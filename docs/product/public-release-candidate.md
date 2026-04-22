@@ -1,6 +1,6 @@
 # Public Release Candidate
 
-- Version line: `1.3.3`
+- Version line: `1.3.4`
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-21`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
@@ -25,9 +25,9 @@
 
 ## Readiness
 
-- Authority baseline: `v1.3.2-tagged-on-main-v1.3.3-hotfix-opened-on-main`
+- Authority baseline: `v1.3.3-tagged-on-main-v1.3.4-hotfix-opened-on-main`
 - Local installed VSIX build:
-  `not-yet-built-v1.3.3-hotfix-public-exact-retry`
+  `not-yet-built-v1.3.4-hotfix-public-exact-retry`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -41,7 +41,7 @@
 - Runtime-provider public-acceptance gate:
   `closed-on-published-v1.3.0-candidate-heads-retained`
 - Exact public release:
-  `v1.3.1-github-release-published-v1.3.2-public-retry-pending`
+  `v1.3.1-github-release-published-v1.3.4-public-retry-pending`
 
 ## Exact Release Baseline
 
@@ -67,22 +67,22 @@
 - The latest retained expert-agent review still covers the current published
   source/wiki heads `ab293d5` / `141c39e` and returned
   `no findings; exact release / Marketplace publish may proceed`.
-- Authority exact `v1.3.2` is already tagged on `main` `20e760d`, but the
+- Authority exact `v1.3.3` is already tagged on `main` `a3fe134`, but the
   separate public GitHub exact release act is still pending because
-  `v1.3.3` reopened the exact line only to repair stale authority-side
+  `v1.3.4` reopened the exact line only to repair the last stale authority-side
   public-source validation expectations before retrying that public act.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` passed on
-  the authority tranche before `v1.3.2` exact tagging.
-- The first governed `v1.3.3` hotfix preview VSIX is not yet built; the next
+  the authority tranche before `v1.3.3` exact tagging.
+- The first governed `v1.3.4` hotfix preview VSIX is not yet built; the next
   retained local preview surface is
-  `preview-evidence/vi-history-suite-1.3.3.vsix` with sidecar checksum
-  `preview-evidence/vi-history-suite-1.3.3.vsix.sha256`, and the governed
+  `preview-evidence/vi-history-suite-1.3.4.vsix` with sidecar checksum
+  `preview-evidence/vi-history-suite-1.3.4.vsix.sha256`, and the governed
   build command remains
-  `npm run package -- --out "preview-evidence/vi-history-suite-1.3.3.vsix"`.
+  `npm run package -- --out "preview-evidence/vi-history-suite-1.3.4.vsix"`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -175,7 +175,7 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- The current `v1.3.3` hotfix exists only to retry the separate public GitHub
-  exact-release act for already-tagged authority `v1.3.2`; public GitHub
+- The current `v1.3.4` hotfix exists only to retry the separate public GitHub
+  exact-release act for already-tagged authority `v1.3.3`; public GitHub
   exact still serves `v1.3.1`, and VS Code Marketplace remains retained at
   `1.3.0` until that later act occurs.

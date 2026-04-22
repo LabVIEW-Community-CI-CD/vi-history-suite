@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public release candidate control surface', () => {
-  it('reopens exact 1.3.3 on authority while retaining the tagged v1.3.2 authority baseline and the v1.3.1 public exact baseline', () => {
+  it('reopens exact 1.3.4 on authority while retaining the tagged v1.3.3 authority baseline and the v1.3.1 public exact baseline', () => {
     const candidate = readJson<{
       versionLine?: string;
       burnedExactReleaseLine?: string;
@@ -138,7 +138,7 @@ describe('public release candidate control surface', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(candidate.versionLine).toBe('1.3.3');
+    expect(candidate.versionLine).toBe('1.3.4');
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.authorityRepo).toMatchObject({
       role: 'source-of-truth',
@@ -172,21 +172,21 @@ describe('public release candidate control surface', () => {
       status: 'published-v1.3.1-candidate-wiki-head'
     });
     expect(candidate.candidateReadiness).toMatchObject({
-      authorityBaseline: 'v1.3.2-tagged-on-main-v1.3.3-hotfix-opened-on-main',
-      localInstalledVsix: 'not-yet-built-v1.3.3-hotfix-public-exact-retry',
+      authorityBaseline: 'v1.3.3-tagged-on-main-v1.3.4-hotfix-opened-on-main',
+      localInstalledVsix: 'not-yet-built-v1.3.4-hotfix-public-exact-retry',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
       authorityIssue0414ImplementationState: 'closed-clean-before-next-public-candidate-step',
       authorityIssue0414LiveSessionProof: 'fresh-governed-windows-proof-retained',
       publishedSurfaceExpertAgentReview: 'no-findings-on-current-v1.3.1-published-heads',
       runtimeProviderPublicAcceptanceGate: 'closed-on-published-v1.3.0-candidate-heads-retained',
-      exactPublicRelease: 'v1.3.1-github-release-published-v1.3.2-public-retry-pending'
+      exactPublicRelease: 'v1.3.1-github-release-published-v1.3.4-public-retry-pending'
     });
     expect(candidate.localProofs?.localInstalledVsixPreview).toMatchObject({
       status: 'pending',
-      version: '1.3.3',
-      vsixPath: 'preview-evidence/vi-history-suite-1.3.3.vsix',
-      checksumPath: 'preview-evidence/vi-history-suite-1.3.3.vsix.sha256',
-      buildCommand: 'npm run package -- --out "preview-evidence/vi-history-suite-1.3.3.vsix"'
+      version: '1.3.4',
+      vsixPath: 'preview-evidence/vi-history-suite-1.3.4.vsix',
+      checksumPath: 'preview-evidence/vi-history-suite-1.3.4.vsix.sha256',
+      buildCommand: 'npm run package -- --out "preview-evidence/vi-history-suite-1.3.4.vsix"'
     });
     expect(candidate.localProofs?.privateRelease).toMatchObject({
       status: 'current-v1.3.1-private-release-published',
@@ -233,10 +233,10 @@ describe('public release candidate control surface', () => {
       marketplaceVersion: '1.3.0'
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
-      status: 'authority-v1.3.2-tagged-public-github-exact-retry-pending',
-      hotfixBranch: 'hotfix/v1.3.3-public-exact-retry',
-      authorityMainCommit: '20e760d',
-      authorityTag: 'v1.3.2',
+      status: 'authority-v1.3.3-tagged-public-github-exact-retry-pending',
+      hotfixBranch: 'hotfix/v1.3.4-public-exact-retry',
+      authorityMainCommit: 'a3fe134',
+      authorityTag: 'v1.3.3',
       publicGitHubExactCommit: 'ad351ed',
       publicGitHubReleaseUrl:
         'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1',
@@ -287,18 +287,18 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.activeBlockers).toEqual([]);
 
-    expect(candidateMarkdown).toContain('Version line: `1.3.3`');
+    expect(candidateMarkdown).toContain('Version line: `1.3.4`');
     expect(candidateMarkdown).toContain('Published public source commit: `ad351ed`');
     expect(candidateMarkdown).toContain('Public `develop` candidate commit: `ab293d5`');
     expect(candidateMarkdown).toContain('Published public wiki head: `141c39e`');
-    expect(candidateMarkdown).toContain('`not-yet-built-v1.3.3-hotfix-public-exact-retry`');
+    expect(candidateMarkdown).toContain('`not-yet-built-v1.3.4-hotfix-public-exact-retry`');
     expect(candidateMarkdown).toContain('`closed-clean-before-next-public-candidate-step`');
     expect(candidateMarkdown).toContain('`fresh-governed-windows-proof-retained`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
     expect(candidateMarkdown).toContain('`no-findings-on-current-v1.3.1-published-heads`');
     expect(candidateMarkdown).toContain('`closed-on-published-v1.3.0-candidate-heads-retained`');
     expect(candidateMarkdown).toContain(
-      '`v1.3.1-github-release-published-v1.3.2-public-retry-pending`'
+      '`v1.3.1-github-release-published-v1.3.4-public-retry-pending`'
     );
     expect(candidateMarkdown).toContain('private-v1.3.1-windows-x64');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
@@ -317,7 +317,7 @@ describe('public release candidate control surface', () => {
       'no findings; exact release / Marketplace publish may proceed'
     );
     expect(candidateMarkdown).toContain(
-      'The current `v1.3.3` hotfix exists only to retry the separate public GitHub'
+      'The current `v1.3.4` hotfix exists only to retry the separate public GitHub'
     );
     expect(candidateMarkdown).toContain('`v1.2.0` baseline evidence only');
     expect(candidateMarkdown).toContain('Decision: helper-backed canonical path plus generic public-repo reference manual');
@@ -325,15 +325,15 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Generic interactive command: `npm run public:repo:clone`');
     expect(candidateMarkdown).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidateMarkdown).toContain(
-      'Authority exact `v1.3.2` is already tagged on `main` `20e760d`'
+      'Authority exact `v1.3.3` is already tagged on `main` `a3fe134`'
     );
 
-    expect(currentState).toContain('current exact released line: `v1.3.2`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.2`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.3.1`');
+    expect(currentState).toContain('current exact released line: `v1.3.3`');
+    expect(currentState).toContain('current published package line on `main`: `1.3.3`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: none');
-    expect(currentState).toContain('active exact hotfix candidate line on `main`: `v1.3.3`');
-    expect(currentState).toContain('`hotfix/v1.3.3-public-exact-retry`');
+    expect(currentState).toContain('active exact hotfix candidate line on `main`: `v1.3.4`');
+    expect(currentState).toContain('`hotfix/v1.3.4-public-exact-retry`');
     expect(currentState).toContain('separate public GitHub exact release: `v1.3.1` on `ad351ed`');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');
 
