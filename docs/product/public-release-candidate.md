@@ -4,7 +4,7 @@
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-21`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
-- Published public source commit: `0ea58af`
+- Published public source commit: `ad351ed`
 - Public `develop` candidate commit: `ab293d5`
 - Published public wiki head: `141c39e`
 
@@ -26,7 +26,8 @@
 ## Readiness
 
 - Authority baseline: `v1.3.0-exact-closeout-complete-v1.3.1-opened-on-develop`
-- Local installed VSIX build: `not-yet-built-for-v1.3.1`
+- Local installed VSIX build:
+  `built-v1.3.2-hotfix-preview-with-marketplace-icon-retained`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -39,23 +40,23 @@
   `no-findings-on-current-v1.3.1-published-heads`
 - Runtime-provider public-acceptance gate:
   `closed-on-published-v1.3.0-candidate-heads-retained`
-- Exact public release: `v1.3.0-github-release-and-marketplace-published`
+- Exact public release: `v1.3.1-github-release-published-marketplace-pending`
 
 ## Exact Release Baseline
 
-- GitHub release: `v1.3.0`
+- GitHub release: `v1.3.1`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.0`
-- GitHub asset: `vi-history-suite-1.3.0.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1`
+- GitHub asset: `vi-history-suite-1.3.1.vsix`
 - GitHub asset SHA-256:
-  `2fcafa94dc87e78bfe7f85484b62763f8506b0d706c9574c0f5ee60052fa8811`
+  `7d7d2bd85cd47042953a2b397a9a7e50529b70ffb2af4d9ac9d195f4394f3f58`
 - VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
 - VS Code Marketplace version: `1.3.0`
 
 ## Public Publication
 
-- The exact published public source head on `main` now publishes `0ea58af`,
-  and public GitHub exact release `v1.3.0` is retained in
+- The exact published public source head on `main` now publishes `ad351ed`,
+  and the separate public GitHub exact release `v1.3.1` is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - The maintained public `develop` candidate for `v1.3.1` now publishes
   `ab293d5` through GitHub PR `#38` and is retained in
@@ -74,26 +75,28 @@
   published-surface findings, and those findings are now folded into the
   current published candidate heads.
 - The current published `v1.3.1` candidate heads `ab293d5` / `141c39e`
-  closed the published-surface gate cleanly, and that `tag-eligible`
-  reopening state is now retained on authority `release/1.3.1` from
-  merged-green `develop` `0f4db5e` with green release-branch pipeline
-  `2468432598`.
+  closed the published-surface gate cleanly, authority `release/1.3.1`
+  already carried that reopening state from merged-green `develop`
+  `0f4db5e` with green release-branch pipeline `2468432598`, the exact tag
+  `v1.3.1` and separate public GitHub exact release are now published, and
+  VS Code Marketplace publication remains pending.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` all passed
   on the authority tranche before public publication and exact closeout.
+- First governed `v1.3.2` hotfix preview VSIX is now retained at
+  `preview-evidence/vi-history-suite-1.3.2.vsix` with sidecar checksum
+  `preview-evidence/vi-history-suite-1.3.2.vsix.sha256`; size `993985`
+  bytes, built `2026-04-21T16:26:55.5516553Z`, SHA-256
+  `49CA509AC1F26F21200002DBB83DA46EBBED432CCAA2FC9F3056C16545734F68`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   is now published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
-- Exact-release reopening is now retained on authority `release/1.3.1` from
-  merged-green `develop` `0f4db5e`, but private-release preparation, exact
-  tagging, public GitHub exact release, and VS Code Marketplace publication
-  remain separate later acts for `v1.3.1`.
-- Exact-release reopening remains active on authority `release/1.3.1`, and
-  exact tagging, public GitHub exact release, and VS Code Marketplace
-  publication remain separate later acts after this private-release act.
+- Exact-release reopening on authority `release/1.3.1` is now followed by the
+  exact tag `v1.3.1` and the separate public GitHub exact release on
+  `ad351ed`; VS Code Marketplace publication remains the later separate act.
 - Installed-user docs, bundled docs, and runtime-doctor next actions now treat
   missing Docker CLI or a stopped daemon as a first-run prerequisite boundary.
 - Fresh governed `ISSUE-0414` Windows live-session proof is retained at
@@ -126,8 +129,8 @@
 - Required skill: `vi-history-suite-expert-agent-reviewer`
 - Canonical Codex skill path:
   `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
-- Exact published public release commit retained for exact `v1.3.0`:
-  `0ea58af`
+- Exact published public release commit retained for exact `v1.3.1`:
+  `ad351ed`
 - Exact published public wiki head retained for the current candidate:
   `141c39e`
 - Latest retained verdict: `no findings; exact release / Marketplace publish may proceed`
@@ -139,10 +142,9 @@
 - Prior retained finding count: `2`
 - Those prior findings are now folded into the current published candidate
   heads `ab293d5` / `141c39e`.
-- Exact `v1.3.0` tagging, public GitHub release, and Marketplace publication
-  now remain closed cleanly on published-surface review grounds, and
-  authority exact closeout is retained complete on back-merge `04b07bd` with
-  green pipeline `2467081960`.
+- Exact `v1.3.0` publication remains closed cleanly on published-surface
+  review grounds, while the current `v1.3.1` review retains the clean
+  published candidate heads without overclaiming Marketplace state.
 
 ## Tester Fixture Strategy
 
@@ -191,7 +193,7 @@
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
 - The current published `v1.3.1` candidate heads have already closed the
-  published-surface reopening gate, authority exact-release reopening is now
-  retained on `release/1.3.1`, the controlled Windows x64 private GitLab
-  release is now published separately, and protected `main` promotion is the
-  next separate act while VS Code Marketplace remains retained at `1.3.0`.
+  published-surface reopening gate, the controlled Windows x64 private GitLab
+  release is now published separately, the public GitHub exact release now
+  publishes `ad351ed`, and VS Code Marketplace publication is the next
+  separate act while VS Code Marketplace remains retained at `1.3.0`.

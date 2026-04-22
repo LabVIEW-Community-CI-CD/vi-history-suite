@@ -32,8 +32,12 @@ describe('private release assurance contradiction guards', () => {
     expect(readme).toContain('Windows defaults to local `LabVIEWCLI`');
     expect(readme).toContain('if Docker is selected, install or start Docker Desktop or Docker');
     expect(currentState).toContain('current exact released line: `v1.3.0`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.1`');
-    expect(releaseProcedure).toContain('The active Windows x64 private-release-prep slice is `release/1.3.1`.');
+    expect(currentState).toContain('active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('active exact hotfix candidate line on `main`: `v1.3.2`');
+    expect(releaseProcedure).toContain(
+      'The active Windows x64 private-release-prep slice is the historical'
+    );
+    expect(releaseProcedure).toContain('`release/1.3.1` lane.');
     expect(releaseProcedure).toContain(
       'That private-release act does not imply exact tagging, public GitHub release,'
     );

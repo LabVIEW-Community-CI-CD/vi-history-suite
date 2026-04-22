@@ -13,9 +13,11 @@ import {
   designGateReportMarkdownPath,
   extractWeakestCoverageFocus,
   extractAssuranceGateSummary,
+  getWindowsPythonExecutableCandidates,
   isMountedWindowsPath,
   resolveDesignGateArgs,
   resolveDesignGateCommand,
+  resolveWindowsPythonCommand,
   renderDesignGateMarkdown,
   selectNextDevelopmentTranche
 } from '../../src/tooling/designGate';
@@ -72,10 +74,17 @@ describe('designGate tooling', () => {
   });
 
   it('uses native Windows entrypoints for npm and Python in the governed design gate plan', () => {
+    const windowsEnvironment = {
+      LocalAppData: 'C:\\Users\\tester\\AppData\\Local'
+    } as NodeJS.ProcessEnv;
+    const expectedPython =
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
     const plan = buildDesignGatePlan(
       'C:/repo/vi-history-suite',
       'C:/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py',
-      'win32'
+      'win32',
+      windowsEnvironment,
+      (candidate) => candidate === expectedPython
     );
 
     expect(plan).toEqual([
@@ -118,7 +127,7 @@ describe('designGate tooling', () => {
       {
         id: 'standards-assurance',
         title: 'Standards assurance',
-        command: 'python',
+        command: expectedPython,
         args: [
           'C:/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py',
           'C:/repo/vi-history-suite',
@@ -131,17 +140,70 @@ describe('designGate tooling', () => {
   });
 
   it('resolves native command entrypoints deterministically for Linux and Windows', () => {
+    const windowsEnvironment = {
+      LocalAppData: 'C:\\Users\\tester\\AppData\\Local'
+    } as NodeJS.ProcessEnv;
+    const expectedPython =
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe';
+
     expect(resolveDesignGateCommand('npm', 'linux')).toBe('npm');
     expect(resolveDesignGateCommand('python3', 'linux')).toBe('python3');
     expect(resolveDesignGateCommand('npm', 'win32')).toBe('cmd.exe');
-    expect(resolveDesignGateCommand('python3', 'win32')).toBe('python');
+    expect(
+      resolveDesignGateCommand(
+        'python3',
+        'win32',
+        windowsEnvironment,
+        (candidate) => candidate === expectedPython
+      )
+    ).toBe(expectedPython);
     expect(resolveDesignGateArgs('npm', ['run', 'test'], 'win32')).toEqual([
       '/d',
       '/s',
       '/c',
       'npm run test'
     ]);
-    expect(resolveDesignGateArgs('python3', ['tool.py'], 'win32')).toEqual(['tool.py']);
+    expect(
+      resolveDesignGateArgs(
+        'python3',
+        ['tool.py'],
+        'win32',
+        windowsEnvironment,
+        () => false
+      )
+    ).toEqual(['-3', 'tool.py']);
+  });
+
+  it('prefers an explicit or deterministic Windows Python toolchain before the launcher fallback', () => {
+    const windowsEnvironment = {
+      LocalAppData: 'C:\\Users\\tester\\AppData\\Local'
+    } as NodeJS.ProcessEnv;
+    const expectedCandidates = [
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python313\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python311\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python310\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python39\\python.exe'
+    ];
+
+    expect(getWindowsPythonExecutableCandidates(windowsEnvironment).slice(0, 5)).toEqual(
+      expectedCandidates
+    );
+    expect(
+      resolveWindowsPythonCommand(
+        {
+          VI_HISTORY_SUITE_ASSURANCE_PYTHON: 'D:\\tools\\python\\python.exe'
+        } as NodeJS.ProcessEnv
+      )
+    ).toBe('D:\\tools\\python\\python.exe');
+    expect(
+      resolveWindowsPythonCommand(
+        windowsEnvironment,
+        (candidate) =>
+          candidate === 'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
+      )
+    ).toBe('C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe');
+    expect(resolveWindowsPythonCommand(windowsEnvironment, () => false)).toBe('py');
   });
 
   it('prefers explicit and Linux-local assurance script candidates before the Windows-mounted fallback', () => {

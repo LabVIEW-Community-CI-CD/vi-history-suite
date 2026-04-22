@@ -32,12 +32,16 @@ describe('runner lane operator assets', () => {
     );
     const linuxApply = readText('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     const linuxHelper = readText('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    const linuxDoctor = readText(
+      'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh'
+    );
     const linuxService = readText(
       'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
     );
     const linuxAssert = readText(
       'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh'
     );
+    const runnerDoctorWrapper = readText('scripts/doctorGovernedRunnerLanes.js');
     const runnerAssertWrapper = readText('scripts/assertGovernedRunnerLanes.js');
     const windowsLaneDoc = readText('docs/product/windows-private-release-runner-lane.md');
     const linuxLaneDoc = readText('docs/product/linux-assurance-runner-lane.md');
@@ -59,9 +63,16 @@ describe('runner lane operator assets', () => {
     expect(windowsBootstrap).toContain("$runnerRoot = 'C:\\GitLab-Runner'");
     expect(windowsBootstrap).toContain("Start-Process -FilePath $runnerExe");
     expect(windowsBootstrap).toContain('Stop-Process -Id $duplicateWindowsRunner.ProcessId -Force');
+    expect(windowsBootstrap).toContain("$linuxAssuranceDistro = 'Ubuntu'");
     expect(windowsBootstrap).toContain(
-      "wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh' | Out-Null"
+      "$linuxAssuranceBootstrapCommand = '$HOME/gitlab-runner/start-linux-assurance.sh'"
     );
+    expect(windowsBootstrap).toContain('$linuxAssuranceWakeAttempts = 12');
+    expect(windowsBootstrap).toContain('$linuxAssuranceWakeDelaySeconds = 10');
+    expect(windowsBootstrap).toContain('function Start-LinuxAssuranceSurface');
+    expect(windowsBootstrap).toContain("governed-runner-startup");
+    expect(windowsBootstrap).toContain("vi-history-suite/governed-runner-startup@v1");
+    expect(windowsBootstrap).toContain('Governed Linux assurance bootstrap failed after');
 
     expect(windowsAssert).toContain("Get-ScheduledTask -TaskName $TaskName");
     expect(windowsAssert).toContain('Export-ScheduledTask -TaskName $TaskName');
@@ -85,17 +96,33 @@ describe('runner lane operator assets', () => {
     );
 
     expect(linuxApply).toContain('EXPECTED_USER="sveld"');
-    expect(linuxApply).toContain('sudo systemctl enable --now "$SERVICE_NAME"');
+    expect(linuxApply).toContain('command -v node');
+    expect(linuxApply).toContain('concurrent = 2');
+    expect(linuxApply).toContain('request_concurrency = 2');
+    expect(linuxApply).toContain('Governed Linux assurance apply requires non-interactive sudo access.');
+    expect(linuxApply).toContain('sudo -n systemctl enable --now "$SERVICE_NAME"');
     expect(linuxApply).toContain('systemctl is-enabled "$SERVICE_NAME"');
     expect(linuxApply).toContain('systemctl is-active "$SERVICE_NAME"');
     expect(linuxApply).toContain('is not active after apply');
 
     expect(linuxHelper).toContain('RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"');
     expect(linuxHelper).toContain('CONFIG="$HOME/.gitlab-runner/config.toml"');
+    expect(linuxHelper).toContain('SERVICE_POLL_ATTEMPTS=24');
+    expect(linuxHelper).toContain('grep -Eq "$EXPECTED_GLOBAL_CONCURRENCY_PATTERN"');
+    expect(linuxHelper).toContain('systemctl is-enabled "$SERVICE_NAME"');
+    expect(linuxHelper).toContain('systemctl is-active "$SERVICE_NAME"');
     expect(linuxHelper).toContain('pgrep -af "$RUNNER_BIN run --config $CONFIG"');
+    expect(linuxHelper).toContain('receipts/linux-assurance-startup');
+    expect(linuxHelper).toContain('vi-history-suite/linux-assurance-startup@v1');
     expect(linuxHelper).toContain(
-      'nohup "$RUNNER_BIN" run --config "$CONFIG" >>"$LOG_DIR/stdout.log" 2>>"$LOG_DIR/stderr.log" </dev/null &'
+      'Governed Linux assurance helper timed out waiting for $SERVICE_NAME to report enabled=enabled, active=active, and exactly one configured runner process.'
     );
+    expect(linuxHelper).not.toContain('nohup "$RUNNER_BIN" run --config "$CONFIG"');
+
+    expect(linuxDoctor).toContain('vi-history-suite/linux-governed-runner-doctor@v1');
+    expect(linuxDoctor).toContain('latest.json');
+    expect(linuxDoctor).toContain('request_concurrency');
+    expect(linuxDoctor).toContain('healthy');
 
     expect(linuxService).toContain('Description=VIHS Linux assurance GitLab runner');
     expect(linuxService).toContain('User=sveld');
@@ -108,10 +135,18 @@ describe('runner lane operator assets', () => {
 
     expect(linuxAssert).toContain('cmp -s "$HELPER_SOURCE" "$HELPER_DESTINATION"');
     expect(linuxAssert).toContain('cmp -s "$SERVICE_SOURCE" "$SERVICE_DESTINATION"');
+    expect(linuxAssert).toContain('EXPECTED_GLOBAL_CONCURRENCY_PATTERN');
+    expect(linuxAssert).toContain('concurrent = 2');
     expect(linuxAssert).toContain('request_concurrency = 2');
     expect(linuxAssert).toContain('systemctl show --property FragmentPath --value "$SERVICE_NAME"');
     expect(linuxAssert).toContain('exactly one running gitlab-runner process');
+    expect(linuxAssert).toContain('"globalConcurrent":');
     expect(linuxAssert).toContain('"runnerProcessLines": [');
+
+    expect(runnerDoctorWrapper).toContain('Usage: node scripts/doctorGovernedRunnerLanes.js');
+    expect(runnerDoctorWrapper).toContain('Governed runner doctor detected drift.');
+    expect(runnerDoctorWrapper).toContain("command: 'powershell.exe'");
+    expect(runnerDoctorWrapper).toContain("command: 'wsl.exe'");
 
     expect(runnerAssertWrapper).toContain('Usage: node scripts/assertGovernedRunnerLanes.js');
     expect(runnerAssertWrapper).toContain("surface: platform === 'win32' ? 'all' : 'linux'");
@@ -121,11 +156,16 @@ describe('runner lane operator assets', () => {
 
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(windowsLaneDoc).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
+    expect(windowsLaneDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(windowsLaneDoc).toContain('npm run gitlab:runner:doctor');
     expect(windowsLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(windowsLaneDoc).toContain('npm run gitlab:runner:assert');
+    expect(windowsLaneDoc).toContain('governed_runner_admission');
+    expect(windowsLaneDoc).toContain('C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json');
     expect(windowsLaneDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
     expect(windowsLaneDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
     expect(windowsLaneDoc).not.toContain('ExecutionPolicy Bypass -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"');
@@ -134,45 +174,86 @@ describe('runner lane operator assets', () => {
     expect(windowsLaneDoc).toContain('installed bootstrap hash still matches the repo source');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(windowsLaneDoc).toContain('retries the repo-owned Linux assurance helper up');
     expect(windowsLaneDoc).toContain('powershell.exe -NoLogo -NoProfile -File .\\scripts\\gitlab-runner\\windows\\apply-governed-runner-lanes.ps1');
+    expect(linuxLaneDoc).toContain('concurrent = 2');
     expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(linuxLaneDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(linuxLaneDoc).toContain('npm run gitlab:runner:doctor');
     expect(linuxLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(linuxLaneDoc).toContain('npm run gitlab:runner:assert');
+    expect(linuxLaneDoc).toContain('$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json');
     expect(linuxLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(linuxLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
 
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(hostedGovernanceDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:doctor');
     expect(hostedGovernanceDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
+    expect(hostedGovernanceDoc).toContain('governed_runner_admission');
+    expect(hostedGovernanceDoc).toContain('concurrent = 2');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance.operatorModel).toEqual(
       expect.objectContaining({
+        globalConcurrency: 2,
         repoOwnedApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
         repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+        repoOwnedDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
         repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
         repoOwnedAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+        combinedDoctorScript: 'scripts/doctorGovernedRunnerLanes.js',
+        combinedDoctorPackageScript: 'npm run gitlab:runner:doctor',
         combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
-        combinedAssertionPackageScript: 'npm run gitlab:runner:assert'
+        combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
+        helperVerification: {
+          distro: 'Ubuntu',
+          wakeAttempts: 12,
+          wakeDelaySeconds: 10,
+          checks: [
+            'config-global-concurrency-two',
+            'config-request-concurrency-two',
+            'systemctl-is-enabled',
+            'systemctl-is-active',
+            'exactly-one-configured-runner-process',
+            'writes-startup-receipt'
+          ],
+          failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
+        }
       })
     );
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease.operatorModel).toEqual(
       expect.objectContaining({
         repoOwnedApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
         repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+        repoOwnedDoctorScript: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
         repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
         repoOwnedRecoveryScript:
           'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
         repoOwnedRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
         repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+        repoOwnedLinuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+        linuxAssuranceBootstrap: {
+          distro: 'Ubuntu',
+          bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
+          wakeAttempts: 12,
+          wakeDelaySeconds: 10,
+          failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
+        },
+        combinedDoctorScript: 'scripts/doctorGovernedRunnerLanes.js',
+        combinedDoctorPackageScript: 'npm run gitlab:runner:doctor',
         combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
         combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
         recoveryRehearsal: {
@@ -190,75 +271,128 @@ describe('runner lane operator assets', () => {
 
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(privateReleasePacketDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(privateReleasePacketDoc).toContain('npm run gitlab:runner:doctor');
     expect(privateReleasePacketDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(privateReleasePacketDoc).toContain('npm run gitlab:runner:assert');
+    expect(privateReleasePacketDoc).toContain('concurrent = 2');
     expect(privateReleasePacketJson.gitlabRunnerLane).toEqual(
       expect.objectContaining({
         hostInstallState: 'current-user-scheduled-task-bootstrap-active',
-        hostAssertionSurface: {
+        governedRunnerAdmission: expect.objectContaining({
+          jobName: 'governed_runner_admission',
+          packageScript: 'npm run gitlab:runner:doctor',
+          evidenceRoot: 'governed-runner-admission-evidence/',
+          failurePolicy: 'fail-fast-before-docs-assurance-test-package-and-release-stages'
+        }),
+        startupReceipts: expect.objectContaining({
+          windowsLatest: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
+          linuxLatest: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json'
+        }),
+        linuxBootstrapReadiness: expect.objectContaining({
+          script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          distro: 'Ubuntu',
+          bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
+          wakeAttempts: 12,
+          wakeDelaySeconds: 10,
+          failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
+        }),
+        hostDoctorSurface: expect.objectContaining({
+          windowsDoctorScript: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
+          linuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+          runnerDoctorWrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+          runnerDoctorPackageScript: 'npm run gitlab:runner:doctor',
+          failurePolicy:
+            'non-mutating-readback; combined surface may fail closed on drift when requested'
+        }),
+        hostAssertionSurface: expect.objectContaining({
           runnerAssertionWrapperScript: 'scripts/assertGovernedRunnerLanes.js',
           runnerAssertionPackageScript: 'npm run gitlab:runner:assert',
           windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           linuxAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
-          failurePolicy: 'fail-closed-on-live-host-drift'
-        },
-        repoOwnedOperatorAssets: {
+          failurePolicy: 'fail-closed-on-live-host-drift',
+          linuxConcurrencyContract: {
+            globalConcurrency: 2,
+            requestConcurrency: 2
+          }
+        }),
+        repoOwnedOperatorAssets: expect.objectContaining({
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          windowsDoctorScript: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
           windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           windowsRecoveryScript:
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           windowsRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          linuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
           linuxAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+          runnerDoctorWrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+          runnerDoctorPackageScript: 'npm run gitlab:runner:doctor',
           runnerAssertionWrapperScript: 'scripts/assertGovernedRunnerLanes.js',
           runnerAssertionPackageScript: 'npm run gitlab:runner:assert',
           runnerRecoveryRehearsalPackageScript: 'npm run gitlab:runner:windows:recovery:rehearse'
-        }
+        })
       })
     );
 
     expect(informationItemMap).toContain(
       '| Governed runner host asset pack | `scripts/gitlab-runner/` |'
     );
-    expect(informationItemMap).toContain('cross-lane runner-assert wrapper');
-    expect(readme).toContain('## Authority And Release Control');
-    expect(readme).toContain('[Hosted CI Governance](./docs/product/hosted-ci-governance.md)');
-    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
-    expect(currentState).toContain('repo-owned runner host asset pack, apply surfaces, and live drift');
+    expect(informationItemMap).toContain('cross-lane runner-doctor/assert wrappers');
+    expect(readme).toContain('[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)');
+    expect(readme).toContain('[docs/information-item-map.md](./docs/information-item-map.md)');
+    expect(currentState).toContain('repo-owned runner host asset pack, startup receipts, doctor surfaces, apply');
     expect(currentState).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
+    expect(currentState).toContain('scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1');
     expect(currentState).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(currentState).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(currentState).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
     expect(currentState).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
+    expect(currentState).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(currentState).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(currentState).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(currentState).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(currentState).toContain('npm run gitlab:runner:doctor');
     expect(currentState).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(currentState).toContain('npm run gitlab:runner:assert');
-    expect(releaseProcedure).toContain('The repo-owned runner host asset pack, apply surfaces, and live drift');
+    expect(currentState).toContain('concurrent = 2');
+    expect(currentState).toContain('governed_runner_admission');
+    expect(releaseProcedure).toContain('The repo-owned runner host asset pack, startup receipts, doctor surfaces');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(releaseProcedure).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
+    expect(releaseProcedure).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(releaseProcedure).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(releaseProcedure).toContain('npm run gitlab:runner:doctor');
     expect(releaseProcedure).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(releaseProcedure).toContain('npm run gitlab:runner:assert');
+    expect(releaseProcedure).toContain('concurrent = 2');
+    expect(releaseProcedure).toContain('governed_runner_admission');
     expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
-      'node scripts/assertGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/assertGovernedRunnerLanes.js'
+    );
+    expect(packageManifest.scripts?.['gitlab:runner:doctor']).toBe(
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:windows:recovery:rehearse']).toBe(
-      'npm run compile && node scripts/runWindowsProofRuntimeRecoveryRehearsal.js'
+      'npm run compile && scripts\\invoke-node-from-npm-execpath.cmd scripts/runWindowsProofRuntimeRecoveryRehearsal.js'
     );
   });
 
@@ -291,9 +425,12 @@ describe('runner lane operator assets', () => {
     expect(windowsBootstrap).toContain(
       'Windows proof runtime cleanup failed before cold runner admission; remaining processes:'
     );
-    expect(windowsBootstrap).toMatch(
-      /if \(\$windowsRunners\.Count -eq 0\) \{\r?\n  Clear-WindowsProofRuntimeSurface\r?\n  Start-Process -FilePath \$runnerExe/
+    expect(windowsBootstrap).toContain('if ($windowsRunners.Count -eq 0) {');
+    expect(windowsBootstrap).toContain(
+      '$script:startupReceipt.coldAdmissionRuntimeCleanupAttempted = $true'
     );
+    expect(windowsBootstrap).toContain('Clear-WindowsProofRuntimeSurface');
+    expect(windowsBootstrap).toContain('Start-Process -FilePath $runnerExe `');
 
     expect(windowsLaneDoc).toContain('stale `LabVIEW`,');
     expect(windowsLaneDoc).toContain('`LabVIEWCLI`, and `LVCompare` processes');
@@ -324,7 +461,7 @@ describe('runner lane operator assets', () => {
     expect(privateReleasePacketDoc).toContain('contamination remains');
     expect(privateReleasePacketJson.gitlabRunnerLane).toEqual(
       expect.objectContaining({
-        coldAdmissionRuntimeCleanup: {
+        coldAdmissionRuntimeCleanup: expect.objectContaining({
           processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
           terminationStrategy: [
             'stop-process-force-by-pid',
@@ -332,12 +469,11 @@ describe('runner lane operator assets', () => {
             'taskkill-image-tree'
           ],
           failurePolicy: 'fail-closed-before-runner-start'
-        }
+        })
       })
     );
 
-    expect(readme).toContain('## Authority And Release Control');
-    expect(readme).toContain('[Hosted CI Governance](./docs/product/hosted-ci-governance.md)');
+    expect(readme).toContain('[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)');
     expect(currentState).toContain(
       'the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
     );

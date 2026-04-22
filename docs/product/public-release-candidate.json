@@ -20,9 +20,9 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "0ea58af",
+    "publishedCommit": "ad351ed",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
-    "status": "published-exact-v1.3.0-main"
+    "status": "published-exact-v1.3.1-main"
   },
   "publicDevelopCandidate": {
     "branch": "develop",
@@ -49,7 +49,7 @@
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.3.0-exact-closeout-complete-v1.3.1-opened-on-develop",
-    "localInstalledVsix": "not-yet-built-for-v1.3.1",
+    "localInstalledVsix": "built-v1.3.2-hotfix-preview-with-marketplace-icon-retained",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
@@ -57,7 +57,7 @@
     "authorityIssue0414LiveSessionProof": "fresh-governed-windows-proof-retained",
     "publishedSurfaceExpertAgentReview": "no-findings-on-current-v1.3.1-published-heads",
     "runtimeProviderPublicAcceptanceGate": "closed-on-published-v1.3.0-candidate-heads-retained",
-    "exactPublicRelease": "v1.3.0-github-release-and-marketplace-published"
+    "exactPublicRelease": "v1.3.1-github-release-published-marketplace-pending"
   },
   "findingClassifications": [
     {
@@ -99,10 +99,10 @@
     }
   ],
   "exactRelease": {
-    "version": "v1.3.0",
-    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.0",
-    "gitHubAssetName": "vi-history-suite-1.3.0.vsix",
-    "gitHubAssetSha256": "2fcafa94dc87e78bfe7f85484b62763f8506b0d706c9574c0f5ee60052fa8811",
+    "version": "v1.3.1",
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1",
+    "gitHubAssetName": "vi-history-suite-1.3.1.vsix",
+    "gitHubAssetSha256": "7d7d2bd85cd47042953a2b397a9a7e50529b70ffb2af4d9ac9d195f4394f3f58",
     "marketplaceItemName": "svelderrainruiz.vi-history-suite",
     "marketplaceVersion": "1.3.0",
     "marketplaceVerification": "official-gallery-extensionquery-verified",
@@ -110,7 +110,7 @@
     "releaseBranch": "main"
   },
   "exactReleaseReopening": {
-    "status": "reopened-on-authority-release-1.3.1-branch",
+    "status": "exact-tag-and-public-github-release-published-marketplace-pending",
     "releaseBranch": "release/1.3.1",
     "mergedGreenDevelopCommit": "0f4db5e",
     "mergedGreenDevelopPipelineId": 2468407077,
@@ -118,10 +118,24 @@
     "releaseBranchCommit": "3fe766a",
     "releaseBranchPipelineId": 2468432598,
     "releaseBranchPipelineStatus": "success",
-    "nextSeparateAct": "protected-main-promotion",
+    "authorityMainCommit": "a841a2f",
+    "authorityTag": "v1.3.1",
+    "publicGitHubExactCommit": "ad351ed",
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1",
+    "nextSeparateAct": "marketplace-publication",
     "marketplaceVersionRetained": "1.3.0"
   },
   "localProofs": {
+    "localInstalledVsixPreview": {
+      "status": "passed",
+      "version": "1.3.2",
+      "vsixPath": "preview-evidence/vi-history-suite-1.3.2.vsix",
+      "checksumPath": "preview-evidence/vi-history-suite-1.3.2.vsix.sha256",
+      "sha256": "49CA509AC1F26F21200002DBB83DA46EBBED432CCAA2FC9F3056C16545734F68",
+      "sizeBytes": 993985,
+      "builtAt": "2026-04-21T16:26:55.5516553Z",
+      "buildCommand": "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.2.vsix\""
+    },
     "privateRelease": {
       "status": "current-v1.3.1-private-release-published",
       "tag": "private-v1.3.1-windows-x64",

@@ -11,6 +11,7 @@ RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"
 RUNNER_CONFIG="$HOME/.gitlab-runner/config.toml"
 EXPECTED_USER="sveld"
 EXPECTED_HOME="/home/sveld"
+EXPECTED_GLOBAL_CONCURRENCY_PATTERN='^[[:space:]]*concurrent[[:space:]]*=[[:space:]]*2[[:space:]]*$'
 EXPECTED_REQUEST_CONCURRENCY_PATTERN='^[[:space:]]*request_concurrency[[:space:]]*=[[:space:]]*2[[:space:]]*$'
 
 fail() {
@@ -46,6 +47,7 @@ command -v systemctl >/dev/null 2>&1 || fail "systemctl is required to verify $S
 
 cmp -s "$HELPER_SOURCE" "$HELPER_DESTINATION" || fail "Governed Linux assurance assertion failed; installed helper drift detected at $HELPER_DESTINATION."
 cmp -s "$SERVICE_SOURCE" "$SERVICE_DESTINATION" || fail "Governed Linux assurance assertion failed; installed service drift detected at $SERVICE_DESTINATION."
+grep -Eq "$EXPECTED_GLOBAL_CONCURRENCY_PATTERN" "$RUNNER_CONFIG" || fail "Governed Linux assurance assertion failed; $RUNNER_CONFIG no longer retains concurrent = 2."
 grep -Eq "$EXPECTED_REQUEST_CONCURRENCY_PATTERN" "$RUNNER_CONFIG" || fail "Governed Linux assurance assertion failed; $RUNNER_CONFIG no longer retains request_concurrency = 2."
 
 enabled_state="$(systemctl is-enabled "$SERVICE_NAME")"
@@ -82,6 +84,7 @@ printf '  "activeState": "%s",\n' "$active_state"
 printf '  "fragmentPath": "%s",\n' "$fragment_path"
 printf '  "serviceUser": "%s",\n' "$service_user"
 printf '  "workingDirectory": "%s",\n' "$working_directory"
+printf '  "globalConcurrent": %s,\n' "2"
 printf '  "requestConcurrency": %s,\n' "2"
 printf '  "mainPid": "%s",\n' "$main_pid"
 printf '  "helperSourceSha256": "%s",\n' "$helper_source_sha256"

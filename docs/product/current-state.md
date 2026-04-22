@@ -155,11 +155,13 @@ Latest landed ship target:
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.0`
-- current published package line on `main`: `1.3.0`
+- current published package line on `main`: `1.3.1`
 - current develop package line on `develop`: `1.3.1`
-- active exact release candidate line on `develop`: `v1.3.1`
-- active release-candidate branch: `release/1.3.1`
-- active Windows x64 private-release-prep slice: `release/1.3.1`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
+- active exact hotfix candidate line on `main`: `v1.3.2`
+- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
+- active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
 - active Windows x64 private-release packet JSON:
@@ -172,6 +174,8 @@ Latest landed ship target:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
+- separate public GitHub exact release: `v1.3.1` on `ad351ed`
+- VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -185,23 +189,38 @@ Latest landed ship target:
 - `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
   `develop`, and are deleted only after both merges complete
 - hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)
-- repo-owned runner host asset pack, apply surfaces, and live drift
-  assertions:
+- repo-owned runner host asset pack, startup receipts, doctor surfaces, apply
+  surfaces, and live drift assertions:
   - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
   - `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
     `npm run gitlab:runner:windows:recovery:rehearse`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+  - `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
   - `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+  - `scripts/doctorGovernedRunnerLanes.js` via
+    `npm run gitlab:runner:doctor`
   - `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
+  - latest Windows startup receipt:
+    `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
+  - latest Linux startup receipt:
+    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  - fail-fast GitLab runner admission job: `governed_runner_admission`
+  - fail-fast GitLab runner admission command:
+    `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   - the Windows apply surface keeps the scheduled task on
     `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
     without `ExecutionPolicy Bypass` and fails closed unless exactly one
     configured runner manager remains after apply
+  - the Windows bootstrap now writes a machine-readable startup receipt that
+    records duplicate-collapse, cold-admission cleanup, Linux-helper retry,
+    and receipt-link facts before the current-user runner contract is
+    considered healthy
   - the Windows drift assertion surface fails closed unless the installed
     bootstrap still matches the repo source, the scheduled task retains that
     exact action plus its logon trigger, `C:\GitLab-Runner\config.toml` still
@@ -211,14 +230,30 @@ Latest landed ship target:
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
+  - the same Windows bootstrap also wakes Ubuntu and retries the repo-owned
+    Linux assurance helper until it proves the paired
+    `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular,
+    failing closed otherwise
+  - the Linux helper now reconciles `~/.gitlab-runner/config.toml` back to
+    `concurrent = 2` plus `request_concurrency = 2`, restarts the admitted
+    `systemd` service when needed, and writes a machine-readable startup
+    receipt before it reports the Linux assurance surface healthy
   - the Linux apply surface installs the helper and service unit and fails
-    closed unless `vihs-linux-assurance-runner.service` is both enabled and
-    active after apply
+    closed unless `~/.gitlab-runner/config.toml` first retains
+    `concurrent = 2` plus `request_concurrency = 2` and
+    `vihs-linux-assurance-runner.service` is both enabled and active after
+    apply
   - the Linux drift assertion surface fails closed unless the installed helper
     and service unit still match the repo source,
-    `~/.gitlab-runner/config.toml` still contains
+    `~/.gitlab-runner/config.toml` still contains `concurrent = 2` plus
     `request_concurrency = 2`, the admitted service fragment/user and working
-    directory remain exact, and exactly one configured runner process is live
+    directory remain exact, the service is still `enabled` and `active`, and
+    exactly one configured runner process is live
+  - the repo-owned doctor surfaces now read both live runner state and the
+    retained startup receipts, and the fail-fast
+    `governed_runner_admission` job runs those doctor surfaces in the
+    `admission` stage so docs, assurance, test, package, and release work do
+    not queue behind unreconciled post-reset runner drift
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -252,9 +287,10 @@ Latest landed ship target:
   authority exact-release reopening is now retained on `release/1.3.1` from
   merged-green `develop` `0f4db5e` with green release-branch pipeline
   `2468432598`, the controlled Windows x64 private GitLab release is now
-  published separately, and the next exact-release act is protected `main`
-  promotion because the latest expert-agent review on the exact published heads returned
-  `no findings; exact release / Marketplace publish may proceed`
+  published separately, exact tag `v1.3.1` and the separate public GitHub
+  exact release on `ad351ed` are now live, VS Code Marketplace still serves
+  `1.3.0`, and the active exact hotfix lane is now
+  `hotfix/v1.3.2-marketplace-icon` from exact `main`
 
 Current active and recently closed tranches:
 
@@ -608,14 +644,14 @@ Post-release tranches:
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
   - closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
-  - exact public `main` now publishes `v1.3.0`, and the maintained public
-    `v1.3.1` `develop` line now publishes `ab293d5`, and the current
-    expert-agent review on the published source/wiki heads now reports
+  - exact public `main` now publishes `v1.3.1`, and the maintained public
+    `v1.3.1` `develop` line still publishes `ab293d5`, and the current
+    expert-agent review on the published candidate heads now reports
     `no findings; exact release / Marketplace publish may proceed`, the
-    published-surface reopening gate is closed cleanly, authority exact-release
-    reopening is now retained on `release/1.3.1`, the controlled Windows x64
-    private GitLab release is now published separately, and protected `main`
-    promotion is the next separate act while Marketplace remains `1.3.0`
+    published-surface reopening gate is closed cleanly, the controlled Windows
+    x64 private GitLab release and the separate public GitHub exact release
+    are now published, and Marketplace publication is the next separate act
+    while Marketplace remains `1.3.0`
   - the first `1.2.0` correction repaired branch-governance admission by
     realigning exact `main` back into `develop` before feature work continues
   - the line now adds one generic public-repo bootstrap surface for public
@@ -623,12 +659,13 @@ Post-release tranches:
     helper path separate
   - Sergio's documented brand-new-fork and brand-new-Codespace rerun passes on
     `Examples/Logging with Helper-VIs.vi`, the exact public `main` line now
-    publishes `0ea58af`, the maintained public `develop` candidate now
-    publishes `ab293d5`, the VS Code Marketplace listing now serves `1.3.0`,
-    the maintained public wiki/reference-manual package now publishes
-    `141c39e`, the last clean expert-agent-reviewed public source/wiki heads
-    remain `0f19f4b` / `53b5348`, and exact `v1.3.0` closeout is complete on
-    authority `develop` `04b07bd`
+    publishes `ad351ed`, the maintained public `develop` candidate still
+    publishes `ab293d5`, the public GitHub exact release `v1.3.1` is live,
+    the VS Code Marketplace listing still serves `1.3.0`, the maintained
+    public wiki/reference-manual package now publishes `141c39e`, the last
+    clean expert-agent-reviewed public source/wiki heads remain `0f19f4b` /
+    `53b5348`, and exact `v1.3.0` closeout is complete on authority `develop`
+    `04b07bd`
 
 Historical public closeout and runtime-provider public-acceptance gate record:
 

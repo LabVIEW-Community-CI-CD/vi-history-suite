@@ -117,6 +117,8 @@ publishes the controlled Windows-only install asset.
     `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - the governed Windows bootstrap asset is
     `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - the governed Windows doctor surface is
+    `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
   - the governed Windows drift assertion surface is
     `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - the governed Windows proof runtime recovery surface is
@@ -137,6 +139,9 @@ publishes the controlled Windows-only install asset.
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
+  - that same Windows bootstrap also wakes Ubuntu and retries the repo-owned
+    Linux assurance helper until it proves the paired
+    `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular
   - when the host-native proof exits on that same cleanup seam, the acceptance
     wrapper preserves the first failed proof transcript as
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -154,16 +159,30 @@ publishes the controlled Windows-only install asset.
     `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
     `scripts/gitlab-runner/linux/start-linux-assurance.sh`, and
     `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+  - the governed Linux doctor surface is
+    `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`
   - the governed Linux drift assertion surface is
     `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+  - the admitted Windows-host doctor wrapper across both lanes is
+    `scripts/doctorGovernedRunnerLanes.js` via
+    `npm run gitlab:runner:doctor`
   - the admitted Windows-host wrapper across both lanes is
     `scripts/assertGovernedRunnerLanes.js` via
     `npm run gitlab:runner:assert`
+  - the Windows bootstrap now writes the latest startup receipt to
+    `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
+  - the Linux helper now writes the latest startup receipt to
+    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  - the fail-fast GitLab admission lane is
+    `governed_runner_admission`, running
+    `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
+    before docs, assurance, test, package, or release work queues
   - that Linux drift assertion fails closed unless the installed helper and
     service unit still match the repo source, `~/.gitlab-runner/config.toml`
-    still contains `request_concurrency = 2`, the admitted service
-    fragment/user and working directory remain exact, and exactly one
-    configured runner process is live
+    still contains `concurrent = 2` plus `request_concurrency = 2`, the
+    admitted service fragment/user and working directory remain exact, the
+    service is still `enabled` and `active`, and exactly one configured runner
+    process is live
   - no secret runner token is retained in the repo
 
 ## First Retained Runner Receipt

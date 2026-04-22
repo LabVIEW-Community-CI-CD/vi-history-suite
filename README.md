@@ -196,11 +196,13 @@ Authority release facts:
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.0`
-- current published package line on `main`: `1.3.0`
+- current published package line on `main`: `1.3.1`
 - current develop package line on `develop`: `1.3.1`
-- active exact release candidate line on `develop`: `v1.3.1`
-- active release-candidate branch: `release/1.3.1`
-- active Windows x64 private-release-prep slice: `release/1.3.1`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
+- active exact hotfix candidate line on `main`: `v1.3.2`
+- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
+- active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
 - active Windows x64 private-release packet JSON:
@@ -213,6 +215,8 @@ Authority release facts:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
+- separate public GitHub exact release: `v1.3.1` on `ad351ed`
+- VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`

@@ -1938,7 +1938,9 @@ Information-for-users review cases:
   Windows apply/bootstrap scripts, the Linux apply/helper scripts, and the
   Linux assurance `systemd` unit, and that the lane docs, hosted governance,
   the private-release packet, and the wider control plane point to those exact
-  asset paths plus repo-owned fail-closed host apply/update behavior
+  asset paths plus repo-owned fail-closed host apply/update behavior, bounded
+  post-reset Windows-to-WSL Linux-helper recovery, and the admitted Linux
+  `concurrent = 2` plus `request_concurrency = 2` contract
 - `TEST-UNIT-363`: verify the repo-owned Windows bootstrap clears stale
   `LabVIEW`, `LabVIEWCLI`, and `LVCompare` before cold runner admission, uses
   bounded PID-tree plus image-name forced descendant termination, and fails
@@ -1954,6 +1956,8 @@ Information-for-users review cases:
   admitted Windows and Linux assertion commands explicit, keep the combined
   wrapper and `npm run gitlab:runner:assert` package surface explicit, and
   fail closed when the Windows assertion is requested from a non-Windows host
+  or when the admitted Linux `concurrent = 2` plus `request_concurrency = 2`
+  contract or live enabled/active service state drifts
 - `TEST-UNIT-366`: verify the Windows proof runtime recovery rehearsal surface
   fails closed unless the admitted Windows host starts clean, seeds one
   headless LabVIEW contamination, runs the repo-owned recovery script,
@@ -1966,6 +1970,15 @@ Information-for-users review cases:
   interactive, and on non-interactive surfaces seeds or retains the governed
   default `host/windows/2026/x64` bundle plus exact follow-up `vihs` commands
   without claiming raw `code --install-extension` interactivity
+- `TEST-UNIT-368`: verify the governed runner startup/doctor substrate writes
+  machine-readable Windows and Linux startup receipts, exposes repo-owned
+  lane-local doctor scripts plus the combined `npm run gitlab:runner:doctor`
+  wrapper, and can fail closed on drift without mutating healthy hosts
+- `TEST-UNIT-369`: verify GitLab retains one fail-fast
+  `governed_runner_admission` lane in the `admission` stage that runs the
+  combined doctor surface with `--fail-on-drift`, retains
+  `governed-runner-admission-evidence/`, and blocks downstream docs,
+  assurance, test, package, and release work when runner drift is detected
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -1981,7 +1994,8 @@ Information-for-users review cases:
   release procedure, SRS, RTM, and the new asset-pack test and confirm the
   governed runner host asset pack and repo-owned apply surfaces are versioned,
   recoverable without untracked machine-only startup files, and explicit about
-  fail-closed host apply/update behavior
+  fail-closed host apply/update behavior, bounded reboot-time Windows-to-WSL
+  Linux assurance recovery, and the retained Linux dual-concurrency contract
 - `TEST-DOC-116`: review the runner-lane contract, hosted governance,
   private-release packet, README, current-state, release procedure, SRS, RTM,
   and the test plan and confirm the Windows proof lane retains cold-admission
@@ -2000,7 +2014,8 @@ Information-for-users review cases:
   package, SRS, RTM, and the test plan and confirm the repo-owned live
   drift-assert surfaces and the combined wrapper are explicit about exact
   scheduled-task/bootstrap state, installed helper/service/bootstrap hash
-  matching, `request_concurrency = 2`, and live runner/service process checks
+  matching, Linux `concurrent = 2` plus `request_concurrency = 2`, enabled and
+  active Linux service state, and live runner/service process checks
 - `TEST-DOC-119`: review the Windows runner-lane contract, hosted governance,
   private-release packet, README, current-state, release procedure, sustainment
   package, SRS, RTM, and the test plan and confirm the repo-owned Windows
@@ -2015,6 +2030,16 @@ Information-for-users review cases:
   bootstrap rather than raw `code --install-extension` alone, with exact
   follow-up `vihs` commands and Windows-host-derived platform posture kept
   explicit
+- `TEST-DOC-121`: review the runner-lane contracts, hosted governance,
+  private-release packet, information-item map, current-state, release
+  procedure, SRS, RTM, and test plan and confirm the governed runner package
+  now retains startup receipts plus repo-owned doctor surfaces for both lanes
+  without relying on ad hoc post-reset shell history
+- `TEST-DOC-122`: review `.gitlab-ci.yml`, hosted governance, sustainment
+  rules, the runner-lane contracts, current-state, release procedure, SRS,
+  RTM, and test plan and confirm `governed_runner_admission` runs first as a
+  fail-fast admission gate with retained doctor evidence before later docs,
+  assurance, test, package, and release stages queue
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

@@ -33,6 +33,9 @@ type SustainmentRules = {
       currentMainPackageLine: string;
       currentDevelopPackageLine?: string;
       activeDevelopCandidateReleaseLine?: string | null;
+      activeReleaseCandidateBranch?: string | null;
+      activeHotfixCandidateReleaseLine?: string | null;
+      activeHotfixBranch?: string | null;
       publicDefaultBranch?: string;
       publicCodespaceBranch: string;
       integrationBranch?: string;
@@ -59,6 +62,7 @@ type SustainmentRules = {
     activeOpeningDecision?: {
       chosenBump?: string;
       targetDevelopCandidateReleaseLine?: string;
+      targetHotfixCandidateReleaseLine?: string;
       rationale?: string[];
       rejectedAlternatives?: Record<string, string>;
     };
@@ -146,10 +150,12 @@ describe('post-release sustainment rules package', () => {
       retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0'],
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.3.0',
-      currentMainPackageLine: '1.3.0',
+      currentMainPackageLine: '1.3.1',
       currentDevelopPackageLine: '1.3.1',
-      activeDevelopCandidateReleaseLine: 'v1.3.1',
-      activeReleaseCandidateBranch: 'release/1.3.1',
+      activeDevelopCandidateReleaseLine: null,
+      activeReleaseCandidateBranch: null,
+      activeHotfixCandidateReleaseLine: 'v1.3.2',
+      activeHotfixBranch: 'hotfix/v1.3.2-marketplace-icon',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -243,13 +249,13 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetDevelopCandidateReleaseLine: 'v1.3.1'
+        targetHotfixCandidateReleaseLine: 'v1.3.2'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line hardens the published host-default Windows local LabVIEWCLI workflow and retained live-session proof/control surfaces without adding another governed capability line',
-        'exact v1.3.0 remains the truthful published baseline while the v1.3.1 patch line opens on develop for ISSUE-0414 proof-depth and release-control follow-through'
+        'the next line hardens the already-published exact package surface by adding the missing Marketplace icon without changing the installed-user workflow or widening the governed capability line',
+        'public GitHub exact v1.3.1 is already immutable while VS Code Marketplace still serves 1.3.0, so v1.3.2 opens as a hotfix from main instead of mutating the retained v1.3.1 GitHub asset'
       ])
     );
 
@@ -300,6 +306,7 @@ describe('post-release sustainment rules package', () => {
       ])
     );
     expect(rules.operatorSurfaceSustainment.branchModel.requiredChecks).toEqual([
+      'governed_runner_admission',
       'docs_continuous_integration',
       'docs_public_continuous_integration',
       'docs_internal_continuous_integration',
@@ -313,12 +320,45 @@ describe('post-release sustainment rules package', () => {
       rules.operatorSurfaceSustainment.branchModel?.governedLaneBehaviors
     ).toEqual(
       expect.objectContaining({
+        governed_runner_admission: {
+          stage: 'admission',
+          packageScript: 'npm run gitlab:runner:doctor',
+          command:
+            'npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence',
+          evidenceRoot: 'governed-runner-admission-evidence/',
+          failurePolicy: 'fail-fast-before-docs-assurance-test-package-and-release-stages'
+        },
         windows_private_release_acceptance: {
           hostApplySurface: {
             script: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
             scheduledTaskAction:
               'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
             failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
+          },
+          startupReceiptSurface: {
+            script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+            latestReceipt: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
+            failurePolicy: 'fail-closed-unless-bootstrap-refreshes-governed-startup-receipt'
+          },
+          hostDoctorSurface: {
+            script: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
+          },
+          linuxAssuranceBootstrap: {
+            script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+            distro: 'Ubuntu',
+            bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
+            wakeAttempts: 12,
+            wakeDelaySeconds: 10,
+            verification: [
+              'systemctl-is-enabled',
+              'systemctl-is-active',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
           },
           hostAssertionSurface: {
             script: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
@@ -360,8 +400,38 @@ describe('post-release sustainment rules package', () => {
         linux_assurance: {
           hostApplySurface: {
             script: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
-            verification: ['systemctl-is-enabled', 'systemctl-is-active'],
-            failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+            verification: [
+              'node-available',
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active'
+            ],
+            failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
+          },
+          helperReadinessSurface: {
+            script: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+            verification: [
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
+              'exactly-one-configured-runner-process',
+              'writes-startup-receipt'
+            ],
+            failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
+          },
+          startupReceiptSurface: {
+            script: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+            latestReceipt: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json',
+            failurePolicy: 'fail-closed-unless-helper-refreshes-governed-startup-receipt'
+          },
+          hostDoctorSurface: {
+            script: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
           },
           hostAssertionSurface: {
             script: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
@@ -370,7 +440,10 @@ describe('post-release sustainment rules package', () => {
             verification: [
               'helper-hash-match',
               'service-unit-hash-match',
+              'global-concurrency-two',
               'request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
               'service-fragment-path-match',
               'service-user-match',
               'service-working-directory-match',
@@ -486,10 +559,15 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
     expect(rulesDoc).toContain('current exact released line: `v1.3.0`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.1`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.1`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.1`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.1`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
+    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.2`');
+    expect(rulesDoc).toContain('active hotfix branch: `hotfix/v1.3.2-marketplace-icon`');
     expect(rulesDoc).toContain('chosen bump: `patch`');
+    expect(rulesDoc).toContain('Active opening decision that opens hotfix exact `v1.3.2`:');
+    expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('protected exact-release line');
     expect(rulesDoc).toContain('required checks');
@@ -522,6 +600,12 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
     expect(rulesDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
     expect(rulesDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
+    expect(rulesDoc).toContain('governed_runner_admission');
+    expect(rulesDoc).toContain('doctor-governed-runner-lanes.ps1');
+    expect(rulesDoc).toContain('doctor-linux-assurance-runner.sh');
+    expect(rulesDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(rulesDoc).toContain('npm run gitlab:runner:doctor');
+    expect(rulesDoc).toContain('governed-runner-admission-evidence');
     expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');
@@ -530,11 +614,10 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('npm run gitlab:runner:assert');
     expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
 
-    expect(readme).toContain('## Authority And Release Control');
     expect(readme).toContain(
       '[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)'
     );
-    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
+    expect(readme).toContain('[docs/information-item-map.md](./docs/information-item-map.md)');
     expect(currentState).toContain(
       '[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)'
     );
