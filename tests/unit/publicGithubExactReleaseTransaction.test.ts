@@ -33,6 +33,25 @@ const releaseManifestFixture = {
 };
 const releaseChecksumFixture =
   '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb  vi-history-suite-1.3.6.vsix\n';
+const alternateWorktreeRoot = path.join(repoRoot, '..', 'vihs-authority-retained');
+const alternateReleaseManifestPath = path.join(
+  alternateWorktreeRoot,
+  '.cache',
+  'gitlab-release-artifacts',
+  'v1.3.6',
+  'expanded',
+  'release-evidence',
+  'release-manifest.json'
+);
+const alternateReleaseChecksumPath = path.join(
+  alternateWorktreeRoot,
+  '.cache',
+  'gitlab-release-artifacts',
+  'v1.3.6',
+  'expanded',
+  'release-evidence',
+  'vi-history-suite-1.3.6.vsix.sha256'
+);
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const transaction = require(path.join(
@@ -94,6 +113,7 @@ const transaction = require(path.join(
     status: string;
     authority: { tag: string; mainSha: string };
     publicSource: { mainSha: string | null; tagRef: string | null };
+    releaseManifest?: { manifestPath: string } | null;
     marketplace: { currentPublishedVersion: string | null };
     draftPublishabilityProbe: {
       status: string;
@@ -155,9 +175,26 @@ const transaction = require(path.join(
       stderr?: string;
     }
   ) => string;
-  resolveReleaseManifestPath: (tag: string, fsApi?: typeof fs) => string | null;
-  readReleaseManifest: (tag: string, fsApi?: typeof fs) => {
+  resolveReleaseManifestPath: (
+    tag: string,
+    fsApi?: typeof fs,
+    spawnImpl?: (command: string, args: string[], options: { cwd: string; encoding: string; shell: boolean }) => {
+      status?: number | null;
+      stdout?: string;
+      stderr?: string;
+    }
+  ) => string | null;
+  readReleaseManifest: (
+    tag: string,
+    fsApi?: typeof fs,
+    spawnImpl?: (command: string, args: string[], options: { cwd: string; encoding: string; shell: boolean }) => {
+      status?: number | null;
+      stdout?: string;
+      stderr?: string;
+    }
+  ) => {
     manifestPath: string;
+    manifestRoot: string;
     checksumPath: string | null;
     manifest: {
       tag: string;
@@ -173,26 +210,33 @@ const transaction = require(path.join(
   ) => Promise<{ outcome: string; report?: Record<string, unknown> }>;
 };
 
-function createReleaseManifestFs(): typeof fs {
+function createReleaseManifestFs(
+  manifestPath = releaseManifestPath,
+  checksumPath = releaseChecksumPath,
+  fallbackToRealFs = true
+): typeof fs {
   return {
     ...fs,
     existsSync: (targetPath: fs.PathLike) => {
       const normalized = path.normalize(String(targetPath));
       if (
-        normalized === path.normalize(releaseManifestPath) ||
-        normalized === path.normalize(releaseChecksumPath)
+        normalized === path.normalize(manifestPath) ||
+        normalized === path.normalize(checksumPath)
       ) {
         return true;
       }
-      return fs.existsSync(targetPath);
+      return fallbackToRealFs ? fs.existsSync(targetPath) : false;
     },
     readFileSync: (targetPath: fs.PathOrFileDescriptor, encoding?: BufferEncoding | null) => {
       const normalized = path.normalize(String(targetPath));
-      if (normalized === path.normalize(releaseManifestPath)) {
+      if (normalized === path.normalize(manifestPath)) {
         return JSON.stringify(releaseManifestFixture);
       }
-      if (normalized === path.normalize(releaseChecksumPath)) {
+      if (normalized === path.normalize(checksumPath)) {
         return releaseChecksumFixture;
+      }
+      if (!fallbackToRealFs) {
+        throw new Error(`Unexpected readFileSync outside retained manifest fixture: ${normalized}`);
       }
       return fs.readFileSync(targetPath, encoding as BufferEncoding);
     }
@@ -273,10 +317,43 @@ describe('public GitHub exact-release transaction controller', () => {
     const manifest = transaction.readReleaseManifest('v1.3.6', fakeFs);
     expect(manifest).toMatchObject({
       manifestPath,
+      manifestRoot: repoRoot,
       checksumPath: releaseChecksumPath,
       manifest: releaseManifestFixture
     });
     expect(manifest?.checksumSha256).toBe(transaction.computeFileSha256(releaseChecksumPath, fakeFs));
+  });
+
+  it('locates the retained authority release manifest across the known worktree set', () => {
+    const fakeFs = createReleaseManifestFs(
+      alternateReleaseManifestPath,
+      alternateReleaseChecksumPath,
+      false
+    );
+    const worktreeAwareSpawn = (command: string, args: string[]) => {
+      expect(command).toBe('git');
+      expect(args).toEqual(['worktree', 'list', '--porcelain']);
+      return {
+        status: 0,
+        stdout: [`worktree ${repoRoot}`, `worktree ${alternateWorktreeRoot}`].join('\n'),
+        stderr: ''
+      };
+    };
+
+    const manifestPath = transaction.resolveReleaseManifestPath(
+      'v1.3.6',
+      fakeFs,
+      worktreeAwareSpawn
+    );
+    expect(manifestPath).toBe(alternateReleaseManifestPath);
+
+    const manifest = transaction.readReleaseManifest('v1.3.6', fakeFs, worktreeAwareSpawn);
+    expect(manifest).toMatchObject({
+      manifestPath: alternateReleaseManifestPath,
+      manifestRoot: path.resolve(alternateWorktreeRoot),
+      checksumPath: alternateReleaseChecksumPath,
+      manifest: releaseManifestFixture
+    });
   });
 
   it('fails closed on the current v1.3.6 partial-publication state and freezes new SemVer openings', () => {
@@ -426,6 +503,9 @@ describe('public GitHub exact-release transaction controller', () => {
       status: assessment.status,
       authority: { tag: 'v1.3.6', mainSha: '3cb2383' },
       publicSource: { mainSha: 'bd81bfe', tagRef: 'refs/tags/v1.3.6' },
+      releaseManifest: {
+        manifestPath: '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json'
+      },
       marketplace: { currentPublishedVersion: '1.3.0' },
       draftPublishabilityProbe: assessment.draftPublishabilityProbe,
       publishabilityProbe: assessment.publishabilityProbe,
@@ -435,8 +515,12 @@ describe('public GitHub exact-release transaction controller', () => {
     });
     expect(markdown).toContain('# Public GitHub Exact Release Transaction');
     expect(markdown).toContain('Status: blocked');
+    expect(markdown).toContain(
+      'Authority release manifest: .cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json'
+    );
     expect(markdown).toContain('## Draft Publishability Probe');
     expect(markdown).toContain('Requested draft release id: 312363117');
+    expect(markdown).toContain('Exact assets retained against authority manifest: true');
     expect(markdown).toContain('## Publishability Probe');
     expect(markdown).toContain('Blocker code: draft-release-tag-lookup-unavailable');
     expect(markdown).toContain('Immutable releases enabled: true');
@@ -495,6 +579,9 @@ describe('public GitHub exact-release transaction controller', () => {
               }
               if (joined === 'rev-list -n 1 v1.3.6') {
                 return { status: 0, stdout: '3cb238334100d01d5cfe7998e17e20a7b497b3fb', stderr: '' };
+              }
+              if (joined === 'worktree list --porcelain') {
+                return { status: 0, stdout: `worktree ${repoRoot}`, stderr: '' };
               }
               throw new Error(`Unexpected git invocation: ${joined}`);
             },
@@ -629,6 +716,12 @@ describe('public GitHub exact-release transaction controller', () => {
 
       const jsonReport = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8')) as {
         authority: { packageVersion: string; branchPackageVersion: string };
+        releaseManifest: {
+          manifestPath: string;
+          manifestRoot: string;
+          checksumPath: string | null;
+          checksumSha256: string | null;
+        } | null;
         publicReleaseByIdLookup: {
           requestedDraftReleaseId: number | null;
           statusCode: number | null;
@@ -671,13 +764,20 @@ describe('public GitHub exact-release transaction controller', () => {
         requestedDraftReleaseId: 312363117,
         statusCode: 200
       });
+      expect(jsonReport.releaseManifest).toMatchObject({
+        manifestPath: '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+        manifestRoot: '.',
+        checksumPath:
+          '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix.sha256'
+      });
       expect(jsonReport.draftPublishabilityProbe).toMatchObject({
         status: 'blocked',
         blockerCode: 'draft-release-tag-lookup-unavailable',
         safeToAttemptPublishDraftInPlace: false,
         requestedDraftReleaseId: 312363117,
         draftReleaseByIdStatusCode: 200,
-        draftReleaseIdMatchesRequested: true
+        draftReleaseIdMatchesRequested: true,
+        exactAssetsRetained: true
       });
       expect(jsonReport.immutableReleasePolicy).toEqual({
         statusCode: 200,
@@ -692,7 +792,8 @@ describe('public GitHub exact-release transaction controller', () => {
         immutableReleasesEnforcedByOwner: false,
         draftReleaseTargetCommitish: 'main',
         draftReleaseLookupStatusCode: 404,
-        draftReleaseHtmlUrlUsesUntaggedPath: true
+        draftReleaseHtmlUrlUsesUntaggedPath: true,
+        exactAssetsRetained: true
       });
       expect(jsonReport.status).toBe('blocked');
       expect(jsonReport.semverFreeze).toMatchObject({

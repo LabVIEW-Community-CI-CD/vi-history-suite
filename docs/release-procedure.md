@@ -47,10 +47,12 @@
   draft release `312363117` retains the exact assets, the last published
   GitHub release still serves `v1.3.1`, the new non-mutating
   draft-publishability probe can read draft release `312363117` by id with
-  status `200` and confirms it still matches authority tag `v1.3.6`,
-  immutable releases are enabled, exact-tag release lookup still returns
-  `404`, the draft still serves an `untagged-*` URL, and VS Code Marketplace
-  still serves `1.3.0`.
+  status `200` and confirms it still matches authority tag `v1.3.6`, the
+  repo-owned controller can now locate the retained authority release
+  manifest non-mutatively and verify the draft still carries the exact VSIX
+  plus checksum assets, immutable releases are enabled, exact-tag release
+  lookup still returns `404`, the draft still serves an `untagged-*` URL, and
+  VS Code Marketplace still serves `1.3.0`.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
