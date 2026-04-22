@@ -189,7 +189,9 @@ Latest landed ship target:
   publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117`
   retains the exact assets, the new non-mutating draft-publishability probe
   can read that draft by id with status `200` and confirms it still matches
-  authority tag `v1.3.6`, immutable releases are enabled, exact-tag release
+  authority tag `v1.3.6`, the repo-owned transaction controller can now locate
+  the retained authority release manifest non-mutatively and verify those
+  exact assets against it, immutable releases are enabled, exact-tag release
   lookup still returns `404`, the draft still serves an `untagged-*` URL, and
   the last published GitHub release remains `v1.3.1`
 - VS Code Marketplace retained published version: `1.3.0`

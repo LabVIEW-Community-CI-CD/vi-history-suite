@@ -220,9 +220,34 @@ function computeFileSha256(filePath, fsApi = fs) {
   return hash.digest('hex');
 }
 
-function resolveReleaseManifestPath(tag, fsApi = fs) {
-  const manifestPath = path.join(
-    repoRoot,
+function toRelativeReportPath(targetPath) {
+  const relativePath = path.relative(repoRoot, targetPath).replaceAll(path.sep, '/');
+  return relativePath.length > 0 ? relativePath : '.';
+}
+
+function listKnownWorktreeRoots(spawnImpl = spawnSync) {
+  const result = runGit(['worktree', 'list', '--porcelain'], repoRoot, spawnImpl);
+  if (result.status !== 0) {
+    return [repoRoot];
+  }
+
+  const roots = new Set([path.resolve(repoRoot)]);
+  for (const line of result.stdout.split(/\r?\n/)) {
+    if (!line.startsWith('worktree ')) {
+      continue;
+    }
+    const worktreeRoot = line.slice('worktree '.length).trim();
+    if (worktreeRoot.length > 0) {
+      roots.add(path.resolve(worktreeRoot));
+    }
+  }
+
+  return Array.from(roots);
+}
+
+function buildReleaseManifestPathForRoot(root, tag) {
+  return path.join(
+    root,
     '.cache',
     'gitlab-release-artifacts',
     tag,
@@ -230,11 +255,21 @@ function resolveReleaseManifestPath(tag, fsApi = fs) {
     'release-evidence',
     'release-manifest.json'
   );
-  return fsApi.existsSync(manifestPath) ? manifestPath : null;
 }
 
-function readReleaseManifest(tag, fsApi = fs) {
-  const manifestPath = resolveReleaseManifestPath(tag, fsApi);
+function resolveReleaseManifestPath(tag, fsApi = fs, spawnImpl = spawnSync) {
+  for (const root of listKnownWorktreeRoots(spawnImpl)) {
+    const manifestPath = buildReleaseManifestPathForRoot(root, tag);
+    if (fsApi.existsSync(manifestPath)) {
+      return manifestPath;
+    }
+  }
+
+  return null;
+}
+
+function readReleaseManifest(tag, fsApi = fs, spawnImpl = spawnSync) {
+  const manifestPath = resolveReleaseManifestPath(tag, fsApi, spawnImpl);
   if (!manifestPath) {
     return null;
   }
@@ -243,6 +278,7 @@ function readReleaseManifest(tag, fsApi = fs) {
   const checksumPath = path.join(path.dirname(manifestPath), `${manifest.vsixArtifact.fileName}.sha256`);
   return {
     manifestPath,
+    manifestRoot: path.resolve(path.dirname(manifestPath), '..', '..', '..', '..', '..'),
     checksumPath: fsApi.existsSync(checksumPath) ? checksumPath : null,
     manifest,
     checksumSha256: fsApi.existsSync(checksumPath) ? computeFileSha256(checksumPath, fsApi) : null
@@ -785,6 +821,7 @@ function buildMarkdown(report) {
     `- Authority main: ${report.authority.mainSha}`,
     `- Public GitHub main: ${report.publicSource.mainSha ?? 'unknown'}`,
     `- Public GitHub tag: ${report.publicSource.tagRef ?? 'missing'}`,
+    `- Authority release manifest: ${report.releaseManifest?.manifestPath ?? 'missing'}`,
     `- Marketplace version: ${report.marketplace.currentPublishedVersion ?? 'unknown'}`,
     '',
     '## Draft Publishability Probe',
@@ -795,6 +832,7 @@ function buildMarkdown(report) {
     `- Draft release by-id status: ${report.draftPublishabilityProbe.draftReleaseByIdStatusCode ?? 'unknown'}`,
     `- Draft release id matches requested: ${report.draftPublishabilityProbe.draftReleaseIdMatchesRequested}`,
     `- Draft release tag matches authority: ${report.draftPublishabilityProbe.draftReleaseTagMatchesAuthority}`,
+    `- Exact assets retained against authority manifest: ${report.draftPublishabilityProbe.exactAssetsRetained}`,
     `- Blocker code: ${report.draftPublishabilityProbe.blockerCode ?? 'none'}`,
     `- Rationale: ${report.draftPublishabilityProbe.rationale}`,
     `- Draft release target commitish: ${report.draftPublishabilityProbe.draftReleaseTargetCommitish ?? 'unknown'}`,
@@ -809,6 +847,7 @@ function buildMarkdown(report) {
     `- Rationale: ${report.publishabilityProbe.rationale}`,
     `- Immutable releases enabled: ${report.publishabilityProbe.immutableReleasesEnabled}`,
     `- Immutable releases enforced by owner: ${report.publishabilityProbe.immutableReleasesEnforcedByOwner}`,
+    `- Exact assets retained against authority manifest: ${report.publishabilityProbe.exactAssetsRetained}`,
     `- Draft release target commitish: ${report.publishabilityProbe.draftReleaseTargetCommitish ?? 'unknown'}`,
     `- Draft release tag lookup status: ${report.publishabilityProbe.draftReleaseLookupStatusCode}`,
     `- Draft release uses untagged URL: ${report.publishabilityProbe.draftReleaseHtmlUrlUsesUntaggedPath}`,
@@ -927,7 +966,7 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
       )
     : { statusCode: 0, json: null };
   const publicRelease = releaseByIdResponse.statusCode === 200 ? releaseByIdResponse.json : null;
-  const releaseManifest = readReleaseManifest(tag, fsApi);
+  const releaseManifest = readReleaseManifest(tag, fsApi, deps.spawnImpl);
   const packageVersion =
     releaseManifest?.manifest?.packageVersion ??
     (parseSemverTag(tag)?.tag.replace(/^v/, '') ?? branchPackageVersion);
@@ -1012,9 +1051,10 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
     publicReleases: facts.publicReleases,
     releaseManifest: facts.releaseManifest
       ? {
-          manifestPath: path.relative(repoRoot, facts.releaseManifest.manifestPath).replaceAll(path.sep, '/'),
+          manifestPath: toRelativeReportPath(facts.releaseManifest.manifestPath),
+          manifestRoot: toRelativeReportPath(facts.releaseManifest.manifestRoot),
           checksumPath: facts.releaseManifest.checksumPath
-            ? path.relative(repoRoot, facts.releaseManifest.checksumPath).replaceAll(path.sep, '/')
+            ? toRelativeReportPath(facts.releaseManifest.checksumPath)
             : null,
           manifest: facts.releaseManifest.manifest,
           checksumSha256: facts.releaseManifest.checksumSha256

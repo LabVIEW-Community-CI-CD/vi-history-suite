@@ -73,6 +73,8 @@
         "draftReleaseId": 312363117,
         "draftReleaseByIdStatusCode": 200,
         "draftReleaseTagMatchesAuthority": true,
+        "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json",
+        "releaseAssetsRetainedAgainstManifest": true,
         "safeToAttemptPublish": false
       },
       "publicDefaultBranch": "main",

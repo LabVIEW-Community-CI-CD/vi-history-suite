@@ -100,6 +100,10 @@ describe('public release candidate control surface', () => {
       vsixAssetName: 'vi-history-suite-1.3.6.vsix',
       vsixAssetSha256: '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb',
       checksumAssetSha256: '7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0',
+      authorityReleaseManifestPath:
+        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+      authorityReleaseManifestLocatorStatus: 'located-and-verified-non-mutatively',
+      releaseAssetsRetainedAgainstManifest: true,
       draftPublishabilityProbeStatus: 'blocked',
       draftPublishabilityBlockerCode: 'draft-release-tag-lookup-unavailable',
       draftPublishabilityBlockerSummary:
@@ -190,6 +194,10 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('npm run public:github:exact:transaction:assess');
     expect(candidateMarkdown).toContain('draft release `312363117`');
     expect(candidateMarkdown).toContain('read release `312363117` by id with status `200`');
+    expect(candidateMarkdown).toContain(
+      '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json'
+    );
+    expect(candidateMarkdown).toContain('`releaseAssetsRetainedAgainstManifest=true`');
     expect(candidateMarkdown).toContain('`draftPublishabilityProbeReleaseId=312363117`');
     expect(candidateMarkdown).toContain('`draftPublishabilityByIdStatusCode=200`');
     expect(candidateMarkdown).toContain('immutable releases are enabled');
@@ -212,6 +220,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('npm run public:github:exact:transaction:assess');
     expect(currentState).toContain('separate public GitHub exact release publication: blocked; public `main` now');
     expect(currentState).toContain('can read that draft by id with status `200`');
+    expect(currentState).toContain('retained authority release manifest non-mutatively');
     expect(currentState).toContain('lookup still returns `404`');
     expect(currentState).toContain('draftPublishabilityProbeReleaseId=312363117');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');

@@ -91,7 +91,10 @@ Current version-line contract:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
 - current retained public GitHub exact draft-publishability probe:
   draft release `312363117` is readable by id with status `200`, still matches
-  authority tag `v1.3.6`, and still is not safe to publish in place
+  authority tag `v1.3.6`, the repo-owned controller can now locate the
+  retained authority release manifest non-mutatively and verify the draft
+  still carries the exact VSIX plus checksum assets, and it still is not safe
+  to publish in place
 - current retained public GitHub exact publishability probe:
   immutable releases `enabled=true`, `enforced_by_owner=false`, draft release
   `312363117` targets `main`, exact-tag release lookup returns `404`, and the

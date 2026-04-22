@@ -203,6 +203,9 @@ describe('post-release sustainment rules package', () => {
         draftReleaseId: 312363117,
         draftReleaseByIdStatusCode: 200,
         draftReleaseTagMatchesAuthority: true,
+        authorityReleaseManifestPath:
+          '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+        releaseAssetsRetainedAgainstManifest: true,
         safeToAttemptPublish: false
       },
       publicDefaultBranch: 'main',
@@ -636,6 +639,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('draft release `312363117` is readable by id with status `200`');
     expect(rulesDoc).toContain('still matches');
     expect(rulesDoc).toContain('authority tag `v1.3.6`');
+    expect(rulesDoc).toContain('retained authority release manifest non-mutatively');
+    expect(rulesDoc).toContain('exact VSIX plus checksum assets');
     expect(rulesDoc).toContain('immutable releases `enabled=true`, `enforced_by_owner=false`');
     expect(rulesDoc).toContain('exact-tag release lookup returns `404`');
     expect(rulesDoc).toContain('draft still serves an `untagged-*` URL');

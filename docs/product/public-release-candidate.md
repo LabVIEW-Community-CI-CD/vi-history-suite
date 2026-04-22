@@ -72,9 +72,12 @@
   is still blocked on draft release `312363117`; the last published GitHub
   release remains `v1.3.1`, the new non-mutating draft-publishability probe
   can read release `312363117` by id with status `200` and confirms the draft
-  still matches authority tag `v1.3.6`, but immutable releases are enabled,
-  release lookup by the exact tag still returns `404`, and the retained draft
-  still uses the `untagged-308c75957d1c8136f871` release URL.
+  still matches authority tag `v1.3.6`, the repo-owned transaction
+  controller can now locate the retained authority release manifest
+  non-mutatively and verify the draft still carries the exact VSIX plus
+  checksum assets, but immutable releases are enabled, release lookup by the
+  exact tag still returns `404`, and the retained draft still uses the
+  `untagged-308c75957d1c8136f871` release URL.
 - The maintained public `develop` candidate for `v1.3.1` still publishes
   `ab293d5` through GitHub PR `#38` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
@@ -112,6 +115,9 @@
   `4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb`,
   checksum-asset SHA-256
   `7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0`,
+  retained authority manifest
+  `.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json`,
+  `releaseAssetsRetainedAgainstManifest=true`,
   `openingNewSemverAllowed=false`, `repairInPlaceRequired=true`,
   `draftPublishabilityProbeStatus=blocked`,
   `draftPublishabilityProbeReleaseId=312363117`,
