@@ -64,6 +64,13 @@ describe('designGate tooling', () => {
         args: ['run', 'docs:ci:core']
       },
       {
+        id: 'public-exact-pretag-proof',
+        title: 'Public exact pre-tag proof',
+        command: 'npm',
+        args: ['run', 'public:exact:pretag:proof'],
+        timeoutMs: 300000
+      },
+      {
         id: 'standards-assurance',
         title: 'Standards assurance',
         command: 'python3',
@@ -123,6 +130,13 @@ describe('designGate tooling', () => {
         title: 'Documentation continuous integration',
         command: 'cmd.exe',
         args: ['/d', '/s', '/c', 'npm run docs:ci:core']
+      },
+      {
+        id: 'public-exact-pretag-proof',
+        title: 'Public exact pre-tag proof',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run public:exact:pretag:proof'],
+        timeoutMs: 300000
       },
       {
         id: 'standards-assurance',

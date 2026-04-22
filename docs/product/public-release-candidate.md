@@ -11,10 +11,13 @@
 ## Branch Model
 
 - Integration branch: `develop`
+- Feature-lane public-exact hardening branch:
+  `feature/public-exact-pretag-proof`
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
 - Required checks:
+  - `public_exact_pretag_proof`
   - `docs_continuous_integration`
   - `docs_public_continuous_integration`
   - `docs_internal_continuous_integration`
@@ -25,9 +28,10 @@
 
 ## Readiness
 
-- Authority baseline: `v1.3.4-tagged-on-main-v1.3.5-hotfix-opened-on-main`
+- Authority baseline:
+  `v1.3.5-tagged-on-main-feature-public-exact-pretag-proof-open-on-develop`
 - Local installed VSIX build:
-  `not-yet-built-v1.3.5-hotfix-public-exact-retry`
+  `not-required-until-next-exact-reopen`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -40,8 +44,10 @@
   `no-findings-on-current-v1.3.1-published-heads`
 - Runtime-provider public-acceptance gate:
   `closed-on-published-v1.3.0-candidate-heads-retained`
+- Pre-tag public-exact proof gate:
+  `required-before-any-later-exact-reopen`
 - Exact public release:
-  `v1.3.1-github-release-published-v1.3.5-public-retry-pending`
+  `v1.3.1-github-release-published-v1.3.5-authority-tagged-public-exact-retry-blocked-until-pretag-proof`
 
 ## Exact Release Baseline
 
@@ -67,22 +73,25 @@
 - The latest retained expert-agent review still covers the current published
   source/wiki heads `ab293d5` / `141c39e` and returned
   `no findings; exact release / Marketplace publish may proceed`.
-- Authority exact `v1.3.4` is already tagged on `main` `e5fba169`, but the
-  separate public GitHub exact release act is still pending because
-  `v1.3.5` reopened the exact line only to repair the remaining stale authority-side
-  public-source validation expectations before retrying that public act.
+- Authority exact `v1.3.5` is already tagged on `main` `8f0069d`, but the
+  separate public GitHub exact release act is still pending because no later
+  exact reopen is active right now; the remaining authority-side public-exact
+  validation hardening now lives on `feature/public-exact-pretag-proof` from
+  `develop` `9004102`, and any later retry stays blocked until
+  `npm run public:exact:pretag:proof` plus GitLab
+  `public_exact_pretag_proof` pass cleanly against the promoted public facade.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` passed on
   the authority tranche before `v1.3.3` exact tagging.
-- The first governed `v1.3.5` hotfix preview VSIX is not yet built; the next
-  retained local preview surface is
-  `preview-evidence/vi-history-suite-1.3.5.vsix` with sidecar checksum
-  `preview-evidence/vi-history-suite-1.3.5.vsix.sha256`, and the governed
-  build command remains
-  `npm run package -- --out "preview-evidence/vi-history-suite-1.3.5.vsix"`.
+- `npm run public:exact:pretag:proof` is now the fail-closed local proof
+  surface for any later exact reopen, and GitLab `public_exact_pretag_proof`
+  retains the matching CI proof through
+  `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`.
+- No later exact reopen is active, so no new preview VSIX is currently required
+  before the remaining public-exact validation hardening lands on `develop`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -175,7 +184,7 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- The current `v1.3.5` hotfix exists only to retry the separate public GitHub
-  exact-release act for already-tagged authority `v1.3.4`; public GitHub
-  exact still serves `v1.3.1`, and VS Code Marketplace remains retained at
-  `1.3.0` until that later act occurs.
+- Public GitHub exact still serves `v1.3.1`, VS Code Marketplace remains
+  retained at `1.3.0`, and any later retry of the public GitHub exact-release
+  act stays blocked until the feature-lane pre-tag public-exact proof closes
+  cleanly.

@@ -110,6 +110,7 @@ describe('designGateRunner', () => {
       'extension-host-integration',
       'canonical-harness-smoke',
       'documentation-continuous-integration',
+      'public-exact-pretag-proof',
       'standards-assurance'
     ]);
     expect(report.status).toBe('pass');
@@ -121,8 +122,8 @@ describe('designGateRunner', () => {
       writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md')) ?? [];
     const jsonWrites =
       writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.json')) ?? [];
-    expect(markdownWrites.length).toBe(7);
-    expect(jsonWrites.length).toBe(7);
+    expect(markdownWrites.length).toBe(8);
+    expect(jsonWrites.length).toBe(8);
     expect(markdownWrites.some((contents) => contents.includes('## Coverage Focus'))).toBe(true);
     expect(
       markdownWrites.some((contents) =>

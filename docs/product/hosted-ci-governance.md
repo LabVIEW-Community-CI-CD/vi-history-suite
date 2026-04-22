@@ -8,11 +8,12 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.4`, `develop` still carries
-`1.3.3`, the separate public GitHub exact release still serves `v1.3.1`, the
-Marketplace listing still serves `1.3.0`, and
-`hotfix/v1.3.5-public-exact-retry` is now the active hotfix lane from exact
-authority `v1.3.4`.
+Authority exact `main` now carries tagged `v1.3.5`, `develop` now carries
+`1.3.5`, the separate public GitHub exact release still serves `v1.3.1`, the
+Marketplace listing still serves `1.3.0`, no exact hotfix lane is currently
+open, and the remaining public-exact validation hardening now proceeds on
+`feature/public-exact-pretag-proof` from `develop` before any later exact
+reopen.
 
 ## Current Exact Closeout State
 
@@ -26,23 +27,27 @@ authority `v1.3.4`.
   `04b07bd`
 - resulting `develop` pipeline: `2467081960` `success`
 
-## Active Opening Decision For v1.3.5
+## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.4`
-- current `main` package line: `1.3.4`
-- current `develop` package line: `1.3.3`
+- current exact release line: `v1.3.5`
+- current `main` package line: `1.3.5`
+- current `develop` package line: `1.3.5`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.5`
-- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
+- active exact hotfix candidate line on `main`: none
+- active hotfix branch: none
+- active feature-lane public-exact hardening branch on `develop`:
+  `feature/public-exact-pretag-proof`
+- pre-tag public-exact proof package script:
+  `npm run public:exact:pretag:proof`
+- pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - chosen bump: `patch`
-- rationale: this line hardens the already-tagged exact package surface by
-  fixing stale authority-side public-source validation expectations without
-  opening another governed installed-user capability line
-- rationale: authority exact `v1.3.4` remains immutable while public GitHub
-  exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the published
-  surfaces, so `v1.3.5` opens as a hotfix from `main` instead of mutating
-  retained `v1.3.4` authority evidence
+- rationale: the remaining public-exact validation hardening now returns to
+  short-lived `feature/*` branches from `develop` instead of reopening
+  `main` for another exact hotfix attempt
+- rationale: any later exact reopen stays blocked until
+  `npm run public:exact:pretag:proof` and GitLab `public_exact_pretag_proof`
+  pass cleanly against the promoted public facade before a later tag act
 
 ## Branch Model
 
@@ -156,6 +161,11 @@ Job ownership:
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   so docs, assurance, test, package, and release jobs fail fast on post-reset
   runner drift instead of waiting behind missing or degraded runner capacity
+- `public_exact_pretag_proof`: blocking pre-tag public-facade proof lane on
+  merge requests, `develop`, `main`, `release/*`, and `hotfix/*`; it runs
+  `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
+  so any later exact reopen fails closed before tag creation when the promoted
+  public facade still diverges from authority truth
 - `docs_link_check`, `docs_continuous_integration`,
   `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
   docs integrity on merge requests, governed branch lanes, and exact tags
