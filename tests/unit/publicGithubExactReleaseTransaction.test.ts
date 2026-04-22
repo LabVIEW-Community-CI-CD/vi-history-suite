@@ -47,6 +47,20 @@ const transaction = require(path.join(
   assessTransaction: (facts: Record<string, unknown>) => {
     status: string;
     phases: Array<{ id: string; status: string; summary: string }>;
+    publishabilityProbe: {
+      status: string;
+      safeToAttemptRepairPublish: boolean;
+      blockerCode: string | null;
+      rationale: string;
+      immutableReleasePolicyStatusCode: number | null;
+      immutableReleasesEnabled: boolean | null;
+      immutableReleasesEnforcedByOwner: boolean | null;
+      draftReleaseTargetCommitish: string | null;
+      draftReleaseLookupStatusCode: number;
+      draftReleaseDiscoveredByTag: boolean;
+      draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+      exactAssetsRetained: boolean;
+    };
     semverFreeze: {
       status: string;
       openingNewSemverAllowed: boolean;
@@ -65,12 +79,23 @@ const transaction = require(path.join(
     repoRoot: string;
     status: string;
     authority: { tag: string; mainSha: string };
-    publicSource: { mainSha: string | null; tagRef: string | null };
-    marketplace: { currentPublishedVersion: string | null };
-    semverFreeze: {
-      status: string;
-      openingNewSemverAllowed: boolean;
-      rationale: string;
+      publicSource: { mainSha: string | null; tagRef: string | null };
+      marketplace: { currentPublishedVersion: string | null };
+      publishabilityProbe: {
+        status: string;
+        safeToAttemptRepairPublish: boolean;
+        blockerCode: string | null;
+        rationale: string;
+        immutableReleasesEnabled: boolean | null;
+        immutableReleasesEnforcedByOwner: boolean | null;
+        draftReleaseTargetCommitish: string | null;
+        draftReleaseLookupStatusCode: number;
+        draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+      };
+      semverFreeze: {
+        status: string;
+        openingNewSemverAllowed: boolean;
+        rationale: string;
     };
     repairInPlace: {
       required: boolean;
@@ -237,6 +262,11 @@ describe('public GitHub exact-release transaction controller', () => {
         tagObjectSha: '4e2e2f92bd733336eb81e496b1cc4facc4410016',
         tagCommitSha: 'bd81bfe6743348c9138c3f0f4967c790a235184f'
       },
+      immutableReleasePolicy: {
+        statusCode: 200,
+        enabled: true,
+        enforcedByOwner: false
+      },
       publicReleaseLookup: {
         statusCode: 404
       },
@@ -257,6 +287,7 @@ describe('public GitHub exact-release transaction controller', () => {
         published_at: null,
         html_url:
           'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+        target_commitish: 'main',
         immutable: false,
         assets: [
           {
@@ -290,6 +321,22 @@ describe('public GitHub exact-release transaction controller', () => {
     });
 
     expect(assessment.status).toBe('blocked');
+    expect(assessment.publishabilityProbe).toEqual(
+      expect.objectContaining({
+        status: 'blocked',
+        safeToAttemptRepairPublish: false,
+        blockerCode: 'draft-release-tag-lookup-unavailable',
+        immutableReleasePolicyStatusCode: 200,
+        immutableReleasesEnabled: true,
+        immutableReleasesEnforcedByOwner: false,
+        draftReleaseTargetCommitish: 'main',
+        draftReleaseLookupStatusCode: 404,
+        draftReleaseDiscoveredByTag: false,
+        draftReleaseHtmlUrlUsesUntaggedPath: true,
+        exactAssetsRetained: true
+      })
+    );
+    expect(assessment.publishabilityProbe.rationale).toContain('discoverable only by id/list');
     expect(assessment.semverFreeze).toEqual(
       expect.objectContaining({
         status: 'frozen',
@@ -327,12 +374,16 @@ describe('public GitHub exact-release transaction controller', () => {
       authority: { tag: 'v1.3.6', mainSha: '3cb2383' },
       publicSource: { mainSha: 'bd81bfe', tagRef: 'refs/tags/v1.3.6' },
       marketplace: { currentPublishedVersion: '1.3.0' },
+      publishabilityProbe: assessment.publishabilityProbe,
       semverFreeze: assessment.semverFreeze,
       repairInPlace: assessment.repairInPlace,
       phases: assessment.phases
     });
     expect(markdown).toContain('# Public GitHub Exact Release Transaction');
     expect(markdown).toContain('Status: blocked');
+    expect(markdown).toContain('## Publishability Probe');
+    expect(markdown).toContain('Blocker code: draft-release-tag-lookup-unavailable');
+    expect(markdown).toContain('Immutable releases enabled: true');
     expect(markdown).toContain('New SemVer opening allowed: false');
     expect(markdown).toContain('| public-release-published | blocked |');
   });
@@ -445,6 +496,15 @@ describe('public GitHub exact-release transaction controller', () => {
                   ]
                 };
               }
+              if (endpoint === '/immutable-releases') {
+                return {
+                  statusCode: 200,
+                  json: {
+                    enabled: true,
+                    enforced_by_owner: false
+                  }
+                };
+              }
               if (endpoint === '/releases/tags/v1.3.6') {
                 return { statusCode: 404, json: { message: 'Not Found' } };
               }
@@ -460,6 +520,7 @@ describe('public GitHub exact-release transaction controller', () => {
                     published_at: null,
                     html_url:
                       'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+                    target_commitish: 'main',
                     immutable: false,
                     assets: [
                       {
@@ -512,6 +573,21 @@ describe('public GitHub exact-release transaction controller', () => {
 
       const jsonReport = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8')) as {
         authority: { packageVersion: string; branchPackageVersion: string };
+        immutableReleasePolicy: {
+          statusCode: number;
+          enabled: boolean | null;
+          enforcedByOwner: boolean | null;
+        };
+        publishabilityProbe: {
+          status: string;
+          blockerCode: string | null;
+          safeToAttemptRepairPublish: boolean;
+          immutableReleasesEnabled: boolean | null;
+          immutableReleasesEnforcedByOwner: boolean | null;
+          draftReleaseTargetCommitish: string | null;
+          draftReleaseLookupStatusCode: number;
+          draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+        };
         status: string;
         semverFreeze: { status: string; openingNewSemverAllowed: boolean };
         repairInPlace: { required: boolean; allowed: boolean; status: string };
@@ -522,6 +598,21 @@ describe('public GitHub exact-release transaction controller', () => {
       expect(jsonReport.authority).toMatchObject({
         packageVersion: '1.3.6',
         branchPackageVersion: '1.3.6'
+      });
+      expect(jsonReport.immutableReleasePolicy).toEqual({
+        statusCode: 200,
+        enabled: true,
+        enforcedByOwner: false
+      });
+      expect(jsonReport.publishabilityProbe).toMatchObject({
+        status: 'blocked',
+        blockerCode: 'draft-release-tag-lookup-unavailable',
+        safeToAttemptRepairPublish: false,
+        immutableReleasesEnabled: true,
+        immutableReleasesEnforcedByOwner: false,
+        draftReleaseTargetCommitish: 'main',
+        draftReleaseLookupStatusCode: 404,
+        draftReleaseHtmlUrlUsesUntaggedPath: true
       });
       expect(jsonReport.status).toBe('blocked');
       expect(jsonReport.semverFreeze).toMatchObject({
@@ -537,6 +628,7 @@ describe('public GitHub exact-release transaction controller', () => {
         jsonReport.phases.find((phase) => phase.id === 'marketplace-published')?.summary
       ).toContain('not 1.3.6');
       expect(markdownReport).toContain('Authority tag: v1.3.6');
+      expect(markdownReport).toContain('Blocker code: draft-release-tag-lookup-unavailable');
       expect(markdownReport).toContain('Next allowed action: repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven');
     } finally {
       fs.rmSync(evidenceDir, { recursive: true, force: true });

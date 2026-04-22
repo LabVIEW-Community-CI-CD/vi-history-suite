@@ -1981,9 +1981,10 @@ Information-for-users review cases:
   assurance, test, package, and release work when runner drift is detected
 - `TEST-UNIT-370`: verify the public GitHub exact-release transaction
   controller inspects authority exact main/tag state, live public GitHub
-  main/tag/release/assets, and live VS Code Marketplace version, writes JSON
-  plus Markdown receipts, and fails closed when the transaction remains
-  incomplete or contradictory
+  main/tag/release/assets, the repo immutable-release policy, the current
+  draft-release publishability facts, and live VS Code Marketplace version,
+  writes JSON plus Markdown receipts, and fails closed when the transaction
+  remains incomplete or contradictory
 - `TEST-UNIT-371`: verify the public GitHub exact-release transaction
   controller freezes later SemVer openings and classifies the current exact
   line as repair-in-place first whenever public GitHub `main`, the exact tag,
@@ -2058,7 +2059,8 @@ Information-for-users review cases:
 - `TEST-DOC-123`: review README, current-state, release procedure, the
   sustainment package, the public-release candidate package, SRS, RTM, and
   the test plan and confirm the public GitHub exact-release transaction
-  assessment surface is explicit, receipt-backed, and fail-closed while the
+  assessment surface is explicit, receipt-backed, retains the non-mutating
+  immutable-release publishability probe, and stays fail-closed while the
   current exact public transaction remains incomplete
 - `TEST-DOC-124`: review the sustainment package, current-state, release
   procedure, public-release candidate package, SRS, RTM, and the test plan
@@ -2070,8 +2072,9 @@ Information-for-users review cases:
   and the test plan and confirm the control plane retains the current exact
   line, `main` and `develop` package lines, active hardening feature branch,
   live public GitHub source head and tag, draft-release id when present, last
-  published GitHub release baseline, retained Marketplace version, and the
-  transaction-assessment package script and receipt path
+  published GitHub release baseline, retained Marketplace version, the
+  transaction-assessment package script and receipt path, and the current
+  non-mutating publishability-probe result
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

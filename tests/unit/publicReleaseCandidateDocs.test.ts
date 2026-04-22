@@ -100,6 +100,19 @@ describe('public release candidate control surface', () => {
       vsixAssetName: 'vi-history-suite-1.3.6.vsix',
       vsixAssetSha256: '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb',
       checksumAssetSha256: '7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0',
+      publishabilityProbeStatus: 'blocked',
+      publishabilityBlockerCode: 'draft-release-tag-lookup-unavailable',
+      publishabilityBlockerSummary:
+        'Immutable releases are enabled, but the retained draft is still discoverable only by id/list; release lookup by the exact tag remains unavailable.',
+      immutableReleasePolicyStatusCode: 200,
+      immutableReleasesEnabled: true,
+      immutableReleasesEnforcedByOwner: false,
+      draftReleaseTargetCommitish: 'main',
+      draftReleaseLookupStatusCode: 404,
+      draftReleaseDiscoveredByList: true,
+      draftReleaseDiscoveredByTag: false,
+      draftReleaseUsesUntaggedUrl: true,
+      safeToAttemptRepairPublish: false,
       openingNewSemverAllowed: false,
       repairInPlaceRequired: true,
       repairInPlaceAllowed: true,
@@ -126,6 +139,13 @@ describe('public release candidate control surface', () => {
       publicGitHubDraftReleaseId: 312363117,
       publicGitHubDraftReleaseUrl:
         'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+      publicGitHubPublishabilityProbeStatus: 'blocked',
+      publicGitHubPublishabilityBlockerCode: 'draft-release-tag-lookup-unavailable',
+      publicGitHubImmutableReleasesEnabled: true,
+      publicGitHubImmutableReleasesEnforcedByOwner: false,
+      publicGitHubDraftReleaseTargetCommitish: 'main',
+      publicGitHubReleaseLookupStatusCode: 404,
+      publicGitHubDraftReleaseUsesUntaggedUrl: true,
       nextSeparateAct:
         'repair-existing-v1.3.6-public-github-release-in-place-through-transaction-controller',
       marketplaceVersionRetained: '1.3.0',
@@ -155,6 +175,10 @@ describe('public release candidate control surface', () => {
     );
     expect(candidateMarkdown).toContain('npm run public:github:exact:transaction:assess');
     expect(candidateMarkdown).toContain('draft release `312363117`');
+    expect(candidateMarkdown).toContain('immutable releases are enabled');
+    expect(candidateMarkdown).toContain('`publishabilityBlockerCode=draft-release-tag-lookup-unavailable`');
+    expect(candidateMarkdown).toContain('`draftReleaseTargetCommitish=main`');
+    expect(candidateMarkdown).toContain('`draftReleaseLookupStatusCode=404`');
     expect(candidateMarkdown).toContain(
       '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     );
@@ -170,6 +194,8 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:assess');
     expect(currentState).toContain('separate public GitHub exact release publication: blocked; public `main` now');
+    expect(currentState).toContain('lookup still returns `404`');
+    expect(currentState).toContain('publishabilityBlockerCode=draft-release-tag-lookup-unavailable');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');
 
     expect(srs).toContain('VHS-REQ-566');

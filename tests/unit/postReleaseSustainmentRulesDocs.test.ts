@@ -36,6 +36,22 @@ type SustainmentRules = {
       activeReleaseCandidateBranch?: string | null;
       activeHotfixCandidateReleaseLine?: string | null;
       activeHotfixBranch?: string | null;
+      activeFeatureBranch?: string | null;
+      preTagPublicExactProofPackageScript?: string;
+      preTagPublicExactProofJob?: string;
+      publicGitHubExactTransactionPackageScript?: string;
+      publicGitHubExactTransactionReceiptPath?: string;
+      publicGitHubExactPublishabilityProbe?: {
+        status: string;
+        blockerCode: string;
+        immutableReleasePolicyStatusCode: number;
+        immutableReleasesEnabled: boolean;
+        immutableReleasesEnforcedByOwner: boolean;
+        draftReleaseId: number;
+        draftReleaseTargetCommitish: string;
+        draftReleaseLookupStatusCode: number;
+        draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+      };
       publicDefaultBranch?: string;
       publicCodespaceBranch: string;
       integrationBranch?: string;
@@ -162,6 +178,17 @@ describe('post-release sustainment rules package', () => {
       publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
       publicGitHubExactTransactionReceiptPath:
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+      publicGitHubExactPublishabilityProbe: {
+        status: 'blocked',
+        blockerCode: 'draft-release-tag-lookup-unavailable',
+        immutableReleasePolicyStatusCode: 200,
+        immutableReleasesEnabled: true,
+        immutableReleasesEnforcedByOwner: false,
+        draftReleaseId: 312363117,
+        draftReleaseTargetCommitish: 'main',
+        draftReleaseLookupStatusCode: 404,
+        draftReleaseHtmlUrlUsesUntaggedPath: true
+      },
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -195,12 +222,13 @@ describe('post-release sustainment rules package', () => {
         'when develop carries post-release work, the develop package line shall advance to the next exact release candidate before public-facing normalization continues',
         'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published',
-        'future sessions shall not keep landing post-release changes on the previous exact release version number',
-        'future sessions shall not treat a burned exact release as the green release baseline for later publication',
-        'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
-        'future sessions shall assess any partially public exact GitHub transaction through npm run public:github:exact:transaction:assess before any further public GitHub release or VS Code Marketplace act',
-        'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction',
-        'future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible',
+          'future sessions shall not keep landing post-release changes on the previous exact release version number',
+          'future sessions shall not treat a burned exact release as the green release baseline for later publication',
+          'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
+          'future sessions shall assess any partially public exact GitHub transaction through npm run public:github:exact:transaction:assess before any further public GitHub release or VS Code Marketplace act',
+          "future sessions shall retain the controller's non-mutating immutable-release publishability probe before any in-place public GitHub release repair attempt",
+          'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction',
+          'future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible',
         'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
         'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package',
@@ -270,7 +298,7 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
         'authority exact v1.3.6 is already tagged on main, public GitHub main and tag are already published, and a draft GitHub release with exact assets already exists, so the governed next step is repair in place rather than another SemVer opening',
-        'the new repo-owned transaction controller now fails closed on that partial-public state and freezes later openings until npm run public:github:exact:transaction:assess proves a safe repair or retains that repair is impossible'
+        'the new repo-owned transaction controller now fails closed on that partial-public state, retains the non-mutating immutable-release publishability probe, and freezes later openings until npm run public:github:exact:transaction:assess proves a safe repair or retains the exact blocker or impossibility state'
       ])
     );
 
@@ -589,6 +617,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(rulesDoc).toContain('none');
     expect(rulesDoc).toContain('`npm run public:github:exact:transaction:assess`');
+    expect(rulesDoc).toContain('immutable releases `enabled=true`, `enforced_by_owner=false`');
+    expect(rulesDoc).toContain('exact-tag release lookup returns `404`');
+    expect(rulesDoc).toContain('draft still serves an `untagged-*` URL');
     expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
     expect(rulesDoc).toContain('active release-candidate branch: none');
     expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
@@ -615,6 +646,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('design:gate');
     expect(rulesDoc).toContain('burned exact release line');
     expect(rulesDoc).toContain('VS Code Marketplace exact publication state');
+    expect(rulesDoc).toContain("future sessions shall retain the controller's non-mutating immutable-release");
+    expect(rulesDoc).toContain('publishability probe before any in-place public GitHub release repair');
     expect(rulesDoc).toContain('future sessions shall not treat an exact release as fully closed');
     expect(rulesDoc).toContain('installed-user entry surfaces');
     expect(rulesDoc).toContain('PROGRAM-0002');

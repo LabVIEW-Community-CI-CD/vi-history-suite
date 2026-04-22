@@ -70,7 +70,9 @@
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - Public GitHub tag `v1.3.6` is now live, but the GitHub release publication
   is still blocked on draft release `312363117`; the last published GitHub
-  release remains `v1.3.1`.
+  release remains `v1.3.1`, immutable releases are enabled, release lookup by
+  the exact tag still returns `404`, and the retained draft still uses the
+  `untagged-308c75957d1c8136f871` release URL.
 - The maintained public `develop` candidate for `v1.3.1` still publishes
   `ab293d5` through GitHub PR `#38` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
@@ -108,7 +110,14 @@
   `4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb`,
   checksum-asset SHA-256
   `7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0`,
-  `openingNewSemverAllowed=false`, and `repairInPlaceRequired=true`.
+  `openingNewSemverAllowed=false`, `repairInPlaceRequired=true`,
+  `publishabilityProbeStatus=blocked`,
+  `publishabilityBlockerCode=draft-release-tag-lookup-unavailable`,
+  `immutableReleasesEnabled=true`,
+  `immutableReleasesEnforcedByOwner=false`,
+  `draftReleaseTargetCommitish=main`,
+  `draftReleaseLookupStatusCode=404`, and
+  `draftReleaseHtmlUrlUsesUntaggedPath=true`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -207,4 +216,6 @@
 - Draft release `312363117` already retains the exact `v1.3.6` assets, so the
   no-bump repair rule now blocks any later SemVer opening until
   `npm run public:github:exact:transaction:assess` proves a safe in-place
-  repair path or retains that repair is impossible.
+  repair path or retains that repair is impossible; the current retained
+  blocker is that immutable releases are enabled while exact-tag release lookup
+  still returns `404` and the draft still serves an `untagged-*` URL.

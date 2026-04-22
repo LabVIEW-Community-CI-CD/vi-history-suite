@@ -351,6 +351,77 @@ function buildPhase(id, title, status, summary, details = {}) {
   return { id, title, status, summary, details };
 }
 
+function buildPublishabilityProbe(facts, assetPhaseStatus) {
+  const immutableReleasePolicyStatusCode = facts.immutableReleasePolicy?.statusCode ?? null;
+  const immutableReleasesEnabled = facts.immutableReleasePolicy?.enabled ?? null;
+  const immutableReleasesEnforcedByOwner = facts.immutableReleasePolicy?.enforcedByOwner ?? null;
+  const draftRelease = facts.publicRelease ?? null;
+  const draftReleaseId = draftRelease?.id ?? null;
+  const draftReleaseTag = draftRelease?.tag_name ?? null;
+  const draftReleaseIsDraft = draftRelease?.draft === true;
+  const draftReleaseTargetCommitish = draftRelease?.target_commitish ?? null;
+  const draftReleaseTargetsMain = draftReleaseTargetCommitish === 'main';
+  const draftReleaseLookupStatusCode = facts.publicReleaseLookup.statusCode;
+  const draftReleaseDiscoveredByList = Boolean(draftRelease);
+  const draftReleaseDiscoveredByTag = draftReleaseLookupStatusCode === 200;
+  const draftReleaseHtmlUrl = draftRelease?.html_url ?? null;
+  const draftReleaseHtmlUrlUsesUntaggedPath = Boolean(
+    draftReleaseHtmlUrl && draftReleaseHtmlUrl.includes('/untagged-')
+  );
+  const exactAssetsRetained = assetPhaseStatus === 'pass';
+
+  let blockerCode = null;
+  let rationale =
+    'The non-mutating publishability probe confirms the immutable-release policy, draft tag lookup, target commitish, draft URL, and retained assets for a safe in-place publish attempt.';
+
+  if (!draftReleaseDiscoveredByList) {
+    blockerCode = 'draft-release-missing';
+    rationale = 'No retained draft release was found for the current exact line.';
+  } else if (!draftReleaseIsDraft) {
+    blockerCode = 'draft-release-not-draft';
+    rationale = 'The retained release is no longer a draft, so the in-place repair path is not the active publishability surface.';
+  } else if (immutableReleasePolicyStatusCode !== 200) {
+    blockerCode = 'immutable-release-policy-unconfirmed';
+    rationale =
+      'The controller could not prove the repo immutable-release policy non-mutatively, so a safe publish transition is not yet confirmed.';
+  } else if (!draftReleaseDiscoveredByTag) {
+    blockerCode = 'draft-release-tag-lookup-unavailable';
+    rationale =
+      'Immutable releases are enabled, but the retained draft is still discoverable only by id/list; release lookup by the exact tag remains unavailable.';
+  } else if (!draftReleaseTargetsMain) {
+    blockerCode = 'draft-release-target-commitish-mismatch';
+    rationale =
+      'The retained draft release does not target public GitHub main, so publishing it in place would risk closing against the wrong source baseline.';
+  } else if (draftReleaseHtmlUrlUsesUntaggedPath) {
+    blockerCode = 'draft-release-html-url-still-untagged';
+    rationale =
+      'The retained draft release still resolves through an untagged GitHub release URL, so the controller cannot prove a safe exact-tag publish transition yet.';
+  } else if (!exactAssetsRetained) {
+    blockerCode = 'draft-release-assets-mismatch';
+    rationale =
+      'The retained draft release assets do not fully match the authority release manifest, so publishability remains blocked.';
+  }
+
+  return {
+    status: blockerCode === null ? 'pass' : 'blocked',
+    safeToAttemptRepairPublish: blockerCode === null,
+    blockerCode,
+    rationale,
+    immutableReleasePolicyStatusCode,
+    immutableReleasesEnabled,
+    immutableReleasesEnforcedByOwner,
+    draftReleaseId,
+    draftReleaseTag,
+    draftReleaseTargetCommitish,
+    draftReleaseLookupStatusCode,
+    draftReleaseDiscoveredByList,
+    draftReleaseDiscoveredByTag,
+    draftReleaseHtmlUrl,
+    draftReleaseHtmlUrlUsesUntaggedPath,
+    exactAssetsRetained
+  };
+}
+
 function assessTransaction(facts) {
   const phases = [];
   const manifest = facts.releaseManifest?.manifest ?? null;
@@ -362,10 +433,6 @@ function assessTransaction(facts) {
     manifest && facts.releaseManifest?.checksumPath
       ? releaseAssets.find((asset) => asset.name === `${manifest.vsixArtifact.fileName}.sha256`)
       : null;
-  const publishedImmutableReleaseCount = facts.publicReleases.filter(
-    (release) => release.draft !== true && release.immutable === true
-  ).length;
-
   phases.push(
     buildPhase(
       'authority-exact-main',
@@ -470,24 +537,18 @@ function assessTransaction(facts) {
     )
   );
 
-  const publishabilityBlocked =
-    !facts.publicRelease ||
-    facts.publicRelease.draft !== true ||
-    facts.publicReleaseLookup.statusCode === 404 ||
-    publishedImmutableReleaseCount > 0;
+  const publishabilityProbe = buildPublishabilityProbe(facts, assetPhaseStatus);
+  const publishabilityBlocked = publishabilityProbe.safeToAttemptRepairPublish !== true;
   phases.push(
     buildPhase(
       'public-release-publishability',
       'Public GitHub release publishability proven',
       publishabilityBlocked ? 'blocked' : 'pass',
       publishabilityBlocked
-        ? 'The controller cannot prove a safe GitHub publish transition non-mutatively; published releases are immutable and the current tag resolves only through the draft/list surface.'
-        : 'The current release looks publishable without violating the immutable-release contract.',
+        ? `The non-mutating publishability probe is blocked: ${publishabilityProbe.rationale}`
+        : 'The non-mutating publishability probe proves a safe in-place publish transition.',
       {
-        draftReleaseId: facts.publicRelease?.id ?? null,
-        draftReleaseHtmlUrl: facts.publicRelease?.html_url ?? null,
-        releaseLookupStatusCode: facts.publicReleaseLookup.statusCode,
-        publishedImmutableReleaseCount
+        publishabilityProbe
       }
     )
   );
@@ -544,6 +605,7 @@ function assessTransaction(facts) {
   return {
     status: assessmentStatus,
     phases,
+    publishabilityProbe,
     semverFreeze: {
       status: openingNewSemverAllowed ? 'clear' : 'frozen',
       openingNewSemverAllowed,
@@ -568,8 +630,10 @@ function assessTransaction(facts) {
             ? `The transaction is already partially public for ${facts.authority.tag}, but the release record or assets are not yet sufficient for a safe repair-in-place attempt.`
             : `No partial public exact-release transaction was detected for ${facts.authority.tag}.`,
       nextAllowedAction:
-        repairInPlaceRequired && repairInPlaceAllowed
-          ? 'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
+        repairInPlaceRequired && repairInPlaceAllowed && publishabilityProbe.safeToAttemptRepairPublish
+          ? 'repair-the-existing-v1.3.6-public-github-release-in-place'
+          : repairInPlaceRequired && repairInPlaceAllowed
+            ? 'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
           : openingNewSemverAllowed
             ? 'normal-next-semver-opening-may-proceed'
             : 'retain-the-blocked-state-and-do-not-open-a-new-version'
@@ -589,6 +653,18 @@ function buildMarkdown(report) {
     `- Public GitHub main: ${report.publicSource.mainSha ?? 'unknown'}`,
     `- Public GitHub tag: ${report.publicSource.tagRef ?? 'missing'}`,
     `- Marketplace version: ${report.marketplace.currentPublishedVersion ?? 'unknown'}`,
+    '',
+    '## Publishability Probe',
+    '',
+    `- Status: ${report.publishabilityProbe.status}`,
+    `- Safe in-place publish attempt allowed: ${report.publishabilityProbe.safeToAttemptRepairPublish}`,
+    `- Blocker code: ${report.publishabilityProbe.blockerCode ?? 'none'}`,
+    `- Rationale: ${report.publishabilityProbe.rationale}`,
+    `- Immutable releases enabled: ${report.publishabilityProbe.immutableReleasesEnabled}`,
+    `- Immutable releases enforced by owner: ${report.publishabilityProbe.immutableReleasesEnforcedByOwner}`,
+    `- Draft release target commitish: ${report.publishabilityProbe.draftReleaseTargetCommitish ?? 'unknown'}`,
+    `- Draft release tag lookup status: ${report.publishabilityProbe.draftReleaseLookupStatusCode}`,
+    `- Draft release uses untagged URL: ${report.publishabilityProbe.draftReleaseHtmlUrlUsesUntaggedPath}`,
     '',
     '## Freeze Rule',
     '',
@@ -669,6 +745,12 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
     `/releases/tags/${encodeURIComponent(tag)}`,
     token
   );
+  const immutableReleasePolicyResponse = await (deps.fetchGitHubJson ?? fetchGitHubJson)(
+    parsed.owner,
+    parsed.repo,
+    '/immutable-releases',
+    token
+  );
   const marketplace = await (deps.fetchMarketplaceState ?? fetchMarketplaceState)(
     parsed.marketplaceItem
   );
@@ -732,6 +814,17 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
       tagObjectSha: tagResponse.json?.object?.sha ?? null,
       tagCommitSha
     },
+    immutableReleasePolicy: {
+      statusCode: immutableReleasePolicyResponse.statusCode,
+      enabled:
+        immutableReleasePolicyResponse.statusCode === 200
+          ? immutableReleasePolicyResponse.json?.enabled === true
+          : null,
+      enforcedByOwner:
+        immutableReleasePolicyResponse.statusCode === 200
+          ? immutableReleasePolicyResponse.json?.enforced_by_owner === true
+          : null
+    },
     publicReleaseLookup: {
       statusCode: releaseByTagResponse.statusCode
     },
@@ -741,13 +834,14 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
           id: publicRelease.id,
           tag_name: publicRelease.tag_name,
           draft: publicRelease.draft,
-          prerelease: publicRelease.prerelease,
-          created_at: publicRelease.created_at,
-          published_at: publicRelease.published_at,
-          html_url: publicRelease.html_url,
-          immutable: publicRelease.immutable === true,
-          assets: extractReleaseAssets(publicRelease)
-        }
+        prerelease: publicRelease.prerelease,
+        created_at: publicRelease.created_at,
+        published_at: publicRelease.published_at,
+        html_url: publicRelease.html_url,
+        target_commitish: publicRelease.target_commitish ?? null,
+        immutable: publicRelease.immutable === true,
+        assets: extractReleaseAssets(publicRelease)
+      }
       : null,
     releaseManifest,
     marketplace
@@ -761,6 +855,7 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
     status: assessment.status,
     authority: facts.authority,
     publicSource: facts.publicSource,
+    immutableReleasePolicy: facts.immutableReleasePolicy,
     publicReleaseLookup: facts.publicReleaseLookup,
     publicRelease: facts.publicRelease,
     publicReleases: facts.publicReleases,
@@ -776,6 +871,7 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
       : null,
     marketplace: facts.marketplace,
     phases: assessment.phases,
+    publishabilityProbe: assessment.publishabilityProbe,
     semverFreeze: assessment.semverFreeze,
     repairInPlace: assessment.repairInPlace
   };
