@@ -4,6 +4,35 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
+const releaseManifestPath = path.join(
+  repoRoot,
+  '.cache',
+  'gitlab-release-artifacts',
+  'v1.3.6',
+  'expanded',
+  'release-evidence',
+  'release-manifest.json'
+);
+const releaseChecksumPath = path.join(
+  repoRoot,
+  '.cache',
+  'gitlab-release-artifacts',
+  'v1.3.6',
+  'expanded',
+  'release-evidence',
+  'vi-history-suite-1.3.6.vsix.sha256'
+);
+const releaseManifestFixture = {
+  tag: 'v1.3.6',
+  packageVersion: '1.3.6',
+  commitSha: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
+  vsixArtifact: {
+    fileName: 'vi-history-suite-1.3.6.vsix',
+    sha256: '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb'
+  }
+};
+const releaseChecksumFixture =
+  '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb  vi-history-suite-1.3.6.vsix\n';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const transaction = require(path.join(
@@ -52,6 +81,7 @@ const transaction = require(path.join(
     };
     phases: Array<{ id: string; status: string; summary: string }>;
   }) => string;
+  computeFileSha256: (filePath: string, fsApi?: typeof fs) => string;
   getUsage: () => string;
   parseArgs: (argv: string[]) => {
     helpRequested: boolean;
@@ -84,7 +114,37 @@ const transaction = require(path.join(
     };
     checksumSha256: string | null;
   } | null;
+  runAssessment: (
+    argv?: string[],
+    deps?: Record<string, unknown>
+  ) => Promise<{ outcome: string; report?: Record<string, unknown> }>;
 };
+
+function createReleaseManifestFs(): typeof fs {
+  return {
+    ...fs,
+    existsSync: (targetPath: fs.PathLike) => {
+      const normalized = path.normalize(String(targetPath));
+      if (
+        normalized === path.normalize(releaseManifestPath) ||
+        normalized === path.normalize(releaseChecksumPath)
+      ) {
+        return true;
+      }
+      return fs.existsSync(targetPath);
+    },
+    readFileSync: (targetPath: fs.PathOrFileDescriptor, encoding?: BufferEncoding | null) => {
+      const normalized = path.normalize(String(targetPath));
+      if (normalized === path.normalize(releaseManifestPath)) {
+        return JSON.stringify(releaseManifestFixture);
+      }
+      if (normalized === path.normalize(releaseChecksumPath)) {
+        return releaseChecksumFixture;
+      }
+      return fs.readFileSync(targetPath, encoding as BufferEncoding);
+    }
+  } as typeof fs;
+}
 
 describe('public GitHub exact-release transaction controller', () => {
   it('retains a deterministic CLI contract and latest-tag resolver', () => {
@@ -148,44 +208,17 @@ describe('public GitHub exact-release transaction controller', () => {
   });
 
   it('reads the retained authority release manifest for the current exact tag', () => {
-    const manifestPath = transaction.resolveReleaseManifestPath('v1.3.6');
-    expect(manifestPath).toBe(
-      path.join(
-        repoRoot,
-        '.cache',
-        'gitlab-release-artifacts',
-        'v1.3.6',
-        'expanded',
-        'release-evidence',
-        'release-manifest.json'
-      )
-    );
+    const fakeFs = createReleaseManifestFs();
+    const manifestPath = transaction.resolveReleaseManifestPath('v1.3.6', fakeFs);
+    expect(manifestPath).toBe(releaseManifestPath);
 
-    const manifest = transaction.readReleaseManifest('v1.3.6');
+    const manifest = transaction.readReleaseManifest('v1.3.6', fakeFs);
     expect(manifest).toMatchObject({
       manifestPath,
-      checksumPath: path.join(
-        repoRoot,
-        '.cache',
-        'gitlab-release-artifacts',
-        'v1.3.6',
-        'expanded',
-        'release-evidence',
-        'vi-history-suite-1.3.6.vsix.sha256'
-      ),
-      manifest: {
-        tag: 'v1.3.6',
-        packageVersion: '1.3.6',
-        commitSha: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
-        vsixArtifact: {
-          fileName: 'vi-history-suite-1.3.6.vsix',
-          sha256: '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb'
-        }
-      }
+      checksumPath: releaseChecksumPath,
+      manifest: releaseManifestFixture
     });
-    expect(manifest?.checksumSha256).toBe(
-      '7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0'
-    );
+    expect(manifest?.checksumSha256).toBe(transaction.computeFileSha256(releaseChecksumPath, fakeFs));
   });
 
   it('fails closed on the current v1.3.6 partial-publication state and freezes new SemVer openings', () => {
@@ -307,6 +340,7 @@ describe('public GitHub exact-release transaction controller', () => {
   it('writes a retained blocked receipt before failing closed on an incomplete public transaction', async () => {
     const evidenceDir = path.join(repoRoot, '.cache', 'test-public-github-exact-release-transaction');
     fs.rmSync(evidenceDir, { recursive: true, force: true });
+    const releaseManifestFs = createReleaseManifestFs();
 
     try {
       await expect(
@@ -319,20 +353,28 @@ describe('public GitHub exact-release transaction controller', () => {
               VIHS_GITHUB_TOKEN_FILE: path.join(repoRoot, '.cache', 'tests', 'github-token.txt')
             },
             fs: {
-              ...fs,
+              ...releaseManifestFs,
               existsSync: (targetPath: fs.PathLike) => {
-                const normalized = String(targetPath);
-                if (normalized.endsWith(path.join('.cache', 'tests', 'github-token.txt'))) {
+                const normalized = path.normalize(String(targetPath));
+                if (
+                  normalized.endsWith(
+                    path.normalize(path.join('.cache', 'tests', 'github-token.txt'))
+                  )
+                ) {
                   return true;
                 }
-                return fs.existsSync(targetPath);
+                return releaseManifestFs.existsSync(targetPath);
               },
               readFileSync: (targetPath: fs.PathOrFileDescriptor, encoding?: BufferEncoding | null) => {
-                const normalized = String(targetPath);
-                if (normalized.endsWith(path.join('.cache', 'tests', 'github-token.txt'))) {
+                const normalized = path.normalize(String(targetPath));
+                if (
+                  normalized.endsWith(
+                    path.normalize(path.join('.cache', 'tests', 'github-token.txt'))
+                  )
+                ) {
                   return 'github-token';
                 }
-                return fs.readFileSync(targetPath, encoding as BufferEncoding);
+                return releaseManifestFs.readFileSync(targetPath, encoding as BufferEncoding);
               }
             },
             spawnImpl: (command, args) => {
