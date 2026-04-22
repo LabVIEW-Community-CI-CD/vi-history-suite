@@ -13,11 +13,14 @@
   `release-evidence/release-manifest.json`.
 - The current exact released line is `v1.3.0`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.3.0`.
+- The current published package line on `main` is `1.3.1`.
 - The current develop package line on `develop` is `1.3.1`.
-- The active exact release candidate line on `develop` is `v1.3.1`.
-- The active release-candidate branch is `release/1.3.1`.
-- The active Windows x64 private-release-prep slice is `release/1.3.1`.
+- The active exact release candidate line on `develop` is none.
+- The active release-candidate branch is none.
+- The active exact hotfix candidate line on `main` is `v1.3.2`.
+- The active hotfix branch is `hotfix/v1.3.2-marketplace-icon`.
+- The active Windows x64 private-release-prep slice is the historical
+  `release/1.3.1` lane.
 - The active Windows x64 private-release packet is:
   - `docs/product/private-release-windows-x64-v1.3.1.md`
   - `docs/product/private-release-windows-x64-v1.3.1.json`
@@ -29,6 +32,8 @@
   `windows-private-release-evidence/manifest.json`.
 - That private-release act does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
+- The separate public GitHub exact release `v1.3.1` is now live, while VS
+  Code Marketplace still serves `1.3.0`.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
@@ -42,27 +47,39 @@
   - `docs/product/windows-private-release-runner-lane.md`
 - The governed external assurance lane for that prep sequence is:
   - `docs/product/linux-assurance-runner-lane.md`
+  - fail-fast admission job `governed_runner_admission`
+  - fail-fast admission evidence root `governed-runner-admission-evidence/`
   - blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
     `assurance_requirements_quality`, and
     `assurance_external_user_information`
   - advisory job `assurance_audit_packet`
-- The repo-owned runner host asset pack, apply surfaces, and live drift
-  assertions for those lanes are:
+- The repo-owned runner host asset pack, startup receipts, doctor surfaces,
+  apply surfaces, and live drift assertions for those lanes are:
   - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
   - `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
     `npm run gitlab:runner:windows:recovery:rehearse`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+  - `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
   - `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+  - `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
   - `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
+  - latest Windows startup receipt:
+    `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
+  - latest Linux startup receipt:
+    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
 - The Windows apply surface keeps the scheduled task on
   `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
   without `ExecutionPolicy Bypass` and fails closed unless exactly one
   configured runner manager remains after apply.
+- The Windows bootstrap writes a machine-readable startup receipt for duplicate
+  collapse, cold-admission cleanup, Linux-helper retry, and current-user
+  runner readiness before the governed Windows lane is treated as healthy.
 - The Windows drift assertion surface fails closed unless the installed
   bootstrap still matches the repo source, the scheduled task retains that
   exact action plus its logon trigger, `C:\GitLab-Runner\config.toml` still
@@ -72,14 +89,30 @@
   before cold runner admission with bounded `Stop-Process`,
   `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
   contamination remains.
+- The same Windows bootstrap also wakes Ubuntu and retries the repo-owned
+  Linux assurance helper until it proves the paired
+  `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular,
+  failing closed otherwise.
+- The Linux helper now reconciles `~/.gitlab-runner/config.toml` back to
+  `concurrent = 2` plus `request_concurrency = 2`, restarts the admitted
+  `systemd` service when needed, and writes a machine-readable startup receipt
+  before it reports the Linux assurance surface healthy.
 - The Linux apply surface installs the helper and service unit and fails
-  closed unless `vihs-linux-assurance-runner.service` is both enabled and
-  active after apply.
+  closed unless `~/.gitlab-runner/config.toml` first retains
+  `concurrent = 2` plus `request_concurrency = 2` and
+  `vihs-linux-assurance-runner.service` is both enabled and active after
+  apply.
 - The Linux drift assertion surface fails closed unless the installed helper
   and service unit still match the repo source, `~/.gitlab-runner/config.toml`
-  still contains `request_concurrency = 2`, the admitted service fragment/user
-  and working directory remain exact, and exactly one configured runner
+  still contains `concurrent = 2` plus `request_concurrency = 2`, the
+  admitted service fragment/user and working directory remain exact, the
+  service is still enabled and active, and exactly one configured runner
   process is live.
+- The fail-fast `governed_runner_admission` job runs first in the GitLab
+  `admission` stage through
+  `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
+  and blocks docs, assurance, test, package, and release stages whenever the
+  post-reset Windows or Linux runner contract drifts.
 - When the host-native Windows proof exits on that same cleanup seam, the
   acceptance wrapper retains
   `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -196,6 +229,10 @@ separate afterward.
      when one combined local report is more convenient.
 6. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
+   - the fail-fast `governed_runner_admission` lane now runs first in the
+     `admission` stage and retains `governed-runner-admission-evidence/`; do
+     not treat later pending stages as trustworthy until that doctor lane is
+     green
    - the blocking Linux assurance jobs now run through the repo-owned
      `npm run assurance:*` wrapper on the local authenticated self-hosted Linux
      runner lane, which pulls the latest published
@@ -351,15 +388,16 @@ separate afterward.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.3.0`, tracked in
+- The current published package line on `main` is `1.3.1`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
   exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact
-  `v1.2.2`, or exact `v1.3.0` release evidence.
-- The current develop package line on `develop` is `1.3.0`, exact `v1.3.0`
-  closeout is complete on authority `main` `9587a99` back-merged into
-  `develop` `04b07bd` with green pipeline `2467081960`, and no newer
-  `release/*` branch is active yet.
+  `v1.2.2`, exact `v1.3.0`, or separate public GitHub exact `v1.3.1` release
+  evidence.
+- The current develop package line on `develop` is `1.3.1`, public GitHub
+  exact release `v1.3.1` now publishes separately on `ad351ed`, VS Code
+  Marketplace remains `1.3.0`, and `hotfix/v1.3.2-marketplace-icon` is the
+  active hotfix lane for the missing packaged Marketplace icon.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

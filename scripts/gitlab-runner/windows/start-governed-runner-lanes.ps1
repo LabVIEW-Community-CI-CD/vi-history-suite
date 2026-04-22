@@ -6,6 +6,11 @@ $runnerConfig = Join-Path $runnerRoot 'config.toml'
 $logDir = Join-Path $runnerRoot 'logs'
 $stdoutLog = Join-Path $logDir 'gitlab-runner-stdout.log'
 $stderrLog = Join-Path $logDir 'gitlab-runner-stderr.log'
+$startupReceiptRoot = Join-Path $runnerRoot 'receipts\governed-runner-startup'
+$linuxAssuranceDistro = 'Ubuntu'
+$linuxAssuranceBootstrapCommand = '$HOME/gitlab-runner/start-linux-assurance.sh'
+$linuxAssuranceWakeAttempts = 12
+$linuxAssuranceWakeDelaySeconds = 10
 $windowsProofRuntimeProcessNames = @(
   'LabVIEW'
   'LabVIEWCLI'
@@ -18,6 +23,32 @@ $windowsProofRuntimeImageNames = @(
 )
 $windowsProofRuntimeCleanupTimeoutSeconds = 10
 $windowsProofRuntimeCleanupPollMilliseconds = 500
+$script:startupIssues = [System.Collections.Generic.List[string]]::new()
+$script:startupReceipt = [ordered]@{
+  schema = 'vi-history-suite/governed-runner-startup@v1'
+  generatedAt = $null
+  runnerRoot = $runnerRoot
+  runnerConfig = $runnerConfig
+  logDir = $logDir
+  windowsRunnerCountBefore = 0
+  windowsRunnerCountAfter = 0
+  windowsRunnerProcessIdsAfter = @()
+  coldAdmissionRuntimeCleanupAttempted = $false
+  linuxAssuranceBootstrap = [ordered]@{
+    distro = $linuxAssuranceDistro
+    bootstrapCommand = $linuxAssuranceBootstrapCommand
+    wakeAttempts = $linuxAssuranceWakeAttempts
+    wakeDelaySeconds = $linuxAssuranceWakeDelaySeconds
+    attempted = $false
+    attemptCount = 0
+    succeeded = $false
+    helperHealthy = $null
+    helperLatestReceiptPath = $null
+    helperTimestampedReceiptPath = $null
+  }
+  healthy = $false
+  issues = @()
+}
 
 function Get-ConfiguredWindowsRunners {
   @(
@@ -77,23 +108,104 @@ function Clear-WindowsProofRuntimeSurface {
   }
 }
 
+function Start-LinuxAssuranceSurface {
+  $lastBootstrapFailure = ''
+
+  for ($attempt = 1; $attempt -le $linuxAssuranceWakeAttempts; $attempt++) {
+    $script:startupReceipt.linuxAssuranceBootstrap.attempted = $true
+    $script:startupReceipt.linuxAssuranceBootstrap.attemptCount = $attempt
+    $bootstrapOutput = & wsl.exe -d $linuxAssuranceDistro bash -lc $linuxAssuranceBootstrapCommand 2>&1
+    $bootstrapExitCode = $LASTEXITCODE
+    $bootstrapText = [string]::Join([Environment]::NewLine, @($bootstrapOutput | ForEach-Object { "$_" }))
+    $bootstrapPayload = $null
+    try {
+      if (-not [string]::IsNullOrWhiteSpace($bootstrapText)) {
+        $bootstrapPayload = $bootstrapText | ConvertFrom-Json
+      }
+    }
+    catch {
+      $bootstrapPayload = $null
+    }
+
+    if ($null -ne $bootstrapPayload) {
+      $script:startupReceipt.linuxAssuranceBootstrap.helperHealthy = $bootstrapPayload.healthy
+      $script:startupReceipt.linuxAssuranceBootstrap.helperLatestReceiptPath = $bootstrapPayload.latestReceiptPath
+      $script:startupReceipt.linuxAssuranceBootstrap.helperTimestampedReceiptPath = $bootstrapPayload.timestampedReceiptPath
+    }
+
+    if ($bootstrapExitCode -eq 0) {
+      $script:startupReceipt.linuxAssuranceBootstrap.succeeded = $true
+      return
+    }
+
+    $lastBootstrapFailure = $bootstrapText
+    if ($attempt -lt $linuxAssuranceWakeAttempts) {
+      Start-Sleep -Seconds $linuxAssuranceWakeDelaySeconds
+    }
+  }
+
+  throw "Governed Linux assurance bootstrap failed after $linuxAssuranceWakeAttempts attempts for distro $linuxAssuranceDistro. Last failure: $lastBootstrapFailure"
+}
+
+function Write-StartupReceipt {
+  if (-not (Test-Path -LiteralPath $startupReceiptRoot)) {
+    New-Item -ItemType Directory -Path $startupReceiptRoot -Force | Out-Null
+  }
+
+  $generatedAt = (Get-Date).ToUniversalTime().ToString('o')
+  $timestampLeaf = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH-mm-ss-fffZ')
+  $timestampedReceiptPath = Join-Path $startupReceiptRoot "$timestampLeaf.json"
+  $latestReceiptPath = Join-Path $startupReceiptRoot 'latest.json'
+
+  $script:startupReceipt.generatedAt = $generatedAt
+  $script:startupReceipt.latestReceiptPath = $latestReceiptPath
+  $script:startupReceipt.timestampedReceiptPath = $timestampedReceiptPath
+  $script:startupReceipt.issues = @($script:startupIssues.ToArray())
+
+  $startupReceiptJson = $script:startupReceipt | ConvertTo-Json -Depth 12
+  Set-Content -LiteralPath $timestampedReceiptPath -Value $startupReceiptJson -Encoding utf8
+  Set-Content -LiteralPath $latestReceiptPath -Value $startupReceiptJson -Encoding utf8
+}
+
 if (-not (Test-Path -LiteralPath $logDir)) {
   New-Item -ItemType Directory -Path $logDir | Out-Null
 }
 
-$windowsRunners = Remove-DuplicateWindowsRunners
+try {
+  $windowsRunners = Remove-DuplicateWindowsRunners
+  $script:startupReceipt.windowsRunnerCountBefore = $windowsRunners.Count
 
-if ($windowsRunners.Count -eq 0) {
-  Clear-WindowsProofRuntimeSurface
-  Start-Process -FilePath $runnerExe `
-    -ArgumentList @('run', '--config', $runnerConfig) `
-    -WorkingDirectory $runnerRoot `
-    -WindowStyle Hidden `
-    -RedirectStandardOutput $stdoutLog `
-    -RedirectStandardError $stderrLog | Out-Null
-  Start-Sleep -Seconds 2
+  if ($windowsRunners.Count -eq 0) {
+    $script:startupReceipt.coldAdmissionRuntimeCleanupAttempted = $true
+    Clear-WindowsProofRuntimeSurface
+    Start-Process -FilePath $runnerExe `
+      -ArgumentList @('run', '--config', $runnerConfig) `
+      -WorkingDirectory $runnerRoot `
+      -WindowStyle Hidden `
+      -RedirectStandardOutput $stdoutLog `
+      -RedirectStandardError $stderrLog | Out-Null
+    Start-Sleep -Seconds 2
+  }
+
+  $windowsRunners = Remove-DuplicateWindowsRunners
+
+  Start-LinuxAssuranceSurface
+
+  $script:startupReceipt.windowsRunnerCountAfter = $windowsRunners.Count
+  $script:startupReceipt.windowsRunnerProcessIdsAfter = @($windowsRunners | ForEach-Object ProcessId)
+  $script:startupReceipt.healthy = $true
 }
+catch {
+  $script:startupIssues.Add($_.Exception.Message)
+  $script:startupReceipt.healthy = $false
+  throw
+}
+finally {
+  if (-not $script:startupReceipt.windowsRunnerCountAfter) {
+    $windowsRunnersAfter = @(Get-ConfiguredWindowsRunners)
+    $script:startupReceipt.windowsRunnerCountAfter = $windowsRunnersAfter.Count
+    $script:startupReceipt.windowsRunnerProcessIdsAfter = @($windowsRunnersAfter | ForEach-Object ProcessId)
+  }
 
-$windowsRunners = Remove-DuplicateWindowsRunners
-
-wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh' | Out-Null
+  Write-StartupReceipt
+}

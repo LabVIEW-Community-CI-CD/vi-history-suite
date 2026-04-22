@@ -220,13 +220,48 @@ function resolveSkillRoot(env = process.env, existsSyncImpl = fs.existsSync) {
   );
 }
 
-function resolvePythonInvocation(env = process.env, platform = process.platform) {
+function getWindowsPythonExecutableCandidates(env = process.env) {
+  const candidates = new Set();
+  const versionDirectories = ['Python313', 'Python312', 'Python311', 'Python310', 'Python39'];
+  const localAppData = `${env.LocalAppData || ''}`.trim();
+  const programRoots = [env.ProgramW6432, env.ProgramFiles, env['ProgramFiles(x86)']]
+    .map((value) => `${value || ''}`.trim())
+    .filter((value) => value.length > 0);
+
+  if (localAppData) {
+    for (const versionDirectory of versionDirectories) {
+      candidates.add(
+        path.win32.join(localAppData, 'Programs', 'Python', versionDirectory, 'python.exe')
+      );
+    }
+  }
+
+  for (const programRoot of programRoots) {
+    for (const versionDirectory of versionDirectories) {
+      candidates.add(path.win32.join(programRoot, versionDirectory, 'python.exe'));
+    }
+  }
+
+  return [...candidates];
+}
+
+function resolvePythonInvocation(
+  env = process.env,
+  platform = process.platform,
+  existsSyncImpl = fs.existsSync
+) {
   const explicit = `${env.VIHS_ASSURANCE_PYTHON || ''}`.trim();
   if (explicit) {
     return { command: explicit, args: [] };
   }
 
   if (platform === 'win32') {
+    for (const candidate of getWindowsPythonExecutableCandidates(env)) {
+      if (existsSyncImpl(candidate)) {
+        return { command: candidate, args: [] };
+      }
+    }
+
     return { command: 'py', args: ['-3'] };
   }
 
@@ -614,6 +649,7 @@ module.exports = {
   isRepoScopePathIncluded,
   parseArgs,
   resolveExecutor,
+  getWindowsPythonExecutableCandidates,
   resolvePythonInvocation,
   runLane,
   selectScopePaths

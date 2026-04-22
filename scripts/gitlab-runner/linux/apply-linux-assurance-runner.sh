@@ -33,14 +33,39 @@ assert_path_exists "$SERVICE_SOURCE" "Run this script from the repo-owned runner
 assert_path_exists "$RUNNER_BIN" "Install the governed gitlab-runner binary under $HOME/gitlab-runner/bin before applying the Linux assurance lane."
 assert_path_exists "$RUNNER_CONFIG" "Register the governed Linux assurance runner first so $RUNNER_CONFIG exists."
 
+command -v node >/dev/null 2>&1 || fail "node is required to normalize $RUNNER_CONFIG."
 command -v sudo >/dev/null 2>&1 || fail "sudo is required to install and enable $SERVICE_NAME."
 command -v systemctl >/dev/null 2>&1 || fail "systemctl is required to manage $SERVICE_NAME."
+sudo -n -v >/dev/null 2>&1 || fail "Governed Linux assurance apply requires non-interactive sudo access."
+
+node - "$RUNNER_CONFIG" <<'NODE'
+const fs = require('node:fs');
+
+const configPath = process.argv[2];
+let configText = fs.readFileSync(configPath, 'utf8');
+
+if (/^\s*concurrent\s*=/m.test(configText)) {
+  configText = configText.replace(/^\s*concurrent\s*=.*$/m, 'concurrent = 2');
+} else {
+  configText = `concurrent = 2\n${configText}`;
+}
+
+if (/^\s*request_concurrency\s*=/m.test(configText)) {
+  configText = configText.replace(/^\s*request_concurrency\s*=.*$/m, '  request_concurrency = 2');
+} else if (/^\[\[runners\]\]\s*$/m.test(configText)) {
+  configText = configText.replace(/^\[\[runners\]\]\s*$/m, '[[runners]]\n  request_concurrency = 2');
+} else {
+  throw new Error(`Could not locate [[runners]] in ${configPath}.`);
+}
+
+fs.writeFileSync(configPath, configText);
+NODE
 
 install -d "$INSTALL_ROOT"
 install -m 0755 "$HELPER_SOURCE" "$HELPER_DESTINATION"
-sudo install -m 0644 "$SERVICE_SOURCE" "$SERVICE_DESTINATION"
-sudo systemctl daemon-reload
-sudo systemctl enable --now "$SERVICE_NAME"
+sudo -n install -m 0644 "$SERVICE_SOURCE" "$SERVICE_DESTINATION"
+sudo -n systemctl daemon-reload
+sudo -n systemctl enable --now "$SERVICE_NAME"
 
 enabled_state="$(systemctl is-enabled "$SERVICE_NAME")"
 active_state="$(systemctl is-active "$SERVICE_NAME")"

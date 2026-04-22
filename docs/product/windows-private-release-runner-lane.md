@@ -15,6 +15,8 @@ It is intentionally separate from the Linux assurance runner lane documented in
 
 ## Governing Surfaces
 
+- fail-fast GitLab admission job before docs, assurance, test, and packaging:
+  `governed_runner_admission`
 - GitLab job: `windows_private_release_acceptance`
 - governed CLI: `npm run acceptance:windows:private-release`
 - governed script: `scripts/runWindowsPrivateReleaseAcceptance.js`
@@ -93,10 +95,16 @@ Current host activation state:
 - launched at user logon by scheduled task `VIHS Governed Runner Lanes`
 - scheduled task bootstrap surface:
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`
+- latest startup receipt:
+  `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
 - admitted runner config path: `C:\GitLab-Runner\config.toml`
 - per-runner request concurrency: `request_concurrency = 2`
 - startup script collapses duplicate `gitlab-runner.exe` manager processes for
   the same config before ensuring exactly one current-user manager remains
+- on each logon bootstrap, the same script wakes the admitted Ubuntu distro,
+  retries the repo-owned Linux assurance helper up to `12` times with `10`
+  second pauses, and fails closed unless that helper proves the paired
+  `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular
 - on cold admission, the startup script clears stale `LabVIEW`,
   `LabVIEWCLI`, and `LVCompare` processes before the current-user runner
   starts with bounded `Stop-Process`, `taskkill /PID /T /F`, and
@@ -111,6 +119,8 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
 - Windows bootstrap script:
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+- Windows doctor script:
+  `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
 - Windows drift assertion script:
   `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
 - Windows proof runtime recovery script:
@@ -122,6 +132,10 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
 - Linux helper invoked by that bootstrap:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+- Linux doctor script consumed by the admitted Windows host:
+  `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`
+- Cross-lane doctor wrapper from the admitted Windows host:
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
 - Cross-lane wrapper from the admitted Windows host:
   `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
 
@@ -134,7 +148,17 @@ runner manager remains after apply.
 
 The Windows bootstrap script remains the repo-owned source of truth for
 duplicate collapse, cold-admission runtime cleanup, current-user runner
-launch, and WSL wake-up on user logon.
+launch, and bounded WSL wake-up plus Linux-assurance readiness recovery on
+user logon. It now also writes a machine-readable startup receipt under
+`C:\GitLab-Runner\receipts\governed-runner-startup\` that records duplicate
+collapse, cold-admission cleanup, Linux-helper retry, and current-user runner
+readiness facts before the Windows lane is considered healthy.
+
+The Windows doctor script is the repo-owned non-destructive readback surface
+for the admitted scheduled-task/bootstrap contract. It reports the scheduled
+task state, runner-process count, latest startup-receipt facts, and live drift
+issues without mutating host state. The combined wrapper can run that Windows
+doctor plus the paired Linux doctor and fail closed when requested.
 
 The Windows assertion surface is the repo-owned live drift check for the
 admitted scheduled-task/bootstrap contract. It fails closed unless the
@@ -188,12 +212,33 @@ The admitted Linux helper path consumed by the bootstrap remains:
 wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh'
 ```
 
+The repo-owned Windows bootstrap now treats that Linux helper as a bounded
+readiness gate instead of a fire-and-forget launch. It retries the helper up
+to `12` times with `10` second pauses and fails closed unless the helper exits
+`0` after confirming the paired Linux assurance service is `enabled`,
+`active`, and singular.
+
 The bootstrap only performs stale-runtime cleanup before cold runner
 admission. If no governed current-user runner manager is active, it forcibly
 clears `LabVIEW`, `LabVIEWCLI`, and `LVCompare` with bounded
 `Stop-Process`, `taskkill /PID /T /F`, and `taskkill /IM /T /F`; if any of
 those processes remain afterward, the lane fails closed and the runner is not
 started.
+
+## Diagnose Live Host State
+
+From the repo root on the admitted Windows host:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -File .\scripts\gitlab-runner\windows\doctor-governed-runner-lanes.ps1
+npm run gitlab:runner:doctor -- --surface all
+npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence
+```
+
+The first command diagnoses only the admitted Windows lane. The combined
+wrapper can diagnose the Windows lane plus the paired Linux assurance lane,
+and the final command is the fail-fast GitLab admission surface retained in
+job `governed_runner_admission`.
 
 ## Assert Live Host Drift
 
@@ -285,6 +330,14 @@ The job shall retain:
   `proof-runtime-recovery.txt`
 - the latest operator-only recovery rehearsal receipt at
   `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- the latest Windows startup receipt at
+  `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
+- the latest Linux startup receipt observed by the paired helper at
+  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+- fail-fast admission evidence when GitLab runs the governed doctor surface:
+  `governed-runner-admission-evidence/runner-doctor.json`
+- fail-fast admission summary when GitLab runs the governed doctor surface:
+  `governed-runner-admission-evidence/runner-doctor.md`
 - `windows-private-release-evidence/host/harness-report/**`
 - `windows-private-release-evidence/container/settings-file.json`
 - `windows-private-release-evidence/container/settings-write.txt`

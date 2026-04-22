@@ -71,10 +71,12 @@ Current version-line contract:
   `v1.2.2`, `v1.3.0`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.0`
-- current published package line on `main`: `1.3.0`
+- current published package line on `main`: `1.3.1`
 - current develop package line on `develop`: `1.3.1`
-- active exact release candidate line on `develop`: `v1.3.1`
-- active release-candidate branch: `release/1.3.1`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
+- active exact hotfix candidate line on `main`: `v1.3.2`
+- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -83,7 +85,23 @@ Current version-line contract:
 - hotfix branch family: `hotfix/*`
 - next-line branch model: `GitFlow`
 
-Active opening decision that opens exact `v1.3.1`:
+Active opening decision that opens hotfix exact `v1.3.2`:
+
+- chosen bump: `patch`
+- target exact hotfix candidate line: `v1.3.2`
+- rationale: the next line hardens the already-published exact package surface
+  by adding the missing Marketplace icon without changing the installed-user
+  workflow or opening another governed capability line
+- rationale: public GitHub exact `v1.3.1` is already immutable while VS Code
+  Marketplace still serves `1.3.0`, so `v1.3.2` opens as a hotfix from
+  `main` instead of mutating the retained `v1.3.1` GitHub asset
+- rejected `minor`: the icon change hardens an existing packaged surface
+  rather than adding a new governed capability or supported workflow
+- rejected `major`: no exact public or maintainer contract is intentionally
+  broken or removed; the retained `v1.3.1` GitHub exact release stays intact
+  while the fix advances to a separate hotfix line
+
+Historical opening decision that opened exact `v1.3.1`:
 
 - chosen bump: `patch`
 - target exact candidate line: `v1.3.1`
@@ -286,6 +304,7 @@ Required branch-model and CI posture:
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
   when the target repo is dirty
 - the required checks are:
+  - GitLab `governed_runner_admission`
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
@@ -311,8 +330,16 @@ Hosted automation governance is now retained explicitly:
   retaining `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
   and still failing closed after that single retry if the repo-owned recovery
   step cannot restore a clean proof surface
-- GitLab runner upkeep now uses repo-owned apply and live drift-assert
-  surfaces:
+- GitLab runner upkeep now uses repo-owned startup-receipt, doctor, apply, and
+  live drift-assert surfaces:
+  `governed_runner_admission` runs
+  `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
+  in the `admission` stage before docs, assurance, test, package, and release
+  work can queue; `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
+  and `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh` are the
+  lane-local non-destructive doctor surfaces, and
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
+  is the admitted Windows-host wrapper for those doctor reads;
   `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1` keeps the
   scheduled task on ambient execution policy without `ExecutionPolicy Bypass`
   and fails closed unless exactly one configured Windows runner manager
@@ -320,12 +347,24 @@ Hosted automation governance is now retained explicitly:
   fails closed unless the installed bootstrap hash, exact scheduled-task
   action plus logon trigger, `request_concurrency = 2`, and one live
   configured Windows runner manager remain intact; while
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1` also wakes
+  Ubuntu and retries the repo-owned Linux assurance helper until it proves the
+  paired Linux service is enabled, active, and singular, writing the latest
+  Windows startup receipt to
+  `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`;
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh` fails closed
-  unless `vihs-linux-assurance-runner.service` finishes `enabled` and `active`;
+  unless `~/.gitlab-runner/config.toml` retains `concurrent = 2` plus
+  `request_concurrency = 2` and
+  `vihs-linux-assurance-runner.service` finishes `enabled` and `active`;
+  `scripts/gitlab-runner/linux/start-linux-assurance.sh` now reconciles the
+  live config back to that dual-concurrency contract, restarts the admitted
+  service when needed, and writes the latest Linux startup receipt to
+  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`;
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh` fails closed
-  unless the installed helper/service unit hashes, `request_concurrency = 2`,
-  admitted service fragment/user/working directory, and one live configured
-  Linux runner process remain intact; and the admitted Windows-host wrapper
+  unless the installed helper/service unit hashes, `concurrent = 2`,
+  `request_concurrency = 2`, admitted service fragment/user/working
+  directory, enabled/active service state, and one live configured Linux
+  runner process remain intact; and the admitted Windows-host wrapper
   for both lane assertions is `scripts/assertGovernedRunnerLanes.js` via
   `npm run gitlab:runner:assert`; the operator-only Windows recovery rehearsal
   wrapper is `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via

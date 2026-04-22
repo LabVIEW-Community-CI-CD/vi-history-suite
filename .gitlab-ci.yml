@@ -1,9 +1,40 @@
 stages:
+  - admission
   - docs
+  - assurance
   - test
   - image
   - package
   - release
+
+governed_runner_admission:
+  stage: admission
+  tags:
+    - windows
+    - x64
+    - labview-host
+    - docker-windows
+    - private-release
+  script:
+    - $ErrorActionPreference = 'Stop'
+    - npm ci
+    - $npmCommand = (Get-Command npm -ErrorAction Stop).Source
+    - $nodeDirectory = Split-Path -Parent $npmCommand
+    - if (-not (Test-Path (Join-Path $nodeDirectory 'node.exe'))) { throw "Unable to locate node.exe adjacent to npm at $npmCommand" }
+    - $env:PATH = "$nodeDirectory;$env:PATH"
+    - npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - governed-runner-admission-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 docs_link_check:
   stage: docs
@@ -100,17 +131,20 @@ docs_internal_continuous_integration:
     VIHS_ASSURANCE_IMAGE: registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main
   before_script:
     - |
+      export DOCKER_CONFIG="$(mktemp -d)"
+      chmod 700 "${DOCKER_CONFIG}"
+      trap 'rm -rf "${DOCKER_CONFIG}"' EXIT
       if [ -n "${VIHS_ASSURANCE_REGISTRY_USER}" ] && [ -n "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" ]; then
         printf '%s' "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" | docker login registry.gitlab.com --username "${VIHS_ASSURANCE_REGISTRY_USER}" --password-stdin
       elif [ -n "${VIHS_ASSURANCE_REGISTRY_USER}" ] || [ -n "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" ]; then
         echo "VIHS_ASSURANCE_REGISTRY_USER and VIHS_ASSURANCE_REGISTRY_PASSWORD must be set together." >&2
         exit 1
       fi
-    - docker pull "${VIHS_ASSURANCE_IMAGE}"
+      docker pull "${VIHS_ASSURANCE_IMAGE}"
 
 assurance_release_gate:
   extends: .linux_assurance_runner
-  stage: docs
+  stage: assurance
   script:
     - npm run assurance:release-gate -- --evidence-dir assurance-release-gate-evidence
   artifacts:
@@ -128,7 +162,7 @@ assurance_release_gate:
 
 assurance_26514_authority:
   extends: .linux_assurance_runner
-  stage: docs
+  stage: assurance
   script:
     - npm run assurance:26514:authority -- --evidence-dir assurance-26514-authority-evidence
   artifacts:
@@ -146,7 +180,7 @@ assurance_26514_authority:
 
 assurance_requirements_quality:
   extends: .linux_assurance_runner
-  stage: docs
+  stage: assurance
   script:
     - npm run assurance:requirements -- --evidence-dir assurance-requirements-quality-evidence
   artifacts:
@@ -164,7 +198,7 @@ assurance_requirements_quality:
 
 assurance_external_user_information:
   extends: .linux_assurance_runner
-  stage: docs
+  stage: assurance
   script:
     - npm run assurance:user-info -- --evidence-dir assurance-external-user-information-evidence
   artifacts:
@@ -182,7 +216,7 @@ assurance_external_user_information:
 
 assurance_audit_packet:
   extends: .linux_assurance_runner
-  stage: docs
+  stage: assurance
   allow_failure: true
   script:
     - npm run assurance:evidence-pack -- --evidence-dir assurance-audit-packet-evidence/evidence-pack
@@ -377,6 +411,10 @@ windows_private_release_acceptance:
   script:
     - $ErrorActionPreference = 'Stop'
     - npm ci
+    - $npmCommand = (Get-Command npm -ErrorAction Stop).Source
+    - $nodeDirectory = Split-Path -Parent $npmCommand
+    - if (-not (Test-Path (Join-Path $nodeDirectory 'node.exe'))) { throw "Unable to locate node.exe adjacent to npm at $npmCommand" }
+    - $env:PATH = "$nodeDirectory;$env:PATH"
     - npm run acceptance:windows:private-release
   artifacts:
     when: always

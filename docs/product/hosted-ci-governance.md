@@ -7,14 +7,12 @@ public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
 This document is the control-plane summary of the governed `v1.3.0`
-exact-tag, public-release, Marketplace publication, and exact-closeout
-sequence. The exact public release now serves `v1.3.0`, `main` carries
-`1.3.0`, `develop` now carries `1.3.1` as the next candidate line, the
-Marketplace listing serves `1.3.0`, authority `main` `9587a99` is
-back-merged into `develop` `04b07bd`, the resulting `develop` pipeline
-`2467081960` is green, protected `develop` `0f4db5e` is now green through
-pipeline `2468407077`, and `release/1.3.1` is open from that merged-green
-state.
+exact-closeout plus the later `v1.3.1` exact-tag/public-GitHub-release
+sequence. The current exact-closeout baseline still remains `v1.3.0`, `main`
+now carries `1.3.1`, `develop` still carries `1.3.1`, the separate public
+GitHub exact release now serves `v1.3.1`, the Marketplace listing still
+serves `1.3.0`, and `hotfix/v1.3.2-marketplace-icon` is now the active
+hotfix lane from exact `main`.
 
 ## Current Exact Closeout State
 
@@ -28,20 +26,22 @@ state.
   `04b07bd`
 - resulting `develop` pipeline: `2467081960` `success`
 
-## Active Opening Decision For v1.3.1
+## Active Opening Decision For v1.3.2
 
 - current exact release line: `v1.3.0`
-- current `main` package line: `1.3.0`
+- current `main` package line: `1.3.1`
 - current `develop` package line: `1.3.1`
-- active exact release candidate line on `develop`: `v1.3.1`
-- active release-candidate branch: `release/1.3.1`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
+- active exact hotfix candidate line on `main`: `v1.3.2`
+- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
 - chosen bump: `patch`
-- rationale: this line hardens the published host-default Windows local
-  `LabVIEWCLI` workflow and retained live-session proof/control surfaces
-  without opening another governed installed-user capability line
-- rationale: exact `v1.3.0` remains the truthful published baseline while the
-  `v1.3.1` patch line opens on `develop` for `ISSUE-0414` proof-depth and
-  release-control follow-through
+- rationale: this line hardens the already-published exact package surface by
+  adding the missing Marketplace icon without opening another governed
+  installed-user capability line
+- rationale: public GitHub exact `v1.3.1` is already immutable while VS Code
+  Marketplace still serves `1.3.0`, so `v1.3.2` opens as a hotfix from
+  `main` instead of mutating the retained `v1.3.1` GitHub asset
 
 ## Branch Model
 
@@ -84,35 +84,51 @@ Runner lanes:
 Runner operator hardening:
 
 - `linux-assurance`: admitted config path
-  `~/.gitlab-runner/config.toml`, per-runner
+  `~/.gitlab-runner/config.toml`, top-level `concurrent = 2`, per-runner
   `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
   `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
+  `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`, and
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`, with the
-  admitted Windows-host wrapper retained at
-  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
-  the Linux apply surface fails closed unless the admitted `systemd` service
-  is both enabled and active after apply, and the Linux assertion surface
-  fails closed unless the installed helper and service unit still match the
-  repo asset pack, `request_concurrency = 2` is still present, the admitted
-  fragment path/user/working directory remain exact, and exactly one
-  configured runner process is live
+  admitted Windows-host wrappers retained at
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
+  and `scripts/assertGovernedRunnerLanes.js` via
+  `npm run gitlab:runner:assert`; the Linux apply surface first normalizes
+  both concurrency facts and then fails closed unless the admitted `systemd`
+  service is both enabled and active after apply; the Windows bootstrap now
+  retries the Linux helper as a bounded post-reset readiness gate; the helper
+  itself reconciles the live config back to `concurrent = 2` plus
+  `request_concurrency = 2`, restarts the admitted service when needed, and
+  writes a machine-readable startup receipt under
+  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`; the
+  Linux doctor surface reports current concurrency, service, process, and
+  receipt facts; and the Linux assertion surface fails closed unless the
+  installed helper and service unit still match the repo asset pack,
+  `concurrent = 2` plus `request_concurrency = 2` are still present, the
+  admitted fragment path/user/working directory remain exact, the service is
+  still enabled and active, and exactly one configured runner process is live
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
   `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
-  current-user runner manager remains per config, cold-admission fail-closed
-  cleanup of stale `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes
-  before the runner starts using bounded `Stop-Process` plus
-  `taskkill /PID /T /F` and `taskkill /IM /T /F`, the repo-owned bootstrap
-  asset `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, and
-  the repo-owned drift assertion surface
+  current-user runner manager remains per config, bounded Ubuntu wake-up plus
+  Linux-helper retries fail closed unless the paired Linux assurance service
+  comes up after reboot, cold-admission fail-closed cleanup of stale
+  `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes before the runner
+  starts using bounded `Stop-Process` plus `taskkill /PID /T /F` and
+  `taskkill /IM /T /F`, the repo-owned bootstrap asset
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, the
+  repo-owned doctor surface
+  `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`, and the
+  repo-owned drift assertion surface
   `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`; the
-  combined Windows-host wrapper remains
-  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
+  combined Windows-host wrappers remain
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
+  and `scripts/assertGovernedRunnerLanes.js` via
+  `npm run gitlab:runner:assert`;
   the operator-only recovery rehearsal wrapper is
   `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
   `npm run gitlab:runner:windows:recovery:rehearse`, retaining the latest
@@ -127,10 +143,18 @@ Runner operator hardening:
   repo source, that exact scheduled-task action plus its logon trigger remain
   intact, `request_concurrency = 2` remains in
   `C:\GitLab-Runner\config.toml`, and exactly one configured runner manager is
-  live
+  live; the Windows bootstrap now writes a machine-readable startup receipt
+  under `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`, and
+  the Windows doctor surface reports the task, runner-process, startup-receipt,
+  and Linux-helper receipt facts without mutating host state
 
 Job ownership:
 
+- `governed_runner_admission`: blocking Windows-host `admission` stage lane on
+  merge requests, governed branch lanes, and exact tags; it runs
+  `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
+  so docs, assurance, test, package, and release jobs fail fast on post-reset
+  runner drift instead of waiting behind missing or degraded runner capacity
 - `docs_link_check`, `docs_continuous_integration`,
   `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
   docs integrity on merge requests, governed branch lanes, and exact tags

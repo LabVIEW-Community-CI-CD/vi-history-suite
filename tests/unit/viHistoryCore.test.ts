@@ -11,6 +11,11 @@ import {
 
 const tempDirectories: string[] = [];
 
+function normalizeAssertPath(candidatePath: string): string {
+  const normalized = path.normalize(candidatePath);
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
 async function createTempGitRepo(): Promise<string> {
   const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-core-'));
   tempDirectories.push(repoRoot);
@@ -124,7 +129,7 @@ describe('viHistoryModel', () => {
 
     const eligibility = await evaluateViEligibilityForFsPath(targetPath);
 
-    expect(path.normalize(eligibility.repositoryRoot)).toBe(path.normalize(repoRoot));
+    expect(normalizeAssertPath(eligibility.repositoryRoot)).toBe(normalizeAssertPath(repoRoot));
     expect(eligibility.relativePath).toBe('nested/content-detected.bin');
     expect(eligibility.signature).toBe('LVCC');
     expect(eligibility.commitHashes).toHaveLength(2);
@@ -145,7 +150,7 @@ describe('viHistoryModel', () => {
 
     const viewModel = await loadViHistoryViewModelFromFsPath(targetPath);
 
-    expect(path.normalize(viewModel.repositoryRoot)).toBe(path.normalize(repoRoot));
+    expect(normalizeAssertPath(viewModel.repositoryRoot)).toBe(normalizeAssertPath(repoRoot));
     expect(viewModel.repositoryName).toBe(path.basename(repoRoot));
     expect(viewModel.relativePath).toBe('nested/default-history.weird');
     expect(viewModel.signature).toBe('LVIN');
