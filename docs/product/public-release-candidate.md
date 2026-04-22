@@ -70,9 +70,11 @@
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - Public GitHub tag `v1.3.6` is now live, but the GitHub release publication
   is still blocked on draft release `312363117`; the last published GitHub
-  release remains `v1.3.1`, immutable releases are enabled, release lookup by
-  the exact tag still returns `404`, and the retained draft still uses the
-  `untagged-308c75957d1c8136f871` release URL.
+  release remains `v1.3.1`, the new non-mutating draft-publishability probe
+  can read release `312363117` by id with status `200` and confirms the draft
+  still matches authority tag `v1.3.6`, but immutable releases are enabled,
+  release lookup by the exact tag still returns `404`, and the retained draft
+  still uses the `untagged-308c75957d1c8136f871` release URL.
 - The maintained public `develop` candidate for `v1.3.1` still publishes
   `ab293d5` through GitHub PR `#38` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
@@ -111,6 +113,11 @@
   checksum-asset SHA-256
   `7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0`,
   `openingNewSemverAllowed=false`, `repairInPlaceRequired=true`,
+  `draftPublishabilityProbeStatus=blocked`,
+  `draftPublishabilityProbeReleaseId=312363117`,
+  `draftPublishabilityByIdStatusCode=200`,
+  `draftPublishabilityTagMatchesAuthority=true`,
+  `draftPublishabilitySafeToAttemptPublish=false`,
   `publishabilityProbeStatus=blocked`,
   `publishabilityBlockerCode=draft-release-tag-lookup-unavailable`,
   `immutableReleasesEnabled=true`,
@@ -217,5 +224,7 @@
   no-bump repair rule now blocks any later SemVer opening until
   `npm run public:github:exact:transaction:assess` proves a safe in-place
   repair path or retains that repair is impossible; the current retained
-  blocker is that immutable releases are enabled while exact-tag release lookup
-  still returns `404` and the draft still serves an `untagged-*` URL.
+  draft-publishability blocker is that release `312363117` is readable by id
+  and still matches the authority tag, but immutable releases are enabled while
+  exact-tag release lookup still returns `404` and the draft still serves an
+  `untagged-*` URL.

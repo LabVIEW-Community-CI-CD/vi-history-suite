@@ -89,6 +89,9 @@ Current version-line contract:
   `npm run public:github:exact:transaction:assess`
 - public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- current retained public GitHub exact draft-publishability probe:
+  draft release `312363117` is readable by id with status `200`, still matches
+  authority tag `v1.3.6`, and still is not safe to publish in place
 - current retained public GitHub exact publishability probe:
   immutable releases `enabled=true`, `enforced_by_owner=false`, draft release
   `312363117` targets `main`, exact-tag release lookup returns `404`, and the
@@ -111,8 +114,8 @@ Current control decision for public exact hardening:
   already retains the exact assets, so the governed next step is repair in
   place rather than another SemVer opening
 - rationale: the repo-owned transaction controller now fails closed on that
-  partial-public state, retains the non-mutating immutable-release
-  publishability probe, and freezes later openings until
+  partial-public state, retains the non-mutating draft-publishability probe
+  against release `312363117`, and freezes later openings until
   `npm run public:github:exact:transaction:assess` proves a safe repair or
   retains the exact blocker or impossibility state
 - rejected `hotfix`: opening another exact-line repair from `main` would
@@ -182,8 +185,8 @@ Strict SemVer rule after an exact release:
 - future sessions shall assess any partially public exact GitHub transaction
   through `npm run public:github:exact:transaction:assess` before any further
   public GitHub release or VS Code Marketplace act
-- future sessions shall retain the controller's non-mutating immutable-release
-  publishability probe before any in-place public GitHub release repair
+- future sessions shall retain the controller's non-mutating
+  draft-publishability probe before any in-place public GitHub release repair
   attempt
 - future sessions shall not open a later SemVer line while the current exact
   line still retains a blocked public GitHub or VS Code Marketplace

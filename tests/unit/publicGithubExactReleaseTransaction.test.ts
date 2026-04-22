@@ -47,6 +47,20 @@ const transaction = require(path.join(
   assessTransaction: (facts: Record<string, unknown>) => {
     status: string;
     phases: Array<{ id: string; status: string; summary: string }>;
+    draftPublishabilityProbe: {
+      status: string;
+      safeToAttemptPublishDraftInPlace: boolean;
+      blockerCode: string | null;
+      rationale: string;
+      requestedDraftReleaseId: number | null;
+      draftReleaseByIdStatusCode: number | null;
+      draftReleaseIdMatchesRequested: boolean;
+      draftReleaseTagMatchesAuthority: boolean;
+      draftReleaseTargetCommitish: string | null;
+      draftReleaseLookupByTagStatusCode: number | null;
+      draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+      exactAssetsRetained: boolean;
+    };
     publishabilityProbe: {
       status: string;
       safeToAttemptRepairPublish: boolean;
@@ -79,23 +93,36 @@ const transaction = require(path.join(
     repoRoot: string;
     status: string;
     authority: { tag: string; mainSha: string };
-      publicSource: { mainSha: string | null; tagRef: string | null };
-      marketplace: { currentPublishedVersion: string | null };
-      publishabilityProbe: {
-        status: string;
-        safeToAttemptRepairPublish: boolean;
-        blockerCode: string | null;
-        rationale: string;
-        immutableReleasesEnabled: boolean | null;
-        immutableReleasesEnforcedByOwner: boolean | null;
-        draftReleaseTargetCommitish: string | null;
-        draftReleaseLookupStatusCode: number;
-        draftReleaseHtmlUrlUsesUntaggedPath: boolean;
-      };
-      semverFreeze: {
-        status: string;
-        openingNewSemverAllowed: boolean;
-        rationale: string;
+    publicSource: { mainSha: string | null; tagRef: string | null };
+    marketplace: { currentPublishedVersion: string | null };
+    draftPublishabilityProbe: {
+      status: string;
+      safeToAttemptPublishDraftInPlace: boolean;
+      blockerCode: string | null;
+      rationale: string;
+      requestedDraftReleaseId: number | null;
+      draftReleaseByIdStatusCode: number | null;
+      draftReleaseIdMatchesRequested: boolean;
+      draftReleaseTagMatchesAuthority: boolean;
+      draftReleaseTargetCommitish: string | null;
+      draftReleaseLookupByTagStatusCode: number | null;
+      draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+    };
+    publishabilityProbe: {
+      status: string;
+      safeToAttemptRepairPublish: boolean;
+      blockerCode: string | null;
+      rationale: string;
+      immutableReleasesEnabled: boolean | null;
+      immutableReleasesEnforcedByOwner: boolean | null;
+      draftReleaseTargetCommitish: string | null;
+      draftReleaseLookupStatusCode: number;
+      draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+    };
+    semverFreeze: {
+      status: string;
+      openingNewSemverAllowed: boolean;
+      rationale: string;
     };
     repairInPlace: {
       required: boolean;
@@ -113,6 +140,7 @@ const transaction = require(path.join(
     owner: string;
     repo: string;
     tag: string | null;
+    draftReleaseId: number | null;
     evidenceDir: string;
     githubTokenPath: string | null;
     marketplaceItem: string;
@@ -178,6 +206,7 @@ describe('public GitHub exact-release transaction controller', () => {
       owner: 'svelderrainruiz',
       repo: 'vi-history-suite',
       tag: null,
+      draftReleaseId: null,
       evidenceDir: transaction.DEFAULT_EVIDENCE_DIR,
       githubTokenPath: null,
       marketplaceItem: 'svelderrainruiz.vi-history-suite'
@@ -186,6 +215,8 @@ describe('public GitHub exact-release transaction controller', () => {
       transaction.parseArgs([
         '--tag',
         'v1.3.6',
+        '--draft-release-id',
+        '312363117',
         '--owner',
         'owner',
         '--repo',
@@ -202,12 +233,14 @@ describe('public GitHub exact-release transaction controller', () => {
       owner: 'owner',
       repo: 'repo',
       tag: 'v1.3.6',
+      draftReleaseId: 312363117,
       evidenceDir: path.resolve('artifacts/public-transaction'),
       githubTokenPath: path.resolve('C:\\tokens\\github.txt'),
       marketplaceItem: 'publisher.extension'
     });
     expect(transaction.getUsage()).toContain('--github-token-path');
     expect(transaction.getUsage()).toContain('--marketplace-item');
+    expect(transaction.getUsage()).toContain('--draft-release-id');
     expect(transaction.DEFAULT_OWNER).toBe('svelderrainruiz');
     expect(transaction.DEFAULT_REPO).toBe('vi-history-suite');
     expect(transaction.DEFAULT_MARKETPLACE_ITEM).toBe('svelderrainruiz.vi-history-suite');
@@ -270,6 +303,10 @@ describe('public GitHub exact-release transaction controller', () => {
       publicReleaseLookup: {
         statusCode: 404
       },
+      publicReleaseByIdLookup: {
+        requestedDraftReleaseId: 312363117,
+        statusCode: 200
+      },
       publicReleases: [
         {
           id: 311813620,
@@ -321,6 +358,22 @@ describe('public GitHub exact-release transaction controller', () => {
     });
 
     expect(assessment.status).toBe('blocked');
+    expect(assessment.draftPublishabilityProbe).toEqual(
+      expect.objectContaining({
+        status: 'blocked',
+        safeToAttemptPublishDraftInPlace: false,
+        blockerCode: 'draft-release-tag-lookup-unavailable',
+        requestedDraftReleaseId: 312363117,
+        draftReleaseByIdStatusCode: 200,
+        draftReleaseIdMatchesRequested: true,
+        draftReleaseTagMatchesAuthority: true,
+        draftReleaseTargetCommitish: 'main',
+        draftReleaseLookupByTagStatusCode: 404,
+        draftReleaseHtmlUrlUsesUntaggedPath: true,
+        exactAssetsRetained: true
+      })
+    );
+    expect(assessment.draftPublishabilityProbe.rationale).toContain('readable by id');
     expect(assessment.publishabilityProbe).toEqual(
       expect.objectContaining({
         status: 'blocked',
@@ -336,7 +389,7 @@ describe('public GitHub exact-release transaction controller', () => {
         exactAssetsRetained: true
       })
     );
-    expect(assessment.publishabilityProbe.rationale).toContain('discoverable only by id/list');
+    expect(assessment.publishabilityProbe.rationale).toContain('draft-publishability probe is blocked');
     expect(assessment.semverFreeze).toEqual(
       expect.objectContaining({
         status: 'frozen',
@@ -374,6 +427,7 @@ describe('public GitHub exact-release transaction controller', () => {
       authority: { tag: 'v1.3.6', mainSha: '3cb2383' },
       publicSource: { mainSha: 'bd81bfe', tagRef: 'refs/tags/v1.3.6' },
       marketplace: { currentPublishedVersion: '1.3.0' },
+      draftPublishabilityProbe: assessment.draftPublishabilityProbe,
       publishabilityProbe: assessment.publishabilityProbe,
       semverFreeze: assessment.semverFreeze,
       repairInPlace: assessment.repairInPlace,
@@ -381,6 +435,8 @@ describe('public GitHub exact-release transaction controller', () => {
     });
     expect(markdown).toContain('# Public GitHub Exact Release Transaction');
     expect(markdown).toContain('Status: blocked');
+    expect(markdown).toContain('## Draft Publishability Probe');
+    expect(markdown).toContain('Requested draft release id: 312363117');
     expect(markdown).toContain('## Publishability Probe');
     expect(markdown).toContain('Blocker code: draft-release-tag-lookup-unavailable');
     expect(markdown).toContain('Immutable releases enabled: true');
@@ -394,10 +450,10 @@ describe('public GitHub exact-release transaction controller', () => {
     const releaseManifestFs = createReleaseManifestFs();
 
     try {
-      await expect(
-        transaction.runAssessment(
-          ['--tag', 'v1.3.6', '--evidence-dir', evidenceDir],
-          {
+        await expect(
+          transaction.runAssessment(
+            ['--tag', 'v1.3.6', '--draft-release-id', '312363117', '--evidence-dir', evidenceDir],
+            {
             now: () => '2026-04-22T21:00:00.000Z',
             env: {
               [process.env.USERPROFILE ? 'USERPROFILE' : 'HOME']: process.env.USERPROFILE ?? process.env.HOME,
@@ -573,6 +629,18 @@ describe('public GitHub exact-release transaction controller', () => {
 
       const jsonReport = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8')) as {
         authority: { packageVersion: string; branchPackageVersion: string };
+        publicReleaseByIdLookup: {
+          requestedDraftReleaseId: number | null;
+          statusCode: number | null;
+        };
+        draftPublishabilityProbe: {
+          status: string;
+          blockerCode: string | null;
+          safeToAttemptPublishDraftInPlace: boolean;
+          requestedDraftReleaseId: number | null;
+          draftReleaseByIdStatusCode: number | null;
+          draftReleaseIdMatchesRequested: boolean;
+        };
         immutableReleasePolicy: {
           statusCode: number;
           enabled: boolean | null;
@@ -598,6 +666,18 @@ describe('public GitHub exact-release transaction controller', () => {
       expect(jsonReport.authority).toMatchObject({
         packageVersion: '1.3.6',
         branchPackageVersion: '1.3.6'
+      });
+      expect(jsonReport.publicReleaseByIdLookup).toEqual({
+        requestedDraftReleaseId: 312363117,
+        statusCode: 200
+      });
+      expect(jsonReport.draftPublishabilityProbe).toMatchObject({
+        status: 'blocked',
+        blockerCode: 'draft-release-tag-lookup-unavailable',
+        safeToAttemptPublishDraftInPlace: false,
+        requestedDraftReleaseId: 312363117,
+        draftReleaseByIdStatusCode: 200,
+        draftReleaseIdMatchesRequested: true
       });
       expect(jsonReport.immutableReleasePolicy).toEqual({
         statusCode: 200,
@@ -628,6 +708,7 @@ describe('public GitHub exact-release transaction controller', () => {
         jsonReport.phases.find((phase) => phase.id === 'marketplace-published')?.summary
       ).toContain('not 1.3.6');
       expect(markdownReport).toContain('Authority tag: v1.3.6');
+      expect(markdownReport).toContain('Requested draft release id: 312363117');
       expect(markdownReport).toContain('Blocker code: draft-release-tag-lookup-unavailable');
       expect(markdownReport).toContain('Next allowed action: repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven');
     } finally {
