@@ -36,6 +36,7 @@ describe('private release assurance contradiction guards', () => {
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(currentState).toContain('none');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('npm run public:github:exact:transaction:assess');
     expect(releaseProcedure).toContain(

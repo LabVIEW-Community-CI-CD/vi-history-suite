@@ -7,7 +7,7 @@
     "role": "source-of-truth",
     "integrationBranch": "develop",
     "releaseBranch": "main",
-    "featureHardeningBranch": "feature/public-github-release-transaction-hardening",
+    "featureHardeningBranch": null,
     "requiredChecks": [
       "public_exact_pretag_proof",
       "docs_continuous_integration",
@@ -116,7 +116,7 @@
   "exactReleaseReopening": {
     "status": "authority-v1.3.6-tagged-public-main-and-tag-published-release-draft-only-repair-in-place-frozen",
     "hotfixBranch": null,
-    "featureBranch": "feature/public-github-release-transaction-hardening",
+    "featureBranch": null,
     "authorityMainCommit": "3cb238334100d01d5cfe7998e17e20a7b497b3fb",
     "authorityTag": "v1.3.6",
     "publicGitHubExactCommit": "bd81bfe6743348c9138c3f0f4967c790a235184f",

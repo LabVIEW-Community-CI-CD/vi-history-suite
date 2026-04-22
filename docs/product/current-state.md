@@ -162,7 +162,7 @@ Latest landed ship target:
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
-  `feature/public-github-release-transaction-hardening`
+  none
 - later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete
 - active pre-tag public-exact proof package script:
@@ -299,8 +299,8 @@ Latest landed ship target:
   version `1.3.0` for `svelderrainruiz.vi-history-suite`, the maintained
   public `develop` candidate still publishes `ab293d5`, the maintained public
   wiki head still publishes `141c39e`, no exact hotfix lane is currently open,
-  and later SemVer openings are now frozen while
-  `feature/public-github-release-transaction-hardening` uses
+  and later SemVer openings are now frozen while the retained `v1.3.6` public
+  GitHub repair state on `develop` uses
   `npm run public:github:exact:transaction:assess` to prove or reject a safe
   in-place repair path before any further public or Marketplace act.
 

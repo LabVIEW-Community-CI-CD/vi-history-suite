@@ -156,7 +156,7 @@ describe('post-release sustainment rules package', () => {
       activeReleaseCandidateBranch: null,
       activeHotfixCandidateReleaseLine: null,
       activeHotfixBranch: null,
-      activeFeatureBranch: 'feature/public-github-release-transaction-hardening',
+      activeFeatureBranch: null,
       preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
       preTagPublicExactProofJob: 'public_exact_pretag_proof',
       publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
@@ -259,7 +259,7 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetFeatureBranch: 'feature/public-github-release-transaction-hardening',
+        targetFeatureBranch: null,
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
         preTagPublicExactProofJob: 'public_exact_pretag_proof',
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
@@ -586,7 +586,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('current exact released line: `v1.3.6`');
     expect(rulesDoc).toContain('current published package line on `main`: `1.3.6`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.6`');
-    expect(rulesDoc).toContain('`feature/public-github-release-transaction-hardening`');
+    expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(rulesDoc).toContain('none');
     expect(rulesDoc).toContain('`npm run public:github:exact:transaction:assess`');
     expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
     expect(rulesDoc).toContain('active release-candidate branch: none');

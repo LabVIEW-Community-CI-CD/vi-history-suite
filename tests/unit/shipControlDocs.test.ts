@@ -210,7 +210,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
     expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
-    expect(readme).toContain('feature/public-github-release-transaction-hardening');
+    expect(readme).toContain('none');
     expect(readme).toContain('npm run public:exact:pretag:proof');
     expect(readme).toContain('public_exact_pretag_proof');
     expect(readme).toContain('npm run public:github:exact:transaction:assess');
@@ -263,7 +263,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
-    expect(currentState).toContain('feature/public-github-release-transaction-hardening');
+    expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:exact:pretag:proof');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('npm run public:github:exact:transaction:assess');
@@ -340,6 +340,7 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
     expect(releaseProcedure).toContain('The active feature-lane public GitHub release hardening branch on `develop`');
+    expect(releaseProcedure).toContain('is none.');
     expect(releaseProcedure).toContain('npm run public:exact:pretag:proof');
     expect(releaseProcedure).toContain('public_exact_pretag_proof');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:assess');

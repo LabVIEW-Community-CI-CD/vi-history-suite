@@ -11,8 +11,7 @@
 ## Branch Model
 
 - Integration branch: `develop`
-- Feature-lane public GitHub release hardening branch:
-  `feature/public-github-release-transaction-hardening`
+- Feature-lane public GitHub release hardening branch: none
 - Later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete
 - Protected exact-release line: `main`

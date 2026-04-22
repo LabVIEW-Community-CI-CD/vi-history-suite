@@ -79,7 +79,7 @@ Current version-line contract:
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
-  `feature/public-github-release-transaction-hardening`
+  none
 - later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete
 - pre-tag public-exact proof package script:
@@ -101,7 +101,7 @@ Current control decision for public exact hardening:
 
 - chosen bump: `patch`
 - active feature-lane public GitHub release hardening branch:
-  `feature/public-github-release-transaction-hardening`
+  none
 - rationale: authority exact `v1.3.6` is already tagged on `main`, public
   GitHub `main` plus tag are already published, and draft release `312363117`
   already retains the exact assets, so the governed next step is repair in

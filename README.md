@@ -187,7 +187,7 @@ Authority release facts:
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
-  `feature/public-github-release-transaction-hardening`
+  none
 - later SemVer openings are frozen while the current exact public GitHub transaction remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`

@@ -20,7 +20,7 @@
     "activeReleaseCandidateBranch": null,
     "activeHotfixCandidateReleaseLine": null,
     "activeHotfixBranch": null,
-    "activeFeatureBranch": "feature/public-github-release-transaction-hardening",
+    "activeFeatureBranch": null,
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
     "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:assess",
@@ -44,7 +44,7 @@
     "exactReleaseLineBranch": "main",
     "activeReleaseCandidateBranch": null,
     "activeHotfixBranch": null,
-    "activeFeatureBranch": "feature/public-github-release-transaction-hardening",
+    "activeFeatureBranch": null,
     "temporaryBranchPrefixes": [
       "feature/",
       "release/",

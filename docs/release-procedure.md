@@ -20,7 +20,7 @@
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
-  is `feature/public-github-release-transaction-hardening`.
+  is none.
 - Later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete.
 - The pre-tag public-exact proof package script is
@@ -422,8 +422,7 @@ separate afterward.
 - The current develop package line on `develop` is `1.3.6`, public GitHub
   `main` now publishes `bd81bfe`, public tag `v1.3.6` is live, draft release
   `312363117` retains the exact assets, VS Code Marketplace remains `1.3.0`,
-  and the active repair lane is
-  `feature/public-github-release-transaction-hardening` until
+  and the retained `v1.3.6` repair state on `develop` stays frozen until
   `npm run public:github:exact:transaction:assess` proves a safe in-place
   repair or retains that repair is impossible.
 - The packaged extension homepage now points installed users to the maintained
