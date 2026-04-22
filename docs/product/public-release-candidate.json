@@ -145,20 +145,30 @@
     "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json"
   },
   "softwareFactoryGovernance": {
-    "status": "assess-only-foundation-open-no-production-mutation",
-    "activeFeatureBranch": "feature/software-factory-governance-foundation",
-    "packageScript": "npm run software:factory:assess",
-    "receiptPath": ".cache/software-factory-orchestrator/latest/software-factory-state.json",
-    "currentPhase": "assess",
-    "plannedFuturePhases": [
+    "status": "rehearse-repair-contract-open-no-production-mutation",
+    "activeFeatureBranch": "feature/software-factory-rehearse-repair-contract",
+    "packageScripts": {
+      "assess": "npm run software:factory:assess",
+      "rehearse": "npm run software:factory:rehearse",
+      "repair": "npm run software:factory:repair"
+    },
+    "receiptPaths": {
+      "assess": ".cache/software-factory-orchestrator/latest/software-factory-state.json",
+      "rehearse": ".cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json",
+      "repair": ".cache/software-factory-orchestrator/latest/repair/software-factory-state.json"
+    },
+    "admittedNonProductionPhases": [
+      "assess",
       "rehearse",
-      "repair",
+      "repair"
+    ],
+    "plannedFuturePhases": [
       "publish",
       "verify"
     ],
     "soleProductionRecoveryTarget": "v1.3.6",
     "productionMutationAllowed": false,
-    "rule": "no GitHub release publication, Marketplace publication, or other production mutation may occur through this foundation slice while the retained v1.3.6 recovery case remains open"
+    "rule": "no GitHub release publication, Marketplace publication, or other production mutation may occur through this non-production slice while the retained v1.3.6 recovery case remains open"
   },
   "localProofs": {
     "localInstalledVsixPreview": {

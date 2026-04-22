@@ -315,7 +315,13 @@ describe('extension manifest research alignment', () => {
       'node scripts/runPublicGithubExactReleaseTransaction.js'
     );
     expect(manifest.scripts?.['software:factory:assess']).toBe(
-      'node scripts/runSoftwareFactoryOrchestrator.js'
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase assess'
+    );
+    expect(manifest.scripts?.['software:factory:rehearse']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase rehearse'
+    );
+    expect(manifest.scripts?.['software:factory:repair']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase repair'
     );
     expect(manifest.scripts?.['dashboard:latest']).toBe(
       'node scripts/printLatestDashboardRun.js'
