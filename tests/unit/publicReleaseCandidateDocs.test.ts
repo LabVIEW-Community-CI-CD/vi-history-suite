@@ -148,7 +148,7 @@ describe('public release candidate control surface', () => {
       role: 'source-of-truth',
       integrationBranch: 'develop',
       releaseBranch: 'main',
-      featureHardeningBranch: 'feature/public-exact-pretag-proof',
+      featureHardeningBranch: null,
       semverDiscipline: 'strict-post-release-bumps'
     });
     expect(candidate.authorityRepo?.requiredChecks).toEqual(
@@ -178,7 +178,7 @@ describe('public release candidate control surface', () => {
       status: 'published-v1.3.1-candidate-wiki-head'
     });
     expect(candidate.candidateReadiness).toMatchObject({
-      authorityBaseline: 'v1.3.5-tagged-on-main-feature-public-exact-pretag-proof-open-on-develop',
+      authorityBaseline: 'v1.3.5-tagged-on-main-pretag-proof-retained-on-develop',
       localInstalledVsix: 'not-required-until-next-exact-reopen',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
       authorityIssue0414ImplementationState: 'closed-clean-before-next-public-candidate-step',
@@ -243,15 +243,16 @@ describe('public release candidate control surface', () => {
       marketplaceVersion: '1.3.0'
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
-      status: 'authority-v1.3.5-tagged-public-github-exact-retry-blocked-until-pretag-proof',
+      status:
+        'authority-v1.3.5-tagged-public-github-exact-retry-blocked-until-pretag-proof-retained-on-develop',
       hotfixBranch: null,
-      featureBranch: 'feature/public-exact-pretag-proof',
+      featureBranch: null,
       authorityMainCommit: '8f0069d',
       authorityTag: 'v1.3.5',
       publicGitHubExactCommit: 'ad351ed',
       publicGitHubReleaseUrl:
         'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1',
-      nextSeparateAct: 'feature-lane-public-exact-hardening',
+      nextSeparateAct: 'pre-tag-public-exact-proof-retained-on-develop',
       marketplaceVersionRetained: '1.3.0',
       preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
       preTagPublicExactProofJob: 'public_exact_pretag_proof'
@@ -309,7 +310,8 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Published public source commit: `ad351ed`');
     expect(candidateMarkdown).toContain('Public `develop` candidate commit: `ab293d5`');
     expect(candidateMarkdown).toContain('Published public wiki head: `141c39e`');
-    expect(candidateMarkdown).toContain('feature/public-exact-pretag-proof');
+    expect(candidateMarkdown).toContain('Feature-lane public-exact hardening branch: none');
+    expect(candidateMarkdown).toContain('Pre-tag public-exact proof hardening is now retained directly on `develop`');
     expect(candidateMarkdown).toContain('`not-required-until-next-exact-reopen`');
     expect(candidateMarkdown).toContain('`closed-clean-before-next-public-candidate-step`');
     expect(candidateMarkdown).toContain('`fresh-governed-windows-proof-retained`');
@@ -355,7 +357,8 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('active exact release candidate line on `develop`: none');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('active hotfix branch: none');
-    expect(currentState).toContain('feature/public-exact-pretag-proof');
+    expect(currentState).toContain('active feature-lane public-exact hardening branch on `develop`: none');
+    expect(currentState).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('separate public GitHub exact release: `v1.3.1` on `ad351ed`');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');

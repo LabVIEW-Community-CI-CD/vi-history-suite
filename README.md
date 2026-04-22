@@ -186,8 +186,8 @@ Authority release facts:
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`:
-  `feature/public-exact-pretag-proof`
+- active feature-lane public-exact hardening branch on `develop`: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`

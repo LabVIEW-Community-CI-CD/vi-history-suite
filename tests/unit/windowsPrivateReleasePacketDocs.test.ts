@@ -251,7 +251,8 @@ describe('windows private release packet docs', () => {
         }),
         linuxBootstrapReadiness: expect.objectContaining({
           script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
-          distro: 'Ubuntu',
+          distro: 'Ubuntu-24.04',
+          distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
           bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
           wakeAttempts: 12,
           wakeDelaySeconds: 10,

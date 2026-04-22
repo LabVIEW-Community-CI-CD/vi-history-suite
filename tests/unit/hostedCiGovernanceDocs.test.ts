@@ -37,7 +37,7 @@ describe('hosted ci governance docs', () => {
         activeReleaseCandidateBranch: null,
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
-        activeFeatureBranch: 'feature/public-exact-pretag-proof',
+        activeFeatureBranch: null,
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
         preTagPublicExactProofJob: 'public_exact_pretag_proof',
         chosenBump: 'patch'
@@ -170,7 +170,8 @@ describe('hosted ci governance docs', () => {
             failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
           },
           helperVerification: {
-            distro: 'Ubuntu',
+            distro: 'Ubuntu-24.04',
+            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
             wakeAttempts: 12,
             wakeDelaySeconds: 10,
             checks: [
@@ -237,7 +238,8 @@ describe('hosted ci governance docs', () => {
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           repoOwnedLinuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           linuxAssuranceBootstrap: {
-            distro: 'Ubuntu',
+            distro: 'Ubuntu-24.04',
+            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
             bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
             wakeAttempts: 12,
             wakeDelaySeconds: 10,
@@ -314,8 +316,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('active release-candidate branch: none');
     expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(matrixDoc).toContain('active hotfix branch: none');
-    expect(matrixDoc).toContain('active feature-lane public-exact hardening branch on `develop`:');
-    expect(matrixDoc).toContain('feature/public-exact-pretag-proof');
+    expect(matrixDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
+    expect(matrixDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
     expect(matrixDoc).toContain('Current Control Decision For Public Exact Hardening');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
@@ -339,7 +341,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('VIHS Governed Runner Lanes');
     expect(matrixDoc).toContain('apply-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('apply-governed-runner-lanes.ps1');
-    expect(matrixDoc).toContain('cold-admission fail-closed');
+    expect(matrixDoc).toContain('cold-admission');
+    expect(matrixDoc).toContain('fail-closed cleanup');
     expect(matrixDoc).toContain('doctor-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('doctor-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
@@ -373,7 +376,9 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(matrixDoc).toContain('npm run gitlab:runner:assert');
-    expect(matrixDoc).toContain('Ubuntu wake-up plus');
+    expect(matrixDoc).toContain('bounded Linux-distro wake-up');
+    expect(matrixDoc).toContain('Ubuntu-24.04');
+    expect(matrixDoc).toContain('VIHS_LINUX_ASSURANCE_DISTRO');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 

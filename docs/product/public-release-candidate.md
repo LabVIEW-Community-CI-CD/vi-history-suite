@@ -11,8 +11,8 @@
 ## Branch Model
 
 - Integration branch: `develop`
-- Feature-lane public-exact hardening branch:
-  `feature/public-exact-pretag-proof`
+- Feature-lane public-exact hardening branch: none
+- Pre-tag public-exact proof hardening is now retained directly on `develop`
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -29,7 +29,7 @@
 ## Readiness
 
 - Authority baseline:
-  `v1.3.5-tagged-on-main-feature-public-exact-pretag-proof-open-on-develop`
+  `v1.3.5-tagged-on-main-pretag-proof-retained-on-develop`
 - Local installed VSIX build:
   `not-required-until-next-exact-reopen`
 - Local public devcontainer: `v1.1.0-published-baseline`
@@ -76,9 +76,8 @@
 - Authority exact `v1.3.5` is already tagged on `main` `8f0069d`, but the
   separate public GitHub exact release act is still pending because no later
   exact reopen is active right now; the remaining authority-side public-exact
-  validation hardening now lives on `feature/public-exact-pretag-proof` from
-  `develop` `9004102`, and any later retry stays blocked until
-  `npm run public:exact:pretag:proof` plus GitLab
+  validation hardening is now retained directly on `develop`, and any later
+  retry stays blocked until `npm run public:exact:pretag:proof` plus GitLab
   `public_exact_pretag_proof` pass cleanly against the promoted public facade.
 
 ## Local Proof

@@ -161,8 +161,8 @@ Latest landed ship target:
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`:
-  `feature/public-exact-pretag-proof`
+- active feature-lane public-exact hardening branch on `develop`: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -235,8 +235,10 @@ Latest landed ship target:
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
-  - the same Windows bootstrap also wakes Ubuntu and retries the repo-owned
-    Linux assurance helper until it proves the paired
+  - the same Windows bootstrap also wakes the admitted Linux assurance distro,
+    defaulting to `Ubuntu-24.04` unless `VIHS_LINUX_ASSURANCE_DISTRO`
+    overrides it, and retries the repo-owned Linux assurance helper until it
+    proves the paired
     `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular,
     failing closed otherwise
   - the Linux helper now reconciles `~/.gitlab-runner/config.toml` back to
@@ -296,10 +298,9 @@ Latest landed ship target:
   exact release on `ad351ed` are now live, authority exact `v1.3.5` is now
   tagged on `main` `8f0069d`, VS Code Marketplace still serves `1.3.0`, no
   exact hotfix lane is currently open, and the remaining public-exact
-  validation hardening now proceeds on `feature/public-exact-pretag-proof`
-  from `develop` `9004102` until `npm run public:exact:pretag:proof` plus
-  GitLab `public_exact_pretag_proof` close cleanly before any later exact
-  reopen.
+  validation hardening is now retained directly on `develop` until
+  `npm run public:exact:pretag:proof` plus GitLab
+  `public_exact_pretag_proof` close cleanly before any later exact reopen.
 
 Current active and recently closed tranches:
 

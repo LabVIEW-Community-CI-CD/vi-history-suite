@@ -101,9 +101,11 @@ Current host activation state:
 - per-runner request concurrency: `request_concurrency = 2`
 - startup script collapses duplicate `gitlab-runner.exe` manager processes for
   the same config before ensuring exactly one current-user manager remains
-- on each logon bootstrap, the same script wakes the admitted Ubuntu distro,
-  retries the repo-owned Linux assurance helper up to `12` times with `10`
-  second pauses, and fails closed unless that helper proves the paired
+- on each logon bootstrap, the same script wakes the admitted Linux assurance
+  distro, defaulting to `Ubuntu-24.04` unless
+  `VIHS_LINUX_ASSURANCE_DISTRO` overrides it, retries the repo-owned Linux
+  assurance helper up to `12` times with `10` second pauses, and fails closed
+  unless that helper proves the paired
   `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular
 - on cold admission, the startup script clears stale `LabVIEW`,
   `LabVIEWCLI`, and `LVCompare` processes before the current-user runner
@@ -206,10 +208,13 @@ registration baseline to exist already: `gitlab-runner.exe`,
 It keeps the scheduled-task action on the ambient PowerShell execution policy
 instead of `ExecutionPolicy Bypass`.
 
-The admitted Linux helper path consumed by the bootstrap remains:
+The admitted Linux helper path consumed by the bootstrap remains. The
+repo-owned bootstrap resolves the WSL distro from
+`VIHS_LINUX_ASSURANCE_DISTRO` when set and otherwise defaults to
+`Ubuntu-24.04`:
 
 ```powershell
-wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh'
+wsl.exe -d Ubuntu-24.04 bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh'
 ```
 
 The repo-owned Windows bootstrap now treats that Linux helper as a bounded

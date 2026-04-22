@@ -19,8 +19,8 @@
 - The active release-candidate branch is none.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
-- The active feature-lane public-exact hardening branch on `develop` is
-  `feature/public-exact-pretag-proof`.
+- The active feature-lane public-exact hardening branch on `develop` is none.
+- Pre-tag public-exact proof hardening is now retained directly on `develop`.
 - The pre-tag public-exact proof package script is
   `npm run public:exact:pretag:proof`.
 - The pre-tag public-exact proof GitLab job is `public_exact_pretag_proof`.
@@ -403,10 +403,9 @@ separate afterward.
 - The current develop package line on `develop` is `1.3.5`, public GitHub
   exact release `v1.3.1` now publishes separately on `ad351ed`, VS Code
   Marketplace remains `1.3.0`, no exact hotfix lane is currently open, and
-  remaining public-exact validation hardening now proceeds on
-  `feature/public-exact-pretag-proof` from `develop` until
-  `npm run public:exact:pretag:proof` plus GitLab `public_exact_pretag_proof`
-  close cleanly before any later exact reopen.
+  remaining public-exact validation hardening is now retained directly on
+  `develop` until `npm run public:exact:pretag:proof` plus GitLab
+  `public_exact_pretag_proof` close cleanly before any later exact reopen.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

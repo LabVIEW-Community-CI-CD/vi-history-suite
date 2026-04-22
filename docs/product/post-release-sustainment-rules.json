@@ -50,7 +50,7 @@
       "activeReleaseCandidateBranch": null,
       "activeHotfixCandidateReleaseLine": null,
       "activeHotfixBranch": null,
-      "activeFeatureBranch": "feature/public-exact-pretag-proof",
+      "activeFeatureBranch": null,
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicDefaultBranch": "main",
@@ -134,7 +134,7 @@
     "activeOpeningDecision": {
       "recordedAt": "2026-04-21",
       "chosenBump": "patch",
-      "targetFeatureBranch": "feature/public-exact-pretag-proof",
+      "targetFeatureBranch": null,
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "rationale": [
@@ -142,7 +142,7 @@
         "authority exact v1.3.5 remains immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so any later exact reopen stays blocked until npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof pass cleanly against the promoted public facade"
       ],
       "rejectedAlternatives": {
-        "hotfix": "repeated exact reopen lines on main for brittle public-source validation repairs deviated from the governed GitFlow path, so the remaining hardening now lives on feature/* from develop",
+        "hotfix": "repeated exact reopen lines on main for brittle public-source validation repairs deviated from the governed GitFlow path, so the remaining hardening now stays retained on develop behind the fail-closed pre-tag proof gate",
         "minor": "the validation hardening still does not add a new governed capability or supported installed-user workflow",
         "major": "no exact public or maintainer contract is intentionally broken or removed; the retained v1.3.1 GitHub exact release stays intact while the gating fix advances on a feature lane"
       }
@@ -260,7 +260,8 @@
           },
           "linuxAssuranceBootstrap": {
             "script": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
-            "distro": "Ubuntu",
+            "distro": "Ubuntu-24.04",
+            "distroOverrideEnvironmentVariable": "VIHS_LINUX_ASSURANCE_DISTRO",
             "bootstrapCommand": "$HOME/gitlab-runner/start-linux-assurance.sh",
             "wakeAttempts": 12,
             "wakeDelaySeconds": 10,
