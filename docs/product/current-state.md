@@ -187,8 +187,9 @@ Latest landed ship target:
   `windows-private-release-evidence/manifest.json`
 - separate public GitHub exact release publication: blocked; public `main` now
   publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117`
-  retains the exact assets, and the last published GitHub release remains
-  `v1.3.1`
+  retains the exact assets, immutable releases are enabled, exact-tag release
+  lookup still returns `404`, the draft still serves an `untagged-*` URL, and
+  the last published GitHub release remains `v1.3.1`
 - VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -889,6 +890,13 @@ These are generated locally and are not the committed source of truth:
   - `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.md`
   - local fail-closed assessment via
     `npm run public:github:exact:transaction:assess`
+  - latest retained publishability probe:
+    `immutableReleasesEnabled=true`,
+    `immutableReleasesEnforcedByOwner=false`,
+    `draftReleaseTargetCommitish=main`,
+    `draftReleaseLookupStatusCode=404`,
+    `draftReleaseHtmlUrlUsesUntaggedPath=true`,
+    `publishabilityBlockerCode=draft-release-tag-lookup-unavailable`
 
 ## Commands
 

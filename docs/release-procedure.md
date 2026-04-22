@@ -45,8 +45,9 @@
   `main` promotion, or VS Code Marketplace publication.
 - Public GitHub `main` now publishes `bd81bfe`, public tag `v1.3.6` is live,
   draft release `312363117` retains the exact assets, the last published
-  GitHub release still serves `v1.3.1`, and VS Code Marketplace still serves
-  `1.3.0`.
+  GitHub release still serves `v1.3.1`, immutable releases are enabled,
+  exact-tag release lookup still returns `404`, the draft still serves an
+  `untagged-*` URL, and VS Code Marketplace still serves `1.3.0`.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
@@ -309,6 +310,10 @@ separate afterward.
     - before any further public GitHub exact-release repair or VS Code
       Marketplace act, run
       `npm run public:github:exact:transaction:assess`
+    - the current retained `v1.3.6` probe is blocked because immutable
+      releases are enabled while draft release `312363117` still resolves only
+      through the draft/list surface, exact-tag release lookup returns `404`,
+      and the draft still serves an `untagged-*` URL
     - fail closed if that controller freezes SemVer openings or reports that
       the current exact line must still be repaired in place
 15. Publish the exact VSIX to the VS Code Marketplace and retain the result.
