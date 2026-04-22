@@ -151,9 +151,9 @@ describe('post-release sustainment rules package', () => {
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.3.5',
       currentMainPackageLine: '1.3.5',
-      currentDevelopPackageLine: '1.3.5',
-      activeDevelopCandidateReleaseLine: null,
-      activeReleaseCandidateBranch: null,
+      currentDevelopPackageLine: '1.3.6',
+      activeDevelopCandidateReleaseLine: 'v1.3.6',
+      activeReleaseCandidateBranch: 'release/1.3.6',
       activeHotfixCandidateReleaseLine: null,
       activeHotfixBranch: null,
       activeFeatureBranch: null,
@@ -254,14 +254,15 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         chosenBump: 'patch',
         targetFeatureBranch: null,
+        targetReleaseBranch: 'release/1.3.6',
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
         preTagPublicExactProofJob: 'public_exact_pretag_proof'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the remaining stale public-exact validation hardening now returns to short-lived feature/* branches from develop instead of reopening main for another exact hotfix attempt',
-        'authority exact v1.3.5 remains immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so any later exact reopen stays blocked until npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof pass cleanly against the promoted public facade'
+        'authority exact v1.3.5 remains immutable while the separate public GitHub exact release still serves v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so release/1.3.6 now opens from merged-green develop for the next governed public-exact retry',
+        'npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof remain fail-closed gates on develop before any later exact tag act from the reopened line'
       ])
     );
 
@@ -576,9 +577,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
     expect(rulesDoc).toContain('current exact released line: `v1.3.5`');
     expect(rulesDoc).toContain('current published package line on `main`: `1.3.5`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.5`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
-    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.6`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.6`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.6`');
     expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(rulesDoc).toContain('active hotfix branch: none');
     expect(rulesDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
