@@ -38,7 +38,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain(
       'authority exact-release reopening is now retained on `release/1.3.1`'
     );
-    expect(currentState).toContain('feature/public-exact-pretag-proof');
+    expect(currentState).toContain('active feature-lane public-exact hardening branch on `develop`: none');
     expect(currentState).toContain('public_exact_pretag_proof');
 
     expect(candidate).toContain(

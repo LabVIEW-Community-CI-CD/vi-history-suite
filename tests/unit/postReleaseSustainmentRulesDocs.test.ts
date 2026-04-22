@@ -156,7 +156,7 @@ describe('post-release sustainment rules package', () => {
       activeReleaseCandidateBranch: null,
       activeHotfixCandidateReleaseLine: null,
       activeHotfixBranch: null,
-      activeFeatureBranch: 'feature/public-exact-pretag-proof',
+      activeFeatureBranch: null,
       preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
       preTagPublicExactProofJob: 'public_exact_pretag_proof',
       publicDefaultBranch: 'main',
@@ -253,7 +253,7 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetFeatureBranch: 'feature/public-exact-pretag-proof',
+        targetFeatureBranch: null,
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
         preTagPublicExactProofJob: 'public_exact_pretag_proof'
       })
@@ -580,8 +580,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('active release-candidate branch: none');
     expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(rulesDoc).toContain('active hotfix branch: none');
-    expect(rulesDoc).toContain('active feature-lane public-exact hardening branch on `develop`:');
-    expect(rulesDoc).toContain('feature/public-exact-pretag-proof');
+    expect(rulesDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
+    expect(rulesDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
     expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('Current control decision for public exact hardening:');
     expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');

@@ -209,7 +209,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- active release-candidate branch: none');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
-    expect(readme).toContain('feature/public-exact-pretag-proof');
+    expect(readme).toContain('active feature-lane public-exact hardening branch on `develop`: none');
     expect(readme).toContain('npm run public:exact:pretag:proof');
     expect(readme).toContain('public_exact_pretag_proof');
     expect(readme).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
@@ -260,7 +260,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- active release-candidate branch: none');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
-    expect(currentState).toContain('feature/public-exact-pretag-proof');
+    expect(currentState).toContain('active feature-lane public-exact hardening branch on `develop`: none');
     expect(currentState).toContain('npm run public:exact:pretag:proof');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
@@ -335,7 +335,7 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('The active release-candidate branch is none.');
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
-    expect(releaseProcedure).toContain('feature/public-exact-pretag-proof');
+    expect(releaseProcedure).toContain('The active feature-lane public-exact hardening branch on `develop` is none.');
     expect(releaseProcedure).toContain('npm run public:exact:pretag:proof');
     expect(releaseProcedure).toContain('public_exact_pretag_proof');
     expect(releaseProcedure).toContain('The active Windows x64 private-release-prep slice is the historical');

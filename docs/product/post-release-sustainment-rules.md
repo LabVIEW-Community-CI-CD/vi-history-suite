@@ -77,8 +77,8 @@ Current version-line contract:
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`:
-  `feature/public-exact-pretag-proof`
+- active feature-lane public-exact hardening branch on `develop`: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -93,8 +93,8 @@ Current version-line contract:
 Current control decision for public exact hardening:
 
 - chosen bump: `patch`
-- active feature-lane public-exact hardening branch:
-  `feature/public-exact-pretag-proof`
+- active feature-lane public-exact hardening branch: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
 - rationale: the remaining stale public-exact validation hardening now returns
   to short-lived `feature/*` branches from `develop` instead of reopening
   `main` for another exact hotfix attempt
@@ -105,7 +105,8 @@ Current control decision for public exact hardening:
   pass cleanly against the promoted public facade
 - rejected `hotfix`: repeated exact reopen lines on `main` for brittle
   public-source validation repairs deviated from the governed GitFlow path,
-  so the remaining hardening now lives on `feature/*` from `develop`
+  so the remaining hardening now stays retained on `develop` behind the
+  fail-closed pre-tag proof gate
 - rejected `minor`: the validation hardening still does not add a new governed
   capability or supported installed-user workflow
 - rejected `major`: no exact public or maintainer contract is intentionally

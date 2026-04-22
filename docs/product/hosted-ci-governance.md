@@ -11,9 +11,8 @@ This document is the control-plane summary of the governed historical
 Authority exact `main` now carries tagged `v1.3.5`, `develop` now carries
 `1.3.5`, the separate public GitHub exact release still serves `v1.3.1`, the
 Marketplace listing still serves `1.3.0`, no exact hotfix lane is currently
-open, and the remaining public-exact validation hardening now proceeds on
-`feature/public-exact-pretag-proof` from `develop` before any later exact
-reopen.
+open, and the remaining public-exact validation hardening is now retained
+directly on `develop` before any later exact reopen.
 
 ## Current Exact Closeout State
 
@@ -36,8 +35,8 @@ reopen.
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`:
-  `feature/public-exact-pretag-proof`
+- active feature-lane public-exact hardening branch on `develop`: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`

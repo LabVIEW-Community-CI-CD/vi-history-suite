@@ -20,7 +20,7 @@
     "activeReleaseCandidateBranch": null,
     "activeHotfixCandidateReleaseLine": null,
     "activeHotfixBranch": null,
-    "activeFeatureBranch": "feature/public-exact-pretag-proof",
+    "activeFeatureBranch": null,
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
     "chosenBump": "patch",
@@ -43,7 +43,7 @@
     "exactReleaseLineBranch": "main",
     "activeReleaseCandidateBranch": null,
     "activeHotfixBranch": null,
-    "activeFeatureBranch": "feature/public-exact-pretag-proof",
+    "activeFeatureBranch": null,
     "temporaryBranchPrefixes": [
       "feature/",
       "release/",

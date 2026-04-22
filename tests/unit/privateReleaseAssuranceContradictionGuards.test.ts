@@ -35,7 +35,7 @@ describe('private release assurance contradiction guards', () => {
     expect(currentState).toContain('active exact release candidate line on `develop`: none');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('active hotfix branch: none');
-    expect(currentState).toContain('feature/public-exact-pretag-proof');
+    expect(currentState).toContain('active feature-lane public-exact hardening branch on `develop`: none');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(releaseProcedure).toContain(
       'The active Windows x64 private-release-prep slice is the historical'

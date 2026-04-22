@@ -7,7 +7,7 @@
     "role": "source-of-truth",
     "integrationBranch": "develop",
     "releaseBranch": "main",
-    "featureHardeningBranch": "feature/public-exact-pretag-proof",
+    "featureHardeningBranch": null,
     "requiredChecks": [
       "public_exact_pretag_proof",
       "docs_continuous_integration",
@@ -50,7 +50,7 @@
     "status": "published-v1.3.1-candidate-wiki-head"
   },
   "candidateReadiness": {
-    "authorityBaseline": "v1.3.5-tagged-on-main-feature-public-exact-pretag-proof-open-on-develop",
+    "authorityBaseline": "v1.3.5-tagged-on-main-pretag-proof-retained-on-develop",
     "localInstalledVsix": "not-required-until-next-exact-reopen",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
@@ -113,14 +113,14 @@
     "releaseBranch": "main"
   },
   "exactReleaseReopening": {
-    "status": "authority-v1.3.5-tagged-public-github-exact-retry-blocked-until-pretag-proof",
+    "status": "authority-v1.3.5-tagged-public-github-exact-retry-blocked-until-pretag-proof-retained-on-develop",
     "hotfixBranch": null,
-    "featureBranch": "feature/public-exact-pretag-proof",
+    "featureBranch": null,
     "authorityMainCommit": "8f0069d",
     "authorityTag": "v1.3.5",
     "publicGitHubExactCommit": "ad351ed",
     "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1",
-    "nextSeparateAct": "feature-lane-public-exact-hardening",
+    "nextSeparateAct": "pre-tag-public-exact-proof-retained-on-develop",
     "marketplaceVersionRetained": "1.3.0",
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof"

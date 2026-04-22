@@ -37,7 +37,7 @@ describe('hosted ci governance docs', () => {
         activeReleaseCandidateBranch: null,
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
-        activeFeatureBranch: 'feature/public-exact-pretag-proof',
+        activeFeatureBranch: null,
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
         preTagPublicExactProofJob: 'public_exact_pretag_proof',
         chosenBump: 'patch'
@@ -314,8 +314,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('active release-candidate branch: none');
     expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(matrixDoc).toContain('active hotfix branch: none');
-    expect(matrixDoc).toContain('active feature-lane public-exact hardening branch on `develop`:');
-    expect(matrixDoc).toContain('feature/public-exact-pretag-proof');
+    expect(matrixDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
+    expect(matrixDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
     expect(matrixDoc).toContain('Current Control Decision For Public Exact Hardening');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
