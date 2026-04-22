@@ -11,19 +11,25 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.3.5`.
+- The current exact released line is `v1.3.6`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.3.5`.
+- The current published package line on `main` is `1.3.6`.
 - The current develop package line on `develop` is `1.3.6`.
-- The active exact release candidate line on `develop` is `v1.3.6`.
-- The active release-candidate branch is `release/1.3.6`.
+- The active exact release candidate line on `develop` is none.
+- The active release-candidate branch is none.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
-- The active feature-lane public-exact hardening branch on `develop` is none.
-- Pre-tag public-exact proof hardening is now retained directly on `develop`.
+- The active feature-lane public GitHub release hardening branch on `develop`
+  is `feature/public-github-release-transaction-hardening`.
+- Later SemVer openings are frozen while the current exact public GitHub
+  transaction remains incomplete.
 - The pre-tag public-exact proof package script is
   `npm run public:exact:pretag:proof`.
 - The pre-tag public-exact proof GitLab job is `public_exact_pretag_proof`.
+- The public GitHub exact transaction assessment package script is
+  `npm run public:github:exact:transaction:assess`.
+- The retained public GitHub exact transaction receipt is
+  `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
 - The active Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The active Windows x64 private-release packet is:
@@ -37,8 +43,10 @@
   `windows-private-release-evidence/manifest.json`.
 - That private-release act does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
-- The separate public GitHub exact release `v1.3.1` is now live, while VS
-  Code Marketplace still serves `1.3.0`.
+- Public GitHub `main` now publishes `bd81bfe`, public tag `v1.3.6` is live,
+  draft release `312363117` retains the exact assets, the last published
+  GitHub release still serves `v1.3.1`, and VS Code Marketplace still serves
+  `1.3.0`.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
@@ -158,6 +166,12 @@
   publication or release normalization continues.
 - A SemVer bump is not complete until the matching public tag, public GitHub
   release, and VS Code Marketplace version are all published.
+- A later SemVer opening is forbidden while the current exact line still
+  retains a blocked public GitHub or VS Code Marketplace transaction.
+- When public GitHub `main`, the exact tag, or a draft release already exist
+  for the current exact line, the governed next step is repair in place
+  unless `npm run public:github:exact:transaction:assess` retains that repair
+  is impossible.
 - Exact release closeout is not complete until the exact released `main` line
   has also been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green.
@@ -292,6 +306,11 @@ separate afterward.
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
 14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.
+    - before any further public GitHub exact-release repair or VS Code
+      Marketplace act, run
+      `npm run public:github:exact:transaction:assess`
+    - fail closed if that controller freezes SemVer openings or reports that
+      the current exact line must still be repaired in place
 15. Publish the exact VSIX to the VS Code Marketplace and retain the result.
     - The governed distribution surface is the VS Code Marketplace item
       `svelderrainruiz.vi-history-suite`.
@@ -393,21 +412,20 @@ separate afterward.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.3.5`, tracked in
-  `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
-  `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
-  exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact
-  `v1.2.2`, exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`,
-  exact `v1.3.4`, exact `v1.3.5`, or separate public GitHub exact `v1.3.1`
-  release evidence.
+- The current published package line on `main` is `1.3.6`, tracked in the
+  exact authority line while the current develop package line remains `1.3.6`;
+  that split must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
+  burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
+  `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
+  exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
+  `v1.3.4`, exact `v1.3.5`, or exact `v1.3.6` release evidence.
 - The current develop package line on `develop` is `1.3.6`, public GitHub
-  exact release `v1.3.1` now publishes separately on `ad351ed`,
-  `release/1.3.6` is now the active exact-retry branch from merged-green
-  `develop`, VS Code Marketplace remains `1.3.0`, no exact hotfix lane is
-  currently open, and the reopened public-exact retry remains blocked until
-  `npm run public:exact:pretag:proof` plus GitLab
-  `public_exact_pretag_proof` close cleanly against the promoted public
-  facade.
+  `main` now publishes `bd81bfe`, public tag `v1.3.6` is live, draft release
+  `312363117` retains the exact assets, VS Code Marketplace remains `1.3.0`,
+  and the active repair lane is
+  `feature/public-github-release-transaction-hardening` until
+  `npm run public:github:exact:transaction:assess` proves a safe in-place
+  repair or retains that repair is impossible.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

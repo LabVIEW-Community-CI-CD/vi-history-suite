@@ -1979,6 +1979,21 @@ Information-for-users review cases:
   combined doctor surface with `--fail-on-drift`, retains
   `governed-runner-admission-evidence/`, and blocks downstream docs,
   assurance, test, package, and release work when runner drift is detected
+- `TEST-UNIT-370`: verify the public GitHub exact-release transaction
+  controller inspects authority exact main/tag state, live public GitHub
+  main/tag/release/assets, and live VS Code Marketplace version, writes JSON
+  plus Markdown receipts, and fails closed when the transaction remains
+  incomplete or contradictory
+- `TEST-UNIT-371`: verify the public GitHub exact-release transaction
+  controller freezes later SemVer openings and classifies the current exact
+  line as repair-in-place first whenever public GitHub `main`, the exact tag,
+  or a draft release already exist for that same exact line
+- `TEST-UNIT-372`: verify the authority release-control package retains the
+  current exact line, `main` and `develop` package lines, the active
+  hardening feature branch, the live public GitHub source head and tag, the
+  current draft-release id when present, the last published GitHub release
+  baseline, the retained Marketplace version, and the transaction-assessment
+  package script and receipt path
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2040,6 +2055,23 @@ Information-for-users review cases:
   RTM, and test plan and confirm `governed_runner_admission` runs first as a
   fail-fast admission gate with retained doctor evidence before later docs,
   assurance, test, package, and release stages queue
+- `TEST-DOC-123`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, SRS, RTM, and
+  the test plan and confirm the public GitHub exact-release transaction
+  assessment surface is explicit, receipt-backed, and fail-closed while the
+  current exact public transaction remains incomplete
+- `TEST-DOC-124`: review the sustainment package, current-state, release
+  procedure, public-release candidate package, SRS, RTM, and the test plan
+  and confirm the no-bump repair rule freezes later SemVer openings whenever
+  the current exact line already retains public GitHub `main`, the exact tag,
+  or a draft release record
+- `TEST-DOC-125`: review README, current-state, hosted governance, the public
+  source publication ledger, the public-release candidate package, SRS, RTM,
+  and the test plan and confirm the control plane retains the current exact
+  line, `main` and `develop` package lines, active hardening feature branch,
+  live public GitHub source head and tag, draft-release id when present, last
+  published GitHub release baseline, retained Marketplace version, and the
+  transaction-assessment package script and receipt path
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

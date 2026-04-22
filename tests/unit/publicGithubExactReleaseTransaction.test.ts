@@ -1,0 +1,503 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const transaction = require(path.join(
+  repoRoot,
+  'scripts',
+  'runPublicGithubExactReleaseTransaction.js'
+)) as {
+  DEFAULT_EVIDENCE_DIR: string;
+  DEFAULT_MARKETPLACE_ITEM: string;
+  DEFAULT_OWNER: string;
+  DEFAULT_REPO: string;
+  assessTransaction: (facts: Record<string, unknown>) => {
+    status: string;
+    phases: Array<{ id: string; status: string; summary: string }>;
+    semverFreeze: {
+      status: string;
+      openingNewSemverAllowed: boolean;
+      rationale: string;
+    };
+    repairInPlace: {
+      required: boolean;
+      allowed: boolean;
+      status: string;
+      rationale: string;
+      nextAllowedAction: string;
+    };
+  };
+  buildMarkdown: (report: {
+    recordedAt: string;
+    repoRoot: string;
+    status: string;
+    authority: { tag: string; mainSha: string };
+    publicSource: { mainSha: string | null; tagRef: string | null };
+    marketplace: { currentPublishedVersion: string | null };
+    semverFreeze: {
+      status: string;
+      openingNewSemverAllowed: boolean;
+      rationale: string;
+    };
+    repairInPlace: {
+      required: boolean;
+      allowed: boolean;
+      status: string;
+      rationale: string;
+      nextAllowedAction: string;
+    };
+    phases: Array<{ id: string; status: string; summary: string }>;
+  }) => string;
+  getUsage: () => string;
+  parseArgs: (argv: string[]) => {
+    helpRequested: boolean;
+    owner: string;
+    repo: string;
+    tag: string | null;
+    evidenceDir: string;
+    githubTokenPath: string | null;
+    marketplaceItem: string;
+  };
+  parseSemverTag: (
+    tag: string
+  ) => { tag: string; major: number; minor: number; patch: number } | null;
+  resolveLatestExactTag: (
+    spawnImpl?: (command: string, args: string[], options: { cwd: string; encoding: string; shell: boolean }) => {
+      status?: number | null;
+      stdout?: string;
+      stderr?: string;
+    }
+  ) => string;
+  resolveReleaseManifestPath: (tag: string, fsApi?: typeof fs) => string | null;
+  readReleaseManifest: (tag: string, fsApi?: typeof fs) => {
+    manifestPath: string;
+    checksumPath: string | null;
+    manifest: {
+      tag: string;
+      packageVersion: string;
+      commitSha: string;
+      vsixArtifact: { fileName: string; sha256: string };
+    };
+    checksumSha256: string | null;
+  } | null;
+};
+
+describe('public GitHub exact-release transaction controller', () => {
+  it('retains a deterministic CLI contract and latest-tag resolver', () => {
+    expect(transaction.parseArgs([])).toEqual({
+      helpRequested: false,
+      owner: 'svelderrainruiz',
+      repo: 'vi-history-suite',
+      tag: null,
+      evidenceDir: transaction.DEFAULT_EVIDENCE_DIR,
+      githubTokenPath: null,
+      marketplaceItem: 'svelderrainruiz.vi-history-suite'
+    });
+    expect(
+      transaction.parseArgs([
+        '--tag',
+        'v1.3.6',
+        '--owner',
+        'owner',
+        '--repo',
+        'repo',
+        '--github-token-path',
+        'C:\\tokens\\github.txt',
+        '--marketplace-item',
+        'publisher.extension',
+        '--evidence-dir',
+        'artifacts/public-transaction'
+      ])
+    ).toEqual({
+      helpRequested: false,
+      owner: 'owner',
+      repo: 'repo',
+      tag: 'v1.3.6',
+      evidenceDir: path.resolve('artifacts/public-transaction'),
+      githubTokenPath: path.resolve('C:\\tokens\\github.txt'),
+      marketplaceItem: 'publisher.extension'
+    });
+    expect(transaction.getUsage()).toContain('--github-token-path');
+    expect(transaction.getUsage()).toContain('--marketplace-item');
+    expect(transaction.DEFAULT_OWNER).toBe('svelderrainruiz');
+    expect(transaction.DEFAULT_REPO).toBe('vi-history-suite');
+    expect(transaction.DEFAULT_MARKETPLACE_ITEM).toBe('svelderrainruiz.vi-history-suite');
+
+    expect(transaction.parseSemverTag('v1.3.6')).toEqual({
+      tag: 'v1.3.6',
+      major: 1,
+      minor: 3,
+      patch: 6
+    });
+    expect(transaction.parseSemverTag('not-a-tag')).toBeNull();
+
+    const latestTag = transaction.resolveLatestExactTag((command, args) => {
+      expect(command).toBe('git');
+      expect(args).toEqual(['tag', '--list', 'v*']);
+      return {
+        status: 0,
+        stdout: ['v1.3.4', 'v1.3.6', 'v1.3.5'].join('\n'),
+        stderr: ''
+      };
+    });
+    expect(latestTag).toBe('v1.3.6');
+  });
+
+  it('reads the retained authority release manifest for the current exact tag', () => {
+    const manifestPath = transaction.resolveReleaseManifestPath('v1.3.6');
+    expect(manifestPath).toBe(
+      path.join(
+        repoRoot,
+        '.cache',
+        'gitlab-release-artifacts',
+        'v1.3.6',
+        'expanded',
+        'release-evidence',
+        'release-manifest.json'
+      )
+    );
+
+    const manifest = transaction.readReleaseManifest('v1.3.6');
+    expect(manifest).toMatchObject({
+      manifestPath,
+      checksumPath: path.join(
+        repoRoot,
+        '.cache',
+        'gitlab-release-artifacts',
+        'v1.3.6',
+        'expanded',
+        'release-evidence',
+        'vi-history-suite-1.3.6.vsix.sha256'
+      ),
+      manifest: {
+        tag: 'v1.3.6',
+        packageVersion: '1.3.6',
+        commitSha: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
+        vsixArtifact: {
+          fileName: 'vi-history-suite-1.3.6.vsix',
+          sha256: '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb'
+        }
+      }
+    });
+    expect(manifest?.checksumSha256).toBe(
+      '7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0'
+    );
+  });
+
+  it('fails closed on the current v1.3.6 partial-publication state and freezes new SemVer openings', () => {
+    const assessment = transaction.assessTransaction({
+      authority: {
+        tag: 'v1.3.6',
+        packageVersion: '1.3.6',
+        mainSha: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
+        tagObjectSha: '044399a598735ad87082d64e01d8c92a8c77b5ef',
+        tagCommitSha: '3cb238334100d01d5cfe7998e17e20a7b497b3fb'
+      },
+      publicSource: {
+        mainSha: 'bd81bfe6743348c9138c3f0f4967c790a235184f',
+        tagRef: 'refs/tags/v1.3.6',
+        tagObjectType: 'tag',
+        tagObjectSha: '4e2e2f92bd733336eb81e496b1cc4facc4410016',
+        tagCommitSha: 'bd81bfe6743348c9138c3f0f4967c790a235184f'
+      },
+      publicReleaseLookup: {
+        statusCode: 404
+      },
+      publicReleases: [
+        {
+          id: 311813620,
+          tag_name: 'v1.3.1',
+          draft: false,
+          immutable: true
+        }
+      ],
+      publicRelease: {
+        id: 312363117,
+        tag_name: 'v1.3.6',
+        draft: true,
+        prerelease: false,
+        created_at: '2026-04-22T17:45:17Z',
+        published_at: null,
+        html_url:
+          'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+        immutable: false,
+        assets: [
+          {
+            name: 'vi-history-suite-1.3.6.vsix',
+            digest: 'sha256:4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb'
+          },
+          {
+            name: 'vi-history-suite-1.3.6.vsix.sha256',
+            digest: 'sha256:7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0'
+          }
+        ]
+      },
+      releaseManifest: {
+        manifestPath: 'release-evidence/release-manifest.json',
+        checksumPath: 'release-evidence/vi-history-suite-1.3.6.vsix.sha256',
+        manifest: {
+          tag: 'v1.3.6',
+          packageVersion: '1.3.6',
+          commitSha: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
+          vsixArtifact: {
+            fileName: 'vi-history-suite-1.3.6.vsix',
+            sha256: '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb'
+          }
+        },
+        checksumSha256: '7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0'
+      },
+      marketplace: {
+        marketplaceItem: 'svelderrainruiz.vi-history-suite',
+        currentPublishedVersion: '1.3.0'
+      }
+    });
+
+    expect(assessment.status).toBe('blocked');
+    expect(assessment.semverFreeze).toEqual(
+      expect.objectContaining({
+        status: 'frozen',
+        openingNewSemverAllowed: false
+      })
+    );
+    expect(assessment.semverFreeze.rationale).toContain('v1.3.6');
+    expect(assessment.repairInPlace).toEqual(
+      expect.objectContaining({
+        required: true,
+        allowed: true,
+        status: 'required-but-blocked-on-publishability'
+      })
+    );
+    expect(assessment.repairInPlace.rationale).toContain('repair in place');
+    expect(assessment.repairInPlace.nextAllowedAction).toBe(
+      'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
+    );
+    expect(assessment.phases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'authority-exact-main', status: 'pass' }),
+        expect.objectContaining({ id: 'public-source-main', status: 'pass' }),
+        expect.objectContaining({ id: 'public-tag', status: 'pass' }),
+        expect.objectContaining({ id: 'public-release-assets', status: 'pass' }),
+        expect.objectContaining({ id: 'public-release-publishability', status: 'blocked' }),
+        expect.objectContaining({ id: 'public-release-published', status: 'blocked' }),
+        expect.objectContaining({ id: 'marketplace-published', status: 'blocked' })
+      ])
+    );
+
+    const markdown = transaction.buildMarkdown({
+      recordedAt: '2026-04-22T19:00:00.000Z',
+      repoRoot: '/repo',
+      status: assessment.status,
+      authority: { tag: 'v1.3.6', mainSha: '3cb2383' },
+      publicSource: { mainSha: 'bd81bfe', tagRef: 'refs/tags/v1.3.6' },
+      marketplace: { currentPublishedVersion: '1.3.0' },
+      semverFreeze: assessment.semverFreeze,
+      repairInPlace: assessment.repairInPlace,
+      phases: assessment.phases
+    });
+    expect(markdown).toContain('# Public GitHub Exact Release Transaction');
+    expect(markdown).toContain('Status: blocked');
+    expect(markdown).toContain('New SemVer opening allowed: false');
+    expect(markdown).toContain('| public-release-published | blocked |');
+  });
+
+  it('writes a retained blocked receipt before failing closed on an incomplete public transaction', async () => {
+    const evidenceDir = path.join(repoRoot, '.cache', 'test-public-github-exact-release-transaction');
+    fs.rmSync(evidenceDir, { recursive: true, force: true });
+
+    try {
+      await expect(
+        transaction.runAssessment(
+          ['--tag', 'v1.3.6', '--evidence-dir', evidenceDir],
+          {
+            now: () => '2026-04-22T21:00:00.000Z',
+            env: {
+              [process.env.USERPROFILE ? 'USERPROFILE' : 'HOME']: process.env.USERPROFILE ?? process.env.HOME,
+              VIHS_GITHUB_TOKEN_FILE: path.join(repoRoot, '.cache', 'tests', 'github-token.txt')
+            },
+            fs: {
+              ...fs,
+              existsSync: (targetPath: fs.PathLike) => {
+                const normalized = String(targetPath);
+                if (normalized.endsWith(path.join('.cache', 'tests', 'github-token.txt'))) {
+                  return true;
+                }
+                return fs.existsSync(targetPath);
+              },
+              readFileSync: (targetPath: fs.PathOrFileDescriptor, encoding?: BufferEncoding | null) => {
+                const normalized = String(targetPath);
+                if (normalized.endsWith(path.join('.cache', 'tests', 'github-token.txt'))) {
+                  return 'github-token';
+                }
+                return fs.readFileSync(targetPath, encoding as BufferEncoding);
+              }
+            },
+            spawnImpl: (command, args) => {
+              expect(command).toBe('git');
+              const joined = args.join(' ');
+              if (joined === 'rev-parse --verify origin/main') {
+                return { status: 0, stdout: '3cb238334100d01d5cfe7998e17e20a7b497b3fb', stderr: '' };
+              }
+              if (joined === 'rev-parse --verify refs/tags/v1.3.6') {
+                return { status: 0, stdout: '044399a598735ad87082d64e01d8c92a8c77b5ef', stderr: '' };
+              }
+              if (joined === 'rev-list -n 1 v1.3.6') {
+                return { status: 0, stdout: '3cb238334100d01d5cfe7998e17e20a7b497b3fb', stderr: '' };
+              }
+              throw new Error(`Unexpected git invocation: ${joined}`);
+            },
+            fetchGitHubJson: async (_owner, _repo, endpoint) => {
+              if (endpoint === '/branches/main') {
+                return {
+                  statusCode: 200,
+                  json: { commit: { sha: 'bd81bfe6743348c9138c3f0f4967c790a235184f' } }
+                };
+              }
+              if (endpoint === '/git/ref/tags/v1.3.6') {
+                return {
+                  statusCode: 200,
+                  json: {
+                    ref: 'refs/tags/v1.3.6',
+                    object: { type: 'tag', sha: '4e2e2f92bd733336eb81e496b1cc4facc4410016' }
+                  }
+                };
+              }
+              if (endpoint === '/git/tags/4e2e2f92bd733336eb81e496b1cc4facc4410016') {
+                return {
+                  statusCode: 200,
+                  json: {
+                    object: { sha: 'bd81bfe6743348c9138c3f0f4967c790a235184f' }
+                  }
+                };
+              }
+              if (endpoint === '/releases?per_page=100') {
+                return {
+                  statusCode: 200,
+                  json: [
+                    {
+                      id: 311813620,
+                      tag_name: 'v1.3.1',
+                      draft: false,
+                      prerelease: false,
+                      created_at: '2026-04-21T14:00:00Z',
+                      published_at: '2026-04-21T14:05:00Z',
+                      html_url:
+                        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1',
+                      immutable: true
+                    },
+                    {
+                      id: 312363117,
+                      tag_name: 'v1.3.6',
+                      draft: true,
+                      prerelease: false,
+                      created_at: '2026-04-22T17:45:17Z',
+                      published_at: null,
+                      html_url:
+                        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+                      immutable: false,
+                      url: 'https://api.github.com/repos/svelderrainruiz/vi-history-suite/releases/312363117'
+                    }
+                  ]
+                };
+              }
+              if (endpoint === '/releases/tags/v1.3.6') {
+                return { statusCode: 404, json: { message: 'Not Found' } };
+              }
+              if (endpoint === '/releases/312363117') {
+                return {
+                  statusCode: 200,
+                  json: {
+                    id: 312363117,
+                    tag_name: 'v1.3.6',
+                    draft: true,
+                    prerelease: false,
+                    created_at: '2026-04-22T17:45:17Z',
+                    published_at: null,
+                    html_url:
+                      'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+                    immutable: false,
+                    assets: [
+                      {
+                        id: 1,
+                        name: 'vi-history-suite-1.3.6.vsix',
+                        size: 495214,
+                        state: 'uploaded',
+                        digest:
+                          'sha256:4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb',
+                        download_count: 0,
+                        browser_download_url: 'https://example.invalid/vsix'
+                      },
+                      {
+                        id: 2,
+                        name: 'vi-history-suite-1.3.6.vsix.sha256',
+                        size: 120,
+                        state: 'uploaded',
+                        digest:
+                          'sha256:7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0',
+                        download_count: 0,
+                        browser_download_url: 'https://example.invalid/vsix.sha256'
+                      }
+                    ]
+                  }
+                };
+              }
+
+              throw new Error(`Unexpected GitHub endpoint: ${endpoint}`);
+            },
+            fetchMarketplaceState: async () => ({
+              statusCode: 200,
+              marketplaceItem: 'svelderrainruiz.vi-history-suite',
+              currentPublishedVersion: '1.3.0',
+              found: true
+            })
+          }
+        )
+      ).rejects.toThrow(/repair in place/i);
+
+      const jsonReportPath = path.join(
+        evidenceDir,
+        'public-github-exact-release-transaction.json'
+      );
+      const markdownReportPath = path.join(
+        evidenceDir,
+        'public-github-exact-release-transaction.md'
+      );
+      expect(fs.existsSync(jsonReportPath)).toBe(true);
+      expect(fs.existsSync(markdownReportPath)).toBe(true);
+
+      const jsonReport = JSON.parse(fs.readFileSync(jsonReportPath, 'utf8')) as {
+        authority: { packageVersion: string; branchPackageVersion: string };
+        status: string;
+        semverFreeze: { status: string; openingNewSemverAllowed: boolean };
+        repairInPlace: { required: boolean; allowed: boolean; status: string };
+        phases: Array<{ id: string; summary: string }>;
+      };
+      const markdownReport = fs.readFileSync(markdownReportPath, 'utf8');
+
+      expect(jsonReport.authority).toMatchObject({
+        packageVersion: '1.3.6',
+        branchPackageVersion: '1.3.6'
+      });
+      expect(jsonReport.status).toBe('blocked');
+      expect(jsonReport.semverFreeze).toMatchObject({
+        status: 'frozen',
+        openingNewSemverAllowed: false
+      });
+      expect(jsonReport.repairInPlace).toMatchObject({
+        required: true,
+        allowed: true,
+        status: 'required-but-blocked-on-publishability'
+      });
+      expect(
+        jsonReport.phases.find((phase) => phase.id === 'marketplace-published')?.summary
+      ).toContain('not 1.3.6');
+      expect(markdownReport).toContain('Authority tag: v1.3.6');
+      expect(markdownReport).toContain('Next allowed action: repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven');
+    } finally {
+      fs.rmSync(evidenceDir, { recursive: true, force: true });
+    }
+  });
+});

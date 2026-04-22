@@ -8,12 +8,13 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.5`, `develop` still carries
-`1.3.5`, `release/1.3.6` is now open from merged-green `develop` `189aa3a`,
-the separate public GitHub exact release still serves `v1.3.1`, the
+Authority exact `main` now carries tagged `v1.3.6`, `develop` still carries
+`1.3.6`, public GitHub `main` plus tag now publish the partial `v1.3.6`
+transaction, the last published GitHub release still serves `v1.3.1`, the
 Marketplace listing still serves `1.3.0`, no exact hotfix lane is currently
-open, and the reopened public-exact retry remains blocked behind the retained
-pre-tag proof.
+open, and the remaining publication work is retained on
+`feature/public-github-release-transaction-hardening` as an in-place repair
+slice rather than another SemVer opening.
 
 ## Current Exact Closeout State
 
@@ -29,26 +30,30 @@ pre-tag proof.
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.5`
-- current `main` package line: `1.3.5`
+- current exact release line: `v1.3.6`
+- current `main` package line: `1.3.6`
 - current `develop` package line: `1.3.6`
-- active exact release candidate line on `develop`: `v1.3.6`
-- active release-candidate branch: `release/1.3.6`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`: none
-- pre-tag public-exact proof hardening is now retained directly on `develop`
+- active feature-lane public GitHub release hardening branch on `develop`:
+  `feature/public-github-release-transaction-hardening`
+- later SemVer openings are frozen while the current exact public GitHub
+  transaction remains incomplete
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
+- public GitHub exact transaction assessment package script:
+  `npm run public:github:exact:transaction:assess`
 - chosen bump: `patch`
-- rationale: authority exact `v1.3.5` remains immutable while the separate
-  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
-  still serves `1.3.0`, so `release/1.3.6` now opens from merged-green
-  `develop` for the next governed public-exact retry
-- rationale: `npm run public:exact:pretag:proof` and GitLab
-  `public_exact_pretag_proof` remain fail-closed gates on `develop` before
-  any later exact tag act from the reopened line
+- rationale: authority exact `v1.3.6` is already tagged on `main` while
+  public GitHub `main` plus the exact tag are already live, so the remaining
+  publication work is repair in place rather than another SemVer opening
+- rationale: the repo-owned public GitHub exact-release transaction controller
+  now freezes later openings until
+  `npm run public:github:exact:transaction:assess` proves a safe repair path
+  or retains that repair is impossible
 
 ## Branch Model
 

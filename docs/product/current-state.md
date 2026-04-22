@@ -154,18 +154,24 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.5`
-- current published package line on `main`: `1.3.5`
+- current exact released line: `v1.3.6`
+- current published package line on `main`: `1.3.6`
 - current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: `v1.3.6`
-- active release-candidate branch: `release/1.3.6`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`: none
-- pre-tag public-exact proof hardening is now retained directly on `develop`
+- active feature-lane public GitHub release hardening branch on `develop`:
+  `feature/public-github-release-transaction-hardening`
+- later SemVer openings are frozen while the current exact public GitHub
+  transaction remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
+- public GitHub exact transaction assessment package script:
+  `npm run public:github:exact:transaction:assess`
+- retained public GitHub exact transaction receipt:
+  `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -179,7 +185,10 @@ Latest landed ship target:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release: `v1.3.1` on `ad351ed`
+- separate public GitHub exact release publication: blocked; public `main` now
+  publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117`
+  retains the exact assets, and the last published GitHub release remains
+  `v1.3.1`
 - VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -281,25 +290,19 @@ Latest landed ship target:
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
-- remaining blockers: exact `v1.3.0` remains closed cleanly; authority `main`
-  `9587a99` was back-merged into `develop` as `04b07bd` through the protected
-  path, the resulting `develop` pipeline `2467081960` is green, public
-  `main` publishes `0ea58af`, public GitHub release `v1.3.0` is live, the
-  official gallery extension query verifies Marketplace version `1.3.0` for
-  `svelderrainruiz.vi-history-suite`, the maintained public `develop`
-  candidate now publishes `ab293d5`, the last clean expert-agent-reviewed
-  public source/wiki heads remain `0f19f4b` / `53b5348`, the maintained
-  public wiki head now publishes `141c39e`, the exact published heads
-  `ab293d5` / `141c39e` closed the published-surface reopening gate cleanly,
-  authority exact `v1.3.5` is now tagged on `main` `8f0069d`, the controlled
-  Windows x64 private GitLab release remains published separately, the
-  separate public GitHub exact release on `ad351ed` still serves `v1.3.1`,
-  `release/1.3.6` is now open from merged-green `develop` `189aa3a`, VS Code
-  Marketplace still serves `1.3.0`, no exact hotfix lane is currently open,
-  and the reopened public-exact retry remains blocked until
-  `npm run public:exact:pretag:proof` plus GitLab
-  `public_exact_pretag_proof` close cleanly against the promoted public
-  facade.
+- remaining blockers: exact `v1.3.0` remains closed cleanly; authority exact
+  `v1.3.6` is now tagged on `main`
+  `3cb238334100d01d5cfe7998e17e20a7b497b3fb`, public GitHub `main` now
+  publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117`
+  retains the exact assets, the last published GitHub release still serves
+  `v1.3.1`, the official gallery extension query still verifies Marketplace
+  version `1.3.0` for `svelderrainruiz.vi-history-suite`, the maintained
+  public `develop` candidate still publishes `ab293d5`, the maintained public
+  wiki head still publishes `141c39e`, no exact hotfix lane is currently open,
+  and later SemVer openings are now frozen while
+  `feature/public-github-release-transaction-hardening` uses
+  `npm run public:github:exact:transaction:assess` to prove or reject a safe
+  in-place repair path before any further public or Marketplace act.
 
 Current active and recently closed tranches:
 
@@ -881,6 +884,11 @@ These are generated locally and are not the committed source of truth:
 - public product Gate D preflight:
   - `.cache/public-product-gate-d/latest/public-product-gate-d-preflight.json`
   - `.cache/public-product-gate-d/latest/public-product-gate-d-preflight.md`
+- public GitHub exact-release transaction:
+  - `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+  - `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.md`
+  - local fail-closed assessment via
+    `npm run public:github:exact:transaction:assess`
 
 ## Commands
 
