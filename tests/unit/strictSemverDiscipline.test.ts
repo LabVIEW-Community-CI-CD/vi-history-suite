@@ -113,8 +113,8 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.currentDevelopPackageLine).toBe(pkg.version);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
     expect(compareSemver(versionLineContract.currentMainPackageLine, exactReleaseLine)).toBe(0);
-    expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBeLessThan(0);
-    expect(compareSemver(pkg.version, exactReleaseLine)).toBeLessThan(0);
+    expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
+    expect(compareSemver(pkg.version, exactReleaseLine)).toBe(0);
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
     expect(readme).toContain('- current exact released line: `v1.3.6`');
     expect(readme).toContain('- current published package line on `main`: `1.3.6`');
