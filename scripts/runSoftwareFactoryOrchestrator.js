@@ -146,6 +146,11 @@ function determineStatus(phases) {
   return phases.some((phase) => phase.status === 'blocked') ? 'blocked' : 'pass';
 }
 
+function isMarketplacePublished(facts) {
+  const expectedMarketplaceVersion = String(facts.exactLine ?? '').replace(/^v/, '');
+  return facts.marketplaceVersion === expectedMarketplaceVersion;
+}
+
 function buildCommonSections(facts, phase, options = {}) {
   const currentPhaseReceiptPath =
     options.currentPhaseReceiptPath ?? DEFAULT_PHASE_RECEIPT_PATHS[phase];
@@ -236,8 +241,9 @@ function buildCommonSections(facts, phase, options = {}) {
         'npm run docs:gate:core',
         'npm run design:gate'
       ],
-      rule:
-        'Future production publication acts must stay blocked until the factory control plane proves the recovery case through repo-owned assessment, non-production rehearsal, the non-production repair contract, and the guarded non-mutating publish/verify contracts before any later production mutation phase is admitted.'
+      rule: isMarketplacePublished(facts)
+        ? 'The current exact line is closed across public GitHub and VS Code Marketplace; later production acts return to normal GitFlow and repo-owned factory governance.'
+        : 'Future production publication acts must stay blocked until the factory control plane proves the recovery case through repo-owned assessment, non-production rehearsal, the non-production repair contract, and the guarded non-mutating publish/verify contracts before any later production mutation phase is admitted.'
     },
     incidentClasses: [
       'production-partial-public-state',
@@ -268,8 +274,12 @@ function buildCommonSections(facts, phase, options = {}) {
       repair: 'repo-owned automatic non-production repair-contract phase',
       publish: 'repo-owned automatic guarded non-mutating publish-contract phase',
       verify: 'repo-owned automatic guarded non-mutating verify-contract phase',
-      publishPublicGitHubRelease: 'explicit later production approval required',
-      publishMarketplace: 'explicit later production approval required'
+      publishPublicGitHubRelease: isMarketplacePublished(facts)
+        ? 'already retained for current exact line'
+        : 'explicit later production approval required',
+      publishMarketplace: isMarketplacePublished(facts)
+        ? 'already retained for current exact line'
+        : 'explicit later production approval required'
     },
     receiptContract: {
       packageScripts: {
@@ -296,12 +306,15 @@ function buildCommonSections(facts, phase, options = {}) {
 
 function buildPhaseSummary(phase, facts) {
   const releaseId = facts.publicGitHubDraftReleaseId ?? 'unknown';
+  const marketplacePublished = isMarketplacePublished(facts);
 
   if (phase === 'assess') {
     return {
       currentPhaseLabel: 'assess',
       summary:
-        facts.publicGitHubReleasePublished
+        facts.publicGitHubReleasePublished && marketplacePublished
+          ? `Assessment confirms public GitHub ${facts.exactLine} and VS Code Marketplace ${String(facts.exactLine).replace(/^v/, '')} are closed.`
+          : facts.publicGitHubReleasePublished
           ? `Assessment confirms public GitHub ${facts.exactLine} is closed and keeps Marketplace ${facts.marketplaceVersion} as the remaining separate publication act.`
           : `Assessment retains the frozen ${facts.exactLine} production recovery case and fails closed on ${facts.blockerCode ?? 'no-blocker'}.`
     };
@@ -311,7 +324,9 @@ function buildPhaseSummary(phase, facts) {
     return {
       currentPhaseLabel: 'rehearse',
       summary:
-        facts.publicGitHubReleasePublished
+        facts.publicGitHubReleasePublished && marketplacePublished
+          ? `Non-production rehearsal confirms GitHub ${facts.exactLine} and Marketplace ${String(facts.exactLine).replace(/^v/, '')} are already closed without admitting any further production mutation.`
+          : facts.publicGitHubReleasePublished
           ? `Non-production rehearsal confirms the GitHub ${facts.exactLine} release is already published and prepares the Marketplace-only boundary without admitting production mutation.`
           : `Non-production rehearsal retains the in-place ${facts.exactLine} repair candidate around draft release ${releaseId} without admitting any production mutation.`
     };
@@ -321,7 +336,9 @@ function buildPhaseSummary(phase, facts) {
     return {
       currentPhaseLabel: 'repair',
       summary:
-        facts.publicGitHubReleasePublished
+        facts.publicGitHubReleasePublished && marketplacePublished
+          ? `The non-production repair contract records that GitHub ${facts.exactLine} and Marketplace ${String(facts.exactLine).replace(/^v/, '')} repair are closed.`
+          : facts.publicGitHubReleasePublished
           ? `The non-production repair contract records that GitHub ${facts.exactLine} repair is no longer required and defers only the Marketplace publication act.`
           : `The non-production repair contract retains the deferred in-place ${facts.exactLine} recovery plan for draft release ${releaseId} without admitting any write action.`
     };
@@ -331,7 +348,9 @@ function buildPhaseSummary(phase, facts) {
     return {
       currentPhaseLabel: 'publish',
       summary:
-        facts.publicGitHubReleasePublished
+        facts.publicGitHubReleasePublished && marketplacePublished
+          ? `The guarded non-mutating publish contract records that the ${facts.exactLine} production publish acts are already retained.`
+          : facts.publicGitHubReleasePublished
           ? `The guarded non-mutating publish contract retains the VS Code Marketplace ${facts.exactLine} publication preconditions without admitting the production publish act.`
           : `The guarded non-mutating publish contract retains the exact ${facts.exactLine} transition requirements for draft release ${releaseId} without admitting any production mutation.`
     };
@@ -340,7 +359,9 @@ function buildPhaseSummary(phase, facts) {
   return {
     currentPhaseLabel: 'verify',
     summary:
-      facts.publicGitHubReleasePublished
+      facts.publicGitHubReleasePublished && marketplacePublished
+        ? `The guarded non-mutating verify contract confirms GitHub ${facts.exactLine} and Marketplace ${String(facts.exactLine).replace(/^v/, '')} are both retained live.`
+        : facts.publicGitHubReleasePublished
         ? `The guarded non-mutating verify contract confirms GitHub ${facts.exactLine} and retains the Marketplace ${facts.exactLine} verification expectation.`
         : `The guarded non-mutating verify contract retains the exact ${facts.exactLine} publication-verification expectations around draft release ${releaseId} without admitting any production mutation.`
   };
@@ -364,6 +385,8 @@ function describeMarketplaceBoundary(facts, marketplacePhaseStatus) {
 }
 
 function createAssessPhases(facts, marketplacePhaseStatus) {
+  const marketplacePublished = isMarketplacePublished(facts);
+
   return [
     {
       id: 'authority-boundary',
@@ -378,8 +401,9 @@ function createAssessPhases(facts, marketplacePhaseStatus) {
     {
       id: 'production-mutation-policy',
       status: 'pass',
-      summary:
-        'The software-factory control plane now admits assess, rehearse, and repair plus guarded non-mutating publish/verify contract phases; Marketplace publication remains forbidden until the separate production act is explicitly approved.'
+      summary: marketplacePublished
+        ? 'The software-factory control plane now records the current exact line as closed across public GitHub and VS Code Marketplace; no further production mutation remains for this line.'
+        : 'The software-factory control plane now admits assess, rehearse, and repair plus guarded non-mutating publish/verify contract phases; Marketplace publication remains forbidden until the separate production act is explicitly approved.'
     },
     {
       id: 'recovery-case',
@@ -444,6 +468,7 @@ function createRehearsePhases(facts, marketplacePhaseStatus) {
 function createRepairPhases(facts, marketplacePhaseStatus) {
   const repairContractReady =
     facts.publicGitHubReleasePublished || (facts.repairInPlaceRequired && facts.repairInPlaceAllowed);
+  const marketplacePublished = isMarketplacePublished(facts);
 
   return [
     {
@@ -460,7 +485,9 @@ function createRepairPhases(facts, marketplacePhaseStatus) {
       id: 'repair-contract',
       status: repairContractReady ? 'pass' : 'blocked',
       summary: repairContractReady
-        ? facts.publicGitHubReleasePublished
+        ? facts.publicGitHubReleasePublished && marketplacePublished
+          ? `The non-production repair contract records that GitHub ${facts.exactLine} and Marketplace ${String(facts.exactLine).replace(/^v/, '')} are closed.`
+          : facts.publicGitHubReleasePublished
           ? `The non-production repair contract records that GitHub ${facts.exactLine} repair is closed; only the separate Marketplace act remains.`
           : `The non-production repair contract retains ${facts.exactLine} as an in-place recovery target against draft release ${facts.publicGitHubDraftReleaseId}.`
         : `The software-factory control plane cannot retain a non-production repair contract until the recovery case is explicitly classified as repair-in-place.`
@@ -470,7 +497,9 @@ function createRepairPhases(facts, marketplacePhaseStatus) {
       status: facts.blockerCode ? 'blocked' : 'pass',
       summary: facts.blockerCode
         ? `Repair remains non-mutating and blocked by ${facts.blockerCode}; later publish/verify phases are not yet admitted.`
-        : 'Repair remains non-mutating, but the current recovery case is ready for later guarded publish/verify contract retention.'
+        : marketplacePublished
+          ? 'Repair remains non-mutating; no current production repair or publish action remains for the exact line.'
+          : 'Repair remains non-mutating, but the current recovery case is ready for later guarded publish/verify contract retention.'
     },
     {
       id: 'marketplace-boundary',
@@ -489,6 +518,7 @@ function createPublishPhases(facts, marketplacePhaseStatus) {
         facts.releaseAssetsRetainedAgainstManifest &&
         facts.draftPublishabilityByIdStatusCode === 200 &&
         facts.draftPublishabilityTagMatchesAuthority === true;
+  const marketplacePublished = isMarketplacePublished(facts);
 
   return [
     {
@@ -505,17 +535,21 @@ function createPublishPhases(facts, marketplacePhaseStatus) {
       id: 'publish-contract',
       status: publishContractReady ? 'pass' : 'blocked',
       summary: publishContractReady
-        ? facts.publicGitHubReleasePublished
+        ? facts.publicGitHubReleasePublished && marketplacePublished
+          ? `The guarded publish contract records that Marketplace ${String(facts.exactLine).replace(/^v/, '')} is already retained live.`
+          : facts.publicGitHubReleasePublished
           ? `The guarded publish contract retains the Marketplace ${facts.exactLine} package, GitHub exact-release proof, and no-write boundary without performing a Marketplace publish mutation.`
           : `The guarded publish contract retains the exact ${facts.exactLine} release draft, manifest-backed assets, and in-place transition preconditions without performing a publish mutation.`
         : `The guarded publish contract cannot yet retain a trustworthy in-place transition because the current ${facts.exactLine} draft state is missing one or more retained prerequisites.`
     },
     {
       id: 'publish-mutation-boundary',
-      status: 'blocked',
+      status: marketplacePublished ? 'pass' : 'blocked',
       summary: facts.blockerCode
         ? `Publish remains contract-only and blocked by ${facts.blockerCode}; GitHub release publication is still forbidden in this slice.`
-        : facts.publicGitHubReleasePublished
+        : facts.publicGitHubReleasePublished && marketplacePublished
+          ? 'No production publish mutation remains for the current exact line; publication is already retained.'
+          : facts.publicGitHubReleasePublished
           ? 'Publish remains contract-only; VS Code Marketplace publication still requires later explicit production approval.'
           : 'Publish remains contract-only; GitHub release publication still requires later explicit production approval even if the current blocker clears.'
     },
@@ -620,6 +654,8 @@ function repairFactoryState(facts) {
   const repairContractReady = phases.find((phase) => phase.id === 'repair-contract')?.status === 'pass';
   const phaseSummary = buildPhaseSummary('repair', facts);
 
+  const marketplacePublished = isMarketplacePublished(facts);
+
   return {
     ...common,
     status: determineStatus(phases),
@@ -630,7 +666,9 @@ function repairFactoryState(facts) {
       mutationPermitted: false,
       packageScript: 'npm run software:factory:repair',
       receiptPath: DEFAULT_PHASE_RECEIPT_PATHS.repair,
-      targetMode: facts.publicGitHubReleasePublished
+      targetMode: facts.publicGitHubReleasePublished && marketplacePublished
+        ? 'no-repair-required-final-publication-retained'
+        : facts.publicGitHubReleasePublished
         ? 'github-release-repair-not-required-marketplace-pending'
         : 'repair-in-place',
       targetTag: facts.exactLine,
@@ -643,7 +681,9 @@ function repairFactoryState(facts) {
       safePublishTransitionProven: facts.safeToAttemptRepairPublish,
       currentBlockerCode: facts.blockerCode,
       nextAllowedAction: facts.nextAllowedAction,
-      deferredWriteActions: facts.publicGitHubReleasePublished
+      deferredWriteActions: facts.publicGitHubReleasePublished && marketplacePublished
+        ? []
+        : facts.publicGitHubReleasePublished
         ? [
             'prepare-vscode-marketplace-v1.3.7-publication',
             'publish-vscode-marketplace-v1.3.7-after-explicit-approval',
@@ -656,7 +696,9 @@ function repairFactoryState(facts) {
             'publish-vscode-marketplace-v1.3.7-after-github-release-verification'
           ],
       rule:
-        facts.publicGitHubReleasePublished
+        facts.publicGitHubReleasePublished && marketplacePublished
+          ? 'This repair contract remains non-mutating; GitHub and VS Code Marketplace closeout are already retained for the current exact line.'
+          : facts.publicGitHubReleasePublished
           ? 'This repair contract remains non-mutating; GitHub repair is closed and the later Marketplace publish/verify phases still require separate explicit production approval.'
           : 'This repair contract remains non-mutating; later publish and verify phases still require separate explicit production approval after safe publishability is proven.'
     },
@@ -670,6 +712,8 @@ function publishFactoryState(facts) {
   const publishContractReady = phases.find((phase) => phase.id === 'publish-contract')?.status === 'pass';
   const phaseSummary = buildPhaseSummary('publish', facts);
 
+  const marketplacePublished = isMarketplacePublished(facts);
+
   return {
     ...common,
     status: determineStatus(phases),
@@ -680,7 +724,9 @@ function publishFactoryState(facts) {
       mutationPermitted: false,
       packageScript: 'npm run software:factory:publish',
       receiptPath: DEFAULT_PHASE_RECEIPT_PATHS.publish,
-      targetMode: facts.publicGitHubReleasePublished
+      targetMode: facts.publicGitHubReleasePublished && marketplacePublished
+        ? 'publication-retained-no-publish-required'
+        : facts.publicGitHubReleasePublished
         ? 'vscode-marketplace-publication-guard'
         : 'publish-in-place-guard',
       targetTag: facts.exactLine,
@@ -692,12 +738,16 @@ function publishFactoryState(facts) {
       draftReleaseTagMatchesAuthority: facts.draftPublishabilityTagMatchesAuthority,
       safePublishTransitionProven: facts.safeToAttemptRepairPublish,
       currentBlockerCode: facts.blockerCode,
-      deferredWriteAction: facts.publicGitHubReleasePublished
+      deferredWriteAction: facts.publicGitHubReleasePublished && marketplacePublished
+        ? 'none-final-publication-retained'
+        : facts.publicGitHubReleasePublished
         ? 'publish-vscode-marketplace-v1.3.7-with-pinned-vsce'
         : 'publish-existing-github-draft-release-in-place',
       nextAllowedAction: facts.nextAllowedAction,
       rule:
-        facts.publicGitHubReleasePublished
+        facts.publicGitHubReleasePublished && marketplacePublished
+          ? 'This guarded publish contract remains non-mutating; the current exact line is already published and retained across public GitHub and VS Code Marketplace.'
+          : facts.publicGitHubReleasePublished
           ? 'This guarded publish contract remains non-mutating; it retains the exact Marketplace publish preconditions and still forbids VS Code Marketplace publication in this slice.'
           : 'This guarded publish contract remains non-mutating; it retains the exact in-place publish preconditions and still forbids GitHub release publication in this slice.'
     },
@@ -837,6 +887,22 @@ function buildMarkdown(report) {
     );
   }
 
+  const marketplaceClosed =
+    report.productionBoundary.vscodeMarketplaceVersion ===
+    report.productionBoundary.expectedMarketplaceVersion;
+  const mutationPolicyLines = marketplaceClosed
+    ? [
+        '- This contract records the current exact line as closed across public GitHub and VS Code Marketplace.',
+        '- The `publish` and `verify` phases here are retained receipt surfaces only; no further production mutation remains for this exact line.',
+        '- Later production acts return to normal GitFlow and repo-owned factory governance.'
+      ]
+    : [
+        '- This contract admits non-production `assess`, `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify` contract phases.',
+        '- The `publish` and `verify` phases here are contract-definition/readiness surfaces only; they do not publish to GitHub or VS Code Marketplace.',
+        '- No GitHub release publication, Marketplace publication, or other production mutation is permitted in this slice.',
+        '- Production publish phases require later explicit approval after the frozen recovery case is closed.'
+      ];
+
   return [
     '# Software Factory Orchestrator Receipt',
     '',
@@ -863,10 +929,7 @@ function buildMarkdown(report) {
     '',
     '## Mutation Policy',
     '',
-    '- This contract admits non-production `assess`, `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify` contract phases.',
-    '- The `publish` and `verify` phases here are contract-definition/readiness surfaces only; they do not publish to GitHub or VS Code Marketplace.',
-    '- No GitHub release publication, Marketplace publication, or other production mutation is permitted in this slice.',
-    '- Production publish phases require later explicit approval after the frozen recovery case is closed.',
+    ...mutationPolicyLines,
     '',
     '## Trust Model',
     '',
@@ -974,7 +1037,7 @@ function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
     exactLine,
     packageLine: versionLineContract.currentMainPackageLine,
     developPackageLine: versionLineContract.currentDevelopPackageLine,
-    semverFrozen: versionLineContract.activeFeatureBranch === null,
+    semverFrozen: !marketplacePublished,
     semverFreezeRationale: marketplacePublished
       ? `Exact ${exactLine} is fully published across public GitHub and VS Code Marketplace.`
       : `Later SemVer openings remain frozen while exact ${exactLine} is closed on public GitHub but still pending the separate VS Code Marketplace publication act.`,

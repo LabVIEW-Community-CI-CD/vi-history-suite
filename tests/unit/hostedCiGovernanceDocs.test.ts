@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('hosted ci governance docs', () => {
-  it('retains the current GitLab authority matrix and v1.3.7 GitHub-published closeout posture', () => {
+  it('retains the current GitLab authority matrix and v1.3.7 published closeout posture', () => {
     const matrix = readJson<any>('docs/product/hosted-ci-governance.json');
     const matrixDoc = readText('docs/product/hosted-ci-governance.md');
     const gitlabCi = readText('.gitlab-ci.yml');
@@ -91,17 +91,17 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrixDoc).toContain('Authority exact `main` now carries tagged `v1.3.7`');
     expect(matrixDoc).toContain('public GitHub `main`, tag, and release now publish the exact');
-    expect(matrixDoc).toContain('Marketplace listing still serves `1.3.0`');
+    expect(matrixDoc).toContain('Marketplace listing now serves `1.3.7`');
     expect(matrixDoc).toContain('current exact release line: `v1.3.7`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.7`');
     expect(matrixDoc).toContain('current `develop` package line: `1.3.7`');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
-    expect(matrixDoc).toContain('Marketplace closeout rather than another SemVer opening');
+    expect(matrixDoc).toContain('final publication act is retained');
     expect(readme).toContain('- separate public GitHub exact release publication: published;');
     expect(readme).toContain('releases/tag/v1.3.7');
     expect(currentState).toContain('current exact released line: `v1.3.7`');
     expect(currentState).toContain('current published package line on `main`: `1.3.7`');
-    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');
+    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.7`');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');
     expect(gitlabCi).toContain('governed_runner_admission');

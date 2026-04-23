@@ -10,11 +10,10 @@ This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
 Authority exact `main` now carries tagged `v1.3.7`, `develop` now also carries
 `1.3.7`, public GitHub `main`, tag, and release now publish the exact
-`v1.3.7` transaction, the Marketplace listing still serves `1.3.0`, no exact
+`v1.3.7` transaction, the Marketplace listing now serves `1.3.7`, no exact
 hotfix lane is currently open, no active feature-lane public GitHub hardening
-branch remains open, and the remaining publication work is retained directly
-on `develop` as the separate Marketplace closeout rather than another SemVer
-opening.
+branch remains open, and the final publication closeout is retained directly
+on `develop`.
 
 ## Current Exact Closeout State
 
@@ -39,8 +38,8 @@ opening.
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- later SemVer openings beyond `1.3.7` are frozen while the separate
-  Marketplace closeout remains incomplete
+- later SemVer openings beyond `1.3.7` return to normal GitFlow governance
+  after the retained public GitHub and Marketplace closeout
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -49,11 +48,10 @@ opening.
 - chosen bump: `patch`
 - rationale: authority exact `v1.3.7` is already tagged on `main` while
   public GitHub `main`, tag, and GitHub release are now published with exact
-  manifest-matched assets, so the remaining publication work is the separate
-  Marketplace closeout rather than another SemVer opening
+  manifest-matched assets, and VS Code Marketplace now serves `1.3.7`
 - rationale: the repo-owned public GitHub exact-release transaction controller
-  now retains a completed verify gate for `v1.3.7`, so later openings remain
-  frozen until the Marketplace publication act closes
+  now retains a completed verify gate for `v1.3.7`, and later openings may
+  proceed only after this final publication act is retained
 
 ## Branch Model
 

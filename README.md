@@ -192,8 +192,9 @@ Authority release facts:
   none
 - active software-factory governance branch on `develop`:
   none
-- later SemVer openings beyond `1.3.7` are frozen while exact `v1.3.7`
-  closeout remains incomplete on the separate Marketplace surface
+- exact `v1.3.7` closeout is now complete across public GitHub and VS Code
+  Marketplace; later SemVer openings return to normal GitFlow governance after
+  this retained final publication act
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -232,9 +233,9 @@ Authority release facts:
 - software-factory phase contract:
   assess, rehearse, and repair remain admitted non-production phases, and
   publish / verify are now retained as guarded non-mutating contract phases
-- no later SemVer opening, Marketplace publication, or other production
-  mutation is permitted outside the repo-owned factory/orchestrator closeout
-  path while exact `v1.3.7` remains open on the separate Marketplace surface
+- exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
+  later SemVer openings may proceed only through normal GitFlow and the
+  repo-owned factory/orchestrator governance path
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -253,12 +254,12 @@ Authority release facts:
   `312517425` is published at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
   and the exact assets match the retained authority manifest
-- VS Code Marketplace retained published version: `1.3.0`
-- VS Code Marketplace publication prep is ready and non-mutating:
+- VS Code Marketplace retained published version: `1.3.7`
+- VS Code Marketplace publication prep and final publication are retained:
   `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
-  `1.3.0` readback, local PAT locator, and pinned `vsce` publish command
-  shape without retaining secret material or publishing.
+  `1.3.7` readback, local PAT locator, and pinned `vsce` publish command
+  shape without retaining secret material.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`

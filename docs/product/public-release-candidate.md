@@ -13,9 +13,9 @@
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
 - Software-factory governance branch: none
-- Later SemVer openings beyond `1.3.7` are frozen while exact `v1.3.7`
-  closeout remains incomplete because VS Code Marketplace still serves
-  `1.3.0`
+- Exact `v1.3.7` closeout is now complete across public GitHub and VS Code
+  Marketplace; later SemVer openings return to normal GitFlow governance after
+  this retained final publication act
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -32,7 +32,7 @@
 ## Readiness
 
 - Authority baseline:
-  `v1.3.7-tagged-on-main-public-main-tag-and-github-release-published-marketplace-pending`
+  `v1.3.7-tagged-on-main-public-main-tag-github-release-and-marketplace-published`
 - Local installed VSIX build:
   `released-v1.3.7-authority-evidence-retained`
 - Local public devcontainer: `v1.1.0-published-baseline`
@@ -52,7 +52,7 @@
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.7-github-release-published-marketplace-pending`
+  `v1.3.7-github-release-and-marketplace-published`
 
 ## Exact Release Baseline
 
@@ -64,7 +64,7 @@
 - GitHub asset SHA-256:
   `89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b`
 - VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
-- VS Code Marketplace version: `1.3.0`
+- VS Code Marketplace version: `1.3.7`
 
 ## Public Publication
 
@@ -97,8 +97,8 @@
 - Historical note: authority exact `v1.3.6` remained externally impossible to
   close in place after the repo-owned publish attempt returned
   `422 tag_name was used by an immutable release`, so `release/1.3.7` became
-  the governed next exact line and is now published separately on GitHub while
-  the Marketplace act remains later and separate.
+  the governed next exact line and is now published separately on GitHub and
+  the VS Code Marketplace.
 
 ## Local Proof
 
@@ -119,7 +119,7 @@
 - The retained transaction receipt path is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
 - VS Code Marketplace publication prep is now the retained local proof surface
-  for the later separate Marketplace act:
+  for the completed Marketplace act:
   `npm run vscode:marketplace:prepare`.
 - The retained Marketplace prep receipt path is
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
@@ -139,13 +139,13 @@
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
 - The Marketplace prep receipt proves `status=ready`,
   `productionMutationAttempted=false`, `publicGitHub.verifyGateStatus=pass`,
-  `currentMarketplaceVersion=1.3.0`, `expectedMarketplaceVersion=1.3.7`,
+  `currentMarketplaceVersion=1.3.7`, `expectedMarketplaceVersion=1.3.7`,
   `vsixSha256Verified=true`, `vscePatLocatorStatus=ok`, and the pinned
   `vsce` command shape with `<redacted>` PAT handling.
 - The current software-factory closeout posture is now:
-  no later SemVer opening, Marketplace publication, or other production
-  mutation may occur outside the repo-owned factory/orchestrator closeout path
-  while the retained `v1.3.7` exact line remains open on Marketplace.
+  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace, and
+  later SemVer openings may proceed only through normal GitFlow and the
+  repo-owned factory/orchestrator governance path.
 - Current retained transaction facts: public `main` `704e629`, public tag
   `v1.3.7`, GitHub release `312517425`, exact VSIX
   `vi-history-suite-1.3.7.vsix`, VSIX SHA-256
@@ -158,10 +158,10 @@
   `publicSourcePromotionStatus=passed`,
   `verifyGateStatus=pass`,
   `verifyGateAllowed=true`,
-  `openingNewSemverAllowed=false`,
+  `openingNewSemverAllowed=true`,
   `repairInPlaceRequired=false`,
   `repairInPlaceAllowed=false`, and
-  `nextAllowedAction=publish-v1.3.7-to-vscode-marketplace-after-governed-validation`.
+  `nextAllowedAction=normal-next-line-governance-after-v1.3.7-retention`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -254,7 +254,7 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- Public GitHub exact now publishes `v1.3.7`, but VS Code Marketplace remains
-  retained at `1.3.0`.
-- The current active closeout blocker is therefore the separate Marketplace
-  publication act, not the public GitHub exact-release act.
+- Public GitHub exact now publishes `v1.3.7`, and VS Code Marketplace now
+  serves `1.3.7`.
+- The current exact closeout blocker is closed after final Marketplace
+  publication retention.

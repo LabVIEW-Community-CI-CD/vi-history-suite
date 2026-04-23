@@ -7,13 +7,13 @@
   "marketplaceItemName": "svelderrainruiz.vi-history-suite",
   "listingUrl": "https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite",
   "homepageUrl": "https://github.com/svelderrainruiz/vi-history-suite/wiki",
-  "currentPublishedVersion": "1.3.0",
-  "currentPublishedDate": "2026-04-21",
+  "currentPublishedVersion": "1.3.7",
+  "currentPublishedDate": "2026-04-23",
   "currentVerificationSurface": "official-gallery-extensionquery",
-  "pendingPublicationVersion": "1.3.7",
+  "pendingPublicationVersion": null,
   "pendingPublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
   "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
-  "pendingPublicationPrepStatus": "ready-no-marketplace-mutation-attempted",
+  "pendingPublicationPrepStatus": "published-and-verified",
   "secretHandling": "do-not-retain-pat-or-secret-material",
   "publicationHistory": [
     {
@@ -66,6 +66,21 @@
         "docs/release-procedure.md",
         "docs/product/current-state.md",
         "docs/product/public-release-candidate.md"
+      ]
+    },
+    {
+      "status": "published",
+      "publishedDate": "2026-04-23",
+      "version": "1.3.7",
+      "publicationMode": "pinned-vsce-cli",
+      "primaryAuthority": [
+        "README.md",
+        "package.json",
+        "CHANGELOG.md",
+        "docs/release-procedure.md",
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "docs/product/vscode-marketplace-publication-ledger.md"
       ]
     }
   ]

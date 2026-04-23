@@ -165,8 +165,9 @@ Latest landed ship target:
   none
 - active software-factory governance branch on `develop`:
   none
-- later SemVer openings beyond `1.3.7` are frozen while exact `v1.3.7`
-  closeout remains incomplete on the separate Marketplace surface
+- exact `v1.3.7` closeout is now complete across public GitHub and VS Code
+  Marketplace; later SemVer openings return to normal GitFlow governance after
+  this retained final publication act
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -206,9 +207,9 @@ Latest landed ship target:
   `assess`, `rehearse`, and `repair` remain admitted non-production phases;
   `publish` / `verify` are retained as guarded non-mutating contract phases
 - current software-factory mutation policy:
-  no later SemVer opening, Marketplace publication, or other production
-  mutation is permitted outside the repo-owned factory/orchestrator closeout
-  path while exact `v1.3.7` remains open on the separate Marketplace surface
+  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
+  later SemVer openings may proceed only through normal GitFlow and the
+  repo-owned factory/orchestrator governance path
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -229,13 +230,13 @@ Latest landed ship target:
   the uploaded exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
-  still serves `1.3.0`
-- VS Code Marketplace retained published version: `1.3.0`
-- VS Code Marketplace publication prep is ready and non-mutating:
+  now serves `1.3.7`
+- VS Code Marketplace retained published version: `1.3.7`
+- VS Code Marketplace publication prep and final publication are retained:
   `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
-  `1.3.0` readback, local PAT locator, and pinned `vsce` publish command
-  shape without retaining secret material or publishing.
+  `1.3.7` readback, local PAT locator, and pinned `vsce` publish command
+  shape without retaining secret material.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -341,16 +342,17 @@ Latest landed ship target:
   `e1a4fc8d2e728100bb98856879eac5de11e99864`, public GitHub `main` now
   publishes `704e629`, public tag `v1.3.7` is live, GitHub release `312517425`
   is published with manifest-matched assets, the official gallery extension
-  query still verifies Marketplace version `1.3.0` for
+  query now verifies Marketplace version `1.3.7` for
   `svelderrainruiz.vi-history-suite`, the maintained public `develop`
   candidate still publishes `ab293d5`, the maintained public wiki head still
-  publishes `141c39e`, no exact hotfix lane is currently open, and later
-  SemVer openings are now frozen while the retained `v1.3.7` closeout remains
-  blocked only on the separate Marketplace publication act; the active
+  publishes `141c39e`, no exact hotfix lane is currently open, and exact
+  `v1.3.7` closeout is now complete across public GitHub and VS Code
+  Marketplace; later SemVer openings return to normal GitFlow governance after
+  this retained final publication act; the active
   software-factory governance contract now retains that same `v1.3.7` line as
   the sole production recovery case and admits `assess`, `rehearse`,
-  `repair`, `publish`, and `verify` as repo-owned contract phases while the
-  Marketplace act stays separately approved.
+  `repair`, `publish`, and `verify` as repo-owned contract phases for retained
+  publication-state proof.
 
 Current active and recently closed tranches:
 

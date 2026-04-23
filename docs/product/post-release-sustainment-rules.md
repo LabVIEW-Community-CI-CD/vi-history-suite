@@ -80,8 +80,9 @@ Current version-line contract:
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- later SemVer openings beyond `1.3.7` are frozen while exact `v1.3.7`
-  closeout remains incomplete on the separate Marketplace surface
+- exact `v1.3.7` closeout is now complete across public GitHub and VS Code
+  Marketplace; later SemVer openings return to normal GitFlow governance after
+  this retained final publication act
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -118,16 +119,16 @@ Current control decision for public exact hardening:
   matched assets, so the remaining governed closeout is the separate
   Marketplace publication act rather than another SemVer opening
 - rationale: the repo-owned transaction controller now retains the completed
-  public GitHub exact verification gate, and later openings stay frozen until
-  the separate Marketplace publication act is retained
-- rejected `hotfix`: reopening `main` now would bypass the separate
-  Marketplace closeout instead of finishing the current exact `v1.3.7` line
+  public GitHub exact verification gate, VS Code Marketplace now serves
+  `1.3.7`, and later openings may proceed only after this final publication
+  act is retained
+- rejected `hotfix`: reopening `main` now would bypass the final Marketplace
+  retention step instead of closing the current exact `v1.3.7` line
 - rejected `minor`: the remaining closeout work is distribution-state
   retention for the current exact line; it does not add a new governed
   capability or supported installed-user workflow
 - rejected `major`: no governed public or maintainer contract is being removed;
-  the current exact line is already published on GitHub and only the separate
-  Marketplace act remains open
+  the current exact line is already published on GitHub and Marketplace
 
 ## Software Factory Governance Contract
 
@@ -161,10 +162,9 @@ Current control decision for public exact hardening:
   `assess`, `rehearse`, `repair`, `publish`, `verify`
 - sole production recovery target: `v1.3.7`
 - production mutation policy:
-  no later SemVer opening, VS Code Marketplace publication, or other
-  production mutation is permitted outside the repo-owned factory/orchestrator
-  closeout path while exact `v1.3.7` remains open on the separate Marketplace
-  surface
+  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
+  later SemVer openings may proceed only through normal GitFlow and the
+  repo-owned factory/orchestrator governance path
 - authority boundary:
   GitLab `develop` -> `release/*` -> protected `main`
 - staging boundary:
@@ -174,8 +174,7 @@ Current control decision for public exact hardening:
   public GitHub `main` / tag / release plus the VS Code Marketplace listing
 - recovery boundary:
   retained partial-public incidents are repair-in-place first; the current
-  exact GitHub act is already closed and the remaining blocker is the
-  separate VS Code Marketplace publication act for `v1.3.7`
+  exact GitHub and VS Code Marketplace acts are closed for `v1.3.7`
 - trust model:
   operator host, self-hosted runners, local token locators, GitLab authority,
   public GitHub, Marketplace, and retained receipts are governed system
@@ -193,7 +192,7 @@ Current control decision for public exact hardening:
   production approval
 - Marketplace prep rule:
   `npm run vscode:marketplace:prepare` must pass and retain its receipt before
-  the later mutating VS Code Marketplace publication act; it verifies the
+  any mutating VS Code Marketplace publication act; it verifies the
   GitHub `v1.3.7` verify gate, exact VSIX/checksum evidence, live Marketplace
   version, local PAT locator, and pinned `vsce` command shape without
   retaining secret material or publishing.
