@@ -21,8 +21,9 @@
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
   is none.
-- Later SemVer openings beyond `1.3.7` are frozen while exact `v1.3.7`
-  closeout remains incomplete on the separate Marketplace surface.
+- Exact `v1.3.7` closeout is now complete across public GitHub and VS Code
+  Marketplace; later SemVer openings return to normal GitFlow governance after
+  this retained final publication act.
 - The pre-tag public-exact proof package script is
   `npm run public:exact:pretag:proof`.
 - The pre-tag public-exact proof GitLab job is `public_exact_pretag_proof`.
@@ -81,7 +82,7 @@
   the uploaded exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
   retained verify receipt records `verifyGateStatus=pass` and
-  `verifyGateAllowed=true`, and VS Code Marketplace still serves `1.3.0`.
+  `verifyGateAllowed=true`, and VS Code Marketplace now serves `1.3.7`.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
@@ -206,12 +207,12 @@
 - When public GitHub `main`, the exact tag, or a draft release already exist
   for the current exact line, the governed next step is repair in place
   unless `npm run public:github:exact:transaction:assess` retains that repair
-  is impossible; once the exact GitHub release is published and verified, the
-  remaining closeout blocker becomes the separate Marketplace act.
+  is impossible; once the exact GitHub release and Marketplace version are
+  published and verified, the exact release can be retained as closed.
 - No GitHub release publication, Marketplace publication, or other production
   mutation shall occur outside the repo-owned factory/orchestrator contract.
-- Exact `v1.3.7` remains the current exact closeout case until the separate
-  VS Code Marketplace publication act is retained.
+- Exact `v1.3.7` is the current exact closed line; the separate VS Code
+  Marketplace publication act is retained.
 - Exact release closeout is not complete until the exact released `main` line
   has also been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green.
@@ -367,7 +368,8 @@ separate afterward.
     - Before the mutating publish act, run
       `npm run vscode:marketplace:prepare` and require its receipt to show the
       GitHub `v1.3.7` verify gate passed, exact VSIX/checksum evidence matched,
-      live Marketplace still served `1.3.0`, the local PAT locator was ready
+      live Marketplace served the expected pre-publication stale version before
+      the act and serves `1.3.7` after the act, the local PAT locator was ready
       without secret retention, and the pinned `vsce` publish command shape was
       retained.
     - The preferred CLI path is the pinned `@vscode/vsce` helper through
@@ -478,9 +480,9 @@ separate afterward.
   evidence.
 - The current develop package line on `develop` is `1.3.7`, public GitHub
   `main` now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
-  `312517425` is published, VS Code Marketplace remains `1.3.0`, and later
-  SemVer openings stay frozen until the separate Marketplace publication act
-  is retained.
+  `312517425` is published, VS Code Marketplace serves `1.3.7`, and later
+  SemVer openings return to normal GitFlow governance after final publication
+  retention.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

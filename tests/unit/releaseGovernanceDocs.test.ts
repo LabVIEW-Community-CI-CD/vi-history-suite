@@ -136,7 +136,7 @@ describe('release governance package', () => {
     expect(hostedGovernance).toContain('public_exact_pretag_proof');
     expect(hostedGovernance).toContain('npm run public:exact:pretag:proof');
     expect(hostedGovernance).toContain('npm run public:github:exact:transaction:verify');
-    expect(hostedGovernance).toContain('Marketplace closeout rather than another SemVer opening');
+    expect(hostedGovernance).toContain('Marketplace listing now serves `1.3.7`');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(

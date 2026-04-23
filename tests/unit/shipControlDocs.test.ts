@@ -221,7 +221,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('.cache/private-release-publish/latest/private-release-publish.json');
     expect(readme).toContain('- separate public GitHub exact release publication: published; public `main`');
     expect(readme).toContain('releases/tag/v1.3.7');
-    expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.0`');
+    expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.7`');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
@@ -275,7 +275,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('.cache/private-release-publish/latest/private-release-publish.json');
     expect(currentState).toContain('- separate public GitHub exact release publication: published; public `main`');
     expect(currentState).toContain('releases/tag/v1.3.7');
-    expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.0`');
+    expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.7`');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
