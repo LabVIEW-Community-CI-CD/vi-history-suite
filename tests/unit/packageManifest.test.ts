@@ -311,6 +311,30 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['public:exact:pretag:proof']).toBe(
       'node scripts/runPublicExactPretagProof.js'
     );
+    expect(manifest.scripts?.['public:github:exact:transaction:assess']).toBe(
+      'node scripts/runPublicGithubExactReleaseTransaction.js --mode assess'
+    );
+    expect(manifest.scripts?.['public:github:exact:transaction:publish']).toBe(
+      'node scripts/runPublicGithubExactReleaseTransaction.js --mode publish'
+    );
+    expect(manifest.scripts?.['public:github:exact:transaction:verify']).toBe(
+      'node scripts/runPublicGithubExactReleaseTransaction.js --mode verify'
+    );
+    expect(manifest.scripts?.['software:factory:assess']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase assess'
+    );
+    expect(manifest.scripts?.['software:factory:rehearse']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase rehearse'
+    );
+    expect(manifest.scripts?.['software:factory:repair']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase repair'
+    );
+    expect(manifest.scripts?.['software:factory:publish']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase publish'
+    );
+    expect(manifest.scripts?.['software:factory:verify']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase verify'
+    );
     expect(manifest.scripts?.['dashboard:latest']).toBe(
       'node scripts/printLatestDashboardRun.js'
     );
@@ -381,7 +405,7 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicExactPretagProof.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/runWindowsIntegrationHost.test.ts'
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicExactPretagProof.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubExactReleaseTransaction.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/resolveLocalGitHubToken.test.ts tests/unit/softwareFactoryOrchestrator.test.ts tests/unit/runWindowsIntegrationHost.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'

@@ -1979,6 +1979,48 @@ Information-for-users review cases:
   combined doctor surface with `--fail-on-drift`, retains
   `governed-runner-admission-evidence/`, and blocks downstream docs,
   assurance, test, package, and release work when runner drift is detected
+- `TEST-UNIT-370`: verify the public GitHub exact-release transaction
+  controller inspects authority exact main/tag state, live public GitHub
+  main/tag/release/assets, the repo immutable-release policy, the current
+  draft-release publishability facts including by-id draft readback, and live
+  VS Code Marketplace version, writes JSON plus Markdown receipts, and fails
+  closed when the transaction remains incomplete or contradictory
+- `TEST-UNIT-371`: verify the public GitHub exact-release transaction
+  controller freezes later SemVer openings and classifies the current exact
+  line as repair-in-place first whenever public GitHub `main`, the exact tag,
+  or a draft release already exist for that same exact line
+- `TEST-UNIT-372`: verify the authority release-control package retains the
+  current exact line, `main` and `develop` package lines, the active
+  hardening feature branch, the live public GitHub source head and tag, the
+  current draft-release id when present, the last published GitHub release
+  baseline, the retained Marketplace version, and the transaction-assessment
+  package script and receipt path
+- `TEST-UNIT-373`: verify the software-factory orchestrator assessment surface
+  classifies authority/staging/production/recovery boundaries, writes
+  receipt-backed factory state, and does not admit any production mutation in
+  this non-production slice
+- `TEST-UNIT-374`: verify the software-factory orchestrator assessment surface
+  retains the trust model, environment baseline, rehearsal policy, incident
+  classes, recovery rules, approval model, the frozen no-bump posture, and
+  exact `v1.3.6` as the sole production recovery case
+- `TEST-UNIT-375`: verify the non-production `software:factory:rehearse`
+  surface reuses the retained exact-transaction facts, writes a rehearsal
+  receipt, and proves the frozen `v1.3.6` in-place repair candidate remains
+  readable by id with manifest-backed exact assets
+- `TEST-UNIT-376`: verify the non-production `software:factory:repair`
+  surface writes the deferred in-place `v1.3.6` repair contract, retains the
+  deferred write actions, and still enforces a no-write boundary before any
+  later mutating production phase is admitted
+- `TEST-UNIT-377`: verify the guarded non-mutating
+  `software:factory:publish` surface writes the exact `v1.3.6`
+  publish-contract receipt, retains the manifest-backed publish preconditions
+  plus the deferred GitHub draft-release write action, and still enforces a
+  no-write boundary
+- `TEST-UNIT-378`: verify the guarded non-mutating
+  `software:factory:verify` surface writes the exact `v1.3.6`
+  verify-contract receipt, retains the expected public GitHub release and
+  VS Code Marketplace verification facts, and keeps verification claims
+  blocked until those production surfaces actually close
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2040,6 +2082,63 @@ Information-for-users review cases:
   RTM, and test plan and confirm `governed_runner_admission` runs first as a
   fail-fast admission gate with retained doctor evidence before later docs,
   assurance, test, package, and release stages queue
+- `TEST-DOC-123`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, SRS, RTM, and
+  the test plan and confirm the public GitHub exact-release transaction
+  assessment surface is explicit, receipt-backed, retains the non-mutating
+  draft-publishability probe plus the immutable-release publishability probe,
+  and stays fail-closed while the current exact public transaction remains
+  incomplete
+- `TEST-DOC-124`: review the sustainment package, current-state, release
+  procedure, public-release candidate package, SRS, RTM, and the test plan
+  and confirm the no-bump repair rule freezes later SemVer openings whenever
+  the current exact line already retains public GitHub `main`, the exact tag,
+  or a draft release record
+- `TEST-DOC-125`: review README, current-state, hosted governance, the public
+  source publication ledger, the public-release candidate package, SRS, RTM,
+  and the test plan and confirm the control plane retains the current exact
+  line, `main` and `develop` package lines, active hardening feature branch,
+  live public GitHub source head and tag, draft-release id when present, last
+  published GitHub release baseline, retained Marketplace version, the
+  transaction-assessment package script and receipt path, and the current
+  non-mutating draft-publishability plus publishability-probe results
+- `TEST-DOC-126`: review the architecture overview, current-state, release
+  procedure, post-release sustainment rules, public-release candidate package,
+  SRS, RTM, and the test plan and confirm the repo now retains a
+  software-factory governance contract with explicit authority/staging/
+  production/recovery boundaries plus the admitted non-production `assess`,
+  `rehearse`, and `repair` phases
+- `TEST-DOC-127`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm exact `v1.3.6` remains
+  the sole frozen production recovery case, the active software-factory branch
+  plus the assess/rehearse/repair scripts and receipt paths are explicit, and
+  GitHub release / Marketplace mutation remain forbidden in this slice
+- `TEST-DOC-128`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, SRS, RTM, and
+  the test plan and confirm the repo now retains one non-production
+  `software:factory:rehearse` surface plus receipt path that reuses the exact
+  transaction receipt and proves the retained `v1.3.6` in-place repair
+  candidate is still readable by id and still carries the manifest-backed
+  exact assets
+- `TEST-DOC-129`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm the repo now retains one
+  non-production `software:factory:repair` surface plus receipt path that
+  records the deferred in-place `v1.3.6` repair contract, deferred write
+  actions, and the no-write boundary before later mutating production phases
+- `TEST-DOC-130`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm the repo now retains one
+  guarded non-mutating `software:factory:publish` surface plus receipt path
+  that records the exact `v1.3.6` publish preconditions, deferred GitHub
+  draft-release write action, and continued no-write boundary
+- `TEST-DOC-131`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm the repo now retains one
+  guarded non-mutating `software:factory:verify` surface plus receipt path
+  that records the exact `v1.3.6` GitHub-release and Marketplace verification
+  expectations while verification claims remain blocked
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

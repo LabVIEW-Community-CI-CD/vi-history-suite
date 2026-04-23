@@ -14,135 +14,15 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public release candidate control surface', () => {
-  it('retains public exact retry blocking on a release lane while keeping authority exact v1.3.5 and public exact v1.3.1 separate', () => {
-    const candidate = readJson<{
-      versionLine?: string;
-      burnedExactReleaseLine?: string;
-      authorityRepo?: {
-        role?: string;
-        integrationBranch?: string;
-        releaseBranch?: string;
-        featureHardeningBranch?: string;
-        semverDiscipline?: string;
-        requiredChecks?: string[];
-      };
-      publishedPublicSource?: { publishedCommit?: string; status?: string };
-      publicDevelopCandidate?: {
-        branch?: string;
-        candidateCommit?: string;
-        status?: string;
-        sourcePullRequest?: string;
-      };
-      publishedPublicWiki?: { publishedHeadCommit?: string; status?: string };
-      candidateReadiness?: Record<string, string>;
-      localProofs?: {
-        localInstalledVsixPreview?: {
-          status?: string;
-          version?: string;
-          vsixPath?: string;
-          checksumPath?: string;
-          buildCommand?: string;
-        };
-        privateRelease?: {
-          status?: string;
-          tag?: string;
-          releaseUrl?: string;
-        };
-        issue0414LiveSessionProof?: {
-          status?: string;
-          receiptPath?: string;
-          generatedAt?: string;
-          latestPacketRunId?: string;
-          liveUptakeObservation?: string;
-          providerDrift?: boolean;
-          historyStance?: string;
-          historyProofStatus?: string;
-          providerSelectionCoverage?: string;
-          nextImplementationSliceRequired?: boolean;
-        };
-      };
-      findingClassifications?: Array<{
-        id?: string;
-        status?: string;
-        requirementRefs?: string[];
-        adrRefs?: string[];
-      }>;
-      exactRelease?: {
-        version?: string;
-        gitHubAssetName?: string;
-        marketplaceVersion?: string;
-      };
-      exactReleaseReopening?: {
-        status?: string;
-        hotfixBranch?: string | null;
-        featureBranch?: string;
-        authorityMainCommit?: string;
-        authorityTag?: string;
-        publicGitHubExactCommit?: string;
-        publicGitHubReleaseUrl?: string;
-        nextSeparateAct?: string;
-        marketplaceVersionRetained?: string;
-        preTagPublicExactProofPackageScript?: string;
-        preTagPublicExactProofJob?: string;
-      };
-      historicalHumanProofs?: {
-        latestSubmission?: {
-          outcome?: string;
-          relativePath?: string;
-          reviewerNote?: string;
-        };
-      };
-      expertAgentReviewProofs?: {
-        requiredSkill?: {
-          skillName?: string;
-          canonicalCodexSkillPath?: string;
-        };
-        latestPublishedSurfaceReview?: {
-          status?: string;
-          retainedAt?: string;
-          verdict?: string;
-          reviewedPublicDevelopCommit?: string;
-          reviewedPublicWikiHead?: string;
-          nextPublishedCandidateCommit?: string;
-          nextPublishedCandidateWikiHead?: string;
-          currentPublishedHeadsCovered?: boolean;
-          findingCount?: number;
-          findings?: Array<{
-            id?: string;
-            severity?: string;
-            path?: string;
-            summary?: string;
-          }>;
-          priorReviewedPublicDevelopCommit?: string;
-          priorReviewedPublicWikiHead?: string;
-          priorVerdict?: string;
-          priorFindingCount?: number;
-          gatingRule?: string;
-        };
-      };
-      exactCloseout?: {
-        status?: string;
-        authorityMainCommit?: string;
-        backMergedDevelopCommit?: string;
-        developPipelineId?: number;
-        developPipelineStatus?: string;
-      };
-      acceptedWaivers?: unknown[];
-      testerFixtureStrategy?: {
-        command?: string;
-        interactiveGenericCommand?: string;
-        genericCommand?: string;
-        requiredReviewEnvironment?: string;
-      };
-      activeBlockers?: Array<{ id?: string; status?: string; summary?: string }>;
-    }>('docs/product/public-release-candidate.json');
+  it('retains the blocked v1.3.6 public GitHub transaction as repair-in-place only while keeping Marketplace separate', () => {
+    const candidate = readJson<any>('docs/product/public-release-candidate.json');
     const candidateMarkdown = readText('docs/product/public-release-candidate.md');
     const currentState = readText('docs/product/current-state.md');
     const srs = readText('docs/requirements/srs.md');
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(candidate.versionLine).toBe('1.3.6');
+    expect(candidate.versionLine).toBe('1.3.7');
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.authorityRepo).toMatchObject({
       role: 'source-of-truth',
@@ -151,7 +31,7 @@ describe('public release candidate control surface', () => {
       featureHardeningBranch: null,
       semverDiscipline: 'strict-post-release-bumps'
     });
-    expect(candidate.authorityRepo?.requiredChecks).toEqual(
+    expect(candidate.authorityRepo.requiredChecks).toEqual(
       expect.arrayContaining([
         'public_exact_pretag_proof',
         'docs_continuous_integration',
@@ -163,9 +43,10 @@ describe('public release candidate control surface', () => {
         'Public Facade Linux Smoke / public-facade-linux-smoke'
       ])
     );
+
     expect(candidate.publishedPublicSource).toMatchObject({
-      publishedCommit: 'ad351ed',
-      status: 'published-exact-v1.3.1-main'
+      publishedCommit: 'bd81bfe',
+      status: 'published-main-and-tag-v1.3.6-release-draft-only'
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
@@ -177,66 +58,80 @@ describe('public release candidate control surface', () => {
       publishedHeadCommit: '141c39e',
       status: 'published-v1.3.1-candidate-wiki-head'
     });
+
     expect(candidate.candidateReadiness).toMatchObject({
-      authorityBaseline: 'v1.3.5-tagged-on-main-release-v1.3.6-open-pretag-proof-retained-on-develop',
-      localInstalledVsix: 'not-yet-built-for-v1.3.6',
+      authorityBaseline: 'v1.3.6-tagged-on-main-public-main-and-tag-published-release-draft-only',
+      localInstalledVsix: 'released-v1.3.6-authority-evidence-retained',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
       authorityIssue0414ImplementationState: 'closed-clean-before-next-public-candidate-step',
       authorityIssue0414LiveSessionProof: 'fresh-governed-windows-proof-retained',
       publishedSurfaceExpertAgentReview: 'no-findings-on-current-v1.3.1-published-heads',
       runtimeProviderPublicAcceptanceGate: 'closed-on-published-v1.3.0-candidate-heads-retained',
       preTagPublicExactProofGate: 'required-before-any-later-exact-reopen',
+      publicGitHubExactTransactionGate:
+        'required-before-any-further-public-github-release-or-marketplace-act',
       exactPublicRelease:
-        'v1.3.1-github-release-published-v1.3.6-release-open-public-exact-retry-blocked-until-pretag-proof'
+        'v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only'
     });
-    expect(candidate.localProofs?.localInstalledVsixPreview).toMatchObject({
-      status: 'not-yet-built-for-v1.3.6',
+
+    expect(candidate.localProofs.localInstalledVsixPreview).toMatchObject({
+      status: 'released-v1.3.6-authority-evidence-retained',
       version: '1.3.6',
-      vsixPath: 'preview-evidence/vi-history-suite-1.3.6.vsix',
-      checksumPath: 'preview-evidence/vi-history-suite-1.3.6.vsix.sha256',
-      buildCommand: 'npm run package -- --out "preview-evidence/vi-history-suite-1.3.6.vsix"',
+      vsixPath:
+        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix',
+      checksumPath:
+        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix.sha256',
+      buildCommand: 'not-applicable-authority-exact-v1.3.6-already-built',
       gatingPackageScript: 'npm run public:exact:pretag:proof',
       gatingGitLabJob: 'public_exact_pretag_proof'
     });
-    expect(candidate.localProofs?.privateRelease).toMatchObject({
-      status: 'current-v1.3.1-private-release-published',
-      tag: 'private-v1.3.1-windows-x64',
-      releaseUrl:
-        'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64'
+    expect(candidate.localProofs.publicGitHubExactTransaction).toMatchObject({
+      status: 'externally-impossible-v1.3.6-release-draft-publish',
+      packageScript: 'npm run public:github:exact:transaction:assess',
+      receiptPath:
+        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+      authorityTag: 'v1.3.6',
+      authorityMainCommit: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
+      publicMainCommit: 'bd81bfe6743348c9138c3f0f4967c790a235184f',
+      publicTag: 'v1.3.6',
+      draftReleaseId: 312363117,
+      draftReleaseUrl:
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+      vsixAssetName: 'vi-history-suite-1.3.6.vsix',
+      vsixAssetSha256: '4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb',
+      checksumAssetSha256: '7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0',
+      authorityReleaseManifestPath:
+        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+      authorityReleaseManifestLocatorStatus: 'located-and-verified-non-mutatively',
+      releaseAssetsRetainedAgainstManifest: true,
+      draftPublishabilityProbeStatus: 'externally-impossible',
+      draftPublishabilityBlockerCode: 'immutable-release-tag-reuse-422',
+      draftPublishabilityBlockerSummary:
+        'The repo-owned in-place publish attempt against draft release 312363117 returned 422 tag_name was used by an immutable release, so the retained by-id draft state is no longer a safe in-place publish candidate.',
+      draftPublishabilityProbeReleaseId: 312363117,
+      draftPublishabilityByIdStatusCode: 200,
+      draftPublishabilityTagMatchesAuthority: true,
+      draftPublishabilitySafeToAttemptPublish: false,
+      publishabilityProbeStatus: 'externally-impossible',
+      publishabilityBlockerCode: 'immutable-release-tag-reuse-422',
+      publishabilityBlockerSummary:
+        'The repo-owned in-place publish attempt against draft release 312363117 returned 422 tag_name was used by an immutable release, so the v1.3.6 GitHub release is externally impossible to close in place.',
+      immutableReleasePolicyStatusCode: 200,
+      immutableReleasesEnabled: true,
+      immutableReleasesEnforcedByOwner: false,
+      draftReleaseTargetCommitish: 'main',
+      draftReleaseLookupStatusCode: 404,
+      draftReleaseDiscoveredByList: true,
+      draftReleaseDiscoveredByTag: false,
+      draftReleaseUsesUntaggedUrl: true,
+      safeToAttemptRepairPublish: false,
+      openingNewSemverAllowed: true,
+      repairInPlaceRequired: true,
+      repairInPlaceAllowed: false,
+      nextAllowedAction:
+        'promote-release-1.3.7-to-main-after-governed-validation'
     });
-    expect(candidate.localProofs?.issue0414LiveSessionProof).toMatchObject({
-      status: 'passed',
-      receiptPath: '.cache/runtime-settings-live-session-proof/latest/runtime-settings-live-session-proof.json',
-      generatedAt: '2026-04-21T06:48:16.064Z',
-      latestPacketRunId: '2026-04-21T06-45-35-068Z',
-      liveUptakeObservation: 'in-session-updated',
-      providerDrift: false,
-      historyStance: 'candidate-live-uptake-observed',
-      historyProofStatus: 're-evaluation-required',
-      providerSelectionCoverage: 'bidirectional-selection-observed',
-      nextImplementationSliceRequired: false
-    });
-    expect(candidate.findingClassifications).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY',
-          status: 'closed',
-          requirementRefs: ['VHS-REQ-528']
-        }),
-        expect.objectContaining({
-          id: 'FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP',
-          status: 'closed',
-          requirementRefs: ['VHS-REQ-527'],
-          adrRefs: ['ADR-0030']
-        }),
-        expect.objectContaining({
-          id: 'FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY',
-          status: 'closed',
-          requirementRefs: ['VHS-REQ-529'],
-          adrRefs: ['ADR-0037']
-        })
-      ])
-    );
+
     expect(candidate.exactRelease).toMatchObject({
       version: 'v1.3.1',
       gitHubAssetName: 'vi-history-suite-1.3.1.vsix',
@@ -244,136 +139,198 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
       status:
-        'authority-v1.3.5-tagged-release-v1.3.6-open-public-github-exact-retry-blocked-until-pretag-proof',
+        'authority-v1.3.6-github-release-externally-impossible-release-1.3.7-open',
       hotfixBranch: null,
       featureBranch: null,
-      authorityMainCommit: '8f0069d',
-      authorityTag: 'v1.3.5',
-      publicGitHubExactCommit: 'ad351ed',
+      authorityMainCommit: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
+      authorityTag: 'v1.3.6',
+      publicGitHubExactCommit: 'bd81bfe6743348c9138c3f0f4967c790a235184f',
+      publicGitHubExactTag: 'v1.3.6',
       publicGitHubReleaseUrl:
         'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1',
-      nextSeparateAct: 'build-v1.3.6-governed-preview-vsix',
+      publicGitHubDraftReleaseId: 312363117,
+      publicGitHubDraftReleaseUrl:
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+      publicGitHubPublishabilityProbeStatus: 'externally-impossible',
+      publicGitHubPublishabilityBlockerCode: 'immutable-release-tag-reuse-422',
+      publicGitHubDraftPublishabilityProbeStatus: 'externally-impossible',
+      publicGitHubDraftPublishabilityBlockerCode: 'immutable-release-tag-reuse-422',
+      publicGitHubDraftPublishabilityProbeReleaseId: 312363117,
+      publicGitHubDraftPublishabilityByIdStatusCode: 200,
+      publicGitHubDraftPublishabilityTagMatchesAuthority: true,
+      publicGitHubDraftPublishabilitySafeToAttemptPublish: false,
+      publicGitHubImmutableReleasesEnabled: true,
+      publicGitHubImmutableReleasesEnforcedByOwner: false,
+      publicGitHubDraftReleaseTargetCommitish: 'main',
+      publicGitHubReleaseLookupStatusCode: 404,
+      publicGitHubDraftReleaseUsesUntaggedUrl: true,
+      nextSeparateAct:
+        'promote-release-1.3.7-to-main-after-governed-validation',
       marketplaceVersionRetained: '1.3.0',
       preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
-      preTagPublicExactProofJob: 'public_exact_pretag_proof'
+      preTagPublicExactProofJob: 'public_exact_pretag_proof',
+      publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
+      publicGitHubExactTransactionReceiptPath:
+        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     });
-    expect(candidate.historicalHumanProofs?.latestSubmission).toMatchObject({
-      outcome: 'passed-human-review',
-      relativePath: 'Examples/Logging with Helper-VIs.vi',
-      reviewerNote: 'It worked on "Examples/Logging with Helper-VIs.vi".'
+    expect(candidate.softwareFactoryGovernance).toEqual({
+      status: 'publish-verify-contract-retained-on-develop-no-active-feature-branch',
+      activeFeatureBranch: null,
+      packageScripts: {
+        assess: 'npm run software:factory:assess',
+        rehearse: 'npm run software:factory:rehearse',
+        repair: 'npm run software:factory:repair',
+        publish: 'npm run software:factory:publish',
+        verify: 'npm run software:factory:verify'
+      },
+      receiptPaths: {
+        assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
+        rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
+        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
+        publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
+        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
+      },
+      admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
+      guardedNonMutatingContractPhases: ['publish', 'verify'],
+      soleProductionRecoveryTarget: 'v1.3.6',
+      productionMutationAllowed: false,
+      rule:
+        'no GitHub release publication, Marketplace publication, or other production mutation may occur through this guarded non-mutating publish/verify contract slice; the retained v1.3.6 incident now proves the immutable-release boundary and release/1.3.7 is the active next governed exact line'
     });
-    expect(candidate.expertAgentReviewProofs?.requiredSkill).toMatchObject({
-      skillName: 'vi-history-suite-expert-agent-reviewer',
-      canonicalCodexSkillPath:
-        '/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer'
-    });
-    expect(candidate.expertAgentReviewProofs?.latestPublishedSurfaceReview).toMatchObject({
-      status: 'no-findings',
-      retainedAt: '2026-04-21T13:04:21Z',
-      verdict: 'no findings; exact release / Marketplace publish may proceed',
-      reviewedPublicDevelopCommit: 'ab293d5',
-      reviewedPublicWikiHead: '141c39e',
-      nextPublishedCandidateCommit: 'ab293d5',
-      nextPublishedCandidateWikiHead: '141c39e',
-      currentPublishedHeadsCovered: true,
-      findingCount: 0,
-      priorReviewedPublicDevelopCommit: 'eecdfeb',
-      priorReviewedPublicWikiHead: '2638ea9',
-      priorVerdict: 'needs another fold before exact release',
-      priorFindingCount: 2,
-      gatingRule:
-        'exact-tag-and-marketplace-publication-blocked-until-latest-expert-agent-review-has-no-findings'
-    });
-    expect(candidate.expertAgentReviewProofs?.latestPublishedSurfaceReview?.findings).toEqual([]);
-    expect(candidate.exactCloseout).toMatchObject({
-      status: 'closed',
-      authorityMainCommit: '9587a99',
-      backMergedDevelopCommit: '04b07bd',
-      developPipelineId: 2467081960,
-      developPipelineStatus: 'success'
-    });
-    expect(candidate.acceptedWaivers).toEqual([]);
-    expect(candidate.testerFixtureStrategy).toMatchObject({
-      command: 'npm run public:fixture:icon-editor',
-      interactiveGenericCommand: 'npm run public:repo:clone',
-      genericCommand: 'npm run public:repo:clone -- --repo-url <https-url>',
-      requiredReviewEnvironment: 'brand-new-fork-plus-brand-new-codespace'
-    });
+
     expect(candidate.activeBlockers).toEqual([
       expect.objectContaining({
-        id: 'BLOCKER-PUBLIC-EXACT-PRETAG-PROOF',
+        id: 'BLOCKER-PUBLIC-GITHUB-EXACT-TRANSACTION',
         status: 'open'
       })
     ]);
 
-    expect(candidateMarkdown).toContain('Version line: `1.3.6`');
-    expect(candidateMarkdown).toContain('Published public source commit: `ad351ed`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `ab293d5`');
-    expect(candidateMarkdown).toContain('Published public wiki head: `141c39e`');
-    expect(candidateMarkdown).toContain('Feature-lane public-exact hardening branch: none');
-    expect(candidateMarkdown).toContain('Pre-tag public-exact proof hardening is now retained directly on `develop`');
-    expect(candidateMarkdown).toContain('`not-yet-built-for-v1.3.6`');
-    expect(candidateMarkdown).toContain('`closed-clean-before-next-public-candidate-step`');
-    expect(candidateMarkdown).toContain('`fresh-governed-windows-proof-retained`');
-    expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
-    expect(candidateMarkdown).toContain('`no-findings-on-current-v1.3.1-published-heads`');
-    expect(candidateMarkdown).toContain('`closed-on-published-v1.3.0-candidate-heads-retained`');
-    expect(candidateMarkdown).toContain('`required-before-any-later-exact-reopen`');
+    expect(candidateMarkdown).toContain('Version line: `1.3.7`');
+    expect(candidateMarkdown).toContain('Published public source commit: `bd81bfe`');
+    expect(candidateMarkdown).toContain('Feature-lane public GitHub release hardening branch: none');
+    expect(candidateMarkdown).toContain('Software-factory governance branch: none');
+    expect(candidateMarkdown).toContain('`released-v1.3.6-authority-evidence-retained`');
     expect(candidateMarkdown).toContain(
-      '`v1.3.1-github-release-published-v1.3.6-release-open-public-exact-retry-blocked-until-pretag-proof`'
-    );
-    expect(candidateMarkdown).toContain('private-v1.3.1-windows-x64');
-    expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
-    expect(candidateMarkdown).toContain('The maintained public `develop` candidate for `v1.3.1` still publishes');
-    expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
-    expect(candidateMarkdown).toContain('FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP');
-    expect(candidateMarkdown).toContain('FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY');
-    expect(candidateMarkdown).toContain('Exact `v1.3.0` remains closed cleanly.');
-    expect(candidateMarkdown).toContain(
-      '.cache/runtime-settings-live-session-proof/latest/runtime-settings-live-session-proof.json'
+      '`required-before-any-further-public-github-release-or-marketplace-act`'
     );
     expect(candidateMarkdown).toContain(
-      'No further authority `ISSUE-0414` implementation slice is currently required'
+      '`v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only-release-1.3.7-open`'
+    );
+    expect(candidateMarkdown).toContain('npm run public:github:exact:transaction:assess');
+    expect(candidateMarkdown).toContain('draft release `312363117`');
+    expect(candidateMarkdown).toContain('read release `312363117` by id with status `200`');
+    expect(candidateMarkdown).toContain(
+      '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json'
+    );
+    expect(candidateMarkdown).toContain('`releaseAssetsRetainedAgainstManifest=true`');
+    expect(candidateMarkdown).toContain('`draftPublishabilityProbeReleaseId=312363117`');
+    expect(candidateMarkdown).toContain('`draftPublishabilityByIdStatusCode=200`');
+    expect(candidateMarkdown).toContain('immutable releases are enabled');
+    expect(candidateMarkdown).toContain('`publishabilityBlockerCode=immutable-release-tag-reuse-422`');
+    expect(candidateMarkdown).toContain('`draftReleaseTargetCommitish=main`');
+    expect(candidateMarkdown).toContain('`draftReleaseLookupStatusCode=404`');
+    expect(candidateMarkdown).toContain('`422 tag_name was used by an immutable release`');
+    expect(candidateMarkdown).toContain(
+      '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
+    );
+    expect(candidateMarkdown).toContain('`npm run software:factory:assess`');
+    expect(candidateMarkdown).toContain('`npm run software:factory:rehearse`');
+    expect(candidateMarkdown).toContain('`npm run software:factory:repair`');
+    expect(candidateMarkdown).toContain('`npm run software:factory:publish`');
+    expect(candidateMarkdown).toContain('`npm run software:factory:verify`');
+    expect(candidateMarkdown).toContain(
+      '.cache/software-factory-orchestrator/latest/software-factory-state.json'
     );
     expect(candidateMarkdown).toContain(
-      'no findings; exact release / Marketplace publish may proceed'
+      '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json'
     );
-    expect(candidateMarkdown).toContain('npm run public:exact:pretag:proof');
-    expect(candidateMarkdown).toContain('public_exact_pretag_proof');
+    expect(candidateMarkdown).toContain(
+      '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+    );
+    expect(candidateMarkdown).toContain(
+      '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json'
+    );
+    expect(candidateMarkdown).toContain(
+      '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
+    );
+    expect(candidateMarkdown).toContain('sole production recovery case');
+    expect(candidateMarkdown).toContain('still forbids GitHub release publication,');
+    expect(candidateMarkdown).toContain(
+      'Marketplace publication, or other production mutation in this slice'
+    );
     expect(candidateMarkdown).toContain('Public GitHub exact still serves `v1.3.1`');
-    expect(candidateMarkdown).toContain('reopened-line pre-tag public-exact proof closes');
-    expect(candidateMarkdown).toContain('`v1.2.0` baseline evidence only');
-    expect(candidateMarkdown).toContain('Decision: helper-backed canonical path plus generic public-repo reference manual');
-    expect(candidateMarkdown).toContain('Canonical helper command: `npm run public:fixture:icon-editor`');
-    expect(candidateMarkdown).toContain('Generic interactive command: `npm run public:repo:clone`');
-    expect(candidateMarkdown).toContain('npm run public:repo:clone -- --repo-url <https-url>');
-    expect(candidateMarkdown).toContain(
-      'Authority exact `v1.3.5` is already tagged on `main` `8f0069d`'
-    );
+    expect(candidateMarkdown).toContain('`release/1.3.7` is now');
 
-    expect(currentState).toContain('current exact released line: `v1.3.5`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.5`');
+    expect(currentState).toContain('current exact released line: `v1.3.6`');
+    expect(currentState).toContain('current published package line on `main`: `1.3.6`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.6`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.6`');
-    expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
-    expect(currentState).toContain('active hotfix branch: none');
-    expect(currentState).toContain('active feature-lane public-exact hardening branch on `develop`: none');
-    expect(currentState).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
-    expect(currentState).toContain('public_exact_pretag_proof');
-    expect(currentState).toContain('separate public GitHub exact release: `v1.3.1` on `ad351ed`');
+    expect(currentState).toContain(
+      'active feature-lane public GitHub release hardening branch on `develop`:'
+    );
+    expect(currentState).toContain('none');
+    expect(currentState).toContain('active software-factory governance branch on `develop`');
+    expect(currentState).toContain('npm run public:github:exact:transaction:assess');
+    expect(currentState).toContain('npm run software:factory:assess');
+    expect(currentState).toContain('npm run software:factory:rehearse');
+    expect(currentState).toContain('npm run software:factory:repair');
+    expect(currentState).toContain('npm run software:factory:publish');
+    expect(currentState).toContain('npm run software:factory:verify');
+    expect(currentState).toContain(
+      '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json'
+    );
+    expect(currentState).toContain(
+      '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+    );
+    expect(currentState).toContain(
+      '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json'
+    );
+    expect(currentState).toContain(
+      '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
+    );
+    expect(currentState).toContain('separate public GitHub exact release publication: `v1.3.6` proved');
+    expect(currentState).toContain('`422 tag_name was used by an immutable release`');
+    expect(currentState).toContain('`release/1.3.7` is now the active next');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');
 
-    expect(srs).toContain('VHS-REQ-527');
-    expect(srs).toContain('VHS-REQ-528');
-    expect(srs).toContain('VHS-REQ-529');
-    expect(rtm).toContain('VHS-REQ-527');
-    expect(rtm).toContain('VHS-REQ-528');
-    expect(rtm).toContain('VHS-REQ-529');
-    expect(testPlan).toContain('TEST-UNIT-338');
-    expect(testPlan).toContain('TEST-UNIT-339');
-    expect(testPlan).toContain('TEST-UNIT-340');
-    expect(testPlan).toContain('TEST-DOC-101');
-    expect(testPlan).toContain('TEST-DOC-102');
-    expect(testPlan).toContain('TEST-DOC-103');
+    expect(srs).toContain('VHS-REQ-566');
+    expect(srs).toContain('VHS-REQ-567');
+    expect(srs).toContain('VHS-REQ-568');
+    expect(srs).toContain('VHS-REQ-569');
+    expect(srs).toContain('VHS-REQ-570');
+    expect(srs).toContain('VHS-REQ-571');
+    expect(srs).toContain('VHS-REQ-572');
+    expect(srs).toContain('VHS-REQ-573');
+    expect(srs).toContain('VHS-REQ-574');
+    expect(srs).toContain('VHS-REQ-575');
+    expect(srs).toContain('VHS-REQ-576');
+    expect(rtm).toContain('VHS-REQ-566');
+    expect(rtm).toContain('VHS-REQ-567');
+    expect(rtm).toContain('VHS-REQ-568');
+    expect(rtm).toContain('VHS-REQ-569');
+    expect(rtm).toContain('VHS-REQ-570');
+    expect(rtm).toContain('VHS-REQ-571');
+    expect(rtm).toContain('VHS-REQ-572');
+    expect(rtm).toContain('VHS-REQ-573');
+    expect(rtm).toContain('VHS-REQ-574');
+    expect(rtm).toContain('VHS-REQ-575');
+    expect(rtm).toContain('VHS-REQ-576');
+    expect(testPlan).toContain('TEST-UNIT-370');
+    expect(testPlan).toContain('TEST-UNIT-371');
+    expect(testPlan).toContain('TEST-UNIT-372');
+    expect(testPlan).toContain('TEST-UNIT-373');
+    expect(testPlan).toContain('TEST-UNIT-374');
+    expect(testPlan).toContain('TEST-UNIT-375');
+    expect(testPlan).toContain('TEST-UNIT-376');
+    expect(testPlan).toContain('TEST-UNIT-377');
+    expect(testPlan).toContain('TEST-UNIT-378');
+    expect(testPlan).toContain('TEST-DOC-123');
+    expect(testPlan).toContain('TEST-DOC-124');
+    expect(testPlan).toContain('TEST-DOC-125');
+    expect(testPlan).toContain('TEST-DOC-126');
+    expect(testPlan).toContain('TEST-DOC-127');
+    expect(testPlan).toContain('TEST-DOC-128');
+    expect(testPlan).toContain('TEST-DOC-129');
+    expect(testPlan).toContain('TEST-DOC-130');
+    expect(testPlan).toContain('TEST-DOC-131');
   });
 });

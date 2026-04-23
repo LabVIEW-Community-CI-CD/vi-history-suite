@@ -153,6 +153,8 @@ documents instead of treating this README as the only manual:
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
 - public release candidate:
   [docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)
+- software factory assessment contract:
+  [scripts/runSoftwareFactoryOrchestrator.js](./scripts/runSoftwareFactoryOrchestrator.js)
 - [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 - [Wiki Authority Map](./docs/product/wiki-authority-map.md)
 - [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.json)
@@ -177,20 +179,55 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.5`
-- current published package line on `main`: `1.3.5`
+- current exact released line: `v1.3.6`
+- current published package line on `main`: `1.3.6`
 - current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: `v1.3.6`
-- active release-candidate branch: `release/1.3.6`
+- active exact release candidate line on `develop`: `1.3.7`
+- active release-candidate branch: `release/1.3.7`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`: none
-- pre-tag public-exact proof hardening is now retained directly on `develop`
+- active feature-lane public GitHub release hardening branch on `develop`:
+  none
+- active software-factory governance branch on `develop`:
+  none
+- later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
+  remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
+- public GitHub exact transaction assessment package script:
+  `npm run public:github:exact:transaction:assess`
+- retained public GitHub exact transaction receipt:
+  `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- software factory assessment package script:
+  `npm run software:factory:assess`
+- software factory rehearsal package script:
+  `npm run software:factory:rehearse`
+- software factory repair package script:
+  `npm run software:factory:repair`
+- software factory publish package script:
+  `npm run software:factory:publish`
+- software factory verify package script:
+  `npm run software:factory:verify`
+- retained software factory assessment receipt:
+  `.cache/software-factory-orchestrator/latest/software-factory-state.json`
+- retained software factory rehearsal receipt:
+  `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json`
+- retained software factory repair receipt:
+  `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`
+- retained software factory publish receipt:
+  `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
+- retained software factory verify receipt:
+  `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- software-factory phase contract:
+  assess, rehearse, and repair remain admitted non-production phases, and
+  publish / verify are now retained as guarded non-mutating contract phases
+- no GitHub release publication, Marketplace publication, or other production
+  mutation is permitted through the software-factory guarded non-mutating
+  slice; the retained `v1.3.6` incident proved the immutable-release boundary
+  and `release/1.3.7` is now the next governed exact line
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -204,7 +241,11 @@ Authority release facts:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release: `v1.3.1` on `ad351ed`
+- separate public GitHub exact release publication: blocked historically on
+  `v1.3.6`; public `main` now publishes `bd81bfe`, public tag `v1.3.6` is
+  live, draft release `312363117` retains the exact assets, the repo-owned
+  publish attempt returned `422 tag_name was used by an immutable release`,
+  and the last published GitHub release remains `v1.3.1`
 - VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

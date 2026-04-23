@@ -36,6 +36,30 @@ type SustainmentRules = {
       activeReleaseCandidateBranch?: string | null;
       activeHotfixCandidateReleaseLine?: string | null;
       activeHotfixBranch?: string | null;
+      activeFeatureBranch?: string | null;
+      preTagPublicExactProofPackageScript?: string;
+      preTagPublicExactProofJob?: string;
+      publicGitHubExactTransactionPackageScript?: string;
+      publicGitHubExactTransactionReceiptPath?: string;
+      publicGitHubExactPublishabilityProbe?: {
+        status: string;
+        blockerCode: string;
+        immutableReleasePolicyStatusCode: number;
+        immutableReleasesEnabled: boolean;
+        immutableReleasesEnforcedByOwner: boolean;
+        draftReleaseId: number;
+        draftReleaseTargetCommitish: string;
+        draftReleaseLookupStatusCode: number;
+        draftReleaseHtmlUrlUsesUntaggedPath: boolean;
+      };
+      publicGitHubExactDraftPublishabilityProbe?: {
+        status: string;
+        blockerCode: string;
+        draftReleaseId: number;
+        draftReleaseByIdStatusCode: number;
+        draftReleaseTagMatchesAuthority: boolean;
+        safeToAttemptPublish: boolean;
+      };
       publicDefaultBranch?: string;
       publicCodespaceBranch: string;
       integrationBranch?: string;
@@ -147,18 +171,43 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2', 'v1.3.3', 'v1.3.4', 'v1.3.5'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2', 'v1.3.3', 'v1.3.4', 'v1.3.5', 'v1.3.6'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.3.5',
-      currentMainPackageLine: '1.3.5',
+      currentExactReleaseLine: 'v1.3.6',
+      currentMainPackageLine: '1.3.6',
       currentDevelopPackageLine: '1.3.6',
-      activeDevelopCandidateReleaseLine: 'v1.3.6',
-      activeReleaseCandidateBranch: 'release/1.3.6',
+      activeDevelopCandidateReleaseLine: '1.3.7',
+      activeReleaseCandidateBranch: 'release/1.3.7',
       activeHotfixCandidateReleaseLine: null,
       activeHotfixBranch: null,
       activeFeatureBranch: null,
       preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
       preTagPublicExactProofJob: 'public_exact_pretag_proof',
+      publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
+      publicGitHubExactTransactionReceiptPath:
+        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+      publicGitHubExactPublishabilityProbe: {
+        status: 'externally-impossible',
+        blockerCode: 'immutable-release-tag-reuse-422',
+        immutableReleasePolicyStatusCode: 200,
+        immutableReleasesEnabled: true,
+        immutableReleasesEnforcedByOwner: false,
+        draftReleaseId: 312363117,
+        draftReleaseTargetCommitish: 'main',
+        draftReleaseLookupStatusCode: 404,
+        draftReleaseHtmlUrlUsesUntaggedPath: true
+      },
+      publicGitHubExactDraftPublishabilityProbe: {
+        status: 'externally-impossible',
+        blockerCode: 'immutable-release-tag-reuse-422',
+        draftReleaseId: 312363117,
+        draftReleaseByIdStatusCode: 200,
+        draftReleaseTagMatchesAuthority: true,
+        authorityReleaseManifestPath:
+          '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+        releaseAssetsRetainedAgainstManifest: true,
+        safeToAttemptPublish: false
+      },
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -192,9 +241,13 @@ describe('post-release sustainment rules package', () => {
         'when develop carries post-release work, the develop package line shall advance to the next exact release candidate before public-facing normalization continues',
         'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published',
-        'future sessions shall not keep landing post-release changes on the previous exact release version number',
-        'future sessions shall not treat a burned exact release as the green release baseline for later publication',
-        'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
+          'future sessions shall not keep landing post-release changes on the previous exact release version number',
+          'future sessions shall not treat a burned exact release as the green release baseline for later publication',
+          'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
+          'future sessions shall assess any partially public exact GitHub transaction through npm run public:github:exact:transaction:assess before any further public GitHub release or VS Code Marketplace act',
+          "future sessions shall retain the controller's non-mutating draft-publishability probe before any in-place public GitHub release repair attempt",
+          'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction unless the retained controller records that the current line is externally impossible to repair in place',
+          'future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible',
         'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
         'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package',
@@ -254,17 +307,84 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         chosenBump: 'patch',
         targetFeatureBranch: null,
-        targetReleaseBranch: 'release/1.3.6',
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
-        preTagPublicExactProofJob: 'public_exact_pretag_proof'
+        preTagPublicExactProofJob: 'public_exact_pretag_proof',
+        publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
+        publicGitHubExactTransactionReceiptPath:
+          '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'authority exact v1.3.5 remains immutable while the separate public GitHub exact release still serves v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so release/1.3.6 now opens from merged-green develop for the next governed public-exact retry',
-        'npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof remain fail-closed gates on develop before any later exact tag act from the reopened line'
+        'authority exact v1.3.6 is already tagged on main, public GitHub main and tag are already published, and a draft GitHub release with exact assets already exists, but the repo-owned publish attempt now proves that closing that GitHub release in place is externally impossible under the immutable-release boundary',
+        'release/1.3.7 therefore opens from develop as the next governed exact line after the v1.3.6 external impossibility was retained'
       ])
     );
+    expect((rules as any).softwareFactoryGovernance).toEqual({
+      status: 'publish-verify-contract-retained-on-develop',
+      activeFeatureBranch: null,
+      packageScripts: {
+        assess: 'npm run software:factory:assess',
+        rehearse: 'npm run software:factory:rehearse',
+        repair: 'npm run software:factory:repair',
+        publish: 'npm run software:factory:publish',
+        verify: 'npm run software:factory:verify'
+      },
+      receiptPaths: {
+        assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
+        rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
+        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
+        publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
+        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
+      },
+      admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
+      guardedNonMutatingContractPhases: ['publish', 'verify'],
+      soleProductionRecoveryTarget: 'v1.3.6',
+      productionMutationAllowed: false,
+      authorityBoundary: ['GitLab develop -> release/* -> protected main'],
+      stagingBoundary: [
+        'GitFlow feature/*, release/*, and hotfix/* lanes with required checks and retained receipts'
+      ],
+      productionBoundary: ['public GitHub main/tag/release', 'VS Code Marketplace listing'],
+      recoveryBoundary: [
+        'repair-in-place first when public GitHub main, tag, or draft release already exist',
+        'current v1.3.6 blocker is externally impossible: publish attempt against draft release 312363117 returned immutable-release tag reuse 422'
+      ],
+      trustModel: [
+        'Windows operator host',
+        'self-hosted Windows runner lane',
+        'self-hosted Linux assurance runner lane',
+        'GitLab authority state',
+        'public GitHub release state',
+        'VS Code Marketplace state',
+        'local token locators and retained receipts'
+      ],
+      environmentBaseline: [
+        'standard Windows installs only',
+        'Git for Windows',
+        'Node.js 22 LTS',
+        'Python 3.12 x64',
+        'Ubuntu-24.04 Linux assurance lane'
+      ],
+      rehearsalPolicy: [
+        'production is not the first proof surface',
+        'retain the admitted assess/rehearse/repair non-production phases plus guarded non-mutating publish/verify contracts before any later mutating production phase opens'
+      ],
+      incidentClasses: [
+        'production-partial-public-state',
+        'production-mutation-policy-violation',
+        'runner-or-host-readiness-drift',
+        'credential-or-capability-boundary-missing',
+        'externally-blocked-publication',
+        'externally-impossible-publication'
+      ],
+      approvalModel: [
+        'assess, rehearse, and repair are repo-owned and automatic non-production phases',
+        'publish and verify are repo-owned and automatic guarded non-mutating contract phases',
+        'later GitHub-release publish requires explicit production approval',
+        'later VS Code Marketplace publish requires explicit production approval'
+      ]
+    });
 
     expect(rules.benchmarkRefreshCadence.model).toBe('event-driven-bounded');
     expect(rules.benchmarkRefreshCadence.acceptedComparablePrefix).toEqual({
@@ -575,15 +695,48 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.3.5`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.5`');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.6`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.6`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.6`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.6`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.6`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `1.3.7`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.7`');
+    expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(rulesDoc).toContain('none');
+    expect(rulesDoc).toContain('`npm run public:github:exact:transaction:assess`');
+    expect(rulesDoc).toContain('draft release `312363117` is readable by id with status `200`');
+    expect(rulesDoc).toContain('still matches');
+    expect(rulesDoc).toContain('authority tag `v1.3.6`');
+    expect(rulesDoc).toContain('retained authority release manifest non-mutatively');
+    expect(rulesDoc).toContain('exact VSIX plus checksum assets');
+    expect(rulesDoc).toContain('immutable releases `enabled=true`, `enforced_by_owner=false`');
+    expect(rulesDoc).toContain('`422 tag_name was used by an immutable release`');
     expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(rulesDoc).toContain('active hotfix branch: none');
-    expect(rulesDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
-    expect(rulesDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
+    expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(rulesDoc).toContain('later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`');
+    expect(rulesDoc).toContain('## Software Factory Governance Contract');
+    expect(rulesDoc).toContain('active software-factory branch on `develop`:');
+    expect(rulesDoc).toContain('none');
+    expect(rulesDoc).toContain('`npm run software:factory:assess`');
+    expect(rulesDoc).toContain('`npm run software:factory:rehearse`');
+    expect(rulesDoc).toContain('`npm run software:factory:repair`');
+    expect(rulesDoc).toContain('`npm run software:factory:publish`');
+    expect(rulesDoc).toContain('`npm run software:factory:verify`');
+    expect(rulesDoc).toContain('.cache/software-factory-orchestrator/latest/software-factory-state.json');
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json'
+    );
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+    );
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json'
+    );
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
+    );
+    expect(rulesDoc).toContain('sole production recovery target: `v1.3.6`');
+    expect(rulesDoc).toContain('no GitHub release publication, VS Code Marketplace publication, or other');
     expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('Current control decision for public exact hardening:');
     expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');
@@ -604,6 +757,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('design:gate');
     expect(rulesDoc).toContain('burned exact release line');
     expect(rulesDoc).toContain('VS Code Marketplace exact publication state');
+    expect(rulesDoc).toContain("future sessions shall retain the controller's non-mutating");
+    expect(rulesDoc).toContain('draft-publishability probe before any in-place public GitHub release repair');
     expect(rulesDoc).toContain('future sessions shall not treat an exact release as fully closed');
     expect(rulesDoc).toContain('installed-user entry surfaces');
     expect(rulesDoc).toContain('PROGRAM-0002');
@@ -654,6 +809,24 @@ describe('post-release sustainment rules package', () => {
     );
     expect(informationItemMap).toContain(
       '| Machine-readable post-release sustainment rules | `docs/product/post-release-sustainment-rules.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory orchestrator contract | `scripts/runSoftwareFactoryOrchestrator.js` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory assessment receipt | `.cache/software-factory-orchestrator/latest/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory rehearsal receipt | `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory repair receipt | `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory publish receipt | `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory verify receipt | `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json` |'
     );
   });
 });

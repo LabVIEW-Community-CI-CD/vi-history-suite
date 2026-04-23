@@ -126,15 +126,17 @@ describe('release governance package', () => {
     expect(adr8).toContain('exact tagging and Marketplace publication blocked until the latest');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
     expect(hostedGovernance).toContain('current `develop` package line: `1.3.6`');
-    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.3.6`');
-    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.6`');
+    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `1.3.7`');
+    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.7`');
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
     expect(hostedGovernance).toContain('active hotfix branch: none');
-    expect(hostedGovernance).toContain('active feature-lane public-exact hardening branch on `develop`: none');
-    expect(hostedGovernance).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
+    expect(hostedGovernance).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(hostedGovernance).toContain('none');
     expect(hostedGovernance).toContain('chosen bump: `patch`');
     expect(hostedGovernance).toContain('public_exact_pretag_proof');
     expect(hostedGovernance).toContain('npm run public:exact:pretag:proof');
+    expect(hostedGovernance).toContain('npm run public:github:exact:transaction:assess');
+    expect(hostedGovernance).toContain('`422 tag_name was used by an immutable release`');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(
@@ -231,6 +233,69 @@ describe('release governance package', () => {
     expect(testPlan).toContain('TEST-DOC-101');
     expect(testPlan).toContain('TEST-DOC-102');
     expect(testPlan).toContain('TEST-DOC-103');
+    expect(testPlan).toContain('TEST-UNIT-373');
+    expect(testPlan).toContain('TEST-UNIT-374');
+    expect(testPlan).toContain('TEST-UNIT-375');
+    expect(testPlan).toContain('TEST-UNIT-376');
+    expect(testPlan).toContain('TEST-UNIT-377');
+    expect(testPlan).toContain('TEST-UNIT-378');
+    expect(testPlan).toContain('TEST-DOC-126');
+    expect(testPlan).toContain('TEST-DOC-127');
+    expect(testPlan).toContain('TEST-DOC-128');
+    expect(testPlan).toContain('TEST-DOC-129');
+    expect(testPlan).toContain('TEST-DOC-130');
+    expect(testPlan).toContain('TEST-DOC-131');
+    expect(srs).toContain('VHS-REQ-569');
+    expect(srs).toContain('VHS-REQ-570');
+    expect(srs).toContain('VHS-REQ-571');
+    expect(srs).toContain('VHS-REQ-572');
+    expect(srs).toContain('VHS-REQ-573');
+    expect(srs).toContain('VHS-REQ-574');
+    expect(srs).toContain('VHS-REQ-575');
+    expect(srs).toContain('VHS-REQ-576');
+    expect(srs).toContain('repo-owned software-factory orchestrator assessment surface');
+    expect(srs).toContain('non-production software-factory rehearsal surface');
+    expect(srs).toContain('non-production software-factory repair-contract surface');
+    expect(srs).toContain('guarded non-mutating software-factory publish-contract surface');
+    expect(srs).toContain('guarded non-mutating software-factory verify-contract surface');
+    expect(srs).toContain('trust model, environment baseline, rehearsal policy, incident classes');
+    expect(srs).toContain('sole production recovery case');
+    expect(srs).toContain('production mutation remain forbidden in this slice');
+    expect(rtm).toContain('VHS-REQ-569');
+    expect(rtm).toContain('VHS-REQ-570');
+    expect(rtm).toContain('VHS-REQ-571');
+    expect(rtm).toContain('VHS-REQ-572');
+    expect(rtm).toContain('VHS-REQ-573');
+    expect(rtm).toContain('VHS-REQ-574');
+    expect(rtm).toContain('VHS-REQ-575');
+    expect(rtm).toContain('VHS-REQ-576');
+    expect(rtm).toContain('scripts/runSoftwareFactoryOrchestrator.js');
+    expect(readText('docs/architecture/overview.md')).toContain(
+      '## Software Factory Governance Contract'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run software:factory:assess'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run software:factory:rehearse'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run software:factory:repair'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run software:factory:publish'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run software:factory:verify'
+    );
+    expect(readText('README.md')).toContain('software factory assessment package script');
+    expect(readText('README.md')).toContain('software factory rehearsal package script');
+    expect(readText('README.md')).toContain('software factory repair package script');
+    expect(readText('README.md')).toContain('software factory publish package script');
+    expect(readText('README.md')).toContain('software factory verify package script');
+    expect(readText('docs/product/current-state.md')).toContain(
+      'active software-factory governance branch on `develop`'
+    );
     expect(readText('docs/release-procedure.md')).toContain(
       'node scripts/resolveLocalGitLabApiToken.js --json'
     );

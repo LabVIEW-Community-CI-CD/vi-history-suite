@@ -30,16 +30,17 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.5',
-        currentMainPackageLine: '1.3.5',
+        currentExactReleaseLine: 'v1.3.6',
+        currentMainPackageLine: '1.3.6',
         currentDevelopPackageLine: '1.3.6',
-        activeDevelopCandidateReleaseLine: 'v1.3.6',
-        activeReleaseCandidateBranch: 'release/1.3.6',
+        activeDevelopCandidateReleaseLine: '1.3.7',
+        activeReleaseCandidateBranch: 'release/1.3.7',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
         preTagPublicExactProofJob: 'public_exact_pretag_proof',
+        publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
         chosenBump: 'patch'
       })
     );
@@ -309,17 +310,20 @@ describe('hosted ci governance docs', () => {
 
     expect(matrixDoc).toContain('current exact release line: `v1.3.0`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.0`');
-    expect(matrixDoc).toContain('current exact release line: `v1.3.5`');
-    expect(matrixDoc).toContain('current `main` package line: `1.3.5`');
+    expect(matrixDoc).toContain('current exact release line: `v1.3.6`');
+    expect(matrixDoc).toContain('current `main` package line: `1.3.6`');
     expect(matrixDoc).toContain('current `develop` package line: `1.3.6`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.6`');
-    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.6`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `1.3.7`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.7`');
     expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(matrixDoc).toContain('active hotfix branch: none');
-    expect(matrixDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
-    expect(matrixDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
+    expect(matrixDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(matrixDoc).toContain('none');
+    expect(matrixDoc).toContain('later SemVer openings beyond `1.3.7`');
+    expect(matrixDoc).toContain('`422 tag_name was used by an immutable release`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
     expect(matrixDoc).toContain('Current Control Decision For Public Exact Hardening');
+    expect(matrixDoc).toContain('npm run public:github:exact:transaction:assess');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');

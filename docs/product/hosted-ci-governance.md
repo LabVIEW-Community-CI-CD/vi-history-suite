@@ -8,12 +8,16 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.5`, `develop` still carries
-`1.3.5`, `release/1.3.6` is now open from merged-green `develop` `189aa3a`,
-the separate public GitHub exact release still serves `v1.3.1`, the
-Marketplace listing still serves `1.3.0`, no exact hotfix lane is currently
-open, and the reopened public-exact retry remains blocked behind the retained
-pre-tag proof.
+Authority exact `main` now carries tagged `v1.3.6`, `develop` still carries
+`1.3.6`, public GitHub `main` plus tag now publish the partial `v1.3.6`
+transaction, the last published GitHub release still serves `v1.3.1`, the
+Marketplace listing still serves `1.3.0`, exact `v1.3.6` proved externally
+impossible to close in place on GitHub when the repo-owned publish attempt
+against draft release `312363117` returned
+`422 tag_name was used by an immutable release`, no exact hotfix lane is
+currently open, no active feature-lane public GitHub hardening branch remains
+open, and `release/1.3.7` is now the active next governed exact line on
+`develop`.
 
 ## Current Exact Closeout State
 
@@ -21,7 +25,8 @@ pre-tag proof.
 - current `main` package line: `1.3.0`
 - current `develop` package line: `1.3.0`
 - active exact release candidate line on `develop`: none; exact `v1.3.0`
-  closeout is complete and the next SemVer line is not open yet
+  closeout is complete and the historical closeout record stays closed even
+  while later lines open
 - active release-candidate branch: none
 - protected back-merge proof: authority `main` `9587a99` into `develop`
   `04b07bd`
@@ -29,26 +34,29 @@ pre-tag proof.
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.5`
-- current `main` package line: `1.3.5`
+- current exact release line: `v1.3.6`
+- current `main` package line: `1.3.6`
 - current `develop` package line: `1.3.6`
-- active exact release candidate line on `develop`: `v1.3.6`
-- active release-candidate branch: `release/1.3.6`
+- active exact release candidate line on `develop`: `1.3.7`
+- active release-candidate branch: `release/1.3.7`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`: none
-- pre-tag public-exact proof hardening is now retained directly on `develop`
+- active feature-lane public GitHub release hardening branch on `develop`:
+  none
+- later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
+  remains incomplete
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
+- public GitHub exact transaction assessment package script:
+  `npm run public:github:exact:transaction:assess`
 - chosen bump: `patch`
-- rationale: authority exact `v1.3.5` remains immutable while the separate
-  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
-  still serves `1.3.0`, so `release/1.3.6` now opens from merged-green
-  `develop` for the next governed public-exact retry
-- rationale: `npm run public:exact:pretag:proof` and GitLab
-  `public_exact_pretag_proof` remain fail-closed gates on `develop` before
-  any later exact tag act from the reopened line
+- rationale: authority exact `v1.3.6` is already tagged on `main` while
+  public GitHub `main` plus the exact tag are already live, and the
+  repo-owned publish attempt now proves that closing the GitHub release in
+  place is externally impossible under the immutable-release boundary
+- rationale: `release/1.3.7` therefore opens from `develop` as the next
+  governed exact line after that external impossibility was retained
 
 ## Branch Model
 
