@@ -32,7 +32,7 @@ describe('public repo package surface', () => {
     const bundledComparisonReview = readText(
       'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
     );
-    const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
+    const previewWorkflow = readText('.github/workflows/public-source-package-preview.yml');
 
     expect(manifest.version).toBe('1.3.9');
     expect(manifest.files).toEqual([
@@ -44,7 +44,10 @@ describe('public repo package surface', () => {
       'LICENSE'
     ]);
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
-      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
+      'npm run compile && node scripts/runPublicLinuxInstalledUserSmoke.js'
+    );
+    expect(manifest.scripts?.['public:contract:windows-installed-user']).toBe(
+      'node scripts/runPublicWindowsInstalledUserContract.js'
     );
     expect(manifest.scripts?.['public:host:bootstrap-linux']).toBe(
       'node scripts/bootstrapLinuxVsCodeHost.js install'
@@ -56,7 +59,7 @@ describe('public repo package surface', () => {
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -137,7 +140,7 @@ describe('public repo package surface', () => {
     expect(bundledComparisonReview).toContain('<h2>Checkbox-Selected Pair Review</h2>');
     expect(bundledComparisonReview).not.toContain('<code>Diff prev</code>');
     expect(bundledComparisonReview).not.toContain('<h2>Retained Pair Review</h2>');
-    expect(previewWorkflow).toContain('name: Public Facade Package Preview');
+    expect(previewWorkflow).toContain('name: Public Source Package Preview');
     expect(previewWorkflow).toContain('  push:');
     expect(previewWorkflow).toContain("      - 'release/**'");
     expect(previewWorkflow).toContain("      - 'hotfix/**'");

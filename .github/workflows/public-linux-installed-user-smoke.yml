@@ -1,0 +1,89 @@
+name: Public Linux Installed-User Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - develop
+      - main
+      - 'release/**'
+      - 'hotfix/**'
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/public-source-package-preview.yml'
+      - '.github/workflows/public-linux-installed-user-smoke.yml'
+      - '.github/workflows/public-windows-installed-user-contract.yml'
+      - '.vscode/**'
+      - 'README.md'
+      - 'INSTALL.md'
+      - 'SUPPORT.md'
+      - 'CONTRIBUTING.md'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'tsconfig.integration.json'
+      - 'vitest.config.ts'
+      - 'resources/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'src/**'
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/public-source-package-preview.yml'
+      - '.github/workflows/public-linux-installed-user-smoke.yml'
+      - '.github/workflows/public-windows-installed-user-contract.yml'
+      - '.vscode/**'
+      - 'README.md'
+      - 'INSTALL.md'
+      - 'SUPPORT.md'
+      - 'CONTRIBUTING.md'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'tsconfig.integration.json'
+      - 'vitest.config.ts'
+      - 'resources/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'src/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-linux-installed-user-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Docker Linux engine
+        run: docker info --format '{{.OSType}}'
+
+      - name: Run public Linux installed-user smoke
+        run: npm run public:smoke:linux -- --evidence-dir artifacts/public-linux-installed-user-smoke
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-linux-installed-user-smoke
+          path: artifacts/public-linux-installed-user-smoke/**
+          if-no-files-found: warn

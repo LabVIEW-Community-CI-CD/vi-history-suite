@@ -27,8 +27,9 @@
   - `docs_internal_continuous_integration`
   - `test_extension`
   - `package_extension_preview`
-  - `Public Facade Package Preview / package-preview`
-  - `Public Facade Linux Smoke / public-facade-linux-smoke`
+  - `Public Source Package Preview / public-source-package-preview`
+  - `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
+  - `Public Windows Installed-User Contract / public-windows-installed-user-contract`
 
 ## Readiness
 

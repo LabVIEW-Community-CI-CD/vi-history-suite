@@ -486,12 +486,13 @@
       "develop"
     ],
     "requiredChecks": [
-      "package-preview",
-      "public-facade-linux-smoke"
+      "public-source-package-preview",
+      "public-linux-installed-user-smoke",
+      "public-windows-installed-user-contract"
     ],
     "workflows": {
-      "Public Facade Package Preview": {
-        "requiredCheck": "package-preview",
+      "Public Source Package Preview": {
+        "requiredCheck": "public-source-package-preview",
         "classification": "release-facing-required-check",
         "admittedBranches": [
           "develop",
@@ -504,8 +505,22 @@
           "main"
         ]
       },
-      "Public Facade Linux Smoke": {
-        "requiredCheck": "public-facade-linux-smoke",
+      "Public Linux Installed-User Smoke": {
+        "requiredCheck": "public-linux-installed-user-smoke",
+        "classification": "release-facing-required-check",
+        "admittedBranches": [
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main"
+        ],
+        "pullRequestTargets": [
+          "develop",
+          "main"
+        ]
+      },
+      "Public Windows Installed-User Contract": {
+        "requiredCheck": "public-windows-installed-user-contract",
         "classification": "release-facing-required-check",
         "admittedBranches": [
           "develop",

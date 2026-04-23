@@ -1549,10 +1549,11 @@ Information-for-users review cases:
   comparison-progress or result update races with disposal of the history
   panel webview, preserving command completion instead of throwing
   `Webview is disposed`
-- `TEST-UNIT-324`: verify the governed public GitHub workflow package keeps an
-  explicit package-preview versus linux-smoke responsibility matrix, bounded
-  `develop`/`main`/`release/*`/`hotfix/*` push and pull-request admission, no
-  `feature/*` push lane, and per-workflow/per-ref concurrency
+- `TEST-UNIT-324`: verify the governed public GitHub admission matrix keeps an
+  explicit source-preview plus Linux/Windows installed-user responsibility
+  matrix, bounded `develop`/`main`/`release/*`/`hotfix/*` push and
+  pull-request admission, no `feature/*` push lane, and per-workflow/per-ref
+  concurrency
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
