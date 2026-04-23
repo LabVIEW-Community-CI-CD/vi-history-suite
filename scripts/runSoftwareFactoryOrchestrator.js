@@ -991,6 +991,13 @@ function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
   const publicReleaseCandidate = readJson('docs/product/public-release-candidate.json', fsApi);
   const releasePublicationState = publicationState.resolvePublicationState(fsApi);
   const activePublicationIncident = releasePublicationState.incident?.active === true;
+  const activeCandidateTag = publicationState.normalizeTag(
+    releasePublicationState.activeCandidate?.tag ??
+      releasePublicationState.activeCandidate?.packageVersion ??
+      versionLineContract.activeHotfixCandidateReleaseLine ??
+      versionLineContract.activeDevelopCandidateReleaseLine ??
+      null
+  );
   const versionLineContract = sustainmentRules.releaseCadence.versionLineContract;
   const currentTransaction =
     publicReleaseCandidate.localProofs?.publicGitHubExactTransaction ?? Object.create(null);
@@ -1018,9 +1025,11 @@ function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
       : Object.prototype.hasOwnProperty.call(softwareFactoryGovernance, 'activeFoundationBranch')
         ? softwareFactoryGovernance.activeFoundationBranch
         : null;
-  const exactLine = activePublicationIncident
-    ? releasePublicationState.authority?.exactTag
-    : versionLineContract.currentExactReleaseLine;
+  const exactLine =
+    activeCandidateTag ??
+    (activePublicationIncident
+      ? releasePublicationState.authority?.exactTag
+      : versionLineContract.currentExactReleaseLine);
   const exactPackageVersion = String(exactLine ?? '').replace(/^v/, '');
   const marketplaceVersion =
     releasePublicationState.marketplace?.currentPublishedVersion ??

@@ -48,18 +48,27 @@
     "role": "final-user-distribution",
     "itemName": "svelderrainruiz.vi-history-suite",
     "currentPublishedVersion": "1.3.7",
-    "expectedVersion": "1.3.8",
-    "status": "blocked-by-incomplete-public-github-release"
+    "expectedVersion": "1.3.9",
+    "status": "awaiting-asset-first-public-github-release"
   },
   "incident": {
-    "active": true,
+    "active": false,
     "id": "PUBLICATION-INCIDENT-v1.3.8-IMMUTABLE-ZERO-ASSETS",
     "classification": "externally-blocked-publication",
     "blockerCode": "published-immutable-release-assets-incomplete",
-    "summary": "Public GitHub release 312768592 for v1.3.8 is already published and immutable with zero assets, so the exact VSIX and checksum cannot be uploaded after publication.",
-    "repairRule": "do-not-attempt-in-place-asset-upload; retain the incident and require the next exact release line to use the asset-first publisher",
-    "semverOpeningsFrozenUntil": "asset-first-publication-safety-kernel-merged"
+    "summary": "Public GitHub release 312768592 for v1.3.8 is already published and immutable with zero assets, so the exact VSIX and checksum cannot be uploaded after publication; retain this as blocked historical incident evidence and move the next exact line through the asset-first publisher.",
+    "repairRule": "do-not-attempt-in-place-asset-upload; retain as blocked historical incident evidence and require the next exact release line to use the asset-first publisher",
+    "semverOpeningsFrozenUntil": "release-1.3.9-closure",
+    "status": "retained-history"
   },
-  "nextAdmittedAction": "retain-v1.3.8-external-block-and-merge-asset-first-publication-safety-before-any-next-exact-line",
-  "productionMutationAllowed": false
+  "nextAdmittedAction": "promote-release-1.3.9-to-main-after-governed-validation",
+  "productionMutationAllowed": false,
+  "activeCandidate": {
+    "sourceBranch": "develop",
+    "releaseBranch": "release/1.3.9",
+    "tag": "v1.3.9",
+    "packageVersion": "1.3.9",
+    "status": "governed-release-line-open",
+    "rationale": "v1.3.8 remains retained as blocked historical incident evidence while release/1.3.9 is the next asset-first publication line."
+  }
 }

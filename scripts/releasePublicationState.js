@@ -69,6 +69,11 @@ function resolvePublicationStateFallback(fsApi = fs) {
       publicReleaseCandidate.versionLine
   );
   const packageVersion = versionFromTag(exactTag);
+  const activeCandidateVersion =
+    publicReleaseCandidate.versionLine ??
+    versionLineContract.activeHotfixCandidateReleaseLine ??
+    versionLineContract.activeDevelopCandidateReleaseLine ??
+    null;
 
   return {
     schema: 'vi-history-suite/release-publication-state@v1',
@@ -111,6 +116,12 @@ function resolvePublicationStateFallback(fsApi = fs) {
       classification: 'none',
       blockerCode: null
     },
+    activeCandidate: activeCandidateVersion
+      ? {
+          packageVersion: versionFromTag(activeCandidateVersion),
+          tag: normalizeTag(activeCandidateVersion)
+        }
+      : null,
     nextAdmittedAction: null
   };
 }
@@ -124,10 +135,12 @@ function deriveTargetFromReceiptOrState(transactionReceipt, fsApi = fs) {
   const state = resolvePublicationState(fsApi);
   const tag =
     transactionReceipt?.authority?.tag ??
+    state.activeCandidate?.tag ??
     state.authority?.exactTag ??
     normalizeTag(state.publicGitHub?.release?.tag);
   const packageVersion =
     transactionReceipt?.authority?.packageVersion ??
+    state.activeCandidate?.packageVersion ??
     state.authority?.packageVersion ??
     versionFromTag(tag);
 

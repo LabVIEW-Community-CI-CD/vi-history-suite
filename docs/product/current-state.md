@@ -154,20 +154,21 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.7`
-- current published package line on `main`: `1.3.7`
-- current develop package line on `develop`: `1.3.7`
-- active exact release candidate line on `develop`: `1.3.8`
-- active release-candidate branch: `release/1.3.8`
+- current exact released line: `v1.3.8`
+- current published package line on `main`: `1.3.8`
+- current develop package line on `develop`: `1.3.8`
+- active exact release candidate line on `develop`: `1.3.9`
+- active release-candidate branch: `release/1.3.9`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
-  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
-  users without global `node` on `PATH`
+- exact authority `v1.3.8` is retained as blocked historical public GitHub
+  incident evidence while the last fully closed public GitHub and VS Code
+  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
+  asset-first retry line for the installed `vihs` launcher fix
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -207,10 +208,11 @@ Latest landed ship target:
   `assess`, `rehearse`, and `repair` remain admitted non-production phases;
   `publish` / `verify` are retained as guarded non-mutating contract phases
 - current software-factory mutation policy:
-  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
-  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
-  factory/orchestrator governance path before any public GitHub or Marketplace
-  mutation
+  exact authority `v1.3.8` is retained as blocked historical publication
+  evidence while the last fully closed public GitHub and VS Code Marketplace
+  line remains `v1.3.7`; `release/1.3.9` may proceed only through normal
+  GitFlow and the repo-owned factory/orchestrator governance path before any
+  public GitHub or Marketplace mutation
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -233,10 +235,10 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.7`
 - VS Code Marketplace retained published version: `1.3.7`
-- active publication incident: public GitHub release `312768592` for
-  `v1.3.8` is published and immutable with zero assets; Marketplace remains
-  `1.3.7` and the next exact release must use the asset-first GitHub publisher
-  before any Marketplace act
+- blocked historical publication incident: public GitHub release `312768592`
+  for `v1.3.8` is published and immutable with zero assets; Marketplace
+  remains `1.3.7`, and `release/1.3.9` is the next exact line that must use
+  the asset-first GitHub publisher before any Marketplace act
 - VS Code Marketplace publication prep and final publication are retained:
   `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
