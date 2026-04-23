@@ -10,6 +10,8 @@ const path = require('node:path');
 const vscePat = require(path.join(__dirname, 'resolveLocalVscePat.js'));
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pinnedVsce = require(path.join(__dirname, 'runPinnedVsce.js'));
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const publicationState = require(path.join(__dirname, 'releasePublicationState.js'));
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const DEFAULT_EVIDENCE_DIR = path.join(
@@ -265,10 +267,15 @@ async function buildPrepReport(options, deps = {}) {
   const fsApi = deps.fs ?? fs;
   const fetchMarketplaceStateImpl = deps.fetchMarketplaceState ?? fetchMarketplaceState;
   const transactionReceipt = readJson(options.transactionReceiptPath, fsApi);
+  const publicationTarget = publicationState.deriveTargetFromReceiptOrState(
+    transactionReceipt,
+    fsApi
+  );
   const publicReleaseCandidate = readJson('docs/product/public-release-candidate.json', fsApi);
   const ledger = readJson('docs/product/vscode-marketplace-publication-ledger.json', fsApi);
-  const expectedVersion = transactionReceipt.authority?.packageVersion ?? publicReleaseCandidate.versionLine;
-  const expectedTag = transactionReceipt.authority?.tag ?? `v${expectedVersion}`;
+  const expectedVersion =
+    publicationTarget.packageVersion ?? transactionReceipt.authority?.packageVersion ?? publicReleaseCandidate.versionLine;
+  const expectedTag = publicationTarget.tag ?? transactionReceipt.authority?.tag ?? `v${expectedVersion}`;
   const manifestPaths = resolveManifestPaths(transactionReceipt, fsApi);
   const marketplace = await fetchMarketplaceStateImpl(options.marketplaceItem);
   const patInspection = vscePat.inspectVscePatFile(
@@ -395,9 +402,11 @@ async function buildPrepReport(options, deps = {}) {
       statusCode: marketplace.statusCode,
       listingUrl: ledger.listingUrl,
       homepageUrl: ledger.homepageUrl,
-      nextAction: marketplace.currentPublishedVersion === expectedVersion
-        ? 'retain-marketplace-publication'
-        : 'publish-v1.3.7-to-vscode-marketplace-after-explicit-production-approval'
+      nextAction: !githubVerifyGatePassed
+        ? `block-marketplace-until-public-github-v${expectedVersion}-release-verifies-complete`
+        : marketplace.currentPublishedVersion === expectedVersion
+          ? 'retain-marketplace-publication'
+          : publicationState.buildMarketplacePublishNextAction(expectedVersion)
     },
     assets: {
       manifestPath: manifestPaths.manifestPath,

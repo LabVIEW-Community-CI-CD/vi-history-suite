@@ -69,20 +69,21 @@ Current version-line contract:
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
   `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`,
-  `v1.3.6`, `v1.3.7`
+  `v1.3.6`, `v1.3.7`, `v1.3.8`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.7`
-- current published package line on `main`: `1.3.7`
-- current develop package line on `develop`: `1.3.7`
-- active exact release candidate line on `develop`: `1.3.8`
-- active release-candidate branch: `release/1.3.8`
+- current exact released line: `v1.3.8`
+- current published package line on `main`: `1.3.8`
+- current develop package line on `develop`: `1.3.8`
+- active exact release candidate line on `develop`: `1.3.9`
+- active release-candidate branch: `release/1.3.9`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
-  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
-  users without global `node` on `PATH`
+- exact authority `v1.3.8` is retained as blocked historical public GitHub
+  incident evidence while the last fully closed public GitHub and VS Code
+  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
+  asset-first retry line for the installed `vihs` launcher fix
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -101,6 +102,13 @@ Current version-line contract:
   `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
   public-source promotion receipt is `passed`, and the retained verify gate is
   `pass`
+- current publication incident history:
+  authority exact `v1.3.8` exists on GitLab, public GitHub release
+  `312768592` is already published and immutable with zero assets, and VS Code
+  Marketplace remains `1.3.7`; blocker
+  `published-immutable-release-assets-incomplete` is retained only as
+  historical incident evidence while `release/1.3.9` carries the next exact
+  line through the asset-first GitHub publisher
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -114,12 +122,12 @@ Current control decision for public exact hardening:
 - chosen bump: `patch`
 - active feature-lane public GitHub release hardening branch:
   none
-- rationale: authority exact `v1.3.7` is already tagged on `main`, public
-  GitHub `main`, tag, and GitHub release are published with manifest-matched
-  assets, and VS Code Marketplace serves `1.3.7`
-- rationale: `release/1.3.8` opens from `develop` as the governed patch line
-  for the installed Windows `vihs` launcher fix that removes the ambient
-  global-node `PATH` dependency
+- rationale: authority exact `v1.3.8` is already tagged on `main` while public
+  GitHub release `312768592` is retained as immutable zero-asset historical
+  incident evidence and VS Code Marketplace still serves `1.3.7`
+- rationale: `release/1.3.9` opens from `develop` as the governed patch line
+  for the installed Windows `vihs` launcher fix through the asset-first public
+  GitHub publisher
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`
@@ -158,12 +166,13 @@ Current control decision for public exact hardening:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - current factory phases:
   `assess`, `rehearse`, `repair`, `publish`, `verify`
-- sole production recovery target: `v1.3.7`
+- sole production recovery target: `v1.3.9`
 - production mutation policy:
-  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
-  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
-  factory/orchestrator governance path before any public GitHub or Marketplace
-  mutation
+  exact authority `v1.3.8` is retained as blocked historical publication
+  evidence while the last fully closed public GitHub and VS Code Marketplace
+  line remains `v1.3.7`; `release/1.3.9` may proceed only through normal
+  GitFlow and the repo-owned factory/orchestrator governance path before any
+  public GitHub or Marketplace mutation
 - authority boundary:
   GitLab `develop` -> `release/*` -> protected `main`
 - staging boundary:
@@ -173,8 +182,9 @@ Current control decision for public exact hardening:
   public GitHub `main` / tag / release plus the VS Code Marketplace listing
 - recovery boundary:
   retained partial-public incidents are repair-in-place first; the current
-  exact GitHub and VS Code Marketplace acts are closed for `v1.3.7` while
-  `release/1.3.8` is the active patch candidate
+  exact GitHub and VS Code Marketplace acts remain fully closed only for
+  `v1.3.7` while `v1.3.8` is retained as blocked historical incident evidence
+  and `release/1.3.9` is the active patch candidate
 - trust model:
   operator host, self-hosted runners, local token locators, GitLab authority,
   public GitHub, Marketplace, and retained receipts are governed system
@@ -196,6 +206,15 @@ Current control decision for public exact hardening:
   GitHub `v1.3.7` verify gate, exact VSIX/checksum evidence, live Marketplace
   version, local PAT locator, and pinned `vsce` command shape without
   retaining secret material or publishing.
+- asset-first GitHub release rule:
+  no public GitHub exact release may be published until the repo-owned
+  publisher has created a draft, uploaded the VSIX and checksum from GitLab
+  authority evidence, read the draft back by id, and verified asset names,
+  nonzero sizes, VSIX SHA-256, checksum content, and manifest alignment.
+- immutable incomplete release rule:
+  a published immutable public GitHub release with missing or mismatched assets
+  is `externally-blocked-publication` and blocks VS Code Marketplace
+  publication.
 
 Historical opening decision that opened exact `v1.3.1`:
 

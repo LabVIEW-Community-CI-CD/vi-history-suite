@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const fsp = require('node:fs/promises');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const publicationState = require(path.join(__dirname, 'releasePublicationState.js'));
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const PHASES = ['assess', 'rehearse', 'repair', 'publish', 'verify'];
@@ -149,6 +151,10 @@ function determineStatus(phases) {
 function isMarketplacePublished(facts) {
   const expectedMarketplaceVersion = String(facts.exactLine ?? '').replace(/^v/, '');
   return facts.marketplaceVersion === expectedMarketplaceVersion;
+}
+
+function marketplaceAction(kind, facts) {
+  return publicationState.buildMarketplaceFactoryAction(kind, facts.exactLine);
 }
 
 function buildCommonSections(facts, phase, options = {}) {
@@ -685,15 +691,15 @@ function repairFactoryState(facts) {
         ? []
         : facts.publicGitHubReleasePublished
         ? [
-            'prepare-vscode-marketplace-v1.3.7-publication',
-            'publish-vscode-marketplace-v1.3.7-after-explicit-approval',
-            'verify-vscode-marketplace-v1.3.7-publication'
+            marketplaceAction('prepare', facts),
+            marketplaceAction('publishAfterApproval', facts),
+            marketplaceAction('verify', facts)
           ]
         : [
             'publish-existing-github-draft-release-in-place',
             'verify-public-github-release-publication',
             'verify-marketplace-remains-blocked-until-github-release-closes',
-            'publish-vscode-marketplace-v1.3.7-after-github-release-verification'
+            marketplaceAction('publishAfterGitHub', facts)
           ],
       rule:
         facts.publicGitHubReleasePublished && marketplacePublished
@@ -741,7 +747,7 @@ function publishFactoryState(facts) {
       deferredWriteAction: facts.publicGitHubReleasePublished && marketplacePublished
         ? 'none-final-publication-retained'
         : facts.publicGitHubReleasePublished
-        ? 'publish-vscode-marketplace-v1.3.7-with-pinned-vsce'
+        ? marketplaceAction('publishWithPinnedVsce', facts)
         : 'publish-existing-github-draft-release-in-place',
       nextAllowedAction: facts.nextAllowedAction,
       rule:
@@ -782,8 +788,8 @@ function verifyFactoryState(facts) {
       deferredReadActions: [
         'verify-public-github-release-publication',
         'verify-public-github-release-assets-and-checksums',
-        'prepare-vscode-marketplace-v1.3.7-publication',
-        'verify-marketplace-v1.3.7-after-marketplace-publication'
+        marketplaceAction('prepare', facts),
+        marketplaceAction('verifyAfterPublication', facts)
       ],
       nextAllowedAction: facts.nextAllowedAction,
       rule:
@@ -983,6 +989,15 @@ async function writeReport(report, evidenceDir) {
 function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
   const sustainmentRules = readJson('docs/product/post-release-sustainment-rules.json', fsApi);
   const publicReleaseCandidate = readJson('docs/product/public-release-candidate.json', fsApi);
+  const releasePublicationState = publicationState.resolvePublicationState(fsApi);
+  const activePublicationIncident = releasePublicationState.incident?.active === true;
+  const activeCandidateTag = publicationState.normalizeTag(
+    releasePublicationState.activeCandidate?.tag ??
+      releasePublicationState.activeCandidate?.packageVersion ??
+      versionLineContract.activeHotfixCandidateReleaseLine ??
+      versionLineContract.activeDevelopCandidateReleaseLine ??
+      null
+  );
   const versionLineContract = sustainmentRules.releaseCadence.versionLineContract;
   const currentTransaction =
     publicReleaseCandidate.localProofs?.publicGitHubExactTransaction ?? Object.create(null);
@@ -1010,12 +1025,21 @@ function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
       : Object.prototype.hasOwnProperty.call(softwareFactoryGovernance, 'activeFoundationBranch')
         ? softwareFactoryGovernance.activeFoundationBranch
         : null;
-  const exactLine = versionLineContract.currentExactReleaseLine;
+  const exactLine =
+    activeCandidateTag ??
+    (activePublicationIncident
+      ? releasePublicationState.authority?.exactTag
+      : versionLineContract.currentExactReleaseLine);
   const exactPackageVersion = String(exactLine ?? '').replace(/^v/, '');
-  const marketplaceVersion = publicReleaseCandidate.exactRelease?.marketplaceVersion ?? null;
+  const marketplaceVersion =
+    releasePublicationState.marketplace?.currentPublishedVersion ??
+    publicReleaseCandidate.exactRelease?.marketplaceVersion ??
+    null;
   const marketplacePublished = marketplaceVersion === exactPackageVersion;
   const retainedBlockerCode =
-    publicReleasePublished
+    activePublicationIncident
+      ? releasePublicationState.incident?.blockerCode ?? 'externally-blocked-publication'
+      : publicReleasePublished
       ? null
       : currentTransaction.publishabilityBlockerCode ??
         currentTransaction.draftPublishabilityBlockerCode ??
@@ -1038,7 +1062,10 @@ function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
     packageLine: versionLineContract.currentMainPackageLine,
     developPackageLine: versionLineContract.currentDevelopPackageLine,
     semverFrozen: !marketplacePublished,
-    semverFreezeRationale: marketplacePublished
+    semverFreezeRationale: activePublicationIncident
+      ? releasePublicationState.incident?.summary ??
+        `Later SemVer openings remain frozen while ${exactLine} is externally blocked.`
+      : marketplacePublished
       ? `Exact ${exactLine} is fully published across public GitHub and VS Code Marketplace.`
       : `Later SemVer openings remain frozen while exact ${exactLine} is closed on public GitHub but still pending the separate VS Code Marketplace publication act.`,
     requiredChecks: publicReleaseCandidate.authorityRepo.requiredChecks,
@@ -1046,74 +1073,111 @@ function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
     publicGitHubExactTransactionPackageScript:
       versionLineContract.publicGitHubExactTransactionPackageScript,
     publicGitHubExactTransactionReceiptPath: transactionReceiptPath,
-    publicGitHubMainCommit: currentTransaction.publicMainCommit ?? transactionReceipt?.publicSource?.mainSha ?? null,
-    publicGitHubTag: currentTransaction.publicTag ?? transactionReceipt?.publicRelease?.tag_name ?? null,
+    publicGitHubMainCommit:
+      releasePublicationState.publicGitHub?.mainCommit ??
+      currentTransaction.publicMainCommit ??
+      transactionReceipt?.publicSource?.mainSha ??
+      null,
+    publicGitHubTag:
+      releasePublicationState.publicGitHub?.tag ??
+      currentTransaction.publicTag ??
+      transactionReceipt?.publicRelease?.tag_name ??
+      null,
     publicGitHubDraftReleaseId:
+      releasePublicationState.publicGitHub?.release?.id ??
       currentTransaction.draftReleaseId ??
       currentTransaction.publicReleaseId ??
       transactionReceipt?.publicRelease?.id ??
       versionLineContract.publicGitHubExactDraftPublishabilityProbe?.draftReleaseId ??
       null,
-    publicGitHubLastPublishedRelease: publicReleasePublished
-      ? exactLine
-      : publicReleaseCandidate.exactRelease?.version ?? null,
+    publicGitHubLastPublishedRelease: activePublicationIncident
+      ? releasePublicationState.publicGitHub?.lastCompleteReleaseTag ??
+        publicReleaseCandidate.exactRelease?.version ??
+        null
+      : publicReleasePublished
+        ? exactLine
+        : publicReleaseCandidate.exactRelease?.version ?? null,
     blockerCode: retainedBlockerCode,
-    blockerSummary: publicReleasePublished
+    blockerSummary: activePublicationIncident
+      ? releasePublicationState.incident?.summary ?? null
+      : publicReleasePublished
       ? null
       : currentTransaction.publishabilityBlockerSummary ??
         currentTransaction.draftPublishabilityBlockerSummary ??
         draftPublishabilityPhase?.summary ??
         publicReleaseCandidate.activeBlockers?.[0]?.summary ??
         null,
-    repairInPlaceRequired: publicReleasePublished ? false : currentTransaction.repairInPlaceRequired === true,
-    repairInPlaceAllowed: publicReleasePublished ? false : currentTransaction.repairInPlaceAllowed === true,
-    nextAllowedAction: currentTransaction.nextAllowedAction ?? 'retain-current-blocker',
-    publicGitHubReleasePublished: Boolean(publicReleasePublished),
-    marketplaceItem: publicReleaseCandidate.exactRelease?.marketplaceItemName ?? null,
+    repairInPlaceRequired: activePublicationIncident
+      ? false
+      : publicReleasePublished ? false : currentTransaction.repairInPlaceRequired === true,
+    repairInPlaceAllowed: activePublicationIncident
+      ? false
+      : publicReleasePublished ? false : currentTransaction.repairInPlaceAllowed === true,
+    nextAllowedAction:
+      releasePublicationState.nextAdmittedAction ??
+      currentTransaction.nextAllowedAction ??
+      'retain-current-blocker',
+    publicGitHubReleasePublished: activePublicationIncident
+      ? releasePublicationState.publicGitHub?.release?.assetStatus === 'verified'
+      : Boolean(publicReleasePublished),
+    marketplaceItem:
+      releasePublicationState.marketplace?.itemName ??
+      publicReleaseCandidate.exactRelease?.marketplaceItemName ??
+      null,
     marketplaceVersion,
     authorityReleaseManifestPath:
+      releasePublicationState.authority?.gitlabReleaseManifestPath ??
       currentTransaction.authorityReleaseManifestPath ??
       transactionReceipt?.releaseManifest?.manifestPath ??
       versionLineContract.publicGitHubExactDraftPublishabilityProbe?.authorityReleaseManifestPath ??
       null,
     releaseAssetsRetainedAgainstManifest:
+      releasePublicationState.publicGitHub?.release?.assetStatus === 'verified' ||
       currentTransaction.releaseAssetsRetainedAgainstManifest === true ||
       transactionReceipt?.draftPublishabilityProbe?.exactAssetsRetained === true ||
       publicReleaseAssetsPhase?.status === 'pass',
     draftPublishabilityByIdStatusCode:
+      releasePublicationState.publicGitHub?.release?.byIdStatusCode ??
       currentTransaction.draftPublishabilityByIdStatusCode ??
       transactionReceipt?.publicReleaseByIdLookup?.statusCode ??
       versionLineContract.publicGitHubExactDraftPublishabilityProbe?.draftReleaseByIdStatusCode ??
       null,
     draftPublishabilityTagMatchesAuthority:
+      releasePublicationState.publicGitHub?.release?.tagMatchesAuthority === true ||
       currentTransaction.draftPublishabilityTagMatchesAuthority === true ||
       versionLineContract.publicGitHubExactDraftPublishabilityProbe?.draftReleaseTagMatchesAuthority === true ||
       transactionReceipt?.publicRelease?.tag_name === versionLineContract.currentExactReleaseLine,
     safeToAttemptRepairPublish:
+      releasePublicationState.publicGitHub?.release?.safeToPublish === true ||
       currentTransaction.safeToAttemptRepairPublish === true ||
       transactionReceipt?.repairInPlace?.status === 'allowed-and-safe' ||
       false,
     draftReleaseUrl:
+      releasePublicationState.publicGitHub?.release?.url ??
       currentTransaction.draftReleaseUrl ??
       transactionReceipt?.publicRelease?.html_url ??
       publicReleaseCandidate.exactReleaseReopening?.publicGitHubDraftReleaseUrl ??
       null,
     draftReleaseTargetCommitish:
+      releasePublicationState.publicGitHub?.release?.targetCommitish ??
       currentTransaction.draftReleaseTargetCommitish ??
       transactionReceipt?.publicRelease?.target_commitish ??
       versionLineContract.publicGitHubExactPublishabilityProbe?.draftReleaseTargetCommitish ??
       null,
     draftReleaseLookupStatusCode:
+      releasePublicationState.publicGitHub?.release?.tagLookupStatusCode ??
       currentTransaction.draftReleaseLookupStatusCode ??
       transactionReceipt?.publicReleaseLookup?.statusCode ??
       versionLineContract.publicGitHubExactPublishabilityProbe?.draftReleaseLookupStatusCode ??
       null,
     immutableReleasesEnabled:
+      releasePublicationState.publicGitHub?.immutableReleasesEnabled ??
       currentTransaction.immutableReleasesEnabled ??
       transactionReceipt?.immutableReleasePolicy?.enabled ??
       versionLineContract.publicGitHubExactPublishabilityProbe?.immutableReleasesEnabled ??
       null,
     immutableReleasesEnforcedByOwner:
+      releasePublicationState.publicGitHub?.immutableReleasesEnforcedByOwner ??
       currentTransaction.immutableReleasesEnforcedByOwner ??
       transactionReceipt?.immutableReleasePolicy?.enforcedByOwner ??
       versionLineContract.publicGitHubExactPublishabilityProbe?.immutableReleasesEnforcedByOwner ??

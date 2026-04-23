@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('hosted ci governance docs', () => {
-  it('retains the current GitLab authority matrix and v1.3.8 release-candidate posture', () => {
+  it('retains the current GitLab authority matrix and v1.3.9 release-candidate posture', () => {
     const matrix = readJson<any>('docs/product/hosted-ci-governance.json');
     const matrixDoc = readText('docs/product/hosted-ci-governance.md');
     const gitlabCi = readText('.gitlab-ci.yml');
@@ -24,11 +24,11 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.7',
-        currentMainPackageLine: '1.3.7',
-        currentDevelopPackageLine: '1.3.7',
-        activeDevelopCandidateReleaseLine: '1.3.8',
-        activeReleaseCandidateBranch: 'release/1.3.8',
+        currentExactReleaseLine: 'v1.3.8',
+        currentMainPackageLine: '1.3.8',
+        currentDevelopPackageLine: '1.3.8',
+        activeDevelopCandidateReleaseLine: '1.3.9',
+        activeReleaseCandidateBranch: 'release/1.3.9',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -89,19 +89,21 @@ describe('hosted ci governance docs', () => {
         distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO'
       })
     );
-    expect(matrixDoc).toContain('Authority exact `main` carries tagged `v1.3.7`');
-    expect(matrixDoc).toContain('public GitHub `main`, tag, and release publish the exact');
-    expect(matrixDoc).toContain('Marketplace listing now serves `1.3.7`');
-    expect(matrixDoc).toContain('current exact release line: `v1.3.7`');
-    expect(matrixDoc).toContain('current `main` package line: `1.3.7`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.7`');
-    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.8`');
+    expect(matrixDoc).toContain('Authority exact `main` carries tagged `v1.3.8`');
+    expect(matrixDoc).toContain(
+      'release `312768592` for `v1.3.8` is retained as immutable zero-asset'
+    );
+    expect(matrixDoc).toContain('VS Code Marketplace baseline remains `v1.3.7`');
+    expect(matrixDoc).toContain('current exact release line: `v1.3.8`');
+    expect(matrixDoc).toContain('current `main` package line: `1.3.8`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.8`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.9`');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
     expect(matrixDoc).toContain('installed Windows `vihs` launcher fix');
     expect(readme).toContain('- separate public GitHub exact release publication: published;');
     expect(readme).toContain('releases/tag/v1.3.7');
-    expect(currentState).toContain('current exact released line: `v1.3.7`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.7`');
+    expect(currentState).toContain('current exact released line: `v1.3.8`');
+    expect(currentState).toContain('current published package line on `main`: `1.3.8`');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.7`');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');

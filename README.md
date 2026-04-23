@@ -179,22 +179,23 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.7`
-- current published package line on `main`: `1.3.7`
-- current develop package line on `develop`: `1.3.7`
-- active exact release candidate line on `develop`: `1.3.8`
-- active release-candidate branch: `release/1.3.8`
+- current exact released line: `v1.3.8`
+- current published package line on `main`: `1.3.8`
+- current develop package line on `develop`: `1.3.8`
+- active exact release candidate line on `develop`: `1.3.9`
+- active release-candidate branch: `release/1.3.9`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
-  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
-  users without global `node` on `PATH`
+- exact authority `v1.3.8` is retained as blocked historical public GitHub
+  incident evidence while the last fully closed public GitHub and VS Code
+  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
+  asset-first retry line for the installed `vihs` launcher fix
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -233,10 +234,11 @@ Authority release facts:
 - software-factory phase contract:
   assess, rehearse, and repair remain admitted non-production phases, and
   publish / verify are now retained as guarded non-mutating contract phases
-- exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
-  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
-  factory/orchestrator governance path before any public GitHub or Marketplace
-  mutation
+- exact authority `v1.3.8` is retained as blocked historical publication
+  evidence while the last fully closed public GitHub and VS Code Marketplace
+  line remains `v1.3.7`; `release/1.3.9` may proceed only through normal
+  GitFlow and the repo-owned factory/orchestrator governance path before any
+  public GitHub or Marketplace mutation
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -256,6 +258,10 @@ Authority release facts:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
   and the exact assets match the retained authority manifest
 - VS Code Marketplace retained published version: `1.3.7`
+- blocked historical publication incident: public GitHub release `312768592`
+  for `v1.3.8` is published and immutable with zero assets; Marketplace
+  remains `1.3.7`, and `release/1.3.9` is the next exact line that must use
+  the asset-first GitHub publisher before any Marketplace act
 - VS Code Marketplace publication prep and final publication are retained:
   `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace

@@ -32,8 +32,8 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
-    expect(currentState).toContain('current exact released line: `v1.3.7`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `1.3.8`');
+    expect(currentState).toContain('current exact released line: `v1.3.8`');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `1.3.9`');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('separate public GitHub exact release publication: published; public `main`');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -55,7 +55,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
       'Exact public release:'
     );
     expect(candidate).toContain(
-      '`v1.3.7-github-release-and-marketplace-published; v1.3.8-not-yet-published`'
+      '`v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`'
     );
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');
