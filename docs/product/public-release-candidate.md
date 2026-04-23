@@ -1,6 +1,6 @@
 # Public Release Candidate
 
-- Version line: `1.3.6`
+- Version line: `1.3.7`
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-22`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
@@ -12,10 +12,9 @@
 
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
-- Software-factory governance branch:
-  `feature/software-factory-publish-verify-contract`
-- Later SemVer openings are frozen while the current exact public GitHub
-  transaction remains incomplete
+- Software-factory governance branch: none
+- Later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
+  remains incomplete
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -52,7 +51,7 @@
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only`
+  `v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only-release-1.3.7-open`
 
 ## Exact Release Baseline
 
@@ -89,9 +88,10 @@
   source/wiki heads `ab293d5` / `141c39e` and returned
   `no findings; exact release / Marketplace publish may proceed`.
 - Authority exact `v1.3.6` is already tagged on `main`
-  `3cb238334100d01d5cfe7998e17e20a7b497b3fb`, and the governed next step is
-  repair in place through `npm run public:github:exact:transaction:assess`
-  instead of another SemVer opening.
+  `3cb238334100d01d5cfe7998e17e20a7b497b3fb`, but the repo-owned in-place
+  publish attempt against draft release `312363117` returned
+  `422 tag_name was used by an immutable release`, so `release/1.3.7` is now
+  the governed next exact line.
 
 ## Local Proof
 
@@ -130,7 +130,8 @@
   retained non-mutating in-place repair candidate, retains the deferred
   non-mutating repair contract, retains guarded non-mutating publish and
   verify contracts, and still forbids GitHub release publication,
-  Marketplace publication, or other production mutation in this slice.
+  Marketplace publication, or other production mutation in this slice while
+  `release/1.3.7` carries the next governed exact line.
 - Current retained transaction facts: public `main` `bd81bfe`, public tag
   `v1.3.6`, draft release `312363117`, exact VSIX
   `vi-history-suite-1.3.6.vsix`, VSIX SHA-256
@@ -140,19 +141,21 @@
   retained authority manifest
   `.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json`,
   `releaseAssetsRetainedAgainstManifest=true`,
-  `openingNewSemverAllowed=false`, `repairInPlaceRequired=true`,
-  `draftPublishabilityProbeStatus=blocked`,
+  `openingNewSemverAllowed=true`, `repairInPlaceRequired=true`,
+  `draftPublishabilityProbeStatus=externally-impossible`,
   `draftPublishabilityProbeReleaseId=312363117`,
   `draftPublishabilityByIdStatusCode=200`,
   `draftPublishabilityTagMatchesAuthority=true`,
   `draftPublishabilitySafeToAttemptPublish=false`,
-  `publishabilityProbeStatus=blocked`,
-  `publishabilityBlockerCode=draft-release-tag-lookup-unavailable`,
+  `publishabilityProbeStatus=externally-impossible`,
+  `publishabilityBlockerCode=immutable-release-tag-reuse-422`,
   `immutableReleasesEnabled=true`,
   `immutableReleasesEnforcedByOwner=false`,
   `draftReleaseTargetCommitish=main`,
-  `draftReleaseLookupStatusCode=404`, and
-  `draftReleaseHtmlUrlUsesUntaggedPath=true`.
+  `draftReleaseLookupStatusCode=404`,
+  `draftReleaseHtmlUrlUsesUntaggedPath=true`,
+  `repairInPlaceAllowed=false`, and
+  `nextAllowedAction=promote-release-1.3.7-to-main-after-governed-validation`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -249,13 +252,13 @@
   retained at `1.3.0`, while public GitHub `main` plus tag already publish
   `v1.3.6`.
 - Draft release `312363117` already retains the exact `v1.3.6` assets, so the
-  no-bump repair rule now blocks any later SemVer opening until
-  `npm run public:github:exact:transaction:assess` proves a safe in-place
-  repair path or retains that repair is impossible; the current retained
-  draft-publishability blocker is that release `312363117` is readable by id
-  and still matches the authority tag, but immutable releases are enabled while
-  exact-tag release lookup still returns `404` and the draft still serves an
-  `untagged-*` URL.
+  no-bump repair rule first blocked later SemVer openings until
+  `npm run public:github:exact:transaction:assess` proved the exact
+  publication state; the current retained result is that the repo-owned
+  in-place publish attempt against release `312363117` returned
+  `422 tag_name was used by an immutable release`, so `v1.3.6` is externally
+  impossible to close in place and `release/1.3.7` is now the active next
+  governed exact line.
 - The software-factory non-production contract keeps this same `v1.3.6` state
   frozen as the only production recovery target before any future GitHub or
   Marketplace act, even though guarded non-mutating `publish` / `verify`

@@ -184,15 +184,16 @@ Authority release facts:
 - current exact released line: `v1.3.6`
 - current published package line on `main`: `1.3.6`
 - current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- active exact release candidate line on `develop`: `1.3.7`
+- active release-candidate branch: `release/1.3.7`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
-  `feature/software-factory-publish-verify-contract`
-- later SemVer openings are frozen while the current exact public GitHub transaction remains incomplete
+  none
+- later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
+  remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -225,7 +226,8 @@ Authority release facts:
   publish / verify are now retained as guarded non-mutating contract phases
 - no GitHub release publication, Marketplace publication, or other production
   mutation is permitted through the software-factory guarded non-mutating
-  slice while exact `v1.3.6` remains the sole production recovery case
+  slice; the retained `v1.3.6` incident proved the immutable-release boundary
+  and `release/1.3.7` is now the next governed exact line
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -239,7 +241,11 @@ Authority release facts:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release publication: blocked; public `main` now publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117` retains the exact assets, and the last published GitHub release remains `v1.3.1`
+- separate public GitHub exact release publication: blocked historically on
+  `v1.3.6`; public `main` now publishes `bd81bfe`, public tag `v1.3.6` is
+  live, draft release `312363117` retains the exact assets, the repo-owned
+  publish attempt returned `422 tag_name was used by an immutable release`,
+  and the last published GitHub release remains `v1.3.1`
 - VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

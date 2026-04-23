@@ -33,8 +33,8 @@ describe('hosted ci governance docs', () => {
         currentExactReleaseLine: 'v1.3.6',
         currentMainPackageLine: '1.3.6',
         currentDevelopPackageLine: '1.3.6',
-        activeDevelopCandidateReleaseLine: null,
-        activeReleaseCandidateBranch: null,
+        activeDevelopCandidateReleaseLine: '1.3.7',
+        activeReleaseCandidateBranch: 'release/1.3.7',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -313,12 +313,14 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('current exact release line: `v1.3.6`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.6`');
     expect(matrixDoc).toContain('current `develop` package line: `1.3.6`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: none');
-    expect(matrixDoc).toContain('active release-candidate branch: none');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `1.3.7`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.7`');
     expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(matrixDoc).toContain('active hotfix branch: none');
     expect(matrixDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(matrixDoc).toContain('none');
+    expect(matrixDoc).toContain('later SemVer openings beyond `1.3.7`');
+    expect(matrixDoc).toContain('`422 tag_name was used by an immutable release`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
     expect(matrixDoc).toContain('Current Control Decision For Public Exact Hardening');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:assess');

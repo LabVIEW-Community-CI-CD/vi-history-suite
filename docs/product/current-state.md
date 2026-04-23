@@ -157,16 +157,16 @@ Latest landed ship target:
 - current exact released line: `v1.3.6`
 - current published package line on `main`: `1.3.6`
 - current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- active exact release candidate line on `develop`: `1.3.7`
+- active release-candidate branch: `release/1.3.7`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
-  `feature/software-factory-publish-verify-contract`
-- later SemVer openings are frozen while the current exact public GitHub
-  transaction remains incomplete
+  none
+- later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
+  remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -213,15 +213,13 @@ Latest landed ship target:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release publication: blocked; public `main` now
+- separate public GitHub exact release publication: `v1.3.6` proved
+  externally impossible to close in place on GitHub; public `main` now
   publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117`
-  retains the exact assets, the new non-mutating draft-publishability probe
-  can read that draft by id with status `200` and confirms it still matches
-  authority tag `v1.3.6`, the repo-owned transaction controller can now locate
-  the retained authority release manifest non-mutatively and verify those
-  exact assets against it, immutable releases are enabled, exact-tag release
-  lookup still returns `404`, the draft still serves an `untagged-*` URL, and
-  the last published GitHub release remains `v1.3.1`
+  retains the exact assets, the repo-owned publish attempt returned
+  `422 tag_name was used by an immutable release`, and the last published
+  GitHub release remains `v1.3.1`, so `release/1.3.7` is now the active next
+  governed exact line
 - VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

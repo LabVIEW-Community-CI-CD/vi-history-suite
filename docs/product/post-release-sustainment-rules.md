@@ -74,14 +74,14 @@ Current version-line contract:
 - current exact released line: `v1.3.6`
 - current published package line on `main`: `1.3.6`
 - current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- active exact release candidate line on `develop`: `1.3.7`
+- active release-candidate branch: `release/1.3.7`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- later SemVer openings are frozen while the current exact public GitHub
-  transaction remains incomplete
+- later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
+  remains incomplete
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -93,12 +93,14 @@ Current version-line contract:
   draft release `312363117` is readable by id with status `200`, still matches
   authority tag `v1.3.6`, the repo-owned controller can now locate the
   retained authority release manifest non-mutatively and verify the draft
-  still carries the exact VSIX plus checksum assets, and it still is not safe
-  to publish in place
+  still carries the exact VSIX plus checksum assets, but the later
+  repo-owned in-place publish attempt proved that this state is externally
+  impossible to close cleanly
 - current retained public GitHub exact publishability probe:
   immutable releases `enabled=true`, `enforced_by_owner=false`, draft release
-  `312363117` targets `main`, exact-tag release lookup returns `404`, and the
-  draft still serves an `untagged-*` URL
+  `312363117` targets `main`, exact-tag release lookup returns `404`, the
+  draft still serves an `untagged-*` URL, and the repo-owned publish attempt
+  returned `422 tag_name was used by an immutable release`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -114,16 +116,18 @@ Current control decision for public exact hardening:
   none
 - rationale: authority exact `v1.3.6` is already tagged on `main`, public
   GitHub `main` plus tag are already published, and draft release `312363117`
-  already retains the exact assets, so the governed next step is repair in
-  place rather than another SemVer opening
+  already retains the exact assets, but the repo-owned publish attempt now
+  proves that closing that GitHub release in place is externally impossible
+  under the immutable-release boundary
 - rationale: the repo-owned transaction controller now fails closed on that
   partial-public state, retains the non-mutating draft-publishability probe
-  against release `312363117`, and freezes later openings until
-  `npm run public:github:exact:transaction:assess` proves a safe repair or
-  retains the exact blocker or impossibility state
+  against release `312363117`, and `release/1.3.7` therefore opens from
+  `develop` as the next governed exact line after the `v1.3.6` external
+  impossibility was retained
 - rejected `hotfix`: opening another exact-line repair from `main` would
-  repeat the immutable-release churn instead of repairing the current
-  partially public `v1.3.6` line in place
+  repeat the immutable-release churn instead of advancing the next governed
+  exact line from `develop` after `v1.3.6` proved externally impossible to
+  publish cleanly
 - rejected `minor`: the transaction hardening fixes publication control and
   exact-release recovery discipline; it does not add a new governed capability
   or supported installed-user workflow
@@ -134,7 +138,7 @@ Current control decision for public exact hardening:
 ## Software Factory Governance Contract
 
 - active software-factory branch on `develop`:
-  `feature/software-factory-publish-verify-contract`
+  none
 - factory assessment package script:
   `npm run software:factory:assess`
 - factory rehearsal package script:
@@ -170,7 +174,8 @@ Current control decision for public exact hardening:
   public GitHub `main` / tag / release plus the VS Code Marketplace listing
 - recovery boundary:
   retained partial-public incidents are repair-in-place first; the current one
-  remains blocked on draft release `312363117`
+  now retains `v1.3.6` as externally impossible because the publish attempt
+  against draft release `312363117` returned immutable-release tag reuse `422`
 - trust model:
   operator host, self-hosted runners, local token locators, GitLab authority,
   public GitHub, Marketplace, and retained receipts are governed system
@@ -249,7 +254,8 @@ Strict SemVer rule after an exact release:
   attempt
 - future sessions shall not open a later SemVer line while the current exact
   line still retains a blocked public GitHub or VS Code Marketplace
-  transaction
+  transaction unless the retained controller records that the current line is
+  externally impossible to repair in place
 - future sessions shall repair the current exact line in place instead of
   burning a new version whenever public GitHub `main`, the exact tag, or a
   draft release already exist for that same exact line unless the retained

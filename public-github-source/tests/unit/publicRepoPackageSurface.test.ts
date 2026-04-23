@@ -34,7 +34,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.3.6');
+    expect(manifest.version).toBe('1.3.7');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
