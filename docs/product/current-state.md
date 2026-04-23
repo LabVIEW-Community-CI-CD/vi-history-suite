@@ -157,17 +157,17 @@ Latest landed ship target:
 - current exact released line: `v1.3.7`
 - current published package line on `main`: `1.3.7`
 - current develop package line on `develop`: `1.3.7`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- active exact release candidate line on `develop`: `1.3.8`
+- active release-candidate branch: `release/1.3.8`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- exact `v1.3.7` closeout is now complete across public GitHub and VS Code
-  Marketplace; later SemVer openings return to normal GitFlow governance after
-  this retained final publication act
+- exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
+  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
+  users without global `node` on `PATH`
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -208,8 +208,9 @@ Latest landed ship target:
   `publish` / `verify` are retained as guarded non-mutating contract phases
 - current software-factory mutation policy:
   exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
-  later SemVer openings may proceed only through normal GitFlow and the
-  repo-owned factory/orchestrator governance path
+  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
+  factory/orchestrator governance path before any public GitHub or Marketplace
+  mutation
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)

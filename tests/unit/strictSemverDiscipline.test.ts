@@ -69,6 +69,10 @@ describe('strict semver discipline', () => {
 
     const versionLineContract = sustainmentRules.releaseCadence.versionLineContract;
     const exactReleaseLine = versionLineContract.currentExactReleaseLine.replace(/^v/, '');
+    const activeCandidateReleaseLine =
+      versionLineContract.activeHotfixCandidateReleaseLine?.replace(/^v/, '') ??
+      versionLineContract.activeDevelopCandidateReleaseLine?.replace(/^v/, '') ??
+      exactReleaseLine;
     expect(versionLineContract.retainedExactVersionReleases).toEqual([
       'v0.2.0',
       'v1.0.0',
@@ -96,26 +100,25 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.releaseBranch).toBe('release/*');
     expect(versionLineContract.hotfixBranch).toBe('hotfix/*');
     expect(versionLineContract.exactReleaseLineBranch).toBe('main');
-    expect(pkg.version).toBe('1.3.7');
+    expect(pkg.version).toBe('1.3.8');
     expect(versionLineContract.currentMainPackageLine).toBe('1.3.7');
     expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.7');
-    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBeNull();
-    expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
+    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBe('1.3.8');
+    expect(versionLineContract.activeReleaseCandidateBranch).toBe('release/1.3.8');
     expect(versionLineContract.activeHotfixCandidateReleaseLine).toBeNull();
     expect(versionLineContract.activeHotfixBranch).toBeNull();
     expect((versionLineContract as any).activeFeatureBranch).toBeNull();
     expect(versionLineContract.publicDefaultBranch).toBe('main');
-    expect(versionLineContract.currentDevelopPackageLine).toBe(pkg.version);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
     expect(compareSemver(versionLineContract.currentMainPackageLine, exactReleaseLine)).toBe(0);
-    expect(compareSemver(pkg.version, versionLineContract.currentDevelopPackageLine!)).toBe(0);
-    expect(compareSemver(pkg.version, exactReleaseLine)).toBe(0);
+    expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
+    expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThan(0);
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
     expect(readme).toContain('- current exact released line: `v1.3.7`');
     expect(readme).toContain('- current published package line on `main`: `1.3.7`');
     expect(readme).toContain('- current develop package line on `develop`: `1.3.7`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: none');
-    expect(readme).toContain('- active release-candidate branch: none');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `1.3.8`');
+    expect(readme).toContain('- active release-candidate branch: `release/1.3.8`');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
     expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -136,8 +139,8 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- current exact released line: `v1.3.7`');
     expect(currentState).toContain('- current published package line on `main`: `1.3.7`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.3.7`');
-    expect(currentState).toContain('- active exact release candidate line on `develop`: none');
-    expect(currentState).toContain('- active release-candidate branch: none');
+    expect(currentState).toContain('- active exact release candidate line on `develop`: `1.3.8`');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.3.8`');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -158,8 +161,8 @@ describe('strict semver discipline', () => {
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
     expect(releaseProcedure).toContain("The current published package line on `main` is `1.3.7`.");
     expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.7`.');
-    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is none.');
-    expect(releaseProcedure).toContain('The active release-candidate branch is none.');
+    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is `1.3.8`.');
+    expect(releaseProcedure).toContain('The active release-candidate branch is `release/1.3.8`.');
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
     expect(releaseProcedure).toContain('The active feature-lane public GitHub release hardening branch on `develop`');

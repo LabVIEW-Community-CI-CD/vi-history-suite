@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.3.7');
+    expect(pkg.version).toBe('1.3.8');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -205,8 +205,8 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- current exact released line: `v1.3.7`');
     expect(readme).toContain('- current published package line on `main`: `1.3.7`');
     expect(readme).toContain('- current develop package line on `develop`: `1.3.7`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: none');
-    expect(readme).toContain('- active release-candidate branch: none');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `1.3.8`');
+    expect(readme).toContain('- active release-candidate branch: `release/1.3.8`');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
     expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -259,8 +259,8 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- current exact released line: `v1.3.7`');
     expect(currentState).toContain('- current published package line on `main`: `1.3.7`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.3.7`');
-    expect(currentState).toContain('- active exact release candidate line on `develop`: none');
-    expect(currentState).toContain('- active release-candidate branch: none');
+    expect(currentState).toContain('- active exact release candidate line on `develop`: `1.3.8`');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.3.8`');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -337,8 +337,8 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
     expect(releaseProcedure).toContain("current published package line on `main` is `1.3.7`");
     expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.7`");
-    expect(releaseProcedure).toContain('active exact release candidate line on `develop` is none');
-    expect(releaseProcedure).toContain('The active release-candidate branch is none.');
+    expect(releaseProcedure).toContain('active exact release candidate line on `develop` is `1.3.8`');
+    expect(releaseProcedure).toContain('The active release-candidate branch is `release/1.3.8`.');
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
     expect(releaseProcedure).toContain('The active feature-lane public GitHub release hardening branch on `develop`');
@@ -415,7 +415,7 @@ describe('ship-control direction system', () => {
     expect(changelog).toContain('## [1.0.1] - 2026-04-07');
     expect(changelog).toContain('## [1.0.0] - 2026-04-07');
     expect(changelog).toContain('Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,');
-    expect(changelog).toContain('`v1.3.5`, and `v1.3.6`.');
+    expect(changelog).toContain('`v1.3.5`, `v1.3.6`, and `v1.3.7`.');
     expect(changelog).toContain('Burned exact-version releases now include `v1.0.2`.');
     expect(changelog).toContain('## [0.2.0] - 2026-04-03');
     expect(cmPlan).toContain('# Configuration Management Plan');

@@ -1,6 +1,6 @@
 # Public Release Candidate
 
-- Version line: `1.3.7`
+- Version line: `1.3.8`
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
@@ -13,9 +13,9 @@
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
 - Software-factory governance branch: none
-- Exact `v1.3.7` closeout is now complete across public GitHub and VS Code
-  Marketplace; later SemVer openings return to normal GitFlow governance after
-  this retained final publication act
+- Exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
+  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
+  users without global `node` on `PATH`
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -34,7 +34,7 @@
 - Authority baseline:
   `v1.3.7-tagged-on-main-public-main-tag-github-release-and-marketplace-published`
 - Local installed VSIX build:
-  `released-v1.3.7-authority-evidence-retained`
+  `release-1.3.8-authority-candidate-package-line`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -52,7 +52,7 @@
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.7-github-release-and-marketplace-published`
+  `v1.3.7-github-release-and-marketplace-published; v1.3.8-not-yet-published`
 
 ## Exact Release Baseline
 
@@ -144,8 +144,9 @@
   `vsce` command shape with `<redacted>` PAT handling.
 - The current software-factory closeout posture is now:
   exact `v1.3.7` is closed across public GitHub and VS Code Marketplace, and
-  later SemVer openings may proceed only through normal GitFlow and the
-  repo-owned factory/orchestrator governance path.
+  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
+  factory/orchestrator governance path before any public GitHub or Marketplace
+  mutation.
 - Current retained transaction facts: public `main` `704e629`, public tag
   `v1.3.7`, GitHub release `312517425`, exact VSIX
   `vi-history-suite-1.3.7.vsix`, VSIX SHA-256
@@ -254,7 +255,8 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- Public GitHub exact now publishes `v1.3.7`, and VS Code Marketplace now
-  serves `1.3.7`.
+- Public GitHub exact now publishes `v1.3.7`, VS Code Marketplace now serves
+  `1.3.7`, and `release/1.3.8` is the active governed patch candidate for the
+  installed `vihs` launcher fix.
 - The current exact closeout blocker is closed after final Marketplace
   publication retention.

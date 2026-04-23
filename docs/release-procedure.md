@@ -15,15 +15,15 @@
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.3.7`.
 - The current develop package line on `develop` is `1.3.7`.
-- The active exact release candidate line on `develop` is none.
-- The active release-candidate branch is none.
+- The active exact release candidate line on `develop` is `1.3.8`.
+- The active release-candidate branch is `release/1.3.8`.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
   is none.
-- Exact `v1.3.7` closeout is now complete across public GitHub and VS Code
-  Marketplace; later SemVer openings return to normal GitFlow governance after
-  this retained final publication act.
+- Exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
+  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
+  users without global `node` on `PATH`.
 - The pre-tag public-exact proof package script is
   `npm run public:exact:pretag:proof`.
 - The pre-tag public-exact proof GitLab job is `public_exact_pretag_proof`.
@@ -211,8 +211,8 @@
   published and verified, the exact release can be retained as closed.
 - No GitHub release publication, Marketplace publication, or other production
   mutation shall occur outside the repo-owned factory/orchestrator contract.
-- Exact `v1.3.7` is the current exact closed line; the separate VS Code
-  Marketplace publication act is retained.
+- Exact `v1.3.7` is the current exact closed line; `release/1.3.8` is the
+  active candidate for the installed `vihs` launcher fix.
 - Exact release closeout is not complete until the exact released `main` line
   has also been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green.
@@ -480,9 +480,9 @@ separate afterward.
   evidence.
 - The current develop package line on `develop` is `1.3.7`, public GitHub
   `main` now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
-  `312517425` is published, VS Code Marketplace serves `1.3.7`, and later
-  SemVer openings return to normal GitFlow governance after final publication
-  retention.
+  `312517425` is published, VS Code Marketplace serves `1.3.7`, and
+  `release/1.3.8` opens from that retained baseline for the installed `vihs`
+  launcher fix.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

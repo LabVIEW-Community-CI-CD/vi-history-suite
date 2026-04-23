@@ -74,15 +74,15 @@ Current version-line contract:
 - current exact released line: `v1.3.7`
 - current published package line on `main`: `1.3.7`
 - current develop package line on `develop`: `1.3.7`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- active exact release candidate line on `develop`: `1.3.8`
+- active release-candidate branch: `release/1.3.8`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- exact `v1.3.7` closeout is now complete across public GitHub and VS Code
-  Marketplace; later SemVer openings return to normal GitFlow governance after
-  this retained final publication act
+- exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
+  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
+  users without global `node` on `PATH`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -115,18 +115,16 @@ Current control decision for public exact hardening:
 - active feature-lane public GitHub release hardening branch:
   none
 - rationale: authority exact `v1.3.7` is already tagged on `main`, public
-  GitHub `main`, tag, and GitHub release are now published with manifest-
-  matched assets, so the remaining governed closeout is the separate
-  Marketplace publication act rather than another SemVer opening
-- rationale: the repo-owned transaction controller now retains the completed
-  public GitHub exact verification gate, VS Code Marketplace now serves
-  `1.3.7`, and later openings may proceed only after this final publication
-  act is retained
-- rejected `hotfix`: reopening `main` now would bypass the final Marketplace
-  retention step instead of closing the current exact `v1.3.7` line
-- rejected `minor`: the remaining closeout work is distribution-state
-  retention for the current exact line; it does not add a new governed
-  capability or supported installed-user workflow
+  GitHub `main`, tag, and GitHub release are published with manifest-matched
+  assets, and VS Code Marketplace serves `1.3.7`
+- rationale: `release/1.3.8` opens from `develop` as the governed patch line
+  for the installed Windows `vihs` launcher fix that removes the ambient
+  global-node `PATH` dependency
+- rejected `hotfix`: the installed launcher fix was already merged to
+  `develop` and should promote through the normal `release/*` path rather than
+  bypassing GitFlow from `main`
+- rejected `minor`: the change fixes an existing installed-user entrypoint
+  contract without adding a new governed capability or supported workflow
 - rejected `major`: no governed public or maintainer contract is being removed;
   the current exact line is already published on GitHub and Marketplace
 
@@ -163,8 +161,9 @@ Current control decision for public exact hardening:
 - sole production recovery target: `v1.3.7`
 - production mutation policy:
   exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
-  later SemVer openings may proceed only through normal GitFlow and the
-  repo-owned factory/orchestrator governance path
+  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
+  factory/orchestrator governance path before any public GitHub or Marketplace
+  mutation
 - authority boundary:
   GitLab `develop` -> `release/*` -> protected `main`
 - staging boundary:
@@ -174,7 +173,8 @@ Current control decision for public exact hardening:
   public GitHub `main` / tag / release plus the VS Code Marketplace listing
 - recovery boundary:
   retained partial-public incidents are repair-in-place first; the current
-  exact GitHub and VS Code Marketplace acts are closed for `v1.3.7`
+  exact GitHub and VS Code Marketplace acts are closed for `v1.3.7` while
+  `release/1.3.8` is the active patch candidate
 - trust model:
   operator host, self-hosted runners, local token locators, GitLab authority,
   public GitHub, Marketplace, and retained receipts are governed system
