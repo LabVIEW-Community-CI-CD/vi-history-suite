@@ -236,3 +236,5 @@
   Expert-agent review gate for public candidates
 - [ADR-0038](./adr/ADR-0038-host-default-local-labviewcli-bounded-expert-docker-and-explicit-compare-preflight.md):
   Active host-default local `LabVIEWCLI`, bounded expert Docker, and explicit compare preflight
+- [ADR-0039](./adr/ADR-0039-gitlab-authority-asset-first-public-github-release-publication.md):
+  GitLab authority and asset-first public GitHub release publication

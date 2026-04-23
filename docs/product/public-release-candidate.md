@@ -52,7 +52,7 @@
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.7-github-release-and-marketplace-published; v1.3.8-not-yet-published`
+  `v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets`
 
 ## Exact Release Baseline
 
@@ -99,6 +99,13 @@
   `422 tag_name was used by an immutable release`, so `release/1.3.7` became
   the governed next exact line and is now published separately on GitHub and
   the VS Code Marketplace.
+- Current incident: authority exact `v1.3.8` exists on GitLab `main`, public
+  GitHub `main` publishes `4f5f616`, and public tag `v1.3.8` exists, but
+  GitHub release `312768592` is already published and immutable with zero
+  assets. The blocker code is
+  `published-immutable-release-assets-incomplete`; VS Code Marketplace remains
+  `1.3.7`, and no Marketplace act is admitted until the next exact line uses
+  the asset-first GitHub publisher.
 
 ## Local Proof
 

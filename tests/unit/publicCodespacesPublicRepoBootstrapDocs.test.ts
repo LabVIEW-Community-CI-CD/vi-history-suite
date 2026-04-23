@@ -55,7 +55,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
       'Exact public release:'
     );
     expect(candidate).toContain(
-      '`v1.3.7-github-release-and-marketplace-published; v1.3.8-not-yet-published`'
+      '`v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets`'
     );
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');

@@ -83,6 +83,15 @@
   `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
   retained verify receipt records `verifyGateStatus=pass` and
   `verifyGateAllowed=true`, and VS Code Marketplace now serves `1.3.7`.
+- Publication incident `v1.3.8` is active: GitLab authority exact tag
+  `v1.3.8` exists, but public GitHub release `312768592` is already published
+  and immutable with zero assets. Treat this as
+  `published-immutable-release-assets-incomplete`; VS Code Marketplace remains
+  `1.3.7`, and no later Marketplace act is admitted until a future exact line
+  is published through the asset-first GitHub release publisher.
+- Future public GitHub exact publication must be asset-first: create a draft,
+  upload the VSIX and checksum from GitLab authority evidence, verify the draft
+  assets by release id, and only then publish.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.

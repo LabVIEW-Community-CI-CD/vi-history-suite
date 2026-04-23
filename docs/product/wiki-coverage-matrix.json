@@ -775,6 +775,17 @@
         "Architecture.md",
         "Architecture-Decision-Records.md"
       ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0039-gitlab-authority-asset-first-public-github-release-publication.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
     }
   ]
 }

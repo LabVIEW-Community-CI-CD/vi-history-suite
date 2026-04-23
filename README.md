@@ -256,6 +256,10 @@ Authority release facts:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
   and the exact assets match the retained authority manifest
 - VS Code Marketplace retained published version: `1.3.7`
+- active publication incident: public GitHub release `312768592` for
+  `v1.3.8` is published and immutable with zero assets; Marketplace remains
+  `1.3.7` and the next exact release must use the asset-first GitHub publisher
+  before any Marketplace act
 - VS Code Marketplace publication prep and final publication are retained:
   `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
