@@ -42,13 +42,25 @@ describe('vs code marketplace publication and installed-user docs', () => {
       'https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite'
     );
     expect(ledger.homepageUrl).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
-    expect(ledger.currentPublishedVersion).toBe('1.3.0');
+    expect(ledger.currentPublishedVersion).toBe('1.3.7');
+    expect(ledger.currentPublishedDate).toBe('2026-04-23');
     expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery');
+    expect(ledger.pendingPublicationVersion).toBeNull();
+    expect(ledger.pendingPublicationPrepPackageScript).toBe(
+      'npm run vscode:marketplace:prepare'
+    );
+    expect(ledger.pendingPublicationPrepReceiptPath).toBe(
+      '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json'
+    );
+    expect(ledger.pendingPublicationPrepStatus).toBe('published-and-verified');
     expect(ledger.secretHandling).toContain('do-not-retain-pat');
 
-    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.0`');
+    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.7`');
+    expect(ledgerDoc).toContain('Current pending publication: none');
+    expect(ledgerDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
+    expect(ledgerDoc).toContain('| VS Code Marketplace exact release | published | `2026-04-23` | `1.3.7` | `pinned-vsce-cli` |');
     expect(ledgerDoc).toContain('official gallery extension query');
     expect(currentState).toContain('VS Code Marketplace listing');
     expect(currentState).toContain('[vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)');

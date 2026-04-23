@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.3.7",
+  "versionLine": "1.3.8",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-22",
+  "recordedAt": "2026-04-23",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -22,9 +22,9 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "bd81bfe",
+    "publishedCommit": "704e629",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
-    "status": "published-main-and-tag-v1.3.6-release-draft-only"
+    "status": "published-main-tag-and-release-v1.3.7"
   },
   "publicDevelopCandidate": {
     "branch": "develop",
@@ -50,8 +50,8 @@
     "status": "published-v1.3.1-candidate-wiki-head"
   },
   "candidateReadiness": {
-    "authorityBaseline": "v1.3.6-tagged-on-main-public-main-and-tag-published-release-draft-only",
-    "localInstalledVsix": "released-v1.3.6-authority-evidence-retained",
+    "authorityBaseline": "v1.3.7-tagged-on-main-public-main-tag-github-release-and-marketplace-published",
+    "localInstalledVsix": "release-1.3.8-authority-candidate-package-line",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
@@ -61,7 +61,7 @@
     "runtimeProviderPublicAcceptanceGate": "closed-on-published-v1.3.0-candidate-heads-retained",
     "preTagPublicExactProofGate": "required-before-any-later-exact-reopen",
     "publicGitHubExactTransactionGate": "required-before-any-further-public-github-release-or-marketplace-act",
-    "exactPublicRelease": "v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only"
+    "exactPublicRelease": "v1.3.7-github-release-and-marketplace-published; v1.3.8-not-yet-published"
   },
   "findingClassifications": [
     {
@@ -103,63 +103,68 @@
     }
   ],
   "exactRelease": {
-    "version": "v1.3.1",
-    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1",
-    "gitHubAssetName": "vi-history-suite-1.3.1.vsix",
-    "gitHubAssetSha256": "7d7d2bd85cd47042953a2b397a9a7e50529b70ffb2af4d9ac9d195f4394f3f58",
+    "version": "v1.3.7",
+    "gitHubReleaseId": 312517425,
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7",
+    "gitHubAssetName": "vi-history-suite-1.3.7.vsix",
+    "gitHubAssetSha256": "89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b",
     "marketplaceItemName": "svelderrainruiz.vi-history-suite",
-    "marketplaceVersion": "1.3.0",
+    "marketplaceVersion": "1.3.7",
     "marketplaceVerification": "official-gallery-extensionquery-verified",
     "integrationBranch": "develop",
     "releaseBranch": "main"
   },
   "exactReleaseReopening": {
-    "status": "authority-v1.3.6-github-release-externally-impossible-release-1.3.7-open",
+    "status": "authority-v1.3.7-github-release-and-marketplace-published-release-1.3.8-open",
     "hotfixBranch": null,
     "featureBranch": null,
-    "authorityMainCommit": "3cb238334100d01d5cfe7998e17e20a7b497b3fb",
-    "authorityTag": "v1.3.6",
-    "publicGitHubExactCommit": "bd81bfe6743348c9138c3f0f4967c790a235184f",
-    "publicGitHubExactTag": "v1.3.6",
-    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1",
-    "publicGitHubDraftReleaseId": 312363117,
-    "publicGitHubDraftReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871",
-    "publicGitHubPublishabilityProbeStatus": "externally-impossible",
-    "publicGitHubPublishabilityBlockerCode": "immutable-release-tag-reuse-422",
-    "publicGitHubDraftPublishabilityProbeStatus": "externally-impossible",
-    "publicGitHubDraftPublishabilityBlockerCode": "immutable-release-tag-reuse-422",
-    "publicGitHubDraftPublishabilityProbeReleaseId": 312363117,
+    "authorityMainCommit": "e1a4fc8d2e728100bb98856879eac5de11e99864",
+    "authorityTag": "v1.3.7",
+    "publicGitHubExactCommit": "704e629eed72d7ea5f46e2e45b1e17e58655edce",
+    "publicGitHubExactTag": "v1.3.7",
+    "publicGitHubReleaseId": 312517425,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7",
+    "publicGitHubReleasePublishedAt": "2026-04-23T02:08:29Z",
+    "publicGitHubPublishabilityProbeStatus": "published",
+    "publicGitHubPublishabilityBlockerCode": null,
+    "publicGitHubDraftPublishabilityProbeStatus": "not-applicable",
+    "publicGitHubDraftPublishabilityBlockerCode": "draft-release-not-draft",
+    "publicGitHubDraftPublishabilityProbeReleaseId": 312517425,
     "publicGitHubDraftPublishabilityByIdStatusCode": 200,
     "publicGitHubDraftPublishabilityTagMatchesAuthority": true,
     "publicGitHubDraftPublishabilitySafeToAttemptPublish": false,
     "publicGitHubImmutableReleasesEnabled": true,
     "publicGitHubImmutableReleasesEnforcedByOwner": false,
     "publicGitHubDraftReleaseTargetCommitish": "main",
-    "publicGitHubReleaseLookupStatusCode": 404,
-    "publicGitHubDraftReleaseUsesUntaggedUrl": true,
-    "nextSeparateAct": "promote-release-1.3.7-to-main-after-governed-validation",
-    "marketplaceVersionRetained": "1.3.0",
+    "publicGitHubReleaseLookupStatusCode": 200,
+    "publicGitHubDraftReleaseUsesUntaggedUrl": false,
+    "nextSeparateAct": "promote-release-1.3.8-to-main-after-governed-validation",
+    "marketplaceVersionRetained": "1.3.7",
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
-    "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:assess",
-    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json"
+    "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
+    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+    "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
+    "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
   },
   "softwareFactoryGovernance": {
-    "status": "publish-verify-contract-retained-on-develop-no-active-feature-branch",
+    "status": "github-release-and-marketplace-published-no-active-feature-branch",
     "activeFeatureBranch": null,
     "packageScripts": {
       "assess": "npm run software:factory:assess",
       "rehearse": "npm run software:factory:rehearse",
       "repair": "npm run software:factory:repair",
       "publish": "npm run software:factory:publish",
-      "verify": "npm run software:factory:verify"
+      "verify": "npm run software:factory:verify",
+      "marketplacePrepare": "npm run vscode:marketplace:prepare"
     },
     "receiptPaths": {
       "assess": ".cache/software-factory-orchestrator/latest/software-factory-state.json",
       "rehearse": ".cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json",
       "repair": ".cache/software-factory-orchestrator/latest/repair/software-factory-state.json",
       "publish": ".cache/software-factory-orchestrator/latest/publish/software-factory-state.json",
-      "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json"
+      "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json",
+      "marketplacePrepare": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
     },
     "admittedNonProductionPhases": [
       "assess",
@@ -170,59 +175,71 @@
       "publish",
       "verify"
     ],
-    "soleProductionRecoveryTarget": "v1.3.6",
+    "soleProductionRecoveryTarget": "v1.3.7",
     "productionMutationAllowed": false,
-    "rule": "no GitHub release publication, Marketplace publication, or other production mutation may occur through this guarded non-mutating publish/verify contract slice; the retained v1.3.6 incident now proves the immutable-release boundary and release/1.3.7 is the active next governed exact line"
+    "rule": "the retained v1.3.7 exact line is closed across public GitHub and VS Code Marketplace; release/1.3.8 may proceed only through normal GitFlow and repo-owned factory/orchestrator governance before any public GitHub or Marketplace mutation"
   },
   "localProofs": {
     "localInstalledVsixPreview": {
-      "status": "released-v1.3.6-authority-evidence-retained",
-      "version": "1.3.6",
-      "vsixPath": ".cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix",
-      "checksumPath": ".cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix.sha256",
-      "buildCommand": "not-applicable-authority-exact-v1.3.6-already-built",
+      "status": "release-1.3.8-authority-candidate-package-line",
+      "version": "1.3.8",
+      "vsixPath": "preview-evidence/vi-history-suite-1.3.8.vsix",
+      "checksumPath": "preview-evidence/vi-history-suite-1.3.8.vsix.sha256",
+      "buildCommand": "npm run package",
       "gatingPackageScript": "npm run public:exact:pretag:proof",
       "gatingGitLabJob": "public_exact_pretag_proof"
     },
     "publicGitHubExactTransaction": {
-      "status": "externally-impossible-v1.3.6-release-draft-publish",
-      "packageScript": "npm run public:github:exact:transaction:assess",
+      "status": "published-v1.3.7-github-release-and-marketplace-verified",
+      "packageScript": "npm run public:github:exact:transaction:verify",
       "receiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
-      "authorityTag": "v1.3.6",
-      "authorityMainCommit": "3cb238334100d01d5cfe7998e17e20a7b497b3fb",
-      "publicMainCommit": "bd81bfe6743348c9138c3f0f4967c790a235184f",
-      "publicTag": "v1.3.6",
-      "draftReleaseId": 312363117,
-      "draftReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871",
-      "vsixAssetName": "vi-history-suite-1.3.6.vsix",
-      "vsixAssetSha256": "4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb",
-      "checksumAssetSha256": "7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0",
-      "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json",
-      "authorityReleaseManifestLocatorStatus": "located-and-verified-non-mutatively",
+      "authorityTag": "v1.3.7",
+      "authorityMainCommit": "e1a4fc8d2e728100bb98856879eac5de11e99864",
+      "publicMainCommit": "704e629eed72d7ea5f46e2e45b1e17e58655edce",
+      "publicTag": "v1.3.7",
+      "publicReleaseId": 312517425,
+      "publicReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7",
+      "publicReleasePublishedAt": "2026-04-23T02:08:29Z",
+      "vsixAssetName": "vi-history-suite-1.3.7.vsix",
+      "vsixAssetSha256": "89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b",
+      "checksumAssetSha256": "82a0545dacbdbcad7c8c3e99f2a23de95f78998199a4a1368f44ddca00d7f612",
+      "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json",
+      "authorityReleaseManifestLocatorStatus": "located-and-verified",
       "releaseAssetsRetainedAgainstManifest": true,
-      "publishabilityProbeStatus": "externally-impossible",
-      "publishabilityBlockerCode": "immutable-release-tag-reuse-422",
-      "publishabilityBlockerSummary": "The repo-owned in-place publish attempt against draft release 312363117 returned 422 tag_name was used by an immutable release, so the v1.3.6 GitHub release is externally impossible to close in place.",
-      "draftPublishabilityProbeStatus": "externally-impossible",
-      "draftPublishabilityBlockerCode": "immutable-release-tag-reuse-422",
-      "draftPublishabilityBlockerSummary": "The repo-owned in-place publish attempt against draft release 312363117 returned 422 tag_name was used by an immutable release, so the retained by-id draft state is no longer a safe in-place publish candidate.",
-      "draftPublishabilityProbeReleaseId": 312363117,
-      "draftPublishabilityByIdStatusCode": 200,
-      "draftPublishabilityTagMatchesAuthority": true,
-      "draftPublishabilitySafeToAttemptPublish": false,
-      "immutableReleasePolicyStatusCode": 200,
-      "immutableReleasesEnabled": true,
-      "immutableReleasesEnforcedByOwner": false,
-      "draftReleaseTargetCommitish": "main",
-      "draftReleaseLookupStatusCode": 404,
-      "draftReleaseDiscoveredByList": true,
-      "draftReleaseDiscoveredByTag": false,
-      "draftReleaseUsesUntaggedUrl": true,
-      "safeToAttemptRepairPublish": false,
+      "publicSourcePromotionReceiptPath": ".cache/public-github-source-promotion/latest/public-github-source-promotion.json",
+      "publicSourcePromotionStatus": "passed",
+      "verifyGateStatus": "pass",
+      "verifyGateAllowed": true,
+      "publicReleaseLookupStatusCode": 200,
+      "publicReleaseByIdStatusCode": 200,
+      "draft": false,
+      "immutable": true,
       "openingNewSemverAllowed": true,
-      "repairInPlaceRequired": true,
+      "repairInPlaceRequired": false,
       "repairInPlaceAllowed": false,
-      "nextAllowedAction": "promote-release-1.3.7-to-main-after-governed-validation"
+      "nextAllowedAction": "promote-release-1.3.8-to-main-after-governed-validation"
+    },
+    "vscodeMarketplacePublicationPrep": {
+      "status": "published-v1.3.7-verified",
+      "packageScript": "npm run vscode:marketplace:prepare",
+      "receiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
+      "authorityTag": "v1.3.7",
+      "expectedMarketplaceVersion": "1.3.7",
+      "currentMarketplaceVersion": "1.3.7",
+      "marketplaceItem": "svelderrainruiz.vi-history-suite",
+      "publicGitHubVerifyGateStatus": "pass",
+      "publicGitHubReleaseId": 312517425,
+      "vsixPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix",
+      "vsixSha256Verified": true,
+      "vscePatLocatorStatus": "ok",
+      "secretRetained": false,
+      "pinnedVscePackage": "@vscode/vsce@3.7.1",
+      "plannedPublishCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix --pat <redacted>",
+      "productionMutationAttempted": true,
+      "publicationCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix --pat <redacted>",
+      "publicationMode": "pinned-vsce-cli",
+      "publishedAt": "2026-04-23",
+      "nextAllowedAction": "promote-release-1.3.8-to-main-after-github-v1.3.8-publication"
     },
     "privateRelease": {
       "status": "current-v1.3.1-private-release-published",
@@ -305,34 +322,11 @@
       "gatingRule": "exact-tag-and-marketplace-publication-blocked-until-latest-expert-agent-review-has-no-findings"
     }
   },
-  "exactCloseout": {
-    "status": "closed",
-    "authorityMainCommit": "9587a99",
-    "backMergedDevelopCommit": "04b07bd",
-    "developPipelineId": 2467081960,
-    "developPipelineStatus": "success"
-  },
-  "acceptedWaivers": [],
-  "testerFixtureStrategy": {
-    "decision": "helper-backed-canonical-path-plus-generic-public-bootstrap-reference-manual",
-    "defaultCloneOnStartup": false,
-    "command": "npm run public:fixture:icon-editor",
-    "interactiveGenericCommand": "npm run public:repo:clone",
-    "genericCommand": "npm run public:repo:clone -- --repo-url <https-url>",
-    "repoUrl": "https://github.com/ni/labview-icon-editor.git",
-    "targetPath": "../labview-icon-editor",
-    "genericTargetPathPattern": "../<repo-name>",
-    "codespaceTargetPath": "/workspaces/<repo-name>",
-    "referenceManualWikiPage": "Review-Public-LabVIEW-VI-Changes",
-    "compatibilityRedirectWikiPage": "Clone-Public-Repo-In-Codespace",
-    "refreshWikiPage": "Refresh-Codespace-Repositories",
-    "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
-  },
   "activeBlockers": [
     {
-      "id": "BLOCKER-PUBLIC-GITHUB-EXACT-TRANSACTION",
-      "status": "open",
-      "summary": "Exact v1.3.6 already publishes public GitHub main plus tag and retains draft release 312363117 with the exact assets; the new non-mutating draft-publishability probe can read that draft by id and confirms it still matches the authority tag, but immutable releases are enabled while exact-tag release lookup still returns 404 and the draft still uses an untagged URL, so no later SemVer opening, public GitHub release act, or Marketplace act may proceed until npm run public:github:exact:transaction:assess proves a safe repair-in-place path or retains that repair is impossible."
+      "id": "BLOCKER-VSCODE-MARKETPLACE-PUBLICATION",
+      "status": "closed",
+      "summary": "Public GitHub exact v1.3.7 is published on main, tag, and GitHub release 312517425 with manifest-matched assets, and VS Code Marketplace now serves 1.3.7, so exact closeout is complete after authority retention."
     }
   ]
 }

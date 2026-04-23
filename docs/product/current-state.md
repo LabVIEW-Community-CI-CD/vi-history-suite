@@ -154,26 +154,31 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.6`
-- current published package line on `main`: `1.3.6`
-- current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: `1.3.7`
-- active release-candidate branch: `release/1.3.7`
+- current exact released line: `v1.3.7`
+- current published package line on `main`: `1.3.7`
+- current develop package line on `develop`: `1.3.7`
+- active exact release candidate line on `develop`: `1.3.8`
+- active release-candidate branch: `release/1.3.8`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
-  remains incomplete
+- exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
+  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
+  users without global `node` on `PATH`
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
-- public GitHub exact transaction assessment package script:
-  `npm run public:github:exact:transaction:assess`
+- public GitHub exact transaction verification package script:
+  `npm run public:github:exact:transaction:verify`
 - retained public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- VS Code Marketplace publication prep package script:
+  `npm run vscode:marketplace:prepare`
+- retained VS Code Marketplace publication prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
 - software factory rehearsal package script:
@@ -184,6 +189,8 @@ Latest landed ship target:
   `npm run software:factory:publish`
 - software factory verify package script:
   `npm run software:factory:verify`
+- VS Code Marketplace prep package script:
+  `npm run vscode:marketplace:prepare`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
@@ -194,12 +201,16 @@ Latest landed ship target:
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
 - retained software factory verify receipt:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- retained VS Code Marketplace prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - software-factory contract phases:
   `assess`, `rehearse`, and `repair` remain admitted non-production phases;
   `publish` / `verify` are retained as guarded non-mutating contract phases
 - current software-factory mutation policy:
-  no GitHub release publication, Marketplace publication, or other production
-  mutation is permitted through this non-production slice
+  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace;
+  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
+  factory/orchestrator governance path before any public GitHub or Marketplace
+  mutation
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -213,14 +224,20 @@ Latest landed ship target:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release publication: `v1.3.6` proved
-  externally impossible to close in place on GitHub; public `main` now
-  publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117`
-  retains the exact assets, the repo-owned publish attempt returned
-  `422 tag_name was used by an immutable release`, and the last published
-  GitHub release remains `v1.3.1`, so `release/1.3.7` is now the active next
-  governed exact line
-- VS Code Marketplace retained published version: `1.3.0`
+- separate public GitHub exact release publication: published; public `main`
+  now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
+  `312517425` is published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
+  the uploaded exact assets match the retained authority manifest under
+  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
+  verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
+  now serves `1.3.7`
+- VS Code Marketplace retained published version: `1.3.7`
+- VS Code Marketplace publication prep and final publication are retained:
+  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
+  verify gate, exact authority VSIX/checksum evidence, live Marketplace
+  `1.3.7` readback, local PAT locator, and pinned `vsce` publish command
+  shape without retaining secret material.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -322,22 +339,21 @@ Latest landed ship target:
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - remaining blockers: exact `v1.3.0` remains closed cleanly; authority exact
-  `v1.3.6` is now tagged on `main`
-  `3cb238334100d01d5cfe7998e17e20a7b497b3fb`, public GitHub `main` now
-  publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117`
-  retains the exact assets, the last published GitHub release still serves
-  `v1.3.1`, the official gallery extension query still verifies Marketplace
-  version `1.3.0` for `svelderrainruiz.vi-history-suite`, the maintained
-  public `develop` candidate still publishes `ab293d5`, the maintained public
-  wiki head still publishes `141c39e`, no exact hotfix lane is currently open,
-  and later SemVer openings are now frozen while the retained `v1.3.6` public
-  GitHub repair state on `develop` uses
-  `npm run public:github:exact:transaction:assess` to prove or reject a safe
-  in-place repair path before any further public or Marketplace act; the active
-  software-factory governance contract now retains that same `v1.3.6` line as
-  the sole production recovery case, admits only the non-production `assess`,
-  `rehearse`, and `repair` phases, and still defers any later `publish` /
-  `verify` phase until a separate approved production slice exists.
+  `v1.3.7` is now tagged on `main`
+  `e1a4fc8d2e728100bb98856879eac5de11e99864`, public GitHub `main` now
+  publishes `704e629`, public tag `v1.3.7` is live, GitHub release `312517425`
+  is published with manifest-matched assets, the official gallery extension
+  query now verifies Marketplace version `1.3.7` for
+  `svelderrainruiz.vi-history-suite`, the maintained public `develop`
+  candidate still publishes `ab293d5`, the maintained public wiki head still
+  publishes `141c39e`, no exact hotfix lane is currently open, and exact
+  `v1.3.7` closeout is now complete across public GitHub and VS Code
+  Marketplace; later SemVer openings return to normal GitFlow governance after
+  this retained final publication act; the active
+  software-factory governance contract now retains that same `v1.3.7` line as
+  the sole production recovery case and admits `assess`, `rehearse`,
+  `repair`, `publish`, and `verify` as repo-owned contract phases for retained
+  publication-state proof.
 
 Current active and recently closed tranches:
 

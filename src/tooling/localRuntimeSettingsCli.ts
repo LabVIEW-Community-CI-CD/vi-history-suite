@@ -114,8 +114,9 @@ const WINDOWS_PATH_SEPARATOR = ';';
 const POSIX_PATH_SEPARATOR = ':';
 const DISABLE_PERSISTENT_USER_PATH_ADMISSION_ENV =
   'VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION';
+const WINDOWS_NODE_OVERRIDE_ENV = 'VI_HISTORY_SUITE_NODE_EXE';
 const MISSING_NODE_RUNTIME_MESSAGE =
-  'VI History runtime-settings CLI requires a usable Node.js runtime on PATH. Install or restore Node.js, then rerun \"VI History: Prepare Local Runtime Settings CLI\" to refresh the launcher if this dependency changed.';
+  'VI History runtime-settings CLI requires the standard VS Code runtime or a usable Node.js runtime. Install or repair VS Code, set VI_HISTORY_SUITE_NODE_EXE, or install Node.js, then rerun \"VI History: Prepare Local Runtime Settings CLI\" to refresh the launcher if this dependency changed.';
 const STALE_LAUNCHER_MESSAGE =
   'VI History runtime-settings CLI launcher is stale or incomplete. Run \"VI History: Prepare Local Runtime Settings CLI\" again to refresh the generated launcher files.';
 
@@ -1102,7 +1103,6 @@ function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platfo
 
 function renderJavascriptLauncher(modulePath: string): string {
   return [
-    '#!/usr/bin/env node',
     'const path = require(\'node:path\');',
     `const modulePath = ${JSON.stringify(modulePath)};`,
     'let cli;',
@@ -1133,13 +1133,47 @@ function renderJavascriptLauncher(modulePath: string): string {
 function renderWindowsLauncher(): string {
   return [
     '@echo off',
+    'setlocal',
     'set SCRIPT_DIR=%~dp0',
-    'where node >nul 2>nul',
-    'if errorlevel 1 (',
+    'set "VIHS_NODE_COMMAND="',
+    'set "VIHS_USE_ELECTRON_RUN_AS_NODE="',
+    `if defined ${WINDOWS_NODE_OVERRIDE_ENV} (`,
+    `  if exist "%${WINDOWS_NODE_OVERRIDE_ENV}%" (`,
+    `    set "VIHS_NODE_COMMAND=%${WINDOWS_NODE_OVERRIDE_ENV}%"`,
+    '  )',
+    ')',
+    'if not defined VIHS_NODE_COMMAND (',
+    '  if defined LOCALAPPDATA (',
+    '    if exist "%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe" (',
+    '      set "VIHS_NODE_COMMAND=%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\Code.exe"',
+    '      set "VIHS_USE_ELECTRON_RUN_AS_NODE=1"',
+    '    )',
+    '  )',
+    ')',
+    'if not defined VIHS_NODE_COMMAND (',
+    '  if defined ProgramFiles (',
+    '    if exist "%ProgramFiles%\\Microsoft VS Code\\Code.exe" (',
+    '      set "VIHS_NODE_COMMAND=%ProgramFiles%\\Microsoft VS Code\\Code.exe"',
+    '      set "VIHS_USE_ELECTRON_RUN_AS_NODE=1"',
+    '    )',
+    '  )',
+    ')',
+    'if not defined VIHS_NODE_COMMAND (',
+    '  for %%I in (node.exe) do (',
+    '    if not "%%~$PATH:I"=="" (',
+    '      set "VIHS_NODE_COMMAND=%%~$PATH:I"',
+    '    )',
+    '  )',
+    ')',
+    'if not defined VIHS_NODE_COMMAND (',
     `  >&2 echo ${escapeWindowsBatchEcho(MISSING_NODE_RUNTIME_MESSAGE)}`,
     '  exit /b 1',
     ')',
-    'node "%SCRIPT_DIR%run-local-runtime-settings-cli.js" %*',
+    'if "%VIHS_USE_ELECTRON_RUN_AS_NODE%"=="1" (',
+    '  set "ELECTRON_RUN_AS_NODE=1"',
+    ')',
+    '"%VIHS_NODE_COMMAND%" "%SCRIPT_DIR%run-local-runtime-settings-cli.js" %*',
+    'exit /b %ERRORLEVEL%',
     ''
   ].join('\r\n');
 }

@@ -111,8 +111,8 @@ The governed launchers live under the extension-global storage root.
   admission so new standalone PowerShell windows can resolve `vihs` by name
   without manual shell-profile editing or machine-wide install doctrine.
 - `VI History: Prepare Local Runtime Settings CLI` is the governed repair and
-  refresh surface when `vihs` is missing, stale, or a repaired Node.js runtime
-  needs the entrypoint refreshed.
+  refresh surface when `vihs` is missing, stale, or a repaired VS Code or
+  Node.js runtime needs the entrypoint refreshed.
 - The command reference and this FAQ are the governed installed-user help and
   recovery surfaces for that CLI.
 - The governed settings targets are the platform-default user
@@ -120,8 +120,11 @@ The governed launchers live under the extension-global storage root.
 - Workspace settings are not a supported target for this CLI surface.
 - The prepare command is admitted in untrusted workspaces because it only
   prepares launcher files, but installed compare remains blocked there.
-- If the launcher is missing, stale, or Node.js was repaired, rerun the same
-  prepare command to refresh it.
+- On Windows, the launcher uses the standard VS Code runtime before falling
+  back to global `node.exe`; set `VI_HISTORY_SUITE_NODE_EXE` only when an
+  explicit Node runtime override is needed.
+- If the launcher is missing, stale, or VS Code/Node.js was repaired, rerun the
+  same prepare command to refresh it.
 
 ### How do I check what the runtime-settings CLI actually persisted?
 

@@ -8,16 +8,11 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.6`, `develop` still carries
-`1.3.6`, public GitHub `main` plus tag now publish the partial `v1.3.6`
-transaction, the last published GitHub release still serves `v1.3.1`, the
-Marketplace listing still serves `1.3.0`, exact `v1.3.6` proved externally
-impossible to close in place on GitHub when the repo-owned publish attempt
-against draft release `312363117` returned
-`422 tag_name was used by an immutable release`, no exact hotfix lane is
-currently open, no active feature-lane public GitHub hardening branch remains
-open, and `release/1.3.7` is now the active next governed exact line on
-`develop`.
+Authority exact `main` carries tagged `v1.3.7`, `develop` carries `1.3.7`,
+public GitHub `main`, tag, and release publish the exact `v1.3.7`
+transaction, and the Marketplace listing now serves `1.3.7`. No exact hotfix lane
+or feature-lane public GitHub hardening branch is open, and `release/1.3.8`
+is now the active candidate to promote the installed `vihs` launcher fix.
 
 ## Current Exact Closeout State
 
@@ -25,8 +20,7 @@ open, and `release/1.3.7` is now the active next governed exact line on
 - current `main` package line: `1.3.0`
 - current `develop` package line: `1.3.0`
 - active exact release candidate line on `develop`: none; exact `v1.3.0`
-  closeout is complete and the historical closeout record stays closed even
-  while later lines open
+  closeout is complete and the next SemVer line is not open yet
 - active release-candidate branch: none
 - protected back-merge proof: authority `main` `9587a99` into `develop`
   `04b07bd`
@@ -34,29 +28,29 @@ open, and `release/1.3.7` is now the active next governed exact line on
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.6`
-- current `main` package line: `1.3.6`
-- current `develop` package line: `1.3.6`
-- active exact release candidate line on `develop`: `1.3.7`
-- active release-candidate branch: `release/1.3.7`
+- current exact release line: `v1.3.7`
+- current `main` package line: `1.3.7`
+- current `develop` package line: `1.3.7`
+- active exact release candidate line on `develop`: `1.3.8`
+- active release-candidate branch: `release/1.3.8`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
-  remains incomplete
+- `release/1.3.8` remains governed by the same GitFlow and publication gates
+  before any public GitHub or Marketplace mutation
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
-- public GitHub exact transaction assessment package script:
-  `npm run public:github:exact:transaction:assess`
+- public GitHub exact transaction verification package script:
+  `npm run public:github:exact:transaction:verify`
 - chosen bump: `patch`
-- rationale: authority exact `v1.3.6` is already tagged on `main` while
-  public GitHub `main` plus the exact tag are already live, and the
-  repo-owned publish attempt now proves that closing the GitHub release in
-  place is externally impossible under the immutable-release boundary
-- rationale: `release/1.3.7` therefore opens from `develop` as the next
-  governed exact line after that external impossibility was retained
+- rationale: authority exact `v1.3.7` is already tagged on `main`, public
+  GitHub `main`, tag, and GitHub release are published with manifest-matched
+  assets, and VS Code Marketplace now serves `1.3.7`
+- rationale: `release/1.3.8` opens from `develop` as the governed patch line
+  for the installed Windows `vihs` launcher fix that removes the ambient
+  global-node `PATH` dependency
 
 ## Branch Model
 

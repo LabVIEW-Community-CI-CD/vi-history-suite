@@ -464,7 +464,14 @@ function buildPublishabilityProbe(facts, assetPhaseStatus) {
   let rationale =
     'The non-mutating publishability probe confirms the immutable-release policy, draft tag lookup, target commitish, draft URL, and retained assets for a safe in-place publish attempt.';
 
-  if (draftPublishabilityProbe.safeToAttemptPublishDraftInPlace !== true) {
+  if (
+    draftPublishabilityProbe.status === 'pass' &&
+    draftRelease?.draft === false &&
+    draftRelease?.published_at
+  ) {
+    rationale =
+      `Release ${draftReleaseId} is already published for ${facts.authority.tag}; in-place draft repair publishability is no longer the active surface.`;
+  } else if (draftPublishabilityProbe.safeToAttemptPublishDraftInPlace !== true) {
     rationale = `The non-mutating draft-publishability probe is blocked: ${draftPublishabilityProbe.rationale}`;
   } else if (!draftReleaseDiscoveredByList) {
     blockerCode = 'draft-release-missing';
@@ -496,7 +503,7 @@ function buildPublishabilityProbe(facts, assetPhaseStatus) {
 
   return {
     status: blockerCode === null ? 'pass' : 'blocked',
-    safeToAttemptRepairPublish: blockerCode === null,
+    safeToAttemptRepairPublish: blockerCode === null && draftReleaseIsDraft,
     blockerCode,
     rationale,
     draftPublishabilityStatus: draftPublishabilityProbe.status,
@@ -556,6 +563,16 @@ function buildDraftPublishabilityProbe(facts, assetPhaseStatus) {
   } else if (!draftReleaseIdMatchesRequested) {
     blockerCode = 'draft-release-id-mismatch';
     rationale = `Draft release lookup by id did not return the requested release ${requestedDraftReleaseId}.`;
+  } else if (
+    !draftReleaseIsDraft &&
+    draftRelease?.published_at &&
+    draftReleaseTagMatchesAuthority &&
+    draftReleaseLookupByTagStatusCode === 200 &&
+    !draftReleaseHtmlUrlUsesUntaggedPath &&
+    exactAssetsRetained
+  ) {
+    rationale =
+      `Release ${requestedDraftReleaseId} is already published for ${facts.authority.tag}; draft publishability is not applicable.`;
   } else if (!draftReleaseIsDraft) {
     blockerCode = 'draft-release-not-draft';
     rationale = `Release ${requestedDraftReleaseId} is no longer a draft.`;
@@ -589,7 +606,7 @@ function buildDraftPublishabilityProbe(facts, assetPhaseStatus) {
 
   return {
     status: blockerCode === null ? 'pass' : 'blocked',
-    safeToAttemptPublishDraftInPlace: blockerCode === null,
+    safeToAttemptPublishDraftInPlace: blockerCode === null && draftReleaseIsDraft,
     blockerCode,
     rationale,
     requestedDraftReleaseId,
@@ -831,9 +848,11 @@ function assessTransaction(facts) {
     buildPhase(
       'public-release-draft-publishability',
       'Public GitHub draft release publishability proven',
-      draftPublishabilityProbe.safeToAttemptPublishDraftInPlace ? 'pass' : 'blocked',
-      draftPublishabilityProbe.safeToAttemptPublishDraftInPlace
-        ? 'The non-mutating draft-publishability probe proves a safe in-place publish transition for the retained draft release.'
+      draftPublishabilityProbe.status,
+      draftPublishabilityProbe.status === 'pass'
+        ? draftPublishabilityProbe.safeToAttemptPublishDraftInPlace
+          ? 'The non-mutating draft-publishability probe proves a safe in-place publish transition for the retained draft release.'
+          : 'Draft publishability is not applicable because the exact GitHub release is already published.'
         : `The non-mutating draft-publishability probe is blocked: ${draftPublishabilityProbe.rationale}`,
       {
         draftPublishabilityProbe
@@ -842,15 +861,16 @@ function assessTransaction(facts) {
   );
 
   const publishabilityProbe = buildPublishabilityProbe(facts, assetPhaseStatus);
-  const publishabilityBlocked = publishabilityProbe.safeToAttemptRepairPublish !== true;
   phases.push(
     buildPhase(
       'public-release-publishability',
       'Public GitHub release publishability proven',
-      publishabilityBlocked ? 'blocked' : 'pass',
-      publishabilityBlocked
+      publishabilityProbe.status,
+      publishabilityProbe.status === 'blocked'
         ? `The non-mutating publishability probe is blocked: ${publishabilityProbe.rationale}`
-        : 'The non-mutating publishability probe proves a safe in-place publish transition.',
+        : publishabilityProbe.safeToAttemptRepairPublish
+          ? 'The non-mutating publishability probe proves a safe in-place publish transition.'
+          : 'The public GitHub exact release is already published, so repair publishability is no longer the active surface.',
       {
         publishabilityProbe
       }

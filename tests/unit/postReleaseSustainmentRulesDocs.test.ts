@@ -5,128 +5,6 @@ import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
-type SustainmentRules = {
-  trancheId: string;
-  issueId: string;
-  programId: string;
-  status: string;
-  parallelOpenCloseout: {
-    trancheId: string;
-    issueId: string;
-    programId: string;
-    state: string;
-  };
-  nextRuntimeProviderPublicAcceptanceGate?: {
-    pathMd: string;
-    pathJson: string;
-    state: string;
-    trancheId: string;
-    issueId: string;
-    programId: string;
-  };
-  releaseCadence: {
-    model: string;
-    versionLineContract: {
-      retainedExactVersionReleases: string[];
-      burnedExactVersionReleases?: string[];
-      currentExactReleaseLine: string;
-      currentMainPackageLine: string;
-      currentDevelopPackageLine?: string;
-      activeDevelopCandidateReleaseLine?: string | null;
-      activeReleaseCandidateBranch?: string | null;
-      activeHotfixCandidateReleaseLine?: string | null;
-      activeHotfixBranch?: string | null;
-      activeFeatureBranch?: string | null;
-      preTagPublicExactProofPackageScript?: string;
-      preTagPublicExactProofJob?: string;
-      publicGitHubExactTransactionPackageScript?: string;
-      publicGitHubExactTransactionReceiptPath?: string;
-      publicGitHubExactPublishabilityProbe?: {
-        status: string;
-        blockerCode: string;
-        immutableReleasePolicyStatusCode: number;
-        immutableReleasesEnabled: boolean;
-        immutableReleasesEnforcedByOwner: boolean;
-        draftReleaseId: number;
-        draftReleaseTargetCommitish: string;
-        draftReleaseLookupStatusCode: number;
-        draftReleaseHtmlUrlUsesUntaggedPath: boolean;
-      };
-      publicGitHubExactDraftPublishabilityProbe?: {
-        status: string;
-        blockerCode: string;
-        draftReleaseId: number;
-        draftReleaseByIdStatusCode: number;
-        draftReleaseTagMatchesAuthority: boolean;
-        safeToAttemptPublish: boolean;
-      };
-      publicDefaultBranch?: string;
-      publicCodespaceBranch: string;
-      integrationBranch?: string;
-      releaseBranch?: string;
-      hotfixBranch?: string;
-      exactReleaseLineBranch?: string;
-      nextLineBranchModel?: string;
-    };
-    maintainedSurfaces: string[];
-    refreshTriggers: string[];
-    strictSemverRule?: string[];
-    semverDecisionFramework?: {
-      defaultGovernanceBump?: string;
-      major?: string[];
-      minor?: string[];
-      patch?: string[];
-      decisionRecordingRule?: string;
-    };
-    candidateStateModel?: {
-      orderedStates?: string[];
-      reviewReadyRule?: string;
-      dirtyPublicSurfaceRule?: string;
-    };
-    activeOpeningDecision?: {
-      chosenBump?: string;
-      targetDevelopCandidateReleaseLine?: string;
-      targetHotfixCandidateReleaseLine?: string;
-      rationale?: string[];
-      rejectedAlternatives?: Record<string, string>;
-    };
-    explicitNonTriggers: string[];
-  };
-  benchmarkRefreshCadence: {
-    model: string;
-    acceptedComparablePrefix: {
-      commitCount: number;
-      pairCount: number;
-    };
-    acceptedCurrentContractBoundaries: Array<{
-      surface: string;
-      firstInvalidPair: number | string;
-      characterization: string;
-    }>;
-    refreshTriggers: string[];
-    explicitNonTriggers: string[];
-    reopenTriggers: string[];
-  };
-  operatorSurfaceSustainment: {
-    branchModel?: {
-      model?: string;
-      integrationBranch?: string;
-      releaseBranch?: string;
-      hotfixBranch?: string;
-      exactReleaseLineBranch?: string;
-      temporaryBranchPrefixes?: string[];
-      promotionRules?: string[];
-      requiredChecks?: string[];
-      governedLaneBehaviors?: Record<string, unknown>;
-      laneResponsibilities?: Record<string, string[]>;
-    };
-    requiredAuthorityUpdates: string[];
-    requiredVerification: string[];
-    requiredDerivedUpdatesWhenReaderFacingTruthChanges: string[];
-    prohibitedBypasses: string[];
-  };
-};
-
 function readText(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
@@ -136,697 +14,126 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('post-release sustainment rules package', () => {
-  it('keeps the active sustainment contract aligned across rules, queue, and entrypoint docs', () => {
-    const rules = readJson<SustainmentRules>('docs/product/post-release-sustainment-rules.json');
+  it('retains the v1.3.8 release candidate on the v1.3.7 published closeout contract', () => {
+    const rules = readJson<any>('docs/product/post-release-sustainment-rules.json');
     const rulesDoc = readText('docs/product/post-release-sustainment-rules.md');
     const readme = readText('README.md');
     const currentState = readText('docs/product/current-state.md');
-    const ship = readText('docs/product/SHIP-0001-releasable-vi-history-suite.md');
-    const program = readText(
-      'docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md'
-    );
-    const issue = readText(
-      'docs/product/issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md'
-    );
-    const informationItemMap = readText('docs/information-item-map.md');
+    const releaseProcedure = readText('docs/release-procedure.md');
 
     expect(rules.trancheId).toBe('TRANCHE-012');
     expect(rules.issueId).toBe('ISSUE-0409');
     expect(rules.programId).toBe('PROGRAM-0004');
     expect(rules.status).toBe('active');
-    expect(rules.parallelOpenCloseout).toEqual({
-      trancheId: 'TRANCHE-010',
-      issueId: 'ISSUE-0407',
-      programId: 'PROGRAM-0002',
-      state: 'historical-docker-only-public-closeout'
-    });
-    expect(rules.nextRuntimeProviderPublicAcceptanceGate).toEqual({
-      pathMd: 'docs/product/runtime-provider-public-acceptance-gate.md',
-      pathJson: 'docs/product/runtime-provider-public-acceptance-gate.json',
-      state: 'closed',
-      trancheId: 'TRANCHE-016',
-      issueId: 'ISSUE-0412',
-      programId: 'PROGRAM-0005'
-    });
-
     expect(rules.releaseCadence.model).toBe('event-driven');
-    expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2', 'v1.3.3', 'v1.3.4', 'v1.3.5', 'v1.3.6'],
-      burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.3.6',
-      currentMainPackageLine: '1.3.6',
-      currentDevelopPackageLine: '1.3.6',
-      activeDevelopCandidateReleaseLine: '1.3.7',
-      activeReleaseCandidateBranch: 'release/1.3.7',
-      activeHotfixCandidateReleaseLine: null,
-      activeHotfixBranch: null,
-      activeFeatureBranch: null,
-      preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
-      preTagPublicExactProofJob: 'public_exact_pretag_proof',
-      publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
-      publicGitHubExactTransactionReceiptPath:
-        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-      publicGitHubExactPublishabilityProbe: {
-        status: 'externally-impossible',
-        blockerCode: 'immutable-release-tag-reuse-422',
-        immutableReleasePolicyStatusCode: 200,
-        immutableReleasesEnabled: true,
-        immutableReleasesEnforcedByOwner: false,
-        draftReleaseId: 312363117,
-        draftReleaseTargetCommitish: 'main',
-        draftReleaseLookupStatusCode: 404,
-        draftReleaseHtmlUrlUsesUntaggedPath: true
-      },
-      publicGitHubExactDraftPublishabilityProbe: {
-        status: 'externally-impossible',
-        blockerCode: 'immutable-release-tag-reuse-422',
-        draftReleaseId: 312363117,
+    expect(rules.releaseCadence.versionLineContract).toEqual(
+      expect.objectContaining({
+        currentExactReleaseLine: 'v1.3.7',
+        currentMainPackageLine: '1.3.7',
+        currentDevelopPackageLine: '1.3.7',
+        activeDevelopCandidateReleaseLine: '1.3.8',
+        activeReleaseCandidateBranch: 'release/1.3.8',
+        activeHotfixCandidateReleaseLine: null,
+        activeHotfixBranch: null,
+        activeFeatureBranch: null,
+        preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
+        preTagPublicExactProofJob: 'public_exact_pretag_proof',
+        publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
+        publicGitHubExactTransactionReceiptPath:
+          '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+        vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare',
+        vscodeMarketplacePublicationPrepReceiptPath:
+          '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json',
+        publicDefaultBranch: 'main',
+        publicCodespaceBranch: 'develop',
+        integrationBranch: 'develop',
+        releaseBranch: 'release/*',
+        hotfixBranch: 'hotfix/*',
+        exactReleaseLineBranch: 'main',
+        nextLineBranchModel: 'gitflow'
+      })
+    );
+    expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.7');
+    expect(rules.releaseCadence.versionLineContract.publicGitHubExactPublishabilityProbe).toEqual(
+      expect.objectContaining({
+        status: 'published',
+        blockerCode: null,
+        draftReleaseId: 312517425,
+        draftReleaseLookupStatusCode: 200,
+        draftReleaseHtmlUrlUsesUntaggedPath: false
+      })
+    );
+    expect(
+      rules.releaseCadence.versionLineContract.publicGitHubExactDraftPublishabilityProbe
+    ).toEqual(
+      expect.objectContaining({
+        status: 'not-applicable',
+        blockerCode: 'draft-release-not-draft',
+        draftReleaseId: 312517425,
         draftReleaseByIdStatusCode: 200,
         draftReleaseTagMatchesAuthority: true,
         authorityReleaseManifestPath:
-          '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
-        releaseAssetsRetainedAgainstManifest: true,
-        safeToAttemptPublish: false
-      },
-      publicDefaultBranch: 'main',
-      publicCodespaceBranch: 'develop',
-      integrationBranch: 'develop',
-      releaseBranch: 'release/*',
-      hotfixBranch: 'hotfix/*',
-      exactReleaseLineBranch: 'main',
-      nextLineBranchModel: 'gitflow'
-    });
-    expect(rules.releaseCadence.maintainedSurfaces).toContain(
-      'preview-evidence/vi-history-suite-<version>.vsix'
-    );
-    expect(rules.releaseCadence.maintainedSurfaces).toContain(
-      'release-evidence/release-manifest.json'
-    );
-    expect(rules.releaseCadence.maintainedSurfaces).toContain(
-      'docs/product/vscode-marketplace-publication-ledger.md'
-    );
-    expect(rules.releaseCadence.maintainedSurfaces).toContain(
-      'VS Code Marketplace listing and installed-user homepage'
-    );
-    expect(rules.releaseCadence.refreshTriggers).toContain('package.json version change');
-    expect(rules.releaseCadence.refreshTriggers).toContain(
-      'Marketplace publication, listing identity, or homepage change'
-    );
-    expect(rules.releaseCadence.refreshTriggers).toContain(
-      'release-procedure, ship-control, or docs-workbench publication contract change'
+          '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json',
+        releaseAssetsRetainedAgainstManifest: true
+      })
     );
     expect(rules.releaseCadence.strictSemverRule).toEqual(
       expect.arrayContaining([
-        'after an exact release is published, the current published package line on main shall match that exact release line',
-        'when develop carries post-release work, the develop package line shall advance to the next exact release candidate before public-facing normalization continues',
-        'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
-        'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published',
-          'future sessions shall not keep landing post-release changes on the previous exact release version number',
-          'future sessions shall not treat a burned exact release as the green release baseline for later publication',
-          'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
-          'future sessions shall assess any partially public exact GitHub transaction through npm run public:github:exact:transaction:assess before any further public GitHub release or VS Code Marketplace act',
-          "future sessions shall retain the controller's non-mutating draft-publishability probe before any in-place public GitHub release repair attempt",
-          'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction unless the retained controller records that the current line is externally impossible to repair in place',
-          'future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible',
-        'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
-        'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
-        'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package',
-        'optional product-owner exploratory review may happen separately, but it shall not replace the clean expert-agent review gate for exact tagging'
-      ])
-    );
-    expect(rules.releaseCadence.candidateStateModel).toEqual(
-      expect.objectContaining({
-        reviewReadyRule:
-          'local authority-green proof is necessary but not sufficient; review-ready opens only after the maintained public develop candidate head and maintained public wiki head are both live and retained in docs/product/public-release-candidate.{md,json}',
-        dirtyPublicSurfaceRule:
-          'preserve unrelated dirt, inspect overlapping files, patch only the maintained candidate slice narrowly, and pause only on direct unresolved conflicts instead of stopping publication merely because the worktree is dirty'
-      })
-    );
-    expect(rules.releaseCadence.candidateStateModel?.orderedStates).toEqual([
-      'local-authority-green',
-      'public-develop-published',
-      'public-wiki-published',
-      'review-ready',
-      'expert-agent-review-findings-received',
-      'expert-agent-review-findings-folded',
-      'tag-eligible'
-    ]);
-    expect(rules.releaseCadence.candidateStateModel?.expertAgentReviewSkill).toEqual(
-      expect.objectContaining({
-        skillName: 'vi-history-suite-expert-agent-reviewer',
-        canonicalCodexSkillPath:
-          '/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer'
-      })
-    );
-    expect(rules.releaseCadence.candidateStateModel?.expertAgentReviewSkill?.gatingRule).toContain(
-      'no findings'
-    );
-    expect(rules.releaseCadence.semverDecisionFramework).toEqual(
-      expect.objectContaining({
-        defaultGovernanceBump: 'patch',
-        decisionRecordingRule:
-          'record the chosen bump rationale in the control plane before further publication or release normalization continues'
-      })
-    );
-    expect(rules.releaseCadence.semverDecisionFramework?.major).toEqual(
-      expect.arrayContaining([
-        'breaks or removes a governed public or maintainer contract on purpose'
-      ])
-    );
-    expect(rules.releaseCadence.semverDecisionFramework?.minor).toEqual(
-      expect.arrayContaining([
-        'adds a new governed capability or supported workflow without breaking the current exact released line'
-      ])
-    );
-    expect(rules.releaseCadence.semverDecisionFramework?.patch).toEqual(
-      expect.arrayContaining([
-        'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
+        'future sessions shall assess or verify the current exact public GitHub transaction through the repo-owned controller before any further public GitHub release or VS Code Marketplace act',
+        "future sessions shall retain the controller's non-mutating draft-publishability probe before any in-place public GitHub release repair attempt",
+        'future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds',
+        'future sessions shall run and retain npm run vscode:marketplace:prepare before any mutating VS Code Marketplace publication act',
+        'future sessions may open the next SemVer line only after the matching public tag, public GitHub release, VS Code Marketplace version, and protected develop retention state all agree'
       ])
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
+        recordedAt: '2026-04-23',
         chosenBump: 'patch',
-        targetFeatureBranch: null,
-        preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
-        preTagPublicExactProofJob: 'public_exact_pretag_proof',
-        publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
-        publicGitHubExactTransactionReceiptPath:
-          '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
+        publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify'
       })
     );
-    expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
+    expect(rules.softwareFactoryGovernance).toEqual(
+      expect.objectContaining({
+        status: 'github-release-and-marketplace-published',
+        activeFeatureBranch: null,
+        soleProductionRecoveryTarget: 'v1.3.7',
+        productionMutationAllowed: false
+      })
+    );
+    expect(rules.softwareFactoryGovernance.recoveryBoundary).toEqual(
       expect.arrayContaining([
-        'authority exact v1.3.6 is already tagged on main, public GitHub main and tag are already published, and a draft GitHub release with exact assets already exists, but the repo-owned publish attempt now proves that closing that GitHub release in place is externally impossible under the immutable-release boundary',
-        'release/1.3.7 therefore opens from develop as the next governed exact line after the v1.3.6 external impossibility was retained'
+        'repair-in-place first when public GitHub main, tag, or draft release already exist',
+        'current exact GitHub and VS Code Marketplace acts are closed for v1.3.7 while release/1.3.8 is the active patch candidate'
       ])
     );
-    expect((rules as any).softwareFactoryGovernance).toEqual({
-      status: 'publish-verify-contract-retained-on-develop',
-      activeFeatureBranch: null,
-      packageScripts: {
-        assess: 'npm run software:factory:assess',
-        rehearse: 'npm run software:factory:rehearse',
-        repair: 'npm run software:factory:repair',
-        publish: 'npm run software:factory:publish',
-        verify: 'npm run software:factory:verify'
-      },
-      receiptPaths: {
-        assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
-        rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
-        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
-        publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
-        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
-      },
-      admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
-      guardedNonMutatingContractPhases: ['publish', 'verify'],
-      soleProductionRecoveryTarget: 'v1.3.6',
-      productionMutationAllowed: false,
-      authorityBoundary: ['GitLab develop -> release/* -> protected main'],
-      stagingBoundary: [
-        'GitFlow feature/*, release/*, and hotfix/* lanes with required checks and retained receipts'
-      ],
-      productionBoundary: ['public GitHub main/tag/release', 'VS Code Marketplace listing'],
-      recoveryBoundary: [
-        'repair-in-place first when public GitHub main, tag, or draft release already exist',
-        'current v1.3.6 blocker is externally impossible: publish attempt against draft release 312363117 returned immutable-release tag reuse 422'
-      ],
-      trustModel: [
-        'Windows operator host',
-        'self-hosted Windows runner lane',
-        'self-hosted Linux assurance runner lane',
-        'GitLab authority state',
-        'public GitHub release state',
-        'VS Code Marketplace state',
-        'local token locators and retained receipts'
-      ],
-      environmentBaseline: [
-        'standard Windows installs only',
-        'Git for Windows',
-        'Node.js 22 LTS',
-        'Python 3.12 x64',
-        'Ubuntu-24.04 Linux assurance lane'
-      ],
-      rehearsalPolicy: [
-        'production is not the first proof surface',
-        'retain the admitted assess/rehearse/repair non-production phases plus guarded non-mutating publish/verify contracts before any later mutating production phase opens'
-      ],
-      incidentClasses: [
-        'production-partial-public-state',
-        'production-mutation-policy-violation',
-        'runner-or-host-readiness-drift',
-        'credential-or-capability-boundary-missing',
-        'externally-blocked-publication',
-        'externally-impossible-publication'
-      ],
-      approvalModel: [
+    expect(rules.softwareFactoryGovernance.approvalModel).toEqual(
+      expect.arrayContaining([
         'assess, rehearse, and repair are repo-owned and automatic non-production phases',
         'publish and verify are repo-owned and automatic guarded non-mutating contract phases',
-        'later GitHub-release publish requires explicit production approval',
-        'later VS Code Marketplace publish requires explicit production approval'
-      ]
-    });
-
-    expect(rules.benchmarkRefreshCadence.model).toBe('event-driven-bounded');
-    expect(rules.benchmarkRefreshCadence.acceptedComparablePrefix).toEqual({
-      commitCount: 129,
-      pairCount: 128
-    });
-    expect(rules.benchmarkRefreshCadence.acceptedCurrentContractBoundaries).toContainEqual({
-      surface: 'windows-benchmark-image',
-      firstInvalidPair: 129,
-      characterization: 'mixed-bitness-call-by-reference-seam'
-    });
-    expect(rules.benchmarkRefreshCadence.acceptedCurrentContractBoundaries).toContainEqual({
-      surface: 'linux-benchmark-image',
-      firstInvalidPair: '135/138',
-      characterization:
-        'linux-headless-recursive-load / labview-cli-connection-failed after one CloseLabVIEW recovery attempt'
-    });
-    expect(rules.benchmarkRefreshCadence.reopenTriggers).toContain(
-      'the current governed Windows benchmark image contract gains same-bitness x86 provisioning'
-    );
-    expect(rules.benchmarkRefreshCadence.explicitNonTriggers).toContain(
-      'out-of-scope alternative Windows x86 provisioning that is not part of the current governed image contract'
-    );
-
-    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
-    expect(rules.operatorSurfaceSustainment.branchModel.integrationBranch).toBe('develop');
-    expect(rules.operatorSurfaceSustainment.branchModel.releaseBranch).toBe('release/*');
-    expect(rules.operatorSurfaceSustainment.branchModel.hotfixBranch).toBe('hotfix/*');
-    expect(rules.operatorSurfaceSustainment.branchModel.exactReleaseLineBranch).toBe('main');
-    expect(rules.operatorSurfaceSustainment.branchModel.temporaryBranchPrefixes).toEqual([
-      'feature/',
-      'release/',
-      'hotfix/'
-    ]);
-    expect(rules.operatorSurfaceSustainment.branchModel.promotionRules).toEqual(
-      expect.arrayContaining([
-        'public GitHub default branch remains main so readers land on the latest exact released line by default',
-        'feature/* branches are cut from develop and merge back into develop',
-        'the governed branch-baseline assertion surface fails closed when develop does not yet contain exact main before a new candidate line opens',
-        'release/* branches are cut from develop, merge into main, merge back into develop, and are deleted only after both merges complete',
-        'hotfix/* branches are cut from main, merge into main, merge back into develop, and are deleted only after both merges complete',
-        'exact SemVer tags are cut from main only after the protected main pipeline succeeds',
-        'local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty',
-        'candidate lines are not review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
-        'dirty public-source/wiki worktrees are controlled publication surfaces: preserve unrelated dirt, patch overlapping maintained files narrowly, and pause only on direct unresolved conflicts'
+        'later VS Code Marketplace publish requires explicit production approval through the repo-owned publication path'
       ])
     );
-    expect(rules.operatorSurfaceSustainment.branchModel.requiredChecks).toEqual([
-      'governed_runner_admission',
-      'public_exact_pretag_proof',
-      'docs_continuous_integration',
-      'docs_public_continuous_integration',
-      'docs_internal_continuous_integration',
-      'test_extension',
-      'windows_private_release_acceptance',
-      'package_extension_preview',
-      'Public Facade Package Preview / package-preview',
-      'Public Facade Linux Smoke / public-facade-linux-smoke'
-    ]);
-    expect(
-      rules.operatorSurfaceSustainment.branchModel?.governedLaneBehaviors
-    ).toEqual(
-      expect.objectContaining({
-        governed_runner_admission: {
-          stage: 'admission',
-          packageScript: 'npm run gitlab:runner:doctor',
-          command:
-            'npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence',
-          evidenceRoot: 'governed-runner-admission-evidence/',
-          failurePolicy: 'fail-fast-before-docs-assurance-test-package-and-release-stages'
-        },
-        public_exact_pretag_proof: {
-          stage: 'test',
-          packageScript: 'npm run public:exact:pretag:proof',
-          command:
-            'npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence',
-          evidenceRoot: 'public-exact-pretag-proof-evidence/',
-          failurePolicy: 'fail-closed-before-any-later-exact-reopen-or-tag'
-        },
-        windows_private_release_acceptance: {
-          hostApplySurface: {
-            script: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
-            scheduledTaskAction:
-              'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
-            failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
-          },
-          startupReceiptSurface: {
-            script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
-            latestReceipt: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
-            failurePolicy: 'fail-closed-unless-bootstrap-refreshes-governed-startup-receipt'
-          },
-          hostDoctorSurface: {
-            script: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
-            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
-            packageScript: 'npm run gitlab:runner:doctor',
-            failurePolicy:
-              'non-mutating-readback; combined surface may fail closed on drift when requested'
-          },
-          linuxAssuranceBootstrap: {
-            script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
-            distro: 'Ubuntu-24.04',
-            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
-            bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
-            wakeAttempts: 12,
-            wakeDelaySeconds: 10,
-            verification: [
-              'systemctl-is-enabled',
-              'systemctl-is-active',
-              'exactly-one-configured-runner-process'
-            ],
-            failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
-          },
-          hostAssertionSurface: {
-            script: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
-            wrapperScript: 'scripts/assertGovernedRunnerLanes.js',
-            packageScript: 'npm run gitlab:runner:assert',
-            verification: [
-              'bootstrap-hash-match',
-              'scheduled-task-action-match',
-              'scheduled-task-logon-trigger',
-              'request-concurrency-two',
-              'exactly-one-configured-runner-manager'
-            ],
-            failurePolicy: 'fail-closed-on-live-host-drift'
-          },
-          hostNativeMidSessionContaminationRecovery: {
-            trigger: 'windows-host-runtime-cleanup-failed',
-            recoveryScript:
-              'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
-            recoveryTranscript:
-              'windows-private-release-evidence/host/proof-runtime-recovery.txt',
-            retryDelayMs: 5000,
-            maxProofRetries: 1,
-            firstFailureTranscript:
-              'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
-            failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
-          },
-          hostNativeMidSessionRecoveryRehearsal: {
-            script: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
-            packageScript: 'npm run gitlab:runner:windows:recovery:rehearse',
-            receiptRoot: '.cache/windows-proof-runtime-recovery-rehearsal',
-            latestReceipt: '.cache/windows-proof-runtime-recovery-rehearsal/latest.json',
-            requestedLabviewVersion: '2026',
-            requestedLabviewBitness: 'x64',
-            contaminationSeedMode: 'headless-labview-launch',
-            recoveryTranscriptLeaf: 'proof-runtime-recovery.txt',
-            failurePolicy: 'fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal'
-          }
-        },
-        linux_assurance: {
-          hostApplySurface: {
-            script: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
-            verification: [
-              'node-available',
-              'config-global-concurrency-two',
-              'config-request-concurrency-two',
-              'systemctl-is-enabled',
-              'systemctl-is-active'
-            ],
-            failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
-          },
-          helperReadinessSurface: {
-            script: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
-            verification: [
-              'config-global-concurrency-two',
-              'config-request-concurrency-two',
-              'systemctl-is-enabled',
-              'systemctl-is-active',
-              'exactly-one-configured-runner-process',
-              'writes-startup-receipt'
-            ],
-            failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
-          },
-          startupReceiptSurface: {
-            script: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
-            latestReceipt: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json',
-            failurePolicy: 'fail-closed-unless-helper-refreshes-governed-startup-receipt'
-          },
-          hostDoctorSurface: {
-            script: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
-            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
-            packageScript: 'npm run gitlab:runner:doctor',
-            failurePolicy:
-              'non-mutating-readback; combined surface may fail closed on drift when requested'
-          },
-          hostAssertionSurface: {
-            script: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
-            wrapperScript: 'scripts/assertGovernedRunnerLanes.js',
-            packageScript: 'npm run gitlab:runner:assert',
-            verification: [
-              'helper-hash-match',
-              'service-unit-hash-match',
-              'global-concurrency-two',
-              'request-concurrency-two',
-              'systemctl-is-enabled',
-              'systemctl-is-active',
-              'service-fragment-path-match',
-              'service-user-match',
-              'service-working-directory-match',
-              'exactly-one-configured-runner-process'
-            ],
-            failurePolicy: 'fail-closed-on-live-host-drift'
-          }
-        }
-      })
-    );
-    expect(rules.operatorSurfaceSustainment.branchModel.laneResponsibilities).toEqual({
-      'feature/*': [
-        'focused tests for the changed surface',
-        'affected documentation or design gates before merge to develop'
-      ],
-      develop: [
-        'required checks',
-        'npm run design:gate',
-        'npm run design:gate:assert-complete for governance or architecture work'
-      ],
-      'release/*': [
-        'required checks',
-        'design gates',
-        'release-readiness normalization',
-        'public-facade proof before merge to main'
-      ],
-      'hotfix/*': [
-        'focused regression checks',
-        'affected documentation or design gates',
-        'exact released-line package audit before merge to main'
-      ],
-      main: ['protected exact-release branch', 'exact SemVer tags only after merged main is green']
-    });
-    expect(rules.operatorSurfaceSustainment.branchModel.publicSourcePromotion).toEqual({
-      defaultTargetRoot: '../vi-history-suite.public',
-      explicitBindingOptions: ['--target-root', 'VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT'],
-      dirtyTargetPolicy: 'fail-closed-before-compare-or-write'
-    });
-    expect(rules.operatorSurfaceSustainment.branchModel.findingRequirementDiscipline).toEqual(
-      expect.arrayContaining([
-        'every governed finding is classified before slice closeout as requirements-update-required or no-requirement-impact'
-      ])
-    );
-    expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
-      expect.arrayContaining([
-        'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'
-      ])
-    );
-    expect(rules.operatorSurfaceSustainment.publicWorkflowGovernance).toEqual(
-      expect.objectContaining({
-        model: 'two-workflow-public-facade-pair',
-        workflows: {
-          packagePreview: expect.objectContaining({
-            workflowName: 'Public Facade Package Preview',
-            requiredCheckName: 'package-preview',
-            featurePushLane: 'forbidden',
-            concurrency: 'per-workflow-per-ref-cancel-in-progress'
-          }),
-          linuxSmoke: expect.objectContaining({
-            workflowName: 'Public Facade Linux Smoke',
-            requiredCheckName: 'public-facade-linux-smoke',
-            featurePushLane: 'forbidden',
-            concurrency: 'per-workflow-per-ref-cancel-in-progress'
-          })
-        }
-      })
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/vscode-marketplace-publication-ledger.md'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/vscode-marketplace-publication-ledger.json'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/hosted-ci-governance.md'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/hosted-ci-governance.json'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/post-release-sustainment-rules.md'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/runtime-provider-public-acceptance-gate.md'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/runtime-provider-public-acceptance-gate.json'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
-      'docs/product/linux-assurance-runner-lane.md'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
-      'docs/product/wiki-publication-ledger.json'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
-      'README.md'
-    );
-    expect(rules.operatorSurfaceSustainment.requiredVerification).toContain(
-      'npm run design:gate:assert-complete'
-    );
-    expect(rules.operatorSurfaceSustainment.prohibitedBypasses).toContain(
-      'execution-policy bypass that skips canonical execution-request validation'
-    );
-    expect(rules.operatorSurfaceSustainment.prohibitedBypasses).toContain(
-      'PowerShell ExecutionPolicy Bypass on governed benchmark-image or host-proof helper surfaces'
-    );
 
-    expect(rulesDoc).toContain('## Release Refresh Rules');
-    expect(rulesDoc).toContain('Current version-line contract:');
-    expect(rulesDoc).toContain('Strict SemVer rule after an exact release');
-    expect(rulesDoc).toContain('Decision framework for choosing `major`, `minor`, or `patch`:');
-    expect(rulesDoc).toContain('## Benchmark Refresh Rules');
-    expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
-    expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.3.6`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.6`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.6`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `1.3.7`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.7`');
-    expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
-    expect(rulesDoc).toContain('none');
-    expect(rulesDoc).toContain('`npm run public:github:exact:transaction:assess`');
-    expect(rulesDoc).toContain('draft release `312363117` is readable by id with status `200`');
-    expect(rulesDoc).toContain('still matches');
-    expect(rulesDoc).toContain('authority tag `v1.3.6`');
-    expect(rulesDoc).toContain('retained authority release manifest non-mutatively');
-    expect(rulesDoc).toContain('exact VSIX plus checksum assets');
-    expect(rulesDoc).toContain('immutable releases `enabled=true`, `enforced_by_owner=false`');
-    expect(rulesDoc).toContain('`422 tag_name was used by an immutable release`');
-    expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
-    expect(rulesDoc).toContain('active hotfix branch: none');
-    expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
-    expect(rulesDoc).toContain('later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`');
-    expect(rulesDoc).toContain('## Software Factory Governance Contract');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.7`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.7`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.7`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.8`');
+    expect(rulesDoc).toContain('installed `vihs` launcher fix');
+    expect(rulesDoc).toContain('public release `312517425` is published on `v1.3.7`');
+    expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
+    expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
+    expect(rulesDoc).toContain(
+      '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/'
+    );
     expect(rulesDoc).toContain('active software-factory branch on `develop`:');
     expect(rulesDoc).toContain('none');
-    expect(rulesDoc).toContain('`npm run software:factory:assess`');
-    expect(rulesDoc).toContain('`npm run software:factory:rehearse`');
-    expect(rulesDoc).toContain('`npm run software:factory:repair`');
-    expect(rulesDoc).toContain('`npm run software:factory:publish`');
-    expect(rulesDoc).toContain('`npm run software:factory:verify`');
-    expect(rulesDoc).toContain('.cache/software-factory-orchestrator/latest/software-factory-state.json');
-    expect(rulesDoc).toContain(
-      '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json'
-    );
-    expect(rulesDoc).toContain(
-      '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
-    );
-    expect(rulesDoc).toContain(
-      '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json'
-    );
-    expect(rulesDoc).toContain(
-      '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
-    );
-    expect(rulesDoc).toContain('sole production recovery target: `v1.3.6`');
-    expect(rulesDoc).toContain('no GitHub release publication, VS Code Marketplace publication, or other');
-    expect(rulesDoc).toContain('chosen bump: `patch`');
-    expect(rulesDoc).toContain('Current control decision for public exact hardening:');
-    expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');
-    expect(rulesDoc).toContain('develop');
-    expect(rulesDoc).toContain('protected exact-release line');
-    expect(rulesDoc).toContain('required checks');
-    expect(rulesDoc).toContain('GitFlow');
-    expect(rulesDoc).toContain('npm run branch:governance:assert');
-    expect(rulesDoc).toContain('Hosted automation governance is now retained explicitly:');
-    expect(rulesDoc).toContain('Lane-specific CI and gate responsibilities:');
-    expect(rulesDoc).toContain('Public GitHub workflow responsibility matrix:');
-    expect(rulesDoc).toContain('preview VSIX packaging and preview-artifact upload');
-    expect(rulesDoc).toContain('Docker Linux engine verification');
-    expect(rulesDoc).toContain('per-workflow/per-ref concurrency');
-    expect(rulesDoc).toContain('neither public GitHub workflow uses a `feature/*` push lane');
-    expect(rulesDoc).toContain('feature/*');
-    expect(rulesDoc).toContain('hotfix/*');
-    expect(rulesDoc).toContain('design:gate');
-    expect(rulesDoc).toContain('burned exact release line');
-    expect(rulesDoc).toContain('VS Code Marketplace exact publication state');
-    expect(rulesDoc).toContain("future sessions shall retain the controller's non-mutating");
-    expect(rulesDoc).toContain('draft-publishability probe before any in-place public GitHub release repair');
-    expect(rulesDoc).toContain('future sessions shall not treat an exact release as fully closed');
-    expect(rulesDoc).toContain('installed-user entry surfaces');
-    expect(rulesDoc).toContain('PROGRAM-0002');
-    expect(rulesDoc).toContain('historical public-closeout record');
-    expect(rulesDoc).toContain('runtime-provider-public-acceptance-gate.md');
-    expect(rulesDoc).toContain('linux-assurance-runner-lane.md');
-    expect(rulesDoc).toContain('execution-policy bypass');
-    expect(rulesDoc).toContain('ExecutionPolicy Bypass');
-    expect(rulesDoc).toContain('proof-run-pre-recovery.txt');
-    expect(rulesDoc).toContain('proof-runtime-recovery.txt');
-    expect(rulesDoc).toContain('single retry');
-    expect(rulesDoc).toContain('recover-windows-proof-runtime-surface.ps1');
-    expect(rulesDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
-    expect(rulesDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
-    expect(rulesDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
-    expect(rulesDoc).toContain('governed_runner_admission');
-    expect(rulesDoc).toContain('public_exact_pretag_proof');
-    expect(rulesDoc).toContain('doctor-governed-runner-lanes.ps1');
-    expect(rulesDoc).toContain('doctor-linux-assurance-runner.sh');
-    expect(rulesDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
-    expect(rulesDoc).toContain('npm run gitlab:runner:doctor');
-    expect(rulesDoc).toContain('governed-runner-admission-evidence');
-    expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
-    expect(rulesDoc).toContain('assert-governed-runner-lanes.ps1');
-    expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');
-    expect(rulesDoc).toContain('assert-linux-assurance-runner.sh');
-    expect(rulesDoc).toContain('scripts/assertGovernedRunnerLanes.js');
-    expect(rulesDoc).toContain('npm run gitlab:runner:assert');
-    expect(rulesDoc).toContain('npm run public:exact:pretag:proof');
-    expect(rulesDoc).toContain('public-exact-pretag-proof-evidence');
-    expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
-
-    expect(readme).toContain(
-      '[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)'
-    );
-    expect(readme).toContain('[docs/information-item-map.md](./docs/information-item-map.md)');
-    expect(currentState).toContain(
-      '[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)'
-    );
-    expect(ship).toContain('[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)');
-    expect(program).toContain('[post-release-sustainment-rules.md](../post-release-sustainment-rules.md)');
-    expect(issue).toContain('docs/product/post-release-sustainment-rules.md');
-    expect(issue).toContain('historical `PROGRAM-0002` closeout');
-    expect(issue).toContain('runtime-provider public-acceptance gate');
-
-    expect(informationItemMap).toContain(
-      '| Post-release sustainment rules | `docs/product/post-release-sustainment-rules.md` |'
-    );
-    expect(informationItemMap).toContain(
-      '| Machine-readable post-release sustainment rules | `docs/product/post-release-sustainment-rules.json` |'
-    );
-    expect(informationItemMap).toContain(
-      '| Software factory orchestrator contract | `scripts/runSoftwareFactoryOrchestrator.js` |'
-    );
-    expect(informationItemMap).toContain(
-      '| Software factory assessment receipt | `.cache/software-factory-orchestrator/latest/software-factory-state.json` |'
-    );
-    expect(informationItemMap).toContain(
-      '| Software factory rehearsal receipt | `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json` |'
-    );
-    expect(informationItemMap).toContain(
-      '| Software factory repair receipt | `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json` |'
-    );
-    expect(informationItemMap).toContain(
-      '| Software factory publish receipt | `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json` |'
-    );
-    expect(informationItemMap).toContain(
-      '| Software factory verify receipt | `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json` |'
-    );
+    expect(rulesDoc).toContain('sole production recovery target: `v1.3.7`');
+    expect(rulesDoc).toContain('release/1.3.8` is the active patch candidate');
+    expect(rulesDoc).toContain('Marketplace prep rule');
+    expect(readme).toContain('current exact released line: `v1.3.7`');
+    expect(currentState).toContain('current exact released line: `v1.3.7`');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.3.7`.');
+    expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
   });
 });

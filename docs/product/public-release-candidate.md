@@ -1,10 +1,10 @@
 # Public Release Candidate
 
-- Version line: `1.3.7`
+- Version line: `1.3.8`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-22`
+- Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
-- Published public source commit: `bd81bfe`
+- Published public source commit: `704e629`
 - Public `develop` candidate commit: `ab293d5`
 - Published public wiki head: `141c39e`
 
@@ -13,8 +13,9 @@
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
 - Software-factory governance branch: none
-- Later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
-  remains incomplete
+- Exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
+  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
+  users without global `node` on `PATH`
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -31,9 +32,9 @@
 ## Readiness
 
 - Authority baseline:
-  `v1.3.6-tagged-on-main-public-main-and-tag-published-release-draft-only`
+  `v1.3.7-tagged-on-main-public-main-tag-github-release-and-marketplace-published`
 - Local installed VSIX build:
-  `released-v1.3.6-authority-evidence-retained`
+  `release-1.3.8-authority-candidate-package-line`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -51,34 +52,40 @@
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only-release-1.3.7-open`
+  `v1.3.7-github-release-and-marketplace-published; v1.3.8-not-yet-published`
 
 ## Exact Release Baseline
 
-- GitHub release: `v1.3.1`
+- GitHub release: `v1.3.7`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1`
-- GitHub asset: `vi-history-suite-1.3.1.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`
+- GitHub release id: `312517425`
+- GitHub asset: `vi-history-suite-1.3.7.vsix`
 - GitHub asset SHA-256:
-  `7d7d2bd85cd47042953a2b397a9a7e50529b70ffb2af4d9ac9d195f4394f3f58`
+  `89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b`
 - VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
-- VS Code Marketplace version: `1.3.0`
+- VS Code Marketplace version: `1.3.7`
 
 ## Public Publication
 
-- Public GitHub `main` now publishes `bd81bfe`, and the separate public source
+- Public GitHub `main` now publishes `704e629`, and the separate public source
   publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
-- Public GitHub tag `v1.3.6` is now live, but the GitHub release publication
-  is still blocked on draft release `312363117`; the last published GitHub
-  release remains `v1.3.1`, the new non-mutating draft-publishability probe
-  can read release `312363117` by id with status `200` and confirms the draft
-  still matches authority tag `v1.3.6`, the repo-owned transaction
-  controller can now locate the retained authority release manifest
-  non-mutatively and verify the draft still carries the exact VSIX plus
-  checksum assets, but immutable releases are enabled, release lookup by the
-  exact tag still returns `404`, and the retained draft still uses the
-  `untagged-308c75957d1c8136f871` release URL.
+- Public GitHub tag `v1.3.7` is now live, and GitHub release `312517425` is
+  now published separately at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`.
+- The published GitHub release now retains the exact authority assets:
+  `vi-history-suite-1.3.7.vsix` and
+  `vi-history-suite-1.3.7.vsix.sha256`.
+- The repo-owned verify receipt now proves:
+  `verifyGateStatus=pass`,
+  `verifyGateAllowed=true`,
+  `publicReleaseLookupStatusCode=200`,
+  `publicReleaseByIdStatusCode=200`,
+  `draft=false`, and
+  `immutable=true`.
+- The separate public-source promotion check also now passes and is retained at
+  `.cache/public-github-source-promotion/latest/public-github-source-promotion.json`.
 - The maintained public `develop` candidate for `v1.3.1` still publishes
   `ab293d5` through GitHub PR `#38` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
@@ -87,34 +94,39 @@
 - The latest retained expert-agent review still covers the current published
   source/wiki heads `ab293d5` / `141c39e` and returned
   `no findings; exact release / Marketplace publish may proceed`.
-- Authority exact `v1.3.6` is already tagged on `main`
-  `3cb238334100d01d5cfe7998e17e20a7b497b3fb`, but the repo-owned in-place
-  publish attempt against draft release `312363117` returned
-  `422 tag_name was used by an immutable release`, so `release/1.3.7` is now
-  the governed next exact line.
+- Historical note: authority exact `v1.3.6` remained externally impossible to
+  close in place after the repo-owned publish attempt returned
+  `422 tag_name was used by an immutable release`, so `release/1.3.7` became
+  the governed next exact line and is now published separately on GitHub and
+  the VS Code Marketplace.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` passed on
-  the authority tranche before `v1.3.6` exact tagging.
-- `npm run public:exact:pretag:proof` is now the fail-closed local proof
+  the authority tranche before `v1.3.7` exact tagging.
+- `npm run public:exact:pretag:proof` remains the fail-closed local proof
   surface for any later exact reopen, and GitLab `public_exact_pretag_proof`
   retains the matching CI proof through
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`.
-- The retained authority exact `v1.3.6` VSIX evidence now lives at
-  `.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix`
+- The retained authority exact `v1.3.7` VSIX evidence now lives at
+  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix`
   with matching checksum file
-  `.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix.sha256`.
-- Public GitHub exact transaction assessment is now a separate fail-closed
-  local proof surface:
-  `npm run public:github:exact:transaction:assess`.
+  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix.sha256`.
+- Public GitHub exact transaction verification is now the retained local proof
+  surface for the completed GitHub act:
+  `npm run public:github:exact:transaction:verify -- --tag v1.3.7`.
 - The retained transaction receipt path is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
-- The software-factory orchestrator now retains separate non-production local
+- VS Code Marketplace publication prep is now the retained local proof surface
+  for the completed Marketplace act:
+  `npm run vscode:marketplace:prepare`.
+- The retained Marketplace prep receipt path is
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
+- The software-factory orchestrator still retains separate non-production local
   proof surfaces:
   `npm run software:factory:assess`,
-  `npm run software:factory:rehearse`, and
+  `npm run software:factory:rehearse`,
   `npm run software:factory:repair`,
   `npm run software:factory:publish`, and
   `npm run software:factory:verify`.
@@ -125,37 +137,32 @@
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`,
   and
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
-- That factory contract retains `v1.3.6` as the sole production recovery case,
-  defines authority/staging/production/recovery boundaries, rehearses the
-  retained non-mutating in-place repair candidate, retains the deferred
-  non-mutating repair contract, retains guarded non-mutating publish and
-  verify contracts, and still forbids GitHub release publication,
-  Marketplace publication, or other production mutation in this slice while
-  `release/1.3.7` carries the next governed exact line.
-- Current retained transaction facts: public `main` `bd81bfe`, public tag
-  `v1.3.6`, draft release `312363117`, exact VSIX
-  `vi-history-suite-1.3.6.vsix`, VSIX SHA-256
-  `4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb`,
+- The Marketplace prep receipt proves `status=ready`,
+  `productionMutationAttempted=false`, `publicGitHub.verifyGateStatus=pass`,
+  `currentMarketplaceVersion=1.3.7`, `expectedMarketplaceVersion=1.3.7`,
+  `vsixSha256Verified=true`, `vscePatLocatorStatus=ok`, and the pinned
+  `vsce` command shape with `<redacted>` PAT handling.
+- The current software-factory closeout posture is now:
+  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace, and
+  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
+  factory/orchestrator governance path before any public GitHub or Marketplace
+  mutation.
+- Current retained transaction facts: public `main` `704e629`, public tag
+  `v1.3.7`, GitHub release `312517425`, exact VSIX
+  `vi-history-suite-1.3.7.vsix`, VSIX SHA-256
+  `89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b`,
   checksum-asset SHA-256
-  `7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0`,
+  `82a0545dacbdbcad7c8c3e99f2a23de95f78998199a4a1368f44ddca00d7f612`,
   retained authority manifest
-  `.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json`,
+  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json`,
   `releaseAssetsRetainedAgainstManifest=true`,
-  `openingNewSemverAllowed=true`, `repairInPlaceRequired=true`,
-  `draftPublishabilityProbeStatus=externally-impossible`,
-  `draftPublishabilityProbeReleaseId=312363117`,
-  `draftPublishabilityByIdStatusCode=200`,
-  `draftPublishabilityTagMatchesAuthority=true`,
-  `draftPublishabilitySafeToAttemptPublish=false`,
-  `publishabilityProbeStatus=externally-impossible`,
-  `publishabilityBlockerCode=immutable-release-tag-reuse-422`,
-  `immutableReleasesEnabled=true`,
-  `immutableReleasesEnforcedByOwner=false`,
-  `draftReleaseTargetCommitish=main`,
-  `draftReleaseLookupStatusCode=404`,
-  `draftReleaseHtmlUrlUsesUntaggedPath=true`,
+  `publicSourcePromotionStatus=passed`,
+  `verifyGateStatus=pass`,
+  `verifyGateAllowed=true`,
+  `openingNewSemverAllowed=true`,
+  `repairInPlaceRequired=false`,
   `repairInPlaceAllowed=false`, and
-  `nextAllowedAction=promote-release-1.3.7-to-main-after-governed-validation`.
+  `nextAllowedAction=normal-next-line-governance-after-v1.3.7-retention`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -188,7 +195,7 @@
 - Canonical Codex skill path:
   `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
 - Exact published public release commit retained for the current public exact
-  baseline: `ad351ed`
+  baseline: `704e629`
 - Exact published public wiki head retained for the current candidate:
   `141c39e`
 - Latest retained verdict:
@@ -248,18 +255,8 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- Public GitHub exact still serves `v1.3.1`, VS Code Marketplace remains
-  retained at `1.3.0`, while public GitHub `main` plus tag already publish
-  `v1.3.6`.
-- Draft release `312363117` already retains the exact `v1.3.6` assets, so the
-  no-bump repair rule first blocked later SemVer openings until
-  `npm run public:github:exact:transaction:assess` proved the exact
-  publication state; the current retained result is that the repo-owned
-  in-place publish attempt against release `312363117` returned
-  `422 tag_name was used by an immutable release`, so `v1.3.6` is externally
-  impossible to close in place and `release/1.3.7` is now the active next
-  governed exact line.
-- The software-factory non-production contract keeps this same `v1.3.6` state
-  frozen as the only production recovery target before any future GitHub or
-  Marketplace act, even though guarded non-mutating `publish` / `verify`
-  contract phases are now retained locally.
+- Public GitHub exact now publishes `v1.3.7`, VS Code Marketplace now serves
+  `1.3.7`, and `release/1.3.8` is the active governed patch candidate for the
+  installed `vihs` launcher fix.
+- The current exact closeout blocker is closed after final Marketplace
+  publication retention.

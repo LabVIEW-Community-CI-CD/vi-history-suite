@@ -56,17 +56,18 @@ directly to the public GitHub source repo.
   mirror of the authority repo.
 - Public source publication shall be one-way: normalize in GitLab authority
   first, then promote outward.
-- Exact public `main` now publishes the exact released `v1.3.6` source line at
-  `bd81bfe`, while the GitHub release record for `v1.3.6` remains draft-only
-  until that release transaction is repaired in place and published.
+- Exact public `main` now publishes the exact released `v1.3.7` source line at
+  `704e629`, and the separate GitHub release record for `v1.3.7` is now
+  published while VS Code Marketplace still remains on `1.3.0`.
 - The maintained public `develop` candidate for `v1.3.1` now publishes
   `ab293d5`, and the current published candidate heads `ab293d5` / `141c39e`
   are now `review-ready` in `docs/product/public-release-candidate.{md,json}`.
 - Public source publication shall not silently mix the exact-release
-  `v1.3.6` source contract, the still-draft `v1.3.6` GitHub release record,
-  and any later candidate wording on the same maintained surface; the exact
-  source publication, its blocked release transaction, and any later candidate
-  lane shall stay explicit.
+  `v1.3.7` source contract, the published `v1.3.7` GitHub release record, the
+  still-retained `v1.3.0` Marketplace listing, and any later candidate wording
+  on the same maintained surface; the exact source publication, its published
+  GitHub release act, the separate Marketplace closeout act, and any later
+  candidate lane shall stay explicit.
 - Public source publication shall be recorded in the dedicated public source
   publication ledger, not in the internal GitLab wiki ledger or the public
   GitHub wiki ledger.

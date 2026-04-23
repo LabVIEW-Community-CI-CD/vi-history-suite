@@ -320,6 +320,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['public:github:exact:transaction:verify']).toBe(
       'node scripts/runPublicGithubExactReleaseTransaction.js --mode verify'
     );
+    expect(manifest.scripts?.['vscode:marketplace:prepare']).toBe(
+      'node scripts/prepareVsCodeMarketplacePublication.js'
+    );
     expect(manifest.scripts?.['software:factory:assess']).toBe(
       'node scripts/runSoftwareFactoryOrchestrator.js --phase assess'
     );

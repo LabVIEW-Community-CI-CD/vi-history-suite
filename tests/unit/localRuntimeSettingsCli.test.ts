@@ -376,14 +376,17 @@ describe('localRuntimeSettingsCli', () => {
       'VI History runtime-settings CLI launcher is stale or incomplete.'
     );
     expect(windowsLauncher).toContain('run-local-runtime-settings-cli.js');
-    expect(windowsLauncher).toContain('where node >nul 2>nul');
+    expect(windowsLauncher).toContain('VI_HISTORY_SUITE_NODE_EXE');
+    expect(windowsLauncher).toContain('Microsoft VS Code\\Code.exe');
+    expect(windowsLauncher).toContain('ELECTRON_RUN_AS_NODE=1');
+    expect(windowsLauncher).toContain('for %%I in (node.exe) do');
     expect(windowsLauncher).toContain(
-      'VI History runtime-settings CLI requires a usable Node.js runtime on PATH.'
+      'VI History runtime-settings CLI requires the standard VS Code runtime or a usable Node.js runtime.'
     );
     expect(posixLauncher).toContain('run-local-runtime-settings-cli.js');
     expect(posixLauncher).toContain('command -v node >/dev/null 2>&1');
     expect(posixLauncher).toContain(
-      'VI History runtime-settings CLI requires a usable Node.js runtime on PATH.'
+      'VI History runtime-settings CLI requires the standard VS Code runtime or a usable Node.js runtime.'
     );
     expect(windowsTerminalEntrypoint).toContain('run-local-runtime-settings-cli.js');
     expect(posixTerminalEntrypoint).toContain('run-local-runtime-settings-cli.js');
@@ -394,6 +397,47 @@ describe('localRuntimeSettingsCli', () => {
     expect(materialized.exampleCommand).toContain('--provider host');
     expect(materialized.exampleCommand).toBe(materialized.nextCommand);
     expect(materialized.nextCommand).toContain('vihs --provider host');
+  });
+
+  it('executes the Windows launcher through an explicit Node runtime override without PATH node', async () => {
+    if (process.platform !== 'win32') {
+      return;
+    }
+
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-node-override-'));
+    tempDirectories.push(tempRoot);
+
+    const globalStoragePath = path.join(tempRoot, 'global storage');
+    const extensionPath = path.join(tempRoot, 'extension with spaces');
+    const modulePath = path.join(extensionPath, 'out', 'tooling', 'localRuntimeSettingsCli.js');
+    const markerPath = path.join(tempRoot, 'marker.txt');
+    await fs.mkdir(path.dirname(modulePath), { recursive: true });
+    await fs.writeFile(
+      modulePath,
+      [
+        'const fs = require("node:fs");',
+        `exports.runLocalRuntimeSettingsCliMain = async () => { fs.writeFileSync(${JSON.stringify(markerPath)}, "ok\\n"); return 0; };`,
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+
+    const materialized = await ensureLocalRuntimeSettingsCli(globalStoragePath, extensionPath);
+    const result = await execFile('cmd.exe', ['/d', '/c', 'call', materialized.windowsLauncherPath], {
+      encoding: 'utf8',
+      env: {
+        ComSpec: process.env.ComSpec,
+        PATHEXT: process.env.PATHEXT,
+        SystemRoot: process.env.SystemRoot,
+        TEMP: process.env.TEMP,
+        TMP: process.env.TMP,
+        PATH: path.win32.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32'),
+        VI_HISTORY_SUITE_NODE_EXE: process.execPath
+      }
+    });
+
+    expect(result.stderr).toBe('');
+    await expect(fs.readFile(markerPath, 'utf8')).resolves.toBe('ok\n');
   });
 
   it('admits the bare vihs terminal entrypoint through PATH prepend', async () => {

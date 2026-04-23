@@ -11,25 +11,30 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.3.6`.
+- The current exact released line is `v1.3.7`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.3.6`.
-- The current develop package line on `develop` is `1.3.6`.
-- The active exact release candidate line on `develop` is `1.3.7`.
-- The active release-candidate branch is `release/1.3.7`.
+- The current published package line on `main` is `1.3.7`.
+- The current develop package line on `develop` is `1.3.7`.
+- The active exact release candidate line on `develop` is `1.3.8`.
+- The active release-candidate branch is `release/1.3.8`.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
   is none.
-- Later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
-  remains incomplete.
+- Exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
+  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
+  users without global `node` on `PATH`.
 - The pre-tag public-exact proof package script is
   `npm run public:exact:pretag:proof`.
 - The pre-tag public-exact proof GitLab job is `public_exact_pretag_proof`.
-- The public GitHub exact transaction assessment package script is
-  `npm run public:github:exact:transaction:assess`.
+- The public GitHub exact transaction verification package script is
+  `npm run public:github:exact:transaction:verify`.
 - The retained public GitHub exact transaction receipt is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
+- The VS Code Marketplace publication prep package script is
+  `npm run vscode:marketplace:prepare`.
+- The retained VS Code Marketplace publication prep receipt is
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
 - The active software-factory governance branch on `develop` is none.
 - The software factory assessment package script is
   `npm run software:factory:assess`.
@@ -41,6 +46,8 @@
   `npm run software:factory:publish`.
 - The software factory verify package script is
   `npm run software:factory:verify`.
+- The VS Code Marketplace prep package script is
+  `npm run vscode:marketplace:prepare`.
 - The retained software factory assessment receipt is
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`.
 - The retained software factory rehearsal receipt is
@@ -51,6 +58,8 @@
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`.
 - The retained software factory verify receipt is
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
+- The retained VS Code Marketplace prep receipt is
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
@@ -67,12 +76,13 @@
   `windows-private-release-evidence/manifest.json`.
 - That private-release act does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
-- Public GitHub `main` now publishes `bd81bfe`, public tag `v1.3.6` is live,
-  draft release `312363117` retains the exact assets, the last published
-  GitHub release still serves `v1.3.1`, the repo-owned in-place publish
-  attempt against draft release `312363117` returned
-  `422 tag_name was used by an immutable release`, and VS Code Marketplace
-  still serves `1.3.0`, so `release/1.3.7` is now the active next exact line.
+- Public GitHub `main` now publishes `704e629`, public tag `v1.3.7` is live,
+  GitHub release `312517425` is published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
+  the uploaded exact assets match the retained authority manifest under
+  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
+  retained verify receipt records `verifyGateStatus=pass` and
+  `verifyGateAllowed=true`, and VS Code Marketplace now serves `1.3.7`.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
@@ -197,12 +207,12 @@
 - When public GitHub `main`, the exact tag, or a draft release already exist
   for the current exact line, the governed next step is repair in place
   unless `npm run public:github:exact:transaction:assess` retains that repair
-  is impossible.
+  is impossible; once the exact GitHub release and Marketplace version are
+  published and verified, the exact release can be retained as closed.
 - No GitHub release publication, Marketplace publication, or other production
   mutation shall occur outside the repo-owned factory/orchestrator contract.
-- Exact `v1.3.6` remains the sole production recovery case until the
-  repo-owned factory/orchestrator contract retains a later safe repair or
-  publish phase explicitly.
+- Exact `v1.3.7` is the current exact closed line; `release/1.3.8` is the
+  active candidate for the installed `vihs` launcher fix.
 - Exact release closeout is not complete until the exact released `main` line
   has also been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green.
@@ -337,24 +347,31 @@ separate afterward.
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
 14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.
-    - before any further public GitHub exact-release repair or VS Code
-      Marketplace act, run
-      `npm run public:github:exact:transaction:assess`
+    - before any further VS Code Marketplace act, retain the completed public
+      GitHub exact-release verification through
+      `npm run public:github:exact:transaction:verify`
     - retain the broader software-factory boundary assessment through
       `npm run software:factory:assess`
     - retain the non-production rehearsal proof through
       `npm run software:factory:rehearse`
     - retain the non-production repair contract through
       `npm run software:factory:repair`
-    - the current retained `v1.3.6` draft-publishability probe is still
-      blocked because draft release `312363117` is readable by id but exact-tag
-      release lookup still returns `404`, immutable releases are enabled, and
-      the draft still serves an `untagged-*` URL
-    - fail closed if that controller freezes SemVer openings or reports that
-      the current exact line must still be repaired in place
+    - retain the VS Code Marketplace publication prep receipt through
+      `npm run vscode:marketplace:prepare`
+    - the retained `v1.3.7` verify receipt now proves the public GitHub exact
+      act closed with manifest-matched assets and `verifyGateStatus=pass`
+    - fail closed if that controller no longer verifies the published public
+      GitHub exact line cleanly
 15. Publish the exact VSIX to the VS Code Marketplace and retain the result.
     - The governed distribution surface is the VS Code Marketplace item
       `svelderrainruiz.vi-history-suite`.
+    - Before the mutating publish act, run
+      `npm run vscode:marketplace:prepare` and require its receipt to show the
+      GitHub `v1.3.7` verify gate passed, exact VSIX/checksum evidence matched,
+      live Marketplace served the expected pre-publication stale version before
+      the act and serves `1.3.7` after the act, the local PAT locator was ready
+      without secret retention, and the pinned `vsce` publish command shape was
+      retained.
     - The preferred CLI path is the pinned `@vscode/vsce` helper through
       `scripts/runPinnedVsce.js`; manual Marketplace portal upload remains the
       approved operator fallback.
@@ -453,19 +470,19 @@ separate afterward.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.3.6`, tracked in the
-  exact authority line while the current develop package line remains `1.3.6`;
+- The current published package line on `main` is `1.3.7`, tracked in the
+  exact authority line while the current develop package line remains `1.3.7`;
   that split must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
   exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
-  `v1.3.4`, exact `v1.3.5`, or exact `v1.3.6` release evidence.
-- The current develop package line on `develop` is `1.3.6`, public GitHub
-  `main` now publishes `bd81bfe`, public tag `v1.3.6` is live, draft release
-  `312363117` retains the exact assets, VS Code Marketplace remains `1.3.0`,
-  and the retained `v1.3.6` repair state on `develop` stays frozen until
-  `npm run public:github:exact:transaction:assess` proves a safe in-place
-  repair or retains that repair is impossible.
+  `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, or exact `v1.3.7` release
+  evidence.
+- The current develop package line on `develop` is `1.3.7`, public GitHub
+  `main` now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
+  `312517425` is published, VS Code Marketplace serves `1.3.7`, and
+  `release/1.3.8` opens from that retained baseline for the installed `vihs`
+  launcher fix.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

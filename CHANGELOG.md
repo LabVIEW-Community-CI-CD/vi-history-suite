@@ -5,9 +5,20 @@ This changelog is the governed version-line summary for `vi-history-suite`.
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
 `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`,
-`v1.3.5`, and `v1.3.6`.
+`v1.3.5`, `v1.3.6`, and `v1.3.7`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.3.8] - 2026-04-23
+
+### Fixed
+
+- `release/1.3.8` opens from the closed `v1.3.7` public GitHub and VS Code
+  Marketplace baseline to promote the installed `vihs` Windows launcher fix
+  for users who do not have global `node` on `PATH`
+- generated Windows launchers now prefer `VI_HISTORY_SUITE_NODE_EXE`, then
+  standard VS Code `Code.exe` with `ELECTRON_RUN_AS_NODE=1`, before falling
+  back to ambient `node.exe`
 
 ## [1.3.7] - 2026-04-22
 
