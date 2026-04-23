@@ -8,12 +8,11 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.7`, `develop` now also carries
-`1.3.7`, public GitHub `main`, tag, and release now publish the exact
-`v1.3.7` transaction, the Marketplace listing now serves `1.3.7`, no exact
-hotfix lane is currently open, no active feature-lane public GitHub hardening
-branch remains open, and the final publication closeout is retained directly
-on `develop`.
+Authority exact `main` carries tagged `v1.3.7`, `develop` carries `1.3.7`,
+public GitHub `main`, tag, and release publish the exact `v1.3.7`
+transaction, and the Marketplace listing now serves `1.3.7`. No exact hotfix lane
+or feature-lane public GitHub hardening branch is open, and `release/1.3.8`
+is now the active candidate to promote the installed `vihs` launcher fix.
 
 ## Current Exact Closeout State
 
@@ -32,26 +31,26 @@ on `develop`.
 - current exact release line: `v1.3.7`
 - current `main` package line: `1.3.7`
 - current `develop` package line: `1.3.7`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- active exact release candidate line on `develop`: `1.3.8`
+- active release-candidate branch: `release/1.3.8`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- later SemVer openings beyond `1.3.7` return to normal GitFlow governance
-  after the retained public GitHub and Marketplace closeout
+- `release/1.3.8` remains governed by the same GitFlow and publication gates
+  before any public GitHub or Marketplace mutation
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - public GitHub exact transaction verification package script:
   `npm run public:github:exact:transaction:verify`
 - chosen bump: `patch`
-- rationale: authority exact `v1.3.7` is already tagged on `main` while
-  public GitHub `main`, tag, and GitHub release are now published with exact
-  manifest-matched assets, and VS Code Marketplace now serves `1.3.7`
-- rationale: the repo-owned public GitHub exact-release transaction controller
-  now retains a completed verify gate for `v1.3.7`, and later openings may
-  proceed only after this final publication act is retained
+- rationale: authority exact `v1.3.7` is already tagged on `main`, public
+  GitHub `main`, tag, and GitHub release are published with manifest-matched
+  assets, and VS Code Marketplace now serves `1.3.7`
+- rationale: `release/1.3.8` opens from `develop` as the governed patch line
+  for the installed Windows `vihs` launcher fix that removes the ambient
+  global-node `PATH` dependency
 
 ## Branch Model
 

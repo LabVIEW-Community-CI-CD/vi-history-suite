@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.3.7",
+  "versionLine": "1.3.8",
   "burnedExactReleaseLine": "v1.0.2",
   "recordedAt": "2026-04-23",
   "authorityRepo": {
@@ -51,7 +51,7 @@
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.3.7-tagged-on-main-public-main-tag-github-release-and-marketplace-published",
-    "localInstalledVsix": "released-v1.3.7-authority-evidence-retained",
+    "localInstalledVsix": "release-1.3.8-authority-candidate-package-line",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
@@ -61,7 +61,7 @@
     "runtimeProviderPublicAcceptanceGate": "closed-on-published-v1.3.0-candidate-heads-retained",
     "preTagPublicExactProofGate": "required-before-any-later-exact-reopen",
     "publicGitHubExactTransactionGate": "required-before-any-further-public-github-release-or-marketplace-act",
-    "exactPublicRelease": "v1.3.7-github-release-and-marketplace-published"
+    "exactPublicRelease": "v1.3.7-github-release-and-marketplace-published; v1.3.8-not-yet-published"
   },
   "findingClassifications": [
     {
@@ -115,7 +115,7 @@
     "releaseBranch": "main"
   },
   "exactReleaseReopening": {
-    "status": "authority-v1.3.7-github-release-and-marketplace-published",
+    "status": "authority-v1.3.7-github-release-and-marketplace-published-release-1.3.8-open",
     "hotfixBranch": null,
     "featureBranch": null,
     "authorityMainCommit": "e1a4fc8d2e728100bb98856879eac5de11e99864",
@@ -138,7 +138,7 @@
     "publicGitHubDraftReleaseTargetCommitish": "main",
     "publicGitHubReleaseLookupStatusCode": 200,
     "publicGitHubDraftReleaseUsesUntaggedUrl": false,
-    "nextSeparateAct": "none-final-publication-retained",
+    "nextSeparateAct": "promote-release-1.3.8-to-main-after-governed-validation",
     "marketplaceVersionRetained": "1.3.7",
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
@@ -177,15 +177,15 @@
     ],
     "soleProductionRecoveryTarget": "v1.3.7",
     "productionMutationAllowed": false,
-    "rule": "the retained v1.3.7 exact line is closed across public GitHub and VS Code Marketplace; later SemVer openings may proceed only through normal GitFlow and repo-owned factory/orchestrator governance"
+    "rule": "the retained v1.3.7 exact line is closed across public GitHub and VS Code Marketplace; release/1.3.8 may proceed only through normal GitFlow and repo-owned factory/orchestrator governance before any public GitHub or Marketplace mutation"
   },
   "localProofs": {
     "localInstalledVsixPreview": {
-      "status": "released-v1.3.7-authority-evidence-retained",
-      "version": "1.3.7",
-      "vsixPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix",
-      "checksumPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix.sha256",
-      "buildCommand": "not-applicable-authority-exact-v1.3.7-already-built",
+      "status": "release-1.3.8-authority-candidate-package-line",
+      "version": "1.3.8",
+      "vsixPath": "preview-evidence/vi-history-suite-1.3.8.vsix",
+      "checksumPath": "preview-evidence/vi-history-suite-1.3.8.vsix.sha256",
+      "buildCommand": "npm run package",
       "gatingPackageScript": "npm run public:exact:pretag:proof",
       "gatingGitLabJob": "public_exact_pretag_proof"
     },
@@ -217,7 +217,7 @@
       "openingNewSemverAllowed": true,
       "repairInPlaceRequired": false,
       "repairInPlaceAllowed": false,
-      "nextAllowedAction": "normal-next-line-governance-after-v1.3.7-retention"
+      "nextAllowedAction": "promote-release-1.3.8-to-main-after-governed-validation"
     },
     "vscodeMarketplacePublicationPrep": {
       "status": "published-v1.3.7-verified",
@@ -239,7 +239,7 @@
       "publicationCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix --pat <redacted>",
       "publicationMode": "pinned-vsce-cli",
       "publishedAt": "2026-04-23",
-      "nextAllowedAction": "normal-next-line-governance-after-v1.3.7-retention"
+      "nextAllowedAction": "promote-release-1.3.8-to-main-after-github-v1.3.8-publication"
     },
     "privateRelease": {
       "status": "current-v1.3.1-private-release-published",
