@@ -185,6 +185,7 @@
     "public:github:exact:transaction:assess": "node scripts/runPublicGithubExactReleaseTransaction.js --mode assess",
     "public:github:exact:transaction:publish": "node scripts/runPublicGithubExactReleaseTransaction.js --mode publish",
     "public:github:exact:transaction:verify": "node scripts/runPublicGithubExactReleaseTransaction.js --mode verify",
+    "vscode:marketplace:prepare": "node scripts/prepareVsCodeMarketplacePublication.js",
     "software:factory:assess": "node scripts/runSoftwareFactoryOrchestrator.js --phase assess",
     "software:factory:rehearse": "node scripts/runSoftwareFactoryOrchestrator.js --phase rehearse",
     "software:factory:repair": "node scripts/runSoftwareFactoryOrchestrator.js --phase repair",

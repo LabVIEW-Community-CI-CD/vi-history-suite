@@ -57,6 +57,8 @@
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
       "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+      "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
+      "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
       "publicGitHubExactPublishabilityProbe": {
         "status": "published",
         "blockerCode": null,
@@ -123,6 +125,7 @@
         "future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction",
         "future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible",
         "future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds",
+        "future sessions shall run and retain npm run vscode:marketplace:prepare before any mutating VS Code Marketplace publication act",
         "future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green",
         "future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package",
         "future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package",
@@ -172,6 +175,8 @@
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
       "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+      "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
+      "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
       "rationale": [
         "authority exact v1.3.7 is already tagged on main, public GitHub main, tag, and release are already published with manifest-matched assets, so the governed remaining closeout is the separate Marketplace act rather than another SemVer opening",
         "the repo-owned transaction controller now retains a completed verify gate for v1.3.7, and later openings remain frozen until the separate Marketplace publication act is retained"
@@ -196,14 +201,16 @@
       "rehearse": "npm run software:factory:rehearse",
       "repair": "npm run software:factory:repair",
       "publish": "npm run software:factory:publish",
-      "verify": "npm run software:factory:verify"
+      "verify": "npm run software:factory:verify",
+      "marketplacePrepare": "npm run vscode:marketplace:prepare"
     },
     "receiptPaths": {
       "assess": ".cache/software-factory-orchestrator/latest/software-factory-state.json",
       "rehearse": ".cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json",
       "repair": ".cache/software-factory-orchestrator/latest/repair/software-factory-state.json",
       "publish": ".cache/software-factory-orchestrator/latest/publish/software-factory-state.json",
-      "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json"
+      "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json",
+      "marketplacePrepare": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
     },
     "admittedNonProductionPhases": [
       "assess",

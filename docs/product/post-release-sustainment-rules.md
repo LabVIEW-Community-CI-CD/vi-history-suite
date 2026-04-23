@@ -89,6 +89,10 @@ Current version-line contract:
   `npm run public:github:exact:transaction:verify`
 - public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- VS Code Marketplace publication prep package script:
+  `npm run vscode:marketplace:prepare`
+- VS Code Marketplace publication prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - current retained public GitHub exact verify gate:
   public release `312517425` is published on `v1.3.7`, release lookup by tag
   returns `200`, readback by id returns `200`, the exact assets match the
@@ -139,6 +143,8 @@ Current control decision for public exact hardening:
   `npm run software:factory:publish`
 - factory verify package script:
   `npm run software:factory:verify`
+- VS Code Marketplace prep package script:
+  `npm run vscode:marketplace:prepare`
 - factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - factory rehearsal receipt:
@@ -149,6 +155,8 @@ Current control decision for public exact hardening:
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
 - factory verify receipt:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- VS Code Marketplace prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - current factory phases:
   `assess`, `rehearse`, `repair`, `publish`, `verify`
 - sole production recovery target: `v1.3.7`
@@ -183,6 +191,12 @@ Current control decision for public exact hardening:
   phases; publish and verify are automatic guarded non-mutating contract
   phases; later VS Code Marketplace publish phases still require explicit
   production approval
+- Marketplace prep rule:
+  `npm run vscode:marketplace:prepare` must pass and retain its receipt before
+  the later mutating VS Code Marketplace publication act; it verifies the
+  GitHub `v1.3.7` verify gate, exact VSIX/checksum evidence, live Marketplace
+  version, local PAT locator, and pinned `vsce` command shape without
+  retaining secret material or publishing.
 
 Historical opening decision that opened exact `v1.3.1`:
 

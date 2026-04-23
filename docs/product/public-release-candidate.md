@@ -118,6 +118,11 @@
   `npm run public:github:exact:transaction:verify -- --tag v1.3.7`.
 - The retained transaction receipt path is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
+- VS Code Marketplace publication prep is now the retained local proof surface
+  for the later separate Marketplace act:
+  `npm run vscode:marketplace:prepare`.
+- The retained Marketplace prep receipt path is
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
 - The software-factory orchestrator still retains separate non-production local
   proof surfaces:
   `npm run software:factory:assess`,
@@ -132,6 +137,11 @@
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`,
   and
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
+- The Marketplace prep receipt proves `status=ready`,
+  `productionMutationAttempted=false`, `publicGitHub.verifyGateStatus=pass`,
+  `currentMarketplaceVersion=1.3.0`, `expectedMarketplaceVersion=1.3.7`,
+  `vsixSha256Verified=true`, `vscePatLocatorStatus=ok`, and the pinned
+  `vsce` command shape with `<redacted>` PAT handling.
 - The current software-factory closeout posture is now:
   no later SemVer opening, Marketplace publication, or other production
   mutation may occur outside the repo-owned factory/orchestrator closeout path

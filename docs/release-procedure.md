@@ -30,6 +30,10 @@
   `npm run public:github:exact:transaction:verify`.
 - The retained public GitHub exact transaction receipt is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
+- The VS Code Marketplace publication prep package script is
+  `npm run vscode:marketplace:prepare`.
+- The retained VS Code Marketplace publication prep receipt is
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
 - The active software-factory governance branch on `develop` is none.
 - The software factory assessment package script is
   `npm run software:factory:assess`.
@@ -41,6 +45,8 @@
   `npm run software:factory:publish`.
 - The software factory verify package script is
   `npm run software:factory:verify`.
+- The VS Code Marketplace prep package script is
+  `npm run vscode:marketplace:prepare`.
 - The retained software factory assessment receipt is
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`.
 - The retained software factory rehearsal receipt is
@@ -51,6 +57,8 @@
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`.
 - The retained software factory verify receipt is
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
+- The retained VS Code Marketplace prep receipt is
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
@@ -347,6 +355,8 @@ separate afterward.
       `npm run software:factory:rehearse`
     - retain the non-production repair contract through
       `npm run software:factory:repair`
+    - retain the VS Code Marketplace publication prep receipt through
+      `npm run vscode:marketplace:prepare`
     - the retained `v1.3.7` verify receipt now proves the public GitHub exact
       act closed with manifest-matched assets and `verifyGateStatus=pass`
     - fail closed if that controller no longer verifies the published public
@@ -354,6 +364,12 @@ separate afterward.
 15. Publish the exact VSIX to the VS Code Marketplace and retain the result.
     - The governed distribution surface is the VS Code Marketplace item
       `svelderrainruiz.vi-history-suite`.
+    - Before the mutating publish act, run
+      `npm run vscode:marketplace:prepare` and require its receipt to show the
+      GitHub `v1.3.7` verify gate passed, exact VSIX/checksum evidence matched,
+      live Marketplace still served `1.3.0`, the local PAT locator was ready
+      without secret retention, and the pinned `vsce` publish command shape was
+      retained.
     - The preferred CLI path is the pinned `@vscode/vsce` helper through
       `scripts/runPinnedVsce.js`; manual Marketplace portal upload remains the
       approved operator fallback.

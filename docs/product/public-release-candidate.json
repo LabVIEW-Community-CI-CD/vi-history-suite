@@ -143,7 +143,9 @@
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
     "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
-    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json"
+    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+    "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
+    "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
   },
   "softwareFactoryGovernance": {
     "status": "github-release-published-marketplace-pending-no-active-feature-branch",
@@ -153,14 +155,16 @@
       "rehearse": "npm run software:factory:rehearse",
       "repair": "npm run software:factory:repair",
       "publish": "npm run software:factory:publish",
-      "verify": "npm run software:factory:verify"
+      "verify": "npm run software:factory:verify",
+      "marketplacePrepare": "npm run vscode:marketplace:prepare"
     },
     "receiptPaths": {
       "assess": ".cache/software-factory-orchestrator/latest/software-factory-state.json",
       "rehearse": ".cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json",
       "repair": ".cache/software-factory-orchestrator/latest/repair/software-factory-state.json",
       "publish": ".cache/software-factory-orchestrator/latest/publish/software-factory-state.json",
-      "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json"
+      "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json",
+      "marketplacePrepare": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
     },
     "admittedNonProductionPhases": [
       "assess",
@@ -214,6 +218,25 @@
       "repairInPlaceRequired": false,
       "repairInPlaceAllowed": false,
       "nextAllowedAction": "publish-v1.3.7-to-vscode-marketplace-after-governed-validation"
+    },
+    "vscodeMarketplacePublicationPrep": {
+      "status": "ready-for-explicit-production-approval",
+      "packageScript": "npm run vscode:marketplace:prepare",
+      "receiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
+      "authorityTag": "v1.3.7",
+      "expectedMarketplaceVersion": "1.3.7",
+      "currentMarketplaceVersion": "1.3.0",
+      "marketplaceItem": "svelderrainruiz.vi-history-suite",
+      "publicGitHubVerifyGateStatus": "pass",
+      "publicGitHubReleaseId": 312517425,
+      "vsixPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix",
+      "vsixSha256Verified": true,
+      "vscePatLocatorStatus": "ok",
+      "secretRetained": false,
+      "pinnedVscePackage": "@vscode/vsce@3.7.1",
+      "plannedPublishCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix --pat <redacted>",
+      "productionMutationAttempted": false,
+      "nextAllowedAction": "publish-v1.3.7-to-vscode-marketplace-after-explicit-production-approval"
     },
     "privateRelease": {
       "status": "current-v1.3.1-private-release-published",

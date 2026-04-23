@@ -174,6 +174,10 @@ Latest landed ship target:
   `npm run public:github:exact:transaction:verify`
 - retained public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- VS Code Marketplace publication prep package script:
+  `npm run vscode:marketplace:prepare`
+- retained VS Code Marketplace publication prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
 - software factory rehearsal package script:
@@ -184,6 +188,8 @@ Latest landed ship target:
   `npm run software:factory:publish`
 - software factory verify package script:
   `npm run software:factory:verify`
+- VS Code Marketplace prep package script:
+  `npm run vscode:marketplace:prepare`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
@@ -194,6 +200,8 @@ Latest landed ship target:
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
 - retained software factory verify receipt:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- retained VS Code Marketplace prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - software-factory contract phases:
   `assess`, `rehearse`, and `repair` remain admitted non-production phases;
   `publish` / `verify` are retained as guarded non-mutating contract phases
@@ -223,6 +231,11 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   still serves `1.3.0`
 - VS Code Marketplace retained published version: `1.3.0`
+- VS Code Marketplace publication prep is ready and non-mutating:
+  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
+  verify gate, exact authority VSIX/checksum evidence, live Marketplace
+  `1.3.0` readback, local PAT locator, and pinned `vsce` publish command
+  shape without retaining secret material or publishing.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
