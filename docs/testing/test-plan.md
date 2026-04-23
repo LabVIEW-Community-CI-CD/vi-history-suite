@@ -2028,6 +2028,18 @@ Information-for-users review cases:
   exact `v1.3.7` release, exact VSIX/checksum evidence, current Marketplace
   version, local Marketplace PAT locator, and pinned `vsce` command shape,
   writes JSON plus Markdown receipts, and performs no Marketplace mutation
+- `TEST-UNIT-380`: verify the release-publication state resolver derives the
+  selected authority tag, package version, Marketplace item, current
+  Marketplace version, and versioned next-action strings without hardcoded
+  release ids or current-version literals.
+- `TEST-UNIT-381`: verify the public GitHub exact-release publisher requires
+  explicit `--tag`, creates a draft for an absent release, uploads the VSIX and
+  checksum from GitLab authority evidence, verifies both assets by release id,
+  and only then publishes the draft.
+- `TEST-UNIT-382`: verify a published immutable GitHub release with missing,
+  zero-size, mismatched, or checksum-invalid assets is classified as
+  `published-immutable-release-assets-incomplete` and blocks Marketplace
+  publication.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2154,6 +2166,19 @@ Information-for-users review cases:
   VSIX/checksum evidence and PAT locator without secret retention, retains the
   pinned `vsce` publish command shape, and keeps Marketplace publication
   pending explicit production approval
+- `TEST-DOC-133`: review `release-publication-state.{md,json}`, the
+  information-item map, release-control docs, SRS, RTM, and test plan and
+  confirm GitLab authority, public GitHub distribution, Marketplace
+  distribution, incident classification, and next admitted action are retained
+  as one parameterized state model.
+- `TEST-DOC-134`: review ADR-0039, release procedure, sustainment rules, SRS,
+  RTM, and the transaction controller and confirm future public GitHub exact
+  releases use the asset-first draft/create/upload/verify/publish sequence
+  sourced from GitLab authority artifacts.
+- `TEST-DOC-135`: review release-control docs, SRS, RTM, and the test plan and
+  confirm public GitHub `v1.3.8` release `312768592` is retained as
+  externally blocked because it is published, immutable, and has zero assets,
+  while VS Code Marketplace remains `1.3.7`.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

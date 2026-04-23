@@ -20,6 +20,8 @@ const DEFAULT_MARKETPLACE_ITEM = 'svelderrainruiz.vi-history-suite';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const githubToken = require(path.join(repoRoot, 'scripts', 'resolveLocalGitHubToken.js'));
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const publicationState = require(path.join(repoRoot, 'scripts', 'releasePublicationState.js'));
 
 function getUsage() {
   return [
@@ -29,7 +31,7 @@ function getUsage() {
     '',
     'Modes:',
     '  assess  Evaluate the retained transaction state without mutating GitHub or Marketplace.',
-    '  publish Publish the retained draft release in place only when the by-id draft, authority tag, target commitish, and retained assets already match and the only remaining blocker is tag lookup.',
+    '  publish Publish a selected exact tag through the asset-first GitHub transaction: draft, upload VSIX/checksum, verify, then publish.',
     '  verify  Confirm the public GitHub exact release is published and canonical without touching Marketplace.',
     '',
     'Defaults:',
@@ -38,7 +40,7 @@ function getUsage() {
     `  repo:              ${DEFAULT_REPO}`,
     `  marketplace-item:  ${DEFAULT_MARKETPLACE_ITEM}`,
     `  evidence-dir:      ${DEFAULT_EVIDENCE_DIR}`,
-    '  tag:               latest exact SemVer tag found locally'
+    '  tag:               latest exact SemVer tag found locally for assess/verify; required explicitly for publish'
   ].join('\n');
 }
 
@@ -55,6 +57,7 @@ function parseArgs(argv) {
     owner: DEFAULT_OWNER,
     repo: DEFAULT_REPO,
     tag: null,
+    tagExplicit: false,
     draftReleaseId: null,
     evidenceDir: DEFAULT_EVIDENCE_DIR,
     githubTokenPath: null,
@@ -86,6 +89,7 @@ function parseArgs(argv) {
         throw new Error('Missing value for --tag');
       }
       parsed.tag = value.trim();
+      parsed.tagExplicit = true;
       index += 1;
       continue;
     }
@@ -298,12 +302,16 @@ function readReleaseManifest(tag, fsApi = fs, spawnImpl = spawnSync) {
 
   const manifest = JSON.parse(fsApi.readFileSync(manifestPath, 'utf8'));
   const checksumPath = path.join(path.dirname(manifestPath), `${manifest.vsixArtifact.fileName}.sha256`);
+  const vsixPath = path.join(path.dirname(manifestPath), manifest.vsixArtifact.fileName);
+  const checksumExists = fsApi.existsSync(checksumPath);
   return {
     manifestPath,
     manifestRoot: path.resolve(path.dirname(manifestPath), '..', '..', '..', '..', '..'),
-    checksumPath: fsApi.existsSync(checksumPath) ? checksumPath : null,
+    vsixPath: fsApi.existsSync(vsixPath) ? vsixPath : null,
+    checksumPath: checksumExists ? checksumPath : null,
     manifest,
-    checksumSha256: fsApi.existsSync(checksumPath) ? computeFileSha256(checksumPath, fsApi) : null
+    checksumText: checksumExists ? fsApi.readFileSync(checksumPath, 'utf8').trim() : null,
+    checksumSha256: checksumExists ? computeFileSha256(checksumPath, fsApi) : null
   };
 }
 
@@ -372,6 +380,61 @@ async function mutateGitHubJson(owner, repo, endpoint, token, method, payload) {
     },
     JSON.stringify(payload)
   );
+}
+
+function normalizeUploadUrl(uploadUrl, assetName) {
+  const baseUrl = String(uploadUrl).replace(/\{\?name,label\}$/, '');
+  const url = new URL(baseUrl);
+  url.searchParams.set('name', assetName);
+  return url.toString();
+}
+
+function uploadGitHubReleaseAsset(uploadUrl, token, filePath, assetName, contentType, fsApi = fs) {
+  const targetUrl = normalizeUploadUrl(uploadUrl, assetName);
+  const body = fsApi.readFileSync(filePath);
+
+  return new Promise((resolve, reject) => {
+    const request = https.request(
+      targetUrl,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': contentType,
+          'Content-Length': Buffer.byteLength(body),
+          'User-Agent': 'vi-history-suite-public-release-transaction'
+        }
+      },
+      (response) => {
+        let responseBody = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk) => {
+          responseBody += chunk;
+        });
+        response.on('end', () => {
+          let parsed;
+          if (responseBody.length > 0) {
+            try {
+              parsed = JSON.parse(responseBody);
+            } catch {
+              parsed = undefined;
+            }
+          }
+          resolve({
+            statusCode: response.statusCode ?? 0,
+            headers: response.headers,
+            bodyText: responseBody,
+            json: parsed
+          });
+        });
+      }
+    );
+
+    request.on('error', reject);
+    request.write(body);
+    request.end();
+  });
 }
 
 async function fetchMarketplaceState(marketplaceItem) {
@@ -634,6 +697,115 @@ function findPhaseStatus(phases, phaseId) {
   return phases.find((phase) => phase.id === phaseId)?.status ?? 'blocked';
 }
 
+function classifyPublicReleaseState(facts, assetPhasePass) {
+  const release = facts.publicRelease ?? null;
+  const releaseLookupStatusCode = facts.publicReleaseLookup?.statusCode ?? null;
+  const immutableEnabled = facts.immutableReleasePolicy?.enabled === true;
+
+  if (!release) {
+    return {
+      state: 'absent-release',
+      status: 'ready',
+      blockerCode: null,
+      rationale: `No public GitHub release exists for ${facts.authority.tag}; the clean asset-first path may create a draft.`
+    };
+  }
+
+  if (release.draft === true) {
+    return {
+      state: assetPhasePass ? 'draft-complete' : 'draft-repair-required',
+      status: 'ready',
+      blockerCode: null,
+      rationale: assetPhasePass
+        ? `Draft release ${release.id} already carries the exact assets and may be published after verification.`
+        : `Draft release ${release.id} exists but needs asset repair before publish.`
+    };
+  }
+
+  if (release.published_at && assetPhasePass) {
+    return {
+      state: 'published-complete',
+      status: 'ready',
+      blockerCode: null,
+      rationale: `Published release ${release.id} already carries the exact assets; publish is verify-only.`
+    };
+  }
+
+  if (release.published_at && (immutableEnabled || release.immutable === true)) {
+    return {
+      state: 'published-immutable-incomplete',
+      status: 'blocked',
+      blockerCode: 'published-immutable-release-assets-incomplete',
+      rationale: `Published immutable release ${release.id} exists for ${facts.authority.tag}, but its assets do not match the authority manifest and cannot be repaired in place.`
+    };
+  }
+
+  return {
+    state: 'published-incomplete',
+    status: 'blocked',
+    blockerCode: 'published-release-assets-incomplete',
+    rationale: `Published release ${release.id} exists for ${facts.authority.tag}, but asset verification failed.`
+  };
+}
+
+function buildAssetFirstPublishExecutionGate(facts, assessment, options = {}) {
+  const fsApi = options.fs ?? fs;
+  const assetPhasePass = findPhaseStatus(assessment.phases, 'public-release-assets') === 'pass';
+  const manifest = facts.releaseManifest?.manifest ?? null;
+  const vsixPath = facts.releaseManifest?.vsixPath ?? null;
+  const checksumPath = facts.releaseManifest?.checksumPath ?? null;
+  const checksumDeclaresVsixSha = Boolean(
+    facts.releaseManifest?.checksumText &&
+      manifest?.vsixArtifact?.sha256 &&
+      facts.releaseManifest.checksumText.includes(manifest.vsixArtifact.sha256)
+  );
+  const releaseState = classifyPublicReleaseState(facts, assetPhasePass);
+  let blockerCode = releaseState.blockerCode;
+  let rationale = releaseState.rationale;
+
+  if (options.tagExplicit !== true) {
+    blockerCode = 'explicit-tag-required';
+    rationale =
+      'Mutating public GitHub release publish requires an explicit --tag vX.Y.Z so production writes cannot drift to the latest local tag.';
+  } else if (!manifest) {
+    blockerCode = 'authority-release-manifest-missing';
+    rationale = `No retained GitLab authority release manifest was found for ${facts.authority.tag}.`;
+  } else if (!vsixPath || !fsApi.existsSync(vsixPath)) {
+    blockerCode = 'authority-vsix-missing';
+    rationale = `The retained GitLab authority VSIX artifact is missing for ${facts.authority.tag}.`;
+  } else if (!checksumPath || !fsApi.existsSync(checksumPath)) {
+    blockerCode = 'authority-checksum-missing';
+    rationale = `The retained GitLab authority checksum artifact is missing for ${facts.authority.tag}.`;
+  } else if (!checksumDeclaresVsixSha) {
+    blockerCode = 'authority-checksum-content-mismatch';
+    rationale = `The retained checksum file for ${facts.authority.tag} does not declare the VSIX SHA-256 from the authority manifest.`;
+  } else if (facts.publicSource.tagRef === null) {
+    blockerCode = 'public-tag-missing';
+    rationale = `Public GitHub tag ${facts.authority.tag} is missing, so a GitHub release cannot be created safely.`;
+  } else if (facts.publicSource.mainSha === null) {
+    blockerCode = 'public-main-missing';
+    rationale = 'Public GitHub main did not resolve, so the exact release target cannot be proven.';
+  }
+
+  return {
+    status: blockerCode === null ? 'pass' : 'blocked',
+    blockerCode,
+    rationale,
+    allowed: blockerCode === null,
+    state: blockerCode === null ? releaseState.state : 'blocked',
+    releaseId: facts.publicRelease?.id ?? null,
+    releaseUploadUrl: facts.publicRelease?.upload_url ?? null,
+    assetPhasePass,
+    manifestPath: facts.releaseManifest?.manifestPath ?? null,
+    vsixPath,
+    checksumPath,
+    expectedAssets: manifest
+      ? [manifest.vsixArtifact.fileName, `${manifest.vsixArtifact.fileName}.sha256`]
+      : [],
+    checksumDeclaresVsixSha
+  };
+}
+
 function buildReleasePublishExecutionGate(facts, assessment) {
   const assetPhasePass = findPhaseStatus(assessment.phases, 'public-release-assets') === 'pass';
   const draftRelease = facts.publicRelease ?? null;
@@ -739,6 +911,11 @@ function assessTransaction(facts) {
     manifest && facts.releaseManifest?.checksumPath
       ? releaseAssets.find((asset) => asset.name === `${manifest.vsixArtifact.fileName}.sha256`)
       : null;
+  const checksumDeclaresVsixSha = Boolean(
+    facts.releaseManifest?.checksumText &&
+      manifest?.vsixArtifact?.sha256 &&
+      facts.releaseManifest.checksumText.includes(manifest.vsixArtifact.sha256)
+  );
   phases.push(
     buildPhase(
       'authority-exact-main',
@@ -821,6 +998,9 @@ function assessTransaction(facts) {
     manifest &&
     vsixAsset &&
     checksumAsset &&
+    Number(vsixAsset.size ?? 0) > 0 &&
+    Number(checksumAsset.size ?? 0) > 0 &&
+    checksumDeclaresVsixSha &&
     `${vsixAsset.digest ?? ''}`.replace(/^sha256:/, '') === manifest.vsixArtifact.sha256 &&
     `${checksumAsset.digest ?? ''}`.replace(/^sha256:/, '') === facts.releaseManifest?.checksumSha256
       ? 'pass'
@@ -837,8 +1017,11 @@ function assessTransaction(facts) {
         manifestPath: facts.releaseManifest?.manifestPath ?? null,
         vsixExpectedSha256: manifest?.vsixArtifact?.sha256 ?? null,
         vsixObservedDigest: vsixAsset?.digest ?? null,
+        vsixObservedSize: vsixAsset?.size ?? null,
         checksumExpectedSha256: facts.releaseManifest?.checksumSha256 ?? null,
-        checksumObservedDigest: checksumAsset?.digest ?? null
+        checksumObservedDigest: checksumAsset?.digest ?? null,
+        checksumObservedSize: checksumAsset?.size ?? null,
+        checksumDeclaresVsixSha
       }
     )
   );
@@ -912,6 +1095,7 @@ function assessTransaction(facts) {
 
   const releasePublished = phases.find((phase) => phase.id === 'public-release-published')?.status === 'pass';
   const marketplacePublished = phases.find((phase) => phase.id === 'marketplace-published')?.status === 'pass';
+  const publicReleaseState = classifyPublicReleaseState(facts, assetPhaseStatus === 'pass');
   const repairInPlaceRequired =
     facts.publicSource.tagRef &&
     facts.publicRelease &&
@@ -929,6 +1113,7 @@ function assessTransaction(facts) {
   return {
     status: assessmentStatus,
     phases,
+    publicReleaseState,
     draftPublishabilityProbe,
     publishabilityProbe,
     semverFreeze: {
@@ -936,29 +1121,43 @@ function assessTransaction(facts) {
       openingNewSemverAllowed,
       rationale: openingNewSemverAllowed
         ? 'The current exact release line is fully published across public GitHub and Marketplace.'
-        : `A newer public exact-release transaction for ${facts.authority.tag} is still incomplete, so opening ${facts.authority.packageVersion} successors is forbidden.`,
+        : publicReleaseState.blockerCode
+          ? `${publicReleaseState.rationale} Opening ${facts.authority.packageVersion} successors remains frozen until the blocked state is retained and the asset-first safety path is merged.`
+          : `A newer public exact-release transaction for ${facts.authority.tag} is still incomplete, so opening ${facts.authority.packageVersion} successors is forbidden.`,
       enforcedBy: 'no-bump-repair-rule'
     },
     repairInPlace: {
       required: repairInPlaceRequired,
       allowed: repairInPlaceAllowed,
       status:
+        publicReleaseState.status === 'blocked' &&
+        publicReleaseState.state === 'published-immutable-incomplete'
+          ? 'externally-blocked'
+          : publicReleaseState.status === 'blocked'
+            ? 'blocked'
+            :
         repairInPlaceRequired && repairInPlaceAllowed
           ? 'required-but-blocked-on-publishability'
           : repairInPlaceRequired
             ? 'required-but-incomplete'
             : 'not-required',
       rationale:
+        publicReleaseState.status === 'blocked'
+          ? publicReleaseState.rationale
+          :
         repairInPlaceRequired && repairInPlaceAllowed
           ? `Public main, tag, and draft release already exist for ${facts.authority.tag}; the governed path is repair in place, not another bump.`
           : repairInPlaceRequired
             ? `The transaction is already partially public for ${facts.authority.tag}, but the release record or assets are not yet sufficient for a safe repair-in-place attempt.`
             : `No partial public exact-release transaction was detected for ${facts.authority.tag}.`,
       nextAllowedAction:
+        publicReleaseState.status === 'blocked'
+          ? `retain-${facts.authority.tag}-external-block-and-merge-asset-first-publication-safety-before-any-next-exact-line`
+          :
         repairInPlaceRequired && repairInPlaceAllowed && publishabilityProbe.safeToAttemptRepairPublish
-          ? 'repair-the-existing-v1.3.6-public-github-release-in-place'
+          ? `repair-the-existing-${facts.authority.tag}-public-github-release-in-place`
           : repairInPlaceRequired && repairInPlaceAllowed
-            ? 'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
+            ? `repair-the-existing-${facts.authority.tag}-public-github-release-only-after-safe-publishability-is-proven`
           : openingNewSemverAllowed
             ? 'normal-next-semver-opening-may-proceed'
             : 'retain-the-blocked-state-and-do-not-open-a-new-version'
@@ -979,6 +1178,7 @@ function buildMarkdown(report) {
     `- Public GitHub tag: ${report.publicSource.tagRef ?? 'missing'}`,
     `- Authority release manifest: ${report.releaseManifest?.manifestPath ?? 'missing'}`,
     `- Marketplace version: ${report.marketplace.currentPublishedVersion ?? 'unknown'}`,
+    `- Public release state: ${report.publicReleaseState?.state ?? 'unknown'}`,
     '',
     '## Draft Publishability Probe',
     '',
@@ -1162,6 +1362,7 @@ async function collectTransactionFacts(parsed, deps, token, fsApi) {
           created_at: publicRelease.created_at,
           published_at: publicRelease.published_at,
           html_url: publicRelease.html_url,
+          upload_url: publicRelease.upload_url ?? null,
           target_commitish: publicRelease.target_commitish ?? null,
           immutable: publicRelease.immutable === true,
           assets: extractReleaseAssets(publicRelease)
@@ -1173,6 +1374,7 @@ async function collectTransactionFacts(parsed, deps, token, fsApi) {
 }
 
 function buildReport(facts, assessment, evidenceDir, recordedAt) {
+  const retainedPublicationState = publicationState.resolvePublicationState();
   return {
     schema: 'vi-history-suite/public-github-exact-release-transaction@v1',
     recordedAt,
@@ -1181,6 +1383,12 @@ function buildReport(facts, assessment, evidenceDir, recordedAt) {
     mode: 'assess',
     status: assessment.status,
     authority: facts.authority,
+    publicationState: {
+      path: publicationState.DEFAULT_PUBLICATION_STATE_PATH,
+      authorityExactTag: retainedPublicationState.authority?.exactTag ?? null,
+      incidentClassification: retainedPublicationState.incident?.classification ?? null,
+      nextAdmittedAction: retainedPublicationState.nextAdmittedAction ?? null
+    },
     publicSource: facts.publicSource,
     immutableReleasePolicy: facts.immutableReleasePolicy,
     publicReleaseLookup: facts.publicReleaseLookup,
@@ -1191,15 +1399,20 @@ function buildReport(facts, assessment, evidenceDir, recordedAt) {
       ? {
           manifestPath: toRelativeReportPath(facts.releaseManifest.manifestPath),
           manifestRoot: toRelativeReportPath(facts.releaseManifest.manifestRoot),
+          vsixPath: facts.releaseManifest.vsixPath
+            ? toRelativeReportPath(facts.releaseManifest.vsixPath)
+            : null,
           checksumPath: facts.releaseManifest.checksumPath
             ? toRelativeReportPath(facts.releaseManifest.checksumPath)
             : null,
           manifest: facts.releaseManifest.manifest,
+          checksumText: facts.releaseManifest.checksumText,
           checksumSha256: facts.releaseManifest.checksumSha256
         }
       : null,
     marketplace: facts.marketplace,
     phases: assessment.phases,
+    publicReleaseState: assessment.publicReleaseState,
     draftPublishabilityProbe: assessment.draftPublishabilityProbe,
     publishabilityProbe: assessment.publishabilityProbe,
     semverFreeze: assessment.semverFreeze,
@@ -1262,6 +1475,83 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
   return { outcome: 'pass', report };
 }
 
+async function createDraftRelease(parsed, token, facts, deps) {
+  const mutate = deps.mutateGitHubJson ?? mutateGitHubJson;
+  const response = await mutate(parsed.owner, parsed.repo, '/releases', token, 'POST', {
+    tag_name: facts.authority.tag,
+    target_commitish: 'main',
+    name: `VI History Suite ${facts.authority.tag}`,
+    body:
+      `Exact public GitHub release for ${facts.authority.tag}. Assets are uploaded and verified before this draft is published.`,
+    draft: true,
+    prerelease: false
+  });
+
+  if (response.statusCode !== 201) {
+    throw new Error(
+      `GitHub draft release creation failed for ${facts.authority.tag}: ${response.statusCode} ${response.bodyText || ''}`.trim()
+    );
+  }
+
+  return response.json;
+}
+
+async function deleteExpectedDraftAssets(parsed, token, release, expectedAssetNames, deps) {
+  const mutate = deps.mutateGitHubJson ?? mutateGitHubJson;
+  const assets = Array.isArray(release?.assets) ? release.assets : [];
+  for (const asset of assets) {
+    if (!expectedAssetNames.includes(asset.name)) {
+      continue;
+    }
+    const response = await mutate(
+      parsed.owner,
+      parsed.repo,
+      `/releases/assets/${asset.id}`,
+      token,
+      'DELETE',
+      {}
+    );
+    if (![204, 404].includes(response.statusCode)) {
+      throw new Error(
+        `GitHub draft asset delete failed for ${asset.name}: ${response.statusCode} ${response.bodyText || ''}`.trim()
+      );
+    }
+  }
+}
+
+async function uploadAuthorityAssets(uploadUrl, token, releaseManifest, deps, fsApi) {
+  const uploadAsset = deps.uploadGitHubReleaseAsset ?? uploadGitHubReleaseAsset;
+  const manifest = releaseManifest.manifest;
+  const expectedAssets = [
+    {
+      filePath: releaseManifest.vsixPath,
+      name: manifest.vsixArtifact.fileName,
+      contentType: 'application/octet-stream'
+    },
+    {
+      filePath: releaseManifest.checksumPath,
+      name: `${manifest.vsixArtifact.fileName}.sha256`,
+      contentType: 'text/plain'
+    }
+  ];
+
+  for (const asset of expectedAssets) {
+    const response = await uploadAsset(
+      uploadUrl,
+      token,
+      asset.filePath,
+      asset.name,
+      asset.contentType,
+      fsApi
+    );
+    if (response.statusCode !== 201) {
+      throw new Error(
+        `GitHub draft asset upload failed for ${asset.name}: ${response.statusCode} ${response.bodyText || ''}`.trim()
+      );
+    }
+  }
+}
+
 async function runPublish(argv = process.argv.slice(2), deps = {}) {
   const parsed = parseArgs(argv);
   const stdout = deps.stdout ?? process.stdout;
@@ -1274,7 +1564,9 @@ async function runPublish(argv = process.argv.slice(2), deps = {}) {
   }
 
   parsed.mode = 'publish';
-  parsed.tag = parsed.tag ?? resolveLatestExactTag(deps.spawnImpl);
+  if (!parsed.tagExplicit) {
+    throw new Error('Public GitHub exact-release publish requires an explicit --tag vX.Y.Z.');
+  }
   const tokenEnv = { ...(deps.env ?? process.env) };
   if (parsed.githubTokenPath) {
     tokenEnv[githubToken.GITHUB_TOKEN_FILE_ENV] = parsed.githubTokenPath;
@@ -1285,7 +1577,10 @@ async function runPublish(argv = process.argv.slice(2), deps = {}) {
 
   const initialFacts = await collectTransactionFacts(parsed, deps, token, fsApi);
   const initialAssessment = assessTransaction(initialFacts);
-  const publishGate = buildReleasePublishExecutionGate(initialFacts, initialAssessment);
+  const publishGate = buildAssetFirstPublishExecutionGate(initialFacts, initialAssessment, {
+    tagExplicit: parsed.tagExplicit,
+    fs: fsApi
+  });
   const initialReport = buildReport(initialFacts, initialAssessment, parsed.evidenceDir, now());
   initialReport.mode = parsed.mode;
   initialReport.publishGate = publishGate;
@@ -1296,17 +1591,64 @@ async function runPublish(argv = process.argv.slice(2), deps = {}) {
   }
 
   const mutate = deps.mutateGitHubJson ?? mutateGitHubJson;
+  let workingRelease = initialFacts.publicRelease;
+  if (publishGate.state === 'published-complete') {
+    const verifyGate = buildPublishedReleaseVerificationGate(initialFacts, initialAssessment);
+    const finalReport = {
+      ...initialReport,
+      verifyGate
+    };
+    await writeReport(parsed.evidenceDir, finalReport);
+    if (!verifyGate.allowed) {
+      throw new Error(`Public GitHub exact-release publish verification is blocked: ${verifyGate.rationale}`);
+    }
+    return { outcome: 'verified', report: finalReport };
+  }
+
+  if (publishGate.state === 'absent-release') {
+    workingRelease = await createDraftRelease(parsed, token, initialFacts, deps);
+  }
+
+  if (workingRelease.draft !== true) {
+    throw new Error(`GitHub release ${workingRelease.id ?? 'unknown'} is not a draft and cannot be asset-repaired before publish.`);
+  }
+
+  if (publishGate.state !== 'draft-complete') {
+    if (!workingRelease?.upload_url) {
+      throw new Error(`GitHub draft release upload URL is missing for ${parsed.tag}.`);
+    }
+    const expectedAssetNames = publishGate.expectedAssets;
+    await deleteExpectedDraftAssets(parsed, token, workingRelease, expectedAssetNames, deps);
+    await uploadAuthorityAssets(workingRelease.upload_url, token, initialFacts.releaseManifest, deps, fsApi);
+  }
+
+  const assetFacts = await collectTransactionFacts(parsed, deps, token, fsApi);
+  const assetAssessment = assessTransaction(assetFacts);
+  const assetGate = buildAssetFirstPublishExecutionGate(assetFacts, assetAssessment, {
+    tagExplicit: parsed.tagExplicit,
+    fs: fsApi
+  });
+  const assetReport = buildReport(assetFacts, assetAssessment, parsed.evidenceDir, now());
+  assetReport.mode = parsed.mode;
+  assetReport.publishGate = assetGate;
+  await writeReport(parsed.evidenceDir, assetReport);
+
+  if (!assetGate.allowed || !assetGate.assetPhasePass) {
+    throw new Error(`Public GitHub exact-release asset verification is blocked before publish: ${assetGate.rationale}`);
+  }
+
+  const releaseId = assetFacts.publicRelease?.id ?? workingRelease.id;
   const publishResponse = await mutate(
     parsed.owner,
     parsed.repo,
-    `/releases/${publishGate.requestedDraftReleaseId}`,
+    `/releases/${releaseId}`,
     token,
     'PATCH',
     { draft: false }
   );
   if (publishResponse.statusCode !== 200) {
     throw new Error(
-      `GitHub draft release publish failed for ${publishGate.requestedDraftReleaseId}: ${publishResponse.statusCode} ${publishResponse.bodyText || ''}`.trim()
+      `GitHub draft release publish failed for ${releaseId}: ${publishResponse.statusCode} ${publishResponse.bodyText || ''}`.trim()
     );
   }
 
@@ -1400,17 +1742,21 @@ module.exports = {
   DEFAULT_OWNER,
   DEFAULT_REPO,
   assessTransaction,
+  buildAssetFirstPublishExecutionGate,
   buildMarkdown,
   buildPublishedReleaseVerificationGate,
   buildReleasePublishExecutionGate,
   collectTransactionFacts,
   computeFileSha256,
+  createDraftRelease,
   delay,
+  deleteExpectedDraftAssets,
   extractReleaseAssets,
   fetchGitHubJson,
   fetchMarketplaceState,
   getUsage,
   mutateGitHubJson,
+  normalizeUploadUrl,
   parseArgs,
   parseSemverTag,
   readReleaseManifest,
@@ -1419,5 +1765,7 @@ module.exports = {
   runAssessment,
   runCli,
   runPublish,
-  runVerify
+  runVerify,
+  uploadAuthorityAssets,
+  uploadGitHubReleaseAsset
 };

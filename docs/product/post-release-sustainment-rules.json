@@ -80,6 +80,16 @@
         "releaseAssetsRetainedAgainstManifest": true,
         "safeToAttemptPublish": false
       },
+      "publicGitHubExactImmutableAssetIncident": {
+        "status": "externally-blocked",
+        "authorityTag": "v1.3.8",
+        "publicGitHubReleaseId": 312768592,
+        "publicGitHubReleaseImmutable": true,
+        "publicGitHubReleaseAssetCount": 0,
+        "blockerCode": "published-immutable-release-assets-incomplete",
+        "marketplaceVersionRetained": "1.3.7",
+        "requiredPublisherRule": "create-draft-upload-verify-assets-before-publish"
+      },
       "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
@@ -126,6 +136,8 @@
         "future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible",
         "future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds",
         "future sessions shall run and retain npm run vscode:marketplace:prepare before any mutating VS Code Marketplace publication act",
+        "future sessions shall not publish a public GitHub exact release until the repo-owned asset-first publisher has created a draft, uploaded the VSIX and checksum from GitLab authority evidence, and verified those assets by release id",
+        "future sessions shall classify a published immutable public GitHub release with missing or mismatched assets as externally blocked and Marketplace-blocking",
         "future sessions may open the next SemVer line only after the matching public tag, public GitHub release, VS Code Marketplace version, and protected develop retention state all agree",
         "future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green",
         "future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package",

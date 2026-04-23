@@ -101,6 +101,13 @@ Current version-line contract:
   `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
   public-source promotion receipt is `passed`, and the retained verify gate is
   `pass`
+- current publication incident:
+  authority exact `v1.3.8` exists on GitLab, public GitHub release
+  `312768592` is already published and immutable with zero assets, and VS Code
+  Marketplace remains `1.3.7`; blocker
+  `published-immutable-release-assets-incomplete` freezes any later SemVer
+  opening until the asset-first GitHub publisher is merged and used for the
+  next exact line
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -196,6 +203,15 @@ Current control decision for public exact hardening:
   GitHub `v1.3.7` verify gate, exact VSIX/checksum evidence, live Marketplace
   version, local PAT locator, and pinned `vsce` command shape without
   retaining secret material or publishing.
+- asset-first GitHub release rule:
+  no public GitHub exact release may be published until the repo-owned
+  publisher has created a draft, uploaded the VSIX and checksum from GitLab
+  authority evidence, read the draft back by id, and verified asset names,
+  nonzero sizes, VSIX SHA-256, checksum content, and manifest alignment.
+- immutable incomplete release rule:
+  a published immutable public GitHub release with missing or mismatched assets
+  is `externally-blocked-publication` and blocks VS Code Marketplace
+  publication.
 
 Historical opening decision that opened exact `v1.3.1`:
 

@@ -43,6 +43,9 @@ describe('release governance package', () => {
     const adr8 = readText(
       'docs/architecture/adr/ADR-0037-expert-agent-review-gate-for-public-candidates.md'
     );
+    const adr9 = readText(
+      'docs/architecture/adr/ADR-0039-gitlab-authority-asset-first-public-github-release-publication.md'
+    );
     const hostedGovernance = readText('docs/product/hosted-ci-governance.md');
     const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
     const srs = readText('docs/requirements/srs.md');
@@ -124,6 +127,11 @@ describe('release governance package', () => {
     expect(adr8).toContain('# ADR-0037: Expert-Agent Review Gate For Public Candidates');
     expect(adr8).toContain('vi-history-suite-expert-agent-reviewer');
     expect(adr8).toContain('exact tagging and Marketplace publication blocked until the latest');
+    expect(adr9).toContain('# ADR-0039: GitLab Authority And Asset-First Public GitHub Release Publication');
+    expect(adr9).toContain('GitLab is the authority plane');
+    expect(adr9).toContain('Create a GitHub draft release');
+    expect(adr9).toContain('published immutable');
+    expect(adr9).toContain('release with missing or mismatched assets is externally blocked');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
     expect(hostedGovernance).toContain('current `develop` package line: `1.3.7`');
     expect(hostedGovernance).toContain('active exact release candidate line on `develop`: none');

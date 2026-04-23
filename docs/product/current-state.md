@@ -233,6 +233,10 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.7`
 - VS Code Marketplace retained published version: `1.3.7`
+- active publication incident: public GitHub release `312768592` for
+  `v1.3.8` is published and immutable with zero assets; Marketplace remains
+  `1.3.7` and the next exact release must use the asset-first GitHub publisher
+  before any Marketplace act
 - VS Code Marketplace publication prep and final publication are retained:
   `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
