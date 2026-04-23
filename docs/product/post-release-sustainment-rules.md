@@ -440,8 +440,9 @@ Required branch-model and CI posture:
   - GitLab `test_extension`
   - GitLab `windows_private_release_acceptance`
   - GitLab `package_extension_preview`
-  - GitHub `Public Facade Package Preview / package-preview`
-  - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
+  - GitHub `Public Source Package Preview / public-source-package-preview`
+  - GitHub `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
+  - GitHub `Public Windows Installed-User Contract / public-windows-installed-user-contract`
 
 Hosted automation governance is now retained explicitly:
 
@@ -449,7 +450,9 @@ Hosted automation governance is now retained explicitly:
   `only_allow_merge_if_pipeline_succeeds=true`; it does not have GitHub-style
   named required checks
 - GitHub public branch protection relies on named required checks
-  `package-preview` and `public-facade-linux-smoke`
+  `public-source-package-preview`,
+  `public-linux-installed-user-smoke`, and
+  `public-windows-installed-user-contract`
 - GitHub benchmark workflows are characterization-only experiment lanes and
   are not exact-release required checks
 - GitLab `windows_private_release_acceptance` now retains one bounded
@@ -524,23 +527,29 @@ Lane-specific CI and gate responsibilities:
 - `main`: protected exact-release branch; exact SemVer tags are cut only after
   merged `main` is green
 
-Public GitHub workflow responsibility matrix:
+Public GitHub admission matrix:
 
-- `Public Facade Package Preview / package-preview`
+- `Public Source Package Preview / public-source-package-preview`
   - owns `npm run compile`
   - owns `npm run test:design-contract`
   - owns preview VSIX packaging and preview-artifact upload
   - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
     `develop`, `main`, `release/*`, and `hotfix/*`
   - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
-- `Public Facade Linux Smoke / public-facade-linux-smoke`
+- `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
   - owns Docker Linux engine verification
   - owns `npm run public:smoke:linux`
   - owns retained smoke-evidence upload
   - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
     `develop`, `main`, `release/*`, and `hotfix/*`
   - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
-- neither public GitHub workflow uses a `feature/*` push lane
+- `Public Windows Installed-User Contract / public-windows-installed-user-contract`
+  - owns `npm run public:contract:windows-installed-user`
+  - owns Windows installed-user launcher/runtime-settings contract evidence
+  - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
+    `develop`, `main`, `release/*`, and `hotfix/*`
+  - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
+- none of the public GitHub admission workflows use a `feature/*` push lane
 
 Requirement-evolution discipline:
 

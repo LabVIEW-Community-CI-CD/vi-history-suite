@@ -10,13 +10,17 @@ function readText(relativePath: string): string {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const publicSmoke = require(path.join(repoRoot, 'scripts', 'runPublicFacadeLinuxSmoke.js')) as {
-  createPublicFacadeLinuxSmokeSteps: (options?: {
+const publicSmoke = require(path.join(
+  repoRoot,
+  'scripts',
+  'runPublicLinuxInstalledUserSmoke.js'
+)) as {
+  createPublicLinuxInstalledUserSmokeSteps: (options?: {
     linuxImage?: string;
     skipImageRemove?: boolean;
   }) => Array<{ id: string; command: string; args: string[] }>;
-  getPublicFacadeLinuxSmokeUsage: () => string;
-  parsePublicFacadeLinuxSmokeArgs: (argv: string[]) => {
+  getPublicLinuxInstalledUserSmokeUsage: () => string;
+  parsePublicLinuxInstalledUserSmokeArgs: (argv: string[]) => {
     helpRequested: boolean;
     linuxImage: string;
     evidenceDir?: string;
@@ -24,12 +28,12 @@ const publicSmoke = require(path.join(repoRoot, 'scripts', 'runPublicFacadeLinux
   };
 };
 
-describe('public facade linux smoke', () => {
-  it('retains a deterministic public-facade smoke runner and workflow', () => {
-    const workflow = readText('.github/workflows/public-facade-linux-smoke.yml');
+describe('public linux installed-user smoke', () => {
+  it('retains a deterministic Linux installed-user smoke runner and workflow', () => {
+    const workflow = readText('.github/workflows/public-linux-installed-user-smoke.yml');
 
     expect(
-      publicSmoke.parsePublicFacadeLinuxSmokeArgs([
+      publicSmoke.parsePublicLinuxInstalledUserSmokeArgs([
         '--linux-image',
         'example/linux-image',
         '--evidence-dir',
@@ -42,10 +46,10 @@ describe('public facade linux smoke', () => {
       evidenceDir: path.resolve('artifacts/public-smoke'),
       skipImageRemove: true
     });
-    expect(publicSmoke.getPublicFacadeLinuxSmokeUsage()).toContain('--skip-image-remove');
+    expect(publicSmoke.getPublicLinuxInstalledUserSmokeUsage()).toContain('--skip-image-remove');
 
     expect(
-      publicSmoke.createPublicFacadeLinuxSmokeSteps({
+      publicSmoke.createPublicLinuxInstalledUserSmokeSteps({
         linuxImage: 'nationalinstruments/labview:2026q1-linux'
       })
     ).toEqual([
@@ -77,7 +81,7 @@ describe('public facade linux smoke', () => {
       },
       {
         id: 'integration-linux',
-        title: 'Run Linux-hosted extension integration smoke',
+        title: 'Run Linux-hosted installed-user smoke',
         command: 'npm',
         args: ['run', 'test:integration:linux'],
         stdoutFileName: 'integration-linux.stdout.log',
@@ -85,12 +89,15 @@ describe('public facade linux smoke', () => {
       }
     ]);
 
-    expect(workflow).toContain('name: Public Facade Linux Smoke');
+    expect(workflow).toContain('name: Public Linux Installed-User Smoke');
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('  push:');
     expect(workflow).toContain("      - 'release/**'");
     expect(workflow).toContain("      - 'hotfix/**'");
-    expect(workflow).toContain("      - '.github/workflows/public-facade-package-preview.yml'");
+    expect(workflow).toContain("      - '.github/workflows/public-source-package-preview.yml'");
+    expect(workflow).toContain(
+      "      - '.github/workflows/public-windows-installed-user-contract.yml'"
+    );
     expect(workflow).toContain("      - 'INSTALL.md'");
     expect(workflow).toContain("      - 'resources/**'");
     expect(workflow).toContain("      - 'scripts/**'");
@@ -102,8 +109,10 @@ describe('public facade linux smoke', () => {
     expect(workflow).toContain('cancel-in-progress: true');
     expect(workflow).toContain('runs-on: ubuntu-24.04');
     expect(workflow).toContain("docker info --format '{{.OSType}}'");
-    expect(workflow).toContain('npm run public:smoke:linux -- --evidence-dir artifacts/public-facade-linux-smoke');
+    expect(workflow).toContain(
+      'npm run public:smoke:linux -- --evidence-dir artifacts/public-linux-installed-user-smoke'
+    );
     expect(workflow).toContain('actions/upload-artifact@v4');
-    expect(workflow).toContain('public-facade-linux-smoke');
+    expect(workflow).toContain('public-linux-installed-user-smoke');
   });
 });

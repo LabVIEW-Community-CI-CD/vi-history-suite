@@ -35,8 +35,10 @@ Retain these protection semantics explicitly:
 - GitLab authority uses protected branches plus
   `only_allow_merge_if_pipeline_succeeds=true`
 - GitLab does not pretend to have GitHub-style named required checks
-- public GitHub uses named required checks `package-preview` and
-  `public-facade-linux-smoke`
+- public GitHub uses named required checks
+  `public-source-package-preview`,
+  `public-linux-installed-user-smoke`, and
+  `public-windows-installed-user-contract`
 - GitHub benchmark workflows remain governed characterization lanes, not exact
   release gates
 

@@ -53,10 +53,12 @@ Current truth:
   GitLab maintainer wiki
 - `docs:ci:public` and `docs:ci:internal` now split the public-user and
   internal-authority docs surfaces while `docs:ci` remains the umbrella lane
-- the public smoke surface is `.github/workflows/public-facade-linux-smoke.yml`
+- the public Linux installed-user smoke surface is `.github/workflows/public-linux-installed-user-smoke.yml`
   plus `npm run public:smoke:linux`
-- the public package-preview publication surface is
-  `.github/workflows/public-facade-package-preview.yml`
+- the public source package-preview publication surface is
+  `.github/workflows/public-source-package-preview.yml`
+- the public Windows installed-user contract surface is
+  `.github/workflows/public-windows-installed-user-contract.yml`
 - the public-source branch model is now explicit: `develop` is the integration
   branch used for public Codespaces evaluation, `release/*` is the
   release-candidate lane, and `main` remains the protected exact-release line
@@ -148,8 +150,9 @@ LabVIEW.
 ### Future Reproducibility Truth
 
 - the public devcontainer/Codespaces surface in the public GitHub source repo
-- `.github/workflows/public-facade-linux-smoke.yml`
-- `.github/workflows/public-facade-package-preview.yml`
+- `.github/workflows/public-linux-installed-user-smoke.yml`
+- `.github/workflows/public-source-package-preview.yml`
+- `.github/workflows/public-windows-installed-user-contract.yml`
 
 ### Queued Benchmark Follow-On Truth
 
@@ -209,7 +212,7 @@ surface for the GitHub front face.
 
 Current first slice:
 
-- `.github/workflows/public-facade-linux-smoke.yml` with `workflow_dispatch`
+- `.github/workflows/public-linux-installed-user-smoke.yml` with `workflow_dispatch`
 - local `npm run public:smoke:linux`
 - Linux-engine cold-pull compare characterization for the Docker-only
   installed-extension contract
@@ -235,7 +238,7 @@ Gate D is now defined against the real public product:
 1. authority-to-public-source promotion tooling and publication ledgering
 2. public source repo product shaping
 3. public GitHub wiki and bundled-doc alignment
-4. public smoke and package-preview validation
+4. public admission-matrix validation
 5. deterministic Gate D acceptance on the canonical fixture workspace with a
    Linux-engine cold pull
 6. explicit boundary documentation that keeps benchmark proof under
@@ -248,7 +251,7 @@ Gate D is now defined against the real public product:
 - authority publication ledgers for the public source repo and public GitHub
   wiki
 - public devcontainer/Codespaces surface
-- public Linux smoke and package-preview workflows
+- public source-preview, Linux smoke, and Windows installed-user workflows
 - retained Gate D preflight evidence under `.cache/public-product-gate-d/latest/`
 - bundled installed-user docs aligned to the public user story
 - retained Gate D acceptance evidence for the public Docker-only product
@@ -281,8 +284,9 @@ Gate D is now defined against the real public product:
 
 ### Gate C: Public Smoke And Packaging
 
-- `.github/workflows/public-facade-linux-smoke.yml` remains truthful
-- `.github/workflows/public-facade-package-preview.yml` remains truthful
+- `.github/workflows/public-linux-installed-user-smoke.yml` remains truthful
+- `.github/workflows/public-source-package-preview.yml` remains truthful
+- `.github/workflows/public-windows-installed-user-contract.yml` remains truthful
 - local `npm run public:smoke:linux` and `npm run package` remain viable on the
   public repo
 
@@ -325,9 +329,11 @@ The public product now retains:
   `docs/product/public-github-wiki-publication-ledger.md` and
   `docs/product/public-github-wiki-publication-ledger.json`
 - a public devcontainer/Codespaces surface
-- a public package-preview workflow
-- a public Linux smoke workflow at
-  `.github/workflows/public-facade-linux-smoke.yml`
+- a public source package-preview workflow
+- a public Linux installed-user smoke workflow at
+  `.github/workflows/public-linux-installed-user-smoke.yml`
+- a public Windows installed-user contract workflow at
+  `.github/workflows/public-windows-installed-user-contract.yml`
 - local `npm run public:smoke:linux` and public `npm run package` paths
 - authority-side `npm run public:gate-d:preflight` and
   `npm run public:gate-d:prepare-cold-pull` operator surfaces for retained Gate D

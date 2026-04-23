@@ -33,10 +33,12 @@ Current landed state:
 - the public GitHub wiki publication head is retained in
   `docs/product/public-github-wiki-publication-ledger.md` and
   `docs/product/public-github-wiki-publication-ledger.json`
-- `.github/workflows/public-facade-linux-smoke.yml` plus local
+- `.github/workflows/public-linux-installed-user-smoke.yml` plus local
   `npm run public:smoke:linux` define the public Docker smoke surface
-- `.github/workflows/public-facade-package-preview.yml` defines the public
-  package-preview lane
+- `.github/workflows/public-source-package-preview.yml` defines the public
+  source-preview lane
+- `.github/workflows/public-windows-installed-user-contract.yml` defines the
+  public Windows installed-user lane
 - the public-source branch model is now explicit: `develop` is the integration
   branch used for public Codespaces evaluation, `release/*` is the
   release-candidate lane, and `main` remains the protected exact-release line

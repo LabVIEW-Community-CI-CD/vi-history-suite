@@ -40,8 +40,9 @@ Required checks now mean:
 - GitLab `docs_internal_continuous_integration`
 - GitLab `test_extension`
 - GitLab `package_extension_preview`
-- GitHub `Public Facade Package Preview / package-preview`
-- GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
+- GitHub `Public Source Package Preview / public-source-package-preview`
+- GitHub `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
+- GitHub `Public Windows Installed-User Contract / public-windows-installed-user-contract`
 
 ## Consequences
 

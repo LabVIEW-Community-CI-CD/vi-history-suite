@@ -246,20 +246,27 @@ Protection semantics:
 
 - protected branches: `main`, `develop`
 - named required checks:
-  - `package-preview`
-  - `public-facade-linux-smoke`
+  - `public-source-package-preview`
+  - `public-linux-installed-user-smoke`
+  - `public-windows-installed-user-contract`
 
 Workflow ownership:
 
-- `Public Facade Package Preview`
+- `Public Source Package Preview`
   - owns compile, `test:design-contract`, preview VSIX packaging, and preview
     artifact upload
   - admits bounded `push` on `develop`, `main`, `release/*`, and `hotfix/*`
   - admits bounded `pull_request` into `develop` and `main`
   - uses per-workflow/per-ref concurrency
-- `Public Facade Linux Smoke`
+- `Public Linux Installed-User Smoke`
   - owns Docker Linux engine verification, `public:smoke:linux`, and retained
     smoke-evidence upload
+  - admits bounded `push` on `develop`, `main`, `release/*`, and `hotfix/*`
+  - admits bounded `pull_request` into `develop` and `main`
+  - uses per-workflow/per-ref concurrency
+- `Public Windows Installed-User Contract`
+  - owns `public:contract:windows-installed-user` and retained Windows
+    installed-user contract evidence
   - admits bounded `push` on `develop`, `main`, `release/*`, and `hotfix/*`
   - admits bounded `pull_request` into `develop` and `main`
   - uses per-workflow/per-ref concurrency

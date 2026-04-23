@@ -356,8 +356,9 @@
         "test_extension",
         "windows_private_release_acceptance",
         "package_extension_preview",
-        "Public Facade Package Preview / package-preview",
-        "Public Facade Linux Smoke / public-facade-linux-smoke"
+        "Public Source Package Preview / public-source-package-preview",
+        "Public Linux Installed-User Smoke / public-linux-installed-user-smoke",
+        "Public Windows Installed-User Contract / public-windows-installed-user-contract"
       ],
       "governedLaneBehaviors": {
         "governed_runner_admission": {
@@ -544,11 +545,11 @@
       ]
     },
     "publicWorkflowGovernance": {
-      "model": "two-workflow-public-facade-pair",
+      "model": "three-lane-public-admission-matrix",
       "workflows": {
-        "packagePreview": {
-          "workflowName": "Public Facade Package Preview",
-          "requiredCheckName": "package-preview",
+        "sourcePackagePreview": {
+          "workflowName": "Public Source Package Preview",
+          "requiredCheckName": "public-source-package-preview",
           "responsibilities": [
             "npm run compile",
             "npm run test:design-contract",
@@ -568,13 +569,33 @@
           "featurePushLane": "forbidden",
           "concurrency": "per-workflow-per-ref-cancel-in-progress"
         },
-        "linuxSmoke": {
-          "workflowName": "Public Facade Linux Smoke",
-          "requiredCheckName": "public-facade-linux-smoke",
+        "linuxInstalledUserSmoke": {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "requiredCheckName": "public-linux-installed-user-smoke",
           "responsibilities": [
             "Docker Linux engine verification",
             "npm run public:smoke:linux",
             "smoke evidence upload"
+          ],
+          "admittedBranches": [
+            "develop",
+            "main",
+            "release/*",
+            "hotfix/*"
+          ],
+          "pullRequestTargets": [
+            "develop",
+            "main"
+          ],
+          "featurePushLane": "forbidden",
+          "concurrency": "per-workflow-per-ref-cancel-in-progress"
+        },
+        "windowsInstalledUserContract": {
+          "workflowName": "Public Windows Installed-User Contract",
+          "requiredCheckName": "public-windows-installed-user-contract",
+          "responsibilities": [
+            "npm run public:contract:windows-installed-user",
+            "Windows installed-user launcher/runtime-settings contract evidence upload"
           ],
           "admittedBranches": [
             "develop",
@@ -606,8 +627,9 @@
           "develop"
         ],
         "requiredChecks": [
-          "package-preview",
-          "public-facade-linux-smoke"
+          "public-source-package-preview",
+          "public-linux-installed-user-smoke",
+          "public-windows-installed-user-contract"
         ]
       },
       "githubExperiment": {

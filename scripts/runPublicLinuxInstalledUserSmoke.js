@@ -8,11 +8,11 @@ const { spawnSync } = require('node:child_process');
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const DEFAULT_LINUX_IMAGE = 'nationalinstruments/labview:2026q1-linux';
 
-function getPublicFacadeLinuxSmokeUsage() {
+function getPublicLinuxInstalledUserSmokeUsage() {
   return [
-    'Usage: node scripts/runPublicFacadeLinuxSmoke.js [--linux-image <image>] [--evidence-dir <path>] [--skip-image-remove] [--help]',
+    'Usage: node scripts/runPublicLinuxInstalledUserSmoke.js [--linux-image <image>] [--evidence-dir <path>] [--skip-image-remove] [--help]',
     '',
-    'Run the public-facade Linux smoke lane against the Docker-only installed extension contract.',
+    'Run the public Linux installed-user smoke lane against the Docker-only installed extension contract.',
     '',
     'Options:',
     '  --linux-image IMAGE   Override the governed Linux image reference.',
@@ -22,7 +22,7 @@ function getPublicFacadeLinuxSmokeUsage() {
   ].join('\n');
 }
 
-function parsePublicFacadeLinuxSmokeArgs(argv) {
+function parsePublicLinuxInstalledUserSmokeArgs(argv) {
   const parsed = {
     helpRequested: false,
     linuxImage: DEFAULT_LINUX_IMAGE,
@@ -69,7 +69,7 @@ function parsePublicFacadeLinuxSmokeArgs(argv) {
   return parsed;
 }
 
-function createPublicFacadeLinuxSmokeSteps(options = {}) {
+function createPublicLinuxInstalledUserSmokeSteps(options = {}) {
   const steps = [
     {
       id: 'docker-engine',
@@ -104,7 +104,7 @@ function createPublicFacadeLinuxSmokeSteps(options = {}) {
 
   steps.push({
     id: 'integration-linux',
-    title: 'Run Linux-hosted extension integration smoke',
+    title: 'Run Linux-hosted installed-user smoke',
     command: 'npm',
     args: ['run', 'test:integration:linux'],
     stdoutFileName: 'integration-linux.stdout.log',
@@ -153,14 +153,14 @@ async function runStep(step, options) {
 
   if (step.requiredStdout && stdoutText.trim() !== step.requiredStdout) {
     const error = new Error(
-      `Public facade Linux smoke requires Docker OSType ${step.requiredStdout}, got ${stdoutText.trim() || 'empty'}.`
+      `Public Linux installed-user smoke requires Docker OSType ${step.requiredStdout}, got ${stdoutText.trim() || 'empty'}.`
     );
     error.stepId = step.id;
     throw error;
   }
 
   if (typeof result.status === 'number' && result.status !== 0 && !step.allowFailure) {
-    const error = new Error(`Public facade Linux smoke step failed: ${step.id}`);
+    const error = new Error(`Public Linux installed-user smoke step failed: ${step.id}`);
     error.stepId = step.id;
     error.exitCode = result.status;
     throw error;
@@ -180,9 +180,9 @@ async function runStep(step, options) {
   };
 }
 
-function buildPublicFacadeLinuxSmokeReport(options) {
+function buildPublicLinuxInstalledUserSmokeReport(options) {
   return {
-    schema: 'vi-history-suite/public-facade-linux-smoke@v1',
+    schema: 'vi-history-suite/public-linux-installed-user-smoke@v1',
     recordedAt: options.recordedAt,
     status: options.status,
     repoRoot: options.repoRoot,
@@ -194,9 +194,9 @@ function buildPublicFacadeLinuxSmokeReport(options) {
   };
 }
 
-function buildPublicFacadeLinuxSmokeMarkdown(report) {
+function buildPublicLinuxInstalledUserSmokeMarkdown(report) {
   return [
-    '# Public Facade Linux Smoke Report',
+    '# Public Linux Installed-User Smoke Report',
     '',
     `- Status: ${report.status}`,
     `- Recorded at: ${report.recordedAt}`,
@@ -216,29 +216,33 @@ function buildPublicFacadeLinuxSmokeMarkdown(report) {
   ].join('\n');
 }
 
-async function writePublicFacadeLinuxSmokeReport(evidenceDir, report) {
-  const jsonPath = path.join(evidenceDir, 'public-facade-linux-smoke.json');
-  const markdownPath = path.join(evidenceDir, 'public-facade-linux-smoke.md');
+async function writePublicLinuxInstalledUserSmokeReport(evidenceDir, report) {
+  const jsonPath = path.join(evidenceDir, 'public-linux-installed-user-smoke.json');
+  const markdownPath = path.join(evidenceDir, 'public-linux-installed-user-smoke.md');
   await fsp.writeFile(jsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-  await fsp.writeFile(markdownPath, `${buildPublicFacadeLinuxSmokeMarkdown(report)}\n`, 'utf8');
+  await fsp.writeFile(
+    markdownPath,
+    `${buildPublicLinuxInstalledUserSmokeMarkdown(report)}\n`,
+    'utf8'
+  );
   return { jsonPath, markdownPath };
 }
 
-async function runPublicFacadeLinuxSmoke(argv = process.argv.slice(2), deps = {}) {
-  const parsed = parsePublicFacadeLinuxSmokeArgs(argv);
+async function runPublicLinuxInstalledUserSmoke(argv = process.argv.slice(2), deps = {}) {
+  const parsed = parsePublicLinuxInstalledUserSmokeArgs(argv);
   const stdout = deps.stdout ?? process.stdout;
   const stderr = deps.stderr ?? process.stderr;
 
   if (parsed.helpRequested) {
-    stdout.write(`${getPublicFacadeLinuxSmokeUsage()}\n`);
+    stdout.write(`${getPublicLinuxInstalledUserSmokeUsage()}\n`);
     return 'help';
   }
 
   const evidenceDir =
-    parsed.evidenceDir ?? path.join(repoRoot, 'artifacts', 'public-facade-linux-smoke');
+    parsed.evidenceDir ?? path.join(repoRoot, 'artifacts', 'public-linux-installed-user-smoke');
   await ensureEvidenceDir(evidenceDir);
 
-  const steps = createPublicFacadeLinuxSmokeSteps({
+  const steps = createPublicLinuxInstalledUserSmokeSteps({
     linuxImage: parsed.linuxImage,
     skipImageRemove: parsed.skipImageRemove
   });
@@ -247,7 +251,7 @@ async function runPublicFacadeLinuxSmoke(argv = process.argv.slice(2), deps = {}
   let failure = null;
 
   for (const step of steps) {
-    stdout.write(`[public-smoke] ${step.title}\n`);
+    stdout.write(`[public-linux-smoke] ${step.title}\n`);
     try {
       stepResults.push(
         await runStep(step, {
@@ -277,9 +281,9 @@ async function runPublicFacadeLinuxSmoke(argv = process.argv.slice(2), deps = {}
     }
   }
 
-  await writePublicFacadeLinuxSmokeReport(
+  await writePublicLinuxInstalledUserSmokeReport(
     evidenceDir,
-    buildPublicFacadeLinuxSmokeReport({
+    buildPublicLinuxInstalledUserSmokeReport({
       recordedAt: (deps.now ?? (() => new Date()))().toISOString(),
       status,
       repoRoot: deps.cwd ?? repoRoot,
@@ -292,16 +296,16 @@ async function runPublicFacadeLinuxSmoke(argv = process.argv.slice(2), deps = {}
   );
 
   if (status === 'failed') {
-    throw new Error(failure?.message ?? 'Public facade Linux smoke failed.');
+    throw new Error(failure?.message ?? 'Public Linux installed-user smoke failed.');
   }
 
-  stdout.write('[public-smoke] Public facade Linux smoke passed.\n');
+  stdout.write('[public-linux-smoke] Public Linux installed-user smoke passed.\n');
   return 'pass';
 }
 
 async function main(argv = process.argv.slice(2), deps = {}) {
   try {
-    await runPublicFacadeLinuxSmoke(argv, deps);
+    await runPublicLinuxInstalledUserSmoke(argv, deps);
     return 0;
   } catch (error) {
     const stderr = deps.stderr ?? process.stderr;
@@ -317,12 +321,12 @@ if (require.main === module) {
 }
 
 module.exports = {
-  buildPublicFacadeLinuxSmokeMarkdown,
-  buildPublicFacadeLinuxSmokeReport,
-  createPublicFacadeLinuxSmokeSteps,
-  getPublicFacadeLinuxSmokeUsage,
+  buildPublicLinuxInstalledUserSmokeMarkdown,
+  buildPublicLinuxInstalledUserSmokeReport,
+  createPublicLinuxInstalledUserSmokeSteps,
+  getPublicLinuxInstalledUserSmokeUsage,
   main,
-  parsePublicFacadeLinuxSmokeArgs,
-  runPublicFacadeLinuxSmoke,
-  writePublicFacadeLinuxSmokeReport
+  parsePublicLinuxInstalledUserSmokeArgs,
+  runPublicLinuxInstalledUserSmoke,
+  writePublicLinuxInstalledUserSmokeReport
 };

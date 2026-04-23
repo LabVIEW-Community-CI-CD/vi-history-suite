@@ -319,7 +319,7 @@ describe('documentation-package workbench', () => {
       'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
     );
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
-      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
+      'npm run compile && node scripts/runPublicLinuxInstalledUserSmoke.js'
     );
     expect(manifest.scripts?.['public:source:promote']).toBe(
       'node scripts/promotePublicGithubSource.js'

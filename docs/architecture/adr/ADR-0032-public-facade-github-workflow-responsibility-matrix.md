@@ -1,4 +1,4 @@
-# ADR-0032: Public Facade GitHub Workflow Responsibility Matrix
+# ADR-0032: Public GitHub Admission Matrix
 
 ## Status
 
@@ -6,10 +6,11 @@ Accepted
 
 ## Context
 
-The public GitHub facade now depends on two protected required checks:
+The public GitHub facade now depends on three protected required checks:
 
-- `Public Facade Package Preview / package-preview`
-- `Public Facade Linux Smoke / public-facade-linux-smoke`
+- `Public Source Package Preview / public-source-package-preview`
+- `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
+- `Public Windows Installed-User Contract / public-windows-installed-user-contract`
 
 Those checks were already named in the control plane, but their actual
 workflow responsibilities, trigger boundaries, and churn controls were still
@@ -24,18 +25,22 @@ encoded mainly in raw GitHub Actions YAML. That left a landmine:
 
 ## Decision
 
-Retain a governed two-workflow public-facade matrix:
+Retain a governed three-lane public admission matrix:
 
-- `Public Facade Package Preview`
+- `Public Source Package Preview`
   - owns `npm run compile`
   - owns `npm run test:design-contract`
   - owns preview VSIX packaging and artifact upload
-- `Public Facade Linux Smoke`
+- `Public Linux Installed-User Smoke`
   - owns Docker Linux engine verification
   - owns `npm run public:smoke:linux`
   - owns retained smoke-evidence upload
+- `Public Windows Installed-User Contract`
+  - owns `npm run public:contract:windows-installed-user`
+  - owns Windows `vihs` launcher and runtime-settings CLI contract proof
+  - owns retained Windows contract-evidence upload
 
-Retain these trigger rules for both workflows:
+Retain these trigger rules for all three workflows:
 
 - allow `workflow_dispatch`
 - allow bounded `push` admission only on `develop`, `main`, `release/*`, and
@@ -55,10 +60,10 @@ Retain these churn controls:
 
 Positive:
 
-- the two required public GitHub checks now have stable owned responsibilities
+- the three required public GitHub checks now have stable owned responsibilities
 - public workflow trigger changes become requirement/ADR-visible changes
 - GitHub CI churn is reduced because unrelated pushes no longer run public
-  workflow lanes
+  workflow lanes while still representing Linux and Windows installed-user truth
 
 Costs:
 
@@ -69,9 +74,9 @@ Costs:
 
 ## Follow-On
 
-- keep workflow trigger boundaries and concurrency aligned in both public
+- keep workflow trigger boundaries and concurrency aligned in all three public
   workflow files
 - keep the workflow-responsibility matrix explicit in sustainment rules,
   PROGRAM-0004, ISSUE-0409, SRS, RTM, and test-plan coverage
 - treat future additions, removals, or role swaps in the public GitHub
-  workflow pair as governed ADR-impacting changes
+  admission matrix as governed ADR-impacting changes

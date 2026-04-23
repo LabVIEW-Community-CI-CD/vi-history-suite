@@ -344,7 +344,8 @@ separate afterward.
     - local `npm run public:gate-d:preflight`
     - local `npm run public:gate-d:prepare-cold-pull` immediately before the
       real cold-pull Gate D rerun
-    - GitHub `workflow_dispatch` on `.github/workflows/public-facade-linux-smoke.yml`
+    - GitHub `workflow_dispatch` on `.github/workflows/public-linux-installed-user-smoke.yml`
+      and `.github/workflows/public-windows-installed-user-contract.yml`
 13. When the public source facade changes materially, promote the curated
     public GitHub source repo from authority and record the published commit:
     - bind the intended local public checkout with `--target-root` or

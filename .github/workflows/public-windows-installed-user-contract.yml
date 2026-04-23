@@ -1,4 +1,4 @@
-name: Public Facade Linux Smoke
+name: Public Windows Installed-User Contract
 
 on:
   workflow_dispatch:
@@ -10,8 +10,9 @@ on:
       - 'hotfix/**'
     paths:
       - '.devcontainer/**'
-      - '.github/workflows/public-facade-package-preview.yml'
-      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.github/workflows/public-source-package-preview.yml'
+      - '.github/workflows/public-linux-installed-user-smoke.yml'
+      - '.github/workflows/public-windows-installed-user-contract.yml'
       - '.vscode/**'
       - 'README.md'
       - 'INSTALL.md'
@@ -32,8 +33,9 @@ on:
       - main
     paths:
       - '.devcontainer/**'
-      - '.github/workflows/public-facade-package-preview.yml'
-      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.github/workflows/public-source-package-preview.yml'
+      - '.github/workflows/public-linux-installed-user-smoke.yml'
+      - '.github/workflows/public-windows-installed-user-contract.yml'
       - '.vscode/**'
       - 'README.md'
       - 'INSTALL.md'
@@ -57,8 +59,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  public-facade-linux-smoke:
-    runs-on: ubuntu-24.04
+  public-windows-installed-user-contract:
+    runs-on: windows-2022
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,16 +74,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify Docker Linux engine
-        run: docker info --format '{{.OSType}}'
+      - name: Run public Windows installed-user contract
+        run: npm run public:contract:windows-installed-user -- --evidence-dir artifacts/public-windows-installed-user-contract
 
-      - name: Run public facade Linux smoke
-        run: npm run public:smoke:linux -- --evidence-dir artifacts/public-facade-linux-smoke
-
-      - name: Upload smoke evidence
+      - name: Upload contract evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: public-facade-linux-smoke
-          path: artifacts/public-facade-linux-smoke/**
+          name: public-windows-installed-user-contract
+          path: artifacts/public-windows-installed-user-contract/**
           if-no-files-found: warn
