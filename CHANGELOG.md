@@ -9,6 +9,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.7] - 2026-04-22
+
+### Changed
+
+- exact authority `v1.3.6` on `main` remains immutable while public GitHub
+  `main` plus tag already publish `v1.3.6`, but the repo-owned in-place
+  GitHub release publish attempt against draft `312363117` now proves an
+  external immutable-release boundary (`422 tag_name was used by an immutable
+  release`), so `release/1.3.7` opens from merged-green `develop` as the next
+  governed exact line
+- the repo-owned exact-release publish/verify controller remains retained on
+  `develop` so the next exact line can close through one governed GitHub
+  release act instead of another draft-only partial transaction
+
 ## [1.3.6] - 2026-04-22
 
 ### Changed

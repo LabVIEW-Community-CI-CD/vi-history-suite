@@ -176,8 +176,8 @@ describe('post-release sustainment rules package', () => {
       currentExactReleaseLine: 'v1.3.6',
       currentMainPackageLine: '1.3.6',
       currentDevelopPackageLine: '1.3.6',
-      activeDevelopCandidateReleaseLine: null,
-      activeReleaseCandidateBranch: null,
+      activeDevelopCandidateReleaseLine: '1.3.7',
+      activeReleaseCandidateBranch: 'release/1.3.7',
       activeHotfixCandidateReleaseLine: null,
       activeHotfixBranch: null,
       activeFeatureBranch: null,
@@ -187,8 +187,8 @@ describe('post-release sustainment rules package', () => {
       publicGitHubExactTransactionReceiptPath:
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
       publicGitHubExactPublishabilityProbe: {
-        status: 'blocked',
-        blockerCode: 'draft-release-tag-lookup-unavailable',
+        status: 'externally-impossible',
+        blockerCode: 'immutable-release-tag-reuse-422',
         immutableReleasePolicyStatusCode: 200,
         immutableReleasesEnabled: true,
         immutableReleasesEnforcedByOwner: false,
@@ -198,8 +198,8 @@ describe('post-release sustainment rules package', () => {
         draftReleaseHtmlUrlUsesUntaggedPath: true
       },
       publicGitHubExactDraftPublishabilityProbe: {
-        status: 'blocked',
-        blockerCode: 'draft-release-tag-lookup-unavailable',
+        status: 'externally-impossible',
+        blockerCode: 'immutable-release-tag-reuse-422',
         draftReleaseId: 312363117,
         draftReleaseByIdStatusCode: 200,
         draftReleaseTagMatchesAuthority: true,
@@ -246,7 +246,7 @@ describe('post-release sustainment rules package', () => {
           'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
           'future sessions shall assess any partially public exact GitHub transaction through npm run public:github:exact:transaction:assess before any further public GitHub release or VS Code Marketplace act',
           "future sessions shall retain the controller's non-mutating draft-publishability probe before any in-place public GitHub release repair attempt",
-          'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction',
+          'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction unless the retained controller records that the current line is externally impossible to repair in place',
           'future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible',
         'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
@@ -316,13 +316,13 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'authority exact v1.3.6 is already tagged on main, public GitHub main and tag are already published, and a draft GitHub release with exact assets already exists, so the governed next step is repair in place rather than another SemVer opening',
-        'the new repo-owned transaction controller now fails closed on that partial-public state, retains the non-mutating draft-publishability probe against release 312363117, and freezes later openings until npm run public:github:exact:transaction:assess proves a safe repair or retains the exact blocker or impossibility state'
+        'authority exact v1.3.6 is already tagged on main, public GitHub main and tag are already published, and a draft GitHub release with exact assets already exists, but the repo-owned publish attempt now proves that closing that GitHub release in place is externally impossible under the immutable-release boundary',
+        'release/1.3.7 therefore opens from develop as the next governed exact line after the v1.3.6 external impossibility was retained'
       ])
     );
     expect((rules as any).softwareFactoryGovernance).toEqual({
-      status: 'publish-verify-contract-open',
-      activeFeatureBranch: 'feature/software-factory-publish-verify-contract',
+      status: 'publish-verify-contract-retained-on-develop',
+      activeFeatureBranch: null,
       packageScripts: {
         assess: 'npm run software:factory:assess',
         rehearse: 'npm run software:factory:rehearse',
@@ -348,7 +348,7 @@ describe('post-release sustainment rules package', () => {
       productionBoundary: ['public GitHub main/tag/release', 'VS Code Marketplace listing'],
       recoveryBoundary: [
         'repair-in-place first when public GitHub main, tag, or draft release already exist',
-        'current blocker remains draft release 312363117 with draft-release-tag-lookup-unavailable'
+        'current v1.3.6 blocker is externally impossible: publish attempt against draft release 312363117 returned immutable-release tag reuse 422'
       ],
       trustModel: [
         'Windows operator host',
@@ -698,6 +698,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('current exact released line: `v1.3.6`');
     expect(rulesDoc).toContain('current published package line on `main`: `1.3.6`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.6`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `1.3.7`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.7`');
     expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(rulesDoc).toContain('none');
     expect(rulesDoc).toContain('`npm run public:github:exact:transaction:assess`');
@@ -707,16 +709,14 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('retained authority release manifest non-mutatively');
     expect(rulesDoc).toContain('exact VSIX plus checksum assets');
     expect(rulesDoc).toContain('immutable releases `enabled=true`, `enforced_by_owner=false`');
-    expect(rulesDoc).toContain('exact-tag release lookup returns `404`');
-    expect(rulesDoc).toContain('draft still serves an `untagged-*` URL');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
-    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('`422 tag_name was used by an immutable release`');
     expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(rulesDoc).toContain('active hotfix branch: none');
     expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
-    expect(rulesDoc).toContain('later SemVer openings are frozen while the current exact public GitHub');
+    expect(rulesDoc).toContain('later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`');
     expect(rulesDoc).toContain('## Software Factory Governance Contract');
-    expect(rulesDoc).toContain('`feature/software-factory-publish-verify-contract`');
+    expect(rulesDoc).toContain('active software-factory branch on `develop`:');
+    expect(rulesDoc).toContain('none');
     expect(rulesDoc).toContain('`npm run software:factory:assess`');
     expect(rulesDoc).toContain('`npm run software:factory:rehearse`');
     expect(rulesDoc).toContain('`npm run software:factory:repair`');

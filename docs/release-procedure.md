@@ -15,14 +15,14 @@
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.3.6`.
 - The current develop package line on `develop` is `1.3.6`.
-- The active exact release candidate line on `develop` is none.
-- The active release-candidate branch is none.
+- The active exact release candidate line on `develop` is `1.3.7`.
+- The active release-candidate branch is `release/1.3.7`.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
   is none.
-- Later SemVer openings are frozen while the current exact public GitHub
-  transaction remains incomplete.
+- Later SemVer openings beyond `1.3.7` are frozen while `release/1.3.7`
+  remains incomplete.
 - The pre-tag public-exact proof package script is
   `npm run public:exact:pretag:proof`.
 - The pre-tag public-exact proof GitLab job is `public_exact_pretag_proof`.
@@ -30,8 +30,7 @@
   `npm run public:github:exact:transaction:assess`.
 - The retained public GitHub exact transaction receipt is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
-- The active software-factory governance branch on `develop` is
-  `feature/software-factory-publish-verify-contract`.
+- The active software-factory governance branch on `develop` is none.
 - The software factory assessment package script is
   `npm run software:factory:assess`.
 - The software factory rehearsal package script is
@@ -70,14 +69,10 @@
   `main` promotion, or VS Code Marketplace publication.
 - Public GitHub `main` now publishes `bd81bfe`, public tag `v1.3.6` is live,
   draft release `312363117` retains the exact assets, the last published
-  GitHub release still serves `v1.3.1`, the new non-mutating
-  draft-publishability probe can read draft release `312363117` by id with
-  status `200` and confirms it still matches authority tag `v1.3.6`, the
-  repo-owned controller can now locate the retained authority release
-  manifest non-mutatively and verify the draft still carries the exact VSIX
-  plus checksum assets, immutable releases are enabled, exact-tag release
-  lookup still returns `404`, the draft still serves an `untagged-*` URL, and
-  VS Code Marketplace still serves `1.3.0`.
+  GitHub release still serves `v1.3.1`, the repo-owned in-place publish
+  attempt against draft release `312363117` returned
+  `422 tag_name was used by an immutable release`, and VS Code Marketplace
+  still serves `1.3.0`, so `release/1.3.7` is now the active next exact line.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.

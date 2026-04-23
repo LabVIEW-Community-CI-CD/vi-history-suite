@@ -22,7 +22,7 @@ describe('public release candidate control surface', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(candidate.versionLine).toBe('1.3.6');
+    expect(candidate.versionLine).toBe('1.3.7');
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.authorityRepo).toMatchObject({
       role: 'source-of-truth',
@@ -86,7 +86,7 @@ describe('public release candidate control surface', () => {
       gatingGitLabJob: 'public_exact_pretag_proof'
     });
     expect(candidate.localProofs.publicGitHubExactTransaction).toMatchObject({
-      status: 'blocked-v1.3.6-release-draft-repair-in-place-required',
+      status: 'externally-impossible-v1.3.6-release-draft-publish',
       packageScript: 'npm run public:github:exact:transaction:assess',
       receiptPath:
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
@@ -104,18 +104,18 @@ describe('public release candidate control surface', () => {
         '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
       authorityReleaseManifestLocatorStatus: 'located-and-verified-non-mutatively',
       releaseAssetsRetainedAgainstManifest: true,
-      draftPublishabilityProbeStatus: 'blocked',
-      draftPublishabilityBlockerCode: 'draft-release-tag-lookup-unavailable',
+      draftPublishabilityProbeStatus: 'externally-impossible',
+      draftPublishabilityBlockerCode: 'immutable-release-tag-reuse-422',
       draftPublishabilityBlockerSummary:
-        'Draft release 312363117 is readable by id and still carries the exact assets, but immutable releases are enabled while exact-tag release lookup still returns 404, so a safe in-place draft publish transition cannot yet be proven non-mutatively.',
+        'The repo-owned in-place publish attempt against draft release 312363117 returned 422 tag_name was used by an immutable release, so the retained by-id draft state is no longer a safe in-place publish candidate.',
       draftPublishabilityProbeReleaseId: 312363117,
       draftPublishabilityByIdStatusCode: 200,
       draftPublishabilityTagMatchesAuthority: true,
       draftPublishabilitySafeToAttemptPublish: false,
-      publishabilityProbeStatus: 'blocked',
-      publishabilityBlockerCode: 'draft-release-tag-lookup-unavailable',
+      publishabilityProbeStatus: 'externally-impossible',
+      publishabilityBlockerCode: 'immutable-release-tag-reuse-422',
       publishabilityBlockerSummary:
-        'Immutable releases are enabled, but the retained draft is still discoverable only by id/list; release lookup by the exact tag remains unavailable.',
+        'The repo-owned in-place publish attempt against draft release 312363117 returned 422 tag_name was used by an immutable release, so the v1.3.6 GitHub release is externally impossible to close in place.',
       immutableReleasePolicyStatusCode: 200,
       immutableReleasesEnabled: true,
       immutableReleasesEnforcedByOwner: false,
@@ -125,11 +125,11 @@ describe('public release candidate control surface', () => {
       draftReleaseDiscoveredByTag: false,
       draftReleaseUsesUntaggedUrl: true,
       safeToAttemptRepairPublish: false,
-      openingNewSemverAllowed: false,
+      openingNewSemverAllowed: true,
       repairInPlaceRequired: true,
-      repairInPlaceAllowed: true,
+      repairInPlaceAllowed: false,
       nextAllowedAction:
-        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
+        'promote-release-1.3.7-to-main-after-governed-validation'
     });
 
     expect(candidate.exactRelease).toMatchObject({
@@ -139,7 +139,7 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
       status:
-        'authority-v1.3.6-tagged-public-main-and-tag-published-release-draft-only-repair-in-place-frozen',
+        'authority-v1.3.6-github-release-externally-impossible-release-1.3.7-open',
       hotfixBranch: null,
       featureBranch: null,
       authorityMainCommit: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
@@ -151,10 +151,10 @@ describe('public release candidate control surface', () => {
       publicGitHubDraftReleaseId: 312363117,
       publicGitHubDraftReleaseUrl:
         'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
-      publicGitHubPublishabilityProbeStatus: 'blocked',
-      publicGitHubPublishabilityBlockerCode: 'draft-release-tag-lookup-unavailable',
-      publicGitHubDraftPublishabilityProbeStatus: 'blocked',
-      publicGitHubDraftPublishabilityBlockerCode: 'draft-release-tag-lookup-unavailable',
+      publicGitHubPublishabilityProbeStatus: 'externally-impossible',
+      publicGitHubPublishabilityBlockerCode: 'immutable-release-tag-reuse-422',
+      publicGitHubDraftPublishabilityProbeStatus: 'externally-impossible',
+      publicGitHubDraftPublishabilityBlockerCode: 'immutable-release-tag-reuse-422',
       publicGitHubDraftPublishabilityProbeReleaseId: 312363117,
       publicGitHubDraftPublishabilityByIdStatusCode: 200,
       publicGitHubDraftPublishabilityTagMatchesAuthority: true,
@@ -165,7 +165,7 @@ describe('public release candidate control surface', () => {
       publicGitHubReleaseLookupStatusCode: 404,
       publicGitHubDraftReleaseUsesUntaggedUrl: true,
       nextSeparateAct:
-        'repair-existing-v1.3.6-public-github-release-in-place-through-transaction-controller',
+        'promote-release-1.3.7-to-main-after-governed-validation',
       marketplaceVersionRetained: '1.3.0',
       preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
       preTagPublicExactProofJob: 'public_exact_pretag_proof',
@@ -174,8 +174,8 @@ describe('public release candidate control surface', () => {
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     });
     expect(candidate.softwareFactoryGovernance).toEqual({
-      status: 'publish-verify-contract-open-no-production-mutation',
-      activeFeatureBranch: 'feature/software-factory-publish-verify-contract',
+      status: 'publish-verify-contract-retained-on-develop-no-active-feature-branch',
+      activeFeatureBranch: null,
       packageScripts: {
         assess: 'npm run software:factory:assess',
         rehearse: 'npm run software:factory:rehearse',
@@ -195,7 +195,7 @@ describe('public release candidate control surface', () => {
       soleProductionRecoveryTarget: 'v1.3.6',
       productionMutationAllowed: false,
       rule:
-        'no GitHub release publication, Marketplace publication, or other production mutation may occur through this guarded non-mutating publish/verify contract slice while the retained v1.3.6 recovery case remains open'
+        'no GitHub release publication, Marketplace publication, or other production mutation may occur through this guarded non-mutating publish/verify contract slice; the retained v1.3.6 incident now proves the immutable-release boundary and release/1.3.7 is the active next governed exact line'
     });
 
     expect(candidate.activeBlockers).toEqual([
@@ -205,17 +205,16 @@ describe('public release candidate control surface', () => {
       })
     ]);
 
-    expect(candidateMarkdown).toContain('Version line: `1.3.6`');
+    expect(candidateMarkdown).toContain('Version line: `1.3.7`');
     expect(candidateMarkdown).toContain('Published public source commit: `bd81bfe`');
     expect(candidateMarkdown).toContain('Feature-lane public GitHub release hardening branch: none');
-    expect(candidateMarkdown).toContain('Software-factory governance branch:');
-    expect(candidateMarkdown).toContain('`feature/software-factory-publish-verify-contract`');
+    expect(candidateMarkdown).toContain('Software-factory governance branch: none');
     expect(candidateMarkdown).toContain('`released-v1.3.6-authority-evidence-retained`');
     expect(candidateMarkdown).toContain(
       '`required-before-any-further-public-github-release-or-marketplace-act`'
     );
     expect(candidateMarkdown).toContain(
-      '`v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only`'
+      '`v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only-release-1.3.7-open`'
     );
     expect(candidateMarkdown).toContain('npm run public:github:exact:transaction:assess');
     expect(candidateMarkdown).toContain('draft release `312363117`');
@@ -227,9 +226,10 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('`draftPublishabilityProbeReleaseId=312363117`');
     expect(candidateMarkdown).toContain('`draftPublishabilityByIdStatusCode=200`');
     expect(candidateMarkdown).toContain('immutable releases are enabled');
-    expect(candidateMarkdown).toContain('`publishabilityBlockerCode=draft-release-tag-lookup-unavailable`');
+    expect(candidateMarkdown).toContain('`publishabilityBlockerCode=immutable-release-tag-reuse-422`');
     expect(candidateMarkdown).toContain('`draftReleaseTargetCommitish=main`');
     expect(candidateMarkdown).toContain('`draftReleaseLookupStatusCode=404`');
+    expect(candidateMarkdown).toContain('`422 tag_name was used by an immutable release`');
     expect(candidateMarkdown).toContain(
       '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     );
@@ -259,7 +259,7 @@ describe('public release candidate control surface', () => {
       'Marketplace publication, or other production mutation in this slice'
     );
     expect(candidateMarkdown).toContain('Public GitHub exact still serves `v1.3.1`');
-    expect(candidateMarkdown).toContain('repair in place through `npm run public:github:exact:transaction:assess`');
+    expect(candidateMarkdown).toContain('`release/1.3.7` is now');
 
     expect(currentState).toContain('current exact released line: `v1.3.6`');
     expect(currentState).toContain('current published package line on `main`: `1.3.6`');
@@ -287,11 +287,9 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain(
       '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
     );
-    expect(currentState).toContain('separate public GitHub exact release publication: blocked; public `main` now');
-    expect(currentState).toContain('can read that draft by id with status `200`');
-    expect(currentState).toContain('retained authority release manifest non-mutatively');
-    expect(currentState).toContain('lookup still returns `404`');
-    expect(currentState).toContain('draftPublishabilityProbeReleaseId=312363117');
+    expect(currentState).toContain('separate public GitHub exact release publication: `v1.3.6` proved');
+    expect(currentState).toContain('`422 tag_name was used by an immutable release`');
+    expect(currentState).toContain('`release/1.3.7` is now the active next');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');
 
     expect(srs).toContain('VHS-REQ-566');
