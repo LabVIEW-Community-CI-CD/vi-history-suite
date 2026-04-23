@@ -1818,9 +1818,10 @@ Information-for-users review cases:
   content, rejects unsupported workspace-target widening, and rewrites only
   provider/version/bitness facts
 - `TEST-UNIT-352`: verify the bare `vihs` terminal entrypoint either executes
-  through the governed runtime contract or fails closed with one actionable
-  missing-or-stale runtime dependency message that restores the admitted
-  terminal surface without hidden-path reconstruction
+  through the governed runtime contract, including the Windows standard VS
+  Code runtime path when global `node.exe` is absent from PATH, or fails closed
+  with one actionable missing-or-stale runtime dependency message that
+  restores the admitted terminal surface without hidden-path reconstruction
 - `TEST-UNIT-353`: verify `vihs` with no arguments seeds missing settings to
   `host/windows/2026/x64`, reads back the current provider/platform/version/bitness
   bundle, prints exact copyable next commands, and, on interactive TTY
@@ -1839,9 +1840,10 @@ Information-for-users review cases:
   `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.exe`
   instead of failing closed with `labview-cli-not-found-for-bitness`
 - `TEST-INTEG-010`: prove the bare `vihs` terminal entrypoint runtime
-  dependency contract on the supported host surface and retain the actionable
-  failure mode that restores the admitted terminal surface when the governed
-  runtime dependency is unavailable or stale
+  dependency contract on the supported host surface, including the Windows
+  standard VS Code runtime path before any global Node fallback, and retain the
+  actionable failure mode that restores the admitted terminal surface when the
+  governed runtime dependency is unavailable or stale
 - `TEST-INTEG-011`: prove the governed `vihs` validation action reports the
   persisted provider/version/bitness bundle and the bounded runtime-validation
   outcome from a real extension-host session; the explicit Windows lane shall
