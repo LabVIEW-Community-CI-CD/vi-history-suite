@@ -127,8 +127,8 @@ runtime-settings CLI on the active branch.
 
 - Purpose: repair or refresh the governed `vihs` terminal entrypoint plus the
   compatibility launchers under the extension-global storage root.
-- Use when: `vihs` is missing, stale, or a repaired Node.js runtime needs the
-  governed entrypoint refreshed.
+- Use when: `vihs` is missing, stale, or a repaired VS Code or Node.js runtime
+  needs the governed entrypoint refreshed.
 - Notes:
   - the governed materialization root is the extension-global storage path
     reported by the command result
@@ -142,8 +142,11 @@ runtime-settings CLI on the active branch.
   - the command result reports the current-platform compatibility-launcher path
     plus one exact next command to run without reconstructing the hidden
     extension-global storage layout
+  - on Windows, the launcher uses the standard VS Code runtime before falling
+    back to global `node.exe`; `VI_HISTORY_SUITE_NODE_EXE` can bind an explicit
+    Node runtime when the VS Code runtime is unavailable
   - rerun this same prepare command when the launcher is missing, stale, or a
-    repaired Node.js runtime needs a refreshed launcher
+    repaired VS Code or Node.js runtime needs a refreshed launcher
   - supported settings targets are the default user `settings.json` path for
     the current platform or one explicit `--settings-file` override
   - this prepare command is admitted in untrusted workspaces because it only
