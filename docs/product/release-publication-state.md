@@ -17,6 +17,9 @@ final installed-user distribution surface.
 - Expected checksum: `vi-history-suite-1.3.8.vsix.sha256`
 - Expected VSIX SHA-256:
   `d365f27836ada8a5279dedfc9fbfc7a86067da560f86324a5b9cdb9279e8f5e2`
+- Active candidate release branch: `release/1.3.9`
+- Active candidate tag: `v1.3.9`
+- Active candidate package version: `1.3.9`
 
 ## Public GitHub State
 
@@ -32,20 +35,28 @@ final installed-user distribution surface.
 
 - Marketplace item: `svelderrainruiz.vi-history-suite`
 - Current Marketplace version: `1.3.7`
-- Expected version for the blocked authority exact line: `1.3.8`
-- Marketplace status: blocked until a complete public GitHub exact release is
-  verified.
+- Expected version for the active governed candidate line: `1.3.9`
+- Marketplace status: waiting for the asset-first public GitHub exact release
+  on `v1.3.9`.
 
 ## Incident Classification
 
 - Incident id: `PUBLICATION-INCIDENT-v1.3.8-IMMUTABLE-ZERO-ASSETS`
+- Incident status: `retained-history`
 - Class: `externally-blocked-publication`
 - Blocker code: `published-immutable-release-assets-incomplete`
 - Summary: public GitHub release `312768592` for `v1.3.8` is already published
   and immutable with zero assets, so the exact VSIX and checksum cannot be
-  uploaded after publication.
-- Repair rule: do not attempt in-place asset upload; retain the incident and
-  require the next exact release line to use the asset-first publisher.
+  uploaded after publication; retain this only as blocked historical incident
+  evidence.
+- Repair rule: do not attempt in-place asset upload; require the next exact
+  release line to use the asset-first publisher.
+
+## Next Admitted Action
+
+- Governed next line: `release/1.3.9`
+- Next admitted action:
+  `promote-release-1.3.9-to-main-after-governed-validation`
 
 ## Publication Rule
 

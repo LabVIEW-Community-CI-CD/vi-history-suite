@@ -13,11 +13,11 @@
     "developPipelineStatus": "success"
   },
   "openingDecision": {
-    "currentExactReleaseLine": "v1.3.7",
-    "currentMainPackageLine": "1.3.7",
-    "currentDevelopPackageLine": "1.3.7",
-    "activeDevelopCandidateReleaseLine": "1.3.8",
-    "activeReleaseCandidateBranch": "release/1.3.8",
+    "currentExactReleaseLine": "v1.3.8",
+    "currentMainPackageLine": "1.3.8",
+    "currentDevelopPackageLine": "1.3.8",
+    "activeDevelopCandidateReleaseLine": "1.3.9",
+    "activeReleaseCandidateBranch": "release/1.3.9",
     "activeHotfixCandidateReleaseLine": null,
     "activeHotfixBranch": null,
     "activeFeatureBranch": null,
@@ -26,12 +26,12 @@
     "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
     "chosenBump": "patch",
     "rationale": [
-      "authority exact v1.3.7 is already tagged on main while public GitHub main, tag, and GitHub release are published with exact manifest-matched assets, and VS Code Marketplace serves 1.3.7",
-      "release/1.3.8 opens from develop as the governed patch line for the installed Windows vihs launcher fix that removes the ambient global-node PATH dependency"
+      "authority exact v1.3.8 is already tagged on main while public GitHub release 312768592 is retained as immutable zero-asset historical incident evidence and VS Code Marketplace still serves 1.3.7",
+      "release/1.3.9 opens from develop as the governed patch line for the installed Windows vihs launcher fix through the asset-first public GitHub publisher"
     ],
     "rejectedAlternatives": {
-      "hotfix": "the installed launcher fix was already merged to develop and should promote through the normal release/* path rather than bypassing GitFlow from main",
-      "minor": "the change fixes an existing installed-user entrypoint contract without adding a new governed capability or supported workflow",
+      "hotfix": "the next exact line should promote from develop through the normal release/* path after retaining the blocked v1.3.8 incident history, not bypass GitFlow from main",
+      "minor": "the next line still fixes an existing installed-user entrypoint contract and publication path without adding a new governed capability or supported workflow",
       "major": "no exact public or maintainer contract is intentionally broken or removed; the current exact line is already published on GitHub and Marketplace"
     }
   },
@@ -42,7 +42,7 @@
     "releaseBranch": "release/*",
     "hotfixBranch": "hotfix/*",
     "exactReleaseLineBranch": "main",
-    "activeReleaseCandidateBranch": "release/1.3.8",
+    "activeReleaseCandidateBranch": "release/1.3.9",
     "activeHotfixBranch": null,
     "activeFeatureBranch": null,
     "temporaryBranchPrefixes": [
@@ -143,9 +143,9 @@
             "failurePolicy": "fail-closed-unless-config-normalized-and-service-enabled-and-active"
           },
           "helperVerification": {
-              "distro": "Ubuntu-24.04",
-              "distroOverrideEnvironmentVariable": "VIHS_LINUX_ASSURANCE_DISTRO",
-              "wakeAttempts": 12,
+            "distro": "Ubuntu-24.04",
+            "distroOverrideEnvironmentVariable": "VIHS_LINUX_ASSURANCE_DISTRO",
+            "wakeAttempts": 12,
             "wakeDelaySeconds": 10,
             "checks": [
               "config-global-concurrency-two",
@@ -219,9 +219,9 @@
           "repoOwnedLinuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
           "repoOwnedLinuxDoctorScript": "scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh",
           "linuxAssuranceBootstrap": {
-              "distro": "Ubuntu-24.04",
-              "distroOverrideEnvironmentVariable": "VIHS_LINUX_ASSURANCE_DISTRO",
-              "bootstrapCommand": "$HOME/gitlab-runner/start-linux-assurance.sh",
+            "distro": "Ubuntu-24.04",
+            "distroOverrideEnvironmentVariable": "VIHS_LINUX_ASSURANCE_DISTRO",
+            "bootstrapCommand": "$HOME/gitlab-runner/start-linux-assurance.sh",
             "wakeAttempts": 12,
             "wakeDelaySeconds": 10,
             "failurePolicy": "fail-closed-unless-linux-assurance-helper-observes-live-service"

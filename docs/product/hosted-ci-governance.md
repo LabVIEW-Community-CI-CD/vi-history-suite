@@ -8,11 +8,12 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` carries tagged `v1.3.7`, `develop` carries `1.3.7`,
-public GitHub `main`, tag, and release publish the exact `v1.3.7`
-transaction, and the Marketplace listing now serves `1.3.7`. No exact hotfix lane
-or feature-lane public GitHub hardening branch is open, and `release/1.3.8`
-is now the active candidate to promote the installed `vihs` launcher fix.
+Authority exact `main` carries tagged `v1.3.8`, the last fully closed public
+GitHub and VS Code Marketplace baseline remains `v1.3.7`, public GitHub
+release `312768592` for `v1.3.8` is retained as immutable zero-asset
+historical incident evidence, and `release/1.3.9` is now the active candidate
+to promote the installed `vihs` launcher fix through the asset-first public
+GitHub publisher.
 
 ## Current Exact Closeout State
 
@@ -28,16 +29,16 @@ is now the active candidate to promote the installed `vihs` launcher fix.
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.7`
-- current `main` package line: `1.3.7`
-- current `develop` package line: `1.3.7`
-- active exact release candidate line on `develop`: `1.3.8`
-- active release-candidate branch: `release/1.3.8`
+- current exact release line: `v1.3.8`
+- current `main` package line: `1.3.8`
+- current `develop` package line: `1.3.8`
+- active exact release candidate line on `develop`: `1.3.9`
+- active release-candidate branch: `release/1.3.9`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- `release/1.3.8` remains governed by the same GitFlow and publication gates
+- `release/1.3.9` remains governed by the same GitFlow and publication gates
   before any public GitHub or Marketplace mutation
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
@@ -45,12 +46,12 @@ is now the active candidate to promote the installed `vihs` launcher fix.
 - public GitHub exact transaction verification package script:
   `npm run public:github:exact:transaction:verify`
 - chosen bump: `patch`
-- rationale: authority exact `v1.3.7` is already tagged on `main`, public
-  GitHub `main`, tag, and GitHub release are published with manifest-matched
-  assets, and VS Code Marketplace now serves `1.3.7`
-- rationale: `release/1.3.8` opens from `develop` as the governed patch line
-  for the installed Windows `vihs` launcher fix that removes the ambient
-  global-node `PATH` dependency
+- rationale: authority exact `v1.3.8` is already tagged on `main` while public
+  GitHub release `312768592` is retained as immutable zero-asset historical
+  incident evidence and VS Code Marketplace still serves `1.3.7`
+- rationale: `release/1.3.9` opens from `develop` as the governed patch line
+  for the installed Windows `vihs` launcher fix through the asset-first public
+  GitHub publisher
 
 ## Branch Model
 

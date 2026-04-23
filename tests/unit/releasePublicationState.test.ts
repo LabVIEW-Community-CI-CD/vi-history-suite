@@ -29,7 +29,7 @@ const publicationState = require(path.join(
 };
 
 describe('release publication state resolver', () => {
-  it('retains the current v1.3.8 GitLab-authority incident without hardcoding action builders', () => {
+  it('retains the current v1.3.8 GitLab-authority incident while exposing the v1.3.9 active candidate without hardcoding action builders', () => {
     const state = publicationState.resolvePublicationState();
 
     expect(state.authority).toMatchObject({
@@ -50,12 +50,18 @@ describe('release publication state resolver', () => {
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
       currentPublishedVersion: '1.3.7',
-      expectedVersion: '1.3.8'
+      expectedVersion: '1.3.9'
     });
     expect(state.incident).toMatchObject({
-      active: true,
+      active: false,
       classification: 'externally-blocked-publication',
-      blockerCode: 'published-immutable-release-assets-incomplete'
+      blockerCode: 'published-immutable-release-assets-incomplete',
+      status: 'retained-history'
+    });
+    expect(state.activeCandidate).toMatchObject({
+      releaseBranch: 'release/1.3.9',
+      tag: 'v1.3.9',
+      packageVersion: '1.3.9'
     });
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

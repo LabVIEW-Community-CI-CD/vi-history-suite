@@ -1,6 +1,6 @@
 # Public Release Candidate
 
-- Version line: `1.3.8`
+- Version line: `1.3.9`
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
@@ -13,9 +13,10 @@
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
 - Software-factory governance branch: none
-- Exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
-  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
-  users without global `node` on `PATH`
+- Exact authority `v1.3.8` is retained as blocked historical public GitHub
+  incident evidence while the last fully closed public GitHub and VS Code
+  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
+  asset-first retry line for the installed `vihs` launcher fix
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -32,9 +33,9 @@
 ## Readiness
 
 - Authority baseline:
-  `v1.3.7-tagged-on-main-public-main-tag-github-release-and-marketplace-published`
+  `v1.3.8-tagged-on-main-gitlab-authority-public-github-release-blocked-marketplace-1.3.7-retained`
 - Local installed VSIX build:
-  `release-1.3.8-authority-candidate-package-line`
+  `release-1.3.9-authority-candidate-package-line`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -52,7 +53,7 @@
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets`
+  `v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`
 
 ## Exact Release Baseline
 
@@ -99,13 +100,13 @@
   `422 tag_name was used by an immutable release`, so `release/1.3.7` became
   the governed next exact line and is now published separately on GitHub and
   the VS Code Marketplace.
-- Current incident: authority exact `v1.3.8` exists on GitLab `main`, public
+- Historical incident: authority exact `v1.3.8` exists on GitLab `main`, public
   GitHub `main` publishes `4f5f616`, and public tag `v1.3.8` exists, but
   GitHub release `312768592` is already published and immutable with zero
   assets. The blocker code is
   `published-immutable-release-assets-incomplete`; VS Code Marketplace remains
-  `1.3.7`, and no Marketplace act is admitted until the next exact line uses
-  the asset-first GitHub publisher.
+  `1.3.7`, and `release/1.3.9` is the next exact line that must use the
+  asset-first GitHub publisher.
 
 ## Local Proof
 
@@ -150,10 +151,11 @@
   `vsixSha256Verified=true`, `vscePatLocatorStatus=ok`, and the pinned
   `vsce` command shape with `<redacted>` PAT handling.
 - The current software-factory closeout posture is now:
-  exact `v1.3.7` is closed across public GitHub and VS Code Marketplace, and
-  `release/1.3.8` may proceed only through normal GitFlow and the repo-owned
-  factory/orchestrator governance path before any public GitHub or Marketplace
-  mutation.
+  exact authority `v1.3.8` is retained as blocked historical publication
+  evidence, the last fully closed public GitHub and VS Code Marketplace line
+  remains `v1.3.7`, and `release/1.3.9` may proceed only through normal
+  GitFlow and the repo-owned factory/orchestrator governance path before any
+  public GitHub or Marketplace mutation.
 - Current retained transaction facts: public `main` `704e629`, public tag
   `v1.3.7`, GitHub release `312517425`, exact VSIX
   `vi-history-suite-1.3.7.vsix`, VSIX SHA-256
@@ -263,7 +265,8 @@
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
 - Public GitHub exact now publishes `v1.3.7`, VS Code Marketplace now serves
-  `1.3.7`, and `release/1.3.8` is the active governed patch candidate for the
-  installed `vihs` launcher fix.
+  `1.3.7`, `v1.3.8` remains retained as blocked historical incident evidence,
+  and `release/1.3.9` is the active governed patch candidate for the installed
+  `vihs` launcher fix.
 - The current exact closeout blocker is closed after final Marketplace
   publication retention.

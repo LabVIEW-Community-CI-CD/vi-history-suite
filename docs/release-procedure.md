@@ -11,19 +11,20 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.3.7`.
+- The current exact released line is `v1.3.8`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.3.7`.
-- The current develop package line on `develop` is `1.3.7`.
-- The active exact release candidate line on `develop` is `1.3.8`.
-- The active release-candidate branch is `release/1.3.8`.
+- The current published package line on `main` is `1.3.8`.
+- The current develop package line on `develop` is `1.3.8`.
+- The active exact release candidate line on `develop` is `1.3.9`.
+- The active release-candidate branch is `release/1.3.9`.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
   is none.
-- Exact `v1.3.7` remains the closed public GitHub and VS Code Marketplace
-  baseline while `release/1.3.8` carries the installed `vihs` launcher fix for
-  users without global `node` on `PATH`.
+- Exact authority `v1.3.8` is retained as blocked historical public GitHub
+  incident evidence while the last fully closed public GitHub and VS Code
+  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
+  asset-first retry line for the installed `vihs` launcher fix.
 - The pre-tag public-exact proof package script is
   `npm run public:exact:pretag:proof`.
 - The pre-tag public-exact proof GitLab job is `public_exact_pretag_proof`.
@@ -83,12 +84,12 @@
   `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
   retained verify receipt records `verifyGateStatus=pass` and
   `verifyGateAllowed=true`, and VS Code Marketplace now serves `1.3.7`.
-- Publication incident `v1.3.8` is active: GitLab authority exact tag
-  `v1.3.8` exists, but public GitHub release `312768592` is already published
-  and immutable with zero assets. Treat this as
-  `published-immutable-release-assets-incomplete`; VS Code Marketplace remains
-  `1.3.7`, and no later Marketplace act is admitted until a future exact line
-  is published through the asset-first GitHub release publisher.
+- Publication incident `v1.3.8` is retained as blocked historical evidence:
+  GitLab authority exact tag `v1.3.8` exists, but public GitHub release
+  `312768592` is already published and immutable with zero assets. Treat this
+  as `published-immutable-release-assets-incomplete`; VS Code Marketplace
+  remains `1.3.7`, and `release/1.3.9` is the next exact line that must be
+  published through the asset-first GitHub release publisher.
 - Future public GitHub exact publication must be asset-first: create a draft,
   upload the VSIX and checksum from GitLab authority evidence, verify the draft
   assets by release id, and only then publish.
@@ -220,8 +221,9 @@
   published and verified, the exact release can be retained as closed.
 - No GitHub release publication, Marketplace publication, or other production
   mutation shall occur outside the repo-owned factory/orchestrator contract.
-- Exact `v1.3.7` is the current exact closed line; `release/1.3.8` is the
-  active candidate for the installed `vihs` launcher fix.
+- Exact `v1.3.8` is the current authority exact line retained as blocked
+  historical incident evidence; `release/1.3.9` is the active candidate for
+  the installed `vihs` launcher fix.
 - Exact release closeout is not complete until the exact released `main` line
   has also been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green.
@@ -479,19 +481,19 @@ separate afterward.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.3.7`, tracked in the
-  exact authority line while the current develop package line remains `1.3.7`;
+- The current published package line on `main` is `1.3.8`, tracked in the
+  exact authority line while the current develop package line remains `1.3.8`;
   that split must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
   exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
   `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, or exact `v1.3.7` release
   evidence.
-- The current develop package line on `develop` is `1.3.7`, public GitHub
+- The current develop package line on `develop` is `1.3.8`, public GitHub
   `main` now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
   `312517425` is published, VS Code Marketplace serves `1.3.7`, and
-  `release/1.3.8` opens from that retained baseline for the installed `vihs`
-  launcher fix.
+  `release/1.3.9` opens from that retained baseline plus blocked `v1.3.8`
+  historical incident evidence for the installed `vihs` launcher fix.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.
