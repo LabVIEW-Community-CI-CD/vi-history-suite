@@ -125,9 +125,9 @@ describe('release governance package', () => {
     expect(adr8).toContain('vi-history-suite-expert-agent-reviewer');
     expect(adr8).toContain('exact tagging and Marketplace publication blocked until the latest');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.3.6`');
-    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `1.3.7`');
-    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.7`');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.3.7`');
+    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: none');
+    expect(hostedGovernance).toContain('active release-candidate branch: none');
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
     expect(hostedGovernance).toContain('active hotfix branch: none');
     expect(hostedGovernance).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -135,8 +135,8 @@ describe('release governance package', () => {
     expect(hostedGovernance).toContain('chosen bump: `patch`');
     expect(hostedGovernance).toContain('public_exact_pretag_proof');
     expect(hostedGovernance).toContain('npm run public:exact:pretag:proof');
-    expect(hostedGovernance).toContain('npm run public:github:exact:transaction:assess');
-    expect(hostedGovernance).toContain('`422 tag_name was used by an immutable release`');
+    expect(hostedGovernance).toContain('npm run public:github:exact:transaction:verify');
+    expect(hostedGovernance).toContain('Marketplace closeout rather than another SemVer opening');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(
