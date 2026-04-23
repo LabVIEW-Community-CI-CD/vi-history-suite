@@ -201,6 +201,10 @@ Authority release facts:
   `npm run public:github:exact:transaction:verify`
 - retained public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- VS Code Marketplace publication prep package script:
+  `npm run vscode:marketplace:prepare`
+- retained VS Code Marketplace publication prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
 - software factory rehearsal package script:
@@ -211,6 +215,8 @@ Authority release facts:
   `npm run software:factory:publish`
 - software factory verify package script:
   `npm run software:factory:verify`
+- VS Code Marketplace prep package script:
+  `npm run vscode:marketplace:prepare`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
@@ -221,6 +227,8 @@ Authority release facts:
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
 - retained software factory verify receipt:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- retained VS Code Marketplace prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - software-factory phase contract:
   assess, rehearse, and repair remain admitted non-production phases, and
   publish / verify are now retained as guarded non-mutating contract phases
@@ -246,6 +254,11 @@ Authority release facts:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
   and the exact assets match the retained authority manifest
 - VS Code Marketplace retained published version: `1.3.0`
+- VS Code Marketplace publication prep is ready and non-mutating:
+  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
+  verify gate, exact authority VSIX/checksum evidence, live Marketplace
+  `1.3.0` readback, local PAT locator, and pinned `vsce` publish command
+  shape without retaining secret material or publishing.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`

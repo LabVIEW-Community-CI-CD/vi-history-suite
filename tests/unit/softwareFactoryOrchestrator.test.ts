@@ -29,48 +29,46 @@ const orchestrator = require(path.join(
 const baseFacts = {
   recordedAt: '2026-04-22T23:59:59.000Z',
   repoRoot: 'C:/dev/vihs',
-  currentBranch: 'feature/software-factory-publish-verify-contract',
-  activeFeatureBranch: 'feature/software-factory-publish-verify-contract',
+  currentBranch: 'feature/vscode-marketplace-v1.3.7-publication-prep',
+  activeFeatureBranch: null,
   integrationBranch: 'develop',
   exactReleaseLineBranch: 'main',
   releaseBranchFamily: 'release/*',
   hotfixBranchFamily: 'hotfix/*',
   featureBranchFamily: 'feature/*',
-  exactLine: 'v1.3.6',
-  packageLine: '1.3.6',
-  developPackageLine: '1.3.6',
+  exactLine: 'v1.3.7',
+  packageLine: '1.3.7',
+  developPackageLine: '1.3.7',
   semverFrozen: true,
   semverFreezeRationale:
-    'Later SemVer openings remain frozen while the current exact public GitHub repair state on v1.3.6 stays incomplete.',
+    'Later SemVer openings remain frozen while exact v1.3.7 is closed on public GitHub but still pending the separate VS Code Marketplace publication act.',
   requiredChecks: ['public_exact_pretag_proof', 'test_extension'],
   preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
   publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
   publicGitHubExactTransactionReceiptPath:
     '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-  publicGitHubMainCommit: 'bd81bfe6743348c9138c3f0f4967c790a235184f',
-  publicGitHubTag: 'v1.3.6',
-  publicGitHubDraftReleaseId: 312363117,
-  publicGitHubLastPublishedRelease: 'v1.3.1',
-  blockerCode: 'draft-release-tag-lookup-unavailable',
-  blockerSummary:
-    'Immutable releases are enabled while exact-tag release lookup still returns 404.',
-  repairInPlaceRequired: true,
-  repairInPlaceAllowed: true,
-  nextAllowedAction:
-    'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
-  publicGitHubReleasePublished: false,
+  publicGitHubMainCommit: '704e629eed72d7ea5f46e2e45b1e17e58655edce',
+  publicGitHubTag: 'v1.3.7',
+  publicGitHubDraftReleaseId: 312517425,
+  publicGitHubLastPublishedRelease: 'v1.3.7',
+  blockerCode: null,
+  blockerSummary: null,
+  repairInPlaceRequired: false,
+  repairInPlaceAllowed: false,
+  nextAllowedAction: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation',
+  publicGitHubReleasePublished: true,
   marketplaceItem: 'svelderrainruiz.vi-history-suite',
   marketplaceVersion: '1.3.0',
   authorityReleaseManifestPath:
-    '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+    '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json',
   releaseAssetsRetainedAgainstManifest: true,
   draftPublishabilityByIdStatusCode: 200,
   draftPublishabilityTagMatchesAuthority: true,
   safeToAttemptRepairPublish: false,
   draftReleaseUrl:
-    'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+    'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7',
   draftReleaseTargetCommitish: 'main',
-  draftReleaseLookupStatusCode: 404,
+  draftReleaseLookupStatusCode: 200,
   immutableReleasesEnabled: true,
   immutableReleasesEnforcedByOwner: false
 };
@@ -93,7 +91,7 @@ describe('software factory orchestrator contract', () => {
     );
   });
 
-  it('retains an assess-phase blocked factory state for the frozen v1.3.6 recovery case', () => {
+  it('retains an assess-phase factory state for GitHub-closed v1.3.7 with Marketplace pending', () => {
     const report = orchestrator.assessFactoryState(baseFacts);
 
     expect(report.status).toBe('blocked');
@@ -106,7 +104,7 @@ describe('software factory orchestrator contract', () => {
         assessOnly: false,
         nonProductionOnly: true,
         productionMutationAllowed: false,
-        activeFeatureBranch: 'feature/software-factory-publish-verify-contract'
+        activeFeatureBranch: null
       })
     );
     expect(report.receiptContract).toEqual({
@@ -115,26 +113,30 @@ describe('software factory orchestrator contract', () => {
         rehearse: 'npm run software:factory:rehearse',
         repair: 'npm run software:factory:repair',
         publish: 'npm run software:factory:publish',
-        verify: 'npm run software:factory:verify'
+        verify: 'npm run software:factory:verify',
+        marketplacePrepare: 'npm run vscode:marketplace:prepare'
       },
-      receiptPaths: orchestrator.DEFAULT_PHASE_RECEIPT_PATHS,
+      receiptPaths: {
+        ...orchestrator.DEFAULT_PHASE_RECEIPT_PATHS,
+        marketplacePrepare:
+          '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json'
+      },
       currentPhaseReceiptPath: '.cache/software-factory-orchestrator/latest/software-factory-state.json'
     });
     expect(report.recoveryRules).toEqual({
-      repairInPlaceRequired: true,
-      repairInPlaceAllowed: true,
+      repairInPlaceRequired: false,
+      repairInPlaceAllowed: false,
       noBumpRule: true,
       receiptDrivenRecovery: true,
       publicGitHubExactTransactionReceiptPath:
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-      nextAllowedAction:
-        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
+      nextAllowedAction: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation'
     });
     expect(report.phases).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'authority-boundary', status: 'pass' }),
         expect.objectContaining({ id: 'production-mutation-policy', status: 'pass' }),
-        expect.objectContaining({ id: 'recovery-case', status: 'blocked' }),
+        expect.objectContaining({ id: 'recovery-case', status: 'pass' }),
         expect.objectContaining({ id: 'marketplace-boundary', status: 'blocked' })
       ])
     );
@@ -152,24 +154,23 @@ describe('software factory orchestrator contract', () => {
       receiptPath: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
       transactionReceiptPath:
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-      targetTag: 'v1.3.6',
-      targetDraftReleaseId: 312363117,
+      targetTag: 'v1.3.7',
+      targetDraftReleaseId: 312517425,
       targetDraftReleaseUrl:
-        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7',
       authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+        '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json',
       exactAssetsRetainedAgainstManifest: true,
       draftReleaseReadableById: true,
       draftReleaseTagMatchesAuthority: true,
       immutableReleasesEnabled: true,
       safePublishTransitionProven: false,
-      nextAllowedAction:
-        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
+      nextAllowedAction: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation'
     });
     expect(report.phases).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'rehearsal-readiness', status: 'pass' }),
-        expect.objectContaining({ id: 'rehearsal-publishability-boundary', status: 'blocked' })
+        expect.objectContaining({ id: 'rehearsal-publishability-boundary', status: 'pass' })
       ])
     );
   });
@@ -185,33 +186,31 @@ describe('software factory orchestrator contract', () => {
       mutationPermitted: false,
       packageScript: 'npm run software:factory:repair',
       receiptPath: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
-      targetMode: 'repair-in-place',
-      targetTag: 'v1.3.6',
-      targetDraftReleaseId: 312363117,
+      targetMode: 'github-release-repair-not-required-marketplace-pending',
+      targetTag: 'v1.3.7',
+      targetDraftReleaseId: 312517425,
       targetDraftReleaseUrl:
-        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7',
       authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+        '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json',
       exactAssetsRetainedAgainstManifest: true,
       draftReleaseReadableById: true,
       draftReleaseTagMatchesAuthority: true,
       safePublishTransitionProven: false,
-      currentBlockerCode: 'draft-release-tag-lookup-unavailable',
-      nextAllowedAction:
-        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
+      currentBlockerCode: null,
+      nextAllowedAction: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation',
       deferredWriteActions: [
-        'publish-existing-github-draft-release-in-place',
-        'verify-public-github-release-publication',
-        'verify-marketplace-remains-blocked-until-github-release-closes',
-        'publish-vscode-marketplace-v1.3.6-after-github-release-verification'
+        'prepare-vscode-marketplace-v1.3.7-publication',
+        'publish-vscode-marketplace-v1.3.7-after-explicit-approval',
+        'verify-vscode-marketplace-v1.3.7-publication'
       ],
       rule:
-        'This repair contract remains non-mutating; later publish and verify phases still require separate explicit production approval after safe publishability is proven.'
+        'This repair contract remains non-mutating; GitHub repair is closed and the later Marketplace publish/verify phases still require separate explicit production approval.'
     });
     expect(report.phases).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'repair-contract', status: 'pass' }),
-        expect.objectContaining({ id: 'repair-write-boundary', status: 'blocked' })
+        expect.objectContaining({ id: 'repair-write-boundary', status: 'pass' })
       ])
     );
   });
@@ -227,23 +226,22 @@ describe('software factory orchestrator contract', () => {
       mutationPermitted: false,
       packageScript: 'npm run software:factory:publish',
       receiptPath: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
-      targetMode: 'publish-in-place-guard',
-      targetTag: 'v1.3.6',
-      targetDraftReleaseId: 312363117,
+      targetMode: 'vscode-marketplace-publication-guard',
+      targetTag: 'v1.3.7',
+      targetDraftReleaseId: 312517425,
       targetDraftReleaseUrl:
-        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7',
       authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+        '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json',
       exactAssetsRetainedAgainstManifest: true,
       draftReleaseReadableById: true,
       draftReleaseTagMatchesAuthority: true,
       safePublishTransitionProven: false,
-      currentBlockerCode: 'draft-release-tag-lookup-unavailable',
-      deferredWriteAction: 'publish-existing-github-draft-release-in-place',
-      nextAllowedAction:
-        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
+      currentBlockerCode: null,
+      deferredWriteAction: 'publish-vscode-marketplace-v1.3.7-with-pinned-vsce',
+      nextAllowedAction: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation',
       rule:
-        'This guarded publish contract remains non-mutating; it retains the exact in-place publish preconditions and still forbids GitHub release publication in this slice.'
+        'This guarded publish contract remains non-mutating; it retains the exact Marketplace publish preconditions and still forbids VS Code Marketplace publication in this slice.'
     });
     expect(report.phases).toEqual(
       expect.arrayContaining([
@@ -265,21 +263,20 @@ describe('software factory orchestrator contract', () => {
       packageScript: 'npm run software:factory:verify',
       receiptPath: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json',
       targetMode: 'post-publish-verify-guard',
-      targetTag: 'v1.3.6',
-      targetDraftReleaseId: 312363117,
-      expectedGitHubRelease: 'v1.3.6',
-      expectedMarketplaceVersion: '1.3.6',
-      currentPublishedGitHubRelease: 'v1.3.1',
+      targetTag: 'v1.3.7',
+      targetDraftReleaseId: 312517425,
+      expectedGitHubRelease: 'v1.3.7',
+      expectedMarketplaceVersion: '1.3.7',
+      currentPublishedGitHubRelease: 'v1.3.7',
       currentMarketplaceVersion: '1.3.0',
-      currentBlockerCode: 'draft-release-tag-lookup-unavailable',
+      currentBlockerCode: null,
       deferredReadActions: [
         'verify-public-github-release-publication',
         'verify-public-github-release-assets-and-checksums',
-        'verify-marketplace-remains-blocked-until-github-release-closes',
-        'verify-marketplace-v1.3.6-after-github-release-publication'
+        'prepare-vscode-marketplace-v1.3.7-publication',
+        'verify-marketplace-v1.3.7-after-marketplace-publication'
       ],
-      nextAllowedAction:
-        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
+      nextAllowedAction: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation',
       rule:
         'This guarded verify contract remains non-mutating; it retains the exact post-publish verification expectations and still forbids any production mutation in this slice.'
     });
@@ -304,6 +301,7 @@ describe('software factory orchestrator contract', () => {
     expect(markdown).toContain('`npm run software:factory:repair`');
     expect(markdown).toContain('`npm run software:factory:publish`');
     expect(markdown).toContain('`npm run software:factory:verify`');
+    expect(markdown).toContain('`npm run vscode:marketplace:prepare`');
     expect(markdown).toContain('.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json');
     expect(markdown).toContain('.cache/software-factory-orchestrator/latest/repair/software-factory-state.json');
     expect(markdown).toContain('.cache/software-factory-orchestrator/latest/publish/software-factory-state.json');

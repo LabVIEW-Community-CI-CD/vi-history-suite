@@ -2021,6 +2021,11 @@ Information-for-users review cases:
   verify-contract receipt, retains the expected public GitHub release and
   VS Code Marketplace verification facts, and keeps verification claims
   blocked until those production surfaces actually close
+- `TEST-UNIT-379`: verify the non-mutating
+  `vscode:marketplace:prepare` surface verifies the published public GitHub
+  exact `v1.3.7` release, exact VSIX/checksum evidence, current Marketplace
+  version, local Marketplace PAT locator, and pinned `vsce` command shape,
+  writes JSON plus Markdown receipts, and performs no Marketplace mutation
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2139,6 +2144,14 @@ Information-for-users review cases:
   guarded non-mutating `software:factory:verify` surface plus receipt path
   that records the exact `v1.3.6` GitHub-release and Marketplace verification
   expectations while verification claims remain blocked
+- `TEST-DOC-132`: review README, current-state, release procedure, the
+  Marketplace publication ledger, the sustainment package, the public-release
+  candidate package, SRS, RTM, and the test plan and confirm the repo now
+  retains one non-mutating `vscode:marketplace:prepare` surface plus receipt
+  path that proves public GitHub exact `v1.3.7` is closed, validates the exact
+  VSIX/checksum evidence and PAT locator without secret retention, retains the
+  pinned `vsce` publish command shape, and keeps Marketplace publication
+  pending explicit production approval
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

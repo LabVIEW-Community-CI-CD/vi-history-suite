@@ -56,7 +56,8 @@ describe('public release candidate control surface', () => {
       publicGitHubDraftReleaseUsesUntaggedUrl: false,
       nextSeparateAct: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation',
       marketplaceVersionRetained: '1.3.0',
-      publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify'
+      publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
+      vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare'
     });
     expect(candidate.softwareFactoryGovernance).toEqual({
       status: 'github-release-published-marketplace-pending-no-active-feature-branch',
@@ -66,14 +67,17 @@ describe('public release candidate control surface', () => {
         rehearse: 'npm run software:factory:rehearse',
         repair: 'npm run software:factory:repair',
         publish: 'npm run software:factory:publish',
-        verify: 'npm run software:factory:verify'
+        verify: 'npm run software:factory:verify',
+        marketplacePrepare: 'npm run vscode:marketplace:prepare'
       },
       receiptPaths: {
         assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
         rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
         repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
         publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
-        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
+        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json',
+        marketplacePrepare:
+          '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json'
       },
       admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
       guardedNonMutatingContractPhases: ['publish', 'verify'],
@@ -114,6 +118,19 @@ describe('public release candidate control surface', () => {
       repairInPlaceAllowed: false,
       nextAllowedAction: 'publish-v1.3.7-to-vscode-marketplace-after-governed-validation'
     });
+    expect(candidate.localProofs.vscodeMarketplacePublicationPrep).toMatchObject({
+      status: 'ready-for-explicit-production-approval',
+      packageScript: 'npm run vscode:marketplace:prepare',
+      expectedMarketplaceVersion: '1.3.7',
+      currentMarketplaceVersion: '1.3.0',
+      publicGitHubVerifyGateStatus: 'pass',
+      publicGitHubReleaseId: 312517425,
+      vsixSha256Verified: true,
+      vscePatLocatorStatus: 'ok',
+      secretRetained: false,
+      pinnedVscePackage: '@vscode/vsce@3.7.1',
+      productionMutationAttempted: false
+    });
     expect(candidate.activeBlockers).toEqual([
       expect.objectContaining({
         id: 'BLOCKER-VSCODE-MARKETPLACE-PUBLICATION',
@@ -134,6 +151,8 @@ describe('public release candidate control surface', () => {
     );
     expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.7`');
     expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.0`');
+    expect(candidateMarkdown).toContain('`npm run vscode:marketplace:prepare`');
+    expect(candidateMarkdown).toContain('`status=ready`');
 
     expect(currentState).toContain('current exact released line: `v1.3.7`');
     expect(currentState).toContain('current published package line on `main`: `1.3.7`');
@@ -157,7 +176,8 @@ describe('public release candidate control surface', () => {
       'VHS-REQ-573',
       'VHS-REQ-574',
       'VHS-REQ-575',
-      'VHS-REQ-576'
+      'VHS-REQ-576',
+      'VHS-REQ-577'
     ]) {
       expect(srs).toContain(requirementId);
       expect(rtm).toContain(requirementId);
@@ -173,6 +193,7 @@ describe('public release candidate control surface', () => {
       'TEST-UNIT-376',
       'TEST-UNIT-377',
       'TEST-UNIT-378',
+      'TEST-UNIT-379',
       'TEST-DOC-123',
       'TEST-DOC-124',
       'TEST-DOC-125',
@@ -181,7 +202,8 @@ describe('public release candidate control surface', () => {
       'TEST-DOC-128',
       'TEST-DOC-129',
       'TEST-DOC-130',
-      'TEST-DOC-131'
+      'TEST-DOC-131',
+      'TEST-DOC-132'
     ]) {
       expect(testPlan).toContain(testId);
     }

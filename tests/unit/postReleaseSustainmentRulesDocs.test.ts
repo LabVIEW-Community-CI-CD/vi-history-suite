@@ -41,6 +41,9 @@ describe('post-release sustainment rules package', () => {
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
         publicGitHubExactTransactionReceiptPath:
           '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+        vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare',
+        vscodeMarketplacePublicationPrepReceiptPath:
+          '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json',
         publicDefaultBranch: 'main',
         publicCodespaceBranch: 'develop',
         integrationBranch: 'develop',
@@ -78,7 +81,8 @@ describe('post-release sustainment rules package', () => {
       expect.arrayContaining([
         'future sessions shall assess or verify the current exact public GitHub transaction through the repo-owned controller before any further public GitHub release or VS Code Marketplace act',
         "future sessions shall retain the controller's non-mutating draft-publishability probe before any in-place public GitHub release repair attempt",
-        'future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds'
+        'future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds',
+        'future sessions shall run and retain npm run vscode:marketplace:prepare before any mutating VS Code Marketplace publication act'
       ])
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
@@ -115,6 +119,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.7`');
     expect(rulesDoc).toContain('later SemVer openings beyond `1.3.7` are frozen');
     expect(rulesDoc).toContain('public release `312517425` is published on `v1.3.7`');
+    expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
+    expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(rulesDoc).toContain(
       '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/'
     );
@@ -122,6 +128,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('none');
     expect(rulesDoc).toContain('sole production recovery target: `v1.3.7`');
     expect(rulesDoc).toContain('separate VS Code Marketplace publication act for `v1.3.7`');
+    expect(rulesDoc).toContain('Marketplace prep rule');
     expect(readme).toContain('current exact released line: `v1.3.7`');
     expect(currentState).toContain('current exact released line: `v1.3.7`');
     expect(releaseProcedure).toContain('The current exact released line is `v1.3.7`.');

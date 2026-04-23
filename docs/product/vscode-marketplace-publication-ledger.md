@@ -21,6 +21,12 @@ The machine-readable companion surface for this ledger is:
 - Current published Marketplace version: `1.3.0`
 - Current publication date: `2026-04-21`
 - Current verification surface: official gallery extension query
+- Current pending publication: `1.3.7`
+- Pending publication prep command: `npm run vscode:marketplace:prepare`
+- Pending publication prep receipt:
+  `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- Pending publication prep status: ready; no Marketplace publish mutation has
+  been attempted for `1.3.7`
 
 ## Publications
 
@@ -43,3 +49,8 @@ The machine-readable companion surface for this ledger is:
   verification surface before the exact release is treated as closed.
 - Secret material such as Azure DevOps PAT values shall not be retained in this
   ledger, its JSON companion, or other repo evidence.
+- Before a mutating Marketplace publication act, the prep receipt shall prove
+  the public GitHub exact release is verified, the authority VSIX/checksum
+  evidence matches, the live Marketplace version is still stale, the local PAT
+  locator is ready without retaining the secret, and the pinned `vsce` command
+  shape is retained.

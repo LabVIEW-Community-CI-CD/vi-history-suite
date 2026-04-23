@@ -10,6 +10,10 @@
   "currentPublishedVersion": "1.3.0",
   "currentPublishedDate": "2026-04-21",
   "currentVerificationSurface": "official-gallery-extensionquery",
+  "pendingPublicationVersion": "1.3.7",
+  "pendingPublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
+  "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
+  "pendingPublicationPrepStatus": "ready-no-marketplace-mutation-attempted",
   "secretHandling": "do-not-retain-pat-or-secret-material",
   "publicationHistory": [
     {
