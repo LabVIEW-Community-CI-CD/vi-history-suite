@@ -50,27 +50,21 @@ function parsePublicWindowsInstalledUserContractArgs(argv) {
 }
 
 function createPublicWindowsInstalledUserContractSteps() {
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  const vitestRunner = path.join(repoRoot, 'node_modules', 'vitest', 'vitest.mjs');
   return [
     {
       id: 'runtime-settings-cli-contract',
       title: 'Validate generated vihs launcher and runtime-settings CLI on Windows',
-      command: npmCommand,
-      args: ['exec', '--', 'vitest', 'run', 'tests/unit/localRuntimeSettingsCli.test.ts'],
+      command: process.execPath,
+      args: [vitestRunner, 'run', 'tests/unit/localRuntimeSettingsCli.test.ts'],
       stdoutFileName: 'runtime-settings-cli-contract.stdout.log',
       stderrFileName: 'runtime-settings-cli-contract.stderr.log'
     },
     {
       id: 'public-windows-installed-user-contract',
       title: 'Validate the public Windows installed-user admission matrix surface',
-      command: npmCommand,
-      args: [
-        'exec',
-        '--',
-        'vitest',
-        'run',
-        'tests/unit/publicWindowsInstalledUserContract.test.ts'
-      ],
+      command: process.execPath,
+      args: [vitestRunner, 'run', 'tests/unit/publicWindowsInstalledUserContract.test.ts'],
       stdoutFileName: 'public-windows-installed-user-contract.stdout.log',
       stderrFileName: 'public-windows-installed-user-contract.stderr.log'
     }
