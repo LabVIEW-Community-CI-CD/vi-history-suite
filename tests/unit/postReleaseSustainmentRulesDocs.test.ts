@@ -41,6 +41,9 @@ describe('post-release sustainment rules package', () => {
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
         publicGitHubExactTransactionReceiptPath:
           '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+        windowsExactVsixInstallProofPackageScript: 'npm run vscode:marketplace:install-proof',
+        windowsExactVsixInstallProofReceiptPath:
+          '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
         vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare',
         vscodeMarketplacePublicationPrepReceiptPath:
           '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json',
@@ -126,6 +129,11 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('public release `312994104` is published on `v1.3.9`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
     expect(rulesDoc).toContain('asset-first GitHub release rule');
+    expect(rulesDoc).toContain('`npm run vscode:marketplace:install-proof`');
+    expect(rulesDoc).toContain(
+      '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
+    );
+    expect(rulesDoc).toContain('runtimeValidationOutcome=ready');
     expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(rulesDoc).toContain(
@@ -141,5 +149,6 @@ describe('post-release sustainment rules package', () => {
     expect(currentState).toContain('current exact released line: `v1.3.9`');
     expect(releaseProcedure).toContain('The current exact released line is `v1.3.9`.');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
+    expect(releaseProcedure).toContain('The Windows exact-VSIX install proof package script is');
   });
 });

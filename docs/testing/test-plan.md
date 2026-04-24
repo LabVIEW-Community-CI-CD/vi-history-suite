@@ -2041,6 +2041,16 @@ Information-for-users review cases:
   zero-size, mismatched, or checksum-invalid assets is classified as
   `published-immutable-release-assets-incomplete` and blocks Marketplace
   publication.
+- `TEST-UNIT-383`: verify the non-mutating
+  `vscode:marketplace:install-proof` surface installs the selected authority
+  VSIX into isolated VS Code user-data/extensions roots on Windows, verifies
+  the exact VSIX SHA-256 against the authority manifest, and retains passing
+  bare `vihs` plus `vihs --validate` receipt evidence without ambient Node on
+  PATH.
+- `TEST-UNIT-384`: verify the Marketplace prep surface requires the retained
+  Windows exact-VSIX install proof before a future mutating Marketplace act is
+  admitted, while exact lines that are already published may remain in
+  retained-publication state.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2181,6 +2191,15 @@ Information-for-users review cases:
   externally blocked because it is published, immutable, and has zero assets,
   while the later exact `v1.3.9` GitHub and VS Code Marketplace publication
   acts are retained as closed.
+- `TEST-DOC-136`: review release-publication state, release procedure,
+  Marketplace ledger, current-state, ADR-0036, SRS, RTM, and the test plan and
+  confirm the repo retains one governed Windows exact-VSIX install proof
+  package script plus receipt path for the current exact line.
+- `TEST-DOC-137`: review release-control docs, the Marketplace ledger,
+  sustainment rules, public-release candidate package, SRS, RTM, and the test
+  plan and confirm future Marketplace publication is blocked until the
+  retained Windows exact-VSIX install proof passes, while already-published
+  exact lines may remain in retained-publication state.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

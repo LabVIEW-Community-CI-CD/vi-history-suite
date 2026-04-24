@@ -13,6 +13,7 @@ const publicationState = require(path.join(
 )) as {
   buildMarketplaceFactoryAction: (kind: string, versionOrTag: string) => string;
   buildMarketplacePublishNextAction: (versionOrTag: string) => string;
+  buildWindowsExactVsixInstallProofNextAction: (versionOrTag: string) => string;
   deriveTargetFromReceiptOrState: (
     receipt: Record<string, unknown> | null,
     fsApi?: typeof fs
@@ -52,7 +53,16 @@ describe('release publication state resolver', () => {
       itemName: 'svelderrainruiz.vi-history-suite',
       currentPublishedVersion: '1.3.9',
       expectedVersion: '1.3.9',
-      status: 'published-and-verified'
+      status: 'published-and-verified',
+      windowsExactVsixInstallProof: {
+        packageScript: 'npm run vscode:marketplace:install-proof',
+        receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
+        status: 'passed',
+        authorityTag: 'v1.3.9',
+        runtimeValidationOutcome: 'ready',
+        launcherPathStrippedToLauncherAndSystem32: true,
+        ambientNodeOnPathRequired: false
+      }
     });
     expect(state.incident).toMatchObject({
       active: false,
@@ -71,6 +81,9 @@ describe('release publication state resolver', () => {
     expect(publicationState.versionFromTag('v1.4.2')).toBe('1.4.2');
     expect(publicationState.buildMarketplacePublishNextAction('1.4.2')).toBe(
       'publish-v1.4.2-to-vscode-marketplace-after-explicit-production-approval'
+    );
+    expect(publicationState.buildWindowsExactVsixInstallProofNextAction('v1.4.2')).toBe(
+      'retain-windows-exact-vsix-install-proof-for-v1.4.2-before-marketplace-publication'
     );
     expect(publicationState.buildMarketplaceFactoryAction('publishWithPinnedVsce', 'v1.4.2')).toBe(
       'publish-vscode-marketplace-v1.4.2-with-pinned-vsce'

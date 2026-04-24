@@ -90,6 +90,10 @@ Current version-line contract:
   `npm run public:github:exact:transaction:verify`
 - public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- Windows exact-VSIX install proof package script:
+  `npm run vscode:marketplace:install-proof`
+- Windows exact-VSIX install proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - VS Code Marketplace publication prep package script:
   `npm run vscode:marketplace:prepare`
 - VS Code Marketplace publication prep receipt:
@@ -148,6 +152,8 @@ Current control decision for public exact hardening:
   `npm run software:factory:publish`
 - factory verify package script:
   `npm run software:factory:verify`
+- VS Code Marketplace install-proof package script:
+  `npm run vscode:marketplace:install-proof`
 - VS Code Marketplace prep package script:
   `npm run vscode:marketplace:prepare`
 - factory assessment receipt:
@@ -160,6 +166,8 @@ Current control decision for public exact hardening:
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
 - factory verify receipt:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- VS Code Marketplace install-proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - VS Code Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - current factory phases:
@@ -195,6 +203,13 @@ Current control decision for public exact hardening:
   phases; publish and verify are automatic guarded non-mutating contract
   phases; later VS Code Marketplace publish phases still require explicit
   production approval
+- Marketplace prep rule:
+  `npm run vscode:marketplace:install-proof` must pass and retain its receipt
+  before any mutating VS Code Marketplace publication act; it installs the
+  exact authority VSIX into isolated VS Code user-data/extensions roots,
+  runs bare `vihs` plus `vihs --validate`, and fails closed unless
+  `runtimeValidationOutcome=ready`, the launcher PATH is stripped to the
+  isolated launcher root plus `System32`, and ambient Node is not required.
 - Marketplace prep rule:
   `npm run vscode:marketplace:prepare` must pass and retain its receipt before
   any mutating VS Code Marketplace publication act; for the current retained

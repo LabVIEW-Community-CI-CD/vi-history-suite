@@ -289,6 +289,40 @@ describe('localRuntimeSettingsCli', () => {
     expect(stdout.join('')).toContain('runtimeBlockedReason=installed-provider-invalid');
   });
 
+  it('accepts UTF-8 BOM-prefixed settings during validation', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-cli-bom-'));
+    tempDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    await fs.writeFile(
+      settingsFilePath,
+      '\uFEFF{\n  "viHistorySuite.runtimeProvider": "host",\n  "viHistorySuite.labviewVersion": "2026",\n  "viHistorySuite.labviewBitness": "x64"\n}\n',
+      'utf8'
+    );
+
+    const result = await runLocalRuntimeSettingsCli(['--validate', '--settings-file', settingsFilePath], {
+      locateRuntime: async (_platform, settings) => ({
+        platform: 'win32',
+        requestedProvider: settings.requestedProvider,
+        provider: 'host',
+        engine: 'labview-cli',
+        bitness: settings.bitness ?? 'x64',
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      })
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      settingsFilePath,
+      persistedProvider: 'host',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x64',
+      runtimeValidationOutcome: 'ready',
+      runtimeProvider: 'host'
+    });
+  });
+
   it('returns a non-zero exit code when required settings arguments are missing', async () => {
     const stderr: string[] = [];
 

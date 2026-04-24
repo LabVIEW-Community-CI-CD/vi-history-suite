@@ -41,6 +41,13 @@ function buildMarketplacePublishNextAction(versionOrTag) {
     : 'publish-selected-version-to-vscode-marketplace-after-explicit-production-approval';
 }
 
+function buildWindowsExactVsixInstallProofNextAction(versionOrTag) {
+  const version = versionFromTag(versionOrTag);
+  return version
+    ? `retain-windows-exact-vsix-install-proof-for-v${version}-before-marketplace-publication`
+    : 'retain-windows-exact-vsix-install-proof-before-marketplace-publication';
+}
+
 function buildMarketplaceFactoryAction(kind, versionOrTag) {
   const version = versionFromTag(versionOrTag);
   const versionSegment = version ? `v${version}` : 'selected-version';
@@ -160,6 +167,7 @@ module.exports = {
   DEFAULT_PUBLICATION_STATE_PATH,
   buildMarketplaceFactoryAction,
   buildMarketplacePublishNextAction,
+  buildWindowsExactVsixInstallProofNextAction,
   deriveTargetFromReceiptOrState,
   loadPublicationState,
   normalizeTag,

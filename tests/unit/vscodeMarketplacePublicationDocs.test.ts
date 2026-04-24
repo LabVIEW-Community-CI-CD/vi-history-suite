@@ -46,6 +46,13 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledger.currentPublishedDate).toBe('2026-04-23');
     expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery');
     expect(ledger.pendingPublicationVersion).toBeNull();
+    expect(ledger.pendingPublicationInstallProofPackageScript).toBe(
+      'npm run vscode:marketplace:install-proof'
+    );
+    expect(ledger.pendingPublicationInstallProofReceiptPath).toBe(
+      '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
+    );
+    expect(ledger.pendingPublicationInstallProofStatus).toBe('retain-passed-install-proof');
     expect(ledger.pendingPublicationPrepPackageScript).toBe(
       'npm run vscode:marketplace:prepare'
     );
@@ -57,6 +64,8 @@ describe('vs code marketplace publication and installed-user docs', () => {
 
     expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.9`');
     expect(ledgerDoc).toContain('Current pending publication: none');
+    expect(ledgerDoc).toContain('`npm run vscode:marketplace:install-proof`');
+    expect(ledgerDoc).toContain('retain-passed-install-proof');
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
@@ -65,6 +74,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(currentState).toContain('VS Code Marketplace listing');
     expect(currentState).toContain('[vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)');
     expect(releaseProcedure).toContain('VS Code Marketplace version are all published');
+    expect(releaseProcedure).toContain('npm run vscode:marketplace:install-proof');
     expect(releaseProcedure).toContain('scripts/runPinnedVsce.js');
     expect(releaseProcedure).toContain('Marketplace: Manage');
     expect(releaseProcedure).toContain('approved operator fallback');
@@ -72,6 +82,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(adr).toContain('manual Marketplace portal-upload fallback');
     expect(adr).toContain('do not retain PAT values or other secret material in repo evidence');
     expect(adr).toContain('packaged README content stays version-agnostic');
+    expect(adr).toContain('Windows exact-VSIX install proof');
   });
 
   it('keeps the Marketplace-linked entry surfaces installed-user first', () => {

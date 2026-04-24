@@ -885,7 +885,9 @@ function normalizeSettingsJsoncText(
   existingSettingsText: string | undefined,
   settingsFilePath: string
 ): string {
-  const candidateText = existingSettingsText?.trim() ? existingSettingsText : '{}';
+  const candidateText = stripUtf8ByteOrderMark(
+    existingSettingsText?.trim() ? existingSettingsText : '{}'
+  );
   const parseErrors: ParseError[] = [];
   const parsed = parse(candidateText, parseErrors, {
     allowTrailingComma: true,
@@ -901,6 +903,10 @@ function normalizeSettingsJsoncText(
   }
 
   return candidateText;
+}
+
+function stripUtf8ByteOrderMark(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
 function applySettingsJsoncEdit(

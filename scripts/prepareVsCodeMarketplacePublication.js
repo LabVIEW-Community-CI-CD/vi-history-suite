@@ -22,11 +22,13 @@ const DEFAULT_EVIDENCE_DIR = path.join(
 );
 const DEFAULT_TRANSACTION_RECEIPT_PATH =
   '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json';
+const DEFAULT_WINDOWS_INSTALL_PROOF_RECEIPT_PATH =
+  '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json';
 const DEFAULT_MARKETPLACE_ITEM = 'svelderrainruiz.vi-history-suite';
 
 function getUsage() {
   return [
-    'Usage: node scripts/prepareVsCodeMarketplacePublication.js [--evidence-dir <path>] [--pat-path <path>] [--marketplace-item <publisher.extension>] [--transaction-receipt <path>] [--help]',
+    'Usage: node scripts/prepareVsCodeMarketplacePublication.js [--evidence-dir <path>] [--pat-path <path>] [--marketplace-item <publisher.extension>] [--transaction-receipt <path>] [--install-proof-receipt <path>] [--help]',
     '',
     'Prepare the governed VS Code Marketplace publication act without publishing.',
     'The command verifies the public GitHub exact-release gate, exact VSIX/checksum evidence, current Marketplace version,',
@@ -40,7 +42,8 @@ function parseArgs(argv) {
     evidenceDir: DEFAULT_EVIDENCE_DIR,
     patPath: null,
     marketplaceItem: DEFAULT_MARKETPLACE_ITEM,
-    transactionReceiptPath: DEFAULT_TRANSACTION_RECEIPT_PATH
+    transactionReceiptPath: DEFAULT_TRANSACTION_RECEIPT_PATH,
+    installProofReceiptPath: DEFAULT_WINDOWS_INSTALL_PROOF_RECEIPT_PATH
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -91,6 +94,16 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (argument === '--install-proof-receipt') {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error('Missing value for --install-proof-receipt');
+      }
+      parsed.installProofReceiptPath = value.trim();
+      index += 1;
+      continue;
+    }
+
     throw new Error(`Unknown argument: ${argument}`);
   }
 
@@ -102,6 +115,14 @@ function readJson(relativeOrAbsolutePath, fsApi = fs) {
     ? relativeOrAbsolutePath
     : path.join(repoRoot, relativeOrAbsolutePath);
   return JSON.parse(fsApi.readFileSync(targetPath, 'utf8'));
+}
+
+function tryReadJson(relativeOrAbsolutePath, fsApi = fs) {
+  try {
+    return readJson(relativeOrAbsolutePath, fsApi);
+  } catch {
+    return null;
+  }
 }
 
 function computeFileSha256(filePath, fsApi = fs) {
@@ -234,6 +255,59 @@ function buildPlannedVscePublishCommand(vsixPath) {
   };
 }
 
+function assessWindowsExactVsixInstallProof(installProofReceipt, expectedTag, expectedVersion, manifestSha) {
+  if (!installProofReceipt) {
+    return {
+      status: 'blocked',
+      summary:
+        `No retained Windows exact-VSIX install proof receipt was found for ${expectedTag}.`,
+      receiptPath: null,
+      authorityTag: null,
+      packageVersion: null,
+      runtimeValidationOutcome: null,
+      launcherPathStrippedToLauncherAndSystem32: false,
+      ambientNodeOnPathRequired: null,
+      allowed: false
+    };
+  }
+
+  const validateStep =
+    installProofReceipt.commands?.find?.((step) => step.id === 'vihs-validate') ?? null;
+  const bareStep = installProofReceipt.commands?.find?.((step) => step.id === 'vihs') ?? null;
+  const authorityTag = installProofReceipt.authority?.tag ?? null;
+  const packageVersion = installProofReceipt.authority?.packageVersion ?? null;
+  const observedVsixSha256 = installProofReceipt.authority?.observedVsixSha256 ?? null;
+  const runtimeValidationOutcome = validateStep?.runtimeValidationOutcome ?? null;
+  const launcherPathStrippedToLauncherAndSystem32 =
+    installProofReceipt.launcher?.pathStrippedToLauncherAndSystem32 === true;
+  const ambientNodeOnPathRequired =
+    installProofReceipt.launcher?.ambientNodeOnPathRequired === true;
+  const passed =
+    installProofReceipt.status === 'passed' &&
+    authorityTag === expectedTag &&
+    packageVersion === expectedVersion &&
+    bareStep?.status === 'passed' &&
+    validateStep?.status === 'passed' &&
+    runtimeValidationOutcome === 'ready' &&
+    observedVsixSha256 === manifestSha &&
+    launcherPathStrippedToLauncherAndSystem32 &&
+    ambientNodeOnPathRequired === false;
+
+  return {
+    status: passed ? 'pass' : 'blocked',
+    summary: passed
+      ? `The retained Windows exact-VSIX install proof for ${expectedTag} passed with bare vihs plus vihs --validate ready state.`
+      : `The retained Windows exact-VSIX install proof for ${expectedTag} is missing, stale, or did not retain a ready isolated validation state.`,
+    receiptPath: installProofReceipt.receiptPaths?.json ?? null,
+    authorityTag,
+    packageVersion,
+    runtimeValidationOutcome,
+    launcherPathStrippedToLauncherAndSystem32,
+    ambientNodeOnPathRequired,
+    allowed: passed
+  };
+}
+
 function buildMarkdown(report) {
   return [
     '# VS Code Marketplace Publication Prep',
@@ -278,6 +352,7 @@ async function buildPrepReport(options, deps = {}) {
   const expectedTag = publicationTarget.tag ?? transactionReceipt.authority?.tag ?? `v${expectedVersion}`;
   const manifestPaths = resolveManifestPaths(transactionReceipt, fsApi);
   const marketplace = await fetchMarketplaceStateImpl(options.marketplaceItem);
+  const installProofReceipt = tryReadJson(options.installProofReceiptPath, fsApi);
   const patInspection = vscePat.inspectVscePatFile(
     options.patPath ?? vscePat.resolveVscePatFilePath(),
     fsApi
@@ -301,10 +376,17 @@ async function buildPrepReport(options, deps = {}) {
     transactionReceipt.verifyGate?.allowed === true &&
     transactionReceipt.publicRelease?.draft === false &&
     Boolean(transactionReceipt.publicRelease?.published_at);
+  const marketplaceAlreadyPublished = marketplace.currentPublishedVersion === expectedVersion;
 
   const plannedPublishCommand = manifestPaths.vsixPath
     ? buildPlannedVscePublishCommand(manifestPaths.vsixPath)
     : null;
+  const windowsInstallProof = assessWindowsExactVsixInstallProof(
+    installProofReceipt,
+    expectedTag,
+    expectedVersion,
+    manifestSha
+  );
   const phases = [
     buildPhase(
       'public-github-exact-release-verified',
@@ -335,6 +417,28 @@ async function buildPrepReport(options, deps = {}) {
         vsixPath: manifestPaths.vsixPath,
         expectedSha256: manifestSha,
         observedSha256: observedVsixSha
+      }
+    ),
+    buildPhase(
+      'windows-exact-vsix-install-proof',
+      windowsInstallProof.status === 'pass'
+        ? 'pass'
+        : marketplaceAlreadyPublished
+          ? 'retained-publication'
+          : windowsInstallProof.status,
+      windowsInstallProof.status === 'pass'
+        ? windowsInstallProof.summary
+        : marketplaceAlreadyPublished
+          ? `Marketplace already serves ${expectedVersion}; retain the missing or stale Windows exact-VSIX install proof as historical publication evidence rather than reopening the already-published line.`
+          : windowsInstallProof.summary,
+      {
+        receiptPath: windowsInstallProof.receiptPath,
+        authorityTag: windowsInstallProof.authorityTag,
+        packageVersion: windowsInstallProof.packageVersion,
+        runtimeValidationOutcome: windowsInstallProof.runtimeValidationOutcome,
+        launcherPathStrippedToLauncherAndSystem32:
+          windowsInstallProof.launcherPathStrippedToLauncherAndSystem32,
+        ambientNodeOnPathRequired: windowsInstallProof.ambientNodeOnPathRequired
       }
     ),
     buildPhase(
@@ -402,10 +506,15 @@ async function buildPrepReport(options, deps = {}) {
       statusCode: marketplace.statusCode,
       listingUrl: ledger.listingUrl,
       homepageUrl: ledger.homepageUrl,
+      windowsExactVsixInstallProofStatus: windowsInstallProof.status,
+      windowsExactVsixInstallProofReceiptPath:
+        windowsInstallProof.receiptPath ?? options.installProofReceiptPath,
       nextAction: !githubVerifyGatePassed
         ? `block-marketplace-until-public-github-v${expectedVersion}-release-verifies-complete`
-        : marketplace.currentPublishedVersion === expectedVersion
+        : marketplaceAlreadyPublished
           ? 'retain-marketplace-publication'
+        : windowsInstallProof.allowed !== true
+          ? publicationState.buildWindowsExactVsixInstallProofNextAction(expectedVersion)
           : publicationState.buildMarketplacePublishNextAction(expectedVersion)
     },
     assets: {
@@ -416,6 +525,17 @@ async function buildPrepReport(options, deps = {}) {
       observedVsixSha256: observedVsixSha,
       vsixSha256Verified,
       checksumDeclaresExpected
+    },
+    windowsExactVsixInstallProof: {
+      status: windowsInstallProof.status,
+      receiptPath: windowsInstallProof.receiptPath ?? options.installProofReceiptPath,
+      authorityTag: windowsInstallProof.authorityTag,
+      packageVersion: windowsInstallProof.packageVersion,
+      runtimeValidationOutcome: windowsInstallProof.runtimeValidationOutcome,
+      launcherPathStrippedToLauncherAndSystem32:
+        windowsInstallProof.launcherPathStrippedToLauncherAndSystem32,
+      ambientNodeOnPathRequired: windowsInstallProof.ambientNodeOnPathRequired,
+      allowed: windowsInstallProof.allowed
     },
     pat: {
       path: patInspection.path,
@@ -506,6 +626,8 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_EVIDENCE_DIR,
   DEFAULT_MARKETPLACE_ITEM,
+  DEFAULT_WINDOWS_INSTALL_PROOF_RECEIPT_PATH,
+  assessWindowsExactVsixInstallProof,
   DEFAULT_TRANSACTION_RECEIPT_PATH,
   buildPlannedVscePublishCommand,
   buildPrepReport,

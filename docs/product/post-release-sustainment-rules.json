@@ -59,6 +59,8 @@
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
       "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+      "windowsExactVsixInstallProofPackageScript": "npm run vscode:marketplace:install-proof",
+      "windowsExactVsixInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
       "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
       "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
       "publicGitHubExactPublishabilityProbe": {
@@ -108,6 +110,8 @@
       "release-evidence/release-record.md",
       ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
       ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.md",
+      ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
+      ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.md",
       "docs/product/vscode-marketplace-publication-ledger.md",
       "docs/product/vscode-marketplace-publication-ledger.json",
       "VS Code Marketplace listing and installed-user homepage",
@@ -119,6 +123,7 @@
       "package.json version change",
       "SemVer tag or release-manifest contract change",
       "public GitHub exact-release transaction state or repair-in-place rule change",
+      "Windows exact-VSIX install-proof contract, bootstrap, or retained receipt change",
       "Marketplace publication, listing identity, or homepage change",
       "public release-kit asset or setup/support change tied to the exact released VSIX",
       "installed-user entry-surface redesign or reader guidance change",
@@ -137,6 +142,7 @@
       "future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction",
       "future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible",
       "future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds",
+      "future sessions shall run and retain npm run vscode:marketplace:install-proof against the exact authority VSIX before any mutating VS Code Marketplace publication act",
       "future sessions shall run and retain npm run vscode:marketplace:prepare before any mutating VS Code Marketplace publication act",
       "future sessions shall not publish a public GitHub exact release until the repo-owned asset-first publisher has created a draft, uploaded the VSIX and checksum from GitLab authority evidence, and verified those assets by release id",
       "future sessions shall classify a published immutable public GitHub release with missing or mismatched assets as externally blocked and Marketplace-blocking",
@@ -217,6 +223,7 @@
       "repair": "npm run software:factory:repair",
       "publish": "npm run software:factory:publish",
       "verify": "npm run software:factory:verify",
+      "marketplaceInstallProof": "npm run vscode:marketplace:install-proof",
       "marketplacePrepare": "npm run vscode:marketplace:prepare"
     },
     "receiptPaths": {
@@ -225,6 +232,7 @@
       "repair": ".cache/software-factory-orchestrator/latest/repair/software-factory-state.json",
       "publish": ".cache/software-factory-orchestrator/latest/publish/software-factory-state.json",
       "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json",
+      "marketplaceInstallProof": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
       "marketplacePrepare": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
     },
     "admittedNonProductionPhases": [
