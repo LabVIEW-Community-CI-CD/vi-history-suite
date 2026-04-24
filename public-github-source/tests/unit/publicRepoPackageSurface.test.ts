@@ -73,6 +73,7 @@ describe('public repo package surface', () => {
 
     expect(readme).toContain('## Install The Extension');
     expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
+    expect(readme).toContain('The packaged Marketplace listing is intentionally installed-user first');
     expect(readme).toContain('VI History: Prepare Local Runtime Settings CLI');
     expect(readme).toContain('## Compare A VI');
     expect(readme).toContain('## Supported Today');
@@ -89,6 +90,10 @@ describe('public repo package surface', () => {
     expect(readme).toContain('[CONTRIBUTING.md](./CONTRIBUTING.md)');
     expect(readme).not.toContain('Need Source Evaluation Or Contribution?');
     expect(readme).not.toContain('latest exact released source');
+    expect(readme).not.toContain('Install And Use');
+    expect(readme).not.toContain('exact released Marketplace line');
+    expect(readme).not.toContain('maintained `develop` candidate line');
+    expect(readme).not.toContain('install-vihs-extension.ps1');
     expect(readme).not.toContain('Authority And Release Control');
     expect(install).toContain('## Install The Extension');
     expect(install).toContain('## First-Time Setup');

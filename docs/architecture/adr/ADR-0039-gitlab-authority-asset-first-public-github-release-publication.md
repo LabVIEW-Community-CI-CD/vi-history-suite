@@ -48,5 +48,8 @@ GitHub exact release is verified complete.
 - A future empty immutable GitHub release is caught before publication.
 - Marketplace publication cannot proceed from a public GitHub release that lacks
   verified exact assets.
+- Retained exact-release receipts stay scoped to the selected authority tag so
+  obsolete unrelated draft releases do not remain part of the current exact
+  publication evidence path after later closeout work.
 - Historical incident values such as `v1.3.8` and release `312768592` may
   appear in incident ledgers, but reusable code and tests must be parameterized.

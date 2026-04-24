@@ -3,6 +3,10 @@
 `vi-history-suite` is a Visual Studio Code extension for reviewing LabVIEW VI
 history in Git repositories.
 
+The packaged Marketplace listing is intentionally installed-user first and
+version-agnostic. Use the Marketplace version history or the Extensions view
+when you need the exact published version number.
+
 ## Install The Extension
 
 Use one of these install surfaces:
