@@ -10,7 +10,7 @@ function readText(relativePath: string): string {
 }
 
 describe('public facade boundary docs', () => {
-  it('keeps the public source publication boundary explicit after the exact v1.3.7 GitHub release', () => {
+  it('keeps the public source publication boundary explicit after the exact v1.3.9 GitHub release', () => {
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
     const publicSourceMap = readText('docs/product/public-github-source-authority-map.md');
@@ -24,17 +24,18 @@ describe('public facade boundary docs', () => {
     expect(releaseProcedure).toContain('public-github-source-authority-map.md');
     expect(releaseProcedure).toContain('public:source:promote');
     expect(publicSourceMap).toContain('public GitHub source repo only');
-    expect(publicSourceMap).toContain('Exact public `main` now publishes the exact released `v1.3.7` source line');
-    expect(publicSourceMap).toContain('GitHub release record for `v1.3.7` is now');
-    expect(publicSourceMap).toContain('VS Code Marketplace still remains on `1.3.0`');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `704e629`');
-    expect(publicSourceLedger).toContain('Public source v1.3.7 exact source publication');
-    expect(publicSourceLedger).toContain('704e629');
-    expect(publicSourceLedger).toContain('ab293d5');
+    expect(publicSourceMap).toContain(
+      'Exact public `main` now publishes the exact released `v1.3.9` source line'
+    );
+    expect(publicSourceMap).toContain('the separate GitHub release record for `v1.3.9` is now');
+    expect(publicSourceMap).toContain('VS Code Marketplace now serves `1.3.9`');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `fb0ef2b`');
+    expect(publicSourceLedger).toContain('Public source v1.3.9 exact source publication');
+    expect(publicSourceLedger).toContain('fb0ef2b');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "704e629"');
-    expect(publicSourceLedgerJson).toContain('"id": "public-source-v1-3-7-exact-source-publication"');
-    expect(publicSourceLedgerJson).toContain('"repoCommit": "704e629"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "fb0ef2b"');
+    expect(publicSourceLedgerJson).toContain('"id": "public-source-v1-3-9-exact-source-publication"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "fb0ef2b"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
   });
 });

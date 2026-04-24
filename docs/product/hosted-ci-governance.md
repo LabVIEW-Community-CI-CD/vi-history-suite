@@ -8,12 +8,11 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` carries tagged `v1.3.8`, the last fully closed public
-GitHub and VS Code Marketplace baseline remains `v1.3.7`, public GitHub
-release `312768592` for `v1.3.8` is retained as immutable zero-asset
-historical incident evidence, and `release/1.3.9` is now the active candidate
-to promote the installed `vihs` launcher fix through the asset-first public
-GitHub publisher.
+Authority exact `main` now carries tagged `v1.3.9`, public GitHub and VS Code
+Marketplace both publish `1.3.9`, public GitHub release `312768592` for
+`v1.3.8` remains retained as immutable zero-asset historical incident
+evidence, and later exact lines must reopen through normal GitFlow from this
+retained closed baseline.
 
 ## Current Exact Closeout State
 
@@ -29,29 +28,28 @@ GitHub publisher.
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.8`
-- current `main` package line: `1.3.8`
-- current `develop` package line: `1.3.8`
-- active exact release candidate line on `develop`: `1.3.9`
-- active release-candidate branch: `release/1.3.9`
+- current exact release line: `v1.3.9`
+- current `main` package line: `1.3.9`
+- current `develop` package line: `1.3.9`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- `release/1.3.9` remains governed by the same GitFlow and publication gates
-  before any public GitHub or Marketplace mutation
+- no active exact release candidate line is open; later exact lines must
+  reopen through the same GitFlow and publication gates from `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - public GitHub exact transaction verification package script:
   `npm run public:github:exact:transaction:verify`
-- chosen bump: `patch`
-- rationale: authority exact `v1.3.8` is already tagged on `main` while public
-  GitHub release `312768592` is retained as immutable zero-asset historical
-  incident evidence and VS Code Marketplace still serves `1.3.7`
-- rationale: `release/1.3.9` opens from `develop` as the governed patch line
-  for the installed Windows `vihs` launcher fix through the asset-first public
-  GitHub publisher
+- chosen bump: none
+- rationale: authority exact `v1.3.9` is already tagged on `main`, public
+  GitHub release `312994104` is published with exact assets, and VS Code
+  Marketplace serves `1.3.9`
+- rationale: blocked historical `v1.3.8` incident evidence remains retained,
+  but no active exact release candidate line is currently open
 
 ## Branch Model
 

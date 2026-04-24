@@ -2026,7 +2026,7 @@ Information-for-users review cases:
   blocked until those production surfaces actually close
 - `TEST-UNIT-379`: verify the non-mutating
   `vscode:marketplace:prepare` surface verifies the published public GitHub
-  exact `v1.3.7` release, exact VSIX/checksum evidence, current Marketplace
+  exact release for the current authority tag, exact VSIX/checksum evidence, current Marketplace
   version, local Marketplace PAT locator, and pinned `vsce` command shape,
   writes JSON plus Markdown receipts, and performs no Marketplace mutation
 - `TEST-UNIT-380`: verify the release-publication state resolver derives the
@@ -2163,10 +2163,10 @@ Information-for-users review cases:
   Marketplace publication ledger, the sustainment package, the public-release
   candidate package, SRS, RTM, and the test plan and confirm the repo now
   retains one non-mutating `vscode:marketplace:prepare` surface plus receipt
-  path that proves public GitHub exact `v1.3.7` is closed, validates the exact
-  VSIX/checksum evidence and PAT locator without secret retention, retains the
-  pinned `vsce` publish command shape, and keeps Marketplace publication
-  pending explicit production approval
+  path that proves the current public GitHub exact release is closed,
+  validates the exact VSIX/checksum evidence and PAT locator without secret
+  retention, retains the pinned `vsce` publish command shape, and keeps
+  Marketplace publication pending explicit production approval
 - `TEST-DOC-133`: review `release-publication-state.{md,json}`, the
   information-item map, release-control docs, SRS, RTM, and test plan and
   confirm GitLab authority, public GitHub distribution, Marketplace
@@ -2179,7 +2179,8 @@ Information-for-users review cases:
 - `TEST-DOC-135`: review release-control docs, SRS, RTM, and the test plan and
   confirm public GitHub `v1.3.8` release `312768592` is retained as
   externally blocked because it is published, immutable, and has zero assets,
-  while VS Code Marketplace remains `1.3.7`.
+  while the later exact `v1.3.9` GitHub and VS Code Marketplace publication
+  acts are retained as closed.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

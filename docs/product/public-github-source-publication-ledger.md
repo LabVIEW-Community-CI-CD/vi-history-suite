@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `704e629`
+Current published public GitHub source HEAD: `fb0ef2b`
 
 ## Publications
 
@@ -45,6 +45,7 @@ Current published public GitHub source HEAD: `704e629`
 | Public source v1.3.1 published-review fold | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-21` | `ab293d5` | `scripts/syncBundledDocs.js`; `resources/bundled-docs/manifest.json`; `resources/bundled-docs/pages/install-and-release.html`; `resources/bundled-docs/pages/user-workflow.html`; `tests/unit/bundledDocumentation.test.ts`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md` |
 | Public source v1.3.6 exact source publication | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-22` | `bd81bfe` | `README.md`; `CHANGELOG.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
 | Public source v1.3.7 exact source publication | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-23` | `704e629` | `README.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `docs/product/public-github-source-publication-ledger.md`; `package.json` |
+| Public source v1.3.9 exact source publication | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-23` | `fb0ef2b` | `README.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `docs/product/public-github-source-publication-ledger.md`; `docs/product/release-publication-state.md`; `package.json` |
 
 ## Publication Rules
 

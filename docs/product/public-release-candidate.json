@@ -23,15 +23,15 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "704e629",
+    "publishedCommit": "fb0ef2b",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
-    "status": "published-main-tag-and-release-v1.3.7"
+    "status": "published-main-tag-and-release-v1.3.9"
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": "ab293d5",
-    "status": "published-v1.3.1-candidate-tag-eligible",
-    "sourcePullRequest": "#38",
+    "candidateCommit": "11051ac",
+    "status": "published-v1.3.9-admission-matrix-baseline",
+    "sourcePullRequest": "#43",
     "priorPullRequests": [
       "#24",
       "#25",
@@ -51,7 +51,7 @@
     "status": "published-v1.3.1-candidate-wiki-head"
   },
   "candidateReadiness": {
-    "authorityBaseline": "v1.3.8-tagged-on-main-gitlab-authority-public-github-release-blocked-marketplace-1.3.7-retained",
+    "authorityBaseline": "v1.3.9-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained",
     "localInstalledVsix": "release-1.3.9-authority-candidate-package-line",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
@@ -62,7 +62,7 @@
     "runtimeProviderPublicAcceptanceGate": "closed-on-published-v1.3.0-candidate-heads-retained",
     "preTagPublicExactProofGate": "required-before-any-later-exact-reopen",
     "publicGitHubExactTransactionGate": "required-before-any-further-public-github-release-or-marketplace-act",
-    "exactPublicRelease": "v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history"
+    "exactPublicRelease": "v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history"
   },
   "findingClassifications": [
     {
@@ -104,13 +104,13 @@
     }
   ],
   "exactRelease": {
-    "version": "v1.3.7",
-    "gitHubReleaseId": 312517425,
-    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7",
-    "gitHubAssetName": "vi-history-suite-1.3.7.vsix",
-    "gitHubAssetSha256": "89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b",
+    "version": "v1.3.9",
+    "gitHubReleaseId": 312994104,
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9",
+    "gitHubAssetName": "vi-history-suite-1.3.9.vsix",
+    "gitHubAssetSha256": "62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353",
     "marketplaceItemName": "svelderrainruiz.vi-history-suite",
-    "marketplaceVersion": "1.3.7",
+    "marketplaceVersion": "1.3.9",
     "marketplaceVerification": "official-gallery-extensionquery-verified",
     "integrationBranch": "develop",
     "releaseBranch": "main"
@@ -131,26 +131,26 @@
     "publicGitHubReleaseImmutable": true,
     "publicGitHubReleaseAssetCount": 0,
     "blockerCode": "published-immutable-release-assets-incomplete",
-    "marketplaceVersionRetained": "1.3.7",
-    "nextAdmittedAction": "promote-release-1.3.9-to-main-after-governed-validation",
-    "summary": "v1.3.8 remains retained as blocked historical incident evidence after public GitHub release 312768592 published immutable with zero assets."
+    "marketplaceVersionRetained": "1.3.9",
+    "nextAdmittedAction": "normal-next-line-governance-after-v1.3.9-retention",
+    "summary": "v1.3.8 remains retained as blocked historical incident evidence after public GitHub release 312768592 published immutable with zero assets; exact v1.3.9 now closes cleanly across GitLab authority, public GitHub, and VS Code Marketplace."
   },
   "exactReleaseReopening": {
-    "status": "authority-v1.3.8-public-github-release-blocked-release-1.3.9-open",
+    "status": "authority-v1.3.9-published-v1.3.8-history-retained-no-open-release-line",
     "hotfixBranch": null,
     "featureBranch": null,
-    "authorityMainCommit": "1ceddb3fd63c79c312d9abf41cfa08681cb51f94",
-    "authorityTag": "v1.3.8",
-    "publicGitHubExactCommit": "704e629eed72d7ea5f46e2e45b1e17e58655edce",
-    "publicGitHubExactTag": "v1.3.7",
-    "publicGitHubReleaseId": 312517425,
-    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7",
-    "publicGitHubReleasePublishedAt": "2026-04-23T02:08:29Z",
-    "publicGitHubPublishabilityProbeStatus": "published-immutable-incomplete",
-    "publicGitHubPublishabilityBlockerCode": "published-immutable-release-assets-incomplete",
-    "publicGitHubDraftPublishabilityProbeStatus": "not-applicable-historical-incident",
-    "publicGitHubDraftPublishabilityBlockerCode": "published-release-not-draft",
-    "publicGitHubDraftPublishabilityProbeReleaseId": 312517425,
+    "authorityMainCommit": "2f86063a35926fa67963af5ccd47e971157927c6",
+    "authorityTag": "v1.3.9",
+    "publicGitHubExactCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
+    "publicGitHubExactTag": "v1.3.9",
+    "publicGitHubReleaseId": 312994104,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9",
+    "publicGitHubReleasePublishedAt": "2026-04-24T00:22:35Z",
+    "publicGitHubPublishabilityProbeStatus": "published-complete",
+    "publicGitHubPublishabilityBlockerCode": null,
+    "publicGitHubDraftPublishabilityProbeStatus": "not-applicable-already-published",
+    "publicGitHubDraftPublishabilityBlockerCode": null,
+    "publicGitHubDraftPublishabilityProbeReleaseId": 312994104,
     "publicGitHubDraftPublishabilityByIdStatusCode": 200,
     "publicGitHubDraftPublishabilityTagMatchesAuthority": true,
     "publicGitHubDraftPublishabilitySafeToAttemptPublish": false,
@@ -159,8 +159,8 @@
     "publicGitHubDraftReleaseTargetCommitish": "main",
     "publicGitHubReleaseLookupStatusCode": 200,
     "publicGitHubDraftReleaseUsesUntaggedUrl": false,
-    "nextSeparateAct": "promote-release-1.3.9-to-main-after-governed-validation",
-    "marketplaceVersionRetained": "1.3.7",
+    "nextSeparateAct": "normal-next-line-governance-after-v1.3.9-retention",
+    "marketplaceVersionRetained": "1.3.9",
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
     "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
@@ -169,7 +169,7 @@
     "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
   },
   "softwareFactoryGovernance": {
-    "status": "authority-v1.3.8-blocked-history-release-1.3.9-open-no-active-feature-branch",
+    "status": "authority-v1.3.9-fully-published-no-active-feature-branch",
     "activeFeatureBranch": null,
     "packageScripts": {
       "assess": "npm run software:factory:assess",
@@ -196,9 +196,9 @@
       "publish",
       "verify"
     ],
-    "soleProductionRecoveryTarget": "v1.3.9",
+    "soleProductionRecoveryTarget": null,
     "productionMutationAllowed": false,
-    "rule": "the retained v1.3.8 authority exact line is blocked historical publication evidence; release/1.3.9 may proceed only through normal GitFlow and repo-owned factory/orchestrator governance before any public GitHub or Marketplace mutation"
+    "rule": "Exact v1.3.9 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence."
   },
   "localProofs": {
     "localInstalledVsixPreview": {
@@ -211,20 +211,20 @@
       "gatingGitLabJob": "public_exact_pretag_proof"
     },
     "publicGitHubExactTransaction": {
-      "status": "published-v1.3.7-github-release-and-marketplace-verified",
+      "status": "published-v1.3.9-github-release-and-marketplace-verified",
       "packageScript": "npm run public:github:exact:transaction:verify",
       "receiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
-      "authorityTag": "v1.3.7",
-      "authorityMainCommit": "e1a4fc8d2e728100bb98856879eac5de11e99864",
-      "publicMainCommit": "704e629eed72d7ea5f46e2e45b1e17e58655edce",
-      "publicTag": "v1.3.7",
-      "publicReleaseId": 312517425,
-      "publicReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7",
-      "publicReleasePublishedAt": "2026-04-23T02:08:29Z",
-      "vsixAssetName": "vi-history-suite-1.3.7.vsix",
-      "vsixAssetSha256": "89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b",
-      "checksumAssetSha256": "82a0545dacbdbcad7c8c3e99f2a23de95f78998199a4a1368f44ddca00d7f612",
-      "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json",
+      "authorityTag": "v1.3.9",
+      "authorityMainCommit": "2f86063a35926fa67963af5ccd47e971157927c6",
+      "publicMainCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
+      "publicTag": "v1.3.9",
+      "publicReleaseId": 312994104,
+      "publicReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9",
+      "publicReleasePublishedAt": "2026-04-24T00:22:35Z",
+      "vsixAssetName": "vi-history-suite-1.3.9.vsix",
+      "vsixAssetSha256": "62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353",
+      "checksumAssetSha256": "25b4ff9a9c00b1a3e3a15946ce061b4b0c3f998dfb1fcaf6c342953bbd0d7ff6",
+      "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json",
       "authorityReleaseManifestLocatorStatus": "located-and-verified",
       "releaseAssetsRetainedAgainstManifest": true,
       "publicSourcePromotionReceiptPath": ".cache/public-github-source-promotion/latest/public-github-source-promotion.json",
@@ -238,29 +238,29 @@
       "openingNewSemverAllowed": true,
       "repairInPlaceRequired": false,
       "repairInPlaceAllowed": false,
-      "nextAllowedAction": "promote-release-1.3.9-to-main-after-governed-validation"
+      "nextAllowedAction": "normal-next-line-governance-after-v1.3.9-retention"
     },
     "vscodeMarketplacePublicationPrep": {
-      "status": "published-v1.3.7-verified",
+      "status": "published-v1.3.9-verified",
       "packageScript": "npm run vscode:marketplace:prepare",
       "receiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
-      "authorityTag": "v1.3.7",
-      "expectedMarketplaceVersion": "1.3.7",
-      "currentMarketplaceVersion": "1.3.7",
+      "authorityTag": "v1.3.9",
+      "expectedMarketplaceVersion": "1.3.9",
+      "currentMarketplaceVersion": "1.3.9",
       "marketplaceItem": "svelderrainruiz.vi-history-suite",
       "publicGitHubVerifyGateStatus": "pass",
-      "publicGitHubReleaseId": 312517425,
-      "vsixPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix",
+      "publicGitHubReleaseId": 312994104,
+      "vsixPath": ".cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/vi-history-suite-1.3.9.vsix",
       "vsixSha256Verified": true,
       "vscePatLocatorStatus": "ok",
       "secretRetained": false,
       "pinnedVscePackage": "@vscode/vsce@3.7.1",
-      "plannedPublishCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix --pat <redacted>",
+      "plannedPublishCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/vi-history-suite-1.3.9.vsix --pat <redacted>",
       "productionMutationAttempted": true,
-      "publicationCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix --pat <redacted>",
+      "publicationCommand": "node scripts/runPinnedVsce.js publish --packagePath .cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/vi-history-suite-1.3.9.vsix --pat <redacted>",
       "publicationMode": "pinned-vsce-cli",
       "publishedAt": "2026-04-23",
-      "nextAllowedAction": "publish-v1.3.9-to-vscode-marketplace-after-github-v1.3.9-publication"
+      "nextAllowedAction": "normal-next-line-governance-after-v1.3.9-retention"
     },
     "privateRelease": {
       "status": "current-v1.3.1-private-release-published",
@@ -347,7 +347,7 @@
     {
       "id": "BLOCKER-VSCODE-MARKETPLACE-PUBLICATION",
       "status": "closed",
-      "summary": "Public GitHub exact v1.3.7 is published on main, tag, and GitHub release 312517425 with manifest-matched assets, and VS Code Marketplace now serves 1.3.7, so exact closeout is complete after authority retention."
+      "summary": "Public GitHub exact v1.3.9 is published on main, tag, and GitHub release 312994104 with manifest-matched assets, and VS Code Marketplace now serves 1.3.9, so exact closeout is complete after authority retention."
     }
   ]
 }

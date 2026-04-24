@@ -154,21 +154,20 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.8`
-- current published package line on `main`: `1.3.8`
-- current develop package line on `develop`: `1.3.8`
-- active exact release candidate line on `develop`: `1.3.9`
-- active release-candidate branch: `release/1.3.9`
+- current exact released line: `v1.3.9`
+- current published package line on `main`: `1.3.9`
+- current develop package line on `develop`: `1.3.9`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- exact authority `v1.3.8` is retained as blocked historical public GitHub
-  incident evidence while the last fully closed public GitHub and VS Code
-  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
-  asset-first retry line for the installed `vihs` launcher fix
+- exact authority `v1.3.9` is now fully published across GitLab authority,
+  public GitHub, and VS Code Marketplace, while blocked historical public
+  GitHub incident evidence for `v1.3.8` remains retained separately
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -208,11 +207,9 @@ Latest landed ship target:
   `assess`, `rehearse`, and `repair` remain admitted non-production phases;
   `publish` / `verify` are retained as guarded non-mutating contract phases
 - current software-factory mutation policy:
-  exact authority `v1.3.8` is retained as blocked historical publication
-  evidence while the last fully closed public GitHub and VS Code Marketplace
-  line remains `v1.3.7`; `release/1.3.9` may proceed only through normal
-  GitFlow and the repo-owned factory/orchestrator governance path before any
-  public GitHub or Marketplace mutation
+  exact authority `v1.3.9` is now fully closed across public GitHub and VS
+  Code Marketplace; later SemVer openings return to normal GitFlow governance
+  while `v1.3.8` remains retained as blocked historical publication evidence
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -227,22 +224,22 @@ Latest landed ship target:
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
 - separate public GitHub exact release publication: published; public `main`
-  now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
-  `312517425` is published at
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
+  now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
+  `312994104` is published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
   the uploaded exact assets match the retained authority manifest under
-  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`, the
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
-  now serves `1.3.7`
-- VS Code Marketplace retained published version: `1.3.7`
+  now serves `1.3.9`
+- VS Code Marketplace retained published version: `1.3.9`
 - blocked historical publication incident: public GitHub release `312768592`
-  for `v1.3.8` is published and immutable with zero assets; Marketplace
-  remains `1.3.7`, and `release/1.3.9` is the next exact line that must use
-  the asset-first GitHub publisher before any Marketplace act
+  for `v1.3.8` is published and immutable with zero assets; retain it as
+  historical evidence only while the current live Marketplace version remains
+  `1.3.9`
 - VS Code Marketplace publication prep and final publication are retained:
-  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
+  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.9`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
-  `1.3.7` readback, local PAT locator, and pinned `vsce` publish command
+  `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -344,22 +341,18 @@ Latest landed ship target:
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
-- remaining blockers: exact `v1.3.0` remains closed cleanly; authority exact
-  `v1.3.7` is now tagged on `main`
-  `e1a4fc8d2e728100bb98856879eac5de11e99864`, public GitHub `main` now
-  publishes `704e629`, public tag `v1.3.7` is live, GitHub release `312517425`
+- remaining blockers: none on the exact `v1.3.9` publication path; authority
+  exact `v1.3.9` is now tagged on `main`
+  `2f86063a35926fa67963af5ccd47e971157927c6`, public GitHub `main` now
+  publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release `312994104`
   is published with manifest-matched assets, the official gallery extension
-  query now verifies Marketplace version `1.3.7` for
+  query now verifies Marketplace version `1.3.9` for
   `svelderrainruiz.vi-history-suite`, the maintained public `develop`
-  candidate still publishes `ab293d5`, the maintained public wiki head still
-  publishes `141c39e`, no exact hotfix lane is currently open, and exact
-  `v1.3.7` closeout is now complete across public GitHub and VS Code
-  Marketplace; later SemVer openings return to normal GitFlow governance after
-  this retained final publication act; the active
-  software-factory governance contract now retains that same `v1.3.7` line as
-  the sole production recovery case and admits `assess`, `rehearse`,
-  `repair`, `publish`, and `verify` as repo-owned contract phases for retained
-  publication-state proof.
+  candidate still publishes `11051ac`, the maintained public wiki head still
+  publishes `141c39e`, no exact hotfix lane is currently open, `v1.3.8`
+  remains retained as blocked historical incident evidence only, and later
+  SemVer openings now return to normal GitFlow governance after retained
+  `v1.3.9` closeout.
 
 Current active and recently closed tranches:
 
