@@ -41,7 +41,7 @@ describe('host-operation matrix docs', () => {
     expect(rtm).toContain('x64-first and then x86');
     expect(testPlan).toContain('x64 tranche first');
     expect(currentState).toContain(
-      'Windows x86 / 32-bit LabVIEW remains out of scope for current release'
+      'Windows x86 / 32-bit LabVIEW remains out of scope for the current released'
     );
     expect(srs).toContain('characterization-only outside the current release scope');
     expect(rtm).toContain('characterization-only outside the current release scope');

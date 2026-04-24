@@ -144,6 +144,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('sole production recovery target: none');
     expect(rulesDoc).toContain('current');
     expect(rulesDoc).toContain('exact GitHub and VS Code Marketplace acts are fully closed for `v1.3.9`');
+    expect(rulesDoc).toContain('published `v1.3.9` host-default Windows local');
+    expect(rulesDoc).toContain('`LabVIEWCLI` contract with bounded expert Docker');
     expect(rulesDoc).toContain('Marketplace prep rule');
     expect(readme).toContain('current exact released line: `v1.3.9`');
     expect(currentState).toContain('current exact released line: `v1.3.9`');

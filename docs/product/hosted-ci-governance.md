@@ -171,9 +171,15 @@ Job ownership:
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
   so any later exact reopen fails closed before tag creation when the promoted
   public facade still diverges from authority truth
-- `docs_link_check`, `docs_continuous_integration`,
-  `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
-  docs integrity on merge requests, governed branch lanes, and exact tags
+- `docs_link_check`: blocking README/docs link integrity lane on merge
+  requests, governed branch lanes, and exact tags; it runs `lychee` from the
+  pinned Alpine image
+  `lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00`
+  so the lane no longer depends on drift-prone `lycheeverse/lychee:latest`
+  images that can outpace the shared Linux runner glibc baseline
+- `docs_continuous_integration`, `docs_public_continuous_integration`,
+  `docs_internal_continuous_integration`: docs integrity on merge requests,
+  governed branch lanes, and exact tags
 - `assurance_release_gate`: blocking Linux-assurance lane on merge requests,
   governed branch lanes, and exact tags; it stages the bounded repo scope,
   pulls the latest published
@@ -301,3 +307,4 @@ When hosted automation truth changes, update together:
 - `docs/product/windows-private-release-runner-lane.md`
 - `docs/product/linux-assurance-runner-lane.md`
 - affected workflow YAML
+- `docker/docs-authoring/Dockerfile`

@@ -25,6 +25,10 @@ not absorb the historical `PROGRAM-0002` closeout, `PROGRAM-0003`,
 generic maintenance language; those surfaces remain explicit when they are
 historical or active.
 
+`PROGRAM-0005` now retains the published `v1.3.9` host-default Windows local
+`LabVIEWCLI` contract with bounded expert Docker, while `TRANCHE-013` and
+`TRANCHE-015` remain the historical Docker-only installed-user baseline.
+
 The current release branch model is explicit too:
 
 - `develop` is the integration branch

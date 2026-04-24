@@ -18,6 +18,7 @@ describe('hosted ci governance docs', () => {
     const matrix = readJson<any>('docs/product/hosted-ci-governance.json');
     const matrixDoc = readText('docs/product/hosted-ci-governance.md');
     const gitlabCi = readText('.gitlab-ci.yml');
+    const docsAuthoringDockerfile = readText('docker/docs-authoring/Dockerfile');
     const readme = readText('README.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
@@ -65,6 +66,15 @@ describe('hosted ci governance docs', () => {
         evidenceRoot: 'public-exact-pretag-proof-evidence/'
       })
     );
+    expect(matrix.authorityGitLab.jobs.docs_link_check).toEqual(
+      expect.objectContaining({
+        classification: 'required-governance-check',
+        containerImage:
+          'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00',
+        stabilityPolicy: 'pinned-alpine-digest-no-floating-latest',
+        command: 'lychee --verbose --no-progress --include-fragments README.md docs/**/*.md'
+      })
+    );
     expect(matrix.authorityGitLab.jobs.windows_private_release_acceptance).toEqual(
       expect.objectContaining({
         classification: 'required-governance-check',
@@ -100,6 +110,10 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('active release-candidate branch: none');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
     expect(matrixDoc).toContain('chosen bump: none');
+    expect(matrixDoc).toContain(
+      'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
+    );
+    expect(matrixDoc).toContain('no longer depends on drift-prone `lycheeverse/lychee:latest`');
     expect(readme).toContain('- separate public GitHub exact release publication: published;');
     expect(readme).toContain('releases/tag/v1.3.9');
     expect(currentState).toContain('current exact released line: `v1.3.9`');
@@ -110,5 +124,12 @@ describe('hosted ci governance docs', () => {
     expect(gitlabCi).toContain('governed_runner_admission');
     expect(gitlabCi).toContain('public_exact_pretag_proof');
     expect(gitlabCi).toContain('windows_private_release_acceptance');
+    expect(gitlabCi).toContain(
+      'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
+    );
+    expect(gitlabCi).not.toMatch(/name:\s+lycheeverse\/lychee:latest(?:\r?\n|$)/);
+    expect(docsAuthoringDockerfile).toContain('lychee-v0.24.1');
+    expect(docsAuthoringDockerfile).toContain('lychee-x86_64-unknown-linux-musl.tar.gz');
+    expect(docsAuthoringDockerfile).not.toContain('releases/latest');
   });
 });

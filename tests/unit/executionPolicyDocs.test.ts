@@ -45,7 +45,7 @@ describe('execution-policy control plane', () => {
     expect(debtLedgerJson).toContain('"retirementCommit": "2f4ced0"');
   });
 
-  it('keeps the current Docker-only baseline explicit while promoting the active host-default LabVIEWCLI plus expert Docker transition', () => {
+  it('keeps the historical Docker-only baseline explicit while retaining the active published host-default LabVIEWCLI plus expert Docker contract', () => {
     const manifest = readJson<{
       contributes?: { configuration?: { properties?: Record<string, unknown> } };
     }>('package.json');
@@ -138,7 +138,10 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain(
       '[PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
-    expect(currentState).toContain('current exact released installed extension is still Docker-only');
+    expect(currentState).toContain(
+      'current exact released installed extension now defaults to Windows'
+    );
+    expect(currentState).toContain('local `LabVIEWCLI` with bounded expert Docker');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('WSL is not part of the active Windows x64 private-release contract');
@@ -239,13 +242,15 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
     expect(program).toContain('expert Docker provider');
-    expect(program).toContain('bundled docs and public reader surfaces keep the exact released Docker-only');
+    expect(program).toContain(
+      'bundled docs and public reader surfaces retain the published host-default'
+    );
     expect(issueCurrent).toContain('Closed historical issue, superseded by `ISSUE-0412`');
     expect(issueCurrent).toContain('TRANCHE-013');
     expect(issueCurrent).toContain('TRANCHE-015');
     expect(issueNext).toContain('Active post-release issue.');
     expect(issueNext).toContain('generated settings CLI, exact Windows');
-    expect(issueNext).toContain('keep the installed manifest/settings slice truthful');
+    expect(issueNext).toContain('keep the installed manifest/settings contract truthful');
     expect(issueNext).toContain('current-host launcher execution against a temporary settings file');
     expect(issueNext).toContain('`.cmd` launcher path');
     expect(issueNext).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
@@ -256,7 +261,9 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('or restart only if stale provider or runtime facts remain');
     expect(issueNext).toContain('keep WSL out of the active Windows x64 private-release contract');
     expect(issueNext).toContain('Docker Desktop');
-    expect(issueNext).toContain('keep packaged/public docs on the exact released Docker-only baseline');
+    expect(issueNext).toContain(
+      'keep packaged/public docs on the published host-default local `LabVIEWCLI`'
+    );
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');
     expect(issueNext).toContain('VS Code warning notification');

@@ -320,7 +320,10 @@
           "hotfix/*",
           "main",
           "vX.Y.Z-tags"
-        ]
+        ],
+        "containerImage": "lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00",
+        "stabilityPolicy": "pinned-alpine-digest-no-floating-latest",
+        "command": "lychee --verbose --no-progress --include-fragments README.md docs/**/*.md"
       },
       "docs_continuous_integration": {
         "classification": "required-governance-check",

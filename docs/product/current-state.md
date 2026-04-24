@@ -398,25 +398,28 @@ Current active and recently closed tranches:
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
 - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - keep the current exact released Docker-only contract explicit until the
-    replacement is actually published
-  - branch implementation now includes generated provider selection with
+  - exact `v1.3.9` now publishes the host-default Windows local
+    `LabVIEWCLI` contract with bounded expert Docker, while the Docker-only
+    line remains explicit only as historical baseline evidence under
+    `ISSUE-0410`
+  - the released line now includes generated provider selection with
     explicit provider, version, and bitness facts, with version plus bitness
     required across both provider classes
-  - branch implementation now includes exact Windows host-runtime preflight
+  - the released line now includes exact Windows host-runtime preflight
     that resolves one matching local `LabVIEWCLI`-backed runtime and fails
     closed on missing, ambiguous, or incompatible resolution
-  - branch implementation now includes explicit compare preflight that shows
+  - the released line now includes explicit compare preflight that shows
     selected/base commit plus provider, version, and bitness before the
     explicit compare action
   - historical released `repo-standards-review` `v0.2.9` compliance closeout
     is retained on this branch, the current outer assurance lane now uses the
     published `repo-standards-review` assurance-workbench `:main` image, and
     the latest tagged release remains `v0.2.18`
-  - branch promotion into `develop`, candidate publication alignment, and the
-    runtime-provider public-acceptance gate are now retained as completed
+  - branch promotion into `develop`, exact publication alignment, and the
+    runtime-provider public-acceptance gate are now retained as completed on
+    the published `v1.3.9` line
   - remaining work is the unresolved live active-settings mutation seam for an
-    already-running VS Code session plus later exact-release promotion work
+    already-running VS Code session plus later sustainment truth-alignment work
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate record:
@@ -547,11 +550,12 @@ Post-release tranches:
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
   - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - the current exact released installed extension is still Docker-only, but
-    that is now historical baseline truth rather than the active destination
+  - the current exact released installed extension now defaults to Windows
+    local `LabVIEWCLI` with bounded expert Docker, while the Docker-only line
+    is retained only as historical baseline truth under `ISSUE-0410`
   - the control-plane reset, explicit compare preflight, exact Windows
-    host-runtime preflight, and provider-selection CLI slice are now landed
-    on `develop`
+    host-runtime preflight, and provider-selection CLI slice are now
+    published in exact `v1.3.9`
   - the installed manifest/settings slice now truthfully exposes
     `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
     `viHistorySuite.labviewBitness`
@@ -585,11 +589,12 @@ Post-release tranches:
     same mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner
     snapshot and `LabVIEW.exe` observed at exit
 - private-release proof focus is now explicit: close the Windows x64 host
-  and Windows-container lanes only for the active `1.3.0` candidate;
-  Windows x86 / 32-bit LabVIEW remains out of scope for current release
+  and Windows-container lanes as the admitted released-contract proof lanes;
+  Windows x86 / 32-bit LabVIEW remains out of scope for the current released
+  contract
   admission and any retained x86 evidence is characterization only
 - installed-user and private-release docs now fail closed on scope: Windows
-  x64 only for the active `1.3.0` candidate, with Linux public smoke, Linux
+  x64 only for the released host-default contract, with Linux public smoke, Linux
   benchmark material, and Windows x86 evidence retained only as
   source-evaluation or internal proof surfaces rather than part of the active
   user contract
@@ -693,9 +698,9 @@ Post-release tranches:
   - the retained gate decision now keeps reload-or-restart guidance active
     while direct live-session uptake of updated settings remains unproven
   - no further `ISSUE-0414` implementation slice is currently required before
-    the next public candidate publication step; the remaining work on this
-    line is authority/public reader-surface retention and public-candidate
-    publication once the maintained public heads are ready to move
+    later sustainment work on this published line; the remaining work on this
+    line is authority/public reader-surface retention plus the unresolved
+    active-settings mutation seam
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate:

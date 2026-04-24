@@ -1,6 +1,6 @@
 FROM node:24-bookworm
 
-ARG LYCHEE_DOWNLOAD_URL="https://github.com/lycheeverse/lychee/releases/latest/download/lychee-x86_64-unknown-linux-gnu.tar.gz"
+ARG LYCHEE_DOWNLOAD_URL="https://github.com/lycheeverse/lychee/releases/download/lychee-v0.24.1/lychee-x86_64-unknown-linux-musl.tar.gz"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends bash ca-certificates curl git jq python3 \
