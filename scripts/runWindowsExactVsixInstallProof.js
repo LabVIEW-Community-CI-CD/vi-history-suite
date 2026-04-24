@@ -20,6 +20,36 @@ const DEFAULT_EVIDENCE_DIR = path.join(
 );
 const DEFAULT_CODE_COMMAND = 'code';
 const DEFAULT_EXTENSION_ID = 'svelderrainruiz.vi-history-suite';
+const WINDOWS_PATH_PREFIX = /^[A-Za-z]:[\\/]/;
+
+function usesWindowsPathSemantics(targetPath) {
+  return (
+    typeof targetPath === 'string' &&
+    (WINDOWS_PATH_PREFIX.test(targetPath) || targetPath.startsWith('\\\\'))
+  );
+}
+
+function pathApiFor(targetPath) {
+  return usesWindowsPathSemantics(targetPath) ? path.win32 : path;
+}
+
+function joinPathForTarget(targetPath, ...segments) {
+  return pathApiFor(targetPath).join(targetPath, ...segments);
+}
+
+function normalizeExternalPath(targetPath) {
+  if (!targetPath) {
+    return targetPath;
+  }
+
+  return usesWindowsPathSemantics(targetPath)
+    ? path.win32.normalize(targetPath)
+    : path.resolve(targetPath);
+}
+
+function buildWindowsSystem32Path(systemRoot) {
+  return path.win32.join(systemRoot, 'System32');
+}
 
 function getUsage() {
   return [
@@ -112,13 +142,13 @@ function computeFileSha256(filePath, fsApi = fs) {
 }
 
 function buildIsolatedRoots(evidenceDir, extensionId = DEFAULT_EXTENSION_ID) {
-  const isolatedRoot = path.join(evidenceDir, 'isolated-vscode');
-  const homeRoot = path.join(isolatedRoot, 'home');
-  const appDataRoot = path.join(isolatedRoot, 'appdata', 'Roaming');
-  const userDataDir = path.join(appDataRoot, 'Code');
-  const extensionsRoot = path.join(isolatedRoot, 'extensions');
-  const settingsFilePath = path.join(userDataDir, 'User', 'settings.json');
-  const launcherRoot = path.join(
+  const isolatedRoot = joinPathForTarget(evidenceDir, 'isolated-vscode');
+  const homeRoot = joinPathForTarget(isolatedRoot, 'home');
+  const appDataRoot = joinPathForTarget(isolatedRoot, 'appdata', 'Roaming');
+  const userDataDir = joinPathForTarget(appDataRoot, 'Code');
+  const extensionsRoot = joinPathForTarget(isolatedRoot, 'extensions');
+  const settingsFilePath = joinPathForTarget(userDataDir, 'User', 'settings.json');
+  const launcherRoot = joinPathForTarget(
     userDataDir,
     'User',
     'globalStorage',
@@ -138,7 +168,8 @@ function buildIsolatedRoots(evidenceDir, extensionId = DEFAULT_EXTENSION_ID) {
 }
 
 function buildWindowsHomeEnv(roots, baseEnv = process.env) {
-  const parsedHomeRoot = path.parse(roots.homeRoot);
+  const pathApi = pathApiFor(roots.homeRoot);
+  const parsedHomeRoot = pathApi.parse(roots.homeRoot);
   const homeDrive = parsedHomeRoot.root.replace(/[\\\/]+$/, '');
   const homePath = roots.homeRoot.slice(parsedHomeRoot.root.length - 1);
 
@@ -158,14 +189,14 @@ function buildBootstrapEnv(roots, baseEnv = process.env) {
 
 function buildLauncherCommandEnv(roots, baseEnv = process.env) {
   const systemRoot = baseEnv.SystemRoot ?? 'C:\\Windows';
-  const system32Path = path.join(systemRoot, 'System32');
+  const system32Path = buildWindowsSystem32Path(systemRoot);
   const env = {
     ...buildWindowsHomeEnv(roots, baseEnv),
     SystemRoot: systemRoot,
-    ComSpec: baseEnv.ComSpec ?? path.join(system32Path, 'cmd.exe'),
+    ComSpec: baseEnv.ComSpec ?? path.win32.join(system32Path, 'cmd.exe'),
     PATHEXT: baseEnv.PATHEXT ?? '.COM;.EXE;.BAT;.CMD',
-    TEMP: baseEnv.TEMP ?? path.join(roots.isolatedRoot, 'temp'),
-    TMP: baseEnv.TMP ?? path.join(roots.isolatedRoot, 'tmp'),
+    TEMP: baseEnv.TEMP ?? joinPathForTarget(roots.isolatedRoot, 'temp'),
+    TMP: baseEnv.TMP ?? joinPathForTarget(roots.isolatedRoot, 'tmp'),
     LOCALAPPDATA: baseEnv.LOCALAPPDATA,
     ProgramFiles: baseEnv.ProgramFiles,
     'ProgramFiles(x86)': baseEnv['ProgramFiles(x86)'],
@@ -374,7 +405,13 @@ async function runWindowsExactVsixInstallProof(argv = process.argv.slice(2), dep
 
   const powershellCommand =
     deps.powershellCommand ??
-    path.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+    path.win32.join(
+      process.env.SystemRoot ?? 'C:\\Windows',
+      'System32',
+      'WindowsPowerShell',
+      'v1.0',
+      'powershell.exe'
+    );
   const bootstrapStep = {
     id: 'install-exact-vsix',
     title: 'Install the exact authority VSIX into isolated VS Code roots',
@@ -405,7 +442,7 @@ async function runWindowsExactVsixInstallProof(argv = process.argv.slice(2), dep
 
   const bootstrapFacts = parseKeyValueOutput(bootstrapResult.stdoutText);
   const launcherRoot = bootstrapFacts.launcherRoot
-    ? path.resolve(bootstrapFacts.launcherRoot)
+    ? normalizeExternalPath(bootstrapFacts.launcherRoot)
     : roots.launcherRoot;
 
   if (bootstrapResult.error || bootstrapResult.statusCode !== 0) {
@@ -430,7 +467,7 @@ async function runWindowsExactVsixInstallProof(argv = process.argv.slice(2), dep
     stderrPath: toRelativeReportPath(bootstrapStderrPath)
   });
 
-  const launcherPath = path.join(launcherRoot, 'vihs.cmd');
+  const launcherPath = joinPathForTarget(launcherRoot, 'vihs.cmd');
   if (!failure && !fsApi.existsSync(launcherPath)) {
     status = 'failed';
     failure = {
@@ -561,7 +598,8 @@ async function runWindowsExactVsixInstallProof(argv = process.argv.slice(2), dep
         : null
     },
     launcher: {
-      pathStrippedToLauncherAndSystem32: commandEnv.PATH === `${roots.launcherRoot};${path.join(commandEnv.SystemRoot, 'System32')}`,
+      pathStrippedToLauncherAndSystem32:
+        commandEnv.PATH === `${roots.launcherRoot};${buildWindowsSystem32Path(commandEnv.SystemRoot)}`,
       ambientNodeOnPathRequired: false,
       bootstrapPersistedUserPath: false
     },
