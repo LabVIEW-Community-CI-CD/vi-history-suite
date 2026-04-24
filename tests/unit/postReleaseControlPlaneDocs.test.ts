@@ -75,7 +75,10 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('retained preflight preparation already proves');
     expect(currentState).toContain('retained hosted public proof on GitHub Codespace `novacula` now passes');
     expect(currentState).toContain('Comparison report is as expected.');
-    expect(currentState).toContain('current exact released installed extension is still Docker-only');
+    expect(currentState).toContain(
+      'current exact released installed extension now defaults to Windows'
+    );
+    expect(currentState).toContain('local `LabVIEWCLI` with bounded expert Docker');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('bounded expert provider');
     expect(currentState).toContain('`npm run test:integration:windows`');
