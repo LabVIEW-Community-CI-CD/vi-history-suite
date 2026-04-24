@@ -39,7 +39,7 @@ governed_runner_admission:
 docs_link_check:
   stage: docs
   image:
-    name: lycheeverse/lychee:latest
+    name: lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00
     entrypoint:
       - ""
   script:
