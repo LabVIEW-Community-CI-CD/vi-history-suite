@@ -71,6 +71,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(adr).toContain('VS Code Marketplace');
     expect(adr).toContain('manual Marketplace portal-upload fallback');
     expect(adr).toContain('do not retain PAT values or other secret material in repo evidence');
+    expect(adr).toContain('packaged README content stays version-agnostic');
   });
 
   it('keeps the Marketplace-linked entry surfaces installed-user first', () => {
@@ -101,20 +102,32 @@ describe('vs code marketplace publication and installed-user docs', () => {
 
     expect(readme).toContain('Install The Extension');
     expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
+    expect(readme).toContain('The packaged Marketplace listing is intentionally installed-user first');
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Report A Problem Or Request Support');
     expect(readme).toContain('Issue Chooser');
     expect(readme).toContain('LabVIEW Version Support Request');
     expect(readme).toContain('Evaluate From Source');
     expect(readme).toContain('Contribute');
+    expect(readme).not.toContain('Install And Use');
+    expect(readme).not.toContain('exact released Marketplace line');
+    expect(readme).not.toContain('maintained `develop` candidate line');
+    expect(readme).not.toContain('install-vihs-extension.ps1');
 
     expect(publicReadme).toContain('Install The Extension');
     expect(publicReadme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
+    expect(publicReadme).toContain(
+      'The packaged Marketplace listing is intentionally installed-user first'
+    );
     expect(publicReadme).toContain('vihs --validate');
     expect(publicReadme).toContain('Report A Problem Or Request Support');
     expect(publicReadme).toContain('LabVIEW Version Support Request');
     expect(publicReadme).toContain('Evaluate From Source');
     expect(publicReadme).toContain('Contribute');
+    expect(publicReadme).not.toContain('Install And Use');
+    expect(publicReadme).not.toContain('exact released Marketplace line');
+    expect(publicReadme).not.toContain('maintained `develop` candidate line');
+    expect(publicReadme).not.toContain('install-vihs-extension.ps1');
 
     expect(publicInstall).toContain('Install The Extension');
     expect(publicInstall).toContain('First-Time Setup');

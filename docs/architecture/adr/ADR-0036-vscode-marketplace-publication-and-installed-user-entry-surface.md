@@ -41,6 +41,10 @@ Adopt an installed-user-first entry surface for Marketplace readers:
   surface instead of the repo root
 - the root README and public source README lead with the installed-extension
   local workflow before repo/fork/Codespaces guidance
+- the packaged README content stays version-agnostic for installed users and
+  does not describe exact released lines, maintained develop candidate lines,
+  or other branch-specific release doctrine that can persist on the Marketplace
+  listing after one publication closes
 - repo, branch, fork, and Codespaces procedures remain explicit, but they are
   secondary source-evaluation lanes instead of the first contact for installed
   users

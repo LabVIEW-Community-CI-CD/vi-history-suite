@@ -315,6 +315,14 @@ function readReleaseManifest(tag, fsApi = fs, spawnImpl = spawnSync) {
   };
 }
 
+function retainReportedPublicReleases(publicReleases, authorityTag) {
+  if (!Array.isArray(publicReleases) || publicReleases.length === 0) {
+    return [];
+  }
+
+  return publicReleases.filter((release) => release?.tag_name === authorityTag);
+}
+
 function httpsJsonRequest(url, options = {}, body) {
   return new Promise((resolve, reject) => {
     const request = https.request(
@@ -1394,7 +1402,7 @@ function buildReport(facts, assessment, evidenceDir, recordedAt) {
     publicReleaseLookup: facts.publicReleaseLookup,
     publicReleaseByIdLookup: facts.publicReleaseByIdLookup,
     publicRelease: facts.publicRelease,
-    publicReleases: facts.publicReleases,
+    publicReleases: retainReportedPublicReleases(facts.publicReleases, facts.authority.tag),
     releaseManifest: facts.releaseManifest
       ? {
           manifestPath: toRelativeReportPath(facts.releaseManifest.manifestPath),
@@ -1760,6 +1768,7 @@ module.exports = {
   parseArgs,
   parseSemverTag,
   readReleaseManifest,
+  retainReportedPublicReleases,
   resolveLatestExactTag,
   resolveReleaseManifestPath,
   runAssessment,
