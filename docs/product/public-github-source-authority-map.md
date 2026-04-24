@@ -56,18 +56,21 @@ directly to the public GitHub source repo.
   mirror of the authority repo.
 - Public source publication shall be one-way: normalize in GitLab authority
   first, then promote outward.
-- Exact public `main` now publishes the exact released `v1.3.7` source line at
-  `704e629`, and the separate GitHub release record for `v1.3.7` is now
-  published while VS Code Marketplace still remains on `1.3.0`.
-- The maintained public `develop` candidate for `v1.3.1` now publishes
-  `ab293d5`, and the current published candidate heads `ab293d5` / `141c39e`
-  are now `review-ready` in `docs/product/public-release-candidate.{md,json}`.
+- Exact public `main` now publishes the exact released `v1.3.9` source line at
+  `fb0ef2b`, and the separate GitHub release record for `v1.3.9` is now
+  published while VS Code Marketplace now serves `1.3.9`.
+- The maintained public `develop` candidate for the retained `1.3.9`
+  admission-matrix baseline now publishes `11051ac`, and the current retained
+  published candidate heads `11051ac` / `141c39e` are now carried in
+  `docs/product/public-release-candidate.{md,json}` as historical public proof
+  rather than an open exact-release gate.
 - Public source publication shall not silently mix the exact-release
-  `v1.3.7` source contract, the published `v1.3.7` GitHub release record, the
-  still-retained `v1.3.0` Marketplace listing, and any later candidate wording
-  on the same maintained surface; the exact source publication, its published
-  GitHub release act, the separate Marketplace closeout act, and any later
-  candidate lane shall stay explicit.
+  `v1.3.9` source contract, the published `v1.3.9` GitHub release record, the
+  now-closed `1.3.9` Marketplace listing, the blocked historical `v1.3.8`
+  zero-asset incident, and any later candidate wording on the same maintained
+  surface; the exact source publication, its published GitHub release act, the
+  separate Marketplace closeout act, the blocked historical incident, and any
+  later candidate lane shall stay explicit.
 - Public source publication shall be recorded in the dedicated public source
   publication ledger, not in the internal GitLab wiki ledger or the public
   GitHub wiki ledger.

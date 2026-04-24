@@ -4,8 +4,8 @@
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
-- Published public source commit: `704e629`
-- Public `develop` candidate commit: `ab293d5`
+- Published public source commit: `fb0ef2b`
+- Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
 ## Branch Model
@@ -13,10 +13,9 @@
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
 - Software-factory governance branch: none
-- Exact authority `v1.3.8` is retained as blocked historical public GitHub
-  incident evidence while the last fully closed public GitHub and VS Code
-  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
-  asset-first retry line for the installed `vihs` launcher fix
+- Exact authority `v1.3.9` is now fully published across GitLab authority,
+  public GitHub, and VS Code Marketplace, while blocked historical public
+  GitHub incident evidence for `v1.3.8` remains retained separately
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -34,7 +33,7 @@
 ## Readiness
 
 - Authority baseline:
-  `v1.3.8-tagged-on-main-gitlab-authority-public-github-release-blocked-marketplace-1.3.7-retained`
+  `v1.3.9-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained`
 - Local installed VSIX build:
   `release-1.3.9-authority-candidate-package-line`
 - Local public devcontainer: `v1.1.0-published-baseline`
@@ -54,31 +53,31 @@
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`
+  `v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`
 
 ## Exact Release Baseline
 
-- GitHub release: `v1.3.7`
+- GitHub release: `v1.3.9`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`
-- GitHub release id: `312517425`
-- GitHub asset: `vi-history-suite-1.3.7.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`
+- GitHub release id: `312994104`
+- GitHub asset: `vi-history-suite-1.3.9.vsix`
 - GitHub asset SHA-256:
-  `89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b`
+  `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
-- VS Code Marketplace version: `1.3.7`
+- VS Code Marketplace version: `1.3.9`
 
 ## Public Publication
 
-- Public GitHub `main` now publishes `704e629`, and the separate public source
+- Public GitHub `main` now publishes `fb0ef2b`, and the separate public source
   publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
-- Public GitHub tag `v1.3.7` is now live, and GitHub release `312517425` is
+- Public GitHub tag `v1.3.9` is now live, and GitHub release `312994104` is
   now published separately at
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`.
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`.
 - The published GitHub release now retains the exact authority assets:
-  `vi-history-suite-1.3.7.vsix` and
-  `vi-history-suite-1.3.7.vsix.sha256`.
+  `vi-history-suite-1.3.9.vsix` and
+  `vi-history-suite-1.3.9.vsix.sha256`.
 - The repo-owned verify receipt now proves:
   `verifyGateStatus=pass`,
   `verifyGateAllowed=true`,
@@ -88,8 +87,8 @@
   `immutable=true`.
 - The separate public-source promotion check also now passes and is retained at
   `.cache/public-github-source-promotion/latest/public-github-source-promotion.json`.
-- The maintained public `develop` candidate for `v1.3.1` still publishes
-  `ab293d5` through GitHub PR `#38` and remains retained in
+- The maintained public `develop` admission-matrix baseline for `1.3.9` now
+  publishes `11051ac` through GitHub PR `#43` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - The maintained public wiki head still publishes `141c39e` and remains
   retained in `docs/product/public-github-wiki-publication-ledger.{md,json}`.
@@ -105,26 +104,26 @@
   GitHub `main` publishes `4f5f616`, and public tag `v1.3.8` exists, but
   GitHub release `312768592` is already published and immutable with zero
   assets. The blocker code is
-  `published-immutable-release-assets-incomplete`; VS Code Marketplace remains
-  `1.3.7`, and `release/1.3.9` is the next exact line that must use the
-  asset-first GitHub publisher.
+  `published-immutable-release-assets-incomplete`; VS Code Marketplace now
+  serves `1.3.9`, and the blocked `v1.3.8` line remains historical evidence
+  only.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` passed on
-  the authority tranche before `v1.3.7` exact tagging.
+  the authority tranche before `v1.3.9` exact tagging.
 - `npm run public:exact:pretag:proof` remains the fail-closed local proof
   surface for any later exact reopen, and GitLab `public_exact_pretag_proof`
   retains the matching CI proof through
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`.
-- The retained authority exact `v1.3.7` VSIX evidence now lives at
-  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix`
+- The retained authority exact `v1.3.9` VSIX evidence now lives at
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/vi-history-suite-1.3.9.vsix`
   with matching checksum file
-  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/vi-history-suite-1.3.7.vsix.sha256`.
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/vi-history-suite-1.3.9.vsix.sha256`.
 - Public GitHub exact transaction verification is now the retained local proof
   surface for the completed GitHub act:
-  `npm run public:github:exact:transaction:verify -- --tag v1.3.7`.
+  `npm run public:github:exact:transaction:verify -- --tag v1.3.9`.
 - The retained transaction receipt path is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
 - VS Code Marketplace publication prep is now the retained local proof surface
@@ -148,23 +147,21 @@
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
 - The Marketplace prep receipt proves `status=ready`,
   `productionMutationAttempted=false`, `publicGitHub.verifyGateStatus=pass`,
-  `currentMarketplaceVersion=1.3.7`, `expectedMarketplaceVersion=1.3.7`,
+  `currentMarketplaceVersion=1.3.9`, `expectedMarketplaceVersion=1.3.9`,
   `vsixSha256Verified=true`, `vscePatLocatorStatus=ok`, and the pinned
   `vsce` command shape with `<redacted>` PAT handling.
 - The current software-factory closeout posture is now:
-  exact authority `v1.3.8` is retained as blocked historical publication
-  evidence, the last fully closed public GitHub and VS Code Marketplace line
-  remains `v1.3.7`, and `release/1.3.9` may proceed only through normal
-  GitFlow and the repo-owned factory/orchestrator governance path before any
-  public GitHub or Marketplace mutation.
-- Current retained transaction facts: public `main` `704e629`, public tag
-  `v1.3.7`, GitHub release `312517425`, exact VSIX
-  `vi-history-suite-1.3.7.vsix`, VSIX SHA-256
-  `89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b`,
+  exact authority `v1.3.9` is fully closed across public GitHub and VS Code
+  Marketplace, `v1.3.8` remains retained as blocked historical publication
+  evidence, and later SemVer openings now return to normal GitFlow.
+- Current retained transaction facts: public `main` `fb0ef2b`, public tag
+  `v1.3.9`, GitHub release `312994104`, exact VSIX
+  `vi-history-suite-1.3.9.vsix`, VSIX SHA-256
+  `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`,
   checksum-asset SHA-256
-  `82a0545dacbdbcad7c8c3e99f2a23de95f78998199a4a1368f44ddca00d7f612`,
+  `25b4ff9a9c00b1a3e3a15946ce061b4b0c3f998dfb1fcaf6c342953bbd0d7ff6`,
   retained authority manifest
-  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json`,
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json`,
   `releaseAssetsRetainedAgainstManifest=true`,
   `publicSourcePromotionStatus=passed`,
   `verifyGateStatus=pass`,
@@ -172,7 +169,7 @@
   `openingNewSemverAllowed=true`,
   `repairInPlaceRequired=false`,
   `repairInPlaceAllowed=false`, and
-  `nextAllowedAction=normal-next-line-governance-after-v1.3.7-retention`.
+  `nextAllowedAction=normal-next-line-governance-after-v1.3.9-retention`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -205,7 +202,7 @@
 - Canonical Codex skill path:
   `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
 - Exact published public release commit retained for the current public exact
-  baseline: `704e629`
+  baseline: `fb0ef2b`
 - Exact published public wiki head retained for the current candidate:
   `141c39e`
 - Latest retained verdict:
@@ -265,9 +262,8 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- Public GitHub exact now publishes `v1.3.7`, VS Code Marketplace now serves
-  `1.3.7`, `v1.3.8` remains retained as blocked historical incident evidence,
-  and `release/1.3.9` is the active governed patch candidate for the installed
-  `vihs` launcher fix.
+- Public GitHub exact now publishes `v1.3.9`, VS Code Marketplace now serves
+  `1.3.9`, and `v1.3.8` remains retained as blocked historical incident
+  evidence only.
 - The current exact closeout blocker is closed after final Marketplace
   publication retention.

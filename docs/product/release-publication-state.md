@@ -9,35 +9,34 @@ final installed-user distribution surface.
 ## Current State
 
 - Authority system: GitLab
-- Authority exact tag: `v1.3.8`
-- Authority `main`: `1ceddb3fd63c79c312d9abf41cfa08681cb51f94`
+- Authority exact tag: `v1.3.9`
+- Authority `main`: `2f86063a35926fa67963af5ccd47e971157927c6`
 - GitLab release manifest:
-  `.cache/gitlab-release-artifacts/v1.3.8/expanded/release-evidence/release-manifest.json`
-- Expected VSIX: `vi-history-suite-1.3.8.vsix`
-- Expected checksum: `vi-history-suite-1.3.8.vsix.sha256`
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json`
+- Expected VSIX: `vi-history-suite-1.3.9.vsix`
+- Expected checksum: `vi-history-suite-1.3.9.vsix.sha256`
 - Expected VSIX SHA-256:
-  `d365f27836ada8a5279dedfc9fbfc7a86067da560f86324a5b9cdb9279e8f5e2`
-- Active candidate release branch: `release/1.3.9`
-- Active candidate tag: `v1.3.9`
+  `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
+- Active candidate release branch: none
+- Active candidate tag: none
 - Active candidate package version: `1.3.9`
 
 ## Public GitHub State
 
-- Public GitHub `main`: `4f5f6162bb0f6609eb51f7505ad4321a827b0ec7`
-- Public GitHub tag: `v1.3.8`
-- Public GitHub release id: `312768592`
+- Public GitHub `main`: `fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a`
+- Public GitHub tag: `v1.3.9`
+- Public GitHub release id: `312994104`
 - Public GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.8`
-- Public GitHub release status: published, immutable, zero assets
-- Asset status: `externally-blocked-zero-assets`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`
+- Public GitHub release status: published, immutable, exact assets retained
+- Asset status: `published-complete`
 
 ## Marketplace State
 
 - Marketplace item: `svelderrainruiz.vi-history-suite`
-- Current Marketplace version: `1.3.7`
+- Current Marketplace version: `1.3.9`
 - Expected version for the active governed candidate line: `1.3.9`
-- Marketplace status: waiting for the asset-first public GitHub exact release
-  on `v1.3.9`.
+- Marketplace status: published and verified on `1.3.9`.
 
 ## Incident Classification
 
@@ -46,17 +45,17 @@ final installed-user distribution surface.
 - Class: `externally-blocked-publication`
 - Blocker code: `published-immutable-release-assets-incomplete`
 - Summary: public GitHub release `312768592` for `v1.3.8` is already published
-  and immutable with zero assets, so the exact VSIX and checksum cannot be
+  and immutable with zero assets, so the exact VSIX and checksum could not be
   uploaded after publication; retain this only as blocked historical incident
-  evidence.
+  evidence while `v1.3.9` remains the fully closed exact line.
 - Repair rule: do not attempt in-place asset upload; require the next exact
   release line to use the asset-first publisher.
 
 ## Next Admitted Action
 
-- Governed next line: `release/1.3.9`
+- Governed next line: none
 - Next admitted action:
-  `promote-release-1.3.9-to-main-after-governed-validation`
+  `normal-next-line-governance-after-v1.3.9-retention`
 
 ## Publication Rule
 
@@ -71,4 +70,5 @@ Future public GitHub exact-release publication must be asset-first:
 6. Publish the draft only after verification passes.
 
 No VS Code Marketplace publication is admitted until the public GitHub exact
-release verifies complete.
+release verifies complete; `v1.3.9` is the first retained exact line that
+closed that asset-first path end to end.

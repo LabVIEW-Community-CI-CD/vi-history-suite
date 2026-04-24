@@ -29,28 +29,30 @@ const publicationState = require(path.join(
 };
 
 describe('release publication state resolver', () => {
-  it('retains the current v1.3.8 GitLab-authority incident while exposing the v1.3.9 active candidate without hardcoding action builders', () => {
+  it('retains the closed v1.3.9 authority/public publication state while keeping v1.3.8 as blocked history', () => {
     const state = publicationState.resolvePublicationState();
 
     expect(state.authority).toMatchObject({
       system: 'gitlab',
-      exactTag: 'v1.3.8',
-      packageVersion: '1.3.8',
+      exactTag: 'v1.3.9',
+      packageVersion: '1.3.9',
+      mainCommit: '2f86063a35926fa67963af5ccd47e971157927c6',
       gitlabReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.8/expanded/release-evidence/release-manifest.json'
+        '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     });
     expect(state.publicGitHub.release).toMatchObject({
-      id: 312768592,
-      tag: 'v1.3.8',
+      id: 312994104,
+      tag: 'v1.3.9',
       published: true,
       immutable: true,
-      assetCount: 0,
-      assetStatus: 'externally-blocked-zero-assets'
+      assetCount: 2,
+      assetStatus: 'published-complete'
     });
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
-      currentPublishedVersion: '1.3.7',
-      expectedVersion: '1.3.9'
+      currentPublishedVersion: '1.3.9',
+      expectedVersion: '1.3.9',
+      status: 'published-and-verified'
     });
     expect(state.incident).toMatchObject({
       active: false,
@@ -59,9 +61,10 @@ describe('release publication state resolver', () => {
       status: 'retained-history'
     });
     expect(state.activeCandidate).toMatchObject({
-      releaseBranch: 'release/1.3.9',
-      tag: 'v1.3.9',
-      packageVersion: '1.3.9'
+      releaseBranch: null,
+      tag: null,
+      packageVersion: '1.3.9',
+      status: 'no-active-release-line'
     });
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
@@ -89,7 +92,7 @@ describe('release publication state resolver', () => {
       tag: 'v9.8.7',
       packageVersion: '9.8.7',
       marketplaceItem: 'svelderrainruiz.vi-history-suite',
-      currentMarketplaceVersion: '1.3.7'
+      currentMarketplaceVersion: '1.3.9'
     });
   });
 });

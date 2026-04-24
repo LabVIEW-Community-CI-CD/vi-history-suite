@@ -158,7 +158,7 @@ describe('public repo package surface', () => {
     expect(normalizedChangelog).toContain(
       'Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,'
     );
-    expect(normalizedChangelog).toContain('`v1.3.6`, `v1.3.7`, and `v1.3.8`.');
+    expect(normalizedChangelog).toContain('`v1.3.6`, `v1.3.7`, `v1.3.8`, and `v1.3.9`.');
     expect(normalizedChangelog).toContain('## [1.3.9] - 2026-04-23');
     expect(normalizedChangelog).toContain('## [1.3.8] - 2026-04-23');
     expect(normalizedChangelog).toContain('public GitHub release `312768592` published immutable');

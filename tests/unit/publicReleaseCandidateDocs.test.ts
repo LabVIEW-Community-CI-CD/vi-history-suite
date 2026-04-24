@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public release candidate control surface', () => {
-  it('retains the v1.3.9 candidate on top of the blocked historical v1.3.8 GitHub incident and completed public GitHub/Marketplace v1.3.7 release', () => {
+  it('retains the closed v1.3.9 exact publication state while keeping v1.3.8 as blocked historical evidence', () => {
     const candidate = readJson<any>('docs/product/public-release-candidate.json');
     const candidateMarkdown = readText('docs/product/public-release-candidate.md');
     const currentState = readText('docs/product/current-state.md');
@@ -25,38 +25,38 @@ describe('public release candidate control surface', () => {
     expect(candidate.versionLine).toBe('1.3.9');
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
-      publishedCommit: '704e629',
-      status: 'published-main-tag-and-release-v1.3.7'
+      publishedCommit: 'fb0ef2b',
+      status: 'published-main-tag-and-release-v1.3.9'
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline:
-        'v1.3.8-tagged-on-main-gitlab-authority-public-github-release-blocked-marketplace-1.3.7-retained',
+        'v1.3.9-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained',
       localInstalledVsix: 'release-1.3.9-authority-candidate-package-line',
       publicGitHubExactTransactionGate:
         'required-before-any-further-public-github-release-or-marketplace-act',
       exactPublicRelease:
-        'v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history'
+        'v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history'
     });
     expect(candidate.exactRelease).toMatchObject({
-      version: 'v1.3.7',
-      gitHubReleaseId: 312517425,
-      gitHubAssetName: 'vi-history-suite-1.3.7.vsix',
-      gitHubAssetSha256: '89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b',
-      marketplaceVersion: '1.3.7'
+      version: 'v1.3.9',
+      gitHubReleaseId: 312994104,
+      gitHubAssetName: 'vi-history-suite-1.3.9.vsix',
+      gitHubAssetSha256: '62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353',
+      marketplaceVersion: '1.3.9'
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
-      status: 'authority-v1.3.8-public-github-release-blocked-release-1.3.9-open',
-      authorityTag: 'v1.3.8',
-      publicGitHubExactTag: 'v1.3.7',
-      publicGitHubReleaseId: 312517425,
-      publicGitHubPublishabilityProbeStatus: 'published-immutable-incomplete',
-      publicGitHubPublishabilityBlockerCode: 'published-immutable-release-assets-incomplete',
-      publicGitHubDraftPublishabilityProbeStatus: 'not-applicable-historical-incident',
-      publicGitHubDraftPublishabilityBlockerCode: 'published-release-not-draft',
+      status: 'authority-v1.3.9-published-v1.3.8-history-retained-no-open-release-line',
+      authorityTag: 'v1.3.9',
+      publicGitHubExactTag: 'v1.3.9',
+      publicGitHubReleaseId: 312994104,
+      publicGitHubPublishabilityProbeStatus: 'published-complete',
+      publicGitHubPublishabilityBlockerCode: null,
+      publicGitHubDraftPublishabilityProbeStatus: 'not-applicable-already-published',
+      publicGitHubDraftPublishabilityBlockerCode: null,
       publicGitHubReleaseLookupStatusCode: 200,
       publicGitHubDraftReleaseUsesUntaggedUrl: false,
-      nextSeparateAct: 'promote-release-1.3.9-to-main-after-governed-validation',
-      marketplaceVersionRetained: '1.3.7',
+      nextSeparateAct: 'normal-next-line-governance-after-v1.3.9-retention',
+      marketplaceVersionRetained: '1.3.9',
       publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
       vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare'
     });
@@ -70,10 +70,10 @@ describe('public release candidate control surface', () => {
       publicGitHubReleaseImmutable: true,
       publicGitHubReleaseAssetCount: 0,
       blockerCode: 'published-immutable-release-assets-incomplete',
-      marketplaceVersionRetained: '1.3.7'
+      marketplaceVersionRetained: '1.3.9'
     });
     expect(candidate.softwareFactoryGovernance).toEqual({
-      status: 'authority-v1.3.8-blocked-history-release-1.3.9-open-no-active-feature-branch',
+      status: 'authority-v1.3.9-fully-published-no-active-feature-branch',
       activeFeatureBranch: null,
       packageScripts: {
         assess: 'npm run software:factory:assess',
@@ -94,10 +94,10 @@ describe('public release candidate control surface', () => {
       },
       admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
       guardedNonMutatingContractPhases: ['publish', 'verify'],
-      soleProductionRecoveryTarget: 'v1.3.9',
+      soleProductionRecoveryTarget: null,
       productionMutationAllowed: false,
       rule:
-        'the retained v1.3.8 authority exact line is blocked historical publication evidence; release/1.3.9 may proceed only through normal GitFlow and repo-owned factory/orchestrator governance before any public GitHub or Marketplace mutation'
+        'Exact v1.3.9 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence.'
     });
     expect(candidate.localProofs.localInstalledVsixPreview).toMatchObject({
       status: 'release-1.3.9-authority-candidate-package-line',
@@ -106,16 +106,16 @@ describe('public release candidate control surface', () => {
       checksumPath: 'preview-evidence/vi-history-suite-1.3.9.vsix.sha256'
     });
     expect(candidate.localProofs.publicGitHubExactTransaction).toMatchObject({
-      status: 'published-v1.3.7-github-release-and-marketplace-verified',
+      status: 'published-v1.3.9-github-release-and-marketplace-verified',
       packageScript: 'npm run public:github:exact:transaction:verify',
-      authorityTag: 'v1.3.7',
-      publicMainCommit: '704e629eed72d7ea5f46e2e45b1e17e58655edce',
-      publicTag: 'v1.3.7',
-      publicReleaseId: 312517425,
-      vsixAssetName: 'vi-history-suite-1.3.7.vsix',
-      vsixAssetSha256: '89c01d0841399661b2bfaf272361926ba5c0fe99ba4cf463319aa17f7776396b',
+      authorityTag: 'v1.3.9',
+      publicMainCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
+      publicTag: 'v1.3.9',
+      publicReleaseId: 312994104,
+      vsixAssetName: 'vi-history-suite-1.3.9.vsix',
+      vsixAssetSha256: '62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353',
       authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json',
+        '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json',
       releaseAssetsRetainedAgainstManifest: true,
       publicSourcePromotionStatus: 'passed',
       verifyGateStatus: 'pass',
@@ -127,15 +127,15 @@ describe('public release candidate control surface', () => {
       openingNewSemverAllowed: true,
       repairInPlaceRequired: false,
       repairInPlaceAllowed: false,
-      nextAllowedAction: 'promote-release-1.3.9-to-main-after-governed-validation'
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention'
     });
     expect(candidate.localProofs.vscodeMarketplacePublicationPrep).toMatchObject({
-      status: 'published-v1.3.7-verified',
+      status: 'published-v1.3.9-verified',
       packageScript: 'npm run vscode:marketplace:prepare',
-      expectedMarketplaceVersion: '1.3.7',
-      currentMarketplaceVersion: '1.3.7',
+      expectedMarketplaceVersion: '1.3.9',
+      currentMarketplaceVersion: '1.3.9',
       publicGitHubVerifyGateStatus: 'pass',
-      publicGitHubReleaseId: 312517425,
+      publicGitHubReleaseId: 312994104,
       vsixSha256Verified: true,
       vscePatLocatorStatus: 'ok',
       secretRetained: false,
@@ -143,7 +143,7 @@ describe('public release candidate control surface', () => {
       productionMutationAttempted: true,
       publicationMode: 'pinned-vsce-cli',
       publishedAt: '2026-04-23',
-      nextAllowedAction: 'publish-v1.3.9-to-vscode-marketplace-after-github-v1.3.9-publication'
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention'
     });
     expect(candidate.activeBlockers).toEqual([
       expect.objectContaining({
@@ -153,36 +153,36 @@ describe('public release candidate control surface', () => {
     ]);
 
     expect(candidateMarkdown).toContain('Version line: `1.3.9`');
-    expect(candidateMarkdown).toContain('Published public source commit: `704e629`');
+    expect(candidateMarkdown).toContain('Published public source commit: `fb0ef2b`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');
     expect(candidateMarkdown).toContain('`release-1.3.9-authority-candidate-package-line`');
     expect(candidateMarkdown).toContain(
-      '`v1.3.7-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`'
+      '`v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`'
     );
-    expect(candidateMarkdown).toContain('GitHub release `312517425`');
+    expect(candidateMarkdown).toContain('GitHub release `312994104`');
     expect(candidateMarkdown).toContain('`verifyGateStatus=pass`');
     expect(candidateMarkdown).toContain('`verifyGateAllowed=true`');
     expect(candidateMarkdown).toContain(
-      '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json'
+      '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     );
-    expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.7`');
-    expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.7`');
+    expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.9`');
+    expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.9`');
     expect(candidateMarkdown).toContain('`npm run vscode:marketplace:prepare`');
-    expect(candidateMarkdown).toContain('`currentMarketplaceVersion=1.3.7`');
+    expect(candidateMarkdown).toContain('`currentMarketplaceVersion=1.3.9`');
     expect(candidateMarkdown).toContain('GitHub release `312768592` is already published and immutable with zero');
     expect(candidateMarkdown).toContain('`published-immutable-release-assets-incomplete`');
 
-    expect(currentState).toContain('current exact released line: `v1.3.8`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.8`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.3.8`');
-    expect(currentState).toContain('active release-candidate branch: `release/1.3.9`');
+    expect(currentState).toContain('current exact released line: `v1.3.9`');
+    expect(currentState).toContain('current published package line on `main`: `1.3.9`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.9`');
+    expect(currentState).toContain('active release-candidate branch: none');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
     expect(currentState).toContain('separate public GitHub exact release publication: published;');
-    expect(currentState).toContain('releases/tag/v1.3.7');
+    expect(currentState).toContain('releases/tag/v1.3.9');
     expect(currentState).toContain('verify receipt now records `verifyGateStatus=pass`');
-    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.7`');
+    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.9`');
 
     for (const requirementId of [
       'VHS-REQ-566',

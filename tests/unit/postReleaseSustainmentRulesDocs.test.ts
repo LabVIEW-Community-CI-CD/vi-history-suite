@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('post-release sustainment rules package', () => {
-  it('retains the v1.3.9 release candidate on the v1.3.8 authority blocked-history contract', () => {
+  it('retains the fully closed v1.3.9 line while keeping v1.3.8 as blocked historical evidence', () => {
     const rules = readJson<any>('docs/product/post-release-sustainment-rules.json');
     const rulesDoc = readText('docs/product/post-release-sustainment-rules.md');
     const readme = readText('README.md');
@@ -28,11 +28,11 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.8',
-        currentMainPackageLine: '1.3.8',
-        currentDevelopPackageLine: '1.3.8',
-        activeDevelopCandidateReleaseLine: '1.3.9',
-        activeReleaseCandidateBranch: 'release/1.3.9',
+        currentExactReleaseLine: 'v1.3.9',
+        currentMainPackageLine: '1.3.9',
+        currentDevelopPackageLine: '1.3.9',
+        activeDevelopCandidateReleaseLine: null,
+        activeReleaseCandidateBranch: null,
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -55,11 +55,12 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.7');
     expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.8');
+    expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.9');
     expect(rules.releaseCadence.versionLineContract.publicGitHubExactPublishabilityProbe).toEqual(
       expect.objectContaining({
         status: 'published',
         blockerCode: null,
-        draftReleaseId: 312517425,
+        draftReleaseId: 312994104,
         draftReleaseLookupStatusCode: 200,
         draftReleaseHtmlUrlUsesUntaggedPath: false
       })
@@ -70,11 +71,11 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         status: 'not-applicable',
         blockerCode: 'draft-release-not-draft',
-        draftReleaseId: 312517425,
+        draftReleaseId: 312994104,
         draftReleaseByIdStatusCode: 200,
         draftReleaseTagMatchesAuthority: true,
         authorityReleaseManifestPath:
-          '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json',
+          '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json',
         releaseAssetsRetainedAgainstManifest: true
       })
     );
@@ -86,19 +87,8 @@ describe('post-release sustainment rules package', () => {
         publicGitHubReleaseImmutable: true,
         publicGitHubReleaseAssetCount: 0,
         blockerCode: 'published-immutable-release-assets-incomplete',
-        marketplaceVersionRetained: '1.3.7'
+        marketplaceVersionRetained: '1.3.9'
       })
-    );
-    expect(rules.releaseCadence.strictSemverRule).toEqual(
-      expect.arrayContaining([
-        'future sessions shall assess or verify the current exact public GitHub transaction through the repo-owned controller before any further public GitHub release or VS Code Marketplace act',
-        "future sessions shall retain the controller's non-mutating draft-publishability probe before any in-place public GitHub release repair attempt",
-        'future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds',
-        'future sessions shall run and retain npm run vscode:marketplace:prepare before any mutating VS Code Marketplace publication act',
-        'future sessions shall not publish a public GitHub exact release until the repo-owned asset-first publisher has created a draft, uploaded the VSIX and checksum from GitLab authority evidence, and verified those assets by release id',
-        'future sessions shall classify a published immutable public GitHub release with missing or mismatched assets as externally blocked and Marketplace-blocking',
-        'future sessions may open the next SemVer line only after the matching public tag, public GitHub release, VS Code Marketplace version, and protected develop retention state all agree'
-      ])
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
@@ -109,16 +99,16 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.softwareFactoryGovernance).toEqual(
       expect.objectContaining({
-        status: 'authority-v1.3.8-blocked-history-release-1.3.9-open',
+        status: 'authority-v1.3.9-fully-published-no-open-release-line',
         activeFeatureBranch: null,
-        soleProductionRecoveryTarget: 'v1.3.9',
+        soleProductionRecoveryTarget: null,
         productionMutationAllowed: false
       })
     );
     expect(rules.softwareFactoryGovernance.recoveryBoundary).toEqual(
       expect.arrayContaining([
         'repair-in-place first when public GitHub main, tag, or draft release already exist',
-        'current exact GitHub and VS Code Marketplace acts remain fully closed only for v1.3.7 while v1.3.8 is retained as blocked historical incident evidence and release/1.3.9 is the active patch candidate'
+        'current exact GitHub and VS Code Marketplace acts are fully closed for v1.3.9 while v1.3.8 is retained as blocked historical incident evidence'
       ])
     );
     expect(rules.softwareFactoryGovernance.approvalModel).toEqual(
@@ -129,28 +119,27 @@ describe('post-release sustainment rules package', () => {
       ])
     );
 
-    expect(rulesDoc).toContain('current exact released line: `v1.3.8`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.8`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.8`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.9`');
-    expect(rulesDoc).toContain('installed `vihs` launcher fix');
-    expect(rulesDoc).toContain('public release `312517425` is published on `v1.3.7`');
-    expect(rulesDoc).toContain('public GitHub release');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.9`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.9`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.9`');
+    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('public release `312994104` is published on `v1.3.9`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
     expect(rulesDoc).toContain('asset-first GitHub release rule');
     expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(rulesDoc).toContain(
-      '.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/'
+      '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/'
     );
     expect(rulesDoc).toContain('active software-factory branch on `develop`:');
     expect(rulesDoc).toContain('none');
-    expect(rulesDoc).toContain('sole production recovery target: `v1.3.9`');
-    expect(rulesDoc).toContain('release/1.3.9` is the active patch candidate');
+    expect(rulesDoc).toContain('sole production recovery target: none');
+    expect(rulesDoc).toContain('current');
+    expect(rulesDoc).toContain('exact GitHub and VS Code Marketplace acts are fully closed for `v1.3.9`');
     expect(rulesDoc).toContain('Marketplace prep rule');
-    expect(readme).toContain('current exact released line: `v1.3.8`');
-    expect(currentState).toContain('current exact released line: `v1.3.8`');
-    expect(releaseProcedure).toContain('The current exact released line is `v1.3.8`.');
+    expect(readme).toContain('current exact released line: `v1.3.9`');
+    expect(currentState).toContain('current exact released line: `v1.3.9`');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.3.9`.');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
   });
 });
