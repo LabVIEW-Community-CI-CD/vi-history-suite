@@ -22,6 +22,11 @@ The machine-readable companion surface for this ledger is:
 - Current publication date: `2026-04-23`
 - Current verification surface: official gallery extension query
 - Current pending publication: none
+- Pending publication install-proof command:
+  `npm run vscode:marketplace:install-proof`
+- Pending publication install-proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
+- Pending publication install-proof status: retain-passed-install-proof
 - Pending publication prep command: `npm run vscode:marketplace:prepare`
 - Pending publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
@@ -52,6 +57,11 @@ The machine-readable companion surface for this ledger is:
 - Secret material such as Azure DevOps PAT values shall not be retained in this
   ledger, its JSON companion, or other repo evidence.
 - Before a mutating Marketplace publication act, the prep receipt shall prove
+  the retained Windows exact-VSIX install proof passed for the selected
+  authority VSIX in isolated VS Code user-data/extensions roots with bare
+  `vihs` plus `vihs --validate`, launcher-only PATH, and no ambient Node
+  dependency,
+  the prep receipt shall prove
   the public GitHub exact release is verified, the authority VSIX/checksum
   evidence matches, the live Marketplace version is still stale, the local PAT
   locator is ready without retaining the secret, and the pinned `vsce` command

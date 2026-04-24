@@ -36,6 +36,13 @@ const vsixPath = path.join(
   'release-evidence',
   'vi-history-suite-1.3.7.vsix'
 );
+const installProofReceiptPath = path.join(
+  repoRoot,
+  '.cache',
+  'windows-exact-vsix-install-proof',
+  'latest',
+  'windows-exact-vsix-install-proof.json'
+);
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const prep = require(path.resolve(
@@ -47,6 +54,13 @@ const prep = require(path.resolve(
 )) as {
   DEFAULT_EVIDENCE_DIR: string;
   DEFAULT_MARKETPLACE_ITEM: string;
+  DEFAULT_WINDOWS_INSTALL_PROOF_RECEIPT_PATH: string;
+  assessWindowsExactVsixInstallProof: (
+    receipt: Record<string, unknown> | null,
+    expectedTag: string,
+    expectedVersion: string,
+    manifestSha: string
+  ) => Record<string, any>;
   buildPlannedVscePublishCommand: (vsixPath: string) => {
     command: string;
     args: string[];
@@ -60,7 +74,38 @@ const prep = require(path.resolve(
   parseArgs: (argv: string[]) => Record<string, unknown>;
 };
 
-function fakeFs(): typeof fs {
+function buildInstallProofReceipt(
+  tag = 'v1.3.7',
+  version = '1.3.7',
+  observedSha = vsixSha256
+) {
+  return {
+    status: 'passed',
+    authority: {
+      tag,
+      packageVersion: version,
+      observedVsixSha256: observedSha
+    },
+    launcher: {
+      pathStrippedToLauncherAndSystem32: true,
+      ambientNodeOnPathRequired: false
+    },
+    commands: [
+      { id: 'vihs', status: 'passed' },
+      {
+        id: 'vihs-validate',
+        status: 'passed',
+        runtimeValidationOutcome: 'ready'
+      }
+    ],
+    receiptPaths: {
+      json: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
+    }
+  };
+}
+
+function fakeFs(options?: { includeInstallProof?: boolean }): typeof fs {
+  const includeInstallProof = options?.includeInstallProof ?? true;
   const files = new Map<string, string | Buffer>([
     [
       path.normalize(path.join(repoRoot, 'docs/product/public-release-candidate.json')),
@@ -112,6 +157,10 @@ function fakeFs(): typeof fs {
     [path.normalize('D:\\tokens\\azdo.txt'), 'marketplace-pat']
   ]);
 
+  if (includeInstallProof) {
+    files.set(path.normalize(installProofReceiptPath), JSON.stringify(buildInstallProofReceipt()));
+  }
+
   return {
     ...fs,
     existsSync: (targetPath: fs.PathLike) => files.has(path.normalize(String(targetPath))),
@@ -135,10 +184,15 @@ describe('VS Code Marketplace publication prep', () => {
       evidenceDir: prep.DEFAULT_EVIDENCE_DIR,
       patPath: null,
       marketplaceItem: 'svelderrainruiz.vi-history-suite',
+      installProofReceiptPath:
+        '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
       transactionReceiptPath:
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     });
     expect(prep.DEFAULT_MARKETPLACE_ITEM).toBe('svelderrainruiz.vi-history-suite');
+    expect(prep.DEFAULT_WINDOWS_INSTALL_PROOF_RECEIPT_PATH).toBe(
+      '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
+    );
     expect(prep.buildPlannedVscePublishCommand(vsixPath)).toEqual({
       command: 'node',
       args: [
@@ -161,6 +215,8 @@ describe('VS Code Marketplace publication prep', () => {
         evidenceDir: prep.DEFAULT_EVIDENCE_DIR,
         patPath: 'D:\\tokens\\azdo.txt',
         marketplaceItem: 'svelderrainruiz.vi-history-suite',
+        installProofReceiptPath:
+          '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
         transactionReceiptPath:
           '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
       },
@@ -178,6 +234,15 @@ describe('VS Code Marketplace publication prep', () => {
     expect(report.status).toBe('ready');
     expect(report.productionMutationAttempted).toBe(false);
     expect(report.publicGitHub.verifyGateStatus).toBe('pass');
+    expect(report.windowsExactVsixInstallProof).toMatchObject({
+      status: 'pass',
+      authorityTag: 'v1.3.7',
+      packageVersion: '1.3.7',
+      runtimeValidationOutcome: 'ready',
+      launcherPathStrippedToLauncherAndSystem32: true,
+      ambientNodeOnPathRequired: false,
+      allowed: true
+    });
     expect(report.marketplace).toMatchObject({
       expectedVersion: '1.3.7',
       currentPublishedVersion: '1.3.0',
@@ -198,9 +263,83 @@ describe('VS Code Marketplace publication prep', () => {
       expect.arrayContaining([
         expect.objectContaining({ id: 'public-github-exact-release-verified', status: 'pass' }),
         expect.objectContaining({ id: 'authority-vsix-evidence', status: 'pass' }),
+        expect.objectContaining({ id: 'windows-exact-vsix-install-proof', status: 'pass' }),
         expect.objectContaining({ id: 'marketplace-current-version', status: 'pending' }),
         expect.objectContaining({ id: 'vsce-pat-locator', status: 'pass' }),
         expect.objectContaining({ id: 'pinned-vsce-publish-command', status: 'pass' })
+      ])
+    );
+  });
+
+  it('fails closed when the retained Windows exact-VSIX install proof is missing', async () => {
+    const report = await prep.buildPrepReport(
+      {
+        evidenceDir: prep.DEFAULT_EVIDENCE_DIR,
+        patPath: 'D:\\tokens\\azdo.txt',
+        marketplaceItem: 'svelderrainruiz.vi-history-suite',
+        installProofReceiptPath:
+          '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
+        transactionReceiptPath:
+          '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
+      },
+      {
+        fs: fakeFs({ includeInstallProof: false }),
+        fetchMarketplaceState: async () => ({
+          statusCode: 200,
+          marketplaceItem: 'svelderrainruiz.vi-history-suite',
+          currentPublishedVersion: '1.3.0',
+          found: true
+        })
+      }
+    );
+
+    expect(report.status).toBe('blocked');
+    expect(report.windowsExactVsixInstallProof).toMatchObject({
+      status: 'blocked',
+      authorityTag: null,
+      allowed: false
+    });
+    expect(report.marketplace.nextAction).toBe(
+      'retain-windows-exact-vsix-install-proof-for-v1.3.7-before-marketplace-publication'
+    );
+    expect(report.phases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'windows-exact-vsix-install-proof', status: 'blocked' })
+      ])
+    );
+  });
+
+  it('retains already-published Marketplace state even if the install proof receipt is absent', async () => {
+    const report = await prep.buildPrepReport(
+      {
+        evidenceDir: prep.DEFAULT_EVIDENCE_DIR,
+        patPath: 'D:\\tokens\\azdo.txt',
+        marketplaceItem: 'svelderrainruiz.vi-history-suite',
+        installProofReceiptPath:
+          '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
+        transactionReceiptPath:
+          '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
+      },
+      {
+        fs: fakeFs({ includeInstallProof: false }),
+        fetchMarketplaceState: async () => ({
+          statusCode: 200,
+          marketplaceItem: 'svelderrainruiz.vi-history-suite',
+          currentPublishedVersion: '1.3.7',
+          found: true
+        })
+      }
+    );
+
+    expect(report.status).toBe('ready');
+    expect(report.marketplace.nextAction).toBe('retain-marketplace-publication');
+    expect(report.phases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'windows-exact-vsix-install-proof',
+          status: 'retained-publication'
+        }),
+        expect.objectContaining({ id: 'marketplace-current-version', status: 'already-published' })
       ])
     );
   });

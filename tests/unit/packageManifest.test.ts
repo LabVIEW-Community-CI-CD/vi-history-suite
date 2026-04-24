@@ -323,6 +323,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['public:github:exact:transaction:verify']).toBe(
       'node scripts/runPublicGithubExactReleaseTransaction.js --mode verify'
     );
+    expect(manifest.scripts?.['vscode:marketplace:install-proof']).toBe(
+      'node scripts/runWindowsExactVsixInstallProof.js'
+    );
     expect(manifest.scripts?.['vscode:marketplace:prepare']).toBe(
       'node scripts/prepareVsCodeMarketplacePublication.js'
     );

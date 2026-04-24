@@ -29,6 +29,10 @@ Adopt the VS Code Marketplace as a governed exact-release distribution surface:
 
 - exact release closeout is not complete until the matching VSIX version is
   verified on the VS Code Marketplace
+- any future mutating Marketplace publication act must first retain a passing
+  Windows exact-VSIX install proof that installs the exact authority VSIX into
+  isolated VS Code user-data/extensions roots and proves bare `vihs` plus
+  `vihs --validate` succeed without ambient Node on PATH
 - retain the live Marketplace publication state in
   `docs/product/vscode-marketplace-publication-ledger.{md,json}`
 - govern the publish path through pinned `vsce`, Azure DevOps PAT scope
@@ -56,6 +60,9 @@ Positive:
 - Marketplace publication becomes retained release truth instead of an operator
   side effect
 - future exact closeout work must prove Marketplace publication explicitly
+- future Marketplace-ready exact lines must also retain the Windows isolated
+  install proof before publication instead of discovering installed-user
+  defects only after the listing is live
 - installed users land on task-oriented documentation before repo-specific
   governance detail
 

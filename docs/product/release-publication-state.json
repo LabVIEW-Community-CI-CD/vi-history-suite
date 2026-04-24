@@ -49,7 +49,16 @@
     "itemName": "svelderrainruiz.vi-history-suite",
     "currentPublishedVersion": "1.3.9",
     "expectedVersion": "1.3.9",
-    "status": "published-and-verified"
+    "status": "published-and-verified",
+    "windowsExactVsixInstallProof": {
+      "packageScript": "npm run vscode:marketplace:install-proof",
+      "receiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
+      "status": "passed",
+      "authorityTag": "v1.3.9",
+      "runtimeValidationOutcome": "ready",
+      "launcherPathStrippedToLauncherAndSystem32": true,
+      "ambientNodeOnPathRequired": false
+    }
   },
   "incident": {
     "active": false,

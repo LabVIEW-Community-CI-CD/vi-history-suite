@@ -31,6 +31,10 @@
   `npm run public:github:exact:transaction:verify`.
 - The retained public GitHub exact transaction receipt is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
+- The Windows exact-VSIX install proof package script is
+  `npm run vscode:marketplace:install-proof`.
+- The retained Windows exact-VSIX install proof receipt is
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`.
 - The VS Code Marketplace publication prep package script is
   `npm run vscode:marketplace:prepare`.
 - The retained VS Code Marketplace publication prep receipt is
@@ -46,6 +50,8 @@
   `npm run software:factory:publish`.
 - The software factory verify package script is
   `npm run software:factory:verify`.
+- The VS Code Marketplace install-proof package script is
+  `npm run vscode:marketplace:install-proof`.
 - The VS Code Marketplace prep package script is
   `npm run vscode:marketplace:prepare`.
 - The retained software factory assessment receipt is
@@ -58,6 +64,8 @@
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`.
 - The retained software factory verify receipt is
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
+- The retained Windows exact-VSIX install proof receipt is
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`.
 - The retained VS Code Marketplace prep receipt is
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
 - The software-factory contract admits non-production `assess`,
@@ -368,6 +376,8 @@ separate afterward.
       `npm run software:factory:rehearse`
     - retain the non-production repair contract through
       `npm run software:factory:repair`
+    - retain the Windows exact-VSIX install proof through
+      `npm run vscode:marketplace:install-proof`
     - retain the VS Code Marketplace publication prep receipt through
       `npm run vscode:marketplace:prepare`
     - the retained `v1.3.9` verify receipt now proves the public GitHub exact
@@ -378,6 +388,13 @@ separate afterward.
     - The governed distribution surface is the VS Code Marketplace item
       `svelderrainruiz.vi-history-suite`.
     - Before the mutating publish act, run
+      `npm run vscode:marketplace:install-proof` and require its receipt to
+      show the exact authority VSIX installed into isolated VS Code
+      user-data/extensions roots on Windows, bare `vihs` plus
+      `vihs --validate` both passed, `runtimeValidationOutcome=ready`,
+      launcher PATH remained stripped to the isolated launcher root plus
+      `System32`, and no ambient Node on PATH was required.
+    - Then run
       `npm run vscode:marketplace:prepare` and require its receipt to show the
       GitHub `v1.3.9` verify gate passed, exact VSIX/checksum evidence matched,
       live Marketplace served the expected pre-publication stale version before

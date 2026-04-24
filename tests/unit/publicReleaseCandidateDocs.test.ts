@@ -34,6 +34,7 @@ describe('public release candidate control surface', () => {
       localInstalledVsix: 'release-1.3.9-authority-candidate-package-line',
       publicGitHubExactTransactionGate:
         'required-before-any-further-public-github-release-or-marketplace-act',
+      windowsExactVsixInstallProofGate: 'required-before-any-later-marketplace-act',
       exactPublicRelease:
         'v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history'
     });
@@ -58,7 +59,10 @@ describe('public release candidate control surface', () => {
       nextSeparateAct: 'normal-next-line-governance-after-v1.3.9-retention',
       marketplaceVersionRetained: '1.3.9',
       publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
-      vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare'
+      vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare',
+      windowsExactVsixInstallProofPackageScript: 'npm run vscode:marketplace:install-proof',
+      windowsExactVsixInstallProofReceiptPath:
+        '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
     });
     expect(candidate.publicationIncident).toMatchObject({
       id: 'PUBLICATION-INCIDENT-v1.3.8-IMMUTABLE-ZERO-ASSETS',
@@ -81,6 +85,7 @@ describe('public release candidate control surface', () => {
         repair: 'npm run software:factory:repair',
         publish: 'npm run software:factory:publish',
         verify: 'npm run software:factory:verify',
+        marketplaceInstallProof: 'npm run vscode:marketplace:install-proof',
         marketplacePrepare: 'npm run vscode:marketplace:prepare'
       },
       receiptPaths: {
@@ -89,6 +94,8 @@ describe('public release candidate control surface', () => {
         repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
         publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
         verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json',
+        marketplaceInstallProof:
+          '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
         marketplacePrepare:
           '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json'
       },
@@ -104,6 +111,16 @@ describe('public release candidate control surface', () => {
       version: '1.3.9',
       vsixPath: 'preview-evidence/vi-history-suite-1.3.9.vsix',
       checksumPath: 'preview-evidence/vi-history-suite-1.3.9.vsix.sha256'
+    });
+    expect(candidate.localProofs.windowsExactVsixInstallProof).toMatchObject({
+      status: 'passed-v1.3.9-isolated-exact-vsix-install',
+      packageScript: 'npm run vscode:marketplace:install-proof',
+      receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
+      authorityTag: 'v1.3.9',
+      packageVersion: '1.3.9',
+      runtimeValidationOutcome: 'ready',
+      launcherPathStrippedToLauncherAndSystem32: true,
+      ambientNodeOnPathRequired: false
     });
     expect(candidate.localProofs.publicGitHubExactTransaction).toMatchObject({
       status: 'published-v1.3.9-github-release-and-marketplace-verified',
@@ -137,6 +154,9 @@ describe('public release candidate control surface', () => {
       publicGitHubVerifyGateStatus: 'pass',
       publicGitHubReleaseId: 312994104,
       vsixSha256Verified: true,
+      windowsExactVsixInstallProofStatus: 'pass',
+      windowsExactVsixInstallProofReceiptPath:
+        '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
       vscePatLocatorStatus: 'ok',
       secretRetained: false,
       pinnedVscePackage: '@vscode/vsce@3.7.1',
@@ -167,7 +187,14 @@ describe('public release candidate control surface', () => {
     );
     expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.9`');
     expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.9`');
+    expect(candidateMarkdown).toContain('`required-before-any-later-marketplace-act`');
     expect(candidateMarkdown).toContain('`npm run vscode:marketplace:prepare`');
+    expect(candidateMarkdown).toContain('`npm run vscode:marketplace:install-proof`');
+    expect(candidateMarkdown).toContain(
+      '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
+    );
+    expect(candidateMarkdown).toContain('`runtimeValidationOutcome=ready`');
+    expect(candidateMarkdown).toContain('`ambientNodeOnPathRequired=false`');
     expect(candidateMarkdown).toContain('`currentMarketplaceVersion=1.3.9`');
     expect(candidateMarkdown).toContain('GitHub release `312768592` is already published and immutable with zero');
     expect(candidateMarkdown).toContain('`published-immutable-release-assets-incomplete`');
@@ -179,6 +206,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
+    expect(currentState).toContain('npm run vscode:marketplace:install-proof');
     expect(currentState).toContain('separate public GitHub exact release publication: published;');
     expect(currentState).toContain('releases/tag/v1.3.9');
     expect(currentState).toContain('verify receipt now records `verifyGateStatus=pass`');
@@ -199,7 +227,9 @@ describe('public release candidate control surface', () => {
       'VHS-REQ-577',
       'VHS-REQ-578',
       'VHS-REQ-579',
-      'VHS-REQ-580'
+      'VHS-REQ-580',
+      'VHS-REQ-581',
+      'VHS-REQ-582'
     ]) {
       expect(srs).toContain(requirementId);
       expect(rtm).toContain(requirementId);
@@ -229,9 +259,13 @@ describe('public release candidate control surface', () => {
       'TEST-UNIT-380',
       'TEST-UNIT-381',
       'TEST-UNIT-382',
+      'TEST-UNIT-383',
+      'TEST-UNIT-384',
       'TEST-DOC-133',
       'TEST-DOC-134',
-      'TEST-DOC-135'
+      'TEST-DOC-135',
+      'TEST-DOC-136',
+      'TEST-DOC-137'
     ]) {
       expect(testPlan).toContain(testId);
     }

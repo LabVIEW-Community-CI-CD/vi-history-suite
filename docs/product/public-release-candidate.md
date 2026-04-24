@@ -52,6 +52,8 @@
   `required-before-any-later-exact-reopen`
 - Public GitHub exact transaction gate:
   `required-before-any-further-public-github-release-or-marketplace-act`
+- Windows exact-VSIX install proof gate:
+  `required-before-any-later-marketplace-act`
 - Exact public release:
   `v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`
 
@@ -131,6 +133,15 @@
   `npm run vscode:marketplace:prepare`.
 - The retained Marketplace prep receipt path is
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
+- Windows exact-VSIX install proof is now retained as the Windows pre-Marketplace
+  local proof surface for the completed exact line:
+  `npm run vscode:marketplace:install-proof`.
+- The retained Windows exact-VSIX install proof receipt path is
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`.
+- That retained Windows exact-VSIX install proof proves bare `vihs` and
+  `vihs --validate` both passed for the exact `v1.3.9` VSIX in isolated VS
+  Code user-data/extensions roots with `runtimeValidationOutcome=ready`,
+  `pathStrippedToLauncherAndSystem32=true`, and `ambientNodeOnPathRequired=false`.
 - The software-factory orchestrator still retains separate non-production local
   proof surfaces:
   `npm run software:factory:assess`,
@@ -148,8 +159,9 @@
 - The Marketplace prep receipt proves `status=ready`,
   `productionMutationAttempted=false`, `publicGitHub.verifyGateStatus=pass`,
   `currentMarketplaceVersion=1.3.9`, `expectedMarketplaceVersion=1.3.9`,
-  `vsixSha256Verified=true`, `vscePatLocatorStatus=ok`, and the pinned
-  `vsce` command shape with `<redacted>` PAT handling.
+  `vsixSha256Verified=true`, `windowsExactVsixInstallProofStatus=pass`,
+  `vscePatLocatorStatus=ok`, and the pinned `vsce` command shape with
+  `<redacted>` PAT handling.
 - The current software-factory closeout posture is now:
   exact authority `v1.3.9` is fully closed across public GitHub and VS Code
   Marketplace, `v1.3.8` remains retained as blocked historical publication

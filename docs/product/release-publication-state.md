@@ -37,6 +37,13 @@ final installed-user distribution surface.
 - Current Marketplace version: `1.3.9`
 - Expected version for the active governed candidate line: `1.3.9`
 - Marketplace status: published and verified on `1.3.9`.
+- Windows exact-VSIX install proof package script:
+  `npm run vscode:marketplace:install-proof`
+- Windows exact-VSIX install proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
+- Windows exact-VSIX install proof status: passed for `v1.3.9` with
+  `runtimeValidationOutcome=ready`, launcher PATH stripped to the isolated
+  launcher root plus `System32`, and no ambient Node requirement.
 
 ## Incident Classification
 
@@ -72,3 +79,8 @@ Future public GitHub exact-release publication must be asset-first:
 No VS Code Marketplace publication is admitted until the public GitHub exact
 release verifies complete; `v1.3.9` is the first retained exact line that
 closed that asset-first path end to end.
+
+Before any future mutating VS Code Marketplace publication act, the exact
+authority VSIX must also pass the retained Windows isolated install proof by
+installing into isolated VS Code user-data/extensions roots and running bare
+`vihs` plus `vihs --validate` successfully.

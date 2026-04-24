@@ -175,6 +175,10 @@ Latest landed ship target:
   `npm run public:github:exact:transaction:verify`
 - retained public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- Windows exact-VSIX install proof package script:
+  `npm run vscode:marketplace:install-proof`
+- retained Windows exact-VSIX install proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - VS Code Marketplace publication prep package script:
   `npm run vscode:marketplace:prepare`
 - retained VS Code Marketplace publication prep receipt:
@@ -241,6 +245,12 @@ Latest landed ship target:
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
   `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
+- Windows exact-VSIX install proof is also retained:
+  `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
+  installs into isolated VS Code user-data/extensions roots on Windows and
+  that bare `vihs` plus `vihs --validate` both pass with
+  `runtimeValidationOutcome=ready`, a launcher-only PATH, and no ambient Node
+  dependency before any future Marketplace publication act opens.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`

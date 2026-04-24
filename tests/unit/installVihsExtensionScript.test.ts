@@ -45,9 +45,14 @@ describe('install vihs extension bootstrap script', () => {
     const script = readText('scripts/install-vihs-extension.ps1');
 
     expect(script).toContain("$ExtensionId = 'svelderrainruiz.vi-history-suite'");
-    expect(script).toContain("Join-Path $env:APPDATA 'Code\\User\\settings.json'");
-    expect(script).toContain('& $resolvedCliCommand --install-extension $PublisherExtensionId --force');
+    expect(script).toContain('[string]$VsixPath');
+    expect(script).toContain('[string]$UserDataDir');
+    expect(script).toContain('[string]$ExtensionsRoot');
+    expect(script).toContain('[switch]$SkipUserPathPersist');
     expect(script).toContain('function Resolve-VSCodeCliCommand');
+    expect(script).toContain('function Resolve-VSCodeUserDataDir');
+    expect(script).toContain('function Resolve-VSCodeSettingsPath');
+    expect(script).toContain('function Resolve-VSCodeExtensionsRoot');
     expect(script).toContain("\\bin\\code.cmd");
     expect(script).toContain("Resolve-VihsGlobalStorageRoot");
     expect(script).toContain("vihs.cmd");
@@ -56,6 +61,9 @@ describe('install vihs extension bootstrap script', () => {
     expect(script).toContain("ELECTRON_RUN_AS_NODE=1");
     expect(script).toContain("Microsoft VS Code\\Code.exe");
     expect(script).toContain("Ensure-WindowsUserPathPrepend");
+    expect(script).toContain("--user-data-dir");
+    expect(script).toContain("--extensions-dir");
+    expect(script).toContain("exact VSIX $ResolvedVsixPath");
     expect(script).toContain("does not yet include the vihs terminal-entrypoint surface");
     expect(script).toContain("Current VI History install settings:");
     expect(script).toContain("Provider");
@@ -66,6 +74,8 @@ describe('install vihs extension bootstrap script', () => {
     expect(script).toContain("Interactive input was not available.");
     expect(script).toContain("Next commands:");
     expect(script).toContain("vihs --validate");
+    expect(script).toContain("System.Text.UTF8Encoding($false)");
+    expect(script).toContain("[System.IO.File]::WriteAllText");
   });
 
   it.runIf(process.platform === 'win32')(
@@ -134,6 +144,7 @@ describe('install vihs extension bootstrap script', () => {
       expect(settingsText).toContain('"viHistorySuite.runtimeProvider": "host"');
       expect(settingsText).toContain('"viHistorySuite.labviewVersion": "2026"');
       expect(settingsText).toContain('"viHistorySuite.labviewBitness": "x64"');
+      expect(settingsText.charCodeAt(0)).not.toBe(0xfeff);
       expect(fs.existsSync(path.join(launcherRoot, 'vihs.cmd'))).toBe(true);
       expect(fs.existsSync(path.join(launcherRoot, 'vihs-runtime-settings.cmd'))).toBe(true);
       const launcherText = fs.readFileSync(path.join(launcherRoot, 'vihs.cmd'), 'utf8');
@@ -201,6 +212,10 @@ describe('install vihs extension bootstrap script', () => {
 
       const cliLogText = fs.readFileSync(fakeCliLogPath, 'utf8');
       expect(cliLogText).toContain('--install-extension svelderrainruiz.vi-history-suite --force');
+      expect(cliLogText).toContain(`--user-data-dir ${path.join(appDataRoot, 'Code')}`);
+      expect(cliLogText).toContain(
+        `--extensions-dir ${path.join(homeRoot, '.vscode', 'extensions')}`
+      );
     }
   );
 });
