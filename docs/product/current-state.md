@@ -54,6 +54,8 @@ Read these in order:
 36. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 37. [VS Code Marketplace Publication Ledger](./vscode-marketplace-publication-ledger.md)
 38. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
+39. [Release Publication State](./release-publication-state.md)
+40. [Release Publication State JSON](./release-publication-state.json)
 
 ## Authority Stack
 
@@ -109,7 +111,9 @@ Current control-plane surfaces:
 37. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 38. [VS Code Marketplace Publication Ledger](./vscode-marketplace-publication-ledger.md)
 39. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
-40. [Fast VS Code Loop](../dev-fast-loop.md)
+40. [Release Publication State](./release-publication-state.md)
+41. [Release Publication State JSON](./release-publication-state.json)
+42. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -183,6 +187,10 @@ Latest landed ship target:
   `npm run vscode:marketplace:prepare`
 - retained VS Code Marketplace publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
 - software factory rehearsal package script:
@@ -195,6 +203,8 @@ Latest landed ship target:
   `npm run software:factory:verify`
 - VS Code Marketplace prep package script:
   `npm run vscode:marketplace:prepare`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
@@ -207,6 +217,8 @@ Latest landed ship target:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
 - retained VS Code Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software-factory contract phases:
   `assess`, `rehearse`, and `repair` remain admitted non-production phases;
   `publish` / `verify` are retained as guarded non-mutating contract phases
@@ -216,6 +228,11 @@ Latest landed ship target:
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: Linux/Docker validated preview with Windows
   installed-user proof deferred
+- active Marketplace community-validation preview path:
+  admitted for preparation only; Windows/LabVIEW settings may remain
+  selectable with proof-status disclosure through `vihs --validate` and
+  `docs/requirements/rtm.csv`, while actual Marketplace publication is
+  blocked until the user says `publish it now`
 - current Linux/Docker preview release-control packet:
   [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
 - current Linux/Docker preview release-control packet JSON:
@@ -256,6 +273,11 @@ Latest landed ship target:
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
   `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
+- VS Code Marketplace community-validation preview prep is non-mutating:
+  `npm run vscode:marketplace:community-preview:prepare` writes the prep
+  receipt, uses a pinned `vsce --pre-release` command shape, requires a
+  distinct higher Marketplace target version before publish, and does not
+  mutate public GitHub or the Marketplace.
 - Windows exact-VSIX install proof is also retained:
   `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
   installs into isolated VS Code user-data/extensions roots on Windows and

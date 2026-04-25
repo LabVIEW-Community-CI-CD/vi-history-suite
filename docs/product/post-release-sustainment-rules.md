@@ -102,6 +102,10 @@ Current version-line contract:
   `npm run vscode:marketplace:prepare`
 - VS Code Marketplace publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
+- VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - current retained public GitHub exact verify gate:
   public release `312994104` is published on `v1.3.9`, release lookup by tag
   returns `200`, readback by id returns `200`, the exact assets match the
@@ -160,6 +164,8 @@ Current control decision for public exact hardening:
   `npm run vscode:marketplace:install-proof`
 - VS Code Marketplace prep package script:
   `npm run vscode:marketplace:prepare`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
 - factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - factory rehearsal receipt:
@@ -174,6 +180,8 @@ Current control decision for public exact hardening:
   `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - VS Code Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - current factory phases:
   `assess`, `rehearse`, `repair`, `publish`, `verify`
 - sole production recovery target: none

@@ -17,6 +17,21 @@
   "pendingPublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
   "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
   "pendingPublicationPrepStatus": "retain-marketplace-publication",
+  "communityValidationPreviewPreparation": {
+    "status": "admitted-for-preparation-only",
+    "publicationClaim": "community-validation-preview",
+    "preparePackageScript": "npm run vscode:marketplace:community-preview:prepare",
+    "prepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
+    "preferredVsceMode": "pre-release",
+    "targetVersionPolicy": "must-be-distinct-higher-major-minor-patch-than-current-marketplace-version",
+    "targetVersion": null,
+    "publishTrigger": "blocked-until-user-says-publish-it-now",
+    "windowsInstalledUserProofState": "deferred",
+    "windowsLabviewFeaturePolicy": "user-selectable-with-proof-status-disclosure",
+    "traceabilityMatrixPath": "docs/requirements/rtm.csv",
+    "publicGitHubMutationAttemptedByPrep": false,
+    "marketplaceMutationAttemptedByPrep": false
+  },
   "secretHandling": "do-not-retain-pat-or-secret-material",
   "publicationHistory": [
     {

@@ -101,6 +101,30 @@ describe('release publication state resolver', () => {
         ambientNodeOnPathRequired: false
       }
     });
+    expect(state.marketplaceCommunityValidationPreview).toMatchObject({
+      status: 'admitted-for-preparation-only',
+      publicationClaim: 'community-validation-preview',
+      preparePackageScript: 'npm run vscode:marketplace:community-preview:prepare',
+      prepReceiptPath:
+        '.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json',
+      preferredVsceMode: 'pre-release',
+      targetVersionPolicy:
+        'must-be-distinct-higher-major-minor-patch-than-current-marketplace-version',
+      currentMarketplaceVersion: '1.3.9',
+      targetVersion: null,
+      publishTrigger: 'blocked-until-user-says-publish-it-now',
+      windowsLabviewFeaturePolicy: 'user-selectable-with-proof-status-disclosure',
+      windowsInstalledUserProofState: 'deferred',
+      traceabilityMatrixPath: 'docs/requirements/rtm.csv',
+      publicGitHubMutation: 'not-attempted-by-community-preview-prep',
+      marketplaceMutation: 'not-attempted-by-community-preview-prep'
+    });
+    expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
+    expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
+    expect(stateDoc).toContain('blocked until the user says `publish it now`');
+    expect(stateDoc).toContain(
+      'Windows/LabVIEW feature policy: provider, year, and bitness choices may stay'
+    );
     expect(state.incident).toMatchObject({
       active: false,
       classification: 'externally-blocked-publication',

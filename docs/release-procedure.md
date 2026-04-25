@@ -39,6 +39,10 @@
   `npm run vscode:marketplace:prepare`.
 - The retained VS Code Marketplace publication prep receipt is
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`.
+- The VS Code Marketplace community-validation preview prep package script is
+  `npm run vscode:marketplace:community-preview:prepare`.
+- The retained VS Code Marketplace community-validation preview prep receipt is
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`.
 - The active software-factory governance branch on `develop` is none.
 - The software factory assessment package script is
   `npm run software:factory:assess`.
@@ -73,6 +77,10 @@
   contract phases; no production mutation is admitted in this slice.
 - The active governed release claim is Linux/Docker validated preview with
   Windows installed-user proof deferred.
+- The active Marketplace community-validation preview path is preparation-only:
+  Windows/LabVIEW settings may remain selectable with proof-status disclosure,
+  but no public GitHub or Marketplace mutation occurs until the user says
+  `publish it now`.
 - The retained Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The retained Windows x64 private-release packet is:
@@ -394,7 +402,26 @@ promotion still stays separate afterward.
       act closed with manifest-matched assets and `verifyGateStatus=pass`
     - fail closed if that controller no longer verifies the published public
       GitHub exact line cleanly
-15. Publish the exact VSIX to the VS Code Marketplace and retain the result.
+15. Prepare a community-validation Marketplace preview only when that is the
+    intended path for broader installed-user validation.
+    - Run `npm run vscode:marketplace:community-preview:prepare`.
+    - The prep receipt must show `productionMutationAttempted=false`,
+      `publicGitHubMutationAttempted=false`, and
+      `marketplaceMutationAttempted=false`.
+    - The preview uses the pinned `scripts/runPinnedVsce.js` helper with
+      `--pre-release`.
+    - The target version must be a distinct higher `major.minor.patch` value
+      than the current live Marketplace version; `1.3.9` is already live and
+      cannot be reused for a preview.
+    - Windows/LabVIEW provider, year, and bitness choices may remain
+      selectable in the UI/CLI when proof status is visible through
+      `vihs --validate`, `docs/requirements/rtm.csv`, and the release-control
+      state.
+    - Deferred Windows installed-user proof remains deferred; do not re-label
+      Linux/Docker preview evidence as Windows/LabVIEW installed-user proof.
+    - Public GitHub and Marketplace remain untouched until the separate
+      instruction `publish it now` is present.
+16. Publish the exact VSIX to the VS Code Marketplace and retain the result.
     - The governed distribution surface is the VS Code Marketplace item
       `svelderrainruiz.vi-history-suite`.
     - Before the mutating publish act, run
@@ -421,7 +448,7 @@ promotion still stays separate afterward.
     - Update `docs/product/vscode-marketplace-publication-ledger.{md,json}`
       with the publisher id, item id, version, listing URL, publication date,
       publication mode, and homepage URL used for the installed-user surface.
-16. Back-merge the exact released `main` line into `develop` before claiming
+17. Back-merge the exact released `main` line into `develop` before claiming
     exact closeout is complete or opening the next candidate line.
     - use the protected merge path, not an ungoverned local-only shortcut
     - refresh repo-local Git HTTPS transport through
