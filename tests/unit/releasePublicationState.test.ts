@@ -47,14 +47,18 @@ describe('release publication state resolver', () => {
     });
     expect(state.developPreview).toMatchObject({
       classification: 'linux-docker-validated-preview',
-      currentDevelopCommit: 'ebaf84eab1d779d607f4dcb6e58e990d2946779f',
-      currentDevelopPipelineId: 2479875767,
-      currentDevelopPipelineStatus: 'success',
+      stateRole: 'retained-preview-packet-evidence',
+      headTrackingPolicy:
+        'do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed',
       retainedPacketPath: 'docs/product/linux-docker-preview-release-control-packet-2026-04-25.md',
       retainedPacketJsonPath:
         'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json',
+      previewEvidenceCommit: '5c85f0595065d62d4b2679a3df4bb21ba749d71a',
       packetEvidencePipelineId: 2479854355,
       packetEvidencePipelineStatus: 'success',
+      retainedPacketMergeCommit: 'ebaf84eab1d779d607f4dcb6e58e990d2946779f',
+      retainedPacketMergePipelineId: 2479875767,
+      retainedPacketMergePipelineStatus: 'success',
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.9.vsix',
       previewVsixSha256: '7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470',
       publicationState: 'non-production-integration-evidence-only',
@@ -68,8 +72,12 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain(
       'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json'
     );
+    expect(stateDoc).toContain('Preview state role: retained preview packet evidence');
+    expect(stateDoc).toContain('Develop head tracking policy: do not persist the latest live');
     expect(stateDoc).toContain('Public GitHub mutation: not admitted by this preview claim');
     expect(stateDoc).toContain('VS Code Marketplace mutation: not admitted by this preview claim');
+    expect(state.developPreview.currentDevelopCommit).toBeUndefined();
+    expect(state.developPreview.currentDevelopPipelineId).toBeUndefined();
     expect(state.publicGitHub.release).toMatchObject({
       id: 312994104,
       tag: 'v1.3.9',
