@@ -220,6 +220,10 @@ Latest landed ship target:
   [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
 - current Linux/Docker preview release-control packet JSON:
   [linux-docker-preview-release-control-packet-2026-04-25.json](./linux-docker-preview-release-control-packet-2026-04-25.json)
+- current no-mutation Windows/LabVIEW installed-user proof handoff:
+  [windows-labview-installed-user-proof-handoff-2026-04-25.md](./windows-labview-installed-user-proof-handoff-2026-04-25.md)
+- current no-mutation Windows/LabVIEW installed-user proof handoff JSON:
+  [windows-labview-installed-user-proof-handoff-2026-04-25.json](./windows-labview-installed-user-proof-handoff-2026-04-25.json)
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
 - retained Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
