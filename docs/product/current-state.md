@@ -216,6 +216,10 @@ Latest landed ship target:
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: Linux/Docker validated preview with Windows
   installed-user proof deferred
+- current Linux/Docker preview release-control packet:
+  [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
+- current Linux/Docker preview release-control packet JSON:
+  [linux-docker-preview-release-control-packet-2026-04-25.json](./linux-docker-preview-release-control-packet-2026-04-25.json)
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
 - retained Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
