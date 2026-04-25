@@ -21,6 +21,26 @@ final installed-user distribution surface.
 - Active candidate tag: none
 - Active candidate package version: `1.3.9`
 
+## Develop Preview State
+
+- Active develop preview claim: Linux/Docker validated preview
+- Current develop preview commit:
+  `ebaf84eab1d779d607f4dcb6e58e990d2946779f`
+- Current develop preview pipeline: `2479875767` / `success`
+- Retained preview packet:
+  `docs/product/linux-docker-preview-release-control-packet-2026-04-25.md`
+- Retained preview packet JSON:
+  `docs/product/linux-docker-preview-release-control-packet-2026-04-25.json`
+- Packet evidence pipeline: `2479854355` / `success`
+- Preview VSIX evidence:
+  `preview-evidence/vi-history-suite-1.3.9.vsix`
+- Preview VSIX SHA-256:
+  `7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470`
+- Preview publication state: non-production integration evidence only
+- Windows proof state: Windows installed-user proof deferred
+- Public GitHub mutation: not admitted by this preview claim
+- VS Code Marketplace mutation: not admitted by this preview claim
+
 ## Public GitHub State
 
 - Public GitHub `main`: `fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a`

@@ -16,6 +16,22 @@
     "expectedChecksumAsset": "vi-history-suite-1.3.9.vsix.sha256",
     "expectedVsixSha256": "62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353"
   },
+  "developPreview": {
+    "classification": "linux-docker-validated-preview",
+    "currentDevelopCommit": "ebaf84eab1d779d607f4dcb6e58e990d2946779f",
+    "currentDevelopPipelineId": 2479875767,
+    "currentDevelopPipelineStatus": "success",
+    "retainedPacketPath": "docs/product/linux-docker-preview-release-control-packet-2026-04-25.md",
+    "retainedPacketJsonPath": "docs/product/linux-docker-preview-release-control-packet-2026-04-25.json",
+    "packetEvidencePipelineId": 2479854355,
+    "packetEvidencePipelineStatus": "success",
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.9.vsix",
+    "previewVsixSha256": "7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470",
+    "publicationState": "non-production-integration-evidence-only",
+    "windowsInstalledUserProofDeferred": true,
+    "publicGitHubMutation": "not-admitted-by-this-preview-claim",
+    "marketplaceMutation": "not-admitted-by-this-preview-claim"
+  },
   "publicGitHub": {
     "role": "downstream-public-distribution",
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
