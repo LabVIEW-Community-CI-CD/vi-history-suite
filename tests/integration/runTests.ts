@@ -25,6 +25,8 @@ const DEFAULT_WINDOWS_INTEGRATION_TEMP_ROOT =
     : '/mnt/c/Users/sveld/AppData/Local/Temp/vihs-integration-runtime';
 
 async function main(): Promise<void> {
+  clearInheritedVsCodeHostEnvironment();
+
   const repoRoot = path.resolve(__dirname, '..', '..', '..');
   const extensionTestsEntry = path.resolve(__dirname, 'suite', 'index.js');
   const windowsCodePath = WINDOWS_CODE_PATH;
@@ -202,6 +204,14 @@ function buildDecisionRecordAutomationEnv(): Record<string, string> {
     VI_HISTORY_SUITE_DECISION_RATIONALE:
       'Integration automation uses a stable bounded rationale to avoid UI prompts during the extension-host lane.'
   };
+}
+
+function clearInheritedVsCodeHostEnvironment(): void {
+  for (const key of Object.keys(process.env)) {
+    if (key === 'ELECTRON_RUN_AS_NODE' || key === 'ELECTRON_NO_ATTACH_CONSOLE' || key.startsWith('VSCODE_')) {
+      delete process.env[key];
+    }
+  }
 }
 
 function buildIntegrationControlEnv(): Record<string, string> {

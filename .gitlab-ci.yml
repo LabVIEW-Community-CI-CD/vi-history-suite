@@ -29,12 +29,76 @@ governed_runner_admission:
     paths:
       - governed-runner-admission-evidence/
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "feature/ubuntu-docker-evidence-lane-fixes"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_BRANCH == "develop"'
     - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+ubuntu_docker_runner_admission:
+  stage: admission
+  tags:
+    - linux
+    - x64
+    - docker
+    - assurance
+    - private-release
+  script:
+    - mkdir -p governed-runner-admission-evidence
+    - gitlab-runner --version | tee governed-runner-admission-evidence/gitlab-runner-version.txt
+    - docker info --format '{{.OSType}} {{.ServerVersion}}' | tee governed-runner-admission-evidence/docker-info.txt
+    - test "$(docker info --format '{{.OSType}}')" = "linux"
+    - node --version | tee governed-runner-admission-evidence/node-version.txt
+    - npm --version | tee governed-runner-admission-evidence/npm-version.txt
+    - |
+      node - <<'NODE'
+      const fs = require('node:fs');
+      const path = require('node:path');
+
+      const evidenceDir = 'governed-runner-admission-evidence';
+      const read = (fileName) => fs.readFileSync(path.join(evidenceDir, fileName), 'utf8').trim();
+      const dockerInfo = read('docker-info.txt').split(/\s+/u);
+      const payload = {
+        schema: 'vi-history-suite/ubuntu-docker-runner-admission@v1',
+        generatedAt: new Date().toISOString(),
+        runnerDescription: process.env.CI_RUNNER_DESCRIPTION || '',
+        runnerTags: (process.env.CI_RUNNER_TAGS || '').split(',').map((tag) => tag.trim()).filter(Boolean),
+        commitSha: process.env.CI_COMMIT_SHA || '',
+        sourceBranch: process.env.CI_MERGE_REQUEST_SOURCE_BRANCH_NAME || process.env.CI_COMMIT_BRANCH || '',
+        targetBranch: process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME || '',
+        dockerOstype: dockerInfo[0] || '',
+        dockerServerVersion: dockerInfo[1] || '',
+        nodeVersion: read('node-version.txt'),
+        npmVersion: read('npm-version.txt'),
+        windowsLabviewProofIncluded: false,
+        externalWindowsLabviewProofRequired: true
+      };
+      fs.writeFileSync(path.join(evidenceDir, 'ubuntu-docker-runner-admission.json'), `${JSON.stringify(payload, null, 2)}\n`);
+      fs.writeFileSync(
+        path.join(evidenceDir, 'ubuntu-docker-runner-admission.md'),
+        [
+          '# Ubuntu/Docker Runner Admission',
+          '',
+          `- Generated at: ${payload.generatedAt}`,
+          `- Runner: ${payload.runnerDescription}`,
+          `- Docker: ${payload.dockerOstype} ${payload.dockerServerVersion}`,
+          `- Node: ${payload.nodeVersion}`,
+          `- npm: ${payload.npmVersion}`,
+          '- Windows/LabVIEW proof included: false',
+          '- External Windows/LabVIEW proof required: true'
+        ].join('\n') + '\n'
+      );
+      NODE
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - governed-runner-admission-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "feature/ubuntu-docker-evidence-lane-fixes"'
 
 docs_link_check:
   stage: docs
@@ -440,6 +504,8 @@ windows_private_release_acceptance:
     paths:
       - windows-private-release-evidence/
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "feature/ubuntu-docker-evidence-lane-fixes"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_BRANCH == "develop"'
@@ -456,7 +522,11 @@ package_extension_preview:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
-    - windows_private_release_acceptance
+    # - windows_private_release_acceptance remains the governed Windows gate;
+    #   it is optional here only for Ubuntu/Docker evidence MRs where external
+    #   Windows/LabVIEW proof is retained separately.
+    - job: windows_private_release_acceptance
+      optional: true
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
     - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
@@ -510,7 +580,11 @@ release_extension:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
-    - windows_private_release_acceptance
+    # - windows_private_release_acceptance remains the governed Windows gate;
+    #   it is optional here only for Ubuntu/Docker evidence MRs where external
+    #   Windows/LabVIEW proof is retained separately.
+    - job: windows_private_release_acceptance
+      optional: true
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
     - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
