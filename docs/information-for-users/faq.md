@@ -137,10 +137,10 @@ It reports the persisted `viHistorySuite.runtimeProvider`,
 plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
 `runtimeBlockedReason`. This keeps validation on one bounded CLI surface
 without reopening path-picking or a panel-side provider picker. On the current
-Windows x64 private-release route, `ready` means the native Windows host or
-Docker Desktop Windows-container contract is admissible without WSL. The
-interactive no-argument `vihs` flow invokes this same bounded validation after
-you confirm or change settings.
+Linux/Docker validated preview route, `ready` is bounded to the selected
+provider on the current machine; native Windows LabVIEW and Docker Desktop
+Windows-container proof remain deferred. The interactive no-argument `vihs`
+flow invokes this same bounded validation after you confirm or change settings.
 
 ### How do I check live-session drift after changing runtime settings?
 
@@ -206,17 +206,23 @@ Use the command surface that matches the task:
 - for the containerized authoring surface, run `npm run docs:workbench:gate`
 - for the broader branch line, run `npm run test`
 
-### Do I need WSL for the supported Windows x64 path?
+### Is Windows installed-user behavior proven by the current Ubuntu/Docker lane?
 
 No.
 
-For the active Windows x64 private-release and installed-user proof path, use:
+The current governed claim is Linux/Docker validated preview. Users can still
+evaluate the installed extension on their own Windows setups, but this machine
+does not retain native Windows LabVIEW or Docker Desktop Windows-container
+proof.
+
+Windows proof remains deferred until a real Windows/LabVIEW host runner exists
+and produces retained evidence for:
 
 - native Windows host LabVIEW for the host lane
 - Docker Desktop in Windows-container mode for the expert container lane
 
-WSL is retained historical context only; it is not a required dependency for
-the supported Windows x64 user path or the private-release proof route.
+WSL is retained historical context only; it is not proof of native Windows
+installed-user behavior.
 
 ### How do I search the governed docs quickly?
 

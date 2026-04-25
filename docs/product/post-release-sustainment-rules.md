@@ -446,13 +446,12 @@ Required branch-model and CI posture:
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
   when the target repo is dirty
 - the required checks are:
-  - GitLab `governed_runner_admission`
+  - GitLab `ubuntu_docker_runner_admission`
   - GitLab `public_exact_pretag_proof`
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
   - GitLab `test_extension`
-  - GitLab `windows_private_release_acceptance`
   - GitLab `package_extension_preview`
   - GitHub `Public Source Package Preview / public-source-package-preview`
   - GitHub `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
@@ -469,19 +468,27 @@ Hosted automation governance is now retained explicitly:
   `public-windows-installed-user-contract`
 - GitHub benchmark workflows are characterization-only experiment lanes and
   are not exact-release required checks
-- GitLab `windows_private_release_acceptance` now retains one bounded
+- GitLab `governed_runner_admission` and
+  `windows_private_release_acceptance` remain deferred Windows/LabVIEW proof
+  lanes behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`; they are required
+  before any Windows installed-user proof claim, but they are not required for
+  the active Linux/Docker validated preview claim
+- When enabled, GitLab `windows_private_release_acceptance` retains one bounded
   host-native retry when the shared Windows cleanup seam fails before proof
-  execution, preserving `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
-  running `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+  execution, preserving
+  `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, running
+  `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
   retaining `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
   and still failing closed after that single retry if the repo-owned recovery
   step cannot restore a clean proof surface
 - GitLab runner upkeep now uses repo-owned startup-receipt, doctor, apply, and
   live drift-assert surfaces:
-  `governed_runner_admission` runs
+  `ubuntu_docker_runner_admission` now runs in the `admission` stage for the
+  active Linux/Docker preview claim, while deferred `governed_runner_admission`
+  runs
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
-  in the `admission` stage before docs, assurance, test, package, and release
-  work can queue; `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
+  only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`;
+  `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
   and `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh` are the
   lane-local non-destructive doctor surfaces, and
   `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`

@@ -172,11 +172,12 @@
             ],
             "failurePolicy": "fail-closed-on-live-host-drift"
           }
-        }
+        },
+        "claimContribution": "required-for-linux-docker-validated-preview"
       },
       "windowsPrivateRelease": {
         "description": "ghost",
-        "classification": "required-self-hosted-windows-proof-lane",
+        "classification": "deferred-self-hosted-windows-proof-lane",
         "tags": [
           "windows",
           "x64",
@@ -276,25 +277,23 @@
             ],
             "failurePolicy": "fail-closed-on-live-host-drift"
           }
-        }
+        },
+        "availability": "not-available-on-current-ubuntu-docker-machine",
+        "claimBoundary": "cannot be satisfied by Linux Docker; requires native Windows host with LabVIEW and Docker Desktop Windows-container mode"
       }
     },
     "jobs": {
       "governed_runner_admission": {
-        "classification": "required-governance-check",
+        "classification": "deferred-windows-labview-governance-check",
         "stage": "admission",
         "admittedRefs": [
-          "merge_request_event",
-          "develop",
-          "release/*",
-          "hotfix/*",
-          "main",
-          "vX.Y.Z-tags"
+          "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true"
         ],
         "packageScript": "npm run gitlab:runner:doctor",
         "command": "npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence",
         "evidenceRoot": "governed-runner-admission-evidence/",
-        "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages"
+        "failurePolicy": "deferred-until-real-windows-labview-runner-exists",
+        "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true"
       },
       "public_exact_pretag_proof": {
         "classification": "required-governance-check",
@@ -425,14 +424,9 @@
         ]
       },
       "windows_private_release_acceptance": {
-        "classification": "required-governance-check",
+        "classification": "deferred-windows-labview-proof-check",
         "admittedRefs": [
-          "merge_request_event",
-          "develop",
-          "release/*",
-          "hotfix/*",
-          "main",
-          "vX.Y.Z-tags"
+          "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true"
         ],
         "runtimeContaminationRecovery": {
           "laneId": "windows-host-native",
@@ -443,7 +437,9 @@
           "maxProofRetries": 1,
           "firstFailureTranscript": "windows-private-release-evidence/host/proof-run-pre-recovery.txt",
           "failurePolicy": "fail-closed-after-repo-recovery-script-and-single-retry"
-        }
+        },
+        "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true",
+        "claimBoundary": "required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview"
       },
       "package_extension_preview": {
         "classification": "preview-package-lane",
@@ -474,6 +470,22 @@
         "admittedRefs": [
           "vX.Y.Z-tags"
         ]
+      },
+      "ubuntu_docker_runner_admission": {
+        "classification": "required-linux-docker-preview-admission",
+        "stage": "admission",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ],
+        "command": "gitlab-runner --version; docker info; node --version; npm --version",
+        "evidenceRoot": "governed-runner-admission-evidence/",
+        "claimScope": "linux-docker-validated-preview",
+        "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages-on-linux-docker-preview-drift"
       }
     },
     "designGateBoundary": {
@@ -564,5 +576,24 @@
     "docs/product/linux-assurance-runner-lane.md",
     "docs/product/hosted-ci-governance.md",
     "docs/product/hosted-ci-governance.json"
-  ]
+  ],
+  "activeReleaseClaim": {
+    "classification": "linux-docker-validated-preview",
+    "summary": "The governed develop/package preview claim is Linux/Docker validated on the self-hosted Ubuntu runner; Windows installed-user and Windows/LabVIEW proof are deferred until a real Windows host exists.",
+    "verifiedOnThisMachine": [
+      "ubuntu-docker-runner-admission",
+      "linux-assurance-runner-lane",
+      "docs-workbench-gate",
+      "test-extension-linux-ci",
+      "preview-vsix-packaging"
+    ],
+    "deferredProof": [
+      "native Windows installed extension behavior",
+      "native Windows LabVIEW host execution",
+      "Windows Docker Desktop Windows-container execution",
+      "windows_private_release_acceptance"
+    ],
+    "publicGitHubMutation": "not-admitted-by-this-claim",
+    "marketplaceMutation": "not-admitted-by-this-claim"
+  }
 }

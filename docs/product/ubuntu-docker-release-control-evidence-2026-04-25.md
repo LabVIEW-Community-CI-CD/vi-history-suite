@@ -17,8 +17,8 @@ Code Marketplace publication act.
 | GitLab release branch | Do not open `release/*` | No SemVer release candidate, tag, package version change, or Marketplace act is admitted by this slice. |
 | GitLab hotfix branch | Do not open `hotfix/*` | The change does not patch a production exact `main` emergency line. |
 | Public GitHub facade | Do not commit directly to public `main` | The dirty public clone was used only to prove the downstream smoke path. Public source changes must be regenerated from GitLab authority with `npm run public:source:promote` after the authority branch is accepted. |
-| Marketplace | No mutation | Ubuntu/Docker proof is necessary local evidence but does not replace external Windows/LabVIEW installed-user proof. |
-| GitLab MR admission | Use the Ubuntu/Docker runner admission job for this branch only | This Ubuntu machine can truthfully prove Linux Docker runner readiness, but it cannot claim Windows local LabVIEW or Windows Docker proof. The Windows admission and private-release acceptance gates remain for protected/release lines and external Windows/LabVIEW evidence. |
+| Marketplace | No mutation | Ubuntu/Docker proof is necessary local evidence, but it does not prove Windows installed-user behavior and does not admit a Marketplace mutation. |
+| GitLab protected-branch admission | Use the Ubuntu/Docker runner admission job as the active develop/package preview gate | This Ubuntu machine can truthfully prove Linux Docker runner readiness. It cannot claim Windows local LabVIEW or Windows Docker proof, so the Windows admission and private-release acceptance gates are deferred unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`. |
 
 ## Local Fixes
 
@@ -67,7 +67,7 @@ fix, but they are not the governed publication path. The governed path remains:
 4. promote through the public facade branch/PR route admitted by the current
    public candidate state
 
-## External Windows/LabVIEW Proof Still Required
+## Windows/LabVIEW Proof Deferred
 
 This Ubuntu/Docker pass does not cover:
 
@@ -79,8 +79,10 @@ This Ubuntu/Docker pass does not cover:
 - actual bare `vihs`, `vihs --validate`, and compare/report proof on the
   separate Windows/LabVIEW host setup
 
-Any Marketplace or Windows LabVIEW claim that relies on those items remains
-missing proof until the external Windows/LabVIEW host evidence is retained.
+The active governed release claim is therefore downgraded to Linux/Docker
+validated preview. Any Marketplace mutation or Windows installed-user claim
+that relies on those items remains missing proof until real Windows/LabVIEW host
+evidence is retained.
 
 ## Live-Service Boundary
 
@@ -96,5 +98,6 @@ evidence only.
 - Public GitHub production mutation: not admitted
 - Marketplace production mutation: not admitted
 - Exact tag: not admitted
-- Residual gate: external Windows/LabVIEW proof remains separate and required
-  for Windows/Marketplace claims
+- Residual gate: Windows/LabVIEW proof is deferred and required before any
+  Windows installed-user or Marketplace claim, but it is no longer a develop
+  pipeline blocker for the Linux/Docker validated preview claim

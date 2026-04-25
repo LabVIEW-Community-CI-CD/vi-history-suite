@@ -71,17 +71,21 @@
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
-- The active Windows x64 private-release-prep slice is the historical
+- The active governed release claim is Linux/Docker validated preview with
+  Windows installed-user proof deferred.
+- The retained Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
-- The active Windows x64 private-release packet is:
+- The retained Windows x64 private-release packet is:
   - `docs/product/private-release-windows-x64-v1.3.1.md`
   - `docs/product/private-release-windows-x64-v1.3.1.json`
 - The controlled `v1.3.1` Windows x64 private GitLab release is now published
   at `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`,
   with the retained publish receipt at
   `.cache/private-release-publish/latest/private-release-publish.json`.
-- Fresh local `v1.3.1` acceptance evidence remains retained at
-  `windows-private-release-evidence/manifest.json`.
+- Local `v1.3.1` Windows acceptance evidence is deferred on this Ubuntu-only
+  machine; `windows-private-release-evidence/manifest.json` is required before
+  any Windows installed-user proof claim, but it is not a develop pipeline
+  blocker for the Linux/Docker validated preview claim.
 - That private-release act does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
 - Public GitHub `main` now publishes `fb0ef2b`, public tag `v1.3.9` is live,
@@ -109,11 +113,12 @@
 - The governed private-release publish surface for that sequence is:
   - `npm run gitlab:private-release:publish`
   - current retained private-release tag: `private-v1.3.1-windows-x64`
-- The governed Windows runner-lane contract for that prep sequence is:
+- The deferred governed Windows runner-lane contract for that prep sequence is:
   - `docs/product/windows-private-release-runner-lane.md`
 - The governed external assurance lane for that prep sequence is:
   - `docs/product/linux-assurance-runner-lane.md`
-  - fail-fast admission job `governed_runner_admission`
+  - fail-fast Linux/Docker admission job `ubuntu_docker_runner_admission`
+  - deferred Windows/LabVIEW admission job `governed_runner_admission`
   - fail-fast admission evidence root `governed-runner-admission-evidence/`
   - blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
     `assurance_requirements_quality`, and
@@ -174,11 +179,13 @@
   admitted service fragment/user and working directory remain exact, the
   service is still enabled and active, and exactly one configured runner
   process is live.
-- The fail-fast `governed_runner_admission` job runs first in the GitLab
-  `admission` stage through
+- The fail-fast `ubuntu_docker_runner_admission` job runs first in the GitLab
+  `admission` stage for the active Linux/Docker preview claim. The
+  `governed_runner_admission` Windows/LabVIEW doctor job is deferred unless
+  `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`; when enabled, it runs through
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   and blocks docs, assurance, test, package, and release stages whenever the
-  post-reset Windows or Linux runner contract drifts.
+  post-reset Windows/LabVIEW runner contract drifts.
 - When the host-native Windows proof exits on that same cleanup seam, the
   acceptance wrapper retains
   `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -260,10 +267,12 @@
 
 ## Steps
 
-For the current `v1.3.1` Windows-only private-release line, the controlled
-GitLab release is retained at `private-v1.3.1-windows-x64` after the packet
-and validation pack are green; exact/public `release/*` promotion still stays
-separate afterward.
+For the current Linux/Docker validated preview claim, the controlled GitLab
+pipeline must not require an unavailable Windows/LabVIEW runner. The historical
+`v1.3.1` Windows-only private-release packet and GitLab release remain retained,
+but any future Windows installed-user claim stays deferred until a real
+Windows/LabVIEW runner produces retained evidence; exact/public `release/*`
+promotion still stays separate afterward.
 
 1. Ensure branch promotion followed the governed branch model.
    - Before opening or promoting the next candidate line, run
@@ -308,10 +317,12 @@ separate afterward.
      when one combined local report is more convenient.
 6. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
-   - the fail-fast `governed_runner_admission` lane now runs first in the
-     `admission` stage and retains `governed-runner-admission-evidence/`; do
-     not treat later pending stages as trustworthy until that doctor lane is
-     green
+   - the fail-fast `ubuntu_docker_runner_admission` lane now runs first in the
+     `admission` stage for Linux/Docker preview and retains
+     `governed-runner-admission-evidence/`; do not treat later pending stages
+     as trustworthy until that admission lane is green
+   - the Windows/LabVIEW `governed_runner_admission` lane is deferred unless
+     `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
    - the blocking Linux assurance jobs now run through the repo-owned
      `npm run assurance:*` wrapper on the local authenticated self-hosted Linux
      runner lane, which pulls the latest published
@@ -345,9 +356,8 @@ separate afterward.
    under `resources/bundled-docs/`.
 12. When the public Docker product contract changes materially, rerun the
     public-facade Linux smoke lane through:
-    - these Linux checks remain exact/public-release or source-evaluation
-      surfaces; they are not part of the current Windows-only private-release
-      prep route
+    - these Linux checks remain exact/public-release, source-evaluation, or
+      Linux/Docker preview surfaces; they are not Windows installed-user proof
     - local `npm run public:smoke:linux`
     - local `npm run public:gate-d:preflight`
     - local `npm run public:gate-d:prepare-cold-pull` immediately before the

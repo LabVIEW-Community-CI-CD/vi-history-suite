@@ -24,8 +24,10 @@ describe('linux assurance runner lane docs', () => {
     const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
 
     expect(gitlabCi).toContain('assurance_release_gate:');
+    expect(gitlabCi).toContain('ubuntu_docker_runner_admission:');
     expect(gitlabCi).toContain('governed_runner_admission:');
     expect(gitlabCi).toContain('stage: admission');
+    expect(gitlabCi).toContain('linux-docker-validated-preview');
     expect(gitlabCi).toContain('npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence');
     expect(gitlabCi).toContain('assurance_26514_authority:');
     expect(gitlabCi).toContain('assurance_requirements_quality:');
@@ -72,13 +74,14 @@ describe('linux assurance runner lane docs', () => {
     expect(runnerLaneDoc).toContain('npm run gitlab:runner:assert');
     expect(runnerLaneDoc).toContain('$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json');
     expect(runnerLaneDoc).toContain('governed_runner_admission');
+    expect(runnerLaneDoc).toContain('ubuntu_docker_runner_admission');
     expect(runnerLaneDoc).toContain('governed-runner-admission-evidence/runner-doctor.json');
     expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('fails closed unless the configuration is normalized');
     expect(runnerLaneDoc).toContain('fails closed unless the installed helper');
-    expect(runnerLaneDoc).toContain('separate from the Windows private-release proof lane');
+    expect(runnerLaneDoc).toContain('separate from the deferred Windows private-release proof lane');
 
     expect(windowsRunnerLaneDoc).toContain('linux-assurance-runner-lane.md');
     expect(hostedGovernanceDoc).toContain('linux-assurance');
@@ -95,6 +98,8 @@ describe('linux assurance runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
     expect(hostedGovernanceDoc).toContain('governed_runner_admission');
+    expect(hostedGovernanceDoc).toContain('ubuntu_docker_runner_admission');
+    expect(hostedGovernanceDoc).toContain('Linux/Docker validated preview');
     expect(hostedGovernanceDoc).toContain('windows-private-release');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance).toEqual(
       expect.objectContaining({
@@ -181,10 +186,19 @@ describe('linux assurance runner lane docs', () => {
     );
     expect(hostedGovernanceJson.authorityGitLab.jobs.governed_runner_admission).toEqual(
       expect.objectContaining({
-        classification: 'required-governance-check',
+        classification: 'deferred-windows-labview-governance-check',
         stage: 'admission',
         packageScript: 'npm run gitlab:runner:doctor',
-        evidenceRoot: 'governed-runner-admission-evidence/'
+        evidenceRoot: 'governed-runner-admission-evidence/',
+        activationVariable: 'VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true'
+      })
+    );
+    expect(hostedGovernanceJson.authorityGitLab.jobs.ubuntu_docker_runner_admission).toEqual(
+      expect.objectContaining({
+        classification: 'required-linux-docker-preview-admission',
+        stage: 'admission',
+        evidenceRoot: 'governed-runner-admission-evidence/',
+        claimScope: 'linux-docker-validated-preview'
       })
     );
     expect(hostedGovernanceJson.authorityGitLab.jobs.assurance_audit_packet.classification).toBe(

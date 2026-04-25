@@ -119,11 +119,12 @@ history instead of chat memory.
 - retain exact `v1.3.9` as the truthful released host-default Windows local
   `LabVIEWCLI` contract with bounded expert Docker, while keeping
   `ISSUE-0410` explicit only as historical Docker-only baseline evidence
-- keep the published proof focus on Windows x64 host and Windows-container
-  lanes; Windows x86 / 32-bit LabVIEW remains out of scope for the released
-  contract and any retained x86 proof is later characterization only
-- keep WSL out of the active Windows x64 private-release contract: the first
-  admission surfaces are native Windows host proof and Docker Desktop
+- keep the Windows proof focus on deferred Windows x64 host and
+  Windows-container lanes; Windows x86 / 32-bit LabVIEW remains out of scope for
+  any Windows installed-user claim and any retained x86 proof is later
+  characterization only
+- keep WSL out of the Windows x64 proof contract: deferred Windows admission
+  surfaces require native Windows host proof and Docker Desktop
   Windows-container proof on the same Windows machine
 - treat standards-compliance refactor work on this released contract as
   historically

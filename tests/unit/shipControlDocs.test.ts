@@ -214,7 +214,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('npm run public:exact:pretag:proof');
     expect(readme).toContain('public_exact_pretag_proof');
     expect(readme).toContain('npm run public:github:exact:transaction:verify');
-    expect(readme).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
+    expect(readme).toContain('- retained Windows x64 private-release-prep slice: historical `release/1.3.1`');
     expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.json');
     expect(readme).toContain('private-v1.3.1-windows-x64');
@@ -268,7 +268,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('npm run public:exact:pretag:proof');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
-    expect(currentState).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
+    expect(currentState).toContain('- retained Windows x64 private-release-prep slice: historical `release/1.3.1`');
     expect(currentState).toContain('[private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)');
     expect(currentState).toContain('[private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)');
     expect(currentState).toContain('private-v1.3.1-windows-x64');
@@ -346,7 +346,7 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('npm run public:exact:pretag:proof');
     expect(releaseProcedure).toContain('public_exact_pretag_proof');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');
-    expect(releaseProcedure).toContain('The active Windows x64 private-release-prep slice is the historical');
+    expect(releaseProcedure).toContain('The retained Windows x64 private-release-prep slice is the historical');
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.1.json');
     expect(releaseProcedure).toContain('The controlled `v1.3.1` Windows x64 private GitLab release is now published');

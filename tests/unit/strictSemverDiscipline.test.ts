@@ -128,7 +128,7 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('npm run public:exact:pretag:proof');
     expect(readme).toContain('public_exact_pretag_proof');
     expect(readme).toContain('npm run public:github:exact:transaction:verify');
-    expect(readme).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
+    expect(readme).toContain('- retained Windows x64 private-release-prep slice: historical `release/1.3.1`');
     expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
@@ -150,7 +150,7 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('npm run public:exact:pretag:proof');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
-    expect(currentState).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
+    expect(currentState).toContain('- retained Windows x64 private-release-prep slice: historical `release/1.3.1`');
     expect(currentState).toContain('private-release-windows-x64-v1.3.1.md');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
@@ -172,7 +172,7 @@ describe('strict semver discipline', () => {
     expect(releaseProcedure).toContain('npm run public:exact:pretag:proof');
     expect(releaseProcedure).toContain('public_exact_pretag_proof');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');
-    expect(releaseProcedure).toContain('The active Windows x64 private-release-prep slice is the historical');
+    expect(releaseProcedure).toContain('The retained Windows x64 private-release-prep slice is the historical');
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(releaseProcedure).toContain('The public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('`main` shall match that exact release line');

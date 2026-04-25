@@ -30,8 +30,9 @@ See also:
 
 ## Public Evaluation And Installed Baseline
 
-- The active Windows x64 private-release route does not use the Linux public
-  smoke lane.
+- The active governed preview route is Linux/Docker validated; Windows
+  installed-user proof is deferred until a real Windows/LabVIEW host evidence
+  lane exists.
 - Commands prefixed with `public:` below are source-evaluation or maintainer
   surfaces, not the supported installed-user private-release steps.
 
@@ -187,12 +188,12 @@ runtime-settings CLI on the active branch.
     terminal surface needs repair or refresh
   - without `--settings-file`, the governed target is the platform-default
     user `settings.json`; workspace settings are not a supported target
-  - for the supported Windows x64 private-release route, use native Windows
-    host LabVIEW or Docker Desktop in Windows-container mode; WSL is not an
-    admitted dependency for that path
-  - the Linux public smoke lane and Linux benchmark lanes are outside this
-    installed-user private-release route and remain maintainer/source-evaluation
-    proof surfaces
+  - Windows installed-user operation may be evaluated by users on their own
+    Windows setups, but this Ubuntu/Docker evidence lane does not prove native
+    Windows LabVIEW or Docker Desktop Windows-container behavior
+  - Linux public smoke, Linux benchmark, and Ubuntu/Docker preview lanes are
+    maintainer/source-evaluation proof surfaces unless a later Windows proof
+    lane admits them into a Windows installed-user claim
   - if VS Code is already running, review compare preflight or runtime
     validation again after the CLI update and reload or restart the window
     only if that session still shows stale provider or runtime facts
@@ -214,9 +215,10 @@ runtime-settings CLI on the active branch.
     or a panel-side provider picker
   - the no-argument interactive `vihs` confirmation flow invokes this same
     bounded validation after persisting settings
-  - on the current Windows x64 private-release route, treat `ready` as the
-    native Windows host or Docker Desktop Windows-container contract; WSL is
-    not an admitted dependency for that path
+  - on the current Linux/Docker validated preview route, treat `ready` as a
+    runtime-validation result for the selected provider on the current machine;
+    native Windows LabVIEW and Docker Desktop Windows-container proof remain
+    deferred
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

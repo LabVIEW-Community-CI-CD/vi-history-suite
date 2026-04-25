@@ -29,14 +29,12 @@ governed_runner_admission:
     paths:
       - governed-runner-admission-evidence/
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "feature/ubuntu-docker-evidence-lane-fixes"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
-    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
-    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 ubuntu_docker_runner_admission:
   stage: admission
@@ -62,7 +60,8 @@ ubuntu_docker_runner_admission:
       const read = (fileName) => fs.readFileSync(path.join(evidenceDir, fileName), 'utf8').trim();
       const dockerInfo = read('docker-info.txt').split(/\s+/u);
       const payload = {
-        schema: 'vi-history-suite/ubuntu-docker-runner-admission@v1',
+        schema: 'vi-history-suite/ubuntu-docker-runner-admission@v2',
+        claimScope: 'linux-docker-validated-preview',
         generatedAt: new Date().toISOString(),
         runnerDescription: process.env.CI_RUNNER_DESCRIPTION || '',
         runnerTags: (process.env.CI_RUNNER_TAGS || '').split(',').map((tag) => tag.trim()).filter(Boolean),
@@ -74,7 +73,9 @@ ubuntu_docker_runner_admission:
         nodeVersion: read('node-version.txt'),
         npmVersion: read('npm-version.txt'),
         windowsLabviewProofIncluded: false,
-        externalWindowsLabviewProofRequired: true
+        windowsInstalledUserProofDeferred: true,
+        windowsLabviewProofRequiredForPreview: false,
+        windowsLabviewProofRequiredForWindowsClaim: true
       };
       fs.writeFileSync(path.join(evidenceDir, 'ubuntu-docker-runner-admission.json'), `${JSON.stringify(payload, null, 2)}\n`);
       fs.writeFileSync(
@@ -87,8 +88,11 @@ ubuntu_docker_runner_admission:
           `- Docker: ${payload.dockerOstype} ${payload.dockerServerVersion}`,
           `- Node: ${payload.nodeVersion}`,
           `- npm: ${payload.npmVersion}`,
+          '- Claim scope: Linux/Docker validated preview',
           '- Windows/LabVIEW proof included: false',
-          '- External Windows/LabVIEW proof required: true'
+          '- Windows installed-user proof deferred: true',
+          '- Windows/LabVIEW proof required for this preview: false',
+          '- Windows/LabVIEW proof required before Windows installed-user claim: true'
         ].join('\n') + '\n'
       );
       NODE
@@ -98,7 +102,12 @@ ubuntu_docker_runner_admission:
     paths:
       - governed-runner-admission-evidence/
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "feature/ubuntu-docker-evidence-lane-fixes"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 docs_link_check:
   stage: docs
@@ -504,14 +513,12 @@ windows_private_release_acceptance:
     paths:
       - windows-private-release-evidence/
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "feature/ubuntu-docker-evidence-lane-fixes"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
-    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
-    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 package_extension_preview:
   stage: package
@@ -522,9 +529,10 @@ package_extension_preview:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
-    # - windows_private_release_acceptance remains the governed Windows gate;
-    #   it is optional here only for Ubuntu/Docker evidence MRs where external
-    #   Windows/LabVIEW proof is retained separately.
+    # - windows_private_release_acceptance remains the retained Windows proof
+    #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
+    #   Preview packaging is therefore Linux/Docker validated and does not claim
+    #   Windows installed-user proof.
     - job: windows_private_release_acceptance
       optional: true
   script:
@@ -580,9 +588,10 @@ release_extension:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
-    # - windows_private_release_acceptance remains the governed Windows gate;
-    #   it is optional here only for Ubuntu/Docker evidence MRs where external
-    #   Windows/LabVIEW proof is retained separately.
+    # - windows_private_release_acceptance remains the retained Windows proof
+    #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
+    #   Exact packaging from this lane is Linux/Docker validated and does not
+    #   claim Windows installed-user proof.
     - job: windows_private_release_acceptance
       optional: true
   script:

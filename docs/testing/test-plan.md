@@ -1899,19 +1899,20 @@ Information-for-users review cases:
   explicit governed public-acceptance gate
 - `TEST-DOC-110`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
   command reference, the FAQ, the SRS, the RTM, and the test plan and confirm
-  the active Windows x64 private-release route is native Windows only: host
-  validation admits the governed mixed-bitness LabVIEW bundle, Docker proof
-  admits Docker Desktop Windows-container execution, and WSL is retained
-  historical context only rather than an admitted installed-user or
-  private-release dependency
+  the active governed claim is Linux/Docker validated preview, while Windows x64
+  installed-user proof is deferred until a real Windows/LabVIEW host proves the
+  native host LabVIEW bundle and Docker Desktop Windows-container execution; WSL
+  remains historical context rather than installed-user proof
 - `TEST-UNIT-356`: verify the governed Windows private-release acceptance
   script keeps the canonical `HARNESS-VHS-002` `lv_icon.vi` selected/base pair,
   retains separate host and Windows-container command plans, and emits the
   machine-readable runner manifest under `windows-private-release-evidence/`
 - `TEST-DOC-111`: review `.gitlab-ci.yml`, hosted governance, sustainment,
   current-state, the private-release packet, the runner-lane contract, the
-  SRS, the RTM, and the test plan and confirm preview and exact packaging now
-  depend on the tagged Windows shell-runner acceptance lane
+  SRS, the RTM, and the test plan and confirm preview packaging now depends on
+  `ubuntu_docker_runner_admission`, Linux assurance, and extension tests, while
+  the tagged Windows shell-runner acceptance lane is retained as deferred proof
+  behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - `TEST-UNIT-357`: verify the hosted CI governance package, `.gitlab-ci.yml`,
   README, current-state, and the release procedure retain the published
   `repo-standards-review` assurance-workbench lane, its
@@ -1978,10 +1979,10 @@ Information-for-users review cases:
   lane-local doctor scripts plus the combined `npm run gitlab:runner:doctor`
   wrapper, and can fail closed on drift without mutating healthy hosts
 - `TEST-UNIT-369`: verify GitLab retains one fail-fast
-  `governed_runner_admission` lane in the `admission` stage that runs the
-  combined doctor surface with `--fail-on-drift`, retains
-  `governed-runner-admission-evidence/`, and blocks downstream docs,
-  assurance, test, package, and release work when runner drift is detected
+  `ubuntu_docker_runner_admission` lane in the `admission` stage that retains
+  `governed-runner-admission-evidence/` for the active Linux/Docker preview
+  claim, and keeps `governed_runner_admission` as a deferred Windows/LabVIEW
+  doctor lane behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - `TEST-UNIT-370`: verify the public GitHub exact-release transaction
   controller inspects authority exact main/tag state, live public GitHub
   main/tag/release/assets, the repo immutable-release policy, the current
@@ -2109,9 +2110,10 @@ Information-for-users review cases:
   without relying on ad hoc post-reset shell history
 - `TEST-DOC-122`: review `.gitlab-ci.yml`, hosted governance, sustainment
   rules, the runner-lane contracts, current-state, release procedure, SRS,
-  RTM, and test plan and confirm `governed_runner_admission` runs first as a
-  fail-fast admission gate with retained doctor evidence before later docs,
-  assurance, test, package, and release stages queue
+  RTM, and test plan and confirm `ubuntu_docker_runner_admission` runs first as
+  the fail-fast Linux/Docker preview admission gate before later docs,
+  assurance, test, package, and release stages queue, while
+  `governed_runner_admission` remains deferred Windows/LabVIEW proof
 - `TEST-DOC-123`: review README, current-state, release procedure, the
   sustainment package, the public-release candidate package, SRS, RTM, and
   the test plan and confirm the public GitHub exact-release transaction
