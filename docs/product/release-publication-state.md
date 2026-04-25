@@ -24,14 +24,20 @@ final installed-user distribution surface.
 ## Develop Preview State
 
 - Active develop preview claim: Linux/Docker validated preview
-- Current develop preview commit:
-  `ebaf84eab1d779d607f4dcb6e58e990d2946779f`
-- Current develop preview pipeline: `2479875767` / `success`
+- Preview state role: retained preview packet evidence
+- Develop head tracking policy: do not persist the latest live `develop`
+  commit or pipeline in this packet. Read live `develop` head and pipeline
+  state from GitLab when that operational status is needed.
 - Retained preview packet:
   `docs/product/linux-docker-preview-release-control-packet-2026-04-25.md`
 - Retained preview packet JSON:
   `docs/product/linux-docker-preview-release-control-packet-2026-04-25.json`
+- Preview evidence commit:
+  `5c85f0595065d62d4b2679a3df4bb21ba749d71a`
 - Packet evidence pipeline: `2479854355` / `success`
+- Retained packet merge commit:
+  `ebaf84eab1d779d607f4dcb6e58e990d2946779f`
+- Retained packet merge pipeline: `2479875767` / `success`
 - Preview VSIX evidence:
   `preview-evidence/vi-history-suite-1.3.9.vsix`
 - Preview VSIX SHA-256:
