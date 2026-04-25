@@ -32,6 +32,10 @@ const publicationState = require(path.join(
 describe('release publication state resolver', () => {
   it('retains the closed v1.3.9 authority/public publication state while keeping v1.3.8 as blocked history', () => {
     const state = publicationState.resolvePublicationState();
+    const stateDoc = fs.readFileSync(
+      path.join(repoRoot, 'docs', 'product', 'release-publication-state.md'),
+      'utf8'
+    );
 
     expect(state.authority).toMatchObject({
       system: 'gitlab',
@@ -41,6 +45,31 @@ describe('release publication state resolver', () => {
       gitlabReleaseManifestPath:
         '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     });
+    expect(state.developPreview).toMatchObject({
+      classification: 'linux-docker-validated-preview',
+      currentDevelopCommit: 'ebaf84eab1d779d607f4dcb6e58e990d2946779f',
+      currentDevelopPipelineId: 2479875767,
+      currentDevelopPipelineStatus: 'success',
+      retainedPacketPath: 'docs/product/linux-docker-preview-release-control-packet-2026-04-25.md',
+      retainedPacketJsonPath:
+        'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json',
+      packetEvidencePipelineId: 2479854355,
+      packetEvidencePipelineStatus: 'success',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.9.vsix',
+      previewVsixSha256: '7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470',
+      publicationState: 'non-production-integration-evidence-only',
+      windowsInstalledUserProofDeferred: true,
+      publicGitHubMutation: 'not-admitted-by-this-preview-claim',
+      marketplaceMutation: 'not-admitted-by-this-preview-claim'
+    });
+    expect(stateDoc).toContain('## Develop Preview State');
+    expect(stateDoc).toContain('Linux/Docker validated preview');
+    expect(stateDoc).toContain('Windows installed-user proof deferred');
+    expect(stateDoc).toContain(
+      'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json'
+    );
+    expect(stateDoc).toContain('Public GitHub mutation: not admitted by this preview claim');
+    expect(stateDoc).toContain('VS Code Marketplace mutation: not admitted by this preview claim');
     expect(state.publicGitHub.release).toMatchObject({
       id: 312994104,
       tag: 'v1.3.9',
