@@ -329,6 +329,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['vscode:marketplace:prepare']).toBe(
       'node scripts/prepareVsCodeMarketplacePublication.js'
     );
+    expect(manifest.scripts?.['vscode:marketplace:community-preview:prepare']).toBe(
+      'node scripts/prepareMarketplaceCommunityValidationPreview.js'
+    );
     expect(manifest.scripts?.['software:factory:assess']).toBe(
       'node scripts/runSoftwareFactoryOrchestrator.js --phase assess'
     );

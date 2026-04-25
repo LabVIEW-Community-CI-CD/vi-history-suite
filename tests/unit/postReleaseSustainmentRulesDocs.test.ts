@@ -47,6 +47,12 @@ describe('post-release sustainment rules package', () => {
         vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare',
         vscodeMarketplacePublicationPrepReceiptPath:
           '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json',
+        vscodeMarketplaceCommunityValidationPreviewPrepPackageScript:
+          'npm run vscode:marketplace:community-preview:prepare',
+        vscodeMarketplaceCommunityValidationPreviewPrepReceiptPath:
+          '.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json',
+        vscodeMarketplaceCommunityValidationPreviewPrepStatus:
+          'preparation-only-until-user-says-publish-it-now',
         publicDefaultBranch: 'main',
         publicCodespaceBranch: 'develop',
         integrationBranch: 'develop',
@@ -136,6 +142,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('runtimeValidationOutcome=ready');
     expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
+    expect(rulesDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
     expect(rulesDoc).toContain(
       '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/'
     );

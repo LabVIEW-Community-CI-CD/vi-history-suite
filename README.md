@@ -89,6 +89,20 @@ Installed-user help:
 - `docker/linux` for `2026` and `host/linux` are not currently implemented
 - blocked or unsupported paths fail closed with explicit next-step guidance
 
+## Proof Status And Community Validation
+
+The Marketplace build may expose selectable Windows/LabVIEW provider, year,
+and bitness settings before every combination has maintainer-retained
+installed-user proof. Treat `vihs --validate` and the traceability matrix as
+the current proof-status surfaces:
+
+- [Traceability Matrix](./docs/requirements/rtm.csv)
+- [Release Publication State](./docs/product/release-publication-state.md)
+
+When a selectable Windows/LabVIEW path works or fails on your machine, include
+provider, LabVIEW year, bitness, extension version, VS Code version, and
+`vihs --validate` output in the issue report.
+
 ## Report A Problem Or Request Support
 
 If install, `vihs`, `vihs --validate`, or compare do not work as expected, use
@@ -210,6 +224,10 @@ Authority release facts:
   `npm run vscode:marketplace:prepare`
 - retained VS Code Marketplace publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
 - software factory rehearsal package script:
@@ -222,6 +240,8 @@ Authority release facts:
   `npm run software:factory:verify`
 - VS Code Marketplace prep package script:
   `npm run vscode:marketplace:prepare`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
@@ -234,6 +254,8 @@ Authority release facts:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
 - retained VS Code Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software-factory phase contract:
   assess, rehearse, and repair remain admitted non-production phases, and
   publish / verify are now retained as guarded non-mutating contract phases

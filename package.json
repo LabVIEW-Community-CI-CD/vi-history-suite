@@ -188,6 +188,7 @@
     "public:github:exact:transaction:verify": "node scripts/runPublicGithubExactReleaseTransaction.js --mode verify",
     "vscode:marketplace:install-proof": "node scripts/runWindowsExactVsixInstallProof.js",
     "vscode:marketplace:prepare": "node scripts/prepareVsCodeMarketplacePublication.js",
+    "vscode:marketplace:community-preview:prepare": "node scripts/prepareMarketplaceCommunityValidationPreview.js",
     "software:factory:assess": "node scripts/runSoftwareFactoryOrchestrator.js --phase assess",
     "software:factory:rehearse": "node scripts/runSoftwareFactoryOrchestrator.js --phase rehearse",
     "software:factory:repair": "node scripts/runSoftwareFactoryOrchestrator.js --phase repair",

@@ -2052,6 +2052,12 @@ Information-for-users review cases:
   Windows exact-VSIX install proof before a future mutating Marketplace act is
   admitted, while exact lines that are already published may remain in
   retained-publication state.
+- `TEST-UNIT-385`: verify the Marketplace community-validation preview prep
+  surface writes a non-mutating receipt, retains Linux/Docker preview
+  evidence, discloses deferred Windows/LabVIEW installed-user proof, keeps
+  Windows/LabVIEW selections user-selectable with proof-status disclosure,
+  blocks reuse of the current Marketplace version, and retains pinned
+  `vsce --pre-release` package and publish command shapes.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2202,6 +2208,14 @@ Information-for-users review cases:
   plan and confirm future Marketplace publication is blocked until the
   retained Windows exact-VSIX install proof passes, while already-published
   exact lines may remain in retained-publication state.
+- `TEST-DOC-138`: review README, current-state, release-publication state, the
+  Marketplace publication ledger, release procedure, SRS, RTM, and the
+  community-preview prep receipt and confirm the Marketplace
+  community-validation preview path is preparation-only, uses
+  `vsce --pre-release`, discloses deferred Windows proof, keeps selectable
+  Windows/LabVIEW features tied to proof-status surfaces, requires a distinct
+  higher Marketplace version, and leaves public GitHub plus Marketplace
+  untouched until the user says `publish it now`.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

@@ -33,6 +33,25 @@ The machine-readable companion surface for this ledger is:
 - Pending publication prep status: retain-marketplace-publication; the retained
   production publication used the pinned `vsce` path for `1.3.9`
 
+## Community-Validation Preview Preparation
+
+- Status: admitted for preparation only
+- Publication claim: community-validation preview
+- Prep command: `npm run vscode:marketplace:community-preview:prepare`
+- Prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
+- Preferred Marketplace mode: pre-release through pinned `vsce --pre-release`
+- Target version policy: choose a distinct higher `major.minor.patch` version
+  before a Marketplace preview can be published; the current live `1.3.9`
+  package line cannot be reused.
+- Publish trigger: blocked until the user says `publish it now`
+- Windows installed-user proof state: deferred
+- Windows/LabVIEW feature policy:
+  user-selectable-with-proof-status-disclosure
+- Traceability matrix: `docs/requirements/rtm.csv`
+- Public GitHub mutation attempted by prep: false
+- Marketplace mutation attempted by prep: false
+
 ## Publications
 
 | Published Surface | Status | Published | Version | Publication Mode | Primary Authority |
@@ -69,3 +88,8 @@ The machine-readable companion surface for this ledger is:
 - After the mutating Marketplace publication act, the official gallery
   extension query shall verify that the live Marketplace version matches the
   exact release before the final publication act is retained.
+- Community-validation preview preparation is a separate, non-mutating path
+  for Marketplace pre-release packaging. It may disclose deferred Windows
+  installed-user proof while leaving Windows/LabVIEW selections available to
+  users for validation reports, but actual Marketplace publication remains a
+  later act.

@@ -71,6 +71,32 @@ final installed-user distribution surface.
   `runtimeValidationOutcome=ready`, launcher PATH stripped to the isolated
   launcher root plus `System32`, and no ambient Node requirement.
 
+## Marketplace Community-Validation Preview Path
+
+- Status: admitted for preparation only
+- Publication claim: community-validation preview
+- Prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
+- Prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
+- Preferred Marketplace mode: VS Code Marketplace pre-release through pinned
+  `vsce --pre-release`
+- Target version policy: the preview target must use a distinct higher
+  `major.minor.patch` Marketplace version than the currently published
+  `1.3.9`; the current `1.3.9` package line cannot be republished as a
+  preview.
+- Publish trigger: blocked until the user says `publish it now`.
+- Active evidence claim: Linux/Docker validated preview
+- Windows installed-user proof: deferred and not claimed by this preview path
+- Windows/LabVIEW feature policy: provider, year, and bitness choices may stay
+  selectable when the UI/CLI discloses proof status through `vihs --validate`
+  and the traceability matrix.
+- Traceability matrix:
+  `docs/requirements/rtm.csv`
+- Public GitHub mutation: not attempted by the community-preview prep path
+- VS Code Marketplace mutation: not attempted by the community-preview prep
+  path
+
 ## Incident Classification
 
 - Incident id: `PUBLICATION-INCIDENT-v1.3.8-IMMUTABLE-ZERO-ASSETS`
@@ -110,3 +136,10 @@ Before any future mutating VS Code Marketplace publication act, the exact
 authority VSIX must also pass the retained Windows isolated install proof by
 installing into isolated VS Code user-data/extensions roots and running bare
 `vihs` plus `vihs --validate` successfully.
+
+The community-validation preview path is separate from the exact-release
+Marketplace gate. It may prepare a Marketplace pre-release package for broader
+installed-user validation with Windows proof disclosed as deferred, but it
+still performs no public GitHub or Marketplace mutation until the separate
+`publish it now` instruction is present and the target package version is
+distinct from the live Marketplace version.
