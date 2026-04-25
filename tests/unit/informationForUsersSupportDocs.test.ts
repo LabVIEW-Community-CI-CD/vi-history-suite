@@ -60,11 +60,11 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('prepare command is admitted in untrusted workspaces');
     expect(faq).toContain('user-scope PATH');
     expect(faq).toContain('runtimeValidationOutcome');
-    expect(faq).toContain('Do I need WSL for the supported Windows x64 path');
+    expect(faq).toContain('Is Windows installed-user behavior proven by the current Ubuntu/Docker lane');
     expect(faq).toContain('native Windows host LabVIEW');
     expect(faq).toContain('Docker Desktop in Windows-container mode');
     expect(faq).toContain('WSL is retained historical context only');
-    expect(faq).toContain('private-release proof route');
+    expect(faq).toContain('Linux/Docker validated preview');
     expect(faq).toContain('npm run proof:runtime-settings-live-session');
     expect(faq).toContain('.cache/runtime-settings-live-session-proof/latest/');
 
@@ -107,11 +107,10 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('npm run proof:runtime-settings-live-session');
     expect(commandReference).toContain('runtime-settings-live-session-proof.json');
     expect(commandReference).toContain('.cache/runtime-settings-live-session-proof/latest/');
-    expect(commandReference).toContain('supported Windows x64 private-release route');
-    expect(commandReference).toContain('WSL is not');
-    expect(commandReference).toContain('admitted dependency for that path');
+    expect(commandReference).toContain('current Linux/Docker validated preview route');
+    expect(commandReference).toContain('native Windows LabVIEW and Docker Desktop Windows-container proof remain');
     expect(commandReference).not.toContain('`npm run public:smoke:linux`');
-    expect(commandReference).toContain('The active Windows x64 private-release route does not use');
+    expect(commandReference).toContain('The active governed preview route is Linux/Docker validated');
     expect(commandReference).toContain('npm run assurance:release-gate');
     expect(commandReference).toContain('npm run assurance:26514:authority');
     expect(commandReference).toContain('npm run assurance:user-info');

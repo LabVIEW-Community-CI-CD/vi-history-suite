@@ -53,10 +53,19 @@ describe('hosted ci governance docs', () => {
     expect(matrix.authorityGitLab.namedRequiredChecks).toBe(false);
     expect(matrix.authorityGitLab.jobs.governed_runner_admission).toEqual(
       expect.objectContaining({
-        classification: 'required-governance-check',
+        classification: 'deferred-windows-labview-governance-check',
         stage: 'admission',
         packageScript: 'npm run gitlab:runner:doctor',
-        evidenceRoot: 'governed-runner-admission-evidence/'
+        evidenceRoot: 'governed-runner-admission-evidence/',
+        activationVariable: 'VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true'
+      })
+    );
+    expect(matrix.authorityGitLab.jobs.ubuntu_docker_runner_admission).toEqual(
+      expect.objectContaining({
+        classification: 'required-linux-docker-preview-admission',
+        stage: 'admission',
+        evidenceRoot: 'governed-runner-admission-evidence/',
+        claimScope: 'linux-docker-validated-preview'
       })
     );
     expect(matrix.authorityGitLab.jobs.public_exact_pretag_proof).toEqual(
@@ -77,12 +86,22 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrix.authorityGitLab.jobs.windows_private_release_acceptance).toEqual(
       expect.objectContaining({
-        classification: 'required-governance-check',
+        classification: 'deferred-windows-labview-proof-check',
+        activationVariable: 'VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true',
+        claimBoundary:
+          'required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview',
         runtimeContaminationRecovery: expect.objectContaining({
           recoveryScript: 'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           retryDelayMs: 5000,
           maxProofRetries: 1
         })
+      })
+    );
+    expect(matrix.activeReleaseClaim).toEqual(
+      expect.objectContaining({
+        classification: 'linux-docker-validated-preview',
+        publicGitHubMutation: 'not-admitted-by-this-claim',
+        marketplaceMutation: 'not-admitted-by-this-claim'
       })
     );
     expect(matrix.authorityGitLab.runnerLanes.linuxAssurance.operatorModel.helperVerification).toEqual(
@@ -122,8 +141,10 @@ describe('hosted ci governance docs', () => {
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');
     expect(gitlabCi).toContain('governed_runner_admission');
+    expect(gitlabCi).toContain('ubuntu_docker_runner_admission');
     expect(gitlabCi).toContain('public_exact_pretag_proof');
     expect(gitlabCi).toContain('windows_private_release_acceptance');
+    expect(gitlabCi).toContain('VIHS_WINDOWS_LABVIEW_PROOF_ENABLED');
     expect(gitlabCi).toContain(
       'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
     );

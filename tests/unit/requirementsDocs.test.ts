@@ -260,7 +260,7 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('remain on the exact released Docker-only baseline until the host-default provider contract is source-backed');
     expect(srs).toContain('VHS-REQ-551');
     expect(srs).toContain(
-      'shall use native Windows host execution and native Windows-container execution'
+      'shall remain deferred on the current Ubuntu-only setup'
     );
     expect(srs).toContain('VHS-REQ-553');
     expect(srs).toContain('published `repo-standards-review` assurance-workbench lane');
@@ -365,7 +365,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-DOC-120');
     expect(testPlan).toContain('proof-runtime-recovery.txt');
     expect(testPlan).toContain('headless LabVIEW contamination');
-    expect(testPlan).toContain('native Windows only');
+    expect(testPlan).toContain('Linux/Docker validated preview');
     expect(testPlan).toContain('Docker Desktop Windows-container execution');
     expect(testPlan).toContain('runtime-provider public-acceptance gate');
     expect(testPlan).toContain('release procedure');

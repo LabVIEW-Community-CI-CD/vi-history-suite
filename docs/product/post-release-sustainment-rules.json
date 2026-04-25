@@ -357,13 +357,12 @@
         "dirty public-source/wiki worktrees are controlled publication surfaces: preserve unrelated dirt, patch overlapping maintained files narrowly, and pause only on direct unresolved conflicts"
       ],
       "requiredChecks": [
-        "governed_runner_admission",
+        "ubuntu_docker_runner_admission",
         "public_exact_pretag_proof",
         "docs_continuous_integration",
         "docs_public_continuous_integration",
         "docs_internal_continuous_integration",
         "test_extension",
-        "windows_private_release_acceptance",
         "package_extension_preview",
         "Public Source Package Preview / public-source-package-preview",
         "Public Linux Installed-User Smoke / public-linux-installed-user-smoke",
@@ -375,7 +374,9 @@
           "packageScript": "npm run gitlab:runner:doctor",
           "command": "npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence",
           "evidenceRoot": "governed-runner-admission-evidence/",
-          "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages"
+          "failurePolicy": "deferred-until-real-windows-labview-runner-exists",
+          "classification": "deferred-windows-labview-governance-check",
+          "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true"
         },
         "public_exact_pretag_proof": {
           "stage": "test",
@@ -447,7 +448,10 @@
             "contaminationSeedMode": "headless-labview-launch",
             "recoveryTranscriptLeaf": "proof-runtime-recovery.txt",
             "failurePolicy": "fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal"
-          }
+          },
+          "classification": "deferred-windows-labview-proof-check",
+          "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true",
+          "claimBoundary": "required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview"
         },
         "linux_assurance": {
           "hostApplySurface": {
@@ -502,6 +506,13 @@
             ],
             "failurePolicy": "fail-closed-on-live-host-drift"
           }
+        },
+        "ubuntu_docker_runner_admission": {
+          "stage": "admission",
+          "command": "gitlab-runner --version; docker info; node --version; npm --version",
+          "evidenceRoot": "governed-runner-admission-evidence/",
+          "claimScope": "linux-docker-validated-preview",
+          "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages-on-linux-docker-preview-drift"
         }
       },
       "laneResponsibilities": {
@@ -688,5 +699,24 @@
       "execution-policy bypass that skips governed provider hard stops",
       "PowerShell ExecutionPolicy Bypass on governed benchmark-image or host-proof helper surfaces"
     ]
+  },
+  "activeReleaseClaim": {
+    "classification": "linux-docker-validated-preview",
+    "summary": "The governed develop/package preview claim is Linux/Docker validated on the self-hosted Ubuntu runner; Windows installed-user and Windows/LabVIEW proof are deferred until a real Windows host exists.",
+    "verifiedOnThisMachine": [
+      "ubuntu-docker-runner-admission",
+      "linux-assurance-runner-lane",
+      "docs-workbench-gate",
+      "test-extension-linux-ci",
+      "preview-vsix-packaging"
+    ],
+    "deferredProof": [
+      "native Windows installed extension behavior",
+      "native Windows LabVIEW host execution",
+      "Windows Docker Desktop Windows-container execution",
+      "windows_private_release_acceptance"
+    ],
+    "publicGitHubMutation": "not-admitted-by-this-claim",
+    "marketplaceMutation": "not-admitted-by-this-claim"
   }
 }

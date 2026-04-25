@@ -3,16 +3,18 @@
 ## Purpose
 
 Retain the governed GitLab Linux shell-runner lane for external standards
-assurance on the active `v1.3.0` Windows x64 private-release line.
+assurance and the active Linux/Docker validated preview line.
 
-This lane is separate from the Windows private-release proof lane. Linux
-assurance owns standards checks only; it does not claim LabVIEW proof,
-installed-user Windows runtime validation, or the `HARNESS-VHS-002`
-host/container compare scenario.
+This lane is separate from the deferred Windows private-release proof lane.
+Linux assurance owns standards checks plus Linux/Docker preview admission; it
+does not claim native Windows LabVIEW proof, installed-user Windows runtime
+validation, or the `HARNESS-VHS-002` host/container compare scenario.
 
 ## Governing Surfaces
 
 - fail-fast GitLab admission job before the assurance lanes:
+  `ubuntu_docker_runner_admission`
+- deferred Windows/LabVIEW admission job:
   `governed_runner_admission`
 - GitLab jobs:
   - `assurance_release_gate`
@@ -35,15 +37,17 @@ host/container compare scenario.
 
 ## Lane Split
 
-The governed runner split for the active private-release sequence is:
+The governed runner split for the active Linux/Docker preview sequence is:
 
-- Windows proof lane:
+- Deferred Windows proof lane:
   [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
   retains the canonical `resource/plugins/lv_icon.vi` host-native and
-  Windows-container acceptance evidence
+  Windows-container acceptance evidence when a real Windows/LabVIEW runner is
+  available and `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - Linux assurance lane:
-  this document retains the external standards-validation lane that blocks
-  preview and exact packaging on the same protected sequence
+  this document retains the external standards-validation lane and the active
+  Linux/Docker admission lane that block preview packaging on the protected
+  sequence
 
 ## Runner Identity
 
@@ -138,13 +142,13 @@ service fragment path, user, and working directory remain exact, the service
 is still `enabled` and `active`, and exactly one configured runner process is
 live.
 
-The helper script remains the bounded cross-OS recovery surface invoked from
-the Windows logon bootstrap. It fails closed unless the admitted config still
-retains both concurrency facts and the paired `systemd` service reports
-`enabled`, `active`, and exactly one configured runner process before the
-Windows bootstrap continues. It now also reconciles the live config back to
-the admitted dual-concurrency contract when post-reset drift is observed and
-writes a machine-readable startup receipt under
+The helper script remains the bounded Linux recovery surface, and can still be
+invoked from a future Windows logon bootstrap when that deferred host exists. It
+fails closed unless the admitted config still retains both concurrency facts and
+the paired `systemd` service reports `enabled`, `active`, and exactly one
+configured runner process before declaring the lane healthy. It now also
+reconciles the live config back to the admitted dual-concurrency contract when
+post-reset drift is observed and writes a machine-readable startup receipt under
 `$HOME/gitlab-runner/receipts/linux-assurance-startup/` before declaring the
 Linux assurance surface healthy. The service unit remains the admitted
 steady-state lifecycle owner on the Linux host.
@@ -200,8 +204,9 @@ npm run gitlab:runner:doctor -- --surface linux
 npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence
 ```
 
-The second command is the fail-fast admission surface retained in GitLab job
-`governed_runner_admission`.
+The Linux/Docker fail-fast admission surface retained in GitLab is
+`ubuntu_docker_runner_admission`. The combined Windows/LabVIEW doctor command is
+deferred behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`.
 
 ## Manual Registration Pack
 

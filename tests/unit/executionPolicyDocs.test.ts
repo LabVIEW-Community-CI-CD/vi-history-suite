@@ -144,7 +144,7 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('local `LabVIEWCLI` with bounded expert Docker');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('installed manifest/settings');
-    expect(currentState).toContain('WSL is not part of the active Windows x64 private-release contract');
+    expect(currentState).toContain('WSL is not part of the retained Windows x64 private-release contract');
     expect(currentState).toContain('native Windows host execution');
     expect(currentState).toContain('Docker Desktop Windows-container execution');
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
@@ -234,7 +234,7 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('`npm run proof:runtime-settings-live-session`');
     expect(program).toContain('review Compare or runtime validation again after CLI updates');
     expect(program).toContain('reload or restart the window only if stale facts remain');
-    expect(program).toContain('WSL is not part of the active Windows x64 private-release path');
+    expect(program).toContain('WSL is not Windows installed-user proof');
     expect(program).toContain('Docker Desktop in');
     expect(program).toContain('Windows-container mode');
     expect(program).toContain('issue-0412-promotion-and-publication-handoff.md');
@@ -259,7 +259,7 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('`.cache/runtime-settings-live-session-proof/latest/`');
     expect(issueNext).toContain('review Compare or runtime validation again after CLI updates');
     expect(issueNext).toContain('or restart only if stale provider or runtime facts remain');
-    expect(issueNext).toContain('keep WSL out of the active Windows x64 private-release contract');
+    expect(issueNext).toContain('keep WSL out of the Windows x64 proof contract');
     expect(issueNext).toContain('Docker Desktop');
     expect(issueNext).toContain(
       'keep packaged/public docs on the published host-default local `LabVIEWCLI`'

@@ -10,7 +10,7 @@ function readRepoFile(...segments: string[]): string {
 }
 
 describe('host-operation matrix docs', () => {
-  it('keeps benchmark host ordering historical while the active release scope stays x64 only', () => {
+  it('keeps benchmark host ordering historical while the active preview scope defers Windows proof', () => {
     const currentState = readRepoFile('docs', 'product', 'current-state.md');
     const program = readRepoFile(
       'docs',
@@ -40,9 +40,10 @@ describe('host-operation matrix docs', () => {
     expect(srs).toContain('x64-first and then x86');
     expect(rtm).toContain('x64-first and then x86');
     expect(testPlan).toContain('x64 tranche first');
-    expect(currentState).toContain(
-      'Windows x86 / 32-bit LabVIEW remains out of scope for the current released'
-    );
+    expect(currentState).toContain('Linux/Docker');
+    expect(currentState).toContain('validated-preview admission');
+    expect(currentState).toContain('Windows x86 / 32-bit LabVIEW remains');
+    expect(currentState).toContain('out of scope for any Windows installed-user claim');
     expect(srs).toContain('characterization-only outside the current release scope');
     expect(rtm).toContain('characterization-only outside the current release scope');
     expect(testPlan).toContain('non-release characterization only');
@@ -77,8 +78,9 @@ describe('host-operation matrix docs', () => {
     }
 
     expect(currentState).toContain(
-      'historical characterization only rather than current `v1.3.0` release'
+      'historical characterization only rather than current Linux/Docker'
     );
+    expect(currentState).toContain('validated-preview admission');
     expect(packetMarkdown).toContain(
       '.cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x64/comparison-report-smoke.json'
     );

@@ -174,7 +174,7 @@ creating a parallel doctrine surface:
 | `CLI-UX-004` | `VHS-REQ-543` | keep mutation scope explicit and JSONC-safe without widening into arbitrary settings editing |
 | `CLI-UX-005`, `CLI-UX-011` | `VHS-REQ-546`; `TEST-UNIT-354`; `TEST-INTEG-011` | strengthen the single validation surface instead of splitting readback and validation into separate commands |
 | `CLI-UX-006`, `CLI-UX-007`, `CLI-UX-009` | `VHS-REQ-537`; `VHS-REQ-544`; `TEST-UNIT-353`; `TEST-UNIT-352`; `TEST-INTEG-010`; `TEST-DOC-107` | keep launcher discovery and recovery attached to the existing bootstrap and launcher-runtime contract |
-| `CLI-UX-008`, `CLI-UX-010` | `VHS-REQ-536`; `VHS-REQ-550`; `TEST-DOC-110` | preserve host-default plus expert-Docker truth and current Windows-only private-release bounds |
+| `CLI-UX-008`, `CLI-UX-010` | `VHS-REQ-536`; `VHS-REQ-550`; `TEST-DOC-110` | preserve host-default plus expert-Docker truth and deferred Windows-only private-release bounds |
 
 ## Promotion Notes
 

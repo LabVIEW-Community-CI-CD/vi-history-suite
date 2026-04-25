@@ -40,7 +40,7 @@ describe('private release assurance contradiction guards', () => {
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
     expect(releaseProcedure).toContain(
-      'The active Windows x64 private-release-prep slice is the historical'
+      'The retained Windows x64 private-release-prep slice is the historical'
     );
     expect(releaseProcedure).toContain('`release/1.3.1` lane.');
     expect(releaseProcedure).toContain(

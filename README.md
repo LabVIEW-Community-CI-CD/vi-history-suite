@@ -240,10 +240,12 @@ Authority release facts:
 - exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active Windows x64 private-release-prep slice: historical `release/1.3.1`
-- active Windows x64 private-release packet:
+- active governed release claim: Linux/Docker validated preview with Windows
+  installed-user proof deferred
+- retained Windows x64 private-release-prep slice: historical `release/1.3.1`
+- retained Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
-- active Windows x64 private-release packet JSON:
+- retained Windows x64 private-release packet JSON:
   [docs/product/private-release-windows-x64-v1.3.1.json](./docs/product/private-release-windows-x64-v1.3.1.json)
 - current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
 - current private GitLab release URL:
@@ -251,8 +253,9 @@ Authority release facts:
 - current Windows x64 private-release publish receipt:
   `.cache/private-release-publish/latest/private-release-publish.json`
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
-- fresh `v1.3.1` Windows host/container acceptance receipt set:
-  `windows-private-release-evidence/manifest.json`
+- Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json` is deferred on this
+  Ubuntu-only machine unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - separate public GitHub exact release publication: published; public `main`
   now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
   `312994104` is published at

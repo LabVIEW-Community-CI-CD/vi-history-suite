@@ -51,6 +51,21 @@ retained closed baseline.
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
   but no active exact release candidate line is currently open
 
+## Current Linux/Docker Preview Claim
+
+- active governed develop/package claim: Linux/Docker validated preview
+- verified on this machine: Ubuntu self-hosted GitLab runner, Linux Docker
+  engine, Linux assurance runner, docs workbench, source build, tests, and
+  preview VSIX packaging
+- deferred proof: native Windows installed extension behavior, native Windows
+  LabVIEW host execution, Docker Desktop Windows-container execution, and
+  `windows_private_release_acceptance`
+- public GitHub production mutation: not admitted by this claim
+- VS Code Marketplace mutation: not admitted by this claim
+- Windows installed-user claim rule: do not claim Windows installed-user proof
+  until a real Windows/LabVIEW host runner exists and the deferred Windows lane
+  produces retained evidence
+
 ## Branch Model
 
 - `main`: protected exact-release line and public default branch
@@ -85,9 +100,13 @@ Runner lanes:
   `repo-standards-review` assurance-workbench `:main` image before each
   assurance job and is governed by
   [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)
-- `windows-private-release`: tagged Windows current-user shell-runner lane for
-  native Windows host plus Windows-container proof; it is governed by
+- `ubuntu-docker-preview`: local Ubuntu shell-runner admission lane for the
+  active Linux/Docker validated preview claim; it retains Docker, Node, npm, and
+  runner-readiness evidence before later stages run
+- `windows-private-release`: deferred tagged Windows current-user shell-runner
+  lane for native Windows host plus Windows-container proof; it is governed by
   [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
+  but does not run unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 
 Runner operator hardening:
 
@@ -161,11 +180,15 @@ Runner operator hardening:
 
 Job ownership:
 
-- `governed_runner_admission`: blocking Windows-host `admission` stage lane on
-  merge requests, governed branch lanes, and exact tags; it runs
+- `ubuntu_docker_runner_admission`: blocking Linux/Docker `admission` stage lane
+  on merge requests, governed branch lanes, and exact tags; it retains
+  `governed-runner-admission-evidence/` with runner, Docker, Node, npm, and
+  explicit Windows-proof-deferred facts before docs, assurance, test, package,
+  and release jobs run
+- `governed_runner_admission`: deferred Windows-host `admission` stage lane; it
+  runs only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true` and still uses
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
-  so docs, assurance, test, package, and release jobs fail fast on post-reset
-  runner drift instead of waiting behind missing or degraded runner capacity
+  when a real Windows/LabVIEW host runner exists
 - `public_exact_pretag_proof`: blocking pre-tag public-facade proof lane on
   merge requests, `develop`, `main`, `release/*`, and `hotfix/*`; it runs
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
@@ -198,11 +221,13 @@ Job ownership:
   packaging
 - `test_extension`: compile, test, and coverage gate on merge requests,
   governed branch lanes, and exact tags
-  - `windows_private_release_acceptance`: tagged Windows shell-runner lane that
-    retains the canonical Windows x64 private-release acceptance evidence for
-    `resource/plugins/lv_icon.vi` on both host-native and Windows-container
-    providers before preview or exact packaging continues; when the host-native
-    proof exits at the shared Windows cleanup seam, it retains
+  - `windows_private_release_acceptance`: deferred tagged Windows shell-runner
+    lane that retains the canonical Windows x64 private-release acceptance
+    evidence for `resource/plugins/lv_icon.vi` on both host-native and
+    Windows-container providers when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`;
+    it is required before any Windows installed-user proof claim, but it is not
+    required for the active Linux/Docker validated preview claim. When the
+    host-native proof exits at the shared Windows cleanup seam, it retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
     `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
     retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
@@ -220,16 +245,18 @@ Job ownership:
   exact tags; it now depends on the blocking Linux assurance lanes
   `assurance_release_gate`, `assurance_26514_authority`,
   `assurance_requirements_quality`, and
-  `assurance_external_user_information`, plus `test_extension` and
-  `windows_private_release_acceptance`, and there is still no generic
-  `feature/*` push lane
+  `assurance_external_user_information`, plus `test_extension`; the deferred
+  `windows_private_release_acceptance` need remains optional unless explicitly
+  enabled, and there is still no generic `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
 - `release_extension`: exact-version release lane on exact tags only, now
-  blocked on the same blocking Linux assurance lanes, `test_extension`, and
-  `windows_private_release_acceptance`
+  blocked on the same blocking Linux assurance lanes and `test_extension`; any
+  exact package produced without the deferred Windows lane remains a
+  Linux/Docker validated artifact and cannot be used as Windows installed-user
+  proof
 
 Design-gate boundary:
 

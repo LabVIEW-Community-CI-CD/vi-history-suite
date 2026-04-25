@@ -214,10 +214,12 @@ Latest landed ship target:
   exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active Windows x64 private-release-prep slice: historical `release/1.3.1`
-- active Windows x64 private-release packet:
+- active governed release claim: Linux/Docker validated preview with Windows
+  installed-user proof deferred
+- retained Windows x64 private-release-prep slice: historical `release/1.3.1`
+- retained Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
-- active Windows x64 private-release packet JSON:
+- retained Windows x64 private-release packet JSON:
   [private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)
 - current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
 - private GitLab release URL:
@@ -225,8 +227,9 @@ Latest landed ship target:
 - current Windows x64 private-release publish receipt:
   `.cache/private-release-publish/latest/private-release-publish.json`
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
-- fresh `v1.3.1` Windows host/container acceptance receipt set:
-  `windows-private-release-evidence/manifest.json`
+- Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json` is deferred on this
+  Ubuntu-only machine unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - separate public GitHub exact release publication: published; public `main`
   now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
   `312994104` is published at
@@ -285,8 +288,11 @@ Latest landed ship target:
     `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
   - latest Linux startup receipt:
     `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
-  - fail-fast GitLab runner admission job: `governed_runner_admission`
-  - fail-fast GitLab runner admission command:
+  - fail-fast GitLab Linux/Docker admission job:
+    `ubuntu_docker_runner_admission`
+  - deferred Windows/LabVIEW runner admission job:
+    `governed_runner_admission`
+  - deferred Windows/LabVIEW runner admission command:
     `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   - the Windows apply surface keeps the scheduled task on
     `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
@@ -329,8 +335,10 @@ Latest landed ship target:
   - the repo-owned doctor surfaces now read both live runner state and the
     retained startup receipts, and the fail-fast
     `governed_runner_admission` job runs those doctor surfaces in the
-    `admission` stage so docs, assurance, test, package, and release work do
-    not queue behind unreconciled post-reset runner drift
+    `admission` stage only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`;
+    the active develop/package preview admission is
+    `ubuntu_docker_runner_admission`, which proves the Linux Docker runner
+    surface and does not claim Windows installed-user proof
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -513,10 +521,10 @@ Post-release tranches:
   `LabVIEWCLI.exe` at the banner snapshot while `LabVIEW.exe` was not
   observed, retained no LabVIEW-related processes at exit, and failed
   `command-timed-out` after `120000ms` without a generated report; that packet
-  is historical characterization only rather than current `v1.3.0` release
-  admission, because the active release truth is the later x64 mixed-bitness
-  success while Windows x86 / 32-bit LabVIEW remains out of scope for the
-  current candidate
+  is historical characterization only rather than current Linux/Docker
+  validated-preview admission, because Windows x64 installed-user proof is
+  deferred on the Ubuntu-only machine and Windows x86 / 32-bit LabVIEW remains
+  out of scope for any Windows installed-user claim
   - canonical proof-admission validation for explicit proof-admission override bundles is now shared across the full governed-proof control surface rather than one diagnosis path only, so `runGovernedProof` subcommands for `dashboard-smoke`, `decision-record`, `report-smoke`, `benchmark-linux`, and `benchmark-windows` all reject contradictory explicit proof-admission bundles before they can bias retained evidence
   - retained internal `LVCompare` parity evidence still does not extend the comparable window: the published-image parity proof at `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof-lvcompare` times out immediately on pair `1/129`, retains `completionState=failed`, `terminalPairFailureReason=command-timed-out`, and remains characterization-only, so `LVCompare` is not currently a viable Windows workaround around the pair-129 `labview-cli-call-by-reference` ceiling
   - the retained exact-pair Windows `LVCompare` parity diagnosis on the precise blocker boundary `6dd65df -> 3408654` also fails closed: the retained report-smoke proof at `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-pair129-lvcompare` reaches the targeted pair, retains `runtimeExecutionState=failed` with `runtimeFailureReason=command-timed-out`, observes both `LabVIEW.exe` and `LVCompare.exe` at process spawn, and then exits the bounded `120000ms` budget without a generated report, so that retained internal parity lane is not a viable exact-pair Windows workaround either
@@ -588,19 +596,18 @@ Post-release tranches:
     `resource/plugins/lv_icon.vi` generated a report on this machine under the
     same mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner
     snapshot and `LabVIEW.exe` observed at exit
-- private-release proof focus is now explicit: close the Windows x64 host
-  and Windows-container lanes as the admitted released-contract proof lanes;
-  Windows x86 / 32-bit LabVIEW remains out of scope for the current released
-  contract
-  admission and any retained x86 evidence is characterization only
+- private-release proof focus is now explicit: Windows x64 host and
+  Windows-container lanes are deferred proof lanes on the current Ubuntu-only
+  setup; the active develop/package claim is Linux/Docker validated preview,
+  and Windows x86 / 32-bit LabVIEW remains out of scope for any Windows
+  installed-user claim
 - installed-user and private-release docs now fail closed on scope: Windows
   x64 only for the released host-default contract, with Linux public smoke, Linux
   benchmark material, and Windows x86 evidence retained only as
   source-evaluation or internal proof surfaces rather than part of the active
   user contract
-  - WSL is not part of the active Windows x64 private-release contract: the
-    supported proof lanes on this machine are native Windows host execution
-    and Docker Desktop Windows-container execution, retained under
+  - WSL is not part of the retained Windows x64 private-release contract; those
+    deferred proof lanes require native Windows host execution and Docker Desktop Windows-container execution, historically retained under
     `.cache/private-release/1.3.0/windows-x64-host/` and
     `.cache/private-release/1.3.0/windows-x64-container/`
   - the tracked branch packet that binds those ignored proof roots, the
@@ -611,12 +618,14 @@ Post-release tranches:
   - the governed private GitLab release for that same packet is now published
     as `private-v1.3.0-windows-x64` and is refreshable through
     `npm run gitlab:private-release:publish`
-  - the repo now retains the tagged GitLab Windows acceptance lane for this
-    same scenario in
+  - the repo retains the tagged GitLab Windows acceptance lane for this same
+    scenario in
     [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md):
     the job `windows_private_release_acceptance` calls
     `npm run acceptance:windows:private-release` and retains
     `windows-private-release-evidence/` as the machine-readable recovery root
+    when a real Windows/LabVIEW runner is available and
+    `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
   - the repo now also retains a separate self-hosted Linux assurance lane for
     the same protected branch sequence in
     [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md): the
