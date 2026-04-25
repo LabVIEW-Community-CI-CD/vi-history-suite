@@ -18,6 +18,7 @@ Code Marketplace publication act.
 | GitLab hotfix branch | Do not open `hotfix/*` | The change does not patch a production exact `main` emergency line. |
 | Public GitHub facade | Do not commit directly to public `main` | The dirty public clone was used only to prove the downstream smoke path. Public source changes must be regenerated from GitLab authority with `npm run public:source:promote` after the authority branch is accepted. |
 | Marketplace | No mutation | Ubuntu/Docker proof is necessary local evidence but does not replace external Windows/LabVIEW installed-user proof. |
+| GitLab MR admission | Use the Ubuntu/Docker runner admission job for this branch only | This Ubuntu machine can truthfully prove Linux Docker runner readiness, but it cannot claim Windows local LabVIEW or Windows Docker proof. The Windows admission and private-release acceptance gates remain for protected/release lines and external Windows/LabVIEW evidence. |
 
 ## Local Fixes
 
@@ -42,6 +43,7 @@ Code Marketplace publication act.
 | Public Linux installed-user smoke | `sg docker -c "npm run public:smoke:linux -- --evidence-dir artifacts/public-linux-installed-user-smoke"` in `/home/ghostshadow/Public/repos/vi-history-suite-github` | PASS. Receipt retained outside authority repo at `/home/ghostshadow/Public/repos/vi-history-suite-github/artifacts/public-linux-installed-user-smoke/public-linux-installed-user-smoke.json`. |
 | Docker engine access | `sg docker -c "docker info --format '{{.OSType}}'"` | PASS; returned `linux`. |
 | Ubuntu package source health | `sudo apt-get update` after disabling duplicate Docker apt source | PASS; duplicate-source warning cleared. |
+| GitLab Ubuntu runner registration | GitLab project runners `ghostshadow-ubuntu-docker-untagged` and `ghostshadow-ubuntu-linux-assurance` | PASS; both runners are online, project-scoped, locked, and backed by the local `gitlab-runner` service on this Ubuntu host. |
 
 ## Public Facade Review
 
