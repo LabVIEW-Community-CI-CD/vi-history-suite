@@ -10,8 +10,8 @@
     "packageVersion": "1.3.10"
   },
   "developPreview": {
-    "classification": "linux-docker-validated-preview",
-    "stateRole": "retained-provider-lane-packet-evidence",
+    "classification": "linux-docker-and-linux-host-labview-validated-preview",
+    "stateRole": "retained-provider-lane-and-linux-host-packet-evidence",
     "headTrackingPolicy": "do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed",
     "retainedPacketPath": "docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md",
     "retainedPacketJsonPath": "docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json",
@@ -54,10 +54,71 @@
       "linuxImageAcquisitionState": "acquisition-required-before-first-compare-run",
       "windowsInstalledUserProofState": "community-deferred"
     },
-    "publicationState": "develop-provider-lane-evidence-only",
+    "publicationState": "develop-provider-lane-and-linux-host-labview-evidence-only",
     "windowsInstalledUserProofDeferred": true,
     "publicGitHubMutation": "not-performed-by-this-packet",
-    "marketplaceMutation": "not-performed-by-this-packet"
+    "marketplaceMutation": "not-performed-by-this-packet",
+    "linuxHostLabviewEvidence": {
+      "packetPath": "docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md",
+      "packetJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json",
+      "schema": "vi-history-suite/linux-host-labview-2026-create-comparison-proof@v1",
+      "recordedAt": "2026-04-26T22:36:27.859Z",
+      "status": "passed",
+      "platform": "linux",
+      "hostOs": "Ubuntu 25.10",
+      "kernel": "6.17.0-1017-oem",
+      "installerBundlePath": "/home/ghostshadow/Downloads/ni-labview-2026-community-26.1.1_linux",
+      "installedPackageLine": "ni-labview-2026-community 26.1.1.49170-0+f18",
+      "selectedSettings": {
+        "provider": "host",
+        "labviewVersion": "2026",
+        "labviewBitness": "x64"
+      },
+      "runtime": {
+        "errorCode": "VIHS_OK",
+        "validationOutcome": "ready",
+        "provider": "host-native",
+        "engine": "labview-cli",
+        "blockedReason": null,
+        "labviewExePath": "/usr/local/natinst/LabVIEW-2026-64/labview",
+        "labviewCliPath": "/usr/local/bin/LabVIEWCLI",
+        "lvComparePath": "/usr/local/bin/LVCompare"
+      },
+      "fixture": {
+        "repository": "https://github.com/ni/labview-icon-editor",
+        "viPath": "resource/plugins/lv_icon.vi",
+        "oldCommit": "ab94f6c4b375062492036c63a6dab7ea8824748a",
+        "oldCommitDate": "2025-06-29",
+        "newCommit": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "newCommitDate": "2026-02-24",
+        "viSignature": "LVIN"
+      },
+      "compare": {
+        "operation": "CreateComparisonReport",
+        "exitCode": 0,
+        "result": "succeeded",
+        "reportFile": "diff-report-lv_icon.vi.html",
+        "reportSizeBytes": 214412,
+        "reportSha256": "637055a103b25ecc77e4e308a6d216fc7adab0e1741038502bb53f129e5eb864",
+        "reportAssetsDirectory": "diff-report-lv_icon.vi_files",
+        "reportAssetsDirectoryApproximateSize": "4.2 MB",
+        "reportAssetsDigestSha256": "1d091f24e656d0aa3d2c32f4f96f6a43b14f0f5582029160bcf97f533363d932",
+        "logSha256": "d1a130c91a78a938f64ac8573683916a2dd5e1facfe01d8e86d543c7a38604ce",
+        "evidence": "CreateComparisonReport operation succeeded."
+      },
+      "compatibilityFixes": [
+        "installed libglu1-mesa",
+        "cleared executable stack on /usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1 with backup /usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1.orig-execstack"
+      ],
+      "linuxHostLabviewProofState": "admitted-local-maintainer-proof",
+      "windowsInstalledUserLabviewProofState": "community-deferred",
+      "linuxHostLabviewProofMayProveWindowsInstalledUserLabview": false,
+      "publicGitHubMutation": "not-performed",
+      "marketplaceMutation": "not-performed"
+    },
+    "linuxHostLabviewProofState": "admitted-local-maintainer-proof",
+    "windowsInstalledUserProofState": "community-deferred",
+    "linuxHostLabviewProofMayProveWindowsInstalledUserLabview": false
   },
   "noMutationBoundary": {
     "publicGitHubTouched": false,
@@ -161,8 +222,10 @@
   ],
   "handoffClassification": {
     "class": "no-mutation-deferred-windows-labview-proof-prerequisites",
-    "activeReleaseClaimAfterHandoff": "linux-docker-validated-preview",
+    "activeReleaseClaimAfterHandoff": "linux-docker-and-linux-host-labview-validated-preview",
     "windowsInstalledUserProofState": "deferred",
-    "nextAdmissibleAction": "provision-external-windows-labview-host-and-retain-required-gitlab-authority-evidence"
+    "nextAdmissibleAction": "provision-external-windows-labview-host-and-retain-required-gitlab-authority-evidence",
+    "linuxHostLabviewProofState": "admitted-local-maintainer-proof",
+    "linuxHostLabviewProofMayProveWindowsInstalledUserLabview": false
   }
 }

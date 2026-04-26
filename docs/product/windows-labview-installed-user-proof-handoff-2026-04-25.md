@@ -6,8 +6,9 @@ Prepare the deferred Windows/LabVIEW installed-user proof path without opening
 an exact release, mutating public GitHub, or mutating VS Code Marketplace.
 
 This handoff uses the evidence-anchored `developPreview` model. The active
-preview state retains the Linux/Docker packet evidence as the proof anchor; it
-does not persist the moving live `develop` head as Windows proof.
+preview state retains the Linux/Docker packet evidence plus the later Linux
+host LabVIEW 2026 proof anchor; it does not persist the moving live `develop`
+head as Windows proof.
 
 ## Current Authority Boundary
 
@@ -17,8 +18,8 @@ does not persist the moving live `develop` head as Windows proof.
 | Integration branch | `develop` |
 | Handoff prepared from `develop` commit | `21774a91710b71c6b63629cc0cf3cf37ce9abc0a` |
 | Handoff prepared from `develop` pipeline | `2480195741` / `success` |
-| Active preview classification | Linux/Docker validated preview |
-| Preview state role | retained provider-lane packet evidence |
+| Active preview classification | Linux/Docker and Linux host LabVIEW validated preview |
+| Preview state role | retained provider-lane and Linux host packet evidence |
 | Head tracking policy | read live `develop` head and pipeline state from GitLab when needed |
 | Retained preview packet | `docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md` |
 | Preview evidence commit | `21774a91710b71c6b63629cc0cf3cf37ce9abc0a` |
@@ -29,9 +30,12 @@ does not persist the moving live `develop` head as Windows proof.
 | Linux Docker provider lane | `npm run linux:docker:provider:lane` / GitLab `linux_docker_provider_lane` job `14091891709` |
 | Linux Docker provider evidence | `linux-docker-provider-lane-evidence/` with schema `vi-history-suite/linux-docker-provider-lane@v1` |
 | Linux Docker provider facts | Docker OSType `linux`; `runtimeProvider=linux-container`; `runtimeEngine=labview-cli`; `runtimeBlockedReason=<none>` |
+| Linux host LabVIEW proof packet | `docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md` |
+| Linux host LabVIEW proof facts | `/usr/local/natinst/LabVIEW-2026-64/labview`; `VIHS_OK`; `runtimeProvider=host-native`; `runtimeEngine=labview-cli`; `CreateComparisonReport operation succeeded.` |
 
-The preview VSIX is Linux/Docker validated only. It is not Windows
-installed-user proof and is not a Marketplace publication candidate by itself.
+The preview VSIX is Linux/Docker and Linux host LabVIEW authority validated.
+It is not Windows installed-user proof and is not a Marketplace publication
+candidate by itself.
 
 ## No-Mutation Boundary
 
@@ -171,7 +175,10 @@ is true:
 ## Handoff Classification
 
 - Handoff class: no-mutation deferred Windows/LabVIEW proof prerequisites
-- Active release claim after this handoff: Linux/Docker validated preview
+- Active release claim after this handoff: Linux/Docker and Linux host LabVIEW
+  validated preview
+- Linux host LabVIEW proof state: admitted local maintainer proof
+- Linux host LabVIEW proof may prove Windows installed-user behavior: no
 - Windows installed-user proof state: deferred
 - Public GitHub mutation: not admitted
 - VS Code Marketplace mutation: not admitted

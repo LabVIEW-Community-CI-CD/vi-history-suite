@@ -56,18 +56,20 @@ Read these in order:
 38. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
 39. [Release Publication State](./release-publication-state.md)
 40. [Release Publication State JSON](./release-publication-state.json)
-41. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
-42. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
-43. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
-44. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
-45. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
-46. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-47. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-48. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-49. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-50. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-51. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-52. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+41. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
+42. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26 JSON](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
+43. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
+44. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
+45. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+47. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
+48. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
+49. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+50. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+51. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+52. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+53. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+54. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -125,19 +127,21 @@ Current control-plane surfaces:
 39. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
 40. [Release Publication State](./release-publication-state.md)
 41. [Release Publication State JSON](./release-publication-state.json)
-42. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
-43. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
-44. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
-45. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
-46. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
-47. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-48. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-49. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-50. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-51. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-52. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-53. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
-54. [Fast VS Code Loop](../dev-fast-loop.md)
+42. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
+43. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26 JSON](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
+44. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
+45. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
+46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+47. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+48. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
+49. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
+50. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+51. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+52. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+53. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+54. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+55. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+56. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -148,6 +152,7 @@ Current control-plane surfaces:
 | Canonical real-history harness smoke | implemented | `src/harness/harnessSmoke.ts`; `src/cli/runHarnessSmoke.ts`; `npm run proof:run -- smoke --harness-id HARNESS-VHS-001`; `VHS-REQ-029..030` | sustain |
 | Comparison-report preflight, planning, and packet storage | implemented | `src/reporting/comparisonReportPreflight.ts`; `src/reporting/comparisonReportPlan.ts`; `src/reporting/comparisonReportPacket.ts`; `VHS-REQ-127..145` | sustain |
 | LabVIEW 2026 Q1 runtime detection and governed live report execution | implemented and active | `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`; `VHS-REQ-146..181`; `VHS-REQ-217..220`; `VHS-REQ-239..250` | sustain |
+| Linux host LabVIEW 2026 CreateComparisonReport proof | implemented and admitted for Linux host only | `src/reporting/comparisonRuntimeLocator.ts`; `tests/unit/comparisonRuntimeLocator.test.ts`; `docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md`; `docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json`; `VHS-REQ-588` | sustain |
 | Canonical comparison-report smoke lane | implemented with succeeded NI proof | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run proof:run -- report-smoke --harness-id HARNESS-VHS-001`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`; `VHS-REQ-152..180`; `VHS-REQ-220` | sustain |
 | Indexing and report progress uplift | partially implemented and active | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; `VHS-REQ-305..306`; research alignment marks this partial | `TRANCHE-004` |
 | Windows 64-bit isolated container provider | implemented and active | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `VHS-REQ-146`; `VHS-REQ-217..220` | sustain |
@@ -326,6 +331,23 @@ Latest landed ship target:
   `runtimeProvider=linux-container` / `runtimeEngine=labview-cli` validation
   from develop pipeline `2480195741`; Windows installed-user LabVIEW proof
   remains community/deferred evidence
+- current Linux host LabVIEW 2026 proof packet:
+  [HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
+- current Linux host LabVIEW 2026 proof packet JSON:
+  [HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
+- governed Linux host LabVIEW proof:
+  this Ubuntu machine installed LabVIEW 2026 Community x64 from
+  `/home/ghostshadow/Downloads/ni-labview-2026-community-26.1.1_linux`,
+  retained the VIHS Linux host-discovery fix for
+  `/usr/local/natinst/LabVIEW-2026-64/labview`, validated `host` / `2026` /
+  `x64` as `VIHS_OK` with `runtimeProvider=host-native` and
+  `runtimeEngine=labview-cli`, and executed host-native
+  `CreateComparisonReport` successfully against canonical
+  `lv_icon.vi` from `https://github.com/ni/labview-icon-editor`
+- Linux host proof boundary:
+  admitted local maintainer proof for Linux host LabVIEW 2026 only; Windows
+  installed-user LabVIEW proof remains community/deferred, and public GitHub
+  plus VS Code Marketplace were not mutated by this authority closeout
 - current no-mutation Windows/LabVIEW installed-user proof handoff:
   [windows-labview-installed-user-proof-handoff-2026-04-25.md](./windows-labview-installed-user-proof-handoff-2026-04-25.md)
 - current no-mutation Windows/LabVIEW installed-user proof handoff JSON:

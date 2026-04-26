@@ -2320,6 +2320,22 @@ Information-for-users review cases:
   `24965599548` / success, Public Linux Installed-User Smoke `24965599557` /
   success, and that Marketplace was not mutated by the public facade docs
   promotion.
+- `TEST-UNIT-395`: run
+  `vitest run tests/unit/comparisonRuntimeLocator.test.ts tests/unit/linuxHostLabviewProofDocs.test.ts`
+  and confirm `VHS-REQ-588`, the VIHS Linux host-discovery fix, the retained Linux host
+  LabVIEW 2026 proof packet, release-publication state, current-state, SRS,
+  RTM, and this test plan preserve Linux host proof as admitted evidence while
+  keeping Windows installed-user LabVIEW proof community/deferred.
+- `TEST-DOC-147`: review the Linux host LabVIEW 2026 proof packet,
+  release-publication state, current-state, SRS, RTM, and this test plan and
+  confirm `/usr/local/natinst/LabVIEW-2026-64/labview`, `VIHS_OK`,
+  `host-native`, `LabVIEWCLI CreateComparisonReport`, canonical
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`,
+  commits `ab94f6c4b375062492036c63a6dab7ea8824748a` and
+  `8741bb08026c104100720c0ef48621e4ab7762fd`, generated
+  `diff-report-lv_icon.vi.html`, report size `214412` bytes, Linux
+  compatibility fixes, and the no-public-GitHub/no-Marketplace mutation
+  boundary are retained without claiming Windows installed-user proof.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

@@ -2352,8 +2352,8 @@ function matchesRequestedLabviewVersion(
 }
 
 function extractLabviewMajorVersion(filePath: string): string | undefined {
-  const normalized = filePath.replaceAll('/', '\\');
-  const folderMatch = normalized.match(/\\LabVIEW ([^\\]+)\\LabVIEW\.exe$/iu);
+  const normalized = filePath.replaceAll('\\', '/');
+  const folderMatch = normalized.match(/\/LabVIEW(?:[- ])([^/]+)\/(?:LabVIEW\.exe|labview|labviewcommunity)$/iu);
   if (!folderMatch) {
     return undefined;
   }

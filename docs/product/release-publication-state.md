@@ -25,8 +25,9 @@ final installed-user distribution surface.
 
 ## Develop Preview State
 
-- Active develop preview claim: Linux/Docker validated preview
-- Preview state role: retained provider-lane packet evidence
+- Active develop preview claim: Linux/Docker and Linux host LabVIEW validated
+  preview
+- Preview state role: retained provider-lane and Linux host packet evidence
 - Develop head tracking policy: do not persist the latest live `develop`
   commit or pipeline in this packet. Read live `develop` head and pipeline
   state from GitLab when that operational status is needed.
@@ -52,8 +53,32 @@ final installed-user distribution surface.
   `docker` / `2026` / `x64` settings through `vihs`,
   `runtimeValidationOutcome=ready`, `runtimeProvider=linux-container`,
   `runtimeEngine=labview-cli`, and `runtimeBlockedReason=<none>`
-- Preview publication state: develop provider-lane evidence only
+- Linux host LabVIEW 2026 evidence:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md`
+- Linux host LabVIEW 2026 evidence JSON:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json`
+- Linux host LabVIEW 2026 traceability: `VHS-REQ-588`
+- Linux host validated facts: Ubuntu `25.10`, LabVIEW Community
+  `2026` / `x64`, `runtimeValidationOutcome=ready`,
+  `runtimeProvider=host-native`, `runtimeEngine=labview-cli`,
+  `runtimeBlockedReason=<none>`, and `VIHS_OK`
+- Linux host LabVIEW executable:
+  `/usr/local/natinst/LabVIEW-2026-64/labview`
+- Linux host canonical fixture:
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
+  from `ab94f6c4b375062492036c63a6dab7ea8824748a` to
+  `8741bb08026c104100720c0ef48621e4ab7762fd`
+- Linux host compare proof: `LabVIEWCLI CreateComparisonReport` exited `0`,
+  generated `diff-report-lv_icon.vi.html`, retained report size `214412`
+  bytes, and logged `CreateComparisonReport operation succeeded.`
+- Linux host compatibility fixes retained: installed `libglu1-mesa` and
+  cleared the executable-stack marking on
+  `/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1`
+- Preview publication state: develop provider-lane and Linux host LabVIEW
+  evidence only
+- Linux host proof state: admitted local maintainer proof
 - Windows proof state: Windows installed-user LabVIEW proof community/deferred
+- Linux host proof may prove Windows installed-user LabVIEW behavior: no
 - Public GitHub mutation: not performed by this packet
 - VS Code Marketplace mutation: not performed by this packet
 
