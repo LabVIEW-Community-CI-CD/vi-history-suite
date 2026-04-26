@@ -47,6 +47,17 @@ See also:
 
 - Purpose: clone the canonical governed public sample repository.
 - Use when: you want the easiest first proof route for public evaluation.
+- Fixture: `https://github.com/ni/labview-icon-editor` at
+  `resource/plugins/lv_icon.vi`.
+- Retained commits:
+  `ab94f6c4b375062492036c63a6dab7ea8824748a` to
+  `8741bb08026c104100720c0ef48621e4ab7762fd`.
+- Retained Docker battery: positive historical compare succeeded, no-change
+  compare succeeded, and missing-file control blocked before Docker at
+  `left-blob-read-failed`.
+- Docker note: the first compare may pull
+  `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`.
+- Proof boundary: Windows host LabVIEW proof remains community/deferred.
 
 ## Documentation Package Workbench
 
@@ -226,8 +237,11 @@ runtime-settings CLI on the active branch.
   - the no-argument interactive `vihs` confirmation flow invokes this same
     bounded validation after persisting settings
   - on the current public validation route, treat `VIHS_OK` as proof for the
-    selected provider on the current machine; native Windows LabVIEW proof
-    remains community/deferred until admitted external proof is retained
+    selected provider on the current machine; for Docker, this means daemon
+    reachability and runtime selection are valid, while the first compare may
+    still pull `nationalinstruments/labview:2026q1-linux`; native Windows
+    LabVIEW proof remains community/deferred until admitted external proof is
+    retained
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

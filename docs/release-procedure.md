@@ -89,6 +89,17 @@
   and proof-packet disclosure, and public GitHub pre-release/source/intake
   mutation is retained for `1.3.11` through public PR #46 and release
   `v1.3.11-public-validation`.
+- The canonical public Docker fixture battery for the `1.3.11` validation lane
+  is retained in GitLab authority before public-facade promotion:
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
+  from `ab94f6c4b375062492036c63a6dab7ea8824748a` to
+  `8741bb08026c104100720c0ef48621e4ab7762fd`; positive Docker compare
+  succeeded, no-change compare succeeded, and missing-file control blocked
+  before Docker at `left-blob-read-failed`. The first uncached compare may
+  pull `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`. Public
+  GitHub facade docs should be promoted only after the GitLab authority MR for
+  this closeout is green, and Marketplace mutation is not part of that
+  docs-promotion act.
 - The retained Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The retained Windows x64 private-release packet is:

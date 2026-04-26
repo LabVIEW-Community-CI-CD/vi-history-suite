@@ -108,6 +108,48 @@ Prepared public template sources:
 - `public-github-source/.github/ISSUE_TEMPLATE/labview-version-support.yml`
 - `public-github-source/.github/labels.yml`
 
+## Canonical Public Docker Fixture Battery
+
+Retained public GitHub evidence from issues
+`https://github.com/svelderrainruiz/vi-history-suite/issues/48` through
+`https://github.com/svelderrainruiz/vi-history-suite/issues/59` establishes
+one repeatable Docker fixture for the `1.3.11` public validation lane:
+
+- fixture repository: `https://github.com/ni/labview-icon-editor`
+- VI path: `resource/plugins/lv_icon.vi`
+- old commit: `ab94f6c4b375062492036c63a6dab7ea8824748a`
+- new commit: `8741bb08026c104100720c0ef48621e4ab7762fd`
+- VI signature: `LVIN`
+- Docker image: `nationalinstruments/labview:2026q1-linux`
+- first uncached Docker compare may pull about `1.4 GB`
+
+Battery results:
+
+| Case | Result | Evidence |
+| --- | --- | --- |
+| Positive historical compare | succeeded, exit `0`, about `112` seconds | LabVIEW `CreateComparisonReport` operation succeeded and generated `diff-report-lv_icon.vi.html`, about `395 KB` |
+| No-change control | succeeded, exit `0`, about `24.7` seconds | same VI revision generated a valid no-change report, about `395 KB` |
+| Missing-file control | blocked before Docker | compare preflight stopped at `left-blob-read-failed` before Docker invocation |
+
+This battery upgrades the Linux/Docker `2026` `x64` evidence from settings
+recognition to real compare execution against a public VI with commit history.
+It does not prove native Windows host LabVIEW, Docker Desktop Windows
+containers, or installed-user Windows behavior; those remain
+community/deferred until external proof is admitted.
+
+The governed authority closeout addresses public issue gaps:
+
+- `#55`: source/tag checkout users must run `npm run compile` before
+  validation when the devcontainer post-start step has not rerun
+- `#57`: the public issue chooser needs direct success, failure, and
+  feature-not-implemented contact links, not only the Windows/LabVIEW template
+- `#58`: installed/source docs need the first Docker image pull warning
+- `#59`: docs and tests need the repeatable fixture recipe retained
+
+Public facade docs promotion is needed after the GitLab authority MR is green.
+Public GitHub and Marketplace mutation are not part of this authority
+closeout.
+
 ## Triage Loop
 
 1. Intake

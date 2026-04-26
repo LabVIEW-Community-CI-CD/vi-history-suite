@@ -102,6 +102,22 @@ The machine-readable companion surface for this ledger is:
   `vihs --validate --proof-out ./vihs-proof`
 - Proof-status policy: selectable paths report success, failure, or
   not-yet-implemented behavior through stable runtime codes
+- Canonical public Docker fixture: `https://github.com/ni/labview-icon-editor`
+  `resource/plugins/lv_icon.vi`
+- Canonical fixture commits:
+  `ab94f6c4b375062492036c63a6dab7ea8824748a` to
+  `8741bb08026c104100720c0ef48621e4ab7762fd`
+- Canonical Docker battery: positive historical compare succeeded with
+  `diff-report-lv_icon.vi.html`, no-change compare succeeded, and
+  missing-file control blocked before Docker at `left-blob-read-failed`
+- Docker image pull warning:
+  `nationalinstruments/labview:2026q1-linux` may be pulled on first compare
+  and is about `1.4 GB`
+- Public evidence issues: `#48`, `#49`, and `#59`
+- Public facade docs promotion decision:
+  needed after the GitLab authority MR is green
+- Public GitHub mutation during this authority closeout: not performed
+- VS Code Marketplace mutation during this authority closeout: not performed
 
 ## Community-Validation Intake
 

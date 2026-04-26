@@ -288,6 +288,23 @@ Latest landed ship target:
   published and verified as Marketplace pre-release `1.3.11`;
   Windows/LabVIEW settings may remain selectable with proof-status disclosure through
   `vihs --validate --proof-out ./vihs-proof` and `docs/requirements/rtm.csv`
+- canonical public Docker fixture battery:
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
+  from `ab94f6c4b375062492036c63a6dab7ea8824748a` to
+  `8741bb08026c104100720c0ef48621e4ab7762fd`; positive Docker compare
+  succeeded, no-change compare succeeded, and missing-file control blocked
+  before Docker at `left-blob-read-failed`
+- canonical Docker image note:
+  first uncached compare may pull
+  `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`
+- canonical public evidence issues:
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/48`,
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/49`, and
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/59`
+- public facade docs promotion decision:
+  needed after the GitLab authority MR for the fixture-battery closeout is
+  green; public GitHub and Marketplace mutation were not performed by that
+  authority closeout
 - retained public GitHub community-validation intake promotion plan:
   [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
 - retained public GitHub community-validation intake publication state:
