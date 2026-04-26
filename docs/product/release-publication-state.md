@@ -115,6 +115,12 @@ final installed-user distribution surface.
   `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
 - Prepared public label manifest:
   `public-github-source/.github/labels.yml`
+- Public GitHub intake promotion plan:
+  `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`
+- Public GitHub intake promotion plan JSON:
+  `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json`
+- Public GitHub intake promotion state: prepared and awaiting explicit
+  `publish the public intake now`
 - Public GitHub intake mutation: not performed; gated separately by public
   facade promotion and explicit publication approval
 - Public GitHub mutation: not mutated by community-validation preview

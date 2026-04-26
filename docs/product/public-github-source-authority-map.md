@@ -29,6 +29,8 @@ When future sessions refresh the public GitHub source repo, use this order:
 8. [public-github-wiki-authority-map.md](./public-github-wiki-authority-map.md)
 9. [public-github-source-publication-ledger.md](./public-github-source-publication-ledger.md)
 10. [public-github-source-publication-ledger.json](./public-github-source-publication-ledger.json)
+11. [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+12. [public-github-community-validation-intake-promotion-plan-v1.3.10.json](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 If two documents disagree, the higher document in this list wins until the
 lower document is corrected.
@@ -78,6 +80,11 @@ directly to the public GitHub source repo.
   under `public-github-source/` in GitLab authority, but they do not become
   public GitHub behavior until the public facade promotion and publication
   gates are explicitly run and approved.
+- The Marketplace community-validation intake promotion plan is the governing
+  handoff for that separate public act. It requires the explicit
+  `publish the public intake now` trigger, a clean target checkout, and a
+  separate label-application step because publishing `.github/labels.yml` does
+  not itself update repository labels.
 - Exact public `main` shall foreground the host-default Windows local
   `LabVIEWCLI` contract plus bounded expert Docker, public
   devcontainer/Codespaces support, and the checkbox-selected two-commit

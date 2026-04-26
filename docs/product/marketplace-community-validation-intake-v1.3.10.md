@@ -166,12 +166,18 @@ Public GitHub mutation remains gated by:
 
 1. `npm run public:source:check`
 2. a governed public facade promotion decision
-3. a separate explicit public GitHub publication approval
-4. post-publication verification of the public repo templates and labels
+3. the separate public intake promotion plan:
+   `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`
+4. a separate explicit `publish the public intake now` approval
+5. post-publication verification of the public repo templates and labels
 
 Until those gates run and are approved, public users may still see the older
 issue templates on GitHub even though this GitLab authority branch has prepared
 the next intake model.
+
+The label manifest is also only a source artifact until the public promotion
+act applies or updates repository labels through GitHub; pushing
+`.github/labels.yml` alone does not update live public GitHub labels.
 
 ## Release-Control Evidence
 

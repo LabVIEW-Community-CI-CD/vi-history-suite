@@ -79,6 +79,12 @@ The machine-readable companion surface for this ledger is:
   `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
 - Prepared label manifest:
   `public-github-source/.github/labels.yml`
+- Public GitHub intake promotion plan:
+  `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`
+- Public GitHub intake promotion plan JSON:
+  `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json`
+- Public GitHub intake promotion trigger:
+  `publish the public intake now`
 - Public GitHub mutation attempted: false
 - Marketplace mutation attempted by intake preparation: false
 - Proof-status policy: selectable does not mean maintainer-proven
@@ -126,4 +132,6 @@ The machine-readable companion surface for this ledger is:
 - Community-validation preview intake is separate from public GitHub facade
   publication. It may prepare issue templates, labels, proof-status wording,
   and triage loops for validation reports, but public GitHub template and
-  label mutation remains a separately gated act.
+  label mutation remains a separately gated act. The separate public intake
+  promotion plan shall be followed before publishing those templates or labels
+  to public GitHub.

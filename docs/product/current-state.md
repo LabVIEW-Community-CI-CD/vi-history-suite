@@ -58,6 +58,8 @@ Read these in order:
 40. [Release Publication State JSON](./release-publication-state.json)
 41. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
 42. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+43. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+44. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -117,7 +119,9 @@ Current control-plane surfaces:
 41. [Release Publication State JSON](./release-publication-state.json)
 42. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
 43. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-44. [Fast VS Code Loop](../dev-fast-loop.md)
+44. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+45. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+46. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -239,6 +243,13 @@ Latest landed ship target:
   admitted for pre-release publication; Windows/LabVIEW settings may remain
   selectable with proof-status disclosure through `vihs --validate` and
   `docs/requirements/rtm.csv`
+- current separately gated public GitHub community-validation intake promotion
+  plan:
+  [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+- current public GitHub community-validation intake publication state:
+  prepared in GitLab authority and awaiting explicit `publish the public intake
+  now`; no public GitHub source, label, release, tag, wiki, or Marketplace
+  mutation is admitted by the plan itself
 - current Linux/Docker preview release-control packet:
   [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
 - current Linux/Docker preview release-control packet JSON:
