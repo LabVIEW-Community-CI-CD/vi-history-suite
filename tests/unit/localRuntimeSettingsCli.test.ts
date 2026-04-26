@@ -43,14 +43,17 @@ describe('localRuntimeSettingsCli', () => {
         '--labview-bitness',
         'x64',
         '--settings-file',
-        './settings.json'
+        './settings.json',
+        '--proof-out',
+        './proof'
       ])
     ).toEqual({
       helpRequested: false,
       provider: 'docker',
       labviewVersion: '2026',
       labviewBitness: 'x64',
-      settingsFilePath: './settings.json'
+      settingsFilePath: './settings.json',
+      proofOutDirectoryPath: './proof'
     });
 
     expect(parseLocalRuntimeSettingsCliArgs(['--help'])).toEqual({
@@ -67,6 +70,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-bitness');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--provider');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--validate');
+    expect(getLocalRuntimeSettingsCliUsage()).toContain('--proof-out');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('Usage: vihs ');
     expect(() => parseLocalRuntimeSettingsCliArgs(['--labview-version'])).toThrow(
       /Missing value for --labview-version/
@@ -274,7 +278,10 @@ describe('localRuntimeSettingsCli', () => {
       runtimeValidationOutcome: 'blocked',
       runtimeProvider: 'unavailable',
       runtimeEngine: undefined,
-      runtimeBlockedReason: 'installed-provider-invalid'
+      runtimeBlockedReason: 'installed-provider-invalid',
+      runtimeErrorCode: 'VIHS_E_PROVIDER_INVALID',
+      runtimeProofStatus: 'blocked-with-actionable-error',
+      runtimeImplementationStatus: 'blocked-or-missing-prerequisite'
     });
 
     expect(stdout.join('')).toContain(`Validated explicit-settings-file target ${settingsFilePath}`);
@@ -287,6 +294,93 @@ describe('localRuntimeSettingsCli', () => {
     expect(stdout.join('')).toContain('runtimeProvider=unavailable');
     expect(stdout.join('')).toContain('runtimeEngine=<none>');
     expect(stdout.join('')).toContain('runtimeBlockedReason=installed-provider-invalid');
+    expect(stdout.join('')).toContain('runtimeErrorCode=VIHS_E_PROVIDER_INVALID');
+    expect(stdout.join('')).toContain('runtimeProofStatus=blocked-with-actionable-error');
+    expect(stdout.join('')).toContain(
+      'runtimeImplementationStatus=blocked-or-missing-prerequisite'
+    );
+  });
+
+  it('writes a public validation proof packet and ready-to-file issue body', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-proof-'));
+    tempDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    const proofRoot = path.join(tempRoot, 'proof');
+    await fs.writeFile(
+      settingsFilePath,
+      [
+        '{',
+        '  "viHistorySuite.runtimeProvider": "docker",',
+        '  "viHistorySuite.labviewVersion": "2024",',
+        '  "viHistorySuite.labviewBitness": "x64"',
+        '}',
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+
+    const result = await runLocalRuntimeSettingsCli(
+      ['--validate', '--settings-file', settingsFilePath, '--proof-out', proofRoot],
+      {
+        env: {
+          PATH: '/usr/bin',
+          SECRET_TOKEN: 'do-not-retain'
+        },
+        locateRuntime: async (_platform, settings) => ({
+          platform: 'linux',
+          requestedProvider: settings.requestedProvider,
+          bitness: settings.bitness ?? 'x64',
+          provider: 'unavailable',
+          blockedReason: 'docker-provider-labview-version-not-implemented',
+          notes: ['LabVIEW 2024 Docker path is not implemented.'],
+          providerDecisions: [
+            {
+              provider: 'linux-container',
+              outcome: 'rejected',
+              reason: 'docker-provider-labview-version-not-implemented',
+              detail: 'Requested Docker LabVIEW year is not implemented.'
+            }
+          ],
+          registryQueryPlans: [],
+          candidates: []
+        })
+      }
+    );
+
+    expect(result).toMatchObject({
+      runtimeValidationOutcome: 'blocked',
+      runtimeErrorCode: 'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED',
+      runtimeProofStatus: 'blocked-with-actionable-error',
+      runtimeImplementationStatus: 'not-implemented',
+      proofReportPath: path.join(proofRoot, 'vihs-validation-proof.json'),
+      proofIssueBodyPath: path.join(proofRoot, 'vihs-validation-issue.md')
+    });
+    const proof = JSON.parse(
+      await fs.readFile(path.join(proofRoot, 'vihs-validation-proof.json'), 'utf8')
+    );
+    const issueBody = await fs.readFile(
+      path.join(proofRoot, 'vihs-validation-issue.md'),
+      'utf8'
+    );
+    expect(proof).toMatchObject({
+      schema: 'vi-history-suite/runtime-validation-proof@v1',
+      proofStatus: 'blocked-with-actionable-error',
+      implementationStatus: 'not-implemented',
+      errorCode: 'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED',
+      settings: {
+        provider: 'docker',
+        labviewVersion: '2024',
+        labviewBitness: 'x64'
+      },
+      publicIntake: {
+        issueChooserUrl: 'https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose',
+        suggestedTemplate: 'feature-not-implemented.yml'
+      }
+    });
+    expect(proof.host.env.PATH).toBe('/usr/bin');
+    expect(proof.host.env.SECRET_TOKEN).toBe('<redacted-secret-like-env-var>');
+    expect(issueBody).toContain('Suggested template: feature-not-implemented.yml');
+    expect(issueBody).toContain('VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED');
   });
 
   it('accepts UTF-8 BOM-prefixed settings during validation', async () => {
@@ -597,7 +691,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(stdout.join('')).toContain('runtimeValidationOutcome=ready');
   });
 
-  it('prompts for a different host year when the selected LabVIEW version is not installed', async () => {
+  it('accepts a host year selection and reports the runtime failure instead of hiding the variant', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-host-year-'));
     tempDirectories.push(tempRoot);
 
@@ -608,7 +702,7 @@ describe('localRuntimeSettingsCli', () => {
       () => tempRoot
     );
     const stdout: string[] = [];
-    const prompts = ['', '', '2024', '', '2026', ''];
+    const prompts = ['', '', '2024', ''];
 
     const result = await runInteractiveLocalRuntimeSettingsCli({
       platform: 'win32',
@@ -649,16 +743,17 @@ describe('localRuntimeSettingsCli', () => {
       }
     });
 
-    expect(result.runtimeValidationOutcome).toBe('ready');
-    expect(stdout.join('')).toContain('LabVIEW 2024 not installed.');
+    expect(result.runtimeValidationOutcome).toBe('blocked');
+    expect(result.runtimeBlockedReason).toBe('labview-exe-not-found');
+    expect(result.runtimeErrorCode).toBe('VIHS_E_LABVIEW_NOT_FOUND');
     expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
       'viHistorySuite.runtimeProvider': 'host',
-      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewVersion': '2024',
       'viHistorySuite.labviewBitness': 'x64'
     });
   });
 
-  it('surfaces unsupported Docker years and blocks docker/linux on Windows hosts during interactive vihs selection', async () => {
+  it('accepts not-yet-implemented Docker variants and reports stable error codes', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-docker-'));
     tempDirectories.push(tempRoot);
 
@@ -669,7 +764,7 @@ describe('localRuntimeSettingsCli', () => {
       () => tempRoot
     );
     const stdout: string[] = [];
-    const prompts = ['docker', 'linux', 'windows', '2024', '2026', ''];
+    const prompts = ['docker', 'linux', '2024', ''];
 
     const result = await runInteractiveLocalRuntimeSettingsCli({
       platform: 'win32',
@@ -683,29 +778,35 @@ describe('localRuntimeSettingsCli', () => {
         }
       },
       promptLine: async () => prompts.shift() ?? '',
-      locateRuntime: async (_platform, settings) => ({
-        platform: 'win32',
-        requestedProvider: settings.requestedProvider,
-        bitness: settings.bitness ?? 'x64',
-        provider: 'windows-container',
-        engine: 'labview-cli',
-        notes: [],
-        registryQueryPlans: [],
-        candidates: []
-      })
+      locateRuntime: async (_platform, settings) => {
+        expect(settings).toEqual(
+          expect.objectContaining({
+            requestedProvider: 'docker',
+            labviewVersion: '2024',
+            bitness: 'x64'
+          })
+        );
+        return {
+          platform: 'win32',
+          requestedProvider: settings.requestedProvider,
+          bitness: settings.bitness ?? 'x64',
+          provider: 'unavailable',
+          blockedReason: 'docker-provider-labview-version-not-implemented',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        };
+      }
     });
 
-    expect(result.runtimeValidationOutcome).toBe('ready');
-    expect(result.runtimeProvider).toBe('windows-container');
-    expect(stdout.join('')).toContain(
-      'docker/linux requires a Linux Docker Desktop/Docker Engine host. On Windows select docker/windows 2026 x64.'
-    );
-    expect(stdout.join('')).toContain(
-      'Docker 2024 is unsupported. Currently implemented: host/windows 2020-2026, docker/windows 2026 x64 on Windows Docker Desktop Windows-container hosts, and docker/linux 2026 x64 on Linux Docker Desktop/Docker Engine hosts.'
-    );
+    expect(result.runtimeValidationOutcome).toBe('blocked');
+    expect(result.runtimeProvider).toBe('unavailable');
+    expect(result.runtimeBlockedReason).toBe('docker-provider-labview-version-not-implemented');
+    expect(result.runtimeErrorCode).toBe('VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED');
+    expect(result.runtimeImplementationStatus).toBe('not-implemented');
     expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
       'viHistorySuite.runtimeProvider': 'docker',
-      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewVersion': '2024',
       'viHistorySuite.labviewBitness': 'x64'
     });
   });

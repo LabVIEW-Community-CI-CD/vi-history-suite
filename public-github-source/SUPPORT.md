@@ -31,6 +31,8 @@ Please include:
 - whether the target file was an eligible tracked LabVIEW VI
 - the persisted provider, LabVIEW version, and LabVIEW bitness bundle
 - whether you ran `vihs --validate`
+- the stable `runtimeErrorCode` shown by `vihs --validate`
+- whether you generated `vihs --validate --proof-out ./vihs-proof`
 - whether VS Code was already open when the generated settings CLI last wrote
   settings
 - whether the issue happened on first-use image pull, on a warm image, or on a
@@ -49,23 +51,32 @@ code --version
 code --list-extensions --show-versions
 git --version
 vihs --validate
+vihs --validate --proof-out ./vihs-proof
 docker version
 docker info --format '{{.OSType}}'
 ```
 
 ## Community Validation Triage
 
-Marketplace pre-release `1.3.10` accepts Windows/LabVIEW community validation
-reports before every selectable combination has maintainer-retained proof.
+Marketplace pre-release `1.3.11` accepts Windows/LabVIEW community validation
+reports and not-yet-implemented feature reports before every selectable
+combination has maintainer-retained proof.
 
 Triage labels start with `community-validation`, `marketplace-preview`,
-`windows-labview`, and `needs-triage`. A report moves to `proof:reported` when
-the user evidence is complete, `needs-reproduction` when maintainer
-reproduction is required, `proof:reproduced` when retained proof exists, or
-`proof:deferred` when the path stays selectable but unproven.
+`windows-labview`, and `needs-triage`. A report moves to
+`validation:success`, `validation:failure`, or `feature:not-implemented`
+based on the submitted proof packet, with `proof:reported` retained when user
+evidence is complete and `needs-reproduction` retained when maintainer
+reproduction is still required.
 
-The maintainer proof boundary is strict: Linux/Docker success does not prove
-Windows/LabVIEW installed-user behavior.
+The public validation lane is intentionally test-seeking: selectable variants
+may work, fail with a stable `VIHS_E_*` code, or report
+`feature:not-implemented`. File the report either way.
+
+Linux/Docker success does not prove native Windows/LabVIEW installed-user
+behavior. It is accepted evidence for the selected Linux/Docker machine only;
+Windows/LabVIEW proof remains community/deferred until a Windows user report is
+admitted and retained.
 
 ## Current Product Boundary
 

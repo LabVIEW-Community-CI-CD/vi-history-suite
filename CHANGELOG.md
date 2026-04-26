@@ -9,6 +9,23 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.11] - 2026-04-26
+
+### Added
+
+- Public validation pre-release lane for publishing `1.3.11` to public GitHub
+  and VS Code Marketplace so users can report validation success, validation
+  failure, bug, and feature-not-implemented results.
+- `vihs --validate --proof-out <dir>` proof packets with stable `VIHS_E_*`
+  runtime codes, GitHub-ready issue body output, and diagnostic path/env
+  evidence with secret-looking environment variables redacted.
+
+### Changed
+
+- Runtime provider selection now keeps all provider/year/bitness variants
+  selectable for public validation reporting, including paths that currently
+  return not-yet-implemented or blocked runtime codes.
+
 ## [1.3.10] - 2026-04-25
 
 ### Added

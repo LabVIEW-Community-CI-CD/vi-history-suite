@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/vscode-marketplace-publication-ledger@v1",
   "publicationSurface": "vscode-marketplace",
-  "status": "published-community-validation-preview",
+  "status": "published-community-validation-preview-with-1.3.11-public-validation-target-prepared",
   "publisherId": "svelderrainruiz",
   "extensionId": "vi-history-suite",
   "marketplaceItemName": "svelderrainruiz.vi-history-suite",
@@ -10,7 +10,7 @@
   "currentPublishedVersion": "1.3.10",
   "currentPublishedDate": "2026-04-25",
   "currentVerificationSurface": "official-gallery-extensionquery-and-vsce-show",
-  "pendingPublicationVersion": null,
+  "pendingPublicationVersion": "1.3.11",
   "pendingPublicationInstallProofPackageScript": "npm run vscode:marketplace:install-proof",
   "pendingPublicationInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
   "pendingPublicationInstallProofStatus": "retain-passed-install-proof",
@@ -18,26 +18,26 @@
   "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
   "pendingPublicationPrepStatus": "retain-marketplace-publication",
   "communityValidationPreviewPreparation": {
-    "status": "published-and-verified",
-    "publicationClaim": "community-validation-preview",
+    "status": "prepared-authorized-pending-publication",
+    "publicationClaim": "public-validation-prerelease",
     "preparePackageScript": "npm run vscode:marketplace:community-preview:prepare",
     "prepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
     "preferredVsceMode": "pre-release",
     "targetVersionPolicy": "must-be-distinct-higher-major-minor-patch-than-current-marketplace-version",
-    "targetVersion": "1.3.10",
-    "publishTrigger": "user-said-publish-it-now",
-    "windowsInstalledUserProofState": "deferred",
-    "windowsLabviewFeaturePolicy": "user-selectable-with-proof-status-disclosure",
+    "targetVersion": "1.3.11",
+    "publishTrigger": "maintainer-authorized-public-github-and-marketplace-public-validation-publication",
+    "windowsInstalledUserProofState": "community-deferred",
+    "windowsLabviewFeaturePolicy": "all-provider-year-bitness-variants-selectable-with-runtime-error-code-and-proof-packet-disclosure",
     "traceabilityMatrixPath": "docs/requirements/rtm.csv",
     "publicGitHubMutationAttemptedByPrep": false,
     "marketplaceMutationAttemptedByPrep": false,
-    "publishedDate": "2026-04-25",
-    "marketplaceLastUpdated": "2026-04-26T00:05:09.09Z",
-    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.10.vsix",
-    "previewVsixSha256": "da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705",
+    "publishedDate": null,
+    "marketplaceLastUpdated": null,
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.11.vsix",
+    "previewVsixSha256": null,
     "publicGitHubMutationAttemptedByPublication": false,
-    "marketplaceMutationAttemptedByPublication": true,
-    "verificationSurface": "official-gallery-extensionquery-and-vsce-show"
+    "marketplaceMutationAttemptedByPublication": false,
+    "verificationSurface": "pending-official-gallery-extensionquery-and-vsce-show"
   },
   "communityValidationIntake": {
     "status": "public-github-published-and-verified",
@@ -172,5 +172,23 @@
   "currentRegularPublishedDate": "2026-04-23",
   "currentPreReleaseVersion": "1.3.10",
   "currentPreReleasePublishedDate": "2026-04-25",
-  "currentPreReleaseLastUpdated": "2026-04-26T00:05:09.09Z"
+  "currentPreReleaseLastUpdated": "2026-04-26T00:05:09.09Z",
+  "publicValidationPrerelease": {
+    "status": "prepared-authorized-pending-publication",
+    "packetPath": "docs/product/public-validation-prerelease-v1.3.11.md",
+    "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.11.json",
+    "marketplaceTargetVersion": "1.3.11",
+    "currentPreReleaseVersionBeforePublication": "1.3.10",
+    "publicGitHubReleaseTarget": "v1.3.11",
+    "publicGitHubReleaseAssets": [
+      "preview-evidence/vi-history-suite-1.3.11.vsix",
+      "preview-evidence/vi-history-suite-1.3.11.vsix.sha256"
+    ],
+    "publicGitHubMutationAuthorized": true,
+    "marketplaceMutationAuthorized": true,
+    "windowsInstalledUserLabviewProof": "community-deferred",
+    "allCliVariantsSelectable": true,
+    "runtimeProofCommand": "vihs --validate --proof-out ./vihs-proof",
+    "proofStatusPolicy": "selectable-paths-report-success-failure-or-not-implemented-with-stable-error-codes"
+  }
 }

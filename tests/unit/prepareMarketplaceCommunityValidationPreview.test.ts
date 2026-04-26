@@ -57,7 +57,7 @@ function fakeFs(packageVersion = '1.3.9'): typeof fs {
           packetEvidencePipelineId: 2480195741,
           packetMergeTrackingPolicy:
             'do-not-track-packet-merge-commit; packet retention is governed by Git history and CI',
-          previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
+          previewVsixPath: 'preview-evidence/vi-history-suite-1.3.11.vsix',
           previewVsixSha256:
             'bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02'
         },
@@ -152,14 +152,14 @@ describe('Marketplace community-validation preview prep', () => {
       {
         evidenceDir: prep.DEFAULT_EVIDENCE_DIR,
         marketplaceItem: 'svelderrainruiz.vi-history-suite',
-        targetVersion: '1.3.10'
+        targetVersion: '1.3.11'
       },
-      { fs: fakeFs('1.3.10') }
+      { fs: fakeFs('1.3.11') }
     );
 
     expect(report.status).toBe('prepared');
-    expect(report.package.packageJsonVersion).toBe('1.3.10');
-    expect(report.package.packagePath).toBe('preview-evidence/vi-history-suite-1.3.10.vsix');
+    expect(report.package.packageJsonVersion).toBe('1.3.11');
+    expect(report.package.packagePath).toBe('preview-evidence/vi-history-suite-1.3.11.vsix');
     expect(report.readiness).toMatchObject({
       versionReadiness: 'ready-distinct-higher-marketplace-version',
       packageManifestReadiness: 'ready-target-version-in-package-manifest',

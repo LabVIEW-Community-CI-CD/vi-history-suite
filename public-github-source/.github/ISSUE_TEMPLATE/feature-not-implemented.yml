@@ -1,0 +1,68 @@
+name: Feature not implemented
+description: Report a selectable v1.3.11 variant that returns a not-implemented code
+title: "[Not implemented]: "
+labels:
+  - community-validation
+  - marketplace-preview
+  - feature:not-implemented
+  - error-code
+  - version:1.3.11
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when Marketplace pre-release `1.3.11` accepts a provider/year/bitness path but reports `runtimeImplementationStatus=not-implemented`.
+
+        This is useful evidence. It tells the project which selectable paths users are actually trying.
+  - type: input
+    id: extension_version
+    attributes:
+      label: Extension version
+      value: "1.3.11"
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Selected provider
+      options:
+        - host
+        - docker
+    validations:
+      required: true
+  - type: input
+    id: labview_year
+    attributes:
+      label: Selected LabVIEW year
+    validations:
+      required: true
+  - type: dropdown
+    id: bitness
+    attributes:
+      label: Selected bitness
+      options:
+        - x64
+        - x86
+    validations:
+      required: true
+  - type: input
+    id: runtime_error_code
+    attributes:
+      label: runtimeErrorCode
+      description: Example `VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED`.
+    validations:
+      required: true
+  - type: textarea
+    id: proof_packet
+    attributes:
+      label: Proof packet or validation output
+      description: Paste `vihs --validate` output, or attach/name `vihs-validation-proof.json` from `vihs --validate --proof-out ./vihs-proof`.
+    validations:
+      required: true
+  - type: textarea
+    id: user_goal
+    attributes:
+      label: What were you trying to validate?
+    validations:
+      required: true

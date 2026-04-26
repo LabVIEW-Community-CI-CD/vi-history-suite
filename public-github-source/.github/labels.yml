@@ -4,6 +4,24 @@
 - name: marketplace-preview
   color: "5319E7"
   description: Report specific to the VS Code Marketplace pre-release channel.
+- name: validation:success
+  color: "0E8A16"
+  description: User reports a selected provider/year/bitness path worked.
+- name: validation:failure
+  color: "D93F0B"
+  description: User reports a selected provider/year/bitness path failed.
+- name: feature:not-implemented
+  color: "B60205"
+  description: Selectable path returned a not-yet-implemented runtime code.
+- name: error-code
+  color: "C5DEF5"
+  description: Report includes a stable VIHS_E runtime error code.
+- name: proof:packet-attached
+  color: "BFD4F2"
+  description: Report includes or references a vihs-validation-proof packet.
+- name: version:1.3.11
+  color: "F9D0C4"
+  description: Report targets the v1.3.11 public validation pre-release.
 - name: windows-labview
   color: "1D76DB"
   description: Windows host or Docker Desktop Windows-container LabVIEW report.

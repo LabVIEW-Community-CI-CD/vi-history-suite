@@ -84,25 +84,29 @@ Installed-user help:
   first compare
 - host Windows LabVIEW years `2020` through `2026` are selectable when they
   are installed locally
-- `docker/windows` is supported for `2026` `x64` only
-- `docker/linux` is supported for `2026` `x64` on Linux Docker
-  Desktop/Docker Engine hosts
-- Docker years before `2026` are unsupported
-- `host/linux` is not currently implemented
-- blocked or unsupported paths fail closed with explicit next-step guidance
+- `docker/windows` and `docker/linux` variants are selectable for community
+  validation; the governed Docker runtime implementation is currently `2026`
+  `x64`
+- other provider/year/bitness combinations are accepted for validation
+  reporting and return stable `VIHS_E_*` error codes when they are blocked or
+  not yet implemented
+- blocked, missing, or not-yet-implemented paths fail closed with explicit
+  next-step guidance and can write a GitHub-ready proof packet
 
 ## Proof Status And Community Validation
 
-The Marketplace build may expose selectable Windows/LabVIEW provider, year,
-and bitness settings before every combination has maintainer-retained
-installed-user proof. Treat `vihs --validate` and the traceability matrix as
+Marketplace pre-release `1.3.11` is the public validation lane. The extension
+intentionally exposes all intended provider/year/bitness variants so the
+runtime and error-reporting layer can be exercised on real user machines.
+
+Treat `vihs --validate`, optional proof packets, and the traceability matrix as
 the current proof-status surfaces:
 
 - [Traceability Matrix](./docs/requirements/rtm.csv)
 - [Release Publication State](./docs/product/release-publication-state.md)
-- [Marketplace Community-Validation Intake v1.3.10](./docs/product/marketplace-community-validation-intake-v1.3.10.md)
+- [Public Validation Pre-Release v1.3.11](./docs/product/public-validation-prerelease-v1.3.11.md)
 
-To join the `1.3.10` pre-release validation lane from the command line, use:
+To join the `1.3.11` pre-release validation lane from the command line, use:
 
 ```bash
 code --install-extension svelderrainruiz.vi-history-suite@prerelease
@@ -110,7 +114,12 @@ code --install-extension svelderrainruiz.vi-history-suite@prerelease
 
 When a selectable Windows/LabVIEW path works or fails on your machine, include
 provider, LabVIEW year, bitness, extension version, VS Code version, and
-`vihs --validate` output in the issue report.
+`vihs --validate` output in the issue report. To generate a ready-to-file
+validation packet:
+
+```bash
+vihs --validate --proof-out ./vihs-proof
+```
 
 ## Report A Problem Or Request Support
 
@@ -119,6 +128,9 @@ the public GitHub issue templates:
 
 - [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
 - [Marketplace Community Validation Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml)
+- [Validation Success](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-success.yml)
+- [Validation Failure](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-failure.yml)
+- [Feature Not Implemented](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-not-implemented.yml)
 - [Bug Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=bug-report.yml)
 - [LabVIEW Version Support Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=labview-version-support.yml)
 - [Feature Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-request.yml)
@@ -129,7 +141,8 @@ Useful issue facts:
 - whether the problem happened during the install bootstrap, `vihs`,
   `vihs --validate`, or compare
 - provider, LabVIEW year, and bitness
-- the current `vihs --validate` output
+- the current `vihs --validate` output and `runtimeErrorCode`
+- the `vihs-validation-proof.json` packet when generated
 - exact reproduction steps and the current vs expected result
 
 ## Common Tasks
@@ -211,7 +224,7 @@ Authority release facts:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.10`
+- current develop package line on `develop`: `1.3.11`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -272,11 +285,12 @@ Authority release facts:
 - exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: Linux/Docker validated preview with Windows
-  installed-user proof deferred
-- active Marketplace community-validation preview line: `1.3.10`
-- active Marketplace community-validation preview trigger:
-  user said `publish it now`
+- active governed release claim: public validation pre-release with all
+  provider/year/bitness variants selectable and Windows installed-user proof
+  community/deferred
+- active Marketplace public validation target: `1.3.11`
+- active public validation publication trigger:
+  maintainer authorized public GitHub and Marketplace publication
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
 - retained Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -297,12 +311,14 @@ Authority release facts:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
-- current public GitHub source publication: public `main` now publishes
-  `b56fde1` for the `1.3.10` community-validation intake facade while the
-  exact `v1.3.9` tag/release remains retained separately
+- current public GitHub source publication: public `main` currently publishes
+  `b56fde1` for the retained `1.3.10` community-validation intake facade; the
+  `1.3.11` public validation facade and pre-release are the next authorized
+  publication targets
 - VS Code Marketplace retained published version: `1.3.9`
-- VS Code Marketplace community-validation preview published version:
+- VS Code Marketplace community-validation preview currently published version:
   `1.3.10`
+- VS Code Marketplace public validation target version: `1.3.11`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
   `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
 - blocked historical publication incident: public GitHub release `312768592`

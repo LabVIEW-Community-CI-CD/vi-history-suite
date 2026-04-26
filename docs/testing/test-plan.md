@@ -2085,6 +2085,17 @@ Information-for-users review cases:
   Windows proof, candidate source VSIX SHA-256, release-publication state
   anchoring, release-branch-opening next action, and public
   GitHub/Marketplace exact no-mutation boundary.
+- `TEST-UNIT-391`: verify the `1.3.11` public validation pre-release packet,
+  release-publication state, Marketplace ledger, public issue templates,
+  labels, promotion script, and package version retain the scoped public
+  GitHub/Marketplace mutation authorization, all-variant selectable policy,
+  proof-packet command, stable runtime error-code taxonomy, and
+  community/deferred Windows proof boundary.
+- `TEST-UNIT-392`: verify `vihs --validate --proof-out` writes a runtime proof
+  packet and GitHub-ready issue body while reporting stable
+  `runtimeErrorCode`, `runtimeProofStatus`, and
+  `runtimeImplementationStatus` values for success, failure, and
+  not-yet-implemented paths.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2271,6 +2282,12 @@ Information-for-users review cases:
   release-branch opening from `14243fd` under the selected community-deferred
   Windows/LabVIEW claim path while public GitHub and Marketplace exact
   mutation remain gated.
+- `TEST-DOC-144`: review the `1.3.11` public validation packet,
+  release-publication state, Marketplace ledger, README, INSTALL, command
+  reference, public GitHub source templates and labels, SRS, RTM, and the test
+  plan and confirm public GitHub plus Marketplace pre-release publication are
+  admitted for the scoped validation lane while Windows installed-user
+  LabVIEW proof remains community/deferred.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

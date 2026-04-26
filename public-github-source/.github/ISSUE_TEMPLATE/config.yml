@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Marketplace community validation
     url: https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml
-    about: Report Windows/LabVIEW results for Marketplace pre-release 1.3.10.
+    about: Report Windows/LabVIEW results for Marketplace pre-release 1.3.11.
   - name: Install and release guide
     url: https://github.com/svelderrainruiz/vi-history-suite/wiki/Install-And-Release
     about: Start here for the install bootstrap and the supported installed-user route.

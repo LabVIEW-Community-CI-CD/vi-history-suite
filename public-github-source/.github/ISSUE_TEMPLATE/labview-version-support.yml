@@ -6,13 +6,15 @@ labels:
   - windows-labview
   - community-validation
   - proof:deferred
+  - error-code
+  - version:1.3.11
 body:
   - type: markdown
     attributes:
       value: |
         Use this template when the install/bootstrap flow or `vihs` surfaces a missing, unsupported, or not-yet-implemented LabVIEW version path.
 
-        Selectable does not mean maintainer-proven. For Marketplace pre-release `1.3.10`, requests remain proof-deferred until maintainer reproduction or retained Windows/LabVIEW proof changes that status.
+        For Marketplace pre-release `1.3.11`, selectable version paths should be exercised through `vihs --validate --proof-out ./vihs-proof` so the resulting runtimeErrorCode can classify the request.
   - type: input
     id: requested_labview_version
     attributes:
@@ -42,7 +44,7 @@ body:
     id: current_guidance
     attributes:
       label: Current guidance or failure output
-      description: Paste the exact bootstrap, `vihs`, or `vihs --validate` guidance you received
+      description: Paste the exact bootstrap, `vihs`, or `vihs --validate` guidance you received, including runtimeErrorCode when present
     validations:
       required: true
   - type: textarea

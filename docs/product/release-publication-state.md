@@ -19,8 +19,9 @@ final installed-user distribution surface.
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: none
 - Active candidate tag: none
-- Active candidate package version: `1.3.10`
-- Active candidate state: Marketplace community-validation preview line
+- Active candidate package version: `1.3.11`
+- Active candidate state: public validation pre-release prepared for public
+  GitHub and VS Code Marketplace publication
 
 ## Develop Preview State
 
@@ -78,9 +79,9 @@ final installed-user distribution surface.
 - Current pre-release Marketplace version: `1.3.10`
 - Current pre-release last updated: `2026-04-26T00:05:09.09Z`
 - Expected exact-candidate version for the active governed candidate line:
-  `1.3.10`
+  `1.3.11`
 - Marketplace status: community-validation preview published and verified on
-  `1.3.10`, while regular exact release `1.3.9` remains retained.
+  `1.3.10`; the next public validation pre-release target is `1.3.11`.
 - Windows exact-VSIX install proof package script:
   `npm run vscode:marketplace:install-proof`
 - Windows exact-VSIX install proof receipt:
@@ -91,16 +92,15 @@ final installed-user distribution surface.
 
 ## Marketplace Community-Validation Preview Path
 
-- Status: published and verified
-- Publication claim: community-validation preview
-- Target preview version: `1.3.10`
-- Published preview version: `1.3.10`
-- Preview publication date: `2026-04-25`
-- Marketplace last updated: `2026-04-26T00:05:09.09Z`
+- Status: prepared, authorized, pending publication
+- Publication claim: public validation pre-release
+- Target preview version: `1.3.11`
+- Published preview version: not yet published by this packet
+- Preview publication date: pending
+- Marketplace last updated: pending post-publication readback
 - Preview VSIX path:
-  `preview-evidence/vi-history-suite-1.3.10.vsix`
-- Preview VSIX SHA-256:
-  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
+  `preview-evidence/vi-history-suite-1.3.11.vsix`
+- Preview VSIX SHA-256: pending package build
 - Prep package script:
   `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
@@ -109,41 +109,63 @@ final installed-user distribution surface.
   `vsce --pre-release`
 - Target version policy: the preview target must use a distinct higher
   `major.minor.patch` Marketplace version than the currently published
-  `1.3.9`; the current `1.3.9` package line cannot be republished as a
+  `1.3.10`; the current `1.3.10` package line cannot be republished as a
   preview.
-- Publish trigger: user said `publish it now`
+- Publish trigger: maintainer authorized public GitHub and Marketplace public
+  validation publication for `1.3.11`
 - Active evidence claim: Linux/Docker validated preview
-- Windows installed-user proof: deferred and not claimed by this preview path
-- Windows/LabVIEW feature policy: provider, year, and bitness choices may stay
-  selectable when the UI/CLI discloses proof status through `vihs --validate`
-  and the traceability matrix.
+- Windows installed-user proof: community/deferred and not claimed as current
+  `1.3.11` proof
+- Windows/LabVIEW feature policy: all provider, year, and bitness choices may
+  stay selectable when the UI/CLI discloses proof status through stable
+  `VIHS_E_*` runtime codes, `vihs --validate --proof-out ./vihs-proof`, and
+  the traceability matrix.
 - Traceability matrix:
   `docs/requirements/rtm.csv`
-- Community-validation intake packet:
-  `docs/product/marketplace-community-validation-intake-v1.3.10.md`
-- Community-validation intake packet JSON:
-  `docs/product/marketplace-community-validation-intake-v1.3.10.json`
+- Public validation packet:
+  `docs/product/public-validation-prerelease-v1.3.11.md`
+- Public validation packet JSON:
+  `docs/product/public-validation-prerelease-v1.3.11.json`
 - Prepared public issue template source:
   `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
 - Prepared public label manifest:
   `public-github-source/.github/labels.yml`
-- Public GitHub intake promotion plan:
-  `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`
-- Public GitHub intake promotion plan JSON:
-  `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json`
-- Public GitHub intake promotion state: published and verified on public
-  `main` commit `b56fde1`
-- Public GitHub intake publication PR:
-  `https://github.com/svelderrainruiz/vi-history-suite/pull/45`
-- Public GitHub intake labels: applied and verified
-- Public GitHub intake mutation: performed after explicit
-  `publish the public intake now`
-- Public GitHub release/tag mutation: not performed by the intake publication
-- Public GitHub wiki mutation: not performed by the intake publication
-- Public GitHub mutation by community-validation preview publication:
-  Marketplace preview publication itself did not mutate public GitHub; the
-  later public intake publication is recorded separately here
-- VS Code Marketplace mutation: published community-validation preview
+- Public GitHub intake promotion plan: superseded by the `1.3.11` public
+  validation lane packet
+- Public GitHub intake promotion state: authorized, pending publication
+- Public GitHub intake labels: prepared and pending application
+- Public GitHub intake mutation: authorized, pending publication
+- Public GitHub release/tag mutation: authorized for `v1.3.11` pre-release
+  with VSIX and checksum assets
+- Public GitHub wiki mutation: not in scope for this lane
+- VS Code Marketplace mutation: authorized, pending pre-release publication
+
+## Public Validation Pre-Release 1.3.11
+
+- Status: prepared, authorized, pending publication
+- Packet:
+  `docs/product/public-validation-prerelease-v1.3.11.md`
+- Packet JSON:
+  `docs/product/public-validation-prerelease-v1.3.11.json`
+- Authority branch: GitLab `develop`
+- Public GitHub target: `github.com/svelderrainruiz/vi-history-suite`
+- Public GitHub release target: `v1.3.11` pre-release or draft pre-release
+  with `preview-evidence/vi-history-suite-1.3.11.vsix` and checksum assets
+- Marketplace target: `svelderrainruiz.vi-history-suite` pre-release
+  `1.3.11`
+- Selectable variant policy: all CLI variants remain selectable for validation
+  reporting
+- Runtime proof command:
+  `vihs --validate --proof-out ./vihs-proof`
+- Runtime proof files:
+  `vihs-validation-proof.json`; `vihs-validation-issue.md`
+- Windows installed-user LabVIEW proof: community/deferred
+- Prior Windows x64 LabVIEW proof: retained confidence context, not the current
+  `1.3.11` proof claim
+- Exact-release gate blocked by missing Windows proof: false for this public
+  validation lane
+- Public GitHub and Marketplace mutation: authorized by the maintainer for the
+  scoped `1.3.11` public validation publication
 
 ## Exact Release Readiness Assessment
 
@@ -256,9 +278,9 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: `release/1.3.10`
+- Governed next line: `1.3.11` public validation pre-release
 - Next admitted action:
-  `open-governed-release-1.3.10-branch-from-14243fd-community-deferred-windows-claim`
+  `publish-v1.3.11-public-validation-prerelease-to-public-github-and-marketplace`
 
 ## Publication Rule
 
@@ -272,19 +294,18 @@ Future public GitHub exact-release publication must be asset-first:
    manifest alignment.
 6. Publish the draft only after verification passes.
 
-No VS Code Marketplace publication is admitted until the public GitHub exact
-release verifies complete; `v1.3.9` is the first retained exact line that
-closed that asset-first path end to end.
+No VS Code Marketplace exact-release publication is admitted until the public
+GitHub exact release verifies complete; `v1.3.9` is the first retained exact
+line that closed that asset-first path end to end.
 
-Before any future mutating VS Code Marketplace publication act, the exact
+Before any future mutating VS Code Marketplace exact-release act, the exact
 authority VSIX must also pass the retained Windows isolated install proof by
 installing into isolated VS Code user-data/extensions roots and running bare
 `vihs` plus `vihs --validate` successfully.
 
-The community-validation preview path is separate from the exact-release
-Marketplace gate. It may publish a Marketplace pre-release package for broader
-installed-user validation with Windows proof disclosed as deferred after the
-separate `publish it now` instruction is present and the target package
-version is distinct from the live Marketplace version. Public GitHub source
-and release publication are not required for this community-validation preview
-act.
+The public validation pre-release path is separate from the exact-release
+Marketplace gate. It may publish a Marketplace pre-release package and a public
+GitHub pre-release with VSIX assets for broader installed-user validation with
+Windows proof disclosed as community/deferred. For `1.3.11`, the maintainer has
+authorized public GitHub and Marketplace mutation for that scoped validation
+lane; exact-release promotion remains a separate later claim.

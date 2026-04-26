@@ -27,7 +27,7 @@ The machine-readable companion surface for this ledger is:
 - Current pre-release last updated: `2026-04-26T00:05:09.09Z`
 - Current verification surface: official gallery extension query and
   `vsce show`
-- Current pending publication: none
+- Current pending publication: `1.3.11` public validation pre-release
 - Pending publication install-proof command:
   `npm run vscode:marketplace:install-proof`
 - Pending publication install-proof receipt:
@@ -41,32 +41,53 @@ The machine-readable companion surface for this ledger is:
 
 ## Community-Validation Preview Preparation
 
-- Status: published and verified
-- Publication claim: community-validation preview
-- Target preview version: `1.3.10`
-- Published preview version: `1.3.10`
-- Preview publication date: `2026-04-25`
-- Marketplace last updated: `2026-04-26T00:05:09.09Z`
+- Status: prepared, authorized, pending publication
+- Publication claim: public validation pre-release
+- Target preview version: `1.3.11`
+- Published preview version: not yet published by this packet
+- Preview publication date: pending
+- Marketplace last updated: pending post-publication readback
 - Preview VSIX:
-  `preview-evidence/vi-history-suite-1.3.10.vsix`
-- Preview VSIX SHA-256:
-  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
+  `preview-evidence/vi-history-suite-1.3.11.vsix`
+- Preview VSIX SHA-256: pending package build
 - Prep command: `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
   `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - Preferred Marketplace mode: pre-release through pinned `vsce --pre-release`
 - Target version policy: choose a distinct higher `major.minor.patch` version
-  before a Marketplace preview can be published; the current live `1.3.9`
-  package line cannot be reused.
-- Publish trigger: user said `publish it now`
-- Windows installed-user proof state: deferred
+  before a Marketplace preview can be published; the current live `1.3.10`
+  pre-release package line cannot be reused.
+- Publish trigger: maintainer authorized public GitHub and Marketplace public
+  validation publication
+- Windows installed-user proof state: community/deferred
 - Windows/LabVIEW feature policy:
-  user-selectable-with-proof-status-disclosure
+  all provider/year/bitness variants selectable with runtime error-code and
+  proof-packet disclosure
 - Traceability matrix: `docs/requirements/rtm.csv`
 - Public GitHub mutation attempted by prep: false
 - Marketplace mutation attempted by prep: false
-- Public GitHub mutation attempted by publication: false
-- Marketplace mutation attempted by publication: true
+- Public GitHub mutation attempted by publication: false, authorized pending
+- Marketplace mutation attempted by publication: false, authorized pending
+
+## Public Validation Pre-Release 1.3.11
+
+- Status: prepared, authorized, pending publication
+- Packet:
+  `docs/product/public-validation-prerelease-v1.3.11.md`
+- Packet JSON:
+  `docs/product/public-validation-prerelease-v1.3.11.json`
+- Marketplace target version: `1.3.11`
+- Public GitHub release target: `v1.3.11`
+- Public GitHub release assets:
+  `preview-evidence/vi-history-suite-1.3.11.vsix`;
+  `preview-evidence/vi-history-suite-1.3.11.vsix.sha256`
+- Public GitHub mutation authorized: true
+- Marketplace mutation authorized: true
+- Windows installed-user LabVIEW proof: community/deferred
+- Runtime proof command:
+  `vihs --validate --proof-out ./vihs-proof`
+- Proof-status policy: selectable paths report success, failure, or
+  not-yet-implemented behavior through stable runtime codes
 
 ## Community-Validation Intake
 

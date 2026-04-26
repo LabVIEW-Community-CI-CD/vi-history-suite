@@ -95,6 +95,9 @@ describe('public GitHub source promotion', () => {
     expect(plan.templateCopyPaths).toContain(
       '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
     );
+    expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/validation-success.yml');
+    expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/validation-failure.yml');
+    expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/feature-not-implemented.yml');
     expect(plan.templateCopyPaths).toContain('.github/labels.yml');
     expect(plan.templateCopyPaths).toContain('.github/workflows/public-source-package-preview.yml');
     expect(plan.authorityCopyPaths).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
@@ -160,7 +163,7 @@ describe('public GitHub source promotion', () => {
   it('renders a narrower public package contract than authority', () => {
     const manifest = promotion.renderPublicPackageManifest();
 
-    expect(manifest.version).toBe('1.3.10');
+    expect(manifest.version).toBe('1.3.11');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -217,6 +220,9 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('SUPPORT.md');
       expect(expectedFiles).toContain('CONTRIBUTING.md');
       expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/validation-success.yml');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/validation-failure.yml');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/feature-not-implemented.yml');
       expect(expectedFiles).toContain('.github/labels.yml');
       expect(expectedFiles).toContain('scripts/bootstrapLinuxVsCodeHost.js');
       expect(expectedFiles).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
