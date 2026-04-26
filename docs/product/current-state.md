@@ -56,10 +56,12 @@ Read these in order:
 38. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
 39. [Release Publication State](./release-publication-state.md)
 40. [Release Publication State JSON](./release-publication-state.json)
-41. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-42. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-43. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-44. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+41. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
+42. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
+43. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+44. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+45. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+46. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -117,11 +119,13 @@ Current control-plane surfaces:
 39. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
 40. [Release Publication State](./release-publication-state.md)
 41. [Release Publication State JSON](./release-publication-state.json)
-42. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-43. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-44. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-45. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
-46. [Fast VS Code Loop](../dev-fast-loop.md)
+42. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
+43. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
+44. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+45. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+46. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+47. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+48. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -236,6 +240,15 @@ Latest landed ship target:
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: Linux/Docker validated preview with Windows
   installed-user proof deferred
+- current exact-release readiness assessment:
+  [exact-release-readiness-assessment-2026-04-26.md](./exact-release-readiness-assessment-2026-04-26.md)
+- current exact-release readiness assessment JSON:
+  [exact-release-readiness-assessment-2026-04-26.json](./exact-release-readiness-assessment-2026-04-26.json)
+- current exact-release readiness verdict:
+  blocked for exact-release promotion; `develop` commit
+  `42d1f581874c9fad8f6dcbc96c8827bb07e3b508` and pipeline `2480212103` are
+  Linux/Docker validated, but Windows installed-user LabVIEW proof for
+  `1.3.10` remains community/deferred
 - active Marketplace community-validation preview line: `1.3.10`
 - active Marketplace community-validation preview trigger:
   user said `publish it now`

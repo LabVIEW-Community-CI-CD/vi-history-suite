@@ -162,7 +162,31 @@ describe('release publication state resolver', () => {
       publicGitHubIntakeLabelsApplied: true,
       publicGitHubReleaseMutation: 'not-performed-by-intake-publication'
     });
+    expect(state.exactReleaseReadinessAssessment).toMatchObject({
+      status: 'blocked',
+      assessmentPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.md',
+      assessmentJsonPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.json',
+      assessedBranch: 'develop',
+      assessedCommit: '42d1f581874c9fad8f6dcbc96c8827bb07e3b508',
+      assessedPipelineId: 2480212103,
+      assessedPipelineStatus: 'success',
+      packageVersion: '1.3.10',
+      currentAdmissibleClaim: 'linux-docker-validated-preview-only',
+      retainedExactBaseline: 'v1.3.9',
+      blockingReason: 'missing-native-windows-installed-user-labview-proof-for-1.3.10',
+      windowsInstalledUserLabviewProofState: 'community-deferred',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
+      previewVsixSha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6',
+      publicGitHubExactMutation: 'not-admitted-and-not-performed',
+      marketplaceExactMutation: 'not-admitted-and-not-performed'
+    });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
+    expect(stateDoc).toContain('## Exact Release Readiness Assessment');
+    expect(stateDoc).toContain('Exact-release readiness: blocked');
+    expect(stateDoc).toContain('Assessed pipeline: `2480212103` / `success`');
+    expect(stateDoc).toContain(
+      'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
+    );
     expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
     expect(stateDoc).toContain('Status: published and verified');
     expect(stateDoc).toContain('Target preview version: `1.3.10`');

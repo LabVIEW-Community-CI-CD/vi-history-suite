@@ -144,6 +144,35 @@ final installed-user distribution surface.
   later public intake publication is recorded separately here
 - VS Code Marketplace mutation: published community-validation preview
 
+## Exact Release Readiness Assessment
+
+- Current assessment:
+  `docs/product/exact-release-readiness-assessment-2026-04-26.md`
+- Current assessment JSON:
+  `docs/product/exact-release-readiness-assessment-2026-04-26.json`
+- Assessed branch: `develop`
+- Assessed commit:
+  `42d1f581874c9fad8f6dcbc96c8827bb07e3b508`
+- Assessed pipeline: `2480212103` / `success`
+- Candidate package version: `1.3.10`
+- Exact-release readiness: blocked
+- Current admissible claim: Linux/Docker validated preview only
+- Blocking reason:
+  missing native Windows installed-user LabVIEW proof for `1.3.10`
+- Windows installed-user LabVIEW proof state: community/deferred
+- Preview VSIX evidence:
+  `preview-evidence/vi-history-suite-1.3.10.vsix`
+- Preview VSIX SHA-256:
+  `f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6`
+- Public GitHub exact mutation: not admitted and not performed
+- VS Code Marketplace exact mutation: not admitted and not performed
+
+The current `develop` line is healthy as a Linux/Docker validated preview and
+community-validation package line. It is not ready for exact-release promotion
+until the missing Windows installed-user LabVIEW proof for the selected exact
+VSIX is retained or the exact release claim is explicitly narrowed and
+re-governed.
+
 ## Incident Classification
 
 - Incident id: `PUBLICATION-INCIDENT-v1.3.8-IMMUTABLE-ZERO-ASSETS`

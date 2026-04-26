@@ -2069,6 +2069,11 @@ Information-for-users review cases:
   runtime facts, preview VSIX SHA-256, release-publication state anchoring,
   and the no-mutation public GitHub/Marketplace boundary while Windows
   installed-user LabVIEW proof remains community/deferred.
+- `TEST-UNIT-388`: verify the exact-release readiness assessment retains the
+  current `develop` commit and pipeline, passed Linux/Docker preview evidence,
+  blocked exact-release verdict, deferred Windows installed-user LabVIEW proof,
+  preview VSIX SHA-256, release-publication state anchoring, and public
+  GitHub/Marketplace no-mutation boundary.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2237,6 +2242,12 @@ Information-for-users review cases:
   RTM, and the test plan and confirm the current retained develop preview
   evidence is anchored to pipeline `2480195741`, does not track the moving
   live `develop` head, and did not mutate public GitHub or Marketplace.
+- `TEST-DOC-141`: review the exact-release readiness assessment,
+  release-publication state, current-state, information-item map, SRS, RTM,
+  and the test plan and confirm the current `develop` line is marked
+  Linux/Docker preview-valid but blocked for exact-release promotion while
+  Windows installed-user LabVIEW proof remains community/deferred and public
+  GitHub/Marketplace exact mutation is not admitted.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
