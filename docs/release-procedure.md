@@ -14,7 +14,7 @@
 - The current exact released line is `v1.3.9`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.3.9`.
-- The current develop package line on `develop` is `1.3.10`.
+- The current develop package line on `develop` is `1.3.11`.
 - The active exact release candidate line on `develop` is none.
 - The active release-candidate branch is none.
 - The active exact hotfix candidate line on `main` is none.
@@ -75,18 +75,19 @@
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
-- The active governed release claim is Linux/Docker validated preview with
-  Windows installed-user proof deferred.
-- The active Marketplace community-validation preview line is `1.3.10`.
-- The active Marketplace community-validation preview trigger is:
-  user said `publish it now`.
-- The active Marketplace community-validation preview status is published and
-  verified; the official gallery query plus `vsce show` read back `1.3.10`
-  with Marketplace `lastUpdated=2026-04-26T00:05:09.09Z`.
-- The active Marketplace community-validation preview path is admitted for
-  pre-release publication:
-  Windows/LabVIEW settings may remain selectable with proof-status disclosure,
-  while public GitHub remains untouched by this preview act.
+- The active governed release claim is the `1.3.11` public validation
+  pre-release with all provider/year/bitness variants selectable and Windows
+  installed-user proof community/deferred.
+- The active Marketplace public validation preview line is `1.3.11`.
+- The active Marketplace public validation preview trigger is maintainer
+  authorization for public GitHub and Marketplace publication.
+- The active Marketplace public validation preview status is prepared,
+  authorized, and pending publication; post-publication readback must verify
+  the official gallery query plus `vsce show`.
+- The active public validation path is admitted for pre-release publication:
+  Windows/LabVIEW settings may remain selectable with stable runtime error-code
+  and proof-packet disclosure, and public GitHub pre-release/source/intake
+  mutation is in scope for `1.3.11`.
 - The retained Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The retained Windows x64 private-release packet is:
@@ -388,11 +389,10 @@ promotion still stays separate afterward.
       and `.github/workflows/public-windows-installed-user-contract.yml`
 13. When the public source facade changes materially, promote the curated
     public GitHub source repo from authority and record the published commit:
-    - for the Marketplace community-validation intake templates and labels,
-      follow
-      `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`
-      and stop until the separate exact trigger `publish the public intake now`
-      is present
+    - for the `1.3.11` public validation lane, follow
+      `docs/product/public-validation-prerelease-v1.3.11.md`; public GitHub
+      source, issue-intake, and pre-release asset publication are admitted
+      when the maintainer has authorized that scoped lane
     - bind the intended local public checkout with `--target-root` or
       `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` whenever the canonical sibling
       checkout is not the repo you intend to validate or write
@@ -423,7 +423,7 @@ promotion still stays separate afterward.
       act closed with manifest-matched assets and `verifyGateStatus=pass`
     - fail closed if that controller no longer verifies the published public
       GitHub exact line cleanly
-15. Prepare a community-validation Marketplace preview only when that is the
+15. Prepare a public-validation Marketplace preview only when that is the
     intended path for broader installed-user validation.
     - Run `npm run vscode:marketplace:community-preview:prepare`.
     - The prep receipt must show `productionMutationAttempted=false`,
@@ -432,22 +432,24 @@ promotion still stays separate afterward.
     - The preview uses the pinned `scripts/runPinnedVsce.js` helper with
       `--pre-release`.
     - The target version must be a distinct higher `major.minor.patch` value
-      than the current live Marketplace version; `1.3.9` is already live and
-      cannot be reused for a preview.
+      than the current live Marketplace version; the current live pre-release
+      package line cannot be reused for a preview.
     - Windows/LabVIEW provider, year, and bitness choices may remain
       selectable in the UI/CLI when proof status is visible through
-      `vihs --validate`, `docs/requirements/rtm.csv`, and the release-control
-      state.
-    - Deferred Windows installed-user proof remains deferred; do not re-label
-      Linux/Docker preview evidence as Windows/LabVIEW installed-user proof.
-    - Public GitHub remains untouched by this community-validation preview
-      act.
-    - Prepare the community-validation intake packet at
-      `docs/product/marketplace-community-validation-intake-v1.3.10.md` when
-      broader user validation is active.
+      `vihs --validate --proof-out ./vihs-proof`,
+      `docs/requirements/rtm.csv`, and the release-control state.
+    - Deferred Windows installed-user proof remains community/deferred; do not
+      re-label Linux/Docker preview evidence as Windows/LabVIEW installed-user
+      proof.
+    - For `1.3.11`, public GitHub pre-release/source/intake mutation and VS
+      Code Marketplace pre-release publication are in scope after the
+      maintainer authorization retained in the public validation packet.
+    - Prepare the public validation packet at
+      `docs/product/public-validation-prerelease-v1.3.11.md` when broader user
+      validation is active.
     - Keep prepared public issue templates and label manifests under
-      `public-github-source/` until a separate public facade promotion and
-      explicit public GitHub publication approval admits mutation.
+      `public-github-source/`, then promote and apply them as part of the
+      scoped public validation publication act.
     - The intake packet must separate validation commands into individual user
       steps so reports identify whether failure happened at VS Code version
       readback, extension listing, `vihs`, `vihs --validate`, preflight, or
@@ -568,14 +570,14 @@ promotion still stays separate afterward.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
 - The current published package line on `main` is `1.3.9`, and the current
-  develop package line on `develop` is `1.3.10`; the closed exact line
+  develop package line on `develop` is `1.3.11`; the closed exact line
   must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
   exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
   `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, exact `v1.3.7`, or exact `v1.3.9` release
   evidence.
-- The current develop package line on `develop` is `1.3.10`, public GitHub
+- The current develop package line on `develop` is `1.3.11`, public GitHub
   `main` now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
   `312994104` is published, VS Code Marketplace serves `1.3.9`, and
   blocked `v1.3.8` historical incident evidence remains retained separately

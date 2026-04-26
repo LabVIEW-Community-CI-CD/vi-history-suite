@@ -38,7 +38,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-source-package-preview.yml');
 
-    expect(manifest.version).toBe('1.3.10');
+    expect(manifest.version).toBe('1.3.11');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -85,7 +85,7 @@ describe('public repo package surface', () => {
     expect(readme).toContain('Review the compare preflight');
     expect(readme).toContain('Choose `Compare`');
     expect(readme).toContain('LabVIEW years `2020` through `2026`');
-    expect(readme).toContain('`docker/windows` is supported for `2026` `x64` only');
+    expect(readme).toContain('runtimeErrorCode');
     expect(readme).toContain('Proof Status And Community Validation');
     expect(readme).toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(readme).toContain('Report A Problem Or Request Support');
@@ -136,18 +136,23 @@ describe('public repo package surface', () => {
     expect(bugReport).toContain('`code --install-extension svelderrainruiz.vi-history-suite`');
     expect(bugReport).toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(bugReport).toContain('Exact released Marketplace line (`1.3.9`)');
-    expect(bugReport).toContain('Marketplace community-validation pre-release (`1.3.10`)');
+    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.11`)');
+    expect(bugReport).toContain('runtime_error_code');
     expect(bugReport).toContain('What command or surface failed?');
     expect(bugReport).toContain('`vihs --validate` output');
     expect(communityValidation).toContain('Marketplace community validation report');
-    expect(communityValidation).toContain('Selectable does not mean maintainer-proven');
+    expect(communityValidation).toContain('Expected `1.3.11`');
+    expect(communityValidation).toContain('runtime_error_code');
     expect(communityValidation).toContain('Proof-status acknowledgement');
     expect(labviewVersionRequest).toContain('LabVIEW version support request');
     expect(labviewVersionRequest).toContain('Requested LabVIEW year');
-    expect(labviewVersionRequest).toContain('proof-deferred');
+    expect(labviewVersionRequest).toContain('runtimeErrorCode');
     expect(featureRequest).toContain('install, configuration, validation, or compare improvement');
     expect(featureRequest).toContain('Which surface should improve?');
     expect(labels).toContain('name: community-validation');
+    expect(labels).toContain('name: validation:success');
+    expect(labels).toContain('name: validation:failure');
+    expect(labels).toContain('name: feature:not-implemented');
     expect(labels).toContain('name: proof:reported');
     expect(labels).toContain('name: proof:deferred');
     expect(issueConfig).toContain('Install and release guide');
@@ -183,6 +188,8 @@ describe('public repo package surface', () => {
       'Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,'
     );
     expect(normalizedChangelog).toContain('`v1.3.6`, `v1.3.7`, `v1.3.8`, and `v1.3.9`.');
+    expect(normalizedChangelog).toContain('## [1.3.11] - 2026-04-26');
+    expect(normalizedChangelog).toContain('Public validation pre-release lane');
     expect(normalizedChangelog).toContain('## [1.3.10] - 2026-04-25');
     expect(normalizedChangelog).toContain('Marketplace community-validation preview package line');
     expect(normalizedChangelog).toContain('## [1.3.9] - 2026-04-23');

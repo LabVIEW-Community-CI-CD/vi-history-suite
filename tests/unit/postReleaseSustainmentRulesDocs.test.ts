@@ -30,8 +30,8 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.9',
         currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.10',
-        activeMarketplaceCommunityPreviewLine: '1.3.10',
+        currentDevelopPackageLine: '1.3.11',
+        activeMarketplaceCommunityPreviewLine: '1.3.11',
         activeDevelopCandidateReleaseLine: null,
         activeReleaseCandidateBranch: null,
         activeHotfixCandidateReleaseLine: null,
@@ -52,13 +52,13 @@ describe('post-release sustainment rules package', () => {
           'npm run vscode:marketplace:community-preview:prepare',
         vscodeMarketplaceCommunityValidationPreviewPrepReceiptPath:
           '.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json',
-        vscodeMarketplaceCommunityValidationPreviewPrepStatus: 'published-and-verified',
-        vscodeMarketplaceCommunityValidationPreviewTargetVersion: '1.3.10',
-        vscodeMarketplaceCommunityValidationPreviewPublishedVersion: '1.3.10',
-        vscodeMarketplaceCommunityValidationPreviewPublishedDate: '2026-04-25',
-        vscodeMarketplaceCommunityValidationPreviewLastUpdated: '2026-04-26T00:05:09.09Z',
-        vscodeMarketplaceCommunityValidationPreviewVsixSha256:
-          'da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705',
+        vscodeMarketplaceCommunityValidationPreviewPrepStatus:
+          'prepared-authorized-pending-publication',
+        vscodeMarketplaceCommunityValidationPreviewTargetVersion: '1.3.11',
+        vscodeMarketplaceCommunityValidationPreviewPublishedVersion: null,
+        vscodeMarketplaceCommunityValidationPreviewPublishedDate: null,
+        vscodeMarketplaceCommunityValidationPreviewLastUpdated: null,
+        vscodeMarketplaceCommunityValidationPreviewVsixSha256: null,
         publicDefaultBranch: 'main',
         publicCodespaceBranch: 'develop',
         integrationBranch: 'develop',
@@ -136,7 +136,7 @@ describe('post-release sustainment rules package', () => {
 
     expect(rulesDoc).toContain('current exact released line: `v1.3.9`');
     expect(rulesDoc).toContain('current published package line on `main`: `1.3.9`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.10`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.11`');
     expect(rulesDoc).toContain('active release-candidate branch: none');
     expect(rulesDoc).toContain('public release `312994104` is published on `v1.3.9`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
@@ -149,7 +149,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(rulesDoc).toContain('Marketplace community-validation preview status: published and verified');
+    expect(rulesDoc).toContain('Marketplace public validation preview status: prepared');
     expect(rulesDoc).toContain(
       '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/'
     );

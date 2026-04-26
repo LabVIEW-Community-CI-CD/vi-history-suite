@@ -894,6 +894,46 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('accepts non-2026 Docker requests for validation reporting and fails with not-implemented reason', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        labviewVersion: '2024',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.requestedProvider).toBe('docker');
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('docker-provider-labview-version-not-implemented');
+    expect(result.notes).toContain(
+      'Docker provider validation accepted the request for evidence capture, but LabVIEW 2024 Docker execution is not implemented in this pre-release lane. Current governed Docker image contracts remain LabVIEW 2026 x64.'
+    );
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'docker-provider-labview-version-not-implemented',
+        detail:
+          'Docker provider execution was accepted for validation reporting, but the requested LabVIEW year does not have a governed Docker implementation in this pre-release lane.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'provider-request-docker-disallows-host-native',
+        detail: 'Host-native execution was not selected because the Docker provider was requested.'
+      }
+    ]);
+  });
+
   it('fails closed for the persisted docker provider when x86 Windows execution is requested', async () => {
     const result = await locateComparisonRuntime(
       'win32',

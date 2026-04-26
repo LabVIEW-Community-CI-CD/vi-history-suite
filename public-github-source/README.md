@@ -49,20 +49,20 @@ Installed-user help:
   first compare
 - host Windows LabVIEW years `2020` through `2026` are selectable when they
   are installed locally
-- `docker/windows` is supported for `2026` `x64` only
-- `docker/linux` is supported for `2026` `x64` on Linux Docker
-  Desktop/Docker Engine hosts
-- Docker years before `2026` are unsupported
-- `host/linux` is not currently implemented
-- blocked or unsupported paths fail closed with explicit next-step guidance
+- `docker/windows` and `docker/linux` variants are selectable for community
+  validation; the governed Docker runtime implementation is currently `2026`
+  `x64`
+- other provider/year/bitness combinations are accepted for validation
+  reporting and return stable `VIHS_E_*` error codes when they are blocked or
+  not yet implemented
+- blocked, missing, or not-yet-implemented paths fail closed with explicit
+  next-step guidance and can write a GitHub-ready proof packet
 
 ## Proof Status And Community Validation
 
-Marketplace pre-release `1.3.10` is a community-validation preview. The
-Linux/Docker preview lane is maintainer-validated. Windows/LabVIEW
-installed-user combinations are selectable so users with those machines can
-report evidence, but they remain proof-deferred until reproduced or retained
-by the maintainer proof lane.
+Marketplace pre-release `1.3.11` is the public validation lane. The extension
+intentionally exposes all intended provider/year/bitness variants so the
+runtime and error-reporting layer can be exercised on real user machines.
 
 To join from the command line:
 
@@ -72,7 +72,12 @@ code --install-extension svelderrainruiz.vi-history-suite@prerelease
 
 When a selectable Windows/LabVIEW path works or fails on your machine, include
 provider, LabVIEW year, bitness, extension version, VS Code version, and
-`vihs --validate` output in the issue report.
+`vihs --validate` output in the issue report. To generate a ready-to-file
+validation packet:
+
+```bash
+vihs --validate --proof-out ./vihs-proof
+```
 
 ## Report A Problem Or Request Support
 
@@ -81,6 +86,9 @@ compare do not behave as expected:
 
 - [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
 - [Marketplace Community Validation Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml)
+- [Validation Success](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-success.yml)
+- [Validation Failure](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-failure.yml)
+- [Feature Not Implemented](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-not-implemented.yml)
 - [Bug Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=bug-report.yml)
 - [LabVIEW Version Support Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=labview-version-support.yml)
 - [Feature Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-request.yml)
@@ -90,7 +98,8 @@ Useful issue facts:
 - extension version and VS Code version
 - whether the problem happened during install, `vihs`, `vihs --validate`, or compare
 - provider, LabVIEW year, and bitness
-- the current `vihs --validate` output
+- the current `vihs --validate` output and `runtimeErrorCode`
+- the `vihs-validation-proof.json` packet when generated
 - exact reproduction steps and the current vs expected result
 
 ## Evaluate From Source

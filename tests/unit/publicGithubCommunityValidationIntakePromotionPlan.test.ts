@@ -128,14 +128,10 @@ describe('public GitHub community-validation intake promotion plan', () => {
     expect(plan).toContain('Do not create or edit a public GitHub release.');
     expect(plan).toContain('Stop if the public checkout is dirty with unrelated work.');
 
-    expect(releaseState.marketplaceCommunityValidationPreview).toMatchObject({
-      intakeStatus: 'public-github-published-and-verified',
-      publicGitHubIntakePromotionPlanStatus: 'published-and-verified',
-      publicGitHubIntakePromotionPlanPath:
-        'docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md',
-      publicGitHubIntakePromotionRequiredTrigger: 'publish the public intake now',
-      publicGitHubIntakePublishedShortCommit: 'b56fde1',
-      publicGitHubIntakeLabelsApplied: true
+    expect(releaseState.publicValidationPrerelease).toMatchObject({
+      status: 'prepared-authorized-pending-publication',
+      packageVersion: '1.3.11',
+      publicAndMarketplaceMutationAuthorizedByMaintainer: true
     });
     expect(marketplaceLedger.communityValidationIntake).toMatchObject({
       status: 'public-github-published-and-verified',
@@ -159,10 +155,8 @@ describe('public GitHub community-validation intake promotion plan', () => {
     expect(publicSourceMap).toContain('publish the public intake now');
     expect(publicSourceMap).toContain('publishing `.github/labels.yml` does not itself update');
     expect(publicSourceMap).toContain('b56fde1');
-    expect(releaseProcedure).toContain(
-      'public-github-community-validation-intake-promotion-plan-v1.3.10.md'
-    );
-    expect(releaseProcedure).toContain('publish the public intake now');
+    expect(releaseProcedure).toContain('public-validation-prerelease-v1.3.11.md');
+    expect(releaseProcedure).toContain('maintainer authorization for public GitHub and Marketplace publication');
     expect(releaseProcedure).toContain('pushing the manifest does not itself update');
     expect(currentState).toContain(
       'public-github-community-validation-intake-promotion-plan-v1.3.10.md'

@@ -107,7 +107,8 @@ describe('execution-policy control plane', () => {
     expect(readme).toContain('TRANCHE-012');
     expect(readme).toContain('TRANCHE-016');
     expect(readme).toContain('ISSUE-0412');
-    expect(readme).toContain('`docker/windows` is supported for `2026` `x64` only');
+    expect(readme).toContain('`docker/windows` and `docker/linux` variants are selectable');
+    expect(readme).toContain('governed Docker runtime implementation is currently `2026`');
     expect(readme).toContain('local `LabVIEWCLI`');
     expect(readme).toContain('bounded expert Docker');
     expect(readme).toContain('install or start Docker Desktop or Docker');

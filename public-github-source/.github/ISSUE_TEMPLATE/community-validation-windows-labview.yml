@@ -1,18 +1,19 @@
 name: Marketplace community validation report
-description: Report a v1.3.10 pre-release Windows/LabVIEW validation result
+description: Report a v1.3.11 pre-release Windows/LabVIEW validation result
 title: "[Community validation]: "
 labels:
   - community-validation
   - marketplace-preview
   - windows-labview
+  - version:1.3.11
   - needs-triage
 body:
   - type: markdown
     attributes:
       value: |
-        Use this template for Marketplace pre-release `1.3.10` validation reports.
+        Use this template for Marketplace pre-release `1.3.11` validation reports.
 
-        Selectable does not mean maintainer-proven. Please include `vihs --validate` output and the exact provider, LabVIEW year, and bitness so the proof status can be updated from reported to reproduced or deferred.
+        Please include `vihs --validate` output or the `vihs --validate --proof-out ./vihs-proof` packet with the exact provider, LabVIEW year, bitness, runtimeErrorCode, and outcome.
 
         Do not include private GitLab material, PATs, access tokens, proprietary VI contents, or confidential screenshots.
   - type: dropdown
@@ -45,8 +46,8 @@ body:
     id: extension_version
     attributes:
       label: Extension version
-      description: Expected `1.3.10` for this intake packet.
-      value: "1.3.10"
+      description: Expected `1.3.11` for this intake packet.
+      value: "1.3.11"
     validations:
       required: true
   - type: textarea
@@ -91,8 +92,15 @@ body:
   - type: textarea
     id: validate_output
     attributes:
-      label: `vihs --validate` output
-      description: Paste the exact output, or say why you could not run it.
+      label: `vihs --validate` output or proof packet
+      description: Paste the exact output and runtimeErrorCode, or attach/name `vihs-validation-proof.json` from `vihs --validate --proof-out ./vihs-proof`.
+    validations:
+      required: true
+  - type: input
+    id: runtime_error_code
+    attributes:
+      label: runtimeErrorCode
+      description: Example `VIHS_OK`, `VIHS_E_LABVIEW_NOT_FOUND`, or `VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED`.
     validations:
       required: true
   - type: textarea
@@ -124,5 +132,5 @@ body:
     attributes:
       label: Proof-status acknowledgement
       options:
-        - label: I understand this report is community evidence until maintainer reproduction or retained Windows/LabVIEW proof changes the proof status.
+        - label: I understand this report may be used to classify success, failure, or not-yet-implemented behavior for the public validation lane.
           required: true

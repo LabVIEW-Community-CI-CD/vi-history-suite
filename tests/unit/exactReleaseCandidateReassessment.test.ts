@@ -203,11 +203,11 @@ describe('exact release candidate reassessment', () => {
       sourceBranch: 'develop',
       releaseBranch: null,
       tag: null,
-      packageVersion: '1.3.10',
-      status: 'exact-release-candidate-reassessment-community-deferred-path-prepared'
+      packageVersion: '1.3.11',
+      status: 'public-validation-prerelease-prepared-for-public-github-and-marketplace-publication'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'open-governed-release-1.3.10-branch-from-14243fd-community-deferred-windows-claim'
+      'publish-v1.3.11-public-validation-prerelease-to-public-github-and-marketplace'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

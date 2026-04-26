@@ -79,13 +79,13 @@ describe('Marketplace community-validation intake packet', () => {
     );
 
     expect(releaseState.marketplaceCommunityValidationPreview).toMatchObject({
-      intakeStatus: 'public-github-published-and-verified',
-      intakePacketPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.md',
+      intakeStatus: 'prepared-for-public-validation-1.3.11',
+      intakePacketPath: 'docs/product/public-validation-prerelease-v1.3.11.md',
       preparedPublicIssueTemplatePath:
         'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
       preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml',
-      publicGitHubIntakePublishedShortCommit: 'b56fde1',
-      publicGitHubIntakeLabelsApplied: true
+      publicGitHubIntakePublishedShortCommit: null,
+      publicGitHubIntakeLabelsApplied: false
     });
     expect(ledger.communityValidationIntake).toMatchObject({
       status: 'public-github-published-and-verified',
@@ -98,7 +98,7 @@ describe('Marketplace community-validation intake packet', () => {
     expect(informationItemMap).toContain('Marketplace community-validation intake packet');
   });
 
-  it('prepares public issue templates and labels without publishing them', () => {
+  it('prepares public issue templates and labels for the current public validation lane', () => {
     const template = readText(
       'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
     );
@@ -110,8 +110,8 @@ describe('Marketplace community-validation intake packet', () => {
     const labels = readText('public-github-source/.github/labels.yml');
 
     expect(template).toContain('Marketplace community validation report');
-    expect(template).toContain('Marketplace pre-release `1.3.10`');
-    expect(template).toContain('Selectable does not mean maintainer-proven');
+    expect(template).toContain('Marketplace pre-release `1.3.11`');
+    expect(template).toContain('runtimeErrorCode');
     expect(template).toContain('Validation outcome');
     expect(template).toContain('Proof-status acknowledgement');
     expect(template).toContain('vihs --validate');
@@ -119,14 +119,21 @@ describe('Marketplace community-validation intake packet', () => {
     expect(template).not.toContain('PAT ');
 
     expect(bugReport).toContain('community-validation');
-    expect(bugReport).toContain('Marketplace community-validation pre-release (`1.3.10`)');
+    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.11`)');
+    expect(bugReport).toContain('runtime_error_code');
     expect(labviewRequest).toContain('proof:deferred');
-    expect(labviewRequest).toContain('proof-deferred');
+    expect(labviewRequest).toContain('runtimeErrorCode');
     expect(issueConfig).toContain('Marketplace community validation');
 
     for (const label of [
       'community-validation',
       'marketplace-preview',
+      'validation:success',
+      'validation:failure',
+      'feature:not-implemented',
+      'error-code',
+      'proof:packet-attached',
+      'version:1.3.11',
       'windows-labview',
       'proof:reported',
       'proof:reproduced',

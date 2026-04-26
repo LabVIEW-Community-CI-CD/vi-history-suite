@@ -1,0 +1,88 @@
+name: Validation failure
+description: Report a failing v1.3.11 pre-release provider/year/bitness path
+title: "[Validation failure]: "
+labels:
+  - community-validation
+  - marketplace-preview
+  - validation:failure
+  - error-code
+  - version:1.3.11
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when Marketplace pre-release `1.3.11` reached a selectable path but failed.
+
+        Run `vihs --validate --proof-out ./vihs-proof` when possible and attach or paste facts from `vihs-validation-proof.json`.
+  - type: input
+    id: extension_version
+    attributes:
+      label: Extension version
+      value: "1.3.11"
+    validations:
+      required: true
+  - type: textarea
+    id: code_version
+    attributes:
+      label: VS Code version
+      description: Paste `code --version`.
+    validations:
+      required: true
+  - type: input
+    id: operating_system
+    attributes:
+      label: Operating system
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Selected provider
+      options:
+        - host
+        - docker
+    validations:
+      required: true
+  - type: input
+    id: labview_year
+    attributes:
+      label: Selected LabVIEW year
+    validations:
+      required: true
+  - type: dropdown
+    id: bitness
+    attributes:
+      label: Selected bitness
+      options:
+        - x64
+        - x86
+    validations:
+      required: true
+  - type: input
+    id: runtime_error_code
+    attributes:
+      label: runtimeErrorCode
+      description: Example `VIHS_E_LABVIEW_NOT_FOUND`.
+    validations:
+      required: true
+  - type: textarea
+    id: validate_output
+    attributes:
+      label: Validation output or proof packet
+      description: Paste `vihs --validate` output, or attach/name `vihs-validation-proof.json`.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Include exact commands and UI actions.
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true

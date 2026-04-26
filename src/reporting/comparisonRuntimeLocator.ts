@@ -652,6 +652,36 @@ export async function locateComparisonRuntime(
       settings.requestedProvider === 'docker'
         ? 'docker-provider-unavailable'
         : 'docker-only-provider-unavailable';
+    if (requestedLabviewVersion && requestedLabviewVersion !== '2026') {
+      return {
+        platform,
+        executionMode,
+        requestedProvider: settings.requestedProvider,
+        bitness,
+        provider: 'unavailable',
+        blockedReason: 'docker-provider-labview-version-not-implemented',
+        providerDecisions: buildProviderDecisions({
+          platform,
+          containerRuntimePlatform: containerFacts?.runtimePlatform,
+          executionMode,
+          requestedProvider: settings.requestedProvider,
+          bitness,
+          configuredWindowsContainerImage: windowsContainerImage,
+          configuredLinuxContainerImage: linuxContainerImage,
+          containerImage: containerFacts?.image,
+          containerAvailable,
+          containerEvaluated,
+          ...buildContainerDecisionFacts(),
+          blockedReason: 'docker-provider-labview-version-not-implemented'
+        }),
+        notes: [
+          `Docker provider validation accepted the request for evidence capture, but LabVIEW ${requestedLabviewVersion} Docker execution is not implemented in this pre-release lane. Current governed Docker image contracts remain LabVIEW 2026 x64.`
+        ],
+        registryQueryPlans,
+        candidates
+      };
+    }
+
     if (platform !== 'win32' && platform !== 'linux') {
       return {
         platform,
@@ -1828,7 +1858,15 @@ function buildProviderDecisions(
       });
     } else if (options.executionMode === 'docker-only') {
       decisions.push(
-        options.blockedReason === 'docker-only-requires-windows-x64-provider' ||
+        options.blockedReason === 'docker-provider-labview-version-not-implemented'
+          ? {
+              provider: selectedContainerProvider,
+              outcome: 'rejected',
+              reason: 'docker-provider-labview-version-not-implemented',
+              detail:
+                'Docker provider execution was accepted for validation reporting, but the requested LabVIEW year does not have a governed Docker implementation in this pre-release lane.'
+            }
+          : options.blockedReason === 'docker-only-requires-windows-x64-provider' ||
         options.blockedReason === 'docker-provider-requires-windows-x64'
           ? {
               provider: selectedContainerProvider,

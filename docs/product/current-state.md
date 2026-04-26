@@ -62,10 +62,12 @@ Read these in order:
 44. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 45. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
 46. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-47. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-48. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-49. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-50. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+47. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+48. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+49. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+50. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+51. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+52. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -129,11 +131,13 @@ Current control-plane surfaces:
 45. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 46. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
 47. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-48. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-49. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-50. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-51. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
-52. [Fast VS Code Loop](../dev-fast-loop.md)
+48. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+49. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+50. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+51. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+52. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+53. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+54. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -180,7 +184,7 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.10`
+- current develop package line on `develop`: `1.3.11`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -246,8 +250,9 @@ Latest landed ship target:
   exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: Linux/Docker validated preview with Windows
-  installed-user proof deferred
+- active governed release claim: public validation pre-release with all
+  provider/year/bitness variants selectable and Windows installed-user proof
+  community/deferred
 - current exact-release readiness assessment:
   [exact-release-readiness-assessment-2026-04-26.md](./exact-release-readiness-assessment-2026-04-26.md)
 - current exact-release readiness assessment JSON:
@@ -276,17 +281,16 @@ Latest landed ship target:
   `release/1.3.10` branch only under the selected community-deferred
   Windows/LabVIEW claim path; public GitHub exact release and VS Code
   Marketplace exact publication remain gated and were not mutated
-- active Marketplace community-validation preview line: `1.3.10`
-- active Marketplace community-validation preview trigger:
-  user said `publish it now`
-- active Marketplace community-validation preview path:
-  admitted for pre-release publication; Windows/LabVIEW settings may remain
-  selectable with proof-status disclosure through `vihs --validate` and
-  `docs/requirements/rtm.csv`
-- current separately gated public GitHub community-validation intake promotion
-  plan:
+- active Marketplace public validation target: `1.3.11`
+- active Marketplace public validation trigger:
+  maintainer authorization for public GitHub and Marketplace publication
+- active Marketplace public validation path:
+  prepared and authorized for pre-release publication; Windows/LabVIEW settings
+  may remain selectable with proof-status disclosure through
+  `vihs --validate --proof-out ./vihs-proof` and `docs/requirements/rtm.csv`
+- retained public GitHub community-validation intake promotion plan:
   [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-- current public GitHub community-validation intake publication state:
+- retained public GitHub community-validation intake publication state:
   published and verified on public `main`
   `b56fde158fe151a736fe72c833efdfd0874d8537` through PR #45 after the
   explicit `publish the public intake now`; public labels were applied, while
@@ -331,10 +335,13 @@ Latest landed ship target:
   now serves `1.3.9`
 - current public GitHub source publication: public `main` now publishes
   `b56fde1` for the `1.3.10` community-validation intake facade while the
-  exact `v1.3.9` tag/release remains retained separately
+  `1.3.11` public validation facade and pre-release are the next authorized
+  publication targets; the exact `v1.3.9` tag/release remains retained
+  separately
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
   `1.3.10`
+- VS Code Marketplace public validation target version: `1.3.11`
 - VS Code Marketplace community-validation preview Marketplace last updated:
   `2026-04-26T00:05:09.09Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:

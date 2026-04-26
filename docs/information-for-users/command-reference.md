@@ -1,8 +1,8 @@
 # Information For Users Command Reference
 
-Applies to: exact released installed baseline `v1.2.2` plus the active
-`develop` authority direction
-Last reviewed: `2026-04-19`
+Applies to: exact released installed baseline plus the active `1.3.11` public
+validation pre-release direction
+Last reviewed: `2026-04-26`
 Primary audience: maintainers, source evaluators, and advanced installed users
 Topic type: reference
 Primary entry route: `README.md` or `INSTALL.md`
@@ -164,11 +164,11 @@ runtime-settings CLI on the active branch.
     bitness bundle, and lets `Enter` keep the current value at each prompt
   - host supports LabVIEW years `2020` through `2026` when that exact
     installation is present on the current machine
-  - Docker is the bounded expert path: `2026` / `x64` is supported for
-    `docker/windows` on Windows Docker Desktop Windows-container hosts and for
-    `docker/linux` on Linux Docker Desktop/Docker Engine hosts; Docker years
-    before `2026` are unsupported
-  - `host/linux` is not currently implemented
+  - Docker is the bounded expert path: `2026` / `x64` is the governed Docker
+    implementation today, while other selectable Docker years or bitnesses may
+    report stable not-yet-implemented runtime codes for public validation
+  - `host/linux` is selectable for validation reporting, but it is expected to
+    report a stable unsupported or missing-runtime code until implemented
   - after confirmation, the interactive flow persists the selected settings and
     auto-runs the same bounded validation action exposed by `vihs --validate`
   - on non-interactive surfaces, `vihs` without arguments prints exact
@@ -192,9 +192,9 @@ runtime-settings CLI on the active branch.
   - Windows installed-user operation may be evaluated by users on their own
     Windows setups, but this Ubuntu/Docker evidence lane does not prove native
     Windows LabVIEW or Docker Desktop Windows-container behavior
-  - for Marketplace pre-release `1.3.10`, report Windows/LabVIEW results
-    through the community-validation intake packet and include provider,
-    LabVIEW year, bitness, and `vihs --validate` output
+  - for Marketplace pre-release `1.3.11`, report Windows/LabVIEW and Docker
+    results through the public GitHub validation templates and include
+    provider, LabVIEW year, bitness, `runtimeErrorCode`, and the proof packet
   - Linux public smoke, Linux benchmark, and Ubuntu/Docker preview lanes are
     maintainer/source-evaluation proof surfaces unless a later Windows proof
     lane admits them into a Windows installed-user claim
@@ -202,7 +202,7 @@ runtime-settings CLI on the active branch.
     validation again after the CLI update and reload or restart the window
     only if that session still shows stale provider or runtime facts
 
-`vihs --validate [--settings-file <path>]`
+`vihs --validate [--settings-file <path>] [--proof-out <dir>]`
 
 - Purpose: report the persisted provider/version/bitness bundle plus the
   bounded runtime-validation outcome for the governed settings target.
@@ -215,14 +215,19 @@ runtime-settings CLI on the active branch.
   - without `--settings-file`, the governed validation target is the
     platform-default user `settings.json`
   - the output retains `runtimeValidationOutcome`, `runtimeProvider`,
-    `runtimeEngine`, and `runtimeBlockedReason` without reopening path-picking
-    or a panel-side provider picker
+    `runtimeEngine`, `runtimeBlockedReason`, `runtimeErrorCode`,
+    `runtimeProofStatus`, and `runtimeImplementationStatus` without reopening
+    path-picking or a panel-side provider picker
+  - `--proof-out` writes `vihs-validation-proof.json` and
+    `vihs-validation-issue.md` for public GitHub reporting
+  - proof packets retain diagnostic paths and environment facts; secret-looking
+    environment variables are redacted while path-like diagnostic values remain
+    visible
   - the no-argument interactive `vihs` confirmation flow invokes this same
     bounded validation after persisting settings
-  - on the current Linux/Docker validated preview route, treat `ready` as a
-    runtime-validation result for the selected provider on the current machine;
-    native Windows LabVIEW and Docker Desktop Windows-container proof remain
-    deferred
+  - on the current public validation route, treat `VIHS_OK` as proof for the
+    selected provider on the current machine; native Windows LabVIEW proof
+    remains community/deferred until admitted external proof is retained
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

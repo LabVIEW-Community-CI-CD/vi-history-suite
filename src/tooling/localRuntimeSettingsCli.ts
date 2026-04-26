@@ -26,6 +26,7 @@ export interface LocalRuntimeSettingsCliArgs {
   labviewVersion?: string;
   labviewBitness?: LocalRuntimeSettingsCliBitness;
   settingsFilePath?: string;
+  proofOutDirectoryPath?: string;
 }
 
 export interface LocalRuntimeSettingsCliRunResult {
@@ -42,6 +43,11 @@ export interface LocalRuntimeSettingsCliRunResult {
   runtimeProvider?: ComparisonRuntimeProvider;
   runtimeEngine?: ComparisonRuntimeEngine;
   runtimeBlockedReason?: string;
+  runtimeErrorCode?: RuntimeValidationErrorCode;
+  runtimeProofStatus?: RuntimeProofStatus;
+  runtimeImplementationStatus?: RuntimeImplementationStatus;
+  proofReportPath?: string;
+  proofIssueBodyPath?: string;
 }
 
 export interface MaterializedLocalRuntimeSettingsCli {
@@ -115,10 +121,40 @@ const POSIX_PATH_SEPARATOR = ':';
 const DISABLE_PERSISTENT_USER_PATH_ADMISSION_ENV =
   'VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION';
 const WINDOWS_NODE_OVERRIDE_ENV = 'VI_HISTORY_SUITE_NODE_EXE';
+const VALIDATION_PROOF_SCHEMA = 'vi-history-suite/runtime-validation-proof@v1';
+const VALIDATION_PROOF_JSON_FILE_NAME = 'vihs-validation-proof.json';
+const VALIDATION_PROOF_ISSUE_FILE_NAME = 'vihs-validation-issue.md';
 const MISSING_NODE_RUNTIME_MESSAGE =
   'VI History runtime-settings CLI requires the standard VS Code runtime or a usable Node.js runtime. Install or repair VS Code, set VI_HISTORY_SUITE_NODE_EXE, or install Node.js, then rerun \"VI History: Prepare Local Runtime Settings CLI\" to refresh the launcher if this dependency changed.';
 const STALE_LAUNCHER_MESSAGE =
   'VI History runtime-settings CLI launcher is stale or incomplete. Run \"VI History: Prepare Local Runtime Settings CLI\" again to refresh the generated launcher files.';
+
+export type RuntimeValidationErrorCode =
+  | 'VIHS_OK'
+  | 'VIHS_E_PROVIDER_INVALID'
+  | 'VIHS_E_RUNTIME_SELECTION_REQUIRED'
+  | 'VIHS_E_LABVIEW_VERSION_REQUIRED'
+  | 'VIHS_E_LABVIEW_BITNESS_REQUIRED'
+  | 'VIHS_E_PLATFORM_UNSUPPORTED'
+  | 'VIHS_E_CONFIGURED_PATH_MISSING'
+  | 'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED'
+  | 'VIHS_E_DOCKER_PROVIDER_UNSUPPORTED_BITNESS'
+  | 'VIHS_E_DOCKER_UNAVAILABLE'
+  | 'VIHS_E_LABVIEW_NOT_FOUND'
+  | 'VIHS_E_LABVIEW_AMBIGUOUS'
+  | 'VIHS_E_LABVIEW_CLI_BITNESS_NOT_FOUND'
+  | 'VIHS_E_COMPARISON_TOOL_NOT_FOUND'
+  | 'VIHS_E_RUNTIME_SURFACE_CONTAMINATED'
+  | 'VIHS_E_RUNTIME_VALIDATION_BLOCKED';
+
+export type RuntimeProofStatus =
+  | 'ready'
+  | 'blocked-with-actionable-error';
+
+export type RuntimeImplementationStatus =
+  | 'implemented'
+  | 'not-implemented'
+  | 'blocked-or-missing-prerequisite';
 
 type InteractiveRuntimePlatformChoice = 'windows' | 'linux';
 
@@ -144,6 +180,7 @@ export function getLocalRuntimeSettingsCliUsage(): string {
     '  --labview-bitness Required LabVIEW bitness: x86 or x64',
     '  --settings-file   Optional explicit VS Code settings.json path',
     '  --validate        Report persisted provider/version/bitness facts plus bounded runtime validation for the governed settings target',
+    '  --proof-out       Optional directory for validation JSON and a ready-to-file GitHub issue body',
     '  --help            Show this help text'
   ].join('\n');
 }
@@ -176,6 +213,9 @@ export function parseLocalRuntimeSettingsCliArgs(argv: readonly string[]): Local
       case '--settings-file':
         parsed.settingsFilePath = readRequiredArgValue(argv, argument, ++index);
         break;
+      case '--proof-out':
+        parsed.proofOutDirectoryPath = readRequiredArgValue(argv, argument, ++index);
+        break;
       default:
         throw new Error(`Unknown argument: ${argument}`);
     }
@@ -191,6 +231,9 @@ export function resolveDefaultVsCodeSettingsPath(
 ): string {
   if (platform === 'win32') {
     const appData = env.APPDATA ?? path.win32.join(homedir(), 'AppData', 'Roaming');
+    if (appData.startsWith('/')) {
+      return path.posix.join(appData, 'Code', 'User', 'settings.json');
+    }
     return path.win32.join(appData, 'Code', 'User', 'settings.json');
   }
 
@@ -425,7 +468,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
   const promptController = await resolvePromptLine(deps);
   const promptLine = promptController.promptLine;
   const selection = deriveInteractiveSelection(settingsFacts);
-  const hostRuntimePlatform = resolveCliRuntimePlatform(deps.platform ?? process.platform);
 
   try {
     writeLine(
@@ -448,17 +490,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
         promptLine
       );
 
-      if (selection.provider === 'host' && selection.platform === 'linux') {
-        writeLine(stdout, renderNotImplementedPathMessage('host/linux'));
-        continue;
-      }
-
-      const dockerAvailability = checkDockerSelectionAvailability(selection, hostRuntimePlatform);
-      if (!dockerAvailability.available) {
-        writeLine(stdout, dockerAvailability.message);
-        continue;
-      }
-
       while (true) {
         selection.labviewVersion = await promptEnum(
           'LabVIEW year',
@@ -467,17 +498,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
           promptLine
         );
 
-        if (
-          selection.provider === 'docker' &&
-          selection.labviewVersion !== SUPPORTED_DOCKER_LABVIEW_VERSION
-        ) {
-          writeLine(
-            stdout,
-            `Docker ${selection.labviewVersion} is unsupported. ${renderImplementedPathSummary()}`
-          );
-          continue;
-        }
-
         while (true) {
           selection.labviewBitness = await promptEnum(
             'Bitness',
@@ -485,22 +505,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
             ['x86', 'x64'],
             promptLine
           );
-
-          if (selection.provider === 'docker' && selection.labviewBitness !== 'x64') {
-            writeLine(
-              stdout,
-              `Docker x86 is unsupported. ${renderImplementedPathSummary()}`
-            );
-            continue;
-          }
-
-          if (selection.provider === 'host') {
-            const hostAvailability = await checkHostSelectionAvailability(selection, deps);
-            if (!hostAvailability.available) {
-              writeLine(stdout, `LabVIEW ${selection.labviewVersion} not installed.`);
-              break;
-            }
-          }
 
           await runLocalRuntimeSettingsCli(
             [
@@ -518,13 +522,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
             { helpRequested: false, validateRequested: true },
             deps
           );
-        }
-
-        if (selection.provider === 'host') {
-          const hostAvailability = await checkHostSelectionAvailability(selection, deps);
-          if (!hostAvailability.available) {
-            continue;
-          }
         }
       }
     }
@@ -660,58 +657,6 @@ function deriveInteractiveSelection(
   };
 }
 
-function checkDockerSelectionAvailability(
-  selection: InteractiveRuntimeSettingsSelection,
-  hostRuntimePlatform: RuntimePlatform
-): { available: true } | { available: false; message: string } {
-  if (selection.provider !== 'docker') {
-    return { available: true };
-  }
-
-  if (selection.platform === 'linux' && hostRuntimePlatform !== 'linux') {
-    return {
-      available: false,
-      message:
-        'docker/linux requires a Linux Docker Desktop/Docker Engine host. On Windows select docker/windows 2026 x64.'
-    };
-  }
-
-  if (selection.platform === 'windows' && hostRuntimePlatform !== 'win32') {
-    return {
-      available: false,
-      message:
-        'docker/windows requires a Windows Docker Desktop Windows-container host. On Linux select docker/linux 2026 x64.'
-    };
-  }
-
-  return { available: true };
-}
-
-async function checkHostSelectionAvailability(
-  selection: InteractiveRuntimeSettingsSelection,
-  deps: LocalRuntimeSettingsCliDeps
-): Promise<{ available: boolean }> {
-  const locateRuntime = deps.locateRuntime ?? locateComparisonRuntime;
-  const runtimeSelection = await locateRuntime(resolveCliRuntimePlatform(deps.platform ?? process.platform), {
-    requestedProvider: 'host',
-    requireVersionAndBitness: true,
-    labviewVersion: selection.labviewVersion,
-    bitness: selection.labviewBitness
-  } satisfies ComparisonRuntimeSettings, deps.runtimeLocatorDeps);
-
-  return {
-    available: runtimeSelection.blockedReason !== 'labview-exe-not-found'
-  };
-}
-
-function renderNotImplementedPathMessage(pathLabel: 'host/linux'): string {
-  return `${pathLabel} is not currently implemented. ${renderImplementedPathSummary()}`;
-}
-
-function renderImplementedPathSummary(): string {
-  return 'Currently implemented: host/windows 2020-2026, docker/windows 2026 x64 on Windows Docker Desktop Windows-container hosts, and docker/linux 2026 x64 on Linux Docker Desktop/Docker Engine hosts.';
-}
-
 function resolveSettingsTarget(
   parsed: LocalRuntimeSettingsCliArgs,
   deps: LocalRuntimeSettingsCliDeps
@@ -753,6 +698,11 @@ async function validateLocalRuntimeSettingsCli(
     runtimeSelection.provider !== 'unavailable' && !runtimeSelection.blockedReason
       ? 'ready'
       : 'blocked';
+  const runtimeErrorCode = deriveRuntimeValidationErrorCode(runtimeSelection.blockedReason);
+  const runtimeProofStatus = deriveRuntimeProofStatus(runtimeValidationOutcome);
+  const runtimeImplementationStatus = deriveRuntimeImplementationStatus(
+    runtimeSelection.blockedReason
+  );
 
   writeLine(
     deps.stdout ?? process.stdout,
@@ -788,6 +738,37 @@ async function validateLocalRuntimeSettingsCli(
     deps.stdout ?? process.stdout,
     `runtimeBlockedReason=${runtimeSelection.blockedReason ?? '<none>'}`
   );
+  writeLine(deps.stdout ?? process.stdout, `runtimeErrorCode=${runtimeErrorCode}`);
+  writeLine(deps.stdout ?? process.stdout, `runtimeProofStatus=${runtimeProofStatus}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeImplementationStatus=${runtimeImplementationStatus}`
+  );
+
+  let proofPaths:
+    | {
+        proofReportPath: string;
+        proofIssueBodyPath: string;
+      }
+    | undefined;
+  if (parsed.proofOutDirectoryPath) {
+    proofPaths = await writeValidationProofPacket(
+      {
+        parsed,
+        settingsFilePath,
+        settingsTarget: resolvedTarget.settingsTarget,
+        settingsFacts,
+        runtimeSelection,
+        runtimeValidationOutcome,
+        runtimeErrorCode,
+        runtimeProofStatus,
+        runtimeImplementationStatus
+      },
+      deps
+    );
+    writeLine(deps.stdout ?? process.stdout, `proofReportPath=${proofPaths.proofReportPath}`);
+    writeLine(deps.stdout ?? process.stdout, `proofIssueBodyPath=${proofPaths.proofIssueBodyPath}`);
+  }
 
   return {
     outcome: 'validated-settings',
@@ -799,8 +780,285 @@ async function validateLocalRuntimeSettingsCli(
     runtimeValidationOutcome,
     runtimeProvider: runtimeSelection.provider,
     runtimeEngine: runtimeSelection.engine,
-    runtimeBlockedReason: runtimeSelection.blockedReason
+    runtimeBlockedReason: runtimeSelection.blockedReason,
+    runtimeErrorCode,
+    runtimeProofStatus,
+    runtimeImplementationStatus,
+    ...proofPaths
   };
+}
+
+function deriveRuntimeValidationErrorCode(
+  blockedReason: string | undefined
+): RuntimeValidationErrorCode {
+  if (!blockedReason) {
+    return 'VIHS_OK';
+  }
+
+  if (blockedReason === 'installed-provider-invalid') {
+    return 'VIHS_E_PROVIDER_INVALID';
+  }
+
+  if (blockedReason === 'labview-runtime-selection-required') {
+    return 'VIHS_E_RUNTIME_SELECTION_REQUIRED';
+  }
+
+  if (blockedReason === 'labview-version-required') {
+    return 'VIHS_E_LABVIEW_VERSION_REQUIRED';
+  }
+
+  if (blockedReason === 'labview-bitness-required') {
+    return 'VIHS_E_LABVIEW_BITNESS_REQUIRED';
+  }
+
+  if (
+    blockedReason === 'labview-2026q1-unsupported-on-macos' ||
+    blockedReason.endsWith('provider-not-supported-on-platform')
+  ) {
+    return 'VIHS_E_PLATFORM_UNSUPPORTED';
+  }
+
+  if (blockedReason.startsWith('configured-') && blockedReason.endsWith('-path-missing')) {
+    return 'VIHS_E_CONFIGURED_PATH_MISSING';
+  }
+
+  if (blockedReason === 'docker-provider-labview-version-not-implemented') {
+    return 'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED';
+  }
+
+  if (
+    blockedReason === 'docker-provider-requires-windows-x64' ||
+    blockedReason === 'docker-only-requires-windows-x64-provider'
+  ) {
+    return 'VIHS_E_DOCKER_PROVIDER_UNSUPPORTED_BITNESS';
+  }
+
+  if (
+    blockedReason === 'docker-provider-unavailable' ||
+    blockedReason === 'docker-only-provider-unavailable' ||
+    blockedReason === 'auto-docker-installed-provider-unavailable'
+  ) {
+    return 'VIHS_E_DOCKER_UNAVAILABLE';
+  }
+
+  if (blockedReason === 'labview-exe-not-found') {
+    return 'VIHS_E_LABVIEW_NOT_FOUND';
+  }
+
+  if (blockedReason === 'labview-exe-ambiguous') {
+    return 'VIHS_E_LABVIEW_AMBIGUOUS';
+  }
+
+  if (blockedReason === 'labview-cli-not-found-for-bitness') {
+    return 'VIHS_E_LABVIEW_CLI_BITNESS_NOT_FOUND';
+  }
+
+  if (
+    blockedReason === 'canonical-labview-cli-not-found' ||
+    blockedReason === 'comparison-tool-not-found'
+  ) {
+    return 'VIHS_E_COMPARISON_TOOL_NOT_FOUND';
+  }
+
+  if (blockedReason === 'windows-host-runtime-surface-contaminated') {
+    return 'VIHS_E_RUNTIME_SURFACE_CONTAMINATED';
+  }
+
+  return 'VIHS_E_RUNTIME_VALIDATION_BLOCKED';
+}
+
+function deriveRuntimeProofStatus(
+  runtimeValidationOutcome: 'ready' | 'blocked'
+): RuntimeProofStatus {
+  return runtimeValidationOutcome === 'ready'
+    ? 'ready'
+    : 'blocked-with-actionable-error';
+}
+
+function deriveRuntimeImplementationStatus(
+  blockedReason: string | undefined
+): RuntimeImplementationStatus {
+  if (!blockedReason) {
+    return 'implemented';
+  }
+
+  if (
+    blockedReason === 'docker-provider-labview-version-not-implemented' ||
+    blockedReason === 'docker-provider-requires-windows-x64' ||
+    blockedReason === 'docker-only-requires-windows-x64-provider' ||
+    blockedReason.endsWith('provider-not-supported-on-platform') ||
+    blockedReason === 'labview-2026q1-unsupported-on-macos'
+  ) {
+    return 'not-implemented';
+  }
+
+  return 'blocked-or-missing-prerequisite';
+}
+
+interface WriteValidationProofPacketInput {
+  parsed: LocalRuntimeSettingsCliArgs;
+  settingsFilePath: string;
+  settingsTarget: LocalRuntimeSettingsCliRunResult['settingsTarget'];
+  settingsFacts: PersistedRuntimeSettingsFacts;
+  runtimeSelection: Awaited<ReturnType<typeof locateComparisonRuntime>>;
+  runtimeValidationOutcome: 'ready' | 'blocked';
+  runtimeErrorCode: RuntimeValidationErrorCode;
+  runtimeProofStatus: RuntimeProofStatus;
+  runtimeImplementationStatus: RuntimeImplementationStatus;
+}
+
+async function writeValidationProofPacket(
+  input: WriteValidationProofPacketInput,
+  deps: LocalRuntimeSettingsCliDeps
+): Promise<{ proofReportPath: string; proofIssueBodyPath: string }> {
+  if (!input.parsed.proofOutDirectoryPath) {
+    throw new Error('Missing proof output directory.');
+  }
+
+  const cwd = deps.cwd ?? process.cwd;
+  const proofRoot = path.resolve(cwd(), input.parsed.proofOutDirectoryPath);
+  const fsApi = deps.fs ?? fs;
+  await fsApi.mkdir(proofRoot, { recursive: true });
+  const proofReportPath = path.join(proofRoot, VALIDATION_PROOF_JSON_FILE_NAME);
+  const proofIssueBodyPath = path.join(proofRoot, VALIDATION_PROOF_ISSUE_FILE_NAME);
+  const proof = buildValidationProof(input, deps);
+  await fsApi.writeFile(proofReportPath, `${JSON.stringify(proof, null, 2)}\n`, 'utf8');
+  await fsApi.writeFile(proofIssueBodyPath, `${buildValidationIssueBody(proof)}\n`, 'utf8');
+  return { proofReportPath, proofIssueBodyPath };
+}
+
+function buildValidationProof(
+  input: WriteValidationProofPacketInput,
+  deps: LocalRuntimeSettingsCliDeps
+): Record<string, unknown> {
+  const env = deps.env ?? process.env;
+  return {
+    schema: VALIDATION_PROOF_SCHEMA,
+    recordedAt: new Date().toISOString(),
+    proofStatus: input.runtimeProofStatus,
+    implementationStatus: input.runtimeImplementationStatus,
+    errorCode: input.runtimeErrorCode,
+    settings: {
+      settingsTarget: input.settingsTarget,
+      settingsFilePath: input.settingsFilePath,
+      provider: input.settingsFacts.persistedProvider ?? null,
+      labviewVersion: input.settingsFacts.persistedLabviewVersion ?? null,
+      labviewBitness: input.settingsFacts.persistedLabviewBitness ?? null
+    },
+    runtime: {
+      validationOutcome: input.runtimeValidationOutcome,
+      provider: input.runtimeSelection.provider,
+      engine: input.runtimeSelection.engine ?? null,
+      blockedReason: input.runtimeSelection.blockedReason ?? null,
+      platform: input.runtimeSelection.platform,
+      containerRuntimePlatform: input.runtimeSelection.containerRuntimePlatform ?? null,
+      containerHostMode: input.runtimeSelection.containerHostMode ?? null,
+      containerImage: input.runtimeSelection.containerImage ?? null,
+      dockerCliAvailable: input.runtimeSelection.dockerCliAvailable ?? null,
+      dockerDaemonReachable: input.runtimeSelection.dockerDaemonReachable ?? null,
+      containerCapabilityAvailable: input.runtimeSelection.containerCapabilityAvailable ?? null,
+      containerImageAvailable: input.runtimeSelection.containerImageAvailable ?? null,
+      containerAcquisitionState: input.runtimeSelection.containerAcquisitionState ?? null,
+      providerDecisions: input.runtimeSelection.providerDecisions ?? [],
+      notes: input.runtimeSelection.notes,
+      candidates: input.runtimeSelection.candidates
+    },
+    host: {
+      processPlatform: deps.platform ?? process.platform,
+      processArch: process.arch,
+      nodeVersion: process.version,
+      versions: process.versions,
+      cwd: (deps.cwd ?? process.cwd)(),
+      execPath: process.execPath,
+      homedir: (deps.homedir ?? os.homedir)(),
+      username: safeUserName(),
+      env: buildReportableEnvironment(env),
+      envPolicy:
+        'host paths and environment facts are retained for public validation; secret-like environment variable names are redacted'
+    },
+    publicIntake: {
+      issueChooserUrl: 'https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose',
+      successTemplate: 'validation-success.yml',
+      failureTemplate: 'validation-failure.yml',
+      notImplementedTemplate: 'feature-not-implemented.yml',
+      suggestedTemplate:
+        input.runtimeValidationOutcome === 'ready'
+          ? 'validation-success.yml'
+          : input.runtimeImplementationStatus === 'not-implemented'
+            ? 'feature-not-implemented.yml'
+            : 'validation-failure.yml'
+    }
+  };
+}
+
+function safeUserName(): string | null {
+  try {
+    return os.userInfo().username;
+  } catch {
+    return null;
+  }
+}
+
+function buildReportableEnvironment(env: NodeJS.ProcessEnv): Record<string, string> {
+  const reportable: Record<string, string> = {};
+  for (const [key, value] of Object.entries(env).sort(([left], [right]) =>
+    left.localeCompare(right)
+  )) {
+    reportable[key] = isSecretLikeEnvironmentKey(key)
+      ? '<redacted-secret-like-env-var>'
+      : String(value ?? '');
+  }
+  return reportable;
+}
+
+function isSecretLikeEnvironmentKey(key: string): boolean {
+  const normalized = key.toUpperCase();
+  if (normalized === 'PATH' || normalized.endsWith('PATH')) {
+    return false;
+  }
+
+  return /TOKEN|(^|_)PAT($|_)|PASSWORD|PASSWD|SECRET|PRIVATE|CREDENTIAL|AUTH|KEY/u.test(
+    normalized
+  );
+}
+
+function buildValidationIssueBody(proof: Record<string, unknown>): string {
+  const settings = proof.settings as Record<string, unknown>;
+  const runtime = proof.runtime as Record<string, unknown>;
+  const publicIntake = proof.publicIntake as Record<string, unknown>;
+  return [
+    '## VI History Suite Public Validation Report',
+    '',
+    `Suggested template: ${publicIntake.suggestedTemplate}`,
+    '',
+    '## Outcome',
+    '',
+    `- Proof status: ${proof.proofStatus}`,
+    `- Implementation status: ${proof.implementationStatus}`,
+    `- Error code: ${proof.errorCode}`,
+    `- Runtime validation outcome: ${runtime.validationOutcome}`,
+    `- Runtime blocked reason: ${runtime.blockedReason ?? '<none>'}`,
+    '',
+    '## Selected Variant',
+    '',
+    `- Provider: ${settings.provider ?? '<missing>'}`,
+    `- LabVIEW year: ${settings.labviewVersion ?? '<missing>'}`,
+    `- Bitness: ${settings.labviewBitness ?? '<missing>'}`,
+    `- Settings file: ${settings.settingsFilePath}`,
+    '',
+    '## Runtime Facts',
+    '',
+    `- Runtime provider: ${runtime.provider}`,
+    `- Runtime engine: ${runtime.engine ?? '<none>'}`,
+    `- Platform: ${runtime.platform}`,
+    `- Container runtime platform: ${runtime.containerRuntimePlatform ?? '<none>'}`,
+    `- Docker CLI available: ${runtime.dockerCliAvailable ?? '<unknown>'}`,
+    `- Docker daemon reachable: ${runtime.dockerDaemonReachable ?? '<unknown>'}`,
+    '',
+    '## Proof Attachment',
+    '',
+    `Attach ${VALIDATION_PROOF_JSON_FILE_NAME} from the proof output directory with this issue.`
+  ].join('\n');
 }
 
 async function writeVsCodeSettingsFile(
