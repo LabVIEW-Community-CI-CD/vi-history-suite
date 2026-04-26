@@ -205,7 +205,9 @@ describe('Windows/LabVIEW community proof intake checklist', () => {
     expect(informationItemMap).toContain('Windows/LabVIEW community proof intake checklist');
     expect(currentState).toContain('current external Windows/LabVIEW community proof intake checklist');
     expect(srs).toContain('external/community Windows/LabVIEW proof intake');
-    expect(rtm).toContain('TEST-UNIT-389; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142');
+    expect(rtm).toContain(
+      'TEST-UNIT-389; TEST-UNIT-390; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143'
+    );
     expect(testPlan).toContain('TEST-UNIT-389');
     expect(testPlan).toContain('TEST-DOC-142');
   });

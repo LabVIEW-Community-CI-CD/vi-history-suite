@@ -116,7 +116,7 @@ describe('release publication state resolver', () => {
       currentPublishedKind: 'community-validation-pre-release',
       currentRegularPublishedVersion: '1.3.9',
       currentPreReleaseVersion: '1.3.10',
-      expectedVersion: '1.3.9',
+      expectedVersion: '1.3.10',
       status: 'community-validation-preview-published-and-verified',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
@@ -201,10 +201,36 @@ describe('release publication state resolver', () => {
       publicGitHubMutation: 'not-performed',
       marketplaceMutation: 'not-performed'
     });
+    expect(state.exactReleaseCandidateReassessment).toMatchObject({
+      status: 'prepared',
+      path: 'docs/product/exact-release-candidate-reassessment-2026-04-26.md',
+      jsonPath: 'docs/product/exact-release-candidate-reassessment-2026-04-26.json',
+      sourceBranch: 'develop',
+      sourceCommit: '14243fd0ee647736124b06edb5a9947eae178d38',
+      sourcePipelineId: 2480546719,
+      sourcePipelineStatus: 'success',
+      packageVersion: '1.3.10',
+      selectedCandidatePath: 'community-deferred-windows-labview-claim',
+      releaseBranchOpening: 'admissible-as-next-governed-action',
+      releaseBranch: null,
+      exactTag: null,
+      candidateSourceVsixSha256:
+        'afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783',
+      admittedExternalWindowsProofArrived: false,
+      windowsInstalledUserLabviewProofClaimMade: false,
+      publicGitHubExactMutation: 'gated-and-not-performed',
+      marketplaceExactMutation: 'gated-and-not-performed',
+      nextAdmittedAction:
+        'open-governed-release-1.3.10-branch-from-14243fd-community-deferred-windows-claim'
+    });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('## Exact Release Readiness Assessment');
     expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
+    expect(stateDoc).toContain('## Exact Release Candidate Reassessment');
     expect(stateDoc).toContain('Exact-release readiness: blocked');
+    expect(stateDoc).toContain('Source pipeline: `2480546719` / `success`');
+    expect(stateDoc).toContain('Release branch opening: admissible as next governed action');
+    expect(stateDoc).toContain('Admitted external Windows proof arrived: false');
     expect(stateDoc).toContain('Assessed pipeline: `2480212103` / `success`');
     expect(stateDoc).toContain(
       'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
@@ -222,6 +248,10 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain(
       'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md'
     );
+    expect(stateDoc).toContain('docs/product/exact-release-candidate-reassessment-2026-04-26.md');
+    expect(stateDoc).toContain(
+      'afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783'
+    );
     expect(stateDoc).toContain('Community reports become maintainer proof automatically: false');
     expect(stateDoc).toContain('community-deferred claim with no Windows installed-user proof claim');
     expect(stateDoc).toContain('public-github-source/.github/labels.yml');
@@ -238,8 +268,11 @@ describe('release publication state resolver', () => {
       releaseBranch: null,
       tag: null,
       packageVersion: '1.3.10',
-      status: 'marketplace-community-validation-preview-line'
+      status: 'exact-release-candidate-reassessment-community-deferred-path-prepared'
     });
+    expect(state.nextAdmittedAction).toBe(
+      'open-governed-release-1.3.10-branch-from-14243fd-community-deferred-windows-claim'
+    );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
     expect(publicationState.versionFromTag('v1.4.2')).toBe('1.4.2');

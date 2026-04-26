@@ -2079,6 +2079,12 @@ Information-for-users review cases:
   commands, proof-status ladder, two exact-candidate conversion paths,
   candidate admission checklist, and public GitHub/Marketplace no-mutation
   boundary.
+- `TEST-UNIT-390`: verify the exact-release candidate reassessment retains
+  `develop` commit `14243fd`, pipeline `2480546719`, the
+  community-deferred Windows/LabVIEW claim selection, absence of admitted
+  Windows proof, candidate source VSIX SHA-256, release-publication state
+  anchoring, release-branch-opening next action, and public
+  GitHub/Marketplace exact no-mutation boundary.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2259,6 +2265,12 @@ Information-for-users review cases:
   reports remain community signals until admitted, Linux/Docker proof is not
   Windows proof, and the exact candidate must choose either a Windows-proof
   claim path or a community-deferred claim path before reassessment.
+- `TEST-DOC-143`: review the exact-release candidate reassessment,
+  release-publication state, current-state, information-item map, SRS, RTM,
+  and the test plan and confirm `1.3.10` is admissible only for governed
+  release-branch opening from `14243fd` under the selected community-deferred
+  Windows/LabVIEW claim path while public GitHub and Marketplace exact
+  mutation remain gated.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
