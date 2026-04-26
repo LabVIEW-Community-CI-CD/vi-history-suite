@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Prepare the `1.3.11` public validation lane for public GitHub and VS Code
+Retain the `1.3.11` public validation lane for public GitHub and VS Code
 Marketplace pre-release distribution. GitLab remains the authority repository;
-public GitHub becomes the public source, release-asset, and issue-intake facade.
+public GitHub is the public source, release-asset, and issue-intake facade.
 
 This packet changes the operating model from a blocked exact-release gate to a
 community-validation lane: every selectable provider, LabVIEW year, and bitness
@@ -20,11 +20,25 @@ Machine-readable companion:
 
 - Package version: `1.3.11`
 - Authority branch: GitLab `develop`
+- Authority merge commit: `129cfe1f40698a6efaf51845ba47cf2e101d0e7e`
+- Authority develop pipeline: `2480723883` / success
 - Public GitHub target: `github.com/svelderrainruiz/vi-history-suite`
-- Public GitHub release target: `v1.3.11` pre-release or draft release with
+- Public GitHub PR: `https://github.com/svelderrainruiz/vi-history-suite/pull/46`
+- Public GitHub main commit: `5e67194992af021ada2903ea868e8b84678d72d6`
+- Public GitHub release target: `v1.3.11-public-validation` pre-release with
   VSIX and checksum assets
-- Marketplace target: `svelderrainruiz.vi-history-suite` pre-release
-- Public mutation authorization: granted by the maintainer for the `1.3.11`
+- Nominal package tag: `v1.3.11`
+- GitHub tag repair note: the first `v1.3.11` published pre-release became
+  immutable before assets could be attached; the zero-asset release and tag
+  were deleted, but GitHub retained the tag name as used, so the asset-bearing
+  public validation release uses `v1.3.11-public-validation`.
+- Public GitHub release URL:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
+- Marketplace target: `svelderrainruiz.vi-history-suite` pre-release `1.3.11`
+- Marketplace readback: official gallery query, `vsce show`, and isolated VS
+  Code CLI install read back `1.3.11`
+- Marketplace last updated: `2026-04-26T16:51:22.260Z`
+- Public mutation authorization: executed by the maintainer for the `1.3.11`
   validation lane
 - Exact-release gate: no longer blocked by missing Windows/LabVIEW proof for
   this lane; failures and missing implementations route to public issues
@@ -135,6 +149,15 @@ missing implementation to public GitHub.
   the GitHub release is used.
 - Verify Marketplace publication after upload through an official Marketplace
   or `vsce show` readback.
+
+## Published Assets
+
+- VSIX:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix`
+- Checksum:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix.sha256`
+- SHA-256:
+  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 
 ## Release-Control Evidence
 

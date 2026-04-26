@@ -204,10 +204,10 @@ describe('exact release candidate reassessment', () => {
       releaseBranch: null,
       tag: null,
       packageVersion: '1.3.11',
-      status: 'public-validation-prerelease-prepared-for-public-github-and-marketplace-publication'
+      status: 'public-validation-prerelease-published-and-verified'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'publish-v1.3.11-public-validation-prerelease-to-public-github-and-marketplace'
+      'collect-community-validation-reports-for-1.3.11-public-validation'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

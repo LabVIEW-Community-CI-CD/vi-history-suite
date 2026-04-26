@@ -1,16 +1,16 @@
 {
   "schema": "vi-history-suite/vscode-marketplace-publication-ledger@v1",
   "publicationSurface": "vscode-marketplace",
-  "status": "published-community-validation-preview-with-1.3.11-public-validation-target-prepared",
+  "status": "published-public-validation-prerelease-1.3.11",
   "publisherId": "svelderrainruiz",
   "extensionId": "vi-history-suite",
   "marketplaceItemName": "svelderrainruiz.vi-history-suite",
   "listingUrl": "https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite",
   "homepageUrl": "https://github.com/svelderrainruiz/vi-history-suite/wiki",
-  "currentPublishedVersion": "1.3.10",
-  "currentPublishedDate": "2026-04-25",
-  "currentVerificationSurface": "official-gallery-extensionquery-and-vsce-show",
-  "pendingPublicationVersion": "1.3.11",
+  "currentPublishedVersion": "1.3.11",
+  "currentPublishedDate": "2026-04-26",
+  "currentVerificationSurface": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install",
+  "pendingPublicationVersion": null,
   "pendingPublicationInstallProofPackageScript": "npm run vscode:marketplace:install-proof",
   "pendingPublicationInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
   "pendingPublicationInstallProofStatus": "retain-passed-install-proof",
@@ -18,7 +18,7 @@
   "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
   "pendingPublicationPrepStatus": "retain-marketplace-publication",
   "communityValidationPreviewPreparation": {
-    "status": "prepared-authorized-pending-publication",
+    "status": "published-and-verified",
     "publicationClaim": "public-validation-prerelease",
     "preparePackageScript": "npm run vscode:marketplace:community-preview:prepare",
     "prepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
@@ -31,13 +31,13 @@
     "traceabilityMatrixPath": "docs/requirements/rtm.csv",
     "publicGitHubMutationAttemptedByPrep": false,
     "marketplaceMutationAttemptedByPrep": false,
-    "publishedDate": null,
-    "marketplaceLastUpdated": null,
+    "publishedDate": "2026-04-26",
+    "marketplaceLastUpdated": "2026-04-26T16:51:22.260Z",
     "previewVsixPath": "preview-evidence/vi-history-suite-1.3.11.vsix",
-    "previewVsixSha256": null,
-    "publicGitHubMutationAttemptedByPublication": false,
-    "marketplaceMutationAttemptedByPublication": false,
-    "verificationSurface": "pending-official-gallery-extensionquery-and-vsce-show"
+    "previewVsixSha256": "21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff",
+    "publicGitHubMutationAttemptedByPublication": true,
+    "marketplaceMutationAttemptedByPublication": true,
+    "verificationSurface": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install"
   },
   "communityValidationIntake": {
     "status": "public-github-published-and-verified",
@@ -165,21 +165,33 @@
         "docs/product/vscode-marketplace-publication-ledger.md",
         "docs/release-procedure.md"
       ]
+    },
+    {
+      "status": "published-public-validation-preview",
+      "publishedDate": "2026-04-26",
+      "version": "1.3.11",
+      "publicationMode": "pinned-vsce-cli-pre-release",
+      "primaryAuthority": [
+        "docs/product/public-validation-prerelease-v1.3.11.md",
+        "docs/product/release-publication-state.md",
+        "docs/product/vscode-marketplace-publication-ledger.md",
+        "public GitHub PR #46"
+      ]
     }
   ],
-  "currentPublishedKind": "community-validation-pre-release",
+  "currentPublishedKind": "public-validation-pre-release",
   "currentRegularPublishedVersion": "1.3.9",
   "currentRegularPublishedDate": "2026-04-23",
-  "currentPreReleaseVersion": "1.3.10",
-  "currentPreReleasePublishedDate": "2026-04-25",
-  "currentPreReleaseLastUpdated": "2026-04-26T00:05:09.09Z",
+  "currentPreReleaseVersion": "1.3.11",
+  "currentPreReleasePublishedDate": "2026-04-26",
+  "currentPreReleaseLastUpdated": "2026-04-26T16:51:22.260Z",
   "publicValidationPrerelease": {
-    "status": "prepared-authorized-pending-publication",
+    "status": "published-and-verified",
     "packetPath": "docs/product/public-validation-prerelease-v1.3.11.md",
     "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.11.json",
     "marketplaceTargetVersion": "1.3.11",
     "currentPreReleaseVersionBeforePublication": "1.3.10",
-    "publicGitHubReleaseTarget": "v1.3.11",
+    "publicGitHubReleaseTarget": "v1.3.11-public-validation",
     "publicGitHubReleaseAssets": [
       "preview-evidence/vi-history-suite-1.3.11.vsix",
       "preview-evidence/vi-history-suite-1.3.11.vsix.sha256"
@@ -189,6 +201,21 @@
     "windowsInstalledUserLabviewProof": "community-deferred",
     "allCliVariantsSelectable": true,
     "runtimeProofCommand": "vihs --validate --proof-out ./vihs-proof",
-    "proofStatusPolicy": "selectable-paths-report-success-failure-or-not-implemented-with-stable-error-codes"
+    "proofStatusPolicy": "selectable-paths-report-success-failure-or-not-implemented-with-stable-error-codes",
+    "marketplacePublishedVersion": "1.3.11",
+    "marketplaceLastUpdated": "2026-04-26T16:51:22.260Z",
+    "nominalPackageTag": "v1.3.11",
+    "publicGitHubReleaseId": 313782074,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation",
+    "publicGitHubMainCommit": "5e67194992af021ada2903ea868e8b84678d72d6",
+    "publicGitHubPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/46",
+    "publicGitHubReleaseAssetUrls": [
+      "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix",
+      "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix.sha256"
+    ],
+    "publicGitHubTagRepairNote": "The initial published v1.3.11 pre-release was immutable before assets could be attached; the zero-asset release and tag were deleted, but GitHub retained the tag name as used, so the asset-bearing public validation release uses v1.3.11-public-validation.",
+    "publicGitHubPublished": true,
+    "marketplacePublished": true,
+    "previewVsixSha256": "21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff"
   }
 }

@@ -283,10 +283,10 @@ Latest landed ship target:
   Marketplace exact publication remain gated and were not mutated
 - active Marketplace public validation target: `1.3.11`
 - active Marketplace public validation trigger:
-  maintainer authorization for public GitHub and Marketplace publication
+  published through public GitHub PR #46 and pinned `vsce --pre-release`
 - active Marketplace public validation path:
-  prepared and authorized for pre-release publication; Windows/LabVIEW settings
-  may remain selectable with proof-status disclosure through
+  published and verified as Marketplace pre-release `1.3.11`;
+  Windows/LabVIEW settings may remain selectable with proof-status disclosure through
   `vihs --validate --proof-out ./vihs-proof` and `docs/requirements/rtm.csv`
 - retained public GitHub community-validation intake promotion plan:
   [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
@@ -335,17 +335,18 @@ Latest landed ship target:
   now serves `1.3.9`
 - current public GitHub source publication: public `main` now publishes
   `b56fde1` for the `1.3.10` community-validation intake facade while the
-  `1.3.11` public validation facade and pre-release are the next authorized
-  publication targets; the exact `v1.3.9` tag/release remains retained
-  separately
+  `1.3.11` public validation facade now publishes at `5e67194`; the exact
+  `v1.3.9` tag/release remains retained separately
+- public GitHub public-validation pre-release:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
-  `1.3.10`
+  `1.3.11`
 - VS Code Marketplace public validation target version: `1.3.11`
 - VS Code Marketplace community-validation preview Marketplace last updated:
-  `2026-04-26T00:05:09.09Z`
+  `2026-04-26T16:51:22.260Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
-  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
+  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 - Marketplace community-validation intake packet:
   [marketplace-community-validation-intake-v1.3.10.md](./marketplace-community-validation-intake-v1.3.10.md)
 - Marketplace community-validation intake packet JSON:
@@ -364,8 +365,9 @@ Latest landed ship target:
 - VS Code Marketplace community-validation preview is published and verified:
   `npm run vscode:marketplace:community-preview:prepare` writes the prep
   receipt, the package was published with pinned `vsce --pre-release`, the
-  official gallery query plus `vsce show` read back `1.3.10`, and public
-  GitHub was not mutated by this preview act.
+  official gallery query plus `vsce show` and isolated VS Code CLI install
+  read back `1.3.11`, and public GitHub was mutated through protected PR #46
+  for the scoped validation lane.
 - Windows exact-VSIX install proof is also retained:
   `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
   installs into isolated VS Code user-data/extensions roots on Windows and

@@ -53,12 +53,13 @@ describe('post-release sustainment rules package', () => {
         vscodeMarketplaceCommunityValidationPreviewPrepReceiptPath:
           '.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json',
         vscodeMarketplaceCommunityValidationPreviewPrepStatus:
-          'prepared-authorized-pending-publication',
+          'published-and-verified',
         vscodeMarketplaceCommunityValidationPreviewTargetVersion: '1.3.11',
-        vscodeMarketplaceCommunityValidationPreviewPublishedVersion: null,
-        vscodeMarketplaceCommunityValidationPreviewPublishedDate: null,
-        vscodeMarketplaceCommunityValidationPreviewLastUpdated: null,
-        vscodeMarketplaceCommunityValidationPreviewVsixSha256: null,
+        vscodeMarketplaceCommunityValidationPreviewPublishedVersion: '1.3.11',
+        vscodeMarketplaceCommunityValidationPreviewPublishedDate: '2026-04-26',
+        vscodeMarketplaceCommunityValidationPreviewLastUpdated: '2026-04-26T16:51:22.260Z',
+        vscodeMarketplaceCommunityValidationPreviewVsixSha256:
+          '21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff',
         publicDefaultBranch: 'main',
         publicCodespaceBranch: 'develop',
         integrationBranch: 'develop',
@@ -149,7 +150,11 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(rulesDoc).toContain('Marketplace public validation preview status: prepared');
+    expect(rulesDoc).toContain('Marketplace public validation preview status: published and verified');
+    expect(rulesDoc).toContain('Marketplace public validation preview last updated:');
+    expect(rulesDoc).toContain(
+      '21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff'
+    );
     expect(rulesDoc).toContain(
       '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/'
     );
