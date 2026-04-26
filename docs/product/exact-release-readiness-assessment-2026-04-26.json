@@ -279,6 +279,19 @@
     "npm run vscode:marketplace:install-proof against the selected exact VSIX",
     "receipt readback into GitLab authority docs before any Windows installed-user or Marketplace exact claim"
   ],
+  "communityProofIntakeChecklist": {
+    "path": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md",
+    "jsonPath": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json",
+    "status": "prepared-no-mutation",
+    "candidateAdmissionPaths": [
+      "windows-proof-claim",
+      "community-deferred-claim"
+    ],
+    "windowsProofClaimRequiresAdmittedProofReceipts": true,
+    "communityDeferredClaimRequiresExplicitNarrowedClaim": true,
+    "communityReportsBecomeMaintainerProofAutomatically": false,
+    "linuxDockerEvidenceMayProveWindowsLabviewInstalledUserBehavior": false
+  },
   "noMutationBoundary": {
     "publicGitHubTouched": false,
     "marketplaceTouched": false,

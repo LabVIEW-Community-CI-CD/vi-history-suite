@@ -124,6 +124,24 @@ is retained for the selected exact VSIX:
 - receipt readback into GitLab authority docs before any Windows installed-user
   or Marketplace exact claim is made
 
+## Community Proof Intake Checklist
+
+The external Windows/LabVIEW community proof intake checklist is retained at:
+
+- `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md`
+- `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json`
+
+The checklist defines two later reassessment paths:
+
+1. Windows-proof claim: retain admitted Windows/LabVIEW proof receipts before
+   making a Windows installed-user claim.
+2. Community-deferred claim: explicitly narrow the exact-release claim so
+   Windows/LabVIEW remains selectable with proof-status disclosure, but no
+   maintainer-proven Windows installed-user claim is made.
+
+Until one path is selected and retained through a release branch assessment,
+this readiness assessment remains blocked.
+
 ## No-Mutation Boundary
 
 This assessment did not mutate public GitHub or VS Code Marketplace.
@@ -145,4 +163,3 @@ Windows installed-user proof gate.
    candidate readiness closes.
 5. Run Marketplace exact publication only after public GitHub exact release
    verification and Windows exact VSIX install proof are retained.
-

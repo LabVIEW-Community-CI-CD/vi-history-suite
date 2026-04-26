@@ -43,6 +43,11 @@ describe('exact release readiness assessment', () => {
       'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
     );
     expect(assessment).toContain('No `governed_runner_admission` or `windows_private_release_acceptance` job');
+    expect(assessment).toContain('Community Proof Intake Checklist');
+    expect(assessment).toContain(
+      'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md'
+    );
+    expect(assessment).toContain('Community-deferred claim');
     expect(assessment).toContain('This assessment did not mutate public GitHub or VS Code Marketplace');
 
     expect(machine).toEqual(
@@ -95,6 +100,15 @@ describe('exact release readiness assessment', () => {
           sha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6',
           sizeBytes: 998988,
           releaseUse: 'preview-only-not-exact-release-artifact'
+        }),
+        communityProofIntakeChecklist: expect.objectContaining({
+          path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
+          jsonPath:
+            'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
+          status: 'prepared-no-mutation',
+          candidateAdmissionPaths: ['windows-proof-claim', 'community-deferred-claim'],
+          communityReportsBecomeMaintainerProofAutomatically: false,
+          linuxDockerEvidenceMayProveWindowsLabviewInstalledUserBehavior: false
         })
       })
     );
@@ -135,14 +149,26 @@ describe('exact release readiness assessment', () => {
       currentAdmissibleClaim: 'linux-docker-validated-preview-only',
       blockingReason: 'missing-native-windows-installed-user-labview-proof-for-1.3.10',
       windowsInstalledUserLabviewProofState: 'community-deferred',
-      previewVsixSha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
+      previewVsixSha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6',
+      communityProofIntakeChecklistPath:
+        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
+      communityProofIntakeChecklistJsonPath:
+        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json'
     });
     expect(informationItemMap).toContain('Exact release readiness assessment');
+    expect(informationItemMap).toContain('Windows/LabVIEW community proof intake checklist');
     expect(currentState).toContain('exact-release-readiness-assessment-2026-04-26.md');
     expect(currentState).toContain('current exact-release readiness verdict');
+    expect(currentState).toContain(
+      'windows-labview-community-proof-intake-checklist-2026-04-26.md'
+    );
     expect(srs).toContain('exact-release readiness');
-    expect(rtm).toContain('TEST-UNIT-388; TEST-DOC-133; TEST-DOC-141');
+    expect(rtm).toContain(
+      'TEST-UNIT-388; TEST-UNIT-389; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142'
+    );
     expect(testPlan).toContain('TEST-UNIT-388');
+    expect(testPlan).toContain('TEST-UNIT-389');
     expect(testPlan).toContain('TEST-DOC-141');
+    expect(testPlan).toContain('TEST-DOC-142');
   });
 });

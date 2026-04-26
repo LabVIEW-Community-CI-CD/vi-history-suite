@@ -166,12 +166,49 @@ final installed-user distribution surface.
   `f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6`
 - Public GitHub exact mutation: not admitted and not performed
 - VS Code Marketplace exact mutation: not admitted and not performed
+- Community proof intake checklist:
+  `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md`
+- Community proof intake checklist JSON:
+  `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json`
+- Exact candidate conversion paths:
+  Windows-proof claim with admitted Windows/LabVIEW receipts, or
+  community-deferred claim with no Windows installed-user proof claim
 
 The current `develop` line is healthy as a Linux/Docker validated preview and
 community-validation package line. It is not ready for exact-release promotion
 until the missing Windows installed-user LabVIEW proof for the selected exact
 VSIX is retained or the exact release claim is explicitly narrowed and
 re-governed.
+
+## Windows/LabVIEW Community Proof Intake Checklist
+
+- Status: prepared, no mutation
+- Checklist:
+  `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md`
+- Checklist JSON:
+  `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json`
+- Prepared from `develop` commit:
+  `3c0404a5cc51f3e131dfb29474fb36a338aec4ec`
+- Source readiness assessment:
+  `docs/product/exact-release-readiness-assessment-2026-04-26.md`
+- Source assessed pipeline: `2480212103` / `success`
+- Candidate package version: `1.3.10`
+- Proof-status ladder:
+  `community-reported`, `intake-complete`, `needs-more-evidence`,
+  `maintainer-reproduction-pending`, `maintainer-reproduced`,
+  `admitted-proof`, `deferred-no-host`, and
+  `rejected-insufficient-evidence`
+- Community reports become maintainer proof automatically: false
+- Linux/Docker proof may prove Windows/LabVIEW installed-user behavior: false
+- Public GitHub mutation: not performed
+- VS Code Marketplace mutation: not performed
+
+The checklist is the intake path for turning the blocked assessment into a
+later admissible exact-release candidate decision. It keeps the crowd-testing
+model alive while requiring the exact release claim to choose one of two
+truthful paths: retain admitted Windows/LabVIEW proof before making a Windows
+claim, or narrow the exact release claim so Windows/LabVIEW remains selectable
+with community/deferred proof status.
 
 ## Incident Classification
 

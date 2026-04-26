@@ -194,6 +194,8 @@ through GitHub.
   `docs/product/vscode-marketplace-publication-ledger.md`
 - Windows/LabVIEW deferred proof handoff:
   `docs/product/windows-labview-installed-user-proof-handoff-2026-04-25.md`
+- Windows/LabVIEW community proof intake checklist:
+  `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md`
 - Linux/Docker preview packet:
   `docs/product/linux-docker-preview-release-control-packet-2026-04-25.md`
 - Traceability matrix:
