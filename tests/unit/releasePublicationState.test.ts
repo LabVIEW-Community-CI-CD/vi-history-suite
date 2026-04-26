@@ -102,15 +102,17 @@ describe('release publication state resolver', () => {
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: '5e67194992af021ada2903ea868e8b84678d72d6',
+      mainCommit: 'ce6dbd0b1b5783f7015b9d0589f3803636564789',
       sourcePublication: {
-        status: 'public-validation-prerelease-facade-published-and-verified',
-        currentMainShortCommit: '5e67194',
+        status: 'public-validation-prerelease-facade-docs-promoted-and-verified',
+        currentMainCommit: 'ce6dbd0b1b5783f7015b9d0589f3803636564789',
+        currentMainShortCommit: 'ce6dbd0',
         exactReleaseRetainedCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
         priorCommunityValidationIntakeCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
         priorCommunityValidationIntakePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/45',
-        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46'
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/60'
       }
     });
     expect(state.marketplace).toMatchObject({

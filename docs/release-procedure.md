@@ -97,9 +97,10 @@
   succeeded, no-change compare succeeded, and missing-file control blocked
   before Docker at `left-blob-read-failed`. The first uncached compare may
   pull `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`. Public
-  GitHub facade docs should be promoted only after the GitLab authority MR for
-  this closeout is green, and Marketplace mutation is not part of that
-  docs-promotion act.
+  GitHub facade docs were promoted after the GitLab authority MR for this
+  closeout went green through public PR #60, leaving public `main` at
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`; Marketplace mutation was not
+  part of that docs-promotion act.
 - The retained Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The retained Windows x64 private-release packet is:

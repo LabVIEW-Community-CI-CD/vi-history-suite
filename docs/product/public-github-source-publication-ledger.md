@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `b56fde1`
+Current published public GitHub source HEAD: `ce6dbd0`
 
 ## Publications
 
@@ -47,6 +47,20 @@ Current published public GitHub source HEAD: `b56fde1`
 | Public source v1.3.7 exact source publication | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-23` | `704e629` | `README.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `docs/product/public-github-source-publication-ledger.md`; `package.json` |
 | Public source v1.3.9 exact source publication | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-23` | `fb0ef2b` | `README.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `docs/product/public-github-source-publication-ledger.md`; `docs/product/release-publication-state.md`; `package.json` |
 | Public source v1.3.10 community-validation intake publication | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-25` | `b56fde1` | `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`; `public-github-source/.github/labels.yml`; `public-github-source/README.md`; `public-github-source/SUPPORT.md`; `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`; `docs/product/marketplace-community-validation-intake-v1.3.10.md`; `docs/product/release-publication-state.md` |
+| Public source v1.3.11 canonical Docker fixture docs promotion | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-26` | `ce6dbd0` | `README.md`; `INSTALL.md`; `.github/ISSUE_TEMPLATE/config.yml`; `docs/product/public-validation-prerelease-v1.3.11.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; `docs/product/public-github-source-publication-ledger.md` |
+
+## Latest Public Facade Docs Promotion
+
+- Public PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
+- Public `main` commit:
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`
+- Promoted files: `README.md`, `INSTALL.md`, and
+  `.github/ISSUE_TEMPLATE/config.yml`
+- Post-merge public checks: Public Source Package Preview `24965599550` /
+  success, Public Windows Installed-User Contract `24965599548` / success, and
+  Public Linux Installed-User Smoke `24965599557` / success
+- Marketplace mutation: not performed
 
 ## Publication Rules
 

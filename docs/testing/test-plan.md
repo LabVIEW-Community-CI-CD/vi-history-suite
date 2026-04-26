@@ -2305,6 +2305,21 @@ Information-for-users review cases:
   the source/tag checkout `npm run compile` warning, direct public validation
   contact links, and the community/deferred Windows host LabVIEW proof boundary
   are retained without mutating public GitHub or Marketplace.
+- `TEST-UNIT-394`: run
+  `vitest run tests/unit/publicGithubFixtureDocsPromotionCloseout.test.ts` and
+  confirm `VHS-REQ-587`, public PR `#60`, public `main` commit
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`, promoted files `README.md`,
+  `INSTALL.md`, `.github/ISSUE_TEMPLATE/config.yml`, successful post-merge
+  public GitHub checks, and Marketplace no-mutation are retained across the
+  authority release-state JSON and Markdown surfaces.
+- `TEST-DOC-146`: review README, current-state, release procedure, public
+  validation packet, release-publication state, Marketplace ledger, SRS, RTM,
+  and this test plan and confirm the canonical fixture docs promotion closeout
+  records public PR `#60`, public commit `ce6dbd0`, Public Source Package
+  Preview `24965599550` / success, Public Windows Installed-User Contract
+  `24965599548` / success, Public Linux Installed-User Smoke `24965599557` /
+  success, and that Marketplace was not mutated by the public facade docs
+  promotion.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

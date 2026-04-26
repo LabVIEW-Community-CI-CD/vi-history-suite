@@ -69,7 +69,7 @@
   "publicGitHub": {
     "role": "downstream-public-distribution",
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "mainCommit": "5e67194992af021ada2903ea868e8b84678d72d6",
+    "mainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
     "tag": "v1.3.9",
     "tagRef": "refs/tags/v1.3.9",
     "tagObjectType": "commit",
@@ -94,9 +94,9 @@
       "safeToPublish": false
     },
     "sourcePublication": {
-      "status": "public-validation-prerelease-facade-published-and-verified",
-      "currentMainCommit": "5e67194992af021ada2903ea868e8b84678d72d6",
-      "currentMainShortCommit": "5e67194",
+      "status": "public-validation-prerelease-facade-docs-promoted-and-verified",
+      "currentMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "currentMainShortCommit": "ce6dbd0",
       "exactReleaseRetainedCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
       "priorCommunityValidationIntakeCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
       "priorCommunityValidationIntakePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
@@ -121,7 +121,84 @@
           "jobId": 73089436919,
           "conclusion": "success"
         }
-      ]
+      ],
+      "latestPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+      "publicFacadeDocsPromotionCloseout": {
+        "status": "published-and-verified",
+        "repository": "github.com/svelderrainruiz/vi-history-suite",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+        "publicBranch": "main",
+        "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+        "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+        "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainShortCommit": "ce6dbd0",
+        "mergedAt": "2026-04-26T19:53:22Z",
+        "promotedFiles": [
+          "README.md",
+          "INSTALL.md",
+          ".github/ISSUE_TEMPLATE/config.yml"
+        ],
+        "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+        "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+        "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+        "prHeadChecks": [
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "checkName": "public-linux-installed-user-smoke",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Source Package Preview",
+            "checkName": "public-source-package-preview",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "checkName": "public-windows-installed-user-contract",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+            "conclusion": "success"
+          }
+        ],
+        "postMergeMainChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 24965599550,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 24965599548,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 24965599557,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          }
+        ],
+        "localValidation": [
+          "npm ci",
+          "npm run compile",
+          "npm run test:design-contract",
+          "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+          "git diff --check",
+          "diff secret scan returned no hits"
+        ],
+        "marketplaceMutation": "not-performed",
+        "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+      }
     }
   },
   "marketplace": {
@@ -205,7 +282,11 @@
       "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix",
       "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix.sha256"
     ],
-    "publicGitHubExactTagRepairNote": "The initial published v1.3.11 pre-release was immutable before assets could be attached; the zero-asset release and tag were deleted, but GitHub retained the tag name as used, so the asset-bearing public validation release uses v1.3.11-public-validation."
+    "publicGitHubExactTagRepairNote": "The initial published v1.3.11 pre-release was immutable before assets could be attached; the zero-asset release and tag were deleted, but GitHub retained the tag name as used, so the asset-bearing public validation release uses v1.3.11-public-validation.",
+    "latestPublicGitHubFacadeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+    "latestPublicGitHubFacadeShortCommit": "ce6dbd0",
+    "latestPublicGitHubFacadePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+    "latestPublicGitHubFacadePromotion": "canonical-public-docker-fixture-docs"
   },
   "exactReleaseReadinessAssessment": {
     "status": "blocked",
@@ -337,7 +418,86 @@
         "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix",
         "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix.sha256"
       ],
-      "vsixSha256": "21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff"
+      "vsixSha256": "21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff",
+      "currentMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "currentMainShortCommit": "ce6dbd0",
+      "latestSourceFacadePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+      "publicFacadeDocsPromotionCloseout": {
+        "status": "published-and-verified",
+        "repository": "github.com/svelderrainruiz/vi-history-suite",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+        "publicBranch": "main",
+        "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+        "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+        "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainShortCommit": "ce6dbd0",
+        "mergedAt": "2026-04-26T19:53:22Z",
+        "promotedFiles": [
+          "README.md",
+          "INSTALL.md",
+          ".github/ISSUE_TEMPLATE/config.yml"
+        ],
+        "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+        "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+        "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+        "prHeadChecks": [
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "checkName": "public-linux-installed-user-smoke",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Source Package Preview",
+            "checkName": "public-source-package-preview",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "checkName": "public-windows-installed-user-contract",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+            "conclusion": "success"
+          }
+        ],
+        "postMergeMainChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 24965599550,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 24965599548,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 24965599557,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          }
+        ],
+        "localValidation": [
+          "npm ci",
+          "npm run compile",
+          "npm run test:design-contract",
+          "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+          "git diff --check",
+          "diff secret scan returned no hits"
+        ],
+        "marketplaceMutation": "not-performed",
+        "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+      }
     },
     "marketplace": {
       "itemName": "svelderrainruiz.vi-history-suite",
@@ -415,9 +575,85 @@
         "repeatableFixtureRecipe": "https://github.com/svelderrainruiz/vi-history-suite/issues/59"
       },
       "windowsHostLabviewProof": "community-deferred",
-      "publicFacadeDocsPromotionDecision": "needed-after-gitlab-authority-mr-green",
+      "publicFacadeDocsPromotionDecision": "completed-through-public-pr-60-after-gitlab-authority-green",
       "publicGitHubMutationDuringAuthorityCloseout": false,
-      "marketplaceMutationDuringAuthorityCloseout": false
+      "marketplaceMutationDuringAuthorityCloseout": false,
+      "publicFacadeDocsPromotionCloseout": {
+        "status": "published-and-verified",
+        "repository": "github.com/svelderrainruiz/vi-history-suite",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+        "publicBranch": "main",
+        "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+        "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+        "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainShortCommit": "ce6dbd0",
+        "mergedAt": "2026-04-26T19:53:22Z",
+        "promotedFiles": [
+          "README.md",
+          "INSTALL.md",
+          ".github/ISSUE_TEMPLATE/config.yml"
+        ],
+        "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+        "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+        "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+        "prHeadChecks": [
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "checkName": "public-linux-installed-user-smoke",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Source Package Preview",
+            "checkName": "public-source-package-preview",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "checkName": "public-windows-installed-user-contract",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+            "conclusion": "success"
+          }
+        ],
+        "postMergeMainChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 24965599550,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 24965599548,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 24965599557,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          }
+        ],
+        "localValidation": [
+          "npm ci",
+          "npm run compile",
+          "npm run test:design-contract",
+          "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+          "git diff --check",
+          "diff secret scan returned no hits"
+        ],
+        "marketplaceMutation": "not-performed",
+        "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+      }
     },
     "docsGapsClosedByAuthorityCloseout": [
       "https://github.com/svelderrainruiz/vi-history-suite/issues/55",
@@ -425,9 +661,85 @@
       "https://github.com/svelderrainruiz/vi-history-suite/issues/58",
       "https://github.com/svelderrainruiz/vi-history-suite/issues/59"
     ],
-    "publicFacadeDocsPromotionDecision": "needed-after-gitlab-authority-mr-green",
+    "publicFacadeDocsPromotionDecision": "completed-through-public-pr-60-after-gitlab-authority-green",
     "publicGitHubMutationDuringAuthorityCloseout": false,
-    "marketplaceMutationDuringAuthorityCloseout": false
+    "marketplaceMutationDuringAuthorityCloseout": false,
+    "publicFacadeDocsPromotionCloseout": {
+      "status": "published-and-verified",
+      "repository": "github.com/svelderrainruiz/vi-history-suite",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+      "publicBranch": "main",
+      "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+      "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+      "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "publicMainShortCommit": "ce6dbd0",
+      "mergedAt": "2026-04-26T19:53:22Z",
+      "promotedFiles": [
+        "README.md",
+        "INSTALL.md",
+        ".github/ISSUE_TEMPLATE/config.yml"
+      ],
+      "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+      "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+      "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+      "prHeadChecks": [
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "checkName": "public-linux-installed-user-smoke",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Source Package Preview",
+          "checkName": "public-source-package-preview",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "checkName": "public-windows-installed-user-contract",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+          "conclusion": "success"
+        }
+      ],
+      "postMergeMainChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 24965599550,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 24965599548,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 24965599557,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        }
+      ],
+      "localValidation": [
+        "npm ci",
+        "npm run compile",
+        "npm run test:design-contract",
+        "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+        "git diff --check",
+        "diff secret scan returned no hits"
+      ],
+      "marketplaceMutation": "not-performed",
+      "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+    }
   },
   "publicValidationMutationAllowed": false
 }

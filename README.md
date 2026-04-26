@@ -331,9 +331,10 @@ Authority release facts:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
-- current public GitHub source publication: public `main` currently publishes
-  `b56fde1` for the retained `1.3.10` community-validation intake facade; the
-  `1.3.11` public validation facade now publishes at `5e67194`
+- current public GitHub source publication: public `main` now publishes
+  `ce6dbd0` after public PR #60 promoted the canonical public Docker fixture
+  docs; the exact `v1.3.9` tag/release remains retained separately at
+  `fb0ef2b`
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
 - VS Code Marketplace retained published version: `1.3.9`

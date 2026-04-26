@@ -23,8 +23,12 @@ Machine-readable companion:
 - Authority merge commit: `129cfe1f40698a6efaf51845ba47cf2e101d0e7e`
 - Authority develop pipeline: `2480723883` / success
 - Public GitHub target: `github.com/svelderrainruiz/vi-history-suite`
-- Public GitHub PR: `https://github.com/svelderrainruiz/vi-history-suite/pull/46`
-- Public GitHub main commit: `5e67194992af021ada2903ea868e8b84678d72d6`
+- Public GitHub initial validation PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/46`
+- Public GitHub current facade PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
+- Public GitHub current main commit:
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`
 - Public GitHub release target: `v1.3.11-public-validation` pre-release with
   VSIX and checksum assets
 - Nominal package tag: `v1.3.11`
@@ -146,9 +150,24 @@ The governed authority closeout addresses public issue gaps:
 - `#58`: installed/source docs need the first Docker image pull warning
 - `#59`: docs and tests need the repeatable fixture recipe retained
 
-Public facade docs promotion is needed after the GitLab authority MR is green.
-Public GitHub and Marketplace mutation are not part of this authority
-closeout.
+Public facade docs promotion was completed after the GitLab authority MR was
+green:
+
+- GitLab authority MR:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181`
+- GitLab authority develop pipeline:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467`
+- public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
+- public GitHub main commit:
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`
+- promoted public files: `README.md`, `INSTALL.md`, and
+  `.github/ISSUE_TEMPLATE/config.yml`
+- post-merge public GitHub checks: Public Source Package Preview
+  `24965599550` / success, Public Windows Installed-User Contract
+  `24965599548` / success, and Public Linux Installed-User Smoke
+  `24965599557` / success
+- Marketplace mutation: not performed
 
 ## Triage Loop
 
