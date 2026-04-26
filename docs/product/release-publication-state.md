@@ -19,7 +19,8 @@ final installed-user distribution surface.
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: none
 - Active candidate tag: none
-- Active candidate package version: `1.3.9`
+- Active candidate package version: `1.3.10`
+- Active candidate state: Marketplace community-validation preview line
 
 ## Develop Preview State
 
@@ -60,9 +61,14 @@ final installed-user distribution surface.
 ## Marketplace State
 
 - Marketplace item: `svelderrainruiz.vi-history-suite`
-- Current Marketplace version: `1.3.9`
+- Current Marketplace version: `1.3.10`
+- Current Marketplace publication kind: community-validation pre-release
+- Current regular Marketplace version: `1.3.9`
+- Current pre-release Marketplace version: `1.3.10`
+- Current pre-release last updated: `2026-04-26T00:05:09.09Z`
 - Expected version for the active governed candidate line: `1.3.9`
-- Marketplace status: published and verified on `1.3.9`.
+- Marketplace status: community-validation preview published and verified on
+  `1.3.10`, while regular exact release `1.3.9` remains retained.
 - Windows exact-VSIX install proof package script:
   `npm run vscode:marketplace:install-proof`
 - Windows exact-VSIX install proof receipt:
@@ -73,8 +79,16 @@ final installed-user distribution surface.
 
 ## Marketplace Community-Validation Preview Path
 
-- Status: admitted for preparation only
+- Status: published and verified
 - Publication claim: community-validation preview
+- Target preview version: `1.3.10`
+- Published preview version: `1.3.10`
+- Preview publication date: `2026-04-25`
+- Marketplace last updated: `2026-04-26T00:05:09.09Z`
+- Preview VSIX path:
+  `preview-evidence/vi-history-suite-1.3.10.vsix`
+- Preview VSIX SHA-256:
+  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
 - Prep package script:
   `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
@@ -85,7 +99,7 @@ final installed-user distribution surface.
   `major.minor.patch` Marketplace version than the currently published
   `1.3.9`; the current `1.3.9` package line cannot be republished as a
   preview.
-- Publish trigger: blocked until the user says `publish it now`.
+- Publish trigger: user said `publish it now`
 - Active evidence claim: Linux/Docker validated preview
 - Windows installed-user proof: deferred and not claimed by this preview path
 - Windows/LabVIEW feature policy: provider, year, and bitness choices may stay
@@ -93,9 +107,9 @@ final installed-user distribution surface.
   and the traceability matrix.
 - Traceability matrix:
   `docs/requirements/rtm.csv`
-- Public GitHub mutation: not attempted by the community-preview prep path
-- VS Code Marketplace mutation: not attempted by the community-preview prep
-  path
+- Public GitHub mutation: not mutated by community-validation preview
+  publication
+- VS Code Marketplace mutation: published community-validation preview
 
 ## Incident Classification
 
@@ -138,8 +152,9 @@ installing into isolated VS Code user-data/extensions roots and running bare
 `vihs` plus `vihs --validate` successfully.
 
 The community-validation preview path is separate from the exact-release
-Marketplace gate. It may prepare a Marketplace pre-release package for broader
-installed-user validation with Windows proof disclosed as deferred, but it
-still performs no public GitHub or Marketplace mutation until the separate
-`publish it now` instruction is present and the target package version is
-distinct from the live Marketplace version.
+Marketplace gate. It may publish a Marketplace pre-release package for broader
+installed-user validation with Windows proof disclosed as deferred after the
+separate `publish it now` instruction is present and the target package
+version is distinct from the live Marketplace version. Public GitHub source
+and release publication are not required for this community-validation preview
+act.

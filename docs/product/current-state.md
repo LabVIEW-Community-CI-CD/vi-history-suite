@@ -160,7 +160,7 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.9`
+- current develop package line on `develop`: `1.3.10`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -228,11 +228,13 @@ Latest landed ship target:
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: Linux/Docker validated preview with Windows
   installed-user proof deferred
+- active Marketplace community-validation preview line: `1.3.10`
+- active Marketplace community-validation preview trigger:
+  user said `publish it now`
 - active Marketplace community-validation preview path:
-  admitted for preparation only; Windows/LabVIEW settings may remain
+  admitted for pre-release publication; Windows/LabVIEW settings may remain
   selectable with proof-status disclosure through `vihs --validate` and
-  `docs/requirements/rtm.csv`, while actual Marketplace publication is
-  blocked until the user says `publish it now`
+  `docs/requirements/rtm.csv`
 - current Linux/Docker preview release-control packet:
   [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
 - current Linux/Docker preview release-control packet JSON:
@@ -264,6 +266,12 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.9`
 - VS Code Marketplace retained published version: `1.3.9`
+- VS Code Marketplace community-validation preview published version:
+  `1.3.10`
+- VS Code Marketplace community-validation preview Marketplace last updated:
+  `2026-04-26T00:05:09.09Z`
+- VS Code Marketplace community-validation preview VSIX SHA-256:
+  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
 - blocked historical publication incident: public GitHub release `312768592`
   for `v1.3.8` is published and immutable with zero assets; retain it as
   historical evidence only while the current live Marketplace version remains
@@ -273,11 +281,11 @@ Latest landed ship target:
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
   `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
-- VS Code Marketplace community-validation preview prep is non-mutating:
+- VS Code Marketplace community-validation preview is published and verified:
   `npm run vscode:marketplace:community-preview:prepare` writes the prep
-  receipt, uses a pinned `vsce --pre-release` command shape, requires a
-  distinct higher Marketplace target version before publish, and does not
-  mutate public GitHub or the Marketplace.
+  receipt, the package was published with pinned `vsce --pre-release`, the
+  official gallery query plus `vsce show` read back `1.3.10`, and public
+  GitHub was not mutated by this preview act.
 - Windows exact-VSIX install proof is also retained:
   `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
   installs into isolated VS Code user-data/extensions roots on Windows and

@@ -201,7 +201,7 @@ Authority release facts:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.9`
+- current develop package line on `develop`: `1.3.10`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -264,6 +264,9 @@ Authority release facts:
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: Linux/Docker validated preview with Windows
   installed-user proof deferred
+- active Marketplace community-validation preview line: `1.3.10`
+- active Marketplace community-validation preview trigger:
+  user said `publish it now`
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
 - retained Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -285,6 +288,10 @@ Authority release facts:
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
 - VS Code Marketplace retained published version: `1.3.9`
+- VS Code Marketplace community-validation preview published version:
+  `1.3.10`
+- VS Code Marketplace community-validation preview VSIX SHA-256:
+  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
 - blocked historical publication incident: public GitHub release `312768592`
   for `v1.3.8` is published and immutable with zero assets; retain it as
   historical evidence only while the current live Marketplace version remains

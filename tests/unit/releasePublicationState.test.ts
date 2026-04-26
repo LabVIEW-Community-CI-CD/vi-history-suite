@@ -88,9 +88,12 @@ describe('release publication state resolver', () => {
     });
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
-      currentPublishedVersion: '1.3.9',
+      currentPublishedVersion: '1.3.10',
+      currentPublishedKind: 'community-validation-pre-release',
+      currentRegularPublishedVersion: '1.3.9',
+      currentPreReleaseVersion: '1.3.10',
       expectedVersion: '1.3.9',
-      status: 'published-and-verified',
+      status: 'community-validation-preview-published-and-verified',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
         receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
@@ -102,7 +105,7 @@ describe('release publication state resolver', () => {
       }
     });
     expect(state.marketplaceCommunityValidationPreview).toMatchObject({
-      status: 'admitted-for-preparation-only',
+      status: 'published-and-verified',
       publicationClaim: 'community-validation-preview',
       preparePackageScript: 'npm run vscode:marketplace:community-preview:prepare',
       prepReceiptPath:
@@ -111,17 +114,25 @@ describe('release publication state resolver', () => {
       targetVersionPolicy:
         'must-be-distinct-higher-major-minor-patch-than-current-marketplace-version',
       currentMarketplaceVersion: '1.3.9',
-      targetVersion: null,
-      publishTrigger: 'blocked-until-user-says-publish-it-now',
+      targetVersion: '1.3.10',
+      packageVersion: '1.3.10',
+      publishedVersion: '1.3.10',
+      publishedDate: '2026-04-25',
+      marketplaceLastUpdated: '2026-04-26T00:05:09.09Z',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
+      previewVsixSha256: 'da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705',
+      publishTrigger: 'user-said-publish-it-now',
       windowsLabviewFeaturePolicy: 'user-selectable-with-proof-status-disclosure',
       windowsInstalledUserProofState: 'deferred',
       traceabilityMatrixPath: 'docs/requirements/rtm.csv',
-      publicGitHubMutation: 'not-attempted-by-community-preview-prep',
-      marketplaceMutation: 'not-attempted-by-community-preview-prep'
+      publicGitHubMutation: 'not-mutated-by-community-validation-preview-publication',
+      marketplaceMutation: 'published-community-validation-preview'
     });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(stateDoc).toContain('blocked until the user says `publish it now`');
+    expect(stateDoc).toContain('Status: published and verified');
+    expect(stateDoc).toContain('Target preview version: `1.3.10`');
+    expect(stateDoc).toContain('Published preview version: `1.3.10`');
     expect(stateDoc).toContain(
       'Windows/LabVIEW feature policy: provider, year, and bitness choices may stay'
     );
@@ -134,8 +145,8 @@ describe('release publication state resolver', () => {
     expect(state.activeCandidate).toMatchObject({
       releaseBranch: null,
       tag: null,
-      packageVersion: '1.3.9',
-      status: 'no-active-release-line'
+      packageVersion: '1.3.10',
+      status: 'marketplace-community-validation-preview-line'
     });
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
@@ -166,7 +177,7 @@ describe('release publication state resolver', () => {
       tag: 'v9.8.7',
       packageVersion: '9.8.7',
       marketplaceItem: 'svelderrainruiz.vi-history-suite',
-      currentMarketplaceVersion: '1.3.9'
+      currentMarketplaceVersion: '1.3.10'
     });
   });
 });

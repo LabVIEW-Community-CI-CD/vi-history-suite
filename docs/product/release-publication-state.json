@@ -66,9 +66,9 @@
   "marketplace": {
     "role": "final-user-distribution",
     "itemName": "svelderrainruiz.vi-history-suite",
-    "currentPublishedVersion": "1.3.9",
+    "currentPublishedVersion": "1.3.10",
     "expectedVersion": "1.3.9",
-    "status": "published-and-verified",
+    "status": "community-validation-preview-published-and-verified",
     "windowsExactVsixInstallProof": {
       "packageScript": "npm run vscode:marketplace:install-proof",
       "receiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
@@ -77,18 +77,23 @@
       "runtimeValidationOutcome": "ready",
       "launcherPathStrippedToLauncherAndSystem32": true,
       "ambientNodeOnPathRequired": false
-    }
+    },
+    "currentPublishedKind": "community-validation-pre-release",
+    "currentRegularPublishedVersion": "1.3.9",
+    "currentPreReleaseVersion": "1.3.10",
+    "currentPreReleasePublishedDate": "2026-04-25",
+    "currentPreReleaseLastUpdated": "2026-04-26T00:05:09.09Z"
   },
   "marketplaceCommunityValidationPreview": {
-    "status": "admitted-for-preparation-only",
+    "status": "published-and-verified",
     "publicationClaim": "community-validation-preview",
     "preparePackageScript": "npm run vscode:marketplace:community-preview:prepare",
     "prepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
     "preferredVsceMode": "pre-release",
     "targetVersionPolicy": "must-be-distinct-higher-major-minor-patch-than-current-marketplace-version",
     "currentMarketplaceVersion": "1.3.9",
-    "targetVersion": null,
-    "publishTrigger": "blocked-until-user-says-publish-it-now",
+    "targetVersion": "1.3.10",
+    "publishTrigger": "user-said-publish-it-now",
     "windowsLabviewFeaturePolicy": "user-selectable-with-proof-status-disclosure",
     "windowsInstalledUserProofState": "deferred",
     "linuxDockerEvidenceClaim": "linux-docker-validated-preview",
@@ -101,8 +106,15 @@
       "docs/requirements/rtm.csv",
       "docs/information-for-users/command-reference.md"
     ],
-    "publicGitHubMutation": "not-attempted-by-community-preview-prep",
-    "marketplaceMutation": "not-attempted-by-community-preview-prep"
+    "publicGitHubMutation": "not-mutated-by-community-validation-preview-publication",
+    "marketplaceMutation": "published-community-validation-preview",
+    "packageVersion": "1.3.10",
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.10.vsix",
+    "publishedVersion": "1.3.10",
+    "publishedDate": "2026-04-25",
+    "marketplaceLastUpdated": "2026-04-26T00:05:09.09Z",
+    "previewVsixSha256": "da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705",
+    "verificationSurface": "official-gallery-extensionquery-and-vsce-show"
   },
   "incident": {
     "active": false,
@@ -120,8 +132,8 @@
     "sourceBranch": "develop",
     "releaseBranch": null,
     "tag": null,
-    "packageVersion": "1.3.9",
-    "status": "no-active-release-line",
-    "rationale": "Exact v1.3.9 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; the blocked v1.3.8 incident remains historical evidence only and the next line must reopen through normal GitFlow from develop."
+    "packageVersion": "1.3.10",
+    "status": "marketplace-community-validation-preview-line",
+    "rationale": "Exact v1.3.9 remains fully published across GitLab authority, public GitHub, and VS Code Marketplace regular release; develop package line 1.3.10 is opened only for Marketplace community-validation pre-release publication with Windows proof disclosed as deferred."
   }
 }

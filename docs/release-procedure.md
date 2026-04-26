@@ -14,7 +14,7 @@
 - The current exact released line is `v1.3.9`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.3.9`.
-- The current develop package line on `develop` is `1.3.9`.
+- The current develop package line on `develop` is `1.3.10`.
 - The active exact release candidate line on `develop` is none.
 - The active release-candidate branch is none.
 - The active exact hotfix candidate line on `main` is none.
@@ -77,10 +77,16 @@
   contract phases; no production mutation is admitted in this slice.
 - The active governed release claim is Linux/Docker validated preview with
   Windows installed-user proof deferred.
-- The active Marketplace community-validation preview path is preparation-only:
+- The active Marketplace community-validation preview line is `1.3.10`.
+- The active Marketplace community-validation preview trigger is:
+  user said `publish it now`.
+- The active Marketplace community-validation preview status is published and
+  verified; the official gallery query plus `vsce show` read back `1.3.10`
+  with Marketplace `lastUpdated=2026-04-26T00:05:09.09Z`.
+- The active Marketplace community-validation preview path is admitted for
+  pre-release publication:
   Windows/LabVIEW settings may remain selectable with proof-status disclosure,
-  but no public GitHub or Marketplace mutation occurs until the user says
-  `publish it now`.
+  while public GitHub remains untouched by this preview act.
 - The retained Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The retained Windows x64 private-release packet is:
@@ -419,8 +425,8 @@ promotion still stays separate afterward.
       state.
     - Deferred Windows installed-user proof remains deferred; do not re-label
       Linux/Docker preview evidence as Windows/LabVIEW installed-user proof.
-    - Public GitHub and Marketplace remain untouched until the separate
-      instruction `publish it now` is present.
+    - Public GitHub remains untouched by this community-validation preview
+      act.
 16. Publish the exact VSIX to the VS Code Marketplace and retain the result.
     - The governed distribution surface is the VS Code Marketplace item
       `svelderrainruiz.vi-history-suite`.
@@ -537,14 +543,14 @@ promotion still stays separate afterward.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
 - The current published package line on `main` is `1.3.9`, and the current
-  develop package line on `develop` is also `1.3.9`; that closed exact line
+  develop package line on `develop` is `1.3.10`; the closed exact line
   must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
   exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
   `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, exact `v1.3.7`, or exact `v1.3.9` release
   evidence.
-- The current develop package line on `develop` is `1.3.9`, public GitHub
+- The current develop package line on `develop` is `1.3.10`, public GitHub
   `main` now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
   `312994104` is published, VS Code Marketplace serves `1.3.9`, and
   blocked `v1.3.8` historical incident evidence remains retained separately
