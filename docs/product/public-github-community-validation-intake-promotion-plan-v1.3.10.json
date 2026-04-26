@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/public-github-community-validation-intake-promotion-plan@v1",
-  "status": "prepared-awaiting-trigger",
+  "status": "published-and-verified",
   "preparedDate": "2026-04-25",
   "requiredTriggerPhrase": "publish the public intake now",
   "authority": {
@@ -14,18 +14,56 @@
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
     "remoteUrl": "https://github.com/svelderrainruiz/vi-history-suite.git",
     "branch": "main",
-    "localCheckoutPath": "/home/ghostshadow/Public/repos/vi-history-suite-github",
-    "currentPublishedHead": "fb0ef2b",
+    "localCheckoutPath": "/home/ghostshadow/Public/repos/vi-history-suite-github-public-intake-publish-KHCe2T",
+    "previousPublishedHead": "fb0ef2b",
+    "currentPublishedHead": "b56fde1",
+    "currentPublishedHeadSha": "b56fde158fe151a736fe72c833efdfd0874d8537",
     "currentPublishedLine": "v1.3.9"
   },
   "mutationState": {
-    "publicGitHubCheckoutWritten": false,
-    "publicGitHubRemotePushed": false,
-    "publicGitHubLabelsApplied": false,
+    "publicGitHubCheckoutWritten": true,
+    "publicGitHubRemotePushed": true,
+    "publicGitHubLabelsApplied": true,
     "publicGitHubReleaseMutated": false,
     "publicGitHubTagMutated": false,
     "publicWikiMutated": false,
     "marketplaceMutated": false
+  },
+  "publicationResult": {
+    "status": "published-and-verified",
+    "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
+    "sourceBranch": "public-intake/community-validation-v1.3.10",
+    "mergeCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
+    "mergeCommitShort": "b56fde1",
+    "mergedAt": "2026-04-26T02:46:35Z",
+    "publicationMode": "protected-branch-pull-request-squash",
+    "promotionReceiptPath": ".cache/public-github-community-validation-intake-promotion/latest/public-github-source-promotion.json",
+    "publicFilesVerified": [
+      ".github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
+      ".github/ISSUE_TEMPLATE/bug-report.yml",
+      ".github/ISSUE_TEMPLATE/labview-version-support.yml",
+      ".github/ISSUE_TEMPLATE/feature-request.yml",
+      ".github/ISSUE_TEMPLATE/config.yml",
+      ".github/labels.yml"
+    ],
+    "labelsApplied": true,
+    "postMergeChecks": [
+      {
+        "workflowName": "Public Linux Installed-User Smoke",
+        "runId": 24946590594,
+        "conclusion": "success"
+      },
+      {
+        "workflowName": "Public Source Package Preview",
+        "runId": 24946590598,
+        "conclusion": "success"
+      },
+      {
+        "workflowName": "Public Windows Installed-User Contract",
+        "runId": 24946590585,
+        "conclusion": "success"
+      }
+    ]
   },
   "scope": {
     "publicationKind": "intake-support-facade",

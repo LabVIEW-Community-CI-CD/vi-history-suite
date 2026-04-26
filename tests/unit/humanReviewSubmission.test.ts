@@ -198,15 +198,21 @@ describe('humanReviewSubmission', () => {
       machineId: 'author-designated-canonical-host',
       vscodeVersion: '1.100.0'
     };
-    await persistHumanReviewSubmission(workspaceStorageRoot, {
-      source: 'history-panel',
-      model: buildModel(),
-      reviewerName: 'Sergio Velderrain',
-      outcome: 'needs-more-review',
-      confidence: 'medium',
-      note: 'Baseline registration on the canonical host.',
-      machineFingerprint: canonicalFingerprint
-    });
+    await persistHumanReviewSubmission(
+      workspaceStorageRoot,
+      {
+        source: 'history-panel',
+        model: buildModel(),
+        reviewerName: 'Sergio Velderrain',
+        outcome: 'needs-more-review',
+        confidence: 'medium',
+        note: 'Baseline registration on the canonical host.',
+        machineFingerprint: canonicalFingerprint
+      },
+      {
+        now: () => '2026-04-25T19:56:00.000Z'
+      }
+    );
 
     const differentFingerprint = buildHostMachineFingerprint({
       machineId: 'machine-2',
@@ -216,15 +222,21 @@ describe('humanReviewSubmission', () => {
       osRelease: '10.0.26100',
       vscodeVersion: '1.100.0'
     });
-    const mismatch = await persistHumanReviewSubmission(workspaceStorageRoot, {
-      source: 'history-panel',
-      model: buildModel(),
-      reviewerName: 'Sergio Velderrain',
-      outcome: 'failed-human-review',
-      confidence: 'high',
-      note: 'This should fail closed because the host fingerprint changed.',
-      machineFingerprint: differentFingerprint
-    });
+    const mismatch = await persistHumanReviewSubmission(
+      workspaceStorageRoot,
+      {
+        source: 'history-panel',
+        model: buildModel(),
+        reviewerName: 'Sergio Velderrain',
+        outcome: 'failed-human-review',
+        confidence: 'high',
+        note: 'This should fail closed because the host fingerprint changed.',
+        machineFingerprint: differentFingerprint
+      },
+      {
+        now: () => '2026-04-25T19:57:00.000Z'
+      }
+    );
 
     expect(mismatch.outcome).toBe('canonical-machine-mismatch');
     if (mismatch.outcome !== 'canonical-machine-mismatch') {

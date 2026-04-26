@@ -50,13 +50,16 @@ final installed-user distribution surface.
 
 ## Public GitHub State
 
-- Public GitHub `main`: `fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a`
+- Public GitHub `main`: `b56fde158fe151a736fe72c833efdfd0874d8537`
 - Public GitHub tag: `v1.3.9`
 - Public GitHub release id: `312994104`
 - Public GitHub release URL:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`
 - Public GitHub release status: published, immutable, exact assets retained
 - Asset status: `published-complete`
+- Public GitHub source status: community-validation intake facade published on
+  `b56fde1`; exact release tag `v1.3.9` remains retained separately at
+  `fb0ef2b`
 
 ## Marketplace State
 
@@ -119,12 +122,18 @@ final installed-user distribution surface.
   `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`
 - Public GitHub intake promotion plan JSON:
   `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json`
-- Public GitHub intake promotion state: prepared and awaiting explicit
+- Public GitHub intake promotion state: published and verified on public
+  `main` commit `b56fde1`
+- Public GitHub intake publication PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/45`
+- Public GitHub intake labels: applied and verified
+- Public GitHub intake mutation: performed after explicit
   `publish the public intake now`
-- Public GitHub intake mutation: not performed; gated separately by public
-  facade promotion and explicit publication approval
-- Public GitHub mutation: not mutated by community-validation preview
-  publication
+- Public GitHub release/tag mutation: not performed by the intake publication
+- Public GitHub wiki mutation: not performed by the intake publication
+- Public GitHub mutation by community-validation preview publication:
+  Marketplace preview publication itself did not mutate public GitHub; the
+  later public intake publication is recorded separately here
 - VS Code Marketplace mutation: published community-validation preview
 
 ## Incident Classification

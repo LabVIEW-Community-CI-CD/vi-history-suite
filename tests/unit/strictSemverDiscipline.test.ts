@@ -138,7 +138,9 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- integration branch: `develop`');
     expect(readme).toContain('- protected exact-release line: `main`');
     expect(readme).toContain('- release-candidate branch family: `release/*`');
-    expect(readme).toContain('- separate public GitHub exact release publication: published; public `main`');
+    expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
+    expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
+    expect(readme).toContain('`b56fde1` for the `1.3.10` community-validation intake facade');
     expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.3.9`');
@@ -160,7 +162,9 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- integration branch: `develop`');
     expect(currentState).toContain('- protected exact-release line: `main`');
     expect(currentState).toContain('- release-candidate branch family: `release/*`');
-    expect(currentState).toContain('- separate public GitHub exact release publication: published; public `main`');
+    expect(currentState).toContain('- separate public GitHub exact release publication: published; public tag');
+    expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
+    expect(currentState).toContain('`b56fde1` for the `1.3.10` community-validation intake facade');
     expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(releaseProcedure).toContain('The current exact released line is `v1.3.9`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');

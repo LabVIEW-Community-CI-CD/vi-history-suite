@@ -24,6 +24,8 @@
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
     "publishedCommit": "fb0ef2b",
+    "currentPublicSourceHead": "b56fde1",
+    "currentPublicSourceHeadSha": "b56fde158fe151a736fe72c833efdfd0874d8537",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
     "status": "published-main-tag-and-release-v1.3.9"
   },

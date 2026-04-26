@@ -61,6 +61,9 @@ directly to the public GitHub source repo.
 - Exact public `main` now publishes the exact released `v1.3.9` source line at
   `fb0ef2b`, and the separate GitHub release record for `v1.3.9` is now
   published while VS Code Marketplace now serves `1.3.9`.
+- Current public `main` now publishes the later Marketplace
+  community-validation intake facade at `b56fde1`; this does not move the
+  exact `v1.3.9` public tag or mutate the public GitHub release.
 - The maintained public `develop` candidate for the retained `1.3.9`
   admission-matrix baseline now publishes `11051ac`, and the current retained
   published candidate heads `11051ac` / `141c39e` are now carried in
@@ -76,15 +79,14 @@ directly to the public GitHub source repo.
 - Public source publication shall be recorded in the dedicated public source
   publication ledger, not in the internal GitLab wiki ledger or the public
   GitHub wiki ledger.
-- Marketplace community-validation intake templates and labels may be prepared
-  under `public-github-source/` in GitLab authority, but they do not become
-  public GitHub behavior until the public facade promotion and publication
-  gates are explicitly run and approved.
-- The Marketplace community-validation intake promotion plan is the governing
-  handoff for that separate public act. It requires the explicit
-  `publish the public intake now` trigger, a clean target checkout, and a
-  separate label-application step because publishing `.github/labels.yml` does
-  not itself update repository labels.
+- Marketplace community-validation intake templates and labels are prepared
+  under `public-github-source/` in GitLab authority, and the `1.3.10`
+  community-validation intake has now been published through protected-branch
+  PR #45 after the explicit `publish the public intake now` trigger.
+- Future Marketplace community-validation intake promotion shall use the same
+  governing handoff: explicit trigger, clean target checkout, public
+  protected-branch PR, and a separate label-application step because publishing
+  `.github/labels.yml` does not itself update repository labels.
 - Exact public `main` shall foreground the host-default Windows local
   `LabVIEWCLI` contract plus bounded expert Docker, public
   devcontainer/Codespaces support, and the checkbox-selected two-commit

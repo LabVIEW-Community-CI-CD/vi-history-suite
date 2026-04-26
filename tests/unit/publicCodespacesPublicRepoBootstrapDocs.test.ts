@@ -35,7 +35,8 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('current exact released line: `v1.3.9`');
     expect(currentState).toContain('active exact release candidate line on `develop`: none');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
-    expect(currentState).toContain('separate public GitHub exact release publication: published; public `main`');
+    expect(currentState).toContain('separate public GitHub exact release publication: published; public tag');
+    expect(currentState).toContain('current public GitHub source publication: public `main` now publishes');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(currentState).toContain('none');
     expect(currentState).toContain('public_exact_pretag_proof');

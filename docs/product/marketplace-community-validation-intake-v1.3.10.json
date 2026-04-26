@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/marketplace-community-validation-intake@v1",
-  "status": "prepared-public-github-gated",
+  "status": "public-github-published-and-verified",
   "preparedDate": "2026-04-25",
   "marketplace": {
     "itemName": "svelderrainruiz.vi-history-suite",
@@ -63,7 +63,10 @@
     ]
   },
   "preparedPublicSourceArtifacts": {
-    "publicGitHubMutation": "not-performed",
+    "publicGitHubMutation": "performed-after-explicit-publish-the-public-intake-now",
+    "publicGitHubPublishedCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
+    "publicGitHubPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
+    "publicGitHubLabelsApplied": true,
     "promotionRequiredBeforePublicEffect": true,
     "issueTemplatePaths": [
       "public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
@@ -146,11 +149,19 @@
     }
   ],
   "publicGitHubBoundary": {
-    "status": "gated-separately",
+    "status": "public-github-published-and-verified",
     "promotionPlanPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md",
     "promotionPlanJsonPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json",
     "requiredPromotionTrigger": "publish the public intake now",
     "labelManifestRequiresSeparateApplication": true,
+    "publishedCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
+    "publishedShortCommit": "b56fde1",
+    "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
+    "labelsApplied": true,
+    "publicGitHubReleaseMutation": "not-performed",
+    "publicGitHubTagMutation": "not-performed",
+    "publicGitHubWikiMutation": "not-performed",
+    "marketplaceMutationByPublicIntake": "not-performed",
     "requiredBeforeMutation": [
       "npm run public:source:check",
       "governed public facade promotion decision",

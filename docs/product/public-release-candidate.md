@@ -4,7 +4,8 @@
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
-- Published public source commit: `fb0ef2b`
+- Published exact public source commit: `fb0ef2b`
+- Current public source head: `b56fde1`
 - Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
@@ -71,9 +72,12 @@
 
 ## Public Publication
 
-- Public GitHub `main` now publishes `fb0ef2b`, and the separate public source
-  publication is retained in
+- The exact `v1.3.9` public source publication is retained at `fb0ef2b`, and
+  the separate public source publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
+- Public GitHub `main` now publishes `b56fde1` for the later
+  community-validation intake facade, without moving public tag `v1.3.9` or
+  mutating GitHub release `312994104`.
 - Public GitHub tag `v1.3.9` is now live, and GitHub release `312994104` is
   now published separately at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`.
@@ -166,7 +170,7 @@
   exact authority `v1.3.9` is fully closed across public GitHub and VS Code
   Marketplace, `v1.3.8` remains retained as blocked historical publication
   evidence, and later SemVer openings now return to normal GitFlow.
-- Current retained transaction facts: public `main` `fb0ef2b`, public tag
+- Current retained exact transaction facts: public exact source `fb0ef2b`, public tag
   `v1.3.9`, GitHub release `312994104`, exact VSIX
   `vi-history-suite-1.3.9.vsix`, VSIX SHA-256
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`,

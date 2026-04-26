@@ -26,6 +26,7 @@ describe('public release candidate control surface', () => {
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: 'fb0ef2b',
+      currentPublicSourceHead: 'b56fde1',
       status: 'published-main-tag-and-release-v1.3.9'
     });
     expect(candidate.candidateReadiness).toMatchObject({
@@ -173,7 +174,8 @@ describe('public release candidate control surface', () => {
     ]);
 
     expect(candidateMarkdown).toContain('Version line: `1.3.9`');
-    expect(candidateMarkdown).toContain('Published public source commit: `fb0ef2b`');
+    expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
+    expect(candidateMarkdown).toContain('Current public source head: `b56fde1`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');
     expect(candidateMarkdown).toContain('`release-1.3.9-authority-candidate-package-line`');
     expect(candidateMarkdown).toContain(

@@ -86,6 +86,15 @@ describe('release publication state resolver', () => {
       assetCount: 2,
       assetStatus: 'published-complete'
     });
+    expect(state.publicGitHub).toMatchObject({
+      mainCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
+      sourcePublication: {
+        status: 'community-validation-intake-published-and-verified',
+        currentMainShortCommit: 'b56fde1',
+        exactReleaseRetainedCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/45'
+      }
+    });
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
       currentPublishedVersion: '1.3.10',
@@ -127,12 +136,16 @@ describe('release publication state resolver', () => {
       traceabilityMatrixPath: 'docs/requirements/rtm.csv',
       publicGitHubMutation: 'not-mutated-by-community-validation-preview-publication',
       marketplaceMutation: 'published-community-validation-preview',
-      intakeStatus: 'prepared-public-github-gated',
+      intakeStatus: 'public-github-published-and-verified',
       intakePacketPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.md',
       intakePacketJsonPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.json',
       preparedPublicIssueTemplatePath:
         'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
-      preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml'
+      preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml',
+      publicGitHubIntakePromotionPlanStatus: 'published-and-verified',
+      publicGitHubIntakePublishedShortCommit: 'b56fde1',
+      publicGitHubIntakeLabelsApplied: true,
+      publicGitHubReleaseMutation: 'not-performed-by-intake-publication'
     });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
@@ -146,7 +159,9 @@ describe('release publication state resolver', () => {
       'docs/product/marketplace-community-validation-intake-v1.3.10.md'
     );
     expect(stateDoc).toContain('public-github-source/.github/labels.yml');
-    expect(stateDoc).toContain('Public GitHub intake mutation: not performed');
+    expect(stateDoc).toContain('Public GitHub intake promotion state: published and verified');
+    expect(stateDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/45');
+    expect(stateDoc).toContain('Public GitHub release/tag mutation: not performed');
     expect(state.incident).toMatchObject({
       active: false,
       classification: 'externally-blocked-publication',

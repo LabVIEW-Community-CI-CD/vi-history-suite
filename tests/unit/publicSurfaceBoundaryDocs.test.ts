@@ -30,14 +30,21 @@ describe('public facade boundary docs', () => {
     expect(publicSourceMap).toContain('the separate GitHub release record for `v1.3.9` is now');
     expect(publicSourceMap).toContain('VS Code Marketplace now serves `1.3.9`');
     expect(publicSourceMap).toContain('Marketplace community-validation intake templates and labels');
-    expect(publicSourceMap).toContain('public facade promotion and publication');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `fb0ef2b`');
+    expect(publicSourceMap).toContain('protected-branch PR');
+    expect(publicSourceMap).toContain('b56fde1');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `b56fde1`');
     expect(publicSourceLedger).toContain('Public source v1.3.9 exact source publication');
+    expect(publicSourceLedger).toContain('Public source v1.3.10 community-validation intake publication');
     expect(publicSourceLedger).toContain('fb0ef2b');
+    expect(publicSourceLedger).toContain('b56fde1');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "fb0ef2b"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "b56fde1"');
     expect(publicSourceLedgerJson).toContain('"id": "public-source-v1-3-9-exact-source-publication"');
+    expect(publicSourceLedgerJson).toContain(
+      '"id": "public-source-v1-3-10-community-validation-intake-publication"'
+    );
     expect(publicSourceLedgerJson).toContain('"repoCommit": "fb0ef2b"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "b56fde1"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
   });
 });

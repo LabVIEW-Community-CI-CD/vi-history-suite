@@ -88,13 +88,18 @@ describe('vs code marketplace publication and installed-user docs', () => {
       marketplaceMutationAttemptedByPublication: true
     });
     expect(ledger.communityValidationIntake).toMatchObject({
-      status: 'prepared-public-github-gated',
+      status: 'public-github-published-and-verified',
       packetPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.md',
       packetJsonPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.json',
       preparedIssueTemplatePath:
         'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
       preparedLabelManifestPath: 'public-github-source/.github/labels.yml',
-      publicGitHubMutationAttempted: false,
+      publicGitHubPublishedShortCommit: 'b56fde1',
+      publicGitHubLabelsApplied: true,
+      publicGitHubMutationAttempted: true,
+      publicGitHubReleaseMutationAttempted: false,
+      publicGitHubTagMutationAttempted: false,
+      publicGitHubWikiMutationAttempted: false,
       marketplaceMutationAttempted: false,
       proofStatusPolicy: 'selectable-does-not-mean-maintainer-proven'
     });
@@ -112,7 +117,9 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledgerDoc).toContain('Target preview version: `1.3.10`');
     expect(ledgerDoc).toContain('user said `publish it now`');
     expect(ledgerDoc).toContain('## Community-Validation Intake');
-    expect(ledgerDoc).toContain('prepared, public GitHub gated');
+    expect(ledgerDoc).toContain('public GitHub published and verified');
+    expect(ledgerDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/45');
+    expect(ledgerDoc).toContain('b56fde158fe151a736fe72c833efdfd0874d8537');
     expect(ledgerDoc).toContain(
       'docs/product/marketplace-community-validation-intake-v1.3.10.md'
     );

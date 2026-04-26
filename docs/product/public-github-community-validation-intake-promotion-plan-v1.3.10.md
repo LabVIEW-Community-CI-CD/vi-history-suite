@@ -17,14 +17,20 @@ Machine-readable companion:
 
 ## Current Status
 
-- Plan status: prepared, awaiting explicit public publication trigger
+- Plan status: published and verified
 - Required trigger phrase: `publish the public intake now`
 - GitLab authority branch: `develop`
 - Target public repo: `https://github.com/svelderrainruiz/vi-history-suite`
 - Target public branch: `main`
-- Current public GitHub publication state: unchanged from retained public
-  source `v1.3.9` head `fb0ef2b`
-- Public GitHub mutation performed by this plan: no
+- Previous public GitHub source head: `fb0ef2b`
+- Current public GitHub source head:
+  `b56fde158fe151a736fe72c833efdfd0874d8537`
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/45`
+- Public GitHub issue templates and labels: published and verified
+- Public GitHub mutation performed by this plan: yes, after the explicit
+  trigger
+- Public GitHub release/tag/wiki mutation performed by this plan: no
 - Marketplace mutation performed by this plan: no
 
 The local public checkout observed while preparing this plan was
@@ -32,6 +38,41 @@ The local public checkout observed while preparing this plan was
 local changes in `tests/integration/runTests.ts` and `artifacts/`, so the
 future publish act must either clean that side work without reverting unrelated
 user work or bind a fresh public checkout explicitly.
+
+The publication used a fresh clean checkout at
+`/home/ghostshadow/Public/repos/vi-history-suite-github-public-intake-publish-KHCe2T`
+to avoid mutating or reverting that unrelated local side work.
+
+## Publication Result
+
+- Protected-branch PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/45`
+- PR source branch: `public-intake/community-validation-v1.3.10`
+- Public `main` commit:
+  `b56fde158fe151a736fe72c833efdfd0874d8537`
+- Merge time: `2026-04-26T02:46:35Z`
+- Publication mode: protected-branch pull request, squash merge
+- Promotion receipt:
+  `.cache/public-github-community-validation-intake-promotion/latest/public-github-source-promotion.json`
+- Public files verified on `main`:
+  - `.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
+  - `.github/ISSUE_TEMPLATE/bug-report.yml`
+  - `.github/ISSUE_TEMPLATE/labview-version-support.yml`
+  - `.github/ISSUE_TEMPLATE/feature-request.yml`
+  - `.github/ISSUE_TEMPLATE/config.yml`
+  - `.github/labels.yml`
+- Labels applied and verified:
+  `community-validation`, `marketplace-preview`, `windows-labview`,
+  `proof:reported`, `proof:reproduced`, `proof:deferred`, `needs-triage`,
+  `needs-reproduction`, `provider:host`, `provider:docker`, `labview:x64`,
+  `labview:x86`
+- Post-merge public checks on `b56fde1`:
+  - Public Linux Installed-User Smoke: success
+    (`24946590594`)
+  - Public Source Package Preview: success
+    (`24946590598`)
+  - Public Windows Installed-User Contract: success
+    (`24946590585`)
 
 ## Promotion Scope
 

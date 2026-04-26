@@ -38,7 +38,7 @@
   "publicGitHub": {
     "role": "downstream-public-distribution",
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "mainCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
+    "mainCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
     "tag": "v1.3.9",
     "tagRef": "refs/tags/v1.3.9",
     "tagObjectType": "commit",
@@ -61,6 +61,31 @@
       "tagLookupStatusCode": 200,
       "tagMatchesAuthority": true,
       "safeToPublish": false
+    },
+    "sourcePublication": {
+      "status": "community-validation-intake-published-and-verified",
+      "currentMainCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
+      "currentMainShortCommit": "b56fde1",
+      "exactReleaseRetainedCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
+      "publishedAt": "2026-04-26T02:46:35Z",
+      "postMergeChecks": [
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 24946590594,
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 24946590598,
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 24946590585,
+          "conclusion": "success"
+        }
+      ]
     }
   },
   "marketplace": {
@@ -119,16 +144,23 @@
     "marketplaceLastUpdated": "2026-04-26T00:05:09.09Z",
     "previewVsixSha256": "da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705",
     "verificationSurface": "official-gallery-extensionquery-and-vsce-show",
-    "intakeStatus": "prepared-public-github-gated",
+    "intakeStatus": "public-github-published-and-verified",
     "intakePacketPath": "docs/product/marketplace-community-validation-intake-v1.3.10.md",
     "intakePacketJsonPath": "docs/product/marketplace-community-validation-intake-v1.3.10.json",
     "preparedPublicIssueTemplatePath": "public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
     "preparedPublicLabelManifestPath": "public-github-source/.github/labels.yml",
-    "publicGitHubIntakePromotionPlanStatus": "prepared-awaiting-trigger",
+    "publicGitHubIntakePromotionPlanStatus": "published-and-verified",
     "publicGitHubIntakePromotionPlanPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md",
     "publicGitHubIntakePromotionPlanJsonPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json",
     "publicGitHubIntakePromotionRequiredTrigger": "publish the public intake now",
-    "publicGitHubIntakeMutation": "not-performed; gated separately by public facade promotion and explicit publication approval"
+    "publicGitHubIntakePublishedCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
+    "publicGitHubIntakePublishedShortCommit": "b56fde1",
+    "publicGitHubIntakePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
+    "publicGitHubIntakeLabelsApplied": true,
+    "publicGitHubIntakeMutation": "performed-after-explicit-publish-the-public-intake-now",
+    "publicGitHubReleaseMutation": "not-performed-by-intake-publication",
+    "publicGitHubTagMutation": "not-performed-by-intake-publication",
+    "publicGitHubWikiMutation": "not-performed-by-intake-publication"
   },
   "incident": {
     "active": false,
