@@ -390,6 +390,72 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('recognizes the Linux LabVIEW 2026 Community host runtime scan roots', async () => {
+    const result = await locateComparisonRuntime(
+      'linux',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            '/usr/local/natinst/LabVIEW-2026-64/labview',
+            '/usr/local/bin/LabVIEWCLI',
+            '/usr/local/natinst/share/nilvcli/LabVIEWCLI',
+            '/usr/local/bin/LVCompare'
+          ].includes(filePath)
+        )
+      }
+    );
+
+    expect(result.provider).toBe('host-native');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.labviewExe).toMatchObject({
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      bitness: 'x64'
+    });
+    expect(result.labviewCli?.path).toBe('/usr/local/bin/LabVIEWCLI');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'provider-request-host-selected-host-native',
+        detail:
+          'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+      }
+    ]);
+  });
+
+  it('filters Linux host runtime selection by requested LabVIEW version', async () => {
+    const result = await locateComparisonRuntime(
+      'linux',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2024',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            '/usr/local/natinst/LabVIEW-2026-64/labview',
+            '/usr/local/bin/LabVIEWCLI',
+            '/usr/local/bin/LVCompare'
+          ].includes(filePath)
+        )
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-exe-not-found');
+    expect(result.notes).toContain(
+      'No supported LabVIEW 2024 runtime was located for report generation.'
+    );
+  });
+
   it('fails closed for installed compare when multiple matching Windows LabVIEW executables satisfy the requested version and bitness', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
@@ -1602,10 +1668,19 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
   });
 
   it('uses the default filesystem access path when no path-exists dependency is injected', async () => {
-    const result = await locateComparisonRuntime('linux', {
-      labviewExePath: __filename,
-      labviewCliPath: __filename
-    });
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        labviewExePath: __filename,
+        labviewCliPath: __filename
+      },
+      {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
 
     expect(result.engine).toBe('labview-cli');
     expect(result.provider).toBe('host-native');

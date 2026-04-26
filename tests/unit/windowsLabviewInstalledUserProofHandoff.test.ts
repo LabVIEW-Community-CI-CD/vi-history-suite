@@ -38,20 +38,26 @@ describe('windows labview installed-user proof handoff', () => {
           marketplaceMutation: 'not-admitted'
         }),
         handoffClassification: expect.objectContaining({
-          activeReleaseClaimAfterHandoff: 'linux-docker-validated-preview',
-          windowsInstalledUserProofState: 'deferred'
+          activeReleaseClaimAfterHandoff:
+            'linux-docker-and-linux-host-labview-validated-preview',
+          windowsInstalledUserProofState: 'deferred',
+          linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
+          linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false
         })
       })
     );
     expect(machine.developPreview).toMatchObject(publicationState.developPreview);
     expect(machine.developPreview).toMatchObject({
-      classification: 'linux-docker-validated-preview',
-      stateRole: 'retained-provider-lane-packet-evidence',
+      classification: 'linux-docker-and-linux-host-labview-validated-preview',
+      stateRole: 'retained-provider-lane-and-linux-host-packet-evidence',
       previewEvidenceCommit: '21774a91710b71c6b63629cc0cf3cf37ce9abc0a',
       packetEvidencePipelineId: 2480195741,
       packetMergeTrackingPolicy:
         'do-not-track-packet-merge-commit; packet retention is governed by Git history and CI',
-      windowsInstalledUserProofDeferred: true
+      windowsInstalledUserProofDeferred: true,
+      linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
+      windowsInstalledUserProofState: 'community-deferred',
+      linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false
     });
     expect(machine.developPreview.currentDevelopCommit).toBeUndefined();
     expect(machine.developPreview.currentDevelopPipelineId).toBeUndefined();
@@ -94,7 +100,8 @@ describe('windows labview installed-user proof handoff', () => {
     expect(handoff).toContain('VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true');
     expect(handoff).toContain('windows_private_release_acceptance');
     expect(handoff).toContain('npm run vscode:marketplace:install-proof');
-    expect(handoff).toContain('preview VSIX is Linux/Docker validated only');
+    expect(handoff).toContain('preview VSIX is Linux/Docker and Linux host LabVIEW');
+    expect(handoff).toContain('Linux host LabVIEW proof may prove Windows installed-user behavior: no');
     expect(handoff).toContain('Public GitHub mutation: not admitted');
     expect(handoff).toContain('VS Code Marketplace mutation: not admitted');
 

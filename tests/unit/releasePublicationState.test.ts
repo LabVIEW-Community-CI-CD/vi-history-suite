@@ -46,8 +46,8 @@ describe('release publication state resolver', () => {
         '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     });
     expect(state.developPreview).toMatchObject({
-      classification: 'linux-docker-validated-preview',
-      stateRole: 'retained-provider-lane-packet-evidence',
+      classification: 'linux-docker-and-linux-host-labview-validated-preview',
+      stateRole: 'retained-provider-lane-and-linux-host-packet-evidence',
       headTrackingPolicy:
         'do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed',
       retainedPacketPath:
@@ -73,20 +73,66 @@ describe('release publication state resolver', () => {
         }),
         windowsInstalledUserProofState: 'community-deferred'
       }),
+      linuxHostLabviewEvidence: expect.objectContaining({
+        packetPath:
+          'docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md',
+        packetJsonPath:
+          'docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json',
+        schema: 'vi-history-suite/linux-host-labview-2026-create-comparison-proof@v1',
+        status: 'passed',
+        platform: 'linux',
+        runtime: expect.objectContaining({
+          errorCode: 'VIHS_OK',
+          validationOutcome: 'ready',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          labviewExePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+          labviewCliPath: '/usr/local/bin/LabVIEWCLI'
+        }),
+        fixture: expect.objectContaining({
+          repository: 'https://github.com/ni/labview-icon-editor',
+          viPath: 'resource/plugins/lv_icon.vi',
+          oldCommit: 'ab94f6c4b375062492036c63a6dab7ea8824748a',
+          newCommit: '8741bb08026c104100720c0ef48621e4ab7762fd'
+        }),
+        compare: expect.objectContaining({
+          operation: 'CreateComparisonReport',
+          exitCode: 0,
+          result: 'succeeded',
+          reportFile: 'diff-report-lv_icon.vi.html',
+          reportSizeBytes: 214412,
+          reportSha256:
+            '637055a103b25ecc77e4e308a6d216fc7adab0e1741038502bb53f129e5eb864'
+        }),
+        linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
+        windowsInstalledUserLabviewProofState: 'community-deferred',
+        linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
+        publicGitHubMutation: 'not-performed',
+        marketplaceMutation: 'not-performed'
+      }),
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
       previewVsixSha256: 'bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02',
-      publicationState: 'develop-provider-lane-evidence-only',
+      publicationState: 'develop-provider-lane-and-linux-host-labview-evidence-only',
+      linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
+      windowsInstalledUserProofState: 'community-deferred',
+      linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
       windowsInstalledUserProofDeferred: true,
       publicGitHubMutation: 'not-performed-by-this-packet',
       marketplaceMutation: 'not-performed-by-this-packet'
     });
     expect(stateDoc).toContain('## Develop Preview State');
-    expect(stateDoc).toContain('Linux/Docker validated preview');
+    expect(stateDoc).toContain('Linux/Docker and Linux host LabVIEW validated');
     expect(stateDoc).toContain('Windows installed-user LabVIEW proof community/deferred');
+    expect(stateDoc).toContain(
+      'HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json'
+    );
+    expect(stateDoc).toContain('Linux host proof may prove Windows installed-user LabVIEW behavior: no');
     expect(stateDoc).toContain(
       'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json'
     );
-    expect(stateDoc).toContain('Preview state role: retained provider-lane packet evidence');
+    expect(stateDoc).toContain(
+      'Preview state role: retained provider-lane and Linux host packet evidence'
+    );
     expect(stateDoc).toContain('Develop head tracking policy: do not persist the latest live');
     expect(stateDoc).toContain('Packet evidence pipeline: `2480195741` / `success`');
     expect(stateDoc).toContain('Public GitHub mutation: not performed by this packet');
