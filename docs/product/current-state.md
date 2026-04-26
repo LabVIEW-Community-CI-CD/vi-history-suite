@@ -256,6 +256,12 @@ Latest landed ship target:
   [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
 - current Linux/Docker preview release-control packet JSON:
   [linux-docker-preview-release-control-packet-2026-04-25.json](./linux-docker-preview-release-control-packet-2026-04-25.json)
+- governed Linux Docker provider lane:
+  `npm run linux:docker:provider:lane` / GitLab `linux_docker_provider_lane`
+  now retain `linux-docker-provider-lane-evidence/` with Docker OSType
+  `linux`, `vihs`-persisted `docker` / `2026` / `x64` settings, and
+  `runtimeProvider=linux-container` / `runtimeEngine=labview-cli` validation;
+  Windows installed-user LabVIEW proof remains community/deferred evidence
 - current no-mutation Windows/LabVIEW installed-user proof handoff:
   [windows-labview-installed-user-proof-handoff-2026-04-25.md](./windows-labview-installed-user-proof-handoff-2026-04-25.md)
 - current no-mutation Windows/LabVIEW installed-user proof handoff JSON:
@@ -403,6 +409,12 @@ Latest landed ship target:
     the active develop/package preview admission is
     `ubuntu_docker_runner_admission`, which proves the Linux Docker runner
     surface and does not claim Windows installed-user proof
+  - the active develop/package preview package lane is now additionally gated
+    by `linux_docker_provider_lane`, which proves this Ubuntu
+    Docker Desktop/Docker Engine host can persist the `docker` / `2026` /
+    `x64` runtime bundle through `vihs` and validate it as
+    `linux-container` / `labview-cli`; this still does not claim native
+    Windows installed-user LabVIEW proof
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs

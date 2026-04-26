@@ -491,6 +491,30 @@ public_exact_pretag_proof:
     - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
 
+linux_docker_provider_lane:
+  stage: test
+  tags:
+    - linux
+    - x64
+    - docker
+    - assurance
+    - private-release
+  script:
+    - npm ci
+    - npm run linux:docker:provider:lane -- --evidence-dir linux-docker-provider-lane-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - linux-docker-provider-lane-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
 windows_private_release_acceptance:
   stage: test
   tags:
@@ -529,6 +553,7 @@ package_extension_preview:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
+    - linux_docker_provider_lane
     # - windows_private_release_acceptance remains the retained Windows proof
     #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
     #   Preview packaging is therefore Linux/Docker validated and does not claim
@@ -588,6 +613,7 @@ release_extension:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
+    - linux_docker_provider_lane
     # - windows_private_release_acceptance remains the retained Windows proof
     #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
     #   Exact packaging from this lane is Linux/Docker validated and does not

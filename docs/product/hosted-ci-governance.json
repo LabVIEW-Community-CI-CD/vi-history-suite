@@ -445,6 +445,17 @@
       },
       "package_extension_preview": {
         "classification": "preview-package-lane",
+        "requiredNeeds": [
+          "assurance_release_gate",
+          "assurance_26514_authority",
+          "assurance_requirements_quality",
+          "assurance_external_user_information",
+          "test_extension",
+          "linux_docker_provider_lane"
+        ],
+        "optionalNeeds": [
+          "windows_private_release_acceptance"
+        ],
         "admittedRefs": [
           "merge_request_event",
           "develop",
@@ -469,9 +480,47 @@
       },
       "release_extension": {
         "classification": "exact-release-only",
+        "requiredNeeds": [
+          "assurance_release_gate",
+          "assurance_26514_authority",
+          "assurance_requirements_quality",
+          "assurance_external_user_information",
+          "test_extension",
+          "linux_docker_provider_lane"
+        ],
+        "optionalNeeds": [
+          "windows_private_release_acceptance"
+        ],
         "admittedRefs": [
           "vX.Y.Z-tags"
         ]
+      },
+      "linux_docker_provider_lane": {
+        "classification": "required-linux-docker-provider-validation",
+        "stage": "test",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ],
+        "packageScript": "npm run linux:docker:provider:lane",
+        "evidenceRoot": "linux-docker-provider-lane-evidence/",
+        "evidenceSchema": "vi-history-suite/linux-docker-provider-lane@v1",
+        "claimScope": "linux-docker-validated-preview",
+        "validatedFacts": [
+          "docker-info-ostype-linux",
+          "vihs-provider-docker-labview-2026-x64-settings",
+          "runtimeValidationOutcome=ready",
+          "runtimeProvider=linux-container",
+          "runtimeEngine=labview-cli",
+          "runtimeBlockedReason=<none>"
+        ],
+        "windowsLabviewProofIncluded": false,
+        "windowsInstalledUserProofDeferred": true,
+        "failurePolicy": "fail-closed-before-preview-or-exact-package-artifacts-when-the-governed-linux-docker-provider-cannot-be-validated"
       },
       "ubuntu_docker_runner_admission": {
         "classification": "required-linux-docker-preview-admission",
@@ -584,6 +633,7 @@
     "summary": "The governed develop/package preview claim is Linux/Docker validated on the self-hosted Ubuntu runner; Windows installed-user and Windows/LabVIEW proof are deferred until a real Windows host exists.",
     "verifiedOnThisMachine": [
       "ubuntu-docker-runner-admission",
+      "linux-docker-provider-lane",
       "linux-assurance-runner-lane",
       "docs-workbench-gate",
       "test-extension-linux-ci",

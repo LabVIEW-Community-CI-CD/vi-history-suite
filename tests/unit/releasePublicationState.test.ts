@@ -58,6 +58,13 @@ describe('release publication state resolver', () => {
       packetEvidencePipelineStatus: 'success',
       retainedPacketMergeCommit: 'ebaf84eab1d779d607f4dcb6e58e990d2946779f',
       retainedPacketMergePipelineId: 2479875767,
+      providerLaneEvidence: expect.objectContaining({
+        packageScript: 'npm run linux:docker:provider:lane',
+        gitLabJob: 'linux_docker_provider_lane',
+        evidenceRoot: 'linux-docker-provider-lane-evidence/',
+        schema: 'vi-history-suite/linux-docker-provider-lane@v1',
+        windowsInstalledUserProofState: 'community-deferred'
+      }),
       retainedPacketMergePipelineStatus: 'success',
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.9.vsix',
       previewVsixSha256: '7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470',

@@ -192,6 +192,13 @@ Job ownership:
   `governed-runner-admission-evidence/` with runner, Docker, Node, npm, and
   explicit Windows-proof-deferred facts before docs, assurance, test, package,
   and release jobs run
+- `linux_docker_provider_lane`: blocking Linux Docker Desktop/Docker Engine
+  provider lane on merge requests, governed branch lanes, and exact tags; it
+  runs `npm run linux:docker:provider:lane`, retains
+  `linux-docker-provider-lane-evidence/`, proves the persisted
+  `docker` / `2026` / `x64` settings bundle validates as
+  `runtimeProvider=linux-container` with `runtimeEngine=labview-cli`, and
+  records Windows/LabVIEW installed-user proof as community/deferred evidence
 - `governed_runner_admission`: deferred Windows-host `admission` stage lane; it
   runs only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true` and still uses
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
@@ -252,18 +259,19 @@ Job ownership:
   exact tags; it now depends on the blocking Linux assurance lanes
   `assurance_release_gate`, `assurance_26514_authority`,
   `assurance_requirements_quality`, and
-  `assurance_external_user_information`, plus `test_extension`; the deferred
-  `windows_private_release_acceptance` need remains optional unless explicitly
-  enabled, and there is still no generic `feature/*` push lane
+  `assurance_external_user_information`, plus `test_extension` and
+  `linux_docker_provider_lane`; the deferred `windows_private_release_acceptance`
+  need remains optional unless explicitly enabled, and there is still no
+  generic `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
 - `release_extension`: exact-version release lane on exact tags only, now
-  blocked on the same blocking Linux assurance lanes and `test_extension`; any
-  exact package produced without the deferred Windows lane remains a
-  Linux/Docker validated artifact and cannot be used as Windows installed-user
-  proof
+  blocked on the same blocking Linux assurance lanes, `test_extension`, and
+  `linux_docker_provider_lane`; any exact package produced without the deferred
+  Windows lane remains a Linux/Docker validated artifact and cannot be used as
+  Windows installed-user proof
 
 Design-gate boundary:
 

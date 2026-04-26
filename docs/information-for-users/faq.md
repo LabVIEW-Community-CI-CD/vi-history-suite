@@ -86,10 +86,11 @@ In supported Windows PowerShell sessions and admitted VS Code terminals, type
   different value.
 - Host is the default provider and supports LabVIEW years `2020` through `2026`
   when that exact installation is present on the current machine.
-- Docker is the bounded expert path: `2026` / `x64` is the supported
-  Windows-container route; Docker years before `2026` are unsupported;
-  `docker/linux` is selectable for `2026` only but is not currently
-  implemented; `host/linux` is not currently implemented.
+- Docker is the bounded expert path: `2026` / `x64` is supported for
+  `docker/windows` on Windows Docker Desktop Windows-container hosts and for
+  `docker/linux` on Linux Docker Desktop/Docker Engine hosts; Docker years
+  before `2026` are unsupported, and `host/linux` is not currently
+  implemented.
 - For non-interactive scripting, use the exact command shape:
 
 `vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`

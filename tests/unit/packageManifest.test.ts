@@ -290,6 +290,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
     );
+    expect(manifest.scripts?.['linux:docker:provider:lane']).toBe(
+      'npm run compile && node scripts/runLinuxDockerProviderLane.js'
+    );
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicLinuxInstalledUserSmoke.js'
     );

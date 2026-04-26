@@ -85,8 +85,10 @@ Installed-user help:
 - host Windows LabVIEW years `2020` through `2026` are selectable when they
   are installed locally
 - `docker/windows` is supported for `2026` `x64` only
+- `docker/linux` is supported for `2026` `x64` on Linux Docker
+  Desktop/Docker Engine hosts
 - Docker years before `2026` are unsupported
-- `docker/linux` for `2026` and `host/linux` are not currently implemented
+- `host/linux` is not currently implemented
 - blocked or unsupported paths fail closed with explicit next-step guidance
 
 ## Proof Status And Community Validation

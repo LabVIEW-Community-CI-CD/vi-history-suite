@@ -318,6 +318,9 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['docs:ci:internal:core']).toBe(
       'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
     );
+    expect(manifest.scripts?.['linux:docker:provider:lane']).toBe(
+      'npm run compile && node scripts/runLinuxDockerProviderLane.js'
+    );
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicLinuxInstalledUserSmoke.js'
     );

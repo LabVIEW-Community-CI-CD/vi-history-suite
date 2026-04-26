@@ -658,7 +658,7 @@ describe('localRuntimeSettingsCli', () => {
     });
   });
 
-  it('surfaces unsupported and not-implemented docker paths during interactive vihs selection', async () => {
+  it('surfaces unsupported Docker years and blocks docker/linux on Windows hosts during interactive vihs selection', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-docker-'));
     tempDirectories.push(tempRoot);
 
@@ -669,7 +669,7 @@ describe('localRuntimeSettingsCli', () => {
       () => tempRoot
     );
     const stdout: string[] = [];
-    const prompts = ['docker', 'linux', '2024', '2026', '', 'windows', '', ''];
+    const prompts = ['docker', 'linux', 'windows', '2024', '2026', ''];
 
     const result = await runInteractiveLocalRuntimeSettingsCli({
       platform: 'win32',
@@ -698,11 +698,71 @@ describe('localRuntimeSettingsCli', () => {
     expect(result.runtimeValidationOutcome).toBe('ready');
     expect(result.runtimeProvider).toBe('windows-container');
     expect(stdout.join('')).toContain(
-      'Docker 2024 is unsupported. Currently implemented: host/windows 2020-2026 and docker/windows 2026 x64.'
+      'docker/linux requires a Linux Docker Desktop/Docker Engine host. On Windows select docker/windows 2026 x64.'
     );
     expect(stdout.join('')).toContain(
-      'docker/linux is not currently implemented. Currently implemented: host/windows 2020-2026 and docker/windows 2026 x64.'
+      'Docker 2024 is unsupported. Currently implemented: host/windows 2020-2026, docker/windows 2026 x64 on Windows Docker Desktop Windows-container hosts, and docker/linux 2026 x64 on Linux Docker Desktop/Docker Engine hosts.'
     );
+    expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
+      'viHistorySuite.runtimeProvider': 'docker',
+      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewBitness': 'x64'
+    });
+  });
+
+  it('admits docker/linux 2026 x64 on Linux Docker hosts during interactive vihs selection', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-linux-docker-'));
+    tempDirectories.push(tempRoot);
+
+    const configRoot = path.join(tempRoot, '.config');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'linux',
+      { XDG_CONFIG_HOME: configRoot },
+      () => tempRoot
+    );
+    const stdout: string[] = [];
+    const prompts = ['docker', 'linux', '', ''];
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      platform: 'linux',
+      env: {
+        XDG_CONFIG_HOME: configRoot
+      },
+      homedir: () => tempRoot,
+      stdout: {
+        write(text: string) {
+          stdout.push(text);
+        }
+      },
+      promptLine: async () => prompts.shift() ?? '',
+      locateRuntime: async (platform, settings) => {
+        expect(platform).toBe('linux');
+        expect(settings).toEqual(
+          expect.objectContaining({
+            requestedProvider: 'docker',
+            requireVersionAndBitness: true,
+            labviewVersion: '2026',
+            bitness: 'x64'
+          })
+        );
+        return {
+          platform: 'linux',
+          requestedProvider: settings.requestedProvider,
+          bitness: settings.bitness ?? 'x64',
+          provider: 'linux-container',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        };
+      }
+    });
+
+    expect(result.runtimeValidationOutcome).toBe('ready');
+    expect(result.runtimeProvider).toBe('linux-container');
+    expect(stdout.join('')).toContain('runtimeValidationOutcome=ready');
+    expect(stdout.join('')).toContain('runtimeProvider=linux-container');
+    expect(stdout.join('')).not.toContain('docker/linux is not currently implemented');
     expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
       'viHistorySuite.runtimeProvider': 'docker',
       'viHistorySuite.labviewVersion': '2026',

@@ -132,8 +132,10 @@
 - The governed external assurance lane for that prep sequence is:
   - `docs/product/linux-assurance-runner-lane.md`
   - fail-fast Linux/Docker admission job `ubuntu_docker_runner_admission`
+  - blocking Linux Docker provider job `linux_docker_provider_lane`
   - deferred Windows/LabVIEW admission job `governed_runner_admission`
   - fail-fast admission evidence root `governed-runner-admission-evidence/`
+  - provider-lane evidence root `linux-docker-provider-lane-evidence/`
   - blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
     `assurance_requirements_quality`, and
     `assurance_external_user_information`
@@ -335,6 +337,12 @@ promotion still stays separate afterward.
      `admission` stage for Linux/Docker preview and retains
      `governed-runner-admission-evidence/`; do not treat later pending stages
      as trustworthy until that admission lane is green
+   - the blocking `linux_docker_provider_lane` runs
+     `npm run linux:docker:provider:lane` and retains
+     `linux-docker-provider-lane-evidence/`; preview and exact package
+     artifacts are not admitted unless `vihs` validates the `docker` /
+     `2026` / `x64` bundle as `linux-container` / `labview-cli` on the Linux
+     Docker Desktop/Docker Engine host
    - the Windows/LabVIEW `governed_runner_admission` lane is deferred unless
      `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
    - the blocking Linux assurance jobs now run through the repo-owned

@@ -367,6 +367,7 @@
       ],
       "requiredChecks": [
         "ubuntu_docker_runner_admission",
+        "linux_docker_provider_lane",
         "public_exact_pretag_proof",
         "docs_continuous_integration",
         "docs_public_continuous_integration",
@@ -522,6 +523,15 @@
           "evidenceRoot": "governed-runner-admission-evidence/",
           "claimScope": "linux-docker-validated-preview",
           "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages-on-linux-docker-preview-drift"
+        },
+        "linux_docker_provider_lane": {
+          "stage": "test",
+          "packageScript": "npm run linux:docker:provider:lane",
+          "evidenceRoot": "linux-docker-provider-lane-evidence/",
+          "evidenceSchema": "vi-history-suite/linux-docker-provider-lane@v1",
+          "claimScope": "linux-docker-validated-preview",
+          "failurePolicy": "fail-closed-before-preview-or-exact-package-artifacts-when-the-governed-linux-docker-provider-cannot-be-validated",
+          "windowsInstalledUserProofDeferred": true
         }
       },
       "laneResponsibilities": {
@@ -714,6 +724,7 @@
     "summary": "The governed develop/package preview claim is Linux/Docker validated on the self-hosted Ubuntu runner; Windows installed-user and Windows/LabVIEW proof are deferred until a real Windows host exists.",
     "verifiedOnThisMachine": [
       "ubuntu-docker-runner-admission",
+      "linux-docker-provider-lane",
       "linux-assurance-runner-lane",
       "docs-workbench-gate",
       "test-extension-linux-ci",

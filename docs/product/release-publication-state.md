@@ -43,6 +43,15 @@ final installed-user distribution surface.
   `preview-evidence/vi-history-suite-1.3.9.vsix`
 - Preview VSIX SHA-256:
   `7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470`
+- Linux Docker provider evidence:
+  `npm run linux:docker:provider:lane` / GitLab
+  `linux_docker_provider_lane`, retaining
+  `linux-docker-provider-lane-evidence/` with schema
+  `vi-history-suite/linux-docker-provider-lane@v1`
+- Linux Docker provider validated facts: Docker OSType `linux`, persisted
+  `docker` / `2026` / `x64` settings through `vihs`,
+  `runtimeValidationOutcome=ready`, `runtimeProvider=linux-container`,
+  `runtimeEngine=labview-cli`, and `runtimeBlockedReason=<none>`
 - Preview publication state: non-production integration evidence only
 - Windows proof state: Windows installed-user proof deferred
 - Public GitHub mutation: not admitted by this preview claim
