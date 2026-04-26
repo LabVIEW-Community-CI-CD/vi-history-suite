@@ -289,12 +289,15 @@ Authority release facts:
 - Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json` is deferred on this
   Ubuntu-only machine unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
-- separate public GitHub exact release publication: published; public `main`
-  now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
-  `312994104` is published at
+- separate public GitHub exact release publication: published; public tag
+  `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is
+  published at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
+- current public GitHub source publication: public `main` now publishes
+  `b56fde1` for the `1.3.10` community-validation intake facade while the
+  exact `v1.3.9` tag/release remains retained separately
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
   `1.3.10`

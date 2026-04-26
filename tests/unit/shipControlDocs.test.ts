@@ -219,8 +219,10 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.json');
     expect(readme).toContain('private-v1.3.1-windows-x64');
     expect(readme).toContain('.cache/private-release-publish/latest/private-release-publish.json');
-    expect(readme).toContain('- separate public GitHub exact release publication: published; public `main`');
+    expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(readme).toContain('releases/tag/v1.3.9');
+    expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
+    expect(readme).toContain('`b56fde1` for the `1.3.10` community-validation intake facade');
     expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
@@ -273,8 +275,10 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)');
     expect(currentState).toContain('private-v1.3.1-windows-x64');
     expect(currentState).toContain('.cache/private-release-publish/latest/private-release-publish.json');
-    expect(currentState).toContain('- separate public GitHub exact release publication: published; public `main`');
+    expect(currentState).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(currentState).toContain('releases/tag/v1.3.9');
+    expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
+    expect(currentState).toContain('`b56fde1` for the `1.3.10` community-validation intake facade');
     expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');

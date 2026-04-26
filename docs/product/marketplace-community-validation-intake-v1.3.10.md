@@ -158,11 +158,22 @@ Required labels:
 
 ## Public GitHub Boundary
 
-Prepared files under `public-github-source/` are source-of-truth inputs for a
-future public facade publication. They do not update
-`github.com/svelderrainruiz/vi-history-suite` by themselves.
+Prepared files under `public-github-source/` were source-of-truth inputs for
+the public facade publication. They were published to public GitHub through
+protected-branch PR #45 after the explicit `publish the public intake now`
+trigger.
 
-Public GitHub mutation remains gated by:
+The completed public intake publication evidence is:
+
+- Public PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/45`
+- Public `main` commit:
+  `b56fde158fe151a736fe72c833efdfd0874d8537`
+- Public labels: applied and verified
+- Public GitHub release/tag/wiki mutation: not performed
+- VS Code Marketplace mutation by this intake publication: not performed
+
+Future Public GitHub intake mutation remains gated by:
 
 1. `npm run public:source:check`
 2. a governed public facade promotion decision
@@ -171,13 +182,9 @@ Public GitHub mutation remains gated by:
 4. a separate explicit `publish the public intake now` approval
 5. post-publication verification of the public repo templates and labels
 
-Until those gates run and are approved, public users may still see the older
-issue templates on GitHub even though this GitLab authority branch has prepared
-the next intake model.
-
-The label manifest is also only a source artifact until the public promotion
-act applies or updates repository labels through GitHub; pushing
-`.github/labels.yml` alone does not update live public GitHub labels.
+The label manifest remains the authority source for future label changes, but
+live public labels are updated only when the public promotion act applies them
+through GitHub.
 
 ## Release-Control Evidence
 

@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "fb0ef2b",
+  "publishedHeadCommit": "b56fde1",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -460,6 +460,45 @@
         "docs/product/public-github-source-publication-ledger.md",
         "docs/product/release-publication-state.md",
         "package.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-10-community-validation-intake-publication",
+      "title": "Public source v1.3.10 community-validation intake publication",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-25",
+      "publishedAt": "2026-04-26T02:46:35Z",
+      "repoCommit": "b56fde1",
+      "repoCommitSha": "b56fde158fe151a736fe72c833efdfd0874d8537",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
+      "publicationMode": "protected-branch-pull-request-squash",
+      "postMergeChecks": [
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 24946590594,
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 24946590598,
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 24946590585,
+          "conclusion": "success"
+        }
+      ],
+      "labelsApplied": true,
+      "primaryAuthority": [
+        "public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
+        "public-github-source/.github/labels.yml",
+        "public-github-source/README.md",
+        "public-github-source/SUPPORT.md",
+        "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md",
+        "docs/product/marketplace-community-validation-intake-v1.3.10.md",
+        "docs/product/release-publication-state.md"
       ]
     }
   ]

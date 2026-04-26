@@ -70,7 +70,7 @@ The machine-readable companion surface for this ledger is:
 
 ## Community-Validation Intake
 
-- Status: prepared, public GitHub gated
+- Status: public GitHub published and verified
 - Intake packet:
   `docs/product/marketplace-community-validation-intake-v1.3.10.md`
 - Intake packet JSON:
@@ -85,7 +85,13 @@ The machine-readable companion surface for this ledger is:
   `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json`
 - Public GitHub intake promotion trigger:
   `publish the public intake now`
-- Public GitHub mutation attempted: false
+- Public GitHub intake publication PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/45`
+- Public GitHub intake published commit:
+  `b56fde158fe151a736fe72c833efdfd0874d8537`
+- Public GitHub intake labels applied: true
+- Public GitHub mutation attempted: true
+- Public GitHub release/tag/wiki mutation attempted: false
 - Marketplace mutation attempted by intake preparation: false
 - Proof-status policy: selectable does not mean maintainer-proven
 - Triage loop:
@@ -129,9 +135,8 @@ The machine-readable companion surface for this ledger is:
 - After the mutating Marketplace publication act, the official gallery
   extension query shall verify that the live Marketplace version matches the
   exact release before the final publication act is retained.
-- Community-validation preview intake is separate from public GitHub facade
-  publication. It may prepare issue templates, labels, proof-status wording,
-  and triage loops for validation reports, but public GitHub template and
-  label mutation remains a separately gated act. The separate public intake
-  promotion plan shall be followed before publishing those templates or labels
-  to public GitHub.
+- Community-validation preview intake is separate from Marketplace preview
+  publication. The public GitHub intake facade has now been published through
+  the separate public intake promotion plan and protected-branch PR #45. Future
+  intake template or label changes shall follow the same separate public
+  promotion path.

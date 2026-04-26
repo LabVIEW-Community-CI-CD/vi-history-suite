@@ -25,7 +25,7 @@ describe('Marketplace community-validation intake packet', () => {
 
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/marketplace-community-validation-intake@v1',
-      status: 'prepared-public-github-gated',
+      status: 'public-github-published-and-verified',
       marketplace: {
         itemName: 'svelderrainruiz.vi-history-suite',
         communityValidationVersion: '1.3.10',
@@ -41,7 +41,9 @@ describe('Marketplace community-validation intake packet', () => {
           'do-not-use-linux-docker-evidence-as-windows-labview-installed-user-proof'
       },
       preparedPublicSourceArtifacts: {
-        publicGitHubMutation: 'not-performed',
+        publicGitHubMutation: 'performed-after-explicit-publish-the-public-intake-now',
+        publicGitHubPublishedCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
+        publicGitHubLabelsApplied: true,
         promotionRequiredBeforePublicEffect: true,
         labelManifestPath: 'public-github-source/.github/labels.yml'
       }
@@ -54,7 +56,9 @@ describe('Marketplace community-validation intake packet', () => {
     expect(packet).toContain('7. Run `vihs --validate` and retain the complete output.');
     expect(packet).toContain('Selectable does not mean maintainer-proven');
     expect(packet).toContain('Do not say that Linux/Docker evidence proves Windows/LabVIEW');
-    expect(packet).toContain('Public GitHub mutation: gated separately');
+    expect(packet).toContain('Public GitHub Boundary');
+    expect(packet).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/45');
+    expect(packet).toContain('b56fde158fe151a736fe72c833efdfd0874d8537');
 
     expect(packetJson.userValidationInstructions.steps).toEqual(
       expect.arrayContaining([
@@ -75,15 +79,19 @@ describe('Marketplace community-validation intake packet', () => {
     );
 
     expect(releaseState.marketplaceCommunityValidationPreview).toMatchObject({
-      intakeStatus: 'prepared-public-github-gated',
+      intakeStatus: 'public-github-published-and-verified',
       intakePacketPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.md',
       preparedPublicIssueTemplatePath:
         'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
-      preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml'
+      preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml',
+      publicGitHubIntakePublishedShortCommit: 'b56fde1',
+      publicGitHubIntakeLabelsApplied: true
     });
     expect(ledger.communityValidationIntake).toMatchObject({
-      status: 'prepared-public-github-gated',
-      publicGitHubMutationAttempted: false,
+      status: 'public-github-published-and-verified',
+      publicGitHubMutationAttempted: true,
+      publicGitHubPublishedShortCommit: 'b56fde1',
+      publicGitHubLabelsApplied: true,
       marketplaceMutationAttempted: false,
       proofStatusPolicy: 'selectable-does-not-mean-maintainer-proven'
     });

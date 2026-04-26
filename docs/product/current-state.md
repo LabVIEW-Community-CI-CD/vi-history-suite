@@ -247,9 +247,11 @@ Latest landed ship target:
   plan:
   [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
 - current public GitHub community-validation intake publication state:
-  prepared in GitLab authority and awaiting explicit `publish the public intake
-  now`; no public GitHub source, label, release, tag, wiki, or Marketplace
-  mutation is admitted by the plan itself
+  published and verified on public `main`
+  `b56fde158fe151a736fe72c833efdfd0874d8537` through PR #45 after the
+  explicit `publish the public intake now`; public labels were applied, while
+  public GitHub release/tag/wiki and Marketplace mutation were not performed
+  by the public intake publication
 - current Linux/Docker preview release-control packet:
   [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
 - current Linux/Docker preview release-control packet JSON:
@@ -272,14 +274,17 @@ Latest landed ship target:
 - Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json` is deferred on this
   Ubuntu-only machine unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
-- separate public GitHub exact release publication: published; public `main`
-  now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
-  `312994104` is published at
+- separate public GitHub exact release publication: published; public tag
+  `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is
+  published at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
   the uploaded exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`, the
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.9`
+- current public GitHub source publication: public `main` now publishes
+  `b56fde1` for the `1.3.10` community-validation intake facade while the
+  exact `v1.3.9` tag/release remains retained separately
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
   `1.3.10`
@@ -421,8 +426,9 @@ Latest landed ship target:
 - remaining blockers: none on the exact `v1.3.9` publication path; authority
   exact `v1.3.9` is now tagged on `main`
   `2f86063a35926fa67963af5ccd47e971157927c6`, public GitHub `main` now
-  publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release `312994104`
-  is published with manifest-matched assets, the official gallery extension
+  publishes `b56fde1` for the community-validation intake facade, public tag
+  `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is published
+  with manifest-matched assets, the official gallery extension
   query now verifies Marketplace version `1.3.9` for
   `svelderrainruiz.vi-history-suite`, the maintained public `develop`
   candidate still publishes `11051ac`, the maintained public wiki head still

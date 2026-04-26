@@ -18,7 +18,7 @@ function collapseWhitespace(text: string): string {
 }
 
 describe('public GitHub community-validation intake promotion plan', () => {
-  it('retains a separately gated no-mutation plan for public intake templates and labels', () => {
+  it('retains the verified public intake publication result and remaining no-mutation boundaries', () => {
     const plan = readText(
       'docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md'
     );
@@ -41,7 +41,7 @@ describe('public GitHub community-validation intake promotion plan', () => {
 
     expect(planJson).toMatchObject({
       schema: 'vi-history-suite/public-github-community-validation-intake-promotion-plan@v1',
-      status: 'prepared-awaiting-trigger',
+      status: 'published-and-verified',
       requiredTriggerPhrase: 'publish the public intake now',
       authority: {
         system: 'gitlab',
@@ -53,18 +53,27 @@ describe('public GitHub community-validation intake promotion plan', () => {
         repoUrl: 'https://github.com/svelderrainruiz/vi-history-suite',
         remoteUrl: 'https://github.com/svelderrainruiz/vi-history-suite.git',
         branch: 'main',
-        currentPublishedHead: 'fb0ef2b',
+        previousPublishedHead: 'fb0ef2b',
+        currentPublishedHead: 'b56fde1',
+        currentPublishedHeadSha: 'b56fde158fe151a736fe72c833efdfd0874d8537',
         currentPublishedLine: 'v1.3.9'
       },
       mutationState: {
-        publicGitHubCheckoutWritten: false,
-        publicGitHubRemotePushed: false,
-        publicGitHubLabelsApplied: false,
+        publicGitHubCheckoutWritten: true,
+        publicGitHubRemotePushed: true,
+        publicGitHubLabelsApplied: true,
         publicGitHubReleaseMutated: false,
         publicGitHubTagMutated: false,
         publicWikiMutated: false,
         marketplaceMutated: false
       }
+    });
+    expect(planJson.publicationResult).toMatchObject({
+      status: 'published-and-verified',
+      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/45',
+      mergeCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
+      mergeCommitShort: 'b56fde1',
+      labelsApplied: true
     });
 
     expect(planJson.scope.intakeSpecificSources).toEqual(
@@ -110,34 +119,46 @@ describe('public GitHub community-validation intake promotion plan', () => {
     });
 
     expect(plan).toContain('Required trigger phrase: `publish the public intake now`');
-    expect(plan).toContain('Public GitHub mutation performed by this plan: no');
+    expect(plan).toContain('Plan status: published and verified');
+    expect(plan).toContain('Public GitHub mutation performed by this plan: yes');
+    expect(plan).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/45');
+    expect(plan).toContain('b56fde158fe151a736fe72c833efdfd0874d8537');
     expect(plan).toContain('Pushing `.github/labels.yml` does not by itself change repository labels.');
     expect(plan).toContain('Do not create or move a public GitHub tag.');
     expect(plan).toContain('Do not create or edit a public GitHub release.');
     expect(plan).toContain('Stop if the public checkout is dirty with unrelated work.');
 
     expect(releaseState.marketplaceCommunityValidationPreview).toMatchObject({
-      publicGitHubIntakePromotionPlanStatus: 'prepared-awaiting-trigger',
-      publicGitHubIntakePromotionPlanPath:
-        'docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md',
-      publicGitHubIntakePromotionRequiredTrigger: 'publish the public intake now'
-    });
-    expect(marketplaceLedger.communityValidationIntake).toMatchObject({
-      publicGitHubIntakePromotionPlanStatus: 'prepared-awaiting-trigger',
+      intakeStatus: 'public-github-published-and-verified',
+      publicGitHubIntakePromotionPlanStatus: 'published-and-verified',
       publicGitHubIntakePromotionPlanPath:
         'docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md',
       publicGitHubIntakePromotionRequiredTrigger: 'publish the public intake now',
-      publicGitHubMutationAttempted: false,
+      publicGitHubIntakePublishedShortCommit: 'b56fde1',
+      publicGitHubIntakeLabelsApplied: true
+    });
+    expect(marketplaceLedger.communityValidationIntake).toMatchObject({
+      status: 'public-github-published-and-verified',
+      publicGitHubIntakePromotionPlanStatus: 'published-and-verified',
+      publicGitHubIntakePromotionPlanPath:
+        'docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md',
+      publicGitHubIntakePromotionRequiredTrigger: 'publish the public intake now',
+      publicGitHubPublishedShortCommit: 'b56fde1',
+      publicGitHubLabelsApplied: true,
+      publicGitHubMutationAttempted: true,
       marketplaceMutationAttempted: false
     });
     expect(intake.publicGitHubBoundary).toMatchObject({
       promotionPlanPath:
         'docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md',
       requiredPromotionTrigger: 'publish the public intake now',
-      labelManifestRequiresSeparateApplication: true
+      labelManifestRequiresSeparateApplication: true,
+      publishedShortCommit: 'b56fde1',
+      labelsApplied: true
     });
     expect(publicSourceMap).toContain('publish the public intake now');
     expect(publicSourceMap).toContain('publishing `.github/labels.yml` does not itself update');
+    expect(publicSourceMap).toContain('b56fde1');
     expect(releaseProcedure).toContain(
       'public-github-community-validation-intake-promotion-plan-v1.3.10.md'
     );
