@@ -380,6 +380,11 @@ promotion still stays separate afterward.
       and `.github/workflows/public-windows-installed-user-contract.yml`
 13. When the public source facade changes materially, promote the curated
     public GitHub source repo from authority and record the published commit:
+    - for the Marketplace community-validation intake templates and labels,
+      follow
+      `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`
+      and stop until the separate exact trigger `publish the public intake now`
+      is present
     - bind the intended local public checkout with `--target-root` or
       `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` whenever the canonical sibling
       checkout is not the repo you intend to validate or write
@@ -388,6 +393,8 @@ promotion still stays separate afterward.
     - clean the target repo first if the governed check/promotion surface
       reports dirty-target failure; do not treat dirty side-worktree drift as
       publishable truth
+    - apply public GitHub labels separately from `.github/labels.yml`; pushing
+      the manifest does not itself update repository labels
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
 14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.

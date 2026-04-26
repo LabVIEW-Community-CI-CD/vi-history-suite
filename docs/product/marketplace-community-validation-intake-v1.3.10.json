@@ -147,10 +147,15 @@
   ],
   "publicGitHubBoundary": {
     "status": "gated-separately",
+    "promotionPlanPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md",
+    "promotionPlanJsonPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json",
+    "requiredPromotionTrigger": "publish the public intake now",
+    "labelManifestRequiresSeparateApplication": true,
     "requiredBeforeMutation": [
       "npm run public:source:check",
       "governed public facade promotion decision",
-      "separate explicit public GitHub publication approval",
+      "public GitHub community-validation intake promotion plan",
+      "separate explicit publish the public intake now approval",
       "post-publication verification of issue templates and labels"
     ]
   },

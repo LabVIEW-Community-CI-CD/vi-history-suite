@@ -104,6 +104,8 @@
       "docs/product/vscode-marketplace-publication-ledger.md",
       "docs/product/marketplace-community-validation-intake-v1.3.10.md",
       "docs/product/marketplace-community-validation-intake-v1.3.10.json",
+      "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md",
+      "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json",
       "docs/product/windows-labview-installed-user-proof-handoff-2026-04-25.md",
       "docs/requirements/rtm.csv",
       "docs/information-for-users/command-reference.md"
@@ -122,6 +124,10 @@
     "intakePacketJsonPath": "docs/product/marketplace-community-validation-intake-v1.3.10.json",
     "preparedPublicIssueTemplatePath": "public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
     "preparedPublicLabelManifestPath": "public-github-source/.github/labels.yml",
+    "publicGitHubIntakePromotionPlanStatus": "prepared-awaiting-trigger",
+    "publicGitHubIntakePromotionPlanPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md",
+    "publicGitHubIntakePromotionPlanJsonPath": "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json",
+    "publicGitHubIntakePromotionRequiredTrigger": "publish the public intake now",
     "publicGitHubIntakeMutation": "not-performed; gated separately by public facade promotion and explicit publication approval"
   },
   "incident": {
