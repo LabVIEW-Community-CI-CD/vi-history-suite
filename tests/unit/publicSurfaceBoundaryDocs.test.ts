@@ -29,6 +29,8 @@ describe('public facade boundary docs', () => {
     );
     expect(publicSourceMap).toContain('the separate GitHub release record for `v1.3.9` is now');
     expect(publicSourceMap).toContain('VS Code Marketplace now serves `1.3.9`');
+    expect(publicSourceMap).toContain('Marketplace community-validation intake templates and labels');
+    expect(publicSourceMap).toContain('public facade promotion and publication');
     expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `fb0ef2b`');
     expect(publicSourceLedger).toContain('Public source v1.3.9 exact source publication');
     expect(publicSourceLedger).toContain('fb0ef2b');

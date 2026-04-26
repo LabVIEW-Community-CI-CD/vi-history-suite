@@ -102,6 +102,8 @@
       "README.md",
       "docs/product/release-publication-state.md",
       "docs/product/vscode-marketplace-publication-ledger.md",
+      "docs/product/marketplace-community-validation-intake-v1.3.10.md",
+      "docs/product/marketplace-community-validation-intake-v1.3.10.json",
       "docs/product/windows-labview-installed-user-proof-handoff-2026-04-25.md",
       "docs/requirements/rtm.csv",
       "docs/information-for-users/command-reference.md"
@@ -114,7 +116,13 @@
     "publishedDate": "2026-04-25",
     "marketplaceLastUpdated": "2026-04-26T00:05:09.09Z",
     "previewVsixSha256": "da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705",
-    "verificationSurface": "official-gallery-extensionquery-and-vsce-show"
+    "verificationSurface": "official-gallery-extensionquery-and-vsce-show",
+    "intakeStatus": "prepared-public-github-gated",
+    "intakePacketPath": "docs/product/marketplace-community-validation-intake-v1.3.10.md",
+    "intakePacketJsonPath": "docs/product/marketplace-community-validation-intake-v1.3.10.json",
+    "preparedPublicIssueTemplatePath": "public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
+    "preparedPublicLabelManifestPath": "public-github-source/.github/labels.yml",
+    "publicGitHubIntakeMutation": "not-performed; gated separately by public facade promotion and explicit publication approval"
   },
   "incident": {
     "active": false,

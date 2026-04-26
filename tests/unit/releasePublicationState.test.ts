@@ -126,7 +126,13 @@ describe('release publication state resolver', () => {
       windowsInstalledUserProofState: 'deferred',
       traceabilityMatrixPath: 'docs/requirements/rtm.csv',
       publicGitHubMutation: 'not-mutated-by-community-validation-preview-publication',
-      marketplaceMutation: 'published-community-validation-preview'
+      marketplaceMutation: 'published-community-validation-preview',
+      intakeStatus: 'prepared-public-github-gated',
+      intakePacketPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.md',
+      intakePacketJsonPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.json',
+      preparedPublicIssueTemplatePath:
+        'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
+      preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml'
     });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
@@ -136,6 +142,11 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain(
       'Windows/LabVIEW feature policy: provider, year, and bitness choices may stay'
     );
+    expect(stateDoc).toContain(
+      'docs/product/marketplace-community-validation-intake-v1.3.10.md'
+    );
+    expect(stateDoc).toContain('public-github-source/.github/labels.yml');
+    expect(stateDoc).toContain('Public GitHub intake mutation: not performed');
     expect(state.incident).toMatchObject({
       active: false,
       classification: 'externally-blocked-publication',

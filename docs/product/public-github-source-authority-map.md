@@ -74,6 +74,10 @@ directly to the public GitHub source repo.
 - Public source publication shall be recorded in the dedicated public source
   publication ledger, not in the internal GitLab wiki ledger or the public
   GitHub wiki ledger.
+- Marketplace community-validation intake templates and labels may be prepared
+  under `public-github-source/` in GitLab authority, but they do not become
+  public GitHub behavior until the public facade promotion and publication
+  gates are explicitly run and approved.
 - Exact public `main` shall foreground the host-default Windows local
   `LabVIEWCLI` contract plus bounded expert Docker, public
   devcontainer/Codespaces support, and the checkbox-selected two-commit

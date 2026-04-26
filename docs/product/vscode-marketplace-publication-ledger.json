@@ -39,6 +39,23 @@
     "marketplaceMutationAttemptedByPublication": true,
     "verificationSurface": "official-gallery-extensionquery-and-vsce-show"
   },
+  "communityValidationIntake": {
+    "status": "prepared-public-github-gated",
+    "packetPath": "docs/product/marketplace-community-validation-intake-v1.3.10.md",
+    "packetJsonPath": "docs/product/marketplace-community-validation-intake-v1.3.10.json",
+    "preparedIssueTemplatePath": "public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
+    "preparedLabelManifestPath": "public-github-source/.github/labels.yml",
+    "publicGitHubMutationAttempted": false,
+    "marketplaceMutationAttempted": false,
+    "proofStatusPolicy": "selectable-does-not-mean-maintainer-proven",
+    "triageLoop": [
+      "intake",
+      "evidence-completeness",
+      "classification",
+      "maintainer-reproduction",
+      "close-or-promote"
+    ]
+  },
   "secretHandling": "do-not-retain-pat-or-secret-material",
   "publicationHistory": [
     {

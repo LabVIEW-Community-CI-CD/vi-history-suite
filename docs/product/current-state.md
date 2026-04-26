@@ -56,6 +56,8 @@ Read these in order:
 38. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
 39. [Release Publication State](./release-publication-state.md)
 40. [Release Publication State JSON](./release-publication-state.json)
+41. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+42. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
 
 ## Authority Stack
 
@@ -113,7 +115,9 @@ Current control-plane surfaces:
 39. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
 40. [Release Publication State](./release-publication-state.md)
 41. [Release Publication State JSON](./release-publication-state.json)
-42. [Fast VS Code Loop](../dev-fast-loop.md)
+42. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+43. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+44. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -272,6 +276,12 @@ Latest landed ship target:
   `2026-04-26T00:05:09.09Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
   `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
+- Marketplace community-validation intake packet:
+  [marketplace-community-validation-intake-v1.3.10.md](./marketplace-community-validation-intake-v1.3.10.md)
+- Marketplace community-validation intake packet JSON:
+  [marketplace-community-validation-intake-v1.3.10.json](./marketplace-community-validation-intake-v1.3.10.json)
+- Marketplace community-validation intake state: prepared for public facade
+  source, with public GitHub template and label mutation gated separately
 - blocked historical publication incident: public GitHub release `312768592`
   for `v1.3.8` is published and immutable with zero assets; retain it as
   historical evidence only while the current live Marketplace version remains

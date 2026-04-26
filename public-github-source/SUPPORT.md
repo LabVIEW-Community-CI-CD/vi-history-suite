@@ -53,6 +53,20 @@ docker version
 docker info --format '{{.OSType}}'
 ```
 
+## Community Validation Triage
+
+Marketplace pre-release `1.3.10` accepts Windows/LabVIEW community validation
+reports before every selectable combination has maintainer-retained proof.
+
+Triage labels start with `community-validation`, `marketplace-preview`,
+`windows-labview`, and `needs-triage`. A report moves to `proof:reported` when
+the user evidence is complete, `needs-reproduction` when maintainer
+reproduction is required, `proof:reproduced` when retained proof exists, or
+`proof:deferred` when the path stays selectable but unproven.
+
+The maintainer proof boundary is strict: Linux/Docker success does not prove
+Windows/LabVIEW installed-user behavior.
+
 ## Current Product Boundary
 
 - Windows defaults to local `LabVIEWCLI`

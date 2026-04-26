@@ -107,6 +107,16 @@ final installed-user distribution surface.
   and the traceability matrix.
 - Traceability matrix:
   `docs/requirements/rtm.csv`
+- Community-validation intake packet:
+  `docs/product/marketplace-community-validation-intake-v1.3.10.md`
+- Community-validation intake packet JSON:
+  `docs/product/marketplace-community-validation-intake-v1.3.10.json`
+- Prepared public issue template source:
+  `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
+- Prepared public label manifest:
+  `public-github-source/.github/labels.yml`
+- Public GitHub intake mutation: not performed; gated separately by public
+  facade promotion and explicit publication approval
 - Public GitHub mutation: not mutated by community-validation preview
   publication
 - VS Code Marketplace mutation: published community-validation preview

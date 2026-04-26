@@ -104,9 +104,11 @@ const AUTHORITY_COPY_PATHS = [
 
 const TEMPLATE_COPY_PATHS = [
   '.github/ISSUE_TEMPLATE/bug-report.yml',
+  '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
   '.github/ISSUE_TEMPLATE/config.yml',
   '.github/ISSUE_TEMPLATE/feature-request.yml',
   '.github/ISSUE_TEMPLATE/labview-version-support.yml',
+  '.github/labels.yml',
   '.github/workflows/public-source-package-preview.yml',
   'CONTRIBUTING.md',
   'INSTALL.md',

@@ -98,6 +98,13 @@ the current proof-status surfaces:
 
 - [Traceability Matrix](./docs/requirements/rtm.csv)
 - [Release Publication State](./docs/product/release-publication-state.md)
+- [Marketplace Community-Validation Intake v1.3.10](./docs/product/marketplace-community-validation-intake-v1.3.10.md)
+
+To join the `1.3.10` pre-release validation lane from the command line, use:
+
+```bash
+code --install-extension svelderrainruiz.vi-history-suite@prerelease
+```
 
 When a selectable Windows/LabVIEW path works or fails on your machine, include
 provider, LabVIEW year, bitness, extension version, VS Code version, and
@@ -109,6 +116,7 @@ If install, `vihs`, `vihs --validate`, or compare do not work as expected, use
 the public GitHub issue templates:
 
 - [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
+- [Marketplace Community Validation Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml)
 - [Bug Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=bug-report.yml)
 - [LabVIEW Version Support Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=labview-version-support.yml)
 - [Feature Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-request.yml)

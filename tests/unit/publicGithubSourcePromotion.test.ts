@@ -92,6 +92,10 @@ describe('public GitHub source promotion', () => {
       ])
     );
     expect(plan.templateCopyPaths).toContain('README.md');
+    expect(plan.templateCopyPaths).toContain(
+      '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
+    );
+    expect(plan.templateCopyPaths).toContain('.github/labels.yml');
     expect(plan.templateCopyPaths).toContain('.github/workflows/public-source-package-preview.yml');
     expect(plan.authorityCopyPaths).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
     expect(plan.authorityCopyPaths).toContain(
@@ -212,6 +216,8 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('INSTALL.md');
       expect(expectedFiles).toContain('SUPPORT.md');
       expect(expectedFiles).toContain('CONTRIBUTING.md');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml');
+      expect(expectedFiles).toContain('.github/labels.yml');
       expect(expectedFiles).toContain('scripts/bootstrapLinuxVsCodeHost.js');
       expect(expectedFiles).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
       expect(expectedFiles).toContain('.github/workflows/public-source-package-preview.yml');

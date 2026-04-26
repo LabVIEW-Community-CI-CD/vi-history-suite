@@ -68,6 +68,24 @@ The machine-readable companion surface for this ledger is:
 - Public GitHub mutation attempted by publication: false
 - Marketplace mutation attempted by publication: true
 
+## Community-Validation Intake
+
+- Status: prepared, public GitHub gated
+- Intake packet:
+  `docs/product/marketplace-community-validation-intake-v1.3.10.md`
+- Intake packet JSON:
+  `docs/product/marketplace-community-validation-intake-v1.3.10.json`
+- Prepared issue template source:
+  `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
+- Prepared label manifest:
+  `public-github-source/.github/labels.yml`
+- Public GitHub mutation attempted: false
+- Marketplace mutation attempted by intake preparation: false
+- Proof-status policy: selectable does not mean maintainer-proven
+- Triage loop:
+  intake, evidence completeness, classification, maintainer reproduction,
+  close or promote
+
 ## Publications
 
 | Published Surface | Status | Published | Version | Publication Mode | Primary Authority |
@@ -105,8 +123,7 @@ The machine-readable companion surface for this ledger is:
 - After the mutating Marketplace publication act, the official gallery
   extension query shall verify that the live Marketplace version matches the
   exact release before the final publication act is retained.
-- Community-validation preview preparation is a separate, non-mutating path
-  for Marketplace pre-release packaging. It may disclose deferred Windows
-  installed-user proof while leaving Windows/LabVIEW selections available to
-  users for validation reports, but actual Marketplace publication remains a
-  later act.
+- Community-validation preview intake is separate from public GitHub facade
+  publication. It may prepare issue templates, labels, proof-status wording,
+  and triage loops for validation reports, but public GitHub template and
+  label mutation remains a separately gated act.

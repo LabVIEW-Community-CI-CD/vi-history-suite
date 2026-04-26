@@ -3,6 +3,7 @@ description: Request an install, configuration, validation, or compare improveme
 title: "[Feature]: "
 labels:
   - enhancement
+  - needs-triage
 body:
   - type: markdown
     attributes:

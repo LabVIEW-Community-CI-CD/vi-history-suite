@@ -25,9 +25,13 @@ describe('public repo package surface', () => {
     const support = readText('SUPPORT.md');
     const contributing = readText('CONTRIBUTING.md');
     const bugReport = readText('.github/ISSUE_TEMPLATE/bug-report.yml');
+    const communityValidation = readText(
+      '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
+    );
     const labviewVersionRequest = readText('.github/ISSUE_TEMPLATE/labview-version-support.yml');
     const featureRequest = readText('.github/ISSUE_TEMPLATE/feature-request.yml');
     const issueConfig = readText('.github/ISSUE_TEMPLATE/config.yml');
+    const labels = readText('.github/labels.yml');
     const bundledUserWorkflow = readText('resources/bundled-docs/pages/user-workflow.html');
     const bundledComparisonReview = readText(
       'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
@@ -82,7 +86,10 @@ describe('public repo package surface', () => {
     expect(readme).toContain('Choose `Compare`');
     expect(readme).toContain('LabVIEW years `2020` through `2026`');
     expect(readme).toContain('`docker/windows` is supported for `2026` `x64` only');
+    expect(readme).toContain('Proof Status And Community Validation');
+    expect(readme).toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(readme).toContain('Report A Problem Or Request Support');
+    expect(readme).toContain('[Marketplace Community Validation Report]');
     expect(readme).toContain('[LabVIEW Version Support Request]');
     expect(readme).toContain('## Evaluate From Source');
     expect(readme).toContain('## Contribute');
@@ -123,16 +130,28 @@ describe('public repo package surface', () => {
     expect(support).toContain('or from a VSIX');
     expect(support).toContain('vihs --validate');
     expect(support).toContain('Windows defaults to local `LabVIEWCLI`');
+    expect(support).toContain('Community Validation Triage');
+    expect(support).toContain('Linux/Docker success does not prove');
     expect(bugReport).toContain('install, settings, validation, or compare problem');
     expect(bugReport).toContain('`code --install-extension svelderrainruiz.vi-history-suite`');
-    expect(bugReport).toContain('Exact released Marketplace line (`1.3.0`)');
+    expect(bugReport).toContain('svelderrainruiz.vi-history-suite@prerelease');
+    expect(bugReport).toContain('Exact released Marketplace line (`1.3.9`)');
+    expect(bugReport).toContain('Marketplace community-validation pre-release (`1.3.10`)');
     expect(bugReport).toContain('What command or surface failed?');
     expect(bugReport).toContain('`vihs --validate` output');
+    expect(communityValidation).toContain('Marketplace community validation report');
+    expect(communityValidation).toContain('Selectable does not mean maintainer-proven');
+    expect(communityValidation).toContain('Proof-status acknowledgement');
     expect(labviewVersionRequest).toContain('LabVIEW version support request');
     expect(labviewVersionRequest).toContain('Requested LabVIEW year');
+    expect(labviewVersionRequest).toContain('proof-deferred');
     expect(featureRequest).toContain('install, configuration, validation, or compare improvement');
     expect(featureRequest).toContain('Which surface should improve?');
+    expect(labels).toContain('name: community-validation');
+    expect(labels).toContain('name: proof:reported');
+    expect(labels).toContain('name: proof:deferred');
     expect(issueConfig).toContain('Install and release guide');
+    expect(issueConfig).toContain('Marketplace community validation');
     expect(issueConfig).toContain('User workflow');
     expect(contributing).toContain('source-available and intentionally restrictive');
     expect(contributing).toContain('npm run public:host:bootstrap-linux');

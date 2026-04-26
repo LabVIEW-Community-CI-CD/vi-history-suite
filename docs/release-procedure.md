@@ -427,6 +427,16 @@ promotion still stays separate afterward.
       Linux/Docker preview evidence as Windows/LabVIEW installed-user proof.
     - Public GitHub remains untouched by this community-validation preview
       act.
+    - Prepare the community-validation intake packet at
+      `docs/product/marketplace-community-validation-intake-v1.3.10.md` when
+      broader user validation is active.
+    - Keep prepared public issue templates and label manifests under
+      `public-github-source/` until a separate public facade promotion and
+      explicit public GitHub publication approval admits mutation.
+    - The intake packet must separate validation commands into individual user
+      steps so reports identify whether failure happened at VS Code version
+      readback, extension listing, `vihs`, `vihs --validate`, preflight, or
+      compare execution.
 16. Publish the exact VSIX to the VS Code Marketplace and retain the result.
     - The governed distribution surface is the VS Code Marketplace item
       `svelderrainruiz.vi-history-suite`.

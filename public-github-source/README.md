@@ -54,12 +54,31 @@ Installed-user help:
 - `docker/linux` for `2026` and `host/linux` are not currently implemented
 - blocked or unsupported paths fail closed with explicit next-step guidance
 
+## Proof Status And Community Validation
+
+Marketplace pre-release `1.3.10` is a community-validation preview. The
+Linux/Docker preview lane is maintainer-validated. Windows/LabVIEW
+installed-user combinations are selectable so users with those machines can
+report evidence, but they remain proof-deferred until reproduced or retained
+by the maintainer proof lane.
+
+To join from the command line:
+
+```bash
+code --install-extension svelderrainruiz.vi-history-suite@prerelease
+```
+
+When a selectable Windows/LabVIEW path works or fails on your machine, include
+provider, LabVIEW year, bitness, extension version, VS Code version, and
+`vihs --validate` output in the issue report.
+
 ## Report A Problem Or Request Support
 
 Use the public GitHub issue templates when install, `vihs`, validation, or
 compare do not behave as expected:
 
 - [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
+- [Marketplace Community Validation Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml)
 - [Bug Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=bug-report.yml)
 - [LabVIEW Version Support Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=labview-version-support.yml)
 - [Feature Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-request.yml)

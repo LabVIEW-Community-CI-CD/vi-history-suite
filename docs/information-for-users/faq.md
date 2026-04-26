@@ -215,6 +215,11 @@ evaluate the installed extension on their own Windows setups, but this machine
 does not retain native Windows LabVIEW or Docker Desktop Windows-container
 proof.
 
+For Marketplace pre-release `1.3.10`, use the community-validation intake
+packet when reporting Windows/LabVIEW results:
+`docs/product/marketplace-community-validation-intake-v1.3.10.md`.
+Selectable means available for validation, not maintainer-proven.
+
 Windows proof remains deferred until a real Windows/LabVIEW host runner exists
 and produces retained evidence for:
 
