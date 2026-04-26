@@ -187,6 +187,26 @@ final installed-user distribution surface.
 - Windows installed-user LabVIEW proof: community/deferred
 - Prior Windows x64 LabVIEW proof: retained confidence context, not the current
   `1.3.11` proof claim
+- Canonical public Docker fixture: `https://github.com/ni/labview-icon-editor`
+  `resource/plugins/lv_icon.vi`
+- Canonical fixture commits:
+  `ab94f6c4b375062492036c63a6dab7ea8824748a` to
+  `8741bb08026c104100720c0ef48621e4ab7762fd`
+- Canonical Docker battery: positive historical compare succeeded with
+  `diff-report-lv_icon.vi.html` at about `112` seconds and `395 KB`;
+  no-change compare succeeded at about `24.7` seconds; missing-file control
+  blocked before Docker at `left-blob-read-failed`
+- Canonical Docker image: `nationalinstruments/labview:2026q1-linux`; first
+  uncached compare may pull about `1.4 GB`
+- Canonical evidence issues:
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/48`,
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/49`, and
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/59`
+- Closed docs/testability gaps: public issues `#55`, `#57`, `#58`, and `#59`
+- Public facade docs promotion decision:
+  needed after the GitLab authority MR is green
+- Public GitHub mutation during this authority closeout: not performed
+- VS Code Marketplace mutation during this authority closeout: not performed
 - Exact-release gate blocked by missing Windows proof: false for this public
   validation lane
 - Public GitHub and Marketplace mutation: performed for the scoped `1.3.11`

@@ -47,6 +47,8 @@ Installed-user help:
   editor-title `VI History` action, to start a comparison
 - if Docker is selected, install or start Docker Desktop or Docker before the
   first compare
+- the first Docker compare on a fresh machine may pull
+  `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`
 - host Windows LabVIEW years `2020` through `2026` are selectable when they
   are installed locally
 - `docker/windows` and `docker/linux` variants are selectable for community
@@ -78,6 +80,24 @@ validation packet:
 ```bash
 vihs --validate --proof-out ./vihs-proof
 ```
+
+### Canonical Public Docker Fixture
+
+The retained public Docker fixture for `1.3.11` validation is
+`https://github.com/ni/labview-icon-editor` using
+`resource/plugins/lv_icon.vi`.
+
+- old commit:
+  `ab94f6c4b375062492036c63a6dab7ea8824748a`
+- new commit:
+  `8741bb08026c104100720c0ef48621e4ab7762fd`
+- positive Docker compare: succeeded and generated
+  `diff-report-lv_icon.vi.html`
+- no-change Docker compare: succeeded
+- missing-file control: blocked before Docker at `left-blob-read-failed`
+
+This proves the Linux/Docker `2026` `x64` public fixture path. Windows host
+LabVIEW proof remains community/deferred.
 
 ## Report A Problem Or Request Support
 

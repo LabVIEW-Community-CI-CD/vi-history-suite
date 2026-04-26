@@ -360,7 +360,74 @@
     "publicAndMarketplaceMutationAuthorizedByMaintainer": true,
     "traceabilityMatrixPath": "docs/requirements/rtm.csv",
     "authorityMergeCommit": "129cfe1f40698a6efaf51845ba47cf2e101d0e7e",
-    "authorityDevelopPipelineId": 2480723883
+    "authorityDevelopPipelineId": 2480723883,
+    "canonicalPublicDockerFixtureBattery": {
+      "status": "public-reported-success-retained",
+      "retainedEvidence": {
+        "parentIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/48",
+        "validationSuccessIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/49",
+        "docsFixtureRecipeIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/59",
+        "issueRange": "#48-#59"
+      },
+      "fixtureRepository": "https://github.com/ni/labview-icon-editor",
+      "fixtureViPath": "resource/plugins/lv_icon.vi",
+      "oldCommit": {
+        "sha": "ab94f6c4b375062492036c63a6dab7ea8824748a",
+        "date": "2025-06-29"
+      },
+      "newCommit": {
+        "sha": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "date": "2026-02-24"
+      },
+      "viSignature": "LVIN",
+      "dockerRuntime": {
+        "image": "nationalinstruments/labview:2026q1-linux",
+        "firstPullApproximateSize": "1.4 GB",
+        "acquisition": "pulled-on-first-compare-when-not-cached",
+        "validationBoundary": "vihs --validate proves daemon reachability and runtime path selection; compare acquires the image when needed"
+      },
+      "batteryCases": {
+        "positiveHistoricalCompare": {
+          "status": "succeeded",
+          "exitCode": 0,
+          "runtimeSecondsApprox": 112,
+          "reportFile": "diff-report-lv_icon.vi.html",
+          "reportSizeApprox": "395 KB",
+          "evidence": "LabVIEW CreateComparisonReport operation succeeded"
+        },
+        "noChangeControl": {
+          "status": "succeeded",
+          "exitCode": 0,
+          "runtimeSecondsApprox": 24.7,
+          "reportSizeApprox": "395 KB",
+          "evidence": "same VI revision generated a valid no-change report"
+        },
+        "missingFileControl": {
+          "status": "blocked-before-docker",
+          "blockedReason": "left-blob-read-failed",
+          "evidence": "preflight blocked before Docker invocation"
+        }
+      },
+      "docsGapsClosed": {
+        "installCompileAfterTagCheckout": "https://github.com/svelderrainruiz/vi-history-suite/issues/55",
+        "issueTemplateContactLinks": "https://github.com/svelderrainruiz/vi-history-suite/issues/57",
+        "dockerImageFirstPullWarning": "https://github.com/svelderrainruiz/vi-history-suite/issues/58",
+        "repeatableFixtureRecipe": "https://github.com/svelderrainruiz/vi-history-suite/issues/59"
+      },
+      "windowsHostLabviewProof": "community-deferred",
+      "publicFacadeDocsPromotionDecision": "needed-after-gitlab-authority-mr-green",
+      "publicGitHubMutationDuringAuthorityCloseout": false,
+      "marketplaceMutationDuringAuthorityCloseout": false
+    },
+    "docsGapsClosedByAuthorityCloseout": [
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/55",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/57",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/58",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/59"
+    ],
+    "publicFacadeDocsPromotionDecision": "needed-after-gitlab-authority-mr-green",
+    "publicGitHubMutationDuringAuthorityCloseout": false,
+    "marketplaceMutationDuringAuthorityCloseout": false
   },
   "publicValidationMutationAllowed": false
 }

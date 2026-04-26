@@ -33,6 +33,11 @@ docker info --format '{{.OSType}}'
 If those checks fail, correct provider, version, bitness, or Docker readiness
 before expecting Compare to run.
 
+On a fresh Docker machine, the first successful Docker compare may pull
+`nationalinstruments/labview:2026q1-linux`, about `1.4 GB`. `vihs --validate`
+confirms Docker reachability and the selected runtime path; the compare
+operation acquires the image when it is not cached yet.
+
 ## Compare A VI
 
 1. Open a trusted Git repository that contains a `.vi`, `.ctl`, or `.vit` file.
@@ -62,8 +67,12 @@ Fast path:
 
 1. Open the repo or your fork on `develop` in a devcontainer or Codespace.
 2. Let `npm ci` complete.
-3. Press `F5` to open the extension development host.
-4. Open the target Git repository there and use the same compare-preflight workflow.
+3. If you checked out a tag or switched branches inside an existing Codespace
+   or devcontainer session, run `npm run compile` before `vihs --validate`,
+   source evaluation, or extension-host testing. The container post-start step
+   does not rerun automatically after a checkout.
+4. Press `F5` to open the extension development host.
+5. Open the target Git repository there and use the same compare-preflight workflow.
 
 Useful commands:
 
@@ -81,6 +90,21 @@ npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
 
 That generic bootstrap is intentionally limited to public
 `https://github.com/...` and `https://gitlab.com/...` repository URLs.
+
+Canonical public Docker fixture:
+
+```bash
+git clone https://github.com/ni/labview-icon-editor.git ../labview-icon-editor
+cd ../labview-icon-editor
+git show ab94f6c4b375062492036c63a6dab7ea8824748a:resource/plugins/lv_icon.vi > /tmp/lv_icon-old.vi
+git show 8741bb08026c104100720c0ef48621e4ab7762fd:resource/plugins/lv_icon.vi > /tmp/lv_icon-new.vi
+```
+
+Use `resource/plugins/lv_icon.vi` from those two commits for repeatable Docker
+compare validation. Retained public evidence shows the positive historical
+compare succeeded, the no-change control succeeded, and the missing-file
+control blocked before Docker at `left-blob-read-failed`. Windows host LabVIEW
+proof remains community/deferred.
 
 More source-evaluation help:
 

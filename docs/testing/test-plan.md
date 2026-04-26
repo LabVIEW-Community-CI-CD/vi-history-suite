@@ -2288,6 +2288,23 @@ Information-for-users review cases:
   plan and confirm public GitHub plus Marketplace pre-release publication are
   admitted for the scoped validation lane while Windows installed-user
   LabVIEW proof remains community/deferred.
+- `TEST-UNIT-393`: run
+  `vitest run tests/unit/publicDockerFixtureBatteryDocs.test.ts` and confirm
+  `VHS-REQ-586`, the retained canonical fixture model, installed/public docs,
+  issue chooser links, RTM, SRS, and test plan all preserve the public Docker
+  fixture recipe from issues `#48` through `#59`.
+- `TEST-DOC-145`: review the public-validation packet, release-publication
+  state, Marketplace ledger, README, INSTALL, public source README/INSTALL,
+  issue-template config, command reference, SRS, RTM, and this test plan and
+  confirm `https://github.com/ni/labview-icon-editor`
+  `resource/plugins/lv_icon.vi`, commits
+  `ab94f6c4b375062492036c63a6dab7ea8824748a` and
+  `8741bb08026c104100720c0ef48621e4ab7762fd`, positive Docker compare
+  success, no-change Docker compare success, `left-blob-read-failed`, the
+  `nationalinstruments/labview:2026q1-linux` about `1.4 GB` pull warning,
+  the source/tag checkout `npm run compile` warning, direct public validation
+  contact links, and the community/deferred Windows host LabVIEW proof boundary
+  are retained without mutating public GitHub or Marketplace.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
