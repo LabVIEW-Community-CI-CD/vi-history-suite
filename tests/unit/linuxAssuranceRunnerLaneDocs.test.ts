@@ -25,6 +25,7 @@ describe('linux assurance runner lane docs', () => {
 
     expect(gitlabCi).toContain('assurance_release_gate:');
     expect(gitlabCi).toContain('ubuntu_docker_runner_admission:');
+    expect(gitlabCi).toContain('linux_docker_provider_lane:');
     expect(gitlabCi).toContain('governed_runner_admission:');
     expect(gitlabCi).toContain('stage: admission');
     expect(gitlabCi).toContain('linux-docker-validated-preview');
@@ -44,10 +45,12 @@ describe('linux assurance runner lane docs', () => {
     expect(gitlabCi).toContain('npm run assurance:user-info -- --evidence-dir assurance-external-user-information-evidence');
     expect(gitlabCi).toContain('npm run assurance:evidence-pack -- --evidence-dir assurance-audit-packet-evidence/evidence-pack');
     expect(gitlabCi).toContain('npm run assurance:uplift -- --evidence-dir assurance-audit-packet-evidence/uplift');
+    expect(gitlabCi).toContain('npm run linux:docker:provider:lane -- --evidence-dir linux-docker-provider-lane-evidence');
     expect(gitlabCi).toContain('- assurance_release_gate');
     expect(gitlabCi).toContain('- assurance_26514_authority');
     expect(gitlabCi).toContain('- assurance_requirements_quality');
     expect(gitlabCi).toContain('- assurance_external_user_information');
+    expect(gitlabCi).toContain('- linux_docker_provider_lane');
 
     expect(runnerLaneDoc).toContain('# Linux Assurance Runner Lane');
     expect(runnerLaneDoc).toContain('local-linux-assurance');
@@ -99,6 +102,8 @@ describe('linux assurance runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
     expect(hostedGovernanceDoc).toContain('governed_runner_admission');
     expect(hostedGovernanceDoc).toContain('ubuntu_docker_runner_admission');
+    expect(hostedGovernanceDoc).toContain('linux_docker_provider_lane');
+    expect(hostedGovernanceDoc).toContain('runtimeProvider=linux-container');
     expect(hostedGovernanceDoc).toContain('Linux/Docker validated preview');
     expect(hostedGovernanceDoc).toContain('windows-private-release');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance).toEqual(
@@ -201,6 +206,17 @@ describe('linux assurance runner lane docs', () => {
         claimScope: 'linux-docker-validated-preview'
       })
     );
+    expect(hostedGovernanceJson.authorityGitLab.jobs.linux_docker_provider_lane).toEqual(
+      expect.objectContaining({
+        classification: 'required-linux-docker-provider-validation',
+        stage: 'test',
+        packageScript: 'npm run linux:docker:provider:lane',
+        evidenceRoot: 'linux-docker-provider-lane-evidence/',
+        evidenceSchema: 'vi-history-suite/linux-docker-provider-lane@v1',
+        claimScope: 'linux-docker-validated-preview',
+        windowsInstalledUserProofDeferred: true
+      })
+    );
     expect(hostedGovernanceJson.authorityGitLab.jobs.assurance_audit_packet.classification).toBe(
       'advisory-governance-check'
     );
@@ -231,6 +247,9 @@ describe('linux assurance runner lane docs', () => {
     );
     expect(packageManifest.scripts?.['gitlab:runner:doctor']).toBe(
       'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
+    );
+    expect(packageManifest.scripts?.['linux:docker:provider:lane']).toBe(
+      'npm run compile && node scripts/runLinuxDockerProviderLane.js'
     );
   });
 });

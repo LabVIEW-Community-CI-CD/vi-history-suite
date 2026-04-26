@@ -27,6 +27,9 @@ does not persist the moving live `develop` head as Windows proof.
 | Retained packet merge pipeline | `2479875767` / `success` |
 | Preview VSIX evidence | `preview-evidence/vi-history-suite-1.3.9.vsix` |
 | Preview VSIX SHA-256 | `7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470` |
+| Linux Docker provider lane | `npm run linux:docker:provider:lane` / GitLab `linux_docker_provider_lane` |
+| Linux Docker provider evidence | `linux-docker-provider-lane-evidence/` with schema `vi-history-suite/linux-docker-provider-lane@v1` |
+| Linux Docker provider facts | Docker OSType `linux`; `runtimeProvider=linux-container`; `runtimeEngine=labview-cli`; `runtimeBlockedReason=<none>` |
 
 The preview VSIX is Linux/Docker validated only. It is not Windows
 installed-user proof and is not a Marketplace publication candidate by itself.

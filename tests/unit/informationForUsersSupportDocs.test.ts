@@ -100,7 +100,7 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('vihs --validate');
     expect(commandReference).toContain('host/windows/2026/x64');
     expect(commandReference).toContain('Enter` keep the current value');
-    expect(commandReference).toContain('docker/linux` is selectable for `2026` only but not currently implemented');
+    expect(commandReference).toContain('`docker/linux` on Linux Docker Desktop/Docker Engine hosts');
     expect(commandReference).toContain('before trusting Compare');
     expect(commandReference).toContain('or other runtime-provider surfaces');
     expect(commandReference).toContain('runtimeBlockedReason');

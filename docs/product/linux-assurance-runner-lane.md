@@ -14,6 +14,8 @@ validation, or the `HARNESS-VHS-002` host/container compare scenario.
 
 - fail-fast GitLab admission job before the assurance lanes:
   `ubuntu_docker_runner_admission`
+- blocking Linux Docker provider proof before package lanes:
+  `linux_docker_provider_lane`
 - deferred Windows/LabVIEW admission job:
   `governed_runner_admission`
 - GitLab jobs:
@@ -22,6 +24,7 @@ validation, or the `HARNESS-VHS-002` host/container compare scenario.
   - `assurance_requirements_quality`
   - `assurance_external_user_information`
   - `assurance_audit_packet`
+  - `linux_docker_provider_lane`
 - governed package scripts:
   - `npm run assurance:release-gate`
   - `npm run assurance:26514:authority`
@@ -205,8 +208,13 @@ npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir gov
 ```
 
 The Linux/Docker fail-fast admission surface retained in GitLab is
-`ubuntu_docker_runner_admission`. The combined Windows/LabVIEW doctor command is
-deferred behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`.
+`ubuntu_docker_runner_admission`. The package-blocking provider surface is
+`linux_docker_provider_lane`, which runs
+`npm run linux:docker:provider:lane`, retains
+`linux-docker-provider-lane-evidence/`, and proves the `docker` / `2026` /
+`x64` settings bundle validates as `linux-container` / `labview-cli` on the
+Linux Docker Desktop/Docker Engine host. The combined Windows/LabVIEW doctor
+command is deferred behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`.
 
 ## Manual Registration Pack
 

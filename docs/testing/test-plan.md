@@ -1827,8 +1827,9 @@ Information-for-users review cases:
   `host/windows/2026/x64`, reads back the current provider/platform/version/bitness
   bundle, prints exact copyable next commands, and, on interactive TTY
   surfaces, admits Enter-through confirmation or guided selection of supported
-  provider/platform/version/bitness values while failing closed with explicit
-  unsupported or not-yet-implemented path guidance
+  provider/platform/version/bitness values, including `docker/linux` `2026`
+  `x64` on Linux Docker Desktop/Docker Engine hosts, while failing closed with
+  explicit unsupported, host-mismatched, or not-yet-implemented path guidance
 - `TEST-UNIT-354`: verify the `vihs` surface exposes `vihs --validate` as one
   governed validation action that reports persisted provider/version/bitness
   truth plus runtime-validation outcome, and that the no-argument interactive
@@ -2058,6 +2059,11 @@ Information-for-users review cases:
   Windows/LabVIEW selections user-selectable with proof-status disclosure,
   blocks reuse of the current Marketplace version, and retains pinned
   `vsce --pre-release` package and publish command shapes.
+- `TEST-UNIT-386`: verify the Linux Docker provider lane script writes JSON
+  plus Markdown evidence, validates Docker OSType `linux`, persists
+  `docker` / `2026` / `x64` through `vihs`, proves
+  `runtimeProvider=linux-container` with `runtimeEngine=labview-cli`, and
+  records Windows installed-user LabVIEW proof as community/deferred evidence.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2216,6 +2222,11 @@ Information-for-users review cases:
   Windows/LabVIEW features tied to proof-status surfaces, requires a distinct
   higher Marketplace version, and leaves public GitHub plus Marketplace
   untouched until the user says `publish it now`.
+- `TEST-DOC-139`: review `.gitlab-ci.yml`, hosted governance,
+  release-publication state, current-state, README, INSTALL, command
+  reference, FAQ, SRS, RTM, and the test plan and confirm the develop package
+  path now requires the governed Linux Docker Desktop/Docker Engine provider
+  lane while Windows installed-user LabVIEW proof remains community/deferred.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

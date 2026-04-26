@@ -464,6 +464,7 @@ Required branch-model and CI posture:
   when the target repo is dirty
 - the required checks are:
   - GitLab `ubuntu_docker_runner_admission`
+  - GitLab `linux_docker_provider_lane`
   - GitLab `public_exact_pretag_proof`
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
@@ -483,6 +484,11 @@ Hosted automation governance is now retained explicitly:
   `public-source-package-preview`,
   `public-linux-installed-user-smoke`, and
   `public-windows-installed-user-contract`
+- GitLab `linux_docker_provider_lane` owns
+  `npm run linux:docker:provider:lane` and retained
+  `linux-docker-provider-lane-evidence/` so preview and exact package lanes
+  prove the Linux Docker provider before artifact publication while Windows
+  installed-user LabVIEW proof stays deferred
 - GitHub benchmark workflows are characterization-only experiment lanes and
   are not exact-release required checks
 - GitLab `governed_runner_admission` and

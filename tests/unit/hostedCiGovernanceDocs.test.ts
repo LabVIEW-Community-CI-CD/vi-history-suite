@@ -69,6 +69,17 @@ describe('hosted ci governance docs', () => {
         claimScope: 'linux-docker-validated-preview'
       })
     );
+    expect(matrix.authorityGitLab.jobs.linux_docker_provider_lane).toEqual(
+      expect.objectContaining({
+        classification: 'required-linux-docker-provider-validation',
+        stage: 'test',
+        packageScript: 'npm run linux:docker:provider:lane',
+        evidenceRoot: 'linux-docker-provider-lane-evidence/',
+        evidenceSchema: 'vi-history-suite/linux-docker-provider-lane@v1',
+        claimScope: 'linux-docker-validated-preview',
+        windowsInstalledUserProofDeferred: true
+      })
+    );
     expect(matrix.authorityGitLab.jobs.public_exact_pretag_proof).toEqual(
       expect.objectContaining({
         classification: 'required-governance-check',
@@ -143,6 +154,8 @@ describe('hosted ci governance docs', () => {
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');
     expect(gitlabCi).toContain('governed_runner_admission');
     expect(gitlabCi).toContain('ubuntu_docker_runner_admission');
+    expect(gitlabCi).toContain('linux_docker_provider_lane');
+    expect(gitlabCi).toContain('npm run linux:docker:provider:lane');
     expect(gitlabCi).toContain('public_exact_pretag_proof');
     expect(gitlabCi).toContain('windows_private_release_acceptance');
     expect(gitlabCi).toContain('VIHS_WINDOWS_LABVIEW_PROOF_ENABLED');

@@ -425,6 +425,7 @@ export async function runInteractiveLocalRuntimeSettingsCli(
   const promptController = await resolvePromptLine(deps);
   const promptLine = promptController.promptLine;
   const selection = deriveInteractiveSelection(settingsFacts);
+  const hostRuntimePlatform = resolveCliRuntimePlatform(deps.platform ?? process.platform);
 
   try {
     writeLine(
@@ -452,6 +453,12 @@ export async function runInteractiveLocalRuntimeSettingsCli(
         continue;
       }
 
+      const dockerAvailability = checkDockerSelectionAvailability(selection, hostRuntimePlatform);
+      if (!dockerAvailability.available) {
+        writeLine(stdout, dockerAvailability.message);
+        continue;
+      }
+
       while (true) {
         selection.labviewVersion = await promptEnum(
           'LabVIEW year',
@@ -466,7 +473,7 @@ export async function runInteractiveLocalRuntimeSettingsCli(
         ) {
           writeLine(
             stdout,
-            `Docker ${selection.labviewVersion} is unsupported. Currently implemented: host/windows 2020-2026 and docker/windows 2026 x64.`
+            `Docker ${selection.labviewVersion} is unsupported. ${renderImplementedPathSummary()}`
           );
           continue;
         }
@@ -482,14 +489,9 @@ export async function runInteractiveLocalRuntimeSettingsCli(
           if (selection.provider === 'docker' && selection.labviewBitness !== 'x64') {
             writeLine(
               stdout,
-              'Docker x86 is unsupported. Currently implemented: host/windows 2020-2026 and docker/windows 2026 x64.'
+              `Docker x86 is unsupported. ${renderImplementedPathSummary()}`
             );
             continue;
-          }
-
-          if (selection.provider === 'docker' && selection.platform === 'linux') {
-            writeLine(stdout, renderNotImplementedPathMessage('docker/linux'));
-            break;
           }
 
           if (selection.provider === 'host') {
@@ -516,10 +518,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
             { helpRequested: false, validateRequested: true },
             deps
           );
-        }
-
-        if (selection.provider === 'docker' && selection.platform === 'linux') {
-          break;
         }
 
         if (selection.provider === 'host') {
@@ -662,6 +660,33 @@ function deriveInteractiveSelection(
   };
 }
 
+function checkDockerSelectionAvailability(
+  selection: InteractiveRuntimeSettingsSelection,
+  hostRuntimePlatform: RuntimePlatform
+): { available: true } | { available: false; message: string } {
+  if (selection.provider !== 'docker') {
+    return { available: true };
+  }
+
+  if (selection.platform === 'linux' && hostRuntimePlatform !== 'linux') {
+    return {
+      available: false,
+      message:
+        'docker/linux requires a Linux Docker Desktop/Docker Engine host. On Windows select docker/windows 2026 x64.'
+    };
+  }
+
+  if (selection.platform === 'windows' && hostRuntimePlatform !== 'win32') {
+    return {
+      available: false,
+      message:
+        'docker/windows requires a Windows Docker Desktop Windows-container host. On Linux select docker/linux 2026 x64.'
+    };
+  }
+
+  return { available: true };
+}
+
 async function checkHostSelectionAvailability(
   selection: InteractiveRuntimeSettingsSelection,
   deps: LocalRuntimeSettingsCliDeps
@@ -679,8 +704,12 @@ async function checkHostSelectionAvailability(
   };
 }
 
-function renderNotImplementedPathMessage(pathLabel: 'host/linux' | 'docker/linux'): string {
-  return `${pathLabel} is not currently implemented. Currently implemented: host/windows 2020-2026 and docker/windows 2026 x64.`;
+function renderNotImplementedPathMessage(pathLabel: 'host/linux'): string {
+  return `${pathLabel} is not currently implemented. ${renderImplementedPathSummary()}`;
+}
+
+function renderImplementedPathSummary(): string {
+  return 'Currently implemented: host/windows 2020-2026, docker/windows 2026 x64 on Windows Docker Desktop Windows-container hosts, and docker/linux 2026 x64 on Linux Docker Desktop/Docker Engine hosts.';
 }
 
 function resolveSettingsTarget(
