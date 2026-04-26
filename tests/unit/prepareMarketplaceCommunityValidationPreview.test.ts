@@ -49,16 +49,17 @@ function fakeFs(packageVersion = '1.3.9'): typeof fs {
         },
         developPreview: {
           classification: 'linux-docker-validated-preview',
-          retainedPacketPath: 'docs/product/linux-docker-preview-release-control-packet-2026-04-25.md',
+          retainedPacketPath:
+            'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md',
           retainedPacketJsonPath:
-            'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json',
-          previewEvidenceCommit: '5c85f0595065d62d4b2679a3df4bb21ba749d71a',
-          packetEvidencePipelineId: 2479854355,
-          retainedPacketMergeCommit: 'ebaf84eab1d779d607f4dcb6e58e990d2946779f',
-          retainedPacketMergePipelineId: 2479875767,
-          previewVsixPath: 'preview-evidence/vi-history-suite-1.3.9.vsix',
+            'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json',
+          previewEvidenceCommit: '21774a91710b71c6b63629cc0cf3cf37ce9abc0a',
+          packetEvidencePipelineId: 2480195741,
+          packetMergeTrackingPolicy:
+            'do-not-track-packet-merge-commit; packet retention is governed by Git history and CI',
+          previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
           previewVsixSha256:
-            '7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470'
+            'bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02'
         },
         marketplace: {
           itemName: 'svelderrainruiz.vi-history-suite',
@@ -135,6 +136,13 @@ describe('Marketplace community-validation preview prep', () => {
       nextAction: 'resolve-version-and-package-blockers-before-user-says-publish-it-now'
     });
     expect(report.evidence.proofDisclosureSurfaces).toContain('docs/requirements/rtm.csv');
+    expect(report.evidence.developPreview).toMatchObject({
+      retainedPacketPath:
+        'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md',
+      packetEvidencePipelineId: 2480195741,
+      packetMergeTrackingPolicy:
+        'do-not-track-packet-merge-commit; packet retention is governed by Git history and CI'
+    });
     expect(report.vsce.plannedPublishCommand.display).toContain('--pre-release');
     expect(report.vsce.plannedPublishCommand.display).toContain('--pat <redacted>');
   });

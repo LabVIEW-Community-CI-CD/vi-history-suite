@@ -2064,6 +2064,11 @@ Information-for-users review cases:
   `docker` / `2026` / `x64` through `vihs`, proves
   `runtimeProvider=linux-container` with `runtimeEngine=labview-cli`, and
   records Windows installed-user LabVIEW proof as community/deferred evidence.
+- `TEST-UNIT-387`: verify the Linux Docker provider-lane release-control
+  packet retains develop pipeline `2480195741`, job `14091891709`, provider
+  runtime facts, preview VSIX SHA-256, release-publication state anchoring,
+  and the no-mutation public GitHub/Marketplace boundary while Windows
+  installed-user LabVIEW proof remains community/deferred.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2227,6 +2232,11 @@ Information-for-users review cases:
   reference, FAQ, SRS, RTM, and the test plan and confirm the develop package
   path now requires the governed Linux Docker Desktop/Docker Engine provider
   lane while Windows installed-user LabVIEW proof remains community/deferred.
+- `TEST-DOC-140`: review the Linux Docker provider-lane release-control
+  packet, release-publication state, current-state, information-item map, SRS,
+  RTM, and the test plan and confirm the current retained develop preview
+  evidence is anchored to pipeline `2480195741`, does not track the moving
+  live `develop` head, and did not mutate public GitHub or Marketplace.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

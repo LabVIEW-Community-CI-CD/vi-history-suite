@@ -84,7 +84,7 @@ describe('linux docker preview release-control packet', () => {
     expect(informationItemMap).toContain(
       'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json'
     );
-    expect(currentState).toContain(
+    expect(informationItemMap).toContain(
       'linux-docker-preview-release-control-packet-2026-04-25.md'
     );
   });
