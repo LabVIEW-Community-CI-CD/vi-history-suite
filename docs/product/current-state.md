@@ -302,9 +302,11 @@ Latest landed ship target:
   `https://github.com/svelderrainruiz/vi-history-suite/issues/49`, and
   `https://github.com/svelderrainruiz/vi-history-suite/issues/59`
 - public facade docs promotion decision:
-  needed after the GitLab authority MR for the fixture-battery closeout is
-  green; public GitHub and Marketplace mutation were not performed by that
-  authority closeout
+  completed through public PR #60 after the GitLab authority MR for the
+  fixture-battery closeout went green; public `main` now publishes
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`, post-merge public checks passed,
+  and Marketplace mutation was not performed by that public facade docs
+  promotion
 - retained public GitHub community-validation intake promotion plan:
   [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
 - retained public GitHub community-validation intake publication state:
@@ -351,9 +353,8 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.9`
 - current public GitHub source publication: public `main` now publishes
-  `b56fde1` for the `1.3.10` community-validation intake facade while the
-  `1.3.11` public validation facade now publishes at `5e67194`; the exact
-  `v1.3.9` tag/release remains retained separately
+  `ce6dbd0` after public PR #60 promoted the canonical public Docker fixture
+  docs; the exact `v1.3.9` tag/release remains retained separately
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
 - VS Code Marketplace retained published version: `1.3.9`
@@ -505,7 +506,8 @@ Latest landed ship target:
 - remaining blockers: none on the exact `v1.3.9` publication path; authority
   exact `v1.3.9` is now tagged on `main`
   `2f86063a35926fa67963af5ccd47e971157927c6`, public GitHub `main` now
-  publishes `b56fde1` for the community-validation intake facade, public tag
+  publishes `ce6dbd0` after the canonical public Docker fixture docs
+  promotion, public tag
   `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is published
   with manifest-matched assets, the official gallery extension
   query now verifies Marketplace version `1.3.9` for

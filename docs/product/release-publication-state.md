@@ -59,18 +59,27 @@ final installed-user distribution surface.
 
 ## Public GitHub State
 
-- Public GitHub `main`: `5e67194992af021ada2903ea868e8b84678d72d6`
+- Public GitHub `main`: `ce6dbd0b1b5783f7015b9d0589f3803636564789`
 - Public GitHub tag: `v1.3.9`
 - Public GitHub release id: `312994104`
 - Public GitHub release URL:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`
 - Public GitHub release status: published, immutable, exact assets retained
 - Asset status: `published-complete`
-- Public GitHub source status: community-validation intake facade published on
-  `b56fde1`; exact release tag `v1.3.9` remains retained separately at
-  `fb0ef2b`
+- Public GitHub source status: current public `main` publishes
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789` after public PR #60 promoted the
+  canonical Docker fixture docs; the earlier community-validation intake facade
+  remains retained at `b56fde1`, and exact release tag `v1.3.9` remains
+  retained separately at `fb0ef2b`
 - Public validation source status: `1.3.11` facade published through public
-  PR #46
+  PR #46, then canonical fixture docs promoted through public PR #60
+- Public validation facade closeout PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
+- Public validation facade closeout checks:
+  Public Source Package Preview `24965599550` / success, Public Windows
+  Installed-User Contract `24965599548` / success, and Public Linux
+  Installed-User Smoke `24965599557` / success
+- Public validation facade closeout Marketplace mutation: not performed
 - Public validation pre-release URL:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
 - Public validation release id: `313782074`
@@ -146,6 +155,8 @@ final installed-user distribution surface.
   validation lane packet
 - Public GitHub intake promotion state: published and verified through public
   PR #46
+- Latest public GitHub facade docs promotion: published and verified through
+  public PR #60 on `ce6dbd0b1b5783f7015b9d0589f3803636564789`
 - Public GitHub intake labels: applied
 - Public GitHub intake mutation: performed through protected public PR #46
 - Public GitHub release/tag mutation: published as
@@ -171,8 +182,10 @@ final installed-user distribution surface.
 - Public GitHub release id: `313782074`
 - Public GitHub PR:
   `https://github.com/svelderrainruiz/vi-history-suite/pull/46`
-- Public GitHub main commit:
-  `5e67194992af021ada2903ea868e8b84678d72d6`
+- Public GitHub current main commit:
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`
+- Public GitHub latest facade PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
 - VSIX SHA-256:
   `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 - Marketplace target: `svelderrainruiz.vi-history-suite` pre-release
@@ -204,9 +217,15 @@ final installed-user distribution surface.
   `https://github.com/svelderrainruiz/vi-history-suite/issues/59`
 - Closed docs/testability gaps: public issues `#55`, `#57`, `#58`, and `#59`
 - Public facade docs promotion decision:
-  needed after the GitLab authority MR is green
-- Public GitHub mutation during this authority closeout: not performed
-- VS Code Marketplace mutation during this authority closeout: not performed
+  completed through public PR #60 after the GitLab authority MR went green
+- Public facade docs promotion post-merge checks:
+  Public Source Package Preview `24965599550` / success, Public Windows
+  Installed-User Contract `24965599548` / success, and Public Linux
+  Installed-User Smoke `24965599557` / success
+- Public GitHub mutation during the GitLab authority fixture-battery closeout:
+  not performed; the later docs promotion was the separate public PR #60 act
+- VS Code Marketplace mutation during the public facade docs promotion: not
+  performed
 - Exact-release gate blocked by missing Windows proof: false for this public
   validation lane
 - Public GitHub and Marketplace mutation: performed for the scoped `1.3.11`

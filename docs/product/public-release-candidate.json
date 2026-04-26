@@ -24,10 +24,86 @@
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
     "publishedCommit": "fb0ef2b",
-    "currentPublicSourceHead": "b56fde1",
-    "currentPublicSourceHeadSha": "b56fde158fe151a736fe72c833efdfd0874d8537",
+    "currentPublicSourceHead": "ce6dbd0",
+    "currentPublicSourceHeadSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
-    "status": "published-main-tag-and-release-v1.3.9"
+    "status": "published-main-tag-and-release-v1.3.9",
+    "latestPublicFacadeDocsPromotion": {
+      "status": "published-and-verified",
+      "repository": "github.com/svelderrainruiz/vi-history-suite",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+      "publicBranch": "main",
+      "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+      "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+      "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "publicMainShortCommit": "ce6dbd0",
+      "mergedAt": "2026-04-26T19:53:22Z",
+      "promotedFiles": [
+        "README.md",
+        "INSTALL.md",
+        ".github/ISSUE_TEMPLATE/config.yml"
+      ],
+      "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+      "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+      "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+      "prHeadChecks": [
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "checkName": "public-linux-installed-user-smoke",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Source Package Preview",
+          "checkName": "public-source-package-preview",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "checkName": "public-windows-installed-user-contract",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+          "conclusion": "success"
+        }
+      ],
+      "postMergeMainChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 24965599550,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 24965599548,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 24965599557,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        }
+      ],
+      "localValidation": [
+        "npm ci",
+        "npm run compile",
+        "npm run test:design-contract",
+        "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+        "git diff --check",
+        "diff secret scan returned no hits"
+      ],
+      "marketplaceMutation": "not-performed",
+      "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+    }
   },
   "publicDevelopCandidate": {
     "branch": "develop",

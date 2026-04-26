@@ -88,8 +88,10 @@ The machine-readable companion surface for this ledger is:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
 - Public GitHub PR:
   `https://github.com/svelderrainruiz/vi-history-suite/pull/46`
-- Public GitHub main commit:
-  `5e67194992af021ada2903ea868e8b84678d72d6`
+- Public GitHub current main commit:
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`
+- Public GitHub latest facade PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
 - Public GitHub release assets:
   `preview-evidence/vi-history-suite-1.3.11.vsix`;
   `preview-evidence/vi-history-suite-1.3.11.vsix.sha256`
@@ -115,9 +117,15 @@ The machine-readable companion surface for this ledger is:
   and is about `1.4 GB`
 - Public evidence issues: `#48`, `#49`, and `#59`
 - Public facade docs promotion decision:
-  needed after the GitLab authority MR is green
-- Public GitHub mutation during this authority closeout: not performed
-- VS Code Marketplace mutation during this authority closeout: not performed
+  completed through public PR #60 after the GitLab authority MR went green
+- Public facade docs promotion post-merge checks:
+  Public Source Package Preview `24965599550` / success, Public Windows
+  Installed-User Contract `24965599548` / success, and Public Linux
+  Installed-User Smoke `24965599557` / success
+- Public GitHub mutation during the GitLab authority fixture-battery closeout:
+  not performed; the later docs promotion was the separate public PR #60 act
+- VS Code Marketplace mutation during the public facade docs promotion: not
+  performed
 
 ## Community-Validation Intake
 

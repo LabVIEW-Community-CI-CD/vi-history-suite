@@ -80,7 +80,8 @@ describe('canonical public Docker fixture battery docs', () => {
         repeatableFixtureRecipe: 'https://github.com/svelderrainruiz/vi-history-suite/issues/59'
       },
       windowsHostLabviewProof: 'community-deferred',
-      publicFacadeDocsPromotionDecision: 'needed-after-gitlab-authority-mr-green',
+      publicFacadeDocsPromotionDecision:
+        'completed-through-public-pr-60-after-gitlab-authority-green',
       publicGitHubMutationDuringAuthorityCloseout: false,
       marketplaceMutationDuringAuthorityCloseout: false
     };
@@ -154,7 +155,8 @@ describe('canonical public Docker fixture battery docs', () => {
     expect(packet).toContain('about `395 KB`');
     expect(packet).toContain('issues/48');
     expect(packet).toContain('issues/59');
-    expect(packet).toContain('Public GitHub and Marketplace mutation are not part of this');
+    expect(packet).toContain('public GitHub PR');
+    expect(packet).toContain('Marketplace mutation: not performed');
 
     const install = readText('INSTALL.md');
     const publicInstall = readText('public-github-source/INSTALL.md');
