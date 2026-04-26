@@ -178,10 +178,32 @@ describe('release publication state resolver', () => {
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
       previewVsixSha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6',
       publicGitHubExactMutation: 'not-admitted-and-not-performed',
-      marketplaceExactMutation: 'not-admitted-and-not-performed'
+      marketplaceExactMutation: 'not-admitted-and-not-performed',
+      communityProofIntakeChecklistPath:
+        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
+      communityProofIntakeChecklistJsonPath:
+        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
+      exactCandidateConversionPaths: [
+        'windows-proof-claim-with-admitted-windows-labview-receipts',
+        'community-deferred-claim-with-no-windows-installed-user-proof-claim'
+      ]
+    });
+    expect(state.windowsLabviewCommunityProofIntakeChecklist).toMatchObject({
+      status: 'prepared-no-mutation',
+      path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
+      jsonPath: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
+      preparedFromDevelopCommit: '3c0404a5cc51f3e131dfb29474fb36a338aec4ec',
+      sourceAssessedPipelineId: 2480212103,
+      packageVersion: '1.3.10',
+      candidateAdmissionPaths: ['windows-proof-claim', 'community-deferred-claim'],
+      communityReportsBecomeMaintainerProofAutomatically: false,
+      linuxDockerEvidenceMayProveWindowsLabviewInstalledUserBehavior: false,
+      publicGitHubMutation: 'not-performed',
+      marketplaceMutation: 'not-performed'
     });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('## Exact Release Readiness Assessment');
+    expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
     expect(stateDoc).toContain('Exact-release readiness: blocked');
     expect(stateDoc).toContain('Assessed pipeline: `2480212103` / `success`');
     expect(stateDoc).toContain(
@@ -197,6 +219,11 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain(
       'docs/product/marketplace-community-validation-intake-v1.3.10.md'
     );
+    expect(stateDoc).toContain(
+      'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md'
+    );
+    expect(stateDoc).toContain('Community reports become maintainer proof automatically: false');
+    expect(stateDoc).toContain('community-deferred claim with no Windows installed-user proof claim');
     expect(stateDoc).toContain('public-github-source/.github/labels.yml');
     expect(stateDoc).toContain('Public GitHub intake promotion state: published and verified');
     expect(stateDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/45');

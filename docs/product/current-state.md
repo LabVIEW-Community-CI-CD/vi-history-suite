@@ -58,10 +58,12 @@ Read these in order:
 40. [Release Publication State JSON](./release-publication-state.json)
 41. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
 42. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
-43. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-44. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-45. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-46. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+43. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+44. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+45. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+46. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+47. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+48. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -121,11 +123,13 @@ Current control-plane surfaces:
 41. [Release Publication State JSON](./release-publication-state.json)
 42. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
 43. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
-44. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-45. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-46. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-47. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
-48. [Fast VS Code Loop](../dev-fast-loop.md)
+44. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+45. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+46. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+47. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+48. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+49. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+50. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -249,6 +253,15 @@ Latest landed ship target:
   `42d1f581874c9fad8f6dcbc96c8827bb07e3b508` and pipeline `2480212103` are
   Linux/Docker validated, but Windows installed-user LabVIEW proof for
   `1.3.10` remains community/deferred
+- current external Windows/LabVIEW community proof intake checklist:
+  [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+- current external Windows/LabVIEW community proof intake checklist JSON:
+  [windows-labview-community-proof-intake-checklist-2026-04-26.json](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+- exact-release candidate conversion boundary:
+  the blocked assessment can be reassessed through either a Windows-proof claim
+  path with admitted Windows/LabVIEW proof receipts, or a community-deferred
+  claim path that keeps Windows/LabVIEW selectable while explicitly avoiding a
+  maintainer-proof claim
 - active Marketplace community-validation preview line: `1.3.10`
 - active Marketplace community-validation preview trigger:
   user said `publish it now`

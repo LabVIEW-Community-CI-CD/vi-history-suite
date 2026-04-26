@@ -2074,6 +2074,11 @@ Information-for-users review cases:
   blocked exact-release verdict, deferred Windows installed-user LabVIEW proof,
   preview VSIX SHA-256, release-publication state anchoring, and public
   GitHub/Marketplace no-mutation boundary.
+- `TEST-UNIT-389`: verify the Windows/LabVIEW community proof intake checklist
+  retains the blocked `1.3.10` assessment anchor, required external report
+  commands, proof-status ladder, two exact-candidate conversion paths,
+  candidate admission checklist, and public GitHub/Marketplace no-mutation
+  boundary.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2248,6 +2253,12 @@ Information-for-users review cases:
   Linux/Docker preview-valid but blocked for exact-release promotion while
   Windows installed-user LabVIEW proof remains community/deferred and public
   GitHub/Marketplace exact mutation is not admitted.
+- `TEST-DOC-142`: review the Windows/LabVIEW community proof intake checklist,
+  release-publication state, exact-release readiness assessment, current-state,
+  information-item map, SRS, RTM, and the test plan and confirm external
+  reports remain community signals until admitted, Linux/Docker proof is not
+  Windows proof, and the exact candidate must choose either a Windows-proof
+  claim path or a community-deferred claim path before reassessment.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
