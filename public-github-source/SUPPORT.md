@@ -73,6 +73,11 @@ The public validation lane is intentionally test-seeking: selectable variants
 may work, fail with a stable `VIHS_E_*` code, or report
 `feature:not-implemented`. File the report either way.
 
+Linux/Docker success does not prove native Windows/LabVIEW installed-user
+behavior. It is accepted evidence for the selected Linux/Docker machine only;
+Windows/LabVIEW proof remains community/deferred until a Windows user report is
+admitted and retained.
+
 ## Current Product Boundary
 
 - Windows defaults to local `LabVIEWCLI`
