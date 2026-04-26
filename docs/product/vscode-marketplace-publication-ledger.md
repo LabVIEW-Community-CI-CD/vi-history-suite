@@ -18,9 +18,15 @@ The machine-readable companion surface for this ledger is:
   `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - Installed-user homepage:
   `https://github.com/svelderrainruiz/vi-history-suite/wiki`
-- Current published Marketplace version: `1.3.9`
-- Current publication date: `2026-04-23`
-- Current verification surface: official gallery extension query
+- Current published Marketplace version: `1.3.10`
+- Current publication date: `2026-04-25`
+- Current publication kind: community-validation pre-release
+- Current regular Marketplace version: `1.3.9`
+- Current regular publication date: `2026-04-23`
+- Current pre-release Marketplace version: `1.3.10`
+- Current pre-release last updated: `2026-04-26T00:05:09.09Z`
+- Current verification surface: official gallery extension query and
+  `vsce show`
 - Current pending publication: none
 - Pending publication install-proof command:
   `npm run vscode:marketplace:install-proof`
@@ -35,8 +41,16 @@ The machine-readable companion surface for this ledger is:
 
 ## Community-Validation Preview Preparation
 
-- Status: admitted for preparation only
+- Status: published and verified
 - Publication claim: community-validation preview
+- Target preview version: `1.3.10`
+- Published preview version: `1.3.10`
+- Preview publication date: `2026-04-25`
+- Marketplace last updated: `2026-04-26T00:05:09.09Z`
+- Preview VSIX:
+  `preview-evidence/vi-history-suite-1.3.10.vsix`
+- Preview VSIX SHA-256:
+  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
 - Prep command: `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
   `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
@@ -44,13 +58,15 @@ The machine-readable companion surface for this ledger is:
 - Target version policy: choose a distinct higher `major.minor.patch` version
   before a Marketplace preview can be published; the current live `1.3.9`
   package line cannot be reused.
-- Publish trigger: blocked until the user says `publish it now`
+- Publish trigger: user said `publish it now`
 - Windows installed-user proof state: deferred
 - Windows/LabVIEW feature policy:
   user-selectable-with-proof-status-disclosure
 - Traceability matrix: `docs/requirements/rtm.csv`
 - Public GitHub mutation attempted by prep: false
 - Marketplace mutation attempted by prep: false
+- Public GitHub mutation attempted by publication: false
+- Marketplace mutation attempted by publication: true
 
 ## Publications
 
@@ -62,6 +78,7 @@ The machine-readable companion surface for this ledger is:
 | VS Code Marketplace exact release | published | `2026-04-21` | `1.3.0` | `pinned-vsce-cli` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md` |
 | VS Code Marketplace exact release | published | `2026-04-23` | `1.3.7` | `pinned-vsce-cli` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
 | VS Code Marketplace exact release | published | `2026-04-23` | `1.3.9` | `pinned-vsce-cli` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
+| VS Code Marketplace community-validation preview | published | `2026-04-25` | `1.3.10` | `pinned-vsce-cli-pre-release` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; `docs/release-procedure.md` |
 
 ## Publication Rules
 

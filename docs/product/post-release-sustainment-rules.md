@@ -77,7 +77,7 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.9`
+- current develop package line on `develop`: `1.3.10`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -130,12 +130,21 @@ Current version-line contract:
 
 Current control decision for public exact hardening:
 
-- chosen bump: `patch`
+- chosen bump: `patch-preview`
+- active Marketplace community-validation preview line: `1.3.10`
+- Marketplace community-validation preview status: published and verified
+- Marketplace community-validation preview last updated:
+  `2026-04-26T00:05:09.09Z`
+- Marketplace community-validation preview VSIX SHA-256:
+  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
 - active feature-lane public GitHub release hardening branch:
   none
-- rationale: authority exact `v1.3.9` is already tagged on `main` while public
+- rationale: authority exact `v1.3.9` remains tagged on `main` while public
   GitHub release `312994104` is retained as a complete immutable exact release
-  and VS Code Marketplace serves `1.3.9`
+  and VS Code Marketplace serves regular `1.3.9`
+- rationale: `develop` now carries Marketplace community-validation preview
+  package line `1.3.10` so the pre-release can publish without reusing the
+  live `1.3.9` Marketplace version
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
   but no active exact release candidate line is currently open
 - rejected `hotfix`: the installed launcher fix was already merged to

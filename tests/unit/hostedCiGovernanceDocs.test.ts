@@ -27,7 +27,8 @@ describe('hosted ci governance docs', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.9',
         currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.9',
+        currentDevelopPackageLine: '1.3.10',
+        activeMarketplaceCommunityPreviewLine: '1.3.10',
         activeDevelopCandidateReleaseLine: null,
         activeReleaseCandidateBranch: null,
         activeHotfixCandidateReleaseLine: null,
@@ -36,7 +37,7 @@ describe('hosted ci governance docs', () => {
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
         preTagPublicExactProofJob: 'public_exact_pretag_proof',
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
-        chosenBump: 'none'
+        chosenBump: 'patch-preview'
       })
     );
     expect(matrix.branchModel).toEqual(
@@ -125,10 +126,10 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('Marketplace both publish `1.3.9`');
     expect(matrixDoc).toContain('current exact release line: `v1.3.9`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.9`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.9`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.10`');
     expect(matrixDoc).toContain('active release-candidate branch: none');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
-    expect(matrixDoc).toContain('chosen bump: none');
+    expect(matrixDoc).toContain('chosen bump: patch-preview');
     expect(matrixDoc).toContain(
       'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
     );

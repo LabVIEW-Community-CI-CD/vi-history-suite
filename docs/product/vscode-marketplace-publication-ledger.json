@@ -1,15 +1,15 @@
 {
   "schema": "vi-history-suite/vscode-marketplace-publication-ledger@v1",
   "publicationSurface": "vscode-marketplace",
-  "status": "published",
+  "status": "published-community-validation-preview",
   "publisherId": "svelderrainruiz",
   "extensionId": "vi-history-suite",
   "marketplaceItemName": "svelderrainruiz.vi-history-suite",
   "listingUrl": "https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite",
   "homepageUrl": "https://github.com/svelderrainruiz/vi-history-suite/wiki",
-  "currentPublishedVersion": "1.3.9",
-  "currentPublishedDate": "2026-04-23",
-  "currentVerificationSurface": "official-gallery-extensionquery",
+  "currentPublishedVersion": "1.3.10",
+  "currentPublishedDate": "2026-04-25",
+  "currentVerificationSurface": "official-gallery-extensionquery-and-vsce-show",
   "pendingPublicationVersion": null,
   "pendingPublicationInstallProofPackageScript": "npm run vscode:marketplace:install-proof",
   "pendingPublicationInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
@@ -18,19 +18,26 @@
   "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
   "pendingPublicationPrepStatus": "retain-marketplace-publication",
   "communityValidationPreviewPreparation": {
-    "status": "admitted-for-preparation-only",
+    "status": "published-and-verified",
     "publicationClaim": "community-validation-preview",
     "preparePackageScript": "npm run vscode:marketplace:community-preview:prepare",
     "prepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
     "preferredVsceMode": "pre-release",
     "targetVersionPolicy": "must-be-distinct-higher-major-minor-patch-than-current-marketplace-version",
-    "targetVersion": null,
-    "publishTrigger": "blocked-until-user-says-publish-it-now",
+    "targetVersion": "1.3.10",
+    "publishTrigger": "user-said-publish-it-now",
     "windowsInstalledUserProofState": "deferred",
     "windowsLabviewFeaturePolicy": "user-selectable-with-proof-status-disclosure",
     "traceabilityMatrixPath": "docs/requirements/rtm.csv",
     "publicGitHubMutationAttemptedByPrep": false,
-    "marketplaceMutationAttemptedByPrep": false
+    "marketplaceMutationAttemptedByPrep": false,
+    "publishedDate": "2026-04-25",
+    "marketplaceLastUpdated": "2026-04-26T00:05:09.09Z",
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.10.vsix",
+    "previewVsixSha256": "da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705",
+    "publicGitHubMutationAttemptedByPublication": false,
+    "marketplaceMutationAttemptedByPublication": true,
+    "verificationSurface": "official-gallery-extensionquery-and-vsce-show"
   },
   "secretHandling": "do-not-retain-pat-or-secret-material",
   "publicationHistory": [
@@ -116,6 +123,26 @@
         "docs/product/release-publication-state.md",
         "docs/product/vscode-marketplace-publication-ledger.md"
       ]
+    },
+    {
+      "status": "published-community-validation-preview",
+      "publishedDate": "2026-04-25",
+      "version": "1.3.10",
+      "publicationMode": "pinned-vsce-cli-pre-release",
+      "primaryAuthority": [
+        "README.md",
+        "package.json",
+        "CHANGELOG.md",
+        "docs/product/release-publication-state.md",
+        "docs/product/vscode-marketplace-publication-ledger.md",
+        "docs/release-procedure.md"
+      ]
     }
-  ]
+  ],
+  "currentPublishedKind": "community-validation-pre-release",
+  "currentRegularPublishedVersion": "1.3.9",
+  "currentRegularPublishedDate": "2026-04-23",
+  "currentPreReleaseVersion": "1.3.10",
+  "currentPreReleasePublishedDate": "2026-04-25",
+  "currentPreReleaseLastUpdated": "2026-04-26T00:05:09.09Z"
 }

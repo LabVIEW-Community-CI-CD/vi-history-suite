@@ -245,6 +245,9 @@ function buildPrepReport(options, deps = {}) {
     ledger.currentPublishedVersion ??
     state.marketplace?.currentPublishedVersion ??
     null;
+  const publishTrigger =
+    state.marketplaceCommunityValidationPreview?.publishTrigger ??
+    'blocked-until-user-says-publish-it-now';
   const packagePath = buildPackagePath(options, state, targetVersion);
   const plannedCommands = buildPlannedVsceCommands(packagePath);
   const readiness = buildReadiness(
@@ -253,6 +256,9 @@ function buildPrepReport(options, deps = {}) {
     packageManifest.version,
     packagePath
   );
+  if (readiness.blockers.length === 0 && publishTrigger === 'user-said-publish-it-now') {
+    readiness.publishReadiness = 'prepared-user-trigger-present';
+  }
   const activePreviewClaim =
     state.developPreview?.classification ?? 'linux-docker-validated-preview';
   const proofDisclosureSurfaces = [
@@ -335,7 +341,7 @@ function buildPrepReport(options, deps = {}) {
       {
         publicGitHubMutationAttempted: false,
         marketplaceMutationAttempted: false,
-        publishTrigger: 'blocked-until-user-says-publish-it-now'
+        publishTrigger
       }
     )
   ];
@@ -360,7 +366,7 @@ function buildPrepReport(options, deps = {}) {
       currentPublishedVersion: currentMarketplaceVersion,
       preferredMode: 'pre-release',
       targetVersion,
-      publishTrigger: 'blocked-until-user-says-publish-it-now'
+      publishTrigger
     },
     package: {
       packageJsonVersion: packageManifest.version ?? null,
@@ -403,9 +409,11 @@ function buildPrepReport(options, deps = {}) {
     },
     readiness,
     nextAction:
-      readiness.blockers.length === 0
-        ? 'await-user-says-publish-it-now'
-        : 'resolve-version-and-package-blockers-before-user-says-publish-it-now',
+      readiness.blockers.length > 0
+        ? 'resolve-version-and-package-blockers-before-user-says-publish-it-now'
+        : publishTrigger === 'user-said-publish-it-now'
+          ? 'publish-marketplace-community-validation-preview'
+          : 'await-user-says-publish-it-now',
     phases
   };
 }

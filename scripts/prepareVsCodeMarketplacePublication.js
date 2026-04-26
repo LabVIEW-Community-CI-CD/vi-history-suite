@@ -205,12 +205,25 @@ async function fetchMarketplaceState(marketplaceItem) {
     response.json?.results?.[0]?.extensions?.[0] ??
     response.json?.results?.[0]?.extensions?.find?.(() => true) ??
     null;
-  const latestVersion = extension?.versions?.[0]?.version ?? null;
+  const versions = extension?.versions ?? [];
+  const isPreReleaseVersion = (version) =>
+    version?.properties?.some?.(
+      (property) =>
+        property.key === 'Microsoft.VisualStudio.Code.PreRelease' &&
+        String(property.value).toLowerCase() === 'true'
+    ) === true;
+  const latestRegularVersion =
+    versions.find((version) => !isPreReleaseVersion(version))?.version ??
+    versions[0]?.version ??
+    null;
+  const latestPreReleaseVersion = versions.find(isPreReleaseVersion)?.version ?? null;
 
   return {
     statusCode: response.statusCode,
     marketplaceItem,
-    currentPublishedVersion: latestVersion,
+    currentPublishedVersion: latestRegularVersion,
+    latestMarketplaceVersion: versions[0]?.version ?? null,
+    latestPreReleaseVersion,
     found: Boolean(extension)
   };
 }

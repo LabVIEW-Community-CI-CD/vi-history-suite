@@ -35,16 +35,20 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
 
     expect(ledger.publicationSurface).toBe('vscode-marketplace');
-    expect(ledger.status).toBe('published');
+    expect(ledger.status).toBe('published-community-validation-preview');
     expect(ledger.publisherId).toBe('svelderrainruiz');
     expect(ledger.marketplaceItemName).toBe('svelderrainruiz.vi-history-suite');
     expect(ledger.listingUrl).toBe(
       'https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite'
     );
     expect(ledger.homepageUrl).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
-    expect(ledger.currentPublishedVersion).toBe('1.3.9');
-    expect(ledger.currentPublishedDate).toBe('2026-04-23');
-    expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery');
+    expect(ledger.currentPublishedVersion).toBe('1.3.10');
+    expect(ledger.currentPublishedDate).toBe('2026-04-25');
+    expect(ledger.currentPublishedKind).toBe('community-validation-pre-release');
+    expect(ledger.currentRegularPublishedVersion).toBe('1.3.9');
+    expect(ledger.currentPreReleaseVersion).toBe('1.3.10');
+    expect(ledger.currentPreReleaseLastUpdated).toBe('2026-04-26T00:05:09.09Z');
+    expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery-and-vsce-show');
     expect(ledger.pendingPublicationVersion).toBeNull();
     expect(ledger.pendingPublicationInstallProofPackageScript).toBe(
       'npm run vscode:marketplace:install-proof'
@@ -61,7 +65,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
     expect(ledger.pendingPublicationPrepStatus).toBe('retain-marketplace-publication');
     expect(ledger.communityValidationPreviewPreparation).toMatchObject({
-      status: 'admitted-for-preparation-only',
+      status: 'published-and-verified',
       publicationClaim: 'community-validation-preview',
       preparePackageScript: 'npm run vscode:marketplace:community-preview:prepare',
       prepReceiptPath:
@@ -69,25 +73,36 @@ describe('vs code marketplace publication and installed-user docs', () => {
       preferredVsceMode: 'pre-release',
       targetVersionPolicy:
         'must-be-distinct-higher-major-minor-patch-than-current-marketplace-version',
-      targetVersion: null,
-      publishTrigger: 'blocked-until-user-says-publish-it-now',
+      targetVersion: '1.3.10',
+      publishTrigger: 'user-said-publish-it-now',
+      publishedDate: '2026-04-25',
+      marketplaceLastUpdated: '2026-04-26T00:05:09.09Z',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
+      previewVsixSha256:
+        'da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705',
       windowsInstalledUserProofState: 'deferred',
       windowsLabviewFeaturePolicy: 'user-selectable-with-proof-status-disclosure',
       publicGitHubMutationAttemptedByPrep: false,
-      marketplaceMutationAttemptedByPrep: false
+      marketplaceMutationAttemptedByPrep: false,
+      publicGitHubMutationAttemptedByPublication: false,
+      marketplaceMutationAttemptedByPublication: true
     });
     expect(ledger.secretHandling).toContain('do-not-retain-pat');
 
-    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.9`');
+    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.10`');
+    expect(ledgerDoc).toContain('Current regular Marketplace version: `1.3.9`');
+    expect(ledgerDoc).toContain('Current pre-release Marketplace version: `1.3.10`');
     expect(ledgerDoc).toContain('Current pending publication: none');
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:install-proof`');
     expect(ledgerDoc).toContain('retain-passed-install-proof');
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(ledgerDoc).toContain('## Community-Validation Preview Preparation');
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(ledgerDoc).toContain('blocked until the user says `publish it now`');
+    expect(ledgerDoc).toContain('Target preview version: `1.3.10`');
+    expect(ledgerDoc).toContain('user said `publish it now`');
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
+    expect(ledgerDoc).toContain('| VS Code Marketplace community-validation preview | published | `2026-04-25` | `1.3.10` | `pinned-vsce-cli-pre-release` |');
     expect(ledgerDoc).toContain('| VS Code Marketplace exact release | published | `2026-04-23` | `1.3.9` | `pinned-vsce-cli` |');
     expect(ledgerDoc).toContain('official gallery extension query');
     expect(currentState).toContain('VS Code Marketplace listing');

@@ -15,7 +15,7 @@
   "openingDecision": {
     "currentExactReleaseLine": "v1.3.9",
     "currentMainPackageLine": "1.3.9",
-    "currentDevelopPackageLine": "1.3.9",
+    "currentDevelopPackageLine": "1.3.10",
     "activeDevelopCandidateReleaseLine": null,
     "activeReleaseCandidateBranch": null,
     "activeHotfixCandidateReleaseLine": null,
@@ -24,16 +24,18 @@
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
     "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
-    "chosenBump": "none",
+    "chosenBump": "patch-preview",
     "rationale": [
-      "authority exact v1.3.9 is already tagged on main while public GitHub release 312994104 is retained as a complete immutable exact release and VS Code Marketplace serves 1.3.9",
-      "blocked historical v1.3.8 incident evidence remains retained, but no active exact release candidate line is currently open"
+      "authority exact v1.3.9 remains tagged on main while public GitHub release 312994104 is retained as a complete immutable exact release and VS Code Marketplace serves regular 1.3.9",
+      "develop now carries Marketplace community-validation preview package line 1.3.10 so the pre-release can publish without reusing the live 1.3.9 Marketplace version",
+      "blocked historical v1.3.8 incident evidence remains retained, and no active exact release candidate line is currently open"
     ],
     "rejectedAlternatives": {
       "hotfix": "the next exact line should promote from develop through the normal release/* path after retaining the blocked v1.3.8 incident history, not bypass GitFlow from main",
       "minor": "the next line still fixes an existing installed-user entrypoint contract and publication path without adding a new governed capability or supported workflow",
       "major": "no exact public or maintainer contract is intentionally broken or removed; the current exact line is already published on GitHub and Marketplace"
-    }
+    },
+    "activeMarketplaceCommunityPreviewLine": "1.3.10"
   },
   "branchModel": {
     "model": "gitflow",
