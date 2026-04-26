@@ -47,42 +47,50 @@ describe('release publication state resolver', () => {
     });
     expect(state.developPreview).toMatchObject({
       classification: 'linux-docker-validated-preview',
-      stateRole: 'retained-preview-packet-evidence',
+      stateRole: 'retained-provider-lane-packet-evidence',
       headTrackingPolicy:
         'do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed',
-      retainedPacketPath: 'docs/product/linux-docker-preview-release-control-packet-2026-04-25.md',
+      retainedPacketPath:
+        'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md',
       retainedPacketJsonPath:
-        'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json',
-      previewEvidenceCommit: '5c85f0595065d62d4b2679a3df4bb21ba749d71a',
-      packetEvidencePipelineId: 2479854355,
+        'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json',
+      previewEvidenceCommit: '21774a91710b71c6b63629cc0cf3cf37ce9abc0a',
+      packetEvidencePipelineId: 2480195741,
       packetEvidencePipelineStatus: 'success',
-      retainedPacketMergeCommit: 'ebaf84eab1d779d607f4dcb6e58e990d2946779f',
-      retainedPacketMergePipelineId: 2479875767,
+      packetMergeTrackingPolicy:
+        'do-not-track-packet-merge-commit; packet retention is governed by Git history and CI',
       providerLaneEvidence: expect.objectContaining({
         packageScript: 'npm run linux:docker:provider:lane',
         gitLabJob: 'linux_docker_provider_lane',
+        jobId: 14091891709,
         evidenceRoot: 'linux-docker-provider-lane-evidence/',
         schema: 'vi-history-suite/linux-docker-provider-lane@v1',
+        status: 'passed',
+        docker: expect.objectContaining({
+          ostype: 'linux',
+          serverVersion: '29.4.1',
+          driver: 'overlayfs'
+        }),
         windowsInstalledUserProofState: 'community-deferred'
       }),
-      retainedPacketMergePipelineStatus: 'success',
-      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.9.vsix',
-      previewVsixSha256: '7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470',
-      publicationState: 'non-production-integration-evidence-only',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
+      previewVsixSha256: 'bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02',
+      publicationState: 'develop-provider-lane-evidence-only',
       windowsInstalledUserProofDeferred: true,
-      publicGitHubMutation: 'not-admitted-by-this-preview-claim',
-      marketplaceMutation: 'not-admitted-by-this-preview-claim'
+      publicGitHubMutation: 'not-performed-by-this-packet',
+      marketplaceMutation: 'not-performed-by-this-packet'
     });
     expect(stateDoc).toContain('## Develop Preview State');
     expect(stateDoc).toContain('Linux/Docker validated preview');
-    expect(stateDoc).toContain('Windows installed-user proof deferred');
+    expect(stateDoc).toContain('Windows installed-user LabVIEW proof community/deferred');
     expect(stateDoc).toContain(
-      'docs/product/linux-docker-preview-release-control-packet-2026-04-25.json'
+      'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json'
     );
-    expect(stateDoc).toContain('Preview state role: retained preview packet evidence');
+    expect(stateDoc).toContain('Preview state role: retained provider-lane packet evidence');
     expect(stateDoc).toContain('Develop head tracking policy: do not persist the latest live');
-    expect(stateDoc).toContain('Public GitHub mutation: not admitted by this preview claim');
-    expect(stateDoc).toContain('VS Code Marketplace mutation: not admitted by this preview claim');
+    expect(stateDoc).toContain('Packet evidence pipeline: `2480195741` / `success`');
+    expect(stateDoc).toContain('Public GitHub mutation: not performed by this packet');
+    expect(stateDoc).toContain('VS Code Marketplace mutation: not performed by this packet');
     expect(state.developPreview.currentDevelopCommit).toBeUndefined();
     expect(state.developPreview.currentDevelopPipelineId).toBeUndefined();
     expect(state.publicGitHub.release).toMatchObject({

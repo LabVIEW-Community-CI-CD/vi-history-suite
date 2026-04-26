@@ -252,16 +252,17 @@ Latest landed ship target:
   explicit `publish the public intake now`; public labels were applied, while
   public GitHub release/tag/wiki and Marketplace mutation were not performed
   by the public intake publication
-- current Linux/Docker preview release-control packet:
-  [linux-docker-preview-release-control-packet-2026-04-25.md](./linux-docker-preview-release-control-packet-2026-04-25.md)
-- current Linux/Docker preview release-control packet JSON:
-  [linux-docker-preview-release-control-packet-2026-04-25.json](./linux-docker-preview-release-control-packet-2026-04-25.json)
+- current Linux Docker provider-lane release-control packet:
+  [linux-docker-provider-lane-release-control-packet-2026-04-26.md](./linux-docker-provider-lane-release-control-packet-2026-04-26.md)
+- current Linux Docker provider-lane release-control packet JSON:
+  [linux-docker-provider-lane-release-control-packet-2026-04-26.json](./linux-docker-provider-lane-release-control-packet-2026-04-26.json)
 - governed Linux Docker provider lane:
   `npm run linux:docker:provider:lane` / GitLab `linux_docker_provider_lane`
   now retain `linux-docker-provider-lane-evidence/` with Docker OSType
   `linux`, `vihs`-persisted `docker` / `2026` / `x64` settings, and
-  `runtimeProvider=linux-container` / `runtimeEngine=labview-cli` validation;
-  Windows installed-user LabVIEW proof remains community/deferred evidence
+  `runtimeProvider=linux-container` / `runtimeEngine=labview-cli` validation
+  from develop pipeline `2480195741`; Windows installed-user LabVIEW proof
+  remains community/deferred evidence
 - current no-mutation Windows/LabVIEW installed-user proof handoff:
   [windows-labview-installed-user-proof-handoff-2026-04-25.md](./windows-labview-installed-user-proof-handoff-2026-04-25.md)
 - current no-mutation Windows/LabVIEW installed-user proof handoff JSON:

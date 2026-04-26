@@ -15,19 +15,18 @@ does not persist the moving live `develop` head as Windows proof.
 | --- | --- |
 | Authority repo | `https://gitlab.com/svelderrainruiz/vi-history-suite` |
 | Integration branch | `develop` |
-| Handoff prepared from `develop` commit | `7f50d31b592ddf917639dc61af763e3378ee1999` |
-| Handoff prepared from `develop` pipeline | `2479898422` / `success` |
+| Handoff prepared from `develop` commit | `21774a91710b71c6b63629cc0cf3cf37ce9abc0a` |
+| Handoff prepared from `develop` pipeline | `2480195741` / `success` |
 | Active preview classification | Linux/Docker validated preview |
-| Preview state role | retained preview packet evidence |
+| Preview state role | retained provider-lane packet evidence |
 | Head tracking policy | read live `develop` head and pipeline state from GitLab when needed |
-| Retained preview packet | `docs/product/linux-docker-preview-release-control-packet-2026-04-25.md` |
-| Preview evidence commit | `5c85f0595065d62d4b2679a3df4bb21ba749d71a` |
-| Packet evidence pipeline | `2479854355` / `success` |
-| Retained packet merge commit | `ebaf84eab1d779d607f4dcb6e58e990d2946779f` |
-| Retained packet merge pipeline | `2479875767` / `success` |
-| Preview VSIX evidence | `preview-evidence/vi-history-suite-1.3.9.vsix` |
-| Preview VSIX SHA-256 | `7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470` |
-| Linux Docker provider lane | `npm run linux:docker:provider:lane` / GitLab `linux_docker_provider_lane` |
+| Retained preview packet | `docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md` |
+| Preview evidence commit | `21774a91710b71c6b63629cc0cf3cf37ce9abc0a` |
+| Packet evidence pipeline | `2480195741` / `success` |
+| Packet merge tracking policy | packet file retention is governed by Git history and CI instead of a moving merge-commit field |
+| Preview VSIX evidence | `preview-evidence/vi-history-suite-1.3.10.vsix` |
+| Preview VSIX SHA-256 | `bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02` |
+| Linux Docker provider lane | `npm run linux:docker:provider:lane` / GitLab `linux_docker_provider_lane` job `14091891709` |
 | Linux Docker provider evidence | `linux-docker-provider-lane-evidence/` with schema `vi-history-suite/linux-docker-provider-lane@v1` |
 | Linux Docker provider facts | Docker OSType `linux`; `runtimeProvider=linux-container`; `runtimeEngine=labview-cli`; `runtimeBlockedReason=<none>` |
 

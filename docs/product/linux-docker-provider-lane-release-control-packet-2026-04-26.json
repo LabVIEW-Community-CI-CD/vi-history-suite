@@ -1,0 +1,283 @@
+{
+  "schema": "vi-history-suite/linux-docker-provider-lane-release-control-packet@v1",
+  "recordedAt": "2026-04-26",
+  "authority": {
+    "repo": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+    "branch": "develop",
+    "mergeRequestIid": 174,
+    "mergeRequestTitle": "Govern Linux Docker provider lane",
+    "mergeCommitSha": "21774a91710b71c6b63629cc0cf3cf37ce9abc0a",
+    "sourceCommitSha": "231d1ab05fd1ec218ce367e1a1936997cfb9fa36",
+    "pipelineId": 2480195741,
+    "pipelineStatus": "success",
+    "pipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480195741",
+    "packageVersion": "1.3.10"
+  },
+  "claim": {
+    "classification": "linux-docker-validated-preview",
+    "providerLane": "admitted",
+    "windowsInstalledUserProofState": "community-deferred",
+    "windowsInstalledUserProofDeferred": true,
+    "windowsLabviewProofRequiredForPreview": false,
+    "windowsLabviewProofRequiredForWindowsClaim": true,
+    "publicGitHubMutation": "not-performed",
+    "marketplaceMutation": "not-performed",
+    "exactTag": "not-admitted"
+  },
+  "pipelineJobs": [
+    {
+      "stage": "admission",
+      "name": "ubuntu_docker_runner_admission",
+      "id": 14091891697,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 5.586423
+    },
+    {
+      "stage": "docs",
+      "name": "docs_link_check",
+      "id": 14091891698,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 12.614956
+    },
+    {
+      "stage": "docs",
+      "name": "docs_continuous_integration",
+      "id": 14091891699,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 47.300529
+    },
+    {
+      "stage": "docs",
+      "name": "docs_public_continuous_integration",
+      "id": 14091891700,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 44.427748
+    },
+    {
+      "stage": "docs",
+      "name": "docs_internal_continuous_integration",
+      "id": 14091891701,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 46.250693
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_release_gate",
+      "id": 14091891702,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 13.126266
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_26514_authority",
+      "id": 14091891703,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 12.857477
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_requirements_quality",
+      "id": 14091891704,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 11.18136
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_external_user_information",
+      "id": 14091891705,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 10.777702
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_audit_packet",
+      "id": 14091891706,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 15.468828
+    },
+    {
+      "stage": "test",
+      "name": "test_extension",
+      "id": 14091891707,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 81.536687
+    },
+    {
+      "stage": "test",
+      "name": "public_exact_pretag_proof",
+      "id": 14091891708,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 48.132901
+    },
+    {
+      "stage": "test",
+      "name": "linux_docker_provider_lane",
+      "id": 14091891709,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 16.243289
+    },
+    {
+      "stage": "package",
+      "name": "package_extension_preview",
+      "id": 14091891710,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 79.953285
+    }
+  ],
+  "absentWindowsJobs": [
+    "governed_runner_admission",
+    "windows_private_release_acceptance"
+  ],
+  "ubuntuDockerAdmission": {
+    "jobId": 14091891697,
+    "artifactPath": "governed-runner-admission-evidence/ubuntu-docker-runner-admission.json",
+    "schema": "vi-history-suite/ubuntu-docker-runner-admission@v2",
+    "claimScope": "linux-docker-validated-preview",
+    "generatedAt": "2026-04-26T05:11:25.962Z",
+    "runnerDescription": "ghostshadow-ubuntu-linux-assurance",
+    "commitSha": "21774a91710b71c6b63629cc0cf3cf37ce9abc0a",
+    "sourceBranch": "develop",
+    "dockerOstype": "linux",
+    "dockerServerVersion": "29.4.1",
+    "nodeVersion": "v24.15.0",
+    "npmVersion": "11.12.1",
+    "windowsLabviewProofIncluded": false,
+    "windowsInstalledUserProofDeferred": true,
+    "windowsLabviewProofRequiredForPreview": false,
+    "windowsLabviewProofRequiredForWindowsClaim": true
+  },
+  "linuxDockerProviderLane": {
+    "jobId": 14091891709,
+    "artifactPath": "linux-docker-provider-lane-evidence/linux-docker-provider-lane.json",
+    "schema": "vi-history-suite/linux-docker-provider-lane@v1",
+    "recordedAt": "2026-04-26T05:13:40.368Z",
+    "status": "passed",
+    "claimScope": "linux-docker-validated-preview",
+    "providerLane": {
+      "hostContract": "linux-docker-desktop-or-docker-engine",
+      "selectedProviderSetting": "docker",
+      "labviewVersion": "2026",
+      "labviewBitness": "x64",
+      "runtimeProvider": "linux-container",
+      "runtimeEngine": "labview-cli",
+      "runtimeValidationOutcome": "ready",
+      "runtimeBlockedReason": "<none>",
+      "linuxImage": "nationalinstruments/labview:2026q1-linux",
+      "linuxImageAvailable": false,
+      "linuxImageAcquisitionState": "acquisition-required-before-first-compare-run"
+    },
+    "docker": {
+      "ostype": "linux",
+      "serverVersion": "29.4.1",
+      "driver": "overlayfs",
+      "cgroupDriver": "systemd",
+      "context": "default"
+    },
+    "steps": [
+      {
+        "name": "docker-info",
+        "status": "passed",
+        "exitCode": 0
+      },
+      {
+        "name": "docker-context-show",
+        "status": "passed",
+        "exitCode": 0
+      },
+      {
+        "name": "docker-context-ls",
+        "status": "passed",
+        "exitCode": 0
+      },
+      {
+        "name": "linux-image-inspect",
+        "status": "allowed-failure",
+        "exitCode": 1
+      },
+      {
+        "name": "vihs-settings-update",
+        "status": "passed",
+        "exitCode": 0
+      },
+      {
+        "name": "vihs-settings-validate",
+        "status": "passed",
+        "exitCode": 0
+      }
+    ],
+    "windowsLabviewProof": {
+      "included": false,
+      "state": "community-deferred",
+      "requiredForThisLane": false,
+      "requiredBeforeWindowsInstalledUserClaim": true,
+      "deferredEvidence": [
+        "native Windows installed extension behavior",
+        "native Windows LabVIEW host execution",
+        "Windows Docker Desktop Windows-container execution",
+        "windows_private_release_acceptance"
+      ]
+    },
+    "publicGitHubMutation": "not-performed",
+    "marketplaceMutation": "not-performed"
+  },
+  "previewArtifact": {
+    "jobId": 14091891710,
+    "manifestPath": "preview-evidence/preview-manifest.json",
+    "vsixPath": "preview-evidence/vi-history-suite-1.3.10.vsix",
+    "fileName": "vi-history-suite-1.3.10.vsix",
+    "packageVersion": "1.3.10",
+    "commitSha": "21774a91710b71c6b63629cc0cf3cf37ce9abc0a",
+    "sha256": "bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02",
+    "sizeBytes": 998988
+  },
+  "localStandardsReviewEvidence": {
+    "preflight": "passed",
+    "requirementsQuality": "passed",
+    "docsWorkbenchGate": "passed",
+    "branchGovernanceAssert": "passed",
+    "gitDiffCheck": "passed",
+    "docsWorkbenchDockerfile": "docker/docs-authoring/Dockerfile",
+    "docsWorkbenchGuide": "docs/documentation-workbench.md"
+  },
+  "deferredProof": [
+    "native Windows installed extension behavior",
+    "native Windows LabVIEW host execution",
+    "Docker Desktop Windows-container execution",
+    "governed_runner_admission",
+    "windows_private_release_acceptance",
+    "npm run test:integration:windows",
+    "Windows exact VSIX installed-user proof for this preview line",
+    "VS Code Marketplace proof as Windows proof"
+  ],
+  "publicAndMarketplaceBoundary": {
+    "publicGitHubTouched": false,
+    "marketplaceTouched": false,
+    "publicGitHubRemoteMutation": "not-performed",
+    "marketplaceMutation": "not-performed",
+    "publishedMarketplaceCommunityValidationPreviewRemainsSeparate": true,
+    "publishedPublicGitHubIntakeRemainsSeparate": true
+  },
+  "classification": {
+    "promotionClass": "governed-develop-provider-lane-release-control-packet",
+    "evidenceCommit": "21774a91710b71c6b63629cc0cf3cf37ce9abc0a",
+    "evidencePipelineId": 2480195741,
+    "evidencePipelineStatus": "success",
+    "publicGitHubProductionMutationAdmitted": false,
+    "marketplaceProductionMutationAdmitted": false,
+    "windowsInstalledUserClaimAdmitted": false
+  }
+}

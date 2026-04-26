@@ -46,11 +46,11 @@ describe('windows labview installed-user proof handoff', () => {
     expect(machine.developPreview).toMatchObject(publicationState.developPreview);
     expect(machine.developPreview).toMatchObject({
       classification: 'linux-docker-validated-preview',
-      stateRole: 'retained-preview-packet-evidence',
-      previewEvidenceCommit: '5c85f0595065d62d4b2679a3df4bb21ba749d71a',
-      packetEvidencePipelineId: 2479854355,
-      retainedPacketMergeCommit: 'ebaf84eab1d779d607f4dcb6e58e990d2946779f',
-      retainedPacketMergePipelineId: 2479875767,
+      stateRole: 'retained-provider-lane-packet-evidence',
+      previewEvidenceCommit: '21774a91710b71c6b63629cc0cf3cf37ce9abc0a',
+      packetEvidencePipelineId: 2480195741,
+      packetMergeTrackingPolicy:
+        'do-not-track-packet-merge-commit; packet retention is governed by Git history and CI',
       windowsInstalledUserProofDeferred: true
     });
     expect(machine.developPreview.currentDevelopCommit).toBeUndefined();
@@ -84,6 +84,10 @@ describe('windows labview installed-user proof handoff', () => {
     expect(handoff).toContain('No public GitHub or VS Code Marketplace mutation');
     expect(handoff).toContain('This Ubuntu/Docker machine cannot satisfy the deferred Windows proof.');
     expect(handoff).toContain('PowerShell 7 shell executor');
+    expect(handoff).toContain(
+      'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md'
+    );
+    expect(handoff).toContain('2480195741');
     expect(handoff).toContain('Docker Desktop switchable to Windows-container mode');
     expect(handoff).toContain('LabVIEW 2026 x64 host bundle');
     expect(handoff).toContain('npm run gitlab:runner:windows:recovery:rehearse');

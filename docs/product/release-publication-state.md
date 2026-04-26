@@ -25,37 +25,36 @@ final installed-user distribution surface.
 ## Develop Preview State
 
 - Active develop preview claim: Linux/Docker validated preview
-- Preview state role: retained preview packet evidence
+- Preview state role: retained provider-lane packet evidence
 - Develop head tracking policy: do not persist the latest live `develop`
   commit or pipeline in this packet. Read live `develop` head and pipeline
   state from GitLab when that operational status is needed.
 - Retained preview packet:
-  `docs/product/linux-docker-preview-release-control-packet-2026-04-25.md`
+  `docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md`
 - Retained preview packet JSON:
-  `docs/product/linux-docker-preview-release-control-packet-2026-04-25.json`
+  `docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json`
 - Preview evidence commit:
-  `5c85f0595065d62d4b2679a3df4bb21ba749d71a`
-- Packet evidence pipeline: `2479854355` / `success`
-- Retained packet merge commit:
-  `ebaf84eab1d779d607f4dcb6e58e990d2946779f`
-- Retained packet merge pipeline: `2479875767` / `success`
+  `21774a91710b71c6b63629cc0cf3cf37ce9abc0a`
+- Packet evidence pipeline: `2480195741` / `success`
+- Packet merge tracking policy: do not retain a moving packet-merge commit in
+  this state surface; packet retention is governed by Git history and CI.
 - Preview VSIX evidence:
-  `preview-evidence/vi-history-suite-1.3.9.vsix`
+  `preview-evidence/vi-history-suite-1.3.10.vsix`
 - Preview VSIX SHA-256:
-  `7179df117c5b3c9032afbacb0b7c4a24f81229f3fbc0fd99f3ac0ed66a4c7470`
+  `bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02`
 - Linux Docker provider evidence:
   `npm run linux:docker:provider:lane` / GitLab
-  `linux_docker_provider_lane`, retaining
+  `linux_docker_provider_lane` job `14091891709`, retaining
   `linux-docker-provider-lane-evidence/` with schema
   `vi-history-suite/linux-docker-provider-lane@v1`
 - Linux Docker provider validated facts: Docker OSType `linux`, persisted
   `docker` / `2026` / `x64` settings through `vihs`,
   `runtimeValidationOutcome=ready`, `runtimeProvider=linux-container`,
   `runtimeEngine=labview-cli`, and `runtimeBlockedReason=<none>`
-- Preview publication state: non-production integration evidence only
-- Windows proof state: Windows installed-user proof deferred
-- Public GitHub mutation: not admitted by this preview claim
-- VS Code Marketplace mutation: not admitted by this preview claim
+- Preview publication state: develop provider-lane evidence only
+- Windows proof state: Windows installed-user LabVIEW proof community/deferred
+- Public GitHub mutation: not performed by this packet
+- VS Code Marketplace mutation: not performed by this packet
 
 ## Public GitHub State
 

@@ -380,6 +380,7 @@ function buildPrepReport(options, deps = {}) {
         retainedPacketJsonPath: state.developPreview?.retainedPacketJsonPath ?? null,
         previewEvidenceCommit: state.developPreview?.previewEvidenceCommit ?? null,
         packetEvidencePipelineId: state.developPreview?.packetEvidencePipelineId ?? null,
+        packetMergeTrackingPolicy: state.developPreview?.packetMergeTrackingPolicy ?? null,
         retainedPacketMergeCommit: state.developPreview?.retainedPacketMergeCommit ?? null,
         retainedPacketMergePipelineId: state.developPreview?.retainedPacketMergePipelineId ?? null,
         previewVsixPath: state.developPreview?.previewVsixPath ?? null,
