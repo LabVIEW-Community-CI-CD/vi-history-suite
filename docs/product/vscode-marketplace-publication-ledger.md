@@ -18,16 +18,16 @@ The machine-readable companion surface for this ledger is:
   `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - Installed-user homepage:
   `https://github.com/svelderrainruiz/vi-history-suite/wiki`
-- Current published Marketplace version: `1.3.10`
-- Current publication date: `2026-04-25`
-- Current publication kind: community-validation pre-release
+- Current published Marketplace version: `1.3.11`
+- Current publication date: `2026-04-26`
+- Current publication kind: public-validation pre-release
 - Current regular Marketplace version: `1.3.9`
 - Current regular publication date: `2026-04-23`
-- Current pre-release Marketplace version: `1.3.10`
-- Current pre-release last updated: `2026-04-26T00:05:09.09Z`
-- Current verification surface: official gallery extension query and
-  `vsce show`
-- Current pending publication: `1.3.11` public validation pre-release
+- Current pre-release Marketplace version: `1.3.11`
+- Current pre-release last updated: `2026-04-26T16:51:22.260Z`
+- Current verification surface: official gallery extension query, `vsce show`,
+  and isolated VS Code CLI install readback
+- Current pending publication: none
 - Pending publication install-proof command:
   `npm run vscode:marketplace:install-proof`
 - Pending publication install-proof receipt:
@@ -41,15 +41,16 @@ The machine-readable companion surface for this ledger is:
 
 ## Community-Validation Preview Preparation
 
-- Status: prepared, authorized, pending publication
+- Status: published and verified
 - Publication claim: public validation pre-release
 - Target preview version: `1.3.11`
-- Published preview version: not yet published by this packet
-- Preview publication date: pending
-- Marketplace last updated: pending post-publication readback
+- Published preview version: `1.3.11`
+- Preview publication date: `2026-04-26`
+- Marketplace last updated: `2026-04-26T16:51:22.260Z`
 - Preview VSIX:
   `preview-evidence/vi-history-suite-1.3.11.vsix`
-- Preview VSIX SHA-256: pending package build
+- Preview VSIX SHA-256:
+  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 - Prep command: `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
   `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
@@ -66,23 +67,36 @@ The machine-readable companion surface for this ledger is:
 - Traceability matrix: `docs/requirements/rtm.csv`
 - Public GitHub mutation attempted by prep: false
 - Marketplace mutation attempted by prep: false
-- Public GitHub mutation attempted by publication: false, authorized pending
-- Marketplace mutation attempted by publication: false, authorized pending
+- Public GitHub mutation attempted by publication: true
+- Marketplace mutation attempted by publication: true
 
 ## Public Validation Pre-Release 1.3.11
 
-- Status: prepared, authorized, pending publication
+- Status: published and verified
 - Packet:
   `docs/product/public-validation-prerelease-v1.3.11.md`
 - Packet JSON:
   `docs/product/public-validation-prerelease-v1.3.11.json`
 - Marketplace target version: `1.3.11`
-- Public GitHub release target: `v1.3.11`
+- Public GitHub release target: `v1.3.11-public-validation`
+- Nominal package tag: `v1.3.11`
+- Tag repair note: the first `v1.3.11` published pre-release became immutable
+  before assets could be attached; the zero-asset release and tag were deleted,
+  but GitHub retained the tag name as used, so the asset-bearing public
+  validation release uses `v1.3.11-public-validation`.
+- Public GitHub release URL:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/46`
+- Public GitHub main commit:
+  `5e67194992af021ada2903ea868e8b84678d72d6`
 - Public GitHub release assets:
   `preview-evidence/vi-history-suite-1.3.11.vsix`;
   `preview-evidence/vi-history-suite-1.3.11.vsix.sha256`
 - Public GitHub mutation authorized: true
 - Marketplace mutation authorized: true
+- Marketplace published version: `1.3.11`
+- Marketplace last updated: `2026-04-26T16:51:22.260Z`
 - Windows installed-user LabVIEW proof: community/deferred
 - Runtime proof command:
   `vihs --validate --proof-out ./vihs-proof`
@@ -130,6 +144,7 @@ The machine-readable companion surface for this ledger is:
 | VS Code Marketplace exact release | published | `2026-04-23` | `1.3.7` | `pinned-vsce-cli` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
 | VS Code Marketplace exact release | published | `2026-04-23` | `1.3.9` | `pinned-vsce-cli` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
 | VS Code Marketplace community-validation preview | published | `2026-04-25` | `1.3.10` | `pinned-vsce-cli-pre-release` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; `docs/release-procedure.md` |
+| VS Code Marketplace public-validation preview | published | `2026-04-26` | `1.3.11` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.11.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; public GitHub PR #46 |
 
 ## Publication Rules
 

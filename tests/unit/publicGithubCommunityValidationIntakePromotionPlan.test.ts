@@ -129,9 +129,15 @@ describe('public GitHub community-validation intake promotion plan', () => {
     expect(plan).toContain('Stop if the public checkout is dirty with unrelated work.');
 
     expect(releaseState.publicValidationPrerelease).toMatchObject({
-      status: 'prepared-authorized-pending-publication',
+      status: 'published-and-verified',
       packageVersion: '1.3.11',
       publicAndMarketplaceMutationAuthorizedByMaintainer: true
+    });
+    expect(releaseState.publicValidationPrerelease.publicGitHub).toMatchObject({
+      tag: 'v1.3.11-public-validation',
+      releaseMutation: 'published-and-verified',
+      mainCommit: '5e67194992af021ada2903ea868e8b84678d72d6',
+      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46'
     });
     expect(marketplaceLedger.communityValidationIntake).toMatchObject({
       status: 'public-github-published-and-verified',

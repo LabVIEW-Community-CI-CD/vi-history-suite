@@ -35,23 +35,23 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
 
     expect(ledger.publicationSurface).toBe('vscode-marketplace');
-    expect(ledger.status).toBe(
-      'published-community-validation-preview-with-1.3.11-public-validation-target-prepared'
-    );
+    expect(ledger.status).toBe('published-public-validation-prerelease-1.3.11');
     expect(ledger.publisherId).toBe('svelderrainruiz');
     expect(ledger.marketplaceItemName).toBe('svelderrainruiz.vi-history-suite');
     expect(ledger.listingUrl).toBe(
       'https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite'
     );
     expect(ledger.homepageUrl).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
-    expect(ledger.currentPublishedVersion).toBe('1.3.10');
-    expect(ledger.currentPublishedDate).toBe('2026-04-25');
-    expect(ledger.currentPublishedKind).toBe('community-validation-pre-release');
+    expect(ledger.currentPublishedVersion).toBe('1.3.11');
+    expect(ledger.currentPublishedDate).toBe('2026-04-26');
+    expect(ledger.currentPublishedKind).toBe('public-validation-pre-release');
     expect(ledger.currentRegularPublishedVersion).toBe('1.3.9');
-    expect(ledger.currentPreReleaseVersion).toBe('1.3.10');
-    expect(ledger.currentPreReleaseLastUpdated).toBe('2026-04-26T00:05:09.09Z');
-    expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery-and-vsce-show');
-    expect(ledger.pendingPublicationVersion).toBe('1.3.11');
+    expect(ledger.currentPreReleaseVersion).toBe('1.3.11');
+    expect(ledger.currentPreReleaseLastUpdated).toBe('2026-04-26T16:51:22.260Z');
+    expect(ledger.currentVerificationSurface).toBe(
+      'official-gallery-extensionquery-vsce-show-and-vscode-cli-install'
+    );
+    expect(ledger.pendingPublicationVersion).toBeNull();
     expect(ledger.pendingPublicationInstallProofPackageScript).toBe(
       'npm run vscode:marketplace:install-proof'
     );
@@ -67,7 +67,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
     expect(ledger.pendingPublicationPrepStatus).toBe('retain-marketplace-publication');
     expect(ledger.communityValidationPreviewPreparation).toMatchObject({
-      status: 'prepared-authorized-pending-publication',
+      status: 'published-and-verified',
       publicationClaim: 'public-validation-prerelease',
       preparePackageScript: 'npm run vscode:marketplace:community-preview:prepare',
       prepReceiptPath:
@@ -77,25 +77,37 @@ describe('vs code marketplace publication and installed-user docs', () => {
         'must-be-distinct-higher-major-minor-patch-than-current-marketplace-version',
       targetVersion: '1.3.11',
       publishTrigger: 'maintainer-authorized-public-github-and-marketplace-public-validation-publication',
-      publishedDate: null,
-      marketplaceLastUpdated: null,
+      publishedDate: '2026-04-26',
+      marketplaceLastUpdated: '2026-04-26T16:51:22.260Z',
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.11.vsix',
-      previewVsixSha256: null,
+      previewVsixSha256: '21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff',
       windowsInstalledUserProofState: 'community-deferred',
       windowsLabviewFeaturePolicy:
         'all-provider-year-bitness-variants-selectable-with-runtime-error-code-and-proof-packet-disclosure',
       publicGitHubMutationAttemptedByPrep: false,
       marketplaceMutationAttemptedByPrep: false,
-      publicGitHubMutationAttemptedByPublication: false,
-      marketplaceMutationAttemptedByPublication: false
+      publicGitHubMutationAttemptedByPublication: true,
+      marketplaceMutationAttemptedByPublication: true,
+      verificationSurface: 'official-gallery-extensionquery-vsce-show-and-vscode-cli-install'
     });
     expect(ledger.publicValidationPrerelease).toMatchObject({
-      status: 'prepared-authorized-pending-publication',
+      status: 'published-and-verified',
       marketplaceTargetVersion: '1.3.11',
-      publicGitHubReleaseTarget: 'v1.3.11',
+      publicGitHubReleaseTarget: 'v1.3.11-public-validation',
       publicGitHubMutationAuthorized: true,
       marketplaceMutationAuthorized: true,
-      allCliVariantsSelectable: true
+      allCliVariantsSelectable: true,
+      marketplacePublishedVersion: '1.3.11',
+      marketplaceLastUpdated: '2026-04-26T16:51:22.260Z',
+      nominalPackageTag: 'v1.3.11',
+      publicGitHubReleaseId: 313782074,
+      publicGitHubReleaseUrl:
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation',
+      publicGitHubMainCommit: '5e67194992af021ada2903ea868e8b84678d72d6',
+      publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
+      publicGitHubPublished: true,
+      marketplacePublished: true,
+      previewVsixSha256: '21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff'
     });
     expect(ledger.communityValidationIntake).toMatchObject({
       status: 'public-github-published-and-verified',
@@ -115,18 +127,24 @@ describe('vs code marketplace publication and installed-user docs', () => {
     });
     expect(ledger.secretHandling).toContain('do-not-retain-pat');
 
-    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.10`');
+    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.11`');
     expect(ledgerDoc).toContain('Current regular Marketplace version: `1.3.9`');
-    expect(ledgerDoc).toContain('Current pre-release Marketplace version: `1.3.10`');
-    expect(ledgerDoc).toContain('Current pending publication: `1.3.11` public validation pre-release');
+    expect(ledgerDoc).toContain('Current pre-release Marketplace version: `1.3.11`');
+    expect(ledgerDoc).toContain('Current pending publication: none');
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:install-proof`');
     expect(ledgerDoc).toContain('retain-passed-install-proof');
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(ledgerDoc).toContain('## Community-Validation Preview Preparation');
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
     expect(ledgerDoc).toContain('Target preview version: `1.3.11`');
+    expect(ledgerDoc).toContain('Published preview version: `1.3.11`');
     expect(ledgerDoc).toContain('maintainer authorized public GitHub and Marketplace public');
     expect(ledgerDoc).toContain('## Public Validation Pre-Release 1.3.11');
+    expect(ledgerDoc).toContain('v1.3.11-public-validation');
+    expect(ledgerDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/46');
+    expect(ledgerDoc).toContain(
+      '21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff'
+    );
     expect(ledgerDoc).toContain('## Community-Validation Intake');
     expect(ledgerDoc).toContain('public GitHub published and verified');
     expect(ledgerDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/45');
@@ -138,6 +156,9 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
     expect(ledgerDoc).toContain('| VS Code Marketplace community-validation preview | published | `2026-04-25` | `1.3.10` | `pinned-vsce-cli-pre-release` |');
+    expect(ledgerDoc).toContain(
+      '| VS Code Marketplace public-validation preview | published | `2026-04-26` | `1.3.11` | `pinned-vsce-cli-pre-release` |'
+    );
     expect(ledgerDoc).toContain('| VS Code Marketplace exact release | published | `2026-04-23` | `1.3.9` | `pinned-vsce-cli` |');
     expect(ledgerDoc).toContain('official gallery extension query');
     expect(currentState).toContain('VS Code Marketplace listing');

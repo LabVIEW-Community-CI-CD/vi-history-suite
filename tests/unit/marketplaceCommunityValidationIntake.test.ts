@@ -79,13 +79,15 @@ describe('Marketplace community-validation intake packet', () => {
     );
 
     expect(releaseState.marketplaceCommunityValidationPreview).toMatchObject({
-      intakeStatus: 'prepared-for-public-validation-1.3.11',
+      intakeStatus: 'public-github-published-and-verified-for-1.3.11',
       intakePacketPath: 'docs/product/public-validation-prerelease-v1.3.11.md',
       preparedPublicIssueTemplatePath:
         'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
       preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml',
-      publicGitHubIntakePublishedShortCommit: null,
-      publicGitHubIntakeLabelsApplied: false
+      publicGitHubIntakePublishedShortCommit: '5e67194',
+      publicGitHubIntakePullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
+      publicGitHubIntakeLabelsApplied: true,
+      publicGitHubReleaseTag: 'v1.3.11-public-validation'
     });
     expect(ledger.communityValidationIntake).toMatchObject({
       status: 'public-github-published-and-verified',

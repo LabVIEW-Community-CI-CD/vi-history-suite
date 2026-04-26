@@ -102,22 +102,25 @@ describe('release publication state resolver', () => {
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
+      mainCommit: '5e67194992af021ada2903ea868e8b84678d72d6',
       sourcePublication: {
-        status: 'community-validation-intake-published-and-verified',
-        currentMainShortCommit: 'b56fde1',
+        status: 'public-validation-prerelease-facade-published-and-verified',
+        currentMainShortCommit: '5e67194',
         exactReleaseRetainedCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
-        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/45'
+        priorCommunityValidationIntakeCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
+        priorCommunityValidationIntakePullRequest:
+          'https://github.com/svelderrainruiz/vi-history-suite/pull/45',
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46'
       }
     });
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
-      currentPublishedVersion: '1.3.10',
-      currentPublishedKind: 'community-validation-pre-release',
+      currentPublishedVersion: '1.3.11',
+      currentPublishedKind: 'public-validation-pre-release',
       currentRegularPublishedVersion: '1.3.9',
-      currentPreReleaseVersion: '1.3.10',
+      currentPreReleaseVersion: '1.3.11',
       expectedVersion: '1.3.11',
-      status: 'published-community-validation-preview-with-1.3.11-public-validation-target-prepared',
+      status: 'published-public-validation-prerelease-1.3.11',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
         receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
@@ -129,7 +132,7 @@ describe('release publication state resolver', () => {
       }
     });
     expect(state.marketplaceCommunityValidationPreview).toMatchObject({
-      status: 'prepared-authorized-pending-publication',
+      status: 'published-and-verified',
       publicationClaim: 'public-validation-prerelease',
       preparePackageScript: 'npm run vscode:marketplace:community-preview:prepare',
       prepReceiptPath:
@@ -137,39 +140,54 @@ describe('release publication state resolver', () => {
       preferredVsceMode: 'pre-release',
       targetVersionPolicy:
         'must-be-distinct-higher-major-minor-patch-than-current-marketplace-version',
-      currentMarketplaceVersion: '1.3.10',
+      currentMarketplaceVersion: '1.3.11',
       targetVersion: '1.3.11',
       packageVersion: '1.3.11',
-      publishedVersion: null,
-      publishedDate: null,
-      marketplaceLastUpdated: null,
+      publishedVersion: '1.3.11',
+      publishedDate: '2026-04-26',
+      marketplaceLastUpdated: '2026-04-26T16:51:22.260Z',
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.11.vsix',
-      previewVsixSha256: null,
+      previewVsixSha256: '21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff',
       publishTrigger: 'maintainer-authorized-public-github-and-marketplace-public-validation-publication',
       windowsLabviewFeaturePolicy:
         'all-provider-year-bitness-variants-selectable-with-runtime-error-code-and-proof-packet-disclosure',
       windowsInstalledUserProofState: 'community-deferred',
       traceabilityMatrixPath: 'docs/requirements/rtm.csv',
       publicGitHubMutation: 'not-mutated-by-community-validation-preview-publication',
-      marketplaceMutation: 'authorized-pending-publication',
-      intakeStatus: 'prepared-for-public-validation-1.3.11',
+      marketplaceMutation: 'published-public-validation-prerelease',
+      intakeStatus: 'public-github-published-and-verified-for-1.3.11',
       intakePacketPath: 'docs/product/public-validation-prerelease-v1.3.11.md',
       intakePacketJsonPath: 'docs/product/public-validation-prerelease-v1.3.11.json',
       preparedPublicIssueTemplatePath:
         'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
       preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml',
       publicGitHubIntakePromotionPlanStatus: 'superseded-by-1.3.11-public-validation-lane',
-      publicGitHubIntakePublishedShortCommit: null,
-      publicGitHubIntakeLabelsApplied: false,
-      publicGitHubReleaseMutation: 'authorized-pending-v1.3.11-pre-release-with-vsix-assets'
+      publicGitHubIntakePublishedShortCommit: '5e67194',
+      publicGitHubIntakeLabelsApplied: true,
+      publicGitHubReleaseMutation: 'published-prerelease-with-vsix-assets',
+      publicGitHubReleaseTag: 'v1.3.11-public-validation',
+      publicGitHubReleaseId: 313782074
     });
     expect(state.publicValidationPrerelease).toMatchObject({
-      status: 'prepared-authorized-pending-publication',
+      status: 'published-and-verified',
       packageVersion: '1.3.11',
       runtimeProofCommand: 'vihs --validate --proof-out ./vihs-proof',
       windowsInstalledUserLabviewProof: 'community-deferred',
       exactReleaseGateBlockedByMissingWindowsProof: false,
       publicAndMarketplaceMutationAuthorizedByMaintainer: true
+    });
+    expect(state.publicValidationPrerelease.publicGitHub).toMatchObject({
+      tag: 'v1.3.11-public-validation',
+      releaseMutation: 'published-and-verified',
+      sourceFacadeMutation: 'published-through-protected-pr',
+      releaseId: 313782074,
+      mainCommit: '5e67194992af021ada2903ea868e8b84678d72d6',
+      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46'
+    });
+    expect(state.publicValidationPrerelease.marketplace).toMatchObject({
+      mutation: 'published-and-verified',
+      publishedVersion: '1.3.11',
+      lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(state.exactReleaseReadinessAssessment).toMatchObject({
       status: 'blocked',
@@ -245,9 +263,9 @@ describe('release publication state resolver', () => {
       'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
     );
     expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(stateDoc).toContain('Status: prepared, authorized, pending publication');
+    expect(stateDoc).toContain('Status: published and verified');
     expect(stateDoc).toContain('Target preview version: `1.3.11`');
-    expect(stateDoc).toContain('Published preview version: not yet published by this packet');
+    expect(stateDoc).toContain('Published preview version: `1.3.11`');
     expect(stateDoc).toContain(
       'Windows/LabVIEW feature policy: all provider, year, and bitness choices may'
     );
@@ -264,8 +282,12 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Community reports become maintainer proof automatically: false');
     expect(stateDoc).toContain('community-deferred claim with no Windows installed-user proof claim');
     expect(stateDoc).toContain('public-github-source/.github/labels.yml');
-    expect(stateDoc).toContain('Public GitHub intake promotion state: authorized, pending publication');
-    expect(stateDoc).toContain('Public GitHub release/tag mutation: authorized for `v1.3.11`');
+    expect(stateDoc).toContain(
+      'Public GitHub intake promotion state: published and verified through public'
+    );
+    expect(stateDoc).toContain(
+      'Public GitHub release/tag mutation: published as'
+    );
     expect(state.incident).toMatchObject({
       active: false,
       classification: 'externally-blocked-publication',
@@ -276,10 +298,10 @@ describe('release publication state resolver', () => {
       releaseBranch: null,
       tag: null,
       packageVersion: '1.3.11',
-      status: 'public-validation-prerelease-prepared-for-public-github-and-marketplace-publication'
+      status: 'public-validation-prerelease-published-and-verified'
     });
     expect(state.nextAdmittedAction).toBe(
-      'publish-v1.3.11-public-validation-prerelease-to-public-github-and-marketplace'
+      'collect-community-validation-reports-for-1.3.11-public-validation'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
@@ -310,7 +332,7 @@ describe('release publication state resolver', () => {
       tag: 'v9.8.7',
       packageVersion: '9.8.7',
       marketplaceItem: 'svelderrainruiz.vi-history-suite',
-      currentMarketplaceVersion: '1.3.10'
+      currentMarketplaceVersion: '1.3.11'
     });
   });
 });

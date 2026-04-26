@@ -81,13 +81,14 @@
 - The active Marketplace public validation preview line is `1.3.11`.
 - The active Marketplace public validation preview trigger is maintainer
   authorization for public GitHub and Marketplace publication.
-- The active Marketplace public validation preview status is prepared,
-  authorized, and pending publication; post-publication readback must verify
-  the official gallery query plus `vsce show`.
+- The active Marketplace public validation preview status is published and
+  verified for `1.3.11`; readback verified the official gallery query,
+  `vsce show`, and isolated VS Code CLI install.
 - The active public validation path is admitted for pre-release publication:
   Windows/LabVIEW settings may remain selectable with stable runtime error-code
   and proof-packet disclosure, and public GitHub pre-release/source/intake
-  mutation is in scope for `1.3.11`.
+  mutation is retained for `1.3.11` through public PR #46 and release
+  `v1.3.11-public-validation`.
 - The retained Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The retained Windows x64 private-release packet is:

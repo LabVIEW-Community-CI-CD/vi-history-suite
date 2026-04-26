@@ -290,7 +290,7 @@ Authority release facts:
   community/deferred
 - active Marketplace public validation target: `1.3.11`
 - active public validation publication trigger:
-  maintainer authorized public GitHub and Marketplace publication
+  published through public GitHub PR #46 and pinned `vsce --pre-release`
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
 - retained Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -313,14 +313,15 @@ Authority release facts:
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
 - current public GitHub source publication: public `main` currently publishes
   `b56fde1` for the retained `1.3.10` community-validation intake facade; the
-  `1.3.11` public validation facade and pre-release are the next authorized
-  publication targets
+  `1.3.11` public validation facade now publishes at `5e67194`
+- public GitHub public-validation pre-release:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview currently published version:
-  `1.3.10`
+  `1.3.11`
 - VS Code Marketplace public validation target version: `1.3.11`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
-  `da09af0d288db60870c1a8125667303c710159c80c06ff2deda02a76e5085705`
+  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 - blocked historical publication incident: public GitHub release `312768592`
   for `v1.3.8` is published and immutable with zero assets; retain it as
   historical evidence only while the current live Marketplace version remains

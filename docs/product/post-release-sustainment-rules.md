@@ -132,11 +132,11 @@ Current control decision for public exact hardening:
 
 - chosen bump: `patch-preview`
 - active Marketplace public validation preview line: `1.3.11`
-- Marketplace public validation preview status: prepared, authorized, pending
-  publication
-- Marketplace public validation preview last updated: pending post-publication
-  readback
-- Marketplace public validation preview VSIX SHA-256: pending package build
+- Marketplace public validation preview status: published and verified
+- Marketplace public validation preview last updated:
+  `2026-04-26T16:51:22.260Z`
+- Marketplace public validation preview VSIX SHA-256:
+  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 - active feature-lane public GitHub release hardening branch:
   none
 - rationale: authority exact `v1.3.9` remains tagged on `main` while public
