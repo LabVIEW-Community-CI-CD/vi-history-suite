@@ -164,7 +164,7 @@ describe('exact release readiness assessment', () => {
     );
     expect(srs).toContain('exact-release readiness');
     expect(rtm).toContain(
-      'TEST-UNIT-388; TEST-UNIT-389; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142'
+      'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143'
     );
     expect(testPlan).toContain('TEST-UNIT-388');
     expect(testPlan).toContain('TEST-UNIT-389');

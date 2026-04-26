@@ -1,0 +1,257 @@
+{
+  "schema": "vi-history-suite/exact-release-candidate-reassessment@v1",
+  "recordedAt": "2026-04-26",
+  "status": "prepared",
+  "authority": {
+    "repo": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+    "branch": "develop",
+    "reassessedCommitSha": "14243fd0ee647736124b06edb5a9947eae178d38",
+    "pipelineId": 2480546719,
+    "pipelineStatus": "success",
+    "pipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480546719",
+    "packageVersion": "1.3.10"
+  },
+  "verdict": {
+    "reassessmentStatus": "prepared",
+    "selectedCandidatePath": "community-deferred-windows-labview-claim",
+    "currentAdmissibleCandidateClaim": "linux-docker-validated-exact-candidate-source-with-windows-labview-selectable-as-community-deferred",
+    "releaseBranchOpening": "admissible-as-next-governed-action",
+    "releaseBranch": "not-opened-by-this-reassessment",
+    "exactTag": "not-admitted",
+    "windowsInstalledUserLabviewProofClaim": "not-made",
+    "publicGitHubExactMutation": "gated-and-not-performed",
+    "marketplaceExactMutation": "gated-and-not-performed",
+    "rationale": "Develop commit 14243fd passed GitLab CI and the checklist-selected path narrows Windows/LabVIEW to community-deferred because no admitted external Windows proof has arrived."
+  },
+  "inputs": {
+    "sourceBlockedAssessmentPath": "docs/product/exact-release-readiness-assessment-2026-04-26.md",
+    "sourceBlockedAssessmentJsonPath": "docs/product/exact-release-readiness-assessment-2026-04-26.json",
+    "communityProofIntakeChecklistPath": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md",
+    "communityProofIntakeChecklistJsonPath": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json",
+    "retainedExactBaseline": "v1.3.9",
+    "activeMarketplacePreview": "1.3.10-community-validation-pre-release"
+  },
+  "pipelineJobs": [
+    {
+      "stage": "admission",
+      "name": "ubuntu_docker_runner_admission",
+      "id": 14093348390,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 6.381837
+    },
+    {
+      "stage": "docs",
+      "name": "docs_link_check",
+      "id": 14093348391,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 13.290025
+    },
+    {
+      "stage": "docs",
+      "name": "docs_continuous_integration",
+      "id": 14093348392,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 50.031255
+    },
+    {
+      "stage": "docs",
+      "name": "docs_public_continuous_integration",
+      "id": 14093348393,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 46.944403
+    },
+    {
+      "stage": "docs",
+      "name": "docs_internal_continuous_integration",
+      "id": 14093348394,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 48.90511
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_release_gate",
+      "id": 14093348395,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 16.865256
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_26514_authority",
+      "id": 14093348396,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 12.630114
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_requirements_quality",
+      "id": 14093348397,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 11.665155
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_external_user_information",
+      "id": 14093348398,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 12.106489
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_audit_packet",
+      "id": 14093348399,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 15.19968
+    },
+    {
+      "stage": "test",
+      "name": "test_extension",
+      "id": 14093348400,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 84.359262
+    },
+    {
+      "stage": "test",
+      "name": "public_exact_pretag_proof",
+      "id": 14093348401,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 50.346231
+    },
+    {
+      "stage": "test",
+      "name": "linux_docker_provider_lane",
+      "id": 14093348402,
+      "status": "success",
+      "runner": "ghostshadow-ubuntu-linux-assurance",
+      "durationSeconds": 18.770774
+    },
+    {
+      "stage": "package",
+      "name": "package_extension_preview",
+      "id": 14093348403,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 79.630479
+    }
+  ],
+  "candidateSourceArtifact": {
+    "jobId": 14093348403,
+    "manifestPath": "preview-evidence/preview-manifest.json",
+    "vsixPath": "preview-evidence/vi-history-suite-1.3.10.vsix",
+    "fileName": "vi-history-suite-1.3.10.vsix",
+    "packageVersion": "1.3.10",
+    "commitSha": "14243fd0ee647736124b06edb5a9947eae178d38",
+    "sha256": "afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783",
+    "sizeBytes": 998988,
+    "releaseUse": "candidate-source-preview-only-not-selected-exact-release-artifact"
+  },
+  "linuxDockerProviderLane": {
+    "jobId": 14093348402,
+    "schema": "vi-history-suite/linux-docker-provider-lane@v1",
+    "recordedAt": "2026-04-26T13:03:25.064Z",
+    "status": "passed",
+    "providerLane": {
+      "hostContract": "linux-docker-desktop-or-docker-engine",
+      "selectedProviderSetting": "docker",
+      "labviewVersion": "2026",
+      "labviewBitness": "x64",
+      "runtimeProvider": "linux-container",
+      "runtimeEngine": "labview-cli",
+      "runtimeValidationOutcome": "ready",
+      "runtimeBlockedReason": "<none>",
+      "linuxImage": "nationalinstruments/labview:2026q1-linux",
+      "linuxImageAvailable": false,
+      "linuxImageAcquisitionState": "acquisition-required-before-first-compare-run"
+    },
+    "docker": {
+      "ostype": "linux",
+      "serverVersion": "29.4.1",
+      "driver": "overlayfs",
+      "cgroupDriver": "systemd",
+      "context": "default"
+    },
+    "windowsLabviewProof": {
+      "included": false,
+      "state": "community-deferred",
+      "claimMade": false
+    }
+  },
+  "admittedExternalWindowsProofCheck": {
+    "proofArrived": false,
+    "governedRunnerAdmissionJobInPipeline": false,
+    "windowsPrivateReleaseAcceptanceJobInPipeline": false,
+    "retainedWindowsPrivateReleaseEvidenceFor1310": false,
+    "retainedGovernedRunnerAdmissionEvidenceFor1310": false,
+    "retainedWindowsExactVsixInstallProofForSelected1310ExactVsix": false,
+    "readOnlyPublicGitHubIssueQueries": [
+      {
+        "label": "community-validation",
+        "issueCount": 0
+      },
+      {
+        "label": "windows-labview",
+        "issueCount": 0
+      },
+      {
+        "label": "proof:reported",
+        "issueCount": 0
+      },
+      {
+        "label": "proof:reproduced",
+        "issueCount": 0
+      },
+      {
+        "label": "marketplace-preview",
+        "issueCount": 0
+      }
+    ],
+    "decision": "select-community-deferred-claim-path"
+  },
+  "selectedCommunityDeferredClaim": {
+    "claim": "1.3.10 is eligible for governed release-branch opening as a Linux/Docker validated exact-candidate source; Windows/LabVIEW installed-user host and Docker Desktop combinations remain selectable for community validation with proof-status disclosure, but they are not claimed as maintainer-proven for this candidate.",
+    "windowsInstalledUserProofClaimMade": false,
+    "selectableFeaturePolicy": "selectable-with-proof-status-disclosure",
+    "traceabilityRequirement": "distinguish-proven-selectable-deferred-and-unsupported-paths",
+    "linuxDockerEvidenceMayProveWindowsLabviewInstalledUserBehavior": false,
+    "communityReportsBecomeMaintainerProofAutomatically": false
+  },
+  "publicationGates": {
+    "releaseBranch": "not-opened-by-this-reassessment",
+    "selectedExactAuthorityVsix": "not-retained-yet",
+    "exactTag": "not-admitted",
+    "publicGitHubExactRelease": "gated-not-performed",
+    "marketplaceExactRelease": "gated-not-performed",
+    "windowsInstalledUserLabviewProofClaim": "not-made",
+    "communityDeferredWindowsLabviewWording": "selected-and-required"
+  },
+  "nextAdmittedActions": [
+    "open-governed-release-1.3.10-branch-from-14243fd0ee647736124b06edb5a9947eae178d38-if-community-deferred-claim-remains-selected",
+    "run-release-branch-pipeline-and-retain-selected-exact-authority-vsix-checksum-job-ids-and-proof-status-wording",
+    "reassess-exact-release-readiness-from-release-branch-before-exact-tag",
+    "use-asset-first-public-github-exact-release-controller-only-after-release-branch-readiness-closes",
+    "keep-vscode-marketplace-exact-publication-gated-until-public-github-exact-release-verification-and-marketplace-exact-publication-prerequisites-close",
+    "rerun-through-windows-proof-claim-path-if-admitted-windows-labview-proof-arrives-before-release-branch-closeout"
+  ],
+  "noMutationBoundary": {
+    "publicGitHubTouched": false,
+    "marketplaceTouched": false,
+    "publicGitHubExactReleaseMutation": "not-performed",
+    "publicGitHubTagMutation": "not-performed",
+    "publicGitHubSourceMutation": "not-performed",
+    "publicGitHubWikiMutation": "not-performed",
+    "marketplaceExactMutation": "not-performed",
+    "exactTagCreated": false,
+    "releaseBranchCreated": false
+  }
+}

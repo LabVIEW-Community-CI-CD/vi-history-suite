@@ -77,7 +77,8 @@ final installed-user distribution surface.
 - Current regular Marketplace version: `1.3.9`
 - Current pre-release Marketplace version: `1.3.10`
 - Current pre-release last updated: `2026-04-26T00:05:09.09Z`
-- Expected version for the active governed candidate line: `1.3.9`
+- Expected exact-candidate version for the active governed candidate line:
+  `1.3.10`
 - Marketplace status: community-validation preview published and verified on
   `1.3.10`, while regular exact release `1.3.9` remains retained.
 - Windows exact-VSIX install proof package script:
@@ -210,6 +211,36 @@ truthful paths: retain admitted Windows/LabVIEW proof before making a Windows
 claim, or narrow the exact release claim so Windows/LabVIEW remains selectable
 with community/deferred proof status.
 
+## Exact Release Candidate Reassessment
+
+- Status: prepared
+- Reassessment:
+  `docs/product/exact-release-candidate-reassessment-2026-04-26.md`
+- Reassessment JSON:
+  `docs/product/exact-release-candidate-reassessment-2026-04-26.json`
+- Source branch: `develop`
+- Source commit:
+  `14243fd0ee647736124b06edb5a9947eae178d38`
+- Source pipeline: `2480546719` / `success`
+- Candidate package version: `1.3.10`
+- Selected candidate path:
+  `community-deferred-windows-labview-claim`
+- Current admissible candidate claim:
+  Linux/Docker validated exact-candidate source with Windows/LabVIEW
+  selectable as community/deferred
+- Release branch opening: admissible as next governed action
+- Exact release branch: not opened by this reassessment
+- Exact tag: not admitted
+- Candidate source VSIX SHA-256:
+  `afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783`
+- Admitted external Windows proof arrived: false
+- Public GitHub exact mutation: gated and not performed
+- VS Code Marketplace exact mutation: gated and not performed
+
+This reassessment does not replace release-branch proof. It only selects the
+claim boundary that lets the next governed `release/1.3.10` branch open from
+`14243fd` without making a Windows installed-user LabVIEW proof claim.
+
 ## Incident Classification
 
 - Incident id: `PUBLICATION-INCIDENT-v1.3.8-IMMUTABLE-ZERO-ASSETS`
@@ -225,9 +256,9 @@ with community/deferred proof status.
 
 ## Next Admitted Action
 
-- Governed next line: none
+- Governed next line: `release/1.3.10`
 - Next admitted action:
-  `normal-next-line-governance-after-v1.3.9-retention`
+  `open-governed-release-1.3.10-branch-from-14243fd-community-deferred-windows-claim`
 
 ## Publication Rule
 
