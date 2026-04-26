@@ -1,0 +1,128 @@
+name: Marketplace community validation report
+description: Report a v1.3.10 pre-release Windows/LabVIEW validation result
+title: "[Community validation]: "
+labels:
+  - community-validation
+  - marketplace-preview
+  - windows-labview
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for Marketplace pre-release `1.3.10` validation reports.
+
+        Selectable does not mean maintainer-proven. Please include `vihs --validate` output and the exact provider, LabVIEW year, and bitness so the proof status can be updated from reported to reproduced or deferred.
+
+        Do not include private GitLab material, PATs, access tokens, proprietary VI contents, or confidential screenshots.
+  - type: dropdown
+    id: validation_outcome
+    attributes:
+      label: Validation outcome
+      options:
+        - Worked
+        - Failed during install or bootstrap
+        - Failed during `vihs`
+        - Failed during `vihs --validate`
+        - Failed during compare preflight
+        - Failed during compare execution
+        - Blocked before testing
+        - Documentation mismatch
+    validations:
+      required: true
+  - type: dropdown
+    id: install_route
+    attributes:
+      label: Install route
+      options:
+        - VS Code Extensions view pre-release channel
+        - `code --install-extension svelderrainruiz.vi-history-suite@prerelease`
+        - VSIX provided by maintainer
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: extension_version
+    attributes:
+      label: Extension version
+      description: Expected `1.3.10` for this intake packet.
+      value: "1.3.10"
+    validations:
+      required: true
+  - type: textarea
+    id: code_version
+    attributes:
+      label: VS Code version
+      description: Paste the output from `code --version`.
+    validations:
+      required: true
+  - type: input
+    id: operating_system
+    attributes:
+      label: Operating system
+      description: Example Windows 11 24H2.
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Selected provider
+      options:
+        - host
+        - docker
+    validations:
+      required: true
+  - type: input
+    id: labview_year
+    attributes:
+      label: Selected LabVIEW year
+      description: Example `2026`.
+    validations:
+      required: true
+  - type: dropdown
+    id: bitness
+    attributes:
+      label: Selected bitness
+      options:
+        - x64
+        - x86
+    validations:
+      required: true
+  - type: textarea
+    id: validate_output
+    attributes:
+      label: `vihs --validate` output
+      description: Paste the exact output, or say why you could not run it.
+    validations:
+      required: true
+  - type: textarea
+    id: compare_result
+    attributes:
+      label: Compare result
+      description: Include the compare preflight result, whether `Compare` was attempted, and where it stopped.
+    validations:
+      required: true
+  - type: textarea
+    id: docker_details
+    attributes:
+      label: Docker details if provider is docker
+      description: Paste `docker version` and `docker info --format '{{.OSType}}'` when relevant.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Include the exact command, setting change, or compare step that reproduces the result.
+    validations:
+      required: true
+  - type: textarea
+    id: attachments_or_redactions
+    attributes:
+      label: Attachments or redactions
+      description: Name any logs or screenshots attached, and note any confidential paths or data you redacted.
+  - type: checkboxes
+    id: proof_status_acknowledgement
+    attributes:
+      label: Proof-status acknowledgement
+      options:
+        - label: I understand this report is community evidence until maintainer reproduction or retained Windows/LabVIEW proof changes the proof status.
+          required: true

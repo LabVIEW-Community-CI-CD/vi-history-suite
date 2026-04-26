@@ -3,11 +3,16 @@ description: Request support for a missing or newer LabVIEW version or bitness
 title: "[LabVIEW version]: "
 labels:
   - enhancement
+  - windows-labview
+  - community-validation
+  - proof:deferred
 body:
   - type: markdown
     attributes:
       value: |
         Use this template when the install/bootstrap flow or `vihs` surfaces a missing, unsupported, or not-yet-implemented LabVIEW version path.
+
+        Selectable does not mean maintainer-proven. For Marketplace pre-release `1.3.10`, requests remain proof-deferred until maintainer reproduction or retained Windows/LabVIEW proof changes that status.
   - type: input
     id: requested_labview_version
     attributes:

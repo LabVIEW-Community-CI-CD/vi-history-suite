@@ -191,6 +191,9 @@ runtime-settings CLI on the active branch.
   - Windows installed-user operation may be evaluated by users on their own
     Windows setups, but this Ubuntu/Docker evidence lane does not prove native
     Windows LabVIEW or Docker Desktop Windows-container behavior
+  - for Marketplace pre-release `1.3.10`, report Windows/LabVIEW results
+    through the community-validation intake packet and include provider,
+    LabVIEW year, bitness, and `vihs --validate` output
   - Linux public smoke, Linux benchmark, and Ubuntu/Docker preview lanes are
     maintainer/source-evaluation proof surfaces unless a later Windows proof
     lane admits them into a Windows installed-user claim

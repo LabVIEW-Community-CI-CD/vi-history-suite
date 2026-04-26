@@ -87,6 +87,17 @@ describe('vs code marketplace publication and installed-user docs', () => {
       publicGitHubMutationAttemptedByPublication: false,
       marketplaceMutationAttemptedByPublication: true
     });
+    expect(ledger.communityValidationIntake).toMatchObject({
+      status: 'prepared-public-github-gated',
+      packetPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.md',
+      packetJsonPath: 'docs/product/marketplace-community-validation-intake-v1.3.10.json',
+      preparedIssueTemplatePath:
+        'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
+      preparedLabelManifestPath: 'public-github-source/.github/labels.yml',
+      publicGitHubMutationAttempted: false,
+      marketplaceMutationAttempted: false,
+      proofStatusPolicy: 'selectable-does-not-mean-maintainer-proven'
+    });
     expect(ledger.secretHandling).toContain('do-not-retain-pat');
 
     expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.10`');
@@ -100,6 +111,12 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledgerDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
     expect(ledgerDoc).toContain('Target preview version: `1.3.10`');
     expect(ledgerDoc).toContain('user said `publish it now`');
+    expect(ledgerDoc).toContain('## Community-Validation Intake');
+    expect(ledgerDoc).toContain('prepared, public GitHub gated');
+    expect(ledgerDoc).toContain(
+      'docs/product/marketplace-community-validation-intake-v1.3.10.md'
+    );
+    expect(ledgerDoc).toContain('public-github-source/.github/labels.yml');
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
     expect(ledgerDoc).toContain('| VS Code Marketplace community-validation preview | published | `2026-04-25` | `1.3.10` | `pinned-vsce-cli-pre-release` |');
@@ -152,9 +169,12 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(readme).toContain('The packaged Marketplace listing is intentionally installed-user first');
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Proof Status And Community Validation');
+    expect(readme).toContain('Marketplace Community-Validation Intake v1.3.10');
+    expect(readme).toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(readme).toContain('Traceability Matrix');
     expect(readme).toContain('Report A Problem Or Request Support');
     expect(readme).toContain('Issue Chooser');
+    expect(readme).toContain('Marketplace Community Validation Report');
     expect(readme).toContain('LabVIEW Version Support Request');
     expect(readme).toContain('Evaluate From Source');
     expect(readme).toContain('Contribute');
@@ -169,7 +189,10 @@ describe('vs code marketplace publication and installed-user docs', () => {
       'The packaged Marketplace listing is intentionally installed-user first'
     );
     expect(publicReadme).toContain('vihs --validate');
+    expect(publicReadme).toContain('Proof Status And Community Validation');
+    expect(publicReadme).toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(publicReadme).toContain('Report A Problem Or Request Support');
+    expect(publicReadme).toContain('Marketplace Community Validation Report');
     expect(publicReadme).toContain('LabVIEW Version Support Request');
     expect(publicReadme).toContain('Evaluate From Source');
     expect(publicReadme).toContain('Contribute');
@@ -187,8 +210,11 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(publicSupport).toContain(
       'if the selected host or Docker bundle is missing, contradictory, unsupported, or blocked, the product should fail closed with visible next-step guidance'
     );
+    expect(publicSupport).toContain('Community Validation Triage');
+    expect(publicSupport).toContain('proof:reported');
     expect(publicBugReport).toContain('install, settings, validation, or compare problem');
     expect(publicBugReport).toContain('Install route');
+    expect(publicBugReport).toContain('Marketplace community-validation pre-release (`1.3.10`)');
     expect(publicBugReport).toContain('`vihs --validate` output');
     expect(publicBugReport).toContain('What command or surface failed?');
     expect(publicLabviewVersion).toContain('LabVIEW version support request');
