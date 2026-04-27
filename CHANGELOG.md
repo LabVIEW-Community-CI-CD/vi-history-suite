@@ -9,6 +9,25 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.12] - 2026-04-26
+
+### Added
+
+- `vihs validate-fixture` for running the canonical public
+  `ni/labview-icon-editor` / `resource/plugins/lv_icon.vi` compare battery
+  from the installed CLI and retaining public proof packets.
+- Public proof-status matrix that distinguishes admitted Linux/Docker,
+  admitted Linux host LabVIEW, community/deferred Windows host LabVIEW, and
+  community/deferred Windows Docker Desktop Windows-container evidence.
+
+### Changed
+
+- Public validation docs now treat the canonical fixture as an executable
+  validation recipe, not only retained issue evidence.
+- Linux host comparison execution now returns cleanly after `LabVIEWCLI` exits
+  even when headless LabVIEW keeps inherited stdio handles open long enough to
+  outlive the CLI process.
+
 ## [1.3.11] - 2026-04-26
 
 ### Added

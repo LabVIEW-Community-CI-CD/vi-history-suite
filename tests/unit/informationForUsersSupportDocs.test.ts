@@ -112,7 +112,9 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('does not prove native');
     expect(commandReference).toContain('Docker Desktop Windows-container behavior');
     expect(commandReference).not.toContain('`npm run public:smoke:linux`');
-    expect(commandReference).toContain('The active governed preview route is Linux/Docker validated');
+    expect(commandReference).toContain(
+      'The active governed preview route is Linux/Docker and Linux host LabVIEW'
+    );
     expect(commandReference).toContain('npm run assurance:release-gate');
     expect(commandReference).toContain('npm run assurance:26514:authority');
     expect(commandReference).toContain('npm run assurance:user-info');

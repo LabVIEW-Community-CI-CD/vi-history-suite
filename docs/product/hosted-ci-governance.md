@@ -30,7 +30,7 @@ retained closed baseline.
 
 - current exact release line: `v1.3.9`
 - current `main` package line: `1.3.9`
-- current `develop` package line: `1.3.11`
+- current `develop` package line: `1.3.12`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -45,7 +45,7 @@ retained closed baseline.
 - public GitHub exact transaction verification package script:
   `npm run public:github:exact:transaction:verify`
 - chosen bump: patch-preview
-- active Marketplace public validation preview line: `1.3.11`
+- active Marketplace public validation preview line: `1.3.12`
 - Marketplace public validation preview status: prepared, authorized, pending
   publication
 - Marketplace public validation preview last updated: pending post-publication
@@ -54,7 +54,7 @@ retained closed baseline.
   GitHub release `312994104` is published with exact assets, and VS Code
   Marketplace serves regular `1.3.9`
 - rationale: `develop` now carries public validation pre-release package line
-  `1.3.11` so the pre-release can publish without reusing the live `1.3.10`
+  `1.3.12` so the pre-release can publish without reusing the live `1.3.11`
   Marketplace version
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
   but no active exact release candidate line is currently open

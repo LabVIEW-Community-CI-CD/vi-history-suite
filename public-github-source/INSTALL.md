@@ -50,11 +50,11 @@ operation acquires the image when it is not cached yet.
 
 - Windows defaults to local `LabVIEWCLI`
 - host Windows LabVIEW years `2020` through `2026` are selectable when they are installed locally
+- host Linux LabVIEW `2026` `x64` is admitted when LabVIEW Community 2026 is
+  installed and discoverable at `/usr/local/natinst/LabVIEW-2026-64/labview`
 - `docker/windows` and `docker/linux` are governed today for `2026` `x64`
   only, but other selectable Docker years and bitnesses are accepted for
   validation reporting and may return a stable not-yet-implemented code
-- `host/linux` is selectable for validation reporting and is expected to return
-  a stable unsupported or missing-runtime code until implemented
 - blocked or unsupported paths fail closed with explicit next-step guidance
 
 ## Source Evaluation And Codespaces
@@ -105,6 +105,15 @@ compare validation. Retained public evidence shows the positive historical
 compare succeeded, the no-change control succeeded, and the missing-file
 control blocked before Docker at `left-blob-read-failed`. Windows host LabVIEW
 proof remains community/deferred.
+
+Executable fixture validation:
+
+```bash
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof
+```
+
+On a Linux machine with LabVIEW Community 2026 installed, use `--provider host`
+with the same command to generate the Linux host-native proof packet.
 
 More source-evaluation help:
 

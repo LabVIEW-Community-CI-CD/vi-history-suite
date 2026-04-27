@@ -4,7 +4,7 @@ title: "[Bug]: "
 labels:
   - bug
   - community-validation
-  - version:1.3.11
+  - version:1.3.12
   - needs-triage
 body:
   - type: markdown
@@ -13,7 +13,7 @@ body:
         Use this template for public installed-user issues only. Do not include private GitLab control-plane material.
         Before filing, keep the exact `vihs --validate` output and the command or UI step that failed.
 
-        For Marketplace pre-release `1.3.11`, include provider, LabVIEW year, bitness, validation output, and runtimeErrorCode so the proof status can be triaged.
+        For Marketplace pre-release `1.3.12`, include provider, LabVIEW year, bitness, validation output, and runtimeErrorCode so the proof status can be triaged.
   - type: dropdown
     id: install_route
     attributes:
@@ -24,7 +24,7 @@ body:
         - `code --install-extension svelderrainruiz.vi-history-suite`
         - `code --install-extension svelderrainruiz.vi-history-suite@prerelease`
         - Exact released Marketplace line (`1.3.9`)
-        - Marketplace public-validation pre-release (`1.3.11`)
+        - Marketplace public-validation pre-release (`1.3.12`)
         - Preview VSIX or other non-Marketplace package
     validations:
       required: true
