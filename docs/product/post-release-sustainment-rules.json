@@ -49,7 +49,7 @@
       ],
       "currentExactReleaseLine": "v1.3.9",
       "currentMainPackageLine": "1.3.9",
-      "currentDevelopPackageLine": "1.3.12",
+      "currentDevelopPackageLine": "1.3.13",
       "activeDevelopCandidateReleaseLine": null,
       "activeReleaseCandidateBranch": null,
       "activeHotfixCandidateReleaseLine": null,
@@ -104,14 +104,14 @@
       "hotfixBranch": "hotfix/*",
       "exactReleaseLineBranch": "main",
       "nextLineBranchModel": "gitflow",
-      "activeMarketplaceCommunityPreviewLine": "1.3.12",
-      "vscodeMarketplaceCommunityValidationPreviewTargetVersion": "1.3.12",
+      "activeMarketplaceCommunityPreviewLine": "1.3.13",
+      "vscodeMarketplaceCommunityValidationPreviewTargetVersion": "1.3.13",
       "vscodeMarketplaceCommunityValidationPreviewPublishedVersion": null,
       "vscodeMarketplaceCommunityValidationPreviewPublishedDate": null,
       "vscodeMarketplaceCommunityValidationPreviewLastUpdated": null,
       "vscodeMarketplaceCommunityValidationPreviewVsixSha256": null,
-      "publicValidationPrereleasePacketPath": "docs/product/public-validation-prerelease-v1.3.12.md",
-      "publicValidationPrereleasePacketJsonPath": "docs/product/public-validation-prerelease-v1.3.12.json"
+      "publicValidationPrereleasePacketPath": "docs/product/public-validation-prerelease-v1.3.13.md",
+      "publicValidationPrereleasePacketJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json"
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",

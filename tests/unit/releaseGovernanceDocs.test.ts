@@ -134,7 +134,7 @@ describe('release governance package', () => {
     expect(adr9).toContain('published immutable');
     expect(adr9).toContain('release with missing or mismatched assets is externally blocked');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.3.12`');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.3.13`');
     expect(hostedGovernance).toContain('active exact release candidate line on `develop`: none');
     expect(hostedGovernance).toContain('active release-candidate branch: none');
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');

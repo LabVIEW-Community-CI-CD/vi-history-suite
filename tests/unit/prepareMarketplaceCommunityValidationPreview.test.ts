@@ -119,10 +119,10 @@ describe('Marketplace community-validation preview prep', () => {
       activePreviewClaim: 'linux-docker-validated-preview',
       targetVersion: '1.3.9',
       currentMarketplaceVersion: '1.3.9',
-      windowsInstalledUserProof: {
-        state: 'deferred',
-        claimMade: false
-      },
+    windowsInstalledUserProof: {
+      state: 'community-deferred',
+      claimMade: false
+    },
       windowsLabviewFeatures: {
         selectionPolicy: 'user-selectable-with-proof-status-disclosure',
         unsupportedOrBlockedRuntimeBehavior: 'fail-closed-with-visible-next-step-guidance'

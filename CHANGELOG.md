@@ -9,6 +9,16 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.13] - 2026-04-27
+
+### Changed
+
+- Public validation pre-release refresh carries the admitted Windows host
+  LabVIEW 2026 x64 proof wording into the public facade and Marketplace
+  package line.
+- Successful LabVIEWCLI `CreateComparisonReport` diagnostics no longer retain
+  a stale success-before-failure note when the operation succeeded.
+
 ## [1.3.12] - 2026-04-26
 
 ### Added

@@ -18,9 +18,10 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: none
-- Active candidate tag: `v1.3.12-public-validation-prerelease`
-- Active candidate package version: `1.3.12`
-- Active candidate state: public validation pre-release published and verified
+- Active candidate tag: `v1.3.13-public-validation-prerelease`
+- Active candidate package version: `1.3.13`
+- Active candidate state: public validation pre-release prepared and
+  authorized, awaiting public GitHub and Marketplace publication
 
 ## Develop Preview State
 
@@ -134,9 +135,10 @@ final installed-user distribution surface.
 - Current pre-release Marketplace version: `1.3.12`
 - Current pre-release last updated: `2026-04-27T00:36:15.800Z`
 - Expected exact-candidate version for the active governed candidate line:
-  `1.3.12`
-- Marketplace status: public validation pre-release `1.3.12` published and
-  verified through pinned `vsce --pre-release` and official gallery readback.
+  `1.3.13`
+- Marketplace status: public validation pre-release `1.3.12` remains published
+  and verified; `1.3.13` is prepared to carry the admitted Windows host proof
+  wording and diagnostic-note fix to installed users.
 - Windows exact-VSIX install proof package script:
   `npm run vscode:marketplace:install-proof`
 - Windows exact-VSIX install proof receipt:
@@ -147,16 +149,16 @@ final installed-user distribution surface.
 
 ## Marketplace Community-Validation Preview Path
 
-- Status: published and verified
+- Status: prepared and authorized, awaiting publication
 - Publication claim: public validation pre-release
-- Target preview version: `1.3.12`
-- Published preview version: `1.3.12`
-- Preview publication date: `2026-04-27`
-- Marketplace last updated: `2026-04-27T00:36:15.800Z`
+- Target preview version: `1.3.13`
+- Published preview version: pending
+- Preview publication date: pending
+- Marketplace last updated: pending
 - Preview VSIX path:
-  `preview-evidence/vi-history-suite-1.3.12.vsix`
+  `preview-evidence/vi-history-suite-1.3.13.vsix`
 - Preview VSIX SHA-256:
-  `e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25`
+  pending
 - Prep package script:
   `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
@@ -165,15 +167,15 @@ final installed-user distribution surface.
   `vsce --pre-release`
 - Target version policy: the preview target must use a distinct higher
   `major.minor.patch` Marketplace version than the currently published
-  `1.3.11`; the current `1.3.11` package line cannot be republished as a
+  `1.3.12`; the current `1.3.12` package line cannot be republished as a
   preview.
 - Publish trigger: maintainer authorized public GitHub and Marketplace public
-  validation publication for `1.3.12` after GitLab authority is green
+  validation publication for `1.3.13` after GitLab authority is green
 - Active evidence claim: Linux/Docker, Linux host LabVIEW, and Windows host
   LabVIEW 2026 x64 validated preview
-- Windows installed-user proof: admitted for host LabVIEW 2026 x64 after the
-  public `1.3.12` publication; Windows Docker Desktop Windows-container proof
-  remains community/deferred
+- Windows installed-user proof: admitted for host LabVIEW 2026 x64 from the
+  retained Windows 11 VirtualBox proof; Windows Docker Desktop
+  Windows-container proof remains community/deferred
 - Windows/LabVIEW feature policy: all provider, year, and bitness choices may
   stay selectable when the UI/CLI discloses proof status through stable
   `VIHS_E_*` runtime codes, `vihs --validate --proof-out ./vihs-proof`,
@@ -182,9 +184,9 @@ final installed-user distribution surface.
 - Traceability matrix:
   `docs/requirements/rtm.csv`
 - Public validation packet:
-  `docs/product/public-validation-prerelease-v1.3.12.md`
+  `docs/product/public-validation-prerelease-v1.3.13.md`
 - Public validation packet JSON:
-  `docs/product/public-validation-prerelease-v1.3.12.json`
+  `docs/product/public-validation-prerelease-v1.3.13.json`
 - Prepared public issue template source:
   `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
 - Prepared public label manifest:
@@ -197,10 +199,30 @@ final installed-user distribution surface.
   public PR #60 on `ce6dbd0b1b5783f7015b9d0589f3803636564789`
 - Public GitHub intake labels: applied
 - Public GitHub intake mutation: performed through protected public PR #46
-- Public GitHub release/tag mutation: published and verified as
-  `v1.3.12-public-validation-prerelease`
+- Public GitHub release/tag mutation: authorized and awaiting publication as
+  `v1.3.13-public-validation-prerelease`
 - Public GitHub wiki mutation: not in scope for this lane
-- VS Code Marketplace mutation: published and verified
+- VS Code Marketplace mutation: authorized and awaiting publication
+
+## Public Validation Pre-Release 1.3.13
+
+- Status: prepared and authorized, awaiting public GitHub and Marketplace
+  publication
+- Packet:
+  `docs/product/public-validation-prerelease-v1.3.13.md`
+- Packet JSON:
+  `docs/product/public-validation-prerelease-v1.3.13.json`
+- Public GitHub release target: `v1.3.13-public-validation-prerelease`
+- Marketplace target: `1.3.13` pre-release, prepared and authorized
+- Purpose: publish the admitted Windows host LabVIEW 2026 x64 proof wording and
+  the successful-run diagnostic-note fix to installed users
+- Carried-forward admitted proof: Linux/Docker `2026` `x64`, Linux host
+  LabVIEW `2026` `x64`, and Windows host LabVIEW `2026` `x64`
+- Remaining deferred proof: Windows Docker Desktop Windows-container
+  validation
+- Diagnostic-note fix:
+  `src/reporting/comparisonReportRuntimeExecution.ts` with regression coverage
+  in `tests/unit/comparisonReportRuntimeExecution.test.ts`
 
 ## Public Validation Pre-Release 1.3.12
 
@@ -423,8 +445,8 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: collect and triage public community-validation reports
-  for the published `1.3.12` public validation preview
+- Governed next line: publish and verify the `1.3.13` public validation
+  preview, then collect and triage public community-validation reports
 - Next admitted action:
   `collect-windows-docker-desktop-community-proof-and-triage-public-issues`
 
@@ -455,6 +477,8 @@ GitHub pre-release with VSIX assets for broader installed-user validation with
 Windows proof disclosed by variant. The retained `1.3.11` public validation
 lane is published and verified. For `1.3.12`, public GitHub and Marketplace
 publication are published and verified, and a follow-on Windows 11 VirtualBox
-proof now admits Windows host LabVIEW 2026 x64. Windows Docker Desktop
+proof now admits Windows host LabVIEW 2026 x64. For `1.3.13`, public GitHub
+and Marketplace publication are authorized to carry that proof wording and the
+diagnostic-note fix to installed users. Windows Docker Desktop
 Windows-container proof remains community/deferred; exact-release promotion
 remains a separate later claim.

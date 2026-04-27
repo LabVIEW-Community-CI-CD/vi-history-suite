@@ -62,7 +62,7 @@ Installed-user help:
 
 ## Proof Status And Community Validation
 
-Marketplace pre-release `1.3.12` is the public validation lane. The extension
+Marketplace pre-release `1.3.13` is the public validation lane. The extension
 intentionally exposes all intended provider/year/bitness variants so the
 runtime and error-reporting layer can be exercised on real user machines.
 

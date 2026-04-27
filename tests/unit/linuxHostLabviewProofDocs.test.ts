@@ -166,10 +166,10 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
       }
     });
     expect(releaseState.marketplaceCommunityValidationPreview.linuxHostLabviewEvidenceClaim).toContain(
-      'admitted-and-promoted-into-1.3.12-public-validation-wording'
+      'admitted-and-carried-forward-from-1.3.12-public-validation-wording'
     );
     expect(releaseState.marketplaceCommunityValidationPreview.publicGitHubReleaseMutation).toBe(
-      'published-and-verified'
+      'authorized-awaiting-publication'
     );
   });
 
