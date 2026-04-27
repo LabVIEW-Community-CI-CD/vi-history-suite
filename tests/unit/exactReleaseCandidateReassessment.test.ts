@@ -202,9 +202,9 @@ describe('exact release candidate reassessment', () => {
     expect(publicationState.activeCandidate).toMatchObject({
       sourceBranch: 'develop',
       releaseBranch: null,
-      tag: 'v1.3.13-public-validation-prerelease',
+      tag: 'v1.3.13-public-validation-prerelease-1',
       packageVersion: '1.3.13',
-      status: 'public-validation-prerelease-prepared-authorized-awaiting-publication'
+      status: 'public-validation-prerelease-published-and-verified'
     });
     expect(publicationState.nextAdmittedAction).toBe(
       'collect-windows-docker-desktop-community-proof-and-triage-public-issues'

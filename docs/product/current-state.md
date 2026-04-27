@@ -64,12 +64,14 @@ Read these in order:
 46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 47. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
 48. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-49. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-50. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-51. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-52. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-53. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-54. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+49. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
+50. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+51. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+52. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+53. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+54. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+55. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+56. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -135,13 +137,15 @@ Current control-plane surfaces:
 47. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 48. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
 49. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-50. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-51. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-52. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-53. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-54. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-55. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
-56. [Fast VS Code Loop](../dev-fast-loop.md)
+50. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
+51. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+52. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+53. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+54. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+55. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+56. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+57. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+58. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -289,10 +293,10 @@ Latest landed ship target:
   Marketplace exact publication remain gated and were not mutated
 - active Marketplace public validation target: `1.3.13`
 - active Marketplace public validation trigger:
-  authorized for public GitHub and Marketplace publication after the GitLab
-  authority MR for `1.3.13` is green
+  closed; public GitHub and Marketplace publication completed after GitLab
+  authority MR !187 and develop pipeline `2481344357` went green
 - active Marketplace public validation path:
-  prepared as Marketplace pre-release `1.3.13` to carry the admitted Windows
+  published as Marketplace pre-release `1.3.13` to carry the admitted Windows
   host proof wording and successful-run diagnostic-note fix to installed users;
   Windows/LabVIEW settings may remain selectable with proof-status disclosure through
   `vihs --validate --proof-out ./vihs-proof`,
@@ -384,18 +388,19 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.9`
 - current public GitHub source publication: public `main` now publishes
-  `ce6dbd0` after public PR #60 promoted the canonical public Docker fixture
-  docs; the exact `v1.3.9` tag/release remains retained separately
+  `769cf180c1d5e94d1462d90e4e7366b1e050e7b1` after public PR #67 promoted
+  the `1.3.13` public validation facade; the exact `v1.3.9` tag/release
+  remains retained separately
 - public GitHub public-validation pre-release:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
-  `1.3.11`
+  `1.3.13`
 - VS Code Marketplace public validation target version: `1.3.13`
 - VS Code Marketplace community-validation preview Marketplace last updated:
-  `2026-04-26T16:51:22.260Z`
+  `2026-04-27T04:24:05.457Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
-  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
 - Marketplace community-validation intake packet:
   [marketplace-community-validation-intake-v1.3.10.md](./marketplace-community-validation-intake-v1.3.10.md)
 - Marketplace community-validation intake packet JSON:
@@ -411,11 +416,12 @@ Latest landed ship target:
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
   `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
-- VS Code Marketplace `1.3.12` public-validation preview is published and
-  verified; the active `1.3.13` public validation path is prepared and
-  authorized to refresh installed users with the admitted Windows host proof
-  wording plus the diagnostic-note fix, with final readback retained after
-  public GitHub and Marketplace publication.
+- VS Code Marketplace `1.3.13` public-validation preview is published and
+  verified; it refreshes installed users with admitted Windows host proof
+  wording plus the diagnostic-note fix. The corrected public GitHub release is
+  `v1.3.13-public-validation-prerelease-1`; the superseded immutable sibling
+  `v1.3.13-public-validation-prerelease` is retained only as asset-repair
+  evidence because its VSIX was packaged without the VS Code pre-release marker.
 - Windows exact-VSIX install proof is also retained:
   `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
   installs into isolated VS Code user-data/extensions roots on Windows and

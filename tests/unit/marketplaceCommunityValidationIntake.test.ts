@@ -87,8 +87,8 @@ describe('Marketplace community-validation intake packet', () => {
       publicGitHubIntakePublishedShortCommit: '5e67194',
       publicGitHubIntakePullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
       publicGitHubIntakeLabelsApplied: true,
-      publicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease',
-      publicGitHubReleaseMutation: 'authorized-awaiting-publication'
+      publicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease-1',
+      publicGitHubReleaseMutation: 'published-and-verified-with-corrected-asset-release'
     });
     expect(ledger.communityValidationIntake).toMatchObject({
       status: 'public-github-published-and-verified',

@@ -1,7 +1,7 @@
 # Public Validation Pre-Release v1.3.13
 
-Status: prepared and authorized, awaiting public GitHub and Marketplace
-publication after GitLab authority is green.
+Status: published and verified across GitLab authority, public GitHub, and VS
+Code Marketplace.
 
 ## Objective
 
@@ -98,19 +98,28 @@ Retained Windows host LabVIEW `validate-fixture` proof:
 
 ## Publication Closeout
 
-- GitLab authority merge commit: pending
-- GitLab authority pipeline: pending
+- GitLab authority merge commit:
+  `50f0be3e2a500977844295c5e055e47ba9c46b01`
+- GitLab authority pipeline: `2481344357` / `success`
 - Public GitHub PR:
-  pending
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/67`
 - Public GitHub main commit:
-  pending
+  `769cf180c1d5e94d1462d90e4e7366b1e050e7b1`
 - Public GitHub pre-release:
-  `v1.3.13-public-validation-prerelease`
-- Corrected public GitHub release id: pending
+  `v1.3.13-public-validation-prerelease-1`
+- Corrected public GitHub release id: `313873748`
+- Corrected public GitHub release URL:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - Corrected VSIX SHA-256:
-  pending
-- Marketplace target: `1.3.13` pre-release, prepared and authorized
-- Marketplace readback: pending
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
+- Superseded immutable public GitHub release:
+  `v1.3.13-public-validation-prerelease` / `313873598`
+- Superseded reason:
+  the immutable GitHub release asset was packaged without the VS Code
+  pre-release marker, so a corrected sibling release was required.
+- Marketplace target: `1.3.13` pre-release, published and verified
+- Marketplace readback: `1.3.13`, last updated
+  `2026-04-27T04:24:05.457Z`
 - Windows installed-user LabVIEW proof remains admitted for host LabVIEW 2026
   x64; Windows Docker Desktop / Windows-container proof remains
   community/deferred and is tracked by public issue #65.

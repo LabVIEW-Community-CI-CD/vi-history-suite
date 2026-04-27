@@ -113,7 +113,7 @@ describe('public validation pre-release 1.3.11', () => {
 
     expect(releaseState.activeCandidate).toMatchObject({
       packageVersion: '1.3.13',
-      status: 'public-validation-prerelease-prepared-authorized-awaiting-publication'
+      status: 'public-validation-prerelease-published-and-verified'
     });
     expect(releaseState.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
