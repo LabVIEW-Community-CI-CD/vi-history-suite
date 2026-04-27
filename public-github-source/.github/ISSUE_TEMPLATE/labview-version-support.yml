@@ -7,14 +7,14 @@ labels:
   - community-validation
   - proof:deferred
   - error-code
-  - version:1.3.12
+  - version:1.3.13
 body:
   - type: markdown
     attributes:
       value: |
         Use this template when the install/bootstrap flow or `vihs` surfaces a missing, unsupported, or not-yet-implemented LabVIEW version path.
 
-        For Marketplace pre-release `1.3.12`, selectable version paths should be exercised through `vihs --validate --proof-out ./vihs-proof` so the resulting runtimeErrorCode can classify the request.
+        For Marketplace pre-release `1.3.13`, selectable version paths should be exercised through `vihs --validate --proof-out ./vihs-proof` so the resulting runtimeErrorCode can classify the request.
   - type: input
     id: requested_labview_version
     attributes:

@@ -97,7 +97,7 @@ Installed-user help:
 
 ## Proof Status And Community Validation
 
-Marketplace pre-release `1.3.12` is the public validation lane. The extension
+Marketplace pre-release `1.3.13` is the public validation lane. The extension
 intentionally exposes all intended provider/year/bitness variants so the
 runtime and error-reporting layer can be exercised on real user machines.
 
@@ -106,7 +106,7 @@ the current proof-status surfaces:
 
 - [Traceability Matrix](./docs/requirements/rtm.csv)
 - [Release Publication State](./docs/product/release-publication-state.md)
-- [Public Validation Pre-Release v1.3.12](./docs/product/public-validation-prerelease-v1.3.12.md)
+- [Public Validation Pre-Release v1.3.13](./docs/product/public-validation-prerelease-v1.3.13.md)
 - [Public Validation Pre-Release v1.3.11](./docs/product/public-validation-prerelease-v1.3.11.md)
 
 Proof-status matrix:
@@ -119,7 +119,7 @@ Proof-status matrix:
 | Windows Docker Desktop Windows containers | community/deferred | file a validation success, failure, or feature-not-implemented issue with the stable `VIHS_E_*` code |
 | Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
 
-To join the `1.3.12` pre-release validation lane from the command line, use:
+To join the `1.3.13` pre-release validation lane from the command line, use:
 
 ```bash
 code --install-extension svelderrainruiz.vi-history-suite@prerelease
@@ -264,7 +264,7 @@ Authority release facts:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.12`
+- current develop package line on `develop`: `1.3.13`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -328,7 +328,7 @@ Authority release facts:
 - active governed release claim: public validation pre-release with all
   provider/year/bitness variants selectable and Windows installed-user proof
   community/deferred
-- active Marketplace public validation target: `1.3.12`
+- active Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
   published through public GitHub PR #46 and pinned `vsce --pre-release`
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
@@ -360,7 +360,7 @@ Authority release facts:
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview currently published version:
   `1.3.11`
-- VS Code Marketplace public validation target version: `1.3.12`
+- VS Code Marketplace public validation target version: `1.3.13`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
   `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 - blocked historical publication incident: public GitHub release `312768592`

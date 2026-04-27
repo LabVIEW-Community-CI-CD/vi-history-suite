@@ -35,7 +35,7 @@ describe('public validation pre-release 1.3.12', () => {
     const commandReference = readText('docs/information-for-users/command-reference.md');
     const changelog = readText('CHANGELOG.md');
 
-    expect(packageManifest.version).toBe('1.3.12');
+    expect(packageManifest.version).toBe('1.3.13');
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
       status: 'published-and-verified',
@@ -234,8 +234,8 @@ describe('public validation pre-release 1.3.12', () => {
       expect(surface).toContain('Windows host LabVIEW');
       expect(surface).toContain('admitted');
     }
-    expect(readme).toContain('Marketplace pre-release `1.3.12`');
-    expect(publicReadme).toContain('Marketplace pre-release `1.3.12`');
-    expect(changelog).toContain('## [1.3.12] - 2026-04-26');
+    expect(readme).toContain('Marketplace pre-release `1.3.13`');
+    expect(publicReadme).toContain('Marketplace pre-release `1.3.13`');
+    expect(changelog).toContain('## [1.3.13] - 2026-04-27');
   });
 });

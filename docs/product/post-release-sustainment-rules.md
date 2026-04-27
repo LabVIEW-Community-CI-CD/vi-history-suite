@@ -77,7 +77,7 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.12`
+- current develop package line on `develop`: `1.3.13`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -131,7 +131,7 @@ Current version-line contract:
 Current control decision for public exact hardening:
 
 - chosen bump: `patch-preview`
-- active Marketplace public validation preview line: `1.3.12`
+- active Marketplace public validation preview line: `1.3.13`
 - Marketplace public validation preview status: prepared, authorized, pending
   GitLab authority green
 - Marketplace public validation preview last updated: pending post-publication
@@ -143,7 +143,7 @@ Current control decision for public exact hardening:
   GitHub release `312994104` is retained as a complete immutable exact release
   and VS Code Marketplace serves regular `1.3.9`
 - rationale: `develop` now carries public validation pre-release package line
-  `1.3.12` so the pre-release can publish without reusing the live `1.3.11`
+  `1.3.13` so the pre-release can publish without reusing the live `1.3.11`
   Marketplace version
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
   but no active exact release candidate line is currently open

@@ -27,14 +27,15 @@ The machine-readable companion surface for this ledger is:
 - Current pre-release last updated: `2026-04-27T00:36:15.800Z`
 - Current verification surface: official gallery extension query, `vsce show`,
   and isolated VS Code CLI install readback
-- Current pending publication: none; `1.3.12` public validation pre-release is
-  published and verified
+- Current pending publication: `1.3.13` public validation pre-release, to carry
+  the admitted Windows host proof wording and diagnostic-note fix to installed
+  users
 - Pending publication install-proof command:
   `npm run vscode:marketplace:install-proof`
 - Pending publication install-proof receipt:
   `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - Pending publication install-proof status:
-  not-required-for-community-validation-prerelease-windows-proof-deferred
+  not-required-for-community-validation-prerelease-windows-docker-desktop-proof-deferred
 - Pending publication prep command: `npm run vscode:marketplace:prepare`
 - Pending publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
@@ -43,34 +44,59 @@ The machine-readable companion surface for this ledger is:
 
 ## Community-Validation Preview Preparation
 
-- Status: published and verified
+- Status: prepared and authorized, awaiting publication
 - Publication claim: public validation pre-release
-- Target preview version: `1.3.12`
-- Published preview version: `1.3.12`
-- Preview publication date: `2026-04-27`
-- Marketplace last updated: `2026-04-27T00:36:15.800Z`
+- Target preview version: `1.3.13`
+- Published preview version: pending
+- Preview publication date: pending
+- Marketplace last updated: pending
 - Preview VSIX:
-  `preview-evidence/vi-history-suite-1.3.12.vsix`
+  `preview-evidence/vi-history-suite-1.3.13.vsix`
 - Preview VSIX SHA-256:
-  `e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25`
+  pending
 - Prep command: `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
   `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - Preferred Marketplace mode: pre-release through pinned `vsce --pre-release`
 - Target version policy: choose a distinct higher `major.minor.patch` version
-  before a Marketplace preview can be published; the current live `1.3.11`
+  before a Marketplace preview can be published; the current live `1.3.12`
   pre-release package line cannot be reused.
 - Publish trigger: maintainer authorized public GitHub and Marketplace public
   validation publication
-- Windows installed-user proof state: community/deferred
+- Windows installed-user proof state: admitted for host LabVIEW 2026 x64;
+  Windows Docker Desktop Windows-container proof remains community/deferred
 - Windows/LabVIEW feature policy:
   all provider/year/bitness variants selectable with runtime error-code and
   proof-packet disclosure
 - Traceability matrix: `docs/requirements/rtm.csv`
 - Public GitHub mutation attempted by prep: false
 - Marketplace mutation attempted by prep: false
-- Public GitHub mutation attempted by publication: true
-- Marketplace mutation attempted by publication: true
+- Public GitHub mutation attempted by publication: pending
+- Marketplace mutation attempted by publication: pending
+
+## Public Validation Pre-Release 1.3.13
+
+- Status: prepared and authorized, awaiting public GitHub and Marketplace
+  publication
+- Packet:
+  `docs/product/public-validation-prerelease-v1.3.13.md`
+- Packet JSON:
+  `docs/product/public-validation-prerelease-v1.3.13.json`
+- Marketplace target version: `1.3.13`
+- Public GitHub release target: `v1.3.13-public-validation-prerelease`
+- Public GitHub release URL: pending
+- Public GitHub PR: pending
+- Public GitHub main commit: pending
+- Public GitHub release VSIX SHA-256: pending
+- Public GitHub mutation authorized: true and pending
+- Marketplace mutation authorized: true and pending
+- Marketplace published version: pending
+- Marketplace last updated: pending
+- Purpose: publish the admitted Windows host LabVIEW proof wording and the
+  diagnostic-note fix for successful LabVIEWCLI comparisons
+- Windows host LabVIEW `2026` `x64`: admitted from retained `1.3.12`
+  Windows 11 VirtualBox installed-user proof
+- Windows Docker Desktop Windows-container proof: community/deferred
 
 ## Public Validation Pre-Release 1.3.12
 
@@ -214,6 +240,7 @@ The machine-readable companion surface for this ledger is:
 | VS Code Marketplace community-validation preview | published | `2026-04-25` | `1.3.10` | `pinned-vsce-cli-pre-release` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; `docs/release-procedure.md` |
 | VS Code Marketplace public-validation preview | published | `2026-04-26` | `1.3.11` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.11.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; public GitHub PR #46 |
 | VS Code Marketplace public-validation preview | published | `2026-04-27` | `1.3.12` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.12.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; public GitHub PR #63 |
+| VS Code Marketplace public-validation preview | pending | pending | `1.3.13` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.13.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
 
 ## Publication Rules
 

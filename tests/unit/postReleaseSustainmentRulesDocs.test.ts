@@ -30,8 +30,8 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.9',
         currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.12',
-        activeMarketplaceCommunityPreviewLine: '1.3.12',
+        currentDevelopPackageLine: '1.3.13',
+        activeMarketplaceCommunityPreviewLine: '1.3.13',
         activeDevelopCandidateReleaseLine: null,
         activeReleaseCandidateBranch: null,
         activeHotfixCandidateReleaseLine: null,
@@ -54,7 +54,7 @@ describe('post-release sustainment rules package', () => {
           '.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json',
         vscodeMarketplaceCommunityValidationPreviewPrepStatus:
           'prepared-authorized-awaiting-gitlab-authority-green',
-        vscodeMarketplaceCommunityValidationPreviewTargetVersion: '1.3.12',
+        vscodeMarketplaceCommunityValidationPreviewTargetVersion: '1.3.13',
         vscodeMarketplaceCommunityValidationPreviewPublishedVersion: null,
         vscodeMarketplaceCommunityValidationPreviewPublishedDate: null,
         vscodeMarketplaceCommunityValidationPreviewLastUpdated: null,
@@ -136,7 +136,7 @@ describe('post-release sustainment rules package', () => {
 
     expect(rulesDoc).toContain('current exact released line: `v1.3.9`');
     expect(rulesDoc).toContain('current published package line on `main`: `1.3.9`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.12`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.13`');
     expect(rulesDoc).toContain('active release-candidate branch: none');
     expect(rulesDoc).toContain('public release `312994104` is published on `v1.3.9`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');

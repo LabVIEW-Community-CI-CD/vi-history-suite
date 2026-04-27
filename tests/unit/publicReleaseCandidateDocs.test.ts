@@ -212,7 +212,7 @@ describe('public release candidate control surface', () => {
 
     expect(currentState).toContain('current exact released line: `v1.3.9`');
     expect(currentState).toContain('current published package line on `main`: `1.3.9`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.3.12`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.13`');
     expect(currentState).toContain('active release-candidate branch: none');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');

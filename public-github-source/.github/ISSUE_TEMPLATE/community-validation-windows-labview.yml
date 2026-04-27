@@ -1,17 +1,17 @@
 name: Marketplace community validation report
-description: Report a v1.3.12 pre-release Windows/LabVIEW validation result
+description: Report a v1.3.13 pre-release Windows/LabVIEW validation result
 title: "[Community validation]: "
 labels:
   - community-validation
   - marketplace-preview
   - windows-labview
-  - version:1.3.12
+  - version:1.3.13
   - needs-triage
 body:
   - type: markdown
     attributes:
       value: |
-        Use this template for Marketplace pre-release `1.3.12` validation reports.
+        Use this template for Marketplace pre-release `1.3.13` validation reports.
 
         Please include `vihs --validate` output or the `vihs --validate --proof-out ./vihs-proof` packet with the exact provider, LabVIEW year, bitness, runtimeErrorCode, and outcome.
 
@@ -46,8 +46,8 @@ body:
     id: extension_version
     attributes:
       label: Extension version
-      description: Expected `1.3.12` for this intake packet.
-      value: "1.3.12"
+      description: Expected `1.3.13` for this intake packet.
+      value: "1.3.13"
     validations:
       required: true
   - type: textarea

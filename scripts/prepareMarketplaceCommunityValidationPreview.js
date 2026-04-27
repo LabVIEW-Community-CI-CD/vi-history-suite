@@ -261,6 +261,12 @@ function buildPrepReport(options, deps = {}) {
   }
   const activePreviewClaim =
     state.developPreview?.classification ?? 'linux-docker-validated-preview';
+  const linuxDockerEvidenceRetained = activePreviewClaim.includes('linux-docker');
+  const windowsInstalledUserProofState =
+    state.developPreview?.windowsInstalledUserProofState ?? 'community-deferred';
+  const windowsInstalledUserProofAdmitted = String(windowsInstalledUserProofState).startsWith(
+    'admitted'
+  );
   const proofDisclosureSurfaces = [
     'README.md',
     'docs/product/release-publication-state.md',
@@ -272,9 +278,9 @@ function buildPrepReport(options, deps = {}) {
   const phases = [
     buildPhase(
       'linux-docker-preview-evidence',
-      activePreviewClaim === 'linux-docker-validated-preview' ? 'retained' : 'blocked',
-      activePreviewClaim === 'linux-docker-validated-preview'
-        ? 'The retained develop preview claim is Linux/Docker validated preview evidence.'
+      linuxDockerEvidenceRetained ? 'retained' : 'blocked',
+      linuxDockerEvidenceRetained
+        ? 'The retained develop preview claim includes Linux/Docker validated preview evidence.'
         : `The active develop preview claim is ${activePreviewClaim}, not Linux/Docker validated preview.`,
       {
         retainedPacketPath: state.developPreview?.retainedPacketPath ?? null,
@@ -286,11 +292,13 @@ function buildPrepReport(options, deps = {}) {
     ),
     buildPhase(
       'windows-installed-user-proof',
-      'deferred',
-      'Windows/LabVIEW installed-user proof remains deferred and is not claimed by the community-validation preview.',
+      windowsInstalledUserProofAdmitted ? 'retained' : 'deferred',
+      windowsInstalledUserProofAdmitted
+        ? `Windows/LabVIEW installed-user proof is ${windowsInstalledUserProofState}.`
+        : 'Windows/LabVIEW installed-user proof remains deferred and is not claimed by the community-validation preview.',
       {
         handoffPath: 'docs/product/windows-labview-installed-user-proof-handoff-2026-04-25.md',
-        proofState: 'deferred'
+        proofState: windowsInstalledUserProofState
       }
     ),
     buildPhase(
@@ -390,8 +398,8 @@ function buildPrepReport(options, deps = {}) {
       proofDisclosureSurfaces
     },
     windowsInstalledUserProof: {
-      state: 'deferred',
-      claimMade: false,
+      state: windowsInstalledUserProofState,
+      claimMade: windowsInstalledUserProofAdmitted,
       handoffPath: 'docs/product/windows-labview-installed-user-proof-handoff-2026-04-25.md'
     },
     windowsLabviewFeatures: {

@@ -189,7 +189,7 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.12`
+- current develop package line on `develop`: `1.3.13`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -256,7 +256,8 @@ Latest landed ship target:
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: public validation pre-release with all
-  provider/year/bitness variants selectable and Windows installed-user proof
+  provider/year/bitness variants selectable, admitted Windows host LabVIEW
+  2026 x64 proof, and Windows Docker Desktop Windows-container proof
   community/deferred
 - current exact-release readiness assessment:
   [exact-release-readiness-assessment-2026-04-26.md](./exact-release-readiness-assessment-2026-04-26.md)
@@ -286,12 +287,13 @@ Latest landed ship target:
   `release/1.3.10` branch only under the selected community-deferred
   Windows/LabVIEW claim path; public GitHub exact release and VS Code
   Marketplace exact publication remain gated and were not mutated
-- active Marketplace public validation target: `1.3.12`
+- active Marketplace public validation target: `1.3.13`
 - active Marketplace public validation trigger:
   authorized for public GitHub and Marketplace publication after the GitLab
-  authority MR for `1.3.12` is green
+  authority MR for `1.3.13` is green
 - active Marketplace public validation path:
-  prepared as Marketplace pre-release `1.3.12`;
+  prepared as Marketplace pre-release `1.3.13` to carry the admitted Windows
+  host proof wording and successful-run diagnostic-note fix to installed users;
   Windows/LabVIEW settings may remain selectable with proof-status disclosure through
   `vihs --validate --proof-out ./vihs-proof`,
   `vihs validate-fixture --proof-out ./vihs-fixture-proof`, and
@@ -389,7 +391,7 @@ Latest landed ship target:
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
   `1.3.11`
-- VS Code Marketplace public validation target version: `1.3.12`
+- VS Code Marketplace public validation target version: `1.3.13`
 - VS Code Marketplace community-validation preview Marketplace last updated:
   `2026-04-26T16:51:22.260Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
@@ -409,10 +411,11 @@ Latest landed ship target:
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
   `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
-- VS Code Marketplace `1.3.11` community-validation preview is published and
-  verified; the active `1.3.12` public validation path is prepared and
-  authorized, with final readback retained after public GitHub and Marketplace
-  publication.
+- VS Code Marketplace `1.3.12` public-validation preview is published and
+  verified; the active `1.3.13` public validation path is prepared and
+  authorized to refresh installed users with the admitted Windows host proof
+  wording plus the diagnostic-note fix, with final readback retained after
+  public GitHub and Marketplace publication.
 - Windows exact-VSIX install proof is also retained:
   `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
   installs into isolated VS Code user-data/extensions roots on Windows and

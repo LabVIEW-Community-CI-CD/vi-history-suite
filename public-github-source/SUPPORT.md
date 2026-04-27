@@ -59,7 +59,7 @@ docker info --format '{{.OSType}}'
 
 ## Community Validation Triage
 
-Marketplace pre-release `1.3.12` accepts Windows/LabVIEW community validation
+Marketplace pre-release `1.3.13` accepts Windows/LabVIEW community validation
 reports and not-yet-implemented feature reports before every selectable
 combination has maintainer-retained proof.
 
