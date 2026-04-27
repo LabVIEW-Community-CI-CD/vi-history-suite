@@ -6,6 +6,9 @@ contact_links:
   - name: Docker/Linux validation success
     url: https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-success.yml
     about: Report a successful validation run, including Docker/Linux fixture proof.
+  - name: Windows Docker Desktop validation
+    url: https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=windows-docker-desktop-validation.yml
+    about: Report public issue #65 evidence from Windows Docker Desktop switched to Windows containers.
   - name: Validation failure
     url: https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-failure.yml
     about: Report a failing validation or compare path with the stable VIHS_E code.

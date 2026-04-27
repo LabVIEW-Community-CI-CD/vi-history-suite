@@ -73,7 +73,7 @@ Proof-status matrix:
 | Linux/Docker `2026` `x64` | admitted | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
 | Linux host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 Community is installed on Linux | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
 | Windows host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 x64 is installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
-| Windows Docker Desktop Windows containers | community/deferred | file a validation success, failure, or feature-not-implemented issue with the stable `VIHS_E_*` code |
+| Windows Docker Desktop Windows containers | community/deferred through public issue #65 | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000` after Docker Desktop is switched to Windows containers |
 | Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
 
 To join from the command line:
@@ -97,6 +97,14 @@ To exercise the canonical public fixture and write a compare proof packet:
 vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof
 ```
 
+On Windows Docker Desktop, switch Docker Desktop to Windows containers first
+and confirm `docker info --format "{{.OSType}} {{.OperatingSystem}}"` reports
+`windows`. Then run:
+
+```powershell
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000
+```
+
 ### Canonical Public Docker Fixture
 
 The retained public Docker fixture for validation is
@@ -116,7 +124,9 @@ This proves the Linux/Docker `2026` `x64` public fixture path. Linux host
 LabVIEW `2026` `x64` is separately admitted on the maintainer Ubuntu machine
 when LabVIEW Community 2026 is installed. Windows host LabVIEW `2026` `x64`
 is now separately admitted from a Windows 11 VirtualBox installed-user proof.
-Windows Docker Desktop Windows-container proof remains community/deferred.
+Windows Docker Desktop Windows-container proof remains community/deferred until
+public issue #65 receives an admissible packet from a real Windows host with
+Docker Desktop OSType `windows`.
 
 ## Report A Problem Or Request Support
 
@@ -125,6 +135,7 @@ compare do not behave as expected:
 
 - [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
 - [Marketplace Community Validation Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml)
+- [Windows Docker Desktop Validation](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=windows-docker-desktop-validation.yml)
 - [Validation Success](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-success.yml)
 - [Validation Failure](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-failure.yml)
 - [Feature Not Implemented](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-not-implemented.yml)

@@ -98,6 +98,9 @@ describe('public GitHub source promotion', () => {
     expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/validation-success.yml');
     expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/validation-failure.yml');
     expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/feature-not-implemented.yml');
+    expect(plan.templateCopyPaths).toContain(
+      '.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml'
+    );
     expect(plan.templateCopyPaths).toContain('.github/labels.yml');
     expect(plan.templateCopyPaths).toContain('.github/workflows/public-source-package-preview.yml');
     expect(plan.authorityCopyPaths).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
@@ -223,6 +226,9 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/validation-success.yml');
       expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/validation-failure.yml');
       expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/feature-not-implemented.yml');
+      expect(expectedFiles).toContain(
+        '.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml'
+      );
       expect(expectedFiles).toContain('.github/labels.yml');
       expect(expectedFiles).toContain('scripts/bootstrapLinuxVsCodeHost.js');
       expect(expectedFiles).toContain('.github/workflows/public-linux-installed-user-smoke.yml');

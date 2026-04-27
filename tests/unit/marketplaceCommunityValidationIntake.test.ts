@@ -127,6 +127,7 @@ describe('Marketplace community-validation intake packet', () => {
     expect(labviewRequest).toContain('proof:deferred');
     expect(labviewRequest).toContain('runtimeErrorCode');
     expect(issueConfig).toContain('Marketplace community validation');
+    expect(issueConfig).toContain('Windows Docker Desktop validation');
 
     for (const label of [
       'community-validation',
@@ -138,6 +139,7 @@ describe('Marketplace community-validation intake packet', () => {
       'proof:packet-attached',
       'version:1.3.13',
       'windows-labview',
+      'windows-docker-desktop',
       'proof:reported',
       'proof:reproduced',
       'proof:deferred',

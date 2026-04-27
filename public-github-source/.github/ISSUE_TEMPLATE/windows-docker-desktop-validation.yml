@@ -1,0 +1,157 @@
+name: Windows Docker Desktop validation
+description: Report v1.3.13 Windows Docker Desktop Windows-container fixture proof
+title: "[Windows Docker Desktop validation]: "
+labels:
+  - community-validation
+  - marketplace-preview
+  - provider:docker
+  - windows-labview
+  - windows-docker-desktop
+  - version:1.3.13
+  - proof:reported
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template only for public issue #65: real Windows 10/11 plus Docker Desktop switched to Windows containers.
+
+        Run the canonical public fixture with Marketplace pre-release `1.3.13`:
+
+        `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000`
+
+        Do not use this template for Linux Docker Engine, Docker Desktop Linux containers, WSL-only results, Windows host LabVIEW, simulated platform injection, private VIs, PATs, access tokens, or proprietary screenshots.
+  - type: dropdown
+    id: validation_outcome
+    attributes:
+      label: Validation outcome
+      options:
+        - Worked and generated a LabVIEW comparison report
+        - Failed with stable VIHS_E runtime code
+        - Feature not implemented but reported clearly
+        - Blocked by Docker Desktop prerequisite
+        - Blocked before Docker invocation
+        - Documentation mismatch
+    validations:
+      required: true
+  - type: input
+    id: extension_version
+    attributes:
+      label: Extension version
+      description: Expected `1.3.13` for this intake.
+      value: "1.3.13"
+    validations:
+      required: true
+  - type: textarea
+    id: code_version
+    attributes:
+      label: VS Code version
+      description: Paste the full output from `code --version`.
+    validations:
+      required: true
+  - type: input
+    id: windows_version
+    attributes:
+      label: Windows version
+      description: Example `Windows 11 24H2`.
+    validations:
+      required: true
+  - type: input
+    id: docker_desktop_version
+    attributes:
+      label: Docker Desktop version
+      description: Paste the Docker Desktop version from the UI or `docker version`.
+    validations:
+      required: true
+  - type: textarea
+    id: docker_version
+    attributes:
+      label: `docker version`
+      description: Paste the full output.
+    validations:
+      required: true
+  - type: textarea
+    id: docker_ostype
+    attributes:
+      label: Docker OSType and operating system
+      description: Paste `docker info --format "{{.OSType}} {{.OperatingSystem}}"`. Admissible Windows-container proof requires `windows`.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Exact command run
+      description: Paste the exact `vihs validate-fixture` command.
+      value: |
+        vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000
+    validations:
+      required: true
+  - type: textarea
+    id: proof_summary
+    attributes:
+      label: Proof packet summary
+      description: Paste the selectedVariant and result sections from `vihs-fixture-validation-proof.json`.
+    validations:
+      required: true
+  - type: input
+    id: runtime_provider
+    attributes:
+      label: runtimeProvider
+      description: Successful Windows Docker Desktop proof should report `windows-container`.
+    validations:
+      required: true
+  - type: input
+    id: runtime_engine
+    attributes:
+      label: runtimeEngine
+      description: Successful proof should report `labview-cli`.
+    validations:
+      required: true
+  - type: input
+    id: runtime_execution_state
+    attributes:
+      label: runtimeExecutionState
+      description: Example `succeeded`, `failed`, or `not-available`.
+    validations:
+      required: true
+  - type: input
+    id: runtime_error_code
+    attributes:
+      label: runtimeErrorCode or runtimeBlockedReason
+      description: Use `VIHS_OK` for success, or paste the stable `VIHS_E_*` code/blocker when the lane fails closed.
+    validations:
+      required: true
+  - type: input
+    id: generated_report
+    attributes:
+      label: generatedReportExists
+      description: Successful proof should be `true`.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Attached artifacts
+      description: Name the attached proof JSON, issue body, harness markdown/HTML, and any redacted logs or screenshots.
+    validations:
+      required: true
+  - type: textarea
+    id: redactions
+    attributes:
+      label: Redactions
+      description: List any user names, paths, environment values, tokens, or proprietary details you removed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Proof acknowledgements
+      options:
+        - label: I ran this on a real Windows host, not Linux, WSL-only, macOS, or simulated platform injection.
+          required: true
+        - label: Docker Desktop was switched to Windows containers and `docker info` reported OSType `windows`.
+          required: true
+        - label: I used the public `ni/labview-icon-editor` fixture and did not attach proprietary VI contents.
+          required: true
+        - label: I removed PATs, access tokens, and confidential screenshots before posting.
+          required: true

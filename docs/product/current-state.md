@@ -66,6 +66,8 @@ Read these in order:
 48. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
 49. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
 50. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+51. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+52. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
 51. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
 52. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
 53. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
@@ -139,6 +141,8 @@ Current control-plane surfaces:
 49. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
 50. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
 51. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+52. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+53. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
 52. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
 53. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
 54. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
@@ -262,7 +266,7 @@ Latest landed ship target:
 - active governed release claim: public validation pre-release with all
   provider/year/bitness variants selectable, admitted Windows host LabVIEW
   2026 x64 proof, and Windows Docker Desktop Windows-container proof
-  community/deferred
+  community/deferred through public issue #65
 - current exact-release readiness assessment:
   [exact-release-readiness-assessment-2026-04-26.md](./exact-release-readiness-assessment-2026-04-26.md)
 - current exact-release readiness assessment JSON:
@@ -315,6 +319,12 @@ Latest landed ship target:
   `https://github.com/svelderrainruiz/vi-history-suite/issues/48`,
   `https://github.com/svelderrainruiz/vi-history-suite/issues/49`, and
   `https://github.com/svelderrainruiz/vi-history-suite/issues/59`
+- Windows Docker Desktop proof intake:
+  `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md` and public
+  issue #65 require a real Windows host, Docker Desktop OSType `windows`,
+  `runtimeProvider=windows-container`, `runtimeEngine=labview-cli`,
+  `runtimeExecutionState=succeeded`, and `generatedReportExists=true` before
+  that lane can move from community/deferred to admitted
 - public facade docs promotion decision:
   completed through public PR #60 after the GitLab authority MR for the
   fixture-battery closeout went green; public `main` now publishes
@@ -360,7 +370,8 @@ Latest landed ship target:
 - Windows host proof boundary:
   admitted installed-user proof for Windows host LabVIEW 2026 x64 on the
   VirtualBox Windows 11 VM; Windows Docker Desktop Windows-container proof
-  remains community/deferred
+  remains community/deferred through public issue #65 and the
+  Windows Docker Desktop proof-intake packet
 - current no-mutation Windows/LabVIEW installed-user proof handoff:
   [windows-labview-installed-user-proof-handoff-2026-04-25.md](./windows-labview-installed-user-proof-handoff-2026-04-25.md)
 - current no-mutation Windows/LabVIEW installed-user proof handoff JSON:

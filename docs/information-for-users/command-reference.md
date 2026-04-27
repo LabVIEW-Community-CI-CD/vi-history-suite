@@ -1,8 +1,8 @@
 # Information For Users Command Reference
 
-Applies to: exact released installed baseline plus the active `1.3.12` public
+Applies to: exact released installed baseline plus the active `1.3.13` public
 validation pre-release direction
-Last reviewed: `2026-04-26`
+Last reviewed: `2026-04-27`
 Primary audience: maintainers, source evaluators, and advanced installed users
 Topic type: reference
 Primary entry route: `README.md` or `INSTALL.md`
@@ -32,8 +32,9 @@ See also:
 
 - The active governed preview route is Linux/Docker, Linux host LabVIEW, and
   Windows host LabVIEW 2026 x64 validated; Windows Docker Desktop
-  Windows-container proof remains community/deferred until that evidence lane
-  exists.
+  Windows-container proof remains community/deferred until public issue #65
+  receives an admissible packet from a real Windows host with Docker Desktop
+  OSType `windows`.
 - Commands prefixed with `public:` below are source-evaluation or maintainer
   surfaces, not the supported installed-user private-release steps.
 
@@ -184,8 +185,9 @@ runtime-settings CLI on the active branch.
   - Docker is the bounded expert path: `2026` / `x64` is the governed Docker
     implementation today, while other selectable Docker years or bitnesses may
     report stable not-yet-implemented runtime codes for public validation
-  - `host/linux` is selectable for validation reporting, but it is expected to
-    report a stable unsupported or missing-runtime code until implemented
+  - `host/linux` is selectable; `2026` / `x64` is admitted when LabVIEW
+    Community 2026 is installed on Linux, while unsupported or missing local
+    host bundles still report stable fail-closed runtime codes
   - after confirmation, the interactive flow persists the selected settings and
     auto-runs the same bounded validation action exposed by `vihs --validate`
   - on non-interactive surfaces, `vihs` without arguments prints exact
@@ -209,7 +211,7 @@ runtime-settings CLI on the active branch.
   - Windows host LabVIEW 2026 x64 is admitted through a separate Windows 11
     VirtualBox installed-user fixture proof; the Ubuntu/Docker evidence lane
     still does not prove Docker Desktop Windows-container behavior
-  - for Marketplace pre-release `1.3.12`, report Windows/LabVIEW and Docker
+  - for Marketplace pre-release `1.3.13`, report Windows/LabVIEW and Docker
     results through the public GitHub validation templates and include
     provider, LabVIEW year, bitness, `runtimeErrorCode`, and the proof packet
   - Linux public smoke, Linux benchmark, Ubuntu/Docker preview, and Windows
@@ -245,8 +247,10 @@ runtime-settings CLI on the active branch.
   - on the current public validation route, treat `VIHS_OK` as proof for the
     selected provider on the current machine; for Docker, this means daemon
     reachability and runtime selection are valid, while the first compare may
-    still pull `nationalinstruments/labview:2026q1-linux`; Windows host
-    LabVIEW 2026 x64 proof is admitted separately through the canonical fixture
+    still pull `nationalinstruments/labview:2026q1-linux` on Linux or the
+    governed Windows image on Docker Desktop Windows-container hosts; Windows
+    host LabVIEW 2026 x64 proof is admitted separately through the canonical
+    fixture
 
 `vihs validate-fixture [--provider <host|docker>] [--labview-version <major>] [--labview-bitness <x86|x64>] [--settings-file <path>] [--proof-out <dir>] [--runtime-timeout-ms <ms>]`
 
@@ -270,7 +274,14 @@ runtime-settings CLI on the active branch.
     installed on Linux, and the Windows host LabVIEW admitted lane when
     LabVIEW 2026 x64 is installed on Windows
   - Windows Docker Desktop Windows-container results are community/deferred
-    until users file proof packets from those machines
+    until users file proof packets from those machines. For public issue #65,
+    switch Docker Desktop to Windows containers, confirm
+    `docker info --format "{{.OSType}} {{.OperatingSystem}}"` reports
+    `windows`, and run
+    `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000`.
+    Admissible success reports should include
+    `runtimeProvider=windows-container`, `runtimeEngine=labview-cli`,
+    `runtimeExecutionState=succeeded`, and `generatedReportExists=true`.
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

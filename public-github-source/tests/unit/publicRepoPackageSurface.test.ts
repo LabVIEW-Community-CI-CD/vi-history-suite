@@ -28,6 +28,9 @@ describe('public repo package surface', () => {
     const communityValidation = readText(
       '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
     );
+    const windowsDockerDesktopValidation = readText(
+      '.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml'
+    );
     const labviewVersionRequest = readText('.github/ISSUE_TEMPLATE/labview-version-support.yml');
     const featureRequest = readText('.github/ISSUE_TEMPLATE/feature-request.yml');
     const issueConfig = readText('.github/ISSUE_TEMPLATE/config.yml');
@@ -144,6 +147,11 @@ describe('public repo package surface', () => {
     expect(communityValidation).toContain('Expected `1.3.13`');
     expect(communityValidation).toContain('runtime_error_code');
     expect(communityValidation).toContain('Proof-status acknowledgement');
+    expect(windowsDockerDesktopValidation).toContain('Windows Docker Desktop validation');
+    expect(windowsDockerDesktopValidation).toContain('public issue #65');
+    expect(windowsDockerDesktopValidation).toContain('docker info --format "{{.OSType}} {{.OperatingSystem}}"');
+    expect(windowsDockerDesktopValidation).toContain('windows-container');
+    expect(windowsDockerDesktopValidation).toContain('generatedReportExists');
     expect(labviewVersionRequest).toContain('LabVIEW version support request');
     expect(labviewVersionRequest).toContain('Requested LabVIEW year');
     expect(labviewVersionRequest).toContain('runtimeErrorCode');
@@ -155,8 +163,10 @@ describe('public repo package surface', () => {
     expect(labels).toContain('name: feature:not-implemented');
     expect(labels).toContain('name: proof:reported');
     expect(labels).toContain('name: proof:deferred');
+    expect(labels).toContain('name: windows-docker-desktop');
     expect(issueConfig).toContain('Install and release guide');
     expect(issueConfig).toContain('Marketplace community validation');
+    expect(issueConfig).toContain('Windows Docker Desktop validation');
     expect(issueConfig).toContain('User workflow');
     expect(contributing).toContain('source-available and intentionally restrictive');
     expect(contributing).toContain('npm run public:host:bootstrap-linux');

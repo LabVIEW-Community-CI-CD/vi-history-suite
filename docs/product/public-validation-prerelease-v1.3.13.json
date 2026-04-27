@@ -45,6 +45,9 @@
     "newCommit": "8741bb08026c104100720c0ef48621e4ab7762fd",
     "newCommitDate": "2026-02-24",
     "dockerImage": "nationalinstruments/labview:2026q1-linux",
+    "linuxDockerImage": "nationalinstruments/labview:2026q1-linux",
+    "windowsDockerImage": "nationalinstruments/labview:2026q1-windows",
+    "windowsDockerRequiredOSType": "windows",
     "firstDockerPullApproximateSize": "1.4 GB",
     "retainedPublicIssues": "#48-#59"
   },
@@ -103,7 +106,7 @@
     {
       "variant": "windows-docker-desktop-windows-containers",
       "status": "community-deferred",
-      "evidence": "requires Windows Docker Desktop proof packet"
+      "evidence": "requires public issue #65 packet following docs/product/windows-docker-desktop-proof-intake-v1.3.13.md"
     },
     {
       "variant": "unsupported-or-missing-provider-year-bitness",
@@ -114,8 +117,32 @@
   "proofPolicy": {
     "windowsInstalledUserLabviewProof": "admitted-for-host-labview-2026-x64",
     "windowsDockerDesktopProof": "community-deferred",
+    "windowsDockerDesktopProofIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+    "windowsDockerDesktopIntakePacket": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.md",
+    "windowsDockerDesktopIntakePacketJson": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.json",
     "allCliVariantsSelectable": true,
     "unsupportedVariantsReportable": true
+  },
+  "windowsDockerDesktopProofIntake": {
+    "status": "prepared-gitlab-authority",
+    "publicIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+    "templatePath": "public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+    "command": "vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\\vihs-fixture-proof --runtime-timeout-ms 300000",
+    "requiredDockerOSType": "windows",
+    "admissibleSuccess": {
+      "selectedVariant": {
+        "platform": "win32",
+        "provider": "docker",
+        "labviewVersion": "2026",
+        "labviewBitness": "x64"
+      },
+      "result": {
+        "runtimeProvider": "windows-container",
+        "runtimeEngine": "labview-cli",
+        "runtimeExecutionState": "succeeded",
+        "generatedReportExists": true
+      }
+    }
   },
   "docsAndTests": {
     "cliEntryPoint": "src/tooling/localRuntimeSettingsCli.ts",
@@ -125,12 +152,16 @@
       "tests/unit/localRuntimeSettingsCli.test.ts",
       "tests/unit/publicFixtureValidation.test.ts",
       "tests/unit/harnessReportSmoke.test.ts",
-      "tests/unit/publicValidationPrereleaseV1312.test.ts"
+      "tests/unit/publicValidationPrereleaseV1312.test.ts",
+      "tests/unit/windowsDockerDesktopProofIntake.test.ts"
     ],
     "traceability": [
       "VHS-REQ-589",
+      "VHS-REQ-590",
       "TEST-UNIT-396",
-      "TEST-DOC-148"
+      "TEST-DOC-148",
+      "TEST-UNIT-397",
+      "TEST-DOC-149"
     ]
   },
   "nextAdmittedAction": "collect-windows-docker-desktop-community-proof-and-triage-public-issues",

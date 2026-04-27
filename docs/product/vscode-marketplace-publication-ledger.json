@@ -562,6 +562,14 @@
     "linuxHostLabview2026x64": "admitted-carried-forward-from-1.3.12",
     "windowsHostLabview2026x64": "admitted-carried-forward-from-1.3.12-windows-vm-proof",
     "windowsDockerDesktopProof": "community-deferred",
+    "windowsDockerDesktopProofIntake": {
+      "status": "prepared-gitlab-authority",
+      "publicIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+      "packetPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.md",
+      "packetJsonPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.json",
+      "requiredDockerOSType": "windows",
+      "templatePath": "public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml"
+    },
     "packetPath": "docs/product/public-validation-prerelease-v1.3.13.md",
     "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json",
     "previewVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f",

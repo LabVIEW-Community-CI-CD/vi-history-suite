@@ -5,7 +5,7 @@
 - Product or service: `vi-history-suite`
 - Applies to: exact released installed baseline `v1.2.2` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-19`
+- Last reviewed: `2026-04-27`
 - Primary audience: installed users, source evaluators, and maintainers
 - Topic type: troubleshooting and quick-reference support
 - Primary entry route: `README.md` and `INSTALL.md`
@@ -89,8 +89,8 @@ In supported Windows PowerShell sessions and admitted VS Code terminals, type
 - Docker is the bounded expert path: `2026` / `x64` is supported for
   `docker/windows` on Windows Docker Desktop Windows-container hosts and for
   `docker/linux` on Linux Docker Desktop/Docker Engine hosts; Docker years
-  before `2026` are unsupported, and `host/linux` is not currently
-  implemented.
+  before `2026` are unsupported; `host/linux` `2026` / `x64` is admitted when
+  LabVIEW Community 2026 is installed on Linux.
 - For non-interactive scripting, use the exact command shape:
 
 `vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
@@ -216,10 +216,10 @@ Partly.
 The Ubuntu/Docker lane does not prove Windows behavior by itself. A separate
 Windows 11 VirtualBox installed-user run now admits Windows host LabVIEW 2026
 x64 for the canonical `lv_icon.vi` fixture. Docker Desktop Windows-container
-proof remains deferred until a Windows Docker Desktop tester files or retains
-that proof packet.
+proof remains deferred until public issue #65 receives an admissible packet
+from a real Windows host with Docker Desktop OSType `windows`.
 
-For Marketplace pre-release `1.3.12`, use the public validation templates when
+For Marketplace pre-release `1.3.13`, use the public validation templates when
 reporting Windows/LabVIEW or Docker Desktop results. Selectable means available
 for validation, not automatically maintainer-proven for every provider/year/
 bitness variant.
@@ -227,6 +227,12 @@ bitness variant.
 The remaining Windows proof gap is:
 
 - Docker Desktop in Windows-container mode for the expert container lane
+
+To work that gap, switch Docker Desktop to Windows containers, confirm
+`docker info --format "{{.OSType}} {{.OperatingSystem}}"` reports `windows`,
+and run:
+
+`vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000`
 
 WSL is retained historical context only; it is not proof of native Windows
 installed-user behavior.

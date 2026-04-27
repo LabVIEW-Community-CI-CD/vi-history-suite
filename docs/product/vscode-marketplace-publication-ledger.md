@@ -104,7 +104,13 @@ The machine-readable companion surface for this ledger is:
   diagnostic-note fix for successful LabVIEWCLI comparisons
 - Windows host LabVIEW `2026` `x64`: admitted from retained `1.3.12`
   Windows 11 VirtualBox installed-user proof
-- Windows Docker Desktop Windows-container proof: community/deferred
+- Windows Docker Desktop Windows-container proof: community/deferred through
+  public issue #65 and
+  `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md`
+- Windows Docker Desktop admissible success requires Docker Desktop OSType
+  `windows`, `runtimeProvider=windows-container`,
+  `runtimeEngine=labview-cli`, `runtimeExecutionState=succeeded`, and
+  `generatedReportExists=true`
 
 ## Public Validation Pre-Release 1.3.12
 
