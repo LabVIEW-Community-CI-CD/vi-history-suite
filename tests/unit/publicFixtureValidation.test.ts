@@ -132,7 +132,8 @@ describe('public fixture validation', () => {
         linuxDocker2026x64: 'admitted',
         linuxHostLabview2026x64:
           'admitted-when-run-on-a-linux-host-with-labview-installed',
-        windowsHostLabview: 'community-deferred',
+        windowsHostLabview2026x64:
+          'admitted-when-run-on-a-windows-host-with-labview-2026-x64-installed',
         windowsDockerDesktopWindowsContainers: 'community-deferred'
       }
     });

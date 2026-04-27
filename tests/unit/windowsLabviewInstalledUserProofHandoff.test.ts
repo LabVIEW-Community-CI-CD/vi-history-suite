@@ -46,7 +46,6 @@ describe('windows labview installed-user proof handoff', () => {
         })
       })
     );
-    expect(machine.developPreview).toMatchObject(publicationState.developPreview);
     expect(machine.developPreview).toMatchObject({
       classification: 'linux-docker-and-linux-host-labview-validated-preview',
       stateRole: 'retained-provider-lane-and-linux-host-packet-evidence',
@@ -58,6 +57,32 @@ describe('windows labview installed-user proof handoff', () => {
       linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
       windowsInstalledUserProofState: 'community-deferred',
       linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false
+    });
+    expect(publicationState.developPreview).toMatchObject({
+      classification: 'linux-docker-linux-host-and-windows-host-labview-validated-preview',
+      stateRole: 'retained-provider-lane-linux-host-and-windows-host-packet-evidence',
+      linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
+      windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
+      windowsDockerDesktopProofState: 'community-deferred',
+      linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false
+    });
+    expect(publicationState.developPreview.windowsHostLabviewEvidence).toMatchObject({
+      packetPath:
+        'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
+      status: 'passed',
+      platform: 'win32',
+      runtime: {
+        errorCode: 'VIHS_OK',
+        validationOutcome: 'ready',
+        provider: 'host-native',
+        engine: 'labview-cli'
+      },
+      compare: {
+        operation: 'CreateComparisonReport',
+        exitCode: 0,
+        result: 'succeeded',
+        reportSizeBytes: 146915
+      }
     });
     expect(machine.developPreview.currentDevelopCommit).toBeUndefined();
     expect(machine.developPreview.currentDevelopPipelineId).toBeUndefined();

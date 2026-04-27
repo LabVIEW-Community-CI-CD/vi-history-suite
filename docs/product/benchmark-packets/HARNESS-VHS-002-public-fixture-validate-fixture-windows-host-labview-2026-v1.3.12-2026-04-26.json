@@ -1,0 +1,129 @@
+{
+  "schema": "vi-history-suite/windows-host-labview-installed-user-proof@v1",
+  "status": "passed",
+  "recordedAt": "2026-04-27T03:16:29.5042582Z",
+  "packageVersion": "1.3.12",
+  "publicReleaseTag": "v1.3.12-public-validation-prerelease",
+  "publicMainCommit": "1853a4332eff40665e30db6e632febaa9821cf98",
+  "authorityDevelopBeforeAdmission": "9264ab59197c23f730639bb4b3f19989022557fe",
+  "virtualization": {
+    "host": "Ubuntu VirtualBox host",
+    "vmName": "sergiovelderrain",
+    "vmGuestOs": "Microsoft Windows 11 Home 10.0.26200",
+    "vmUser": "sergiovelderrai\\vboxuser",
+    "guestAdditionsVersion": "7.2.8"
+  },
+  "installedTools": {
+    "vsCodeCommand": "C:\\Users\\vboxuser\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd",
+    "gitVersion": "git version 2.51.0.windows.1",
+    "labviewCliPath": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe",
+    "labviewExeX64": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+    "labviewExeX86": "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+    "labviewX64Exists": true,
+    "labviewX86Exists": true
+  },
+  "installedExtension": {
+    "source": "exact public GitHub pre-release VSIX",
+    "vsixName": "vi-history-suite-1.3.12.vsix",
+    "expectedSha256": "e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25",
+    "observedSha256": "e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25",
+    "verified": true,
+    "installMode": "isolated VS Code user-data and extensions roots",
+    "launcher": "vihs.cmd"
+  },
+  "fixture": {
+    "repository": "https://github.com/ni/labview-icon-editor",
+    "harnessId": "HARNESS-VHS-002",
+    "viPath": "resource/plugins/lv_icon.vi",
+    "oldCommit": "ab94f6c4b375062492036c63a6dab7ea8824748a",
+    "oldCommitDate": "2025-06-29",
+    "newCommit": "8741bb08026c104100720c0ef48621e4ab7762fd",
+    "newCommitDate": "2026-02-24"
+  },
+  "selectedVariant": {
+    "platform": "win32",
+    "provider": "host",
+    "labviewVersion": "2026",
+    "labviewBitness": "x64",
+    "runtimeExecutionTimeoutMs": 600000
+  },
+  "commands": [
+    {
+      "id": "install-exact-vsix",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 2.349
+    },
+    {
+      "id": "configure-host-2026-x64",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.764
+    },
+    {
+      "id": "validate-host-2026-x64",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 0.573
+    },
+    {
+      "id": "validate-fixture-host-2026-x64",
+      "status": "passed",
+      "exitCode": 0,
+      "durationSeconds": 90.278
+    }
+  ],
+  "runtimeValidation": {
+    "runtimeValidationOutcome": "ready",
+    "runtimeProvider": "host-native",
+    "runtimeEngine": "labview-cli",
+    "runtimeBlockedReason": "<none>",
+    "runtimeErrorCode": "VIHS_OK",
+    "runtimeProofStatus": "ready",
+    "runtimeImplementationStatus": "implemented"
+  },
+  "fixtureValidation": {
+    "classification": "validation-success",
+    "reportStatus": "ready-for-runtime",
+    "runtimeExecutionState": "succeeded",
+    "runtimeProvider": "host-native",
+    "runtimeEngine": "labview-cli",
+    "runtimeExecutable": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe",
+    "labviewPath": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+    "exitCode": 0,
+    "durationMs": 62252,
+    "generatedReportExists": true,
+    "generatedReportSizeBytes": 146915,
+    "runtimeStdoutRetained": true,
+    "runtimeStderrSizeBytes": 0,
+    "runtimeDiagnosticLogRetained": true
+  },
+  "retainedLocalArtifacts": {
+    "hostZipPath": "/tmp/vihs-windows-host-proof-output/windows-host-labview-2026-v1.3.12.zip",
+    "proofRootInGuest": "C:\\Users\\vboxuser\\vihs-vm-proof\\windows-host-labview-2026-v1.3.12",
+    "summaryJson": "windows-host-labview-proof-summary.json",
+    "summaryMarkdown": "windows-host-labview-proof-summary.md",
+    "runtimeValidationProof": "runtime-validation-proof\\vihs-validation-proof.json",
+    "fixtureValidationProof": "fixture-proof\\vihs-fixture-validation-proof.json",
+    "harnessJson": "fixture-proof\\reports\\HARNESS-VHS-002\\comparison-report-smoke.json",
+    "generatedReport": "fixture-proof\\reports\\HARNESS-VHS-002\\workspace-storage\\reports\\f0b14222cbcd\\14ead538feaf\\diff-report-lv_icon.vi.html"
+  },
+  "admissionDecision": {
+    "windowsHostLabview2026x64": "admitted",
+    "windowsInstalledUserLabviewProof": "admitted-for-host-labview-2026-x64",
+    "windowsDockerDesktopWindowsContainers": "community-deferred",
+    "linuxDocker2026x64": "admitted-separate-lane",
+    "linuxHostLabview2026x64": "admitted-separate-lane"
+  },
+  "reportingFollowUp": {
+    "observedIssue": "The v1.3.12 retained runtime notes included a stale success-before-failure sentence even though LabVIEWCLI stdout and the diagnostic log both reported CreateComparisonReport operation succeeded.",
+    "fixSource": "src/reporting/comparisonReportRuntimeExecution.ts",
+    "fixTest": "tests/unit/comparisonReportRuntimeExecution.test.ts",
+    "publicIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/66"
+  },
+  "publicIssueLedger": {
+    "hostProofIssueClosed": "https://github.com/svelderrainruiz/vi-history-suite/issues/56",
+    "windowsDockerDesktopRemainingIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+    "diagnosticNoteBugIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/66"
+  }
+}

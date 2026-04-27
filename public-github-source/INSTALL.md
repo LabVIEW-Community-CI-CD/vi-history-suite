@@ -104,7 +104,9 @@ Use `resource/plugins/lv_icon.vi` from those two commits for repeatable Docker
 compare validation. Retained public evidence shows the positive historical
 compare succeeded, the no-change control succeeded, and the missing-file
 control blocked before Docker at `left-blob-read-failed`. Windows host LabVIEW
-proof remains community/deferred.
+`2026` `x64` is now separately admitted from a Windows 11 VirtualBox
+installed-user proof; Windows Docker Desktop Windows-container proof remains
+community/deferred.
 
 Executable fixture validation:
 

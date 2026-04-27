@@ -46,8 +46,8 @@ describe('release publication state resolver', () => {
         '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     });
     expect(state.developPreview).toMatchObject({
-      classification: 'linux-docker-and-linux-host-labview-validated-preview',
-      stateRole: 'retained-provider-lane-and-linux-host-packet-evidence',
+      classification: 'linux-docker-linux-host-and-windows-host-labview-validated-preview',
+      stateRole: 'retained-provider-lane-linux-host-and-windows-host-packet-evidence',
       headTrackingPolicy:
         'do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed',
       retainedPacketPath:
@@ -71,7 +71,7 @@ describe('release publication state resolver', () => {
           serverVersion: '29.4.1',
           driver: 'overlayfs'
         }),
-        windowsInstalledUserProofState: 'community-deferred'
+        windowsInstalledUserProofState: 'admitted-separate-windows-host-proof'
       }),
       linuxHostLabviewEvidence: expect.objectContaining({
         packetPath:
@@ -105,33 +105,70 @@ describe('release publication state resolver', () => {
             '637055a103b25ecc77e4e308a6d216fc7adab0e1741038502bb53f129e5eb864'
         }),
         linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
-        windowsInstalledUserLabviewProofState: 'community-deferred',
+        windowsInstalledUserLabviewProofState: 'admitted-separate-windows-host-proof',
         linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
         publicGitHubMutation: 'not-performed',
         marketplaceMutation: 'not-performed'
       }),
+      windowsHostLabviewEvidence: expect.objectContaining({
+        packetPath:
+          'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
+        packetJsonPath:
+          'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json',
+        schema: 'vi-history-suite/windows-host-labview-installed-user-proof@v1',
+        status: 'passed',
+        platform: 'win32',
+        runtime: expect.objectContaining({
+          errorCode: 'VIHS_OK',
+          validationOutcome: 'ready',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          labviewExePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+          labviewCliPath:
+            'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+        }),
+        fixture: expect.objectContaining({
+          repository: 'https://github.com/ni/labview-icon-editor',
+          viPath: 'resource/plugins/lv_icon.vi',
+          oldCommit: 'ab94f6c4b375062492036c63a6dab7ea8824748a',
+          newCommit: '8741bb08026c104100720c0ef48621e4ab7762fd'
+        }),
+        compare: expect.objectContaining({
+          operation: 'CreateComparisonReport',
+          exitCode: 0,
+          result: 'succeeded',
+          reportFile: 'diff-report-lv_icon.vi.html',
+          reportSizeBytes: 146915,
+          evidence: 'CreateComparisonReport operation succeeded.'
+        })
+      }),
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
       previewVsixSha256: 'bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02',
-      publicationState: 'develop-provider-lane-and-linux-host-labview-evidence-only',
+      publicationState: 'develop-provider-lane-linux-host-and-windows-host-labview-evidence',
       linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
-      windowsInstalledUserProofState: 'community-deferred',
+      windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
+      windowsDockerDesktopProofState: 'community-deferred',
       linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
-      windowsInstalledUserProofDeferred: true,
+      windowsInstalledUserProofDeferred: false,
       publicGitHubMutation: 'not-performed-by-this-packet',
       marketplaceMutation: 'not-performed-by-this-packet'
     });
     expect(stateDoc).toContain('## Develop Preview State');
-    expect(stateDoc).toContain('Linux/Docker and Linux host LabVIEW validated');
-    expect(stateDoc).toContain('Windows installed-user LabVIEW proof community/deferred');
+    expect(stateDoc).toContain('Linux/Docker, Linux host LabVIEW, and Windows');
+    expect(stateDoc).toContain('Windows proof state: host LabVIEW 2026 x64 admitted');
+    expect(stateDoc).toContain('Windows-container proof community/deferred');
     expect(stateDoc).toContain(
       'HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json'
+    );
+    expect(stateDoc).toContain(
+      'HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json'
     );
     expect(stateDoc).toContain('Linux host proof may prove Windows installed-user LabVIEW behavior: no');
     expect(stateDoc).toContain(
       'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json'
     );
     expect(stateDoc).toContain(
-      'Preview state role: retained provider-lane and Linux host packet evidence'
+      'Preview state role: retained provider-lane, Linux host, and Windows host'
     );
     expect(stateDoc).toContain('Develop head tracking policy: do not persist the latest live');
     expect(stateDoc).toContain('Packet evidence pipeline: `2480195741` / `success`');
@@ -229,6 +266,17 @@ describe('release publication state resolver', () => {
       publicGitHubMainCommit: '1853a4332eff40665e30db6e632febaa9821cf98',
       publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
       previewVsixSha256: 'e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25',
+      windowsInstalledUserLabviewProof: 'admitted-for-host-labview-2026-x64',
+      windowsHostLabview2026x64: 'admitted',
+      windowsDockerDesktopProof: 'community-deferred',
+      retainedWindowsHostValidateFixtureProofPath:
+        'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
+      windowsHostProofAdmission: expect.objectContaining({
+        status: 'admitted-after-publication',
+        runtimeExecutionState: 'succeeded',
+        runtimeProvider: 'host-native',
+        runtimeErrorCode: 'VIHS_OK'
+      }),
       branchHygiene: expect.objectContaining({
         publicDevelopSyncPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
         status: 'not-applied-requires-separate-branch-policy-decision'
@@ -332,6 +380,10 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Status: published and verified');
     expect(stateDoc).toContain('Target preview version: `1.3.12`');
     expect(stateDoc).toContain('Published preview version: `1.3.12`');
+    expect(stateDoc).toContain('Windows host LabVIEW 2026 x64');
+    expect(stateDoc).toContain(
+      'HARNESS-VHS-002-public-fixture-validate-fixture-windows-host'
+    );
     expect(stateDoc).toContain(
       'Windows/LabVIEW feature policy: all provider, year, and bitness choices may'
     );
@@ -367,7 +419,7 @@ describe('release publication state resolver', () => {
       status: 'public-validation-prerelease-published-and-verified'
     });
     expect(state.nextAdmittedAction).toBe(
-      'collect-community-validation-reports-and-triage-public-issues'
+      'collect-windows-docker-desktop-community-proof-and-triage-public-issues'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

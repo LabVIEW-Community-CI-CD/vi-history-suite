@@ -207,7 +207,7 @@ describe('exact release candidate reassessment', () => {
       status: 'public-validation-prerelease-published-and-verified'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'collect-community-validation-reports-and-triage-public-issues'
+      'collect-windows-docker-desktop-community-proof-and-triage-public-issues'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

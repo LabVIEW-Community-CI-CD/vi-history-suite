@@ -23,6 +23,9 @@ describe('public validation pre-release 1.3.12', () => {
     const linuxDockerProof = readJson<any>(
       'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.json'
     );
+    const windowsHostProof = readJson<any>(
+      'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json'
+    );
     const linuxHostProofMarkdown = readText(
       'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md'
     );
@@ -68,6 +71,8 @@ describe('public validation pre-release 1.3.12', () => {
           'vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof',
         linuxHostCommand:
           'vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof',
+        windowsHostCommand:
+          'vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof',
         jsonFile: 'vihs-fixture-validation-proof.json',
         issueBodyFile: 'vihs-fixture-validation-issue.md',
         harnessId: 'HARNESS-VHS-002',
@@ -91,10 +96,22 @@ describe('public validation pre-release 1.3.12', () => {
           runtimeProvider: 'linux-container',
           runtimeEngine: 'labview-cli',
           reportSizeBytes: 403891
+        },
+        retainedWindowsHostValidateFixtureProof: {
+          packetPath:
+            'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
+          packetJsonPath:
+            'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json',
+          runtimeExecutionState: 'succeeded',
+          runtimeProvider: 'host-native',
+          runtimeEngine: 'labview-cli',
+          runtimeValidationOutcome: 'ready',
+          runtimeErrorCode: 'VIHS_OK',
+          reportSizeBytes: 146915
         }
       },
       proofPolicy: {
-        windowsInstalledUserLabviewProof: 'community-deferred',
+        windowsInstalledUserLabviewProof: 'admitted-for-host-labview-2026-x64',
         windowsDockerDesktopProof: 'community-deferred',
         allCliVariantsSelectable: true,
         unsupportedVariantsReportable: true
@@ -121,7 +138,7 @@ describe('public validation pre-release 1.3.12', () => {
       expect.arrayContaining([
         expect.objectContaining({ variant: 'linux-docker-2026-x64', status: 'admitted' }),
         expect.objectContaining({ variant: 'linux-host-labview-2026-x64', status: 'admitted' }),
-        expect.objectContaining({ variant: 'windows-host-labview', status: 'community-deferred' }),
+        expect.objectContaining({ variant: 'windows-host-labview', status: 'admitted' }),
         expect.objectContaining({
           variant: 'windows-docker-desktop-windows-containers',
           status: 'community-deferred'
@@ -173,6 +190,37 @@ describe('public validation pre-release 1.3.12', () => {
         generatedReportSizeBytes: 403891
       }
     });
+    expect(windowsHostProof).toMatchObject({
+      status: 'passed',
+      packageVersion: '1.3.12',
+      installedExtension: {
+        observedSha256: 'e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25',
+        verified: true
+      },
+      selectedVariant: {
+        platform: 'win32',
+        provider: 'host',
+        labviewVersion: '2026',
+        labviewBitness: 'x64'
+      },
+      runtimeValidation: {
+        runtimeValidationOutcome: 'ready',
+        runtimeProvider: 'host-native',
+        runtimeEngine: 'labview-cli',
+        runtimeErrorCode: 'VIHS_OK'
+      },
+      fixtureValidation: {
+        runtimeExecutionState: 'succeeded',
+        runtimeProvider: 'host-native',
+        runtimeEngine: 'labview-cli',
+        generatedReportExists: true,
+        generatedReportSizeBytes: 146915
+      },
+      admissionDecision: {
+        windowsHostLabview2026x64: 'admitted',
+        windowsDockerDesktopWindowsContainers: 'community-deferred'
+      }
+    });
 
     for (const surface of [packet, readme, publicReadme, commandReference]) {
       expect(surface).toContain('vihs validate-fixture');
@@ -183,6 +231,8 @@ describe('public validation pre-release 1.3.12', () => {
       expect(surface).toContain('nationalinstruments/labview:2026q1-linux');
       expect(surface).toContain('1.4 GB');
       expect(surface).toContain('community/deferred');
+      expect(surface).toContain('Windows host LabVIEW');
+      expect(surface).toContain('admitted');
     }
     expect(readme).toContain('Marketplace pre-release `1.3.12`');
     expect(publicReadme).toContain('Marketplace pre-release `1.3.12`');

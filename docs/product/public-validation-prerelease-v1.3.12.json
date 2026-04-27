@@ -45,6 +45,7 @@
   "executableFixtureProof": {
     "command": "vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof",
     "linuxHostCommand": "vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof",
+    "windowsHostCommand": "vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof",
     "jsonFile": "vihs-fixture-validation-proof.json",
     "issueBodyFile": "vihs-fixture-validation-issue.md",
     "harnessId": "HARNESS-VHS-002",
@@ -64,6 +65,17 @@
       "runtimeProvider": "linux-container",
       "runtimeEngine": "labview-cli",
       "reportSizeBytes": 403891
+    },
+    "retainedWindowsHostValidateFixtureProof": {
+      "packetPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+      "packetJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json",
+      "runtimeExecutionState": "succeeded",
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "runtimeValidationOutcome": "ready",
+      "runtimeErrorCode": "VIHS_OK",
+      "reportSizeBytes": 146915,
+      "vsixSha256": "e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25"
     }
   },
   "proofStatusMatrix": [
@@ -79,8 +91,8 @@
     },
     {
       "variant": "windows-host-labview",
-      "status": "community-deferred",
-      "evidence": "requires Windows user proof packet"
+      "status": "admitted",
+      "evidence": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md"
     },
     {
       "variant": "windows-docker-desktop-windows-containers",
@@ -94,7 +106,7 @@
     }
   ],
   "proofPolicy": {
-    "windowsInstalledUserLabviewProof": "community-deferred",
+    "windowsInstalledUserLabviewProof": "admitted-for-host-labview-2026-x64",
     "windowsDockerDesktopProof": "community-deferred",
     "allCliVariantsSelectable": true,
     "unsupportedVariantsReportable": true
@@ -115,7 +127,7 @@
       "TEST-DOC-148"
     ]
   },
-  "nextAdmittedAction": "collect-community-validation-reports-and-triage-public-issues",
+  "nextAdmittedAction": "collect-windows-docker-desktop-community-proof-and-triage-public-issues",
   "publicationCloseout": {
     "status": "published-and-verified",
     "gitlabAuthorityMergeCommit": "f281e1f26dc083628166316a16d3a1bed8d1d0c8",
@@ -136,6 +148,22 @@
       "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/64",
       "reason": "repository branch protection forbids merge commits; squash/rebase would not make develop contain main for behind=0 ancestry",
       "directPushRejection": "GH006 protected branch update failed: branch must not contain merge commits"
+    },
+    "windowsProofAdmission": {
+      "status": "admitted-after-publication",
+      "proofPacket": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+      "runtimeValidationOutcome": "ready",
+      "runtimeExecutionState": "succeeded",
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "runtimeErrorCode": "VIHS_OK",
+      "generatedReportSizeBytes": 146915,
+      "windowsDockerDesktopProof": "community-deferred",
+      "publicIssueLedger": {
+        "hostProofIssueClosed": "https://github.com/svelderrainruiz/vi-history-suite/issues/56",
+        "windowsDockerDesktopRemainingIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+        "diagnosticNoteBugIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/66"
+      }
     }
   }
 }

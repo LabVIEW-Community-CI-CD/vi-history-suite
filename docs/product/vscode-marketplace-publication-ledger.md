@@ -99,13 +99,18 @@ The machine-readable companion surface for this ledger is:
   `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
 - Linux host fixture command:
   `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
+- Windows host fixture command:
+  `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof`
 - Linux/Docker `2026` `x64`: admitted
 - Retained Linux/Docker `validate-fixture` proof:
   `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.md`
 - Linux host LabVIEW `2026` `x64`: admitted
 - Retained Linux host `validate-fixture` proof:
   `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md`
-- Windows installed-user LabVIEW proof: community/deferred
+- Windows host LabVIEW `2026` `x64`: admitted after publication
+- Retained Windows host `validate-fixture` proof:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md`
+- Windows Docker Desktop Windows-container proof: community/deferred
 
 ## Public Validation Pre-Release 1.3.11
 

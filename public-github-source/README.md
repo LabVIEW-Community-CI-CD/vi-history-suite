@@ -72,7 +72,7 @@ Proof-status matrix:
 | --- | --- | --- |
 | Linux/Docker `2026` `x64` | admitted | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
 | Linux host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 Community is installed on Linux | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
-| Windows host LabVIEW | community/deferred | `vihs --validate --proof-out ./vihs-proof`, then file a validation success or failure issue |
+| Windows host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 x64 is installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
 | Windows Docker Desktop Windows containers | community/deferred | file a validation success, failure, or feature-not-implemented issue with the stable `VIHS_E_*` code |
 | Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
 
@@ -114,8 +114,9 @@ The retained public Docker fixture for validation is
 
 This proves the Linux/Docker `2026` `x64` public fixture path. Linux host
 LabVIEW `2026` `x64` is separately admitted on the maintainer Ubuntu machine
-when LabVIEW Community 2026 is installed. Windows host LabVIEW proof remains
-community/deferred.
+when LabVIEW Community 2026 is installed. Windows host LabVIEW `2026` `x64`
+is now separately admitted from a Windows 11 VirtualBox installed-user proof.
+Windows Docker Desktop Windows-container proof remains community/deferred.
 
 ## Report A Problem Or Request Support
 

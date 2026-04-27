@@ -39,6 +39,12 @@ Linux host LabVIEW:
 vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof
 ```
 
+Windows host LabVIEW 2026 x64:
+
+```powershell
+vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof
+```
+
 The command writes `vihs-fixture-validation-proof.json` and
 `vihs-fixture-validation-issue.md`, and it retains the underlying
 `HARNESS-VHS-002` comparison-report smoke artifacts.
@@ -64,13 +70,29 @@ Retained Linux/Docker `validate-fixture` proof:
 - Result: `runtimeExecutionState=succeeded`, `runtimeProvider=linux-container`,
   `runtimeEngine=labview-cli`, generated report size `403891` bytes
 
+Retained Windows host LabVIEW `validate-fixture` proof:
+
+- Packet:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md`
+- Packet JSON:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json`
+- Result: `runtimeValidationOutcome=ready`, `runtimeExecutionState=succeeded`,
+  `runtimeProvider=host-native`, `runtimeEngine=labview-cli`,
+  `runtimeErrorCode=VIHS_OK`, generated report size `146915` bytes
+- Installed-user surface: exact public `1.3.12` pre-release VSIX,
+  `vihs.cmd` launcher, Windows 11 VM, LabVIEW 2026 x64, local LabVIEWCLI
+- Follow-up retained: the successful v1.3.12 run exposed a stale diagnostic
+  note that said the operation failed even though retained stdout and the
+  diagnostic log both reported `CreateComparisonReport operation succeeded`;
+  authority source now fixes that note and tracks the public issue as #66.
+
 ## Proof-Status Matrix
 
 | Variant | Status | Evidence path |
 | --- | --- | --- |
 | Linux/Docker `2026` `x64` | admitted | public issue #49 plus the `1.3.12` Linux/Docker `validate-fixture` proof packet |
 | Linux host LabVIEW `2026` `x64` | admitted | Linux host proof packets under `docs/product/benchmark-packets/`, including the `1.3.12` `validate-fixture` proof |
-| Windows host LabVIEW | community/deferred | Windows user proof packet required |
+| Windows host LabVIEW `2026` `x64` | admitted | Windows host proof packet under `docs/product/benchmark-packets/` |
 | Windows Docker Desktop Windows containers | community/deferred | Windows Docker Desktop proof packet required |
 | Unsupported provider/year/bitness variants | selectable/reportable | stable `VIHS_E_*` code or feature-not-implemented issue |
 
@@ -95,7 +117,9 @@ Retained Linux/Docker `validate-fixture` proof:
 - Marketplace target: `1.3.12` pre-release, published and verified
 - Marketplace readback: `2026-04-27T00:36:15.800Z`,
   `Microsoft.VisualStudio.Code.PreRelease=true`
-- Windows installed-user LabVIEW proof remains community/deferred.
+- Windows installed-user LabVIEW proof is now admitted for host LabVIEW 2026
+  x64; Windows Docker Desktop / Windows-container proof remains
+  community/deferred and is tracked by public issue #65.
 
 Public `develop` branch hygiene remains a separate policy decision: PR #64
 confirmed `main` to `develop` is mergeable and checked, but repository branch

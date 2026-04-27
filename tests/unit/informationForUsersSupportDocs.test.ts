@@ -60,11 +60,11 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('prepare command is admitted in untrusted workspaces');
     expect(faq).toContain('user-scope PATH');
     expect(faq).toContain('runtimeValidationOutcome');
-    expect(faq).toContain('Is Windows installed-user behavior proven by the current Ubuntu/Docker lane');
-    expect(faq).toContain('native Windows host LabVIEW');
+    expect(faq).toContain('Is Windows installed-user behavior proven?');
+    expect(faq).toContain('Windows host LabVIEW 2026');
     expect(faq).toContain('Docker Desktop in Windows-container mode');
     expect(faq).toContain('WSL is retained historical context only');
-    expect(faq).toContain('Linux/Docker validated preview');
+    expect(faq).toContain('Windows host LabVIEW 2026');
     expect(faq).toContain('npm run proof:runtime-settings-live-session');
     expect(faq).toContain('.cache/runtime-settings-live-session-proof/latest/');
 
@@ -109,11 +109,11 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('runtime-settings-live-session-proof.json');
     expect(commandReference).toContain('.cache/runtime-settings-live-session-proof/latest/');
     expect(commandReference).toContain('current public validation route');
-    expect(commandReference).toContain('does not prove native');
+    expect(commandReference).toContain('Windows host LabVIEW 2026 x64 is admitted');
     expect(commandReference).toContain('Docker Desktop Windows-container behavior');
     expect(commandReference).not.toContain('`npm run public:smoke:linux`');
     expect(commandReference).toContain(
-      'The active governed preview route is Linux/Docker and Linux host LabVIEW'
+      'The active governed preview route is Linux/Docker, Linux host LabVIEW, and'
     );
     expect(commandReference).toContain('npm run assurance:release-gate');
     expect(commandReference).toContain('npm run assurance:26514:authority');
