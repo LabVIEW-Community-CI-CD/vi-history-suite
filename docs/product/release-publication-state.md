@@ -18,10 +18,9 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: none
-- Active candidate tag: `v1.3.13-public-validation-prerelease`
+- Active candidate tag: `v1.3.13-public-validation-prerelease-1`
 - Active candidate package version: `1.3.13`
-- Active candidate state: public validation pre-release prepared and
-  authorized, awaiting public GitHub and Marketplace publication
+- Active candidate state: public validation pre-release published and verified
 
 ## Develop Preview State
 
@@ -96,7 +95,7 @@ final installed-user distribution surface.
 
 ## Public GitHub State
 
-- Public GitHub `main`: `ce6dbd0b1b5783f7015b9d0589f3803636564789`
+- Public GitHub `main`: `769cf180c1d5e94d1462d90e4e7366b1e050e7b1`
 - Public GitHub tag: `v1.3.9`
 - Public GitHub release id: `312994104`
 - Public GitHub release URL:
@@ -125,20 +124,28 @@ final installed-user distribution surface.
 - Nominal package tag: `v1.3.11`; GitHub retained that exact tag name after an
   immediately deleted zero-asset immutable release attempt, so the asset-bearing
   public validation release uses `v1.3.11-public-validation`.
+- Latest public validation facade PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/67`
+- Latest public validation facade checks: Public Source Package Preview,
+  Public Windows Installed-User Contract, and Public Linux Installed-User Smoke
+  all passed before merge.
+- Latest public validation facade commit:
+  `769cf180c1d5e94d1462d90e4e7366b1e050e7b1`
+- Latest public validation corrected pre-release:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 
 ## Marketplace State
 
 - Marketplace item: `svelderrainruiz.vi-history-suite`
-- Current Marketplace version: `1.3.12`
+- Current Marketplace version: `1.3.13`
 - Current Marketplace publication kind: public-validation pre-release
 - Current regular Marketplace version: `1.3.9`
-- Current pre-release Marketplace version: `1.3.12`
-- Current pre-release last updated: `2026-04-27T00:36:15.800Z`
+- Current pre-release Marketplace version: `1.3.13`
+- Current pre-release last updated: `2026-04-27T04:24:05.457Z`
 - Expected exact-candidate version for the active governed candidate line:
   `1.3.13`
-- Marketplace status: public validation pre-release `1.3.12` remains published
-  and verified; `1.3.13` is prepared to carry the admitted Windows host proof
-  wording and diagnostic-note fix to installed users.
+- Marketplace status: public validation pre-release `1.3.13` is published and
+  verified with admitted Windows host proof wording and the diagnostic-note fix.
 - Windows exact-VSIX install proof package script:
   `npm run vscode:marketplace:install-proof`
 - Windows exact-VSIX install proof receipt:
@@ -149,16 +156,16 @@ final installed-user distribution surface.
 
 ## Marketplace Community-Validation Preview Path
 
-- Status: prepared and authorized, awaiting publication
+- Status: published and verified
 - Publication claim: public validation pre-release
 - Target preview version: `1.3.13`
-- Published preview version: pending
-- Preview publication date: pending
-- Marketplace last updated: pending
+- Published preview version: `1.3.13`
+- Preview publication date: `2026-04-27`
+- Marketplace last updated: `2026-04-27T04:24:05.457Z`
 - Preview VSIX path:
   `preview-evidence/vi-history-suite-1.3.13.vsix`
 - Preview VSIX SHA-256:
-  pending
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
 - Prep package script:
   `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
@@ -196,24 +203,38 @@ final installed-user distribution surface.
 - Public GitHub intake promotion state: published and verified through public
   PR #46
 - Latest public GitHub facade docs promotion: published and verified through
-  public PR #60 on `ce6dbd0b1b5783f7015b9d0589f3803636564789`
+  public PR #67 on `769cf180c1d5e94d1462d90e4e7366b1e050e7b1`
 - Public GitHub intake labels: applied
 - Public GitHub intake mutation: performed through protected public PR #46
-- Public GitHub release/tag mutation: authorized and awaiting publication as
-  `v1.3.13-public-validation-prerelease`
+- Public GitHub release/tag mutation: published and verified through corrected
+  asset release `v1.3.13-public-validation-prerelease-1`
 - Public GitHub wiki mutation: not in scope for this lane
-- VS Code Marketplace mutation: authorized and awaiting publication
+- VS Code Marketplace mutation: published and verified
 
 ## Public Validation Pre-Release 1.3.13
 
-- Status: prepared and authorized, awaiting public GitHub and Marketplace
-  publication
+- Status: published and verified
 - Packet:
   `docs/product/public-validation-prerelease-v1.3.13.md`
 - Packet JSON:
   `docs/product/public-validation-prerelease-v1.3.13.json`
-- Public GitHub release target: `v1.3.13-public-validation-prerelease`
-- Marketplace target: `1.3.13` pre-release, prepared and authorized
+- Public GitHub release target: `v1.3.13-public-validation-prerelease-1`
+- Marketplace target: `1.3.13` pre-release, published and verified
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/67`
+- Public GitHub main commit:
+  `769cf180c1d5e94d1462d90e4e7366b1e050e7b1`
+- Corrected public GitHub release id: `313873748`
+- Corrected VSIX SHA-256:
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
+- Superseded immutable public GitHub release:
+  `v1.3.13-public-validation-prerelease` / `313873598`
+- Superseded reason:
+  the immutable public GitHub release asset was packaged without the VS Code
+  pre-release marker; the corrected sibling release carries the Marketplace
+  pre-release VSIX.
+- Marketplace last updated:
+  `2026-04-27T04:24:05.457Z`
 - Purpose: publish the admitted Windows host LabVIEW 2026 x64 proof wording and
   the successful-run diagnostic-note fix to installed users
 - Carried-forward admitted proof: Linux/Docker `2026` `x64`, Linux host

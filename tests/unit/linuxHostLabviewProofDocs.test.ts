@@ -169,7 +169,7 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
       'admitted-and-carried-forward-from-1.3.12-public-validation-wording'
     );
     expect(releaseState.marketplaceCommunityValidationPreview.publicGitHubReleaseMutation).toBe(
-      'authorized-awaiting-publication'
+      'published-and-verified-with-corrected-asset-release'
     );
   });
 

@@ -204,12 +204,12 @@ describe('release publication state resolver', () => {
     });
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
-      currentPublishedVersion: '1.3.12',
+      currentPublishedVersion: '1.3.13',
       currentPublishedKind: 'public-validation-pre-release',
       currentRegularPublishedVersion: '1.3.9',
-      currentPreReleaseVersion: '1.3.12',
+      currentPreReleaseVersion: '1.3.13',
       expectedVersion: '1.3.13',
-      status: 'published-public-validation-prerelease-1.3.12-next-1.3.13-prepared',
+      status: 'published-public-validation-prerelease-1.3.13',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
         receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
@@ -221,7 +221,7 @@ describe('release publication state resolver', () => {
       }
     });
     expect(state.marketplaceCommunityValidationPreview).toMatchObject({
-      status: 'prepared-authorized-awaiting-publication',
+      status: 'published-and-verified',
       publicationClaim: 'public-validation-prerelease',
       preparePackageScript: 'npm run vscode:marketplace:community-preview:prepare',
       prepReceiptPath:
@@ -229,21 +229,21 @@ describe('release publication state resolver', () => {
       preferredVsceMode: 'pre-release',
       targetVersionPolicy:
         'must-be-distinct-higher-major-minor-patch-than-current-marketplace-version',
-      currentMarketplaceVersion: '1.3.12',
+      currentMarketplaceVersion: '1.3.13',
       targetVersion: '1.3.13',
       packageVersion: '1.3.13',
-      publishedVersion: null,
-      publishedDate: null,
-      marketplaceLastUpdated: null,
+      publishedVersion: '1.3.13',
+      publishedDate: '2026-04-27',
+      marketplaceLastUpdated: '2026-04-27T04:24:05.457Z',
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.13.vsix',
-      previewVsixSha256: null,
+      previewVsixSha256: '3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f',
       publishTrigger: 'maintainer-authorized-public-github-and-marketplace-public-validation-publication',
       windowsLabviewFeaturePolicy:
         'all-provider-year-bitness-variants-selectable-with-runtime-error-code-and-proof-packet-disclosure',
       windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
       traceabilityMatrixPath: 'docs/requirements/rtm.csv',
       publicGitHubMutation: 'not-mutated-by-community-validation-preview-publication',
-      marketplaceMutation: 'authorized-awaiting-publication',
+      marketplaceMutation: 'published-and-verified',
       intakeStatus: 'prepared-authorized-for-1.3.13',
       intakePacketPath: 'docs/product/public-validation-prerelease-v1.3.13.md',
       intakePacketJsonPath: 'docs/product/public-validation-prerelease-v1.3.13.json',
@@ -253,20 +253,27 @@ describe('release publication state resolver', () => {
       publicGitHubIntakePromotionPlanStatus: 'superseded-by-1.3.11-public-validation-lane',
       publicGitHubIntakePublishedShortCommit: '5e67194',
       publicGitHubIntakeLabelsApplied: true,
-      publicGitHubReleaseMutation: 'authorized-awaiting-publication',
-      publicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease',
-      publicGitHubReleaseId: null,
-      supersededPublicGitHubReleaseTag: 'v1.3.12-public-validation'
+      publicGitHubReleaseMutation: 'published-and-verified-with-corrected-asset-release',
+      publicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease-1',
+      publicGitHubReleaseId: 313873748,
+      supersededPublicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease'
     });
     expect(state.publicValidationPrereleaseV1313).toMatchObject({
-      status: 'prepared-authorized-awaiting-publication',
+      status: 'published-and-verified',
       marketplaceTargetVersion: '1.3.13',
-      publicGitHubReleaseTarget: 'v1.3.13-public-validation-prerelease',
+      marketplacePublishedVersion: '1.3.13',
+      publicGitHubReleaseTarget: 'v1.3.13-public-validation-prerelease-1',
+      publicGitHubReleaseId: 313873748,
+      publicGitHubMainCommit: '769cf180c1d5e94d1462d90e4e7366b1e050e7b1',
+      publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/67',
       publicGitHubMutationAuthorized: true,
       marketplaceMutationAuthorized: true,
       windowsInstalledUserLabviewProof: 'admitted-for-host-labview-2026-x64',
       windowsDockerDesktopProof: 'community-deferred',
+      previewVsixSha256: '3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f',
+      supersededImmutablePublicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease',
       diagnosticNoteFix: expect.objectContaining({
+        status: 'published-to-public-facade-and-marketplace',
         source: 'src/reporting/comparisonReportRuntimeExecution.ts',
         publicIssue: 'https://github.com/svelderrainruiz/vi-history-suite/issues/66'
       })
@@ -390,9 +397,9 @@ describe('release publication state resolver', () => {
       'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
     );
     expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(stateDoc).toContain('Status: prepared and authorized, awaiting publication');
+    expect(stateDoc).toContain('Status: published and verified');
     expect(stateDoc).toContain('Target preview version: `1.3.13`');
-    expect(stateDoc).toContain('Published preview version: pending');
+    expect(stateDoc).toContain('Published preview version: `1.3.13`');
     expect(stateDoc).toContain('Windows host LabVIEW 2026 x64');
     expect(stateDoc).toContain(
       'HARNESS-VHS-002-public-fixture-validate-fixture-windows-host'
@@ -420,7 +427,7 @@ describe('release publication state resolver', () => {
       'Public GitHub intake promotion state: published and verified through public'
     );
     expect(stateDoc).toContain(
-      'Public GitHub release/tag mutation: authorized and awaiting publication'
+      'Public GitHub release/tag mutation: published and verified'
     );
     expect(state.incident).toMatchObject({
       active: false,
@@ -430,9 +437,9 @@ describe('release publication state resolver', () => {
     });
     expect(state.activeCandidate).toMatchObject({
       releaseBranch: null,
-      tag: 'v1.3.13-public-validation-prerelease',
+      tag: 'v1.3.13-public-validation-prerelease-1',
       packageVersion: '1.3.13',
-      status: 'public-validation-prerelease-prepared-authorized-awaiting-publication'
+      status: 'public-validation-prerelease-published-and-verified'
     });
     expect(state.nextAdmittedAction).toBe(
       'collect-windows-docker-desktop-community-proof-and-triage-public-issues'
@@ -466,7 +473,7 @@ describe('release publication state resolver', () => {
       tag: 'v9.8.7',
       packageVersion: '9.8.7',
       marketplaceItem: 'svelderrainruiz.vi-history-suite',
-      currentMarketplaceVersion: '1.3.12'
+      currentMarketplaceVersion: '1.3.13'
     });
   });
 });
