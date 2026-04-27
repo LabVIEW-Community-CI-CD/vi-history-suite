@@ -66,6 +66,19 @@ describe('Windows Docker Desktop proof intake', () => {
         templatePath:
           'public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml'
       },
+      publicFacadePromotionCloseout: {
+        status: 'published-and-verified',
+        gitlabAuthorityMergeRequest:
+          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/189',
+        gitlabAuthorityDevelopCommit: '1e0a69a666213e3513f22ce0fe6d82ccc1170ce0',
+        gitlabAuthorityDevelopPipeline:
+          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2481415396',
+        publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+        publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+        publicMainShortCommit: '220111e',
+        publicLabelsApplied: ['windows-docker-desktop'],
+        marketplaceMutation: 'not-performed'
+      },
       proofBoundary: {
         windowsDockerDesktopWindowsContainers:
           'community-deferred-until-issue-65-packet-is-admitted',
@@ -79,6 +92,10 @@ describe('Windows Docker Desktop proof intake', () => {
     expect(packet).toContain('runtimeProvider=windows-container');
     expect(packet).toContain('generatedReportExists=true');
     expect(packet).toContain('Platform-injected or simulated `win32` unit tests');
+    expect(packet).toContain('Public Facade Promotion Closeout');
+    expect(packet).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/68');
+    expect(packet).toContain('220111eae3ac214e99f2233e2bfe6b320edf383d');
+    expect(packet).toContain('Marketplace mutation: not performed');
 
     expect(publicValidation.windowsDockerDesktopProofIntake).toMatchObject({
       status: 'prepared-gitlab-authority',
@@ -87,16 +104,34 @@ describe('Windows Docker Desktop proof intake', () => {
     });
     expect(releaseState.developPreview.windowsDockerDesktopProofIntake).toMatchObject({
       status: 'prepared-gitlab-authority',
-      requiredDockerOSType: 'windows'
+      requiredDockerOSType: 'windows',
+      publicFacadePromotionCloseout: {
+        status: 'published-and-verified',
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+        publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+        marketplaceMutation: 'not-performed'
+      }
     });
     expect(releaseState.publicValidationPrereleaseV1313.windowsDockerDesktopProofIntake).toMatchObject({
       templatePath:
-        'public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml'
+        'public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml',
+      publicFacadePromotionCloseout: {
+        status: 'published-and-verified',
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+        publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+        marketplaceMutation: 'not-performed'
+      }
     });
     expect(marketplaceLedger.publicValidationPrereleaseV1313.windowsDockerDesktopProofIntake)
       .toMatchObject({
         publicIssue: 'https://github.com/svelderrainruiz/vi-history-suite/issues/65',
-        requiredDockerOSType: 'windows'
+        requiredDockerOSType: 'windows',
+        publicFacadePromotionCloseout: {
+          status: 'published-and-verified',
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+          publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+          marketplaceMutation: 'not-performed'
+        }
       });
 
     expect(issueTemplate).toContain('Windows Docker Desktop validation');

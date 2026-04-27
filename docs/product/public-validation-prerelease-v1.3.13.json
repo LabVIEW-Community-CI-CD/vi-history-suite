@@ -142,6 +142,20 @@
         "runtimeExecutionState": "succeeded",
         "generatedReportExists": true
       }
+    },
+    "publicFacadePromotionCloseout": {
+      "status": "published-and-verified",
+      "gitlabAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/189",
+      "gitlabAuthorityDevelopCommit": "1e0a69a666213e3513f22ce0fe6d82ccc1170ce0",
+      "gitlabAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2481415396",
+      "publicGitHubPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+      "publicMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+      "postMergeChecks": [
+        "Public Source Package Preview 24977951913 success",
+        "Public Windows Installed-User Contract 24977951923 success",
+        "Public Linux Installed-User Smoke 24977951904 success"
+      ],
+      "marketplaceMutation": "not-performed"
     }
   },
   "docsAndTests": {

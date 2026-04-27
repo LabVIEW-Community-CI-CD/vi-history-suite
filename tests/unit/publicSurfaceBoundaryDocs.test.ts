@@ -32,18 +32,22 @@ describe('public facade boundary docs', () => {
     expect(publicSourceMap).toContain('Marketplace community-validation intake templates and labels');
     expect(publicSourceMap).toContain('protected-branch PR');
     expect(publicSourceMap).toContain('b56fde1');
+    expect(publicSourceMap).toContain('220111e');
+    expect(publicSourceMap).toContain('public PR #68');
     expect(publicSourceMap).toContain('ce6dbd0');
     expect(publicSourceMap).toContain('public PR #60');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `ce6dbd0`');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `220111e`');
     expect(publicSourceLedger).toContain('Public source v1.3.9 exact source publication');
     expect(publicSourceLedger).toContain('Public source v1.3.10 community-validation intake publication');
     expect(publicSourceLedger).toContain('Public source v1.3.11 canonical Docker fixture docs promotion');
+    expect(publicSourceLedger).toContain('Public source v1.3.13 Windows Docker Desktop intake promotion');
     expect(publicSourceLedger).toContain('fb0ef2b');
     expect(publicSourceLedger).toContain('b56fde1');
     expect(publicSourceLedger).toContain('ce6dbd0');
+    expect(publicSourceLedger).toContain('220111e');
     expect(publicSourceLedger).toContain('Marketplace mutation: not performed');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "ce6dbd0"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "220111e"');
     expect(publicSourceLedgerJson).toContain('"id": "public-source-v1-3-9-exact-source-publication"');
     expect(publicSourceLedgerJson).toContain(
       '"id": "public-source-v1-3-10-community-validation-intake-publication"'
@@ -51,11 +55,18 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedgerJson).toContain(
       '"id": "public-source-v1-3-11-canonical-docker-fixture-docs-promotion"'
     );
+    expect(publicSourceLedgerJson).toContain(
+      '"id": "public-source-v1-3-13-windows-docker-desktop-intake-promotion"'
+    );
     expect(publicSourceLedgerJson).toContain('"repoCommit": "fb0ef2b"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "b56fde1"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "ce6dbd0"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "220111e"');
     expect(publicSourceLedgerJson).toContain(
       '"repoCommitSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"'
+    );
+    expect(publicSourceLedgerJson).toContain(
+      '"repoCommitSha": "220111eae3ac214e99f2233e2bfe6b320edf383d"'
     );
     expect(publicSourceLedgerJson).toContain('"status": "published"');
   });

@@ -411,9 +411,9 @@
     "publicFacadeDocsPromotionDecision": "completed-through-public-pr-60-after-gitlab-authority-green",
     "publicGitHubMutationDuringAuthorityCloseout": false,
     "marketplaceMutationDuringAuthorityCloseout": false,
-    "publicGitHubCurrentMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
-    "publicGitHubCurrentMainShortCommit": "ce6dbd0",
-    "latestPublicGitHubFacadePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+    "publicGitHubCurrentMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+    "publicGitHubCurrentMainShortCommit": "220111e",
+    "latestPublicGitHubFacadePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
     "publicFacadeDocsPromotionCloseout": {
       "status": "published-and-verified",
       "repository": "github.com/svelderrainruiz/vi-history-suite",
@@ -568,7 +568,18 @@
       "packetPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.md",
       "packetJsonPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.json",
       "requiredDockerOSType": "windows",
-      "templatePath": "public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml"
+      "templatePath": "public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+      "publicFacadePromotionCloseout": {
+        "status": "published-and-verified",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+        "publicMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+        "postMergeChecks": [
+          "Public Source Package Preview 24977951913 success",
+          "Public Windows Installed-User Contract 24977951923 success",
+          "Public Linux Installed-User Smoke 24977951904 success"
+        ],
+        "marketplaceMutation": "not-performed"
+      }
     },
     "packetPath": "docs/product/public-validation-prerelease-v1.3.13.md",
     "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json",

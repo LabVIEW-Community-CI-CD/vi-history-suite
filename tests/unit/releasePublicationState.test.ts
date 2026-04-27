@@ -185,17 +185,27 @@ describe('release publication state resolver', () => {
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: '1853a4332eff40665e30db6e632febaa9821cf98',
+      mainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
       sourcePublication: {
-        status: 'public-validation-prerelease-1.3.12-facade-promoted-and-verified',
-        currentMainCommit: '1853a4332eff40665e30db6e632febaa9821cf98',
-        currentMainShortCommit: '1853a43',
+        status:
+          'public-validation-prerelease-1.3.13-windows-docker-desktop-intake-promoted-and-verified',
+        currentMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+        currentMainShortCommit: '220111e',
         exactReleaseRetainedCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
         priorCommunityValidationIntakeCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
         priorCommunityValidationIntakePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/45',
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
-        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+        latestPublicValidationFixturePullRequest:
+          'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
+        latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
+          status: 'published-and-verified',
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+          publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+          publicMainShortCommit: '220111e',
+          marketplaceMutation: 'not-performed'
+        }),
         publicDevelopSync: expect.objectContaining({
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
           status: 'not-applied-requires-separate-branch-policy-decision'

@@ -5,7 +5,7 @@
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published exact public source commit: `fb0ef2b`
-- Current public source head: `ce6dbd0`
+- Current public source head: `220111e`
 - Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
@@ -75,10 +75,12 @@
 - The exact `v1.3.9` public source publication is retained at `fb0ef2b`, and
   the separate public source publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
-- Public GitHub `main` now publishes `ce6dbd0` for the later `1.3.11`
-  canonical Docker fixture docs promotion after public PR #60, without moving
-  public tag `v1.3.9`, mutating GitHub release `312994104`, or mutating the VS
-  Code Marketplace listing.
+- Public GitHub `main` now publishes `220111e` for the later `1.3.13` Windows
+  Docker Desktop proof-intake promotion after public PR #68. The earlier
+  `1.3.11` canonical Docker fixture docs promotion remains retained at
+  `ce6dbd0` after public PR #60. Neither facade promotion moves public tag
+  `v1.3.9`, mutates GitHub release `312994104`, or mutates the VS Code
+  Marketplace listing.
 - Public GitHub tag `v1.3.9` is now live, and GitHub release `312994104` is
   now published separately at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`.

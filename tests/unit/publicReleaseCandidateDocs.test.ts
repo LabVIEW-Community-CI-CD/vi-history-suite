@@ -26,14 +26,21 @@ describe('public release candidate control surface', () => {
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: 'fb0ef2b',
-      currentPublicSourceHead: 'ce6dbd0',
-      currentPublicSourceHeadSha: 'ce6dbd0b1b5783f7015b9d0589f3803636564789',
+      currentPublicSourceHead: '220111e',
+      currentPublicSourceHeadSha: '220111eae3ac214e99f2233e2bfe6b320edf383d',
       status: 'published-main-tag-and-release-v1.3.9'
     });
     expect(candidate.publishedPublicSource.latestPublicFacadeDocsPromotion).toMatchObject({
       pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/60',
       publicMainCommit: 'ce6dbd0b1b5783f7015b9d0589f3803636564789',
       publicMainShortCommit: 'ce6dbd0',
+      marketplaceMutation: 'not-performed'
+    });
+    expect(candidate.publishedPublicSource.latestWindowsDockerDesktopIntakePromotion).toMatchObject({
+      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+      publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+      publicMainShortCommit: '220111e',
+      publicLabelsApplied: ['windows-docker-desktop'],
       marketplaceMutation: 'not-performed'
     });
     expect(candidate.candidateReadiness).toMatchObject({
@@ -182,7 +189,7 @@ describe('public release candidate control surface', () => {
 
     expect(candidateMarkdown).toContain('Version line: `1.3.9`');
     expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
-    expect(candidateMarkdown).toContain('Current public source head: `ce6dbd0`');
+    expect(candidateMarkdown).toContain('Current public source head: `220111e`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');
     expect(candidateMarkdown).toContain('`release-1.3.9-authority-candidate-package-line`');
     expect(candidateMarkdown).toContain(
@@ -195,8 +202,9 @@ describe('public release candidate control surface', () => {
       '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     );
     expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.9`');
+    expect(candidateMarkdown).toContain('public PR #68');
     expect(candidateMarkdown).toContain('public PR #60');
-    expect(candidateMarkdown).toContain('Code Marketplace listing');
+    expect(candidateMarkdown).toContain('VS Code Marketplace item');
     expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.9`');
     expect(candidateMarkdown).toContain('`required-before-any-later-marketplace-act`');
     expect(candidateMarkdown).toContain('`npm run vscode:marketplace:prepare`');

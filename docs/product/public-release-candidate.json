@@ -24,8 +24,8 @@
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
     "publishedCommit": "fb0ef2b",
-    "currentPublicSourceHead": "ce6dbd0",
-    "currentPublicSourceHeadSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+    "currentPublicSourceHead": "220111e",
+    "currentPublicSourceHeadSha": "220111eae3ac214e99f2233e2bfe6b320edf383d",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
     "status": "published-main-tag-and-release-v1.3.9",
     "latestPublicFacadeDocsPromotion": {
@@ -103,6 +103,63 @@
       ],
       "marketplaceMutation": "not-performed",
       "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+    },
+    "latestWindowsDockerDesktopIntakePromotion": {
+      "status": "published-and-verified",
+      "repository": "github.com/svelderrainruiz/vi-history-suite",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+      "publicBranch": "main",
+      "sourceBranch": "codex/windows-docker-desktop-proof-intake",
+      "headCommit": "40b6c7e4ef678e9e6513f40e313bf8397399adee",
+      "mergeCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+      "publicMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+      "publicMainShortCommit": "220111e",
+      "mergedAt": "2026-04-27T05:20:54Z",
+      "promotedFiles": [
+        "README.md",
+        "INSTALL.md",
+        "SUPPORT.md",
+        ".github/ISSUE_TEMPLATE/config.yml",
+        ".github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+        ".github/labels.yml",
+        "src/tooling/publicFixtureValidation.ts",
+        "tests/unit/publicRepoPackageSurface.test.ts"
+      ],
+      "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/189",
+      "governedAuthorityDevelopCommit": "1e0a69a666213e3513f22ce0fe6d82ccc1170ce0",
+      "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2481415396",
+      "postMergeMainChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 24977951913,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24977951913",
+          "conclusion": "success",
+          "headSha": "220111eae3ac214e99f2233e2bfe6b320edf383d"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 24977951923,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24977951923",
+          "conclusion": "success",
+          "headSha": "220111eae3ac214e99f2233e2bfe6b320edf383d"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 24977951904,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24977951904",
+          "conclusion": "success",
+          "headSha": "220111eae3ac214e99f2233e2bfe6b320edf383d"
+        }
+      ],
+      "publicLabelsApplied": [
+        "windows-docker-desktop"
+      ],
+      "publicIssueComments": [
+        "https://github.com/svelderrainruiz/vi-history-suite/issues/65#issuecomment-4324381378",
+        "https://github.com/svelderrainruiz/vi-history-suite/issues/48#issuecomment-4324381850"
+      ],
+      "marketplaceMutation": "not-performed",
+      "marketplaceBoundary": "Marketplace remained untouched by PR #68; the public facade intake promotion did not publish, republish, or alter Marketplace listing state."
     }
   },
   "publicDevelopCandidate": {

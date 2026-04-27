@@ -109,3 +109,23 @@ contents before posting.
   VirtualBox installed-user proof.
 - Windows Docker Desktop Windows containers: community/deferred until a public
   issue #65 packet clears this intake.
+
+## Public Facade Promotion Closeout
+
+- GitLab authority MR: `https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/189`
+- GitLab authority develop commit:
+  `1e0a69a666213e3513f22ce0fe6d82ccc1170ce0`
+- GitLab develop pipeline: `2481415396` / success
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/68`
+- Public `main` commit:
+  `220111eae3ac214e99f2233e2bfe6b320edf383d`
+- Post-merge public checks:
+  - Public Source Package Preview `24977951913` / success
+  - Public Windows Installed-User Contract `24977951923` / success
+  - Public Linux Installed-User Smoke `24977951904` / success
+- Public issue comments:
+  - `https://github.com/svelderrainruiz/vi-history-suite/issues/65#issuecomment-4324381378`
+  - `https://github.com/svelderrainruiz/vi-history-suite/issues/48#issuecomment-4324381850`
+- Public label applied: `windows-docker-desktop`
+- Marketplace mutation: not performed.

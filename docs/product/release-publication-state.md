@@ -95,13 +95,19 @@ final installed-user distribution surface.
   `windows`, `runtimeProvider=windows-container`, and
   `generatedReportExists=true` before any community report can become retained
   proof
+- Windows Docker Desktop public facade promotion:
+  public PR #68 published the dedicated intake template and label to public
+  `main` commit `220111eae3ac214e99f2233e2bfe6b320edf383d`; post-merge Public
+  Source Package Preview `24977951913`, Public Windows Installed-User Contract
+  `24977951923`, and Public Linux Installed-User Smoke `24977951904` all
+  passed; Marketplace mutation was not performed
 - Linux host proof may prove Windows installed-user LabVIEW behavior: no
 - Public GitHub mutation: not performed by this packet
 - VS Code Marketplace mutation: not performed by this packet
 
 ## Public GitHub State
 
-- Public GitHub `main`: `769cf180c1d5e94d1462d90e4e7366b1e050e7b1`
+- Public GitHub `main`: `220111eae3ac214e99f2233e2bfe6b320edf383d`
 - Public GitHub tag: `v1.3.9`
 - Public GitHub release id: `312994104`
 - Public GitHub release URL:
@@ -109,12 +115,15 @@ final installed-user distribution surface.
 - Public GitHub release status: published, immutable, exact assets retained
 - Asset status: `published-complete`
 - Public GitHub source status: current public `main` publishes
-  `ce6dbd0b1b5783f7015b9d0589f3803636564789` after public PR #60 promoted the
-  canonical Docker fixture docs; the earlier community-validation intake facade
-  remains retained at `b56fde1`, and exact release tag `v1.3.9` remains
-  retained separately at `fb0ef2b`
+  `220111eae3ac214e99f2233e2bfe6b320edf383d` after public PR #68 promoted
+  the Windows Docker Desktop proof-intake template and label; the earlier
+  canonical Docker fixture docs remain retained at `ce6dbd0` through public PR
+  #60, the earlier community-validation intake facade remains retained at
+  `b56fde1`, and exact release tag `v1.3.9` remains retained separately at
+  `fb0ef2b`
 - Public validation source status: `1.3.11` facade published through public
-  PR #46, then canonical fixture docs promoted through public PR #60
+  PR #46, canonical fixture docs promoted through public PR #60, and Windows
+  Docker Desktop proof-intake promoted through public PR #68
 - Public validation facade closeout PR:
   `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
 - Public validation facade closeout checks:
@@ -248,6 +257,10 @@ final installed-user distribution surface.
 - Remaining deferred proof: Windows Docker Desktop Windows-container
   validation through public issue #65 and
   `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md`
+- Public facade intake promotion:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/68` merged to
+  public `main` commit `220111eae3ac214e99f2233e2bfe6b320edf383d` with all
+  post-merge public checks green and no Marketplace mutation
 - Diagnostic-note fix:
   `src/reporting/comparisonReportRuntimeExecution.ts` with regression coverage
   in `tests/unit/comparisonReportRuntimeExecution.test.ts`

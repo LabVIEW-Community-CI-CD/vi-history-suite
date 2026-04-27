@@ -116,6 +116,11 @@ Admissible success must retain `runtimeProvider=windows-container`,
 containers, WSL-only execution, Windows host provider proof, and simulated
 platform injection remain non-admissible for issue #65.
 
+Public facade closeout: PR #68 promoted this intake to public `main` commit
+`220111eae3ac214e99f2233e2bfe6b320edf383d` after GitLab MR !189 and develop
+pipeline `2481415396` were green. Post-merge public checks all passed, and
+Marketplace was not mutated.
+
 ## Publication Closeout
 
 - GitLab authority merge commit:
