@@ -142,7 +142,7 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
       'admitted-and-promoted-into-1.3.12-public-validation-wording'
     );
     expect(releaseState.marketplaceCommunityValidationPreview.publicGitHubReleaseMutation).toBe(
-      'pending-gitlab-authority-green'
+      'published-and-verified'
     );
   });
 

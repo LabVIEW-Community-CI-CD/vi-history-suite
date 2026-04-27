@@ -99,12 +99,16 @@ describe('public GitHub fixture docs promotion closeout', () => {
     }
 
     expect(releaseState.publicGitHub).toMatchObject({
-      mainCommit: publicMainCommit,
+      mainCommit: '1853a4332eff40665e30db6e632febaa9821cf98',
       sourcePublication: {
-        status: 'public-validation-prerelease-facade-docs-promoted-and-verified',
-        currentMainCommit: publicMainCommit,
-        currentMainShortCommit: publicMainShortCommit,
-        latestPullRequest: publicPullRequest
+        status: 'public-validation-prerelease-1.3.12-facade-promoted-and-verified',
+        currentMainCommit: '1853a4332eff40665e30db6e632febaa9821cf98',
+        currentMainShortCommit: '1853a43',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
+        publicDevelopSync: expect.objectContaining({
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
+          status: 'not-applied-requires-separate-branch-policy-decision'
+        })
       }
     });
     expect(releaseState.publicValidationPrerelease.publicFacadeDocsPromotionDecision).toBe(

@@ -202,12 +202,12 @@ describe('exact release candidate reassessment', () => {
     expect(publicationState.activeCandidate).toMatchObject({
       sourceBranch: 'develop',
       releaseBranch: null,
-      tag: 'v1.3.12-public-validation',
+      tag: 'v1.3.12-public-validation-prerelease',
       packageVersion: '1.3.12',
-      status: 'public-validation-prerelease-prepared-authorized-awaiting-gitlab-authority-green'
+      status: 'public-validation-prerelease-published-and-verified'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'merge-gitlab-authority-green-then-publish-public-github-and-marketplace-v1.3.12-public-validation'
+      'collect-community-validation-reports-and-triage-public-issues'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

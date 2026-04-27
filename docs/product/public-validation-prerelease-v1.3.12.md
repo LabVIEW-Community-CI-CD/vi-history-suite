@@ -1,7 +1,9 @@
 # Public Validation Pre-Release v1.3.12
 
-Status: prepared and maintainer-authorized, pending GitLab authority MR green
-before public GitHub and VS Code Marketplace mutation.
+Status: published and verified. GitLab authority MR !184 went green and merged,
+public GitHub PR #63 went green and merged, the corrected GitHub pre-release
+assets are published, and VS Code Marketplace readback shows `1.3.12` as a
+pre-release.
 
 ## Objective
 
@@ -72,10 +74,30 @@ Retained Linux/Docker `validate-fixture` proof:
 | Windows Docker Desktop Windows containers | community/deferred | Windows Docker Desktop proof packet required |
 | Unsupported provider/year/bitness variants | selectable/reportable | stable `VIHS_E_*` code or feature-not-implemented issue |
 
-## Publication Plan
+## Publication Closeout
 
-- Public GitHub pre-release target: `v1.3.12-public-validation`
-- Marketplace target: `1.3.12` pre-release
-- Public GitHub and Marketplace mutation are authorized after the GitLab
-  authority MR is green.
+- GitLab authority merge commit:
+  `f281e1f26dc083628166316a16d3a1bed8d1d0c8`
+- GitLab authority pipeline: `2481099798` / success
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/63`
+- Public GitHub main commit:
+  `1853a4332eff40665e30db6e632febaa9821cf98`
+- Corrected public GitHub pre-release:
+  `v1.3.12-public-validation-prerelease`
+- Corrected public GitHub release id: `313840265`
+- Corrected VSIX SHA-256:
+  `e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25`
+- Superseded immutable public GitHub release:
+  `v1.3.12-public-validation` / `313840031`
+- Superseded VSIX SHA-256:
+  `52c907acbe44a877875f865bc141c6e489486cda4b602df4afc75244eaf03c5e`
+- Marketplace target: `1.3.12` pre-release, published and verified
+- Marketplace readback: `2026-04-27T00:36:15.800Z`,
+  `Microsoft.VisualStudio.Code.PreRelease=true`
 - Windows installed-user LabVIEW proof remains community/deferred.
+
+Public `develop` branch hygiene remains a separate policy decision: PR #64
+confirmed `main` to `develop` is mergeable and checked, but repository branch
+protection forbids merge commits, while squash/rebase would not satisfy the
+ancestry requirement that `develop` contain `main`.

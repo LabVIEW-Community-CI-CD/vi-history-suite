@@ -1,22 +1,34 @@
 {
   "schema": "vi-history-suite/public-validation-prerelease@v1",
-  "status": "prepared-authorized-awaiting-gitlab-authority-green",
+  "status": "published-and-verified",
   "packageVersion": "1.3.12",
-  "recordedAt": "2026-04-26",
+  "recordedAt": "2026-04-27",
   "publicationTargets": {
     "publicGitHub": {
-      "tag": "v1.3.12-public-validation",
-      "releaseKind": "pre-release-with-vsix-assets",
+      "tag": "v1.3.12-public-validation-prerelease",
+      "releaseKind": "pre-release-with-prerelease-marked-vsix-assets",
       "mutationAuthorized": true,
-      "status": "pending-gitlab-authority-green",
-      "nominalPackageTag": "v1.3.12"
+      "status": "published-and-verified",
+      "nominalPackageTag": "v1.3.12",
+      "releaseId": 313840265,
+      "releaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.12-public-validation-prerelease",
+      "targetCommitish": "1853a4332eff40665e30db6e632febaa9821cf98",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/63",
+      "supersededImmutableTag": "v1.3.12-public-validation",
+      "supersededImmutableReleaseId": 313840031,
+      "supersededImmutableReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.12-public-validation",
+      "supersededImmutableReason": "first GitHub release used a VSIX packaged without the VS Code pre-release marker and could not be replaced because releases are immutable"
     },
     "marketplace": {
       "version": "1.3.12",
       "publicationKind": "pre-release",
       "mutationAuthorized": true,
-      "status": "pending-gitlab-authority-green",
-      "readback": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install"
+      "status": "published-and-verified",
+      "readback": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install",
+      "publishedVersion": "1.3.12",
+      "publishedDate": "2026-04-27",
+      "marketplaceLastUpdated": "2026-04-27T00:36:15.800Z",
+      "preRelease": true
     }
   },
   "canonicalFixture": {
@@ -103,5 +115,27 @@
       "TEST-DOC-148"
     ]
   },
-  "nextAdmittedAction": "merge-gitlab-authority-green-then-publish-public-github-and-marketplace-v1.3.12-public-validation"
+  "nextAdmittedAction": "collect-community-validation-reports-and-triage-public-issues",
+  "publicationCloseout": {
+    "status": "published-and-verified",
+    "gitlabAuthorityMergeCommit": "f281e1f26dc083628166316a16d3a1bed8d1d0c8",
+    "gitlabAuthorityPipelineId": 2481099798,
+    "publicGitHubMainCommit": "1853a4332eff40665e30db6e632febaa9821cf98",
+    "publicGitHubPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/63",
+    "publicGitHubReleaseTag": "v1.3.12-public-validation-prerelease",
+    "publicGitHubReleaseId": 313840265,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.12-public-validation-prerelease",
+    "supersededPublicGitHubReleaseTag": "v1.3.12-public-validation",
+    "supersededPublicGitHubReleaseId": 313840031,
+    "publicGitHubVsixSha256": "e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25",
+    "marketplacePublishedVersion": "1.3.12",
+    "marketplaceLastUpdated": "2026-04-27T00:36:15.800Z",
+    "marketplacePreRelease": true,
+    "publicDevelopSync": {
+      "status": "not-applied-requires-separate-branch-policy-decision",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/64",
+      "reason": "repository branch protection forbids merge commits; squash/rebase would not make develop contain main for behind=0 ancestry",
+      "directPushRejection": "GH006 protected branch update failed: branch must not contain merge commits"
+    }
+  }
 }

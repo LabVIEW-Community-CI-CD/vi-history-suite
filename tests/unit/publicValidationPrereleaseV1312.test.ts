@@ -35,16 +35,24 @@ describe('public validation pre-release 1.3.12', () => {
     expect(packageManifest.version).toBe('1.3.12');
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
-      status: 'prepared-authorized-awaiting-gitlab-authority-green',
+      status: 'published-and-verified',
       packageVersion: '1.3.12',
       publicationTargets: {
         publicGitHub: {
-          tag: 'v1.3.12-public-validation',
-          mutationAuthorized: true
+          tag: 'v1.3.12-public-validation-prerelease',
+          mutationAuthorized: true,
+          status: 'published-and-verified',
+          releaseId: 313840265,
+          targetCommitish: '1853a4332eff40665e30db6e632febaa9821cf98',
+          supersededImmutableTag: 'v1.3.12-public-validation'
         },
         marketplace: {
           version: '1.3.12',
-          mutationAuthorized: true
+          mutationAuthorized: true,
+          status: 'published-and-verified',
+          publishedVersion: '1.3.12',
+          marketplaceLastUpdated: '2026-04-27T00:36:15.800Z',
+          preRelease: true
         }
       },
       canonicalFixture: {
@@ -91,6 +99,23 @@ describe('public validation pre-release 1.3.12', () => {
         allCliVariantsSelectable: true,
         unsupportedVariantsReportable: true
       }
+    });
+    expect(packetJson.publicationCloseout).toMatchObject({
+      status: 'published-and-verified',
+      gitlabAuthorityMergeCommit: 'f281e1f26dc083628166316a16d3a1bed8d1d0c8',
+      gitlabAuthorityPipelineId: 2481099798,
+      publicGitHubMainCommit: '1853a4332eff40665e30db6e632febaa9821cf98',
+      publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
+      publicGitHubReleaseTag: 'v1.3.12-public-validation-prerelease',
+      publicGitHubReleaseId: 313840265,
+      publicGitHubVsixSha256:
+        'e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25',
+      marketplacePublishedVersion: '1.3.12',
+      marketplacePreRelease: true,
+      publicDevelopSync: expect.objectContaining({
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
+        status: 'not-applied-requires-separate-branch-policy-decision'
+      })
     });
     expect(packetJson.proofStatusMatrix).toEqual(
       expect.arrayContaining([
