@@ -139,7 +139,10 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
       marketplaceMutation: 'not-performed'
     });
     expect(releaseState.marketplaceCommunityValidationPreview.linuxHostLabviewEvidenceClaim).toContain(
-      'not-yet-promoted-to-marketplace-listing'
+      'admitted-and-promoted-into-1.3.12-public-validation-wording'
+    );
+    expect(releaseState.marketplaceCommunityValidationPreview.publicGitHubReleaseMutation).toBe(
+      'pending-gitlab-authority-green'
     );
   });
 

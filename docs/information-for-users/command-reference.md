@@ -1,6 +1,6 @@
 # Information For Users Command Reference
 
-Applies to: exact released installed baseline plus the active `1.3.11` public
+Applies to: exact released installed baseline plus the active `1.3.12` public
 validation pre-release direction
 Last reviewed: `2026-04-26`
 Primary audience: maintainers, source evaluators, and advanced installed users
@@ -30,9 +30,9 @@ See also:
 
 ## Public Evaluation And Installed Baseline
 
-- The active governed preview route is Linux/Docker validated; Windows
-  installed-user proof is deferred until a real Windows/LabVIEW host evidence
-  lane exists.
+- The active governed preview route is Linux/Docker and Linux host LabVIEW
+  validated; Windows installed-user proof remains community/deferred until a
+  real Windows/LabVIEW host evidence lane exists.
 - Commands prefixed with `public:` below are source-evaluation or maintainer
   surfaces, not the supported installed-user private-release steps.
 
@@ -57,7 +57,11 @@ See also:
   `left-blob-read-failed`.
 - Docker note: the first compare may pull
   `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`.
-- Proof boundary: Windows host LabVIEW proof remains community/deferred.
+- Executable installed-user proof route:
+  `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
+- Proof boundary: Linux/Docker `2026` `x64` and Linux host LabVIEW `2026`
+  `x64` are admitted for their selected Linux machines; Windows host LabVIEW
+  proof remains community/deferred.
 
 ## Documentation Package Workbench
 
@@ -203,7 +207,7 @@ runtime-settings CLI on the active branch.
   - Windows installed-user operation may be evaluated by users on their own
     Windows setups, but this Ubuntu/Docker evidence lane does not prove native
     Windows LabVIEW or Docker Desktop Windows-container behavior
-  - for Marketplace pre-release `1.3.11`, report Windows/LabVIEW and Docker
+  - for Marketplace pre-release `1.3.12`, report Windows/LabVIEW and Docker
     results through the public GitHub validation templates and include
     provider, LabVIEW year, bitness, `runtimeErrorCode`, and the proof packet
   - Linux public smoke, Linux benchmark, and Ubuntu/Docker preview lanes are
@@ -242,6 +246,29 @@ runtime-settings CLI on the active branch.
     still pull `nationalinstruments/labview:2026q1-linux`; native Windows
     LabVIEW proof remains community/deferred until admitted external proof is
     retained
+
+`vihs validate-fixture [--provider <host|docker>] [--labview-version <major>] [--labview-bitness <x86|x64>] [--settings-file <path>] [--proof-out <dir>] [--runtime-timeout-ms <ms>]`
+
+- Purpose: execute the canonical public `ni/labview-icon-editor`
+  `resource/plugins/lv_icon.vi` compare fixture and write a public proof
+  packet.
+- Use when: validating the pre-release on a machine that should exercise a
+  real compare path, not only runtime selection.
+- Fixture:
+  - repository: `https://github.com/ni/labview-icon-editor`
+  - VI: `resource/plugins/lv_icon.vi`
+  - old commit: `ab94f6c4b375062492036c63a6dab7ea8824748a`
+  - new commit: `8741bb08026c104100720c0ef48621e4ab7762fd`
+- Notes:
+  - `--provider docker --labview-version 2026 --labview-bitness x64` exercises
+    the Linux/Docker admitted fixture lane and may pull
+    `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`, on first
+    compare
+  - `--provider host --labview-version 2026 --labview-bitness x64` exercises
+    the Linux host LabVIEW admitted lane when LabVIEW Community 2026 is
+    installed on Linux
+  - Windows host LabVIEW and Windows Docker Desktop Windows-container results
+    are community/deferred until users file proof packets from those machines
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

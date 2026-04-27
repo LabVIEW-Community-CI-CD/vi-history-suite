@@ -5,7 +5,7 @@ import { execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parse } from 'jsonc-parser';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   admitLocalRuntimeSettingsCliToTerminalPath,
@@ -66,11 +66,39 @@ describe('localRuntimeSettingsCli', () => {
       validateRequested: true,
       settingsFilePath: './settings.json'
     });
+    expect(
+      parseLocalRuntimeSettingsCliArgs([
+        'validate-fixture',
+        '--provider',
+        'docker',
+        '--labview-version',
+        '2026',
+        '--labview-bitness',
+        'x64',
+        '--settings-file',
+        './settings.json',
+        '--proof-out',
+        './fixture-proof',
+        '--runtime-timeout-ms',
+        '180000'
+      ])
+    ).toEqual({
+      helpRequested: false,
+      validateFixtureRequested: true,
+      provider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      settingsFilePath: './settings.json',
+      proofOutDirectoryPath: './fixture-proof',
+      runtimeExecutionTimeoutMs: 180000
+    });
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-version');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-bitness');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--provider');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--validate');
+    expect(getLocalRuntimeSettingsCliUsage()).toContain('validate-fixture');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--proof-out');
+    expect(getLocalRuntimeSettingsCliUsage()).toContain('--runtime-timeout-ms');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('Usage: vihs ');
     expect(() => parseLocalRuntimeSettingsCliArgs(['--labview-version'])).toThrow(
       /Missing value for --labview-version/
@@ -81,6 +109,9 @@ describe('localRuntimeSettingsCli', () => {
     expect(() =>
       parseLocalRuntimeSettingsCliArgs(['--labview-bitness', 'arm64'])
     ).toThrow(/Unsupported LabVIEW bitness/);
+    expect(() =>
+      parseLocalRuntimeSettingsCliArgs(['validate-fixture', '--runtime-timeout-ms', '0'])
+    ).toThrow(/Unsupported runtime timeout/);
   });
 
   it('resolves default VS Code settings paths for Windows and Linux', () => {
@@ -381,6 +412,108 @@ describe('localRuntimeSettingsCli', () => {
     expect(proof.host.env.SECRET_TOKEN).toBe('<redacted-secret-like-env-var>');
     expect(issueBody).toContain('Suggested template: feature-not-implemented.yml');
     expect(issueBody).toContain('VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED');
+  });
+
+  it('runs the canonical public fixture validation without mutating settings', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-fixture-'));
+    tempDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    const proofRoot = path.join(tempRoot, 'fixture-proof');
+    await fs.writeFile(
+      settingsFilePath,
+      [
+        '{',
+        '  "viHistorySuite.runtimeProvider": "host",',
+        '  "viHistorySuite.labviewVersion": "2026",',
+        '  "viHistorySuite.labviewBitness": "x64"',
+        '}',
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+    const validateFixture = vi.fn().mockResolvedValue({
+      outcome: 'validated-fixture',
+      proofRootPath: proofRoot,
+      proofReportPath: path.join(proofRoot, 'vihs-fixture-validation-proof.json'),
+      proofIssueBodyPath: path.join(proofRoot, 'vihs-fixture-validation-issue.md'),
+      harnessReportJsonPath: path.join(proofRoot, 'reports', 'HARNESS-VHS-002', 'comparison-report-smoke.json'),
+      harnessReportMarkdownPath: path.join(proofRoot, 'reports', 'HARNESS-VHS-002', 'comparison-report-smoke.md'),
+      harnessReportHtmlPath: path.join(proofRoot, 'reports', 'HARNESS-VHS-002', 'comparison-report-smoke.html'),
+      fixture: {},
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      runtimeProvider: 'host-native',
+      runtimeEngine: 'labview-cli',
+      generatedReportExists: true,
+      validationClassification: 'validation-success',
+      suggestedIssueTemplate: 'validation-success.yml'
+    });
+    const stdout: string[] = [];
+
+    const result = await runLocalRuntimeSettingsCli(
+      [
+        'validate-fixture',
+        '--provider',
+        'docker',
+        '--labview-version',
+        '2026',
+        '--labview-bitness',
+        'x64',
+        '--settings-file',
+        settingsFilePath,
+        '--proof-out',
+        proofRoot,
+        '--runtime-timeout-ms',
+        '180000'
+      ],
+      {
+        platform: 'linux',
+        cwd: () => tempRoot,
+        validateFixture: validateFixture as never,
+        stdout: {
+          write(text: string) {
+            stdout.push(text);
+          }
+        }
+      }
+    );
+
+    expect(validateFixture).toHaveBeenCalledWith(
+      {
+        cwd: tempRoot,
+        proofOutDirectoryPath: proofRoot,
+        runtimePlatform: 'linux',
+        runtimeExecutionTimeoutMs: 180000,
+        runtimeSettings: {
+          requestedProvider: 'docker',
+          invalidRequestedProvider: undefined,
+          requireVersionAndBitness: true,
+          labviewVersion: '2026',
+          bitness: 'x64'
+        }
+      },
+      expect.objectContaining({
+        now: expect.any(Function)
+      })
+    );
+    expect(result).toMatchObject({
+      outcome: 'validated-fixture',
+      settingsFilePath,
+      settingsTarget: 'explicit-settings-file',
+      persistedProvider: 'host',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x64',
+      proofReportPath: path.join(proofRoot, 'vihs-fixture-validation-proof.json'),
+      proofIssueBodyPath: path.join(proofRoot, 'vihs-fixture-validation-issue.md')
+    });
+    expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
+      'viHistorySuite.runtimeProvider': 'host',
+      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewBitness': 'x64'
+    });
+    expect(stdout.join('')).toContain('Validated canonical public fixture');
+    expect(stdout.join('')).toContain('runtimeExecutionState=succeeded');
+    expect(stdout.join('')).toContain('validationClassification=validation-success');
   });
 
   it('accepts UTF-8 BOM-prefixed settings during validation', async () => {

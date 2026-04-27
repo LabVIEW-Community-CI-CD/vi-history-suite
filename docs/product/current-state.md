@@ -189,7 +189,7 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.11`
+- current develop package line on `develop`: `1.3.12`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
@@ -286,13 +286,16 @@ Latest landed ship target:
   `release/1.3.10` branch only under the selected community-deferred
   Windows/LabVIEW claim path; public GitHub exact release and VS Code
   Marketplace exact publication remain gated and were not mutated
-- active Marketplace public validation target: `1.3.11`
+- active Marketplace public validation target: `1.3.12`
 - active Marketplace public validation trigger:
-  published through public GitHub PR #46 and pinned `vsce --pre-release`
+  authorized for public GitHub and Marketplace publication after the GitLab
+  authority MR for `1.3.12` is green
 - active Marketplace public validation path:
-  published and verified as Marketplace pre-release `1.3.11`;
+  prepared as Marketplace pre-release `1.3.12`;
   Windows/LabVIEW settings may remain selectable with proof-status disclosure through
-  `vihs --validate --proof-out ./vihs-proof` and `docs/requirements/rtm.csv`
+  `vihs --validate --proof-out ./vihs-proof`,
+  `vihs validate-fixture --proof-out ./vihs-fixture-proof`, and
+  `docs/requirements/rtm.csv`
 - canonical public Docker fixture battery:
   `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
   from `ab94f6c4b375062492036c63a6dab7ea8824748a` to
@@ -382,7 +385,7 @@ Latest landed ship target:
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
   `1.3.11`
-- VS Code Marketplace public validation target version: `1.3.11`
+- VS Code Marketplace public validation target version: `1.3.12`
 - VS Code Marketplace community-validation preview Marketplace last updated:
   `2026-04-26T16:51:22.260Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
@@ -402,12 +405,10 @@ Latest landed ship target:
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
   `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
-- VS Code Marketplace community-validation preview is published and verified:
-  `npm run vscode:marketplace:community-preview:prepare` writes the prep
-  receipt, the package was published with pinned `vsce --pre-release`, the
-  official gallery query plus `vsce show` and isolated VS Code CLI install
-  read back `1.3.11`, and public GitHub was mutated through protected PR #46
-  for the scoped validation lane.
+- VS Code Marketplace `1.3.11` community-validation preview is published and
+  verified; the active `1.3.12` public validation path is prepared and
+  authorized, with final readback retained after public GitHub and Marketplace
+  publication.
 - Windows exact-VSIX install proof is also retained:
   `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
   installs into isolated VS Code user-data/extensions roots on Windows and

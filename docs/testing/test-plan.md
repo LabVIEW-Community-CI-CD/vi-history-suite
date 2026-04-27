@@ -2407,6 +2407,26 @@ Information-for-users review cases:
   surface, explicit compare preflight, panel + warning fail-closed behavior,
   and the Windows exact-runtime-selection fail-closed behavior retained under
   `VHS-REQ-532`
+- `TEST-UNIT-396`: run
+  `tests/unit/comparisonReportRuntimeExecution.test.ts`,
+  `tests/unit/publicFixtureValidation.test.ts`,
+  `tests/unit/localRuntimeSettingsCli.test.ts`,
+  `tests/unit/harnessReportSmoke.test.ts`, and
+  `tests/unit/publicValidationPrereleaseV1312.test.ts` and confirm
+  `vihs validate-fixture` retains `HARNESS-VHS-002`, the
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
+  fixture, old commit `ab94f6c4b375062492036c63a6dab7ea8824748a`, new commit
+  `8741bb08026c104100720c0ef48621e4ab7762fd`, public fixture proof files,
+  explicit non-adjacent historical-pair harness support, and the Linux host
+  LabVIEWCLI exit-handling regression where headless LabVIEW keeps inherited
+  stdio handles open after the CLI process exits
+- `TEST-DOC-148`: review README, INSTALL, public-facade docs, issue templates,
+  command reference, release-publication state, Marketplace ledger, SRS, RTM,
+  and this test plan and confirm the `1.3.12` public validation lane documents
+  the proof-status matrix: Linux/Docker `2026` `x64` admitted, Linux host
+  LabVIEW `2026` `x64` admitted, Windows host LabVIEW community/deferred,
+  Windows Docker Desktop Windows-container proof community/deferred, and
+  unsupported variants selectable/reportable with stable `VIHS_E_*` codes
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

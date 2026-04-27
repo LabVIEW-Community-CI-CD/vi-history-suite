@@ -38,7 +38,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-source-package-preview.yml');
 
-    expect(manifest.version).toBe('1.3.11');
+    expect(manifest.version).toBe('1.3.12');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -131,17 +131,17 @@ describe('public repo package surface', () => {
     expect(support).toContain('vihs --validate');
     expect(support).toContain('Windows defaults to local `LabVIEWCLI`');
     expect(support).toContain('Community Validation Triage');
-    expect(support).toContain('Linux/Docker success does not prove');
+    expect(support).toContain('Linux/Docker and Linux host LabVIEW success do not prove');
     expect(bugReport).toContain('install, settings, validation, or compare problem');
     expect(bugReport).toContain('`code --install-extension svelderrainruiz.vi-history-suite`');
     expect(bugReport).toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(bugReport).toContain('Exact released Marketplace line (`1.3.9`)');
-    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.11`)');
+    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.12`)');
     expect(bugReport).toContain('runtime_error_code');
     expect(bugReport).toContain('What command or surface failed?');
     expect(bugReport).toContain('`vihs --validate` output');
     expect(communityValidation).toContain('Marketplace community validation report');
-    expect(communityValidation).toContain('Expected `1.3.11`');
+    expect(communityValidation).toContain('Expected `1.3.12`');
     expect(communityValidation).toContain('runtime_error_code');
     expect(communityValidation).toContain('Proof-status acknowledgement');
     expect(labviewVersionRequest).toContain('LabVIEW version support request');
@@ -188,7 +188,7 @@ describe('public repo package surface', () => {
       'Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,'
     );
     expect(normalizedChangelog).toContain('`v1.3.6`, `v1.3.7`, `v1.3.8`, and `v1.3.9`.');
-    expect(normalizedChangelog).toContain('## [1.3.11] - 2026-04-26');
+    expect(normalizedChangelog).toContain('## [1.3.12] - 2026-04-26');
     expect(normalizedChangelog).toContain('Public validation pre-release lane');
     expect(normalizedChangelog).toContain('## [1.3.10] - 2026-04-25');
     expect(normalizedChangelog).toContain('Marketplace community-validation preview package line');

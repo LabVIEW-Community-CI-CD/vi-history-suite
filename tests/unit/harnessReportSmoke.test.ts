@@ -830,6 +830,60 @@ describe('runHarnessReportSmoke', () => {
     );
   });
 
+  it('allows an explicit non-adjacent base hash only when requested by a governed fixture', async () => {
+    const preflightComparisonReportRevisions = vi.fn().mockResolvedValue(readyPreflight);
+
+    await runHarnessReportSmoke(
+      'HARNESS-VHS-001',
+      {
+        cloneRoot: '/tmp/harnesses',
+        reportRoot: '/tmp/reports',
+        selectedHash: 'abcdef1234567890',
+        baseHash: '9999999900000000',
+        allowNonAdjacentBaseHash: true
+      },
+      {
+        ensureHarnessClone: vi.fn().mockResolvedValue('/tmp/harnesses/ni-labview-icon-editor') as never,
+        getRepoHead: vi.fn().mockResolvedValue('fedcba0987654321') as never,
+        loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue(canonicalHistoryModel) as never,
+        evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+          eligible: true,
+          signature: 'LVIN'
+        }) as never,
+        preflightComparisonReportRevisions: preflightComparisonReportRevisions as never,
+        locateComparisonRuntime: vi.fn().mockResolvedValue(hostNativeRuntimeSelection) as never,
+        persistComparisonReportPacket: vi.fn().mockResolvedValue(
+          createPersistPacketResult({
+            reportStatus: 'ready-for-runtime',
+            selectedHash: 'abcdef1234567890',
+            baseHash: '9999999900000000'
+          })
+        ) as never,
+        executeComparisonReport: vi.fn().mockResolvedValue({
+          ...createPersistPacketResult({
+            reportStatus: 'ready-for-runtime',
+            selectedHash: 'abcdef1234567890',
+            baseHash: '9999999900000000',
+            runtimeExecutionState: 'succeeded',
+            runtimeExecution: {
+              state: 'succeeded',
+              attempted: true,
+              reportExists: true
+            }
+          })
+        }) as never,
+        pathExists: vi.fn().mockRejectedValue(new Error('missing')) as never
+      }
+    );
+
+    expect(preflightComparisonReportRevisions).toHaveBeenCalledWith({
+      repoRoot: '/tmp/harnesses/ni-labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      leftRevisionId: '9999999900000000',
+      rightRevisionId: 'abcdef1234567890'
+    });
+  });
+
   it('forwards an explicit Windows interop root for win32 report execution from a non-Windows host', async () => {
     const executeComparisonReport = vi.fn().mockResolvedValue({
       record: {

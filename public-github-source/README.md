@@ -62,9 +62,19 @@ Installed-user help:
 
 ## Proof Status And Community Validation
 
-Marketplace pre-release `1.3.11` is the public validation lane. The extension
+Marketplace pre-release `1.3.12` is the public validation lane. The extension
 intentionally exposes all intended provider/year/bitness variants so the
 runtime and error-reporting layer can be exercised on real user machines.
+
+Proof-status matrix:
+
+| Variant | Status | Evidence path |
+| --- | --- | --- |
+| Linux/Docker `2026` `x64` | admitted | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
+| Linux host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 Community is installed on Linux | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
+| Windows host LabVIEW | community/deferred | `vihs --validate --proof-out ./vihs-proof`, then file a validation success or failure issue |
+| Windows Docker Desktop Windows containers | community/deferred | file a validation success, failure, or feature-not-implemented issue with the stable `VIHS_E_*` code |
+| Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
 
 To join from the command line:
 
@@ -81,9 +91,15 @@ validation packet:
 vihs --validate --proof-out ./vihs-proof
 ```
 
+To exercise the canonical public fixture and write a compare proof packet:
+
+```bash
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof
+```
+
 ### Canonical Public Docker Fixture
 
-The retained public Docker fixture for `1.3.11` validation is
+The retained public Docker fixture for validation is
 `https://github.com/ni/labview-icon-editor` using
 `resource/plugins/lv_icon.vi`.
 
@@ -96,8 +112,10 @@ The retained public Docker fixture for `1.3.11` validation is
 - no-change Docker compare: succeeded
 - missing-file control: blocked before Docker at `left-blob-read-failed`
 
-This proves the Linux/Docker `2026` `x64` public fixture path. Windows host
-LabVIEW proof remains community/deferred.
+This proves the Linux/Docker `2026` `x64` public fixture path. Linux host
+LabVIEW `2026` `x64` is separately admitted on the maintainer Ubuntu machine
+when LabVIEW Community 2026 is installed. Windows host LabVIEW proof remains
+community/deferred.
 
 ## Report A Problem Or Request Support
 

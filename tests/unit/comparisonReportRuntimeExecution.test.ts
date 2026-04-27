@@ -1,8 +1,11 @@
+import { EventEmitter } from 'node:events';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   classifyLabviewCliDiagnosticText,
-  executeComparisonReport
+  executeComparisonReport,
+  runComparisonCommandPlanWithObservation
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
@@ -149,6 +152,49 @@ function createWindowsContainerReadyRecord(): ComparisonReportPacketRecord {
 }
 
 describe('comparisonReportRuntimeExecution', () => {
+  it('settles observed host commands on process exit even when LabVIEW keeps stdio open', async () => {
+    const stdout = Object.assign(new EventEmitter(), {
+      setEncoding: vi.fn(),
+      destroy: vi.fn()
+    });
+    const stderr = Object.assign(new EventEmitter(), {
+      setEncoding: vi.fn(),
+      destroy: vi.fn()
+    });
+    const child = Object.assign(new EventEmitter(), {
+      stdout,
+      stderr,
+      pid: 4242,
+      kill: vi.fn()
+    });
+    const spawnImpl = vi.fn(() => child);
+
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport']
+      },
+      {
+        spawnImpl: spawnImpl as never,
+        hostPlatform: 'linux',
+        runtimePlatform: 'linux',
+        engine: 'labview-cli',
+        observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+      }
+    );
+
+    child.emit('spawn');
+    stdout.emit('data', 'CreateComparisonReport operation succeeded.\n');
+    child.emit('exit', 0, null);
+
+    await expect(resultPromise).resolves.toMatchObject({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.\n'
+    });
+    expect(stdout.destroy).toHaveBeenCalledTimes(1);
+    expect(stderr.destroy).toHaveBeenCalledTimes(1);
+  });
+
   it('stages each revision from its resolved historical relative path when the VI moved', async () => {
     const readRevisionBlob = vi
       .fn()

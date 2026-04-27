@@ -27,7 +27,8 @@ The machine-readable companion surface for this ledger is:
 - Current pre-release last updated: `2026-04-26T16:51:22.260Z`
 - Current verification surface: official gallery extension query, `vsce show`,
   and isolated VS Code CLI install readback
-- Current pending publication: none
+- Current pending publication: `1.3.12` public validation pre-release after
+  GitLab authority is green
 - Pending publication install-proof command:
   `npm run vscode:marketplace:install-proof`
 - Pending publication install-proof receipt:
@@ -41,22 +42,21 @@ The machine-readable companion surface for this ledger is:
 
 ## Community-Validation Preview Preparation
 
-- Status: published and verified
+- Status: prepared and authorized, awaiting GitLab authority green
 - Publication claim: public validation pre-release
-- Target preview version: `1.3.11`
-- Published preview version: `1.3.11`
-- Preview publication date: `2026-04-26`
-- Marketplace last updated: `2026-04-26T16:51:22.260Z`
+- Target preview version: `1.3.12`
+- Published preview version: pending
+- Preview publication date: pending
+- Marketplace last updated: pending
 - Preview VSIX:
-  `preview-evidence/vi-history-suite-1.3.11.vsix`
-- Preview VSIX SHA-256:
-  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
+  `preview-evidence/vi-history-suite-1.3.12.vsix`
+- Preview VSIX SHA-256: pending package
 - Prep command: `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
   `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - Preferred Marketplace mode: pre-release through pinned `vsce --pre-release`
 - Target version policy: choose a distinct higher `major.minor.patch` version
-  before a Marketplace preview can be published; the current live `1.3.10`
+  before a Marketplace preview can be published; the current live `1.3.11`
   pre-release package line cannot be reused.
 - Publish trigger: maintainer authorized public GitHub and Marketplace public
   validation publication
@@ -67,8 +67,31 @@ The machine-readable companion surface for this ledger is:
 - Traceability matrix: `docs/requirements/rtm.csv`
 - Public GitHub mutation attempted by prep: false
 - Marketplace mutation attempted by prep: false
-- Public GitHub mutation attempted by publication: true
-- Marketplace mutation attempted by publication: true
+- Public GitHub mutation attempted by publication: false
+- Marketplace mutation attempted by publication: false
+
+## Public Validation Pre-Release 1.3.12
+
+- Status: prepared and authorized, awaiting GitLab authority green
+- Packet:
+  `docs/product/public-validation-prerelease-v1.3.12.md`
+- Packet JSON:
+  `docs/product/public-validation-prerelease-v1.3.12.json`
+- Marketplace target version: `1.3.12`
+- Public GitHub release target: `v1.3.12-public-validation`
+- Public GitHub mutation authorized: true, after GitLab authority green
+- Marketplace mutation authorized: true, after GitLab authority green
+- Executable fixture command:
+  `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
+- Linux host fixture command:
+  `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
+- Linux/Docker `2026` `x64`: admitted
+- Retained Linux/Docker `validate-fixture` proof:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.md`
+- Linux host LabVIEW `2026` `x64`: admitted
+- Retained Linux host `validate-fixture` proof:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md`
+- Windows installed-user LabVIEW proof: community/deferred
 
 ## Public Validation Pre-Release 1.3.11
 
@@ -95,6 +118,8 @@ The machine-readable companion surface for this ledger is:
 - Public GitHub release assets:
   `preview-evidence/vi-history-suite-1.3.11.vsix`;
   `preview-evidence/vi-history-suite-1.3.11.vsix.sha256`
+- Public GitHub release VSIX SHA-256:
+  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
 - Public GitHub mutation authorized: true
 - Marketplace mutation authorized: true
 - Marketplace published version: `1.3.11`

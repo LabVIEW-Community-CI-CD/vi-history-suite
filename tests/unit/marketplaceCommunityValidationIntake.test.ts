@@ -79,15 +79,16 @@ describe('Marketplace community-validation intake packet', () => {
     );
 
     expect(releaseState.marketplaceCommunityValidationPreview).toMatchObject({
-      intakeStatus: 'public-github-published-and-verified-for-1.3.11',
-      intakePacketPath: 'docs/product/public-validation-prerelease-v1.3.11.md',
+      intakeStatus: 'prepared-authorized-for-1.3.12',
+      intakePacketPath: 'docs/product/public-validation-prerelease-v1.3.12.md',
       preparedPublicIssueTemplatePath:
         'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
       preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml',
       publicGitHubIntakePublishedShortCommit: '5e67194',
       publicGitHubIntakePullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
       publicGitHubIntakeLabelsApplied: true,
-      publicGitHubReleaseTag: 'v1.3.11-public-validation'
+      publicGitHubReleaseTag: 'v1.3.12-public-validation',
+      publicGitHubReleaseMutation: 'pending-gitlab-authority-green'
     });
     expect(ledger.communityValidationIntake).toMatchObject({
       status: 'public-github-published-and-verified',
@@ -112,7 +113,7 @@ describe('Marketplace community-validation intake packet', () => {
     const labels = readText('public-github-source/.github/labels.yml');
 
     expect(template).toContain('Marketplace community validation report');
-    expect(template).toContain('Marketplace pre-release `1.3.11`');
+    expect(template).toContain('Marketplace pre-release `1.3.12`');
     expect(template).toContain('runtimeErrorCode');
     expect(template).toContain('Validation outcome');
     expect(template).toContain('Proof-status acknowledgement');
@@ -121,7 +122,7 @@ describe('Marketplace community-validation intake packet', () => {
     expect(template).not.toContain('PAT ');
 
     expect(bugReport).toContain('community-validation');
-    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.11`)');
+    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.12`)');
     expect(bugReport).toContain('runtime_error_code');
     expect(labviewRequest).toContain('proof:deferred');
     expect(labviewRequest).toContain('runtimeErrorCode');
@@ -135,7 +136,7 @@ describe('Marketplace community-validation intake packet', () => {
       'feature:not-implemented',
       'error-code',
       'proof:packet-attached',
-      'version:1.3.11',
+      'version:1.3.12',
       'windows-labview',
       'proof:reported',
       'proof:reproduced',

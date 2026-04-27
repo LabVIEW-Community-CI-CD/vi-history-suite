@@ -13,6 +13,11 @@ import {
   type RuntimePlatform,
   type ComparisonRuntimeSettings
 } from '../reporting/comparisonRuntimeLocator';
+import {
+  PUBLIC_VALIDATION_FIXTURE,
+  runPublicFixtureValidation,
+  type PublicFixtureValidationResult
+} from './publicFixtureValidation';
 
 const execFileAsync = promisify(execFileCallback);
 
@@ -22,15 +27,17 @@ export type LocalRuntimeSettingsCliProvider = 'host' | 'docker';
 export interface LocalRuntimeSettingsCliArgs {
   helpRequested: boolean;
   validateRequested?: boolean;
+  validateFixtureRequested?: boolean;
   provider?: LocalRuntimeSettingsCliProvider;
   labviewVersion?: string;
   labviewBitness?: LocalRuntimeSettingsCliBitness;
   settingsFilePath?: string;
   proofOutDirectoryPath?: string;
+  runtimeExecutionTimeoutMs?: number;
 }
 
 export interface LocalRuntimeSettingsCliRunResult {
-  outcome: 'help' | 'updated-settings' | 'validated-settings';
+  outcome: 'help' | 'updated-settings' | 'validated-settings' | 'validated-fixture';
   settingsFilePath?: string;
   settingsTarget?: LocalRuntimeSettingsCliGovernanceContract['supportedSettingsTargets'][number];
   provider?: LocalRuntimeSettingsCliProvider;
@@ -48,6 +55,7 @@ export interface LocalRuntimeSettingsCliRunResult {
   runtimeImplementationStatus?: RuntimeImplementationStatus;
   proofReportPath?: string;
   proofIssueBodyPath?: string;
+  fixtureValidation?: PublicFixtureValidationResult;
 }
 
 export interface MaterializedLocalRuntimeSettingsCli {
@@ -95,6 +103,7 @@ interface LocalRuntimeSettingsCliDeps {
   platform?: NodeJS.Platform;
   env?: NodeJS.ProcessEnv;
   locateRuntime?: typeof locateComparisonRuntime;
+  validateFixture?: typeof runPublicFixtureValidation;
   runtimeLocatorDeps?: ComparisonRuntimeLocatorDeps;
   promptLine?: (prompt: string) => Promise<string>;
   isInteractiveTerminal?: boolean;
@@ -173,6 +182,7 @@ interface PromptLineController {
 export function getLocalRuntimeSettingsCliUsage(): string {
   return [
     'Usage: vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]',
+    '       vihs validate-fixture [--provider <host|docker>] [--labview-version <major>] [--labview-bitness <x86|x64>] [--settings-file <path>] [--proof-out <path>] [--runtime-timeout-ms <ms>]',
     '',
     'Options:',
     '  --provider         Required compare provider: host or docker',
@@ -181,6 +191,8 @@ export function getLocalRuntimeSettingsCliUsage(): string {
     '  --settings-file   Optional explicit VS Code settings.json path',
     '  --validate        Report persisted provider/version/bitness facts plus bounded runtime validation for the governed settings target',
     '  --proof-out       Optional directory for validation JSON and a ready-to-file GitHub issue body',
+    '  --runtime-timeout-ms Bound canonical fixture comparison runtime execution',
+    '  validate-fixture  Run the canonical public lv_icon.vi fixture compare and write a public proof packet',
     '  --help            Show this help text'
   ].join('\n');
 }
@@ -190,7 +202,13 @@ export function parseLocalRuntimeSettingsCliArgs(argv: readonly string[]): Local
     helpRequested: false
   };
 
-  for (let index = 0; index < argv.length; index += 1) {
+  let startIndex = 0;
+  if (argv[0] === 'validate-fixture') {
+    parsed.validateFixtureRequested = true;
+    startIndex = 1;
+  }
+
+  for (let index = startIndex; index < argv.length; index += 1) {
     const argument = argv[index];
     switch (argument) {
       case '--help':
@@ -215,6 +233,11 @@ export function parseLocalRuntimeSettingsCliArgs(argv: readonly string[]): Local
         break;
       case '--proof-out':
         parsed.proofOutDirectoryPath = readRequiredArgValue(argv, argument, ++index);
+        break;
+      case '--runtime-timeout-ms':
+        parsed.runtimeExecutionTimeoutMs = normalizeRuntimeExecutionTimeoutMs(
+          readRequiredArgValue(argv, argument, ++index)
+        );
         break;
       default:
         throw new Error(`Unknown argument: ${argument}`);
@@ -387,6 +410,10 @@ export async function runLocalRuntimeSettingsCli(
     return validateLocalRuntimeSettingsCli(parsed, deps);
   }
 
+  if (parsed.validateFixtureRequested) {
+    return validateLocalRuntimeFixtureCli(parsed, deps);
+  }
+
   if (!parsed.labviewVersion) {
     throw new Error('Missing required --labview-version.');
   }
@@ -542,6 +569,14 @@ function readRequiredArgValue(argv: readonly string[], flag: string, index: numb
   }
 
   return trimmedValue;
+}
+
+function normalizeRuntimeExecutionTimeoutMs(value: string): number {
+  const parsed = Number.parseInt(value.trim(), 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    throw new Error(`Unsupported runtime timeout: ${value}`);
+  }
+  return parsed;
 }
 
 function normalizeLabviewBitness(value: string): LocalRuntimeSettingsCliBitness {
@@ -785,6 +820,107 @@ async function validateLocalRuntimeSettingsCli(
     runtimeProofStatus,
     runtimeImplementationStatus,
     ...proofPaths
+  };
+}
+
+async function validateLocalRuntimeFixtureCli(
+  parsed: LocalRuntimeSettingsCliArgs,
+  deps: LocalRuntimeSettingsCliDeps
+): Promise<LocalRuntimeSettingsCliRunResult> {
+  const resolvedTarget = resolveSettingsTarget(parsed, deps);
+  const settingsFilePath = resolvedTarget.settingsFilePath;
+  const settingsFacts = await readPersistedRuntimeSettingsFacts(settingsFilePath, deps.fs ?? fs);
+  const runtimeSettings = buildFixtureRuntimeSettings(parsed, settingsFacts);
+  const fixtureValidation = await (deps.validateFixture ?? runPublicFixtureValidation)(
+    {
+      cwd: (deps.cwd ?? process.cwd)(),
+      proofOutDirectoryPath: parsed.proofOutDirectoryPath,
+      runtimePlatform: resolveCliRuntimePlatform(deps.platform ?? process.platform),
+      runtimeSettings,
+      runtimeExecutionTimeoutMs: parsed.runtimeExecutionTimeoutMs
+    },
+    {
+      now: () => new Date().toISOString()
+    }
+  );
+
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `Validated canonical public fixture ${PUBLIC_VALIDATION_FIXTURE.repositoryUrl} ${PUBLIC_VALIDATION_FIXTURE.viPath}`
+  );
+  writeLine(deps.stdout ?? process.stdout, `settingsTarget=${resolvedTarget.settingsTarget}`);
+  writeLine(deps.stdout ?? process.stdout, `settingsFilePath=${settingsFilePath}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `fixtureOldCommit=${PUBLIC_VALIDATION_FIXTURE.oldCommit}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `fixtureNewCommit=${PUBLIC_VALIDATION_FIXTURE.newCommit}`
+  );
+  writeLine(deps.stdout ?? process.stdout, `reportStatus=${fixtureValidation.reportStatus}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeExecutionState=${fixtureValidation.runtimeExecutionState}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeProvider=${fixtureValidation.runtimeProvider ?? '<none>'}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeEngine=${fixtureValidation.runtimeEngine ?? '<none>'}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeBlockedReason=${fixtureValidation.runtimeBlockedReason ?? '<none>'}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `generatedReportExists=${fixtureValidation.generatedReportExists ? 'true' : 'false'}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `validationClassification=${fixtureValidation.validationClassification}`
+  );
+  writeLine(deps.stdout ?? process.stdout, `proofReportPath=${fixtureValidation.proofReportPath}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `proofIssueBodyPath=${fixtureValidation.proofIssueBodyPath}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `harnessReportJsonPath=${fixtureValidation.harnessReportJsonPath}`
+  );
+
+  return {
+    outcome: 'validated-fixture',
+    settingsFilePath,
+    settingsTarget: resolvedTarget.settingsTarget,
+    persistedProvider: settingsFacts.persistedProvider,
+    persistedLabviewVersion: settingsFacts.persistedLabviewVersion,
+    persistedLabviewBitness: settingsFacts.persistedLabviewBitness,
+    proofReportPath: fixtureValidation.proofReportPath,
+    proofIssueBodyPath: fixtureValidation.proofIssueBodyPath,
+    fixtureValidation
+  };
+}
+
+function buildFixtureRuntimeSettings(
+  parsed: LocalRuntimeSettingsCliArgs,
+  settingsFacts: PersistedRuntimeSettingsFacts
+): ComparisonRuntimeSettings {
+  const provider = parsed.provider ?? settingsFacts.persistedProvider;
+  const labviewVersion = parsed.labviewVersion ?? settingsFacts.persistedLabviewVersion;
+  const bitness = parsed.labviewBitness ?? settingsFacts.persistedLabviewBitness;
+
+  return {
+    requestedProvider: provider === 'host' || provider === 'docker' ? provider : undefined,
+    invalidRequestedProvider:
+      provider && provider !== 'host' && provider !== 'docker' ? provider : undefined,
+    requireVersionAndBitness: true,
+    labviewVersion,
+    bitness: bitness === 'x86' || bitness === 'x64' ? bitness : undefined
   };
 }
 
@@ -1380,9 +1516,11 @@ function renderTerminalEntrypointDiscoveryText(): string {
     `  ${buildBareCommandLine(['--provider', 'host', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
     `  ${buildBareCommandLine(['--provider', 'docker', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
     `  ${buildBareCommandLine(['--validate'])}`,
+    `  ${buildBareCommandLine(['validate-fixture', '--provider', 'docker', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
     '',
     'Optional:',
-    '  add --settings-file <path> to target one explicit non-workspace settings.json file'
+    '  add --settings-file <path> to target one explicit non-workspace settings.json file',
+    '  add --proof-out <path> to retain validation or fixture proof packets'
   ].join('\n');
 }
 

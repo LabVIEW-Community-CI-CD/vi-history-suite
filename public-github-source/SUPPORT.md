@@ -52,13 +52,14 @@ code --list-extensions --show-versions
 git --version
 vihs --validate
 vihs --validate --proof-out ./vihs-proof
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof
 docker version
 docker info --format '{{.OSType}}'
 ```
 
 ## Community Validation Triage
 
-Marketplace pre-release `1.3.11` accepts Windows/LabVIEW community validation
+Marketplace pre-release `1.3.12` accepts Windows/LabVIEW community validation
 reports and not-yet-implemented feature reports before every selectable
 combination has maintainer-retained proof.
 
@@ -73,10 +74,10 @@ The public validation lane is intentionally test-seeking: selectable variants
 may work, fail with a stable `VIHS_E_*` code, or report
 `feature:not-implemented`. File the report either way.
 
-Linux/Docker success does not prove native Windows/LabVIEW installed-user
-behavior. It is accepted evidence for the selected Linux/Docker machine only;
-Windows/LabVIEW proof remains community/deferred until a Windows user report is
-admitted and retained.
+Linux/Docker and Linux host LabVIEW success do not prove native Windows/LabVIEW
+installed-user behavior. They are accepted evidence for the selected Linux
+machine only; Windows/LabVIEW proof remains community/deferred until a Windows
+user report is admitted and retained.
 
 ## Current Product Boundary
 

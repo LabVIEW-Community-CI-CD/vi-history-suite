@@ -18,10 +18,10 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: none
-- Active candidate tag: none
-- Active candidate package version: `1.3.11`
-- Active candidate state: public validation pre-release published and verified
-  on public GitHub and VS Code Marketplace
+- Active candidate tag: `v1.3.12-public-validation`
+- Active candidate package version: `1.3.12`
+- Active candidate state: public validation pre-release prepared and authorized,
+  awaiting GitLab authority green before public GitHub and Marketplace mutation
 
 ## Develop Preview State
 
@@ -123,10 +123,10 @@ final installed-user distribution surface.
 - Current pre-release Marketplace version: `1.3.11`
 - Current pre-release last updated: `2026-04-26T16:51:22.260Z`
 - Expected exact-candidate version for the active governed candidate line:
-  `1.3.11`
+  `1.3.12`
 - Marketplace status: public validation pre-release published and verified on
-  `1.3.11` through official gallery query, `vsce show`, and isolated VS Code
-  CLI install readback.
+  `1.3.11`; the next public validation pre-release target is prepared as
+  `1.3.12` and authorized after GitLab authority is green.
 - Windows exact-VSIX install proof package script:
   `npm run vscode:marketplace:install-proof`
 - Windows exact-VSIX install proof receipt:
@@ -137,16 +137,15 @@ final installed-user distribution surface.
 
 ## Marketplace Community-Validation Preview Path
 
-- Status: published and verified
+- Status: prepared and authorized, awaiting GitLab authority green
 - Publication claim: public validation pre-release
-- Target preview version: `1.3.11`
-- Published preview version: `1.3.11`
-- Preview publication date: `2026-04-26`
-- Marketplace last updated: `2026-04-26T16:51:22.260Z`
+- Target preview version: `1.3.12`
+- Published preview version: pending
+- Preview publication date: pending
+- Marketplace last updated: pending
 - Preview VSIX path:
-  `preview-evidence/vi-history-suite-1.3.11.vsix`
-- Preview VSIX SHA-256:
-  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
+  `preview-evidence/vi-history-suite-1.3.12.vsix`
+- Preview VSIX SHA-256: pending package
 - Prep package script:
   `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
@@ -155,23 +154,24 @@ final installed-user distribution surface.
   `vsce --pre-release`
 - Target version policy: the preview target must use a distinct higher
   `major.minor.patch` Marketplace version than the currently published
-  `1.3.10`; the current `1.3.10` package line cannot be republished as a
+  `1.3.11`; the current `1.3.11` package line cannot be republished as a
   preview.
 - Publish trigger: maintainer authorized public GitHub and Marketplace public
-  validation publication for `1.3.11`
-- Active evidence claim: Linux/Docker validated preview
+  validation publication for `1.3.12` after GitLab authority is green
+- Active evidence claim: Linux/Docker and Linux host LabVIEW validated preview
 - Windows installed-user proof: community/deferred and not claimed as current
-  `1.3.11` proof
+  `1.3.12` proof
 - Windows/LabVIEW feature policy: all provider, year, and bitness choices may
   stay selectable when the UI/CLI discloses proof status through stable
-  `VIHS_E_*` runtime codes, `vihs --validate --proof-out ./vihs-proof`, and
-  the traceability matrix.
+  `VIHS_E_*` runtime codes, `vihs --validate --proof-out ./vihs-proof`,
+  `vihs validate-fixture --proof-out ./vihs-fixture-proof`, and the
+  traceability matrix.
 - Traceability matrix:
   `docs/requirements/rtm.csv`
 - Public validation packet:
-  `docs/product/public-validation-prerelease-v1.3.11.md`
+  `docs/product/public-validation-prerelease-v1.3.12.md`
 - Public validation packet JSON:
-  `docs/product/public-validation-prerelease-v1.3.11.json`
+  `docs/product/public-validation-prerelease-v1.3.12.json`
 - Prepared public issue template source:
   `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`
 - Prepared public label manifest:
@@ -184,10 +184,33 @@ final installed-user distribution surface.
   public PR #60 on `ce6dbd0b1b5783f7015b9d0589f3803636564789`
 - Public GitHub intake labels: applied
 - Public GitHub intake mutation: performed through protected public PR #46
-- Public GitHub release/tag mutation: published as
-  `v1.3.11-public-validation` with VSIX and checksum assets
+- Public GitHub release/tag mutation: pending GitLab authority green for
+  `v1.3.12-public-validation`
 - Public GitHub wiki mutation: not in scope for this lane
-- VS Code Marketplace mutation: published and verified
+- VS Code Marketplace mutation: pending GitLab authority green
+
+## Public Validation Pre-Release 1.3.12
+
+- Status: prepared and authorized, awaiting GitLab authority green
+- Packet:
+  `docs/product/public-validation-prerelease-v1.3.12.md`
+- Packet JSON:
+  `docs/product/public-validation-prerelease-v1.3.12.json`
+- Public GitHub release target: `v1.3.12-public-validation`
+- Marketplace target: `1.3.12` pre-release
+- Executable canonical fixture command:
+  `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
+- Linux host canonical fixture command:
+  `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
+- Retained Linux/Docker `validate-fixture` proof:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.md`
+- Retained Linux/Docker `validate-fixture` proof JSON:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.json`
+- Retained Linux host `validate-fixture` proof:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md`
+- Retained Linux host `validate-fixture` proof JSON:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.json`
+- Windows installed-user LabVIEW proof: community/deferred
 
 ## Public Validation Pre-Release 1.3.11
 
@@ -367,9 +390,10 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: collect `1.3.11` public validation reports
+- Governed next line: merge GitLab authority green, then publish `1.3.12`
+  public validation pre-release
 - Next admitted action:
-  `collect-community-validation-reports-for-1.3.11-public-validation`
+  `merge-gitlab-authority-green-then-publish-public-github-and-marketplace-v1.3.12-public-validation`
 
 ## Publication Rule
 
@@ -395,6 +419,7 @@ installing into isolated VS Code user-data/extensions roots and running bare
 The public validation pre-release path is separate from the exact-release
 Marketplace gate. It may publish a Marketplace pre-release package and a public
 GitHub pre-release with VSIX assets for broader installed-user validation with
-Windows proof disclosed as community/deferred. For `1.3.11`, the maintainer has
-authorized public GitHub and Marketplace mutation for that scoped validation
-lane; exact-release promotion remains a separate later claim.
+Windows proof disclosed as community/deferred. The retained `1.3.11` public
+validation lane is published and verified. For `1.3.12`, the maintainer has
+authorized public GitHub and Marketplace mutation after GitLab authority is green;
+exact-release promotion remains a separate later claim.
