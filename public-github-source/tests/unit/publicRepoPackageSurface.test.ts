@@ -188,7 +188,7 @@ describe('public repo package surface', () => {
       'Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,'
     );
     expect(normalizedChangelog).toContain('`v1.3.6`, `v1.3.7`, `v1.3.8`, and `v1.3.9`.');
-    expect(normalizedChangelog).toContain('## [1.3.13] - 2026-04-26');
+    expect(normalizedChangelog).toContain('## [1.3.13] - 2026-04-27');
     expect(normalizedChangelog).toContain('Public validation pre-release lane');
     expect(normalizedChangelog).toContain('## [1.3.10] - 2026-04-25');
     expect(normalizedChangelog).toContain('Marketplace community-validation preview package line');
