@@ -131,7 +131,7 @@ describe('public repo package surface', () => {
     expect(support).toContain('vihs --validate');
     expect(support).toContain('Windows defaults to local `LabVIEWCLI`');
     expect(support).toContain('Community Validation Triage');
-    expect(support).toContain('Linux/Docker success does not prove');
+    expect(support).toContain('Linux/Docker and Linux host LabVIEW success do not prove');
     expect(bugReport).toContain('install, settings, validation, or compare problem');
     expect(bugReport).toContain('`code --install-extension svelderrainruiz.vi-history-suite`');
     expect(bugReport).toContain('svelderrainruiz.vi-history-suite@prerelease');
