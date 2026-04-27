@@ -399,9 +399,10 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.9`
 - current public GitHub source publication: public `main` now publishes
-  `769cf180c1d5e94d1462d90e4e7366b1e050e7b1` after public PR #67 promoted
-  the `1.3.13` public validation facade; the exact `v1.3.9` tag/release
-  remains retained separately
+  `220111eae3ac214e99f2233e2bfe6b320edf383d` after public PR #68 promoted
+  the Windows Docker Desktop proof-intake template and label; public PR #67
+  remains the retained `1.3.13` public validation facade publication, and the
+  exact `v1.3.9` tag/release remains retained separately
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - VS Code Marketplace retained published version: `1.3.9`
@@ -554,8 +555,9 @@ Latest landed ship target:
 - remaining blockers: none on the exact `v1.3.9` publication path; authority
   exact `v1.3.9` is now tagged on `main`
   `2f86063a35926fa67963af5ccd47e971157927c6`, public GitHub `main` now
-  publishes `ce6dbd0` after the canonical public Docker fixture docs
-  promotion, public tag
+  publishes `220111e` after the Windows Docker Desktop proof-intake template
+  and label promotion through public PR #68, public PR #60 remains retained
+  for the canonical public Docker fixture docs, public tag
   `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is published
   with manifest-matched assets, the official gallery extension
   query now verifies Marketplace version `1.3.9` for

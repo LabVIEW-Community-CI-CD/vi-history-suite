@@ -63,10 +63,12 @@ directly to the public GitHub source repo.
   published while VS Code Marketplace now serves `1.3.9`.
 - The earlier Marketplace community-validation intake facade remains retained
   at `b56fde1` through public PR #45.
-- Current public `main` now publishes the later `1.3.11` canonical Docker
-  fixture docs promotion at `ce6dbd0` through public PR #60; this does not move
-  the exact `v1.3.9` public tag, mutate the public GitHub release, or mutate
-  the VS Code Marketplace listing.
+- Current public `main` now publishes the later `1.3.13` Windows Docker
+  Desktop proof-intake promotion at `220111e` through public PR #68; the
+  earlier `1.3.11` canonical Docker fixture docs promotion remains retained at
+  `ce6dbd0` through public PR #60. Neither promotion moves the exact `v1.3.9`
+  public tag, mutates the public GitHub release, or mutates the VS Code
+  Marketplace listing.
 - The maintained public `develop` candidate for the retained `1.3.9`
   admission-matrix baseline now publishes `11051ac`, and the current retained
   published candidate heads `11051ac` / `141c39e` are now carried in

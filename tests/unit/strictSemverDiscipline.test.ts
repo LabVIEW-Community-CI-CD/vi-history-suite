@@ -140,7 +140,8 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- release-candidate branch family: `release/*`');
     expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(readme).toContain('`ce6dbd0` after public PR #60 promoted the canonical public Docker fixture');
+    expect(readme).toContain('`220111e` after public PR #68 promoted the Windows Docker Desktop');
+    expect(readme).toContain('public PR #60 remains retained for the');
     expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.3.9`');
@@ -164,7 +165,8 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- release-candidate branch family: `release/*`');
     expect(currentState).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(currentState).toContain('`ce6dbd0` after the canonical public Docker fixture docs');
+    expect(currentState).toContain('`220111eae3ac214e99f2233e2bfe6b320edf383d` after public PR #68');
+    expect(currentState).toContain('public PR #60 remains retained');
     expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(releaseProcedure).toContain('The current exact released line is `v1.3.9`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');

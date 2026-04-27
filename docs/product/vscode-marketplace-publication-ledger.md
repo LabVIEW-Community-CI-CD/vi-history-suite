@@ -111,6 +111,9 @@ The machine-readable companion surface for this ledger is:
   `windows`, `runtimeProvider=windows-container`,
   `runtimeEngine=labview-cli`, `runtimeExecutionState=succeeded`, and
   `generatedReportExists=true`
+- Public facade intake promotion: PR #68 merged to public `main` commit
+  `220111eae3ac214e99f2233e2bfe6b320edf383d`; Marketplace mutation was not
+  performed for this intake closeout
 
 ## Public Validation Pre-Release 1.3.12
 
@@ -171,9 +174,9 @@ The machine-readable companion surface for this ledger is:
 - Public GitHub PR:
   `https://github.com/svelderrainruiz/vi-history-suite/pull/46`
 - Public GitHub current main commit:
-  `ce6dbd0b1b5783f7015b9d0589f3803636564789`
+  `220111eae3ac214e99f2233e2bfe6b320edf383d`
 - Public GitHub latest facade PR:
-  `https://github.com/svelderrainruiz/vi-history-suite/pull/60`
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/68`
 - Public GitHub release assets:
   `preview-evidence/vi-history-suite-1.3.11.vsix`;
   `preview-evidence/vi-history-suite-1.3.11.vsix.sha256`
@@ -202,6 +205,8 @@ The machine-readable companion surface for this ledger is:
 - Public evidence issues: `#48`, `#49`, and `#59`
 - Public facade docs promotion decision:
   completed through public PR #60 after the GitLab authority MR went green
+- Public facade docs promotion commit:
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`
 - Public facade docs promotion post-merge checks:
   Public Source Package Preview `24965599550` / success, Public Windows
   Installed-User Contract `24965599548` / success, and Public Linux

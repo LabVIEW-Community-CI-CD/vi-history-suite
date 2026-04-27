@@ -363,17 +363,20 @@ Authority release facts:
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
 - current public GitHub source publication: public `main` now publishes
-  `ce6dbd0` after public PR #60 promoted the canonical public Docker fixture
-  docs; the exact `v1.3.9` tag/release remains retained separately at
-  `fb0ef2b`
+  `220111e` after public PR #68 promoted the Windows Docker Desktop
+  proof-intake template and label; public PR #60 remains retained for the
+  canonical public Docker fixture docs at `ce6dbd0`, and the exact `v1.3.9`
+  tag/release remains retained separately at `fb0ef2b`
 - public GitHub public-validation pre-release:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - VS Code Marketplace retained published version: `1.3.9`
-- VS Code Marketplace community-validation preview currently published version:
-  `1.3.11`
+- VS Code Marketplace community-validation preview published version:
+  `1.3.13`
 - VS Code Marketplace public validation target version: `1.3.13`
+- VS Code Marketplace community-validation preview Marketplace last updated:
+  `2026-04-27T04:24:05.457Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
-  `21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff`
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
 - blocked historical publication incident: public GitHub release `312768592`
   for `v1.3.8` is published and immutable with zero assets; retain it as
   historical evidence only while the current live Marketplace version remains
