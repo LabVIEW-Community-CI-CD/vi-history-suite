@@ -18,10 +18,9 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: none
-- Active candidate tag: `v1.3.12-public-validation`
+- Active candidate tag: `v1.3.12-public-validation-prerelease`
 - Active candidate package version: `1.3.12`
-- Active candidate state: public validation pre-release prepared and authorized,
-  awaiting GitLab authority green before public GitHub and Marketplace mutation
+- Active candidate state: public validation pre-release published and verified
 
 ## Develop Preview State
 
@@ -117,16 +116,15 @@ final installed-user distribution surface.
 ## Marketplace State
 
 - Marketplace item: `svelderrainruiz.vi-history-suite`
-- Current Marketplace version: `1.3.11`
+- Current Marketplace version: `1.3.12`
 - Current Marketplace publication kind: public-validation pre-release
 - Current regular Marketplace version: `1.3.9`
-- Current pre-release Marketplace version: `1.3.11`
-- Current pre-release last updated: `2026-04-26T16:51:22.260Z`
+- Current pre-release Marketplace version: `1.3.12`
+- Current pre-release last updated: `2026-04-27T00:36:15.800Z`
 - Expected exact-candidate version for the active governed candidate line:
   `1.3.12`
-- Marketplace status: public validation pre-release published and verified on
-  `1.3.11`; the next public validation pre-release target is prepared as
-  `1.3.12` and authorized after GitLab authority is green.
+- Marketplace status: public validation pre-release `1.3.12` published and
+  verified through pinned `vsce --pre-release` and official gallery readback.
 - Windows exact-VSIX install proof package script:
   `npm run vscode:marketplace:install-proof`
 - Windows exact-VSIX install proof receipt:
@@ -137,15 +135,16 @@ final installed-user distribution surface.
 
 ## Marketplace Community-Validation Preview Path
 
-- Status: prepared and authorized, awaiting GitLab authority green
+- Status: published and verified
 - Publication claim: public validation pre-release
 - Target preview version: `1.3.12`
-- Published preview version: pending
-- Preview publication date: pending
-- Marketplace last updated: pending
+- Published preview version: `1.3.12`
+- Preview publication date: `2026-04-27`
+- Marketplace last updated: `2026-04-27T00:36:15.800Z`
 - Preview VSIX path:
   `preview-evidence/vi-history-suite-1.3.12.vsix`
-- Preview VSIX SHA-256: pending package
+- Preview VSIX SHA-256:
+  `e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25`
 - Prep package script:
   `npm run vscode:marketplace:community-preview:prepare`
 - Prep receipt:
@@ -184,20 +183,29 @@ final installed-user distribution surface.
   public PR #60 on `ce6dbd0b1b5783f7015b9d0589f3803636564789`
 - Public GitHub intake labels: applied
 - Public GitHub intake mutation: performed through protected public PR #46
-- Public GitHub release/tag mutation: pending GitLab authority green for
-  `v1.3.12-public-validation`
+- Public GitHub release/tag mutation: published and verified as
+  `v1.3.12-public-validation-prerelease`
 - Public GitHub wiki mutation: not in scope for this lane
-- VS Code Marketplace mutation: pending GitLab authority green
+- VS Code Marketplace mutation: published and verified
 
 ## Public Validation Pre-Release 1.3.12
 
-- Status: prepared and authorized, awaiting GitLab authority green
+- Status: published and verified
 - Packet:
   `docs/product/public-validation-prerelease-v1.3.12.md`
 - Packet JSON:
   `docs/product/public-validation-prerelease-v1.3.12.json`
-- Public GitHub release target: `v1.3.12-public-validation`
-- Marketplace target: `1.3.12` pre-release
+- Public GitHub release target: `v1.3.12-public-validation-prerelease`
+- Marketplace target: `1.3.12` pre-release, published and verified
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/63`
+- Public GitHub main commit:
+  `1853a4332eff40665e30db6e632febaa9821cf98`
+- Corrected public GitHub release id: `313840265`
+- Superseded immutable public GitHub release:
+  `v1.3.12-public-validation` / `313840031`
+- Corrected VSIX SHA-256:
+  `e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25`
 - Executable canonical fixture command:
   `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
 - Linux host canonical fixture command:
@@ -211,6 +219,10 @@ final installed-user distribution surface.
 - Retained Linux host `validate-fixture` proof JSON:
   `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.json`
 - Windows installed-user LabVIEW proof: community/deferred
+- Public `develop` branch sync: PR #64 was checked and mergeable, but closed
+  because repository branch protection forbids merge commits; squash/rebase
+  would not satisfy the ancestry requirement that public `develop` contain
+  public `main`.
 
 ## Public Validation Pre-Release 1.3.11
 
@@ -390,10 +402,10 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: merge GitLab authority green, then publish `1.3.12`
-  public validation pre-release
+- Governed next line: collect and triage public community-validation reports
+  for the published `1.3.12` public validation preview
 - Next admitted action:
-  `merge-gitlab-authority-green-then-publish-public-github-and-marketplace-v1.3.12-public-validation`
+  `collect-community-validation-reports-and-triage-public-issues`
 
 ## Publication Rule
 

@@ -113,7 +113,7 @@ describe('public validation pre-release 1.3.11', () => {
 
     expect(releaseState.activeCandidate).toMatchObject({
       packageVersion: '1.3.12',
-      status: 'public-validation-prerelease-prepared-authorized-awaiting-gitlab-authority-green'
+      status: 'public-validation-prerelease-published-and-verified'
     });
     expect(releaseState.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
@@ -141,7 +141,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'merge-gitlab-authority-green-then-publish-public-github-and-marketplace-v1.3.12-public-validation'
+      'collect-community-validation-reports-and-triage-public-issues'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
