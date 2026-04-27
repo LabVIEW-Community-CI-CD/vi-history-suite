@@ -25,6 +25,9 @@
 - name: windows-labview
   color: "1D76DB"
   description: Windows host or Docker Desktop Windows-container LabVIEW report.
+- name: windows-docker-desktop
+  color: "0052CC"
+  description: Windows Docker Desktop switched to Windows containers.
 - name: proof:reported
   color: "FBCA04"
   description: User evidence received but not maintainer-reproduced.

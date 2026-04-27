@@ -106,7 +106,8 @@ compare succeeded, the no-change control succeeded, and the missing-file
 control blocked before Docker at `left-blob-read-failed`. Windows host LabVIEW
 `2026` `x64` is now separately admitted from a Windows 11 VirtualBox
 installed-user proof; Windows Docker Desktop Windows-container proof remains
-community/deferred.
+community/deferred until public issue #65 receives an admissible packet from a
+real Windows host with Docker Desktop switched to Windows containers.
 
 Executable fixture validation:
 
@@ -116,6 +117,14 @@ vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness
 
 On a Linux machine with LabVIEW Community 2026 installed, use `--provider host`
 with the same command to generate the Linux host-native proof packet.
+
+On Windows Docker Desktop, switch Docker Desktop to Windows containers and
+confirm `docker info --format "{{.OSType}} {{.OperatingSystem}}"` reports
+`windows`. Then run:
+
+```powershell
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000
+```
 
 More source-evaluation help:
 

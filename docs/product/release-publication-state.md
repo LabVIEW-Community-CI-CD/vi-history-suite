@@ -89,6 +89,12 @@ final installed-user distribution surface.
 - Linux host proof state: admitted local maintainer proof
 - Windows proof state: host LabVIEW 2026 x64 admitted; Docker Desktop
   Windows-container proof community/deferred
+- Windows Docker Desktop intake:
+  `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md` keeps public
+  issue #65 on the exact `vihs validate-fixture` command, Docker OSType
+  `windows`, `runtimeProvider=windows-container`, and
+  `generatedReportExists=true` before any community report can become retained
+  proof
 - Linux host proof may prove Windows installed-user LabVIEW behavior: no
 - Public GitHub mutation: not performed by this packet
 - VS Code Marketplace mutation: not performed by this packet
@@ -240,7 +246,8 @@ final installed-user distribution surface.
 - Carried-forward admitted proof: Linux/Docker `2026` `x64`, Linux host
   LabVIEW `2026` `x64`, and Windows host LabVIEW `2026` `x64`
 - Remaining deferred proof: Windows Docker Desktop Windows-container
-  validation
+  validation through public issue #65 and
+  `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md`
 - Diagnostic-note fix:
   `src/reporting/comparisonReportRuntimeExecution.ts` with regression coverage
   in `tests/unit/comparisonReportRuntimeExecution.test.ts`

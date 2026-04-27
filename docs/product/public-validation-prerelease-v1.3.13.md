@@ -93,8 +93,28 @@ Retained Windows host LabVIEW `validate-fixture` proof:
 | Linux/Docker `2026` `x64` | admitted | public issue #49 plus the `1.3.12` Linux/Docker `validate-fixture` proof packet |
 | Linux host LabVIEW `2026` `x64` | admitted | Linux host proof packets under `docs/product/benchmark-packets/`, including the `1.3.12` `validate-fixture` proof |
 | Windows host LabVIEW `2026` `x64` | admitted | Windows host proof packet under `docs/product/benchmark-packets/` |
-| Windows Docker Desktop Windows containers | community/deferred | Windows Docker Desktop proof packet required |
+| Windows Docker Desktop Windows containers | community/deferred | public issue #65 plus `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md` packet required |
 | Unsupported provider/year/bitness variants | selectable/reportable | stable `VIHS_E_*` code or feature-not-implemented issue |
+
+## Windows Docker Desktop Intake
+
+The next public validation target is not another Marketplace publish; it is the
+Windows Docker Desktop Windows-container evidence lane. A report becomes
+admissible only when it comes from a real Windows host with Docker Desktop
+switched to Windows containers and `docker info --format "{{.OSType}} {{.OperatingSystem}}"`
+reporting `windows`.
+
+PowerShell command:
+
+```powershell
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000
+```
+
+Admissible success must retain `runtimeProvider=windows-container`,
+`runtimeEngine=labview-cli`, `runtimeExecutionState=succeeded`, and
+`generatedReportExists=true`. Linux Docker Engine, Docker Desktop Linux
+containers, WSL-only execution, Windows host provider proof, and simulated
+platform injection remain non-admissible for issue #65.
 
 ## Publication Closeout
 

@@ -55,6 +55,7 @@ vihs --validate --proof-out ./vihs-proof
 vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof
 docker version
 docker info --format '{{.OSType}}'
+docker info --format "{{.OSType}} {{.OperatingSystem}}"
 ```
 
 ## Community Validation Triage
@@ -76,8 +77,10 @@ may work, fail with a stable `VIHS_E_*` code, or report
 
 Linux/Docker and Linux host LabVIEW success do not prove native Windows/LabVIEW
 installed-user behavior. They are accepted evidence for the selected Linux
-machine only; Windows/LabVIEW proof remains community/deferred until a Windows
-user report is admitted and retained.
+machine only; Windows host LabVIEW 2026 x64 is admitted from retained
+Windows installed-user proof. Windows Docker Desktop proof remains
+community/deferred until public issue #65 receives a `vihs validate-fixture`
+packet from a real Windows host with Docker Desktop OSType `windows`.
 
 ## Current Product Boundary
 

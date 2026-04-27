@@ -2427,6 +2427,26 @@ Information-for-users review cases:
   LabVIEW `2026` `x64` admitted, Windows host LabVIEW community/deferred,
   Windows Docker Desktop Windows-container proof community/deferred, and
   unsupported variants selectable/reportable with stable `VIHS_E_*` codes
+- `TEST-UNIT-397`: run
+  `tests/unit/windowsDockerDesktopProofIntake.test.ts`,
+  `tests/unit/publicFixtureValidation.test.ts`,
+  `tests/unit/publicGithubSourcePromotion.test.ts`, and
+  `public-github-source/tests/unit/publicRepoPackageSurface.test.ts` and
+  confirm `VHS-REQ-590` plus public issue #65 retain the dedicated Windows
+  Docker Desktop template, Docker OSType `windows`, the exact
+  `vihs validate-fixture` PowerShell command, `runtimeProvider=windows-container`,
+  `runtimeEngine=labview-cli`, `runtimeExecutionState=succeeded`,
+  `generatedReportExists=true`, and the generated proof's suggested template
+  route
+- `TEST-DOC-149`: review README, INSTALL, SUPPORT, command reference, FAQ,
+  public issue templates, labels, the `1.3.13` public-validation packet,
+  Windows Docker Desktop proof-intake packet, release-publication state,
+  Marketplace ledger, SRS, RTM, and this test plan and confirm `VHS-REQ-590`
+  and the Windows Docker Desktop Windows-container lane remain
+  community/deferred until an admissible public issue #65 packet is retained,
+  while Linux Docker Engine, Docker Desktop Linux containers, WSL-only
+  execution, host-provider proof, platform injection, private VI fixtures, and
+  reports without proof packets are not admissible for that lane
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -111,6 +111,7 @@ const TEMPLATE_COPY_PATHS = [
   '.github/ISSUE_TEMPLATE/labview-version-support.yml',
   '.github/ISSUE_TEMPLATE/validation-failure.yml',
   '.github/ISSUE_TEMPLATE/validation-success.yml',
+  '.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml',
   '.github/labels.yml',
   '.github/workflows/public-source-package-preview.yml',
   'CONTRIBUTING.md',

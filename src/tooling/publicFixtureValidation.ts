@@ -22,6 +22,9 @@ export const PUBLIC_VALIDATION_FIXTURE = {
   newCommit: '8741bb08026c104100720c0ef48621e4ab7762fd',
   newCommitDate: '2026-02-24',
   dockerImage: 'nationalinstruments/labview:2026q1-linux',
+  linuxDockerImage: 'nationalinstruments/labview:2026q1-linux',
+  windowsDockerImage: 'nationalinstruments/labview:2026q1-windows',
+  windowsDockerRequiredOSType: 'windows',
   firstDockerPullApproximateSize: '1.4 GB',
   retainedPublicIssueRange: '#48-#59',
   retainedPublicParentIssue:
@@ -29,7 +32,10 @@ export const PUBLIC_VALIDATION_FIXTURE = {
   retainedPublicSuccessIssue:
     'https://github.com/svelderrainruiz/vi-history-suite/issues/49',
   retainedPublicRecipeIssue:
-    'https://github.com/svelderrainruiz/vi-history-suite/issues/59'
+    'https://github.com/svelderrainruiz/vi-history-suite/issues/59',
+  windowsDockerDesktopProofIssue:
+    'https://github.com/svelderrainruiz/vi-history-suite/issues/65',
+  windowsDockerDesktopIssueTemplate: 'windows-docker-desktop-validation.yml'
 } as const;
 
 const DEFAULT_PROOF_DIRECTORY_NAME = 'vihs-fixture-proof';
@@ -72,7 +78,8 @@ export interface PublicFixtureValidationResult {
   suggestedIssueTemplate:
     | 'validation-success.yml'
     | 'validation-failure.yml'
-    | 'feature-not-implemented.yml';
+    | 'feature-not-implemented.yml'
+    | 'windows-docker-desktop-validation.yml';
 }
 
 export interface PublicFixtureValidationDeps {
@@ -121,7 +128,7 @@ export async function runPublicFixtureValidation(
   );
 
   const classification = deriveFixtureValidationClassification(harnessResult.report);
-  const suggestedIssueTemplate = deriveSuggestedIssueTemplate(classification);
+  const suggestedIssueTemplate = deriveSuggestedIssueTemplate(classification, options);
   const result: PublicFixtureValidationResult = {
     outcome: 'validated-fixture',
     proofRootPath,
@@ -183,6 +190,10 @@ function buildPublicFixtureValidationProof(
       newCommit: PUBLIC_VALIDATION_FIXTURE.newCommit,
       newCommitDate: PUBLIC_VALIDATION_FIXTURE.newCommitDate,
       dockerImage: PUBLIC_VALIDATION_FIXTURE.dockerImage,
+      linuxDockerImage: PUBLIC_VALIDATION_FIXTURE.linuxDockerImage,
+      windowsDockerImage: PUBLIC_VALIDATION_FIXTURE.windowsDockerImage,
+      windowsDockerRequiredOSType:
+        PUBLIC_VALIDATION_FIXTURE.windowsDockerRequiredOSType,
       firstDockerPullApproximateSize:
         PUBLIC_VALIDATION_FIXTURE.firstDockerPullApproximateSize
     },
@@ -215,14 +226,21 @@ function buildPublicFixtureValidationProof(
       issueRange: PUBLIC_VALIDATION_FIXTURE.retainedPublicIssueRange,
       parentIssue: PUBLIC_VALIDATION_FIXTURE.retainedPublicParentIssue,
       successIssue: PUBLIC_VALIDATION_FIXTURE.retainedPublicSuccessIssue,
-      recipeIssue: PUBLIC_VALIDATION_FIXTURE.retainedPublicRecipeIssue
+      recipeIssue: PUBLIC_VALIDATION_FIXTURE.retainedPublicRecipeIssue,
+      windowsDockerDesktopProofIssue:
+        PUBLIC_VALIDATION_FIXTURE.windowsDockerDesktopProofIssue
     },
     proofBoundary: {
       linuxDocker2026x64: 'admitted',
       linuxHostLabview2026x64: 'admitted-when-run-on-a-linux-host-with-labview-installed',
       windowsHostLabview2026x64:
         'admitted-when-run-on-a-windows-host-with-labview-2026-x64-installed',
-      windowsDockerDesktopWindowsContainers: 'community-deferred',
+      windowsDockerDesktopWindowsContainers:
+        'community-deferred-requires-docker-desktop-windows-containers-proof',
+      windowsDockerDesktopRequiredDockerOSType:
+        PUBLIC_VALIDATION_FIXTURE.windowsDockerRequiredOSType,
+      windowsDockerDesktopIssueTemplate:
+        PUBLIC_VALIDATION_FIXTURE.windowsDockerDesktopIssueTemplate,
       unsupportedVariants:
         'selectable-for-validation-reporting-with-stable-error-code-or-feature-not-implemented-reporting'
     }
@@ -247,6 +265,10 @@ function renderPublicFixtureValidationIssueBody(proof: Record<string, unknown>):
     `- New commit: ${fixture.newCommit}`,
     `- Docker image: ${fixture.dockerImage}`,
     `- First Docker pull: about ${fixture.firstDockerPullApproximateSize}`,
+    `- Windows Docker Desktop image: ${fixture.windowsDockerImage ?? '<not-applicable>'}`,
+    `- Windows Docker Desktop Docker OSType required: ${
+      fixture.windowsDockerRequiredOSType ?? '<not-applicable>'
+    }`,
     '',
     '## Selected Variant',
     '',
@@ -271,7 +293,13 @@ function renderPublicFixtureValidationIssueBody(proof: Record<string, unknown>):
     `- Harness JSON: ${harnessReport.jsonPath}`,
     `- Harness Markdown: ${harnessReport.markdownPath}`,
     `- Harness HTML: ${harnessReport.htmlPath}`,
-    `- Generated LabVIEW report: ${harnessReport.generatedReportPath ?? '<none>'}`
+    `- Generated LabVIEW report: ${harnessReport.generatedReportPath ?? '<none>'}`,
+    '',
+    '## Windows Docker Desktop Community Proof',
+    '',
+    `- Public tracking issue: ${PUBLIC_VALIDATION_FIXTURE.windowsDockerDesktopProofIssue}`,
+    `- Dedicated template: ${PUBLIC_VALIDATION_FIXTURE.windowsDockerDesktopIssueTemplate}`,
+    '- Admissible proof requires a real Windows host with Docker Desktop switched to Windows containers.'
   ].join('\n');
 }
 
@@ -297,8 +325,16 @@ function deriveFixtureValidationClassification(
 }
 
 function deriveSuggestedIssueTemplate(
-  classification: PublicFixtureValidationResult['validationClassification']
+  classification: PublicFixtureValidationResult['validationClassification'],
+  options: PublicFixtureValidationOptions
 ): PublicFixtureValidationResult['suggestedIssueTemplate'] {
+  if (
+    options.runtimePlatform === 'win32' &&
+    options.runtimeSettings.requestedProvider === 'docker'
+  ) {
+    return PUBLIC_VALIDATION_FIXTURE.windowsDockerDesktopIssueTemplate;
+  }
+
   if (classification === 'validation-success') {
     return 'validation-success.yml';
   }
