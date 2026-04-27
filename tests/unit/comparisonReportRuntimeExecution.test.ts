@@ -331,6 +331,28 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('does not retain a false failure note when LabVIEW CLI reports CreateComparisonReport success', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"',
+        'LabVIEW launched successfully.',
+        'Connection established with LabVIEW.',
+        'Operation output:',
+        'Report can be found at C:\\proof\\diff-report-lv_icon.vi.html',
+        'CreateComparisonReport operation succeeded.'
+      ].join('\r\n'),
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+
+    expect(result.reason).toBeUndefined();
+    expect(result.notes).toContain(
+      'LabVIEW CLI reported that CreateComparisonReport operation succeeded.'
+    );
+    expect(result.notes).not.toContain(
+      'LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.'
+    );
+  });
+
   it('retries windows-container call-by-reference failures through containerized CloseLabVIEW and retains the normalized failure reason', async () => {
     const record = createWindowsContainerReadyRecord();
     const diagnosticLogPath =

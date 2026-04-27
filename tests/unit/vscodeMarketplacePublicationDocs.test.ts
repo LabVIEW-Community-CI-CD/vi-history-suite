@@ -109,7 +109,16 @@ describe('vs code marketplace publication and installed-user docs', () => {
       marketplaceMutationAuthorized: true,
       linuxDocker2026x64: 'admitted',
       linuxHostLabview2026x64: 'admitted',
-      windowsInstalledUserLabviewProof: 'community-deferred',
+      windowsInstalledUserLabviewProof: 'admitted-for-host-labview-2026-x64',
+      windowsHostLabview2026x64: 'admitted',
+      windowsDockerDesktopProof: 'community-deferred',
+      retainedWindowsHostValidateFixtureProofPath:
+        'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
+      windowsHostProofAdmission: expect.objectContaining({
+        status: 'admitted-after-publication',
+        runtimeExecutionState: 'succeeded',
+        runtimeErrorCode: 'VIHS_OK'
+      }),
       previewVsixSha256: 'e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25',
       supersededPublicGitHubReleaseTag: 'v1.3.12-public-validation'
     });

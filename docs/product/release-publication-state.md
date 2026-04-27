@@ -24,9 +24,10 @@ final installed-user distribution surface.
 
 ## Develop Preview State
 
-- Active develop preview claim: Linux/Docker and Linux host LabVIEW validated
-  preview
-- Preview state role: retained provider-lane and Linux host packet evidence
+- Active develop preview claim: Linux/Docker, Linux host LabVIEW, and Windows
+  host LabVIEW 2026 x64 validated preview
+- Preview state role: retained provider-lane, Linux host, and Windows host
+  packet evidence
 - Develop head tracking policy: do not persist the latest live `develop`
   commit or pipeline in this packet. Read live `develop` head and pipeline
   state from GitLab when that operational status is needed.
@@ -73,10 +74,21 @@ final installed-user distribution surface.
 - Linux host compatibility fixes retained: installed `libglu1-mesa` and
   cleared the executable-stack marking on
   `/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1`
-- Preview publication state: develop provider-lane and Linux host LabVIEW
-  evidence only
+- Windows host LabVIEW 2026 evidence:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md`
+- Windows host LabVIEW 2026 evidence JSON:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json`
+- Windows host validated facts: Windows 11 VirtualBox installed-user VM,
+  exact public `1.3.12` pre-release VSIX, `runtimeValidationOutcome=ready`,
+  `runtimeProvider=host-native`, `runtimeEngine=labview-cli`, and `VIHS_OK`
+- Windows host compare proof: `LabVIEWCLI CreateComparisonReport` exited `0`,
+  generated `diff-report-lv_icon.vi.html`, retained report size `146915`
+  bytes, and logged `CreateComparisonReport operation succeeded.`
+- Preview publication state: develop provider-lane, Linux host LabVIEW, and
+  Windows host LabVIEW evidence
 - Linux host proof state: admitted local maintainer proof
-- Windows proof state: Windows installed-user LabVIEW proof community/deferred
+- Windows proof state: host LabVIEW 2026 x64 admitted; Docker Desktop
+  Windows-container proof community/deferred
 - Linux host proof may prove Windows installed-user LabVIEW behavior: no
 - Public GitHub mutation: not performed by this packet
 - VS Code Marketplace mutation: not performed by this packet
@@ -157,9 +169,11 @@ final installed-user distribution surface.
   preview.
 - Publish trigger: maintainer authorized public GitHub and Marketplace public
   validation publication for `1.3.12` after GitLab authority is green
-- Active evidence claim: Linux/Docker and Linux host LabVIEW validated preview
-- Windows installed-user proof: community/deferred and not claimed as current
-  `1.3.12` proof
+- Active evidence claim: Linux/Docker, Linux host LabVIEW, and Windows host
+  LabVIEW 2026 x64 validated preview
+- Windows installed-user proof: admitted for host LabVIEW 2026 x64 after the
+  public `1.3.12` publication; Windows Docker Desktop Windows-container proof
+  remains community/deferred
 - Windows/LabVIEW feature policy: all provider, year, and bitness choices may
   stay selectable when the UI/CLI discloses proof status through stable
   `VIHS_E_*` runtime codes, `vihs --validate --proof-out ./vihs-proof`,
@@ -210,6 +224,8 @@ final installed-user distribution surface.
   `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
 - Linux host canonical fixture command:
   `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
+- Windows host canonical fixture command:
+  `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof`
 - Retained Linux/Docker `validate-fixture` proof:
   `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.md`
 - Retained Linux/Docker `validate-fixture` proof JSON:
@@ -218,7 +234,12 @@ final installed-user distribution surface.
   `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md`
 - Retained Linux host `validate-fixture` proof JSON:
   `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.json`
-- Windows installed-user LabVIEW proof: community/deferred
+- Retained Windows host `validate-fixture` proof:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md`
+- Retained Windows host `validate-fixture` proof JSON:
+  `docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json`
+- Windows installed-user LabVIEW proof: admitted for host LabVIEW 2026 x64
+- Windows Docker Desktop Windows-container proof: community/deferred
 - Public `develop` branch sync: PR #64 was checked and mergeable, but closed
   because repository branch protection forbids merge commits; squash/rebase
   would not satisfy the ancestry requirement that public `develop` contain
@@ -405,7 +426,7 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 - Governed next line: collect and triage public community-validation reports
   for the published `1.3.12` public validation preview
 - Next admitted action:
-  `collect-community-validation-reports-and-triage-public-issues`
+  `collect-windows-docker-desktop-community-proof-and-triage-public-issues`
 
 ## Publication Rule
 
@@ -431,7 +452,9 @@ installing into isolated VS Code user-data/extensions roots and running bare
 The public validation pre-release path is separate from the exact-release
 Marketplace gate. It may publish a Marketplace pre-release package and a public
 GitHub pre-release with VSIX assets for broader installed-user validation with
-Windows proof disclosed as community/deferred. The retained `1.3.11` public
-validation lane is published and verified. For `1.3.12`, the maintainer has
-authorized public GitHub and Marketplace mutation after GitLab authority is green;
-exact-release promotion remains a separate later claim.
+Windows proof disclosed by variant. The retained `1.3.11` public validation
+lane is published and verified. For `1.3.12`, public GitHub and Marketplace
+publication are published and verified, and a follow-on Windows 11 VirtualBox
+proof now admits Windows host LabVIEW 2026 x64. Windows Docker Desktop
+Windows-container proof remains community/deferred; exact-release promotion
+remains a separate later claim.

@@ -2886,6 +2886,13 @@ export function classifyLabviewCliDiagnosticText(
     };
   }
 
+  if (/CreateComparisonReport operation succeeded\./i.test(diagnosticText)) {
+    notes.push('LabVIEW CLI reported that CreateComparisonReport operation succeeded.');
+    return {
+      notes
+    };
+  }
+
   if (launchSucceeded) {
     notes.push('LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.');
   }

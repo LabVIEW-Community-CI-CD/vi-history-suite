@@ -480,7 +480,7 @@
     "publicGitHubMutationAuthorized": true,
     "marketplaceMutationAuthorized": true,
     "allCliVariantsSelectable": true,
-    "windowsInstalledUserLabviewProof": "community-deferred",
+    "windowsInstalledUserLabviewProof": "admitted-for-host-labview-2026-x64",
     "linuxDocker2026x64": "admitted",
     "linuxHostLabview2026x64": "admitted",
     "executableFixtureCommand": "vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof",
@@ -505,6 +505,25 @@
       "publicDevelopSyncPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/64",
       "status": "not-applied-requires-separate-branch-policy-decision",
       "reason": "no-merge-commit branch protection conflicts with behind=0 ancestry sync unless public develop is deliberately rebased"
+    },
+    "windowsDockerDesktopProof": "community-deferred",
+    "windowsHostLabview2026x64": "admitted",
+    "retainedWindowsHostValidateFixtureProofPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+    "retainedWindowsHostValidateFixtureProofJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json",
+    "windowsHostProofAdmission": {
+      "status": "admitted-after-publication",
+      "runtimeValidationOutcome": "ready",
+      "runtimeExecutionState": "succeeded",
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "runtimeErrorCode": "VIHS_OK",
+      "generatedReportSizeBytes": 146915,
+      "proofPacket": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+      "publicIssueLedger": {
+        "hostProofIssueClosed": "https://github.com/svelderrainruiz/vi-history-suite/issues/56",
+        "windowsDockerDesktopRemainingIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+        "diagnosticNoteBugIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/66"
+      }
     }
   }
 }

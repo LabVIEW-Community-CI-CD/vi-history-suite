@@ -138,10 +138,12 @@ It reports the persisted `viHistorySuite.runtimeProvider`,
 plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
 `runtimeBlockedReason`. This keeps validation on one bounded CLI surface
 without reopening path-picking or a panel-side provider picker. On the current
-Linux/Docker validated preview route, `ready` is bounded to the selected
-provider on the current machine; native Windows LabVIEW and Docker Desktop
-Windows-container proof remain deferred. The interactive no-argument `vihs`
-flow invokes this same bounded validation after you confirm or change settings.
+public validation route, `ready` is bounded to the selected provider on the
+current machine; Linux/Docker, Linux host LabVIEW 2026 x64, and Windows host
+LabVIEW 2026 x64 are admitted through separate retained fixture proof packets.
+Docker Desktop Windows-container proof remains deferred. The interactive
+no-argument `vihs` flow invokes this same bounded validation after you confirm
+or change settings.
 
 ### How do I check live-session drift after changing runtime settings?
 
@@ -207,24 +209,23 @@ Use the command surface that matches the task:
 - for the containerized authoring surface, run `npm run docs:workbench:gate`
 - for the broader branch line, run `npm run test`
 
-### Is Windows installed-user behavior proven by the current Ubuntu/Docker lane?
+### Is Windows installed-user behavior proven?
 
-No.
+Partly.
 
-The current governed claim is Linux/Docker validated preview. Users can still
-evaluate the installed extension on their own Windows setups, but this machine
-does not retain native Windows LabVIEW or Docker Desktop Windows-container
-proof.
+The Ubuntu/Docker lane does not prove Windows behavior by itself. A separate
+Windows 11 VirtualBox installed-user run now admits Windows host LabVIEW 2026
+x64 for the canonical `lv_icon.vi` fixture. Docker Desktop Windows-container
+proof remains deferred until a Windows Docker Desktop tester files or retains
+that proof packet.
 
-For Marketplace pre-release `1.3.10`, use the community-validation intake
-packet when reporting Windows/LabVIEW results:
-`docs/product/marketplace-community-validation-intake-v1.3.10.md`.
-Selectable means available for validation, not maintainer-proven.
+For Marketplace pre-release `1.3.12`, use the public validation templates when
+reporting Windows/LabVIEW or Docker Desktop results. Selectable means available
+for validation, not automatically maintainer-proven for every provider/year/
+bitness variant.
 
-Windows proof remains deferred until a real Windows/LabVIEW host runner exists
-and produces retained evidence for:
+The remaining Windows proof gap is:
 
-- native Windows host LabVIEW for the host lane
 - Docker Desktop in Windows-container mode for the expert container lane
 
 WSL is retained historical context only; it is not proof of native Windows

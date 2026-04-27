@@ -332,8 +332,8 @@ Latest landed ship target:
   now retain `linux-docker-provider-lane-evidence/` with Docker OSType
   `linux`, `vihs`-persisted `docker` / `2026` / `x64` settings, and
   `runtimeProvider=linux-container` / `runtimeEngine=labview-cli` validation
-  from develop pipeline `2480195741`; Windows installed-user LabVIEW proof
-  remains community/deferred evidence
+  from develop pipeline `2480195741`; Windows Docker Desktop
+  Windows-container proof remains community/deferred evidence
 - current Linux host LabVIEW 2026 proof packet:
   [HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
 - current Linux host LabVIEW 2026 proof packet JSON:
@@ -347,10 +347,14 @@ Latest landed ship target:
   `runtimeEngine=labview-cli`, and executed host-native
   `CreateComparisonReport` successfully against canonical
   `lv_icon.vi` from `https://github.com/ni/labview-icon-editor`
-- Linux host proof boundary:
-  admitted local maintainer proof for Linux host LabVIEW 2026 only; Windows
-  installed-user LabVIEW proof remains community/deferred, and public GitHub
-  plus VS Code Marketplace were not mutated by this authority closeout
+- Windows host LabVIEW 2026 installed-user proof packet:
+  [HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md](./benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md)
+- Windows host LabVIEW 2026 installed-user proof packet JSON:
+  [HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json](./benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json)
+- Windows host proof boundary:
+  admitted installed-user proof for Windows host LabVIEW 2026 x64 on the
+  VirtualBox Windows 11 VM; Windows Docker Desktop Windows-container proof
+  remains community/deferred
 - current no-mutation Windows/LabVIEW installed-user proof handoff:
   [windows-labview-installed-user-proof-handoff-2026-04-25.md](./windows-labview-installed-user-proof-handoff-2026-04-25.md)
 - current no-mutation Windows/LabVIEW installed-user proof handoff JSON:
@@ -504,8 +508,9 @@ Latest landed ship target:
     by `linux_docker_provider_lane`, which proves this Ubuntu
     Docker Desktop/Docker Engine host can persist the `docker` / `2026` /
     `x64` runtime bundle through `vihs` and validate it as
-    `linux-container` / `labview-cli`; this still does not claim native
-    Windows installed-user LabVIEW proof
+    `linux-container` / `labview-cli`; native Windows host LabVIEW 2026 x64
+    proof is now admitted separately through the VirtualBox installed-user
+    proof packet
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs

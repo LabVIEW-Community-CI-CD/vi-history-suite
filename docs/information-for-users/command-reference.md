@@ -30,9 +30,10 @@ See also:
 
 ## Public Evaluation And Installed Baseline
 
-- The active governed preview route is Linux/Docker and Linux host LabVIEW
-  validated; Windows installed-user proof remains community/deferred until a
-  real Windows/LabVIEW host evidence lane exists.
+- The active governed preview route is Linux/Docker, Linux host LabVIEW, and
+  Windows host LabVIEW 2026 x64 validated; Windows Docker Desktop
+  Windows-container proof remains community/deferred until that evidence lane
+  exists.
 - Commands prefixed with `public:` below are source-evaluation or maintainer
   surfaces, not the supported installed-user private-release steps.
 
@@ -59,9 +60,10 @@ See also:
   `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`.
 - Executable installed-user proof route:
   `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
-- Proof boundary: Linux/Docker `2026` `x64` and Linux host LabVIEW `2026`
-  `x64` are admitted for their selected Linux machines; Windows host LabVIEW
-  proof remains community/deferred.
+- Proof boundary: Linux/Docker `2026` `x64`, Linux host LabVIEW `2026`
+  `x64`, and Windows host LabVIEW `2026` `x64` are admitted for their selected
+  machines; Windows Docker Desktop Windows-container proof remains
+  community/deferred.
 
 ## Documentation Package Workbench
 
@@ -204,15 +206,15 @@ runtime-settings CLI on the active branch.
     terminal surface needs repair or refresh
   - without `--settings-file`, the governed target is the platform-default
     user `settings.json`; workspace settings are not a supported target
-  - Windows installed-user operation may be evaluated by users on their own
-    Windows setups, but this Ubuntu/Docker evidence lane does not prove native
-    Windows LabVIEW or Docker Desktop Windows-container behavior
+  - Windows host LabVIEW 2026 x64 is admitted through a separate Windows 11
+    VirtualBox installed-user fixture proof; the Ubuntu/Docker evidence lane
+    still does not prove Docker Desktop Windows-container behavior
   - for Marketplace pre-release `1.3.12`, report Windows/LabVIEW and Docker
     results through the public GitHub validation templates and include
     provider, LabVIEW year, bitness, `runtimeErrorCode`, and the proof packet
-  - Linux public smoke, Linux benchmark, and Ubuntu/Docker preview lanes are
-    maintainer/source-evaluation proof surfaces unless a later Windows proof
-    lane admits them into a Windows installed-user claim
+  - Linux public smoke, Linux benchmark, Ubuntu/Docker preview, and Windows
+    host proof lanes are distinct proof surfaces; do not use one provider lane
+    as proof for a different provider lane
   - if VS Code is already running, review compare preflight or runtime
     validation again after the CLI update and reload or restart the window
     only if that session still shows stale provider or runtime facts
@@ -243,9 +245,8 @@ runtime-settings CLI on the active branch.
   - on the current public validation route, treat `VIHS_OK` as proof for the
     selected provider on the current machine; for Docker, this means daemon
     reachability and runtime selection are valid, while the first compare may
-    still pull `nationalinstruments/labview:2026q1-linux`; native Windows
-    LabVIEW proof remains community/deferred until admitted external proof is
-    retained
+    still pull `nationalinstruments/labview:2026q1-linux`; Windows host
+    LabVIEW 2026 x64 proof is admitted separately through the canonical fixture
 
 `vihs validate-fixture [--provider <host|docker>] [--labview-version <major>] [--labview-bitness <x86|x64>] [--settings-file <path>] [--proof-out <dir>] [--runtime-timeout-ms <ms>]`
 
@@ -266,9 +267,10 @@ runtime-settings CLI on the active branch.
     compare
   - `--provider host --labview-version 2026 --labview-bitness x64` exercises
     the Linux host LabVIEW admitted lane when LabVIEW Community 2026 is
-    installed on Linux
-  - Windows host LabVIEW and Windows Docker Desktop Windows-container results
-    are community/deferred until users file proof packets from those machines
+    installed on Linux, and the Windows host LabVIEW admitted lane when
+    LabVIEW 2026 x64 is installed on Windows
+  - Windows Docker Desktop Windows-container results are community/deferred
+    until users file proof packets from those machines
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

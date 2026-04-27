@@ -100,11 +100,12 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
     const releaseState = readJson<any>('docs/product/release-publication-state.json');
 
     expect(releaseState.developPreview).toMatchObject({
-      classification: 'linux-docker-and-linux-host-labview-validated-preview',
-      stateRole: 'retained-provider-lane-and-linux-host-packet-evidence',
-      publicationState: 'develop-provider-lane-and-linux-host-labview-evidence-only',
+      classification: 'linux-docker-linux-host-and-windows-host-labview-validated-preview',
+      stateRole: 'retained-provider-lane-linux-host-and-windows-host-packet-evidence',
+      publicationState: 'develop-provider-lane-linux-host-and-windows-host-labview-evidence',
       linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
-      windowsInstalledUserProofState: 'community-deferred',
+      windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
+      windowsDockerDesktopProofState: 'community-deferred',
       linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
       publicGitHubMutation: 'not-performed-by-this-packet',
       marketplaceMutation: 'not-performed-by-this-packet'
@@ -133,10 +134,36 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
         reportSizeBytes: 214412,
         reportSha256
       },
-      windowsInstalledUserLabviewProofState: 'community-deferred',
+      windowsInstalledUserLabviewProofState: 'admitted-separate-windows-host-proof',
       linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
       publicGitHubMutation: 'not-performed',
       marketplaceMutation: 'not-performed'
+    });
+    expect(releaseState.developPreview.windowsHostLabviewEvidence).toMatchObject({
+      packetPath:
+        'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
+      packetJsonPath:
+        'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json',
+      status: 'passed',
+      platform: 'win32',
+      runtime: {
+        errorCode: 'VIHS_OK',
+        validationOutcome: 'ready',
+        provider: 'host-native',
+        engine: 'labview-cli'
+      },
+      fixture: {
+        repository: fixtureRepository,
+        viPath: fixtureViPath,
+        oldCommit,
+        newCommit
+      },
+      compare: {
+        operation: 'CreateComparisonReport',
+        exitCode: 0,
+        result: 'succeeded',
+        reportSizeBytes: 146915
+      }
     });
     expect(releaseState.marketplaceCommunityValidationPreview.linuxHostLabviewEvidenceClaim).toContain(
       'admitted-and-promoted-into-1.3.12-public-validation-wording'

@@ -141,7 +141,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'collect-community-validation-reports-and-triage-public-issues'
+      'collect-windows-docker-desktop-community-proof-and-triage-public-issues'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
