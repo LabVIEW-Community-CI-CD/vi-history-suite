@@ -1,0 +1,101 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+# vi-history-suite Vagrant acceptance harness
+#
+# Prerequisites on the host runner:
+#   - VirtualBox installed
+#   - Vagrant installed (>= 2.3)
+#   - vagrant-reload plugin: vagrant plugin install vagrant-reload
+#
+# Required environment variable:
+#   VIHS_VAGRANT_BOX  – Name of the registered VirtualBox box that has
+#                        Windows 11 + LabVIEW 2026 pre-installed.
+#                        Example: "vihs/win11-labview2026"
+#
+# Optional environment variables:
+#   VIHS_VAGRANT_MEMORY  – VM RAM in MB (default: 8192)
+#   VIHS_VAGRANT_CPUS    – VM vCPU count (default: 4)
+
+VAGRANTFILE_API_VERSION = "2"
+require 'fileutils'
+
+BOX_NAME    = ENV.fetch("VIHS_VAGRANT_BOX",    "vihs/win11-labview2026")
+VM_MEMORY   = ENV.fetch("VIHS_VAGRANT_MEMORY", "8192").to_i
+VM_CPUS     = ENV.fetch("VIHS_VAGRANT_CPUS",   "4").to_i
+
+# Paths shared into the VM
+REPO_ROOT   = File.expand_path("..", __dir__)
+SHARED_DIR  = File.join(__dir__, "shared")   # vsix + compiled out/ land here
+EVIDENCE_DIR = File.join(__dir__, "evidence") # report output collected here
+
+[SHARED_DIR, EVIDENCE_DIR].each { |d| FileUtils.mkdir_p(d) }
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box              = BOX_NAME
+  config.vm.guest            = :windows
+  config.vm.communicator     = "winrm"
+
+  config.winrm.username      = "vagrant"
+  config.winrm.password      = "Vagrant1234!"
+  config.winrm.transport     = :negotiate
+  config.winrm.timeout       = 300
+
+  # Boot timeout – LabVIEW VMs are heavy; allow extra time
+  config.vm.boot_timeout = 600
+
+  # -----------------------------------------------------------------------
+  # VirtualBox provider settings
+  # -----------------------------------------------------------------------
+  config.vm.provider "virtualbox" do |vb|
+    vb.name   = "windows11"
+    vb.memory = VM_MEMORY
+    vb.cpus   = VM_CPUS
+    vb.gui    = false                         # headless; set true to debug
+    vb.customize ["modifyvm", :id,
+                  "--vram",          "128",
+                  "--clipboard",     "disabled",
+                  "--draganddrop",   "disabled",
+                  "--audio",         "none",
+                  "--usbehci",       "off",
+                  "--accelerate3d",  "off"]
+  end
+
+  # -----------------------------------------------------------------------
+  # Synced folders
+  # -----------------------------------------------------------------------
+  # Repo source + compiled out/ → read-only inside VM
+  config.vm.synced_folder REPO_ROOT,    "C:/vihs-workspace",
+    type: "virtualbox", automount: true
+
+  # shared/ → vsix artefact landing zone (read-only from VM side)
+  config.vm.synced_folder SHARED_DIR,   "C:/vihs-shared",
+    type: "virtualbox", automount: true
+
+  # evidence/ → report output written by VM, read by host
+  config.vm.synced_folder EVIDENCE_DIR, "C:/vihs-evidence",
+    type: "virtualbox", automount: true, mount_options: ["dmode=777", "fmode=666"]
+
+  # -----------------------------------------------------------------------
+  # One-time bootstrap provisioner
+  # Verifies Node.js, npm, VS Code are present; installs Node if absent.
+  # Skipped on subsequent `vagrant up` unless you run `vagrant provision`.
+  # -----------------------------------------------------------------------
+  config.vm.provision "bootstrap",
+    type:       "shell",
+    privileged: true,
+    path:       "provision/bootstrap.ps1",
+    run:        "once"
+
+  # -----------------------------------------------------------------------
+  # Acceptance provisioner
+  # Installs the vsix, configures settings, runs the governed proof, and
+  # writes evidence to C:/vihs-evidence (mapped to vagrant/evidence/ on host).
+  # Run explicitly: vagrant provision --provision-with acceptance
+  # -----------------------------------------------------------------------
+  config.vm.provision "acceptance",
+    type:       "shell",
+    privileged: false,
+    path:       "provision/run-acceptance.ps1",
+    run:        "never"
+end
