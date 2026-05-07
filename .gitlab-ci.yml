@@ -560,6 +560,7 @@ vagrant_windows_vsix_acceptance:
     - private-release
   resource_group: vihs-windows-vagrant
   timeout: 2 hours
+  needs: []
   variables:
     VIHS_VAGRANT_BOX: vihs/win11-labview2026
     VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden

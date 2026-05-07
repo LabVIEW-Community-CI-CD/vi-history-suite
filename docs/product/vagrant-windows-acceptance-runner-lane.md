@@ -116,10 +116,12 @@ Golden box refresh is manual and variable-gated. Set
 The blocking job is `vagrant_windows_vsix_acceptance`.
 
 It runs in the `test` stage on the Vagrant runner tags, serializes access with
-`resource_group: vihs-windows-vagrant`, packages the VSIX, stages it under
-`vagrant/shared/`, optionally refreshes the local box, runs the host doctor,
-boots the disposable VM, runs bootstrap, runs the guest cold-prep provisioner,
-runs acceptance, validates the latest manifest, and always halts the VM.
+`resource_group: vihs-windows-vagrant`, and declares `needs: []` so it can
+start as an independent DAG job without waiting for the separate Linux
+assurance runner lane. It packages the VSIX, stages it under `vagrant/shared/`,
+optionally refreshes the local box, runs the host doctor, boots the disposable
+VM, runs bootstrap, runs the guest cold-prep provisioner, runs acceptance,
+validates the latest manifest, and always halts the VM.
 
 The job retains `vagrant/evidence/`, including:
 

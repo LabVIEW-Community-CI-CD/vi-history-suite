@@ -538,6 +538,8 @@
           "private-release"
         ],
         "resourceGroup": "vihs-windows-vagrant",
+        "requiredNeeds": [],
+        "dagStart": true,
         "command": "npm ci; npm run compile; npm run package:audit; node scripts/runPinnedVsce.js package; vagrant up/provision/acceptance",
         "evidenceRoot": "vagrant/evidence/",
         "hostDoctorScript": "scripts/vagrant/doctor-vagrant-host.sh",

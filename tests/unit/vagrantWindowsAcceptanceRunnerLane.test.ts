@@ -29,6 +29,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
 
     expect(gitlabCi).toContain('vagrant_windows_vsix_acceptance:');
     expect(gitlabCi).toContain('resource_group: vihs-windows-vagrant');
+    expect(gitlabCi).toContain('needs: []');
     expect(gitlabCi).toContain('VAGRANT_DOTFILE_PATH: .vagrant-ci');
     expect(gitlabCi).toContain('bash scripts/vagrant/cleanup-disposable-ci-vm.sh');
     expect(gitlabCi).toContain('rm -rf vagrant/.vagrant');
@@ -141,6 +142,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
+    expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('not replace the deferred native Windows x64 private-release proof');
 
     expect(hostedGovernanceDoc).toContain('vagrant-windows-vsix-acceptance');
@@ -196,6 +198,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
         classification: 'required-vagrant-windows-vsix-acceptance',
         stage: 'test',
         resourceGroup: 'vihs-windows-vagrant',
+        requiredNeeds: [],
+        dagStart: true,
         evidenceRoot: 'vagrant/evidence/'
       })
     );

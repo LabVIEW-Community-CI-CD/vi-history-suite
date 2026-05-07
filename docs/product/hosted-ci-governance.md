@@ -297,8 +297,9 @@ Job ownership:
 - `vagrant_windows_vsix_acceptance`: blocking Vagrant Windows VSIX acceptance
   lane on merge requests, governed branch lanes, and exact tags; it runs on
   `linux,x64,virtualbox,vagrant,private-release`, serializes with
-  `resource_group: vihs-windows-vagrant`, packages the VSIX, stages it under
-  `vagrant/shared/`, optionally refreshes the local box when
+  `resource_group: vihs-windows-vagrant`, declares `needs: []` so it can start
+  independently of the separate Linux assurance runner lane, packages the VSIX,
+  stages it under `vagrant/shared/`, optionally refreshes the local box when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
   disposable `vihs-ci-win11` VM, runs bootstrap, runs the guest cold-prep
   provisioner, runs acceptance, validates the latest acceptance manifest, always
