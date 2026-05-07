@@ -83,10 +83,10 @@ Official GitLab references:
   `/run/media/sergio/Data1/vihs-vagrant/VirtualBox VMs`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
-- disposable clone boot policy: Vagrant sets EFI firmware, enrolls Microsoft
-  Secure Boot signatures, enrolls the Oracle platform key, and enables Secure
-  Boot before the first clone boot so BitLocker does not see Secure Boot as
-  disabled
+- disposable clone boot policy: Vagrant sets EFI firmware, initializes the
+  clone's renamed UEFI variable store, enrolls Microsoft Secure Boot
+  signatures, enrolls the Oracle platform key, and enables Secure Boot before
+  the first clone boot so BitLocker does not see Secure Boot as disabled
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
 - disposable CI VM cleanup script:

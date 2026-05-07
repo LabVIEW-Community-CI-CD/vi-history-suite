@@ -58,6 +58,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(vagrantfile).toContain('WINRM_TIMEOUT = ENV.fetch("VIHS_VAGRANT_WINRM_TIMEOUT", "1800").to_i');
     expect(vagrantfile).toContain('vb.name   = VM_NAME');
     expect(vagrantfile).toContain('vb.customize ["modifyvm", :id, "--firmware", "efi"]');
+    expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "inituefivarstore"]');
     expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "enrollmssignatures"]');
     expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "enrollorclpk"]');
     expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "secureboot", "--enable"]');
@@ -141,7 +142,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vihs-win11-labview2026-golden');
     expect(laneDoc).toContain('vihs-ci-win11');
     expect(laneDoc).toContain('/run/media/sergio/Data1/vihs-vagrant');
-    expect(laneDoc).toContain('before the first clone boot');
+    expect(laneDoc).toContain('first clone boot');
     expect(laneDoc).toContain('vagrant/.vagrant');
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
