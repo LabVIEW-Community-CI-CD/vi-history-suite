@@ -14,3 +14,4 @@ tmp/
 vagrant/shared/
 vagrant/evidence/
 vagrant/.vagrant/
+vagrant/.vagrant-ci/

@@ -11,7 +11,12 @@ name: Vagrant VSIX Acceptance
 #
 # GitHub Actions variables (repository or environment level):
 #   VIHS_VAGRANT_BOX  – Vagrant box name (e.g. "vihs/win11-labview2026")
-#   VIHS_VIRTUALBOX_VM_NAME – Existing VirtualBox VM name (e.g. "windows11")
+#   VIHS_VAGRANT_GOLDEN_VM_NAME – powered-off golden VM name
+#     (e.g. "vihs-win11-labview2026-golden")
+#   VIHS_VAGRANT_CI_VM_NAME – disposable Vagrant-imported VM name
+#     (e.g. "vihs-ci-win11")
+#   VIHS_VAGRANT_STORAGE_ROOT – large local filesystem root for Vagrant state
+#   VIHS_VAGRANT_REFRESH_GOLDEN_BOX – set to "true" to refresh the box
 #
 # No secrets required: LabVIEW and VS Code are already inside the VM box.
 
@@ -126,7 +131,15 @@ jobs:
 
     env:
       VIHS_VAGRANT_BOX: ${{ vars.VIHS_VAGRANT_BOX || 'vihs/win11-labview2026' }}
-      VIHS_VIRTUALBOX_VM_NAME: ${{ vars.VIHS_VIRTUALBOX_VM_NAME || 'windows11' }}
+      VIHS_VAGRANT_GOLDEN_VM_NAME: ${{ vars.VIHS_VAGRANT_GOLDEN_VM_NAME || vars.VIHS_VIRTUALBOX_VM_NAME || 'vihs-win11-labview2026-golden' }}
+      VIHS_VAGRANT_CI_VM_NAME: ${{ vars.VIHS_VAGRANT_CI_VM_NAME || 'vihs-ci-win11' }}
+      VIHS_VAGRANT_STORAGE_ROOT: ${{ vars.VIHS_VAGRANT_STORAGE_ROOT || '/run/media/sergio/Data1/vihs-vagrant' }}
+      VAGRANT_HOME: ${{ vars.VAGRANT_HOME || '/run/media/sergio/Data1/vihs-vagrant/vagrant-home' }}
+      VIHS_VAGRANT_BOX_FILE: ${{ vars.VIHS_VAGRANT_BOX_FILE || '/run/media/sergio/Data1/vihs-vagrant/box-cache/windows11.box' }}
+      VIHS_VAGRANT_BOX_WORKDIR: ${{ vars.VIHS_VAGRANT_BOX_WORKDIR || '/run/media/sergio/Data1/vihs-vagrant/box-work' }}
+      VIHS_VIRTUALBOX_MACHINE_FOLDER: ${{ vars.VIHS_VIRTUALBOX_MACHINE_FOLDER || '/run/media/sergio/Data1/vihs-vagrant/VirtualBox VMs' }}
+      VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER: 'false'
+      VAGRANT_DOTFILE_PATH: .vagrant-ci
 
     steps:
       - name: Checkout
@@ -151,64 +164,56 @@ jobs:
           ls out/cli/ | head -10
 
       - name: Prepare evidence directory
-        run: mkdir -p vagrant/evidence
+        run: |
+          mkdir -p vagrant/evidence
+
+      - name: Prepare large-drive Vagrant storage
+        run: |
+          mkdir -p \
+            "${VAGRANT_HOME}" \
+            "$(dirname "${VIHS_VAGRANT_BOX_FILE}")" \
+            "${VIHS_VAGRANT_BOX_WORKDIR}" \
+            "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
+          VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
+
+      - name: Remove stale disposable CI VM
+        run: |
+          bash scripts/vagrant/cleanup-disposable-ci-vm.sh
+          rm -rf vagrant/.vagrant
 
       - name: Verify Vagrant + VirtualBox prerequisites
-        run: |
-          set -euo pipefail
-          echo "Vagrant: $(vagrant --version)"
-          echo "VBoxManage: $(VBoxManage --version)"
-          echo "Existing VM: ${VIHS_VIRTUALBOX_VM_NAME}"
-          echo "Box configured: ${VIHS_VAGRANT_BOX}"
+        run: bash scripts/vagrant/doctor-vagrant-host.sh
 
-      - name: Prepare Vagrant box from existing VM
-        run: ./.github/scripts/vagrant/prepare-existing-vm-box.sh
+      - name: Refresh Vagrant box from golden VM
+        if: ${{ vars.VIHS_VAGRANT_REFRESH_GOLDEN_BOX == 'true' }}
+        run: bash scripts/vagrant/refresh-golden-box.sh
         env:
-          VIHS_VIRTUALBOX_VM_NAME: ${{ env.VIHS_VIRTUALBOX_VM_NAME }}
+          VIHS_VAGRANT_GOLDEN_VM_NAME: ${{ env.VIHS_VAGRANT_GOLDEN_VM_NAME }}
           VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
-          VIHS_VAGRANT_BOX_FILE: .cache/vagrant/windows11.box
+          VIHS_VAGRANT_BOX_FILE: ${{ env.VIHS_VAGRANT_BOX_FILE }}
 
       - name: Boot VM
         working-directory: vagrant
         run: vagrant up --no-provision
         env:
           VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
 
       - name: Run bootstrap provisioner (skipped if already done)
         working-directory: vagrant
         run: vagrant provision --provision-with bootstrap
         env:
           VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
 
       - name: Force cold LabVIEW state before acceptance
+        working-directory: vagrant
         run: |
           set -euo pipefail
-          log="vagrant/evidence/labview-cold-prep.log"
-          : > "$log"
-
-          echo "Stopping LabVIEW inside guest (if running)..." | tee -a "$log"
-          VBoxManage guestcontrol "${VIHS_VIRTUALBOX_VM_NAME}" run \
-            --username vagrant --password "Vagrant1234!" \
-            -- cmd.exe /c "powershell -ExecutionPolicy Bypass -Command \"Stop-Process -Name LabVIEW -Force -ErrorAction SilentlyContinue; Write-Host 'LabVIEW stop attempted'\"" \
-            2>&1 | tee -a "$log"
-
-          echo "Waiting for 3363 LISTENING sockets to clear..." | tee -a "$log"
-          for i in $(seq 1 18); do
-            result=$(VBoxManage guestcontrol "${VIHS_VIRTUALBOX_VM_NAME}" run \
-              --username vagrant --password "Vagrant1234!" \
-              -- cmd.exe /c "powershell -ExecutionPolicy Bypass -Command \"netstat -an | Select-String ':3363.*LISTENING'\"" \
-              2>&1 || true)
-            echo "[$i/18] ${result}" | tee -a "$log"
-            if [[ -z "${result//[[:space:]]/}" ]]; then
-              echo "Port 3363 is no longer LISTENING." | tee -a "$log"
-              break
-            fi
-            sleep 5
-            if [[ "$i" -eq 18 ]]; then
-              echo "ERROR: Port 3363 remained LISTENING after cold-prep wait window." | tee -a "$log"
-              exit 1
-            fi
-          done
+          vagrant provision --provision-with cold-labview 2>&1 | tee evidence/labview-cold-prep.log
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
 
       - name: Run acceptance provisioner
         working-directory: vagrant
@@ -217,6 +222,7 @@ jobs:
           vagrant provision --provision-with acceptance 2>&1 | tee evidence/acceptance-provision.log
         env:
           VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
 
       - name: Assert cold-start launch markers
         if: always()
@@ -246,6 +252,7 @@ jobs:
         run: vagrant halt --force
         env:
           VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
 
       - name: Print manifest
         if: always()
