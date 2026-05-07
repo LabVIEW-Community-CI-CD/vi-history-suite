@@ -59,6 +59,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.memory = VM_MEMORY
     vb.cpus   = VM_CPUS
     vb.gui    = false                         # headless; set true to debug
+    vb.customize ["modifyvm", :id, "--firmware", "efi"]
+    # Windows 11 BitLocker checks the Secure Boot state during early boot.
+    # Vagrant imports the appliance before first boot, so enroll and enable
+    # Secure Boot in the disposable clone's UEFI variable store before WinRM.
+    vb.customize ["modifynvram", :id, "enrollmssignatures"]
+    vb.customize ["modifynvram", :id, "enrollorclpk"]
+    vb.customize ["modifynvram", :id, "secureboot", "--enable"]
     vb.customize ["modifyvm", :id,
                   "--vram",          "128",
                   "--clipboard",     "disabled",

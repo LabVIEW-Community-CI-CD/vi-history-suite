@@ -83,6 +83,10 @@ Official GitLab references:
   `/run/media/sergio/Data1/vihs-vagrant/VirtualBox VMs`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
+- disposable clone boot policy: Vagrant sets EFI firmware, enrolls Microsoft
+  Secure Boot signatures, enrolls the Oracle platform key, and enables Secure
+  Boot before the first clone boot so BitLocker does not see Secure Boot as
+  disabled
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
 - disposable CI VM cleanup script:
@@ -145,6 +149,7 @@ The lane fails closed when:
 - the refresh work root or box output directory does not have enough free space
 - the configured VirtualBox machine folder is not the large-drive path or lacks
   enough free space for a one-VM import estimate
+- the disposable clone cannot enable EFI Secure Boot before first boot
 - a stale `vihs-ci-win11` VM is already running during cleanup
 - local Vagrant metadata points at any VM other than `vihs-ci-win11`
 - ignored local Vagrant metadata for the active dotfile path points at a VM other than
