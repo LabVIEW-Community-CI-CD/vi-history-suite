@@ -17,6 +17,8 @@
 - The current develop package line on `develop` is `1.3.14`.
 - The active exact release candidate line on `develop` is `v1.3.14`.
 - The active release-candidate branch is `release/1.3.14`.
+- The active release-candidate state is release-branch readiness reassessed;
+  protected `main` promotion is the next separate governed action.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -76,10 +78,15 @@
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
 - The active governed release claim is the `1.3.14` develop patch candidate
-  consolidation with `release/1.3.14` now opened as the governed release
-  candidate branch, all provider/year/bitness variants selectable, admitted
-  Windows host proof retained, Vagrant VSIX acceptance governed by repo-owned
-  assertion, and Windows Docker Desktop proof community/deferred.
+  consolidation with `release/1.3.14` now opened and reassessed as the
+  governed release candidate branch, all provider/year/bitness variants
+  selectable, admitted Windows host proof retained, Vagrant VSIX acceptance
+  governed by repo-owned assertion, and Windows Docker Desktop proof
+  community/deferred.
+- The next admitted release-control action is
+  `promote-release-1.3.14-to-main-as-separate-governed-action`; exact tag,
+  public GitHub exact release, and Marketplace mutation stay blocked until the
+  separate protected `main` promotion and later exact-tag reassessment close.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer
   authorization for public GitHub and Marketplace publication.

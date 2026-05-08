@@ -2477,6 +2477,24 @@ Information-for-users review cases:
   the active governed release-candidate branch while Windows Docker Desktop
   Windows-container proof remains community/deferred and exact publication
   remains blocked
+- `TEST-UNIT-400`: run
+  `tests/unit/releaseBranchReadinessReassessment.test.ts` and confirm the
+  `release/1.3.14` branch-readiness reassessment retains release branch
+  pipeline `2511168302`, protected develop retention pipeline `2511236377`,
+  release branch preview VSIX SHA-256
+  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`,
+  protected develop preview VSIX SHA-256
+  `17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd`,
+  Vagrant jobs `14284865649` and `14285299160`, no exact
+  tag/public GitHub/Marketplace/Windows Docker Desktop/main mutation, and the
+  next protected-main-promotion action
+- `TEST-DOC-152`: review release-publication state, current-state,
+  public-release-candidate, post-release sustainment rules, hosted CI
+  governance, release procedure, README, SRS, RTM, and this test plan and
+  confirm release-branch readiness admits only a later protected `main`
+  promotion action while exact tag, public GitHub exact release, Marketplace
+  mutation, Windows Docker Desktop proof admission, and `main` promotion
+  remain unperformed in the reassessment slice
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

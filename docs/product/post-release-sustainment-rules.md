@@ -80,6 +80,9 @@ Current version-line contract:
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
+- active release-candidate state:
+  release-branch readiness reassessed; protected `main` promotion is the next
+  separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -149,7 +152,9 @@ Current control decision for public exact hardening:
 - rationale: Vagrant Windows VSIX acceptance now has a repo-owned evidence
   assertion surface and retained CI receipt contract
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  and the active exact release candidate line is `v1.3.14`
+  the active exact release candidate line is `v1.3.14`, and
+  release-branch readiness has been reassessed without exact tag, public
+  GitHub, Marketplace, Windows Docker Desktop, or `main` mutation
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`

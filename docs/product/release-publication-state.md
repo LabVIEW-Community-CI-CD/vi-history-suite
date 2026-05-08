@@ -20,8 +20,10 @@ final installed-user distribution surface.
 - Active candidate release branch: `release/1.3.14`
 - Active candidate tag: none
 - Active candidate package version: `1.3.14`
-- Active candidate state: release branch opened from `develop`; no public
-  GitHub release, Marketplace mutation, exact tag, or `main` promotion
+- Active candidate state: release branch opened and reassessed; protected
+  `main` promotion is admissible only as a separate governed action, while no
+  public GitHub release, Marketplace mutation, exact tag, or `main` promotion
+  has been performed
 
 ## Develop Preview State
 
@@ -435,18 +437,20 @@ final installed-user distribution surface.
   `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json`
 - Next exact candidate conversion path:
   the governed `release/1.3.14` branch opening has now been performed and
-  retained separately; reassess release-branch readiness before any exact tag,
-  and retain the selected exact authority VSIX before public exact release or
-  Marketplace gates.
+  release-branch readiness has been reassessed separately; promote the release
+  branch to `main` only through a later protected governed action, then
+  reassess exact-tag admission from the resulting green `main` commit before
+  public exact release or Marketplace gates.
 
 The current `develop` line is no longer a `1.3.10` Linux/Docker-only blocked
 preview. It is a `1.3.14` release-readiness consolidation line with Linux
 Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX acceptance,
 public exact pre-tag, package preview, docs, and assurance evidence retained.
-That makes release-branch opening admissible as a separate governed action,
-but does not admit an exact tag, public GitHub release, VS Code Marketplace
-publication, Windows Docker Desktop Windows-container proof claim, or `main`
-promotion.
+That made release-branch opening admissible as a separate governed action. The
+release branch has since been opened and reassessed, but exact tag, public
+GitHub release, VS Code Marketplace publication, Windows Docker Desktop
+Windows-container proof claim, and `main` promotion remain unperformed in this
+state.
 
 ## Release Branch Opening
 
@@ -486,6 +490,42 @@ This branch opening converts the current candidate from a `develop`-only patch
 candidate into an opened release-candidate branch while preserving the exact
 publication boundary. The branch preview artifact is still preview evidence
 only, not the selected exact authority VSIX.
+
+## Release Branch Readiness Reassessment
+
+- Status: main promotion admissible as a separate governed action
+- Reassessment:
+  `docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md`
+- Reassessment JSON:
+  `docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.json`
+- Release branch: `release/1.3.14`
+- Release branch commit:
+  `50bec3391ea823739c2e8baddb33b77c283a37eb`
+- Release branch pipeline: `2511168302` / `success`
+- Protected develop retention commit:
+  `c9cff58f5608289ec6acdaea64999b1e460cca96`
+- Protected develop retention pipeline: `2511236377` / `success`
+- Release branch preview VSIX SHA-256:
+  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`
+- Protected develop retention preview VSIX SHA-256:
+  `17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd`
+- Release branch Vagrant job: `14284865649`
+- Protected develop Vagrant job: `14285299160`
+- Selected exact authority VSIX: not retained yet
+- Main promotion: admissible only as a separate governed action; not
+  performed by this reassessment
+- Exact tag: not admitted before protected `main` promotion
+- Public GitHub exact mutation: not admitted and not performed
+- VS Code Marketplace exact mutation: not admitted and not performed
+- Windows Docker Desktop Windows-container proof state: community/deferred
+- Next admitted action:
+  `promote-release-1.3.14-to-main-as-separate-governed-action`
+
+This reassessment closes the release-branch-readiness question without
+collapsing it into exact publication. The opened branch and the protected
+`develop` retention merge are both green, so the next governed action may be a
+protected `release/1.3.14` to `main` promotion. The exact tag remains blocked
+until that later main-promotion evidence exists and is green.
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
@@ -562,11 +602,12 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: reassess the opened `release/1.3.14` branch before any
-  exact tag, public GitHub exact release, VS Code Marketplace mutation,
-  Windows Docker Desktop proof admission, or `main` promotion
+- Governed next line: promote `release/1.3.14` to `main` only through a
+  separate protected governed action before any exact tag, public GitHub exact
+  release, VS Code Marketplace mutation, or Windows Docker Desktop proof
+  admission
 - Next admitted action:
-  `reassess-release-1.3.14-branch-readiness-before-exact-tag`
+  `promote-release-1.3.14-to-main-as-separate-governed-action`
 
 ## Publication Rule
 

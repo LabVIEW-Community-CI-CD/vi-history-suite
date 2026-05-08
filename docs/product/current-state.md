@@ -60,14 +60,18 @@ Read these in order:
 42. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26 JSON](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
 43. [Exact Release Readiness Assessment 2026-05-08](./exact-release-readiness-assessment-2026-05-08.md)
 44. [Exact Release Readiness Assessment 2026-05-08 JSON](./exact-release-readiness-assessment-2026-05-08.json)
-45. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
-46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
-47. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
-48. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-49. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
-50. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
-51. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
-52. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+45. [Release Branch Opening v1.3.14 2026-05-08](./release-branch-opening-v1.3.14-2026-05-08.md)
+46. [Release Branch Opening v1.3.14 2026-05-08 JSON](./release-branch-opening-v1.3.14-2026-05-08.json)
+47. [Release Branch Readiness Reassessment v1.3.14 2026-05-08](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.md)
+48. [Release Branch Readiness Reassessment v1.3.14 2026-05-08 JSON](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.json)
+49. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+50. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+51. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
+52. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
+53. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
+54. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+55. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+56. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
 51. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
 52. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
 53. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
@@ -200,6 +204,9 @@ Latest landed ship target:
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
+- active release-candidate state:
+  release-branch readiness reassessed; protected `main` promotion is the next
+  separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -263,28 +270,35 @@ Latest landed ship target:
   exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.14` release branch opened from
-  `develop` with all provider/year/bitness variants selectable, admitted
-  Windows host LabVIEW 2026 x64 proof, repo-owned Vagrant VSIX acceptance
-  assertion, and Windows Docker Desktop Windows-container proof
-  community/deferred through public issue #65
+- active governed release claim: `1.3.14` release branch opened and
+  reassessed from `develop` with all provider/year/bitness variants
+  selectable, admitted Windows host LabVIEW 2026 x64 proof, repo-owned
+  Vagrant VSIX acceptance assertion, and Windows Docker Desktop
+  Windows-container proof community/deferred through public issue #65
 - current exact-release readiness assessment:
   [exact-release-readiness-assessment-2026-05-08.md](./exact-release-readiness-assessment-2026-05-08.md)
 - current exact-release readiness assessment JSON:
   [exact-release-readiness-assessment-2026-05-08.json](./exact-release-readiness-assessment-2026-05-08.json)
 - current exact-release readiness verdict:
-  release branch opening was admitted as a separate governed action and has
-  now been performed on `release/1.3.14`; `develop` commit
+  release branch opening was admitted as a separate governed action, has been
+  performed on `release/1.3.14`, and release-branch readiness has now been
+  reassessed; `develop` commit
   `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8` and pipeline `2511103937`
   retain Linux/Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX
   acceptance, public exact pre-tag, package preview, docs, and assurance
   evidence for `1.3.14`, while exact tag, public GitHub release, VS Code
   Marketplace mutation, Windows Docker Desktop Windows-container proof, and
-  `main` promotion remain not admitted
+  `main` promotion remain unperformed
 - current release-branch opening packet:
   [release-branch-opening-v1.3.14-2026-05-08.md](./release-branch-opening-v1.3.14-2026-05-08.md)
 - current release-branch opening packet JSON:
   [release-branch-opening-v1.3.14-2026-05-08.json](./release-branch-opening-v1.3.14-2026-05-08.json)
+- current release-branch readiness reassessment:
+  [release-branch-readiness-reassessment-v1.3.14-2026-05-08.md](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.md)
+- current release-branch readiness reassessment JSON:
+  [release-branch-readiness-reassessment-v1.3.14-2026-05-08.json](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.json)
+- current next admitted action:
+  `promote-release-1.3.14-to-main-as-separate-governed-action`
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
