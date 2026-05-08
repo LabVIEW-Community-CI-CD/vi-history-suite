@@ -5,6 +5,16 @@
 - Active develop candidate package: `1.3.14`
 - Active develop candidate state: patch consolidation; no public GitHub
   release, Marketplace mutation, exact tag, or `main` promotion
+- Active develop candidate branch: `develop`
+- Source consolidation branch:
+  `feature/develop-1.3.14-candidate-consolidation`
+- Protected develop merge: GitLab MR `!192` merged
+  `97efa937a5317d69a1d65607c4f704d603edbe52` into `develop` as
+  `72899eb39e38ce34c697f0a227292ead6bcd8f2d`
+- Protected develop pipeline: `2511040377` / `success`
+- Vagrant VSIX acceptance receipt: GitLab job `14284054131` / `success`,
+  retaining `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
+  and `vagrant/evidence/20260508-105809/manifest.json`
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`

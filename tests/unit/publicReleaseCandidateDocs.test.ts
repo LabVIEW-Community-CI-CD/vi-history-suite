@@ -27,7 +27,28 @@ describe('public release candidate control surface', () => {
       candidateLine: 'v1.3.14',
       packageVersion: '1.3.14',
       state: 'develop-patch-candidate-consolidation',
-      branch: 'feature/develop-1.3.14-candidate-consolidation',
+      branch: 'develop',
+      sourceFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
+      mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
+      sourceHeadCommit: '97efa937a5317d69a1d65607c4f704d603edbe52',
+      developMergeCommit: '72899eb39e38ce34c697f0a227292ead6bcd8f2d',
+      mergedAt: '2026-05-08T17:52:32.814Z',
+      postMergeDevelopPipeline: {
+        pipelineId: 2511040377,
+        status: 'success',
+        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511040377'
+      },
+      vagrantVsixAcceptanceReceipt: {
+        jobId: 14284054131,
+        jobName: 'vagrant_windows_vsix_acceptance',
+        jobStatus: 'success',
+        jobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14284054131',
+        assertionReceipt: 'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
+        manifest: 'vagrant/evidence/20260508-105809/manifest.json',
+        recordedAt: '2026-05-08T17:58:36.620Z',
+        runtimeExecutionState: 'succeeded',
+        proofExitCode: 0
+      },
       productionMutationAllowed: false,
       claimBoundary: 'does-not-admit-windows-docker-desktop-windows-container-proof'
     });
@@ -198,6 +219,20 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Version line: `1.3.9`');
     expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.14`');
     expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.14`');
+    expect(candidateMarkdown).toContain('Active develop candidate branch: `develop`');
+    expect(candidateMarkdown).toContain(
+      '`feature/develop-1.3.14-candidate-consolidation`'
+    );
+    expect(candidateMarkdown).toContain('Protected develop merge: GitLab MR `!192`');
+    expect(candidateMarkdown).toContain('`72899eb39e38ce34c697f0a227292ead6bcd8f2d`');
+    expect(candidateMarkdown).toContain('Protected develop pipeline: `2511040377` / `success`');
+    expect(candidateMarkdown).toContain(
+      'Vagrant VSIX acceptance receipt: GitLab job `14284054131` / `success`'
+    );
+    expect(candidateMarkdown).toContain(
+      'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json'
+    );
+    expect(candidateMarkdown).toContain('vagrant/evidence/20260508-105809/manifest.json');
     expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
     expect(candidateMarkdown).toContain('Current public source head: `220111e`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');

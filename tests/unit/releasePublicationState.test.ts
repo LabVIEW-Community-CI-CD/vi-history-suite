@@ -144,18 +144,51 @@ describe('release publication state resolver', () => {
         })
       }),
       vagrantVsixAcceptanceEvidence: expect.objectContaining({
-        status: 'repo-owned-assertion-wired-awaiting-protected-ci-receipt',
+        status: 'protected-develop-ci-receipt-retained',
         packageScript: 'npm run vagrant:acceptance:assert',
         assertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
         evidenceRoot: 'vagrant/evidence/',
         assertionReceiptRoot: 'vagrant/evidence/assertion',
+        protectedDevelopMergeRequest:
+          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
+        protectedDevelopMergeCommit: '72899eb39e38ce34c697f0a227292ead6bcd8f2d',
+        protectedDevelopPipelineId: 2511040377,
+        protectedDevelopPipelineStatus: 'success',
+        protectedDevelopPipelineUrl:
+          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511040377',
+        gitLabJob: 'vagrant_windows_vsix_acceptance',
+        gitLabJobId: 14284054131,
+        gitLabJobStatus: 'success',
+        gitLabJobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14284054131',
+        artifactRoot: 'vagrant/evidence/',
+        runDirectory: 'vagrant/evidence/20260508-105809',
+        manifestPath: 'vagrant/evidence/20260508-105809/manifest.json',
+        acceptanceLogPath: 'vagrant/evidence/acceptance-provision.log',
+        coldPrepLogPath: 'vagrant/evidence/labview-cold-prep.log',
+        hostDoctorLogPath: 'vagrant/evidence/vagrant-host-doctor.log',
+        assertionReceiptPath: 'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
+        assertionRecordedAt: '2026-05-08T17:58:36.620Z',
+        manifestGeneratedAt: '2026-05-08T10:58:36.0049159-07:00',
         schema: 'vi-history-suite/vagrant-vsix-acceptance@v1',
         assertionSchema: 'vi-history-suite/vagrant-vsix-acceptance-assertion@v1',
         harnessId: 'HARNESS-VHS-002',
+        selectedHash: '8741bb08026c104100720c0ef48621e4ab7762fd',
+        baseHash: 'c188cdec606aac3b17d8b17274baa19eef3e4017',
+        labviewVersion: '2026',
+        labviewBitness: 'x86',
+        proofExitCode: 0,
         runtimeProvider: 'host-native',
         runtimeEngine: 'labview-cli',
+        runtimeExecutionState: 'succeeded',
         requiredRuntimeExecutionState: 'succeeded',
+        generatedReportExists: true,
         requiredGeneratedReportExists: true,
+        coldStartMarkers: [
+          'LabVIEW not running. Launching via scheduled task...',
+          'LabVIEW VI Server ready on port 3363.'
+        ],
+        publicGitHubMutation: 'not-performed',
+        marketplaceMutation: 'not-performed',
         claimBoundary:
           'vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof'
       }),
@@ -175,7 +208,16 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Windows proof state: host LabVIEW 2026 x64 admitted');
     expect(stateDoc).toContain('Windows-container proof community/deferred');
     expect(stateDoc).toContain('Vagrant Windows VSIX acceptance evidence');
-    expect(stateDoc).toContain('`npm run vagrant:acceptance:assert` validates the latest');
+    expect(stateDoc).toContain('protected `develop` pipeline `2511040377`');
+    expect(stateDoc).toContain('GitLab job `14284054131`');
+    expect(stateDoc).toContain('`npm run vagrant:acceptance:assert`');
+    expect(stateDoc).toContain(
+      'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json'
+    );
+    expect(stateDoc).toContain('vagrant/evidence/20260508-105809/manifest.json');
+    expect(stateDoc).toContain('`proofExitCode=0`');
+    expect(stateDoc).toContain('`runtimeExecutionState=succeeded`');
+    expect(stateDoc).toContain('`generatedReportExists=true`');
     expect(stateDoc).toContain(
       'HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json'
     );
