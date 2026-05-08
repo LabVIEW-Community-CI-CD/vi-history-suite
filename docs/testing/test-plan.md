@@ -2267,9 +2267,12 @@ Information-for-users review cases:
 - `TEST-DOC-141`: review the exact-release readiness assessment,
   release-publication state, current-state, information-item map, SRS, RTM,
   and the test plan and confirm the current `develop` line is marked
-  Linux/Docker preview-valid but blocked for exact-release promotion while
-  Windows installed-user LabVIEW proof remains community/deferred and public
-  GitHub/Marketplace exact mutation is not admitted.
+  `1.3.14` release-branch-opening-admissible as a separate governed action
+  with Linux/Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX
+  acceptance, public exact pre-tag, package preview, docs, and assurance
+  evidence retained, while exact tag, public GitHub release, Marketplace
+  exact mutation, Windows Docker Desktop Windows-container proof, and `main`
+  promotion remain not admitted.
 - `TEST-DOC-142`: review the Windows/LabVIEW community proof intake checklist,
   release-publication state, exact-release readiness assessment, current-state,
   information-item map, SRS, RTM, and the test plan and confirm external

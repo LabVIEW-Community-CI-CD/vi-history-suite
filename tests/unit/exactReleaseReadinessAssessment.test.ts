@@ -14,10 +14,10 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('exact release readiness assessment', () => {
-  it('keeps the current develop line blocked for exact release while Windows proof is deferred', () => {
-    const assessment = readText('docs/product/exact-release-readiness-assessment-2026-04-26.md');
+  it('refreshes the current develop line for 1.3.14 without admitting publication mutation', () => {
+    const assessment = readText('docs/product/exact-release-readiness-assessment-2026-05-08.md');
     const machine = readJson<any>(
-      'docs/product/exact-release-readiness-assessment-2026-04-26.json'
+      'docs/product/exact-release-readiness-assessment-2026-05-08.json'
     );
     const publicationState = readJson<any>('docs/product/release-publication-state.json');
     const informationItemMap = readText('docs/information-item-map.md');
@@ -26,49 +26,67 @@ describe('exact release readiness assessment', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(assessment).toContain('Exact Release Readiness Assessment - 2026-04-26');
-    expect(assessment).toContain('| Exact-release readiness | `blocked` |');
-    expect(assessment).toContain('Assessed pipeline | `2480212103` / `success`');
+    expect(assessment).toContain('Exact Release Readiness Assessment - 2026-05-08');
     expect(assessment).toContain(
-      'Assessed commit | `42d1f581874c9fad8f6dcbc96c8827bb07e3b508`'
+      '| Exact-release readiness | `release-branch-opening-admissible` |'
     );
-    expect(assessment).toContain('Windows installed-user LabVIEW proof | community/deferred');
-    expect(assessment).toContain('`linux_docker_provider_lane` | `14091956354` | `success`');
-    expect(assessment).toContain('`public_exact_pretag_proof` | `14091956353` | `success`');
+    expect(assessment).toContain('Assessed pipeline | `2511103937` / `success`');
+    expect(assessment).toContain(
+      'Assessed commit | `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8`'
+    );
+    expect(assessment).toContain('| Candidate package line | `1.3.14` |');
+    expect(assessment).toContain('| Exact tag | not admitted |');
+    expect(assessment).toContain('| Public GitHub exact mutation | not admitted and not performed |');
+    expect(assessment).toContain(
+      '| VS Code Marketplace exact mutation | not admitted and not performed |'
+    );
+    expect(assessment).toContain('| `main` promotion | not admitted and not performed |');
+    expect(assessment).toContain(
+      '| Windows Docker Desktop Windows-container proof | community/deferred |'
+    );
+    expect(assessment).toContain('`linux_docker_provider_lane` | `14284448827` | `success`');
+    expect(assessment).toContain(
+      '`vagrant_windows_vsix_acceptance` | `14284448828` | `success`'
+    );
+    expect(assessment).toContain('`public_exact_pretag_proof` | `14284448826` | `success`');
     expect(assessment).toContain('runtimeProvider=linux-container');
     expect(assessment).toContain('runtimeEngine=labview-cli');
     expect(assessment).toContain('runtimeBlockedReason=<none>');
-    expect(assessment).toContain('preview-evidence/vi-history-suite-1.3.10.vsix');
+    expect(assessment).toContain('preview-evidence/vi-history-suite-1.3.14.vsix');
     expect(assessment).toContain(
-      'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
+      'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f'
     );
-    expect(assessment).toContain('No `governed_runner_admission` or `windows_private_release_acceptance` job');
-    expect(assessment).toContain('Community Proof Intake Checklist');
-    expect(assessment).toContain(
-      'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md'
-    );
-    expect(assessment).toContain('Community-deferred claim');
-    expect(assessment).toContain('This assessment did not mutate public GitHub or VS Code Marketplace');
+    expect(assessment).toContain('proofExitCode=0');
+    expect(assessment).toContain('runtimeExecutionState=succeeded');
+    expect(assessment).toContain('generatedReportExists=true');
+    expect(assessment).toContain('This assessment did not mutate public GitHub');
+    expect(assessment).toContain('Open a governed `release/1.3.14` branch only as a separate action');
 
     expect(machine).toEqual(
       expect.objectContaining({
         schema: 'vi-history-suite/exact-release-readiness-assessment@v1',
-        recordedAt: '2026-04-26',
+        recordedAt: '2026-05-08',
+        supersedesCurrentAssessmentPath:
+          'docs/product/exact-release-readiness-assessment-2026-04-26.md',
         authority: expect.objectContaining({
           branch: 'develop',
-          assessedCommitSha: '42d1f581874c9fad8f6dcbc96c8827bb07e3b508',
-          pipelineId: 2480212103,
+          assessedCommitSha: 'ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8',
+          pipelineId: 2511103937,
           pipelineStatus: 'success',
-          packageVersion: '1.3.10'
+          packageVersion: '1.3.14'
         }),
         verdict: expect.objectContaining({
-          exactReleaseReadiness: 'blocked',
-          currentAdmissibleClaim: 'linux-docker-validated-preview-only',
-          releaseBranch: 'not-open',
+          exactReleaseReadiness: 'release-branch-opening-admissible',
+          currentAdmissibleClaim:
+            'develop-candidate-release-readiness-consolidated-no-exact-publication',
+          releaseBranch: 'not-opened-by-this-assessment',
           exactTag: 'not-admitted',
           publicGitHubExactMutation: 'not-admitted-and-not-performed',
           marketplaceExactMutation: 'not-admitted-and-not-performed',
-          windowsInstalledUserLabviewProof: 'community-deferred'
+          mainPromotion: 'not-admitted-and-not-performed',
+          windowsInstalledUserLabviewProof: 'admitted-for-host-labview-2026-x64',
+          vagrantVsixAcceptance: 'protected-develop-ci-receipt-retained',
+          windowsDockerDesktopWindowsContainerProof: 'community-deferred'
         }),
         retainedBaseline: expect.objectContaining({
           exactTag: 'v1.3.9',
@@ -76,13 +94,14 @@ describe('exact release readiness assessment', () => {
           publicGitHubReleaseId: 312994104
         }),
         activePreview: expect.objectContaining({
-          packageVersion: '1.3.10',
-          marketplacePublicationKind: 'community-validation-pre-release',
-          linuxDockerClaim: 'linux-docker-validated-preview',
-          windowsProofState: 'community-deferred'
+          packageVersion: '1.3.14',
+          linuxDockerClaim: 'admitted-linux-docker-provider-lane',
+          windowsHostLabviewProofState: 'admitted-for-host-labview-2026-x64',
+          vagrantVsixAcceptanceState: 'protected-develop-ci-receipt-retained',
+          windowsDockerDesktopProofState: 'community-deferred'
         }),
         linuxDockerProviderLane: expect.objectContaining({
-          jobId: 14091956354,
+          jobId: 14284448827,
           status: 'passed',
           providerLane: expect.objectContaining({
             selectedProviderSetting: 'docker',
@@ -94,21 +113,31 @@ describe('exact release readiness assessment', () => {
             runtimeBlockedReason: '<none>'
           })
         }),
-        previewArtifact: expect.objectContaining({
-          jobId: 14091956355,
-          vsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
-          sha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6',
-          sizeBytes: 998988,
-          releaseUse: 'preview-only-not-exact-release-artifact'
+        vagrantVsixAcceptance: expect.objectContaining({
+          jobId: 14284448828,
+          runDirectory: 'vagrant/evidence/20260508-113126',
+          manifestPath: 'vagrant/evidence/20260508-113126/manifest.json',
+          assertionReceiptPath:
+            'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
+          harnessId: 'HARNESS-VHS-002',
+          selectedHash: '8741bb08026c104100720c0ef48621e4ab7762fd',
+          baseHash: 'c188cdec606aac3b17d8b17274baa19eef3e4017',
+          labviewVersion: '2026',
+          labviewBitness: 'x86',
+          proofExitCode: 0,
+          runtimeProvider: 'host-native',
+          runtimeEngine: 'labview-cli',
+          runtimeExecutionState: 'succeeded',
+          generatedReportExists: true,
+          claimBoundary:
+            'vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof'
         }),
-        communityProofIntakeChecklist: expect.objectContaining({
-          path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
-          jsonPath:
-            'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
-          status: 'prepared-no-mutation',
-          candidateAdmissionPaths: ['windows-proof-claim', 'community-deferred-claim'],
-          communityReportsBecomeMaintainerProofAutomatically: false,
-          linuxDockerEvidenceMayProveWindowsLabviewInstalledUserBehavior: false
+        previewArtifact: expect.objectContaining({
+          jobId: 14284448829,
+          vsixPath: 'preview-evidence/vi-history-suite-1.3.14.vsix',
+          sha256: 'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f',
+          sizeBytes: 1011604,
+          releaseUse: 'preview-only-not-exact-release-artifact'
         })
       })
     );
@@ -118,15 +147,23 @@ describe('exact release readiness assessment', () => {
     expect(machine.blockingOrDeferredGates).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'windows-installed-user-labview-proof',
-          status: 'community-deferred'
+          id: 'release-branch',
+          status: 'not-opened-by-this-assessment'
+        }),
+        expect.objectContaining({
+          id: 'exact-tag',
+          status: 'not-admitted'
         }),
         expect.objectContaining({
           id: 'windows-exact-vsix-install-proof',
-          status: 'missing-for-1.3.10'
+          status: 'missing-for-selected-1.3.14-exact-authority-vsix'
         }),
         expect.objectContaining({
-          id: 'marketplace-exact-release',
+          id: 'windows-docker-desktop-windows-container-proof',
+          status: 'community-deferred'
+        }),
+        expect.objectContaining({
+          id: 'main-promotion',
           status: 'not-admitted'
         })
       ])
@@ -136,39 +173,46 @@ describe('exact release readiness assessment', () => {
       marketplaceTouched: false,
       publicGitHubExactReleaseMutation: 'not-performed',
       publicGitHubTagMutation: 'not-performed',
-      marketplaceExactMutation: 'not-performed'
+      marketplaceExactMutation: 'not-performed',
+      exactTagCreated: false,
+      releaseBranchCreated: false,
+      mainPromoted: false
     });
 
     expect(publicationState.exactReleaseReadinessAssessment).toMatchObject({
-      status: 'blocked',
-      assessmentPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.md',
-      assessmentJsonPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.json',
-      assessedCommit: '42d1f581874c9fad8f6dcbc96c8827bb07e3b508',
-      assessedPipelineId: 2480212103,
-      packageVersion: '1.3.10',
-      currentAdmissibleClaim: 'linux-docker-validated-preview-only',
-      blockingReason: 'missing-native-windows-installed-user-labview-proof-for-1.3.10',
-      windowsInstalledUserLabviewProofState: 'community-deferred',
-      previewVsixSha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6',
-      communityProofIntakeChecklistPath:
-        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
-      communityProofIntakeChecklistJsonPath:
-        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json'
+      status: 'release-branch-opening-admissible',
+      assessmentPath: 'docs/product/exact-release-readiness-assessment-2026-05-08.md',
+      assessmentJsonPath: 'docs/product/exact-release-readiness-assessment-2026-05-08.json',
+      assessedCommit: 'ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8',
+      assessedPipelineId: 2511103937,
+      packageVersion: '1.3.14',
+      currentAdmissibleClaim:
+        'develop-candidate-release-readiness-consolidated-no-exact-publication',
+      blockingReason: null,
+      releaseBranchOpening: 'admissible-as-separate-governed-action',
+      windowsInstalledUserLabviewProofState: 'admitted-for-host-labview-2026-x64',
+      vagrantVsixAcceptanceState: 'protected-develop-ci-receipt-retained',
+      windowsDockerDesktopProofState: 'community-deferred',
+      previewVsixSha256: 'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f',
+      windowsExactVsixInstallProofState:
+        'missing-for-selected-1.3.14-exact-authority-vsix',
+      publicGitHubExactMutation: 'not-admitted-and-not-performed',
+      marketplaceExactMutation: 'not-admitted-and-not-performed',
+      mainPromotion: 'not-admitted-and-not-performed'
     });
-    expect(informationItemMap).toContain('Exact release readiness assessment');
-    expect(informationItemMap).toContain('Windows/LabVIEW community proof intake checklist');
-    expect(currentState).toContain('exact-release-readiness-assessment-2026-04-26.md');
-    expect(currentState).toContain('current exact-release readiness verdict');
-    expect(currentState).toContain(
-      'windows-labview-community-proof-intake-checklist-2026-04-26.md'
-    );
-    expect(srs).toContain('exact-release readiness');
+    expect(informationItemMap).toContain('exact-release-readiness-assessment-2026-05-08.md');
+    expect(informationItemMap).toContain('pipeline `2511103937`');
+    expect(currentState).toContain('exact-release-readiness-assessment-2026-05-08.md');
+    expect(currentState).toContain('release branch opening admissible as a separate governed action');
+    expect(currentState).toContain('`2511103937`');
+    expect(srs).toContain('exact-release-readiness-assessment-2026-05-08.md');
+    expect(srs).toContain('current `1.3.14` exact-release readiness verdict');
+    expect(rtm).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(rtm).toContain(
       'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143'
     );
     expect(testPlan).toContain('TEST-UNIT-388');
-    expect(testPlan).toContain('TEST-UNIT-389');
     expect(testPlan).toContain('TEST-DOC-141');
-    expect(testPlan).toContain('TEST-DOC-142');
+    expect(testPlan).toContain('`1.3.14` release-branch-opening-admissible');
   });
 });

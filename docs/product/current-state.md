@@ -58,8 +58,8 @@ Read these in order:
 40. [Release Publication State JSON](./release-publication-state.json)
 41. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
 42. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26 JSON](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
-43. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
-44. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
+43. [Exact Release Readiness Assessment 2026-05-08](./exact-release-readiness-assessment-2026-05-08.md)
+44. [Exact Release Readiness Assessment 2026-05-08 JSON](./exact-release-readiness-assessment-2026-05-08.json)
 45. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 47. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
@@ -133,8 +133,8 @@ Current control-plane surfaces:
 41. [Release Publication State JSON](./release-publication-state.json)
 42. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
 43. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26 JSON](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
-44. [Exact Release Readiness Assessment 2026-04-26](./exact-release-readiness-assessment-2026-04-26.md)
-45. [Exact Release Readiness Assessment 2026-04-26 JSON](./exact-release-readiness-assessment-2026-04-26.json)
+44. [Exact Release Readiness Assessment 2026-05-08](./exact-release-readiness-assessment-2026-05-08.md)
+45. [Exact Release Readiness Assessment 2026-05-08 JSON](./exact-release-readiness-assessment-2026-05-08.json)
 46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 47. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 48. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
@@ -269,14 +269,17 @@ Latest landed ship target:
   assertion, and Windows Docker Desktop Windows-container proof
   community/deferred through public issue #65
 - current exact-release readiness assessment:
-  [exact-release-readiness-assessment-2026-04-26.md](./exact-release-readiness-assessment-2026-04-26.md)
+  [exact-release-readiness-assessment-2026-05-08.md](./exact-release-readiness-assessment-2026-05-08.md)
 - current exact-release readiness assessment JSON:
-  [exact-release-readiness-assessment-2026-04-26.json](./exact-release-readiness-assessment-2026-04-26.json)
+  [exact-release-readiness-assessment-2026-05-08.json](./exact-release-readiness-assessment-2026-05-08.json)
 - current exact-release readiness verdict:
-  blocked for exact-release promotion; `develop` commit
-  `42d1f581874c9fad8f6dcbc96c8827bb07e3b508` and pipeline `2480212103` are
-  Linux/Docker validated, but Windows installed-user LabVIEW proof for
-  `1.3.10` remains community/deferred
+  release branch opening admissible as a separate governed action; `develop`
+  commit `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8` and pipeline
+  `2511103937` retain Linux/Docker, Linux host LabVIEW, Windows host LabVIEW,
+  Vagrant VSIX acceptance, public exact pre-tag, package preview, docs, and
+  assurance evidence for `1.3.14`, while exact tag, public GitHub release, VS
+  Code Marketplace mutation, Windows Docker Desktop Windows-container proof,
+  and `main` promotion remain not admitted
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:

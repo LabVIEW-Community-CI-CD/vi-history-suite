@@ -191,8 +191,9 @@ describe('Windows/LabVIEW community proof intake checklist', () => {
       communityProofIntakeChecklistJsonPath:
         'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
       exactCandidateConversionPaths: [
-        'windows-proof-claim-with-admitted-windows-labview-receipts',
-        'community-deferred-claim-with-no-windows-installed-user-proof-claim'
+        'open-governed-release-1.3.14-branch-with-current-evidence-boundary',
+        'reassess-release-branch-before-exact-tag',
+        'retain-selected-exact-authority-vsix-before-public-exact-release'
       ]
     });
     expect(assessment.communityProofIntakeChecklist).toMatchObject({

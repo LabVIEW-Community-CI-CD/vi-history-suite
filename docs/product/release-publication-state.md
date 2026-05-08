@@ -397,38 +397,56 @@ final installed-user distribution surface.
 ## Exact Release Readiness Assessment
 
 - Current assessment:
-  `docs/product/exact-release-readiness-assessment-2026-04-26.md`
+  `docs/product/exact-release-readiness-assessment-2026-05-08.md`
 - Current assessment JSON:
-  `docs/product/exact-release-readiness-assessment-2026-04-26.json`
+  `docs/product/exact-release-readiness-assessment-2026-05-08.json`
+- Superseded current assessment retained as historical input:
+  `docs/product/exact-release-readiness-assessment-2026-04-26.md`
 - Assessed branch: `develop`
 - Assessed commit:
-  `42d1f581874c9fad8f6dcbc96c8827bb07e3b508`
-- Assessed pipeline: `2480212103` / `success`
-- Candidate package version: `1.3.10`
-- Exact-release readiness: blocked
-- Current admissible claim: Linux/Docker validated preview only
-- Blocking reason:
-  missing native Windows installed-user LabVIEW proof for `1.3.10`
-- Windows installed-user LabVIEW proof state: community/deferred
+  `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8`
+- Assessed pipeline: `2511103937` / `success`
+- Candidate package version: `1.3.14`
+- Exact-release readiness: release branch opening admissible as a separate
+  governed action
+- Current admissible claim: `1.3.14` develop candidate evidence
+  consolidated; exact publication not admitted
+- Release branch: not opened by this assessment
+- Exact tag: not admitted
+- Windows installed-user LabVIEW proof state: admitted for host LabVIEW 2026
+  x64
+- Vagrant Windows VSIX acceptance: protected `develop` CI receipt retained in
+  job `14284448828`
+- Windows Docker Desktop Windows-container proof state: community/deferred
 - Preview VSIX evidence:
-  `preview-evidence/vi-history-suite-1.3.10.vsix`
+  `preview-evidence/vi-history-suite-1.3.14.vsix`
 - Preview VSIX SHA-256:
-  `f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6`
+  `cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f`
+- Preview VSIX size: `1011604` bytes
+- Linux Docker provider lane job: `14284448827`
+- Public exact pre-tag proof job: `14284448826`
+- Preview package job: `14284448829`
 - Public GitHub exact mutation: not admitted and not performed
 - VS Code Marketplace exact mutation: not admitted and not performed
+- `main` promotion: not admitted and not performed
 - Community proof intake checklist:
   `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md`
 - Community proof intake checklist JSON:
   `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json`
-- Exact candidate conversion paths:
-  Windows-proof claim with admitted Windows/LabVIEW receipts, or
-  community-deferred claim with no Windows installed-user proof claim
+- Next exact candidate conversion path:
+  open a governed `release/1.3.14` branch from `ce103d3` only as a separate
+  action, reassess release-branch readiness before any exact tag, and retain
+  the selected exact authority VSIX before public exact release or Marketplace
+  gates.
 
-The current `develop` line is healthy as a Linux/Docker validated preview and
-community-validation package line. It is not ready for exact-release promotion
-until the missing Windows installed-user LabVIEW proof for the selected exact
-VSIX is retained or the exact release claim is explicitly narrowed and
-re-governed.
+The current `develop` line is no longer a `1.3.10` Linux/Docker-only blocked
+preview. It is a `1.3.14` release-readiness consolidation line with Linux
+Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX acceptance,
+public exact pre-tag, package preview, docs, and assurance evidence retained.
+That makes release-branch opening admissible as a separate governed action,
+but does not admit an exact tag, public GitHub release, VS Code Marketplace
+publication, Windows Docker Desktop Windows-container proof claim, or `main`
+promotion.
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
