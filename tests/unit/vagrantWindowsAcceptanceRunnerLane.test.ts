@@ -84,7 +84,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('Configuring WinRM for Vagrant communicator after reload');
     expect(bootstrap).toContain('sc.exe config winrm start= auto');
     expect(bootstrap).toContain('Set-NetConnectionProfile');
-    expect(bootstrap).toContain('Enable-PSRemoting -SkipNetworkProfileCheck -Force');
+    expect(bootstrap).not.toContain('Enable-PSRemoting');
     expect(bootstrap).toContain('Test-WSMan -ComputerName localhost');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');

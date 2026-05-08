@@ -149,11 +149,6 @@ try {
 } catch {
   Write-Step "Network profile normalization warning: $($_.Exception.Message)"
 }
-try {
-  Enable-PSRemoting -SkipNetworkProfileCheck -Force -ErrorAction Stop | Out-Host
-} catch {
-  Write-Step "Enable-PSRemoting warning: $($_.Exception.Message)"
-}
 Start-Service -Name winrm -ErrorAction Stop
 try {
   Test-WSMan -ComputerName localhost -ErrorAction Stop | Out-Null
