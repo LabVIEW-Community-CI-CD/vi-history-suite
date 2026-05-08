@@ -32,13 +32,14 @@ retained closed baseline.
 - current `main` package line: `1.3.9`
 - current `develop` package line: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: none
+- active release-candidate branch: `release/1.3.14`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- the active exact candidate line is `v1.3.14`; later exact lines must reopen
-  through the same GitFlow and publication gates from `develop`
+- the active exact candidate line is `v1.3.14`; `release/1.3.14` is now the
+  governed release-candidate branch, and later exact lines must reopen through
+  the same GitFlow and publication gates from `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`

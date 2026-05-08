@@ -79,7 +79,7 @@ Current version-line contract:
 - current published package line on `main`: `1.3.9`
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: none
+- active release-candidate branch: `release/1.3.14`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:

@@ -2463,6 +2463,20 @@ Information-for-users review cases:
   VSIX acceptance is governed candidate evidence only, not a substitute for
   native Windows x64 private-release proof or Windows Docker Desktop
   Windows-container proof
+- `TEST-UNIT-399`: run `tests/unit/releaseBranchOpening.test.ts` and confirm
+  the `release/1.3.14` branch-opening packet retains branch ref
+  `refs/heads/release/1.3.14`, source commit `50bec33`, pipeline
+  `2511168302`, Vagrant job `14284865649`, package preview job `14284865650`,
+  preview VSIX SHA-256
+  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`,
+  no exact tag/public GitHub/Marketplace/main mutation, and the next
+  release-branch readiness reassessment action
+- `TEST-DOC-151`: review release-publication state, current-state,
+  public-release-candidate, post-release sustainment rules, hosted CI
+  governance, SRS, RTM, and this test plan and confirm `release/1.3.14` is
+  the active governed release-candidate branch while Windows Docker Desktop
+  Windows-container proof remains community/deferred and exact publication
+  remains blocked
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

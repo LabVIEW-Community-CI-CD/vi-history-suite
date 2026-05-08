@@ -28,6 +28,11 @@ describe('public release candidate control surface', () => {
       packageVersion: '1.3.14',
       state: 'develop-patch-candidate-consolidation',
       branch: 'develop',
+      activeReleaseCandidateBranch: 'release/1.3.14',
+      releaseBranchOpeningPacketPath:
+        'docs/product/release-branch-opening-v1.3.14-2026-05-08.md',
+      releaseBranchOpeningPacketJsonPath:
+        'docs/product/release-branch-opening-v1.3.14-2026-05-08.json',
       sourceFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
       mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
       sourceHeadCommit: '97efa937a5317d69a1d65607c4f704d603edbe52',
@@ -220,6 +225,10 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.14`');
     expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.14`');
     expect(candidateMarkdown).toContain('Active develop candidate branch: `develop`');
+    expect(candidateMarkdown).toContain('Active release-candidate branch: `release/1.3.14`');
+    expect(candidateMarkdown).toContain(
+      'docs/product/release-branch-opening-v1.3.14-2026-05-08.md'
+    );
     expect(candidateMarkdown).toContain(
       '`feature/develop-1.3.14-candidate-consolidation`'
     );
@@ -266,7 +275,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('current exact released line: `v1.3.9`');
     expect(currentState).toContain('current published package line on `main`: `1.3.9`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.14`');
-    expect(currentState).toContain('active release-candidate branch: none');
+    expect(currentState).toContain('active release-candidate branch: `release/1.3.14`');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');

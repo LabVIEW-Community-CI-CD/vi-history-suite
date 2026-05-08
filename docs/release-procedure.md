@@ -16,7 +16,7 @@
 - The current published package line on `main` is `1.3.9`.
 - The current develop package line on `develop` is `1.3.14`.
 - The active exact release candidate line on `develop` is `v1.3.14`.
-- The active release-candidate branch is none.
+- The active release-candidate branch is `release/1.3.14`.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -76,7 +76,8 @@
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
 - The active governed release claim is the `1.3.14` develop patch candidate
-  consolidation with all provider/year/bitness variants selectable, admitted
+  consolidation with `release/1.3.14` now opened as the governed release
+  candidate branch, all provider/year/bitness variants selectable, admitted
   Windows host proof retained, Vagrant VSIX acceptance governed by repo-owned
   assertion, and Windows Docker Desktop proof community/deferred.
 - The active Marketplace public validation preview line is `1.3.13`.

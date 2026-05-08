@@ -442,6 +442,32 @@ describe('release publication state resolver', () => {
       nextAdmittedAction:
         'open-governed-release-1.3.14-branch-from-ce103d3-if-current-claim-boundary-remains-selected'
     });
+    expect(state.releaseBranchOpening).toMatchObject({
+      status: 'performed-and-retained',
+      packetPath: 'docs/product/release-branch-opening-v1.3.14-2026-05-08.md',
+      packetJsonPath: 'docs/product/release-branch-opening-v1.3.14-2026-05-08.json',
+      sourceBranch: 'develop',
+      sourceCommit: '50bec3391ea823739c2e8baddb33b77c283a37eb',
+      releaseBranch: 'release/1.3.14',
+      releaseBranchRef: 'refs/heads/release/1.3.14',
+      packageVersion: '1.3.14',
+      pipelineId: 2511168302,
+      pipelineStatus: 'success',
+      vagrantVsixAcceptanceJobId: 14284865649,
+      vagrantVsixAcceptanceAssertionPath:
+        'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
+      vagrantVsixAcceptanceManifestPath: 'vagrant/evidence/20260508-121101/manifest.json',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.14.vsix',
+      previewVsixSha256: 'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91',
+      previewVsixSizeBytes: 1011702,
+      selectedExactAuthorityVsix: null,
+      releaseExtensionJob: 'not-run-without-exact-tag',
+      publicGitHubExactMutation: 'not-admitted-and-not-performed',
+      marketplaceExactMutation: 'not-admitted-and-not-performed',
+      windowsDockerDesktopProofState: 'community-deferred',
+      mainPromotion: 'not-admitted-and-not-performed',
+      nextAdmittedAction: 'reassess-release-1.3.14-branch-readiness-before-exact-tag'
+    });
     expect(state.windowsLabviewCommunityProofIntakeChecklist).toMatchObject({
       status: 'prepared-no-mutation',
       path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
@@ -479,6 +505,7 @@ describe('release publication state resolver', () => {
     });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('## Exact Release Readiness Assessment');
+    expect(stateDoc).toContain('## Release Branch Opening');
     expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
     expect(stateDoc).toContain('## Exact Release Candidate Reassessment');
     expect(stateDoc).toContain('Exact-release readiness: release branch opening admissible');
@@ -486,6 +513,11 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Release branch opening: admissible as next governed action');
     expect(stateDoc).toContain('Admitted external Windows proof arrived: false');
     expect(stateDoc).toContain('Assessed pipeline: `2511103937` / `success`');
+    expect(stateDoc).toContain('Release branch pipeline: `2511168302` / `success`');
+    expect(stateDoc).toContain('Preview package job: `14284865650`');
+    expect(stateDoc).toContain(
+      'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91'
+    );
     expect(stateDoc).toContain(
       'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f'
     );
@@ -532,13 +564,13 @@ describe('release publication state resolver', () => {
       status: 'retained-history'
     });
     expect(state.activeCandidate).toMatchObject({
-      releaseBranch: null,
+      releaseBranch: 'release/1.3.14',
       tag: null,
       packageVersion: '1.3.14',
-      status: 'develop-patch-candidate-consolidation'
+      status: 'release-branch-opened-readiness-pending'
     });
     expect(state.nextAdmittedAction).toBe(
-      'retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation'
+      'reassess-release-1.3.14-branch-readiness-before-exact-tag'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

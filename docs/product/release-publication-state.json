@@ -544,6 +544,32 @@
     ],
     "nextAdmittedAction": "open-governed-release-1.3.14-branch-from-ce103d3-if-current-claim-boundary-remains-selected"
   },
+  "releaseBranchOpening": {
+    "status": "performed-and-retained",
+    "packetPath": "docs/product/release-branch-opening-v1.3.14-2026-05-08.md",
+    "packetJsonPath": "docs/product/release-branch-opening-v1.3.14-2026-05-08.json",
+    "sourceBranch": "develop",
+    "sourceCommit": "50bec3391ea823739c2e8baddb33b77c283a37eb",
+    "releaseBranch": "release/1.3.14",
+    "releaseBranchRef": "refs/heads/release/1.3.14",
+    "packageVersion": "1.3.14",
+    "pipelineId": 2511168302,
+    "pipelineStatus": "success",
+    "pipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511168302",
+    "vagrantVsixAcceptanceJobId": 14284865649,
+    "vagrantVsixAcceptanceAssertionPath": "vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json",
+    "vagrantVsixAcceptanceManifestPath": "vagrant/evidence/20260508-121101/manifest.json",
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.14.vsix",
+    "previewVsixSha256": "d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91",
+    "previewVsixSizeBytes": 1011702,
+    "selectedExactAuthorityVsix": null,
+    "releaseExtensionJob": "not-run-without-exact-tag",
+    "publicGitHubExactMutation": "not-admitted-and-not-performed",
+    "marketplaceExactMutation": "not-admitted-and-not-performed",
+    "windowsDockerDesktopProofState": "community-deferred",
+    "mainPromotion": "not-admitted-and-not-performed",
+    "nextAdmittedAction": "reassess-release-1.3.14-branch-readiness-before-exact-tag"
+  },
   "windowsLabviewCommunityProofIntakeChecklist": {
     "status": "prepared-no-mutation",
     "path": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md",
@@ -603,15 +629,15 @@
     "semverOpeningsFrozenUntil": "v1.3.9-closeout-retained",
     "status": "retained-history"
   },
-  "nextAdmittedAction": "retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation",
+  "nextAdmittedAction": "reassess-release-1.3.14-branch-readiness-before-exact-tag",
   "productionMutationAllowed": false,
   "activeCandidate": {
     "sourceBranch": "develop",
-    "releaseBranch": null,
+    "releaseBranch": "release/1.3.14",
     "tag": null,
     "packageVersion": "1.3.14",
-    "status": "develop-patch-candidate-consolidation",
-    "rationale": "Develop now carries the 1.3.14 patch candidate for release-readiness consolidation after the 1.3.13 public validation pre-release; Vagrant VSIX acceptance has a repo-owned evidence assertion while Windows Docker Desktop Windows-container proof remains community/deferred."
+    "status": "release-branch-opened-readiness-pending",
+    "rationale": "Release/1.3.14 is now opened from the governed develop 1.3.14 candidate line for release-readiness consolidation; exact tag, public GitHub release, Marketplace mutation, Windows Docker Desktop Windows-container proof admission, and main promotion remain not admitted."
   },
   "publicValidationPrerelease": {
     "status": "published-and-verified",

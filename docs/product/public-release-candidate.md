@@ -6,6 +6,9 @@
 - Active develop candidate state: patch consolidation; no public GitHub
   release, Marketplace mutation, exact tag, or `main` promotion
 - Active develop candidate branch: `develop`
+- Active release-candidate branch: `release/1.3.14`
+- Release-branch opening packet:
+  `docs/product/release-branch-opening-v1.3.14-2026-05-08.md`
 - Source consolidation branch:
   `feature/develop-1.3.14-candidate-consolidation`
 - Protected develop merge: GitLab MR `!192` merged
@@ -32,6 +35,7 @@
   public GitHub, and VS Code Marketplace, while blocked historical public
   GitHub incident evidence for `v1.3.8` remains retained separately
 - Protected exact-release line: `main`
+- Active release-candidate branch: `release/1.3.14`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
 - Required checks:

@@ -199,7 +199,7 @@ Latest landed ship target:
 - current published package line on `main`: `1.3.9`
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: none
+- active release-candidate branch: `release/1.3.14`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -263,8 +263,8 @@ Latest landed ship target:
   exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.14` develop patch candidate
-  consolidation with all provider/year/bitness variants selectable, admitted
+- active governed release claim: `1.3.14` release branch opened from
+  `develop` with all provider/year/bitness variants selectable, admitted
   Windows host LabVIEW 2026 x64 proof, repo-owned Vagrant VSIX acceptance
   assertion, and Windows Docker Desktop Windows-container proof
   community/deferred through public issue #65
@@ -273,27 +273,34 @@ Latest landed ship target:
 - current exact-release readiness assessment JSON:
   [exact-release-readiness-assessment-2026-05-08.json](./exact-release-readiness-assessment-2026-05-08.json)
 - current exact-release readiness verdict:
-  release branch opening admissible as a separate governed action; `develop`
-  commit `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8` and pipeline
-  `2511103937` retain Linux/Docker, Linux host LabVIEW, Windows host LabVIEW,
-  Vagrant VSIX acceptance, public exact pre-tag, package preview, docs, and
-  assurance evidence for `1.3.14`, while exact tag, public GitHub release, VS
-  Code Marketplace mutation, Windows Docker Desktop Windows-container proof,
-  and `main` promotion remain not admitted
+  release branch opening was admitted as a separate governed action and has
+  now been performed on `release/1.3.14`; `develop` commit
+  `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8` and pipeline `2511103937`
+  retain Linux/Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX
+  acceptance, public exact pre-tag, package preview, docs, and assurance
+  evidence for `1.3.14`, while exact tag, public GitHub release, VS Code
+  Marketplace mutation, Windows Docker Desktop Windows-container proof, and
+  `main` promotion remain not admitted
+- current release-branch opening packet:
+  [release-branch-opening-v1.3.14-2026-05-08.md](./release-branch-opening-v1.3.14-2026-05-08.md)
+- current release-branch opening packet JSON:
+  [release-branch-opening-v1.3.14-2026-05-08.json](./release-branch-opening-v1.3.14-2026-05-08.json)
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
   [windows-labview-community-proof-intake-checklist-2026-04-26.json](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 - exact-release candidate conversion boundary:
-  the blocked assessment can be reassessed through either a Windows-proof claim
-  path with admitted Windows/LabVIEW proof receipts, or a community-deferred
-  claim path that keeps Windows/LabVIEW selectable while explicitly avoiding a
-  maintainer-proof claim
-- current exact-release candidate reassessment:
+  the `2026-05-08` readiness assessment admitted the governed
+  `release/1.3.14` branch opening as the next separate action; the branch is
+  now open and retained, so the next conversion step is a release-branch
+  readiness reassessment before any exact tag, public GitHub release, VS Code
+  Marketplace mutation, Windows Docker Desktop proof admission, or `main`
+  promotion
+- historical exact-release candidate reassessment:
   [exact-release-candidate-reassessment-2026-04-26.md](./exact-release-candidate-reassessment-2026-04-26.md)
-- current exact-release candidate reassessment JSON:
+- historical exact-release candidate reassessment JSON:
   [exact-release-candidate-reassessment-2026-04-26.json](./exact-release-candidate-reassessment-2026-04-26.json)
-- current exact-release candidate reassessment verdict:
+- historical exact-release candidate reassessment verdict:
   `develop` commit `14243fd0ee647736124b06edb5a9947eae178d38` and
   pipeline `2480546719` are admissible for opening a governed
   `release/1.3.10` branch only under the selected community-deferred
