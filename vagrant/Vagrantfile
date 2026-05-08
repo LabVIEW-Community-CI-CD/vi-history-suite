@@ -60,13 +60,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.cpus   = VM_CPUS
     vb.gui    = false                         # headless; set true to debug
     vb.customize ["modifyvm", :id, "--firmware", "efi"]
-    # Windows 11 BitLocker checks the Secure Boot state during early boot.
-    # Vagrant imports the appliance before first boot. Initialize the clone's
-    # renamed UEFI variable store, then enroll and enable Secure Boot before WinRM.
-    vb.customize ["modifynvram", :id, "inituefivarstore"]
-    vb.customize ["modifynvram", :id, "enrollmssignatures"]
-    vb.customize ["modifynvram", :id, "enrollorclpk"]
-    vb.customize ["modifynvram", :id, "secureboot", "--enable"]
+    # Preserve the exported golden VM's UEFI variable store. Reinitializing or
+    # re-enrolling Secure Boot keys on the clone changes BitLocker measurements.
     vb.customize ["modifyvm", :id,
                   "--vram",          "128",
                   "--clipboard",     "disabled",

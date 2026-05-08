@@ -198,7 +198,7 @@ Runner operator hardening:
   `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
   serialized GitLab `resource_group: vihs-windows-vagrant`, and isolated
   `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host uses
-  `/run/media/sergio/Data1/vihs-vagrant` as the large-drive storage root for
+  `/run/media/sergio/Data/vihs-vagrant` as the large-drive storage root for
   `VAGRANT_HOME`, box output/cache, export work, and the VirtualBox default
   machine folder; runner creation uses the `POST /user/runners` API to set
   tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
@@ -305,7 +305,7 @@ Job ownership:
   provisioner, runs acceptance, validates the latest acceptance manifest, always
   halts the VM, and retains `vagrant/evidence/`; this job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
-  machine folder to `/run/media/sergio/Data1/vihs-vagrant` so the large
+  machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large
   Windows box and disposable VM clone do not land on the root filesystem; this
   is Vagrant VSIX
   acceptance evidence, not a substitute for the deferred native Windows x64

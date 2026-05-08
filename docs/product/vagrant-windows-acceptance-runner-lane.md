@@ -28,7 +28,7 @@ Governed registration contract:
 - locked: `true`
 - run untagged: `false`
 - maximum timeout: `7200`
-- large-drive storage root: `/run/media/sergio/Data1/vihs-vagrant`
+- large-drive storage root: `/run/media/sergio/Data/vihs-vagrant`
 
 Registration uses GitLab's current runner creation workflow: create the runner
 configuration first, receive a runner authentication token with the `glrt-`
@@ -76,17 +76,16 @@ Official GitLab references:
 - Vagrant box: `vihs/win11-labview2026`
 - Vagrantfile surface: `vagrant/Vagrantfile`
 - Vagrant dotfile path: `vagrant/.vagrant-ci`
-- Vagrant home: `/run/media/sergio/Data1/vihs-vagrant/vagrant-home`
-- box output file: `/run/media/sergio/Data1/vihs-vagrant/box-cache/windows11.box`
-- box export work root: `/run/media/sergio/Data1/vihs-vagrant/box-work`
+- Vagrant home: `/run/media/sergio/Data/vihs-vagrant/vagrant-home`
+- box output file: `/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box`
+- box export work root: `/run/media/sergio/Data/vihs-vagrant/box-work`
 - VirtualBox default machine folder:
-  `/run/media/sergio/Data1/vihs-vagrant/VirtualBox VMs`
+  `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
-- disposable clone boot policy: Vagrant sets EFI firmware, initializes the
-  clone's renamed UEFI variable store, enrolls Microsoft Secure Boot
-  signatures, enrolls the Oracle platform key, and enables Secure Boot before
-  the first clone boot so BitLocker does not see Secure Boot as disabled
+- disposable clone boot policy: Vagrant sets EFI firmware and preserves the
+  exported golden VM UEFI variable store so BitLocker sees the same measured
+  boot state in the disposable clone
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
 - disposable CI VM cleanup script:
@@ -104,9 +103,9 @@ CI first runs `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to
 touch the golden VM, fails if the disposable CI VM is running, deletes only a
 stopped VM named `vihs-ci-win11`, and removes the active `.vagrant-ci` state.
 The job then runs Vagrant with `VAGRANT_DOTFILE_PATH=.vagrant-ci` and
-`VAGRANT_HOME=/run/media/sergio/Data1/vihs-vagrant/vagrant-home`. The CI job
+`VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home`. The CI job
 also sets the VirtualBox default machine folder to
-`/run/media/sergio/Data1/vihs-vagrant/VirtualBox VMs` before importing the
+`/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs` before importing the
 disposable VM so the root filesystem does not need to hold the large Windows
 box or clone. The host doctor fails closed when the active VirtualBox machine
 folder does not match this large-drive path, or when existing Vagrant state for
@@ -149,7 +148,7 @@ The lane fails closed when:
 - the refresh work root or box output directory does not have enough free space
 - the configured VirtualBox machine folder is not the large-drive path or lacks
   enough free space for a one-VM import estimate
-- the disposable clone cannot enable EFI Secure Boot before first boot
+- the disposable clone does not boot with the golden VM's exported UEFI state
 - a stale `vihs-ci-win11` VM is already running during cleanup
 - local Vagrant metadata points at any VM other than `vihs-ci-win11`
 - ignored local Vagrant metadata for the active dotfile path points at a VM other than

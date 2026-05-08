@@ -37,11 +37,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('- vagrant');
     expect(gitlabCi).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden');
     expect(gitlabCi).toContain('VIHS_VAGRANT_CI_VM_NAME: vihs-ci-win11');
-    expect(gitlabCi).toContain('VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data1/vihs-vagrant');
-    expect(gitlabCi).toContain('VAGRANT_HOME: /run/media/sergio/Data1/vihs-vagrant/vagrant-home');
-    expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data1/vihs-vagrant/box-cache/windows11.box');
-    expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data1/vihs-vagrant/box-work');
-    expect(gitlabCi).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data1/vihs-vagrant/VirtualBox VMs"');
+    expect(gitlabCi).toContain('VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data/vihs-vagrant');
+    expect(gitlabCi).toContain('VAGRANT_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home');
+    expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box');
+    expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work');
+    expect(gitlabCi).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"');
     expect(gitlabCi).toContain('VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"');
     expect(gitlabCi).toContain('bash scripts/vagrant/doctor-vagrant-host.sh');
     expect(gitlabCi).toContain('bash scripts/vagrant/refresh-golden-box.sh');
@@ -58,10 +58,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(vagrantfile).toContain('WINRM_TIMEOUT = ENV.fetch("VIHS_VAGRANT_WINRM_TIMEOUT", "1800").to_i');
     expect(vagrantfile).toContain('vb.name   = VM_NAME');
     expect(vagrantfile).toContain('vb.customize ["modifyvm", :id, "--firmware", "efi"]');
-    expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "inituefivarstore"]');
-    expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "enrollmssignatures"]');
-    expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "enrollorclpk"]');
-    expect(vagrantfile).toContain('vb.customize ["modifynvram", :id, "secureboot", "--enable"]');
+    expect(vagrantfile).toContain("Preserve the exported golden VM's UEFI variable store");
+    expect(vagrantfile).not.toContain('modifynvram');
     expect(vagrantfile).toContain('config.winrm.timeout       = WINRM_TIMEOUT');
     expect(vagrantfile).toContain('config.vm.boot_timeout = BOOT_TIMEOUT');
     expect(vagrantfile).toContain('config.vm.provision "cold-labview"');
@@ -141,8 +139,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).not.toContain('--tag-list "linux,x64,virtualbox,vagrant,private-release"');
     expect(laneDoc).toContain('vihs-win11-labview2026-golden');
     expect(laneDoc).toContain('vihs-ci-win11');
-    expect(laneDoc).toContain('/run/media/sergio/Data1/vihs-vagrant');
-    expect(laneDoc).toContain('first clone boot');
+    expect(laneDoc).toContain('/run/media/sergio/Data/vihs-vagrant');
+    expect(laneDoc).toContain('preserves the');
+    expect(laneDoc).toContain('exported golden VM UEFI variable store');
     expect(laneDoc).toContain('vagrant/.vagrant');
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
@@ -172,11 +171,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
           ciVmName: 'vihs-ci-win11',
           resourceGroup: 'vihs-windows-vagrant',
           vagrantDotfilePath: '.vagrant-ci',
-          storageRoot: '/run/media/sergio/Data1/vihs-vagrant',
-          vagrantHome: '/run/media/sergio/Data1/vihs-vagrant/vagrant-home',
-          boxFile: '/run/media/sergio/Data1/vihs-vagrant/box-cache/windows11.box',
-          boxWorkdir: '/run/media/sergio/Data1/vihs-vagrant/box-work',
-          virtualBoxMachineFolder: '/run/media/sergio/Data1/vihs-vagrant/VirtualBox VMs',
+          storageRoot: '/run/media/sergio/Data/vihs-vagrant',
+          vagrantHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
+          boxFile: '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box',
+          boxWorkdir: '/run/media/sergio/Data/vihs-vagrant/box-work',
+          virtualBoxMachineFolder: '/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs',
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedCleanupScript: 'scripts/vagrant/cleanup-disposable-ci-vm.sh',
