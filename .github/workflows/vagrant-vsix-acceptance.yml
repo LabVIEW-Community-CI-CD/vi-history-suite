@@ -206,6 +206,13 @@ jobs:
           VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
           VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
 
+      - name: Reload after bootstrap autologon setup
+        working-directory: vagrant
+        run: vagrant reload --no-provision
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
+
       - name: Force cold LabVIEW state before acceptance
         working-directory: vagrant
         run: |

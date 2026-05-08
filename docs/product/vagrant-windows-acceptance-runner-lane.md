@@ -113,6 +113,9 @@ the active dotfile path points at any VM other than `vihs-ci-win11`.
 
 Golden box refresh is manual and variable-gated. Set
 `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true` only for an operator-controlled refresh.
+The bootstrap provisioner configures `vagrant` autologon inside the disposable
+clone, and the job reloads the VM immediately after bootstrap so the
+scheduled-task LabVIEW launch has an interactive desktop session.
 
 ## GitLab Job
 
@@ -123,8 +126,9 @@ It runs in the `test` stage on the Vagrant runner tags, serializes access with
 start as an independent DAG job without waiting for the separate Linux
 assurance runner lane. It packages the VSIX, stages it under `vagrant/shared/`,
 optionally refreshes the local box, runs the host doctor, boots the disposable
-VM, runs bootstrap, runs the guest cold-prep provisioner, runs acceptance,
-validates the latest manifest, and always halts the VM.
+VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
+runs the guest cold-prep provisioner, runs acceptance, validates the latest
+manifest, and always halts the VM.
 
 The job retains `vagrant/evidence/`, including:
 

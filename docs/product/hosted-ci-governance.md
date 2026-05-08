@@ -301,9 +301,10 @@ Job ownership:
   independently of the separate Linux assurance runner lane, packages the VSIX,
   stages it under `vagrant/shared/`, optionally refreshes the local box when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
-  disposable `vihs-ci-win11` VM, runs bootstrap, runs the guest cold-prep
-  provisioner, runs acceptance, validates the latest acceptance manifest, always
-  halts the VM, and retains `vagrant/evidence/`; this job pins
+  disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
+  autologon creates the interactive LabVIEW desktop session, runs the guest
+  cold-prep provisioner, runs acceptance, validates the latest acceptance
+  manifest, always halts the VM, and retains `vagrant/evidence/`; this job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
   machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large
   Windows box and disposable VM clone do not land on the root filesystem; this

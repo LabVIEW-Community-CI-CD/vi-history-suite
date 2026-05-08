@@ -122,6 +122,19 @@ if (-not (Test-Path -LiteralPath $lvExe)) {
 }
 Write-Step "LabVIEW 2026 present: $lvExe"
 
+# CI launches LabVIEW through an interactive scheduled task because WinRM
+# sessions run outside the desktop. Ensure disposable clones create that
+# desktop session after the post-bootstrap reload.
+Write-Step "Configuring vagrant autologon for interactive LabVIEW launch..."
+$winlogonPath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon'
+$computerName = $env:COMPUTERNAME
+Set-ItemProperty -LiteralPath $winlogonPath -Name 'AutoAdminLogon' -Value '1' -Type String
+Set-ItemProperty -LiteralPath $winlogonPath -Name 'ForceAutoLogon' -Value '1' -Type String
+Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultUserName' -Value 'vagrant' -Type String
+Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultPassword' -Value 'Vagrant1234!' -Type String
+Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultDomainName' -Value $computerName -Type String
+Write-Step "Autologon configured for $computerName\vagrant."
+
 # Enable LabVIEW VI Server TCP so LabVIEWCLI can connect
 $lvIniPath = 'C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.ini'
 if (Test-Path -LiteralPath $lvIniPath) {

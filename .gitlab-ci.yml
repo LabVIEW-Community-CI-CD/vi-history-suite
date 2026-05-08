@@ -599,6 +599,7 @@ vagrant_windows_vsix_acceptance:
     - bash scripts/vagrant/doctor-vagrant-host.sh 2>&1 | tee vagrant/evidence/vagrant-host-doctor.log
     - (cd vagrant && vagrant up --no-provision)
     - (cd vagrant && vagrant provision --provision-with bootstrap)
+    - (cd vagrant && vagrant reload --no-provision)
     - (cd vagrant && vagrant provision --provision-with cold-labview 2>&1 | tee evidence/labview-cold-prep.log)
     - (cd vagrant && vagrant provision --provision-with acceptance 2>&1 | tee evidence/acceptance-provision.log)
     - |

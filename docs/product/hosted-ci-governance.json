@@ -314,6 +314,7 @@
           "repoOwnedRefreshScript": "scripts/vagrant/refresh-golden-box.sh",
           "repoOwnedCleanupScript": "scripts/vagrant/cleanup-disposable-ci-vm.sh",
           "repoOwnedColdPrepScript": "vagrant/provision/prepare-cold-labview.ps1",
+          "bootstrapInteractiveSessionPolicy": "bootstrap-configures-vagrant-autologon-then-job-reloads-before-cold-labview",
           "vagrantfile": "vagrant/Vagrantfile",
           "goldenRefreshVariable": "VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true",
           "goldenRefreshWorkdirVariable": "VIHS_VAGRANT_BOX_WORKDIR",

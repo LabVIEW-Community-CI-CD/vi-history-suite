@@ -18,6 +18,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const gitlabCi = readText('.gitlab-ci.yml');
     const githubWorkflow = readText('.github/workflows/vagrant-vsix-acceptance.yml');
     const vagrantfile = readText('vagrant/Vagrantfile');
+    const bootstrap = readText('vagrant/provision/bootstrap.ps1');
     const coldPrep = readText('vagrant/provision/prepare-cold-labview.ps1');
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
     const refreshBox = readText('scripts/vagrant/refresh-golden-box.sh');
@@ -45,6 +46,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"');
     expect(gitlabCi).toContain('bash scripts/vagrant/doctor-vagrant-host.sh');
     expect(gitlabCi).toContain('bash scripts/vagrant/refresh-golden-box.sh');
+    expect(gitlabCi).toContain('vagrant reload --no-provision');
     expect(gitlabCi).toContain('vagrant provision --provision-with cold-labview');
     expect(gitlabCi).toContain('vagrant provision --provision-with acceptance');
     expect(gitlabCi).toContain('vagrant halt --force');
@@ -73,6 +75,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(coldPrep).toContain('taskkill.exe /IM "$processName.exe" /T /F');
     expect(coldPrep).toContain('Port $ViServerPort is no longer LISTENING.');
     expect(coldPrep).toContain('throw "Port $ViServerPort remained LISTENING');
+
+    expect(bootstrap).toContain('AutoAdminLogon');
+    expect(bootstrap).toContain('ForceAutoLogon');
+    expect(bootstrap).toContain('DefaultUserName');
+    expect(bootstrap).toContain('DefaultPassword');
+    expect(bootstrap).toContain('Configuring vagrant autologon for interactive LabVIEW launch');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -128,6 +136,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(githubWorkflow).toContain('rm -rf vagrant/.vagrant');
     expect(githubWorkflow).toContain('bash scripts/vagrant/doctor-vagrant-host.sh');
     expect(githubWorkflow).toContain('bash scripts/vagrant/refresh-golden-box.sh');
+    expect(githubWorkflow).toContain('vagrant reload --no-provision');
     expect(githubWorkflow).toContain('vagrant provision --provision-with cold-labview');
     expect(githubWorkflow).not.toContain('.github/scripts/vagrant/prepare-existing-vm-box.sh');
     expect(githubWorkflow).not.toContain('VBoxManage guestcontrol');
@@ -146,6 +155,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
+    expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon');
+    expect(laneDoc).toContain('reloads the VM immediately after bootstrap');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('not replace the deferred native Windows x64 private-release proof');
@@ -180,6 +191,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedCleanupScript: 'scripts/vagrant/cleanup-disposable-ci-vm.sh',
           repoOwnedColdPrepScript: 'vagrant/provision/prepare-cold-labview.ps1',
+          bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-then-job-reloads-before-cold-labview',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'
         })
