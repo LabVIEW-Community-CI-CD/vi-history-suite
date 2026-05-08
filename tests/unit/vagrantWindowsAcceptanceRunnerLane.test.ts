@@ -100,6 +100,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostDoctor).toContain('missing a virtualbox/box.ovf payload');
     expect(hostDoctor).toContain('Docker Engine reachable');
     expect(hostDoctor).toContain("check_command gitlab-runner");
+    expect(hostDoctor).toContain('Stale inaccessible disposable VM registry entry');
+    expect(hostDoctor).toContain('run scripts/vagrant/cleanup-disposable-ci-vm.sh before booting CI');
     expect(hostDoctor).toContain("Golden VM '$GOLDEN_VM_NAME' exists but is '$vm_state'");
     expect(hostDoctor).toContain("Vagrant CI VM '$CI_VM_NAME' is already running");
     expect(hostDoctor).toContain('Local Vagrant state points at');
@@ -124,6 +126,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(cleanupCiVm).toContain('Local Vagrant state points at golden VM');
     expect(cleanupCiVm).toContain('Deleting disposable import VM');
     expect(cleanupCiVm).toContain('outside expected disposable machine folder');
+    expect(cleanupCiVm).toContain('cleanup_inaccessible_disposable_registry_entries');
+    expect(cleanupCiVm).toContain('Unregistering stale inaccessible disposable VM registry entry');
     expect(cleanupCiVm).toContain('Disposable CI VM');
     expect(cleanupCiVm).toContain('is running; halt it before cleanup');
     expect(cleanupCiVm).toContain('VBoxManage unregistervm "$CI_VM_NAME" --delete');
@@ -223,6 +227,14 @@ describe('Vagrant Windows acceptance runner lane', () => {
         maximumTimeoutSeconds: 7200
       })
     );
+    expect(
+      hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance.operatorModel
+        .hostDoctorChecks
+    ).toContain('no-stale-inaccessible-disposable-registry-entry');
+    expect(
+      hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance.operatorModel
+        .cleanupChecks
+    ).toContain('unregister-stale-inaccessible-disposable-registry-entry');
     expect(hostedGovernanceJson.authorityGitLab.jobs.vagrant_windows_vsix_acceptance).toEqual(
       expect.objectContaining({
         classification: 'required-vagrant-windows-vsix-acceptance',

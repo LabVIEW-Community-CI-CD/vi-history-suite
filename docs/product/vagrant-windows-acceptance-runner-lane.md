@@ -101,15 +101,18 @@ golden-source and CI-runtime state remain distinct.
 
 CI first runs `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to
 touch the golden VM, fails if the disposable CI VM is running, deletes only a
-stopped VM named `vihs-ci-win11`, and removes the active `.vagrant-ci` state.
-The job then runs Vagrant with `VAGRANT_DOTFILE_PATH=.vagrant-ci` and
+stopped VM named `vihs-ci-win11`, unregisters stale inaccessible disposable
+registry entries that still point at the governed CI VM folder, and removes the
+active `.vagrant-ci` state. The job then runs Vagrant with
+`VAGRANT_DOTFILE_PATH=.vagrant-ci` and
 `VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home`. The CI job
 also sets the VirtualBox default machine folder to
 `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs` before importing the
 disposable VM so the root filesystem does not need to hold the large Windows
 box or clone. The host doctor fails closed when the active VirtualBox machine
-folder does not match this large-drive path, or when existing Vagrant state for
-the active dotfile path points at any VM other than `vihs-ci-win11`.
+folder does not match this large-drive path, when stale inaccessible
+disposable registry entries remain, or when existing Vagrant state for the
+active dotfile path points at any VM other than `vihs-ci-win11`.
 
 Golden box refresh is manual and variable-gated. Set
 `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true` only for an operator-controlled refresh.

@@ -343,6 +343,7 @@
             "vagrant-box-ovf-payload-present",
             "golden-vm-exists-and-powered-off",
             "no-stale-running-ci-vm",
+            "no-stale-inaccessible-disposable-registry-entry",
             "local-vagrant-state-points-only-at-ci-vm",
             "virtualbox-machine-folder-on-large-drive",
             "virtualbox-machine-folder-has-vm-import-space",
@@ -352,6 +353,7 @@
             "refuse-golden-vm-name-match",
             "fail-if-ci-vm-running",
             "delete-stopped-disposable-ci-vm-only",
+            "unregister-stale-inaccessible-disposable-registry-entry",
             "remove-active-vagrant-dotfile-state"
           ],
           "coldPrepChecks": [

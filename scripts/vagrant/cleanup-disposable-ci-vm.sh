@@ -70,6 +70,51 @@ remove_directory_if_under() {
   fi
 }
 
+cleanup_inaccessible_disposable_registry_entries() {
+  [[ -n "$EXPECTED_MACHINE_FOLDER" ]] || return 0
+
+  local disposable_root="$EXPECTED_MACHINE_FOLDER/$CI_VM_NAME"
+  local entries=()
+  mapfile -t entries < <(
+    VBoxManage list vms --long 2>/dev/null |
+      awk -v root="$disposable_root" '
+        function flush() {
+          if (name ~ /^<inaccessible!?/ && uuid != "" && index(cfg, root "/") == 1) {
+            print uuid "\t" cfg
+          }
+        }
+        /^Name:[[:space:]][[:space:]]/ {
+          flush()
+          name = $0
+          sub(/^Name:[[:space:]]*/, "", name)
+          uuid = ""
+          cfg = ""
+          next
+        }
+        /^UUID:[[:space:]]/ {
+          uuid = $0
+          sub(/^UUID:[[:space:]]*/, "", uuid)
+          next
+        }
+        /^Config file:[[:space:]]/ {
+          cfg = $0
+          sub(/^Config file:[[:space:]]*/, "", cfg)
+          next
+        }
+        END { flush() }
+      '
+  )
+
+  local entry
+  for entry in "${entries[@]}"; do
+    local vm_id="${entry%%$'\t'*}"
+    local vm_config="${entry#*$'\t'}"
+    [[ -n "$vm_id" && -n "$vm_config" ]] || continue
+    info "Unregistering stale inaccessible disposable VM registry entry '$vm_id' at $vm_config"
+    VBoxManage unregistervm "$vm_id"
+  done
+}
+
 require_command VBoxManage
 
 [[ -n "$CI_VM_NAME" ]] || fail "CI VM name is empty"
@@ -82,6 +127,8 @@ info "vagrant-dotfile-path=$VAGRANT_DOTFILE_PATH_VALUE"
 if [[ -n "$EXPECTED_MACHINE_FOLDER" ]]; then
   info "expected-virtualbox-machine-folder=$EXPECTED_MACHINE_FOLDER"
 fi
+
+cleanup_inaccessible_disposable_registry_entries
 
 if [[ -f "$VAGRANT_MACHINE_ID_FILE" ]]; then
   vagrant_machine_id="$(tr -d '[:space:]' <"$VAGRANT_MACHINE_ID_FILE")"

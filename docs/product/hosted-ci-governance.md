@@ -206,13 +206,15 @@ Runner operator hardening:
   authentication token; the repo-owned disposable cleanup surface
   `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
   fails when the disposable CI VM is running, deletes only a stopped
-  `vihs-ci-win11`, and clears active `.vagrant-ci` state before import; the
-  repo-owned host doctor
+  `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
+  that point at the governed CI VM folder, and clears active `.vagrant-ci`
+  state before import; the repo-owned host doctor
   `scripts/vagrant/doctor-vagrant-host.sh` checks Vagrant,
   VirtualBox, Docker, Node, npm, `gitlab-runner`, the registered box, golden VM
-  power state, stale CI VM state, real `box.ovf` payload presence, and
-  `vagrant-reload`, and verifies that VirtualBox imports target the large-drive
-  machine folder with enough free space; the repo-owned refresh surface
+  power state, stale CI VM state, stale inaccessible disposable registry
+  entries, real `box.ovf` payload presence, and `vagrant-reload`, and verifies
+  that VirtualBox imports target the large-drive machine folder with enough
+  free space; the repo-owned refresh surface
   `scripts/vagrant/refresh-golden-box.sh` updates the local box only when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, and fails early when the export work
   root or box output directory lacks enough free space unless
