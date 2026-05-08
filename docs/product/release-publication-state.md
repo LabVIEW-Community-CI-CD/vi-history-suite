@@ -86,11 +86,23 @@ final installed-user distribution surface.
   generated `diff-report-lv_icon.vi.html`, retained report size `146915`
   bytes, and logged `CreateComparisonReport operation succeeded.`
 - Vagrant Windows VSIX acceptance evidence:
-  `npm run vagrant:acceptance:assert` validates the latest
-  `vagrant/evidence/*/manifest.json`, cold-start markers,
-  `host-native` / `labview-cli`, `generatedReportExists=true`, and nonempty
-  generated report HTML, retaining receipts under `vagrant/evidence/assertion/`
-  in the governed Vagrant CI lane.
+  protected `develop` pipeline `2511040377` passed GitLab job `14284054131`
+  (`vagrant_windows_vsix_acceptance`) after running
+  `npm run vagrant:acceptance:assert`; the job retained
+  `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`,
+  `vagrant/evidence/20260508-105809/manifest.json`,
+  `vagrant/evidence/acceptance-provision.log`, and
+  `vagrant/evidence/labview-cold-prep.log`.
+- Vagrant Windows VSIX acceptance validated facts: assertion schema
+  `vi-history-suite/vagrant-vsix-acceptance-assertion@v1`, manifest schema
+  `vi-history-suite/vagrant-vsix-acceptance@v1`, `HARNESS-VHS-002`,
+  selected hash `8741bb08026c104100720c0ef48621e4ab7762fd`, base hash
+  `c188cdec606aac3b17d8b17274baa19eef3e4017`, LabVIEW `2026` / `x86`,
+  `proofExitCode=0`, `runtimeProvider=host-native`,
+  `runtimeEngine=labview-cli`, `runtimeExecutionState=succeeded`,
+  `generatedReportExists=true`, and the cold-start markers
+  `LabVIEW not running. Launching via scheduled task...` plus
+  `LabVIEW VI Server ready on port 3363.`
 - Preview publication state: develop provider-lane, Linux host LabVIEW, and
   Windows host LabVIEW plus Vagrant VSIX acceptance evidence
 - Linux host proof state: admitted local maintainer proof
