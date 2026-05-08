@@ -46,8 +46,9 @@ describe('release publication state resolver', () => {
         '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     });
     expect(state.developPreview).toMatchObject({
-      classification: 'linux-docker-linux-host-and-windows-host-labview-validated-preview',
-      stateRole: 'retained-provider-lane-linux-host-and-windows-host-packet-evidence',
+      classification:
+        'linux-docker-linux-host-windows-host-labview-and-vagrant-vsix-validated-preview',
+      stateRole: 'retained-provider-lane-linux-host-windows-host-and-vagrant-acceptance-evidence',
       headTrackingPolicy:
         'do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed',
       retainedPacketPath:
@@ -142,6 +143,22 @@ describe('release publication state resolver', () => {
           evidence: 'CreateComparisonReport operation succeeded.'
         })
       }),
+      vagrantVsixAcceptanceEvidence: expect.objectContaining({
+        status: 'repo-owned-assertion-wired-awaiting-protected-ci-receipt',
+        packageScript: 'npm run vagrant:acceptance:assert',
+        assertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
+        evidenceRoot: 'vagrant/evidence/',
+        assertionReceiptRoot: 'vagrant/evidence/assertion',
+        schema: 'vi-history-suite/vagrant-vsix-acceptance@v1',
+        assertionSchema: 'vi-history-suite/vagrant-vsix-acceptance-assertion@v1',
+        harnessId: 'HARNESS-VHS-002',
+        runtimeProvider: 'host-native',
+        runtimeEngine: 'labview-cli',
+        requiredRuntimeExecutionState: 'succeeded',
+        requiredGeneratedReportExists: true,
+        claimBoundary:
+          'vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof'
+      }),
       previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
       previewVsixSha256: 'bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02',
       publicationState: 'develop-provider-lane-linux-host-and-windows-host-labview-evidence',
@@ -154,9 +171,11 @@ describe('release publication state resolver', () => {
       marketplaceMutation: 'not-performed-by-this-packet'
     });
     expect(stateDoc).toContain('## Develop Preview State');
-    expect(stateDoc).toContain('Linux/Docker, Linux host LabVIEW, and Windows');
+    expect(stateDoc).toContain('Vagrant Windows VSIX acceptance validated preview');
     expect(stateDoc).toContain('Windows proof state: host LabVIEW 2026 x64 admitted');
     expect(stateDoc).toContain('Windows-container proof community/deferred');
+    expect(stateDoc).toContain('Vagrant Windows VSIX acceptance evidence');
+    expect(stateDoc).toContain('`npm run vagrant:acceptance:assert` validates the latest');
     expect(stateDoc).toContain(
       'HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json'
     );
@@ -168,7 +187,7 @@ describe('release publication state resolver', () => {
       'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json'
     );
     expect(stateDoc).toContain(
-      'Preview state role: retained provider-lane, Linux host, and Windows host'
+      'Preview state role: retained provider-lane, Linux host, Windows host, and'
     );
     expect(stateDoc).toContain('Develop head tracking policy: do not persist the latest live');
     expect(stateDoc).toContain('Packet evidence pipeline: `2480195741` / `success`');
@@ -218,7 +237,7 @@ describe('release publication state resolver', () => {
       currentPublishedKind: 'public-validation-pre-release',
       currentRegularPublishedVersion: '1.3.9',
       currentPreReleaseVersion: '1.3.13',
-      expectedVersion: '1.3.13',
+      expectedVersion: '1.3.14',
       status: 'published-public-validation-prerelease-1.3.13',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
@@ -447,12 +466,12 @@ describe('release publication state resolver', () => {
     });
     expect(state.activeCandidate).toMatchObject({
       releaseBranch: null,
-      tag: 'v1.3.13-public-validation-prerelease-1',
-      packageVersion: '1.3.13',
-      status: 'public-validation-prerelease-published-and-verified'
+      tag: null,
+      packageVersion: '1.3.14',
+      status: 'develop-patch-candidate-consolidation'
     });
     expect(state.nextAdmittedAction).toBe(
-      'collect-windows-docker-desktop-community-proof-and-triage-public-issues'
+      'retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

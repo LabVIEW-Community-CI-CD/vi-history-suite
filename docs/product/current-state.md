@@ -197,8 +197,8 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.13`
-- active exact release candidate line on `develop`: none
+- current develop package line on `develop`: `1.3.14`
+- active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
@@ -263,9 +263,10 @@ Latest landed ship target:
   exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: public validation pre-release with all
-  provider/year/bitness variants selectable, admitted Windows host LabVIEW
-  2026 x64 proof, and Windows Docker Desktop Windows-container proof
+- active governed release claim: `1.3.14` develop patch candidate
+  consolidation with all provider/year/bitness variants selectable, admitted
+  Windows host LabVIEW 2026 x64 proof, repo-owned Vagrant VSIX acceptance
+  assertion, and Windows Docker Desktop Windows-container proof
   community/deferred through public issue #65
 - current exact-release readiness assessment:
   [exact-release-readiness-assessment-2026-04-26.md](./exact-release-readiness-assessment-2026-04-26.md)

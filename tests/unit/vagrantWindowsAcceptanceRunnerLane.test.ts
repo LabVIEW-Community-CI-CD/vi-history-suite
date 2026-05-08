@@ -50,7 +50,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('vagrant provision --provision-with cold-labview');
     expect(gitlabCi).toContain('vagrant provision --provision-with acceptance');
     expect(gitlabCi).toContain('vagrant halt --force');
-    expect(gitlabCi).toContain('runtimeExecutionState');
+    expect(gitlabCi).toContain('npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion');
     expect(gitlabCi).toContain('- vagrant_windows_vsix_acceptance');
     expect(gitlabCi).toContain('- vagrant/evidence/');
 
@@ -143,6 +143,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(githubWorkflow).toContain('bash scripts/vagrant/refresh-golden-box.sh');
     expect(githubWorkflow).toContain('vagrant reload --no-provision');
     expect(githubWorkflow).toContain('vagrant provision --provision-with cold-labview');
+    expect(githubWorkflow).toContain(
+      'npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion'
+    );
     expect(githubWorkflow).not.toContain('.github/scripts/vagrant/prepare-existing-vm-box.sh');
     expect(githubWorkflow).not.toContain('VBoxManage guestcontrol');
 
@@ -164,6 +167,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('job reloads the VM immediately after');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
+    expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
+    expect(laneDoc).toContain('assertion/vagrant-vsix-acceptance-assertion.json');
     expect(laneDoc).toContain('not replace the deferred native Windows x64 private-release proof');
 
     expect(hostedGovernanceDoc).toContain('vagrant-windows-vsix-acceptance');
@@ -171,6 +176,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostedGovernanceDoc).toContain('resource_group: vihs-windows-vagrant');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/doctor-vagrant-host.sh');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/refresh-golden-box.sh');
+    expect(hostedGovernanceDoc).toContain('npm run vagrant:acceptance:assert');
 
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance).toEqual(
       expect.objectContaining({
@@ -196,6 +202,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedCleanupScript: 'scripts/vagrant/cleanup-disposable-ci-vm.sh',
           repoOwnedColdPrepScript: 'vagrant/provision/prepare-cold-labview.ps1',
+          repoOwnedAcceptanceAssertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
+          repoOwnedAcceptanceAssertionPackageScript: 'npm run vagrant:acceptance:assert',
           bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'
@@ -222,7 +230,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
         resourceGroup: 'vihs-windows-vagrant',
         requiredNeeds: [],
         dagStart: true,
-        evidenceRoot: 'vagrant/evidence/'
+        evidenceRoot: 'vagrant/evidence/',
+        assertionPackageScript: 'npm run vagrant:acceptance:assert',
+        assertionReceiptRoot: 'vagrant/evidence/assertion'
       })
     );
     expect(hostedGovernanceJson.authorityGitLab.jobs.package_extension_preview.requiredNeeds).toContain(
@@ -240,6 +250,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     );
     expect(packageManifest.scripts?.['vagrant:golden:refresh']).toBe(
       'bash scripts/vagrant/refresh-golden-box.sh'
+    );
+    expect(packageManifest.scripts?.['vagrant:acceptance:assert']).toBe(
+      'node scripts/assertVagrantVsixAcceptanceEvidence.js'
     );
   });
 });

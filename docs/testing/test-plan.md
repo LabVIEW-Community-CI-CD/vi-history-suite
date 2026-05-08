@@ -2447,6 +2447,19 @@ Information-for-users review cases:
   while Linux Docker Engine, Docker Desktop Linux containers, WSL-only
   execution, host-provider proof, platform injection, private VI fixtures, and
   reports without proof packets are not admissible for that lane
+- `TEST-UNIT-398`: run
+  `tests/unit/vagrantAcceptanceEvidenceAssert.test.ts` and confirm
+  `npm run vagrant:acceptance:assert` parses UTF-8/BOM manifests, selects the
+  latest timestamped Vagrant run, validates `HARNESS-VHS-002`,
+  `proofExitCode=0`, `runtimeExecutionState=succeeded`,
+  `runtimeProvider=host-native`, `runtimeEngine=labview-cli`,
+  `generatedReportExists=true`, nonempty generated report HTML, and cold-start
+  markers, then retains an assertion receipt
+- `TEST-DOC-150`: review the Vagrant runner lane, hosted CI governance,
+  release-publication state, and this test plan and confirm Vagrant Windows
+  VSIX acceptance is governed candidate evidence only, not a substitute for
+  native Windows x64 private-release proof or Windows Docker Desktop
+  Windows-container proof
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

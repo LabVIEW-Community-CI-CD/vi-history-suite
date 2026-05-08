@@ -202,12 +202,12 @@ describe('exact release candidate reassessment', () => {
     expect(publicationState.activeCandidate).toMatchObject({
       sourceBranch: 'develop',
       releaseBranch: null,
-      tag: 'v1.3.13-public-validation-prerelease-1',
-      packageVersion: '1.3.13',
-      status: 'public-validation-prerelease-published-and-verified'
+      tag: null,
+      packageVersion: '1.3.14',
+      status: 'develop-patch-candidate-consolidation'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'collect-windows-docker-desktop-community-proof-and-triage-public-issues'
+      'retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

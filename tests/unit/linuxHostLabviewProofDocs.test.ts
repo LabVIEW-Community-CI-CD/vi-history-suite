@@ -100,8 +100,9 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
     const releaseState = readJson<any>('docs/product/release-publication-state.json');
 
     expect(releaseState.developPreview).toMatchObject({
-      classification: 'linux-docker-linux-host-and-windows-host-labview-validated-preview',
-      stateRole: 'retained-provider-lane-linux-host-and-windows-host-packet-evidence',
+      classification:
+        'linux-docker-linux-host-windows-host-labview-and-vagrant-vsix-validated-preview',
+      stateRole: 'retained-provider-lane-linux-host-windows-host-and-vagrant-acceptance-evidence',
       publicationState: 'develop-provider-lane-linux-host-and-windows-host-labview-evidence',
       linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
       windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
@@ -109,6 +110,12 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
       linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
       publicGitHubMutation: 'not-performed-by-this-packet',
       marketplaceMutation: 'not-performed-by-this-packet'
+    });
+    expect(releaseState.developPreview.vagrantVsixAcceptanceEvidence).toMatchObject({
+      packageScript: 'npm run vagrant:acceptance:assert',
+      runtimeProvider: 'host-native',
+      runtimeEngine: 'labview-cli',
+      requiredRuntimeExecutionState: 'succeeded'
     });
     expect(releaseState.developPreview.linuxHostLabviewEvidence).toMatchObject({
       packetPath: packetMarkdownPath,

@@ -231,27 +231,9 @@ jobs:
           VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
           VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
 
-      - name: Assert cold-start launch markers
+      - name: Assert Vagrant acceptance evidence
         if: always()
-        run: |
-          set -euo pipefail
-          log="vagrant/evidence/acceptance-provision.log"
-          if [[ ! -f "$log" ]]; then
-            echo "ERROR: Missing acceptance log at $log"
-            exit 1
-          fi
-
-          grep -F "LabVIEW not running. Launching via scheduled task..." "$log" >/dev/null || {
-            echo "ERROR: Cold-start marker missing. Acceptance may not have exercised the cold launch path."
-            exit 1
-          }
-
-          grep -F "LabVIEW VI Server ready on port 3363." "$log" >/dev/null || {
-            echo "ERROR: VI Server readiness marker missing after scheduled task launch."
-            exit 1
-          }
-
-          echo "Cold-start assertions passed."
+        run: npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion
 
       - name: Halt VM
         if: always()

@@ -18,16 +18,17 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: none
-- Active candidate tag: `v1.3.13-public-validation-prerelease-1`
-- Active candidate package version: `1.3.13`
-- Active candidate state: public validation pre-release published and verified
+- Active candidate tag: none
+- Active candidate package version: `1.3.14`
+- Active candidate state: develop patch candidate consolidation; no public
+  GitHub release, Marketplace mutation, exact tag, or `main` promotion
 
 ## Develop Preview State
 
-- Active develop preview claim: Linux/Docker, Linux host LabVIEW, and Windows
-  host LabVIEW 2026 x64 validated preview
-- Preview state role: retained provider-lane, Linux host, and Windows host
-  packet evidence
+- Active develop preview claim: Linux/Docker, Linux host LabVIEW, Windows host
+  LabVIEW 2026 x64, and Vagrant Windows VSIX acceptance validated preview
+- Preview state role: retained provider-lane, Linux host, Windows host, and
+  Vagrant acceptance evidence
 - Develop head tracking policy: do not persist the latest live `develop`
   commit or pipeline in this packet. Read live `develop` head and pipeline
   state from GitLab when that operational status is needed.
@@ -84,8 +85,14 @@ final installed-user distribution surface.
 - Windows host compare proof: `LabVIEWCLI CreateComparisonReport` exited `0`,
   generated `diff-report-lv_icon.vi.html`, retained report size `146915`
   bytes, and logged `CreateComparisonReport operation succeeded.`
+- Vagrant Windows VSIX acceptance evidence:
+  `npm run vagrant:acceptance:assert` validates the latest
+  `vagrant/evidence/*/manifest.json`, cold-start markers,
+  `host-native` / `labview-cli`, `generatedReportExists=true`, and nonempty
+  generated report HTML, retaining receipts under `vagrant/evidence/assertion/`
+  in the governed Vagrant CI lane.
 - Preview publication state: develop provider-lane, Linux host LabVIEW, and
-  Windows host LabVIEW evidence
+  Windows host LabVIEW plus Vagrant VSIX acceptance evidence
 - Linux host proof state: admitted local maintainer proof
 - Windows proof state: host LabVIEW 2026 x64 admitted; Docker Desktop
   Windows-container proof community/deferred
@@ -158,7 +165,7 @@ final installed-user distribution surface.
 - Current pre-release Marketplace version: `1.3.13`
 - Current pre-release last updated: `2026-04-27T04:24:05.457Z`
 - Expected exact-candidate version for the active governed candidate line:
-  `1.3.13`
+  `1.3.14`
 - Marketplace status: public validation pre-release `1.3.13` is published and
   verified with admitted Windows host proof wording and the diagnostic-note fix.
 - Windows exact-VSIX install proof package script:
@@ -193,8 +200,8 @@ final installed-user distribution surface.
   preview.
 - Publish trigger: maintainer authorized public GitHub and Marketplace public
   validation publication for `1.3.13` after GitLab authority is green
-- Active evidence claim: Linux/Docker, Linux host LabVIEW, and Windows host
-  LabVIEW 2026 x64 validated preview
+- Active evidence claim: Linux/Docker, Linux host LabVIEW, Windows host
+  LabVIEW 2026 x64, and Vagrant Windows VSIX acceptance validated preview
 - Windows installed-user proof: admitted for host LabVIEW 2026 x64 from the
   retained Windows 11 VirtualBox proof; Windows Docker Desktop
   Windows-container proof remains community/deferred
@@ -486,10 +493,11 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: publish and verify the `1.3.13` public validation
-  preview, then collect and triage public community-validation reports
+- Governed next line: retain the `1.3.14` develop patch candidate
+  consolidation and collect/triage public community-validation reports without
+  reopening public GitHub or Marketplace mutation
 - Next admitted action:
-  `collect-windows-docker-desktop-community-proof-and-triage-public-issues`
+  `retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation`
 
 ## Publication Rule
 

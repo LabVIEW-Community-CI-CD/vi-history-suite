@@ -49,8 +49,8 @@
       ],
       "currentExactReleaseLine": "v1.3.9",
       "currentMainPackageLine": "1.3.9",
-      "currentDevelopPackageLine": "1.3.13",
-      "activeDevelopCandidateReleaseLine": null,
+      "currentDevelopPackageLine": "1.3.14",
+      "activeDevelopCandidateReleaseLine": "v1.3.14",
       "activeReleaseCandidateBranch": null,
       "activeHotfixCandidateReleaseLine": null,
       "activeHotfixBranch": null,
@@ -65,7 +65,7 @@
       "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
       "vscodeMarketplaceCommunityValidationPreviewPrepPackageScript": "npm run vscode:marketplace:community-preview:prepare",
       "vscodeMarketplaceCommunityValidationPreviewPrepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
-      "vscodeMarketplaceCommunityValidationPreviewPrepStatus": "prepared-authorized-awaiting-gitlab-authority-green",
+      "vscodeMarketplaceCommunityValidationPreviewPrepStatus": "published-and-verified-for-1.3.13",
       "publicGitHubExactPublishabilityProbe": {
         "status": "published",
         "blockerCode": null,
@@ -106,10 +106,10 @@
       "nextLineBranchModel": "gitflow",
       "activeMarketplaceCommunityPreviewLine": "1.3.13",
       "vscodeMarketplaceCommunityValidationPreviewTargetVersion": "1.3.13",
-      "vscodeMarketplaceCommunityValidationPreviewPublishedVersion": null,
-      "vscodeMarketplaceCommunityValidationPreviewPublishedDate": null,
-      "vscodeMarketplaceCommunityValidationPreviewLastUpdated": null,
-      "vscodeMarketplaceCommunityValidationPreviewVsixSha256": null,
+      "vscodeMarketplaceCommunityValidationPreviewPublishedVersion": "1.3.13",
+      "vscodeMarketplaceCommunityValidationPreviewPublishedDate": "2026-04-27",
+      "vscodeMarketplaceCommunityValidationPreviewLastUpdated": "2026-04-27T04:24:05.457Z",
+      "vscodeMarketplaceCommunityValidationPreviewVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f",
       "publicValidationPrereleasePacketPath": "docs/product/public-validation-prerelease-v1.3.13.md",
       "publicValidationPrereleasePacketJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json"
     },
@@ -200,9 +200,10 @@
       "decisionRecordingRule": "record the chosen bump rationale in the control plane before further publication or release normalization continues"
     },
     "activeOpeningDecision": {
-      "recordedAt": "2026-04-23",
+      "recordedAt": "2026-05-08",
       "chosenBump": "patch",
-      "targetFeatureBranch": null,
+      "targetFeatureBranch": "feature/develop-1.3.14-candidate-consolidation",
+      "targetDevelopCandidateReleaseLine": "v1.3.14",
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
@@ -211,7 +212,9 @@
       "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
       "rationale": [
         "authority exact v1.3.9 is already tagged on main while public GitHub release 312994104 is retained as a complete immutable exact release and VS Code Marketplace serves 1.3.9",
-        "blocked historical v1.3.8 incident evidence remains retained, but no active exact release candidate line is currently open"
+        "develop now carries package line 1.3.14 as a patch candidate for release-readiness consolidation after the published 1.3.13 public-validation pre-release",
+        "the candidate adds repo-owned Vagrant VSIX acceptance evidence assertion without admitting Windows Docker Desktop Windows-container proof",
+        "blocked historical v1.3.8 incident evidence remains retained, and the active exact candidate line is v1.3.14"
       ],
       "rejectedAlternatives": {
         "hotfix": "the next exact line should promote from develop through the normal release/* path after retaining the blocked v1.3.8 incident history, not bypass GitFlow from main",
