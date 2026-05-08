@@ -83,7 +83,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('Configuring vagrant autologon for interactive LabVIEW launch');
     expect(bootstrap).toContain('Configuring WinRM for Vagrant communicator after reload');
     expect(bootstrap).toContain('sc.exe config winrm start= auto');
-    expect(bootstrap).toContain('winrm quickconfig -quiet');
+    expect(bootstrap).toContain('Set-NetConnectionProfile');
+    expect(bootstrap).toContain('Enable-PSRemoting -SkipNetworkProfileCheck -Force');
+    expect(bootstrap).toContain('Test-WSMan -ComputerName localhost');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');

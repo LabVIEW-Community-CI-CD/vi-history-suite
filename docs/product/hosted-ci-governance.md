@@ -302,8 +302,9 @@ Job ownership:
   stages it under `vagrant/shared/`, optionally refreshes the local box when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
   disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
-  autologon creates the interactive LabVIEW desktop session while WinRM remains
-  available for Vagrant, runs the guest cold-prep provisioner, runs acceptance,
+  autologon creates the interactive LabVIEW desktop session while clone-local
+  WinRM network/firewall readiness remains available for Vagrant, runs the
+  guest cold-prep provisioner, runs acceptance,
   validates the latest acceptance manifest, always halts the VM, and retains
   `vagrant/evidence/`; this job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox

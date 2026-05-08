@@ -114,9 +114,10 @@ the active dotfile path points at any VM other than `vihs-ci-win11`.
 Golden box refresh is manual and variable-gated. Set
 `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true` only for an operator-controlled refresh.
 The bootstrap provisioner configures `vagrant` autologon and WinRM startup
-inside the disposable clone, and the job reloads the VM immediately after
-bootstrap so the scheduled-task LabVIEW launch has an interactive desktop
-session while the Vagrant communicator remains available.
+inside the disposable clone, normalizes public NAT network profiles for WinRM
+firewall readiness, and the job reloads the VM immediately after bootstrap so
+the scheduled-task LabVIEW launch has an interactive desktop session while the
+Vagrant communicator remains available.
 
 ## GitLab Job
 

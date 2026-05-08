@@ -140,9 +140,25 @@ sc.exe config winrm start= auto | Out-Host
 if ($LASTEXITCODE -ne 0) {
   throw "Failed to configure WinRM service startup (exit $LASTEXITCODE)."
 }
-winrm quickconfig -quiet | Out-Host
-if ($LASTEXITCODE -ne 0) {
-  throw "winrm quickconfig failed (exit $LASTEXITCODE)."
+try {
+  $publicProfiles = Get-NetConnectionProfile -ErrorAction Stop | Where-Object { $_.NetworkCategory -eq 'Public' }
+  foreach ($profile in $publicProfiles) {
+    Write-Step "Setting network profile '$($profile.Name)' to Private for WinRM firewall rules..."
+    Set-NetConnectionProfile -InterfaceIndex $profile.InterfaceIndex -NetworkCategory Private -ErrorAction Stop
+  }
+} catch {
+  Write-Step "Network profile normalization warning: $($_.Exception.Message)"
+}
+try {
+  Enable-PSRemoting -SkipNetworkProfileCheck -Force -ErrorAction Stop | Out-Host
+} catch {
+  Write-Step "Enable-PSRemoting warning: $($_.Exception.Message)"
+}
+Start-Service -Name winrm -ErrorAction Stop
+try {
+  Test-WSMan -ComputerName localhost -ErrorAction Stop | Out-Null
+} catch {
+  throw "WinRM local probe failed after configuration: $($_.Exception.Message)"
 }
 winrm set winrm/config/service/auth '@{Basic="true"}' | Out-Host
 if ($LASTEXITCODE -ne 0) {
