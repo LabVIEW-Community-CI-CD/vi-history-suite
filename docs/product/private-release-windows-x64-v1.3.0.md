@@ -174,7 +174,7 @@ publishes the controlled Windows-only install asset.
   - the Windows bootstrap now writes the latest startup receipt to
     `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
   - the Linux helper now writes the latest startup receipt to
-    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+    `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`
   - the fail-fast GitLab admission lane is
     `governed_runner_admission`, running
     `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`

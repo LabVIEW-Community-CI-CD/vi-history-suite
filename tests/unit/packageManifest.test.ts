@@ -287,6 +287,15 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['gitlab:runner:doctor']).toBe(
       'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
     );
+    expect(manifest.scripts?.['vagrant:ci:cleanup']).toBe(
+      'bash scripts/vagrant/cleanup-disposable-ci-vm.sh'
+    );
+    expect(manifest.scripts?.['vagrant:host:doctor']).toBe(
+      'bash scripts/vagrant/doctor-vagrant-host.sh'
+    );
+    expect(manifest.scripts?.['vagrant:golden:refresh']).toBe(
+      'bash scripts/vagrant/refresh-golden-box.sh'
+    );
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
     );

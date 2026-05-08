@@ -115,14 +115,19 @@ Runner lanes:
   lane for native Windows host plus Windows-container proof; it is governed by
   [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
   but does not run unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
+- `vagrant-windows-vsix-acceptance`: local Ubuntu shell-runner lane for
+  VirtualBox/Vagrant Windows 11 + LabVIEW 2026 VSIX acceptance; it is governed
+  by
+  [vagrant-windows-acceptance-runner-lane.md](./vagrant-windows-acceptance-runner-lane.md)
+  and keeps the golden VM separate from the disposable CI VM
 
 Runner operator hardening:
 
 - `linux-assurance`: admitted config path
-  `~/.gitlab-runner/config.toml`, top-level `concurrent = 2`, per-runner
-  `request_concurrency = 2`, and steady-state lifecycle owned by the admitted
-  Linux assurance distro `systemd` unit `vihs-linux-assurance-runner.service`,
-  defaulting to `Ubuntu-24.04`, with repo-owned host
+  `~/.gitlab-runner/config.toml`, host user `sergio`, runner binary
+  `/home/sergio/.local/bin/gitlab-runner`, top-level `concurrent = 2`,
+  per-runner `request_concurrency = 2`, and steady-state lifecycle owned by
+  user-mode `systemd` unit `gitlab-runner.service`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
   `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`,
@@ -132,19 +137,16 @@ Runner operator hardening:
   `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
   and `scripts/assertGovernedRunnerLanes.js` via
   `npm run gitlab:runner:assert`; the Linux apply surface first normalizes
-  both concurrency facts and then fails closed unless the admitted `systemd`
-  service is both enabled and active after apply; the Windows bootstrap now
-  retries the Linux helper as a bounded post-reset readiness gate; the helper
-  itself reconciles the live config back to `concurrent = 2` plus
-  `request_concurrency = 2`, restarts the admitted service when needed, and
-  writes a machine-readable startup receipt under
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`; the
-  Linux doctor surface reports current concurrency, service, process, and
-  receipt facts; and the Linux assertion surface fails closed unless the
-  installed helper and service unit still match the repo asset pack,
-  `concurrent = 2` plus `request_concurrency = 2` are still present, the
-  admitted fragment path/user/working directory remain exact, the service is
-  still enabled and active, and exactly one configured runner process is live
+  both concurrency facts and then fails closed unless the admitted service is
+  both enabled and active after apply; the helper itself reconciles the live
+  config back to `concurrent = 2` plus `request_concurrency = 2`; the Linux
+  doctor surface reports current concurrency, user-service, runner binary,
+  process, and optional receipt facts; and the Linux assertion surface fails
+  closed unless `concurrent = 2` plus `request_concurrency = 2` are still
+  present, user-mode `gitlab-runner.service` is enabled and active, the admitted
+  `ExecStart` still points at `/home/sergio/.local/bin/gitlab-runner run
+  --config /home/sergio/.gitlab-runner/config.toml`, and exactly one configured
+  runner process is live
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
@@ -185,6 +187,40 @@ Runner operator hardening:
   under `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`, and
   the Windows doctor surface reports the task, runner-process, startup-receipt,
   and Linux-helper receipt facts without mutating host state
+- `vagrant-windows-vsix-acceptance`: admitted host user `sergio` under
+  `/home/sergio`, Linux shell executor, runner description
+  `local-vagrant-windows-acceptance`, tags
+  `linux,x64,virtualbox,vagrant,private-release`, Vagrant box
+  `vihs/win11-labview2026`, golden VM
+  `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
+  serialized GitLab `resource_group: vihs-windows-vagrant`, and isolated
+  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host uses
+  `/run/media/sergio/Data/vihs-vagrant` as the large-drive storage root for
+  `VAGRANT_HOME`, box output/cache, export work, and the VirtualBox default
+  machine folder; runner creation uses the `POST /user/runners` API to set
+  tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
+  registers the local shell runner manager with the returned `glrt-`
+  authentication token; the repo-owned disposable cleanup surface
+  `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
+  fails when the disposable CI VM is running, deletes only a stopped
+  `vihs-ci-win11`, and clears active `.vagrant-ci` state before import; the
+  repo-owned host doctor
+  `scripts/vagrant/doctor-vagrant-host.sh` checks Vagrant,
+  VirtualBox, Docker, Node, npm, `gitlab-runner`, the registered box, golden VM
+  power state, stale CI VM state, real `box.ovf` payload presence, and
+  `vagrant-reload`, and verifies that VirtualBox imports target the large-drive
+  machine folder with enough free space; the repo-owned refresh surface
+  `scripts/vagrant/refresh-golden-box.sh` updates the local box only when
+  `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, and fails early when the export work
+  root or box output directory lacks enough free space unless
+  `VIHS_VAGRANT_BOX_WORKDIR` or `VIHS_VAGRANT_BOX_FILE` points at a larger
+  filesystem; and the guest cold-prep
+  provisioner `vagrant/provision/prepare-cold-labview.ps1` fails closed unless
+  stale `LabVIEW`, `LabVIEWCLI`, and `LVCompare` processes plus VI Server port
+  `3363` are cleared before acceptance; CI removes ignored legacy
+  `vagrant/.vagrant` state before boot, and the cleanup/doctor surfaces fail
+  closed when any active Vagrant machine ID points at a VM other than
+  `vihs-ci-win11`
 
 Job ownership:
 
@@ -255,24 +291,45 @@ Job ownership:
     unless the host starts clean, seeds one headless LabVIEW contamination,
     runs that same recovery script, and refreshes
     `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- `vagrant_windows_vsix_acceptance`: blocking Vagrant Windows VSIX acceptance
+  lane on merge requests, governed branch lanes, and exact tags; it runs on
+  `linux,x64,virtualbox,vagrant,private-release`, serializes with
+  `resource_group: vihs-windows-vagrant`, declares `needs: []` so it can start
+  independently of the separate Linux assurance runner lane, packages the VSIX,
+  stages it under `vagrant/shared/`, optionally refreshes the local box when
+  `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
+  disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
+  autologon creates the interactive LabVIEW desktop session while clone-local
+  WinRM network/firewall readiness remains available for Vagrant, runs the
+  guest cold-prep provisioner, runs acceptance,
+  validates the latest acceptance manifest, always halts the VM, and retains
+  `vagrant/evidence/`; this job pins
+  `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
+  machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large
+  Windows box and disposable VM clone do not land on the root filesystem; this
+  is Vagrant VSIX
+  acceptance evidence, not a substitute for the deferred native Windows x64
+  private-release and Windows-container proof lane
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
   exact tags; it now depends on the blocking Linux assurance lanes
   `assurance_release_gate`, `assurance_26514_authority`,
   `assurance_requirements_quality`, and
   `assurance_external_user_information`, plus `test_extension` and
-  `linux_docker_provider_lane`; the deferred `windows_private_release_acceptance`
-  need remains optional unless explicitly enabled, and there is still no
-  generic `feature/*` push lane
+  `linux_docker_provider_lane`, and now waits for
+  `vagrant_windows_vsix_acceptance`; the deferred
+  `windows_private_release_acceptance` need remains optional unless explicitly
+  enabled, and there is still no generic `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
 - `release_extension`: exact-version release lane on exact tags only, now
   blocked on the same blocking Linux assurance lanes, `test_extension`, and
-  `linux_docker_provider_lane`; any exact package produced without the deferred
-  Windows lane remains a Linux/Docker validated artifact and cannot be used as
-  Windows installed-user proof
+  `linux_docker_provider_lane`, plus `vagrant_windows_vsix_acceptance`; any
+  exact package produced without the deferred Windows private-release lane
+  remains a Linux/Docker plus Vagrant-VSIX validated artifact and cannot be used
+  as native Windows installed-user proof
 
 Design-gate boundary:
 
@@ -349,5 +406,6 @@ When hosted automation truth changes, update together:
 - this hosted governance package
 - `docs/product/windows-private-release-runner-lane.md`
 - `docs/product/linux-assurance-runner-lane.md`
+- `docs/product/vagrant-windows-acceptance-runner-lane.md`
 - affected workflow YAML
 - `docker/docs-authoring/Dockerfile`

@@ -98,24 +98,31 @@ describe('runner lane operator assets', () => {
       "governedScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js'"
     );
 
-    expect(linuxApply).toContain('EXPECTED_USER="sveld"');
+    expect(linuxApply).toContain('SERVICE_SCOPE="${VIHS_LINUX_ASSURANCE_SERVICE_SCOPE:-user}"');
+    expect(linuxApply).toContain('SERVICE_UNIT_SOURCE="$SCRIPT_DIR/vihs-linux-assurance-runner.service"');
+    expect(linuxApply).toContain('SERVICE_UNIT_DESTINATION="${VIHS_LINUX_ASSURANCE_SERVICE_UNIT_DESTINATION:-$HOME/.config/systemd/user/$SERVICE_NAME}"');
+    expect(linuxApply).toContain('EXPECTED_USER="${VIHS_LINUX_ASSURANCE_EXPECTED_USER:-}"');
     expect(linuxApply).toContain('command -v node');
     expect(linuxApply).toContain('concurrent = 2');
     expect(linuxApply).toContain('request_concurrency = 2');
-    expect(linuxApply).toContain('Governed Linux assurance apply requires non-interactive sudo access.');
-    expect(linuxApply).toContain('sudo -n systemctl enable --now "$SERVICE_NAME"');
-    expect(linuxApply).toContain('systemctl is-enabled "$SERVICE_NAME"');
-    expect(linuxApply).toContain('systemctl is-active "$SERVICE_NAME"');
+    expect(linuxApply).toContain('install -m 0644 "$SERVICE_UNIT_SOURCE" "$SERVICE_UNIT_DESTINATION"');
+    expect(linuxApply).toContain('systemctl --user enable --now "$SERVICE_NAME"');
+    expect(linuxApply).toContain('systemctl --user is-enabled "$SERVICE_NAME"');
+    expect(linuxApply).toContain('systemctl --user is-active "$SERVICE_NAME"');
+    expect(linuxApply).toContain('serviceUnitDestination');
     expect(linuxApply).toContain('is not active after apply');
 
-    expect(linuxHelper).toContain('RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"');
     expect(linuxHelper).toContain('CONFIG="$HOME/.gitlab-runner/config.toml"');
+    expect(linuxHelper).toContain('SERVICE_SCOPE="${VIHS_LINUX_ASSURANCE_SERVICE_SCOPE:-user}"');
+    expect(linuxHelper).toContain('RECEIPT_ROOT="${VIHS_LINUX_ASSURANCE_RECEIPT_ROOT:-$HOME/.gitlab-runner/receipts/linux-assurance-startup}"');
+    expect(linuxHelper).toContain('VIHS_LINUX_ASSURANCE_RUNNER_BIN');
+    expect(linuxHelper).toContain('command -v gitlab-runner');
     expect(linuxHelper).toContain('SERVICE_POLL_ATTEMPTS=24');
     expect(linuxHelper).toContain('grep -Eq "$EXPECTED_GLOBAL_CONCURRENCY_PATTERN"');
-    expect(linuxHelper).toContain('systemctl is-enabled "$SERVICE_NAME"');
-    expect(linuxHelper).toContain('systemctl is-active "$SERVICE_NAME"');
+    expect(linuxHelper).toContain('systemctl_read()');
+    expect(linuxHelper).toContain('systemctl --user "$@"');
     expect(linuxHelper).toContain('pgrep -af "$RUNNER_BIN run --config $CONFIG"');
-    expect(linuxHelper).toContain('receipts/linux-assurance-startup');
+    expect(linuxHelper).toContain('.gitlab-runner/receipts/linux-assurance-startup');
     expect(linuxHelper).toContain('vi-history-suite/linux-assurance-startup@v1');
     expect(linuxHelper).toContain(
       'Governed Linux assurance helper timed out waiting for $SERVICE_NAME to report enabled=enabled, active=active, and exactly one configured runner process.'
@@ -124,27 +131,33 @@ describe('runner lane operator assets', () => {
 
     expect(linuxDoctor).toContain('vi-history-suite/linux-governed-runner-doctor@v1');
     expect(linuxDoctor).toContain('latest.json');
+    expect(linuxDoctor).toContain('SERVICE_SCOPE="${VIHS_LINUX_ASSURANCE_SERVICE_SCOPE:-user}"');
+    expect(linuxDoctor).toContain('runnerBinary');
     expect(linuxDoctor).toContain('request_concurrency');
     expect(linuxDoctor).toContain('healthy');
 
-    expect(linuxService).toContain('Description=VIHS Linux assurance GitLab runner');
-    expect(linuxService).toContain('User=sveld');
-    expect(linuxService).toContain('WorkingDirectory=/home/sveld');
+    expect(linuxService).toContain('Description=VIHS local GitLab runner user service');
     expect(linuxService).toContain(
-      'ExecStart=/home/sveld/gitlab-runner/bin/gitlab-runner run --config /home/sveld/.gitlab-runner/config.toml'
+      'ExecStart=%h/.local/bin/gitlab-runner run --config %h/.gitlab-runner/config.toml --working-directory %h'
     );
+    expect(linuxService).toContain('Environment=VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home');
+    expect(linuxService).toContain(
+      'Environment="VIHS_VIRTUALBOX_MACHINE_FOLDER=/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"'
+    );
+    expect(linuxService).not.toContain('User=sveld');
     expect(linuxService).toContain('Restart=always');
-    expect(linuxService).toContain('WantedBy=multi-user.target');
+    expect(linuxService).toContain('WantedBy=default.target');
 
-    expect(linuxAssert).toContain('cmp -s "$HELPER_SOURCE" "$HELPER_DESTINATION"');
-    expect(linuxAssert).toContain('cmp -s "$SERVICE_SOURCE" "$SERVICE_DESTINATION"');
+    expect(linuxAssert).toContain('SERVICE_SCOPE="${VIHS_LINUX_ASSURANCE_SERVICE_SCOPE:-user}"');
+    expect(linuxAssert).toContain('systemctl_read()');
     expect(linuxAssert).toContain('EXPECTED_GLOBAL_CONCURRENCY_PATTERN');
     expect(linuxAssert).toContain('concurrent = 2');
     expect(linuxAssert).toContain('request_concurrency = 2');
-    expect(linuxAssert).toContain('systemctl show --property FragmentPath --value "$SERVICE_NAME"');
+    expect(linuxAssert).toContain('systemctl_read show --property FragmentPath --value "$SERVICE_NAME"');
     expect(linuxAssert).toContain('exactly one running gitlab-runner process');
-    expect(linuxAssert).toContain('"globalConcurrent":');
-    expect(linuxAssert).toContain('"runnerProcessLines": [');
+    expect(linuxAssert).toContain('globalConcurrent: 2');
+    expect(linuxAssert).toContain('runnerBinarySha256: process.env.RUNNER_BIN_SHA256');
+    expect(linuxAssert).toContain('runnerProcessLines');
 
     expect(runnerDoctorWrapper).toContain('Usage: node scripts/doctorGovernedRunnerLanes.js');
     expect(runnerDoctorWrapper).toContain('Governed runner doctor detected drift.');
@@ -190,7 +203,7 @@ describe('runner lane operator assets', () => {
     expect(linuxLaneDoc).toContain('npm run gitlab:runner:doctor');
     expect(linuxLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(linuxLaneDoc).toContain('npm run gitlab:runner:assert');
-    expect(linuxLaneDoc).toContain('$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json');
+    expect(linuxLaneDoc).toContain('$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json');
     expect(linuxLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(linuxLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
 
@@ -213,6 +226,11 @@ describe('runner lane operator assets', () => {
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance.operatorModel).toEqual(
       expect.objectContaining({
         globalConcurrency: 2,
+        hostUser: 'sergio',
+        lifecycleOwner: 'systemd-user',
+        serviceUnit: 'gitlab-runner.service',
+        serviceScope: 'user',
+        runnerBinary: '/home/sergio/.local/bin/gitlab-runner',
         repoOwnedApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
         repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
         repoOwnedDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
@@ -230,12 +248,12 @@ describe('runner lane operator assets', () => {
           checks: [
             'config-global-concurrency-two',
             'config-request-concurrency-two',
-            'systemctl-is-enabled',
-            'systemctl-is-active',
+            'systemctl-user-is-enabled',
+            'systemctl-user-is-active',
             'exactly-one-configured-runner-process',
-            'writes-startup-receipt'
+            'startup-receipt-optional-on-direct-host'
           ],
-          failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
+          failurePolicy: 'fail-closed-unless-direct-host-observes-live-linux-assurance-service'
         }
       })
     );
@@ -302,7 +320,7 @@ describe('runner lane operator assets', () => {
         }),
         startupReceipts: expect.objectContaining({
           windowsLatest: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
-          linuxLatest: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json'
+          linuxLatest: '$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json'
         }),
         linuxBootstrapReadiness: expect.objectContaining({
           script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',

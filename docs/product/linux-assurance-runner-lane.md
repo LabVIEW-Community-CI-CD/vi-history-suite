@@ -56,7 +56,7 @@ The governed runner split for the active Linux/Docker preview sequence is:
 
 Governed registration contract:
 
-- description: `local-linux-assurance`
+- description: `local-linux-docker-assurance`
 - tags:
   - `linux`
   - `x64`
@@ -96,17 +96,17 @@ The admitted operator contract for the current Linux assurance host is:
 - runner config path: `~/.gitlab-runner/config.toml`
 - top-level runner concurrency: `concurrent = 2`
 - per-runner request concurrency: `request_concurrency = 2`
-- steady-state lifecycle owner: admitted Linux assurance distro `systemd`
-- admitted service unit: `vihs-linux-assurance-runner.service`
+- admitted host user: `sergio`
+- steady-state lifecycle owner: user-mode `systemd`
+- admitted service unit: `gitlab-runner.service`
+- admitted runner binary: `/home/sergio/.local/bin/gitlab-runner`
 
-The governed recovery model after a host reboot is to restore the admitted
-Linux assurance distro, defaulting to `Ubuntu-24.04`, let
-`vihs-linux-assurance-runner.service` own steady-state restart and keep-alive,
-and let the repo-owned Windows bootstrap invoke
-`scripts/gitlab-runner/linux/start-linux-assurance.sh` as a bounded readiness
-gate. The Windows/bootstrap and combined-wrapper surfaces admit
-`VIHS_LINUX_ASSURANCE_DISTRO` when the governed WSL distro name changes. The
-lane shall not depend on a long-lived interactive
+The governed recovery model after a host reboot is to let the `sergio`
+user-mode `gitlab-runner.service` own steady-state restart and keep-alive for
+both local runner entries. The Vagrant and Linux assurance lanes remain separate
+by runner authentication token and tag set, while top-level `concurrent = 2`
+allows one Vagrant job and one Docker assurance job to make progress at the same
+time. The lane shall not depend on a long-lived interactive
 `gitlab-runner run` shell or on a fire-and-forget detached helper.
 
 ## Repo-Owned Host Assets
@@ -128,22 +128,21 @@ The governed host asset pack for this lane is versioned in the repo:
 - Cross-lane wrapper from the admitted Windows host:
   `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
 - latest retained startup receipt:
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`
 
 The Linux apply script is the repo-owned update surface for the admitted
 service contract. It first normalizes `~/.gitlab-runner/config.toml` to retain
 both `concurrent = 2` and `request_concurrency = 2`, then copies the helper,
-installs the service unit, reloads `systemd`, enables and starts the service,
-and fails closed unless the configuration is normalized and the service
-finishes `enabled` and `active`.
+installs the user-mode service unit, reloads `systemd`, enables and starts the
+service, and fails closed unless the configuration is normalized and the
+service finishes `enabled` and `active`.
 
 The Linux assertion surface is the repo-owned live drift check for the
-admitted helper/service contract. It fails closed unless the installed helper
-and service unit still match the repo source, `~/.gitlab-runner/config.toml`
-still contains `concurrent = 2` plus `request_concurrency = 2`, the admitted
-service fragment path, user, and working directory remain exact, the service
-is still `enabled` and `active`, and exactly one configured runner process is
-live.
+admitted direct-host contract. It fails closed unless
+`~/.gitlab-runner/config.toml` still contains `concurrent = 2` plus
+`request_concurrency = 2`, user-mode `gitlab-runner.service` remains `enabled`
+and `active`, its `ExecStart` still uses the admitted runner binary and config
+path, and exactly one configured runner process is live.
 
 The helper script remains the bounded Linux recovery surface, and can still be
 invoked from a future Windows logon bootstrap when that deferred host exists. It
@@ -152,15 +151,16 @@ the paired `systemd` service reports `enabled`, `active`, and exactly one
 configured runner process before declaring the lane healthy. It now also
 reconciles the live config back to the admitted dual-concurrency contract when
 post-reset drift is observed and writes a machine-readable startup receipt under
-`$HOME/gitlab-runner/receipts/linux-assurance-startup/` before declaring the
+`$HOME/.gitlab-runner/receipts/linux-assurance-startup/` before declaring the
 Linux assurance surface healthy. The service unit remains the admitted
 steady-state lifecycle owner on the Linux host.
 
 The Linux doctor script is the repo-owned non-destructive readback surface for
-the admitted lane. It reports the live service state, configured concurrency,
-runner-process count, latest startup-receipt facts, and any drift issues
-without mutating host state. The combined wrapper can run that same doctor
-surface from the admitted Windows host and fail closed when requested.
+the admitted lane. It reports the live user-service state, runner binary,
+configured concurrency, runner-process count, optional startup-receipt facts,
+and any drift issues without mutating host state. The combined wrapper can run
+that same doctor surface from the admitted Windows host and fail closed when
+requested.
 
 ## Apply Or Update On The Admitted Host
 
@@ -170,11 +170,12 @@ From the repo root inside the admitted Linux assurance distro:
 bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh
 ```
 
-The admitted first host shape is distro `Ubuntu-24.04` with user `sveld`, so
-the repo-owned service unit intentionally retains `/home/sveld` and
-`User=sveld`. If the admitted host distro label, user, or home path changes
-later, update the repo-owned asset, the hosted-governance package, and this
-lane contract together.
+The admitted direct host shape is Ubuntu under user `sergio`, so the live
+doctor/assert surfaces default to user-mode `gitlab-runner.service`,
+`/home/sergio/.local/bin/gitlab-runner`, and
+`/home/sergio/.gitlab-runner/config.toml`. If the admitted host service, user,
+or home path changes later, update the repo-owned asset, the hosted-governance
+package, and this lane contract together.
 
 ## Assert Live Host Drift
 
@@ -221,7 +222,22 @@ command is deferred behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`.
 Do not commit the runner authentication token. Manual host registration uses a
 placeholder only.
 
-Registration:
+Runner creation:
+
+```bash
+curl --request POST \
+  --header "PRIVATE-TOKEN: <operator-pat>" \
+  --data "runner_type=project_type" \
+  --data "project_id=<project-id>" \
+  --data-urlencode "description=local-linux-docker-assurance" \
+  --data-urlencode "tag_list=linux,x64,docker,assurance,private-release" \
+  --data "run_untagged=false" \
+  --data "locked=true" \
+  --data "maximum_timeout=7200" \
+  https://gitlab.com/api/v4/user/runners
+```
+
+Local registration with the returned runner authentication token:
 
 ```bash
 gitlab-runner register \
@@ -230,11 +246,7 @@ gitlab-runner register \
   --token "<runner-auth-token>" \
   --executor "shell" \
   --shell "bash" \
-  --description "local-linux-assurance" \
-  --tag-list "linux,x64,docker,assurance,private-release" \
-  --locked="true" \
-  --run-untagged="false" \
-  --maximum-timeout 7200
+  --description "local-linux-docker-assurance"
 ```
 
 ## Evidence Contract
@@ -263,7 +275,7 @@ Each retained evidence root shall include:
 Post-reset operator receipts and doctor evidence are retained separately:
 
 - Linux startup receipt:
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`
 - GitLab fail-fast admission evidence:
   `governed-runner-admission-evidence/runner-doctor.json`
 - GitLab fail-fast admission summary:

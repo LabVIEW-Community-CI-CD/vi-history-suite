@@ -190,7 +190,7 @@
     "governed-runner-admission-evidence/runner-doctor.json",
     "governed-runner-admission-evidence/runner-doctor.md",
     "C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json",
-    "$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json",
+    "$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json",
     ".cache/windows-proof-runtime-recovery-rehearsal/latest.json",
     "windows-private-release-evidence/manifest.json",
     "windows-private-release-evidence/host/settings-file.json",

@@ -89,7 +89,7 @@
     },
     "runnerLanes": {
       "linuxAssurance": {
-        "description": "local-linux-assurance",
+        "description": "local-linux-docker-assurance",
         "classification": "required-self-hosted-linux-assurance-lane",
         "tags": [
           "linux",
@@ -104,8 +104,11 @@
           "configPath": "~/.gitlab-runner/config.toml",
           "globalConcurrency": 2,
           "requestConcurrency": 2,
-          "lifecycleOwner": "systemd",
-          "serviceUnit": "vihs-linux-assurance-runner.service",
+          "hostUser": "sergio",
+          "lifecycleOwner": "systemd-user",
+          "serviceUnit": "gitlab-runner.service",
+          "serviceScope": "user",
+          "runnerBinary": "/home/sergio/.local/bin/gitlab-runner",
           "repoOwnedApplyScript": "scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh",
           "repoOwnedHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
           "repoOwnedDoctorScript": "scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh",
@@ -116,8 +119,9 @@
           "combinedAssertionScript": "scripts/assertGovernedRunnerLanes.js",
           "combinedAssertionPackageScript": "npm run gitlab:runner:assert",
           "startupReceipt": {
-            "latestPath": "$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json",
+            "latestPath": "$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json",
             "schema": "vi-history-suite/linux-assurance-startup@v1",
+            "required": false,
             "requiredFacts": [
               "config-hash-before-after",
               "service-state-before-after",
@@ -134,14 +138,14 @@
             "failurePolicy": "non-mutating-readback; combined surface may fail closed on drift when requested"
           },
           "applyVerification": {
-            "requiredUser": "sveld",
-            "requiredHome": "/home/sveld",
+            "requiredUser": "sergio",
+            "requiredHome": "/home/sergio",
             "checks": [
               "node-available",
               "config-global-concurrency-two",
               "config-request-concurrency-two",
-              "systemctl-is-enabled",
-              "systemctl-is-active"
+              "systemctl-user-is-enabled",
+              "systemctl-user-is-active"
             ],
             "failurePolicy": "fail-closed-unless-config-normalized-and-service-enabled-and-active"
           },
@@ -153,24 +157,21 @@
             "checks": [
               "config-global-concurrency-two",
               "config-request-concurrency-two",
-              "systemctl-is-enabled",
-              "systemctl-is-active",
+              "systemctl-user-is-enabled",
+              "systemctl-user-is-active",
               "exactly-one-configured-runner-process",
-              "writes-startup-receipt"
+              "startup-receipt-optional-on-direct-host"
             ],
-            "failurePolicy": "fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service"
+            "failurePolicy": "fail-closed-unless-direct-host-observes-live-linux-assurance-service"
           },
           "assertVerification": {
             "checks": [
-              "helper-hash-match",
-              "service-unit-hash-match",
               "global-concurrency-two",
               "request-concurrency-two",
-              "systemctl-is-enabled",
-              "systemctl-is-active",
+              "systemctl-user-is-enabled",
+              "systemctl-user-is-active",
               "service-fragment-path-match",
-              "service-user-match",
-              "service-working-directory-match",
+              "service-execstart-runner-binary-match",
               "exactly-one-configured-runner-process"
             ],
             "failurePolicy": "fail-closed-on-live-host-drift"
@@ -283,6 +284,82 @@
         },
         "availability": "not-available-on-current-ubuntu-docker-machine",
         "claimBoundary": "cannot be satisfied by Linux Docker; requires native Windows host with LabVIEW and Docker Desktop Windows-container mode"
+      },
+      "vagrantWindowsVsixAcceptance": {
+        "description": "local-vagrant-windows-acceptance",
+        "classification": "self-hosted-vagrant-windows-vsix-acceptance-lane",
+        "tags": [
+          "linux",
+          "x64",
+          "virtualbox",
+          "vagrant",
+          "private-release"
+        ],
+        "runnerContractDoc": "docs/product/vagrant-windows-acceptance-runner-lane.md",
+        "operatorModel": {
+          "hostUser": "sergio",
+          "hostHome": "/home/sergio",
+          "executor": "shell",
+          "shell": "bash",
+          "vagrantBox": "vihs/win11-labview2026",
+          "goldenVmName": "vihs-win11-labview2026-golden",
+          "ciVmName": "vihs-ci-win11",
+          "resourceGroup": "vihs-windows-vagrant",
+          "vagrantDotfilePath": ".vagrant-ci",
+          "storageRoot": "/run/media/sergio/Data/vihs-vagrant",
+          "vagrantHome": "/run/media/sergio/Data/vihs-vagrant/vagrant-home",
+          "boxFile": "/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box",
+          "boxWorkdir": "/run/media/sergio/Data/vihs-vagrant/box-work",
+          "virtualBoxMachineFolder": "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs",
+          "repoOwnedDoctorScript": "scripts/vagrant/doctor-vagrant-host.sh",
+          "repoOwnedRefreshScript": "scripts/vagrant/refresh-golden-box.sh",
+          "repoOwnedCleanupScript": "scripts/vagrant/cleanup-disposable-ci-vm.sh",
+          "repoOwnedColdPrepScript": "vagrant/provision/prepare-cold-labview.ps1",
+          "bootstrapInteractiveSessionPolicy": "bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview",
+          "vagrantfile": "vagrant/Vagrantfile",
+          "goldenRefreshVariable": "VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true",
+          "goldenRefreshWorkdirVariable": "VIHS_VAGRANT_BOX_WORKDIR",
+          "evidenceRoot": "vagrant/evidence/",
+          "lifecycleOwner": "user-mode-linux-shell-runner",
+          "registration": {
+            "tokenType": "runner-authentication-token",
+            "tokenPrefix": "glrt-",
+            "creationApi": "POST /user/runners",
+            "locked": true,
+            "runUntagged": false,
+            "maximumTimeoutSeconds": 7200
+          },
+          "hostDoctorChecks": [
+            "vagrant-available",
+            "virtualbox-available",
+            "docker-engine-reachable",
+            "node-available",
+            "npm-available",
+            "gitlab-runner-available",
+            "vagrant-box-registered",
+            "vagrant-box-ovf-payload-present",
+            "golden-vm-exists-and-powered-off",
+            "no-stale-running-ci-vm",
+            "local-vagrant-state-points-only-at-ci-vm",
+            "virtualbox-machine-folder-on-large-drive",
+            "virtualbox-machine-folder-has-vm-import-space",
+            "vagrant-reload-installed"
+          ],
+          "cleanupChecks": [
+            "refuse-golden-vm-name-match",
+            "fail-if-ci-vm-running",
+            "delete-stopped-disposable-ci-vm-only",
+            "remove-active-vagrant-dotfile-state"
+          ],
+          "coldPrepChecks": [
+            "LabVIEW-stopped",
+            "LabVIEWCLI-stopped",
+            "LVCompare-stopped",
+            "vi-server-port-3363-cleared"
+          ],
+          "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof"
+        },
+        "claimContribution": "required-for-vagrant-windows-vsix-acceptance"
       }
     },
     "jobs": {
@@ -444,6 +521,45 @@
         "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true",
         "claimBoundary": "required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview"
       },
+      "vagrant_windows_vsix_acceptance": {
+        "classification": "required-vagrant-windows-vsix-acceptance",
+        "stage": "test",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ],
+        "tags": [
+          "linux",
+          "x64",
+          "virtualbox",
+          "vagrant",
+          "private-release"
+        ],
+        "resourceGroup": "vihs-windows-vagrant",
+        "requiredNeeds": [],
+        "dagStart": true,
+        "command": "npm ci; npm run compile; npm run package:audit; node scripts/runPinnedVsce.js package; vagrant up/provision/acceptance",
+        "evidenceRoot": "vagrant/evidence/",
+        "hostDoctorScript": "scripts/vagrant/doctor-vagrant-host.sh",
+        "goldenRefreshScript": "scripts/vagrant/refresh-golden-box.sh",
+        "goldenRefreshVariable": "VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true",
+        "coldPrepScript": "vagrant/provision/prepare-cold-labview.ps1",
+        "validatedFacts": [
+          "runner-selected-by-vagrant-tags",
+          "registered-vagrant-box-present",
+          "disposable-ci-vm-boots",
+          "acceptance-manifest-present",
+          "proofExitCode=0",
+          "runtimeExecutionState=succeeded",
+          "cold-start-markers-present"
+        ],
+        "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof",
+        "failurePolicy": "fail-closed-before-preview-or-exact-package-artifacts-when-vagrant-windows-vsix-acceptance-fails"
+      },
       "package_extension_preview": {
         "classification": "preview-package-lane",
         "requiredNeeds": [
@@ -452,7 +568,8 @@
           "assurance_requirements_quality",
           "assurance_external_user_information",
           "test_extension",
-          "linux_docker_provider_lane"
+          "linux_docker_provider_lane",
+          "vagrant_windows_vsix_acceptance"
         ],
         "optionalNeeds": [
           "windows_private_release_acceptance"
@@ -487,7 +604,8 @@
           "assurance_requirements_quality",
           "assurance_external_user_information",
           "test_extension",
-          "linux_docker_provider_lane"
+          "linux_docker_provider_lane",
+          "vagrant_windows_vsix_acceptance"
         ],
         "optionalNeeds": [
           "windows_private_release_acceptance"
@@ -625,6 +743,7 @@
     "docs/requirements/rtm.csv",
     "docs/testing/test-plan.md",
     "docs/product/windows-private-release-runner-lane.md",
+    "docs/product/vagrant-windows-acceptance-runner-lane.md",
     "docs/product/linux-assurance-runner-lane.md",
     "docs/product/hosted-ci-governance.md",
     "docs/product/hosted-ci-governance.json"
@@ -638,6 +757,7 @@
       "linux-assurance-runner-lane",
       "docs-workbench-gate",
       "test-extension-linux-ci",
+      "vagrant-windows-vsix-acceptance",
       "preview-vsix-packaging"
     ],
     "deferredProof": [
@@ -645,6 +765,9 @@
       "native Windows LabVIEW host execution",
       "Windows Docker Desktop Windows-container execution",
       "windows_private_release_acceptance"
+    ],
+    "companionProof": [
+      "vagrant-windows-vsix-acceptance proves Windows 11 + LabVIEW 2026 Vagrant VSIX acceptance only"
     ],
     "publicGitHubMutation": "not-admitted-by-this-claim",
     "marketplaceMutation": "not-admitted-by-this-claim"

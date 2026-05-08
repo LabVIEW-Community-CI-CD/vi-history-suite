@@ -536,12 +536,11 @@ Hosted automation governance is now retained explicitly:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh` now reconciles the
   live config back to that dual-concurrency contract, restarts the admitted
   service when needed, and writes the latest Linux startup receipt to
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`;
+  `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`;
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh` fails closed
-  unless the installed helper/service unit hashes, `concurrent = 2`,
-  `request_concurrency = 2`, admitted service fragment/user/working
-  directory, enabled/active service state, and one live configured Linux
-  runner process remain intact; and the admitted Windows-host wrapper
+  unless `concurrent = 2`, `request_concurrency = 2`, the admitted user-mode
+  service fragment and `ExecStart`, enabled/active service state, and one live
+  configured Linux runner process remain intact; and the admitted Windows-host wrapper
   for both lane assertions is `scripts/assertGovernedRunnerLanes.js` via
   `npm run gitlab:runner:assert`; the operator-only Windows recovery rehearsal
   wrapper is `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
