@@ -345,7 +345,7 @@ The job shall retain:
 - the latest Windows startup receipt at
   `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
 - the latest Linux startup receipt observed by the paired helper at
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`
 - fail-fast admission evidence when GitLab runs the governed doctor surface:
   `governed-runner-admission-evidence/runner-doctor.json`
 - fail-fast admission summary when GitLab runs the governed doctor surface:

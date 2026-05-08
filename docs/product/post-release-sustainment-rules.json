@@ -491,7 +491,7 @@
           },
           "startupReceiptSurface": {
             "script": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
-            "latestReceipt": "$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json",
+            "latestReceipt": "$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json",
             "failurePolicy": "fail-closed-unless-helper-refreshes-governed-startup-receipt"
           },
           "hostDoctorSurface": {

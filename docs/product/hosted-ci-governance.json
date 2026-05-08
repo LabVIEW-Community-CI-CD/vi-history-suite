@@ -89,7 +89,7 @@
     },
     "runnerLanes": {
       "linuxAssurance": {
-        "description": "local-linux-assurance",
+        "description": "local-linux-docker-assurance",
         "classification": "required-self-hosted-linux-assurance-lane",
         "tags": [
           "linux",
@@ -104,8 +104,11 @@
           "configPath": "~/.gitlab-runner/config.toml",
           "globalConcurrency": 2,
           "requestConcurrency": 2,
-          "lifecycleOwner": "systemd",
-          "serviceUnit": "vihs-linux-assurance-runner.service",
+          "hostUser": "sergio",
+          "lifecycleOwner": "systemd-user",
+          "serviceUnit": "gitlab-runner.service",
+          "serviceScope": "user",
+          "runnerBinary": "/home/sergio/.local/bin/gitlab-runner",
           "repoOwnedApplyScript": "scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh",
           "repoOwnedHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
           "repoOwnedDoctorScript": "scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh",
@@ -116,8 +119,9 @@
           "combinedAssertionScript": "scripts/assertGovernedRunnerLanes.js",
           "combinedAssertionPackageScript": "npm run gitlab:runner:assert",
           "startupReceipt": {
-            "latestPath": "$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json",
+            "latestPath": "$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json",
             "schema": "vi-history-suite/linux-assurance-startup@v1",
+            "required": false,
             "requiredFacts": [
               "config-hash-before-after",
               "service-state-before-after",
@@ -134,14 +138,14 @@
             "failurePolicy": "non-mutating-readback; combined surface may fail closed on drift when requested"
           },
           "applyVerification": {
-            "requiredUser": "sveld",
-            "requiredHome": "/home/sveld",
+            "requiredUser": "sergio",
+            "requiredHome": "/home/sergio",
             "checks": [
               "node-available",
               "config-global-concurrency-two",
               "config-request-concurrency-two",
-              "systemctl-is-enabled",
-              "systemctl-is-active"
+              "systemctl-user-is-enabled",
+              "systemctl-user-is-active"
             ],
             "failurePolicy": "fail-closed-unless-config-normalized-and-service-enabled-and-active"
           },
@@ -153,24 +157,21 @@
             "checks": [
               "config-global-concurrency-two",
               "config-request-concurrency-two",
-              "systemctl-is-enabled",
-              "systemctl-is-active",
+              "systemctl-user-is-enabled",
+              "systemctl-user-is-active",
               "exactly-one-configured-runner-process",
-              "writes-startup-receipt"
+              "startup-receipt-optional-on-direct-host"
             ],
-            "failurePolicy": "fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service"
+            "failurePolicy": "fail-closed-unless-direct-host-observes-live-linux-assurance-service"
           },
           "assertVerification": {
             "checks": [
-              "helper-hash-match",
-              "service-unit-hash-match",
               "global-concurrency-two",
               "request-concurrency-two",
-              "systemctl-is-enabled",
-              "systemctl-is-active",
+              "systemctl-user-is-enabled",
+              "systemctl-user-is-active",
               "service-fragment-path-match",
-              "service-user-match",
-              "service-working-directory-match",
+              "service-execstart-runner-binary-match",
               "exactly-one-configured-runner-process"
             ],
             "failurePolicy": "fail-closed-on-live-host-drift"

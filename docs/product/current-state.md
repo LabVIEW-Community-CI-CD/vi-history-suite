@@ -473,7 +473,7 @@ Latest landed ship target:
   - latest Windows startup receipt:
     `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
   - latest Linux startup receipt:
-    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+    `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`
   - fail-fast GitLab Linux/Docker admission job:
     `ubuntu_docker_runner_admission`
   - deferred Windows/LabVIEW runner admission job:

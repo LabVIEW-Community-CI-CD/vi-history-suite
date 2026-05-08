@@ -117,7 +117,7 @@
     },
     "startupReceipts": {
       "windowsLatest": "C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json",
-      "linuxLatest": "$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json"
+      "linuxLatest": "$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json"
     },
     "linuxBootstrapReadiness": {
       "script": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",

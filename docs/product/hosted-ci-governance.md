@@ -124,10 +124,10 @@ Runner lanes:
 Runner operator hardening:
 
 - `linux-assurance`: admitted config path
-  `~/.gitlab-runner/config.toml`, top-level `concurrent = 2`, per-runner
-  `request_concurrency = 2`, and steady-state lifecycle owned by the admitted
-  Linux assurance distro `systemd` unit `vihs-linux-assurance-runner.service`,
-  defaulting to `Ubuntu-24.04`, with repo-owned host
+  `~/.gitlab-runner/config.toml`, host user `sergio`, runner binary
+  `/home/sergio/.local/bin/gitlab-runner`, top-level `concurrent = 2`,
+  per-runner `request_concurrency = 2`, and steady-state lifecycle owned by
+  user-mode `systemd` unit `gitlab-runner.service`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
   `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`,
@@ -137,19 +137,16 @@ Runner operator hardening:
   `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
   and `scripts/assertGovernedRunnerLanes.js` via
   `npm run gitlab:runner:assert`; the Linux apply surface first normalizes
-  both concurrency facts and then fails closed unless the admitted `systemd`
-  service is both enabled and active after apply; the Windows bootstrap now
-  retries the Linux helper as a bounded post-reset readiness gate; the helper
-  itself reconciles the live config back to `concurrent = 2` plus
-  `request_concurrency = 2`, restarts the admitted service when needed, and
-  writes a machine-readable startup receipt under
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`; the
-  Linux doctor surface reports current concurrency, service, process, and
-  receipt facts; and the Linux assertion surface fails closed unless the
-  installed helper and service unit still match the repo asset pack,
-  `concurrent = 2` plus `request_concurrency = 2` are still present, the
-  admitted fragment path/user/working directory remain exact, the service is
-  still enabled and active, and exactly one configured runner process is live
+  both concurrency facts and then fails closed unless the admitted service is
+  both enabled and active after apply; the helper itself reconciles the live
+  config back to `concurrent = 2` plus `request_concurrency = 2`; the Linux
+  doctor surface reports current concurrency, user-service, runner binary,
+  process, and optional receipt facts; and the Linux assertion surface fails
+  closed unless `concurrent = 2` plus `request_concurrency = 2` are still
+  present, user-mode `gitlab-runner.service` is enabled and active, the admitted
+  `ExecStart` still points at `/home/sergio/.local/bin/gitlab-runner run
+  --config /home/sergio/.gitlab-runner/config.toml`, and exactly one configured
+  runner process is live
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface

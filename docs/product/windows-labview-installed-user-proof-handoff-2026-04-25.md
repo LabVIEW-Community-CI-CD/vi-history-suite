@@ -110,7 +110,7 @@ evidence is retained from the external host:
 | Windows runner admission | `governed-runner-admission-evidence/runner-doctor.json` |
 | Windows runner admission summary | `governed-runner-admission-evidence/runner-doctor.md` |
 | Windows startup receipt | `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json` |
-| Paired Linux assurance startup receipt | `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json` |
+| Paired Linux assurance startup receipt | `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json` |
 | Windows recovery rehearsal | `.cache/windows-proof-runtime-recovery-rehearsal/latest.json` |
 | Private-release host/container manifest | `windows-private-release-evidence/manifest.json` |
 | Host settings file | `windows-private-release-evidence/host/settings-file.json` |

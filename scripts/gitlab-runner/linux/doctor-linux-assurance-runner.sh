@@ -1,11 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"
-CONFIG="$HOME/.gitlab-runner/config.toml"
-SERVICE_NAME="vihs-linux-assurance-runner.service"
-RECEIPT_ROOT="$HOME/gitlab-runner/receipts/linux-assurance-startup"
+CONFIG="${VIHS_LINUX_ASSURANCE_CONFIG:-$HOME/.gitlab-runner/config.toml}"
+SERVICE_NAME="${VIHS_LINUX_ASSURANCE_SERVICE_NAME:-gitlab-runner.service}"
+SERVICE_SCOPE="${VIHS_LINUX_ASSURANCE_SERVICE_SCOPE:-user}"
+RECEIPT_ROOT="${VIHS_LINUX_ASSURANCE_RECEIPT_ROOT:-$HOME/.gitlab-runner/receipts/linux-assurance-startup}"
 LATEST_RECEIPT_PATH="$RECEIPT_ROOT/latest.json"
+REQUIRE_RECEIPT="${VIHS_LINUX_ASSURANCE_REQUIRE_RECEIPT:-false}"
+
+if [[ -n "${VIHS_LINUX_ASSURANCE_RUNNER_BIN:-}" ]]; then
+  RUNNER_BIN="$VIHS_LINUX_ASSURANCE_RUNNER_BIN"
+elif command -v gitlab-runner >/dev/null 2>&1; then
+  RUNNER_BIN="$(command -v gitlab-runner)"
+else
+  RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"
+fi
 
 issues=()
 healthy=true
@@ -27,8 +36,16 @@ read_config_value() {
   printf '%s' "$value"
 }
 
-service_enabled_state="$(systemctl is-enabled "$SERVICE_NAME" 2>/dev/null || true)"
-service_active_state="$(systemctl is-active "$SERVICE_NAME" 2>/dev/null || true)"
+systemctl_read() {
+  if [[ "$SERVICE_SCOPE" == "user" ]]; then
+    systemctl --user "$@"
+  else
+    systemctl "$@"
+  fi
+}
+
+service_enabled_state="$(systemctl_read is-enabled "$SERVICE_NAME" 2>/dev/null || true)"
+service_active_state="$(systemctl_read is-active "$SERVICE_NAME" 2>/dev/null || true)"
 mapfile -t runner_process_lines < <(pgrep -af "$RUNNER_BIN run --config $CONFIG" || true)
 
 global_concurrency="$(read_config_value '^[[:space:]]*concurrent[[:space:]]*=')"
@@ -47,10 +64,10 @@ if [[ "$request_concurrency" != "2" ]]; then
   append_issue "Expected request_concurrency = 2 in $CONFIG, found '${request_concurrency:-<missing>}'"
 fi
 if [[ "$service_enabled_state" != "enabled" ]]; then
-  append_issue "$SERVICE_NAME is not enabled."
+  append_issue "$SERVICE_NAME is not enabled in $SERVICE_SCOPE systemd scope."
 fi
 if [[ "$service_active_state" != "active" ]]; then
-  append_issue "$SERVICE_NAME is not active."
+  append_issue "$SERVICE_NAME is not active in $SERVICE_SCOPE systemd scope."
 fi
 if [[ "${#runner_process_lines[@]}" -ne 1 ]]; then
   append_issue "Expected exactly one configured gitlab-runner process for $CONFIG, found ${#runner_process_lines[@]}."
@@ -59,13 +76,11 @@ fi
 receipt_exists="false"
 receipt_generated_at=""
 receipt_healthy=""
-receipt_payload=""
 if [[ -f "$LATEST_RECEIPT_PATH" ]]; then
   receipt_exists="true"
-  receipt_payload="$(cat "$LATEST_RECEIPT_PATH")"
   receipt_generated_at="$(node -e "const fs=require('node:fs'); const payload=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(payload.generatedAt || ''));" "$LATEST_RECEIPT_PATH")"
   receipt_healthy="$(node -e "const fs=require('node:fs'); const payload=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(payload.healthy));" "$LATEST_RECEIPT_PATH")"
-else
+elif [[ "${REQUIRE_RECEIPT,,}" == "true" ]]; then
   append_issue "Missing Linux assurance startup receipt at $LATEST_RECEIPT_PATH."
 fi
 
@@ -75,9 +90,12 @@ runner_process_payload="$(printf '%s\n' "${runner_process_lines[@]:-}" | node -e
 env \
   HEALTHY="$healthy" \
   SERVICE_NAME="$SERVICE_NAME" \
+  SERVICE_SCOPE="$SERVICE_SCOPE" \
+  RUNNER_BIN="$RUNNER_BIN" \
   CONFIG="$CONFIG" \
   LATEST_RECEIPT_PATH="$LATEST_RECEIPT_PATH" \
   RECEIPT_EXISTS="$receipt_exists" \
+  RECEIPT_REQUIRED="$REQUIRE_RECEIPT" \
   RECEIPT_GENERATED_AT="$receipt_generated_at" \
   RECEIPT_HEALTHY="$receipt_healthy" \
   SERVICE_ENABLED_STATE="$service_enabled_state" \
@@ -96,9 +114,12 @@ const payload = {
   generatedAt: new Date().toISOString(),
   healthy: String(process.env.HEALTHY).trim().toLowerCase() === 'true',
   serviceName: process.env.SERVICE_NAME,
+  serviceScope: process.env.SERVICE_SCOPE,
+  runnerBinary: process.env.RUNNER_BIN,
   configPath: process.env.CONFIG,
   latestReceiptPath: process.env.LATEST_RECEIPT_PATH,
   latestReceiptExists: String(process.env.RECEIPT_EXISTS).trim().toLowerCase() === 'true',
+  latestReceiptRequired: String(process.env.RECEIPT_REQUIRED).trim().toLowerCase() === 'true',
   latestReceiptGeneratedAt: process.env.RECEIPT_GENERATED_AT || '',
   latestReceiptHealthy:
     process.env.RECEIPT_HEALTHY === ''

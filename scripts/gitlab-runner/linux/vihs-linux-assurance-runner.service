@@ -1,19 +1,19 @@
 [Unit]
-Description=VIHS Linux assurance GitLab runner
-After=network-online.target docker.service
-Wants=network-online.target docker.service
+Description=VIHS local GitLab runner user service
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=sveld
-WorkingDirectory=/home/sveld
-Environment=HOME=/home/sveld
-Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=/home/sveld/gitlab-runner/bin/gitlab-runner run --config /home/sveld/.gitlab-runner/config.toml
+ExecStart=%h/.local/bin/gitlab-runner run --config %h/.gitlab-runner/config.toml --working-directory %h
 Restart=always
 RestartSec=5
 KillSignal=SIGQUIT
 TimeoutStopSec=60
+Environment=PATH=%h/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+Environment=VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home
+Environment=VIHS_VAGRANT_STORAGE_ROOT=/run/media/sergio/Data/vihs-vagrant
+Environment="VIHS_VIRTUALBOX_MACHINE_FOLDER=/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

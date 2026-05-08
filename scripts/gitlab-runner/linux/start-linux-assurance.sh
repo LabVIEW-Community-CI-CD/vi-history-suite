@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"
 CONFIG="$HOME/.gitlab-runner/config.toml"
-SERVICE_NAME="vihs-linux-assurance-runner.service"
+SERVICE_NAME="${VIHS_LINUX_ASSURANCE_SERVICE_NAME:-gitlab-runner.service}"
+SERVICE_SCOPE="${VIHS_LINUX_ASSURANCE_SERVICE_SCOPE:-user}"
 EXPECTED_GLOBAL_CONCURRENCY_PATTERN='^[[:space:]]*concurrent[[:space:]]*=[[:space:]]*2[[:space:]]*$'
 EXPECTED_REQUEST_CONCURRENCY_PATTERN='^[[:space:]]*request_concurrency[[:space:]]*=[[:space:]]*2[[:space:]]*$'
 SERVICE_POLL_ATTEMPTS=24
 SERVICE_POLL_SECONDS=5
-RECEIPT_ROOT="$HOME/gitlab-runner/receipts/linux-assurance-startup"
+RECEIPT_ROOT="${VIHS_LINUX_ASSURANCE_RECEIPT_ROOT:-$HOME/.gitlab-runner/receipts/linux-assurance-startup}"
 TIMESTAMP_UTC="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
 LATEST_RECEIPT_PATH="$RECEIPT_ROOT/latest.json"
 TIMESTAMPED_RECEIPT_PATH="$RECEIPT_ROOT/$TIMESTAMP_UTC.json"
+
+if [[ -n "${VIHS_LINUX_ASSURANCE_RUNNER_BIN:-}" ]]; then
+  RUNNER_BIN="$VIHS_LINUX_ASSURANCE_RUNNER_BIN"
+elif command -v gitlab-runner >/dev/null 2>&1; then
+  RUNNER_BIN="$(command -v gitlab-runner)"
+else
+  RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"
+fi
 
 CONFIG_HASH_BEFORE=""
 CONFIG_HASH_AFTER=""
@@ -45,6 +53,33 @@ append_reconciliation_action() {
   fi
 }
 
+systemctl_read() {
+  if [[ "$SERVICE_SCOPE" == "user" ]]; then
+    systemctl --user "$@"
+  else
+    systemctl "$@"
+  fi
+}
+
+systemctl_reconcile() {
+  local action="$1"
+  if [[ "$SERVICE_SCOPE" == "user" ]]; then
+    systemctl --user "$action" "$SERVICE_NAME" >/dev/null 2>&1
+  else
+    command -v sudo >/dev/null 2>&1 || fail "Governed Linux assurance helper requires sudo to reconcile $SERVICE_NAME."
+    sudo -n systemctl "$action" "$SERVICE_NAME" >/dev/null 2>&1
+  fi
+}
+
+systemctl_daemon_reload() {
+  if [[ "$SERVICE_SCOPE" == "user" ]]; then
+    systemctl --user daemon-reload >/dev/null 2>&1
+  else
+    command -v sudo >/dev/null 2>&1 || fail "Governed Linux assurance helper requires sudo to reconcile $SERVICE_NAME."
+    sudo -n systemctl daemon-reload >/dev/null 2>&1
+  fi
+}
+
 ensure_receipt_root() {
   mkdir -p "$RECEIPT_ROOT"
 }
@@ -56,6 +91,7 @@ write_receipt() {
     TIMESTAMP_UTC="$TIMESTAMP_UTC" \
     CONFIG="$CONFIG" \
     SERVICE_NAME="$SERVICE_NAME" \
+    SERVICE_SCOPE="$SERVICE_SCOPE" \
     RECEIPT_ROOT="$RECEIPT_ROOT" \
     LATEST_RECEIPT_PATH="$LATEST_RECEIPT_PATH" \
     TIMESTAMPED_RECEIPT_PATH="$TIMESTAMPED_RECEIPT_PATH" \
@@ -105,6 +141,7 @@ const payload = {
   schema: 'vi-history-suite/linux-assurance-startup@v1',
   generatedAt: process.env.TIMESTAMP_UTC,
   serviceName: process.env.SERVICE_NAME,
+  serviceScope: process.env.SERVICE_SCOPE,
   configPath: process.env.CONFIG,
   receiptRoot: process.env.RECEIPT_ROOT,
   latestReceiptPath,
@@ -149,8 +186,8 @@ command -v pgrep >/dev/null 2>&1 || fail "Governed Linux assurance helper requir
 command -v sha256sum >/dev/null 2>&1 || fail "Governed Linux assurance helper requires sha256sum."
 
 CONFIG_HASH_BEFORE="$(sha256sum "$CONFIG" | awk '{print toupper($1)}')"
-ENABLED_STATE_BEFORE="$(systemctl is-enabled "$SERVICE_NAME" 2>/dev/null || true)"
-ACTIVE_STATE_BEFORE="$(systemctl is-active "$SERVICE_NAME" 2>/dev/null || true)"
+ENABLED_STATE_BEFORE="$(systemctl_read is-enabled "$SERVICE_NAME" 2>/dev/null || true)"
+ACTIVE_STATE_BEFORE="$(systemctl_read is-active "$SERVICE_NAME" 2>/dev/null || true)"
 
 mapfile -t normalize_lines < <(node - "$CONFIG" <<'NODE'
 const fs = require('node:fs');
@@ -226,18 +263,17 @@ if ! grep -Eq "$EXPECTED_REQUEST_CONCURRENCY_PATTERN" "$CONFIG"; then
 fi
 
 if [[ "$ENABLED_STATE_BEFORE" != "enabled" || "$ACTIVE_STATE_BEFORE" != "active" || "$RECONCILIATION_PERFORMED" == "true" ]]; then
-  command -v sudo >/dev/null 2>&1 || fail "Governed Linux assurance helper requires sudo to reconcile $SERVICE_NAME."
-  append_reconciliation_action "sudo-daemon-reload"
-  sudo -n systemctl daemon-reload >/dev/null 2>&1 || fail "Governed Linux assurance helper requires non-interactive sudo access to run systemctl daemon-reload."
-  append_reconciliation_action "sudo-enable-service"
-  sudo -n systemctl enable "$SERVICE_NAME" >/dev/null 2>&1 || fail "Governed Linux assurance helper requires non-interactive sudo access to enable $SERVICE_NAME."
-  append_reconciliation_action "sudo-restart-service"
-  sudo -n systemctl restart "$SERVICE_NAME" >/dev/null 2>&1 || fail "Governed Linux assurance helper requires non-interactive sudo access to restart $SERVICE_NAME."
+  append_reconciliation_action "$SERVICE_SCOPE-daemon-reload"
+  systemctl_daemon_reload || fail "Governed Linux assurance helper could not run daemon-reload for $SERVICE_NAME."
+  append_reconciliation_action "$SERVICE_SCOPE-enable-service"
+  systemctl_reconcile enable || fail "Governed Linux assurance helper could not enable $SERVICE_NAME."
+  append_reconciliation_action "$SERVICE_SCOPE-restart-service"
+  systemctl_reconcile restart || fail "Governed Linux assurance helper could not restart $SERVICE_NAME."
 fi
 
 for ((attempt = 1; attempt <= SERVICE_POLL_ATTEMPTS; attempt += 1)); do
-  ENABLED_STATE_AFTER="$(systemctl is-enabled "$SERVICE_NAME" 2>/dev/null || true)"
-  ACTIVE_STATE_AFTER="$(systemctl is-active "$SERVICE_NAME" 2>/dev/null || true)"
+  ENABLED_STATE_AFTER="$(systemctl_read is-enabled "$SERVICE_NAME" 2>/dev/null || true)"
+  ACTIVE_STATE_AFTER="$(systemctl_read is-active "$SERVICE_NAME" 2>/dev/null || true)"
   mapfile -t runner_process_lines < <(pgrep -af "$RUNNER_BIN run --config $CONFIG" || true)
   RUNNER_PROCESS_COUNT_AFTER="${#runner_process_lines[@]}"
 
