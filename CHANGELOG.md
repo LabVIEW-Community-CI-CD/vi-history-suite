@@ -18,6 +18,10 @@ Burned exact-version releases now include `v1.0.2`.
 - Vagrant Windows VSIX acceptance is now governed by a repo-owned evidence
   assertion surface that retains reusable CI receipts without expanding the
   Windows Docker Desktop proof claim.
+- Exact-release readiness now has a current `2026-05-08` assessment for the
+  `1.3.14` `develop` line, making release-branch opening admissible as a
+  separate governed action while exact tag, public GitHub release, Marketplace
+  mutation, and `main` promotion remain gated and not performed.
 
 ## [1.3.13] - 2026-04-27
 

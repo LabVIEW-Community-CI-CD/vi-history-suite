@@ -395,30 +395,52 @@ describe('release publication state resolver', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(state.exactReleaseReadinessAssessment).toMatchObject({
-      status: 'blocked',
-      assessmentPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.md',
-      assessmentJsonPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.json',
+      status: 'release-branch-opening-admissible',
+      assessmentPath: 'docs/product/exact-release-readiness-assessment-2026-05-08.md',
+      assessmentJsonPath: 'docs/product/exact-release-readiness-assessment-2026-05-08.json',
+      supersedesCurrentAssessmentPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.md',
       assessedBranch: 'develop',
-      assessedCommit: '42d1f581874c9fad8f6dcbc96c8827bb07e3b508',
-      assessedPipelineId: 2480212103,
+      assessedCommit: 'ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8',
+      assessedPipelineId: 2511103937,
       assessedPipelineStatus: 'success',
-      packageVersion: '1.3.10',
-      currentAdmissibleClaim: 'linux-docker-validated-preview-only',
+      packageVersion: '1.3.14',
+      currentAdmissibleClaim:
+        'develop-candidate-release-readiness-consolidated-no-exact-publication',
       retainedExactBaseline: 'v1.3.9',
-      blockingReason: 'missing-native-windows-installed-user-labview-proof-for-1.3.10',
-      windowsInstalledUserLabviewProofState: 'community-deferred',
-      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
-      previewVsixSha256: 'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6',
+      blockingReason: null,
+      releaseBranchOpening: 'admissible-as-separate-governed-action',
+      releaseBranch: null,
+      exactTag: null,
+      windowsInstalledUserLabviewProofState: 'admitted-for-host-labview-2026-x64',
+      vagrantVsixAcceptanceState: 'protected-develop-ci-receipt-retained',
+      vagrantVsixAcceptanceJobId: 14284448828,
+      vagrantVsixAcceptanceAssertionPath:
+        'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
+      vagrantVsixAcceptanceManifestPath: 'vagrant/evidence/20260508-113126/manifest.json',
+      windowsDockerDesktopProofState: 'community-deferred',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.14.vsix',
+      previewVsixSha256: 'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f',
+      previewVsixSizeBytes: 1011604,
+      linuxDockerProviderLaneJobId: 14284448827,
+      publicExactPretagProofJobId: 14284448826,
+      packageExtensionPreviewJobId: 14284448829,
+      selectedExactAuthorityVsix: null,
+      windowsExactVsixInstallProofState:
+        'missing-for-selected-1.3.14-exact-authority-vsix',
       publicGitHubExactMutation: 'not-admitted-and-not-performed',
       marketplaceExactMutation: 'not-admitted-and-not-performed',
+      mainPromotion: 'not-admitted-and-not-performed',
       communityProofIntakeChecklistPath:
         'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
       communityProofIntakeChecklistJsonPath:
         'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
       exactCandidateConversionPaths: [
-        'windows-proof-claim-with-admitted-windows-labview-receipts',
-        'community-deferred-claim-with-no-windows-installed-user-proof-claim'
-      ]
+        'open-governed-release-1.3.14-branch-with-current-evidence-boundary',
+        'reassess-release-branch-before-exact-tag',
+        'retain-selected-exact-authority-vsix-before-public-exact-release'
+      ],
+      nextAdmittedAction:
+        'open-governed-release-1.3.14-branch-from-ce103d3-if-current-claim-boundary-remains-selected'
     });
     expect(state.windowsLabviewCommunityProofIntakeChecklist).toMatchObject({
       status: 'prepared-no-mutation',
@@ -459,14 +481,17 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Exact Release Readiness Assessment');
     expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
     expect(stateDoc).toContain('## Exact Release Candidate Reassessment');
-    expect(stateDoc).toContain('Exact-release readiness: blocked');
+    expect(stateDoc).toContain('Exact-release readiness: release branch opening admissible');
     expect(stateDoc).toContain('Source pipeline: `2480546719` / `success`');
     expect(stateDoc).toContain('Release branch opening: admissible as next governed action');
     expect(stateDoc).toContain('Admitted external Windows proof arrived: false');
-    expect(stateDoc).toContain('Assessed pipeline: `2480212103` / `success`');
+    expect(stateDoc).toContain('Assessed pipeline: `2511103937` / `success`');
     expect(stateDoc).toContain(
-      'f516b8ebec261c854e9e6d048a92ce8cb6f67a04114b9da945b916e37b0621a6'
+      'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f'
     );
+    expect(stateDoc).toContain('Vagrant Windows VSIX acceptance: protected `develop` CI receipt');
+    expect(stateDoc).toContain('Windows Docker Desktop Windows-container proof state: community/deferred');
+    expect(stateDoc).toContain('`main` promotion: not admitted and not performed');
     expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
     expect(stateDoc).toContain('Status: published and verified');
     expect(stateDoc).toContain('Target preview version: `1.3.13`');
@@ -492,7 +517,7 @@ describe('release publication state resolver', () => {
       'afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783'
     );
     expect(stateDoc).toContain('Community reports become maintainer proof automatically: false');
-    expect(stateDoc).toContain('community-deferred claim with no Windows installed-user proof claim');
+    expect(stateDoc).toContain('community-deferred-windows-labview-claim');
     expect(stateDoc).toContain('public-github-source/.github/labels.yml');
     expect(stateDoc).toContain(
       'Public GitHub intake promotion state: published and verified through public'
