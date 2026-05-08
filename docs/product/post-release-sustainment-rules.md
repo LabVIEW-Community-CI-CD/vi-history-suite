@@ -81,8 +81,8 @@ Current version-line contract:
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
 - active release-candidate state:
-  release-branch readiness reassessed; protected `main` promotion is the next
-  separate governed action
+  protected `main` promotion preflight admitted opening a release-to-main
+  merge request as the next separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:

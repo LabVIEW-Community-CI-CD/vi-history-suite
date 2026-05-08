@@ -31,6 +31,12 @@ Burned exact-version releases now include `v1.0.2`.
   promotion admissible only as a separate governed action while exact tag,
   public GitHub release, Marketplace mutation, Windows Docker Desktop proof,
   and `main` promotion remain unperformed in this slice.
+- Added a protected `release/1.3.14` to `main` promotion preflight that records
+  clean branch ancestry, MR `!196`, protected `develop` pipeline `2511333533`,
+  and source-branch-retention requirements before opening a release-to-main
+  merge request; no exact tag, public release, Marketplace mutation, Windows
+  Docker Desktop proof admission, `main` merge, or release branch deletion was
+  performed.
 
 ## [1.3.13] - 2026-04-27
 

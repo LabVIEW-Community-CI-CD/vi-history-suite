@@ -145,16 +145,17 @@ describe('release/1.3.14 branch readiness reassessment packet', () => {
       releaseBranch: 'release/1.3.14',
       tag: null,
       packageVersion: '1.3.14',
-      status: 'release-branch-readiness-reassessed-main-promotion-pending'
+      status: 'main-promotion-preflight-admitted-mr-pending'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'promote-release-1.3.14-to-main-as-separate-governed-action'
+      'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
     );
     expect(publicCandidate.activeDevelopCandidate).toMatchObject({
-      state: 'release-branch-readiness-reassessed-main-promotion-pending',
+      state: 'main-promotion-preflight-admitted-mr-pending',
       releaseBranchReadinessReassessmentPacketPath:
         'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md',
-      nextAdmittedAction: 'promote-release-1.3.14-to-main-as-separate-governed-action'
+      nextAdmittedAction:
+        'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
     });
 
     expect(releaseStateDoc).toContain('## Release Branch Readiness Reassessment');
