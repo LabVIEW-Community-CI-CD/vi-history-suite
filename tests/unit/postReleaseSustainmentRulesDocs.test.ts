@@ -30,9 +30,9 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.9',
         currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.13',
+        currentDevelopPackageLine: '1.3.14',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
-        activeDevelopCandidateReleaseLine: null,
+        activeDevelopCandidateReleaseLine: 'v1.3.14',
         activeReleaseCandidateBranch: null,
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
@@ -53,12 +53,13 @@ describe('post-release sustainment rules package', () => {
         vscodeMarketplaceCommunityValidationPreviewPrepReceiptPath:
           '.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json',
         vscodeMarketplaceCommunityValidationPreviewPrepStatus:
-          'prepared-authorized-awaiting-gitlab-authority-green',
+          'published-and-verified-for-1.3.13',
         vscodeMarketplaceCommunityValidationPreviewTargetVersion: '1.3.13',
-        vscodeMarketplaceCommunityValidationPreviewPublishedVersion: null,
-        vscodeMarketplaceCommunityValidationPreviewPublishedDate: null,
-        vscodeMarketplaceCommunityValidationPreviewLastUpdated: null,
-        vscodeMarketplaceCommunityValidationPreviewVsixSha256: null,
+        vscodeMarketplaceCommunityValidationPreviewPublishedVersion: '1.3.13',
+        vscodeMarketplaceCommunityValidationPreviewPublishedDate: '2026-04-27',
+        vscodeMarketplaceCommunityValidationPreviewLastUpdated: '2026-04-27T04:24:05.457Z',
+        vscodeMarketplaceCommunityValidationPreviewVsixSha256:
+          '3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f',
         publicDefaultBranch: 'main',
         publicCodespaceBranch: 'develop',
         integrationBranch: 'develop',
@@ -107,8 +108,10 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
-        recordedAt: '2026-04-23',
+        recordedAt: '2026-05-08',
         chosenBump: 'patch',
+        targetFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
+        targetDevelopCandidateReleaseLine: 'v1.3.14',
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify'
       })
     );
@@ -136,7 +139,8 @@ describe('post-release sustainment rules package', () => {
 
     expect(rulesDoc).toContain('current exact released line: `v1.3.9`');
     expect(rulesDoc).toContain('current published package line on `main`: `1.3.9`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.13`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.14`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.14`');
     expect(rulesDoc).toContain('active release-candidate branch: none');
     expect(rulesDoc).toContain('public release `312994104` is published on `v1.3.9`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
@@ -149,9 +153,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('VS Code Marketplace publication prep package script');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:prepare`');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(rulesDoc).toContain('Marketplace public validation preview status: prepared, authorized, pending');
-    expect(rulesDoc).toContain('Marketplace public validation preview last updated: pending post-publication');
-    expect(rulesDoc).toContain('Marketplace public validation preview VSIX SHA-256: pending package');
+    expect(rulesDoc).toContain('Marketplace public validation preview status: published and verified for');
+    expect(rulesDoc).toContain('Marketplace public validation preview last updated:');
+    expect(rulesDoc).toContain('Marketplace public validation preview VSIX SHA-256:');
     expect(rulesDoc).toContain(
       '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/'
     );

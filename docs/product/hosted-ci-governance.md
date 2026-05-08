@@ -30,34 +30,37 @@ retained closed baseline.
 
 - current exact release line: `v1.3.9`
 - current `main` package line: `1.3.9`
-- current `develop` package line: `1.3.13`
-- active exact release candidate line on `develop`: none
+- current `develop` package line: `1.3.14`
+- active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- no active exact release candidate line is open; later exact lines must
-  reopen through the same GitFlow and publication gates from `develop`
+- the active exact candidate line is `v1.3.14`; later exact lines must reopen
+  through the same GitFlow and publication gates from `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - public GitHub exact transaction verification package script:
   `npm run public:github:exact:transaction:verify`
-- chosen bump: patch-preview
+- chosen bump: patch
 - active Marketplace public validation preview line: `1.3.13`
-- Marketplace public validation preview status: prepared, authorized, pending
-  publication
-- Marketplace public validation preview last updated: pending post-publication
-  readback
+- Marketplace public validation preview status: published and verified for
+  `1.3.13`
+- Marketplace public validation preview last updated:
+  `2026-04-27T04:24:05.457Z`
 - rationale: authority exact `v1.3.9` remains tagged on `main`, public
   GitHub release `312994104` is published with exact assets, and VS Code
   Marketplace serves regular `1.3.9`
-- rationale: `develop` now carries public validation pre-release package line
-  `1.3.13` so the pre-release can publish without reusing the live `1.3.11`
-  Marketplace version
+- rationale: `develop` now carries patch candidate package line `1.3.14` for
+  release-readiness consolidation after the published `1.3.13` public
+  validation pre-release
+- rationale: the Vagrant Windows VSIX acceptance lane now has a repo-owned
+  evidence assertion contract without expanding the Windows Docker Desktop
+  proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  but no active exact release candidate line is currently open
+  and the active exact candidate line is `v1.3.14`
 
 ## Current Linux/Docker Preview Claim
 
@@ -203,13 +206,15 @@ Runner operator hardening:
   authentication token; the repo-owned disposable cleanup surface
   `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
   fails when the disposable CI VM is running, deletes only a stopped
-  `vihs-ci-win11`, and clears active `.vagrant-ci` state before import; the
-  repo-owned host doctor
+  `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
+  that point at the governed CI VM folder, and clears active `.vagrant-ci`
+  state before import; the repo-owned host doctor
   `scripts/vagrant/doctor-vagrant-host.sh` checks Vagrant,
   VirtualBox, Docker, Node, npm, `gitlab-runner`, the registered box, golden VM
-  power state, stale CI VM state, real `box.ovf` payload presence, and
-  `vagrant-reload`, and verifies that VirtualBox imports target the large-drive
-  machine folder with enough free space; the repo-owned refresh surface
+  power state, stale CI VM state, stale inaccessible disposable registry
+  entries, real `box.ovf` payload presence, and `vagrant-reload`, and verifies
+  that VirtualBox imports target the large-drive machine folder with enough
+  free space; the repo-owned refresh surface
   `scripts/vagrant/refresh-golden-box.sh` updates the local box only when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, and fails early when the export work
   root or box output directory lacks enough free space unless
@@ -301,8 +306,9 @@ Job ownership:
   disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
   autologon creates the interactive LabVIEW desktop session while clone-local
   WinRM network/firewall readiness remains available for Vagrant, runs the
-  guest cold-prep provisioner, runs acceptance,
-  validates the latest acceptance manifest, always halts the VM, and retains
+  guest cold-prep provisioner, runs acceptance, validates the latest acceptance
+  manifest, cold-start markers, host-native LabVIEWCLI facts, and generated
+  report output through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
   `vagrant/evidence/`; this job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
   machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large

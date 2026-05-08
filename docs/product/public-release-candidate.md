@@ -1,6 +1,10 @@
 # Public Release Candidate
 
 - Version line: `1.3.9`
+- Active develop candidate line: `v1.3.14`
+- Active develop candidate package: `1.3.14`
+- Active develop candidate state: patch consolidation; no public GitHub
+  release, Marketplace mutation, exact tag, or `main` promotion
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`

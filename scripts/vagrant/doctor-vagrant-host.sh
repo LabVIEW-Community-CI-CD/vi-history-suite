@@ -49,6 +49,39 @@ used_kib() {
   du -sk "$1" | awk '{print $1}'
 }
 
+find_inaccessible_disposable_registry_entries() {
+  [[ -n "$EXPECTED_MACHINE_FOLDER" ]] || return 0
+
+  local disposable_root="$EXPECTED_MACHINE_FOLDER/$CI_VM_NAME"
+  VBoxManage list vms --long 2>/dev/null |
+    awk -v root="$disposable_root" '
+      function flush() {
+        if (name ~ /^<inaccessible!?/ && uuid != "" && index(cfg, root "/") == 1) {
+          print uuid "\t" cfg
+        }
+      }
+      /^Name:[[:space:]][[:space:]]/ {
+        flush()
+        name = $0
+        sub(/^Name:[[:space:]]*/, "", name)
+        uuid = ""
+        cfg = ""
+        next
+      }
+      /^UUID:[[:space:]]/ {
+        uuid = $0
+        sub(/^UUID:[[:space:]]*/, "", uuid)
+        next
+      }
+      /^Config file:[[:space:]]/ {
+        cfg = $0
+        sub(/^Config file:[[:space:]]*/, "", cfg)
+        next
+      }
+      END { flush() }
+    '
+}
+
 printf '[vagrant-host-doctor] box=%s\n' "$BOX_NAME"
 printf '[vagrant-host-doctor] golden-vm=%s\n' "$GOLDEN_VM_NAME"
 printf '[vagrant-host-doctor] ci-vm=%s\n' "$CI_VM_NAME"
@@ -101,6 +134,11 @@ if command -v vagrant >/dev/null 2>&1; then
 fi
 
 if command -v VBoxManage >/dev/null 2>&1; then
+  while IFS=$'\t' read -r stale_vm_id stale_vm_config; do
+    [[ -n "$stale_vm_id" ]] || continue
+    record_issue "Stale inaccessible disposable VM registry entry '$stale_vm_id' points at $stale_vm_config; run scripts/vagrant/cleanup-disposable-ci-vm.sh before booting CI"
+  done < <(find_inaccessible_disposable_registry_entries)
+
   machine_folder="$(
     VBoxManage list systemproperties |
       awk -F: '/^Default machine folder:/{sub(/^[[:space:]]+/, "", $2); print $2; exit}'

@@ -9,6 +9,16 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.14] - 2026-05-08
+
+### Changed
+
+- Opened the next `develop` patch candidate line for release-readiness
+  consolidation after the `1.3.13` public-validation pre-release.
+- Vagrant Windows VSIX acceptance is now governed by a repo-owned evidence
+  assertion surface that retains reusable CI receipts without expanding the
+  Windows Docker Desktop proof claim.
+
 ## [1.3.13] - 2026-04-27
 
 ### Changed

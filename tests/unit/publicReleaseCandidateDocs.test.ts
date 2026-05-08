@@ -23,6 +23,14 @@ describe('public release candidate control surface', () => {
     const testPlan = readText('docs/testing/test-plan.md');
 
     expect(candidate.versionLine).toBe('1.3.9');
+    expect(candidate.activeDevelopCandidate).toMatchObject({
+      candidateLine: 'v1.3.14',
+      packageVersion: '1.3.14',
+      state: 'develop-patch-candidate-consolidation',
+      branch: 'feature/develop-1.3.14-candidate-consolidation',
+      productionMutationAllowed: false,
+      claimBoundary: 'does-not-admit-windows-docker-desktop-windows-container-proof'
+    });
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: 'fb0ef2b',
@@ -188,6 +196,8 @@ describe('public release candidate control surface', () => {
     ]);
 
     expect(candidateMarkdown).toContain('Version line: `1.3.9`');
+    expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.14`');
+    expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.14`');
     expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
     expect(candidateMarkdown).toContain('Current public source head: `220111e`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');
@@ -220,7 +230,7 @@ describe('public release candidate control surface', () => {
 
     expect(currentState).toContain('current exact released line: `v1.3.9`');
     expect(currentState).toContain('current published package line on `main`: `1.3.9`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.3.13`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.14`');
     expect(currentState).toContain('active release-candidate branch: none');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');

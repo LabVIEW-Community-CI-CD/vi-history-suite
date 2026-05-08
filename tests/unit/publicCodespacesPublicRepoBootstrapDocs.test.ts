@@ -33,7 +33,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('current exact released line: `v1.3.9`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.14`');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('separate public GitHub exact release publication: published; public tag');
     expect(currentState).toContain('current public GitHub source publication: public `main` now publishes');

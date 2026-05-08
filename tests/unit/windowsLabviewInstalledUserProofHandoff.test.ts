@@ -59,8 +59,9 @@ describe('windows labview installed-user proof handoff', () => {
       linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false
     });
     expect(publicationState.developPreview).toMatchObject({
-      classification: 'linux-docker-linux-host-and-windows-host-labview-validated-preview',
-      stateRole: 'retained-provider-lane-linux-host-and-windows-host-packet-evidence',
+      classification:
+        'linux-docker-linux-host-windows-host-labview-and-vagrant-vsix-validated-preview',
+      stateRole: 'retained-provider-lane-linux-host-windows-host-and-vagrant-acceptance-evidence',
       linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
       windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
       windowsDockerDesktopProofState: 'community-deferred',

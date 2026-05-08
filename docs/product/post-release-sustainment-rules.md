@@ -77,8 +77,8 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.13`
-- active exact release candidate line on `develop`: none
+- current develop package line on `develop`: `1.3.14`
+- active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
@@ -130,23 +130,26 @@ Current version-line contract:
 
 Current control decision for public exact hardening:
 
-- chosen bump: `patch-preview`
+- chosen bump: `patch`
 - active Marketplace public validation preview line: `1.3.13`
-- Marketplace public validation preview status: prepared, authorized, pending
-  GitLab authority green
-- Marketplace public validation preview last updated: pending post-publication
-  readback
-- Marketplace public validation preview VSIX SHA-256: pending package
+- Marketplace public validation preview status: published and verified for
+  `1.3.13`
+- Marketplace public validation preview last updated:
+  `2026-04-27T04:24:05.457Z`
+- Marketplace public validation preview VSIX SHA-256:
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
 - active feature-lane public GitHub release hardening branch:
   none
 - rationale: authority exact `v1.3.9` remains tagged on `main` while public
   GitHub release `312994104` is retained as a complete immutable exact release
   and VS Code Marketplace serves regular `1.3.9`
-- rationale: `develop` now carries public validation pre-release package line
-  `1.3.13` so the pre-release can publish without reusing the live `1.3.11`
-  Marketplace version
+- rationale: `develop` now carries patch candidate package line `1.3.14` for
+  release-readiness consolidation after the published `1.3.13` public
+  validation pre-release
+- rationale: Vagrant Windows VSIX acceptance now has a repo-owned evidence
+  assertion surface and retained CI receipt contract
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  but no active exact release candidate line is currently open
+  and the active exact release candidate line is `v1.3.14`
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`

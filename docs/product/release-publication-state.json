@@ -17,8 +17,8 @@
     "expectedVsixSha256": "62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353"
   },
   "developPreview": {
-    "classification": "linux-docker-linux-host-and-windows-host-labview-validated-preview",
-    "stateRole": "retained-provider-lane-linux-host-and-windows-host-packet-evidence",
+    "classification": "linux-docker-linux-host-windows-host-labview-and-vagrant-vsix-validated-preview",
+    "stateRole": "retained-provider-lane-linux-host-windows-host-and-vagrant-acceptance-evidence",
     "headTrackingPolicy": "do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed",
     "retainedPacketPath": "docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md",
     "retainedPacketJsonPath": "docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json",
@@ -127,6 +127,21 @@
     "windowsInstalledUserProofState": "admitted-for-host-labview-2026-x64",
     "linuxHostLabviewProofMayProveWindowsInstalledUserLabview": false,
     "windowsDockerDesktopProofState": "community-deferred",
+    "vagrantVsixAcceptanceEvidence": {
+      "status": "repo-owned-assertion-wired-awaiting-protected-ci-receipt",
+      "packageScript": "npm run vagrant:acceptance:assert",
+      "assertionScript": "scripts/assertVagrantVsixAcceptanceEvidence.js",
+      "evidenceRoot": "vagrant/evidence/",
+      "assertionReceiptRoot": "vagrant/evidence/assertion",
+      "schema": "vi-history-suite/vagrant-vsix-acceptance@v1",
+      "assertionSchema": "vi-history-suite/vagrant-vsix-acceptance-assertion@v1",
+      "harnessId": "HARNESS-VHS-002",
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "requiredRuntimeExecutionState": "succeeded",
+      "requiredGeneratedReportExists": true,
+      "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof"
+    },
     "windowsDockerDesktopProofIntake": {
       "status": "prepared-gitlab-authority",
       "publicIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
@@ -356,7 +371,7 @@
     "role": "final-user-distribution",
     "itemName": "svelderrainruiz.vi-history-suite",
     "currentPublishedVersion": "1.3.13",
-    "expectedVersion": "1.3.13",
+    "expectedVersion": "1.3.14",
     "status": "published-public-validation-prerelease-1.3.13",
     "windowsExactVsixInstallProof": {
       "packageScript": "npm run vscode:marketplace:install-proof",
@@ -540,15 +555,15 @@
     "semverOpeningsFrozenUntil": "v1.3.9-closeout-retained",
     "status": "retained-history"
   },
-  "nextAdmittedAction": "collect-windows-docker-desktop-community-proof-and-triage-public-issues",
+  "nextAdmittedAction": "retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation",
   "productionMutationAllowed": false,
   "activeCandidate": {
     "sourceBranch": "develop",
     "releaseBranch": null,
-    "tag": "v1.3.13-public-validation-prerelease-1",
-    "packageVersion": "1.3.13",
-    "status": "public-validation-prerelease-published-and-verified",
-    "rationale": "The 1.3.13 public validation pre-release is published to public GitHub and VS Code Marketplace with admitted Windows host LabVIEW 2026 x64 proof wording and the successful-run diagnostic-note fix; Windows Docker Desktop Windows-container proof remains community/deferred."
+    "tag": null,
+    "packageVersion": "1.3.14",
+    "status": "develop-patch-candidate-consolidation",
+    "rationale": "Develop now carries the 1.3.14 patch candidate for release-readiness consolidation after the 1.3.13 public validation pre-release; Vagrant VSIX acceptance has a repo-owned evidence assertion while Windows Docker Desktop Windows-container proof remains community/deferred."
   },
   "publicValidationPrerelease": {
     "status": "published-and-verified",

@@ -14,8 +14,8 @@
 - The current exact released line is `v1.3.9`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.3.9`.
-- The current develop package line on `develop` is `1.3.13`.
-- The active exact release candidate line on `develop` is none.
+- The current develop package line on `develop` is `1.3.14`.
+- The active exact release candidate line on `develop` is `v1.3.14`.
 - The active release-candidate branch is none.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
@@ -75,15 +75,16 @@
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
-- The active governed release claim is the `1.3.13` public validation
-  pre-release with all provider/year/bitness variants selectable and Windows
-  installed-user proof community/deferred.
+- The active governed release claim is the `1.3.14` develop patch candidate
+  consolidation with all provider/year/bitness variants selectable, admitted
+  Windows host proof retained, Vagrant VSIX acceptance governed by repo-owned
+  assertion, and Windows Docker Desktop proof community/deferred.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer
   authorization for public GitHub and Marketplace publication.
-- The active Marketplace public validation preview status is prepared and
-  authorized for `1.3.13`, pending GitLab authority green before public
-  GitHub and Marketplace publication.
+- The active Marketplace public validation preview status is published and
+  verified for `1.3.13`; no `1.3.14` public GitHub or Marketplace mutation is
+  admitted by the develop candidate consolidation slice.
 - The active public validation path is admitted for pre-release publication:
   Windows/LabVIEW settings may remain selectable with stable runtime error-code
   and proof-packet disclosure, with `vihs validate-fixture` retaining the
@@ -582,14 +583,14 @@ promotion still stays separate afterward.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
 - The current published package line on `main` is `1.3.9`, and the current
-  develop package line on `develop` is `1.3.13`; the closed exact line
+  develop package line on `develop` is `1.3.14`; the closed exact line
   must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
   exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
   `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, exact `v1.3.7`, or exact `v1.3.9` release
   evidence.
-- The current develop package line on `develop` is `1.3.13`, public GitHub
+- The current develop package line on `develop` is `1.3.14`, public GitHub
   `main` now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
   `312994104` is published, VS Code Marketplace serves `1.3.9`, and
   blocked `v1.3.8` historical incident evidence remains retained separately

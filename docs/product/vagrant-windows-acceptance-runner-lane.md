@@ -101,15 +101,18 @@ golden-source and CI-runtime state remain distinct.
 
 CI first runs `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to
 touch the golden VM, fails if the disposable CI VM is running, deletes only a
-stopped VM named `vihs-ci-win11`, and removes the active `.vagrant-ci` state.
-The job then runs Vagrant with `VAGRANT_DOTFILE_PATH=.vagrant-ci` and
+stopped VM named `vihs-ci-win11`, unregisters stale inaccessible disposable
+registry entries that still point at the governed CI VM folder, and removes the
+active `.vagrant-ci` state. The job then runs Vagrant with
+`VAGRANT_DOTFILE_PATH=.vagrant-ci` and
 `VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home`. The CI job
 also sets the VirtualBox default machine folder to
 `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs` before importing the
 disposable VM so the root filesystem does not need to hold the large Windows
 box or clone. The host doctor fails closed when the active VirtualBox machine
-folder does not match this large-drive path, or when existing Vagrant state for
-the active dotfile path points at any VM other than `vihs-ci-win11`.
+folder does not match this large-drive path, when stale inaccessible
+disposable registry entries remain, or when existing Vagrant state for the
+active dotfile path points at any VM other than `vihs-ci-win11`.
 
 Golden box refresh is manual and variable-gated. Set
 `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true` only for an operator-controlled refresh.
@@ -130,7 +133,8 @@ assurance runner lane. It packages the VSIX, stages it under `vagrant/shared/`,
 optionally refreshes the local box, runs the host doctor, boots the disposable
 VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
 runs the guest cold-prep provisioner, runs acceptance, validates the latest
-manifest, and always halts the VM.
+manifest and harness output through `npm run vagrant:acceptance:assert`, and
+always halts the VM.
 
 The job retains `vagrant/evidence/`, including:
 
@@ -138,6 +142,8 @@ The job retains `vagrant/evidence/`, including:
 - `refresh-golden-box.log` when a manual refresh is requested
 - `labview-cold-prep.log`
 - `acceptance-provision.log`
+- `assertion/vagrant-vsix-acceptance-assertion.json`
+- `assertion/vagrant-vsix-acceptance-assertion.md`
 - `*/manifest.json`
 - `*/proof-run.txt`
 - `*/harness-report/**`
@@ -162,5 +168,8 @@ The lane fails closed when:
 - cold prep cannot clear `LabVIEW`, `LabVIEWCLI`, `LVCompare`, or VI Server
   port `3363`
 - acceptance does not exercise the cold scheduled-task LabVIEW launch path
-- the latest acceptance manifest does not report `proofExitCode = 0` and
-  `runtimeExecutionState = succeeded`
+- the repo-owned acceptance assertion cannot prove the latest manifest is
+  schema-valid, `proofExitCode = 0`, `runtimeExecutionState = succeeded`,
+  `runtimeProvider = host-native`, `runtimeEngine = labview-cli`,
+  `generatedReportExists = true`, generated report HTML is nonempty, and the
+  cold-start markers are present
