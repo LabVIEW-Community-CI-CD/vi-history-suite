@@ -278,6 +278,9 @@ Authority release facts:
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
+- active release-candidate state:
+  release-branch readiness reassessed; protected `main` promotion is the next
+  separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -336,10 +339,13 @@ Authority release facts:
 - exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.14` release branch opened from
-  `develop` with all provider/year/bitness variants selectable, admitted
-  Windows host proof retained, Vagrant VSIX acceptance governed by repo-owned
-  assertion, and Windows Docker Desktop proof still community/deferred
+- active governed release claim: `1.3.14` release branch opened and
+  reassessed from `develop` with all provider/year/bitness variants
+  selectable, admitted Windows host proof retained, Vagrant VSIX acceptance
+  governed by repo-owned assertion, and Windows Docker Desktop proof still
+  community/deferred
+- next admitted release-control action:
+  `promote-release-1.3.14-to-main-as-separate-governed-action`
 - active Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
   published through public GitHub PR #46 and pinned `vsce --pre-release`

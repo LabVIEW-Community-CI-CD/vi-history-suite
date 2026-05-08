@@ -204,17 +204,17 @@ describe('exact release candidate reassessment', () => {
       releaseBranch: 'release/1.3.14',
       tag: null,
       packageVersion: '1.3.14',
-      status: 'release-branch-opened-readiness-pending'
+      status: 'release-branch-readiness-reassessed-main-promotion-pending'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'reassess-release-1.3.14-branch-readiness-before-exact-tag'
+      'promote-release-1.3.14-to-main-as-separate-governed-action'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');
     expect(currentState).toContain('historical exact-release candidate reassessment');
     expect(srs).toContain('exact-release candidate reassessment');
     expect(rtm).toContain(
-      'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-UNIT-399; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143; TEST-DOC-151'
+      'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-UNIT-399; TEST-UNIT-400; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143; TEST-DOC-151; TEST-DOC-152'
     );
     expect(testPlan).toContain('TEST-UNIT-390');
     expect(testPlan).toContain('TEST-DOC-143');

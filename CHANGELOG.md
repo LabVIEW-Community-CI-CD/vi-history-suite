@@ -26,6 +26,11 @@ Burned exact-version releases now include `v1.0.2`.
   retained the branch-opening boundary without creating an exact tag,
   publishing GitHub/Marketplace assets, admitting Windows Docker Desktop
   proof, or promoting `main`.
+- Reassessed `release/1.3.14` branch readiness after the branch pipeline and
+  protected `develop` retention pipeline both passed, making protected `main`
+  promotion admissible only as a separate governed action while exact tag,
+  public GitHub release, Marketplace mutation, Windows Docker Desktop proof,
+  and `main` promotion remain unperformed in this slice.
 
 ## [1.3.13] - 2026-04-27
 

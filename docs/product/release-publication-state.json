@@ -570,6 +570,33 @@
     "mainPromotion": "not-admitted-and-not-performed",
     "nextAdmittedAction": "reassess-release-1.3.14-branch-readiness-before-exact-tag"
   },
+  "releaseBranchReadinessReassessment": {
+    "status": "main-promotion-admissible-as-separate-governed-action",
+    "packetPath": "docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md",
+    "packetJsonPath": "docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.json",
+    "releaseBranch": "release/1.3.14",
+    "releaseBranchCommit": "50bec3391ea823739c2e8baddb33b77c283a37eb",
+    "releaseBranchPipelineId": 2511168302,
+    "releaseBranchPipelineStatus": "success",
+    "protectedDevelopRetentionCommit": "c9cff58f5608289ec6acdaea64999b1e460cca96",
+    "protectedDevelopRetentionPipelineId": 2511236377,
+    "protectedDevelopRetentionPipelineStatus": "success",
+    "packageVersion": "1.3.14",
+    "releaseBranchPreviewVsixSha256": "d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91",
+    "releaseBranchPreviewVsixSizeBytes": 1011702,
+    "protectedDevelopPreviewVsixSha256": "17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd",
+    "protectedDevelopPreviewVsixSizeBytes": 1011765,
+    "releaseBranchVagrantVsixAcceptanceJobId": 14284865649,
+    "protectedDevelopVagrantVsixAcceptanceJobId": 14285299160,
+    "selectedExactAuthorityVsix": null,
+    "mainPromotion": "admissible-as-separate-governed-action-not-performed",
+    "exactTag": "not-admitted-before-protected-main-promotion",
+    "releaseExtensionJob": "not-run-without-exact-tag",
+    "publicGitHubExactMutation": "not-admitted-and-not-performed",
+    "marketplaceExactMutation": "not-admitted-and-not-performed",
+    "windowsDockerDesktopProofState": "community-deferred",
+    "nextAdmittedAction": "promote-release-1.3.14-to-main-as-separate-governed-action"
+  },
   "windowsLabviewCommunityProofIntakeChecklist": {
     "status": "prepared-no-mutation",
     "path": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md",
@@ -629,15 +656,15 @@
     "semverOpeningsFrozenUntil": "v1.3.9-closeout-retained",
     "status": "retained-history"
   },
-  "nextAdmittedAction": "reassess-release-1.3.14-branch-readiness-before-exact-tag",
+  "nextAdmittedAction": "promote-release-1.3.14-to-main-as-separate-governed-action",
   "productionMutationAllowed": false,
   "activeCandidate": {
     "sourceBranch": "develop",
     "releaseBranch": "release/1.3.14",
     "tag": null,
     "packageVersion": "1.3.14",
-    "status": "release-branch-opened-readiness-pending",
-    "rationale": "Release/1.3.14 is now opened from the governed develop 1.3.14 candidate line for release-readiness consolidation; exact tag, public GitHub release, Marketplace mutation, Windows Docker Desktop Windows-container proof admission, and main promotion remain not admitted."
+    "status": "release-branch-readiness-reassessed-main-promotion-pending",
+    "rationale": "Release/1.3.14 is now opened and reassessed from the governed develop 1.3.14 candidate line for release-readiness consolidation; protected main promotion is admissible only as a separate governed action, while exact tag, public GitHub release, Marketplace mutation, and Windows Docker Desktop Windows-container proof admission remain not admitted."
   },
   "publicValidationPrerelease": {
     "status": "published-and-verified",

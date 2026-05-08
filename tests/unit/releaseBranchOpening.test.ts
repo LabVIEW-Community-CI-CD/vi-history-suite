@@ -133,10 +133,10 @@ describe('release/1.3.14 branch opening packet', () => {
       releaseBranch: 'release/1.3.14',
       tag: null,
       packageVersion: '1.3.14',
-      status: 'release-branch-opened-readiness-pending'
+      status: 'release-branch-readiness-reassessed-main-promotion-pending'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'reassess-release-1.3.14-branch-readiness-before-exact-tag'
+      'promote-release-1.3.14-to-main-as-separate-governed-action'
     );
 
     expect(releaseStateDoc).toContain('## Release Branch Opening');

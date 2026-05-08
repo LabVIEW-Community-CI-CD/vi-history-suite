@@ -33,12 +33,16 @@ retained closed baseline.
 - current `develop` package line: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
+- active release-candidate state:
+  release-branch readiness reassessed; protected `main` promotion is the next
+  separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - the active exact candidate line is `v1.3.14`; `release/1.3.14` is now the
-  governed release-candidate branch, and later exact lines must reopen through
+  governed release-candidate branch and has been reassessed for the next
+  protected `main` promotion act, while later exact lines must reopen through
   the same GitFlow and publication gates from `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
@@ -61,7 +65,9 @@ retained closed baseline.
   evidence assertion contract without expanding the Windows Docker Desktop
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  and the active exact candidate line is `v1.3.14`
+  the active exact candidate line is `v1.3.14`, and release-branch readiness
+  has been reassessed without exact tag, public GitHub, Marketplace, Windows
+  Docker Desktop, or `main` mutation
 
 ## Current Linux/Docker Preview Claim
 
