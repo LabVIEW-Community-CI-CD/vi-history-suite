@@ -135,6 +135,25 @@ Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultPassword' -Value 'Vagr
 Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultDomainName' -Value $computerName -Type String
 Write-Step "Autologon configured for $computerName\vagrant."
 
+Write-Step "Configuring WinRM for Vagrant communicator after reload..."
+sc.exe config winrm start= auto | Out-Host
+if ($LASTEXITCODE -ne 0) {
+  throw "Failed to configure WinRM service startup (exit $LASTEXITCODE)."
+}
+winrm quickconfig -quiet | Out-Host
+if ($LASTEXITCODE -ne 0) {
+  throw "winrm quickconfig failed (exit $LASTEXITCODE)."
+}
+winrm set winrm/config/service/auth '@{Basic="true"}' | Out-Host
+if ($LASTEXITCODE -ne 0) {
+  throw "Failed to enable WinRM Basic auth (exit $LASTEXITCODE)."
+}
+winrm set winrm/config/service '@{AllowUnencrypted="true"}' | Out-Host
+if ($LASTEXITCODE -ne 0) {
+  throw "Failed to allow unencrypted WinRM for local NAT communicator (exit $LASTEXITCODE)."
+}
+Write-Step "WinRM configured for Vagrant communicator."
+
 # Enable LabVIEW VI Server TCP so LabVIEWCLI can connect
 $lvIniPath = 'C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.ini'
 if (Test-Path -LiteralPath $lvIniPath) {

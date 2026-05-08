@@ -81,6 +81,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('DefaultUserName');
     expect(bootstrap).toContain('DefaultPassword');
     expect(bootstrap).toContain('Configuring vagrant autologon for interactive LabVIEW launch');
+    expect(bootstrap).toContain('Configuring WinRM for Vagrant communicator after reload');
+    expect(bootstrap).toContain('sc.exe config winrm start= auto');
+    expect(bootstrap).toContain('winrm quickconfig -quiet');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -155,8 +158,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
-    expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon');
-    expect(laneDoc).toContain('reloads the VM immediately after bootstrap');
+    expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
+    expect(laneDoc).toContain('job reloads the VM immediately after');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('not replace the deferred native Windows x64 private-release proof');
@@ -191,7 +194,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedCleanupScript: 'scripts/vagrant/cleanup-disposable-ci-vm.sh',
           repoOwnedColdPrepScript: 'vagrant/provision/prepare-cold-labview.ps1',
-          bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-then-job-reloads-before-cold-labview',
+          bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'
         })
