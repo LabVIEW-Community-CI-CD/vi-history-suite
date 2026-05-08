@@ -17,10 +17,10 @@ final installed-user distribution surface.
 - Expected checksum: `vi-history-suite-1.3.9.vsix.sha256`
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
-- Active candidate release branch: none
+- Active candidate release branch: `release/1.3.14`
 - Active candidate tag: none
 - Active candidate package version: `1.3.14`
-- Active candidate state: develop patch candidate consolidation; no public
+- Active candidate state: release branch opened from `develop`; no public
   GitHub release, Marketplace mutation, exact tag, or `main` promotion
 
 ## Develop Preview State
@@ -434,10 +434,10 @@ final installed-user distribution surface.
 - Community proof intake checklist JSON:
   `docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json`
 - Next exact candidate conversion path:
-  open a governed `release/1.3.14` branch from `ce103d3` only as a separate
-  action, reassess release-branch readiness before any exact tag, and retain
-  the selected exact authority VSIX before public exact release or Marketplace
-  gates.
+  the governed `release/1.3.14` branch opening has now been performed and
+  retained separately; reassess release-branch readiness before any exact tag,
+  and retain the selected exact authority VSIX before public exact release or
+  Marketplace gates.
 
 The current `develop` line is no longer a `1.3.10` Linux/Docker-only blocked
 preview. It is a `1.3.14` release-readiness consolidation line with Linux
@@ -447,6 +447,45 @@ That makes release-branch opening admissible as a separate governed action,
 but does not admit an exact tag, public GitHub release, VS Code Marketplace
 publication, Windows Docker Desktop Windows-container proof claim, or `main`
 promotion.
+
+## Release Branch Opening
+
+- Status: performed and retained
+- Packet:
+  `docs/product/release-branch-opening-v1.3.14-2026-05-08.md`
+- Packet JSON:
+  `docs/product/release-branch-opening-v1.3.14-2026-05-08.json`
+- Source branch: `develop`
+- Source commit:
+  `50bec3391ea823739c2e8baddb33b77c283a37eb`
+- Release branch: `release/1.3.14`
+- Release branch pipeline: `2511168302` / `success`
+- Package version: `1.3.14`
+- Vagrant Windows VSIX acceptance: release branch CI receipt retained in job
+  `14284865649`
+- Vagrant assertion receipt:
+  `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
+- Vagrant manifest:
+  `vagrant/evidence/20260508-121101/manifest.json`
+- Preview package job: `14284865650`
+- Preview VSIX evidence:
+  `preview-evidence/vi-history-suite-1.3.14.vsix`
+- Preview VSIX SHA-256:
+  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`
+- Preview VSIX size: `1011702` bytes
+- Exact tag: not admitted and not created
+- `release_extension` job: not run because no exact `vX.Y.Z` tag exists
+- Public GitHub exact mutation: not admitted and not performed
+- VS Code Marketplace exact mutation: not admitted and not performed
+- Windows Docker Desktop Windows-container proof state: community/deferred
+- `main` promotion: not admitted and not performed
+- Next admitted action:
+  `reassess-release-1.3.14-branch-readiness-before-exact-tag`
+
+This branch opening converts the current candidate from a `develop`-only patch
+candidate into an opened release-candidate branch while preserving the exact
+publication boundary. The branch preview artifact is still preview evidence
+only, not the selected exact authority VSIX.
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
@@ -523,11 +562,11 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: retain the `1.3.14` develop patch candidate
-  consolidation and collect/triage public community-validation reports without
-  reopening public GitHub or Marketplace mutation
+- Governed next line: reassess the opened `release/1.3.14` branch before any
+  exact tag, public GitHub exact release, VS Code Marketplace mutation,
+  Windows Docker Desktop proof admission, or `main` promotion
 - Next admitted action:
-  `retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation`
+  `reassess-release-1.3.14-branch-readiness-before-exact-tag`
 
 ## Publication Rule
 

@@ -33,7 +33,7 @@ describe('post-release sustainment rules package', () => {
         currentDevelopPackageLine: '1.3.14',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
         activeDevelopCandidateReleaseLine: 'v1.3.14',
-        activeReleaseCandidateBranch: null,
+        activeReleaseCandidateBranch: 'release/1.3.14',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -141,7 +141,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('current published package line on `main`: `1.3.9`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.14`');
     expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.14`');
-    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.14`');
     expect(rulesDoc).toContain('public release `312994104` is published on `v1.3.9`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
     expect(rulesDoc).toContain('asset-first GitHub release rule');

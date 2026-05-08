@@ -206,7 +206,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- current published package line on `main`: `1.3.9`');
     expect(readme).toContain('- current develop package line on `develop`: `1.3.14`');
     expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.14`');
-    expect(readme).toContain('- active release-candidate branch: none');
+    expect(readme).toContain('- active release-candidate branch: `release/1.3.14`');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
     expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -265,7 +265,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain(
       '- active exact release candidate line on `develop`: `v1.3.14`'
     );
-    expect(currentState).toContain('- active release-candidate branch: none');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.3.14`');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -348,7 +348,9 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain(
       'active exact release candidate line on `develop` is `v1.3.14`'
     );
-    expect(releaseProcedure).toContain('The active release-candidate branch is none.');
+    expect(releaseProcedure).toContain(
+      'The active release-candidate branch is `release/1.3.14`.'
+    );
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
     expect(releaseProcedure).toContain('The active feature-lane public GitHub release hardening branch on `develop`');

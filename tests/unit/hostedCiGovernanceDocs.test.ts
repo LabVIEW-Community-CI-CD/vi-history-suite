@@ -30,7 +30,7 @@ describe('hosted ci governance docs', () => {
         currentDevelopPackageLine: '1.3.14',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
         activeDevelopCandidateReleaseLine: 'v1.3.14',
-        activeReleaseCandidateBranch: null,
+        activeReleaseCandidateBranch: 'release/1.3.14',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -141,7 +141,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.14`');
     expect(matrixDoc).toContain('active Marketplace public validation preview line: `1.3.13`');
     expect(matrixDoc).toContain('Marketplace public validation preview status: published and verified');
-    expect(matrixDoc).toContain('active release-candidate branch: none');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.14`');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
     expect(matrixDoc).toContain('chosen bump: patch');
     expect(matrixDoc).toContain(

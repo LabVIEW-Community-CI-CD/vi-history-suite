@@ -22,6 +22,10 @@ Burned exact-version releases now include `v1.0.2`.
   `1.3.14` `develop` line, making release-branch opening admissible as a
   separate governed action while exact tag, public GitHub release, Marketplace
   mutation, and `main` promotion remain gated and not performed.
+- Opened `release/1.3.14` as the governed release-candidate branch and
+  retained the branch-opening boundary without creating an exact tag,
+  publishing GitHub/Marketplace assets, admitting Windows Docker Desktop
+  proof, or promoting `main`.
 
 ## [1.3.13] - 2026-04-27
 
