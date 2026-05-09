@@ -121,9 +121,10 @@ Golden box refresh is manual and variable-gated. Set
 `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true` only for an operator-controlled refresh.
 The bootstrap provisioner configures `vagrant` autologon and WinRM startup
 inside the disposable clone, normalizes public NAT network profiles for WinRM
-firewall readiness, and the job reloads the VM immediately after bootstrap so
-the scheduled-task LabVIEW launch has an interactive desktop session while the
-Vagrant communicator remains available.
+firewall readiness, creates the `VIHS LabVIEW 2026 VI Server TCP 3363`
+Windows Defender Firewall rule for `LabVIEW.exe`, and the job reloads the VM
+immediately after bootstrap so the scheduled-task LabVIEW launch has an
+interactive desktop session while the Vagrant communicator remains available.
 
 ## GitLab Job
 

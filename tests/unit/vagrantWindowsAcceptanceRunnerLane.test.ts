@@ -87,6 +87,10 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('Set-NetConnectionProfile');
     expect(bootstrap).not.toContain('Enable-PSRemoting');
     expect(bootstrap).toContain('Test-WSMan -ComputerName localhost');
+    expect(bootstrap).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
+    expect(bootstrap).toContain('New-NetFirewallRule');
+    expect(bootstrap).toContain('-Program $lvExe');
+    expect(bootstrap).toContain('-LocalPort 3363');
 
     expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 300');
     expect(acceptance).toContain(
@@ -176,7 +180,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
     expect(laneDoc).toContain('default LabVIEW VI Server startup timeout: `300` seconds');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
-    expect(laneDoc).toContain('job reloads the VM immediately after');
+    expect(laneDoc).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
+    expect(laneDoc).toContain('immediately after bootstrap');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
