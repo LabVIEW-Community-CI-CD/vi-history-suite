@@ -41,16 +41,17 @@
         "v1.3.5",
         "v1.3.6",
         "v1.3.7",
-        "v1.3.8"
+        "v1.3.8",
+        "v1.3.9"
       ],
       "burnedExactVersionReleases": [
         "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.3.8",
-      "currentMainPackageLine": "1.3.8",
-      "currentDevelopPackageLine": "1.3.8",
-      "activeDevelopCandidateReleaseLine": "1.3.9",
-      "activeReleaseCandidateBranch": "release/1.3.9",
+      "currentExactReleaseLine": "v1.3.9",
+      "currentMainPackageLine": "1.3.9",
+      "currentDevelopPackageLine": "1.3.14",
+      "activeDevelopCandidateReleaseLine": "v1.3.14",
+      "activeReleaseCandidateBranch": null,
       "activeHotfixCandidateReleaseLine": null,
       "activeHotfixBranch": null,
       "activeFeatureBranch": null,
@@ -58,15 +59,20 @@
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
       "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+      "windowsExactVsixInstallProofPackageScript": "npm run vscode:marketplace:install-proof",
+      "windowsExactVsixInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
       "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
       "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
+      "vscodeMarketplaceCommunityValidationPreviewPrepPackageScript": "npm run vscode:marketplace:community-preview:prepare",
+      "vscodeMarketplaceCommunityValidationPreviewPrepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
+      "vscodeMarketplaceCommunityValidationPreviewPrepStatus": "published-and-verified-for-1.3.13",
       "publicGitHubExactPublishabilityProbe": {
         "status": "published",
         "blockerCode": null,
         "immutableReleasePolicyStatusCode": 200,
         "immutableReleasesEnabled": true,
         "immutableReleasesEnforcedByOwner": false,
-        "draftReleaseId": 312517425,
+        "draftReleaseId": 312994104,
         "draftReleaseTargetCommitish": "main",
         "draftReleaseLookupStatusCode": 200,
         "draftReleaseHtmlUrlUsesUntaggedPath": false
@@ -74,10 +80,10 @@
       "publicGitHubExactDraftPublishabilityProbe": {
         "status": "not-applicable",
         "blockerCode": "draft-release-not-draft",
-        "draftReleaseId": 312517425,
+        "draftReleaseId": 312994104,
         "draftReleaseByIdStatusCode": 200,
         "draftReleaseTagMatchesAuthority": true,
-        "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/release-manifest.json",
+        "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json",
         "releaseAssetsRetainedAgainstManifest": true,
         "safeToAttemptPublish": false
       },
@@ -88,7 +94,7 @@
         "publicGitHubReleaseImmutable": true,
         "publicGitHubReleaseAssetCount": 0,
         "blockerCode": "published-immutable-release-assets-incomplete",
-        "marketplaceVersionRetained": "1.3.7",
+        "marketplaceVersionRetained": "1.3.9",
         "requiredPublisherRule": "create-draft-upload-verify-assets-before-publish"
       },
       "publicDefaultBranch": "main",
@@ -97,7 +103,15 @@
       "releaseBranch": "release/*",
       "hotfixBranch": "hotfix/*",
       "exactReleaseLineBranch": "main",
-      "nextLineBranchModel": "gitflow"
+      "nextLineBranchModel": "gitflow",
+      "activeMarketplaceCommunityPreviewLine": "1.3.13",
+      "vscodeMarketplaceCommunityValidationPreviewTargetVersion": "1.3.13",
+      "vscodeMarketplaceCommunityValidationPreviewPublishedVersion": "1.3.13",
+      "vscodeMarketplaceCommunityValidationPreviewPublishedDate": "2026-04-27",
+      "vscodeMarketplaceCommunityValidationPreviewLastUpdated": "2026-04-27T04:24:05.457Z",
+      "vscodeMarketplaceCommunityValidationPreviewVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f",
+      "publicValidationPrereleasePacketPath": "docs/product/public-validation-prerelease-v1.3.13.md",
+      "publicValidationPrereleasePacketJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json"
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -107,6 +121,8 @@
       "release-evidence/release-record.md",
       ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
       ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.md",
+      ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
+      ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.md",
       "docs/product/vscode-marketplace-publication-ledger.md",
       "docs/product/vscode-marketplace-publication-ledger.json",
       "VS Code Marketplace listing and installed-user homepage",
@@ -118,6 +134,7 @@
       "package.json version change",
       "SemVer tag or release-manifest contract change",
       "public GitHub exact-release transaction state or repair-in-place rule change",
+      "Windows exact-VSIX install-proof contract, bootstrap, or retained receipt change",
       "Marketplace publication, listing identity, or homepage change",
       "public release-kit asset or setup/support change tied to the exact released VSIX",
       "installed-user entry-surface redesign or reader guidance change",
@@ -136,6 +153,7 @@
       "future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction",
       "future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible",
       "future sessions shall retain the completed public GitHub exact verify gate before the separate VS Code Marketplace publication act proceeds",
+      "future sessions shall run and retain npm run vscode:marketplace:install-proof against the exact authority VSIX before any mutating VS Code Marketplace publication act",
       "future sessions shall run and retain npm run vscode:marketplace:prepare before any mutating VS Code Marketplace publication act",
       "future sessions shall not publish a public GitHub exact release until the repo-owned asset-first publisher has created a draft, uploaded the VSIX and checksum from GitLab authority evidence, and verified those assets by release id",
       "future sessions shall classify a published immutable public GitHub release with missing or mismatched assets as externally blocked and Marketplace-blocking",
@@ -182,9 +200,10 @@
       "decisionRecordingRule": "record the chosen bump rationale in the control plane before further publication or release normalization continues"
     },
     "activeOpeningDecision": {
-      "recordedAt": "2026-04-23",
+      "recordedAt": "2026-05-08",
       "chosenBump": "patch",
-      "targetFeatureBranch": null,
+      "targetFeatureBranch": "feature/develop-1.3.14-candidate-consolidation",
+      "targetDevelopCandidateReleaseLine": "v1.3.14",
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
@@ -192,8 +211,10 @@
       "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
       "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
       "rationale": [
-        "authority exact v1.3.8 is already tagged on main while public GitHub release 312768592 is retained as immutable zero-asset historical incident evidence and VS Code Marketplace still serves 1.3.7",
-        "release/1.3.9 opens from develop as the governed patch line for the installed Windows vihs launcher fix through the asset-first public GitHub publisher"
+        "authority exact v1.3.9 is already tagged on main while public GitHub release 312994104 is retained as a complete immutable exact release and VS Code Marketplace serves 1.3.9",
+        "develop now carries package line 1.3.14 as a patch candidate for release-readiness consolidation after the published 1.3.13 public-validation pre-release",
+        "the candidate adds repo-owned Vagrant VSIX acceptance evidence assertion without admitting Windows Docker Desktop Windows-container proof",
+        "blocked historical v1.3.8 incident evidence remains retained, and the active exact candidate line is v1.3.14"
       ],
       "rejectedAlternatives": {
         "hotfix": "the next exact line should promote from develop through the normal release/* path after retaining the blocked v1.3.8 incident history, not bypass GitFlow from main",
@@ -208,7 +229,7 @@
     ]
   },
   "softwareFactoryGovernance": {
-    "status": "authority-v1.3.8-blocked-history-release-1.3.9-open",
+    "status": "authority-v1.3.9-fully-published-no-open-release-line",
     "activeFeatureBranch": null,
     "packageScripts": {
       "assess": "npm run software:factory:assess",
@@ -216,6 +237,7 @@
       "repair": "npm run software:factory:repair",
       "publish": "npm run software:factory:publish",
       "verify": "npm run software:factory:verify",
+      "marketplaceInstallProof": "npm run vscode:marketplace:install-proof",
       "marketplacePrepare": "npm run vscode:marketplace:prepare"
     },
     "receiptPaths": {
@@ -224,6 +246,7 @@
       "repair": ".cache/software-factory-orchestrator/latest/repair/software-factory-state.json",
       "publish": ".cache/software-factory-orchestrator/latest/publish/software-factory-state.json",
       "verify": ".cache/software-factory-orchestrator/latest/verify/software-factory-state.json",
+      "marketplaceInstallProof": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
       "marketplacePrepare": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json"
     },
     "admittedNonProductionPhases": [
@@ -235,7 +258,7 @@
       "publish",
       "verify"
     ],
-    "soleProductionRecoveryTarget": "v1.3.9",
+    "soleProductionRecoveryTarget": null,
     "productionMutationAllowed": false,
     "authorityBoundary": [
       "GitLab develop -> release/* -> protected main"
@@ -249,7 +272,7 @@
     ],
     "recoveryBoundary": [
       "repair-in-place first when public GitHub main, tag, or draft release already exist",
-      "current exact GitHub and VS Code Marketplace acts remain fully closed only for v1.3.7 while v1.3.8 is retained as blocked historical incident evidence and release/1.3.9 is the active patch candidate"
+      "current exact GitHub and VS Code Marketplace acts are fully closed for v1.3.9 while v1.3.8 is retained as blocked historical incident evidence"
     ],
     "trustModel": [
       "Windows operator host",
@@ -284,7 +307,7 @@
       "publish and verify are repo-owned and automatic guarded non-mutating contract phases",
       "later VS Code Marketplace publish requires explicit production approval through the repo-owned publication path"
     ],
-    "rule": "the retained v1.3.8 authority exact line is blocked historical publication evidence; release/1.3.9 may proceed only through normal GitFlow and repo-owned factory/orchestrator governance before any public GitHub or Marketplace mutation"
+    "rule": "Exact v1.3.9 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence."
   },
   "benchmarkRefreshCadence": {
     "model": "event-driven-bounded",
@@ -348,16 +371,17 @@
         "dirty public-source/wiki worktrees are controlled publication surfaces: preserve unrelated dirt, patch overlapping maintained files narrowly, and pause only on direct unresolved conflicts"
       ],
       "requiredChecks": [
-        "governed_runner_admission",
+        "ubuntu_docker_runner_admission",
+        "linux_docker_provider_lane",
         "public_exact_pretag_proof",
         "docs_continuous_integration",
         "docs_public_continuous_integration",
         "docs_internal_continuous_integration",
         "test_extension",
-        "windows_private_release_acceptance",
         "package_extension_preview",
-        "Public Facade Package Preview / package-preview",
-        "Public Facade Linux Smoke / public-facade-linux-smoke"
+        "Public Source Package Preview / public-source-package-preview",
+        "Public Linux Installed-User Smoke / public-linux-installed-user-smoke",
+        "Public Windows Installed-User Contract / public-windows-installed-user-contract"
       ],
       "governedLaneBehaviors": {
         "governed_runner_admission": {
@@ -365,7 +389,9 @@
           "packageScript": "npm run gitlab:runner:doctor",
           "command": "npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence",
           "evidenceRoot": "governed-runner-admission-evidence/",
-          "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages"
+          "failurePolicy": "deferred-until-real-windows-labview-runner-exists",
+          "classification": "deferred-windows-labview-governance-check",
+          "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true"
         },
         "public_exact_pretag_proof": {
           "stage": "test",
@@ -437,7 +463,10 @@
             "contaminationSeedMode": "headless-labview-launch",
             "recoveryTranscriptLeaf": "proof-runtime-recovery.txt",
             "failurePolicy": "fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal"
-          }
+          },
+          "classification": "deferred-windows-labview-proof-check",
+          "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true",
+          "claimBoundary": "required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview"
         },
         "linux_assurance": {
           "hostApplySurface": {
@@ -465,7 +494,7 @@
           },
           "startupReceiptSurface": {
             "script": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
-            "latestReceipt": "$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json",
+            "latestReceipt": "$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json",
             "failurePolicy": "fail-closed-unless-helper-refreshes-governed-startup-receipt"
           },
           "hostDoctorSurface": {
@@ -492,6 +521,22 @@
             ],
             "failurePolicy": "fail-closed-on-live-host-drift"
           }
+        },
+        "ubuntu_docker_runner_admission": {
+          "stage": "admission",
+          "command": "gitlab-runner --version; docker info; node --version; npm --version",
+          "evidenceRoot": "governed-runner-admission-evidence/",
+          "claimScope": "linux-docker-validated-preview",
+          "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages-on-linux-docker-preview-drift"
+        },
+        "linux_docker_provider_lane": {
+          "stage": "test",
+          "packageScript": "npm run linux:docker:provider:lane",
+          "evidenceRoot": "linux-docker-provider-lane-evidence/",
+          "evidenceSchema": "vi-history-suite/linux-docker-provider-lane@v1",
+          "claimScope": "linux-docker-validated-preview",
+          "failurePolicy": "fail-closed-before-preview-or-exact-package-artifacts-when-the-governed-linux-docker-provider-cannot-be-validated",
+          "windowsInstalledUserProofDeferred": true
         }
       },
       "laneResponsibilities": {
@@ -544,11 +589,11 @@
       ]
     },
     "publicWorkflowGovernance": {
-      "model": "two-workflow-public-facade-pair",
+      "model": "three-lane-public-admission-matrix",
       "workflows": {
-        "packagePreview": {
-          "workflowName": "Public Facade Package Preview",
-          "requiredCheckName": "package-preview",
+        "sourcePackagePreview": {
+          "workflowName": "Public Source Package Preview",
+          "requiredCheckName": "public-source-package-preview",
           "responsibilities": [
             "npm run compile",
             "npm run test:design-contract",
@@ -568,13 +613,33 @@
           "featurePushLane": "forbidden",
           "concurrency": "per-workflow-per-ref-cancel-in-progress"
         },
-        "linuxSmoke": {
-          "workflowName": "Public Facade Linux Smoke",
-          "requiredCheckName": "public-facade-linux-smoke",
+        "linuxInstalledUserSmoke": {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "requiredCheckName": "public-linux-installed-user-smoke",
           "responsibilities": [
             "Docker Linux engine verification",
             "npm run public:smoke:linux",
             "smoke evidence upload"
+          ],
+          "admittedBranches": [
+            "develop",
+            "main",
+            "release/*",
+            "hotfix/*"
+          ],
+          "pullRequestTargets": [
+            "develop",
+            "main"
+          ],
+          "featurePushLane": "forbidden",
+          "concurrency": "per-workflow-per-ref-cancel-in-progress"
+        },
+        "windowsInstalledUserContract": {
+          "workflowName": "Public Windows Installed-User Contract",
+          "requiredCheckName": "public-windows-installed-user-contract",
+          "responsibilities": [
+            "npm run public:contract:windows-installed-user",
+            "Windows installed-user launcher/runtime-settings contract evidence upload"
           ],
           "admittedBranches": [
             "develop",
@@ -606,8 +671,9 @@
           "develop"
         ],
         "requiredChecks": [
-          "package-preview",
-          "public-facade-linux-smoke"
+          "public-source-package-preview",
+          "public-linux-installed-user-smoke",
+          "public-windows-installed-user-contract"
         ]
       },
       "githubExperiment": {
@@ -657,5 +723,25 @@
       "execution-policy bypass that skips governed provider hard stops",
       "PowerShell ExecutionPolicy Bypass on governed benchmark-image or host-proof helper surfaces"
     ]
+  },
+  "activeReleaseClaim": {
+    "classification": "linux-docker-validated-preview",
+    "summary": "The governed develop/package preview claim is Linux/Docker validated on the self-hosted Ubuntu runner; Windows installed-user and Windows/LabVIEW proof are deferred until a real Windows host exists.",
+    "verifiedOnThisMachine": [
+      "ubuntu-docker-runner-admission",
+      "linux-docker-provider-lane",
+      "linux-assurance-runner-lane",
+      "docs-workbench-gate",
+      "test-extension-linux-ci",
+      "preview-vsix-packaging"
+    ],
+    "deferredProof": [
+      "native Windows installed extension behavior",
+      "native Windows LabVIEW host execution",
+      "Windows Docker Desktop Windows-container execution",
+      "windows_private_release_acceptance"
+    ],
+    "publicGitHubMutation": "not-admitted-by-this-claim",
+    "marketplaceMutation": "not-admitted-by-this-claim"
   }
 }

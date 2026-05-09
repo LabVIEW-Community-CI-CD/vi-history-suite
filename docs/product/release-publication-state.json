@@ -1,55 +1,597 @@
 {
   "schema": "vi-history-suite/release-publication-state@v1",
-  "recordedAt": "2026-04-23",
+  "recordedAt": "2026-04-27",
   "authority": {
     "system": "gitlab",
     "integrationBranch": "develop",
     "exactReleaseLineBranch": "main",
-    "exactTag": "v1.3.8",
-    "packageVersion": "1.3.8",
-    "mainCommit": "1ceddb3fd63c79c312d9abf41cfa08681cb51f94",
-    "tagObjectSha": "b4b4f1079d8f17e5f9f25f5d1f07e9f791faa4bb",
-    "tagCommitSha": "1ceddb3fd63c79c312d9abf41cfa08681cb51f94",
-    "gitlabArtifactAuthority": ".cache/gitlab-release-artifacts/v1.3.8/expanded/release-evidence/",
-    "gitlabReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.8/expanded/release-evidence/release-manifest.json",
-    "expectedVsixAsset": "vi-history-suite-1.3.8.vsix",
-    "expectedChecksumAsset": "vi-history-suite-1.3.8.vsix.sha256",
-    "expectedVsixSha256": "d365f27836ada8a5279dedfc9fbfc7a86067da560f86324a5b9cdb9279e8f5e2"
+    "exactTag": "v1.3.9",
+    "packageVersion": "1.3.9",
+    "mainCommit": "2f86063a35926fa67963af5ccd47e971157927c6",
+    "tagObjectSha": "3c79930d53b482738fb102147270f271129afed8",
+    "tagCommitSha": "2f86063a35926fa67963af5ccd47e971157927c6",
+    "gitlabArtifactAuthority": ".cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/",
+    "gitlabReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json",
+    "expectedVsixAsset": "vi-history-suite-1.3.9.vsix",
+    "expectedChecksumAsset": "vi-history-suite-1.3.9.vsix.sha256",
+    "expectedVsixSha256": "62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353"
+  },
+  "developPreview": {
+    "classification": "linux-docker-linux-host-windows-host-labview-and-vagrant-vsix-validated-preview",
+    "stateRole": "retained-provider-lane-linux-host-windows-host-and-vagrant-acceptance-evidence",
+    "headTrackingPolicy": "do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed",
+    "retainedPacketPath": "docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md",
+    "retainedPacketJsonPath": "docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json",
+    "previewEvidenceCommit": "21774a91710b71c6b63629cc0cf3cf37ce9abc0a",
+    "packetEvidencePipelineId": 2480195741,
+    "packetEvidencePipelineStatus": "success",
+    "packetMergeTrackingPolicy": "do-not-track-packet-merge-commit; packet retention is governed by Git history and CI",
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.10.vsix",
+    "previewVsixSha256": "bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02",
+    "providerLaneEvidence": {
+      "packageScript": "npm run linux:docker:provider:lane",
+      "gitLabJob": "linux_docker_provider_lane",
+      "jobId": 14091891709,
+      "evidenceRoot": "linux-docker-provider-lane-evidence/",
+      "schema": "vi-history-suite/linux-docker-provider-lane@v1",
+      "artifactPath": "linux-docker-provider-lane-evidence/linux-docker-provider-lane.json",
+      "recordedAt": "2026-04-26T05:13:40.368Z",
+      "status": "passed",
+      "docker": {
+        "ostype": "linux",
+        "serverVersion": "29.4.1",
+        "driver": "overlayfs",
+        "cgroupDriver": "systemd"
+      },
+      "selectedSettings": {
+        "provider": "docker",
+        "labviewVersion": "2026",
+        "labviewBitness": "x64"
+      },
+      "validatedFacts": [
+        "docker-info-ostype-linux",
+        "vihs-provider-docker-labview-2026-x64-settings",
+        "runtimeValidationOutcome=ready",
+        "runtimeProvider=linux-container",
+        "runtimeEngine=labview-cli",
+        "runtimeBlockedReason=<none>"
+      ],
+      "linuxImage": "nationalinstruments/labview:2026q1-linux",
+      "linuxImageAvailable": false,
+      "linuxImageAcquisitionState": "acquisition-required-before-first-compare-run",
+      "windowsInstalledUserProofState": "admitted-separate-windows-host-proof"
+    },
+    "publicationState": "develop-provider-lane-linux-host-and-windows-host-labview-evidence",
+    "windowsInstalledUserProofDeferred": false,
+    "publicGitHubMutation": "not-performed-by-this-packet",
+    "marketplaceMutation": "not-performed-by-this-packet",
+    "linuxHostLabviewEvidence": {
+      "packetPath": "docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md",
+      "packetJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json",
+      "schema": "vi-history-suite/linux-host-labview-2026-create-comparison-proof@v1",
+      "recordedAt": "2026-04-26T22:36:27.859Z",
+      "status": "passed",
+      "platform": "linux",
+      "hostOs": "Ubuntu 25.10",
+      "kernel": "6.17.0-1017-oem",
+      "installerBundlePath": "/home/ghostshadow/Downloads/ni-labview-2026-community-26.1.1_linux",
+      "installedPackageLine": "ni-labview-2026-community 26.1.1.49170-0+f18",
+      "selectedSettings": {
+        "provider": "host",
+        "labviewVersion": "2026",
+        "labviewBitness": "x64"
+      },
+      "runtime": {
+        "errorCode": "VIHS_OK",
+        "validationOutcome": "ready",
+        "provider": "host-native",
+        "engine": "labview-cli",
+        "blockedReason": null,
+        "labviewExePath": "/usr/local/natinst/LabVIEW-2026-64/labview",
+        "labviewCliPath": "/usr/local/bin/LabVIEWCLI",
+        "lvComparePath": "/usr/local/bin/LVCompare"
+      },
+      "fixture": {
+        "repository": "https://github.com/ni/labview-icon-editor",
+        "viPath": "resource/plugins/lv_icon.vi",
+        "oldCommit": "ab94f6c4b375062492036c63a6dab7ea8824748a",
+        "oldCommitDate": "2025-06-29",
+        "newCommit": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "newCommitDate": "2026-02-24",
+        "viSignature": "LVIN"
+      },
+      "compare": {
+        "operation": "CreateComparisonReport",
+        "exitCode": 0,
+        "result": "succeeded",
+        "reportFile": "diff-report-lv_icon.vi.html",
+        "reportSizeBytes": 214412,
+        "reportSha256": "637055a103b25ecc77e4e308a6d216fc7adab0e1741038502bb53f129e5eb864",
+        "reportAssetsDirectory": "diff-report-lv_icon.vi_files",
+        "reportAssetsDirectoryApproximateSize": "4.2 MB",
+        "reportAssetsDigestSha256": "1d091f24e656d0aa3d2c32f4f96f6a43b14f0f5582029160bcf97f533363d932",
+        "logSha256": "d1a130c91a78a938f64ac8573683916a2dd5e1facfe01d8e86d543c7a38604ce",
+        "evidence": "CreateComparisonReport operation succeeded."
+      },
+      "compatibilityFixes": [
+        "installed libglu1-mesa",
+        "cleared executable stack on /usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1 with backup /usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1.orig-execstack"
+      ],
+      "linuxHostLabviewProofState": "admitted-local-maintainer-proof",
+      "windowsInstalledUserLabviewProofState": "admitted-separate-windows-host-proof",
+      "linuxHostLabviewProofMayProveWindowsInstalledUserLabview": false,
+      "publicGitHubMutation": "not-performed",
+      "marketplaceMutation": "not-performed"
+    },
+    "linuxHostLabviewProofState": "admitted-local-maintainer-proof",
+    "windowsInstalledUserProofState": "admitted-for-host-labview-2026-x64",
+    "linuxHostLabviewProofMayProveWindowsInstalledUserLabview": false,
+    "windowsDockerDesktopProofState": "community-deferred",
+    "vagrantVsixAcceptanceEvidence": {
+      "status": "protected-develop-ci-receipt-retained",
+      "packageScript": "npm run vagrant:acceptance:assert",
+      "assertionScript": "scripts/assertVagrantVsixAcceptanceEvidence.js",
+      "evidenceRoot": "vagrant/evidence/",
+      "assertionReceiptRoot": "vagrant/evidence/assertion",
+      "protectedDevelopMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192",
+      "protectedDevelopMergeCommit": "72899eb39e38ce34c697f0a227292ead6bcd8f2d",
+      "protectedDevelopPipelineId": 2511040377,
+      "protectedDevelopPipelineStatus": "success",
+      "protectedDevelopPipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511040377",
+      "gitLabJob": "vagrant_windows_vsix_acceptance",
+      "gitLabJobId": 14284054131,
+      "gitLabJobStatus": "success",
+      "gitLabJobUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14284054131",
+      "artifactRoot": "vagrant/evidence/",
+      "runDirectory": "vagrant/evidence/20260508-105809",
+      "manifestPath": "vagrant/evidence/20260508-105809/manifest.json",
+      "acceptanceLogPath": "vagrant/evidence/acceptance-provision.log",
+      "coldPrepLogPath": "vagrant/evidence/labview-cold-prep.log",
+      "hostDoctorLogPath": "vagrant/evidence/vagrant-host-doctor.log",
+      "assertionReceiptPath": "vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json",
+      "assertionRecordedAt": "2026-05-08T17:58:36.620Z",
+      "manifestGeneratedAt": "2026-05-08T10:58:36.0049159-07:00",
+      "schema": "vi-history-suite/vagrant-vsix-acceptance@v1",
+      "assertionSchema": "vi-history-suite/vagrant-vsix-acceptance-assertion@v1",
+      "harnessId": "HARNESS-VHS-002",
+      "selectedHash": "8741bb08026c104100720c0ef48621e4ab7762fd",
+      "baseHash": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+      "labviewVersion": "2026",
+      "labviewBitness": "x86",
+      "proofExitCode": 0,
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "runtimeExecutionState": "succeeded",
+      "requiredRuntimeExecutionState": "succeeded",
+      "generatedReportExists": true,
+      "requiredGeneratedReportExists": true,
+      "coldStartMarkers": [
+        "LabVIEW not running. Launching via scheduled task...",
+        "LabVIEW VI Server ready on port 3363."
+      ],
+      "publicGitHubMutation": "not-performed",
+      "marketplaceMutation": "not-performed",
+      "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof"
+    },
+    "windowsDockerDesktopProofIntake": {
+      "status": "prepared-gitlab-authority",
+      "publicIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+      "packetPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.md",
+      "packetJsonPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.json",
+      "requiredDockerOSType": "windows",
+      "templatePath": "public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+      "command": "vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\\vihs-fixture-proof --runtime-timeout-ms 300000",
+      "publicFacadePromotionCloseout": {
+        "status": "published-and-verified",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+        "publicMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+        "publicMainShortCommit": "220111e",
+        "postMergeChecks": [
+          "Public Source Package Preview 24977951913 success",
+          "Public Windows Installed-User Contract 24977951923 success",
+          "Public Linux Installed-User Smoke 24977951904 success"
+        ],
+        "marketplaceMutation": "not-performed"
+      }
+    },
+    "windowsHostLabviewEvidence": {
+      "packetPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+      "packetJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json",
+      "schema": "vi-history-suite/windows-host-labview-installed-user-proof@v1",
+      "recordedAt": "2026-04-27T03:16:29.5042582Z",
+      "status": "passed",
+      "platform": "win32",
+      "hostOs": "Microsoft Windows 11 Home 10.0.26200",
+      "vmName": "sergiovelderrain",
+      "selectedSettings": {
+        "provider": "host",
+        "labviewVersion": "2026",
+        "labviewBitness": "x64"
+      },
+      "runtime": {
+        "errorCode": "VIHS_OK",
+        "validationOutcome": "ready",
+        "provider": "host-native",
+        "engine": "labview-cli",
+        "blockedReason": null,
+        "labviewExePath": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+        "labviewCliPath": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe"
+      },
+      "fixture": {
+        "repository": "https://github.com/ni/labview-icon-editor",
+        "viPath": "resource/plugins/lv_icon.vi",
+        "oldCommit": "ab94f6c4b375062492036c63a6dab7ea8824748a",
+        "newCommit": "8741bb08026c104100720c0ef48621e4ab7762fd"
+      },
+      "compare": {
+        "operation": "CreateComparisonReport",
+        "exitCode": 0,
+        "result": "succeeded",
+        "reportFile": "diff-report-lv_icon.vi.html",
+        "reportSizeBytes": 146915,
+        "durationMs": 62252,
+        "evidence": "CreateComparisonReport operation succeeded."
+      },
+      "publicIssueLedger": {
+        "hostProofIssueClosed": "https://github.com/svelderrainruiz/vi-history-suite/issues/56",
+        "windowsDockerDesktopRemainingIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+        "diagnosticNoteBugIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/66"
+      }
+    }
   },
   "publicGitHub": {
     "role": "downstream-public-distribution",
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "mainCommit": "4f5f6162bb0f6609eb51f7505ad4321a827b0ec7",
-    "tag": "v1.3.8",
-    "tagRef": "refs/tags/v1.3.8",
-    "tagObjectType": "tag",
-    "tagObjectSha": "1e31fb06035013454bca6a2d9eb5411a51c5e281",
+    "mainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+    "tag": "v1.3.9",
+    "tagRef": "refs/tags/v1.3.9",
+    "tagObjectType": "commit",
+    "tagObjectSha": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
     "immutableReleasesEnabled": true,
     "immutableReleasesEnforcedByOwner": false,
-    "lastCompleteReleaseTag": "v1.3.7",
+    "lastCompleteReleaseTag": "v1.3.9",
     "release": {
-      "id": 312768592,
-      "tag": "v1.3.8",
-      "url": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.8",
+      "id": 312994104,
+      "tag": "v1.3.9",
+      "url": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9",
       "draft": false,
       "published": true,
-      "publishedAt": "2026-04-23T14:16:40Z",
+      "publishedAt": "2026-04-24T00:22:35Z",
       "immutable": true,
       "targetCommitish": "main",
-      "assetCount": 0,
-      "assetStatus": "externally-blocked-zero-assets",
+      "assetCount": 2,
+      "assetStatus": "published-complete",
       "byIdStatusCode": 200,
       "tagLookupStatusCode": 200,
       "tagMatchesAuthority": true,
       "safeToPublish": false
+    },
+    "sourcePublication": {
+      "status": "public-validation-prerelease-1.3.13-windows-docker-desktop-intake-promoted-and-verified",
+      "currentMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+      "currentMainShortCommit": "220111e",
+      "exactReleaseRetainedCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
+      "priorCommunityValidationIntakeCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
+      "priorCommunityValidationIntakePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/46",
+      "publishedAt": "2026-04-26T16:43:08Z",
+      "postMergeChecks": [
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 24961728385,
+          "jobId": 73089436918,
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 24961728389,
+          "jobId": 73089436947,
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 24961728386,
+          "jobId": 73089436919,
+          "conclusion": "success"
+        }
+      ],
+      "latestPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+      "latestWindowsDockerDesktopIntakePromotionCloseout": {
+        "status": "published-and-verified",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+        "publicMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+        "publicMainShortCommit": "220111e",
+        "postMergeChecks": [
+          "Public Source Package Preview 24977951913 success",
+          "Public Windows Installed-User Contract 24977951923 success",
+          "Public Linux Installed-User Smoke 24977951904 success"
+        ],
+        "publicLabelsApplied": [
+          "windows-docker-desktop"
+        ],
+        "marketplaceMutation": "not-performed"
+      },
+      "publicFacadeDocsPromotionCloseout": {
+        "status": "published-and-verified",
+        "repository": "github.com/svelderrainruiz/vi-history-suite",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+        "publicBranch": "main",
+        "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+        "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+        "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainShortCommit": "ce6dbd0",
+        "mergedAt": "2026-04-26T19:53:22Z",
+        "promotedFiles": [
+          "README.md",
+          "INSTALL.md",
+          ".github/ISSUE_TEMPLATE/config.yml"
+        ],
+        "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+        "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+        "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+        "prHeadChecks": [
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "checkName": "public-linux-installed-user-smoke",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Source Package Preview",
+            "checkName": "public-source-package-preview",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "checkName": "public-windows-installed-user-contract",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+            "conclusion": "success"
+          }
+        ],
+        "postMergeMainChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 24965599550,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 24965599548,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 24965599557,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          }
+        ],
+        "localValidation": [
+          "npm ci",
+          "npm run compile",
+          "npm run test:design-contract",
+          "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+          "git diff --check",
+          "diff secret scan returned no hits"
+        ],
+        "marketplaceMutation": "not-performed",
+        "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+      },
+      "latestPublicValidationFixturePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/63",
+      "latestPublicValidationFixtureMergeCommit": "1853a4332eff40665e30db6e632febaa9821cf98",
+      "latestPublicValidationFixtureMergedAt": "2026-04-27T00:26:21Z",
+      "publicDevelopSync": {
+        "status": "not-applied-requires-separate-branch-policy-decision",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/64",
+        "reason": "GitHub branch protection forbids merge commits; squash/rebase does not satisfy ancestry behind=0",
+        "directPushRejection": "GH006 protected branch update failed: branch must not contain merge commits"
+      }
     }
   },
   "marketplace": {
     "role": "final-user-distribution",
     "itemName": "svelderrainruiz.vi-history-suite",
-    "currentPublishedVersion": "1.3.7",
-    "expectedVersion": "1.3.9",
-    "status": "awaiting-asset-first-public-github-release"
+    "currentPublishedVersion": "1.3.13",
+    "expectedVersion": "1.3.14",
+    "status": "published-public-validation-prerelease-1.3.13",
+    "windowsExactVsixInstallProof": {
+      "packageScript": "npm run vscode:marketplace:install-proof",
+      "receiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
+      "status": "passed",
+      "authorityTag": "v1.3.9",
+      "runtimeValidationOutcome": "ready",
+      "launcherPathStrippedToLauncherAndSystem32": true,
+      "ambientNodeOnPathRequired": false
+    },
+    "currentPublishedKind": "public-validation-pre-release",
+    "currentRegularPublishedVersion": "1.3.9",
+    "currentPreReleaseVersion": "1.3.13",
+    "currentPreReleasePublishedDate": "2026-04-27",
+    "currentPreReleaseLastUpdated": "2026-04-27T04:24:05.457Z"
+  },
+  "marketplaceCommunityValidationPreview": {
+    "status": "published-and-verified",
+    "publicationClaim": "public-validation-prerelease",
+    "preparePackageScript": "npm run vscode:marketplace:community-preview:prepare",
+    "prepReceiptPath": ".cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json",
+    "preferredVsceMode": "pre-release",
+    "targetVersionPolicy": "must-be-distinct-higher-major-minor-patch-than-current-marketplace-version",
+    "currentMarketplaceVersion": "1.3.13",
+    "targetVersion": "1.3.13",
+    "publishTrigger": "maintainer-authorized-public-github-and-marketplace-public-validation-publication",
+    "windowsLabviewFeaturePolicy": "all-provider-year-bitness-variants-selectable-with-runtime-error-code-and-proof-packet-disclosure",
+    "windowsInstalledUserProofState": "admitted-for-host-labview-2026-x64",
+    "linuxDockerEvidenceClaim": "linux-docker-validated-preview",
+    "traceabilityMatrixPath": "docs/requirements/rtm.csv",
+    "proofDisclosureSurfaces": [
+      "README.md",
+      "docs/product/release-publication-state.md",
+      "docs/product/vscode-marketplace-publication-ledger.md",
+      "docs/product/marketplace-community-validation-intake-v1.3.10.md",
+      "docs/product/marketplace-community-validation-intake-v1.3.10.json",
+      "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md",
+      "docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.json",
+      "docs/product/windows-labview-installed-user-proof-handoff-2026-04-25.md",
+      "docs/product/windows-docker-desktop-proof-intake-v1.3.13.md",
+      "docs/product/windows-docker-desktop-proof-intake-v1.3.13.json",
+      "docs/requirements/rtm.csv",
+      "docs/information-for-users/command-reference.md"
+    ],
+    "publicGitHubMutation": "not-mutated-by-community-validation-preview-publication",
+    "marketplaceMutation": "published-and-verified",
+    "packageVersion": "1.3.13",
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.13.vsix",
+    "publishedVersion": "1.3.13",
+    "publishedDate": "2026-04-27",
+    "marketplaceLastUpdated": "2026-04-27T04:24:05.457Z",
+    "previewVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f",
+    "verificationSurface": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install",
+    "intakeStatus": "prepared-authorized-for-1.3.13",
+    "intakePacketPath": "docs/product/public-validation-prerelease-v1.3.13.md",
+    "intakePacketJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json",
+    "preparedPublicIssueTemplatePath": "public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
+    "preparedWindowsDockerDesktopIssueTemplatePath": "public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+    "preparedPublicLabelManifestPath": "public-github-source/.github/labels.yml",
+    "publicGitHubIntakePromotionPlanStatus": "superseded-by-1.3.11-public-validation-lane",
+    "publicGitHubIntakePromotionPlanPath": null,
+    "publicGitHubIntakePromotionPlanJsonPath": null,
+    "publicGitHubIntakePromotionRequiredTrigger": "publish the public intake now",
+    "publicGitHubIntakePublishedCommit": "5e67194992af021ada2903ea868e8b84678d72d6",
+    "publicGitHubIntakePublishedShortCommit": "5e67194",
+    "publicGitHubIntakePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/46",
+    "publicGitHubIntakeLabelsApplied": true,
+    "publicGitHubIntakeMutation": "performed-through-protected-public-pr-46",
+    "publicGitHubReleaseMutation": "published-and-verified-with-corrected-asset-release",
+    "publicGitHubTagMutation": "published-and-verified-with-corrected-asset-release",
+    "publicGitHubWikiMutation": "not-in-scope-for-1.3.11-public-validation-lane",
+    "publicGitHubIntakeRequiredTrigger": "maintainer-authorized-public-github-and-marketplace-public-validation-publication",
+    "publicGitHubReleaseId": 313873748,
+    "publicGitHubReleaseTag": "v1.3.13-public-validation-prerelease-1",
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1",
+    "publicGitHubReleaseAssetUrls": [
+      "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.13-public-validation-prerelease-1/vi-history-suite-1.3.13.vsix",
+      "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.13-public-validation-prerelease-1/vi-history-suite-1.3.13.vsix.sha256"
+    ],
+    "publicGitHubExactTagRepairNote": "The initial published v1.3.11 pre-release was immutable before assets could be attached; the zero-asset release and tag were deleted, but GitHub retained the tag name as used, so the asset-bearing public validation release uses v1.3.11-public-validation.",
+    "latestPublicGitHubFacadeCommit": "769cf180c1d5e94d1462d90e4e7366b1e050e7b1",
+    "latestPublicGitHubFacadeShortCommit": "769cf18",
+    "latestPublicGitHubFacadePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/67",
+    "latestPublicGitHubFacadePromotion": "public-validation-v1.3.13-windows-host-proof",
+    "latestPublicGitHubIntakeCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+    "latestPublicGitHubIntakeShortCommit": "220111e",
+    "latestPublicGitHubIntakePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+    "latestPublicGitHubIntakePromotion": "windows-docker-desktop-proof-intake",
+    "linuxHostLabviewEvidenceClaim": "admitted-and-carried-forward-from-1.3.12-public-validation-wording",
+    "supersededPublicGitHubReleaseTag": "v1.3.13-public-validation-prerelease",
+    "supersededPublicGitHubReleaseId": 313873598,
+    "supersededPublicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease",
+    "supersededPublicGitHubVsixSha256": "92b101f0ae80f213cb090c368c545465d74e8b3476f9a2316dbdce4435d6bd66",
+    "supersededPublicGitHubReleaseReason": "immutable-release-asset-packaged-without-vscode-prerelease-marker",
+    "publicGitHubCorrectedReleaseTag": "v1.3.13-public-validation-prerelease-1",
+    "publicGitHubCorrectedReleaseId": 313873748,
+    "publicGitHubCorrectedReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1",
+    "publicGitHubCorrectedVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f"
+  },
+  "exactReleaseReadinessAssessment": {
+    "status": "release-branch-opening-admissible",
+    "assessmentPath": "docs/product/exact-release-readiness-assessment-2026-05-08.md",
+    "assessmentJsonPath": "docs/product/exact-release-readiness-assessment-2026-05-08.json",
+    "supersedesCurrentAssessmentPath": "docs/product/exact-release-readiness-assessment-2026-04-26.md",
+    "assessedBranch": "develop",
+    "assessedCommit": "ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8",
+    "assessedPipelineId": 2511103937,
+    "assessedPipelineStatus": "success",
+    "packageVersion": "1.3.14",
+    "currentAdmissibleClaim": "develop-candidate-release-readiness-consolidated-no-exact-publication",
+    "retainedExactBaseline": "v1.3.9",
+    "blockingReason": null,
+    "releaseBranchOpening": "admissible-as-separate-governed-action",
+    "releaseBranch": null,
+    "exactTag": null,
+    "windowsInstalledUserLabviewProofState": "admitted-for-host-labview-2026-x64",
+    "vagrantVsixAcceptanceState": "protected-develop-ci-receipt-retained",
+    "vagrantVsixAcceptanceJobId": 14284448828,
+    "vagrantVsixAcceptanceAssertionPath": "vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json",
+    "vagrantVsixAcceptanceManifestPath": "vagrant/evidence/20260508-113126/manifest.json",
+    "windowsDockerDesktopProofState": "community-deferred",
+    "previewVsixPath": "preview-evidence/vi-history-suite-1.3.14.vsix",
+    "previewVsixSha256": "cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f",
+    "previewVsixSizeBytes": 1011604,
+    "linuxDockerProviderLaneJobId": 14284448827,
+    "publicExactPretagProofJobId": 14284448826,
+    "packageExtensionPreviewJobId": 14284448829,
+    "selectedExactAuthorityVsix": null,
+    "windowsExactVsixInstallProofState": "missing-for-selected-1.3.14-exact-authority-vsix",
+    "publicGitHubExactMutation": "not-admitted-and-not-performed",
+    "marketplaceExactMutation": "not-admitted-and-not-performed",
+    "mainPromotion": "not-admitted-and-not-performed",
+    "communityProofIntakeChecklistPath": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md",
+    "communityProofIntakeChecklistJsonPath": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json",
+    "exactCandidateConversionPaths": [
+      "open-governed-release-1.3.14-branch-with-current-evidence-boundary",
+      "reassess-release-branch-before-exact-tag",
+      "retain-selected-exact-authority-vsix-before-public-exact-release"
+    ],
+    "nextAdmittedAction": "open-governed-release-1.3.14-branch-from-ce103d3-if-current-claim-boundary-remains-selected"
+  },
+  "windowsLabviewCommunityProofIntakeChecklist": {
+    "status": "prepared-no-mutation",
+    "path": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md",
+    "jsonPath": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json",
+    "preparedFromDevelopCommit": "3c0404a5cc51f3e131dfb29474fb36a338aec4ec",
+    "sourceReadinessAssessmentPath": "docs/product/exact-release-readiness-assessment-2026-04-26.md",
+    "sourceAssessedPipelineId": 2480212103,
+    "packageVersion": "1.3.10",
+    "proofStatusLadder": [
+      "community-reported",
+      "intake-complete",
+      "needs-more-evidence",
+      "maintainer-reproduction-pending",
+      "maintainer-reproduced",
+      "admitted-proof",
+      "deferred-no-host",
+      "rejected-insufficient-evidence"
+    ],
+    "candidateAdmissionPaths": [
+      "windows-proof-claim",
+      "community-deferred-claim"
+    ],
+    "communityReportsBecomeMaintainerProofAutomatically": false,
+    "linuxDockerEvidenceMayProveWindowsLabviewInstalledUserBehavior": false,
+    "publicGitHubMutation": "not-performed",
+    "marketplaceMutation": "not-performed"
+  },
+  "exactReleaseCandidateReassessment": {
+    "status": "prepared",
+    "path": "docs/product/exact-release-candidate-reassessment-2026-04-26.md",
+    "jsonPath": "docs/product/exact-release-candidate-reassessment-2026-04-26.json",
+    "sourceBranch": "develop",
+    "sourceCommit": "14243fd0ee647736124b06edb5a9947eae178d38",
+    "sourcePipelineId": 2480546719,
+    "sourcePipelineStatus": "success",
+    "packageVersion": "1.3.10",
+    "selectedCandidatePath": "community-deferred-windows-labview-claim",
+    "currentAdmissibleCandidateClaim": "linux-docker-validated-exact-candidate-source-with-windows-labview-selectable-as-community-deferred",
+    "releaseBranchOpening": "admissible-as-next-governed-action",
+    "releaseBranch": null,
+    "exactTag": null,
+    "candidateSourceVsixPath": "preview-evidence/vi-history-suite-1.3.10.vsix",
+    "candidateSourceVsixSha256": "afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783",
+    "admittedExternalWindowsProofArrived": false,
+    "windowsInstalledUserLabviewProofClaimMade": false,
+    "publicGitHubExactMutation": "gated-and-not-performed",
+    "marketplaceExactMutation": "gated-and-not-performed",
+    "nextAdmittedAction": "open-governed-release-1.3.10-branch-from-14243fd-community-deferred-windows-claim"
   },
   "incident": {
     "active": false,
@@ -58,17 +600,507 @@
     "blockerCode": "published-immutable-release-assets-incomplete",
     "summary": "Public GitHub release 312768592 for v1.3.8 is already published and immutable with zero assets, so the exact VSIX and checksum cannot be uploaded after publication; retain this as blocked historical incident evidence and move the next exact line through the asset-first publisher.",
     "repairRule": "do-not-attempt-in-place-asset-upload; retain as blocked historical incident evidence and require the next exact release line to use the asset-first publisher",
-    "semverOpeningsFrozenUntil": "release-1.3.9-closure",
+    "semverOpeningsFrozenUntil": "v1.3.9-closeout-retained",
     "status": "retained-history"
   },
-  "nextAdmittedAction": "promote-release-1.3.9-to-main-after-governed-validation",
+  "nextAdmittedAction": "retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation",
   "productionMutationAllowed": false,
   "activeCandidate": {
     "sourceBranch": "develop",
-    "releaseBranch": "release/1.3.9",
-    "tag": "v1.3.9",
-    "packageVersion": "1.3.9",
-    "status": "governed-release-line-open",
-    "rationale": "v1.3.8 remains retained as blocked historical incident evidence while release/1.3.9 is the next asset-first publication line."
+    "releaseBranch": null,
+    "tag": null,
+    "packageVersion": "1.3.14",
+    "status": "develop-patch-candidate-consolidation",
+    "rationale": "Develop now carries the 1.3.14 patch candidate for release-readiness consolidation after the 1.3.13 public validation pre-release; Vagrant VSIX acceptance has a repo-owned evidence assertion while Windows Docker Desktop Windows-container proof remains community/deferred."
+  },
+  "publicValidationPrerelease": {
+    "status": "published-and-verified",
+    "packageVersion": "1.3.11",
+    "packetPath": "docs/product/public-validation-prerelease-v1.3.11.md",
+    "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.11.json",
+    "authorityBranch": "develop",
+    "sourceBranch": "feature/public-validation-prerelease-1.3.11",
+    "publicGitHub": {
+      "repository": "github.com/svelderrainruiz/vi-history-suite",
+      "tag": "v1.3.11-public-validation",
+      "releaseKind": "published-pre-release",
+      "releaseMutation": "published-and-verified",
+      "sourceFacadeMutation": "published-through-protected-pr",
+      "issueTemplates": [
+        "bug-report.yml",
+        "community-validation-windows-labview.yml",
+        "validation-success.yml",
+        "validation-failure.yml",
+        "feature-not-implemented.yml",
+        "labview-version-support.yml"
+      ],
+      "nominalPackageTag": "v1.3.11",
+      "tagRepairNote": "The initial published v1.3.11 pre-release was immutable before assets could be attached; the zero-asset release and tag were deleted, but GitHub retained the tag name as used, so the asset-bearing public validation release uses v1.3.11-public-validation.",
+      "releaseId": 313782074,
+      "releaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.11-public-validation",
+      "mainCommit": "5e67194992af021ada2903ea868e8b84678d72d6",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/46",
+      "labelsApplied": true,
+      "assets": [
+        "preview-evidence/vi-history-suite-1.3.11.vsix",
+        "preview-evidence/vi-history-suite-1.3.11.vsix.sha256"
+      ],
+      "assetUrls": [
+        "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix",
+        "https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.11-public-validation/vi-history-suite-1.3.11.vsix.sha256"
+      ],
+      "vsixSha256": "21a21f7638d5348274ef66a9e58e0ba8d58918b72937e1b8c2e104bc6a0136ff",
+      "currentMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "currentMainShortCommit": "ce6dbd0",
+      "latestSourceFacadePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+      "publicFacadeDocsPromotionCloseout": {
+        "status": "published-and-verified",
+        "repository": "github.com/svelderrainruiz/vi-history-suite",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+        "publicBranch": "main",
+        "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+        "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+        "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainShortCommit": "ce6dbd0",
+        "mergedAt": "2026-04-26T19:53:22Z",
+        "promotedFiles": [
+          "README.md",
+          "INSTALL.md",
+          ".github/ISSUE_TEMPLATE/config.yml"
+        ],
+        "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+        "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+        "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+        "prHeadChecks": [
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "checkName": "public-linux-installed-user-smoke",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Source Package Preview",
+            "checkName": "public-source-package-preview",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "checkName": "public-windows-installed-user-contract",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+            "conclusion": "success"
+          }
+        ],
+        "postMergeMainChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 24965599550,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 24965599548,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 24965599557,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          }
+        ],
+        "localValidation": [
+          "npm ci",
+          "npm run compile",
+          "npm run test:design-contract",
+          "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+          "git diff --check",
+          "diff secret scan returned no hits"
+        ],
+        "marketplaceMutation": "not-performed",
+        "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+      }
+    },
+    "marketplace": {
+      "itemName": "svelderrainruiz.vi-history-suite",
+      "publicationKind": "pre-release",
+      "targetVersion": "1.3.11",
+      "mutation": "published-and-verified",
+      "publishedVersion": "1.3.11",
+      "lastUpdated": "2026-04-26T16:51:22.260Z",
+      "readback": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install"
+    },
+    "selectableVariantPolicy": "all-cli-variants-selectable-for-validation-reporting",
+    "runtimeProofCommand": "vihs --validate --proof-out ./vihs-proof",
+    "runtimeProofFiles": [
+      "vihs-validation-proof.json",
+      "vihs-validation-issue.md"
+    ],
+    "windowsInstalledUserLabviewProof": "community-deferred",
+    "priorWindowsX64LabviewProof": "retained-confidence-context-not-current-1.3.11-proof-claim",
+    "exactReleaseGateBlockedByMissingWindowsProof": false,
+    "publicAndMarketplaceMutationAuthorizedByMaintainer": true,
+    "traceabilityMatrixPath": "docs/requirements/rtm.csv",
+    "authorityMergeCommit": "129cfe1f40698a6efaf51845ba47cf2e101d0e7e",
+    "authorityDevelopPipelineId": 2480723883,
+    "canonicalPublicDockerFixtureBattery": {
+      "status": "public-reported-success-retained",
+      "retainedEvidence": {
+        "parentIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/48",
+        "validationSuccessIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/49",
+        "docsFixtureRecipeIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/59",
+        "issueRange": "#48-#59"
+      },
+      "fixtureRepository": "https://github.com/ni/labview-icon-editor",
+      "fixtureViPath": "resource/plugins/lv_icon.vi",
+      "oldCommit": {
+        "sha": "ab94f6c4b375062492036c63a6dab7ea8824748a",
+        "date": "2025-06-29"
+      },
+      "newCommit": {
+        "sha": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "date": "2026-02-24"
+      },
+      "viSignature": "LVIN",
+      "dockerRuntime": {
+        "image": "nationalinstruments/labview:2026q1-linux",
+        "firstPullApproximateSize": "1.4 GB",
+        "acquisition": "pulled-on-first-compare-when-not-cached",
+        "validationBoundary": "vihs --validate proves daemon reachability and runtime path selection; compare acquires the image when needed"
+      },
+      "batteryCases": {
+        "positiveHistoricalCompare": {
+          "status": "succeeded",
+          "exitCode": 0,
+          "runtimeSecondsApprox": 112,
+          "reportFile": "diff-report-lv_icon.vi.html",
+          "reportSizeApprox": "395 KB",
+          "evidence": "LabVIEW CreateComparisonReport operation succeeded"
+        },
+        "noChangeControl": {
+          "status": "succeeded",
+          "exitCode": 0,
+          "runtimeSecondsApprox": 24.7,
+          "reportSizeApprox": "395 KB",
+          "evidence": "same VI revision generated a valid no-change report"
+        },
+        "missingFileControl": {
+          "status": "blocked-before-docker",
+          "blockedReason": "left-blob-read-failed",
+          "evidence": "preflight blocked before Docker invocation"
+        }
+      },
+      "docsGapsClosed": {
+        "installCompileAfterTagCheckout": "https://github.com/svelderrainruiz/vi-history-suite/issues/55",
+        "issueTemplateContactLinks": "https://github.com/svelderrainruiz/vi-history-suite/issues/57",
+        "dockerImageFirstPullWarning": "https://github.com/svelderrainruiz/vi-history-suite/issues/58",
+        "repeatableFixtureRecipe": "https://github.com/svelderrainruiz/vi-history-suite/issues/59"
+      },
+      "windowsHostLabviewProof": "community-deferred",
+      "publicFacadeDocsPromotionDecision": "completed-through-public-pr-60-after-gitlab-authority-green",
+      "publicGitHubMutationDuringAuthorityCloseout": false,
+      "marketplaceMutationDuringAuthorityCloseout": false,
+      "publicFacadeDocsPromotionCloseout": {
+        "status": "published-and-verified",
+        "repository": "github.com/svelderrainruiz/vi-history-suite",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+        "publicBranch": "main",
+        "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+        "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+        "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+        "publicMainShortCommit": "ce6dbd0",
+        "mergedAt": "2026-04-26T19:53:22Z",
+        "promotedFiles": [
+          "README.md",
+          "INSTALL.md",
+          ".github/ISSUE_TEMPLATE/config.yml"
+        ],
+        "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+        "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+        "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+        "prHeadChecks": [
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "checkName": "public-linux-installed-user-smoke",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Source Package Preview",
+            "checkName": "public-source-package-preview",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+            "conclusion": "success"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "checkName": "public-windows-installed-user-contract",
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+            "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+            "conclusion": "success"
+          }
+        ],
+        "postMergeMainChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 24965599550,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 24965599548,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 24965599557,
+            "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+            "conclusion": "success",
+            "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+          }
+        ],
+        "localValidation": [
+          "npm ci",
+          "npm run compile",
+          "npm run test:design-contract",
+          "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+          "git diff --check",
+          "diff secret scan returned no hits"
+        ],
+        "marketplaceMutation": "not-performed",
+        "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+      }
+    },
+    "docsGapsClosedByAuthorityCloseout": [
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/55",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/57",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/58",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/59"
+    ],
+    "publicFacadeDocsPromotionDecision": "completed-through-public-pr-60-after-gitlab-authority-green",
+    "publicGitHubMutationDuringAuthorityCloseout": false,
+    "marketplaceMutationDuringAuthorityCloseout": false,
+    "publicFacadeDocsPromotionCloseout": {
+      "status": "published-and-verified",
+      "repository": "github.com/svelderrainruiz/vi-history-suite",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/60",
+      "publicBranch": "main",
+      "sourceBranch": "codex/canonical-public-docker-fixture-docs",
+      "headCommit": "d9942a87fcf139e259eca65fd9af0b93a89507e8",
+      "mergeCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "publicMainCommit": "ce6dbd0b1b5783f7015b9d0589f3803636564789",
+      "publicMainShortCommit": "ce6dbd0",
+      "mergedAt": "2026-04-26T19:53:22Z",
+      "promotedFiles": [
+        "README.md",
+        "INSTALL.md",
+        ".github/ISSUE_TEMPLATE/config.yml"
+      ],
+      "governedAuthorityMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/181",
+      "governedAuthorityDevelopCommit": "88c60fead29aae8cc250bbbb6381697595c63e4c",
+      "governedAuthorityDevelopPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2480821467",
+      "prHeadChecks": [
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "checkName": "public-linux-installed-user-smoke",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564958/job/73099632606",
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Source Package Preview",
+          "checkName": "public-source-package-preview",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564951/job/73099632556",
+          "conclusion": "success"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "checkName": "public-windows-installed-user-contract",
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949",
+          "jobUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965564949/job/73099632612",
+          "conclusion": "success"
+        }
+      ],
+      "postMergeMainChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 24965599550,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599550",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 24965599548,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599548",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 24965599557,
+          "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/24965599557",
+          "conclusion": "success",
+          "headSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"
+        }
+      ],
+      "localValidation": [
+        "npm ci",
+        "npm run compile",
+        "npm run test:design-contract",
+        "node scripts/promotePublicGithubSource.js --check --target-root <public checkout>",
+        "git diff --check",
+        "diff secret scan returned no hits"
+      ],
+      "marketplaceMutation": "not-performed",
+      "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+    }
+  },
+  "publicValidationMutationAllowed": false,
+  "nextPublicValidationPrerelease": {
+    "status": "published-and-verified",
+    "packageVersion": "1.3.13",
+    "packetPath": "docs/product/public-validation-prerelease-v1.3.13.md",
+    "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json",
+    "publicGitHubTargetTag": "v1.3.13-public-validation-prerelease-1",
+    "marketplaceTargetVersion": "1.3.13",
+    "executableFixtureCommand": "vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof",
+    "linuxHostFixtureCommand": "vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof",
+    "retainedLinuxDockerValidateFixtureProofPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.md",
+    "retainedLinuxDockerValidateFixtureProofJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.json",
+    "retainedLinuxHostValidateFixtureProofPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md",
+    "retainedLinuxHostValidateFixtureProofJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.json",
+    "proofStatusMatrix": "linux-docker-linux-host-and-windows-host-admitted-windows-docker-community-deferred",
+    "publicGitHubMutation": "published-and-verified-with-corrected-asset-release",
+    "marketplaceMutation": "published-and-verified",
+    "previewVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f"
+  },
+  "publicValidationPrereleaseV1312": {
+    "status": "published-and-verified",
+    "marketplaceTargetVersion": "1.3.12",
+    "marketplacePublishedVersion": "1.3.12",
+    "marketplaceLastUpdated": "2026-04-27T00:36:15.800Z",
+    "publicGitHubReleaseTarget": "v1.3.12-public-validation-prerelease",
+    "publicGitHubReleaseId": 313840265,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.12-public-validation-prerelease",
+    "publicGitHubMainCommit": "1853a4332eff40665e30db6e632febaa9821cf98",
+    "publicGitHubPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/63",
+    "publicGitHubPublished": true,
+    "marketplacePublished": true,
+    "publicGitHubMutationAuthorized": true,
+    "marketplaceMutationAuthorized": true,
+    "allCliVariantsSelectable": true,
+    "windowsInstalledUserLabviewProof": "admitted-for-host-labview-2026-x64",
+    "linuxDocker2026x64": "admitted",
+    "linuxHostLabview2026x64": "admitted",
+    "executableFixtureCommand": "vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof",
+    "retainedLinuxDockerValidateFixtureProofPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.md",
+    "retainedLinuxDockerValidateFixtureProofJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.json",
+    "retainedLinuxHostValidateFixtureProofPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md",
+    "retainedLinuxHostValidateFixtureProofJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.json",
+    "packetPath": "docs/product/public-validation-prerelease-v1.3.12.md",
+    "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.12.json",
+    "previewVsixSha256": "e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25",
+    "supersededPublicGitHubReleaseTag": "v1.3.12-public-validation",
+    "supersededPublicGitHubReleaseId": 313840031,
+    "branchHygiene": {
+      "publicDevelopSyncPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/64",
+      "status": "not-applied-requires-separate-branch-policy-decision",
+      "reason": "no-merge-commit branch protection conflicts with behind=0 ancestry sync unless public develop is deliberately rebased"
+    },
+    "windowsDockerDesktopProof": "community-deferred",
+    "windowsHostLabview2026x64": "admitted",
+    "retainedWindowsHostValidateFixtureProofPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+    "retainedWindowsHostValidateFixtureProofJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json",
+    "windowsHostProofAdmission": {
+      "status": "admitted-after-publication",
+      "runtimeValidationOutcome": "ready",
+      "runtimeExecutionState": "succeeded",
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "runtimeErrorCode": "VIHS_OK",
+      "generatedReportSizeBytes": 146915,
+      "proofPacket": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+      "publicIssueLedger": {
+        "hostProofIssueClosed": "https://github.com/svelderrainruiz/vi-history-suite/issues/56",
+        "windowsDockerDesktopRemainingIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+        "diagnosticNoteBugIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/66"
+      }
+    }
+  },
+  "publicValidationPrereleaseV1313": {
+    "status": "published-and-verified",
+    "marketplaceTargetVersion": "1.3.13",
+    "marketplacePublishedVersion": "1.3.13",
+    "marketplacePublished": true,
+    "publicGitHubReleaseTarget": "v1.3.13-public-validation-prerelease-1",
+    "publicGitHubReleaseId": 313873748,
+    "publicGitHubMainCommit": "769cf180c1d5e94d1462d90e4e7366b1e050e7b1",
+    "publicGitHubPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/67",
+    "publicGitHubPublished": true,
+    "publicGitHubMutationAuthorized": true,
+    "marketplaceMutationAuthorized": true,
+    "allCliVariantsSelectable": true,
+    "windowsInstalledUserLabviewProof": "admitted-for-host-labview-2026-x64",
+    "linuxDocker2026x64": "admitted-carried-forward-from-1.3.12",
+    "linuxHostLabview2026x64": "admitted-carried-forward-from-1.3.12",
+    "windowsHostLabview2026x64": "admitted-carried-forward-from-1.3.12-windows-vm-proof",
+    "windowsDockerDesktopProof": "community-deferred",
+    "windowsDockerDesktopProofIntake": {
+      "status": "prepared-gitlab-authority",
+      "publicIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+      "packetPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.md",
+      "packetJsonPath": "docs/product/windows-docker-desktop-proof-intake-v1.3.13.json",
+      "requiredDockerOSType": "windows",
+      "admissibleSuccessRuntimeProvider": "windows-container",
+      "admissibleSuccessRuntimeEngine": "labview-cli",
+      "templatePath": "public-github-source/.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+      "publicFacadePromotionCloseout": {
+        "status": "published-and-verified",
+        "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
+        "publicMainCommit": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+        "publicMainShortCommit": "220111e",
+        "postMergeChecks": [
+          "Public Source Package Preview 24977951913 success",
+          "Public Windows Installed-User Contract 24977951923 success",
+          "Public Linux Installed-User Smoke 24977951904 success"
+        ],
+        "marketplaceMutation": "not-performed"
+      }
+    },
+    "packetPath": "docs/product/public-validation-prerelease-v1.3.13.md",
+    "packetJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json",
+    "previewVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f",
+    "retainedWindowsHostValidateFixtureProofPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md",
+    "retainedWindowsHostValidateFixtureProofJsonPath": "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json",
+    "diagnosticNoteFix": {
+      "status": "published-to-public-facade-and-marketplace",
+      "source": "src/reporting/comparisonReportRuntimeExecution.ts",
+      "test": "tests/unit/comparisonReportRuntimeExecution.test.ts",
+      "publicIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/66"
+    },
+    "marketplaceLastUpdated": "2026-04-27T04:24:05.457Z",
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1",
+    "supersededImmutablePublicGitHubReleaseTag": "v1.3.13-public-validation-prerelease",
+    "supersededImmutablePublicGitHubReleaseId": 313873598,
+    "supersededImmutablePublicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease",
+    "supersededImmutablePublicGitHubVsixSha256": "92b101f0ae80f213cb090c368c545465d74e8b3476f9a2316dbdce4435d6bd66",
+    "supersededImmutablePublicGitHubReason": "immutable-release-asset-packaged-without-vscode-prerelease-marker"
   }
 }

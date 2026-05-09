@@ -318,8 +318,11 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['docs:ci:internal:core']).toBe(
       'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
     );
+    expect(manifest.scripts?.['linux:docker:provider:lane']).toBe(
+      'npm run compile && node scripts/runLinuxDockerProviderLane.js'
+    );
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
-      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
+      'npm run compile && node scripts/runPublicLinuxInstalledUserSmoke.js'
     );
     expect(manifest.scripts?.['public:source:promote']).toBe(
       'node scripts/promotePublicGithubSource.js'
@@ -377,7 +380,9 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['program:repos']).toContain('runProgramRepoJump.js');
 
     expect(dockerfile).toContain('FROM node:24-bookworm');
-    expect(dockerfile).toContain('lychee-x86_64-unknown-linux-gnu.tar.gz');
+    expect(dockerfile).toContain('lychee-v0.24.1');
+    expect(dockerfile).toContain('lychee-x86_64-unknown-linux-musl.tar.gz');
+    expect(dockerfile).not.toContain('releases/latest');
     expect(dockerfile).toContain('CMD ["npm", "run", "docs:gate"]');
     expect(entrypoint).toContain('node_modules/.vihs-docs-workbench-package-lock.sha256');
     expect(entrypoint).toContain('sha256sum package-lock.json');
@@ -523,5 +528,9 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('Prepare note: ${prepare.message ||');
     expect(workbenchDoc).toContain('package_extension_preview');
     expect(workbenchDoc).toContain('preview `npm run package` path');
+    expect(gitlabCi).toContain(
+      'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
+    );
+    expect(gitlabCi).not.toMatch(/name:\s+lycheeverse\/lychee:latest(?:\r?\n|$)/);
   });
 });

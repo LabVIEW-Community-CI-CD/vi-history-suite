@@ -29,6 +29,79 @@ governed_runner_admission:
     paths:
       - governed-runner-admission-evidence/
   rules:
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+ubuntu_docker_runner_admission:
+  stage: admission
+  tags:
+    - linux
+    - x64
+    - docker
+    - assurance
+    - private-release
+  script:
+    - mkdir -p governed-runner-admission-evidence
+    - gitlab-runner --version | tee governed-runner-admission-evidence/gitlab-runner-version.txt
+    - docker info --format '{{.OSType}} {{.ServerVersion}}' | tee governed-runner-admission-evidence/docker-info.txt
+    - test "$(docker info --format '{{.OSType}}')" = "linux"
+    - node --version | tee governed-runner-admission-evidence/node-version.txt
+    - npm --version | tee governed-runner-admission-evidence/npm-version.txt
+    - |
+      node - <<'NODE'
+      const fs = require('node:fs');
+      const path = require('node:path');
+
+      const evidenceDir = 'governed-runner-admission-evidence';
+      const read = (fileName) => fs.readFileSync(path.join(evidenceDir, fileName), 'utf8').trim();
+      const dockerInfo = read('docker-info.txt').split(/\s+/u);
+      const payload = {
+        schema: 'vi-history-suite/ubuntu-docker-runner-admission@v2',
+        claimScope: 'linux-docker-validated-preview',
+        generatedAt: new Date().toISOString(),
+        runnerDescription: process.env.CI_RUNNER_DESCRIPTION || '',
+        runnerTags: (process.env.CI_RUNNER_TAGS || '').split(',').map((tag) => tag.trim()).filter(Boolean),
+        commitSha: process.env.CI_COMMIT_SHA || '',
+        sourceBranch: process.env.CI_MERGE_REQUEST_SOURCE_BRANCH_NAME || process.env.CI_COMMIT_BRANCH || '',
+        targetBranch: process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME || '',
+        dockerOstype: dockerInfo[0] || '',
+        dockerServerVersion: dockerInfo[1] || '',
+        nodeVersion: read('node-version.txt'),
+        npmVersion: read('npm-version.txt'),
+        windowsLabviewProofIncluded: false,
+        windowsInstalledUserProofDeferred: true,
+        windowsLabviewProofRequiredForPreview: false,
+        windowsLabviewProofRequiredForWindowsClaim: true
+      };
+      fs.writeFileSync(path.join(evidenceDir, 'ubuntu-docker-runner-admission.json'), `${JSON.stringify(payload, null, 2)}\n`);
+      fs.writeFileSync(
+        path.join(evidenceDir, 'ubuntu-docker-runner-admission.md'),
+        [
+          '# Ubuntu/Docker Runner Admission',
+          '',
+          `- Generated at: ${payload.generatedAt}`,
+          `- Runner: ${payload.runnerDescription}`,
+          `- Docker: ${payload.dockerOstype} ${payload.dockerServerVersion}`,
+          `- Node: ${payload.nodeVersion}`,
+          `- npm: ${payload.npmVersion}`,
+          '- Claim scope: Linux/Docker validated preview',
+          '- Windows/LabVIEW proof included: false',
+          '- Windows installed-user proof deferred: true',
+          '- Windows/LabVIEW proof required for this preview: false',
+          '- Windows/LabVIEW proof required before Windows installed-user claim: true'
+        ].join('\n') + '\n'
+      );
+      NODE
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - governed-runner-admission-evidence/
+  rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_BRANCH == "develop"'
@@ -39,11 +112,17 @@ governed_runner_admission:
 docs_link_check:
   stage: docs
   image:
-    name: lycheeverse/lychee:latest
+    name: lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00
     entrypoint:
       - ""
   script:
-    - lychee --verbose --no-progress --include-fragments README.md docs/**/*.md
+    # GitHub intermittently serves 5xx for generated issue-template forms to
+    # anonymous link checkers. Keep the user-facing template links in docs, but
+    # avoid treating those GitHub form-generation outages as docs regressions.
+    - >
+      lychee --verbose --no-progress --include-fragments
+      --exclude '^https://github\.com/svelderrainruiz/vi-history-suite/issues/new\?template=.*$'
+      README.md docs/**/*.md
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -418,6 +497,30 @@ public_exact_pretag_proof:
     - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
 
+linux_docker_provider_lane:
+  stage: test
+  tags:
+    - linux
+    - x64
+    - docker
+    - assurance
+    - private-release
+  script:
+    - npm ci
+    - npm run linux:docker:provider:lane -- --evidence-dir linux-docker-provider-lane-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - linux-docker-provider-lane-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
 windows_private_release_acceptance:
   stage: test
   tags:
@@ -440,6 +543,82 @@ windows_private_release_acceptance:
     paths:
       - windows-private-release-evidence/
   rules:
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+vagrant_windows_vsix_acceptance:
+  stage: test
+  tags:
+    - linux
+    - x64
+    - virtualbox
+    - vagrant
+    - private-release
+  resource_group: vihs-windows-vagrant
+  timeout: 2 hours
+  needs: []
+  variables:
+    VIHS_VAGRANT_BOX: vihs/win11-labview2026
+    VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden
+    VIHS_VAGRANT_CI_VM_NAME: vihs-ci-win11
+    VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data/vihs-vagrant
+    VAGRANT_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home
+    VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box
+    VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work
+    VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"
+    VAGRANT_DOTFILE_PATH: .vagrant-ci
+  script:
+    - set -euo pipefail
+    - rm -f ./*.vsix
+    - mkdir -p vagrant/shared vagrant/evidence "${VAGRANT_HOME}" "$(dirname "${VIHS_VAGRANT_BOX_FILE}")" "${VIHS_VAGRANT_BOX_WORKDIR}" "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
+    - VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
+    - bash scripts/vagrant/cleanup-disposable-ci-vm.sh
+    - rm -rf vagrant/.vagrant
+    - npm ci
+    - npm run compile
+    - npm run package:audit
+    - node scripts/runPinnedVsce.js package
+    - |
+      vsix_path="$(find . -maxdepth 1 -type f -name '*.vsix' -printf '%T@ %p\n' | sort -nr | awk 'NR == 1 {print $2}')"
+      if [ -z "${vsix_path}" ]; then
+        echo "No packaged .vsix found after node scripts/runPinnedVsce.js package." >&2
+        exit 1
+      fi
+      cp "${vsix_path}" vagrant/shared/
+      echo "Staged VSIX for Vagrant acceptance: ${vsix_path}"
+    - |
+      if [ "${VIHS_VAGRANT_REFRESH_GOLDEN_BOX:-false}" = "true" ]; then
+        bash scripts/vagrant/refresh-golden-box.sh 2>&1 | tee vagrant/evidence/refresh-golden-box.log
+      else
+        echo "Skipping golden box refresh. Set VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true for operator-controlled refresh."
+      fi
+    - bash scripts/vagrant/doctor-vagrant-host.sh 2>&1 | tee vagrant/evidence/vagrant-host-doctor.log
+    - (cd vagrant && vagrant up --no-provision)
+    - (cd vagrant && vagrant provision --provision-with bootstrap)
+    - (cd vagrant && vagrant reload --no-provision)
+    - (cd vagrant && vagrant provision --provision-with cold-labview 2>&1 | tee evidence/labview-cold-prep.log)
+    - (cd vagrant && vagrant provision --provision-with acceptance 2>&1 | tee evidence/acceptance-provision.log)
+    - npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion
+  after_script:
+    - (cd vagrant && vagrant halt --force) || true
+    - |
+      latest="$(find vagrant/evidence -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | awk 'NR == 1 {print $2}' || true)"
+      if [ -n "${latest}" ] && [ -f "${latest}/manifest.json" ]; then
+        echo "=== Vagrant Acceptance Manifest ==="
+        cat "${latest}/manifest.json"
+      else
+        echo "No Vagrant acceptance manifest found."
+      fi
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - vagrant/evidence/
+  rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_BRANCH == "develop"'
@@ -456,7 +635,14 @@ package_extension_preview:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
-    - windows_private_release_acceptance
+    - linux_docker_provider_lane
+    - vagrant_windows_vsix_acceptance
+    # - windows_private_release_acceptance remains the retained Windows proof
+    #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
+    #   Preview packaging is therefore Linux/Docker validated and does not claim
+    #   Windows installed-user proof.
+    - job: windows_private_release_acceptance
+      optional: true
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
     - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
@@ -510,7 +696,14 @@ release_extension:
     - assurance_requirements_quality
     - assurance_external_user_information
     - test_extension
-    - windows_private_release_acceptance
+    - linux_docker_provider_lane
+    - vagrant_windows_vsix_acceptance
+    # - windows_private_release_acceptance remains the retained Windows proof
+    #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
+    #   Exact packaging from this lane is Linux/Docker validated and does not
+    #   claim Windows installed-user proof.
+    - job: windows_private_release_acceptance
+      optional: true
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
     - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"

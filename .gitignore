@@ -8,3 +8,10 @@ coverage/
 *.log
 .cache/
 tmp/
+
+
+# Vagrant acceptance artefacts
+vagrant/shared/
+vagrant/evidence/
+vagrant/.vagrant/
+vagrant/.vagrant-ci/

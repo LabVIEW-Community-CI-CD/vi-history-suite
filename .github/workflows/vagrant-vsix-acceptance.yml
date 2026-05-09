@@ -1,0 +1,264 @@
+name: Vagrant VSIX Acceptance
+
+# Builds the vi-history-suite vsix, ships it to a Windows 11 + LabVIEW 2026
+# Vagrant VM, installs it, and runs the governed report-smoke proof.
+#
+# Runner requirements:
+#   The `vagrant-acceptance` job must run on a self-hosted Linux runner that has:
+#     - VirtualBox installed
+#     - Vagrant >= 2.3 installed
+#     - The registered Vagrant box named by the VIHS_VAGRANT_BOX variable
+#
+# GitHub Actions variables (repository or environment level):
+#   VIHS_VAGRANT_BOX  – Vagrant box name (e.g. "vihs/win11-labview2026")
+#   VIHS_VAGRANT_GOLDEN_VM_NAME – powered-off golden VM name
+#     (e.g. "vihs-win11-labview2026-golden")
+#   VIHS_VAGRANT_CI_VM_NAME – disposable Vagrant-imported VM name
+#     (e.g. "vihs-ci-win11")
+#   VIHS_VAGRANT_STORAGE_ROOT – large local filesystem root for Vagrant state
+#   VIHS_VAGRANT_REFRESH_GOLDEN_BOX – set to "true" to refresh the box
+#
+# No secrets required: LabVIEW and VS Code are already inside the VM box.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+      - 'hotfix/**'
+    paths:
+      - '.github/workflows/vagrant-vsix-acceptance.yml'
+      - 'vagrant/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'resources/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - '.github/workflows/vagrant-vsix-acceptance.yml'
+      - 'vagrant/**'
+      - 'src/**'
+      - 'scripts/**'
+      - 'resources/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  # One acceptance run at a time per ref to avoid racing over the single VM
+  group: vagrant-vsix-acceptance-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Build the vsix and compile TypeScript on a GitHub-hosted runner
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build vsix
+    runs-on: ubuntu-24.04
+    outputs:
+      vsix_name: ${{ steps.vsix_name.outputs.vsix_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run compile
+
+      - name: Audit packaged runtime surface
+        run: npm run package:audit
+
+      - name: Build vsix
+        # docs:bundle requires a sibling wiki repo that is not available in CI.
+        # The committed resources/bundled-docs/ content is used as-is, which is
+        # correct for release builds where the wiki was synced before tagging.
+        run: node scripts/runPinnedVsce.js package
+
+      - name: Resolve vsix filename
+        id: vsix_name
+        run: |
+          name=$(ls *.vsix | head -1)
+          echo "vsix_name=${name}" >> "$GITHUB_OUTPUT"
+          echo "Built: ${name}"
+
+      - name: Upload vsix artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: ${{ steps.vsix_name.outputs.vsix_name }}
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Archive compiled output
+        run: tar -czf out.tar.gz out/
+
+      - name: Upload compiled output artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-out
+          path: out.tar.gz
+          if-no-files-found: error
+          retention-days: 7
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Run the governed proof inside the Vagrant Windows 11 VM
+  # ---------------------------------------------------------------------------
+  vagrant-acceptance:
+    name: Vagrant acceptance (Windows 11 + LabVIEW 2026)
+    runs-on: [self-hosted, linux, virtualbox]
+    needs: build
+    timeout-minutes: 60
+
+    env:
+      VIHS_VAGRANT_BOX: ${{ vars.VIHS_VAGRANT_BOX || 'vihs/win11-labview2026' }}
+      VIHS_VAGRANT_GOLDEN_VM_NAME: ${{ vars.VIHS_VAGRANT_GOLDEN_VM_NAME || vars.VIHS_VIRTUALBOX_VM_NAME || 'vihs-win11-labview2026-golden' }}
+      VIHS_VAGRANT_CI_VM_NAME: ${{ vars.VIHS_VAGRANT_CI_VM_NAME || 'vihs-ci-win11' }}
+      VIHS_VAGRANT_STORAGE_ROOT: ${{ vars.VIHS_VAGRANT_STORAGE_ROOT || '/run/media/sergio/Data/vihs-vagrant' }}
+      VAGRANT_HOME: ${{ vars.VAGRANT_HOME || '/run/media/sergio/Data/vihs-vagrant/vagrant-home' }}
+      VIHS_VAGRANT_BOX_FILE: ${{ vars.VIHS_VAGRANT_BOX_FILE || '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box' }}
+      VIHS_VAGRANT_BOX_WORKDIR: ${{ vars.VIHS_VAGRANT_BOX_WORKDIR || '/run/media/sergio/Data/vihs-vagrant/box-work' }}
+      VIHS_VIRTUALBOX_MACHINE_FOLDER: ${{ vars.VIHS_VIRTUALBOX_MACHINE_FOLDER || '/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs' }}
+      VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER: 'false'
+      VAGRANT_DOTFILE_PATH: .vagrant-ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download vsix artefact
+        uses: actions/download-artifact@v4
+        with:
+          name: vsix
+          path: vagrant/shared
+
+      - name: Download compiled output artefact
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-out
+          path: .
+
+      - name: Expand compiled output
+        run: |
+          tar -xzf out.tar.gz
+          echo "Compiled outputs restored:"
+          ls out/cli/ | head -10
+
+      - name: Prepare evidence directory
+        run: |
+          mkdir -p vagrant/evidence
+
+      - name: Prepare large-drive Vagrant storage
+        run: |
+          mkdir -p \
+            "${VAGRANT_HOME}" \
+            "$(dirname "${VIHS_VAGRANT_BOX_FILE}")" \
+            "${VIHS_VAGRANT_BOX_WORKDIR}" \
+            "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
+          VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
+
+      - name: Remove stale disposable CI VM
+        run: |
+          bash scripts/vagrant/cleanup-disposable-ci-vm.sh
+          rm -rf vagrant/.vagrant
+
+      - name: Verify Vagrant + VirtualBox prerequisites
+        run: bash scripts/vagrant/doctor-vagrant-host.sh
+
+      - name: Refresh Vagrant box from golden VM
+        if: ${{ vars.VIHS_VAGRANT_REFRESH_GOLDEN_BOX == 'true' }}
+        run: bash scripts/vagrant/refresh-golden-box.sh
+        env:
+          VIHS_VAGRANT_GOLDEN_VM_NAME: ${{ env.VIHS_VAGRANT_GOLDEN_VM_NAME }}
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_BOX_FILE: ${{ env.VIHS_VAGRANT_BOX_FILE }}
+
+      - name: Boot VM
+        working-directory: vagrant
+        run: vagrant up --no-provision
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
+
+      - name: Run bootstrap provisioner (skipped if already done)
+        working-directory: vagrant
+        run: vagrant provision --provision-with bootstrap
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
+
+      - name: Reload after bootstrap autologon setup
+        working-directory: vagrant
+        run: vagrant reload --no-provision
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
+
+      - name: Force cold LabVIEW state before acceptance
+        working-directory: vagrant
+        run: |
+          set -euo pipefail
+          vagrant provision --provision-with cold-labview 2>&1 | tee evidence/labview-cold-prep.log
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
+
+      - name: Run acceptance provisioner
+        working-directory: vagrant
+        run: |
+          set -euo pipefail
+          vagrant provision --provision-with acceptance 2>&1 | tee evidence/acceptance-provision.log
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
+
+      - name: Assert Vagrant acceptance evidence
+        if: always()
+        run: npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion
+
+      - name: Halt VM
+        if: always()
+        working-directory: vagrant
+        run: vagrant halt --force
+        env:
+          VIHS_VAGRANT_BOX: ${{ env.VIHS_VAGRANT_BOX }}
+          VIHS_VAGRANT_CI_VM_NAME: ${{ env.VIHS_VAGRANT_CI_VM_NAME }}
+
+      - name: Print manifest
+        if: always()
+        run: |
+          latest=$(ls -dt vagrant/evidence/*/ 2>/dev/null | head -1)
+          if [[ -n "${latest}" && -f "${latest}/manifest.json" ]]; then
+            echo "=== Acceptance Manifest ==="
+            cat "${latest}/manifest.json"
+          else
+            echo "No manifest found in vagrant/evidence/"
+          fi
+
+      - name: Upload evidence artefact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vagrant-acceptance-evidence
+          path: vagrant/evidence/**
+          if-no-files-found: warn
+          retention-days: 30

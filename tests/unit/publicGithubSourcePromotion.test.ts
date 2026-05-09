@@ -92,8 +92,21 @@ describe('public GitHub source promotion', () => {
       ])
     );
     expect(plan.templateCopyPaths).toContain('README.md');
-    expect(plan.templateCopyPaths).toContain('.github/workflows/public-facade-package-preview.yml');
-    expect(plan.authorityCopyPaths).toContain('.github/workflows/public-facade-linux-smoke.yml');
+    expect(plan.templateCopyPaths).toContain(
+      '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
+    );
+    expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/validation-success.yml');
+    expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/validation-failure.yml');
+    expect(plan.templateCopyPaths).toContain('.github/ISSUE_TEMPLATE/feature-not-implemented.yml');
+    expect(plan.templateCopyPaths).toContain(
+      '.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml'
+    );
+    expect(plan.templateCopyPaths).toContain('.github/labels.yml');
+    expect(plan.templateCopyPaths).toContain('.github/workflows/public-source-package-preview.yml');
+    expect(plan.authorityCopyPaths).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
+    expect(plan.authorityCopyPaths).toContain(
+      '.github/workflows/public-windows-installed-user-contract.yml'
+    );
     expect(plan.publicDesignContractTests).toEqual([
       'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
       'tests/unit/comparisonReportPreflight.test.ts',
@@ -102,7 +115,8 @@ describe('public GitHub source promotion', () => {
       'tests/unit/preparePublicTestFixtureScript.test.ts',
       'tests/unit/publicRepoPackageSurface.test.ts',
       'tests/unit/publicDevcontainerSurface.test.ts',
-      'tests/unit/publicFacadeLinuxSmoke.test.ts',
+      'tests/unit/publicLinuxInstalledUserSmoke.test.ts',
+      'tests/unit/publicWindowsInstalledUserContract.test.ts',
       'tests/unit/runLinuxIntegrationHost.test.ts',
       'tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     ]);
@@ -152,7 +166,7 @@ describe('public GitHub source promotion', () => {
   it('renders a narrower public package contract than authority', () => {
     const manifest = promotion.renderPublicPackageManifest();
 
-    expect(manifest.version).toBe('1.3.9');
+    expect(manifest.version).toBe('1.3.14');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -162,7 +176,10 @@ describe('public GitHub source promotion', () => {
       'LICENSE'
     ]);
     expect(manifest.scripts['public:smoke:linux']).toBe(
-      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
+      'npm run compile && node scripts/runPublicLinuxInstalledUserSmoke.js'
+    );
+    expect(manifest.scripts['public:contract:windows-installed-user']).toBe(
+      'node scripts/runPublicWindowsInstalledUserContract.js'
     );
     expect(manifest.scripts['public:host:bootstrap-linux']).toBe(
       'node scripts/bootstrapLinuxVsCodeHost.js install'
@@ -174,7 +191,7 @@ describe('public GitHub source promotion', () => {
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts.package).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -205,9 +222,18 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('INSTALL.md');
       expect(expectedFiles).toContain('SUPPORT.md');
       expect(expectedFiles).toContain('CONTRIBUTING.md');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/validation-success.yml');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/validation-failure.yml');
+      expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/feature-not-implemented.yml');
+      expect(expectedFiles).toContain(
+        '.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml'
+      );
+      expect(expectedFiles).toContain('.github/labels.yml');
       expect(expectedFiles).toContain('scripts/bootstrapLinuxVsCodeHost.js');
-      expect(expectedFiles).toContain('.github/workflows/public-facade-linux-smoke.yml');
-      expect(expectedFiles).toContain('.github/workflows/public-facade-package-preview.yml');
+      expect(expectedFiles).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
+      expect(expectedFiles).toContain('.github/workflows/public-source-package-preview.yml');
+      expect(expectedFiles).toContain('.github/workflows/public-windows-installed-user-contract.yml');
       expect(expectedFiles).toContain('scripts/preparePublicRepoClone.js');
       expect(expectedFiles).toContain('scripts/publicRepoCloneCore.js');
       expect(expectedFiles).toContain('scripts/preparePublicTestFixture.js');

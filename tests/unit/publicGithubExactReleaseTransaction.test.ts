@@ -259,6 +259,10 @@ const transaction = require(path.join(
     checksumText: string | null;
     checksumSha256: string | null;
   } | null;
+  retainReportedPublicReleases: (
+    publicReleases: Array<Record<string, unknown>>,
+    authorityTag: string
+  ) => Array<Record<string, unknown>>;
   runAssessment: (
     argv?: string[],
     deps?: Record<string, unknown>
@@ -396,6 +400,19 @@ describe('public GitHub exact-release transaction controller', () => {
       manifest: releaseManifestFixture
     });
     expect(manifest?.checksumSha256).toBe(transaction.computeFileSha256(releaseChecksumPath, fakeFs));
+  });
+
+  it('retains only the selected authority-tag release in the reported public release list', () => {
+    expect(
+      transaction.retainReportedPublicReleases(
+        [
+          { id: 312363117, tag_name: 'v1.3.6', draft: true },
+          { id: 312768592, tag_name: 'v1.3.8', draft: false },
+          { id: 312994104, tag_name: 'v1.3.9', draft: false }
+        ],
+        'v1.3.9'
+      )
+    ).toEqual([{ id: 312994104, tag_name: 'v1.3.9', draft: false }]);
   });
 
   it('locates the retained authority release manifest across the known worktree set', () => {
@@ -1142,12 +1159,18 @@ describe('public GitHub exact-release transaction controller', () => {
 
       expect(jsonReport.authority).toMatchObject({
         packageVersion: '1.3.6',
-        branchPackageVersion: '1.3.9'
+        branchPackageVersion: '1.3.14'
       });
       expect(jsonReport.publicReleaseByIdLookup).toEqual({
         requestedDraftReleaseId: 312363117,
         statusCode: 200
       });
+      expect(jsonReport.publicReleases).toEqual([
+        expect.objectContaining({
+          id: 312363117,
+          tag_name: 'v1.3.6'
+        })
+      ]);
       expect(jsonReport.releaseManifest).toMatchObject({
         manifestPath: '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
         manifestRoot: '.',

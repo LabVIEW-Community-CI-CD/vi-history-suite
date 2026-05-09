@@ -2886,6 +2886,13 @@ export function classifyLabviewCliDiagnosticText(
     };
   }
 
+  if (/CreateComparisonReport operation succeeded\./i.test(diagnosticText)) {
+    notes.push('LabVIEW CLI reported that CreateComparisonReport operation succeeded.');
+    return {
+      notes
+    };
+  }
+
   if (launchSucceeded) {
     notes.push('LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.');
   }
@@ -3372,6 +3379,7 @@ export function runComparisonCommandPlanWithObservation(
     let timedOut = false;
     let cancelled = false;
     let terminationRequested = false;
+    let settled = false;
     const timeoutMs =
       typeof deps.timeoutMs === 'number' && deps.timeoutMs > 0
         ? deps.timeoutMs
@@ -3459,18 +3467,19 @@ export function runComparisonCommandPlanWithObservation(
     child.stderr?.on('data', (chunk: string | Buffer) => {
       stderr += String(chunk);
     });
-    child.on('error', (error) => {
+    const settleFromExit = async (exitCode: number | null, signal: NodeJS.Signals | null) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
       }
       disposeCancellationSubscription();
-      reject(error);
-    });
-    child.on('close', async (exitCode, signal) => {
-      if (timeoutHandle) {
-        clearTimeout(timeoutHandle);
-      }
-      disposeCancellationSubscription();
+
+      child.stdout?.destroy();
+      child.stderr?.destroy();
 
       if (observationPromise) {
         await observationPromise;
@@ -3524,6 +3533,22 @@ export function runComparisonCommandPlanWithObservation(
         processObservation,
         exitProcessObservation
       });
+    };
+
+    child.on('error', (error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+      disposeCancellationSubscription();
+      reject(error);
+    });
+    child.on('exit', (exitCode, signal) => {
+      void settleFromExit(exitCode, signal);
     });
   });
 }

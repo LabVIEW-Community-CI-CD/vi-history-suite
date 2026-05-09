@@ -174,7 +174,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('npm run gitlab:runner:doctor');
     expect(packetDoc).toContain('governed_runner_admission');
     expect(packetDoc).toContain('C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json');
-    expect(packetDoc).toContain('$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json');
+    expect(packetDoc).toContain('$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json');
     expect(packetDoc).toContain('## Private Release Publication');
     expect(packetDoc).toContain('npm run gitlab:private-release:publish');
     expect(packetDoc).toContain('private-v1.3.0-windows-x64');
@@ -241,7 +241,7 @@ describe('windows private release packet docs', () => {
         }),
         startupReceipts: expect.objectContaining({
           windowsLatest: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
-          linuxLatest: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json'
+          linuxLatest: '$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json'
         }),
         hostApplySurface: expect.objectContaining({
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',

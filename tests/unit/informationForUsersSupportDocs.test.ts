@@ -60,11 +60,13 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('prepare command is admitted in untrusted workspaces');
     expect(faq).toContain('user-scope PATH');
     expect(faq).toContain('runtimeValidationOutcome');
-    expect(faq).toContain('Do I need WSL for the supported Windows x64 path');
-    expect(faq).toContain('native Windows host LabVIEW');
+    expect(faq).toContain('Is Windows installed-user behavior proven?');
+    expect(faq).toContain('Windows host LabVIEW 2026');
     expect(faq).toContain('Docker Desktop in Windows-container mode');
+    expect(faq).toContain('public issue #65');
+    expect(faq).toContain('docker info --format "{{.OSType}} {{.OperatingSystem}}"');
     expect(faq).toContain('WSL is retained historical context only');
-    expect(faq).toContain('private-release proof route');
+    expect(faq).toContain('Windows host LabVIEW 2026');
     expect(faq).toContain('npm run proof:runtime-settings-live-session');
     expect(faq).toContain('.cache/runtime-settings-live-session-proof/latest/');
 
@@ -100,18 +102,24 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('vihs --validate');
     expect(commandReference).toContain('host/windows/2026/x64');
     expect(commandReference).toContain('Enter` keep the current value');
-    expect(commandReference).toContain('docker/linux` is selectable for `2026` only but not currently implemented');
+    expect(commandReference).toContain('Docker is the bounded expert path');
+    expect(commandReference).toContain('selectable Docker years or bitnesses may');
     expect(commandReference).toContain('before trusting Compare');
     expect(commandReference).toContain('or other runtime-provider surfaces');
     expect(commandReference).toContain('runtimeBlockedReason');
     expect(commandReference).toContain('npm run proof:runtime-settings-live-session');
     expect(commandReference).toContain('runtime-settings-live-session-proof.json');
     expect(commandReference).toContain('.cache/runtime-settings-live-session-proof/latest/');
-    expect(commandReference).toContain('supported Windows x64 private-release route');
-    expect(commandReference).toContain('WSL is not');
-    expect(commandReference).toContain('admitted dependency for that path');
+    expect(commandReference).toContain('current public validation route');
+    expect(commandReference).toContain('Windows host LabVIEW 2026 x64 is admitted');
+    expect(commandReference).toContain('Docker Desktop Windows-container behavior');
+    expect(commandReference).toContain('public issue #65');
+    expect(commandReference).toContain('runtimeProvider=windows-container');
+    expect(commandReference).toContain('generatedReportExists=true');
     expect(commandReference).not.toContain('`npm run public:smoke:linux`');
-    expect(commandReference).toContain('The active Windows x64 private-release route does not use');
+    expect(commandReference).toContain(
+      'The active governed preview route is Linux/Docker, Linux host LabVIEW, and'
+    );
     expect(commandReference).toContain('npm run assurance:release-gate');
     expect(commandReference).toContain('npm run assurance:26514:authority');
     expect(commandReference).toContain('npm run assurance:user-info');

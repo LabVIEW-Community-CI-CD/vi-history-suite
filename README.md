@@ -3,6 +3,10 @@
 `vi-history-suite` is a Visual Studio Code extension for reviewing LabVIEW VI
 history in Git repositories.
 
+The packaged Marketplace listing is intentionally installed-user first and
+version-agnostic. Use the Marketplace version history or the Extensions view
+when you need the exact published version number.
+
 ## Install The Extension
 
 Use one of these install surfaces:
@@ -78,12 +82,94 @@ Installed-user help:
   editor-title `VI History` action, to start a comparison
 - if Docker is selected, install or start Docker Desktop or Docker before the
   first compare
+- the first Docker compare on a fresh machine may pull
+  `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`
 - host Windows LabVIEW years `2020` through `2026` are selectable when they
   are installed locally
-- `docker/windows` is supported for `2026` `x64` only
-- Docker years before `2026` are unsupported
-- `docker/linux` for `2026` and `host/linux` are not currently implemented
-- blocked or unsupported paths fail closed with explicit next-step guidance
+- `docker/windows` and `docker/linux` variants are selectable for community
+  validation; the governed Docker runtime implementation is currently `2026`
+  `x64`
+- other provider/year/bitness combinations are accepted for validation
+  reporting and return stable `VIHS_E_*` error codes when they are blocked or
+  not yet implemented
+- blocked, missing, or not-yet-implemented paths fail closed with explicit
+  next-step guidance and can write a GitHub-ready proof packet
+
+## Proof Status And Community Validation
+
+Marketplace pre-release `1.3.13` is the public validation lane. The extension
+intentionally exposes all intended provider/year/bitness variants so the
+runtime and error-reporting layer can be exercised on real user machines.
+
+Treat `vihs --validate`, optional proof packets, and the traceability matrix as
+the current proof-status surfaces:
+
+- [Traceability Matrix](./docs/requirements/rtm.csv)
+- [Release Publication State](./docs/product/release-publication-state.md)
+- [Public Validation Pre-Release v1.3.13](./docs/product/public-validation-prerelease-v1.3.13.md)
+- [Public Validation Pre-Release v1.3.11](./docs/product/public-validation-prerelease-v1.3.11.md)
+
+Proof-status matrix:
+
+| Variant | Status | Evidence path |
+| --- | --- | --- |
+| Linux/Docker `2026` `x64` | admitted | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
+| Linux host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 Community is installed on Linux | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
+| Windows host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 x64 is installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
+| Windows Docker Desktop Windows containers | community/deferred through public issue #65 | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000` after Docker Desktop is switched to Windows containers |
+| Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
+
+To join the `1.3.13` pre-release validation lane from the command line, use:
+
+```bash
+code --install-extension svelderrainruiz.vi-history-suite@prerelease
+```
+
+When a selectable Windows/LabVIEW path works or fails on your machine, include
+provider, LabVIEW year, bitness, extension version, VS Code version, and
+`vihs --validate` output in the issue report. To generate a ready-to-file
+validation packet:
+
+```bash
+vihs --validate --proof-out ./vihs-proof
+```
+
+To exercise the canonical public fixture and write a compare proof packet:
+
+```bash
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof
+```
+
+On Windows Docker Desktop, switch Docker Desktop to Windows containers first
+and confirm `docker info --format "{{.OSType}} {{.OperatingSystem}}"` reports
+`windows`. Then run:
+
+```powershell
+vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000
+```
+
+### Canonical Public Docker Fixture
+
+The retained public Docker fixture for validation is
+`https://github.com/ni/labview-icon-editor` using
+`resource/plugins/lv_icon.vi`.
+
+- old commit:
+  `ab94f6c4b375062492036c63a6dab7ea8824748a`
+- new commit:
+  `8741bb08026c104100720c0ef48621e4ab7762fd`
+- positive Docker compare: succeeded and generated
+  `diff-report-lv_icon.vi.html`
+- no-change Docker compare: succeeded
+- missing-file control: blocked before Docker at `left-blob-read-failed`
+
+This proves the Linux/Docker `2026` `x64` public fixture path. Linux host
+LabVIEW `2026` `x64` is separately admitted on the maintainer Ubuntu machine
+when LabVIEW Community 2026 is installed. Windows host LabVIEW `2026` `x64`
+is now separately admitted from a Windows 11 VirtualBox installed-user proof.
+Windows Docker Desktop Windows-container proof remains community/deferred until
+public issue #65 receives an admissible packet from a real Windows host with
+Docker Desktop OSType `windows`.
 
 ## Report A Problem Or Request Support
 
@@ -91,6 +177,11 @@ If install, `vihs`, `vihs --validate`, or compare do not work as expected, use
 the public GitHub issue templates:
 
 - [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
+- [Marketplace Community Validation Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml)
+- [Windows Docker Desktop Validation](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=windows-docker-desktop-validation.yml)
+- [Validation Success](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-success.yml)
+- [Validation Failure](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-failure.yml)
+- [Feature Not Implemented](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-not-implemented.yml)
 - [Bug Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=bug-report.yml)
 - [LabVIEW Version Support Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=labview-version-support.yml)
 - [Feature Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-request.yml)
@@ -101,7 +192,8 @@ Useful issue facts:
 - whether the problem happened during the install bootstrap, `vihs`,
   `vihs --validate`, or compare
 - provider, LabVIEW year, and bitness
-- the current `vihs --validate` output
+- the current `vihs --validate` output and `runtimeErrorCode`
+- the `vihs-validation-proof.json` packet when generated
 - exact reproduction steps and the current vs expected result
 
 ## Common Tasks
@@ -179,23 +271,22 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.8`
-- current published package line on `main`: `1.3.8`
-- current develop package line on `develop`: `1.3.8`
-- active exact release candidate line on `develop`: `1.3.9`
-- active release-candidate branch: `release/1.3.9`
+- current exact released line: `v1.3.9`
+- current published package line on `main`: `1.3.9`
+- current develop package line on `develop`: `1.3.14`
+- active exact release candidate line on `develop`: `v1.3.14`
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- exact authority `v1.3.8` is retained as blocked historical public GitHub
-  incident evidence while the last fully closed public GitHub and VS Code
-  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
-  asset-first retry line for the installed `vihs` launcher fix
+- exact authority `v1.3.9` is now fully published across GitLab authority,
+  public GitHub, and VS Code Marketplace, while blocked historical public
+  GitHub incident evidence for `v1.3.8` remains retained separately
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -207,6 +298,10 @@ Authority release facts:
   `npm run vscode:marketplace:prepare`
 - retained VS Code Marketplace publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
 - software factory rehearsal package script:
@@ -219,6 +314,8 @@ Authority release facts:
   `npm run software:factory:verify`
 - VS Code Marketplace prep package script:
   `npm run vscode:marketplace:prepare`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
@@ -231,18 +328,25 @@ Authority release facts:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
 - retained VS Code Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software-factory phase contract:
   assess, rehearse, and repair remain admitted non-production phases, and
   publish / verify are now retained as guarded non-mutating contract phases
-- exact authority `v1.3.8` is retained as blocked historical publication
-  evidence while the last fully closed public GitHub and VS Code Marketplace
-  line remains `v1.3.7`; `release/1.3.9` may proceed only through normal
-  GitFlow and the repo-owned factory/orchestrator governance path before any
-  public GitHub or Marketplace mutation
-- active Windows x64 private-release-prep slice: historical `release/1.3.1`
-- active Windows x64 private-release packet:
+- exact authority `v1.3.9` is now fully closed across public GitHub and VS
+  Code Marketplace; later SemVer openings return to normal GitFlow governance
+  while `v1.3.8` remains retained as blocked historical publication evidence
+- active governed release claim: `1.3.14` develop patch candidate
+  consolidation with all provider/year/bitness variants selectable, admitted
+  Windows host proof retained, Vagrant VSIX acceptance governed by repo-owned
+  assertion, and Windows Docker Desktop proof still community/deferred
+- active Marketplace public validation target: `1.3.13`
+- active public validation publication trigger:
+  published through public GitHub PR #46 and pinned `vsce --pre-release`
+- retained Windows x64 private-release-prep slice: historical `release/1.3.1`
+- retained Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
-- active Windows x64 private-release packet JSON:
+- retained Windows x64 private-release packet JSON:
   [docs/product/private-release-windows-x64-v1.3.1.json](./docs/product/private-release-windows-x64-v1.3.1.json)
 - current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
 - current private GitLab release URL:
@@ -250,22 +354,38 @@ Authority release facts:
 - current Windows x64 private-release publish receipt:
   `.cache/private-release-publish/latest/private-release-publish.json`
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
-- fresh `v1.3.1` Windows host/container acceptance receipt set:
-  `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release publication: published; public `main`
-  now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
-  `312517425` is published at
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
-  and the exact assets match the retained authority manifest
-- VS Code Marketplace retained published version: `1.3.7`
+- Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json` is deferred on this
+  Ubuntu-only machine unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
+- separate public GitHub exact release publication: published; public tag
+  `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is
+  published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
+  and the exact assets match the retained authority manifest under
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
+- current public GitHub source publication: public `main` now publishes
+  `220111e` after public PR #68 promoted the Windows Docker Desktop
+  proof-intake template and label; public PR #60 remains retained for the
+  canonical public Docker fixture docs at `ce6dbd0`, and the exact `v1.3.9`
+  tag/release remains retained separately at `fb0ef2b`
+- public GitHub public-validation pre-release:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
+- VS Code Marketplace retained published version: `1.3.9`
+- VS Code Marketplace community-validation preview published version:
+  `1.3.13`
+- VS Code Marketplace public validation target version: `1.3.13`
+- VS Code Marketplace community-validation preview Marketplace last updated:
+  `2026-04-27T04:24:05.457Z`
+- VS Code Marketplace community-validation preview VSIX SHA-256:
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
 - blocked historical publication incident: public GitHub release `312768592`
-  for `v1.3.8` is published and immutable with zero assets; Marketplace
-  remains `1.3.7`, and `release/1.3.9` is the next exact line that must use
-  the asset-first GitHub publisher before any Marketplace act
+  for `v1.3.8` is published and immutable with zero assets; retain it as
+  historical evidence only while the current live Marketplace version remains
+  `1.3.9`
 - VS Code Marketplace publication prep and final publication are retained:
-  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
+  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.9`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
-  `1.3.7` readback, local PAT locator, and pinned `vsce` publish command
+  `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

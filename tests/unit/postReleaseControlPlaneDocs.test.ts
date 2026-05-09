@@ -75,7 +75,10 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('retained preflight preparation already proves');
     expect(currentState).toContain('retained hosted public proof on GitHub Codespace `novacula` now passes');
     expect(currentState).toContain('Comparison report is as expected.');
-    expect(currentState).toContain('current exact released installed extension is still Docker-only');
+    expect(currentState).toContain(
+      'current exact released installed extension now defaults to Windows'
+    );
+    expect(currentState).toContain('local `LabVIEWCLI` with bounded expert Docker');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('bounded expert provider');
     expect(currentState).toContain('`npm run test:integration:windows`');
@@ -138,18 +141,21 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('public GitHub wiki publication is tracked separately');
     expect(currentState).toContain('docs:ci:public');
     expect(currentState).toContain('docs:ci:internal');
-    expect(currentState).toContain('public-facade Linux smoke lane');
+    expect(currentState).toContain('public GitHub admission matrix');
     expect(currentState).toContain('Docker is now part of the default installed extension setup path');
     expect(currentState).toContain('Docker-required hard stops without host fallback');
     expect(currentState).toContain('provider and progress visibility in the bundled guide');
-    expect(currentState).toContain('workflow_dispatch');
+    expect(currentState).toContain('.github/workflows/public-source-package-preview.yml');
+    expect(currentState).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
+    expect(currentState).toContain('.github/workflows/public-windows-installed-user-contract.yml');
     expect(currentState).toContain('npm run public:smoke:linux');
     expect(currentState).toContain('closed Docker-only Gate D contract');
 
     expect(program).toContain('public GitHub wiki publication is tracked separately');
     expect(program).toContain('docs:ci:public');
     expect(program).toContain('docs:ci:internal');
-    expect(program).toContain('.github/workflows/public-facade-linux-smoke.yml');
+    expect(program).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
+    expect(program).toContain('.github/workflows/public-windows-installed-user-contract.yml');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('Linux-engine cold-pull');

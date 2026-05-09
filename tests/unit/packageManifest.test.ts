@@ -287,11 +287,29 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['gitlab:runner:doctor']).toBe(
       'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
     );
+    expect(manifest.scripts?.['vagrant:ci:cleanup']).toBe(
+      'bash scripts/vagrant/cleanup-disposable-ci-vm.sh'
+    );
+    expect(manifest.scripts?.['vagrant:host:doctor']).toBe(
+      'bash scripts/vagrant/doctor-vagrant-host.sh'
+    );
+    expect(manifest.scripts?.['vagrant:golden:refresh']).toBe(
+      'bash scripts/vagrant/refresh-golden-box.sh'
+    );
+    expect(manifest.scripts?.['vagrant:acceptance:assert']).toBe(
+      'node scripts/assertVagrantVsixAcceptanceEvidence.js'
+    );
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
     );
+    expect(manifest.scripts?.['linux:docker:provider:lane']).toBe(
+      'npm run compile && node scripts/runLinuxDockerProviderLane.js'
+    );
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
-      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
+      'npm run compile && node scripts/runPublicLinuxInstalledUserSmoke.js'
+    );
+    expect(manifest.scripts?.['public:contract:windows-installed-user']).toBe(
+      'node scripts/runPublicWindowsInstalledUserContract.js'
     );
     expect(manifest.scripts?.['public:repo:clone']).toBe(
       'node scripts/preparePublicRepoClone.js'
@@ -320,8 +338,14 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['public:github:exact:transaction:verify']).toBe(
       'node scripts/runPublicGithubExactReleaseTransaction.js --mode verify'
     );
+    expect(manifest.scripts?.['vscode:marketplace:install-proof']).toBe(
+      'node scripts/runWindowsExactVsixInstallProof.js'
+    );
     expect(manifest.scripts?.['vscode:marketplace:prepare']).toBe(
       'node scripts/prepareVsCodeMarketplacePublication.js'
+    );
+    expect(manifest.scripts?.['vscode:marketplace:community-preview:prepare']).toBe(
+      'node scripts/prepareMarketplaceCommunityValidationPreview.js'
     );
     expect(manifest.scripts?.['software:factory:assess']).toBe(
       'node scripts/runSoftwareFactoryOrchestrator.js --phase assess'
@@ -408,7 +432,7 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicExactPretagProof.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubExactReleaseTransaction.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/resolveLocalGitHubToken.test.ts tests/unit/softwareFactoryOrchestrator.test.ts tests/unit/runWindowsIntegrationHost.test.ts'
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicExactPretagProof.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/publicGithubExactReleaseTransaction.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/resolveLocalGitHubToken.test.ts tests/unit/softwareFactoryOrchestrator.test.ts tests/unit/runWindowsIntegrationHost.test.ts tests/unit/linuxHostLabviewProofDocs.test.ts tests/unit/vagrantAcceptanceEvidenceAssert.test.ts tests/unit/vagrantWindowsAcceptanceRunnerLane.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'

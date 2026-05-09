@@ -11,13 +11,12 @@ Current facts:
   baseline
 - `TRANCHE-015` landed the current released first-run Docker onboarding and
   missing-Docker fail-closed guidance
-- the exact released installed extension still depends on Docker for
-  comparison generation while the replacement branch implementation remains
-  unpublished
-- `TRANCHE-016` is the active tranche for replacing that installed-user
-  contract with a host-default Windows local `LabVIEWCLI` workflow plus a
-  bounded expert Docker provider
-- `ISSUE-0412` is the active issue for the replacement direction
+- exact `v1.3.9` now publishes the host-default Windows local `LabVIEWCLI`
+  workflow plus one bounded expert Docker provider, while `TRANCHE-013` and
+  `TRANCHE-015` remain historical Docker-only baseline evidence
+- `TRANCHE-016` is the active tranche for retaining and hardening that
+  published installed-user contract
+- `ISSUE-0412` is the active issue for the published host-default direction
 - the control-plane reset is landed and the installed manifest/settings
   contract slice is landed
 - the installed manifest now truthfully exposes
@@ -48,13 +47,13 @@ Current facts:
   retained host truth is a generated report on `lv_icon.vi` under the same
   mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner snapshot
   and `LabVIEW.exe` observed at exit
-- private-release proof focus is now explicit: close the Windows x64 host and
-  Windows-container lanes only for the active `v1.3.0` candidate; Windows x86
-  / 32-bit LabVIEW remains characterization-only and out of scope for that
-  release admission
-- WSL is not part of the active Windows x64 private-release path; the first
-  admission surfaces are native Windows host execution plus Docker Desktop in
-  Windows-container mode on the same Windows machine, with retained proof
+- private-release proof focus is now explicit: retain the Windows x64 host and
+  Windows-container lanes as deferred Windows installed-user evidence; Windows
+  x86 / 32-bit LabVIEW remains characterization-only and out of scope for any
+  future Windows installed-user claim
+- WSL is not Windows installed-user proof; the deferred Windows x64 admission
+  surfaces require native Windows host execution plus Docker Desktop in
+  Windows-container mode on the same Windows machine, with historical proof
   receipts under `.cache/private-release/1.3.0/windows-x64-host/` and
   `.cache/private-release/1.3.0/windows-x64-container/`
 - a governed live-session probe command now compares persisted
@@ -138,9 +137,9 @@ Current facts:
   remains only partially proven, with probe packet plus local packet-gate
   evidence now explicit
 - no further `ISSUE-0414` implementation slice is currently required before
-  the next public candidate publication step; remaining work now moves to
-  authority/public reader-surface normalization and the next maintained public
-  candidate publication act
+  later sustainment work on this published line; remaining work now moves to
+  authority/public reader-surface normalization and the unresolved live active-
+  settings mutation seam
 - `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
   not the active gate for the next host-default installed contract
 - the retained branch handoff packet is
@@ -150,10 +149,10 @@ Current facts:
 
 ## Purpose
 
-Replace the current released Docker-only installed execution contract with one
-host-default Windows local-`LabVIEWCLI` installed-user contract that retains a
-bounded expert Docker provider, stays settings/CLI-driven, fails closed, and
-is explicit about compare preflight before execution starts.
+Retain and harden the published host-default Windows local-`LabVIEWCLI`
+installed-user contract that retains a bounded expert Docker provider, stays
+settings/CLI-driven, fails closed, and is explicit about compare preflight
+before execution starts.
 
 ## North Star
 
@@ -181,8 +180,8 @@ An installed extension user:
 
 ## Workstreams
 
-1. control-plane reset from the Docker-only installed-user direction to the
-   host-default `LabVIEWCLI` plus expert-Docker replacement direction
+1. sustain the published host-default `LabVIEWCLI` plus expert-Docker
+   installed-user direction while keeping the Docker-only baseline historical
 2. installed manifest/settings contract for required version + bitness plus
    generated provider selection
 3. host runtime-resolution preflight and fail-closed validation
@@ -190,8 +189,8 @@ An installed extension user:
 5. on-demand cross-platform settings CLI generation into user-profile storage
 6. explicit compare preflight UX in the history panel
 7. authority/bundled/public reader-surface normalization after implementation
-8. runtime-provider public acceptance gate after the replacement contract is
-   published
+8. runtime-provider public acceptance gate retention for the published
+   host-default contract
 
 ## Queue Mapping
 
@@ -200,7 +199,7 @@ An installed extension user:
     - `ISSUE-0410`
   - `TRANCHE-015`
     - `ISSUE-0410`
-- active replacement direction:
+- active published direction:
   - `TRANCHE-016`
     - `ISSUE-0412`
 
@@ -211,8 +210,9 @@ An installed extension user:
 - queue, current-state, README, ship control, execution policy, requirements,
   RTM, and test plan promote `TRANCHE-016` / `ISSUE-0412` as the active
   installed-user direction
-- the current released Docker-only baseline remains explicit as historical
-  implemented truth until replacement slices land
+- the current released host-default `LabVIEWCLI` contract remains explicit as
+  the active published truth, while the Docker-only baseline remains explicit
+  only as historical implemented truth
 - `ISSUE-0410`, `TRANCHE-013`, and `TRANCHE-015` are retained as superseded
   direction rather than active destination
 
@@ -248,17 +248,17 @@ An installed extension user:
 - authority/internal control-plane docs and branch runtime-doctor surfaces
   describe host-default local `LabVIEWCLI` plus the bounded expert Docker
   provider
-- bundled docs and public reader surfaces keep the exact released Docker-only
-  installed-user baseline until the replacement contract is truthfully
-  published and admitted through the explicit runtime-provider
-  public-acceptance gate
+- bundled docs and public reader surfaces retain the published host-default
+  local `LabVIEWCLI` installed-user contract, while the Docker-only baseline
+  survives only as explicit historical public-closeout evidence where that
+  context is still needed
 - private/internal versus public reader-surface boundaries remain explicit
 
 ### Gate F: Public Acceptance Gate
 
 - the repo retains one explicit runtime-provider public-acceptance gate for
-  the next deterministic public rerun after the local-`LabVIEWCLI` installed
-  contract is the truthful published bundle
+  the deterministic public rerun that closed on the local-`LabVIEWCLI`
+  installed contract as the truthful published bundle
 - `PROGRAM-0002` and `ISSUE-0407` remain retained as the historical
   Docker-only public-closeout record instead of an active feature gate
 - the branch also retains one explicit promotion/publication handoff packet so
@@ -272,10 +272,11 @@ An installed extension user:
 
 Every slice shall preserve:
 
-- truthful current-release Docker-only baseline wording on bundled/public
-  reader surfaces until replacement code is actually published
-- truthful branch-implementation wording on authority/internal surfaces once
-  replacement slices are actually landed
+- truthful current released host-default `LabVIEWCLI` wording on
+  bundled/public reader surfaces, with Docker-only retained only as historical
+  baseline evidence where required
+- truthful published-contract wording on authority/internal surfaces while the
+  live-session seam and follow-on sustainment work remain open
 - no silent fallback away from the active installed-user contract or away from
   an explicitly selected provider
 - no execution-policy bypass around canonical validation for the active

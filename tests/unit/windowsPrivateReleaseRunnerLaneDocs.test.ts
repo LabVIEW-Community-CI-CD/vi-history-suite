@@ -24,8 +24,10 @@ describe('windows private release runner lane docs', () => {
 
     expect(gitlabCi).toContain('windows_private_release_acceptance:');
     expect(gitlabCi).toContain('governed_runner_admission:');
+    expect(gitlabCi).toContain('ubuntu_docker_runner_admission:');
     expect(gitlabCi).toContain('stage: admission');
     expect(gitlabCi).toContain('governed-runner-admission-evidence/');
+    expect(gitlabCi).toContain('VIHS_WINDOWS_LABVIEW_PROOF_ENABLED');
     expect(gitlabCi).toContain('- windows');
     expect(gitlabCi).toContain('- docker-windows');
     expect(gitlabCi).toContain('npm run acceptance:windows:private-release');
@@ -93,7 +95,9 @@ describe('windows private release runner lane docs', () => {
 
     expect(hostedGovernanceDoc).toContain('`windows_private_release_acceptance`');
     expect(hostedGovernanceDoc).toContain('`governed_runner_admission`');
-    expect(hostedGovernanceDoc).toContain('retains the canonical Windows x64 private-release acceptance evidence');
+    expect(hostedGovernanceDoc).toContain('`ubuntu_docker_runner_admission`');
+    expect(hostedGovernanceDoc).toContain('deferred tagged Windows shell-runner');
+    expect(hostedGovernanceDoc).toContain('required before any Windows installed-user proof claim');
     expect(hostedGovernanceDoc).toContain('VIHS Governed Runner Lanes');
     expect(hostedGovernanceDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('start-governed-runner-lanes.ps1');
@@ -125,6 +129,8 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease).toEqual(
       expect.objectContaining({
         description: 'ghost',
+        classification: 'deferred-self-hosted-windows-proof-lane',
+        availability: 'not-available-on-current-ubuntu-docker-machine',
         runnerContractDoc: 'docs/product/windows-private-release-runner-lane.md',
         operatorModel: expect.objectContaining({
           configPath: 'C:\\GitLab-Runner\\config.toml',
@@ -218,10 +224,19 @@ describe('windows private release runner lane docs', () => {
     );
     expect(hostedGovernanceJson.authorityGitLab.jobs.governed_runner_admission).toEqual(
       expect.objectContaining({
-        classification: 'required-governance-check',
+        classification: 'deferred-windows-labview-governance-check',
         stage: 'admission',
         packageScript: 'npm run gitlab:runner:doctor',
-        evidenceRoot: 'governed-runner-admission-evidence/'
+        evidenceRoot: 'governed-runner-admission-evidence/',
+        activationVariable: 'VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true'
+      })
+    );
+    expect(hostedGovernanceJson.authorityGitLab.jobs.ubuntu_docker_runner_admission).toEqual(
+      expect.objectContaining({
+        classification: 'required-linux-docker-preview-admission',
+        stage: 'admission',
+        evidenceRoot: 'governed-runner-admission-evidence/',
+        claimScope: 'linux-docker-validated-preview'
       })
     );
     expect(

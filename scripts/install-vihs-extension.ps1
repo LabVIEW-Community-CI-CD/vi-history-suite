@@ -1,9 +1,13 @@
 param(
   [string]$CodeCommand = 'code',
   [string]$ExtensionId = 'svelderrainruiz.vi-history-suite',
-  [string]$SettingsFilePath = $(Join-Path $env:APPDATA 'Code\User\settings.json'),
+  [string]$SettingsFilePath,
+  [string]$VsixPath,
+  [string]$UserDataDir,
+  [string]$ExtensionsRoot,
   [switch]$SkipInstall,
-  [switch]$NonInteractive
+  [switch]$NonInteractive,
+  [switch]$SkipUserPathPersist
 )
 
 Set-StrictMode -Version Latest
@@ -77,9 +81,12 @@ function Resolve-VSCodeCliCommand {
 }
 
 function Resolve-ExtensionInstallRoot {
-  param([string]$PublisherExtensionId)
+  param(
+    [string]$PublisherExtensionId,
+    [string]$ResolvedExtensionsRoot
+  )
 
-  $extensionsRoot = Join-Path $HOME '.vscode\extensions'
+  $extensionsRoot = $ResolvedExtensionsRoot
   if (-not (Test-Path -LiteralPath $extensionsRoot)) {
     throw "VS Code extensions root not found at $extensionsRoot. Install VS Code and ensure `code` targets the stable Windows install."
   }
@@ -96,9 +103,12 @@ function Resolve-ExtensionInstallRoot {
 }
 
 function Resolve-VihsGlobalStorageRoot {
-  param([string]$PublisherExtensionId)
+  param(
+    [string]$PublisherExtensionId,
+    [string]$ResolvedUserDataDir
+  )
 
-  return Join-Path $env:APPDATA "Code\User\globalStorage\$PublisherExtensionId\local-runtime-settings-cli"
+  return Join-Path $ResolvedUserDataDir "User\globalStorage\$PublisherExtensionId\local-runtime-settings-cli"
 }
 
 function Render-JavaScriptLauncher {
@@ -204,13 +214,47 @@ function Ensure-WindowsUserPathPrepend {
   [Environment]::SetEnvironmentVariable('Path', ($updated -join ';'), 'User')
 }
 
+function Resolve-VSCodeUserDataDir {
+  param([string]$ExplicitUserDataDir)
+
+  if (-not [string]::IsNullOrWhiteSpace($ExplicitUserDataDir)) {
+    return $ExplicitUserDataDir
+  }
+
+  return Join-Path $env:APPDATA 'Code'
+}
+
+function Resolve-VSCodeSettingsPath {
+  param(
+    [string]$ExplicitSettingsFilePath,
+    [string]$ResolvedUserDataDir
+  )
+
+  if (-not [string]::IsNullOrWhiteSpace($ExplicitSettingsFilePath)) {
+    return $ExplicitSettingsFilePath
+  }
+
+  return Join-Path $ResolvedUserDataDir 'User\settings.json'
+}
+
+function Resolve-VSCodeExtensionsRoot {
+  param([string]$ExplicitExtensionsRoot)
+
+  if (-not [string]::IsNullOrWhiteSpace($ExplicitExtensionsRoot)) {
+    return $ExplicitExtensionsRoot
+  }
+
+  return Join-Path $HOME '.vscode\extensions'
+}
+
 function Ensure-VihsLaunchers {
   param(
     [string]$PublisherExtensionId,
-    [string]$ExtensionInstallRoot
+    [string]$ExtensionInstallRoot,
+    [string]$ResolvedUserDataDir
   )
 
-  $globalStorageRoot = Resolve-VihsGlobalStorageRoot -PublisherExtensionId $PublisherExtensionId
+  $globalStorageRoot = Resolve-VihsGlobalStorageRoot -PublisherExtensionId $PublisherExtensionId -ResolvedUserDataDir $ResolvedUserDataDir
   $modulePath = Join-Path $ExtensionInstallRoot 'out\tooling\localRuntimeSettingsCli.js'
   if (-not (Test-Path -LiteralPath $modulePath)) {
     throw "Installed CLI module not found at $modulePath. The installed Marketplace payload for $PublisherExtensionId does not yet include the vihs terminal-entrypoint surface. Publish or install an updated extension package, then rerun this bootstrap."
@@ -222,7 +266,9 @@ function Ensure-VihsLaunchers {
   Set-Content -LiteralPath (Join-Path $globalStorageRoot 'vihs.cmd') -Value (Render-WindowsLauncher) -Encoding ascii
   Set-Content -LiteralPath (Join-Path $globalStorageRoot 'vihs-runtime-settings.cmd') -Value (Render-WindowsLauncher) -Encoding ascii
 
-  Ensure-WindowsUserPathPrepend -PathEntry $globalStorageRoot
+  if (-not $SkipUserPathPersist.IsPresent) {
+    Ensure-WindowsUserPathPrepend -PathEntry $globalStorageRoot
+  }
   return $globalStorageRoot
 }
 
@@ -291,7 +337,8 @@ function Write-VihsSettings {
   $settingsText = Set-OrAppend-TopLevelStringProperty -JsoncText $settingsText -PropertyName 'viHistorySuite.runtimeProvider' -PropertyValue $Provider
   $settingsText = Set-OrAppend-TopLevelStringProperty -JsoncText $settingsText -PropertyName 'viHistorySuite.labviewVersion' -PropertyValue $LabVIEWVersion
   $settingsText = Set-OrAppend-TopLevelStringProperty -JsoncText $settingsText -PropertyName 'viHistorySuite.labviewBitness' -PropertyValue $LabVIEWBitness
-  Set-Content -LiteralPath $TargetPath -Value ($settingsText.TrimEnd() + "`r`n") -Encoding utf8
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($TargetPath, ($settingsText.TrimEnd() + "`r`n"), $utf8NoBom)
 }
 
 function Get-TopLevelStringProperty {
@@ -428,24 +475,58 @@ function Write-FollowUpGuidance {
 function Install-VihsExtension {
   param(
     [string]$CliCommand,
-    [string]$PublisherExtensionId
+    [string]$PublisherExtensionId,
+    [string]$ResolvedUserDataDir,
+    [string]$ResolvedExtensionsRoot,
+    [string]$ResolvedVsixPath
   )
 
   $resolvedCliCommand = Resolve-VSCodeCliCommand -CliCommand $CliCommand
+  $installTarget = if (-not [string]::IsNullOrWhiteSpace($ResolvedVsixPath)) {
+    $ResolvedVsixPath
+  } else {
+    $PublisherExtensionId
+  }
+  $installTargetDescription = if (-not [string]::IsNullOrWhiteSpace($ResolvedVsixPath)) {
+    "exact VSIX $ResolvedVsixPath"
+  } else {
+    "$PublisherExtensionId from the VS Code Marketplace"
+  }
+  $installArgs = @('--install-extension', $installTarget, '--force')
 
-  Write-Host "Installing $PublisherExtensionId from the VS Code Marketplace..."
-  & $resolvedCliCommand --install-extension $PublisherExtensionId --force
+  if (-not [string]::IsNullOrWhiteSpace($ResolvedUserDataDir)) {
+    $installArgs += @('--user-data-dir', $ResolvedUserDataDir)
+  }
+
+  if (-not [string]::IsNullOrWhiteSpace($ResolvedExtensionsRoot)) {
+    $installArgs += @('--extensions-dir', $ResolvedExtensionsRoot)
+  }
+
+  Write-Host "Installing $installTargetDescription..."
+  & $resolvedCliCommand @installArgs
   if ((Get-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue) -and $global:LASTEXITCODE -ne 0) {
-    throw "VS Code Marketplace install failed for $PublisherExtensionId."
+    throw "VS Code install failed for $installTarget."
   }
 }
 
-if (-not $SkipInstall.IsPresent) {
-  Install-VihsExtension -CliCommand $CodeCommand -PublisherExtensionId $ExtensionId
+$resolvedUserDataDir = Resolve-VSCodeUserDataDir -ExplicitUserDataDir $UserDataDir
+$SettingsFilePath = Resolve-VSCodeSettingsPath -ExplicitSettingsFilePath $SettingsFilePath -ResolvedUserDataDir $resolvedUserDataDir
+$resolvedExtensionsRoot = Resolve-VSCodeExtensionsRoot -ExplicitExtensionsRoot $ExtensionsRoot
+$resolvedVsixPath = if (-not [string]::IsNullOrWhiteSpace($VsixPath)) {
+  if (-not (Test-Path -LiteralPath $VsixPath)) {
+    throw "Exact VSIX path not found at $VsixPath."
+  }
+  $VsixPath
+} else {
+  $null
 }
 
-$extensionInstallRoot = Resolve-ExtensionInstallRoot -PublisherExtensionId $ExtensionId
-$globalStorageRoot = Ensure-VihsLaunchers -PublisherExtensionId $ExtensionId -ExtensionInstallRoot $extensionInstallRoot
+if (-not $SkipInstall.IsPresent) {
+  Install-VihsExtension -CliCommand $CodeCommand -PublisherExtensionId $ExtensionId -ResolvedUserDataDir $resolvedUserDataDir -ResolvedExtensionsRoot $resolvedExtensionsRoot -ResolvedVsixPath $resolvedVsixPath
+}
+
+$extensionInstallRoot = Resolve-ExtensionInstallRoot -PublisherExtensionId $ExtensionId -ResolvedExtensionsRoot $resolvedExtensionsRoot
+$globalStorageRoot = Ensure-VihsLaunchers -PublisherExtensionId $ExtensionId -ExtensionInstallRoot $extensionInstallRoot -ResolvedUserDataDir $resolvedUserDataDir
 
 if (Test-InteractiveConsole) {
   $persisted = Invoke-InteractiveSettingsWizard -TargetPath $SettingsFilePath

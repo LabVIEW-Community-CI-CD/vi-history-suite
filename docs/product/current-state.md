@@ -54,6 +54,26 @@ Read these in order:
 36. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 37. [VS Code Marketplace Publication Ledger](./vscode-marketplace-publication-ledger.md)
 38. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
+39. [Release Publication State](./release-publication-state.md)
+40. [Release Publication State JSON](./release-publication-state.json)
+41. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
+42. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26 JSON](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
+43. [Exact Release Readiness Assessment 2026-05-08](./exact-release-readiness-assessment-2026-05-08.md)
+44. [Exact Release Readiness Assessment 2026-05-08 JSON](./exact-release-readiness-assessment-2026-05-08.json)
+45. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+47. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
+48. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
+49. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
+50. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+51. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+52. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+51. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+52. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+53. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+54. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+55. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+56. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -109,7 +129,27 @@ Current control-plane surfaces:
 37. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 38. [VS Code Marketplace Publication Ledger](./vscode-marketplace-publication-ledger.md)
 39. [VS Code Marketplace Publication Ledger JSON](./vscode-marketplace-publication-ledger.json)
-40. [Fast VS Code Loop](../dev-fast-loop.md)
+40. [Release Publication State](./release-publication-state.md)
+41. [Release Publication State JSON](./release-publication-state.json)
+42. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
+43. [Linux Host LabVIEW 2026 CreateComparisonReport Proof 2026-04-26 JSON](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
+44. [Exact Release Readiness Assessment 2026-05-08](./exact-release-readiness-assessment-2026-05-08.md)
+45. [Exact Release Readiness Assessment 2026-05-08 JSON](./exact-release-readiness-assessment-2026-05-08.json)
+46. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+47. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+48. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
+49. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
+50. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
+51. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+52. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+53. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+52. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+53. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+54. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+55. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+56. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+57. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+58. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -120,6 +160,7 @@ Current control-plane surfaces:
 | Canonical real-history harness smoke | implemented | `src/harness/harnessSmoke.ts`; `src/cli/runHarnessSmoke.ts`; `npm run proof:run -- smoke --harness-id HARNESS-VHS-001`; `VHS-REQ-029..030` | sustain |
 | Comparison-report preflight, planning, and packet storage | implemented | `src/reporting/comparisonReportPreflight.ts`; `src/reporting/comparisonReportPlan.ts`; `src/reporting/comparisonReportPacket.ts`; `VHS-REQ-127..145` | sustain |
 | LabVIEW 2026 Q1 runtime detection and governed live report execution | implemented and active | `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`; `VHS-REQ-146..181`; `VHS-REQ-217..220`; `VHS-REQ-239..250` | sustain |
+| Linux host LabVIEW 2026 CreateComparisonReport proof | implemented and admitted for Linux host only | `src/reporting/comparisonRuntimeLocator.ts`; `tests/unit/comparisonRuntimeLocator.test.ts`; `docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md`; `docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json`; `VHS-REQ-588` | sustain |
 | Canonical comparison-report smoke lane | implemented with succeeded NI proof | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run proof:run -- report-smoke --harness-id HARNESS-VHS-001`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`; `VHS-REQ-152..180`; `VHS-REQ-220` | sustain |
 | Indexing and report progress uplift | partially implemented and active | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; `VHS-REQ-305..306`; research alignment marks this partial | `TRANCHE-004` |
 | Windows 64-bit isolated container provider | implemented and active | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `VHS-REQ-146`; `VHS-REQ-217..220` | sustain |
@@ -131,7 +172,7 @@ Current control-plane surfaces:
 | Review-scenario registry and human decision records | implemented and active as governed backend/proof surfaces with scenario matching by repository remote URL plus VI path, separate Markdown/JSON artifact persistence, persisted reviewer-name defaults across decision-record runs, cancellation honored after dashboard build and before retained Markdown open with already-built artifact paths preserved, and real extension-host proof, while the shipped extension-user workflow no longer exposes decision-record creation from the history panel | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/scenarios/reviewDecisionRecordAction.ts`; `src/harness/harnessDecisionRecord.ts`; `src/commands/openViHistoryCommand.ts`; `tests/integration/suite/extensionHost.test.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `VHS-REQ-307..312`; `VHS-REQ-341..355`; `VHS-REQ-385` | `TRANCHE-007` |
 | Runtime-doctor and compare-refresh developer experience | implemented and active with history-panel command routing that fails closed with explicit build-capability guidance when stale panel commands target unsupported optional surfaces, with stale bundled-doc page requests falling back to the packaged overview page when the installed bundle is still available, with `Diff prev` for content-detected VIs refusing text-diff fallback when comparison-report routing is unavailable in the current build, and with compare opening falling back to the retained packet when retained generated-report HTML is unreadable, rendering retained archive availability/failure facts in the live panel status block, and failing closed with explicit checkbox-flow rebuild guidance when the retained archive source record is malformed, mismatched, render-contract-invalid, or no longer points at a usable retained packet | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/commands/openViHistoryCommand.ts`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258`; `VHS-REQ-377..382`; `VHS-REQ-386` | sustain |
 | Ship-control system and SemVer release target | implemented and active with retained immutable `v0.2.0` release evidence through GitLab release `v0.2.0`, tag pipeline `2428809456`, kept release job `13779604462`, and a governed wiki-authority map that constrains future wiki generation to repo docs instead of source or chat memory | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/product/wiki-authority-map.md`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
-| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local, Docker-first, and published-image-local wiki-workbench commands, a repo-native docs gate that now fails closed on bundled-doc drift, a retained umbrella docs-continuous-integration lane under `.cache/docs-integration/latest/`, split local `docs:ci:public` and `docs:ci:internal` surfaces for public-user and internal-authority docs, split GitLab `docs_public_continuous_integration` and `docs_internal_continuous_integration` lanes beside the retained umbrella `docs_continuous_integration` lane, public GitHub wiki publication tracked separately from the internal GitLab maintainer wiki, explicit installed-user truth checks for Docker-only compare execution, engine-aware Windows/Linux image selection, Docker-required hard stops without host fallback, and provider and progress visibility in the bundled guide, an idempotent bundled-doc sync path that reports unchanged content instead of rewriting it, a guarded `npm run package` path that reruns `npm run docs:bundle` before `vsce package` so stale bundled docs cannot ship, a commit-aligned `wiki_workbench_prepare_published` GitLab lane that runs from `${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}` and retains `wiki-workbench-evidence/`, a governed no-op completion receipt when the publication ledger already retains `nextPage = null`, docs-authoring entrypoint workspace resolution that honors `VIHS_DOCS_WORKSPACE`, falls back to `CI_PROJECT_DIR` for GitLab package lanes, and only then falls back to `/workspace`, a repo-specific container-owned `node_modules` volume plus `package-lock.json` refresh so Linux workbench runs do not inherit incompatible host-mounted optional bindings, normalized GitLab CI-authenticated HTTPS remote comparison for the authority/wiki repo checks, supported GitLab-registry environment-variable auth for local published-image pulls plus explicit fail-closed registry-access diagnostics when the published image is not locally pullable, automated SRS/RTM/test-plan coherence checks, automated active post-release tranche/issue/program coherence checks plus open Gate C-D truth checks, research-control-plane regression checks for the live history-window/dashboard surfaces, a retained documentation coherence ledger, separate internal and public wiki publication ledgers, a generated packaged docs bundle, and a governed wiki workbench that resolves authority/wiki topology from the repo-jump map, stages page-authority bundles, retains `.cache/wiki-workbench/latest-workbench.json`, writes publication-prep receipts under `.cache/wiki-workbench/publication-prep/`, and self-heals onto writable `staging-runs/` or `publication-prep-runs/` paths when stale retained page directories are unwritable | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `scripts/run-docs-continuous-integration.js`; `scripts/runPublicFacadeLinuxSmoke.js`; `scripts/syncBundledDocs.js`; `scripts/runDocsWorkbenchDocker.js`; `src/tooling/wikiWorkbench.ts`; `src/cli/runWikiWorkbench.ts`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `docs/product/wiki-publication-ledger.json`; `docs/product/public-github-wiki-authority-map.md`; `docs/product/public-github-wiki-publication-ledger.md`; `docs/product/public-github-wiki-publication-ledger.json`; `resources/bundled-docs/manifest.json`; `.gitlab-ci.yml`; `.github/workflows/public-facade-linux-smoke.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `tests/unit/docsContinuousIntegration.test.ts`; `tests/unit/syncBundledDocsScript.test.ts`; `tests/unit/packageManifest.test.ts`; `tests/unit/publicSurfaceBoundaryDocs.test.ts`; `tests/unit/publicFacadeLinuxSmoke.test.ts`; `tests/unit/requirementsDocs.test.ts`; `tests/unit/postReleaseControlPlaneDocs.test.ts`; `tests/unit/runWikiWorkbenchCli.test.ts`; `tests/unit/runDocsWorkbenchDocker.test.ts`; `VHS-REQ-350..360`; `VHS-REQ-367..370`; `VHS-REQ-391`; `VHS-REQ-418..426`; `VHS-REQ-491` | `TRANCHE-009` |
+| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local, Docker-first, and published-image-local wiki-workbench commands, a repo-native docs gate that now fails closed on bundled-doc drift, a retained umbrella docs-continuous-integration lane under `.cache/docs-integration/latest/`, split local `docs:ci:public` and `docs:ci:internal` surfaces for public-user and internal-authority docs, split GitLab `docs_public_continuous_integration` and `docs_internal_continuous_integration` lanes beside the retained umbrella `docs_continuous_integration` lane, public GitHub wiki publication tracked separately from the internal GitLab maintainer wiki, explicit installed-user truth checks for Docker-only compare execution, engine-aware Windows/Linux image selection, Docker-required hard stops without host fallback, provider and progress visibility in the bundled guide, and an explicit public GitHub admission matrix spanning source package preview plus Linux/Windows installed-user coverage, an idempotent bundled-doc sync path that reports unchanged content instead of rewriting it, a guarded `npm run package` path that reruns `npm run docs:bundle` before `vsce package` so stale bundled docs cannot ship, a commit-aligned `wiki_workbench_prepare_published` GitLab lane that runs from `${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}` and retains `wiki-workbench-evidence/`, a governed no-op completion receipt when the publication ledger already retains `nextPage = null`, docs-authoring entrypoint workspace resolution that honors `VIHS_DOCS_WORKSPACE`, falls back to `CI_PROJECT_DIR` for GitLab package lanes, and only then falls back to `/workspace`, a repo-specific container-owned `node_modules` volume plus `package-lock.json` refresh so Linux workbench runs do not inherit incompatible host-mounted optional bindings, normalized GitLab CI-authenticated HTTPS remote comparison for the authority/wiki repo checks, supported GitLab-registry environment-variable auth for local published-image pulls plus explicit fail-closed registry-access diagnostics when the published image is not locally pullable, automated SRS/RTM/test-plan coherence checks, automated active post-release tranche/issue/program coherence checks plus open Gate C-D truth checks, research-control-plane regression checks for the live history-window/dashboard surfaces, a retained documentation coherence ledger, separate internal and public wiki publication ledgers, a generated packaged docs bundle, and a governed wiki workbench that resolves authority/wiki topology from the repo-jump map, stages page-authority bundles, retains `.cache/wiki-workbench/latest-workbench.json`, writes publication-prep receipts under `.cache/wiki-workbench/publication-prep/`, and self-heals onto writable `staging-runs/` or `publication-prep-runs/` paths when stale retained page directories are unwritable | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `scripts/run-docs-continuous-integration.js`; `scripts/runPublicLinuxInstalledUserSmoke.js`; `scripts/syncBundledDocs.js`; `scripts/runDocsWorkbenchDocker.js`; `src/tooling/wikiWorkbench.ts`; `src/cli/runWikiWorkbench.ts`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `docs/product/wiki-publication-ledger.json`; `docs/product/public-github-wiki-authority-map.md`; `docs/product/public-github-wiki-publication-ledger.md`; `docs/product/public-github-wiki-publication-ledger.json`; `resources/bundled-docs/manifest.json`; `.gitlab-ci.yml`; `.github/workflows/public-linux-installed-user-smoke.yml`; `.github/workflows/public-windows-installed-user-contract.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `tests/unit/docsContinuousIntegration.test.ts`; `tests/unit/syncBundledDocsScript.test.ts`; `tests/unit/packageManifest.test.ts`; `tests/unit/publicSurfaceBoundaryDocs.test.ts`; `tests/unit/publicLinuxInstalledUserSmoke.test.ts`; `tests/unit/publicWindowsInstalledUserContract.test.ts`; `tests/unit/requirementsDocs.test.ts`; `tests/unit/postReleaseControlPlaneDocs.test.ts`; `tests/unit/runWikiWorkbenchCli.test.ts`; `tests/unit/runDocsWorkbenchDocker.test.ts`; `VHS-REQ-350..360`; `VHS-REQ-367..370`; `VHS-REQ-391`; `VHS-REQ-418..426`; `VHS-REQ-491` | `TRANCHE-009` |
 | Public Gate D operator preflight packet | implemented and active with a retained operator surface that verifies the published public repo and public wiki commits, the canonical fixture workspace and VI path, Docker Linux engine state, and governed Linux image presence or removal before the real human cold-pull rerun begins | `scripts/runPublicProductGateDPreflight.js`; `tests/unit/publicProductGateDPreflight.test.ts`; `docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md`; `VHS-REQ-501..503` | `TRANCHE-010` |
 | Wiki completion invariant for requirements and standards surfaces | implemented and active with a machine-readable wiki coverage matrix, an accepted ADR aggregation rule, a zero-gap publication contract, and docs-gate enforcement that fails when an in-scope authority doc or ADR is uncovered, unpublished, or missing from the publication ledger | `docs/product/wiki-coverage-matrix.md`; `docs/product/wiki-coverage-matrix.json`; `tests/unit/wikiCoverageDocs.test.ts`; `VHS-REQ-427..430` | sustain |
 | Debt-retirement contract for technical and documentation debt | implemented and active with a no-silent-debt rule, governed taxonomy, machine-readable debt ledger, and docs-gate enforcement that fails when debt items are unbounded, malformed, or absent from the authority package | `docs/product/debt-retirement-contract.md`; `docs/product/debt-taxonomy.md`; `docs/product/debt-ledger.md`; `docs/product/debt-ledger.json`; `tests/unit/debtLedgerDocs.test.ts`; `VHS-REQ-453..456` | sustain |
@@ -154,21 +195,20 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.8`
-- current published package line on `main`: `1.3.8`
-- current develop package line on `develop`: `1.3.8`
-- active exact release candidate line on `develop`: `1.3.9`
-- active release-candidate branch: `release/1.3.9`
+- current exact released line: `v1.3.9`
+- current published package line on `main`: `1.3.9`
+- current develop package line on `develop`: `1.3.14`
+- active exact release candidate line on `develop`: `v1.3.14`
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- exact authority `v1.3.8` is retained as blocked historical public GitHub
-  incident evidence while the last fully closed public GitHub and VS Code
-  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
-  asset-first retry line for the installed `vihs` launcher fix
+- exact authority `v1.3.9` is now fully published across GitLab authority,
+  public GitHub, and VS Code Marketplace, while blocked historical public
+  GitHub incident evidence for `v1.3.8` remains retained separately
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -176,10 +216,18 @@ Latest landed ship target:
   `npm run public:github:exact:transaction:verify`
 - retained public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- Windows exact-VSIX install proof package script:
+  `npm run vscode:marketplace:install-proof`
+- retained Windows exact-VSIX install proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - VS Code Marketplace publication prep package script:
   `npm run vscode:marketplace:prepare`
 - retained VS Code Marketplace publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
 - software factory rehearsal package script:
@@ -192,6 +240,8 @@ Latest landed ship target:
   `npm run software:factory:verify`
 - VS Code Marketplace prep package script:
   `npm run vscode:marketplace:prepare`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
@@ -204,19 +254,136 @@ Latest landed ship target:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
 - retained VS Code Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- retained VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - software-factory contract phases:
   `assess`, `rehearse`, and `repair` remain admitted non-production phases;
   `publish` / `verify` are retained as guarded non-mutating contract phases
 - current software-factory mutation policy:
-  exact authority `v1.3.8` is retained as blocked historical publication
-  evidence while the last fully closed public GitHub and VS Code Marketplace
-  line remains `v1.3.7`; `release/1.3.9` may proceed only through normal
-  GitFlow and the repo-owned factory/orchestrator governance path before any
-  public GitHub or Marketplace mutation
-- active Windows x64 private-release-prep slice: historical `release/1.3.1`
-- active Windows x64 private-release packet:
+  exact authority `v1.3.9` is now fully closed across public GitHub and VS
+  Code Marketplace; later SemVer openings return to normal GitFlow governance
+  while `v1.3.8` remains retained as blocked historical publication evidence
+- active governed release claim: `1.3.14` develop patch candidate
+  consolidation with all provider/year/bitness variants selectable, admitted
+  Windows host LabVIEW 2026 x64 proof, repo-owned Vagrant VSIX acceptance
+  assertion, and Windows Docker Desktop Windows-container proof
+  community/deferred through public issue #65
+- current exact-release readiness assessment:
+  [exact-release-readiness-assessment-2026-05-08.md](./exact-release-readiness-assessment-2026-05-08.md)
+- current exact-release readiness assessment JSON:
+  [exact-release-readiness-assessment-2026-05-08.json](./exact-release-readiness-assessment-2026-05-08.json)
+- current exact-release readiness verdict:
+  release branch opening admissible as a separate governed action; `develop`
+  commit `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8` and pipeline
+  `2511103937` retain Linux/Docker, Linux host LabVIEW, Windows host LabVIEW,
+  Vagrant VSIX acceptance, public exact pre-tag, package preview, docs, and
+  assurance evidence for `1.3.14`, while exact tag, public GitHub release, VS
+  Code Marketplace mutation, Windows Docker Desktop Windows-container proof,
+  and `main` promotion remain not admitted
+- current external Windows/LabVIEW community proof intake checklist:
+  [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+- current external Windows/LabVIEW community proof intake checklist JSON:
+  [windows-labview-community-proof-intake-checklist-2026-04-26.json](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+- exact-release candidate conversion boundary:
+  the blocked assessment can be reassessed through either a Windows-proof claim
+  path with admitted Windows/LabVIEW proof receipts, or a community-deferred
+  claim path that keeps Windows/LabVIEW selectable while explicitly avoiding a
+  maintainer-proof claim
+- current exact-release candidate reassessment:
+  [exact-release-candidate-reassessment-2026-04-26.md](./exact-release-candidate-reassessment-2026-04-26.md)
+- current exact-release candidate reassessment JSON:
+  [exact-release-candidate-reassessment-2026-04-26.json](./exact-release-candidate-reassessment-2026-04-26.json)
+- current exact-release candidate reassessment verdict:
+  `develop` commit `14243fd0ee647736124b06edb5a9947eae178d38` and
+  pipeline `2480546719` are admissible for opening a governed
+  `release/1.3.10` branch only under the selected community-deferred
+  Windows/LabVIEW claim path; public GitHub exact release and VS Code
+  Marketplace exact publication remain gated and were not mutated
+- active Marketplace public validation target: `1.3.13`
+- active Marketplace public validation trigger:
+  closed; public GitHub and Marketplace publication completed after GitLab
+  authority MR !187 and develop pipeline `2481344357` went green
+- active Marketplace public validation path:
+  published as Marketplace pre-release `1.3.13` to carry the admitted Windows
+  host proof wording and successful-run diagnostic-note fix to installed users;
+  Windows/LabVIEW settings may remain selectable with proof-status disclosure through
+  `vihs --validate --proof-out ./vihs-proof`,
+  `vihs validate-fixture --proof-out ./vihs-fixture-proof`, and
+  `docs/requirements/rtm.csv`
+- canonical public Docker fixture battery:
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
+  from `ab94f6c4b375062492036c63a6dab7ea8824748a` to
+  `8741bb08026c104100720c0ef48621e4ab7762fd`; positive Docker compare
+  succeeded, no-change compare succeeded, and missing-file control blocked
+  before Docker at `left-blob-read-failed`
+- canonical Docker image note:
+  first uncached compare may pull
+  `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`
+- canonical public evidence issues:
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/48`,
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/49`, and
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/59`
+- Windows Docker Desktop proof intake:
+  `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md` and public
+  issue #65 require a real Windows host, Docker Desktop OSType `windows`,
+  `runtimeProvider=windows-container`, `runtimeEngine=labview-cli`,
+  `runtimeExecutionState=succeeded`, and `generatedReportExists=true` before
+  that lane can move from community/deferred to admitted
+- public facade docs promotion decision:
+  completed through public PR #60 after the GitLab authority MR for the
+  fixture-battery closeout went green; public `main` now publishes
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`, post-merge public checks passed,
+  and Marketplace mutation was not performed by that public facade docs
+  promotion
+- retained public GitHub community-validation intake promotion plan:
+  [public-github-community-validation-intake-promotion-plan-v1.3.10.md](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+- retained public GitHub community-validation intake publication state:
+  published and verified on public `main`
+  `b56fde158fe151a736fe72c833efdfd0874d8537` through PR #45 after the
+  explicit `publish the public intake now`; public labels were applied, while
+  public GitHub release/tag/wiki and Marketplace mutation were not performed
+  by the public intake publication
+- current Linux Docker provider-lane release-control packet:
+  [linux-docker-provider-lane-release-control-packet-2026-04-26.md](./linux-docker-provider-lane-release-control-packet-2026-04-26.md)
+- current Linux Docker provider-lane release-control packet JSON:
+  [linux-docker-provider-lane-release-control-packet-2026-04-26.json](./linux-docker-provider-lane-release-control-packet-2026-04-26.json)
+- governed Linux Docker provider lane:
+  `npm run linux:docker:provider:lane` / GitLab `linux_docker_provider_lane`
+  now retain `linux-docker-provider-lane-evidence/` with Docker OSType
+  `linux`, `vihs`-persisted `docker` / `2026` / `x64` settings, and
+  `runtimeProvider=linux-container` / `runtimeEngine=labview-cli` validation
+  from develop pipeline `2480195741`; Windows Docker Desktop
+  Windows-container proof remains community/deferred evidence
+- current Linux host LabVIEW 2026 proof packet:
+  [HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md)
+- current Linux host LabVIEW 2026 proof packet JSON:
+  [HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json](./benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json)
+- governed Linux host LabVIEW proof:
+  this Ubuntu machine installed LabVIEW 2026 Community x64 from
+  `/home/ghostshadow/Downloads/ni-labview-2026-community-26.1.1_linux`,
+  retained the VIHS Linux host-discovery fix for
+  `/usr/local/natinst/LabVIEW-2026-64/labview`, validated `host` / `2026` /
+  `x64` as `VIHS_OK` with `runtimeProvider=host-native` and
+  `runtimeEngine=labview-cli`, and executed host-native
+  `CreateComparisonReport` successfully against canonical
+  `lv_icon.vi` from `https://github.com/ni/labview-icon-editor`
+- Windows host LabVIEW 2026 installed-user proof packet:
+  [HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md](./benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md)
+- Windows host LabVIEW 2026 installed-user proof packet JSON:
+  [HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json](./benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json)
+- Windows host proof boundary:
+  admitted installed-user proof for Windows host LabVIEW 2026 x64 on the
+  VirtualBox Windows 11 VM; Windows Docker Desktop Windows-container proof
+  remains community/deferred through public issue #65 and the
+  Windows Docker Desktop proof-intake packet
+- current no-mutation Windows/LabVIEW installed-user proof handoff:
+  [windows-labview-installed-user-proof-handoff-2026-04-25.md](./windows-labview-installed-user-proof-handoff-2026-04-25.md)
+- current no-mutation Windows/LabVIEW installed-user proof handoff JSON:
+  [windows-labview-installed-user-proof-handoff-2026-04-25.json](./windows-labview-installed-user-proof-handoff-2026-04-25.json)
+- retained Windows x64 private-release-prep slice: historical `release/1.3.1`
+- retained Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
-- active Windows x64 private-release packet JSON:
+- retained Windows x64 private-release packet JSON:
   [private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)
 - current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
 - private GitLab release URL:
@@ -224,26 +391,59 @@ Latest landed ship target:
 - current Windows x64 private-release publish receipt:
   `.cache/private-release-publish/latest/private-release-publish.json`
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
-- fresh `v1.3.1` Windows host/container acceptance receipt set:
-  `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release publication: published; public `main`
-  now publishes `704e629`, public tag `v1.3.7` is live, GitHub release
-  `312517425` is published at
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.7`,
+- Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json` is deferred on this
+  Ubuntu-only machine unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
+- separate public GitHub exact release publication: published; public tag
+  `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is
+  published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
   the uploaded exact assets match the retained authority manifest under
-  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`, the
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
-  now serves `1.3.7`
-- VS Code Marketplace retained published version: `1.3.7`
+  now serves `1.3.9`
+- current public GitHub source publication: public `main` now publishes
+  `220111eae3ac214e99f2233e2bfe6b320edf383d` after public PR #68 promoted
+  the Windows Docker Desktop proof-intake template and label; public PR #67
+  remains the retained `1.3.13` public validation facade publication, and the
+  exact `v1.3.9` tag/release remains retained separately
+- public GitHub public-validation pre-release:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
+- VS Code Marketplace retained published version: `1.3.9`
+- VS Code Marketplace community-validation preview published version:
+  `1.3.13`
+- VS Code Marketplace public validation target version: `1.3.13`
+- VS Code Marketplace community-validation preview Marketplace last updated:
+  `2026-04-27T04:24:05.457Z`
+- VS Code Marketplace community-validation preview VSIX SHA-256:
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
+- Marketplace community-validation intake packet:
+  [marketplace-community-validation-intake-v1.3.10.md](./marketplace-community-validation-intake-v1.3.10.md)
+- Marketplace community-validation intake packet JSON:
+  [marketplace-community-validation-intake-v1.3.10.json](./marketplace-community-validation-intake-v1.3.10.json)
+- Marketplace community-validation intake state: prepared for public facade
+  source, with public GitHub template and label mutation gated separately
 - blocked historical publication incident: public GitHub release `312768592`
-  for `v1.3.8` is published and immutable with zero assets; Marketplace
-  remains `1.3.7`, and `release/1.3.9` is the next exact line that must use
-  the asset-first GitHub publisher before any Marketplace act
+  for `v1.3.8` is published and immutable with zero assets; retain it as
+  historical evidence only while the current live Marketplace version remains
+  `1.3.9`
 - VS Code Marketplace publication prep and final publication are retained:
-  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.7`
+  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.9`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
-  `1.3.7` readback, local PAT locator, and pinned `vsce` publish command
+  `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
+- VS Code Marketplace `1.3.13` public-validation preview is published and
+  verified; it refreshes installed users with admitted Windows host proof
+  wording plus the diagnostic-note fix. The corrected public GitHub release is
+  `v1.3.13-public-validation-prerelease-1`; the superseded immutable sibling
+  `v1.3.13-public-validation-prerelease` is retained only as asset-repair
+  evidence because its VSIX was packaged without the VS Code pre-release marker.
+- Windows exact-VSIX install proof is also retained:
+  `npm run vscode:marketplace:install-proof` proves the exact `v1.3.9` VSIX
+  installs into isolated VS Code user-data/extensions roots on Windows and
+  that bare `vihs` plus `vihs --validate` both pass with
+  `runtimeValidationOutcome=ready`, a launcher-only PATH, and no ambient Node
+  dependency before any future Marketplace publication act opens.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -277,9 +477,12 @@ Latest landed ship target:
   - latest Windows startup receipt:
     `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
   - latest Linux startup receipt:
-    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
-  - fail-fast GitLab runner admission job: `governed_runner_admission`
-  - fail-fast GitLab runner admission command:
+    `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  - fail-fast GitLab Linux/Docker admission job:
+    `ubuntu_docker_runner_admission`
+  - deferred Windows/LabVIEW runner admission job:
+    `governed_runner_admission`
+  - deferred Windows/LabVIEW runner admission command:
     `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   - the Windows apply surface keeps the scheduled task on
     `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
@@ -322,8 +525,17 @@ Latest landed ship target:
   - the repo-owned doctor surfaces now read both live runner state and the
     retained startup receipts, and the fail-fast
     `governed_runner_admission` job runs those doctor surfaces in the
-    `admission` stage so docs, assurance, test, package, and release work do
-    not queue behind unreconciled post-reset runner drift
+    `admission` stage only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`;
+    the active develop/package preview admission is
+    `ubuntu_docker_runner_admission`, which proves the Linux Docker runner
+    surface and does not claim Windows installed-user proof
+  - the active develop/package preview package lane is now additionally gated
+    by `linux_docker_provider_lane`, which proves this Ubuntu
+    Docker Desktop/Docker Engine host can persist the `docker` / `2026` /
+    `x64` runtime bundle through `vihs` and validate it as
+    `linux-container` / `labview-cli`; native Windows host LabVIEW 2026 x64
+    proof is now admitted separately through the VirtualBox installed-user
+    proof packet
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -344,22 +556,21 @@ Latest landed ship target:
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
-- remaining blockers: exact `v1.3.0` remains closed cleanly; authority exact
-  `v1.3.7` is now tagged on `main`
-  `e1a4fc8d2e728100bb98856879eac5de11e99864`, public GitHub `main` now
-  publishes `704e629`, public tag `v1.3.7` is live, GitHub release `312517425`
-  is published with manifest-matched assets, the official gallery extension
-  query now verifies Marketplace version `1.3.7` for
+- remaining blockers: none on the exact `v1.3.9` publication path; authority
+  exact `v1.3.9` is now tagged on `main`
+  `2f86063a35926fa67963af5ccd47e971157927c6`, public GitHub `main` now
+  publishes `220111e` after the Windows Docker Desktop proof-intake template
+  and label promotion through public PR #68, public PR #60 remains retained
+  for the canonical public Docker fixture docs, public tag
+  `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is published
+  with manifest-matched assets, the official gallery extension
+  query now verifies Marketplace version `1.3.9` for
   `svelderrainruiz.vi-history-suite`, the maintained public `develop`
-  candidate still publishes `ab293d5`, the maintained public wiki head still
-  publishes `141c39e`, no exact hotfix lane is currently open, and exact
-  `v1.3.7` closeout is now complete across public GitHub and VS Code
-  Marketplace; later SemVer openings return to normal GitFlow governance after
-  this retained final publication act; the active
-  software-factory governance contract now retains that same `v1.3.7` line as
-  the sole production recovery case and admits `assess`, `rehearse`,
-  `repair`, `publish`, and `verify` as repo-owned contract phases for retained
-  publication-state proof.
+  candidate still publishes `11051ac`, the maintained public wiki head still
+  publishes `141c39e`, no exact hotfix lane is currently open, `v1.3.8`
+  remains retained as blocked historical incident evidence only, and later
+  SemVer openings now return to normal GitFlow governance after retained
+  `v1.3.9` closeout.
 
 Current active and recently closed tranches:
 
@@ -395,25 +606,28 @@ Current active and recently closed tranches:
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
 - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - keep the current exact released Docker-only contract explicit until the
-    replacement is actually published
-  - branch implementation now includes generated provider selection with
+  - exact `v1.3.9` now publishes the host-default Windows local
+    `LabVIEWCLI` contract with bounded expert Docker, while the Docker-only
+    line remains explicit only as historical baseline evidence under
+    `ISSUE-0410`
+  - the released line now includes generated provider selection with
     explicit provider, version, and bitness facts, with version plus bitness
     required across both provider classes
-  - branch implementation now includes exact Windows host-runtime preflight
+  - the released line now includes exact Windows host-runtime preflight
     that resolves one matching local `LabVIEWCLI`-backed runtime and fails
     closed on missing, ambiguous, or incompatible resolution
-  - branch implementation now includes explicit compare preflight that shows
+  - the released line now includes explicit compare preflight that shows
     selected/base commit plus provider, version, and bitness before the
     explicit compare action
   - historical released `repo-standards-review` `v0.2.9` compliance closeout
     is retained on this branch, the current outer assurance lane now uses the
     published `repo-standards-review` assurance-workbench `:main` image, and
     the latest tagged release remains `v0.2.18`
-  - branch promotion into `develop`, candidate publication alignment, and the
-    runtime-provider public-acceptance gate are now retained as completed
+  - branch promotion into `develop`, exact publication alignment, and the
+    runtime-provider public-acceptance gate are now retained as completed on
+    the published `v1.3.9` line
   - remaining work is the unresolved live active-settings mutation seam for an
-    already-running VS Code session plus later exact-release promotion work
+    already-running VS Code session plus later sustainment truth-alignment work
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate record:
@@ -507,10 +721,10 @@ Post-release tranches:
   `LabVIEWCLI.exe` at the banner snapshot while `LabVIEW.exe` was not
   observed, retained no LabVIEW-related processes at exit, and failed
   `command-timed-out` after `120000ms` without a generated report; that packet
-  is historical characterization only rather than current `v1.3.0` release
-  admission, because the active release truth is the later x64 mixed-bitness
-  success while Windows x86 / 32-bit LabVIEW remains out of scope for the
-  current candidate
+  is historical characterization only rather than current Linux/Docker
+  validated-preview admission, because Windows x64 installed-user proof is
+  deferred on the Ubuntu-only machine and Windows x86 / 32-bit LabVIEW remains
+  out of scope for any Windows installed-user claim
   - canonical proof-admission validation for explicit proof-admission override bundles is now shared across the full governed-proof control surface rather than one diagnosis path only, so `runGovernedProof` subcommands for `dashboard-smoke`, `decision-record`, `report-smoke`, `benchmark-linux`, and `benchmark-windows` all reject contradictory explicit proof-admission bundles before they can bias retained evidence
   - retained internal `LVCompare` parity evidence still does not extend the comparable window: the published-image parity proof at `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof-lvcompare` times out immediately on pair `1/129`, retains `completionState=failed`, `terminalPairFailureReason=command-timed-out`, and remains characterization-only, so `LVCompare` is not currently a viable Windows workaround around the pair-129 `labview-cli-call-by-reference` ceiling
   - the retained exact-pair Windows `LVCompare` parity diagnosis on the precise blocker boundary `6dd65df -> 3408654` also fails closed: the retained report-smoke proof at `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-pair129-lvcompare` reaches the targeted pair, retains `runtimeExecutionState=failed` with `runtimeFailureReason=command-timed-out`, observes both `LabVIEW.exe` and `LVCompare.exe` at process spawn, and then exits the bounded `120000ms` budget without a generated report, so that retained internal parity lane is not a viable exact-pair Windows workaround either
@@ -544,11 +758,12 @@ Post-release tranches:
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
   - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - the current exact released installed extension is still Docker-only, but
-    that is now historical baseline truth rather than the active destination
+  - the current exact released installed extension now defaults to Windows
+    local `LabVIEWCLI` with bounded expert Docker, while the Docker-only line
+    is retained only as historical baseline truth under `ISSUE-0410`
   - the control-plane reset, explicit compare preflight, exact Windows
-    host-runtime preflight, and provider-selection CLI slice are now landed
-    on `develop`
+    host-runtime preflight, and provider-selection CLI slice are now
+    published in exact `v1.3.9`
   - the installed manifest/settings slice now truthfully exposes
     `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
     `viHistorySuite.labviewBitness`
@@ -581,18 +796,18 @@ Post-release tranches:
     `resource/plugins/lv_icon.vi` generated a report on this machine under the
     same mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner
     snapshot and `LabVIEW.exe` observed at exit
-- private-release proof focus is now explicit: close the Windows x64 host
-  and Windows-container lanes only for the active `1.3.0` candidate;
-  Windows x86 / 32-bit LabVIEW remains out of scope for current release
-  admission and any retained x86 evidence is characterization only
+- private-release proof focus is now explicit: Windows x64 host and
+  Windows-container lanes are deferred proof lanes on the current Ubuntu-only
+  setup; the active develop/package claim is Linux/Docker validated preview,
+  and Windows x86 / 32-bit LabVIEW remains out of scope for any Windows
+  installed-user claim
 - installed-user and private-release docs now fail closed on scope: Windows
-  x64 only for the active `1.3.0` candidate, with Linux public smoke, Linux
+  x64 only for the released host-default contract, with Linux public smoke, Linux
   benchmark material, and Windows x86 evidence retained only as
   source-evaluation or internal proof surfaces rather than part of the active
   user contract
-  - WSL is not part of the active Windows x64 private-release contract: the
-    supported proof lanes on this machine are native Windows host execution
-    and Docker Desktop Windows-container execution, retained under
+  - WSL is not part of the retained Windows x64 private-release contract; those
+    deferred proof lanes require native Windows host execution and Docker Desktop Windows-container execution, historically retained under
     `.cache/private-release/1.3.0/windows-x64-host/` and
     `.cache/private-release/1.3.0/windows-x64-container/`
   - the tracked branch packet that binds those ignored proof roots, the
@@ -603,12 +818,14 @@ Post-release tranches:
   - the governed private GitLab release for that same packet is now published
     as `private-v1.3.0-windows-x64` and is refreshable through
     `npm run gitlab:private-release:publish`
-  - the repo now retains the tagged GitLab Windows acceptance lane for this
-    same scenario in
+  - the repo retains the tagged GitLab Windows acceptance lane for this same
+    scenario in
     [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md):
     the job `windows_private_release_acceptance` calls
     `npm run acceptance:windows:private-release` and retains
     `windows-private-release-evidence/` as the machine-readable recovery root
+    when a real Windows/LabVIEW runner is available and
+    `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
   - the repo now also retains a separate self-hosted Linux assurance lane for
     the same protected branch sequence in
     [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md): the
@@ -690,9 +907,9 @@ Post-release tranches:
   - the retained gate decision now keeps reload-or-restart guidance active
     while direct live-session uptake of updated settings remains unproven
   - no further `ISSUE-0414` implementation slice is currently required before
-    the next public candidate publication step; the remaining work on this
-    line is authority/public reader-surface retention and public-candidate
-    publication once the maintained public heads are ready to move
+    later sustainment work on this published line; the remaining work on this
+    line is authority/public reader-surface retention plus the unresolved
+    active-settings mutation seam
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate:
@@ -781,7 +998,7 @@ Historical public closeout and runtime-provider public-acceptance gate record:
   - NSIS has been removed from the active public toolchain
   - Docker is now part of the default installed extension setup path
   - the current Windows 11 host machine has already proven the earlier public bundle, and the published public GitHub source repo plus the canonical fixture workspace remain historical acceptance evidence for the closed Docker-only line rather than automatic proof for the next host-default contract
-  - the public-facade Linux smoke lane now exists through `.github/workflows/public-facade-linux-smoke.yml`, supports `workflow_dispatch`, and uses `npm run public:smoke:linux` as the public Docker-product smoke surface
+  - the public GitHub admission matrix now uses `.github/workflows/public-source-package-preview.yml`, `.github/workflows/public-linux-installed-user-smoke.yml`, and `.github/workflows/public-windows-installed-user-contract.yml`, while `npm run public:smoke:linux` remains the public Docker-product smoke surface
   - the authority repo now retains `npm run public:gate-d:preflight` and `npm run public:gate-d:prepare-cold-pull` so the next human Gate D rerun can record published public commits, canonical fixture facts, Docker Linux engine state, and governed-image absence before the compare pass starts
   - the [Public Release Candidate](./public-release-candidate.md) and [public-release-candidate.json](./public-release-candidate.json) now retain the stable multi-surface exact-release snapshot without relying on ephemeral pipeline ids
   - the local public devcontainer now passes on this machine from a Windows-hosted public checkout after retiring the repo-owned `.devcontainer/devcontainer.json` `overrideCommand=false` defect that let the base Node image exit before `postCreateCommand` finished
@@ -937,7 +1154,7 @@ These are generated locally and are not the committed source of truth:
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json`
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 - public-facade Linux smoke:
-  - `artifacts/public-facade-linux-smoke/public-facade-linux-smoke.json`
+  - `artifacts/public-linux-installed-user-smoke/public-linux-installed-user-smoke.json`
 - public product Gate D preflight:
   - `.cache/public-product-gate-d/latest/public-product-gate-d-preflight.json`
   - `.cache/public-product-gate-d/latest/public-product-gate-d-preflight.md`

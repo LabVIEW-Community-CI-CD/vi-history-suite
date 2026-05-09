@@ -1549,10 +1549,11 @@ Information-for-users review cases:
   comparison-progress or result update races with disposal of the history
   panel webview, preserving command completion instead of throwing
   `Webview is disposed`
-- `TEST-UNIT-324`: verify the governed public GitHub workflow package keeps an
-  explicit package-preview versus linux-smoke responsibility matrix, bounded
-  `develop`/`main`/`release/*`/`hotfix/*` push and pull-request admission, no
-  `feature/*` push lane, and per-workflow/per-ref concurrency
+- `TEST-UNIT-324`: verify the governed public GitHub admission matrix keeps an
+  explicit source-preview plus Linux/Windows installed-user responsibility
+  matrix, bounded `develop`/`main`/`release/*`/`hotfix/*` push and
+  pull-request admission, no `feature/*` push lane, and per-workflow/per-ref
+  concurrency
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
@@ -1826,8 +1827,9 @@ Information-for-users review cases:
   `host/windows/2026/x64`, reads back the current provider/platform/version/bitness
   bundle, prints exact copyable next commands, and, on interactive TTY
   surfaces, admits Enter-through confirmation or guided selection of supported
-  provider/platform/version/bitness values while failing closed with explicit
-  unsupported or not-yet-implemented path guidance
+  provider/platform/version/bitness values, including `docker/linux` `2026`
+  `x64` on Linux Docker Desktop/Docker Engine hosts, while failing closed with
+  explicit unsupported, host-mismatched, or not-yet-implemented path guidance
 - `TEST-UNIT-354`: verify the `vihs` surface exposes `vihs --validate` as one
   governed validation action that reports persisted provider/version/bitness
   truth plus runtime-validation outcome, and that the no-argument interactive
@@ -1898,19 +1900,20 @@ Information-for-users review cases:
   explicit governed public-acceptance gate
 - `TEST-DOC-110`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
   command reference, the FAQ, the SRS, the RTM, and the test plan and confirm
-  the active Windows x64 private-release route is native Windows only: host
-  validation admits the governed mixed-bitness LabVIEW bundle, Docker proof
-  admits Docker Desktop Windows-container execution, and WSL is retained
-  historical context only rather than an admitted installed-user or
-  private-release dependency
+  the active governed claim is Linux/Docker validated preview, while Windows x64
+  installed-user proof is deferred until a real Windows/LabVIEW host proves the
+  native host LabVIEW bundle and Docker Desktop Windows-container execution; WSL
+  remains historical context rather than installed-user proof
 - `TEST-UNIT-356`: verify the governed Windows private-release acceptance
   script keeps the canonical `HARNESS-VHS-002` `lv_icon.vi` selected/base pair,
   retains separate host and Windows-container command plans, and emits the
   machine-readable runner manifest under `windows-private-release-evidence/`
 - `TEST-DOC-111`: review `.gitlab-ci.yml`, hosted governance, sustainment,
   current-state, the private-release packet, the runner-lane contract, the
-  SRS, the RTM, and the test plan and confirm preview and exact packaging now
-  depend on the tagged Windows shell-runner acceptance lane
+  SRS, the RTM, and the test plan and confirm preview packaging now depends on
+  `ubuntu_docker_runner_admission`, Linux assurance, and extension tests, while
+  the tagged Windows shell-runner acceptance lane is retained as deferred proof
+  behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - `TEST-UNIT-357`: verify the hosted CI governance package, `.gitlab-ci.yml`,
   README, current-state, and the release procedure retain the published
   `repo-standards-review` assurance-workbench lane, its
@@ -1977,10 +1980,10 @@ Information-for-users review cases:
   lane-local doctor scripts plus the combined `npm run gitlab:runner:doctor`
   wrapper, and can fail closed on drift without mutating healthy hosts
 - `TEST-UNIT-369`: verify GitLab retains one fail-fast
-  `governed_runner_admission` lane in the `admission` stage that runs the
-  combined doctor surface with `--fail-on-drift`, retains
-  `governed-runner-admission-evidence/`, and blocks downstream docs,
-  assurance, test, package, and release work when runner drift is detected
+  `ubuntu_docker_runner_admission` lane in the `admission` stage that retains
+  `governed-runner-admission-evidence/` for the active Linux/Docker preview
+  claim, and keeps `governed_runner_admission` as a deferred Windows/LabVIEW
+  doctor lane behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - `TEST-UNIT-370`: verify the public GitHub exact-release transaction
   controller inspects authority exact main/tag state, live public GitHub
   main/tag/release/assets, the repo immutable-release policy, the current
@@ -2025,7 +2028,7 @@ Information-for-users review cases:
   blocked until those production surfaces actually close
 - `TEST-UNIT-379`: verify the non-mutating
   `vscode:marketplace:prepare` surface verifies the published public GitHub
-  exact `v1.3.7` release, exact VSIX/checksum evidence, current Marketplace
+  exact release for the current authority tag, exact VSIX/checksum evidence, current Marketplace
   version, local Marketplace PAT locator, and pinned `vsce` command shape,
   writes JSON plus Markdown receipts, and performs no Marketplace mutation
 - `TEST-UNIT-380`: verify the release-publication state resolver derives the
@@ -2040,6 +2043,59 @@ Information-for-users review cases:
   zero-size, mismatched, or checksum-invalid assets is classified as
   `published-immutable-release-assets-incomplete` and blocks Marketplace
   publication.
+- `TEST-UNIT-383`: verify the non-mutating
+  `vscode:marketplace:install-proof` surface installs the selected authority
+  VSIX into isolated VS Code user-data/extensions roots on Windows, verifies
+  the exact VSIX SHA-256 against the authority manifest, and retains passing
+  bare `vihs` plus `vihs --validate` receipt evidence without ambient Node on
+  PATH.
+- `TEST-UNIT-384`: verify the Marketplace prep surface requires the retained
+  Windows exact-VSIX install proof before a future mutating Marketplace act is
+  admitted, while exact lines that are already published may remain in
+  retained-publication state.
+- `TEST-UNIT-385`: verify the Marketplace community-validation preview prep
+  surface writes a non-mutating receipt, retains Linux/Docker preview
+  evidence, discloses deferred Windows/LabVIEW installed-user proof, keeps
+  Windows/LabVIEW selections user-selectable with proof-status disclosure,
+  blocks reuse of the current Marketplace version, and retains pinned
+  `vsce --pre-release` package and publish command shapes.
+- `TEST-UNIT-386`: verify the Linux Docker provider lane script writes JSON
+  plus Markdown evidence, validates Docker OSType `linux`, persists
+  `docker` / `2026` / `x64` through `vihs`, proves
+  `runtimeProvider=linux-container` with `runtimeEngine=labview-cli`, and
+  records Windows installed-user LabVIEW proof as community/deferred evidence.
+- `TEST-UNIT-387`: verify the Linux Docker provider-lane release-control
+  packet retains develop pipeline `2480195741`, job `14091891709`, provider
+  runtime facts, preview VSIX SHA-256, release-publication state anchoring,
+  and the no-mutation public GitHub/Marketplace boundary while Windows
+  installed-user LabVIEW proof remains community/deferred.
+- `TEST-UNIT-388`: verify the exact-release readiness assessment retains the
+  current `develop` commit and pipeline, passed Linux/Docker preview evidence,
+  blocked exact-release verdict, deferred Windows installed-user LabVIEW proof,
+  preview VSIX SHA-256, release-publication state anchoring, and public
+  GitHub/Marketplace no-mutation boundary.
+- `TEST-UNIT-389`: verify the Windows/LabVIEW community proof intake checklist
+  retains the blocked `1.3.10` assessment anchor, required external report
+  commands, proof-status ladder, two exact-candidate conversion paths,
+  candidate admission checklist, and public GitHub/Marketplace no-mutation
+  boundary.
+- `TEST-UNIT-390`: verify the exact-release candidate reassessment retains
+  `develop` commit `14243fd`, pipeline `2480546719`, the
+  community-deferred Windows/LabVIEW claim selection, absence of admitted
+  Windows proof, candidate source VSIX SHA-256, release-publication state
+  anchoring, release-branch-opening next action, and public
+  GitHub/Marketplace exact no-mutation boundary.
+- `TEST-UNIT-391`: verify the `1.3.11` public validation pre-release packet,
+  release-publication state, Marketplace ledger, public issue templates,
+  labels, promotion script, and package version retain the scoped public
+  GitHub/Marketplace mutation authorization, all-variant selectable policy,
+  proof-packet command, stable runtime error-code taxonomy, and
+  community/deferred Windows proof boundary.
+- `TEST-UNIT-392`: verify `vihs --validate --proof-out` writes a runtime proof
+  packet and GitHub-ready issue body while reporting stable
+  `runtimeErrorCode`, `runtimeProofStatus`, and
+  `runtimeImplementationStatus` values for success, failure, and
+  not-yet-implemented paths.
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2098,9 +2154,10 @@ Information-for-users review cases:
   without relying on ad hoc post-reset shell history
 - `TEST-DOC-122`: review `.gitlab-ci.yml`, hosted governance, sustainment
   rules, the runner-lane contracts, current-state, release procedure, SRS,
-  RTM, and test plan and confirm `governed_runner_admission` runs first as a
-  fail-fast admission gate with retained doctor evidence before later docs,
-  assurance, test, package, and release stages queue
+  RTM, and test plan and confirm `ubuntu_docker_runner_admission` runs first as
+  the fail-fast Linux/Docker preview admission gate before later docs,
+  assurance, test, package, and release stages queue, while
+  `governed_runner_admission` remains deferred Windows/LabVIEW proof
 - `TEST-DOC-123`: review README, current-state, release procedure, the
   sustainment package, the public-release candidate package, SRS, RTM, and
   the test plan and confirm the public GitHub exact-release transaction
@@ -2162,10 +2219,10 @@ Information-for-users review cases:
   Marketplace publication ledger, the sustainment package, the public-release
   candidate package, SRS, RTM, and the test plan and confirm the repo now
   retains one non-mutating `vscode:marketplace:prepare` surface plus receipt
-  path that proves public GitHub exact `v1.3.7` is closed, validates the exact
-  VSIX/checksum evidence and PAT locator without secret retention, retains the
-  pinned `vsce` publish command shape, and keeps Marketplace publication
-  pending explicit production approval
+  path that proves the current public GitHub exact release is closed,
+  validates the exact VSIX/checksum evidence and PAT locator without secret
+  retention, retains the pinned `vsce` publish command shape, and keeps
+  Marketplace publication pending explicit production approval
 - `TEST-DOC-133`: review `release-publication-state.{md,json}`, the
   information-item map, release-control docs, SRS, RTM, and test plan and
   confirm GitLab authority, public GitHub distribution, Marketplace
@@ -2178,7 +2235,110 @@ Information-for-users review cases:
 - `TEST-DOC-135`: review release-control docs, SRS, RTM, and the test plan and
   confirm public GitHub `v1.3.8` release `312768592` is retained as
   externally blocked because it is published, immutable, and has zero assets,
-  while VS Code Marketplace remains `1.3.7`.
+  while the later exact `v1.3.9` GitHub and VS Code Marketplace publication
+  acts are retained as closed.
+- `TEST-DOC-136`: review release-publication state, release procedure,
+  Marketplace ledger, current-state, ADR-0036, SRS, RTM, and the test plan and
+  confirm the repo retains one governed Windows exact-VSIX install proof
+  package script plus receipt path for the current exact line.
+- `TEST-DOC-137`: review release-control docs, the Marketplace ledger,
+  sustainment rules, public-release candidate package, SRS, RTM, and the test
+  plan and confirm future Marketplace publication is blocked until the
+  retained Windows exact-VSIX install proof passes, while already-published
+  exact lines may remain in retained-publication state.
+- `TEST-DOC-138`: review README, current-state, release-publication state, the
+  Marketplace publication ledger, release procedure, SRS, RTM, and the
+  community-preview prep receipt and confirm the Marketplace
+  community-validation preview path is preparation-only, uses
+  `vsce --pre-release`, discloses deferred Windows proof, keeps selectable
+  Windows/LabVIEW features tied to proof-status surfaces, requires a distinct
+  higher Marketplace version, and leaves public GitHub plus Marketplace
+  untouched until the user says `publish it now`.
+- `TEST-DOC-139`: review `.gitlab-ci.yml`, hosted governance,
+  release-publication state, current-state, README, INSTALL, command
+  reference, FAQ, SRS, RTM, and the test plan and confirm the develop package
+  path now requires the governed Linux Docker Desktop/Docker Engine provider
+  lane while Windows installed-user LabVIEW proof remains community/deferred.
+- `TEST-DOC-140`: review the Linux Docker provider-lane release-control
+  packet, release-publication state, current-state, information-item map, SRS,
+  RTM, and the test plan and confirm the current retained develop preview
+  evidence is anchored to pipeline `2480195741`, does not track the moving
+  live `develop` head, and did not mutate public GitHub or Marketplace.
+- `TEST-DOC-141`: review the exact-release readiness assessment,
+  release-publication state, current-state, information-item map, SRS, RTM,
+  and the test plan and confirm the current `develop` line is marked
+  `1.3.14` release-branch-opening-admissible as a separate governed action
+  with Linux/Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX
+  acceptance, public exact pre-tag, package preview, docs, and assurance
+  evidence retained, while exact tag, public GitHub release, Marketplace
+  exact mutation, Windows Docker Desktop Windows-container proof, and `main`
+  promotion remain not admitted.
+- `TEST-DOC-142`: review the Windows/LabVIEW community proof intake checklist,
+  release-publication state, exact-release readiness assessment, current-state,
+  information-item map, SRS, RTM, and the test plan and confirm external
+  reports remain community signals until admitted, Linux/Docker proof is not
+  Windows proof, and the exact candidate must choose either a Windows-proof
+  claim path or a community-deferred claim path before reassessment.
+- `TEST-DOC-143`: review the exact-release candidate reassessment,
+  release-publication state, current-state, information-item map, SRS, RTM,
+  and the test plan and confirm `1.3.10` is admissible only for governed
+  release-branch opening from `14243fd` under the selected community-deferred
+  Windows/LabVIEW claim path while public GitHub and Marketplace exact
+  mutation remain gated.
+- `TEST-DOC-144`: review the `1.3.11` public validation packet,
+  release-publication state, Marketplace ledger, README, INSTALL, command
+  reference, public GitHub source templates and labels, SRS, RTM, and the test
+  plan and confirm public GitHub plus Marketplace pre-release publication are
+  admitted for the scoped validation lane while Windows installed-user
+  LabVIEW proof remains community/deferred.
+- `TEST-UNIT-393`: run
+  `vitest run tests/unit/publicDockerFixtureBatteryDocs.test.ts` and confirm
+  `VHS-REQ-586`, the retained canonical fixture model, installed/public docs,
+  issue chooser links, RTM, SRS, and test plan all preserve the public Docker
+  fixture recipe from issues `#48` through `#59`.
+- `TEST-DOC-145`: review the public-validation packet, release-publication
+  state, Marketplace ledger, README, INSTALL, public source README/INSTALL,
+  issue-template config, command reference, SRS, RTM, and this test plan and
+  confirm `https://github.com/ni/labview-icon-editor`
+  `resource/plugins/lv_icon.vi`, commits
+  `ab94f6c4b375062492036c63a6dab7ea8824748a` and
+  `8741bb08026c104100720c0ef48621e4ab7762fd`, positive Docker compare
+  success, no-change Docker compare success, `left-blob-read-failed`, the
+  `nationalinstruments/labview:2026q1-linux` about `1.4 GB` pull warning,
+  the source/tag checkout `npm run compile` warning, direct public validation
+  contact links, and the community/deferred Windows host LabVIEW proof boundary
+  are retained without mutating public GitHub or Marketplace.
+- `TEST-UNIT-394`: run
+  `vitest run tests/unit/publicGithubFixtureDocsPromotionCloseout.test.ts` and
+  confirm `VHS-REQ-587`, public PR `#60`, public `main` commit
+  `ce6dbd0b1b5783f7015b9d0589f3803636564789`, promoted files `README.md`,
+  `INSTALL.md`, `.github/ISSUE_TEMPLATE/config.yml`, successful post-merge
+  public GitHub checks, and Marketplace no-mutation are retained across the
+  authority release-state JSON and Markdown surfaces.
+- `TEST-DOC-146`: review README, current-state, release procedure, public
+  validation packet, release-publication state, Marketplace ledger, SRS, RTM,
+  and this test plan and confirm the canonical fixture docs promotion closeout
+  records public PR `#60`, public commit `ce6dbd0`, Public Source Package
+  Preview `24965599550` / success, Public Windows Installed-User Contract
+  `24965599548` / success, Public Linux Installed-User Smoke `24965599557` /
+  success, and that Marketplace was not mutated by the public facade docs
+  promotion.
+- `TEST-UNIT-395`: run
+  `vitest run tests/unit/comparisonRuntimeLocator.test.ts tests/unit/linuxHostLabviewProofDocs.test.ts`
+  and confirm `VHS-REQ-588`, the VIHS Linux host-discovery fix, the retained Linux host
+  LabVIEW 2026 proof packet, release-publication state, current-state, SRS,
+  RTM, and this test plan preserve Linux host proof as admitted evidence while
+  keeping Windows installed-user LabVIEW proof community/deferred.
+- `TEST-DOC-147`: review the Linux host LabVIEW 2026 proof packet,
+  release-publication state, current-state, SRS, RTM, and this test plan and
+  confirm `/usr/local/natinst/LabVIEW-2026-64/labview`, `VIHS_OK`,
+  `host-native`, `LabVIEWCLI CreateComparisonReport`, canonical
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`,
+  commits `ab94f6c4b375062492036c63a6dab7ea8824748a` and
+  `8741bb08026c104100720c0ef48621e4ab7762fd`, generated
+  `diff-report-lv_icon.vi.html`, report size `214412` bytes, Linux
+  compatibility fixes, and the no-public-GitHub/no-Marketplace mutation
+  boundary are retained without claiming Windows installed-user proof.
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -2250,6 +2410,59 @@ Information-for-users review cases:
   surface, explicit compare preflight, panel + warning fail-closed behavior,
   and the Windows exact-runtime-selection fail-closed behavior retained under
   `VHS-REQ-532`
+- `TEST-UNIT-396`: run
+  `tests/unit/comparisonReportRuntimeExecution.test.ts`,
+  `tests/unit/publicFixtureValidation.test.ts`,
+  `tests/unit/localRuntimeSettingsCli.test.ts`,
+  `tests/unit/harnessReportSmoke.test.ts`, and
+  `tests/unit/publicValidationPrereleaseV1312.test.ts` and confirm
+  `vihs validate-fixture` retains `HARNESS-VHS-002`, the
+  `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
+  fixture, old commit `ab94f6c4b375062492036c63a6dab7ea8824748a`, new commit
+  `8741bb08026c104100720c0ef48621e4ab7762fd`, public fixture proof files,
+  explicit non-adjacent historical-pair harness support, and the Linux host
+  LabVIEWCLI exit-handling regression where headless LabVIEW keeps inherited
+  stdio handles open after the CLI process exits
+- `TEST-DOC-148`: review README, INSTALL, public-facade docs, issue templates,
+  command reference, release-publication state, Marketplace ledger, SRS, RTM,
+  and this test plan and confirm the `1.3.12` public validation lane documents
+  the proof-status matrix: Linux/Docker `2026` `x64` admitted, Linux host
+  LabVIEW `2026` `x64` admitted, Windows host LabVIEW community/deferred,
+  Windows Docker Desktop Windows-container proof community/deferred, and
+  unsupported variants selectable/reportable with stable `VIHS_E_*` codes
+- `TEST-UNIT-397`: run
+  `tests/unit/windowsDockerDesktopProofIntake.test.ts`,
+  `tests/unit/publicFixtureValidation.test.ts`,
+  `tests/unit/publicGithubSourcePromotion.test.ts`, and
+  `public-github-source/tests/unit/publicRepoPackageSurface.test.ts` and
+  confirm `VHS-REQ-590` plus public issue #65 retain the dedicated Windows
+  Docker Desktop template, Docker OSType `windows`, the exact
+  `vihs validate-fixture` PowerShell command, `runtimeProvider=windows-container`,
+  `runtimeEngine=labview-cli`, `runtimeExecutionState=succeeded`,
+  `generatedReportExists=true`, and the generated proof's suggested template
+  route
+- `TEST-DOC-149`: review README, INSTALL, SUPPORT, command reference, FAQ,
+  public issue templates, labels, the `1.3.13` public-validation packet,
+  Windows Docker Desktop proof-intake packet, release-publication state,
+  Marketplace ledger, SRS, RTM, and this test plan and confirm `VHS-REQ-590`
+  and the Windows Docker Desktop Windows-container lane remain
+  community/deferred until an admissible public issue #65 packet is retained,
+  while Linux Docker Engine, Docker Desktop Linux containers, WSL-only
+  execution, host-provider proof, platform injection, private VI fixtures, and
+  reports without proof packets are not admissible for that lane
+- `TEST-UNIT-398`: run
+  `tests/unit/vagrantAcceptanceEvidenceAssert.test.ts` and confirm
+  `npm run vagrant:acceptance:assert` parses UTF-8/BOM manifests, selects the
+  latest timestamped Vagrant run, validates `HARNESS-VHS-002`,
+  `proofExitCode=0`, `runtimeExecutionState=succeeded`,
+  `runtimeProvider=host-native`, `runtimeEngine=labview-cli`,
+  `generatedReportExists=true`, nonempty generated report HTML, and cold-start
+  markers, then retains an assertion receipt
+- `TEST-DOC-150`: review the Vagrant runner lane, hosted CI governance,
+  release-publication state, and this test plan and confirm Vagrant Windows
+  VSIX acceptance is governed candidate evidence only, not a substitute for
+  native Windows x64 private-release proof or Windows Docker Desktop
+  Windows-container proof
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

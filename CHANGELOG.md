@@ -5,9 +5,80 @@ This changelog is the governed version-line summary for `vi-history-suite`.
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
 `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`,
-`v1.3.5`, `v1.3.6`, `v1.3.7`, and `v1.3.8`.
+`v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, and `v1.3.9`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.3.14] - 2026-05-08
+
+### Changed
+
+- Opened the next `develop` patch candidate line for release-readiness
+  consolidation after the `1.3.13` public-validation pre-release.
+- Vagrant Windows VSIX acceptance is now governed by a repo-owned evidence
+  assertion surface that retains reusable CI receipts without expanding the
+  Windows Docker Desktop proof claim.
+- Exact-release readiness now has a current `2026-05-08` assessment for the
+  `1.3.14` `develop` line, making release-branch opening admissible as a
+  separate governed action while exact tag, public GitHub release, Marketplace
+  mutation, and `main` promotion remain gated and not performed.
+
+## [1.3.13] - 2026-04-27
+
+### Changed
+
+- Public validation pre-release refresh carries the admitted Windows host
+  LabVIEW 2026 x64 proof wording into the public facade and Marketplace
+  package line.
+- Successful LabVIEWCLI `CreateComparisonReport` diagnostics no longer retain
+  a stale success-before-failure note when the operation succeeded.
+
+## [1.3.12] - 2026-04-26
+
+### Added
+
+- `vihs validate-fixture` for running the canonical public
+  `ni/labview-icon-editor` / `resource/plugins/lv_icon.vi` compare battery
+  from the installed CLI and retaining public proof packets.
+- Public proof-status matrix that distinguishes admitted Linux/Docker,
+  admitted Linux host LabVIEW, community/deferred Windows host LabVIEW, and
+  community/deferred Windows Docker Desktop Windows-container evidence.
+
+### Changed
+
+- Public validation docs now treat the canonical fixture as an executable
+  validation recipe, not only retained issue evidence.
+- Linux host comparison execution now returns cleanly after `LabVIEWCLI` exits
+  even when headless LabVIEW keeps inherited stdio handles open long enough to
+  outlive the CLI process.
+
+## [1.3.11] - 2026-04-26
+
+### Added
+
+- Public validation pre-release lane for publishing `1.3.11` to public GitHub
+  and VS Code Marketplace so users can report validation success, validation
+  failure, bug, and feature-not-implemented results.
+- `vihs --validate --proof-out <dir>` proof packets with stable `VIHS_E_*`
+  runtime codes, GitHub-ready issue body output, and diagnostic path/env
+  evidence with secret-looking environment variables redacted.
+
+### Changed
+
+- Runtime provider selection now keeps all provider/year/bitness variants
+  selectable for public validation reporting, including paths that currently
+  return not-yet-implemented or blocked runtime codes.
+
+## [1.3.10] - 2026-04-25
+
+### Added
+
+- Marketplace community-validation preview package line for publishing a VS
+  Code Marketplace pre-release while Windows installed-user proof remains
+  explicitly deferred.
+- Proof-status disclosure for selectable Windows/LabVIEW provider, year, and
+  bitness settings through `vihs --validate` and the requirements traceability
+  matrix.
 
 ## [1.3.9] - 2026-04-23
 

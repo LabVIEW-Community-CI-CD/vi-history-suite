@@ -69,7 +69,9 @@ describe('release governance package', () => {
       'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
     );
     expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('patch');
-    expect(rules.releaseCadence.activeOpeningDecision.targetFeatureBranch).toBeNull();
+    expect(rules.releaseCadence.activeOpeningDecision.targetFeatureBranch).toBe(
+      'feature/develop-1.3.14-candidate-consolidation'
+    );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
     expect(rules.operatorSurfaceSustainment.branchModel.temporaryBranchPrefixes).toEqual([
@@ -103,9 +105,10 @@ describe('release governance package', () => {
     expect(adr2).toContain('# ADR-0031: Finding-Driven ADR And Requirement Evolution');
     expect(adr2).toContain('every governed finding is classified for both requirement impact and ADR');
     expect(adr2).toContain('introduce a new ADR in the same slice');
-    expect(adr3).toContain('# ADR-0032: Public Facade GitHub Workflow Responsibility Matrix');
-    expect(adr3).toContain('Public Facade Package Preview');
-    expect(adr3).toContain('Public Facade Linux Smoke');
+    expect(adr3).toContain('# ADR-0032: Public GitHub Admission Matrix');
+    expect(adr3).toContain('Public Source Package Preview');
+    expect(adr3).toContain('Public Linux Installed-User Smoke');
+    expect(adr3).toContain('Public Windows Installed-User Contract');
     expect(adr3).toContain('do not create a `feature/*` push lane');
     expect(adr3).toContain('per-workflow/per-ref concurrency');
     expect(adr4).toContain('# ADR-0033: Hosted Automation Governance Matrix And Protection Semantics');
@@ -133,18 +136,21 @@ describe('release governance package', () => {
     expect(adr9).toContain('published immutable');
     expect(adr9).toContain('release with missing or mismatched assets is externally blocked');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.3.8`');
-    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `1.3.9`');
-    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.9`');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.3.14`');
+    expect(hostedGovernance).toContain(
+      'active exact release candidate line on `develop`: `v1.3.14`'
+    );
+    expect(hostedGovernance).toContain('active release-candidate branch: none');
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
     expect(hostedGovernance).toContain('active hotfix branch: none');
     expect(hostedGovernance).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(hostedGovernance).toContain('none');
-    expect(hostedGovernance).toContain('chosen bump: `patch`');
+    expect(hostedGovernance).toContain('chosen bump: patch');
     expect(hostedGovernance).toContain('public_exact_pretag_proof');
     expect(hostedGovernance).toContain('npm run public:exact:pretag:proof');
     expect(hostedGovernance).toContain('npm run public:github:exact:transaction:verify');
-    expect(hostedGovernance).toContain('VS Code Marketplace baseline remains `v1.3.7`');
+    expect(hostedGovernance).toContain('public GitHub and VS Code');
+    expect(hostedGovernance).toContain('Marketplace both publish `1.3.9`');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(
@@ -156,7 +162,7 @@ describe('release governance package', () => {
     expect(srs).toContain('PR-driven focused admission on `feature/*`');
     expect(srs).toContain('push plus PR validation for `release/*` and `hotfix/*`');
     expect(srs).toContain('continuously classify current and future governed findings for ADR impact');
-    expect(srs).toContain('governed public GitHub workflow matrix');
+    expect(srs).toContain('governed public GitHub admission matrix');
     expect(srs).toContain('governed hosted automation matrix');
     expect(srs).toContain('`feature/*` branches are cut from `develop` and merge back into `develop`');
     expect(srs).toContain('fail closed on branch-model contradictions');
@@ -190,7 +196,7 @@ describe('release governance package', () => {
     expect(rtm).toContain('PR-driven focused admission on `feature/*`');
     expect(rtm).toContain('push plus PR validation for `release/*` and `hotfix/*`');
     expect(rtm).toContain('Continuously classify current and future governed findings for ADR impact');
-    expect(rtm).toContain('Retain a governed public GitHub workflow matrix');
+    expect(rtm).toContain('Retain a governed public GitHub admission matrix');
     expect(rtm).toContain('Retain one governed hosted automation matrix');
     expect(rtm).toContain('Admit authority GitLab preview-package validation');
     expect(rtm).toContain('Fail closed on branch-model contradictions');
@@ -345,11 +351,22 @@ describe('release governance package', () => {
     expect(rules.releaseCadence.candidateStateModel.dirtyPublicSurfaceRule).toContain(
       'preserve unrelated dirt'
     );
-    expect(rules.operatorSurfaceSustainment.publicWorkflowGovernance.workflows.packagePreview.responsibilities).toEqual(
-      expect.arrayContaining(['npm run test:design-contract', 'preview VSIX packaging'])
-    );
-    expect(rules.operatorSurfaceSustainment.publicWorkflowGovernance.workflows.linuxSmoke.responsibilities).toEqual(
-      expect.arrayContaining(['Docker Linux engine verification', 'npm run public:smoke:linux'])
+    expect(
+      rules.operatorSurfaceSustainment.publicWorkflowGovernance.workflows.sourcePackagePreview
+        .responsibilities
+    ).toEqual(expect.arrayContaining(['npm run test:design-contract', 'preview VSIX packaging']));
+    expect(
+      rules.operatorSurfaceSustainment.publicWorkflowGovernance.workflows.linuxInstalledUserSmoke
+        .responsibilities
+    ).toEqual(expect.arrayContaining(['Docker Linux engine verification', 'npm run public:smoke:linux']));
+    expect(
+      rules.operatorSurfaceSustainment.publicWorkflowGovernance.workflows.windowsInstalledUserContract
+        .responsibilities
+    ).toEqual(
+      expect.arrayContaining([
+        'npm run public:contract:windows-installed-user',
+        'Windows installed-user launcher/runtime-settings contract evidence upload'
+      ])
     );
 
     expect(program).toContain('branch-model and lane-specific CI governance');

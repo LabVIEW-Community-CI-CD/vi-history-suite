@@ -25,6 +25,10 @@ not absorb the historical `PROGRAM-0002` closeout, `PROGRAM-0003`,
 generic maintenance language; those surfaces remain explicit when they are
 historical or active.
 
+`PROGRAM-0005` now retains the published `v1.3.9` host-default Windows local
+`LabVIEWCLI` contract with bounded expert Docker, while `TRANCHE-013` and
+`TRANCHE-015` remain the historical Docker-only installed-user baseline.
+
 The current release branch model is explicit too:
 
 - `develop` is the integration branch
@@ -69,21 +73,20 @@ Current version-line contract:
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
   `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`,
-  `v1.3.6`, `v1.3.7`, `v1.3.8`
+  `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.8`
-- current published package line on `main`: `1.3.8`
-- current develop package line on `develop`: `1.3.8`
-- active exact release candidate line on `develop`: `1.3.9`
-- active release-candidate branch: `release/1.3.9`
+- current exact released line: `v1.3.9`
+- current published package line on `main`: `1.3.9`
+- current develop package line on `develop`: `1.3.14`
+- active exact release candidate line on `develop`: `v1.3.14`
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- exact authority `v1.3.8` is retained as blocked historical public GitHub
-  incident evidence while the last fully closed public GitHub and VS Code
-  Marketplace baseline remains `v1.3.7`; `release/1.3.9` carries the governed
-  asset-first retry line for the installed `vihs` launcher fix
+- exact authority `v1.3.9` is now fully published across GitLab authority,
+  public GitHub, and VS Code Marketplace, while blocked historical public
+  GitHub incident evidence for `v1.3.8` remains retained separately
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -91,24 +94,32 @@ Current version-line contract:
   `npm run public:github:exact:transaction:verify`
 - public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- Windows exact-VSIX install proof package script:
+  `npm run vscode:marketplace:install-proof`
+- Windows exact-VSIX install proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - VS Code Marketplace publication prep package script:
   `npm run vscode:marketplace:prepare`
 - VS Code Marketplace publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
+- VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - current retained public GitHub exact verify gate:
-  public release `312517425` is published on `v1.3.7`, release lookup by tag
+  public release `312994104` is published on `v1.3.9`, release lookup by tag
   returns `200`, readback by id returns `200`, the exact assets match the
   retained authority manifest under
-  `.cache/gitlab-release-artifacts/v1.3.7/expanded/release-evidence/`, the
+  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`, the
   public-source promotion receipt is `passed`, and the retained verify gate is
   `pass`
 - current publication incident history:
   authority exact `v1.3.8` exists on GitLab, public GitHub release
   `312768592` is already published and immutable with zero assets, and VS Code
-  Marketplace remains `1.3.7`; blocker
+  Marketplace now serves `1.3.9`; blocker
   `published-immutable-release-assets-incomplete` is retained only as
-  historical incident evidence while `release/1.3.9` carries the next exact
-  line through the asset-first GitHub publisher
+  historical incident evidence while exact `v1.3.9` remains the current fully
+  closed line
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -120,14 +131,25 @@ Current version-line contract:
 Current control decision for public exact hardening:
 
 - chosen bump: `patch`
+- active Marketplace public validation preview line: `1.3.13`
+- Marketplace public validation preview status: published and verified for
+  `1.3.13`
+- Marketplace public validation preview last updated:
+  `2026-04-27T04:24:05.457Z`
+- Marketplace public validation preview VSIX SHA-256:
+  `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
 - active feature-lane public GitHub release hardening branch:
   none
-- rationale: authority exact `v1.3.8` is already tagged on `main` while public
-  GitHub release `312768592` is retained as immutable zero-asset historical
-  incident evidence and VS Code Marketplace still serves `1.3.7`
-- rationale: `release/1.3.9` opens from `develop` as the governed patch line
-  for the installed Windows `vihs` launcher fix through the asset-first public
-  GitHub publisher
+- rationale: authority exact `v1.3.9` remains tagged on `main` while public
+  GitHub release `312994104` is retained as a complete immutable exact release
+  and VS Code Marketplace serves regular `1.3.9`
+- rationale: `develop` now carries patch candidate package line `1.3.14` for
+  release-readiness consolidation after the published `1.3.13` public
+  validation pre-release
+- rationale: Vagrant Windows VSIX acceptance now has a repo-owned evidence
+  assertion surface and retained CI receipt contract
+- rationale: blocked historical `v1.3.8` incident evidence remains retained,
+  and the active exact release candidate line is `v1.3.14`
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`
@@ -150,8 +172,12 @@ Current control decision for public exact hardening:
   `npm run software:factory:publish`
 - factory verify package script:
   `npm run software:factory:verify`
+- VS Code Marketplace install-proof package script:
+  `npm run vscode:marketplace:install-proof`
 - VS Code Marketplace prep package script:
   `npm run vscode:marketplace:prepare`
+- VS Code Marketplace community-validation preview prep package script:
+  `npm run vscode:marketplace:community-preview:prepare`
 - factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - factory rehearsal receipt:
@@ -162,17 +188,19 @@ Current control decision for public exact hardening:
   `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
 - factory verify receipt:
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- VS Code Marketplace install-proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - VS Code Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace community-validation preview prep receipt:
+  `.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json`
 - current factory phases:
   `assess`, `rehearse`, `repair`, `publish`, `verify`
-- sole production recovery target: `v1.3.9`
+- sole production recovery target: none
 - production mutation policy:
-  exact authority `v1.3.8` is retained as blocked historical publication
-  evidence while the last fully closed public GitHub and VS Code Marketplace
-  line remains `v1.3.7`; `release/1.3.9` may proceed only through normal
-  GitFlow and the repo-owned factory/orchestrator governance path before any
-  public GitHub or Marketplace mutation
+  exact authority `v1.3.9` is fully closed across public GitHub and VS Code
+  Marketplace; later SemVer openings now return to normal GitFlow while
+  `v1.3.8` remains retained as blocked historical publication evidence
 - authority boundary:
   GitLab `develop` -> `release/*` -> protected `main`
 - staging boundary:
@@ -182,9 +210,8 @@ Current control decision for public exact hardening:
   public GitHub `main` / tag / release plus the VS Code Marketplace listing
 - recovery boundary:
   retained partial-public incidents are repair-in-place first; the current
-  exact GitHub and VS Code Marketplace acts remain fully closed only for
-  `v1.3.7` while `v1.3.8` is retained as blocked historical incident evidence
-  and `release/1.3.9` is the active patch candidate
+  exact GitHub and VS Code Marketplace acts are fully closed for `v1.3.9`
+  while `v1.3.8` is retained as blocked historical incident evidence
 - trust model:
   operator host, self-hosted runners, local token locators, GitLab authority,
   public GitHub, Marketplace, and retained receipts are governed system
@@ -201,11 +228,18 @@ Current control decision for public exact hardening:
   phases; later VS Code Marketplace publish phases still require explicit
   production approval
 - Marketplace prep rule:
+  `npm run vscode:marketplace:install-proof` must pass and retain its receipt
+  before any mutating VS Code Marketplace publication act; it installs the
+  exact authority VSIX into isolated VS Code user-data/extensions roots,
+  runs bare `vihs` plus `vihs --validate`, and fails closed unless
+  `runtimeValidationOutcome=ready`, the launcher PATH is stripped to the
+  isolated launcher root plus `System32`, and ambient Node is not required.
+- Marketplace prep rule:
   `npm run vscode:marketplace:prepare` must pass and retain its receipt before
-  any mutating VS Code Marketplace publication act; it verifies the
-  GitHub `v1.3.7` verify gate, exact VSIX/checksum evidence, live Marketplace
-  version, local PAT locator, and pinned `vsce` command shape without
-  retaining secret material or publishing.
+  any mutating VS Code Marketplace publication act; for the current retained
+  exact line it verifies the GitHub `v1.3.9` verify gate, exact
+  VSIX/checksum evidence, live Marketplace version, local PAT locator, and
+  pinned `vsce` command shape without retaining secret material or publishing.
 - asset-first GitHub release rule:
   no public GitHub exact release may be published until the repo-owned
   publisher has created a draft, uploaded the VSIX and checksum from GitLab
@@ -432,16 +466,17 @@ Required branch-model and CI posture:
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
   when the target repo is dirty
 - the required checks are:
-  - GitLab `governed_runner_admission`
+  - GitLab `ubuntu_docker_runner_admission`
+  - GitLab `linux_docker_provider_lane`
   - GitLab `public_exact_pretag_proof`
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
   - GitLab `test_extension`
-  - GitLab `windows_private_release_acceptance`
   - GitLab `package_extension_preview`
-  - GitHub `Public Facade Package Preview / package-preview`
-  - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
+  - GitHub `Public Source Package Preview / public-source-package-preview`
+  - GitHub `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
+  - GitHub `Public Windows Installed-User Contract / public-windows-installed-user-contract`
 
 Hosted automation governance is now retained explicitly:
 
@@ -449,22 +484,37 @@ Hosted automation governance is now retained explicitly:
   `only_allow_merge_if_pipeline_succeeds=true`; it does not have GitHub-style
   named required checks
 - GitHub public branch protection relies on named required checks
-  `package-preview` and `public-facade-linux-smoke`
+  `public-source-package-preview`,
+  `public-linux-installed-user-smoke`, and
+  `public-windows-installed-user-contract`
+- GitLab `linux_docker_provider_lane` owns
+  `npm run linux:docker:provider:lane` and retained
+  `linux-docker-provider-lane-evidence/` so preview and exact package lanes
+  prove the Linux Docker provider before artifact publication while Windows
+  installed-user LabVIEW proof stays deferred
 - GitHub benchmark workflows are characterization-only experiment lanes and
   are not exact-release required checks
-- GitLab `windows_private_release_acceptance` now retains one bounded
+- GitLab `governed_runner_admission` and
+  `windows_private_release_acceptance` remain deferred Windows/LabVIEW proof
+  lanes behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`; they are required
+  before any Windows installed-user proof claim, but they are not required for
+  the active Linux/Docker validated preview claim
+- When enabled, GitLab `windows_private_release_acceptance` retains one bounded
   host-native retry when the shared Windows cleanup seam fails before proof
-  execution, preserving `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
-  running `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+  execution, preserving
+  `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, running
+  `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
   retaining `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
   and still failing closed after that single retry if the repo-owned recovery
   step cannot restore a clean proof surface
 - GitLab runner upkeep now uses repo-owned startup-receipt, doctor, apply, and
   live drift-assert surfaces:
-  `governed_runner_admission` runs
+  `ubuntu_docker_runner_admission` now runs in the `admission` stage for the
+  active Linux/Docker preview claim, while deferred `governed_runner_admission`
+  runs
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
-  in the `admission` stage before docs, assurance, test, package, and release
-  work can queue; `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
+  only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`;
+  `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
   and `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh` are the
   lane-local non-destructive doctor surfaces, and
   `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
@@ -489,12 +539,11 @@ Hosted automation governance is now retained explicitly:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh` now reconciles the
   live config back to that dual-concurrency contract, restarts the admitted
   service when needed, and writes the latest Linux startup receipt to
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`;
+  `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`;
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh` fails closed
-  unless the installed helper/service unit hashes, `concurrent = 2`,
-  `request_concurrency = 2`, admitted service fragment/user/working
-  directory, enabled/active service state, and one live configured Linux
-  runner process remain intact; and the admitted Windows-host wrapper
+  unless `concurrent = 2`, `request_concurrency = 2`, the admitted user-mode
+  service fragment and `ExecStart`, enabled/active service state, and one live
+  configured Linux runner process remain intact; and the admitted Windows-host wrapper
   for both lane assertions is `scripts/assertGovernedRunnerLanes.js` via
   `npm run gitlab:runner:assert`; the operator-only Windows recovery rehearsal
   wrapper is `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
@@ -524,23 +573,29 @@ Lane-specific CI and gate responsibilities:
 - `main`: protected exact-release branch; exact SemVer tags are cut only after
   merged `main` is green
 
-Public GitHub workflow responsibility matrix:
+Public GitHub admission matrix:
 
-- `Public Facade Package Preview / package-preview`
+- `Public Source Package Preview / public-source-package-preview`
   - owns `npm run compile`
   - owns `npm run test:design-contract`
   - owns preview VSIX packaging and preview-artifact upload
   - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
     `develop`, `main`, `release/*`, and `hotfix/*`
   - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
-- `Public Facade Linux Smoke / public-facade-linux-smoke`
+- `Public Linux Installed-User Smoke / public-linux-installed-user-smoke`
   - owns Docker Linux engine verification
   - owns `npm run public:smoke:linux`
   - owns retained smoke-evidence upload
   - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
     `develop`, `main`, `release/*`, and `hotfix/*`
   - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
-- neither public GitHub workflow uses a `feature/*` push lane
+- `Public Windows Installed-User Contract / public-windows-installed-user-contract`
+  - owns `npm run public:contract:windows-installed-user`
+  - owns Windows installed-user launcher/runtime-settings contract evidence
+  - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
+    `develop`, `main`, `release/*`, and `hotfix/*`
+  - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
+- none of the public GitHub admission workflows use a `feature/*` push lane
 
 Requirement-evolution discipline:
 

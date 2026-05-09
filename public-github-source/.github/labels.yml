@@ -1,0 +1,57 @@
+- name: community-validation
+  color: "0E8A16"
+  description: User-submitted Marketplace pre-release validation evidence.
+- name: marketplace-preview
+  color: "5319E7"
+  description: Report specific to the VS Code Marketplace pre-release channel.
+- name: validation:success
+  color: "0E8A16"
+  description: User reports a selected provider/year/bitness path worked.
+- name: validation:failure
+  color: "D93F0B"
+  description: User reports a selected provider/year/bitness path failed.
+- name: feature:not-implemented
+  color: "B60205"
+  description: Selectable path returned a not-yet-implemented runtime code.
+- name: error-code
+  color: "C5DEF5"
+  description: Report includes a stable VIHS_E runtime error code.
+- name: proof:packet-attached
+  color: "BFD4F2"
+  description: Report includes or references a vihs-validation-proof packet.
+- name: version:1.3.13
+  color: "F9D0C4"
+  description: Report targets the v1.3.13 public validation pre-release.
+- name: windows-labview
+  color: "1D76DB"
+  description: Windows host or Docker Desktop Windows-container LabVIEW report.
+- name: windows-docker-desktop
+  color: "0052CC"
+  description: Windows Docker Desktop switched to Windows containers.
+- name: proof:reported
+  color: "FBCA04"
+  description: User evidence received but not maintainer-reproduced.
+- name: proof:reproduced
+  color: "0E8A16"
+  description: Maintainer reproduced or retained the reported path.
+- name: proof:deferred
+  color: "D93F0B"
+  description: Evidence is insufficient or blocked while the feature remains selectable.
+- name: needs-triage
+  color: "E99695"
+  description: Report still needs initial classification.
+- name: needs-reproduction
+  color: "B60205"
+  description: Maintainer reproduction is required before proof status changes.
+- name: provider:host
+  color: "C2E0C6"
+  description: Local Windows LabVIEWCLI provider.
+- name: provider:docker
+  color: "BFDADC"
+  description: Docker provider.
+- name: labview:x64
+  color: "D4C5F9"
+  description: x64 LabVIEW request or report.
+- name: labview:x86
+  color: "F9D0C4"
+  description: x86 LabVIEW request or report.

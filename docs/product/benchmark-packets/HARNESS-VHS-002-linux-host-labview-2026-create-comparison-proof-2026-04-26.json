@@ -1,0 +1,187 @@
+{
+  "schema": "vi-history-suite/linux-host-labview-2026-create-comparison-proof@v1",
+  "packetId": "HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26",
+  "proofDate": "2026-04-26",
+  "recordedAt": "2026-04-26T22:36:27.859Z",
+  "sourceAuthority": {
+    "system": "gitlab",
+    "branch": "develop",
+    "baseCommit": "78ab92ba5f417f69f37e4dc9976f3085a74f120f"
+  },
+  "scope": {
+    "provider": "host",
+    "runtimeProvider": "host-native",
+    "engine": "labview-cli",
+    "operation": "CreateComparisonReport",
+    "platform": "linux",
+    "labviewVersion": "2026",
+    "labviewBitness": "x64",
+    "claim": "Linux host LabVIEW 2026 Community proof",
+    "doesNotClaim": "Windows installed-user LabVIEW proof"
+  },
+  "host": {
+    "os": "Ubuntu 25.10",
+    "kernel": "6.17.0-1017-oem",
+    "labviewExePath": "/usr/local/natinst/LabVIEW-2026-64/labview",
+    "labviewExeTarget": "labviewcommunity",
+    "labviewCliPath": "/usr/local/bin/LabVIEWCLI",
+    "labviewCliAlternatePath": "/usr/local/natinst/share/nilvcli/LabVIEWCLI",
+    "lvComparePath": "/usr/local/bin/LVCompare"
+  },
+  "installation": {
+    "installerBundlePath": "/home/ghostshadow/Downloads/ni-labview-2026-community-26.1.1_linux",
+    "repoPackage": "ni-labview-2026-noble-community",
+    "installedPackages": [
+      {
+        "name": "ni-labview-2026-community",
+        "version": "26.1.1.49170-0+f18"
+      },
+      {
+        "name": "labview-2026-community-exe",
+        "version": "26.1.1.49170-0+f18"
+      },
+      {
+        "name": "labview-2026-rte",
+        "version": "26.1.1.49170-0+f18"
+      },
+      {
+        "name": "ni-labview-command-line-interface",
+        "version": "26.1.0.49328-0+f176"
+      },
+      {
+        "name": "ni-labview-vicompare",
+        "version": "26.1.0.49387-0+f235"
+      },
+      {
+        "name": "libglu1-mesa",
+        "version": "9.0.2-1.1build1"
+      },
+      {
+        "name": "patchelf",
+        "version": "0.18.0-1.4"
+      }
+    ],
+    "localCompatibilityFixes": [
+      {
+        "description": "Installed libglu1-mesa to satisfy LabVIEW runtime graphics dependency.",
+        "evidence": "LabVIEWCLI --help and CloseLabVIEW completed after package installation."
+      },
+      {
+        "description": "Cleared executable stack marking on the LabVIEW runtime shared object for Ubuntu 25.10 compatibility.",
+        "target": "/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1",
+        "backup": "/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1.orig-execstack",
+        "postFixReadelf": "GNU_STACK RW"
+      }
+    ],
+    "packageIntegrity": {
+      "dpkgAudit": "clean",
+      "aptGetCheck": "clean"
+    }
+  },
+  "vihsRuntimeValidation": {
+    "proofStatus": "ready",
+    "implementationStatus": "implemented",
+    "errorCode": "VIHS_OK",
+    "settingsSource": "explicit-settings-file",
+    "selectedSettings": {
+      "provider": "host",
+      "labviewVersion": "2026",
+      "labviewBitness": "x64"
+    },
+    "validationOutcome": "ready",
+    "runtimeProvider": "host-native",
+    "runtimeEngine": "labview-cli",
+    "runtimeBlockedReason": null,
+    "candidateEvidence": [
+      {
+        "kind": "labview-exe",
+        "path": "/usr/local/natinst/LabVIEW-2026Q1-64/labview",
+        "exists": false
+      },
+      {
+        "kind": "labview-exe",
+        "path": "/usr/local/natinst/LabVIEW-2026-64/labview",
+        "exists": true,
+        "version": "2026",
+        "bitness": "x64"
+      },
+      {
+        "kind": "labview-cli",
+        "path": "/usr/local/bin/LabVIEWCLI",
+        "exists": true,
+        "bitness": "x64"
+      },
+      {
+        "kind": "labview-cli",
+        "path": "/usr/local/natinst/share/nilvcli/LabVIEWCLI",
+        "exists": true,
+        "bitness": "x64"
+      },
+      {
+        "kind": "lvcompare",
+        "path": "/usr/local/bin/LVCompare",
+        "exists": true
+      }
+    ],
+    "proofPacketSha256": "62eae85c28f44b267987b90b2bfa70a45ca67bc733b7405141878b515d562450",
+    "localProofPacketPath": "/tmp/vihs-labview-host-ready-kfAowD/proof/vihs-validation-proof.json"
+  },
+  "fixture": {
+    "repository": "https://github.com/ni/labview-icon-editor",
+    "viPath": "resource/plugins/lv_icon.vi",
+    "oldCommit": "ab94f6c4b375062492036c63a6dab7ea8824748a",
+    "oldCommitDate": "2025-06-29",
+    "newCommit": "8741bb08026c104100720c0ef48621e4ab7762fd",
+    "newCommitDate": "2026-02-24",
+    "viSignature": "LVIN"
+  },
+  "compareExecution": {
+    "command": "LabVIEWCLI -LogToConsole TRUE -LogFilePath /tmp/vihs-linux-host-compare-zwuDTB/labviewcli-create-comparison.log -OperationName CreateComparisonReport -VI1 /tmp/vihs-linux-host-compare-zwuDTB/lv_icon-old.vi -VI2 /tmp/vihs-linux-host-compare-zwuDTB/lv_icon-new.vi -ReportType HTML -ReportPath /tmp/vihs-linux-host-compare-zwuDTB/diff-report-lv_icon.vi.html -LabVIEWPath /usr/local/natinst/LabVIEW-2026-64/labview",
+    "exitCode": 0,
+    "timeoutSeconds": 180,
+    "result": "succeeded",
+    "reportFile": "diff-report-lv_icon.vi.html",
+    "reportSizeBytes": 214412,
+    "reportSha256": "637055a103b25ecc77e4e308a6d216fc7adab0e1741038502bb53f129e5eb864",
+    "reportAssetsDirectory": "diff-report-lv_icon.vi_files",
+    "reportAssetsDirectoryApproximateSize": "4.2 MB",
+    "reportAssetsDigestSha256": "1d091f24e656d0aa3d2c32f4f96f6a43b14f0f5582029160bcf97f533363d932",
+    "logSha256": "d1a130c91a78a938f64ac8573683916a2dd5e1facfe01d8e86d543c7a38604ce",
+    "logEvidence": [
+      "Using LabVIEW: \"/usr/local/natinst/LabVIEW-2026-64/labview\"",
+      "LabVIEW launched successfully.",
+      "Connection established with LabVIEW.",
+      "Report can be found at /tmp/vihs-linux-host-compare-zwuDTB/diff-report-lv_icon.vi.html",
+      "CreateComparisonReport operation succeeded."
+    ],
+    "postRunCleanup": {
+      "closeLabviewCommand": "LabVIEWCLI -OperationName CloseLabVIEW -LabVIEWPath /usr/local/natinst/LabVIEW-2026-64/labview -LogToConsole TRUE -Verbosity Detailed",
+      "closeLabviewExitCode": 0,
+      "labviewProcessesRemaining": false
+    }
+  },
+  "retainedArtifacts": {
+    "rawArtifactsRetainedLocallyOnly": true,
+    "compareRoot": "/tmp/vihs-linux-host-compare-zwuDTB",
+    "validationRoot": "/tmp/vihs-labview-host-ready-kfAowD",
+    "trackedPacketJson": "docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json",
+    "trackedPacketMarkdown": "docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md"
+  },
+  "boundaries": {
+    "linuxHostLabviewProofState": "admitted-local-maintainer-proof",
+    "windowsInstalledUserLabviewProofState": "community-deferred",
+    "linuxHostLabviewProofMayProveWindowsInstalledUserLabview": false,
+    "publicGitHubMutation": "not-performed",
+    "marketplaceMutation": "not-performed"
+  },
+  "localValidation": [
+    "npm run compile",
+    "npm exec -- vitest run tests/unit/comparisonRuntimeLocator.test.ts tests/unit/localRuntimeSettingsCli.test.ts",
+    "npm run test:design-contract",
+    "dpkg --audit",
+    "apt-get check"
+  ],
+  "requirementIds": [
+    "VHS-REQ-588"
+  ]
+}

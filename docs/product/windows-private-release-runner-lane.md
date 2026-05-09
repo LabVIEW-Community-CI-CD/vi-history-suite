@@ -2,22 +2,25 @@
 
 ## Purpose
 
-Retain the governed GitLab Windows shell-runner lane for the active Windows x64
-private-release contract on `develop`.
+Retain the governed GitLab Windows shell-runner lane as a deferred Windows x64
+private-release proof contract.
 
-This lane does not claim exact/public release readiness by itself. It exists so
-the repo can retain one repeatable Windows-host receipt for the canonical
+This lane does not claim exact/public release readiness by itself, and it is
+not part of the active Linux/Docker validated preview gate. It exists so the
+repo can retain one repeatable Windows-host receipt for the canonical
 installed-user-equivalent compare scenario on `resource/plugins/lv_icon.vi`
-without depending on ad hoc local desktop memory.
+once a real Windows/LabVIEW host exists, without depending on ad hoc local
+desktop memory.
 
 It is intentionally separate from the Linux assurance runner lane documented in
 [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md).
 
 ## Governing Surfaces
 
-- fail-fast GitLab admission job before docs, assurance, test, and packaging:
+- deferred GitLab admission job before docs, assurance, test, and packaging
+  when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`:
   `governed_runner_admission`
-- GitLab job: `windows_private_release_acceptance`
+- deferred GitLab job: `windows_private_release_acceptance`
 - governed CLI: `npm run acceptance:windows:private-release`
 - governed script: `scripts/runWindowsPrivateReleaseAcceptance.js`
 - retained artifact root: `windows-private-release-evidence/`
@@ -30,8 +33,8 @@ It is intentionally separate from the Linux assurance runner lane documented in
 
 ## Active Scenario
 
-The lane retains the Windows x64 private-release scenario already admitted in
-the tracked packet:
+When enabled on a real Windows/LabVIEW host, the lane retains the Windows x64
+private-release scenario already admitted in the tracked packet:
 
 - harness: `HARNESS-VHS-002`
 - upstream repo: `https://github.com/ni/labview-icon-editor.git`
@@ -58,7 +61,7 @@ parallel UI-automation stack.
 
 ## Runner Identity
 
-Tracked project runner metadata:
+Tracked historical project runner metadata:
 
 - runner id: `52775990`
 - description: `ghost`
@@ -91,7 +94,11 @@ admission shape.
 
 Current host activation state:
 
-- registered on the project as runner `ghost` (`52775990`)
+No Windows/LabVIEW host is available on the current Ubuntu-only machine. The
+active develop/package preview claim is Linux/Docker validated only, and this
+lane is deferred unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`.
+
+- historical registration on the project as runner `ghost` (`52775990`)
 - launched at user logon by scheduled task `VIHS Governed Runner Lanes`
 - scheduled task bootstrap surface:
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`
@@ -338,7 +345,7 @@ The job shall retain:
 - the latest Windows startup receipt at
   `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
 - the latest Linux startup receipt observed by the paired helper at
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  `$HOME/.gitlab-runner/receipts/linux-assurance-startup/latest.json`
 - fail-fast admission evidence when GitLab runs the governed doctor surface:
   `governed-runner-admission-evidence/runner-doctor.json`
 - fail-fast admission summary when GitLab runs the governed doctor surface:

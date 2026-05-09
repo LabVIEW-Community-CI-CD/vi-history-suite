@@ -1,4 +1,4 @@
-name: Public Facade Package Preview
+name: Public Source Package Preview
 
 on:
   workflow_dispatch:
@@ -10,8 +10,9 @@ on:
       - 'hotfix/**'
     paths:
       - '.devcontainer/**'
-      - '.github/workflows/public-facade-package-preview.yml'
-      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.github/workflows/public-source-package-preview.yml'
+      - '.github/workflows/public-linux-installed-user-smoke.yml'
+      - '.github/workflows/public-windows-installed-user-contract.yml'
       - '.vscode/**'
       - 'README.md'
       - 'INSTALL.md'
@@ -32,8 +33,9 @@ on:
       - main
     paths:
       - '.devcontainer/**'
-      - '.github/workflows/public-facade-package-preview.yml'
-      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.github/workflows/public-source-package-preview.yml'
+      - '.github/workflows/public-linux-installed-user-smoke.yml'
+      - '.github/workflows/public-windows-installed-user-contract.yml'
       - '.vscode/**'
       - 'README.md'
       - 'INSTALL.md'
@@ -57,7 +59,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  package-preview:
+  public-source-package-preview:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout

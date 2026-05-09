@@ -76,7 +76,7 @@ function createPublicDocsContinuousIntegrationSteps(options = {}) {
         'tests/unit/packageManifest.test.ts',
         'tests/unit/publicDevcontainerSurface.test.ts',
         'tests/unit/publicDocsContinuousIntegration.test.ts',
-        'tests/unit/publicFacadeLinuxSmoke.test.ts',
+        'tests/unit/publicLinuxInstalledUserSmoke.test.ts',
         'tests/unit/publicForkOwnerProcedureDocs.test.ts',
         'tests/unit/publicSurfaceBoundaryDocs.test.ts',
         'tests/unit/repoAgnosticWorkflowDocs.test.ts'

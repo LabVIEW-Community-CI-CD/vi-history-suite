@@ -26,7 +26,8 @@ const PUBLIC_DESIGN_CONTRACT_TESTS = [
   'tests/unit/preparePublicTestFixtureScript.test.ts',
   'tests/unit/publicRepoPackageSurface.test.ts',
   'tests/unit/publicDevcontainerSurface.test.ts',
-  'tests/unit/publicFacadeLinuxSmoke.test.ts',
+  'tests/unit/publicLinuxInstalledUserSmoke.test.ts',
+  'tests/unit/publicWindowsInstalledUserContract.test.ts',
   'tests/unit/runLinuxIntegrationHost.test.ts',
   'tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
 ];
@@ -60,7 +61,8 @@ const MANAGED_ROOT_PATHS = [
 
 const AUTHORITY_COPY_PATHS = [
   '.devcontainer/devcontainer.json',
-  '.github/workflows/public-facade-linux-smoke.yml',
+  '.github/workflows/public-linux-installed-user-smoke.yml',
+  '.github/workflows/public-windows-installed-user-contract.yml',
   '.vscode/extensions.json',
   '.vscode/launch.json',
   '.vscode/tasks.json',
@@ -79,7 +81,8 @@ const AUTHORITY_COPY_PATHS = [
   'scripts/publicRepoCloneCore.js',
   'scripts/preparePublicTestFixture.js',
   'scripts/runPinnedVsce.js',
-  'scripts/runPublicFacadeLinuxSmoke.js',
+  'scripts/runPublicLinuxInstalledUserSmoke.js',
+  'scripts/runPublicWindowsInstalledUserContract.js',
   'scripts/runLinuxIntegrationHost.js',
   'src',
   'tests/integration',
@@ -89,7 +92,9 @@ const AUTHORITY_COPY_PATHS = [
   'tests/unit/preparePublicRepoCloneScript.test.ts',
   'tests/unit/preparePublicTestFixtureScript.test.ts',
   'tests/unit/publicDevcontainerSurface.test.ts',
-  'tests/unit/publicFacadeLinuxSmoke.test.ts',
+  'tests/unit/publicLinuxInstalledUserSmoke.test.ts',
+  'tests/unit/publicWindowsInstalledUserContract.test.ts',
+  'tests/unit/localRuntimeSettingsCli.test.ts',
   'tests/unit/runLinuxIntegrationHost.test.ts',
   'tests/unit/linuxContainerRuntimeExecutionSurface.test.ts',
   'tsconfig.integration.json',
@@ -99,10 +104,16 @@ const AUTHORITY_COPY_PATHS = [
 
 const TEMPLATE_COPY_PATHS = [
   '.github/ISSUE_TEMPLATE/bug-report.yml',
+  '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
   '.github/ISSUE_TEMPLATE/config.yml',
   '.github/ISSUE_TEMPLATE/feature-request.yml',
+  '.github/ISSUE_TEMPLATE/feature-not-implemented.yml',
   '.github/ISSUE_TEMPLATE/labview-version-support.yml',
-  '.github/workflows/public-facade-package-preview.yml',
+  '.github/ISSUE_TEMPLATE/validation-failure.yml',
+  '.github/ISSUE_TEMPLATE/validation-success.yml',
+  '.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml',
+  '.github/labels.yml',
+  '.github/workflows/public-source-package-preview.yml',
   'CONTRIBUTING.md',
   'INSTALL.md',
   'README.md',
@@ -262,6 +273,8 @@ function renderPublicPackageManifest(authorityManifest = readAuthorityPackageMan
     'test:design-contract': `npm exec -- vitest run ${PUBLIC_DESIGN_CONTRACT_TESTS.join(' ')}`,
     test: 'npm run test:design-contract',
     'public:smoke:linux': authorityManifest.scripts['public:smoke:linux'],
+    'public:contract:windows-installed-user':
+      authorityManifest.scripts['public:contract:windows-installed-user'],
     'public:fixture:icon-editor': authorityManifest.scripts['public:fixture:icon-editor'],
     'package:audit': authorityManifest.scripts['package:audit'],
     package: 'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'

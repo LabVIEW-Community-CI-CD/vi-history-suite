@@ -8,12 +8,11 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` carries tagged `v1.3.8`, the last fully closed public
-GitHub and VS Code Marketplace baseline remains `v1.3.7`, public GitHub
-release `312768592` for `v1.3.8` is retained as immutable zero-asset
-historical incident evidence, and `release/1.3.9` is now the active candidate
-to promote the installed `vihs` launcher fix through the asset-first public
-GitHub publisher.
+Authority exact `main` now carries tagged `v1.3.9`, public GitHub and VS Code
+Marketplace both publish `1.3.9`, public GitHub release `312768592` for
+`v1.3.8` remains retained as immutable zero-asset historical incident
+evidence, and later exact lines must reopen through normal GitFlow from this
+retained closed baseline.
 
 ## Current Exact Closeout State
 
@@ -29,29 +28,54 @@ GitHub publisher.
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.8`
-- current `main` package line: `1.3.8`
-- current `develop` package line: `1.3.8`
-- active exact release candidate line on `develop`: `1.3.9`
-- active release-candidate branch: `release/1.3.9`
+- current exact release line: `v1.3.9`
+- current `main` package line: `1.3.9`
+- current `develop` package line: `1.3.14`
+- active exact release candidate line on `develop`: `v1.3.14`
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- `release/1.3.9` remains governed by the same GitFlow and publication gates
-  before any public GitHub or Marketplace mutation
+- the active exact candidate line is `v1.3.14`; later exact lines must reopen
+  through the same GitFlow and publication gates from `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - public GitHub exact transaction verification package script:
   `npm run public:github:exact:transaction:verify`
-- chosen bump: `patch`
-- rationale: authority exact `v1.3.8` is already tagged on `main` while public
-  GitHub release `312768592` is retained as immutable zero-asset historical
-  incident evidence and VS Code Marketplace still serves `1.3.7`
-- rationale: `release/1.3.9` opens from `develop` as the governed patch line
-  for the installed Windows `vihs` launcher fix through the asset-first public
-  GitHub publisher
+- chosen bump: patch
+- active Marketplace public validation preview line: `1.3.13`
+- Marketplace public validation preview status: published and verified for
+  `1.3.13`
+- Marketplace public validation preview last updated:
+  `2026-04-27T04:24:05.457Z`
+- rationale: authority exact `v1.3.9` remains tagged on `main`, public
+  GitHub release `312994104` is published with exact assets, and VS Code
+  Marketplace serves regular `1.3.9`
+- rationale: `develop` now carries patch candidate package line `1.3.14` for
+  release-readiness consolidation after the published `1.3.13` public
+  validation pre-release
+- rationale: the Vagrant Windows VSIX acceptance lane now has a repo-owned
+  evidence assertion contract without expanding the Windows Docker Desktop
+  proof claim
+- rationale: blocked historical `v1.3.8` incident evidence remains retained,
+  and the active exact candidate line is `v1.3.14`
+
+## Current Linux/Docker Preview Claim
+
+- active governed develop/package claim: Linux/Docker validated preview
+- verified on this machine: Ubuntu self-hosted GitLab runner, Linux Docker
+  engine, Linux assurance runner, docs workbench, source build, tests, and
+  preview VSIX packaging
+- deferred proof: native Windows installed extension behavior, native Windows
+  LabVIEW host execution, Docker Desktop Windows-container execution, and
+  `windows_private_release_acceptance`
+- public GitHub production mutation: not admitted by this claim
+- VS Code Marketplace mutation: not admitted by this claim
+- Windows installed-user claim rule: do not claim Windows installed-user proof
+  until a real Windows/LabVIEW host runner exists and the deferred Windows lane
+  produces retained evidence
 
 ## Branch Model
 
@@ -87,17 +111,26 @@ Runner lanes:
   `repo-standards-review` assurance-workbench `:main` image before each
   assurance job and is governed by
   [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)
-- `windows-private-release`: tagged Windows current-user shell-runner lane for
-  native Windows host plus Windows-container proof; it is governed by
+- `ubuntu-docker-preview`: local Ubuntu shell-runner admission lane for the
+  active Linux/Docker validated preview claim; it retains Docker, Node, npm, and
+  runner-readiness evidence before later stages run
+- `windows-private-release`: deferred tagged Windows current-user shell-runner
+  lane for native Windows host plus Windows-container proof; it is governed by
   [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
+  but does not run unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
+- `vagrant-windows-vsix-acceptance`: local Ubuntu shell-runner lane for
+  VirtualBox/Vagrant Windows 11 + LabVIEW 2026 VSIX acceptance; it is governed
+  by
+  [vagrant-windows-acceptance-runner-lane.md](./vagrant-windows-acceptance-runner-lane.md)
+  and keeps the golden VM separate from the disposable CI VM
 
 Runner operator hardening:
 
 - `linux-assurance`: admitted config path
-  `~/.gitlab-runner/config.toml`, top-level `concurrent = 2`, per-runner
-  `request_concurrency = 2`, and steady-state lifecycle owned by the admitted
-  Linux assurance distro `systemd` unit `vihs-linux-assurance-runner.service`,
-  defaulting to `Ubuntu-24.04`, with repo-owned host
+  `~/.gitlab-runner/config.toml`, host user `sergio`, runner binary
+  `/home/sergio/.local/bin/gitlab-runner`, top-level `concurrent = 2`,
+  per-runner `request_concurrency = 2`, and steady-state lifecycle owned by
+  user-mode `systemd` unit `gitlab-runner.service`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
   `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`,
@@ -107,19 +140,16 @@ Runner operator hardening:
   `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
   and `scripts/assertGovernedRunnerLanes.js` via
   `npm run gitlab:runner:assert`; the Linux apply surface first normalizes
-  both concurrency facts and then fails closed unless the admitted `systemd`
-  service is both enabled and active after apply; the Windows bootstrap now
-  retries the Linux helper as a bounded post-reset readiness gate; the helper
-  itself reconciles the live config back to `concurrent = 2` plus
-  `request_concurrency = 2`, restarts the admitted service when needed, and
-  writes a machine-readable startup receipt under
-  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`; the
-  Linux doctor surface reports current concurrency, service, process, and
-  receipt facts; and the Linux assertion surface fails closed unless the
-  installed helper and service unit still match the repo asset pack,
-  `concurrent = 2` plus `request_concurrency = 2` are still present, the
-  admitted fragment path/user/working directory remain exact, the service is
-  still enabled and active, and exactly one configured runner process is live
+  both concurrency facts and then fails closed unless the admitted service is
+  both enabled and active after apply; the helper itself reconciles the live
+  config back to `concurrent = 2` plus `request_concurrency = 2`; the Linux
+  doctor surface reports current concurrency, user-service, runner binary,
+  process, and optional receipt facts; and the Linux assertion surface fails
+  closed unless `concurrent = 2` plus `request_concurrency = 2` are still
+  present, user-mode `gitlab-runner.service` is enabled and active, the admitted
+  `ExecStart` still points at `/home/sergio/.local/bin/gitlab-runner run
+  --config /home/sergio/.gitlab-runner/config.toml`, and exactly one configured
+  runner process is live
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
@@ -160,22 +190,75 @@ Runner operator hardening:
   under `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`, and
   the Windows doctor surface reports the task, runner-process, startup-receipt,
   and Linux-helper receipt facts without mutating host state
+- `vagrant-windows-vsix-acceptance`: admitted host user `sergio` under
+  `/home/sergio`, Linux shell executor, runner description
+  `local-vagrant-windows-acceptance`, tags
+  `linux,x64,virtualbox,vagrant,private-release`, Vagrant box
+  `vihs/win11-labview2026`, golden VM
+  `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
+  serialized GitLab `resource_group: vihs-windows-vagrant`, and isolated
+  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host uses
+  `/run/media/sergio/Data/vihs-vagrant` as the large-drive storage root for
+  `VAGRANT_HOME`, box output/cache, export work, and the VirtualBox default
+  machine folder; runner creation uses the `POST /user/runners` API to set
+  tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
+  registers the local shell runner manager with the returned `glrt-`
+  authentication token; the repo-owned disposable cleanup surface
+  `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
+  fails when the disposable CI VM is running, deletes only a stopped
+  `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
+  that point at the governed CI VM folder, and clears active `.vagrant-ci`
+  state before import; the repo-owned host doctor
+  `scripts/vagrant/doctor-vagrant-host.sh` checks Vagrant,
+  VirtualBox, Docker, Node, npm, `gitlab-runner`, the registered box, golden VM
+  power state, stale CI VM state, stale inaccessible disposable registry
+  entries, real `box.ovf` payload presence, and `vagrant-reload`, and verifies
+  that VirtualBox imports target the large-drive machine folder with enough
+  free space; the repo-owned refresh surface
+  `scripts/vagrant/refresh-golden-box.sh` updates the local box only when
+  `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, and fails early when the export work
+  root or box output directory lacks enough free space unless
+  `VIHS_VAGRANT_BOX_WORKDIR` or `VIHS_VAGRANT_BOX_FILE` points at a larger
+  filesystem; and the guest cold-prep
+  provisioner `vagrant/provision/prepare-cold-labview.ps1` fails closed unless
+  stale `LabVIEW`, `LabVIEWCLI`, and `LVCompare` processes plus VI Server port
+  `3363` are cleared before acceptance; CI removes ignored legacy
+  `vagrant/.vagrant` state before boot, and the cleanup/doctor surfaces fail
+  closed when any active Vagrant machine ID points at a VM other than
+  `vihs-ci-win11`
 
 Job ownership:
 
-- `governed_runner_admission`: blocking Windows-host `admission` stage lane on
-  merge requests, governed branch lanes, and exact tags; it runs
+- `ubuntu_docker_runner_admission`: blocking Linux/Docker `admission` stage lane
+  on merge requests, governed branch lanes, and exact tags; it retains
+  `governed-runner-admission-evidence/` with runner, Docker, Node, npm, and
+  explicit Windows-proof-deferred facts before docs, assurance, test, package,
+  and release jobs run
+- `linux_docker_provider_lane`: blocking Linux Docker Desktop/Docker Engine
+  provider lane on merge requests, governed branch lanes, and exact tags; it
+  runs `npm run linux:docker:provider:lane`, retains
+  `linux-docker-provider-lane-evidence/`, proves the persisted
+  `docker` / `2026` / `x64` settings bundle validates as
+  `runtimeProvider=linux-container` with `runtimeEngine=labview-cli`, and
+  records Windows/LabVIEW installed-user proof as community/deferred evidence
+- `governed_runner_admission`: deferred Windows-host `admission` stage lane; it
+  runs only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true` and still uses
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
-  so docs, assurance, test, package, and release jobs fail fast on post-reset
-  runner drift instead of waiting behind missing or degraded runner capacity
+  when a real Windows/LabVIEW host runner exists
 - `public_exact_pretag_proof`: blocking pre-tag public-facade proof lane on
   merge requests, `develop`, `main`, `release/*`, and `hotfix/*`; it runs
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
   so any later exact reopen fails closed before tag creation when the promoted
   public facade still diverges from authority truth
-- `docs_link_check`, `docs_continuous_integration`,
-  `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
-  docs integrity on merge requests, governed branch lanes, and exact tags
+- `docs_link_check`: blocking README/docs link integrity lane on merge
+  requests, governed branch lanes, and exact tags; it runs `lychee` from the
+  pinned Alpine image
+  `lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00`
+  so the lane no longer depends on drift-prone `lycheeverse/lychee:latest`
+  images that can outpace the shared Linux runner glibc baseline
+- `docs_continuous_integration`, `docs_public_continuous_integration`,
+  `docs_internal_continuous_integration`: docs integrity on merge requests,
+  governed branch lanes, and exact tags
 - `assurance_release_gate`: blocking Linux-assurance lane on merge requests,
   governed branch lanes, and exact tags; it stages the bounded repo scope,
   pulls the latest published
@@ -194,11 +277,13 @@ Job ownership:
   packaging
 - `test_extension`: compile, test, and coverage gate on merge requests,
   governed branch lanes, and exact tags
-  - `windows_private_release_acceptance`: tagged Windows shell-runner lane that
-    retains the canonical Windows x64 private-release acceptance evidence for
-    `resource/plugins/lv_icon.vi` on both host-native and Windows-container
-    providers before preview or exact packaging continues; when the host-native
-    proof exits at the shared Windows cleanup seam, it retains
+  - `windows_private_release_acceptance`: deferred tagged Windows shell-runner
+    lane that retains the canonical Windows x64 private-release acceptance
+    evidence for `resource/plugins/lv_icon.vi` on both host-native and
+    Windows-container providers when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`;
+    it is required before any Windows installed-user proof claim, but it is not
+    required for the active Linux/Docker validated preview claim. When the
+    host-native proof exits at the shared Windows cleanup seam, it retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
     `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
     retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
@@ -211,21 +296,46 @@ Job ownership:
     unless the host starts clean, seeds one headless LabVIEW contamination,
     runs that same recovery script, and refreshes
     `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- `vagrant_windows_vsix_acceptance`: blocking Vagrant Windows VSIX acceptance
+  lane on merge requests, governed branch lanes, and exact tags; it runs on
+  `linux,x64,virtualbox,vagrant,private-release`, serializes with
+  `resource_group: vihs-windows-vagrant`, declares `needs: []` so it can start
+  independently of the separate Linux assurance runner lane, packages the VSIX,
+  stages it under `vagrant/shared/`, optionally refreshes the local box when
+  `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
+  disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
+  autologon creates the interactive LabVIEW desktop session while clone-local
+  WinRM network/firewall readiness remains available for Vagrant, runs the
+  guest cold-prep provisioner, runs acceptance, validates the latest acceptance
+  manifest, cold-start markers, host-native LabVIEWCLI facts, and generated
+  report output through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
+  `vagrant/evidence/`; this job pins
+  `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
+  machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large
+  Windows box and disposable VM clone do not land on the root filesystem; this
+  is Vagrant VSIX
+  acceptance evidence, not a substitute for the deferred native Windows x64
+  private-release and Windows-container proof lane
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
   exact tags; it now depends on the blocking Linux assurance lanes
   `assurance_release_gate`, `assurance_26514_authority`,
   `assurance_requirements_quality`, and
   `assurance_external_user_information`, plus `test_extension` and
-  `windows_private_release_acceptance`, and there is still no generic
-  `feature/*` push lane
+  `linux_docker_provider_lane`, and now waits for
+  `vagrant_windows_vsix_acceptance`; the deferred
+  `windows_private_release_acceptance` need remains optional unless explicitly
+  enabled, and there is still no generic `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
 - `release_extension`: exact-version release lane on exact tags only, now
   blocked on the same blocking Linux assurance lanes, `test_extension`, and
-  `windows_private_release_acceptance`
+  `linux_docker_provider_lane`, plus `vagrant_windows_vsix_acceptance`; any
+  exact package produced without the deferred Windows private-release lane
+  remains a Linux/Docker plus Vagrant-VSIX validated artifact and cannot be used
+  as native Windows installed-user proof
 
 Design-gate boundary:
 
@@ -246,20 +356,27 @@ Protection semantics:
 
 - protected branches: `main`, `develop`
 - named required checks:
-  - `package-preview`
-  - `public-facade-linux-smoke`
+  - `public-source-package-preview`
+  - `public-linux-installed-user-smoke`
+  - `public-windows-installed-user-contract`
 
 Workflow ownership:
 
-- `Public Facade Package Preview`
+- `Public Source Package Preview`
   - owns compile, `test:design-contract`, preview VSIX packaging, and preview
     artifact upload
   - admits bounded `push` on `develop`, `main`, `release/*`, and `hotfix/*`
   - admits bounded `pull_request` into `develop` and `main`
   - uses per-workflow/per-ref concurrency
-- `Public Facade Linux Smoke`
+- `Public Linux Installed-User Smoke`
   - owns Docker Linux engine verification, `public:smoke:linux`, and retained
     smoke-evidence upload
+  - admits bounded `push` on `develop`, `main`, `release/*`, and `hotfix/*`
+  - admits bounded `pull_request` into `develop` and `main`
+  - uses per-workflow/per-ref concurrency
+- `Public Windows Installed-User Contract`
+  - owns `public:contract:windows-installed-user` and retained Windows
+    installed-user contract evidence
   - admits bounded `push` on `develop`, `main`, `release/*`, and `hotfix/*`
   - admits bounded `pull_request` into `develop` and `main`
   - uses per-workflow/per-ref concurrency
@@ -295,4 +412,6 @@ When hosted automation truth changes, update together:
 - this hosted governance package
 - `docs/product/windows-private-release-runner-lane.md`
 - `docs/product/linux-assurance-runner-lane.md`
+- `docs/product/vagrant-windows-acceptance-runner-lane.md`
 - affected workflow YAML
+- `docker/docs-authoring/Dockerfile`

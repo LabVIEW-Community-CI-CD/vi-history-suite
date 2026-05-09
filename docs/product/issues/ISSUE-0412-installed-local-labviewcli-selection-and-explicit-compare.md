@@ -13,16 +13,17 @@ Active post-release issue.
 
 Activation facts:
 
-- the exact released installed extension still uses the Docker-only contract
-  retained under `ISSUE-0410`
-- `TRANCHE-016` is active for replacing that installed-user contract on
-  Windows with host-default local `LabVIEWCLI` plus one bounded expert Docker
-  provider
+- exact `v1.3.9` now publishes the host-default Windows local `LabVIEWCLI`
+  installed-user contract with one bounded expert Docker provider, while
+  `ISSUE-0410` remains the historical Docker-only baseline
+- `TRANCHE-016` is active for retaining and hardening that published
+  installed-user contract on Windows rather than reopening the older
+  Docker-only default
 - Docker is no longer the default installed-user destination for this
   surface; it survives only as a generated-CLI-selected expert path
-- the current branch now lands the generated settings CLI, exact Windows
+- the released line now includes the generated settings CLI, exact Windows
   host-runtime preflight, and explicit compare-preflight workflow for that
-  replacement contract
+  published contract
 - current real-host x64 evidence now closes the remaining control-plane gap
   for persisted host validation: the generated settings CLI and runtime
   validation surface admit the canonical Windows mixed-bitness host bundle in
@@ -34,15 +35,17 @@ Activation facts:
   retained host truth is a generated report on `lv_icon.vi` under the same
   mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner snapshot
   and `LabVIEW.exe` observed at exit
-- Windows x86 / 32-bit LabVIEW remains out of scope for the active `v1.3.0`
-  release, and any retained x86 host evidence is characterization only
+- Windows x86 / 32-bit LabVIEW remains out of scope for the published
+  host-default contract, and any retained x86 host evidence is
+  characterization only
 - historical released `repo-standards-review` `v0.2.9` compliance closeout is
-  retained for this branch implementation, and the current outer assurance
+  retained for this released contract, and the current outer assurance
   lane now uses the published `repo-standards-review`
   assurance-workbench `:main` image while `v0.2.18` remains the latest tagged
   release
-- the exact released line is still Docker-only until that branch
-  implementation is published and rerun through public acceptance
+- the exact released line is no longer Docker-only; the host-default
+  `LabVIEWCLI` contract is already published and the explicit
+  runtime-provider public-acceptance gate is closed
 
 Round 1 is retained in this file so subsequent rounds can continue from git
 history instead of chat memory.
@@ -67,8 +70,8 @@ history instead of chat memory.
 
 ## Non-Goals
 
-- claiming the current released package already implements the replacement
-  contract before the branch implementation is published
+- reopening the historical Docker-only baseline as though it were still the
+  current exact released installed-user contract
 - expanding the installed-user contract into path-picking, direct
   image-family selection, or a general panel-side provider picker
 - shipping a prebuilt external settings CLI payload inside the VSIX
@@ -113,39 +116,41 @@ history instead of chat memory.
 
 ## Current Active Slice
 
-- keep the current released Docker-only installed contract explicit until the
-  branch replacement is truthfully published
-- keep the private-release proof focus on Windows x64 host and
-  Windows-container lanes only for the active `v1.3.0` candidate; Windows x86
-  / 32-bit LabVIEW remains out of scope for that release and any retained x86
-  proof is later characterization only
-- keep WSL out of the active Windows x64 private-release contract: the first
-  admission surfaces are native Windows host proof and Docker Desktop
+- retain exact `v1.3.9` as the truthful released host-default Windows local
+  `LabVIEWCLI` contract with bounded expert Docker, while keeping
+  `ISSUE-0410` explicit only as historical Docker-only baseline evidence
+- keep the Windows proof focus on deferred Windows x64 host and
+  Windows-container lanes; Windows x86 / 32-bit LabVIEW remains out of scope for
+  any Windows installed-user claim and any retained x86 proof is later
+  characterization only
+- keep WSL out of the Windows x64 proof contract: deferred Windows admission
+  surfaces require native Windows host proof and Docker Desktop
   Windows-container proof on the same Windows machine
-- treat standards-compliance refactor work on this branch as historically
+- treat standards-compliance refactor work on this released contract as
+  historically
   closed under the retained released `repo-standards-review` `v0.2.9`
   closeout and currently audited against the published
   `repo-standards-review` assurance-workbench `:main` lane unless a later
   rolling-lane audit fails; keep `v0.2.18` as the latest tagged release when
   exact released reproduction is needed
-- keep the installed manifest/settings slice truthful by exposing
+- keep the installed manifest/settings contract truthful by exposing
   `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
   `viHistorySuite.labviewBitness`
-- prove the generated settings CLI through first-use launcher materialization
+- retain generated settings CLI proof through first-use launcher materialization
   plus current-host launcher execution against a temporary settings file
-- prove the explicit Windows no-`--settings-file` target under a disposable
+- retain the explicit Windows no-`--settings-file` target proof under a disposable
   `APPDATA\\Code\\User\\settings.json`
-- close the real-host x64 validation contradiction first: persisted
-  `host` / `2026` / `x64` settings must stop failing with
-  `labview-cli-not-found-for-bitness` when the canonical host resolves x64
-  `LabVIEW.exe` plus the installed x86 `LabVIEWCLI.exe`
+- retain the closed real-host x64 validation truth: persisted
+  `host` / `2026` / `x64` settings now resolve the canonical x64
+  `LabVIEW.exe` plus installed x86 `LabVIEWCLI.exe` bundle on the admitted
+  Windows host
 - keep the retained `HARNESS-VHS-002` x64 host-only timeout receipt explicit:
   the first real-host proof reached `ready-for-runtime` on `lv_icon.vi` with
   the admitted mixed-bitness bundle, timed out after `180000ms`, and remains
   retained as historical under-timed evidence rather than active branch truth;
   the current retained host proof is the `300000ms` rerun that generated the
   report and observed `LabVIEW.exe` at exit
-- retain the current Windows x64 proof receipts as the active branch truth:
+- retain the current Windows x64 proof receipts as the active released truth:
   `.cache/private-release/1.3.0/windows-x64-host/` proves the native host lane
   and `.cache/private-release/1.3.0/windows-x64-container/` proves the Docker
   Desktop Windows-container lane on the same machine
@@ -159,10 +164,11 @@ history instead of chat memory.
   real user-profile VS Code settings target while Code is already running is
   not yet end-to-end proven, even though probe-path fail-closed safe-restore is
   now covered
-- execute the governed follow-on branch sequence for that seam through
+- execute the governed follow-on maintenance sequence for that seam through
   [ISSUE-0414 Runtime-Provider CLI Live-Session Proof Roadmap](./ISSUE-0414-runtime-provider-cli-live-session-proof-roadmap.md)
-- keep packaged/public docs on the exact released Docker-only baseline until
-  the replacement contract is truthfully publishable
+- keep packaged/public docs on the published host-default local `LabVIEWCLI`
+  contract while retaining the Docker-only line only as historical baseline
+  evidence where reader surfaces still need that context
 - retain the historical branch-transition packet explicitly in
   [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
 - retain the runtime-provider public-acceptance gate record explicitly in

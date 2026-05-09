@@ -10,7 +10,7 @@ function readText(relativePath: string): string {
 }
 
 describe('public facade boundary docs', () => {
-  it('keeps the public source publication boundary explicit after the exact v1.3.7 GitHub release', () => {
+  it('keeps the public source publication boundary explicit after the exact v1.3.9 GitHub release', () => {
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
     const publicSourceMap = readText('docs/product/public-github-source-authority-map.md');
@@ -24,17 +24,50 @@ describe('public facade boundary docs', () => {
     expect(releaseProcedure).toContain('public-github-source-authority-map.md');
     expect(releaseProcedure).toContain('public:source:promote');
     expect(publicSourceMap).toContain('public GitHub source repo only');
-    expect(publicSourceMap).toContain('Exact public `main` now publishes the exact released `v1.3.7` source line');
-    expect(publicSourceMap).toContain('GitHub release record for `v1.3.7` is now');
-    expect(publicSourceMap).toContain('VS Code Marketplace still remains on `1.3.0`');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `704e629`');
-    expect(publicSourceLedger).toContain('Public source v1.3.7 exact source publication');
-    expect(publicSourceLedger).toContain('704e629');
-    expect(publicSourceLedger).toContain('ab293d5');
+    expect(publicSourceMap).toContain(
+      'Exact public `main` now publishes the exact released `v1.3.9` source line'
+    );
+    expect(publicSourceMap).toContain('the separate GitHub release record for `v1.3.9` is now');
+    expect(publicSourceMap).toContain('VS Code Marketplace now serves `1.3.9`');
+    expect(publicSourceMap).toContain('Marketplace community-validation intake templates and labels');
+    expect(publicSourceMap).toContain('protected-branch PR');
+    expect(publicSourceMap).toContain('b56fde1');
+    expect(publicSourceMap).toContain('220111e');
+    expect(publicSourceMap).toContain('public PR #68');
+    expect(publicSourceMap).toContain('ce6dbd0');
+    expect(publicSourceMap).toContain('public PR #60');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `220111e`');
+    expect(publicSourceLedger).toContain('Public source v1.3.9 exact source publication');
+    expect(publicSourceLedger).toContain('Public source v1.3.10 community-validation intake publication');
+    expect(publicSourceLedger).toContain('Public source v1.3.11 canonical Docker fixture docs promotion');
+    expect(publicSourceLedger).toContain('Public source v1.3.13 Windows Docker Desktop intake promotion');
+    expect(publicSourceLedger).toContain('fb0ef2b');
+    expect(publicSourceLedger).toContain('b56fde1');
+    expect(publicSourceLedger).toContain('ce6dbd0');
+    expect(publicSourceLedger).toContain('220111e');
+    expect(publicSourceLedger).toContain('Marketplace mutation: not performed');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "704e629"');
-    expect(publicSourceLedgerJson).toContain('"id": "public-source-v1-3-7-exact-source-publication"');
-    expect(publicSourceLedgerJson).toContain('"repoCommit": "704e629"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "220111e"');
+    expect(publicSourceLedgerJson).toContain('"id": "public-source-v1-3-9-exact-source-publication"');
+    expect(publicSourceLedgerJson).toContain(
+      '"id": "public-source-v1-3-10-community-validation-intake-publication"'
+    );
+    expect(publicSourceLedgerJson).toContain(
+      '"id": "public-source-v1-3-11-canonical-docker-fixture-docs-promotion"'
+    );
+    expect(publicSourceLedgerJson).toContain(
+      '"id": "public-source-v1-3-13-windows-docker-desktop-intake-promotion"'
+    );
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "fb0ef2b"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "b56fde1"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "ce6dbd0"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "220111e"');
+    expect(publicSourceLedgerJson).toContain(
+      '"repoCommitSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"'
+    );
+    expect(publicSourceLedgerJson).toContain(
+      '"repoCommitSha": "220111eae3ac214e99f2233e2bfe6b320edf383d"'
+    );
     expect(publicSourceLedgerJson).toContain('"status": "published"');
   });
 });

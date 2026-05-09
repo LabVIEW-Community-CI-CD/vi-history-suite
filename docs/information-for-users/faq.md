@@ -5,7 +5,7 @@
 - Product or service: `vi-history-suite`
 - Applies to: exact released installed baseline `v1.2.2` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-19`
+- Last reviewed: `2026-04-27`
 - Primary audience: installed users, source evaluators, and maintainers
 - Topic type: troubleshooting and quick-reference support
 - Primary entry route: `README.md` and `INSTALL.md`
@@ -86,10 +86,11 @@ In supported Windows PowerShell sessions and admitted VS Code terminals, type
   different value.
 - Host is the default provider and supports LabVIEW years `2020` through `2026`
   when that exact installation is present on the current machine.
-- Docker is the bounded expert path: `2026` / `x64` is the supported
-  Windows-container route; Docker years before `2026` are unsupported;
-  `docker/linux` is selectable for `2026` only but is not currently
-  implemented; `host/linux` is not currently implemented.
+- Docker is the bounded expert path: `2026` / `x64` is supported for
+  `docker/windows` on Windows Docker Desktop Windows-container hosts and for
+  `docker/linux` on Linux Docker Desktop/Docker Engine hosts; Docker years
+  before `2026` are unsupported; `host/linux` `2026` / `x64` is admitted when
+  LabVIEW Community 2026 is installed on Linux.
 - For non-interactive scripting, use the exact command shape:
 
 `vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
@@ -137,10 +138,12 @@ It reports the persisted `viHistorySuite.runtimeProvider`,
 plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
 `runtimeBlockedReason`. This keeps validation on one bounded CLI surface
 without reopening path-picking or a panel-side provider picker. On the current
-Windows x64 private-release route, `ready` means the native Windows host or
-Docker Desktop Windows-container contract is admissible without WSL. The
-interactive no-argument `vihs` flow invokes this same bounded validation after
-you confirm or change settings.
+public validation route, `ready` is bounded to the selected provider on the
+current machine; Linux/Docker, Linux host LabVIEW 2026 x64, and Windows host
+LabVIEW 2026 x64 are admitted through separate retained fixture proof packets.
+Docker Desktop Windows-container proof remains deferred. The interactive
+no-argument `vihs` flow invokes this same bounded validation after you confirm
+or change settings.
 
 ### How do I check live-session drift after changing runtime settings?
 
@@ -206,17 +209,33 @@ Use the command surface that matches the task:
 - for the containerized authoring surface, run `npm run docs:workbench:gate`
 - for the broader branch line, run `npm run test`
 
-### Do I need WSL for the supported Windows x64 path?
+### Is Windows installed-user behavior proven?
 
-No.
+Partly.
 
-For the active Windows x64 private-release and installed-user proof path, use:
+The Ubuntu/Docker lane does not prove Windows behavior by itself. A separate
+Windows 11 VirtualBox installed-user run now admits Windows host LabVIEW 2026
+x64 for the canonical `lv_icon.vi` fixture. Docker Desktop Windows-container
+proof remains deferred until public issue #65 receives an admissible packet
+from a real Windows host with Docker Desktop OSType `windows`.
 
-- native Windows host LabVIEW for the host lane
+For Marketplace pre-release `1.3.13`, use the public validation templates when
+reporting Windows/LabVIEW or Docker Desktop results. Selectable means available
+for validation, not automatically maintainer-proven for every provider/year/
+bitness variant.
+
+The remaining Windows proof gap is:
+
 - Docker Desktop in Windows-container mode for the expert container lane
 
-WSL is retained historical context only; it is not a required dependency for
-the supported Windows x64 user path or the private-release proof route.
+To work that gap, switch Docker Desktop to Windows containers, confirm
+`docker info --format "{{.OSType}} {{.OperatingSystem}}"` reports `windows`,
+and run:
+
+`vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000`
+
+WSL is retained historical context only; it is not proof of native Windows
+installed-user behavior.
 
 ### How do I search the governed docs quickly?
 

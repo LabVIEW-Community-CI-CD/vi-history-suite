@@ -37,6 +37,7 @@ export interface HarnessReportSmokeOptions {
   historyLimit?: number;
   selectedHash?: string;
   baseHash?: string;
+  allowNonAdjacentBaseHash?: boolean;
   runtimePlatform?: RuntimePlatform;
   runtimeSettings?: ComparisonRuntimeSettings;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
@@ -226,10 +227,21 @@ function resolveCompareCommit(
     );
   }
 
-  if (options.baseHash && compareCommit.previousHash !== options.baseHash) {
+  if (
+    options.baseHash &&
+    compareCommit.previousHash !== options.baseHash &&
+    !options.allowNonAdjacentBaseHash
+  ) {
     throw new Error(
       `Selected compare commit ${options.selectedHash} does not retain base ${options.baseHash}; actual base was ${compareCommit.previousHash}.`
     );
+  }
+
+  if (options.baseHash && compareCommit.previousHash !== options.baseHash) {
+    return {
+      ...compareCommit,
+      previousHash: options.baseHash
+    };
   }
 
   return compareCommit;
