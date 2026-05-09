@@ -1059,10 +1059,18 @@ describe('createOpenViHistoryCommand', () => {
     );
   });
 
-  it('blocks explicit compare generation when compare preflight is not ready', async () => {
+  it('runs explicit compare generation when compare preflight is not ready so runtime seams are retained', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
-    const comparisonReportAction = vi.fn();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
     const comparePreflightResolver = vi.fn().mockResolvedValue({
       status: 'blocked',
       provider: 'docker',
@@ -1126,16 +1134,28 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(comparePreflightResolver).toHaveBeenCalled();
-    expect(comparisonReportAction).not.toHaveBeenCalled();
-    expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Compare preflight is blocked. Use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host, then review compare preflight before choosing Compare.'
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        reportProgress: expect.any(Function)
+      })
     );
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
   it('derives supported win32 compare preflight blocking from runtime-backed resolution instead of settings alone', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
-    const comparisonReportAction = vi.fn();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
     const runtimeLocator = vi.fn().mockResolvedValue({
       platform: 'win32',
       executionMode: 'host-only',
@@ -1209,10 +1229,14 @@ describe('createOpenViHistoryCommand', () => {
         bitness: 'x64'
       })
     );
-    expect(comparisonReportAction).not.toHaveBeenCalled();
-    expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Compare preflight is blocked. Provider: unavailable. Provider request: host. Blocked reason: labview-exe-not-found. If you update provider or runtime settings with the CLI, review compare preflight again. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update. Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.'
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        reportProgress: expect.any(Function)
+      })
     );
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
   it('admits supported win32 compare preflight only after runtime-backed resolution confirms the bundle', async () => {

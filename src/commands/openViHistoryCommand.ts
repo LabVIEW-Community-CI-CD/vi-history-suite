@@ -873,13 +873,6 @@ export function createOpenViHistoryCommand(
       }
 
       if (command === 'generateComparisonReportFromSelection') {
-        if (comparePreflightState.status !== 'ready') {
-          void vscode.window.showWarningMessage(
-            comparePreflightState.warningMessage ?? comparePreflightState.nextAction
-          );
-          return;
-        }
-
         const explicitPair = resolveExplicitComparisonPair(model, selectedHashes);
         if (!explicitPair) {
           void vscode.window.showInformationMessage(
@@ -1444,7 +1437,7 @@ async function resolveHistoryPanelComparePreflightState(
   const labviewVersion = settings.labviewVersion ?? 'Unset';
   const labviewBitness = settings.bitness ?? 'Unset';
   const cliHint =
-    'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. Review compare preflight again after the CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.';
+    'Use the generated settings CLI to change provider, LabVIEW version, or bitness.';
 
   if (settings.invalidRequestedProvider) {
     return {
@@ -1521,7 +1514,7 @@ async function resolveHistoryPanelComparePreflightState(
       ),
       cliHint,
       warningMessage:
-        'Compare preflight is blocked. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host before Compare can run. Use the generated settings CLI, then review compare preflight before choosing Compare. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.'
+        'Runtime settings need attention. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host. Try Compare to capture the exact failure, or update settings with the generated CLI.'
     };
   }
 
@@ -1560,11 +1553,11 @@ function deriveComparisonRuntimeNextAction(
 }
 
 function buildComparePreflightSettingsAction(settingsAction: string): string {
-  return `Next action: ${settingsAction}. Use the generated settings CLI, then review compare preflight before choosing Compare. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.`;
+  return `Next action: ${settingsAction} with the generated settings CLI. Compare can still be tried to retain the exact runtime failure.`;
 }
 
 function buildComparePreflightWarningMessage(settingsAction: string): string {
-  return `Compare preflight is blocked. ${settingsAction}. Use the generated settings CLI, then review compare preflight before choosing Compare. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.`;
+  return `Runtime settings need attention. ${settingsAction} with the generated settings CLI, or try Compare to capture the exact failure.`;
 }
 
 function buildRuntimeBackedBlockedComparePreflightState(options: {
@@ -1587,7 +1580,7 @@ function buildRuntimeBackedBlockedComparePreflightState(options: {
   const nextAction =
     deriveComparisonRuntimeNextAction(runtimeDoctorSummaryLines) ??
     'Next action: make the selected runtime provider available or adjust runtime settings, then rerun compare preflight.';
-  const warningSegments = ['Compare preflight is blocked.'];
+  const warningSegments = ['Runtime settings need attention.'];
 
   if (runtimeProvider) {
     warningSegments.push(`Provider: ${runtimeProvider}.`);
@@ -1602,7 +1595,7 @@ function buildRuntimeBackedBlockedComparePreflightState(options: {
     warningSegments.push(`Blocked reason: ${options.runtimeSelection.blockedReason}.`);
   }
   warningSegments.push(
-    'If you update provider or runtime settings with the CLI, review compare preflight again. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.'
+    'Use the generated settings CLI to change provider, LabVIEW version, or bitness; Compare can still be tried to capture the exact failure.'
   );
   warningSegments.push(nextAction);
 

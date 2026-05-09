@@ -342,7 +342,7 @@ describe('localRuntimeSettingsCli', () => {
       [
         '{',
         '  "viHistorySuite.runtimeProvider": "docker",',
-        '  "viHistorySuite.labviewVersion": "2024",',
+        '  "viHistorySuite.labviewVersion": "2025",',
         '  "viHistorySuite.labviewBitness": "x64"',
         '}',
         ''
@@ -363,7 +363,7 @@ describe('localRuntimeSettingsCli', () => {
           bitness: settings.bitness ?? 'x64',
           provider: 'unavailable',
           blockedReason: 'docker-provider-labview-version-not-implemented',
-          notes: ['LabVIEW 2024 Docker path is not implemented.'],
+          notes: ['LabVIEW 2025 Docker path is not implemented.'],
           providerDecisions: [
             {
               provider: 'linux-container',
@@ -400,7 +400,7 @@ describe('localRuntimeSettingsCli', () => {
       errorCode: 'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED',
       settings: {
         provider: 'docker',
-        labviewVersion: '2024',
+        labviewVersion: '2025',
         labviewBitness: 'x64'
       },
       publicIntake: {
@@ -824,7 +824,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(stdout.join('')).toContain('runtimeValidationOutcome=ready');
   });
 
-  it('accepts a host year selection and reports the runtime failure instead of hiding the variant', async () => {
+  it('accepts a newer host year selection and reports the runtime failure instead of hiding the variant', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-host-year-'));
     tempDirectories.push(tempRoot);
 
@@ -835,7 +835,7 @@ describe('localRuntimeSettingsCli', () => {
       () => tempRoot
     );
     const stdout: string[] = [];
-    const prompts = ['', '', '2024', ''];
+    const prompts = ['', '', 'newer', '2027', ''];
 
     const result = await runInteractiveLocalRuntimeSettingsCli({
       platform: 'win32',
@@ -850,7 +850,7 @@ describe('localRuntimeSettingsCli', () => {
       },
       promptLine: async () => prompts.shift() ?? '',
       locateRuntime: async (_platform, settings) => {
-        if (settings.requestedProvider === 'host' && settings.labviewVersion === '2024') {
+        if (settings.requestedProvider === 'host' && settings.labviewVersion === '2027') {
           return {
             platform: 'win32',
             requestedProvider: settings.requestedProvider,
@@ -881,7 +881,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(result.runtimeErrorCode).toBe('VIHS_E_LABVIEW_NOT_FOUND');
     expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
       'viHistorySuite.runtimeProvider': 'host',
-      'viHistorySuite.labviewVersion': '2024',
+      'viHistorySuite.labviewVersion': '2027',
       'viHistorySuite.labviewBitness': 'x64'
     });
   });
@@ -897,7 +897,7 @@ describe('localRuntimeSettingsCli', () => {
       () => tempRoot
     );
     const stdout: string[] = [];
-    const prompts = ['docker', 'linux', '2024', ''];
+    const prompts = ['docker', 'linux', '2025', ''];
 
     const result = await runInteractiveLocalRuntimeSettingsCli({
       platform: 'win32',
@@ -915,7 +915,7 @@ describe('localRuntimeSettingsCli', () => {
         expect(settings).toEqual(
           expect.objectContaining({
             requestedProvider: 'docker',
-            labviewVersion: '2024',
+            labviewVersion: '2025',
             bitness: 'x64'
           })
         );
@@ -939,7 +939,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(result.runtimeImplementationStatus).toBe('not-implemented');
     expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
       'viHistorySuite.runtimeProvider': 'docker',
-      'viHistorySuite.labviewVersion': '2024',
+      'viHistorySuite.labviewVersion': '2025',
       'viHistorySuite.labviewBitness': 'x64'
     });
   });

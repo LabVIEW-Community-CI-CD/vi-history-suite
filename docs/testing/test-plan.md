@@ -1798,9 +1798,9 @@ Information-for-users review cases:
 - `TEST-UNIT-347`: verify Docker preflight derives the governed image family
   from the current engine and fails closed on unsupported Docker `x86` with
   host/`x64` corrective guidance
-- `TEST-UNIT-348`: verify compare preflight shows provider as read-only text
-  and retains an explicit CLI update hint when provider/runtime settings need
-  correction
+- `TEST-UNIT-348`: verify compare preflight retains an explicit CLI update hint
+  when provider/runtime settings need attention while the explicit Compare path
+  remains available after two revisions are selected
 - `TEST-349` / `TEST-UNIT-349`: verify installed compare preflight admits `ready` only
   after the governing runtime-selection layer confirms the active
   provider/version/bitness bundle, and that settings-only fallback cannot

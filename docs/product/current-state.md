@@ -640,6 +640,7 @@ Current active and recently closed tranches:
     `develop`
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
 - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
+- active handoff issue: [ISSUE-0415 Windows Docker Desktop Launch Gate](./issues/ISSUE-0415-windows-docker-desktop-launch-gate.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - exact `v1.3.9` now publishes the host-default Windows local
     `LabVIEWCLI` contract with bounded expert Docker, while the Docker-only
@@ -953,6 +954,9 @@ Post-release tranches:
     [runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)
   - Docker is now a bounded expert provider rather than either the default
     installed-user dependency or an internal-only path
+  - `ISSUE-0415` retains the Windows-boot continuation path for proving Docker
+    Desktop Windows-container `OSType=windows` before treating that expert path
+    as a launch gate
 - historical installed-user Docker baseline:
   - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
     - historical issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)

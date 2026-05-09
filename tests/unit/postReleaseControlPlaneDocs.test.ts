@@ -58,8 +58,8 @@ describe('post-release control-plane coherence', () => {
       title: 'Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow',
       status: 'active',
       source: 'author direction',
-      summary: expect.stringContaining('runtime-provider public-acceptance gate'),
-      issues: ['ISSUE-0412', 'ISSUE-0414']
+      summary: expect.stringContaining('Windows Docker Desktop launch-gate handoff'),
+      issues: ['ISSUE-0412', 'ISSUE-0414', 'ISSUE-0415']
     });
     expect(queue.find((entry) => entry.id === 'TRANCHE-010')).toMatchObject({
       status: 'done',
@@ -69,6 +69,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('`TRANCHE-010`');
     expect(currentState).toContain('`TRANCHE-012`');
     expect(currentState).toContain('`TRANCHE-016`');
+    expect(currentState).toContain('ISSUE-0415 Windows Docker Desktop Launch Gate');
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists at');
     expect(currentState).toContain('closed public-product closeout');

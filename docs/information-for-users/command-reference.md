@@ -1,8 +1,8 @@
 # Information For Users Command Reference
 
-Applies to: exact released installed baseline plus the active `1.3.13` public
-validation pre-release direction
-Last reviewed: `2026-04-27`
+Applies to: exact released installed baseline plus the active `1.3.15`
+installed-user stable patch direction
+Last reviewed: `2026-05-09`
 Primary audience: maintainers, source evaluators, and advanced installed users
 Topic type: reference
 Primary entry route: `README.md` or `INSTALL.md`
@@ -180,8 +180,11 @@ runtime-settings CLI on the active branch.
   - on interactive TTY surfaces, `vihs` seeds missing settings to
     `host/windows/2026/x64`, reads back the current provider/platform/version/
     bitness bundle, and lets `Enter` keep the current value at each prompt
-  - host supports LabVIEW years `2020` through `2026` when that exact
-    installation is present on the current machine
+  - host supports LabVIEW `2025`, LabVIEW `2026`, and newer local LabVIEW
+    versions when that exact installation is present on the current machine
+  - LabVIEW `2024` and older cannot create the VI Comparison Report that VI
+    History Suite uses; select LabVIEW `2025` or newer even when the VI being
+    reviewed was saved by an older LabVIEW version
   - Docker is the bounded expert path: `2026` / `x64` is the governed Docker
     implementation today, while other selectable Docker years or bitnesses may
     report stable not-yet-implemented runtime codes for public validation
@@ -211,9 +214,10 @@ runtime-settings CLI on the active branch.
   - Windows host LabVIEW 2026 x64 is admitted through a separate Windows 11
     VirtualBox installed-user fixture proof; the Ubuntu/Docker evidence lane
     still does not prove Docker Desktop Windows-container behavior
-  - for Marketplace pre-release `1.3.13`, report Windows/LabVIEW and Docker
-    results through the public GitHub validation templates and include
-    provider, LabVIEW year, bitness, `runtimeErrorCode`, and the proof packet
+  - for the `1.3.15` installed-user stable patch direction, report local
+    Windows/LabVIEW and Docker results through the public GitHub validation
+    templates and include provider, LabVIEW year, bitness, `runtimeErrorCode`,
+    and the proof packet
   - Linux public smoke, Linux benchmark, Ubuntu/Docker preview, and Windows
     host proof lanes are distinct proof surfaces; do not use one provider lane
     as proof for a different provider lane
