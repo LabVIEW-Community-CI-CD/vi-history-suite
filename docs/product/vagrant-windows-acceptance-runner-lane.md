@@ -84,8 +84,8 @@ Official GitLab references:
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
 - default LabVIEW VI Server startup timeout: `300` seconds after the
-  interactive scheduled-task launch, matching the governed runtime proof
-  timeout instead of failing during normal first-launch delay
+  interactive scheduled-task launch; the prelaunch task is manually started
+  and also has a near-future trigger inside the wait window
 - disposable clone boot policy: Vagrant sets EFI firmware and preserves the
   exported golden VM UEFI variable store so BitLocker sees the same measured
   boot state in the disposable clone
@@ -125,6 +125,10 @@ firewall readiness, creates the `VIHS LabVIEW 2026 VI Server TCP 3363`
 Windows Defender Firewall rule for `LabVIEW.exe`, and the job reloads the VM
 immediately after bootstrap so the scheduled-task LabVIEW launch has an
 interactive desktop session while the Vagrant communicator remains available.
+Acceptance retains `vagrant/evidence/labview-startup.json` during the
+prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
+observation, Explorer session observation, and VI Server listener state before
+the assertion script is allowed to run.
 
 ## GitLab Job
 
@@ -146,6 +150,7 @@ The job retains `vagrant/evidence/`, including:
 - `refresh-golden-box.log` when a manual refresh is requested
 - `labview-cold-prep.log`
 - `acceptance-provision.log`
+- `labview-startup.json`
 - `assertion/vagrant-vsix-acceptance-assertion.json`
 - `assertion/vagrant-vsix-acceptance-assertion.md`
 - `*/manifest.json`

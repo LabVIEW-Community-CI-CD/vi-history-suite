@@ -314,9 +314,10 @@ Job ownership:
   disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
   autologon creates the interactive LabVIEW desktop session while clone-local
   WinRM network/firewall readiness remains available for Vagrant, runs the
-  guest cold-prep provisioner, runs acceptance, validates the latest acceptance
-  manifest, cold-start markers, host-native LabVIEWCLI facts, and generated
-  report output through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
+  guest cold-prep provisioner, runs acceptance with a near-future scheduled-task
+  fallback for LabVIEW prelaunch, validates the latest acceptance manifest,
+  cold-start markers, host-native LabVIEWCLI facts, and generated report output
+  through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
   `vagrant/evidence/`; this job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
   machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large

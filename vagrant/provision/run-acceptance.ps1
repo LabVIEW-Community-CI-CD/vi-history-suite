@@ -31,6 +31,7 @@ $ErrorActionPreference = 'Stop'
 $WorkspaceRoot = 'C:\vihs-workspace'
 $SharedRoot    = 'C:\vihs-shared'
 $EvidenceRoot  = 'C:\vihs-evidence'
+$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'
 
 function Write-Step([string]$Message) {
   $ts = (Get-Date -Format 'HH:mm:ss')
@@ -71,14 +72,110 @@ Write-Step "Checking LabVIEW is running in an interactive session (VI Server)...
 
 $lvExe = "C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.exe"
 
+function Test-LabVIEWPortListening {
+  return [bool](netstat -an 2>$null | Select-String ':3363.*LISTENING')
+}
+
+function Get-LabVIEWProcessSnapshot {
+  return @(Get-Process -Name LabVIEW -ErrorAction SilentlyContinue | ForEach-Object {
+    [ordered]@{
+      processName = $_.ProcessName
+      id          = $_.Id
+      sessionId   = $_.SessionId
+      path        = try { $_.Path } catch { $null }
+    }
+  })
+}
+
+function Get-ExplorerSessionSnapshot {
+  return @(Get-Process -Name explorer -ErrorAction SilentlyContinue | ForEach-Object {
+    [ordered]@{
+      processName = $_.ProcessName
+      id          = $_.Id
+      sessionId   = $_.SessionId
+    }
+  })
+}
+
+function Get-LabVIEWPrelaunchTaskSnapshot {
+  param([string]$TaskName)
+
+  if (-not $TaskName) {
+    return $null
+  }
+
+  try {
+    $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+    $taskInfo = Get-ScheduledTaskInfo -TaskName $TaskName -ErrorAction Stop
+    return [ordered]@{
+      taskName           = $TaskName
+      state              = [string]$task.State
+      lastRunTime        = $taskInfo.LastRunTime
+      lastTaskResult     = $taskInfo.LastTaskResult
+      nextRunTime        = $taskInfo.NextRunTime
+      numberOfMissedRuns = $taskInfo.NumberOfMissedRuns
+    }
+  } catch {
+    return [ordered]@{
+      taskName = $TaskName
+      error    = $_.Exception.Message
+    }
+  }
+}
+
+function Write-LabVIEWStartupEvidence {
+  param(
+    [string]$Phase,
+    [string]$TaskName = ''
+  )
+
+  $evidence = [ordered]@{
+    schema                  = 'vi-history-suite/vagrant-labview-startup@v1'
+    capturedAt              = (Get-Date -Format 'o')
+    phase                   = $Phase
+    labviewExe              = $lvExe
+    viServerPort            = 3363
+    viServerTimeoutSec      = $ViServerTimeoutSec
+    prelaunchTask           = Get-LabVIEWPrelaunchTaskSnapshot -TaskName $TaskName
+    labviewProcesses        = @(Get-LabVIEWProcessSnapshot)
+    explorerSessions        = @(Get-ExplorerSessionSnapshot)
+    viServerPortLines       = @(netstat -an 2>$null | Select-String ':3363' | ForEach-Object { [string]$_ })
+  }
+
+  $evidence | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $LabVIEWStartupEvidencePath -Encoding utf8
+}
+
 function Wait-LabVIEWPort {
-  param([int]$TimeoutSec = 120)
+  param(
+    [int]$TimeoutSec = 120,
+    [string]$TaskName = ''
+  )
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  $nextProgressLog = Get-Date
   while ((Get-Date) -lt $deadline) {
-    $port = netstat -an 2>$null | Select-String ':3363.*LISTENING'
-    if ($port) { return $true }
+    if (Test-LabVIEWPortListening) {
+      Write-LabVIEWStartupEvidence -Phase 'vi-server-ready' -TaskName $TaskName
+      return $true
+    }
+
+    if ((Get-Date) -ge $nextProgressLog) {
+      $processSummary = @(Get-LabVIEWProcessSnapshot | ForEach-Object { "pid=$($_.id),session=$($_.sessionId)" })
+      $taskSnapshot = Get-LabVIEWPrelaunchTaskSnapshot -TaskName $TaskName
+      $taskSummary = if ($taskSnapshot -and $taskSnapshot.Contains('error')) {
+        "task-error=$($taskSnapshot.error)"
+      } elseif ($taskSnapshot) {
+        "task-state=$($taskSnapshot.state),last-result=$($taskSnapshot.lastTaskResult)"
+      } else {
+        'task=none'
+      }
+      Write-Step "Waiting for VI Server port 3363; LabVIEW processes: $(if ($processSummary.Count -gt 0) { $processSummary -join '; ' } else { 'none' }); $taskSummary."
+      Write-LabVIEWStartupEvidence -Phase 'waiting-for-vi-server' -TaskName $TaskName
+      $nextProgressLog = (Get-Date).AddSeconds(30)
+    }
+
     Start-Sleep -Seconds 5
   }
+  Write-LabVIEWStartupEvidence -Phase 'timeout' -TaskName $TaskName
   return $false
 }
 
@@ -87,6 +184,7 @@ $portAlreadyOpen = netstat -an 2>$null | Select-String ':3363.*LISTENING'
 if ($portAlreadyOpen) {
   Write-Step "LabVIEW VI Server already listening on port 3363."
 } else {
+  $taskName = ''
   $lvRunning = Get-Process -Name LabVIEW -ErrorAction SilentlyContinue
   if (-not $lvRunning) {
     Write-Step "LabVIEW not running. Launching via scheduled task..."
@@ -94,23 +192,25 @@ if ($portAlreadyOpen) {
     try {
       Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
 
-      $taskAction    = New-ScheduledTaskAction -Execute $lvExe
-      $taskTrigger   = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(5)
+      $taskAction    = New-ScheduledTaskAction -Execute $lvExe -WorkingDirectory (Split-Path -Parent $lvExe)
+      $taskTrigger   = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(15)
       $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'vagrant' -LogonType Interactive -RunLevel Highest
-      $taskSettings  = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+      $taskSettings  = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
       Register-ScheduledTask -TaskName $taskName -Action $taskAction -Trigger $taskTrigger -Principal $taskPrincipal -Settings $taskSettings -Force | Out-Null
+      Write-LabVIEWStartupEvidence -Phase 'task-registered' -TaskName $taskName
       Start-ScheduledTask -TaskName $taskName
+      Write-LabVIEWStartupEvidence -Phase 'task-start-requested' -TaskName $taskName
     } catch {
       throw "Failed to launch LabVIEW via interactive scheduled task: $($_.Exception.Message)"
     }
-    Write-Step "Scheduled task triggered. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server..."
+    Write-Step "Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server..."
   } else {
     Write-Step "LabVIEW is running (Session $($lvRunning.SessionId)). Waiting up to ${ViServerTimeoutSec}s for VI Server port 3363..."
   }
 
-  if (-not (Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec)) {
-    throw "LabVIEW VI Server did not open port 3363 within $ViServerTimeoutSec s. Check LabVIEW.ini and Windows Firewall."
+  if (-not (Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec -TaskName $taskName)) {
+    throw "LabVIEW VI Server did not open port 3363 within $ViServerTimeoutSec s. Check LabVIEW.ini, Windows Firewall, scheduled-task state, and retained startup evidence at $LabVIEWStartupEvidencePath."
   }
   Write-Step "LabVIEW VI Server ready on port 3363."
 }
