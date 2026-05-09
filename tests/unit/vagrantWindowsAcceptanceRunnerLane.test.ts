@@ -106,6 +106,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
       'Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
     );
     expect(acceptance).toContain('Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec');
+    expect(acceptance).toContain('$runtimeSettingsLauncher');
+    expect(acceptance).toContain('--labview-version $LabVIEWVersion');
+    expect(acceptance).toContain('--labview-bitness $LabVIEWBitness');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -197,6 +200,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
+    expect(laneDoc).toContain('stale golden-VM');
     expect(laneDoc).toContain('LabVIEW `2026` `x86`');
     expect(laneDoc).toContain('`runtimeProvider=host-native`');
     expect(laneDoc).toContain('`runtimeEngine=labview-cli`');

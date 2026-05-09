@@ -241,6 +241,18 @@ if (-not (Test-Path -LiteralPath $installScript)) {
 if ($LASTEXITCODE -ne 0) {
   throw "Settings configuration script failed (exit $LASTEXITCODE)."
 }
+
+$runtimeSettingsLauncher = Join-Path $env:APPDATA 'Code\User\globalStorage\svelderrainruiz.vi-history-suite\local-runtime-settings-cli\vihs.cmd'
+if (-not (Test-Path -LiteralPath $runtimeSettingsLauncher)) {
+  throw "Runtime settings launcher not found after install bootstrap: $runtimeSettingsLauncher"
+}
+& $runtimeSettingsLauncher `
+    --provider host `
+    --labview-version $LabVIEWVersion `
+    --labview-bitness $LabVIEWBitness
+if ($LASTEXITCODE -ne 0) {
+  throw "Runtime settings launcher failed to force host/$LabVIEWVersion/$LabVIEWBitness settings (exit $LASTEXITCODE)."
+}
 Write-Step "Settings configured."
 
 # ---------------------------------------------------------------------------
