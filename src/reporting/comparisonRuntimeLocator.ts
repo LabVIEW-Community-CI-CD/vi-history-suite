@@ -2360,6 +2360,12 @@ function resolveExactWindowsHostRuntime(
       blockedReason: 'labview-exe-not-found',
       notes: [
         `No supported LabVIEW ${requestedVersion} ${bitness} runtime was located for report generation.`,
+        ...describeDetectedWindowsHostAlternativeBitness({
+          candidates,
+          requestedVersion,
+          requestedBitness: bitness,
+          kind: 'labview-exe'
+        }),
         'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
       ]
     };
@@ -2410,6 +2416,12 @@ function resolveExactWindowsHostRuntime(
       blockedReason: 'labview-cli-not-found-for-bitness',
       notes: [
         `No matching LabVIEWCLI ${bitness} surface was located for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
+        ...describeDetectedWindowsHostAlternativeBitness({
+          candidates,
+          requestedVersion,
+          requestedBitness: bitness,
+          kind: 'labview-cli'
+        }),
         'Install the matching LabVIEWCLI surface for the requested bitness, or adjust viHistorySuite.runtimeProvider, viHistorySuite.labviewVersion, or viHistorySuite.labviewBitness before retrying compare.'
       ]
     };
@@ -2420,6 +2432,37 @@ function resolveExactWindowsHostRuntime(
     labviewCli,
     notes: notes.length > 0 ? notes : undefined
   };
+}
+
+function describeDetectedWindowsHostAlternativeBitness(options: {
+  candidates: RuntimeToolCandidate[];
+  requestedVersion: string;
+  requestedBitness: RuntimeBitness;
+  kind: Extract<RuntimeCandidateKind, 'labview-exe' | 'labview-cli'>;
+}): string[] {
+  const alternativeBitness = options.requestedBitness === 'x64' ? 'x86' : 'x64';
+  const alternativeCandidates = options.candidates.filter(
+    (candidate) =>
+      candidate.kind === options.kind &&
+      candidate.exists &&
+      candidate.bitness === alternativeBitness &&
+      (options.kind === 'labview-cli' ||
+        matchesRequestedLabviewVersion(candidate, options.requestedVersion))
+  );
+
+  if (alternativeCandidates.length === 0) {
+    return [];
+  }
+
+  const surface =
+    options.kind === 'labview-exe'
+      ? `LabVIEW ${options.requestedVersion} ${alternativeBitness} runtime`
+      : `LabVIEWCLI ${alternativeBitness} surface`;
+  const paths = alternativeCandidates.map((candidate) => candidate.path).join('; ');
+
+  return [
+    `Detected installed ${surface} at ${paths}, but VI History Suite will not auto-switch from selected ${options.requestedBitness} because bitness-specific dependencies may differ.`
+  ];
 }
 
 function matchesRequestedLabviewVersion(

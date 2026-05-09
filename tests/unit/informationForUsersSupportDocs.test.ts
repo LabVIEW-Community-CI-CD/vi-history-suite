@@ -100,7 +100,7 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('persists governed user-scope PATH');
     expect(commandReference).toContain('vihs --provider <host|docker>');
     expect(commandReference).toContain('vihs --validate');
-    expect(commandReference).toContain('host/windows/2026/x64');
+    expect(commandReference).toContain('host/windows/2026/x86');
     expect(commandReference).toContain('Enter` keep the current value');
     expect(commandReference).toContain('Docker is the bounded expert path');
     expect(commandReference).toContain('selectable Docker years or bitnesses may');
@@ -111,7 +111,8 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('runtime-settings-live-session-proof.json');
     expect(commandReference).toContain('.cache/runtime-settings-live-session-proof/latest/');
     expect(commandReference).toContain('current public validation route');
-    expect(commandReference).toContain('Windows host LabVIEW 2026 x64 is admitted');
+    expect(commandReference).toContain('Windows host LabVIEW 2026 x86 is admitted');
+    expect(commandReference).toContain('Docker images are 64-bit only');
     expect(commandReference).toContain('Docker Desktop Windows-container behavior');
     expect(commandReference).toContain('public issue #65');
     expect(commandReference).toContain('runtimeProvider=windows-container');

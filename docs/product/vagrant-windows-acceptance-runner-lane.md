@@ -3,8 +3,8 @@
 ## Purpose
 
 Retain a GitLab self-hosted Vagrant lane that installs the packaged VSIX into
-a Windows 11 + LabVIEW 2026 VirtualBox guest and runs the governed
-`HARNESS-VHS-002` report-smoke proof.
+a Windows 11 + LabVIEW 2026 Community x86 VirtualBox guest and runs the
+governed `HARNESS-VHS-002` report-smoke proof.
 
 This lane proves the Vagrant VM acceptance path for the extension package. It
 does not replace the deferred native Windows x64 private-release proof or the
@@ -142,7 +142,9 @@ optionally refreshes the local box, runs the host doctor, boots the disposable
 VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
 runs the guest cold-prep provisioner, runs acceptance, validates the latest
 manifest and harness output through `npm run vagrant:acceptance:assert`, and
-always halts the VM.
+always halts the VM. The assertion requires the manifest and harness report to
+prove LabVIEW `2026` `x86`, `runtimeProvider=host-native`,
+`runtimeEngine=labview-cli`, and `runtimeExecutionState=succeeded`.
 
 The job retains `vagrant/evidence/`, including:
 

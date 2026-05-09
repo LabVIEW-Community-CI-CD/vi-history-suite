@@ -16,8 +16,10 @@ $ErrorActionPreference = 'Stop'
 $script:DefaultProvider = 'host'
 $script:DefaultPlatform = 'windows'
 $script:DefaultLabVIEWVersion = '2026'
-$script:DefaultLabVIEWBitness = 'x64'
-$script:SupportedHostLabVIEWVersions = @('2020', '2021', '2022', '2023', '2024', '2025', '2026')
+$script:DefaultLabVIEWBitness = 'x86'
+$script:SupportedHostLabVIEWVersions = @('2025', '2026')
+$script:FutureHostLabVIEWOption = 'newer/manual path'
+$script:MinimumComparisonReportLabVIEWYear = 2025
 $script:SupportedDockerLabVIEWVersion = '2026'
 
 function Test-InteractiveConsole {
@@ -401,11 +403,75 @@ function Read-Choice {
   }
 }
 
-function Test-HostLabVIEWInstalled {
+function Test-SupportedHostLabVIEWYear {
   param([string]$LabVIEWVersion)
 
-  $candidate = Join-Path 'C:\Program Files\National Instruments' "LabVIEW $LabVIEWVersion\LabVIEW.exe"
+  $parsedYear = 0
+  return [int]::TryParse($LabVIEWVersion, [ref]$parsedYear) -and $parsedYear -ge $script:MinimumComparisonReportLabVIEWYear
+}
+
+function Read-HostLabVIEWYear {
+  param([string]$DefaultValue)
+
+  while ($true) {
+    $response = (Read-Host "LabVIEW year [$DefaultValue] ($($script:SupportedHostLabVIEWVersions -join ', '), $script:FutureHostLabVIEWOption)").Trim().ToLowerInvariant()
+    $selected = if ([string]::IsNullOrWhiteSpace($response)) { $DefaultValue } else { $response }
+    if (($script:SupportedHostLabVIEWVersions -contains $selected) -or (Test-SupportedHostLabVIEWYear -LabVIEWVersion $selected)) {
+      return $selected
+    }
+
+    if ($selected -eq 'newer' -or $selected -eq 'manual' -or $selected -eq $script:FutureHostLabVIEWOption) {
+      $manualYear = (Read-Host 'Newer/manual local LabVIEW year (2025 or newer)').Trim()
+      if (Test-SupportedHostLabVIEWYear -LabVIEWVersion $manualYear) {
+        return $manualYear
+      }
+    }
+
+    Write-Host 'Choose LabVIEW 2025, LabVIEW 2026, or a newer/manual local LabVIEW year. LabVIEW 2024 and older cannot create the VI Comparison Report.'
+  }
+}
+
+function Resolve-HostLabVIEWExecutablePath {
+  param(
+    [string]$LabVIEWVersion,
+    [string]$LabVIEWBitness
+  )
+
+  $programFilesRoot = if ($LabVIEWBitness -eq 'x86') {
+    'C:\Program Files (x86)\National Instruments'
+  } else {
+    'C:\Program Files\National Instruments'
+  }
+
+  return Join-Path $programFilesRoot "LabVIEW $LabVIEWVersion\LabVIEW.exe"
+}
+
+function Test-HostLabVIEWInstalled {
+  param(
+    [string]$LabVIEWVersion,
+    [string]$LabVIEWBitness
+  )
+
+  $candidate = Resolve-HostLabVIEWExecutablePath -LabVIEWVersion $LabVIEWVersion -LabVIEWBitness $LabVIEWBitness
   return Test-Path -LiteralPath $candidate
+}
+
+function Resolve-InstalledAlternativeBitness {
+  param(
+    [string]$LabVIEWVersion,
+    [string]$LabVIEWBitness
+  )
+
+  $alternativeBitness = if ($LabVIEWBitness -eq 'x86') { 'x64' } else { 'x86' }
+  $alternativePath = Resolve-HostLabVIEWExecutablePath -LabVIEWVersion $LabVIEWVersion -LabVIEWBitness $alternativeBitness
+  if (Test-Path -LiteralPath $alternativePath) {
+    return [pscustomobject]@{
+      Bitness = $alternativeBitness
+      Path = $alternativePath
+    }
+  }
+
+  return $null
 }
 
 function Invoke-InteractiveSettingsWizard {
@@ -414,7 +480,7 @@ function Invoke-InteractiveSettingsWizard {
   $current = Ensure-DefaultSettings -TargetPath $TargetPath
   $provider = if ($current.Provider -eq 'docker') { 'docker' } else { 'host' }
   $labviewVersion =
-    if ($current.LabVIEWVersion -and ($script:SupportedHostLabVIEWVersions -contains $current.LabVIEWVersion)) {
+    if ($current.LabVIEWVersion -and (Test-SupportedHostLabVIEWYear -LabVIEWVersion $current.LabVIEWVersion)) {
       $current.LabVIEWVersion
     } else {
       $script:DefaultLabVIEWVersion
@@ -428,16 +494,21 @@ function Invoke-InteractiveSettingsWizard {
     if ($provider -eq 'docker') {
       $labviewVersion = Read-Choice -Label 'LabVIEW year' -AllowedValues @($script:SupportedDockerLabVIEWVersion) -DefaultValue $script:SupportedDockerLabVIEWVersion
       $labviewBitness = Read-Choice -Label 'Bitness' -AllowedValues @('x64') -DefaultValue 'x64'
+      Write-Host 'Docker images are 64-bit only; using LabVIEW 2026 x64 for Docker.'
       break
     }
 
-    $labviewVersion = Read-Choice -Label 'LabVIEW year' -AllowedValues $script:SupportedHostLabVIEWVersions -DefaultValue $labviewVersion
-    if (-not (Test-HostLabVIEWInstalled -LabVIEWVersion $labviewVersion)) {
-      Write-Host "LabVIEW $labviewVersion not installed."
+    $labviewVersion = Read-HostLabVIEWYear -DefaultValue $labviewVersion
+    $labviewBitness = Read-Choice -Label 'Bitness' -AllowedValues @('x86', 'x64') -DefaultValue $labviewBitness
+    if (-not (Test-HostLabVIEWInstalled -LabVIEWVersion $labviewVersion -LabVIEWBitness $labviewBitness)) {
+      Write-Host "LabVIEW $labviewVersion $labviewBitness not installed."
+      $alternative = Resolve-InstalledAlternativeBitness -LabVIEWVersion $labviewVersion -LabVIEWBitness $labviewBitness
+      if ($alternative) {
+        Write-Host "Detected LabVIEW $labviewVersion $($alternative.Bitness) at $($alternative.Path), but VI History Suite will not auto-switch from selected $labviewBitness because bitness-specific dependencies may differ."
+      }
       continue
     }
 
-    $labviewBitness = Read-Choice -Label 'Bitness' -AllowedValues @('x86', 'x64') -DefaultValue $labviewBitness
     break
   }
 

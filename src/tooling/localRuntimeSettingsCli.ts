@@ -123,6 +123,8 @@ const WINDOWS_TERMINAL_ENTRYPOINT_NAME = 'vihs.cmd';
 const POSIX_TERMINAL_ENTRYPOINT_NAME = 'vihs';
 const TERMINAL_COMMAND_NAME = 'vihs';
 const DEFAULT_INTERACTIVE_PLATFORM = 'windows';
+const DEFAULT_WINDOWS_HOST_LABVIEW_BITNESS: LocalRuntimeSettingsCliBitness = 'x86';
+const DEFAULT_DOCKER_LABVIEW_BITNESS: LocalRuntimeSettingsCliBitness = 'x64';
 const SUPPORTED_HOST_LABVIEW_VERSIONS = ['2025', '2026'] as const;
 const FUTURE_HOST_LABVIEW_OPTION = 'newer/manual path';
 const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
@@ -313,7 +315,7 @@ export function buildLocalRuntimeSettingsCliMaterialization(
     '--labview-version',
     '2026',
     '--labview-bitness',
-    'x64'
+    DEFAULT_WINDOWS_HOST_LABVIEW_BITNESS
   ]);
 
   return {
@@ -521,10 +523,39 @@ export async function runInteractiveLocalRuntimeSettingsCli(
       );
 
       while (true) {
-        selection.labviewVersion = await promptLabviewVersion(
-          selection.labviewVersion,
-          promptLine
-        );
+        if (selection.provider === 'docker') {
+          selection.labviewVersion = await promptEnum(
+            'LabVIEW year',
+            SUPPORTED_DOCKER_LABVIEW_VERSION,
+            [SUPPORTED_DOCKER_LABVIEW_VERSION],
+            promptLine
+          );
+          selection.labviewBitness = await promptEnum(
+            'Bitness',
+            DEFAULT_DOCKER_LABVIEW_BITNESS,
+            [DEFAULT_DOCKER_LABVIEW_BITNESS],
+            promptLine
+          );
+
+          await runLocalRuntimeSettingsCli(
+            [
+              '--provider',
+              selection.provider,
+              '--labview-version',
+              selection.labviewVersion,
+              '--labview-bitness',
+              selection.labviewBitness
+            ],
+            deps
+          );
+
+          return validateLocalRuntimeSettingsCli(
+            { helpRequested: false, validateRequested: true },
+            deps
+          );
+        }
+
+        selection.labviewVersion = await promptLabviewVersion(selection.labviewVersion, promptLine);
 
         while (true) {
           selection.labviewBitness = await promptEnum(
@@ -708,10 +739,16 @@ async function ensureInteractiveDefaultSettings(
     return settingsFacts;
   }
 
-  await writeVsCodeSettingsFile(settingsFilePath, 'host', '2026', 'x64', fsApi);
+  await writeVsCodeSettingsFile(
+    settingsFilePath,
+    'host',
+    '2026',
+    DEFAULT_WINDOWS_HOST_LABVIEW_BITNESS,
+    fsApi
+  );
   writeLine(
     deps.stdout ?? process.stdout,
-    `Created default VI History runtime settings at ${settingsFilePath} with host/windows/2026/x64.`
+    `Created default VI History runtime settings at ${settingsFilePath} with host/windows/2026/${DEFAULT_WINDOWS_HOST_LABVIEW_BITNESS}.`
   );
   settingsFacts = await readPersistedRuntimeSettingsFacts(settingsFilePath, fsApi);
   return settingsFacts;
@@ -720,11 +757,9 @@ async function ensureInteractiveDefaultSettings(
 function deriveInteractiveSelection(
   settingsFacts: PersistedRuntimeSettingsFacts
 ): InteractiveRuntimeSettingsSelection {
+  const provider = settingsFacts.persistedProvider === 'docker' ? 'docker' : 'host';
   return {
-    provider:
-      settingsFacts.persistedProvider === 'docker'
-        ? 'docker'
-        : 'host',
+    provider,
     platform: DEFAULT_INTERACTIVE_PLATFORM,
     labviewVersion:
       isSupportedInstalledLabviewVersion(settingsFacts.persistedLabviewVersion)
@@ -733,7 +768,9 @@ function deriveInteractiveSelection(
     labviewBitness:
       settingsFacts.persistedLabviewBitness === 'x86' || settingsFacts.persistedLabviewBitness === 'x64'
         ? settingsFacts.persistedLabviewBitness
-        : 'x64'
+        : provider === 'docker'
+          ? DEFAULT_DOCKER_LABVIEW_BITNESS
+          : DEFAULT_WINDOWS_HOST_LABVIEW_BITNESS
   };
 }
 
@@ -1562,10 +1599,10 @@ function renderTerminalEntrypointDiscoveryText(): string {
     'VI History runtime-settings terminal entrypoint',
     '',
     'Copy one of these commands:',
-    `  ${buildBareCommandLine(['--provider', 'host', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
-    `  ${buildBareCommandLine(['--provider', 'docker', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
+    `  ${buildBareCommandLine(['--provider', 'host', '--labview-version', '2026', '--labview-bitness', DEFAULT_WINDOWS_HOST_LABVIEW_BITNESS])}`,
+    `  ${buildBareCommandLine(['--provider', 'docker', '--labview-version', '2026', '--labview-bitness', DEFAULT_DOCKER_LABVIEW_BITNESS])}`,
     `  ${buildBareCommandLine(['--validate'])}`,
-    `  ${buildBareCommandLine(['validate-fixture', '--provider', 'docker', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
+    `  ${buildBareCommandLine(['validate-fixture', '--provider', 'docker', '--labview-version', '2026', '--labview-bitness', DEFAULT_DOCKER_LABVIEW_BITNESS])}`,
     '',
     'Optional:',
     '  add --settings-file <path> to target one explicit non-workspace settings.json file',

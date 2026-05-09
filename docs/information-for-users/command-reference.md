@@ -31,7 +31,8 @@ See also:
 ## Public Evaluation And Installed Baseline
 
 - The active governed preview route is Linux/Docker, Linux host LabVIEW, and
-  Windows host LabVIEW 2026 x64 validated; Windows Docker Desktop
+  Windows host LabVIEW 2026 x86 validated; Windows host x64 remains selectable
+  when manually installed, and Windows Docker Desktop
   Windows-container proof remains community/deferred until public issue #65
   receives an admissible packet from a real Windows host with Docker Desktop
   OSType `windows`.
@@ -62,8 +63,9 @@ See also:
 - Executable installed-user proof route:
   `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof`
 - Proof boundary: Linux/Docker `2026` `x64`, Linux host LabVIEW `2026`
-  `x64`, and Windows host LabVIEW `2026` `x64` are admitted for their selected
-  machines; Windows Docker Desktop Windows-container proof remains
+  `x64`, and Windows host LabVIEW `2026` `x86` are admitted for their selected
+  machines; Windows host LabVIEW `2026` `x64` remains selectable when manually
+  installed; Windows Docker Desktop Windows-container proof remains
   community/deferred.
 
 ## Documentation Package Workbench
@@ -133,7 +135,7 @@ runtime-settings CLI on the active branch.
     from the current host and prompts only for provider, LabVIEW year, and
     bitness; `Enter` keeps the current or seeded value at each prompt
   - when settings are missing, the bootstrap seeds
-    `host/windows/2026/x64` before readback or selection
+    `host/windows/2026/x86` before readback or selection
   - on non-interactive surfaces, the bootstrap retains or seeds that same
     governed default bundle and prints exact follow-up `vihs` commands instead
     of hanging on prompts
@@ -178,16 +180,19 @@ runtime-settings CLI on the active branch.
   bundle, or changing provider/runtime selections through the keyboard.
 - Notes:
   - on interactive TTY surfaces, `vihs` seeds missing settings to
-    `host/windows/2026/x64`, reads back the current provider/platform/version/
+    `host/windows/2026/x86`, reads back the current provider/platform/version/
     bitness bundle, and lets `Enter` keep the current value at each prompt
   - host supports LabVIEW `2025`, LabVIEW `2026`, and newer local LabVIEW
-    versions when that exact installation is present on the current machine
+    versions when that exact installation and bitness are present on the
+    current machine; Windows Community installs `x86` first, while `x64`
+    remains selectable after a manual x64 install
   - LabVIEW `2024` and older cannot create the VI Comparison Report that VI
     History Suite uses; select LabVIEW `2025` or newer even when the VI being
     reviewed was saved by an older LabVIEW version
   - Docker is the bounded expert path: `2026` / `x64` is the governed Docker
-    implementation today, while other selectable Docker years or bitnesses may
-    report stable not-yet-implemented runtime codes for public validation
+    implementation today because Docker images are 64-bit only, while other
+    selectable Docker years or bitnesses may report stable
+    not-yet-implemented runtime codes for public validation
   - `host/linux` is selectable; `2026` / `x64` is admitted when LabVIEW
     Community 2026 is installed on Linux, while unsupported or missing local
     host bundles still report stable fail-closed runtime codes
@@ -211,9 +216,10 @@ runtime-settings CLI on the active branch.
     terminal surface needs repair or refresh
   - without `--settings-file`, the governed target is the platform-default
     user `settings.json`; workspace settings are not a supported target
-  - Windows host LabVIEW 2026 x64 is admitted through a separate Windows 11
-    VirtualBox installed-user fixture proof; the Ubuntu/Docker evidence lane
-    still does not prove Docker Desktop Windows-container behavior
+  - Windows host LabVIEW 2026 x86 is admitted through the governed Windows
+    Community/golden-VM installed-user fixture proof; x64 remains selectable
+    when manually installed, and the Ubuntu/Docker evidence lane still does not
+    prove Docker Desktop Windows-container behavior
   - for the `1.3.15` installed-user stable patch direction, report local
     Windows/LabVIEW and Docker results through the public GitHub validation
     templates and include provider, LabVIEW year, bitness, `runtimeErrorCode`,
@@ -275,8 +281,11 @@ runtime-settings CLI on the active branch.
     compare
   - `--provider host --labview-version 2026 --labview-bitness x64` exercises
     the Linux host LabVIEW admitted lane when LabVIEW Community 2026 is
-    installed on Linux, and the Windows host LabVIEW admitted lane when
-    LabVIEW 2026 x64 is installed on Windows
+    installed on Linux, and the Windows host x64 lane when LabVIEW 2026 x64 is
+    manually installed on Windows
+  - `--provider host --labview-version 2026 --labview-bitness x86` exercises
+    the governed Windows Community/default lane when LabVIEW 2026 x86 is
+    installed on Windows
   - Windows Docker Desktop Windows-container results are community/deferred
     until users file proof packets from those machines. For public issue #65,
     switch Docker Desktop to Windows containers, confirm

@@ -176,7 +176,7 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
-  it('defaults Windows bitness to x64 when both host installs are available', async () => {
+  it('honors an explicit x64 preference when both host installs are available', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
@@ -216,6 +216,37 @@ describe('comparisonRuntimeLocator', () => {
         detail:
           'Auto execution selected host-native LabVIEW 2025 or newer plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
       }
+    ]);
+  });
+
+  it('fails closed and reports the detected alternative when the selected Windows bitness is missing', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-exe-not-found');
+    expect(result.notes).toEqual([
+      'No supported LabVIEW 2026 x64 runtime was located for report generation.',
+      'Detected installed LabVIEW 2026 x86 runtime at C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe, but VI History Suite will not auto-switch from selected x64 because bitness-specific dependencies may differ.',
+      'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
     ]);
   });
 
@@ -559,6 +590,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.blockedReason).toBe('labview-cli-not-found-for-bitness');
     expect(result.notes).toEqual([
       'No matching LabVIEWCLI x86 surface was located for requested LabVIEW 2026 x86 execution.',
+      'Detected installed LabVIEWCLI x64 surface at C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe, but VI History Suite will not auto-switch from selected x86 because bitness-specific dependencies may differ.',
       'Install the matching LabVIEWCLI surface for the requested bitness, or adjust viHistorySuite.runtimeProvider, viHistorySuite.labviewVersion, or viHistorySuite.labviewBitness before retrying compare.'
     ]);
     expect(result.providerDecisions).toEqual([

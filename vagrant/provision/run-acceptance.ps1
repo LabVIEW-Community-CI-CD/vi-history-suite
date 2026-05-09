@@ -227,7 +227,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Step "Extension installed."
 
 # ---------------------------------------------------------------------------
-# 2. Configure VS Code settings (non-interactive, defaults to host/2026/x64)
+# 2. Configure VS Code settings (non-interactive, defaults to host/2026/x86)
 # ---------------------------------------------------------------------------
 Write-Step "Configuring VI History Suite runtime settings..."
 $installScript = Join-Path $WorkspaceRoot 'scripts\install-vihs-extension.ps1'

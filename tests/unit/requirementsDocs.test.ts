@@ -249,7 +249,7 @@ describe('requirements documentation coherence', () => {
       'bare `vihs` terminal entrypoint shall make its runtime dependency and recovery explicit'
     );
     expect(srs).toContain('bare `vihs` terminal entrypoint shall make terminal discoverability explicit');
-    expect(srs).toContain('seeding missing settings to `host/windows/2026/x64`');
+    expect(srs).toContain('seeding missing settings to `host/windows/2026/x86`');
     expect(srs).toContain('Enter-through confirmation or guided selection');
     expect(srs).toContain('installed-user `vihs` surface shall expose one governed validation action');
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');

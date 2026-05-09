@@ -118,7 +118,8 @@ Proof-status matrix:
 | --- | --- | --- |
 | Linux/Docker `2026` `x64` | admitted | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
 | Linux host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 Community is installed on Linux | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
-| Windows host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 x64 is installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
+| Windows host LabVIEW `2026` `x86` | admitted on the governed Windows Community/golden-VM lane | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x86 --proof-out .\vihs-fixture-proof` |
+| Windows host LabVIEW `2026` `x64` | selectable when LabVIEW 2026 x64 is manually installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
 | Windows Docker Desktop Windows containers | community/deferred through public issue #65 | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000` after Docker Desktop is switched to Windows containers |
 | Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
 

@@ -1824,12 +1824,12 @@ Information-for-users review cases:
   with one actionable missing-or-stale runtime dependency message that
   restores the admitted terminal surface without hidden-path reconstruction
 - `TEST-UNIT-353`: verify `vihs` with no arguments seeds missing settings to
-  `host/windows/2026/x64`, reads back the current provider/platform/version/bitness
+  `host/windows/2026/x86`, reads back the current provider/platform/version/bitness
   bundle, prints exact copyable next commands, and, on interactive TTY
   surfaces, admits Enter-through confirmation or guided selection of supported
-  provider/platform/version/bitness values, including `docker/linux` `2026`
-  `x64` on Linux Docker Desktop/Docker Engine hosts, while failing closed with
-  explicit unsupported, host-mismatched, or not-yet-implemented path guidance
+  host provider/platform/version/bitness values, keeps Docker on `2026` `x64`,
+  and fails closed with explicit unsupported, host-mismatched, missing selected
+  bitness, or not-yet-implemented path guidance
 - `TEST-UNIT-354`: verify the `vihs` surface exposes `vihs --validate` as one
   governed validation action that reports persisted provider/version/bitness
   truth plus runtime-validation outcome, and that the no-argument interactive
@@ -1973,7 +1973,7 @@ Information-for-users review cases:
   materializes the admitted `vihs` launchers, derives platform from the
   current host, prompts only for provider/LabVIEW year/bitness when
   interactive, and on non-interactive surfaces seeds or retains the governed
-  default `host/windows/2026/x64` bundle plus exact follow-up `vihs` commands
+  default `host/windows/2026/x86` bundle plus exact follow-up `vihs` commands
   without claiming raw `code --install-extension` interactivity
 - `TEST-UNIT-368`: verify the governed runner startup/doctor substrate writes
   machine-readable Windows and Linux startup receipts, exposes repo-owned
