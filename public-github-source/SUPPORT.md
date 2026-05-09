@@ -77,10 +77,12 @@ may work, fail with a stable `VIHS_E_*` code, or report
 
 Linux/Docker and Linux host LabVIEW success do not prove native Windows/LabVIEW
 installed-user behavior. They are accepted evidence for the selected Linux
-machine only; Windows host LabVIEW 2026 x64 is admitted from retained
-Windows installed-user proof. Windows Docker Desktop proof remains
-community/deferred until public issue #65 receives a `vihs validate-fixture`
-packet from a real Windows host with Docker Desktop OSType `windows`.
+machine only; Windows host LabVIEW 2026 x86 is admitted from retained
+Windows Community/golden-VM installed-user proof, while Windows host x64
+remains selectable when that bitness is manually installed. Windows Docker
+Desktop proof remains community/deferred until public issue #65 receives a
+`vihs validate-fixture` packet from a real Windows host with Docker Desktop
+OSType `windows`; Docker images are 64-bit only.
 
 ## Current Product Boundary
 

@@ -186,6 +186,7 @@ function validateHarnessReport(runDirectory, fsApi = fs) {
   assertEqual(harnessReport.baseHash, BASE_HASH, 'harnessReport.baseHash');
   assertEqual(harnessReport.runtimeProvider, 'host-native', 'harnessReport.runtimeProvider');
   assertEqual(harnessReport.runtimeEngine, 'labview-cli', 'harnessReport.runtimeEngine');
+  assertEqual(harnessReport.runtimeBitness, 'x86', 'harnessReport.runtimeBitness');
   assertEqual(harnessReport.runtimeExecutionState, 'succeeded', 'harnessReport.runtimeExecutionState');
   assertEqual(harnessReport.generatedReportExists, true, 'harnessReport.generatedReportExists');
   assertNonemptyFile(harnessReportHtmlPath, 'Vagrant generated comparison report HTML', fsApi);
@@ -207,6 +208,7 @@ function buildVagrantVsixAcceptanceEvidenceMarkdown(report) {
     `- Acceptance log: ${report.acceptanceLogPath}`,
     `- Runtime provider: ${report.facts.runtimeProvider}`,
     `- Runtime engine: ${report.facts.runtimeEngine}`,
+    `- Runtime bitness: ${report.facts.runtimeBitness}`,
     `- Runtime execution: ${report.facts.runtimeExecutionState}`,
     `- Generated report exists: ${report.facts.generatedReportExists ? 'yes' : 'no'}`,
     ''
@@ -256,6 +258,7 @@ function assertVagrantVsixAcceptanceEvidence(options = {}, deps = {}) {
       proofExitCode: manifest.proofExitCode,
       runtimeProvider: harness.harnessReport.runtimeProvider,
       runtimeEngine: harness.harnessReport.runtimeEngine,
+      runtimeBitness: harness.harnessReport.runtimeBitness,
       runtimeExecutionState: harness.harnessReport.runtimeExecutionState,
       generatedReportExists: harness.harnessReport.generatedReportExists,
       coldStartMarkers: coldStart.markers

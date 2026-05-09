@@ -174,6 +174,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(githubWorkflow).not.toContain('VBoxManage guestcontrol');
 
     expect(laneDoc).toContain('local-vagrant-windows-acceptance');
+    expect(laneDoc).toContain('Windows 11 + LabVIEW 2026 Community x86 VirtualBox guest');
     expect(laneDoc).toContain('glrt-');
     expect(laneDoc).toContain('POST /user/runners');
     expect(laneDoc).toContain('not to legacy registration-token arguments');
@@ -196,6 +197,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
+    expect(laneDoc).toContain('LabVIEW `2026` `x86`');
+    expect(laneDoc).toContain('`runtimeProvider=host-native`');
+    expect(laneDoc).toContain('`runtimeEngine=labview-cli`');
     expect(laneDoc).toContain('assertion/vagrant-vsix-acceptance-assertion.json');
     expect(laneDoc).toContain('not replace the deferred native Windows x64 private-release proof');
 

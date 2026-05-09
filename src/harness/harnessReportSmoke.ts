@@ -70,6 +70,7 @@ export interface HarnessReportSmokeReport {
     | 'not-applicable';
   runtimeProvider?: ComparisonRuntimeSelection['provider'];
   runtimeEngine?: ComparisonRuntimeSelection['engine'];
+  runtimeBitness?: ComparisonRuntimeSelection['bitness'];
   executionSurfaceContext?: 'windows-benchmark-image' | 'unverified-execution-surface';
   executionSurfaceMarkers?: string[];
   runtimeBlockedReason?: string;
@@ -432,6 +433,7 @@ function buildHarnessReportSmokeReport(options: {
     runtimeExecutionState: record.runtimeExecutionState,
     runtimeProvider: record.runtimeSelection.provider,
     runtimeEngine: record.runtimeSelection.engine,
+    runtimeBitness: record.runtimeSelection.bitness,
     executionSurfaceContext: executionSurface.context,
     executionSurfaceMarkers:
       executionSurface.markers.length > 0 ? executionSurface.markers : undefined,
@@ -497,6 +499,7 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime execution: ${report.runtimeExecutionState}
 - Runtime provider: ${report.runtimeProvider ?? 'none'}
 - Runtime engine: ${report.runtimeEngine ?? 'none'}
+- Runtime bitness: ${report.runtimeBitness ?? 'none'}
 - Execution surface context: ${report.executionSurfaceContext ?? 'none'}
 - Execution surface markers: ${report.executionSurfaceMarkers?.join(' | ') || 'none'}
 - Runtime blocked reason: ${report.runtimeBlockedReason ?? 'none'}
@@ -565,6 +568,7 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime execution:</strong> ${escapeHtml(report.runtimeExecutionState)}</div>
       <div><strong>Runtime provider:</strong> ${escapeHtml(report.runtimeProvider ?? 'none')}</div>
       <div><strong>Runtime engine:</strong> ${escapeHtml(report.runtimeEngine ?? 'none')}</div>
+      <div><strong>Runtime bitness:</strong> ${escapeHtml(report.runtimeBitness ?? 'none')}</div>
       <div><strong>Execution surface context:</strong> ${escapeHtml(
         report.executionSurfaceContext ?? 'none'
       )}</div>

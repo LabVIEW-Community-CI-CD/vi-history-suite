@@ -30,6 +30,7 @@ const assertion = require(path.join(
     facts: {
       runtimeProvider: string;
       runtimeEngine: string;
+      runtimeBitness: string;
       runtimeExecutionState: string;
       generatedReportExists: boolean;
     };
@@ -121,6 +122,7 @@ function createEvidenceRun(options: {
     runtimeExecutionState,
     runtimeProvider: 'host-native',
     runtimeEngine: 'labview-cli',
+    runtimeBitness: 'x86',
     generatedReportExists
   });
 
@@ -184,6 +186,7 @@ describe('Vagrant VSIX acceptance evidence assertion', () => {
     expect(report.facts).toMatchObject({
       runtimeProvider: 'host-native',
       runtimeEngine: 'labview-cli',
+      runtimeBitness: 'x86',
       runtimeExecutionState: 'succeeded',
       generatedReportExists: true
     });
@@ -217,7 +220,8 @@ describe('Vagrant VSIX acceptance evidence assertion', () => {
       facts: {
         harnessId: assertion.HARNESS_ID,
         runtimeProvider: 'host-native',
-        runtimeEngine: 'labview-cli'
+        runtimeEngine: 'labview-cli',
+        runtimeBitness: 'x86'
       }
     });
   });

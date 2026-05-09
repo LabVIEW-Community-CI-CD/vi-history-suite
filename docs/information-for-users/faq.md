@@ -67,7 +67,7 @@ Use the governed Windows PowerShell bootstrap command:
   surface.
 - The bootstrap derives platform from the current host and asks only for
   provider, LabVIEW year, and bitness.
-- If settings are missing, it seeds `host/windows/2026/x64` first, reads the
+- If settings are missing, it seeds `host/windows/2026/x86` first, reads the
   current bundle back, and lets you keep each value by pressing `Enter`.
 - If PowerShell is not interactive, the bootstrap retains or seeds the
   governed default bundle and prints the exact follow-up `vihs` commands
@@ -80,13 +80,14 @@ Use the governed Windows PowerShell bootstrap command:
 In supported Windows PowerShell sessions and admitted VS Code terminals, type
 `vihs`.
 
-- If settings are missing, `vihs` seeds `host/windows/2026/x64` first.
+- If settings are missing, `vihs` seeds `host/windows/2026/x86` first.
 - `vihs` reads back the current provider/platform/version/bitness bundle so you
   can keep each value by pressing `Enter` or stop at one prompt and choose a
   different value.
 - Host is the default provider and supports LabVIEW `2025`, LabVIEW `2026`,
-  and newer local LabVIEW versions when that exact installation is present on
-  the current machine.
+  and newer local LabVIEW versions when that exact installation and bitness are
+  present on the current machine. Windows Community installs `x86` first; select
+  `x64` only after installing that bitness intentionally.
 - LabVIEW `2024` and older cannot create the VI Comparison Report that VI
   History Suite uses. Use LabVIEW `2025` or newer even for older VIs; those
   newer LabVIEW versions can open prior-version VIs without migrating them.
@@ -95,6 +96,9 @@ In supported Windows PowerShell sessions and admitted VS Code terminals, type
   `docker/linux` on Linux Docker Desktop/Docker Engine hosts; Docker years
   before `2026` are unsupported; `host/linux` `2026` / `x64` is admitted when
   LabVIEW Community 2026 is installed on Linux.
+- Docker images are 64-bit only. If the selected Windows host bitness is not
+  installed, VI History Suite may mention the detected other bitness, but it
+  does not auto-switch because bitness-specific dependencies can differ.
 - For non-interactive scripting, use the exact command shape:
 
 `vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`

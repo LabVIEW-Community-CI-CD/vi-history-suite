@@ -108,10 +108,12 @@ Use `resource/plugins/lv_icon.vi` from those two commits for repeatable Docker
 compare validation. Retained public evidence shows the positive historical
 compare succeeded, the no-change control succeeded, and the missing-file
 control blocked before Docker at `left-blob-read-failed`. Windows host LabVIEW
-`2026` `x64` is now separately admitted from a Windows 11 VirtualBox
-installed-user proof; Windows Docker Desktop Windows-container proof remains
-community/deferred until public issue #65 receives an admissible packet from a
-real Windows host with Docker Desktop switched to Windows containers.
+`2026` `x86` is now separately admitted from the governed Windows
+Community/golden-VM installed-user proof. Windows host LabVIEW `2026` `x64`
+remains selectable when the user manually installs the x64 runtime. Windows
+Docker Desktop Windows-container proof remains community/deferred until public
+issue #65 receives an admissible packet from a real Windows host with Docker
+Desktop switched to Windows containers; Docker images are 64-bit only.
 
 Executable fixture validation:
 
@@ -121,6 +123,11 @@ vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness
 
 On a Linux machine with LabVIEW Community 2026 installed, use `--provider host`
 with the same command to generate the Linux host-native proof packet.
+
+On Windows with LabVIEW Community 2026 installed, use `--provider host` with
+`--labview-bitness x86` for the governed Community/default proof packet. Select
+`x64` only when that LabVIEW bitness is installed intentionally; VI History
+Suite reports a detected alternative bitness but does not auto-switch.
 
 On Windows Docker Desktop, switch Docker Desktop to Windows containers and
 confirm `docker info --format "{{.OSType}} {{.OperatingSystem}}"` reports
