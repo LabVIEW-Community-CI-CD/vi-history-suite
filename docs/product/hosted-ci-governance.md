@@ -30,12 +30,13 @@ retained closed baseline.
 
 - current exact release line: `v1.3.9`
 - current `main` package line: `1.3.9`
-- current `develop` package line: `1.3.14`
-- active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: `release/1.3.14`
+- current `develop` package line: `1.3.15`
+- active exact release candidate line on `develop`: `v1.3.15`
+- active release-candidate branch: none for `1.3.15` yet
 - active release-candidate state:
-  protected `main` promotion preflight admitted opening a release-to-main
-  merge request as the next separate governed action
+  `1.3.15` installed-user stable patch work is open on the feature/develop
+  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
+  Marketplace publication has been created for this line yet
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:

@@ -49,7 +49,11 @@ operation acquires the image when it is not cached yet.
 ## Runtime Notes
 
 - Windows defaults to local `LabVIEWCLI`
-- host Windows LabVIEW years `2020` through `2026` are selectable when they are installed locally
+- host LabVIEW `2025`, `2026`, and newer local versions are selectable when
+  they are installed locally; LabVIEW `2024` and older cannot create the VI
+  Comparison Report that VI History Suite uses
+- LabVIEW `2025` and newer can open older LabVIEW VIs without migrating the
+  source file before generating the comparison report
 - host Linux LabVIEW `2026` `x64` is admitted when LabVIEW Community 2026 is
   installed and discoverable at `/usr/local/natinst/LabVIEW-2026-64/labview`
 - `docker/windows` and `docker/linux` are governed today for `2026` `x64`

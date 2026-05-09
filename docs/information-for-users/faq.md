@@ -84,8 +84,12 @@ In supported Windows PowerShell sessions and admitted VS Code terminals, type
 - `vihs` reads back the current provider/platform/version/bitness bundle so you
   can keep each value by pressing `Enter` or stop at one prompt and choose a
   different value.
-- Host is the default provider and supports LabVIEW years `2020` through `2026`
-  when that exact installation is present on the current machine.
+- Host is the default provider and supports LabVIEW `2025`, LabVIEW `2026`,
+  and newer local LabVIEW versions when that exact installation is present on
+  the current machine.
+- LabVIEW `2024` and older cannot create the VI Comparison Report that VI
+  History Suite uses. Use LabVIEW `2025` or newer even for older VIs; those
+  newer LabVIEW versions can open prior-version VIs without migrating them.
 - Docker is the bounded expert path: `2026` / `x64` is supported for
   `docker/windows` on Windows Docker Desktop Windows-container hosts and for
   `docker/linux` on Linux Docker Desktop/Docker Engine hosts; Docker years
@@ -219,10 +223,10 @@ x64 for the canonical `lv_icon.vi` fixture. Docker Desktop Windows-container
 proof remains deferred until public issue #65 receives an admissible packet
 from a real Windows host with Docker Desktop OSType `windows`.
 
-For Marketplace pre-release `1.3.13`, use the public validation templates when
-reporting Windows/LabVIEW or Docker Desktop results. Selectable means available
-for validation, not automatically maintainer-proven for every provider/year/
-bitness variant.
+For the `1.3.15` installed-user stable patch direction, use the public
+validation templates when reporting Windows/LabVIEW or Docker Desktop results.
+Selectable means available for validation, not automatically maintainer-proven
+for every provider/year/bitness variant.
 
 The remaining Windows proof gap is:
 

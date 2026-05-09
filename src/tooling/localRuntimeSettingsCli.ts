@@ -123,7 +123,9 @@ const WINDOWS_TERMINAL_ENTRYPOINT_NAME = 'vihs.cmd';
 const POSIX_TERMINAL_ENTRYPOINT_NAME = 'vihs';
 const TERMINAL_COMMAND_NAME = 'vihs';
 const DEFAULT_INTERACTIVE_PLATFORM = 'windows';
-const SUPPORTED_HOST_LABVIEW_VERSIONS = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'] as const;
+const SUPPORTED_HOST_LABVIEW_VERSIONS = ['2025', '2026'] as const;
+const FUTURE_HOST_LABVIEW_OPTION = 'newer/manual path';
+const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
 const SUPPORTED_DOCKER_LABVIEW_VERSION = '2026';
 const WINDOWS_PATH_SEPARATOR = ';';
 const POSIX_PATH_SEPARATOR = ':';
@@ -143,6 +145,7 @@ export type RuntimeValidationErrorCode =
   | 'VIHS_E_PROVIDER_INVALID'
   | 'VIHS_E_RUNTIME_SELECTION_REQUIRED'
   | 'VIHS_E_LABVIEW_VERSION_REQUIRED'
+  | 'VIHS_E_LABVIEW_VERSION_UNSUPPORTED'
   | 'VIHS_E_LABVIEW_BITNESS_REQUIRED'
   | 'VIHS_E_PLATFORM_UNSUPPORTED'
   | 'VIHS_E_CONFIGURED_PATH_MISSING'
@@ -518,10 +521,8 @@ export async function runInteractiveLocalRuntimeSettingsCli(
       );
 
       while (true) {
-        selection.labviewVersion = await promptEnum(
-          'LabVIEW year',
+        selection.labviewVersion = await promptLabviewVersion(
           selection.labviewVersion,
-          [...SUPPORTED_HOST_LABVIEW_VERSIONS],
           promptLine
         );
 
@@ -646,6 +647,52 @@ async function promptEnum<T extends string>(
   }
 }
 
+async function promptLabviewVersion(
+  defaultValue: string,
+  promptLine: (prompt: string) => Promise<string>
+): Promise<string> {
+  while (true) {
+    const response = (
+      await promptLine(
+        `LabVIEW year [${defaultValue}] (${[
+          ...SUPPORTED_HOST_LABVIEW_VERSIONS,
+          FUTURE_HOST_LABVIEW_OPTION
+        ].join(', ')}): `
+      )
+    )
+      .trim()
+      .toLowerCase();
+
+    const selected = response || defaultValue;
+    if (isSupportedInstalledLabviewVersion(selected)) {
+      return selected;
+    }
+
+    if (
+      selected === 'newer' ||
+      selected === 'manual' ||
+      selected === FUTURE_HOST_LABVIEW_OPTION
+    ) {
+      const manualVersion = (
+        await promptLine('Newer/manual local LabVIEW year (2025 or newer): ')
+      )
+        .trim()
+        .toLowerCase();
+      if (isSupportedInstalledLabviewVersion(manualVersion)) {
+        return manualVersion;
+      }
+    }
+  }
+}
+
+function isSupportedInstalledLabviewVersion(value: string | undefined): value is string {
+  const requestedYear = Number.parseInt(value ?? '', 10);
+  return (
+    Number.isFinite(requestedYear) &&
+    requestedYear >= MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR
+  );
+}
+
 async function ensureInteractiveDefaultSettings(
   settingsFilePath: string,
   deps: LocalRuntimeSettingsCliDeps
@@ -680,9 +727,7 @@ function deriveInteractiveSelection(
         : 'host',
     platform: DEFAULT_INTERACTIVE_PLATFORM,
     labviewVersion:
-      settingsFacts.persistedLabviewVersion && SUPPORTED_HOST_LABVIEW_VERSIONS.includes(
-        settingsFacts.persistedLabviewVersion as (typeof SUPPORTED_HOST_LABVIEW_VERSIONS)[number]
-      )
+      isSupportedInstalledLabviewVersion(settingsFacts.persistedLabviewVersion)
         ? settingsFacts.persistedLabviewVersion
         : '2026',
     labviewBitness:
@@ -941,6 +986,10 @@ function deriveRuntimeValidationErrorCode(
 
   if (blockedReason === 'labview-version-required') {
     return 'VIHS_E_LABVIEW_VERSION_REQUIRED';
+  }
+
+  if (blockedReason === 'labview-version-unsupported-for-comparison-report') {
+    return 'VIHS_E_LABVIEW_VERSION_UNSUPPORTED';
   }
 
   if (blockedReason === 'labview-bitness-required') {
@@ -1534,23 +1583,31 @@ function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platfo
 
 function renderJavascriptLauncher(modulePath: string): string {
   return [
+    'const fs = require(\'node:fs\');',
     'const path = require(\'node:path\');',
     `const modulePath = ${JSON.stringify(modulePath)};`,
+    'function writeError(message) {',
+    '  try {',
+    '    fs.writeSync(2, `${String(message)}\\n`);',
+    '  } catch {',
+    '    console.error(message);',
+    '  }',
+    '}',
     'let cli;',
     'try {',
     '  cli = require(modulePath);',
     '} catch (error) {',
-    `  console.error(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
+    `  writeError(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
     '  if (error instanceof Error && error.message) {',
-    "    console.error(`Module: ${path.resolve(modulePath)}`);",
-    '    console.error(error.message);',
+    "    writeError(`Module: ${path.resolve(modulePath)}`);",
+    '    writeError(error.message);',
     '  }',
     '  process.exitCode = 1;',
     '  return;',
     '}',
     'if (!cli || typeof cli.runLocalRuntimeSettingsCliMain !== \'function\') {',
-    `  console.error(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
-    "  console.error(`Module: ${path.resolve(modulePath)}`);",
+    `  writeError(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
+    "  writeError(`Module: ${path.resolve(modulePath)}`);",
     '  process.exitCode = 1;',
     '  return;',
     '}',

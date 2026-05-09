@@ -171,7 +171,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'host-native-comparison-tool-not-found',
         detail:
-          'A supported LabVIEW 2026 executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.'
+          'A supported LabVIEW 2025 or newer executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.'
       }
     ]);
   });
@@ -214,7 +214,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'auto-selected-host-native-because-docker-not-installed',
         detail:
-          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
+          'Auto execution selected host-native LabVIEW 2025 or newer plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
       }
     ]);
   });
@@ -314,7 +314,7 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
-  it('filters host-native Windows runtime selection by requested LabVIEW version', async () => {
+  it('rejects host-native Windows runtime selection when requested LabVIEW cannot create comparison reports', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
@@ -337,10 +337,11 @@ describe('comparisonRuntimeLocator', () => {
     );
 
     expect(result.provider).toBe('unavailable');
-    expect(result.blockedReason).toBe('labview-exe-not-found');
-    expect(result.notes).toContain(
-      'No supported LabVIEW 2024 x64 runtime was located for report generation.'
-    );
+    expect(result.blockedReason).toBe('labview-version-unsupported-for-comparison-report');
+    expect(result.notes).toEqual([
+      'LabVIEW 2024 cannot create the VI Comparison Report used by VI History Suite.',
+      'Select LabVIEW 2025, LabVIEW 2026, or a newer local LabVIEW version; those versions can open earlier LabVIEW VIs without migrating the file before generating the report.'
+    ]);
   });
 
   it('derives host-only execution from the persisted host provider for installed compare', async () => {
@@ -385,9 +386,38 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'provider-request-host-selected-host-native',
         detail:
-          'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          'Host provider was requested and host-native LabVIEW 2025 or newer plus LabVIEWCLI were available.'
       }
     ]);
+  });
+
+  it('recognizes requested Windows LabVIEW 2025 host runtime scan roots', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2025',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2025 Q3\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('host-native');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.labviewExe?.path).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2025 Q3\\LabVIEW.exe'
+    );
   });
 
   it('recognizes the Linux LabVIEW 2026 Community host runtime scan roots', async () => {
@@ -424,12 +454,12 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'provider-request-host-selected-host-native',
         detail:
-          'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          'Host provider was requested and host-native LabVIEW 2025 or newer plus LabVIEWCLI were available.'
       }
     ]);
   });
 
-  it('filters Linux host runtime selection by requested LabVIEW version', async () => {
+  it('rejects Linux host runtime selection when requested LabVIEW cannot create comparison reports', async () => {
     const result = await locateComparisonRuntime(
       'linux',
       {
@@ -450,10 +480,11 @@ describe('comparisonRuntimeLocator', () => {
     );
 
     expect(result.provider).toBe('unavailable');
-    expect(result.blockedReason).toBe('labview-exe-not-found');
-    expect(result.notes).toContain(
-      'No supported LabVIEW 2024 runtime was located for report generation.'
-    );
+    expect(result.blockedReason).toBe('labview-version-unsupported-for-comparison-report');
+    expect(result.notes).toEqual([
+      'LabVIEW 2024 cannot create the VI Comparison Report used by VI History Suite.',
+      'Select LabVIEW 2025, LabVIEW 2026, or a newer local LabVIEW version; those versions can open earlier LabVIEW VIs without migrating the file before generating the report.'
+    ]);
   });
 
   it('fails closed for installed compare when multiple matching Windows LabVIEW executables satisfy the requested version and bitness', async () => {
@@ -594,7 +625,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'provider-request-host-selected-host-native',
         detail:
-          'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          'Host provider was requested and host-native LabVIEW 2025 or newer plus LabVIEWCLI were available.'
       }
     ]);
   });
@@ -682,7 +713,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'auto-selected-host-native-because-docker-not-installed',
         detail:
-          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
+          'Auto execution selected host-native LabVIEW 2025 or newer plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
       }
     ]);
   });
@@ -825,7 +856,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'execution-mode-host-only-selected-host-native',
         detail:
-          'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          'Host-only execution was requested and host-native LabVIEW 2025 or newer plus LabVIEWCLI were available.'
       }
     ]);
   });
@@ -960,13 +991,13 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
-  it('accepts non-2026 Docker requests for validation reporting and fails with not-implemented reason', async () => {
+  it('accepts supported non-2026 Docker requests for validation reporting and fails with not-implemented reason', async () => {
     const result = await locateComparisonRuntime(
       'win32',
       {
         requestedProvider: 'docker',
         requireVersionAndBitness: true,
-        labviewVersion: '2024',
+        labviewVersion: '2025',
         bitness: 'x64'
       },
       {
@@ -981,7 +1012,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.provider).toBe('unavailable');
     expect(result.blockedReason).toBe('docker-provider-labview-version-not-implemented');
     expect(result.notes).toContain(
-      'Docker provider validation accepted the request for evidence capture, but LabVIEW 2024 Docker execution is not implemented in this pre-release lane. Current governed Docker image contracts remain LabVIEW 2026 x64.'
+      'Docker provider validation accepted the request for evidence capture, but LabVIEW 2025 Docker execution is not implemented in this pre-release lane. Current governed Docker image contracts remain LabVIEW 2026 x64.'
     );
     expect(result.providerDecisions).toEqual([
       {
@@ -1189,7 +1220,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'host-native-comparison-tool-not-found',
         detail:
-          'A supported LabVIEW 2026 executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.'
+          'A supported LabVIEW 2025 or newer executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.'
       }
     ]);
   });
@@ -1220,7 +1251,7 @@ describe('comparisonRuntimeLocator', () => {
         provider: 'host-native',
         outcome: 'selected',
         reason: 'host-native-labview-cli-selected',
-        detail: 'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
+        detail: 'Host-native LabVIEW 2025 or newer and LabVIEWCLI were available for comparison-report execution.'
       }
     ]);
   });

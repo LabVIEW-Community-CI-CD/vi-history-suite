@@ -114,7 +114,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Local Git history, tracked-file status, and content-detected VI signature checks.');
     expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and explicit selected/base compare preflight facts.');
     expect(html).toContain('Repository/path facts, retained commit chronology, explicit selected/base compare preflight, and retained compare-pair summaries.');
-    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; selecting two revisions populates explicit compare preflight and Compare runs the explicit selected/base pair');
+    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; selecting two revisions enables Compare for the explicit selected/base pair');
     expect(html).toContain('Retained pair review:</strong> Retained comparison evidence opens through the dedicated compare preflight workflow when available; no separate compare button is exposed on commit rows');
     expect(html).toContain('Documentation:</strong> Available in this build');
     expect(html).toContain(
@@ -143,16 +143,16 @@ describe('renderHistoryPanelHtml', () => {
       'No compare action from this panel has retained provider or acquisition truth yet.'
     );
     expect(html).toContain(
-      'Compare preflight is blocked until provider/runtime settings are corrected.'
+      'Runtime settings need attention; select two retained revisions to try Compare and capture the exact failure if it cannot finish.'
     );
     expect(html).toContain(
       'Next action: review compare preflight, then choose Compare to surface the selected provider and any acquisition state here.'
     );
     expect(html).toContain(
-      'Next action: use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+      'Next action: use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness. Compare can still be tried after selecting two revisions.'
     );
     expect(html).toContain(
-      'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.'
+      'Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness.'
     );
     expect(html).toContain('data-command="generateComparisonReportFromSelection"');
     expect(html).toContain('handleCommitSelectionChange');
@@ -496,7 +496,7 @@ describe('renderHistoryPanelHtml', () => {
     });
 
     expect(html).toContain('Repo-agnostic support');
-    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; selecting two revisions populates explicit compare preflight and Compare runs the explicit selected/base pair');
+    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; selecting two revisions enables Compare for the explicit selected/base pair');
     expect(html).not.toContain('data-testid="history-action-dashboard"');
     expect(html).not.toContain('data-testid="history-action-decision-record"');
     expect(html).toContain('data-testid="history-action-open"');

@@ -141,7 +141,7 @@ describe('release/1.3.14 branch opening packet', () => {
 
     expect(releaseStateDoc).toContain('## Release Branch Opening');
     expect(releaseStateDoc).toContain('Release branch pipeline: `2511168302` / `success`');
-    expect(currentState).toContain('active release-candidate branch: `release/1.3.14`');
+    expect(currentState).toContain('active release-candidate branch: none for `1.3.15` yet');
     expect(currentState).toContain('release-branch-opening-v1.3.14-2026-05-08.md');
     expect(informationItemMap).toContain('Release branch opening packet');
     expect(srs).toContain('governed release-branch opening');

@@ -84,8 +84,11 @@ Installed-user help:
   first compare
 - the first Docker compare on a fresh machine may pull
   `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`
-- host Windows LabVIEW years `2020` through `2026` are selectable when they
-  are installed locally
+- host LabVIEW `2025`, `2026`, and newer local versions are selectable when
+  they are installed locally; LabVIEW `2024` and older cannot create the VI
+  Comparison Report that VI History Suite uses
+- LabVIEW `2025` and newer can open older LabVIEW VIs without migrating the
+  source file before generating the comparison report
 - `docker/windows` and `docker/linux` variants are selectable for community
   validation; the governed Docker runtime implementation is currently `2026`
   `x64`
@@ -276,13 +279,13 @@ Authority release facts:
 - current exact released line: `v1.3.9`
 - current fully published exact package line: `1.3.9`
 - current authority package line on `main`: `1.3.14`
-- current develop package line on `develop`: `1.3.14`
-- active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: `release/1.3.14`
+- current develop package line on `develop`: `1.3.15`
+- active exact release candidate line on `develop`: `v1.3.15`
+- active release-candidate branch: none for `1.3.15` yet
 - active release-candidate state:
-  GitLab authority main promotion, exact authority tagging, and public GitHub
-  source/tag handoff are complete; public GitHub release publication and
-  Marketplace publication remain open governed actions
+  `1.3.15` installed-user stable patch work is open on the feature/develop
+  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
+  Marketplace publication has been created for this line yet
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -348,7 +351,8 @@ Authority release facts:
   assertion, and Windows Docker Desktop proof still community/deferred
 - next admitted release-control action:
   `retain-public-source-and-tag-handoff-with-release-publication-blocked`
-- active Marketplace public validation target: `1.3.13`
+- active Marketplace stable target: `1.3.15`
+- retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
   published through public GitHub PR #46 and pinned `vsce --pre-release`
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
@@ -385,6 +389,7 @@ Authority release facts:
 - VS Code Marketplace community-validation preview published version:
   `1.3.13`
 - VS Code Marketplace public validation target version: `1.3.13`
+- VS Code Marketplace next stable target version: `1.3.15`
 - VS Code Marketplace community-validation preview Marketplace last updated:
   `2026-04-27T04:24:05.457Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
@@ -414,7 +419,7 @@ Authority release facts:
 - `TRANCHE-010`: public-source facade and public-product acceptance is a closed tranche
 - active control-plane direction:
   [PROGRAM-0005](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md),
-  `TRANCHE-012`, `TRANCHE-016`, `ISSUE-0412`, and `ISSUE-0414`
+  `TRANCHE-012`, `TRANCHE-016`, `ISSUE-0412`, `ISSUE-0414`, and `ISSUE-0415`
 - preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - governed tagged release artifact and release manifest live under
   `release-evidence/`

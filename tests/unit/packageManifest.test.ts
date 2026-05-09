@@ -204,6 +204,13 @@ describe('extension manifest research alignment', () => {
       description:
         'Installed-user compare provider request. Host is the default local LabVIEWCLI path; docker is a bounded expert path selected through the generated settings CLI.'
     });
+    expect(
+      manifest.contributes?.configuration?.properties?.['viHistorySuite.labviewVersion']
+    ).toEqual({
+      type: 'string',
+      description:
+        'Installed-user LabVIEW major version for comparison reports. Use LabVIEW 2025, 2026, or a newer local version; LabVIEW 2025 and newer can open older VIs without migrating them before generating the report.'
+    });
   });
 
   it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, preview refresh scripts, and the governed JSONC runtime dependency', () => {

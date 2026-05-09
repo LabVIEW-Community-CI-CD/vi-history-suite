@@ -77,13 +77,13 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
 - current authority package line on `main`: `1.3.14`
-- current develop package line on `develop`: `1.3.14`
-- active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: `release/1.3.14`
+- current develop package line on `develop`: `1.3.15`
+- active exact release candidate line on `develop`: `v1.3.15`
+- active release-candidate branch: none for `1.3.15` yet
 - active release-candidate state:
-  GitLab authority main promotion, exact authority tagging, and public GitHub
-  source/tag handoff are complete; public GitHub release publication and
-  Marketplace publication remain open governed actions
+  `1.3.15` installed-user stable patch work is open on the feature/develop
+  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
+  Marketplace publication has been created for this line yet
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -147,16 +147,16 @@ Current control decision for public exact hardening:
 - rationale: authority exact `v1.3.9` remains tagged on `main` while public
   GitHub release `312994104` is retained as a complete immutable exact release
   and VS Code Marketplace serves regular `1.3.9`
-- rationale: `develop` now carries patch candidate package line `1.3.14` for
-  release-readiness consolidation after the published `1.3.13` public
-  validation pre-release
+- rationale: `develop` now carries patch candidate package line `1.3.15` for
+  installed-user UX and local LabVIEW 2025+ support after the completed
+  `v1.3.14` GitLab authority and public source/tag handoff
 - rationale: Vagrant Windows VSIX acceptance now has a repo-owned evidence
   assertion surface and retained CI receipt contract
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  the active exact release candidate line is `v1.3.14`, GitLab authority
-  main/tag plus public GitHub source/tag handoff are complete, and public
-  GitHub release publication, Marketplace mutation, Windows Docker Desktop
-  proof admission, and release branch deletion remain blocked by boundary
+  the active exact release candidate line is `v1.3.15`, no `release/1.3.15`
+  branch or exact tag exists yet, and public GitHub release publication,
+  Marketplace mutation, Windows Docker Desktop proof admission, and release
+  branch deletion remain blocked by boundary
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`

@@ -145,10 +145,11 @@
     "title": "Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow",
     "status": "active",
     "source": "author direction",
-    "summary": "Replace the installed Docker-only compare contract with a host-default Windows local-LabVIEWCLI workflow, retain Docker only as a bounded expert provider selected through the generated settings CLI, require explicit provider-safe LabVIEW version plus bitness selection, add fail-closed host and Docker preflight, replace automatic second-selection compare generation with a dedicated compare preflight section plus explicit compare action, and then carry the landed develop-line contract through truthful publication alignment plus the explicit runtime-provider public-acceptance gate.",
+    "summary": "Replace the installed Docker-only compare contract with a host-default local LabVIEWCLI workflow, retain Docker only as a bounded expert provider selected through the generated settings CLI, require LabVIEW 2025 or newer for VI Comparison Report generation, keep Compare available after exactly two selected revisions so local runtime seams are retained instead of hidden, and carry the landed develop-line contract through truthful publication alignment plus the explicit Windows Docker Desktop launch-gate handoff.",
     "issues": [
       "ISSUE-0412",
-      "ISSUE-0414"
+      "ISSUE-0414",
+      "ISSUE-0415"
     ]
   }
 ]

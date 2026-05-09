@@ -9,6 +9,24 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.15] - 2026-05-09
+
+### Changed
+
+- Started the installed-user stable patch line for Marketplace readiness after
+  the `1.3.14` authority handoff.
+- Reduced the VI History panel's default explanatory clutter by keeping
+  secondary runtime, repository, capability, guidance, and confidence details
+  behind disclosure rows.
+- Compare now remains available after exactly two retained revisions are
+  selected, even when local runtime preflight is not ready, so runtime failures
+  are exposed through the comparison-report path instead of hidden by a disabled
+  button.
+- Installed runtime selection now centers LabVIEW `2025`, `2026`, and newer
+  local versions; LabVIEW `2024` and older are rejected as unsupported for VI
+  Comparison Report generation because LabVIEW `2025` and newer can open older
+  VIs without migrating them.
+
 ## [1.3.14] - 2026-05-08
 
 ### Changed
