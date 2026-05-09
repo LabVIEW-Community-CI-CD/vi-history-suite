@@ -26,7 +26,7 @@ describe('public release candidate control surface', () => {
     expect(candidate.activeDevelopCandidate).toMatchObject({
       candidateLine: 'v1.3.14',
       packageVersion: '1.3.14',
-      state: 'main-promotion-preflight-admitted-mr-pending',
+      state: 'public-source-and-tag-handoff-complete-release-publication-blocked',
       branch: 'develop',
       activeReleaseCandidateBranch: 'release/1.3.14',
       releaseBranchOpeningPacketPath:
@@ -42,7 +42,7 @@ describe('public release candidate control surface', () => {
       releaseMainPromotionPreflightPacketJsonPath:
         'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json',
       nextAdmittedAction:
-        'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained',
+        'retain-public-source-and-tag-handoff-with-release-publication-blocked',
       sourceFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
       mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
       sourceHeadCommit: '97efa937a5317d69a1d65607c4f704d603edbe52',
@@ -70,9 +70,19 @@ describe('public release candidate control surface', () => {
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: 'fb0ef2b',
-      currentPublicSourceHead: '220111e',
-      currentPublicSourceHeadSha: '220111eae3ac214e99f2233e2bfe6b320edf383d',
-      status: 'published-main-tag-and-release-v1.3.9'
+      currentPublicSourceHead: 'f1cb609',
+      currentPublicSourceHeadSha: 'f1cb60900820ea17328b9eec595579768491e22a',
+      status: 'published-main-and-tag-v1.3.14-release-publication-blocked'
+    });
+    expect(candidate.publishedPublicSource.latestPublicSourceAndTagHandoff).toMatchObject({
+      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+      publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicMainShortCommit: 'f1cb609',
+      publicTag: 'v1.3.14',
+      publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
+      publicTagPeeledCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicGitHubReleasePublication: 'not-performed',
+      marketplaceMutation: 'not-performed'
     });
     expect(candidate.publishedPublicSource.latestPublicFacadeDocsPromotion).toMatchObject({
       pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/60',
@@ -246,7 +256,7 @@ describe('public release candidate control surface', () => {
       'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md'
     );
     expect(candidateMarkdown).toContain(
-      '`open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`'
+      '`retain-public-source-and-tag-handoff-with-release-publication-blocked`'
     );
     expect(candidateMarkdown).toContain(
       '`feature/develop-1.3.14-candidate-consolidation`'
@@ -262,7 +272,7 @@ describe('public release candidate control surface', () => {
     );
     expect(candidateMarkdown).toContain('vagrant/evidence/20260508-105809/manifest.json');
     expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
-    expect(candidateMarkdown).toContain('Current public source head: `220111e`');
+    expect(candidateMarkdown).toContain('Current public source head: `f1cb609`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');
     expect(candidateMarkdown).toContain('`release-1.3.9-authority-candidate-package-line`');
     expect(candidateMarkdown).toContain(
@@ -275,7 +285,9 @@ describe('public release candidate control surface', () => {
       '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     );
     expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.9`');
-    expect(candidateMarkdown).toContain('public PR #68');
+    expect(candidateMarkdown).toContain('public PR #69');
+    expect(candidateMarkdown).toContain('`b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`');
+    expect(candidateMarkdown).toContain('Public PR #68');
     expect(candidateMarkdown).toContain('public PR #60');
     expect(candidateMarkdown).toContain('VS Code Marketplace item');
     expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.9`');
@@ -292,7 +304,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('`published-immutable-release-assets-incomplete`');
 
     expect(currentState).toContain('current exact released line: `v1.3.9`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.9`');
+    expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.14`');
     expect(currentState).toContain('active release-candidate branch: `release/1.3.14`');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');

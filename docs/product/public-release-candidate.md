@@ -3,10 +3,10 @@
 - Version line: `1.3.9`
 - Active develop candidate line: `v1.3.14`
 - Active develop candidate package: `1.3.14`
-- Active develop candidate state: protected `main` promotion preflight
-  admitted opening a release-to-main merge request as the next separate
-  governed action, with no public GitHub release, Marketplace mutation, exact
-  tag, `main` promotion, or release branch deletion performed
+- Active develop candidate state: GitLab authority main promotion, exact
+  authority tagging, and public GitHub source/tag handoff are complete; public
+  GitHub release publication, Marketplace mutation, Windows Docker Desktop
+  proof admission, and release branch deletion remain blocked by boundary
 - Active develop candidate branch: `develop`
 - Active release-candidate branch: `release/1.3.14`
 - Release-branch opening packet:
@@ -16,7 +16,7 @@
 - Release main-promotion preflight packet:
   `docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md`
 - Next admitted action:
-  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
+  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
 - Source consolidation branch:
   `feature/develop-1.3.14-candidate-consolidation`
 - Protected develop merge: GitLab MR `!192` merged
@@ -30,7 +30,7 @@
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published exact public source commit: `fb0ef2b`
-- Current public source head: `220111e`
+- Current public source head: `f1cb609`
 - Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
@@ -101,12 +101,15 @@
 - The exact `v1.3.9` public source publication is retained at `fb0ef2b`, and
   the separate public source publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
-- Public GitHub `main` now publishes `220111e` for the later `1.3.13` Windows
-  Docker Desktop proof-intake promotion after public PR #68. The earlier
-  `1.3.11` canonical Docker fixture docs promotion remains retained at
-  `ce6dbd0` after public PR #60. Neither facade promotion moves public tag
-  `v1.3.9`, mutates GitHub release `312994104`, or mutates the VS Code
-  Marketplace listing.
+- Public GitHub `main` now publishes
+  `f1cb60900820ea17328b9eec595579768491e22a` for the `v1.3.14` source
+  handoff after public PR #69. Public annotated tag `v1.3.14` has tag object
+  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae` and peels to
+  `f1cb60900820ea17328b9eec595579768491e22a`; public GitHub release
+  publication and Marketplace mutation remain unperformed. Public PR #68
+  remains retained for the `1.3.13` Windows Docker Desktop proof-intake
+  promotion, and public PR #60 remains retained at `ce6dbd0` for the `1.3.11`
+  canonical Docker fixture docs promotion.
 - Public GitHub tag `v1.3.9` is now live, and GitHub release `312994104` is
   now published separately at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`.

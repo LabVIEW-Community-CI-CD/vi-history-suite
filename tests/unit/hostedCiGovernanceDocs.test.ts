@@ -151,7 +151,8 @@ describe('hosted ci governance docs', () => {
     expect(readme).toContain('- separate public GitHub exact release publication: published;');
     expect(readme).toContain('releases/tag/v1.3.9');
     expect(currentState).toContain('current exact released line: `v1.3.9`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.9`');
+    expect(currentState).toContain('current fully published exact package line: `1.3.9`');
+    expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.9`');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');

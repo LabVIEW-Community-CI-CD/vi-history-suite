@@ -9,8 +9,10 @@ final installed-user distribution surface.
 ## Current State
 
 - Authority system: GitLab
-- Authority exact tag: `v1.3.9`
-- Authority `main`: `2f86063a35926fa67963af5ccd47e971157927c6`
+- Fully closed authority exact tag: `v1.3.9`
+- Fully closed authority `main`: `2f86063a35926fa67963af5ccd47e971157927c6`
+- Current authority exact tag: `v1.3.14`
+- Current authority `main`: `2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa`
 - GitLab release manifest:
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json`
 - Expected VSIX: `vi-history-suite-1.3.9.vsix`
@@ -18,13 +20,12 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: `release/1.3.14`
-- Active candidate tag: none
+- Active candidate tag: `v1.3.14`
 - Active candidate package version: `1.3.14`
-- Active candidate state: release branch opened, reassessed, and preflighted
-  for protected `main` promotion; opening a release-to-main merge request is
-  admissible only as a separate governed action, while no public GitHub
-  release, Marketplace mutation, exact tag, `main` promotion, or release branch
-  deletion has been performed
+- Active candidate state: GitLab authority main promotion, exact authority
+  tagging, and public GitHub source/tag handoff are complete; public GitHub
+  release publication, Marketplace mutation, Windows Docker Desktop proof
+  admission, and release branch deletion remain blocked by boundary
 
 ## Develop Preview State
 
@@ -519,14 +520,14 @@ only, not the selected exact authority VSIX.
 - Public GitHub exact mutation: not admitted and not performed
 - VS Code Marketplace exact mutation: not admitted and not performed
 - Windows Docker Desktop Windows-container proof state: community/deferred
-- Next admitted action:
+- Next admitted action at the time of reassessment:
   `promote-release-1.3.14-to-main-as-separate-governed-action`
+- Superseded by later state: protected main promotion, exact authority tag, and
+  public GitHub source/tag handoff are now complete
 
-This reassessment closes the release-branch-readiness question without
-collapsing it into exact publication. The opened branch and the protected
-`develop` retention merge are both green, so the next governed action may be a
-protected `release/1.3.14` to `main` promotion. The exact tag remains blocked
-until that later main-promotion evidence exists and is green.
+This reassessment closed the release-branch-readiness question without
+collapsing it into exact publication. The later protected `main` promotion and
+exact authority tag evidence supersede this historical next-action pointer.
 
 ## Release Main Promotion Preflight
 
@@ -551,23 +552,61 @@ until that later main-promotion evidence exists and is green.
 - Protected develop preview VSIX SHA-256:
   `3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b`
 - Protected develop Vagrant job: `14285909248`
-- Promotion merge request: admissible as a separate governed action; not
-  opened by this preflight
-- Main promotion merge: not performed; requires a green protected promotion MR
-- Exact tag: not admitted before protected `main` promotion and green `main`
-  pipeline
+- Promotion merge request: opened later as MR `!198` with source branch
+  deletion disabled
+- Main promotion merge: completed later at
+  `2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa`
+- Exact tag: created later as GitLab authority tag `v1.3.14`
 - Release branch deletion: not admitted
-- Public GitHub exact mutation: not admitted and not performed
-- VS Code Marketplace exact mutation: not admitted and not performed
+- Public GitHub exact release publication: not performed
+- VS Code Marketplace exact mutation: not performed
 - Windows Docker Desktop Windows-container proof state: community/deferred
-- Next admitted action:
+- Next admitted action at the time of preflight:
   `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
+- Superseded by later state: protected main promotion, exact authority tag, and
+  public GitHub source/tag handoff are now complete
 
-This preflight narrows the release-branch-readiness decision into an executable
-next step: open a protected merge request from `release/1.3.14` to `main` with
-source-branch deletion disabled. It still does not move `main`; the exact tag
-remains blocked until after the later protected main-promotion merge and green
-`main` pipeline.
+This preflight narrowed the release-branch-readiness decision into an executable
+next step. The later protected main promotion, exact authority tag, and public
+source/tag handoff supersede this historical next-action pointer; the remaining
+open exact-release gates are public GitHub release publication and later
+Marketplace publication.
+
+## Public GitHub Source And Tag Handoff
+
+- Status: public source and public exact tag published; public GitHub release
+  absent
+- Public PR: https://github.com/svelderrainruiz/vi-history-suite/pull/69
+- Public main commit:
+  `f1cb60900820ea17328b9eec595579768491e22a`
+- Public tag: `v1.3.14`
+- Public tag object:
+  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`
+- Public tag peels to:
+  `f1cb60900820ea17328b9eec595579768491e22a`
+- Public Source Package Preview: run `25609017771`, job `75175830284`,
+  success
+- Public Windows Installed-User Contract: run `25609017782`, job
+  `75175830275`, success
+- Public Linux Installed-User Smoke: run `25609017773`, job
+  `75175830267`, success
+- Post-tag exact-release assessment:
+  `.cache/public-github-exact-v1.3.14-after-public-tag/public-github-exact-release-transaction.json`
+- Assessment state: authority main and tag pass; public main and tag pass;
+  public GitHub release is absent; Marketplace still serves `1.3.13`
+- Public GitHub release publication: not performed
+- VS Code Marketplace mutation: not performed
+- Windows Docker Desktop Windows-container proof admission: not performed
+- Release branch deletion: not performed
+- Next admitted action: explicit asset-first public GitHub exact-release
+  publication handoff only when the boundary admits public GitHub release
+  publication
+
+The governed source/tag handoff closes the public-source drift that followed
+GitLab authority tag creation. It does not close the exact release: the
+retained assessment keeps the line frozen until the asset-first public GitHub
+release is published and verified, and Marketplace publication remains blocked
+until that later public GitHub release gate is complete.
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
@@ -644,12 +683,14 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: open a protected `release/1.3.14` to `main` merge
-  request with source branch retention before any `main` merge, exact tag,
-  public GitHub exact release, VS Code Marketplace mutation, Windows Docker
-  Desktop proof admission, or release branch deletion
-- Next admitted action:
-  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
+- Governed next line: retain the completed GitLab authority tag plus public
+  GitHub source/tag handoff, then perform the explicit asset-first public
+  GitHub exact-release publication handoff only when that boundary is admitted
+- Next admitted action under the current boundary:
+  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
+- Next admitted action if public GitHub release publication is explicitly
+  admitted:
+  `run-public-github-exact-transaction-publish-for-v1.3.14`
 
 ## Publication Rule
 

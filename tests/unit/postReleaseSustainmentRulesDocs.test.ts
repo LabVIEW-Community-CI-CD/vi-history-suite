@@ -138,7 +138,7 @@ describe('post-release sustainment rules package', () => {
     );
 
     expect(rulesDoc).toContain('current exact released line: `v1.3.9`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.9`');
+    expect(rulesDoc).toContain('current authority package line on `main`: `1.3.14`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.14`');
     expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.14`');
     expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.14`');

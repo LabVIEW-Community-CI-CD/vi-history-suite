@@ -76,13 +76,14 @@ Current version-line contract:
   `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
-- current published package line on `main`: `1.3.9`
+- current authority package line on `main`: `1.3.14`
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
 - active release-candidate state:
-  protected `main` promotion preflight admitted opening a release-to-main
-  merge request as the next separate governed action
+  GitLab authority main promotion, exact authority tagging, and public GitHub
+  source/tag handoff are complete; public GitHub release publication and
+  Marketplace publication remain open governed actions
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -152,9 +153,10 @@ Current control decision for public exact hardening:
 - rationale: Vagrant Windows VSIX acceptance now has a repo-owned evidence
   assertion surface and retained CI receipt contract
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  the active exact release candidate line is `v1.3.14`, and
-  release-branch readiness has been reassessed without exact tag, public
-  GitHub, Marketplace, Windows Docker Desktop, or `main` mutation
+  the active exact release candidate line is `v1.3.14`, GitLab authority
+  main/tag plus public GitHub source/tag handoff are complete, and public
+  GitHub release publication, Marketplace mutation, Windows Docker Desktop
+  proof admission, and release branch deletion remain blocked by boundary
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`

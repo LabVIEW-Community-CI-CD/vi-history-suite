@@ -129,19 +129,19 @@ describe('release/1.3.14 main promotion preflight packet', () => {
     });
     expect(releaseState.activeCandidate).toMatchObject({
       releaseBranch: 'release/1.3.14',
-      tag: null,
+      tag: 'v1.3.14',
       packageVersion: '1.3.14',
-      status: 'main-promotion-preflight-admitted-mr-pending'
+      status: 'public-source-and-tag-handoff-complete-release-publication-blocked'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
+      'retain-public-source-and-tag-handoff-with-release-publication-blocked'
     );
     expect(publicCandidate.activeDevelopCandidate).toMatchObject({
-      state: 'main-promotion-preflight-admitted-mr-pending',
+      state: 'public-source-and-tag-handoff-complete-release-publication-blocked',
       releaseMainPromotionPreflightPacketPath:
         'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md',
       nextAdmittedAction:
-        'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
+        'retain-public-source-and-tag-handoff-with-release-publication-blocked'
     });
 
     expect(currentState).toContain('release-main-promotion-preflight-v1.3.14-2026-05-08.md');

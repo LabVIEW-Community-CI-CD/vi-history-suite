@@ -274,13 +274,15 @@ Authority release facts:
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
-- current published package line on `main`: `1.3.9`
+- current fully published exact package line: `1.3.9`
+- current authority package line on `main`: `1.3.14`
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
 - active release-candidate state:
-  protected `main` promotion preflight admitted opening a release-to-main
-  merge request as the next separate governed action
+  GitLab authority main promotion, exact authority tagging, and public GitHub
+  source/tag handoff are complete; public GitHub release publication and
+  Marketplace publication remain open governed actions
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -339,14 +341,13 @@ Authority release facts:
 - exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.14` release branch opened and
-  reassessed from `develop`; protected `main` promotion preflight now admits
-  opening a release-to-main merge request as the next separate governed action,
-  with all provider/year/bitness variants selectable, admitted Windows host
-  proof retained, Vagrant VSIX acceptance governed by repo-owned assertion,
-  and Windows Docker Desktop proof still community/deferred
+- active governed release claim: `1.3.14` has completed GitLab authority main
+  promotion, GitLab authority exact tagging, and public GitHub source/tag
+  handoff, with all provider/year/bitness variants selectable, admitted Windows
+  host proof retained, Vagrant VSIX acceptance governed by repo-owned
+  assertion, and Windows Docker Desktop proof still community/deferred
 - next admitted release-control action:
-  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
+  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
 - active Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
   published through public GitHub PR #46 and pinned `vsce --pre-release`
@@ -371,10 +372,13 @@ Authority release facts:
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
 - current public GitHub source publication: public `main` now publishes
-  `220111e` after public PR #68 promoted the Windows Docker Desktop
-  proof-intake template and label; public PR #60 remains retained for the
-  canonical public Docker fixture docs at `ce6dbd0`, and the exact `v1.3.9`
-  tag/release remains retained separately at `fb0ef2b`
+  `f1cb609` after public PR #69 completed the `v1.3.14` source handoff; public
+  annotated tag `v1.3.14` has tag object
+  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae` and peels to
+  `f1cb60900820ea17328b9eec595579768491e22a`; public PR #68 remains retained
+  for the Windows Docker Desktop proof-intake template and label, public PR #60
+  remains retained for the canonical public Docker fixture docs at `ce6dbd0`,
+  and the exact `v1.3.9` tag/release remains retained separately at `fb0ef2b`
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - VS Code Marketplace retained published version: `1.3.9`
