@@ -140,11 +140,13 @@ start as an independent DAG job without waiting for the separate Linux
 assurance runner lane. It packages the VSIX, stages it under `vagrant/shared/`,
 optionally refreshes the local box, runs the host doctor, boots the disposable
 VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
-runs the guest cold-prep provisioner, runs acceptance, validates the latest
-manifest and harness output through `npm run vagrant:acceptance:assert`, and
-always halts the VM. The assertion requires the manifest and harness report to
-prove LabVIEW `2026` `x86`, `runtimeProvider=host-native`,
-`runtimeEngine=labview-cli`, and `runtimeExecutionState=succeeded`.
+runs the guest cold-prep provisioner, runs acceptance, forces the generated
+`vihs` runtime-settings launcher to persist `host/2026/x86` so stale golden-VM
+user settings cannot retain x64, validates the latest manifest and harness
+output through `npm run vagrant:acceptance:assert`, and always halts the VM.
+The assertion requires the manifest and harness report to prove LabVIEW `2026` `x86`,
+`runtimeProvider=host-native`, `runtimeEngine=labview-cli`, and
+`runtimeExecutionState=succeeded`.
 
 The job retains `vagrant/evidence/`, including:
 
