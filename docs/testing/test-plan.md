@@ -2495,6 +2495,25 @@ Information-for-users review cases:
   promotion action while exact tag, public GitHub exact release, Marketplace
   mutation, Windows Docker Desktop proof admission, and `main` promotion
   remain unperformed in the reassessment slice
+- `TEST-UNIT-401`: run
+  `tests/unit/releaseMainPromotionPreflight.test.ts` and confirm the
+  `release/1.3.14` protected-main-promotion preflight retains source commit
+  `50bec33`, target `main` commit `2f86063`, MR `!196`, protected develop
+  pipeline `2511333533`, branch topology showing `main` is an ancestor of the
+  release branch, protected develop preview VSIX SHA-256
+  `3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b`,
+  Vagrant job `14285909248`, no release-to-main MR, no exact
+  tag/public GitHub/Marketplace/Windows Docker Desktop/main mutation, no
+  release branch deletion, and the next source-branch-retained promotion MR
+  opening action
+- `TEST-DOC-153`: review release-publication state, current-state,
+  public-release-candidate, post-release sustainment rules, hosted CI
+  governance, release procedure, README, SRS, RTM, and this test plan and
+  confirm the protected-main-promotion preflight only admits opening a
+  `release/1.3.14` to `main` merge request with source branch retention while
+  the `main` merge, exact tag, public GitHub exact release, Marketplace
+  mutation, Windows Docker Desktop proof admission, and release branch deletion
+  remain unperformed
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

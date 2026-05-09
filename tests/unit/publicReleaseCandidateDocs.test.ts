@@ -26,7 +26,7 @@ describe('public release candidate control surface', () => {
     expect(candidate.activeDevelopCandidate).toMatchObject({
       candidateLine: 'v1.3.14',
       packageVersion: '1.3.14',
-      state: 'release-branch-readiness-reassessed-main-promotion-pending',
+      state: 'main-promotion-preflight-admitted-mr-pending',
       branch: 'develop',
       activeReleaseCandidateBranch: 'release/1.3.14',
       releaseBranchOpeningPacketPath:
@@ -37,7 +37,12 @@ describe('public release candidate control surface', () => {
         'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md',
       releaseBranchReadinessReassessmentPacketJsonPath:
         'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.json',
-      nextAdmittedAction: 'promote-release-1.3.14-to-main-as-separate-governed-action',
+      releaseMainPromotionPreflightPacketPath:
+        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md',
+      releaseMainPromotionPreflightPacketJsonPath:
+        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json',
+      nextAdmittedAction:
+        'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained',
       sourceFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
       mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
       sourceHeadCommit: '97efa937a5317d69a1d65607c4f704d603edbe52',
@@ -238,7 +243,10 @@ describe('public release candidate control surface', () => {
       'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md'
     );
     expect(candidateMarkdown).toContain(
-      '`promote-release-1.3.14-to-main-as-separate-governed-action`'
+      'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md'
+    );
+    expect(candidateMarkdown).toContain(
+      '`open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`'
     );
     expect(candidateMarkdown).toContain(
       '`feature/develop-1.3.14-candidate-consolidation`'

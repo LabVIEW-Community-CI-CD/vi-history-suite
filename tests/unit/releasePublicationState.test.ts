@@ -492,6 +492,33 @@ describe('release publication state resolver', () => {
       exactTag: 'not-admitted-before-protected-main-promotion',
       nextAdmittedAction: 'promote-release-1.3.14-to-main-as-separate-governed-action'
     });
+    expect(state.releaseMainPromotionPreflight).toMatchObject({
+      status: 'protected-main-promotion-merge-request-opening-admissible',
+      packetPath: 'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md',
+      packetJsonPath:
+        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json',
+      sourceBranch: 'release/1.3.14',
+      sourceCommit: '50bec3391ea823739c2e8baddb33b77c283a37eb',
+      sourcePipelineId: 2511168302,
+      sourcePipelineStatus: 'success',
+      targetBranch: 'main',
+      targetCommit: '2f86063a35926fa67963af5ccd47e971157927c6',
+      mainIsAncestorOfReleaseBranch: true,
+      releaseBranchIsAncestorOfProtectedDevelop: true,
+      protectedDevelopRetentionCommit: '3557031442cbf85641544e07f9d75af59fe092d7',
+      protectedDevelopRetentionPipelineId: 2511333533,
+      protectedDevelopRetentionPipelineStatus: 'success',
+      releaseReadinessMergeRequestIid: 196,
+      protectedDevelopPreviewVsixSha256:
+        '3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b',
+      protectedDevelopVagrantVsixAcceptanceJobId: 14285909248,
+      promotionMergeRequest: 'admissible-as-separate-governed-action-not-opened',
+      mainPromotionMerge: 'not-performed-requires-green-protected-promotion-mr',
+      exactTag: 'not-admitted-before-protected-main-promotion-and-green-main-pipeline',
+      releaseBranchDeletion: 'not-admitted',
+      nextAdmittedAction:
+        'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
+    });
     expect(state.windowsLabviewCommunityProofIntakeChecklist).toMatchObject({
       status: 'prepared-no-mutation',
       path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
@@ -531,6 +558,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Exact Release Readiness Assessment');
     expect(stateDoc).toContain('## Release Branch Opening');
     expect(stateDoc).toContain('## Release Branch Readiness Reassessment');
+    expect(stateDoc).toContain('## Release Main Promotion Preflight');
     expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
     expect(stateDoc).toContain('## Exact Release Candidate Reassessment');
     expect(stateDoc).toContain('Exact-release readiness: release branch opening admissible');
@@ -540,9 +568,14 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Assessed pipeline: `2511103937` / `success`');
     expect(stateDoc).toContain('Release branch pipeline: `2511168302` / `success`');
     expect(stateDoc).toContain('Protected develop retention pipeline: `2511236377` / `success`');
+    expect(stateDoc).toContain('Protected develop retention pipeline: `2511333533` / `success`');
+    expect(stateDoc).toContain('Release-readiness MR: `!196` / merged');
     expect(stateDoc).toContain('Preview package job: `14284865650`');
     expect(stateDoc).toContain(
       'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91'
+    );
+    expect(stateDoc).toContain(
+      '3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b'
     );
     expect(stateDoc).toContain(
       'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f'
@@ -593,10 +626,10 @@ describe('release publication state resolver', () => {
       releaseBranch: 'release/1.3.14',
       tag: null,
       packageVersion: '1.3.14',
-      status: 'release-branch-readiness-reassessed-main-promotion-pending'
+      status: 'main-promotion-preflight-admitted-mr-pending'
     });
     expect(state.nextAdmittedAction).toBe(
-      'promote-release-1.3.14-to-main-as-separate-governed-action'
+      'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

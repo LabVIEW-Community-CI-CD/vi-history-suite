@@ -20,10 +20,11 @@ final installed-user distribution surface.
 - Active candidate release branch: `release/1.3.14`
 - Active candidate tag: none
 - Active candidate package version: `1.3.14`
-- Active candidate state: release branch opened and reassessed; protected
-  `main` promotion is admissible only as a separate governed action, while no
-  public GitHub release, Marketplace mutation, exact tag, or `main` promotion
-  has been performed
+- Active candidate state: release branch opened, reassessed, and preflighted
+  for protected `main` promotion; opening a release-to-main merge request is
+  admissible only as a separate governed action, while no public GitHub
+  release, Marketplace mutation, exact tag, `main` promotion, or release branch
+  deletion has been performed
 
 ## Develop Preview State
 
@@ -527,6 +528,47 @@ collapsing it into exact publication. The opened branch and the protected
 protected `release/1.3.14` to `main` promotion. The exact tag remains blocked
 until that later main-promotion evidence exists and is green.
 
+## Release Main Promotion Preflight
+
+- Status: protected `main` promotion merge-request opening admissible
+- Preflight:
+  `docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md`
+- Preflight JSON:
+  `docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json`
+- Source branch: `release/1.3.14`
+- Source commit:
+  `50bec3391ea823739c2e8baddb33b77c283a37eb`
+- Source branch pipeline: `2511168302` / `success`
+- Target branch: `main`
+- Target commit:
+  `2f86063a35926fa67963af5ccd47e971157927c6`
+- Branch topology: `main` is an ancestor of `release/1.3.14`, and
+  `release/1.3.14` is an ancestor of protected `develop`
+- Protected develop retention commit:
+  `3557031442cbf85641544e07f9d75af59fe092d7`
+- Protected develop retention pipeline: `2511333533` / `success`
+- Release-readiness MR: `!196` / merged
+- Protected develop preview VSIX SHA-256:
+  `3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b`
+- Protected develop Vagrant job: `14285909248`
+- Promotion merge request: admissible as a separate governed action; not
+  opened by this preflight
+- Main promotion merge: not performed; requires a green protected promotion MR
+- Exact tag: not admitted before protected `main` promotion and green `main`
+  pipeline
+- Release branch deletion: not admitted
+- Public GitHub exact mutation: not admitted and not performed
+- VS Code Marketplace exact mutation: not admitted and not performed
+- Windows Docker Desktop Windows-container proof state: community/deferred
+- Next admitted action:
+  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
+
+This preflight narrows the release-branch-readiness decision into an executable
+next step: open a protected merge request from `release/1.3.14` to `main` with
+source-branch deletion disabled. It still does not move `main`; the exact tag
+remains blocked until after the later protected main-promotion merge and green
+`main` pipeline.
+
 ## Windows/LabVIEW Community Proof Intake Checklist
 
 - Status: prepared, no mutation
@@ -602,12 +644,12 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: promote `release/1.3.14` to `main` only through a
-  separate protected governed action before any exact tag, public GitHub exact
-  release, VS Code Marketplace mutation, or Windows Docker Desktop proof
-  admission
+- Governed next line: open a protected `release/1.3.14` to `main` merge
+  request with source branch retention before any `main` merge, exact tag,
+  public GitHub exact release, VS Code Marketplace mutation, Windows Docker
+  Desktop proof admission, or release branch deletion
 - Next admitted action:
-  `promote-release-1.3.14-to-main-as-separate-governed-action`
+  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
 
 ## Publication Rule
 

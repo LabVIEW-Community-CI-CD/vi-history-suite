@@ -19,6 +19,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const githubWorkflow = readText('.github/workflows/vagrant-vsix-acceptance.yml');
     const vagrantfile = readText('vagrant/Vagrantfile');
     const bootstrap = readText('vagrant/provision/bootstrap.ps1');
+    const acceptance = readText('vagrant/provision/run-acceptance.ps1');
     const coldPrep = readText('vagrant/provision/prepare-cold-labview.ps1');
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
     const refreshBox = readText('scripts/vagrant/refresh-golden-box.sh');
@@ -86,6 +87,25 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('Set-NetConnectionProfile');
     expect(bootstrap).not.toContain('Enable-PSRemoting');
     expect(bootstrap).toContain('Test-WSMan -ComputerName localhost');
+    expect(bootstrap).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
+    expect(bootstrap).toContain('New-NetFirewallRule');
+    expect(bootstrap).toContain('-Program $lvExe');
+    expect(bootstrap).toContain('-LocalPort 3363');
+
+    expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 300');
+    expect(acceptance).toContain(
+      "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"
+    );
+    expect(acceptance).toContain(
+      'New-ScheduledTaskAction -Execute $lvExe -WorkingDirectory (Split-Path -Parent $lvExe)'
+    );
+    expect(acceptance).toContain('New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(15)');
+    expect(acceptance).toContain('-AllowStartIfOnBatteries');
+    expect(acceptance).toContain("Write-LabVIEWStartupEvidence -Phase 'timeout'");
+    expect(acceptance).toContain(
+      'Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
+    );
+    expect(acceptance).toContain('Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -167,8 +187,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
+    expect(laneDoc).toContain('default LabVIEW VI Server startup timeout: `300` seconds');
+    expect(laneDoc).toContain('near-future trigger inside the wait window');
+    expect(laneDoc).toContain('labview-startup.json');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
-    expect(laneDoc).toContain('job reloads the VM immediately after');
+    expect(laneDoc).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
+    expect(laneDoc).toContain('immediately after bootstrap');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
@@ -180,6 +204,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostedGovernanceDoc).toContain('resource_group: vihs-windows-vagrant');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/doctor-vagrant-host.sh');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/refresh-golden-box.sh');
+    expect(hostedGovernanceDoc).toContain('near-future scheduled-task');
     expect(hostedGovernanceDoc).toContain('npm run vagrant:acceptance:assert');
 
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance).toEqual(
@@ -209,6 +234,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
           repoOwnedAcceptanceAssertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
           repoOwnedAcceptanceAssertionPackageScript: 'npm run vagrant:acceptance:assert',
           bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
+          labviewPrelaunchFallbackPolicy:
+            'manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window',
+          labviewStartupEvidencePath: 'vagrant/evidence/labview-startup.json',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'
         })

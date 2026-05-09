@@ -165,7 +165,9 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Step "WinRM configured for Vagrant communicator."
 
-# Enable LabVIEW VI Server TCP so LabVIEWCLI can connect
+# Enable LabVIEW VI Server TCP so LabVIEWCLI can connect and pre-authorize the
+# listener. Without an explicit rule, Windows Defender can block behind an
+# interactive prompt that CI cannot answer.
 $lvIniPath = 'C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.ini'
 if (Test-Path -LiteralPath $lvIniPath) {
   $iniContent = Get-Content -LiteralPath $lvIniPath -Raw -ErrorAction SilentlyContinue
@@ -182,6 +184,24 @@ if (Test-Path -LiteralPath $lvIniPath) {
   } else {
     Write-Step "LabVIEW VI Server TCP already configured."
   }
+}
+
+$firewallRuleName = 'VIHS LabVIEW 2026 VI Server TCP 3363'
+$existingFirewallRule = Get-NetFirewallRule -DisplayName $firewallRuleName -ErrorAction SilentlyContinue
+if ($existingFirewallRule) {
+  Write-Step "LabVIEW VI Server firewall rule already configured."
+  Set-NetFirewallRule -DisplayName $firewallRuleName -Enabled True -Action Allow -Profile Any -ErrorAction Stop
+} else {
+  Write-Step "Creating LabVIEW VI Server firewall rule for TCP 3363..."
+  New-NetFirewallRule `
+    -DisplayName $firewallRuleName `
+    -Direction Inbound `
+    -Action Allow `
+    -Program $lvExe `
+    -Protocol TCP `
+    -LocalPort 3363 `
+    -Profile Any | Out-Null
+  Write-Step "LabVIEW VI Server firewall rule configured."
 }
 
 # ---------------------------------------------------------------------------

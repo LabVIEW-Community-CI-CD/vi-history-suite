@@ -64,14 +64,16 @@ Read these in order:
 46. [Release Branch Opening v1.3.14 2026-05-08 JSON](./release-branch-opening-v1.3.14-2026-05-08.json)
 47. [Release Branch Readiness Reassessment v1.3.14 2026-05-08](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.md)
 48. [Release Branch Readiness Reassessment v1.3.14 2026-05-08 JSON](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.json)
-49. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
-50. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
-51. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
-52. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-53. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
-54. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
-55. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
-56. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+49. [Release Main Promotion Preflight v1.3.14 2026-05-08](./release-main-promotion-preflight-v1.3.14-2026-05-08.md)
+50. [Release Main Promotion Preflight v1.3.14 2026-05-08 JSON](./release-main-promotion-preflight-v1.3.14-2026-05-08.json)
+51. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+52. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+53. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
+54. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
+55. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
+56. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+57. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+58. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
 51. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
 52. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
 53. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
@@ -205,8 +207,8 @@ Latest landed ship target:
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
 - active release-candidate state:
-  release-branch readiness reassessed; protected `main` promotion is the next
-  separate governed action
+  protected `main` promotion preflight admitted opening a release-to-main
+  merge request as the next separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -271,10 +273,12 @@ Latest landed ship target:
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: `1.3.14` release branch opened and
-  reassessed from `develop` with all provider/year/bitness variants
-  selectable, admitted Windows host LabVIEW 2026 x64 proof, repo-owned
-  Vagrant VSIX acceptance assertion, and Windows Docker Desktop
-  Windows-container proof community/deferred through public issue #65
+  reassessed from `develop` with protected `main` promotion preflight now
+  admitting a release-to-main merge request as the next separate governed
+  action, all provider/year/bitness variants selectable, admitted Windows host
+  LabVIEW 2026 x64 proof, repo-owned Vagrant VSIX acceptance assertion, and
+  Windows Docker Desktop Windows-container proof community/deferred through
+  public issue #65
 - current exact-release readiness assessment:
   [exact-release-readiness-assessment-2026-05-08.md](./exact-release-readiness-assessment-2026-05-08.md)
 - current exact-release readiness assessment JSON:
@@ -297,8 +301,12 @@ Latest landed ship target:
   [release-branch-readiness-reassessment-v1.3.14-2026-05-08.md](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.md)
 - current release-branch readiness reassessment JSON:
   [release-branch-readiness-reassessment-v1.3.14-2026-05-08.json](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.json)
+- current release main-promotion preflight:
+  [release-main-promotion-preflight-v1.3.14-2026-05-08.md](./release-main-promotion-preflight-v1.3.14-2026-05-08.md)
+- current release main-promotion preflight JSON:
+  [release-main-promotion-preflight-v1.3.14-2026-05-08.json](./release-main-promotion-preflight-v1.3.14-2026-05-08.json)
 - current next admitted action:
-  `promote-release-1.3.14-to-main-as-separate-governed-action`
+  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
@@ -306,10 +314,11 @@ Latest landed ship target:
 - exact-release candidate conversion boundary:
   the `2026-05-08` readiness assessment admitted the governed
   `release/1.3.14` branch opening as the next separate action; the branch is
-  now open and retained, so the next conversion step is a release-branch
-  readiness reassessment before any exact tag, public GitHub release, VS Code
-  Marketplace mutation, Windows Docker Desktop proof admission, or `main`
-  promotion
+  now open, retained, reassessed, and preflighted for protected `main`
+  promotion, so the next conversion step is opening a protected
+  `release/1.3.14` to `main` merge request with source branch retention before
+  any exact tag, public GitHub release, VS Code Marketplace mutation, Windows
+  Docker Desktop proof admission, release branch deletion, or `main` merge
 - historical exact-release candidate reassessment:
   [exact-release-candidate-reassessment-2026-04-26.md](./exact-release-candidate-reassessment-2026-04-26.md)
 - historical exact-release candidate reassessment JSON:

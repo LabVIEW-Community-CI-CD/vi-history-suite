@@ -3,17 +3,20 @@
 - Version line: `1.3.9`
 - Active develop candidate line: `v1.3.14`
 - Active develop candidate package: `1.3.14`
-- Active develop candidate state: release-branch readiness reassessed; protected
-  `main` promotion is the next separate governed action, with no public GitHub
-  release, Marketplace mutation, exact tag, or `main` promotion performed
+- Active develop candidate state: protected `main` promotion preflight
+  admitted opening a release-to-main merge request as the next separate
+  governed action, with no public GitHub release, Marketplace mutation, exact
+  tag, `main` promotion, or release branch deletion performed
 - Active develop candidate branch: `develop`
 - Active release-candidate branch: `release/1.3.14`
 - Release-branch opening packet:
   `docs/product/release-branch-opening-v1.3.14-2026-05-08.md`
 - Release-branch readiness reassessment packet:
   `docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md`
+- Release main-promotion preflight packet:
+  `docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md`
 - Next admitted action:
-  `promote-release-1.3.14-to-main-as-separate-governed-action`
+  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
 - Source consolidation branch:
   `feature/develop-1.3.14-candidate-consolidation`
 - Protected develop merge: GitLab MR `!192` merged

@@ -204,10 +204,10 @@ describe('exact release candidate reassessment', () => {
       releaseBranch: 'release/1.3.14',
       tag: null,
       packageVersion: '1.3.14',
-      status: 'release-branch-readiness-reassessed-main-promotion-pending'
+      status: 'main-promotion-preflight-admitted-mr-pending'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'promote-release-1.3.14-to-main-as-separate-governed-action'
+      'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

@@ -597,6 +597,36 @@
     "windowsDockerDesktopProofState": "community-deferred",
     "nextAdmittedAction": "promote-release-1.3.14-to-main-as-separate-governed-action"
   },
+  "releaseMainPromotionPreflight": {
+    "status": "protected-main-promotion-merge-request-opening-admissible",
+    "packetPath": "docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md",
+    "packetJsonPath": "docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json",
+    "sourceBranch": "release/1.3.14",
+    "sourceCommit": "50bec3391ea823739c2e8baddb33b77c283a37eb",
+    "sourcePipelineId": 2511168302,
+    "sourcePipelineStatus": "success",
+    "targetBranch": "main",
+    "targetCommit": "2f86063a35926fa67963af5ccd47e971157927c6",
+    "mainIsAncestorOfReleaseBranch": true,
+    "releaseBranchIsAncestorOfProtectedDevelop": true,
+    "protectedDevelopRetentionCommit": "3557031442cbf85641544e07f9d75af59fe092d7",
+    "protectedDevelopRetentionPipelineId": 2511333533,
+    "protectedDevelopRetentionPipelineStatus": "success",
+    "releaseReadinessMergeRequestIid": 196,
+    "releaseReadinessMergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/196",
+    "packageVersion": "1.3.14",
+    "protectedDevelopPreviewVsixSha256": "3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b",
+    "protectedDevelopPreviewVsixSizeBytes": 1011931,
+    "protectedDevelopVagrantVsixAcceptanceJobId": 14285909248,
+    "promotionMergeRequest": "admissible-as-separate-governed-action-not-opened",
+    "mainPromotionMerge": "not-performed-requires-green-protected-promotion-mr",
+    "exactTag": "not-admitted-before-protected-main-promotion-and-green-main-pipeline",
+    "releaseBranchDeletion": "not-admitted",
+    "publicGitHubExactMutation": "not-admitted-and-not-performed",
+    "marketplaceExactMutation": "not-admitted-and-not-performed",
+    "windowsDockerDesktopProofState": "community-deferred",
+    "nextAdmittedAction": "open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained"
+  },
   "windowsLabviewCommunityProofIntakeChecklist": {
     "status": "prepared-no-mutation",
     "path": "docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md",
@@ -656,15 +686,15 @@
     "semverOpeningsFrozenUntil": "v1.3.9-closeout-retained",
     "status": "retained-history"
   },
-  "nextAdmittedAction": "promote-release-1.3.14-to-main-as-separate-governed-action",
+  "nextAdmittedAction": "open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained",
   "productionMutationAllowed": false,
   "activeCandidate": {
     "sourceBranch": "develop",
     "releaseBranch": "release/1.3.14",
     "tag": null,
     "packageVersion": "1.3.14",
-    "status": "release-branch-readiness-reassessed-main-promotion-pending",
-    "rationale": "Release/1.3.14 is now opened and reassessed from the governed develop 1.3.14 candidate line for release-readiness consolidation; protected main promotion is admissible only as a separate governed action, while exact tag, public GitHub release, Marketplace mutation, and Windows Docker Desktop Windows-container proof admission remain not admitted."
+    "status": "main-promotion-preflight-admitted-mr-pending",
+    "rationale": "Release/1.3.14 is opened and reassessed, and the protected main-promotion preflight confirms the release branch is ahead of main, main is an ancestor of the release branch, and the protected develop retention pipeline is green. Opening a protected release-to-main merge request with source branch retention is admissible only as a separate governed action; exact tag, public GitHub release, Marketplace mutation, Windows Docker Desktop Windows-container proof admission, main promotion merge, and release branch deletion remain not admitted."
   },
   "publicValidationPrerelease": {
     "status": "published-and-verified",

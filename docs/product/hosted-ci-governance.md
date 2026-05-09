@@ -34,16 +34,16 @@ retained closed baseline.
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
 - active release-candidate state:
-  release-branch readiness reassessed; protected `main` promotion is the next
-  separate governed action
+  protected `main` promotion preflight admitted opening a release-to-main
+  merge request as the next separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - the active exact candidate line is `v1.3.14`; `release/1.3.14` is now the
-  governed release-candidate branch and has been reassessed for the next
-  protected `main` promotion act, while later exact lines must reopen through
-  the same GitFlow and publication gates from `develop`
+  governed release-candidate branch and has been preflighted for opening the
+  next protected release-to-main merge request, while later exact lines must
+  reopen through the same GitFlow and publication gates from `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -65,9 +65,10 @@ retained closed baseline.
   evidence assertion contract without expanding the Windows Docker Desktop
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  the active exact candidate line is `v1.3.14`, and release-branch readiness
-  has been reassessed without exact tag, public GitHub, Marketplace, Windows
-  Docker Desktop, or `main` mutation
+  the active exact candidate line is `v1.3.14`, and protected main-promotion
+  preflight admits only opening a release-to-main MR with source branch
+  retention while exact tag, public GitHub, Marketplace, Windows Docker
+  Desktop, `main` mutation, and branch deletion remain blocked
 
 ## Current Linux/Docker Preview Claim
 
@@ -313,9 +314,10 @@ Job ownership:
   disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
   autologon creates the interactive LabVIEW desktop session while clone-local
   WinRM network/firewall readiness remains available for Vagrant, runs the
-  guest cold-prep provisioner, runs acceptance, validates the latest acceptance
-  manifest, cold-start markers, host-native LabVIEWCLI facts, and generated
-  report output through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
+  guest cold-prep provisioner, runs acceptance with a near-future scheduled-task
+  fallback for LabVIEW prelaunch, validates the latest acceptance manifest,
+  cold-start markers, host-native LabVIEWCLI facts, and generated report output
+  through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
   `vagrant/evidence/`; this job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
   machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large

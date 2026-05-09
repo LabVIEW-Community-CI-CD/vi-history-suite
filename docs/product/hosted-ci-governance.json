@@ -18,8 +18,8 @@
     "currentDevelopPackageLine": "1.3.14",
     "activeDevelopCandidateReleaseLine": "v1.3.14",
     "activeReleaseCandidateBranch": "release/1.3.14",
-    "activeReleaseCandidateState": "release-branch-readiness-reassessed-main-promotion-pending",
-    "nextAdmittedAction": "promote-release-1.3.14-to-main-as-separate-governed-action",
+    "activeReleaseCandidateState": "main-promotion-preflight-admitted-mr-pending",
+    "nextAdmittedAction": "open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained",
     "activeHotfixCandidateReleaseLine": null,
     "activeHotfixBranch": null,
     "activeFeatureBranch": null,
@@ -31,7 +31,7 @@
       "authority exact v1.3.9 remains tagged on main while public GitHub release 312994104 is retained as a complete immutable exact release and VS Code Marketplace serves regular 1.3.9",
       "develop now carries patch candidate package line 1.3.14 for release-readiness consolidation after the published 1.3.13 public-validation pre-release",
       "the Vagrant Windows VSIX acceptance lane now has a repo-owned evidence assertion contract without expanding the Windows Docker Desktop proof claim",
-      "blocked historical v1.3.8 incident evidence remains retained, the active exact candidate line is v1.3.14, release/1.3.14 is now the governed release-candidate branch, and release-branch readiness has been reassessed without exact tag, public GitHub, Marketplace, Windows Docker Desktop, or main mutation"
+      "blocked historical v1.3.8 incident evidence remains retained, the active exact candidate line is v1.3.14, release/1.3.14 is now the governed release-candidate branch, and protected main-promotion preflight admits only opening a release-to-main MR with source branch retention while exact tag, public GitHub, Marketplace, Windows Docker Desktop, main mutation, and branch deletion remain blocked"
     ],
     "rejectedAlternatives": {
       "hotfix": "the next exact line should promote from develop through the normal release/* path after retaining the blocked v1.3.8 incident history, not bypass GitFlow from main",
@@ -321,6 +321,8 @@
           "repoOwnedAcceptanceAssertionScript": "scripts/assertVagrantVsixAcceptanceEvidence.js",
           "repoOwnedAcceptanceAssertionPackageScript": "npm run vagrant:acceptance:assert",
           "bootstrapInteractiveSessionPolicy": "bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview",
+          "labviewPrelaunchFallbackPolicy": "manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window",
+          "labviewStartupEvidencePath": "vagrant/evidence/labview-startup.json",
           "vagrantfile": "vagrant/Vagrantfile",
           "goldenRefreshVariable": "VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true",
           "goldenRefreshWorkdirVariable": "VIHS_VAGRANT_BOX_WORKDIR",
