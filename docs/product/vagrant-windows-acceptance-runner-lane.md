@@ -83,6 +83,9 @@ Official GitLab references:
   `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
+- default LabVIEW VI Server startup timeout: `300` seconds after the
+  interactive scheduled-task launch, matching the governed runtime proof
+  timeout instead of failing during normal first-launch delay
 - disposable clone boot policy: Vagrant sets EFI firmware and preserves the
   exported golden VM UEFI variable store so BitLocker sees the same measured
   boot state in the disposable clone

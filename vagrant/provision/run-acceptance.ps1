@@ -21,6 +21,7 @@ param(
   [string]$HarnessId      = 'HARNESS-VHS-002',
   [string]$SelectedHash   = '8741bb08026c104100720c0ef48621e4ab7762fd',
   [string]$BaseHash       = 'c188cdec606aac3b17d8b17274baa19eef3e4017',
+  [int]   $ViServerTimeoutSec = 300,
   [int]   $RuntimeTimeoutMs = 300000
 )
 
@@ -103,13 +104,13 @@ if ($portAlreadyOpen) {
     } catch {
       throw "Failed to launch LabVIEW via interactive scheduled task: $($_.Exception.Message)"
     }
-    Write-Step "Scheduled task triggered. Waiting up to 120s for LabVIEW to initialise VI Server..."
+    Write-Step "Scheduled task triggered. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server..."
   } else {
-    Write-Step "LabVIEW is running (Session $($lvRunning.SessionId)). Waiting up to 60s for VI Server port 3363..."
+    Write-Step "LabVIEW is running (Session $($lvRunning.SessionId)). Waiting up to ${ViServerTimeoutSec}s for VI Server port 3363..."
   }
 
-  if (-not (Wait-LabVIEWPort -TimeoutSec 120)) {
-    throw "LabVIEW VI Server did not open port 3363 within 120 s. Check LabVIEW.ini and Windows Firewall."
+  if (-not (Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec)) {
+    throw "LabVIEW VI Server did not open port 3363 within $ViServerTimeoutSec s. Check LabVIEW.ini and Windows Firewall."
   }
   Write-Step "LabVIEW VI Server ready on port 3363."
 }

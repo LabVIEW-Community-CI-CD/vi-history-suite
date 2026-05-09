@@ -19,6 +19,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const githubWorkflow = readText('.github/workflows/vagrant-vsix-acceptance.yml');
     const vagrantfile = readText('vagrant/Vagrantfile');
     const bootstrap = readText('vagrant/provision/bootstrap.ps1');
+    const acceptance = readText('vagrant/provision/run-acceptance.ps1');
     const coldPrep = readText('vagrant/provision/prepare-cold-labview.ps1');
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
     const refreshBox = readText('scripts/vagrant/refresh-golden-box.sh');
@@ -86,6 +87,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('Set-NetConnectionProfile');
     expect(bootstrap).not.toContain('Enable-PSRemoting');
     expect(bootstrap).toContain('Test-WSMan -ComputerName localhost');
+
+    expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 300');
+    expect(acceptance).toContain(
+      'Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
+    );
+    expect(acceptance).toContain('Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -167,6 +174,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
+    expect(laneDoc).toContain('default LabVIEW VI Server startup timeout: `300` seconds');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
     expect(laneDoc).toContain('job reloads the VM immediately after');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
