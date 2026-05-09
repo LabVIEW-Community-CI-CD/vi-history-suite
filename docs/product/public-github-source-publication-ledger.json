@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "220111e",
+  "publishedHeadCommit": "f1cb609",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -597,9 +597,77 @@
         "docs/product/public-github-source-publication-ledger.md",
         "docs/product/vscode-marketplace-publication-ledger.md"
       ]
+    },
+    {
+      "id": "public-source-v1-3-14-exact-source-and-tag-handoff",
+      "title": "Public source v1.3.14 exact source and tag handoff",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-05-09",
+      "publishedAt": "2026-05-09T18:48:00Z",
+      "repoCommit": "f1cb609",
+      "repoCommitSha": "f1cb60900820ea17328b9eec595579768491e22a",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/69",
+      "publicationMode": "protected-branch-pull-request-squash",
+      "promotedFiles": [
+        ".gitignore",
+        "CHANGELOG.md",
+        "package-lock.json",
+        "package.json",
+        "tests/unit/publicRepoPackageSurface.test.ts"
+      ],
+      "publicExactTag": {
+        "tag": "v1.3.14",
+        "tagObjectSha": "b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae",
+        "tagCommitSha": "f1cb60900820ea17328b9eec595579768491e22a",
+        "tagCreatedAt": "2026-05-09T18:50:00Z"
+      },
+      "postMergeChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 25609017771,
+          "jobId": 75175830284,
+          "conclusion": "success",
+          "headSha": "f1cb60900820ea17328b9eec595579768491e22a"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 25609017782,
+          "jobId": 75175830275,
+          "conclusion": "success",
+          "headSha": "f1cb60900820ea17328b9eec595579768491e22a"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 25609017773,
+          "jobId": 75175830267,
+          "conclusion": "success",
+          "headSha": "f1cb60900820ea17328b9eec595579768491e22a"
+        }
+      ],
+      "postTagExactReleaseAssessment": {
+        "status": "blocked",
+        "receipt": ".cache/public-github-exact-v1.3.14-after-public-tag/public-github-exact-release-transaction.json",
+        "publicReleaseState": "absent-release",
+        "marketplaceVersion": "1.3.13",
+        "nextGovernedAction": "explicit-public-github-exact-release-publication-handoff-when-boundary-allows"
+      },
+      "publicGithubReleasePublication": "not-performed",
+      "marketplaceMutation": "not-performed",
+      "windowsDockerDesktopProofAdmission": "not-performed",
+      "releaseBranchDeletion": "not-performed",
+      "primaryAuthority": [
+        "CHANGELOG.md",
+        "package.json",
+        "package-lock.json",
+        ".gitignore",
+        "tests/unit/publicRepoPackageSurface.test.ts",
+        "docs/product/public-github-source-publication-ledger.md",
+        "docs/product/release-publication-state.md"
+      ]
     }
   ],
-  "publishedHeadCommitSha": "220111eae3ac214e99f2233e2bfe6b320edf383d",
+  "publishedHeadCommitSha": "f1cb60900820ea17328b9eec595579768491e22a",
   "windowsDockerDesktopIntakePromotionCloseout": {
     "status": "published-and-verified",
     "repository": "github.com/svelderrainruiz/vi-history-suite",
@@ -739,5 +807,71 @@
     ],
     "marketplaceMutation": "not-performed",
     "marketplaceBoundary": "Marketplace remained untouched by PR #60; the public facade docs promotion did not publish, republish, or alter Marketplace listing state."
+  },
+  "publicExactV1314SourceAndTagHandoffCloseout": {
+    "status": "published-main-and-tag-release-absent",
+    "repository": "github.com/svelderrainruiz/vi-history-suite",
+    "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/69",
+    "publicBranch": "main",
+    "sourceBranch": "codex/promote-v1.3.14-public-source",
+    "headCommit": "1bf06c0534fe87d30566d5f7230c93edf547a84c",
+    "mergeCommit": "f1cb60900820ea17328b9eec595579768491e22a",
+    "publicMainCommit": "f1cb60900820ea17328b9eec595579768491e22a",
+    "publicMainShortCommit": "f1cb609",
+    "publicTag": "v1.3.14",
+    "publicTagObjectSha": "b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae",
+    "publicTagCommitSha": "f1cb60900820ea17328b9eec595579768491e22a",
+    "mergedAt": "2026-05-09T18:48:00Z",
+    "promotedFiles": [
+      ".gitignore",
+      "CHANGELOG.md",
+      "package-lock.json",
+      "package.json",
+      "tests/unit/publicRepoPackageSurface.test.ts"
+    ],
+    "governedAuthorityMainCommit": "2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa",
+    "governedAuthorityTag": "v1.3.14",
+    "governedAuthorityTagPipeline": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2512680188",
+    "retainedVsixSha256": "6458219dcac56b273404d502a60b83546690b1f30f0fad038aec725549c62b10",
+    "postMergeMainChecks": [
+      {
+        "workflowName": "Public Source Package Preview",
+        "runId": 25609017771,
+        "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/25609017771",
+        "jobId": 75175830284,
+        "conclusion": "success",
+        "headSha": "f1cb60900820ea17328b9eec595579768491e22a"
+      },
+      {
+        "workflowName": "Public Windows Installed-User Contract",
+        "runId": 25609017782,
+        "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/25609017782",
+        "jobId": 75175830275,
+        "conclusion": "success",
+        "headSha": "f1cb60900820ea17328b9eec595579768491e22a"
+      },
+      {
+        "workflowName": "Public Linux Installed-User Smoke",
+        "runId": 25609017773,
+        "runUrl": "https://github.com/svelderrainruiz/vi-history-suite/actions/runs/25609017773",
+        "jobId": 75175830267,
+        "conclusion": "success",
+        "headSha": "f1cb60900820ea17328b9eec595579768491e22a"
+      }
+    ],
+    "postTagExactReleaseAssessment": {
+      "receipt": ".cache/public-github-exact-v1.3.14-after-public-tag/public-github-exact-release-transaction.json",
+      "status": "blocked",
+      "authorityMain": "2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa",
+      "publicMain": "f1cb60900820ea17328b9eec595579768491e22a",
+      "publicTag": "refs/tags/v1.3.14",
+      "publicReleaseState": "absent-release",
+      "marketplaceVersion": "1.3.13"
+    },
+    "publicGithubReleasePublication": "not-performed",
+    "marketplaceMutation": "not-performed",
+    "windowsDockerDesktopProofAdmission": "not-performed",
+    "releaseBranchDeletion": "not-performed",
+    "nextGovernedAction": "explicit-public-github-exact-release-publication-handoff-when-boundary-allows"
   }
 }

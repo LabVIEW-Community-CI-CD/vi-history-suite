@@ -13,13 +13,14 @@
   `release-evidence/release-manifest.json`.
 - The current exact released line is `v1.3.9`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.3.9`.
+- The current authority package line on `main` is `1.3.14`.
 - The current develop package line on `develop` is `1.3.14`.
 - The active exact release candidate line on `develop` is `v1.3.14`.
 - The active release-candidate branch is `release/1.3.14`.
-- The active release-candidate state is protected `main` promotion preflight
-  admitted; opening a release-to-main merge request is the next separate
-  governed action.
+- The active release-candidate state has completed GitLab authority main
+  promotion, exact authority tagging, and public GitHub source/tag handoff;
+  public GitHub release publication and Marketplace publication remain open
+  governed actions.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -84,17 +85,19 @@
   provider/year/bitness variants selectable, admitted Windows host proof
   retained, Vagrant VSIX acceptance governed by repo-owned assertion, and
   Windows Docker Desktop proof community/deferred.
-- The next admitted release-control action is
-  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`;
-  exact tag, public GitHub exact release, Marketplace mutation, release branch
-  deletion, and the `main` merge stay blocked until the separate protected
-  promotion MR and later exact-tag reassessment close.
+- The next admitted release-control action under the current boundary is
+  `retain-public-source-and-tag-handoff-with-release-publication-blocked`;
+  if public GitHub release publication is explicitly admitted, the next
+  governed action is the asset-first `public:github:exact:transaction:publish`
+  handoff for `v1.3.14`. Marketplace mutation, Windows Docker Desktop proof
+  admission, and release branch deletion remain blocked.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer
   authorization for public GitHub and Marketplace publication.
 - The active Marketplace public validation preview status is published and
-  verified for `1.3.13`; no `1.3.14` public GitHub or Marketplace mutation is
-  admitted by the develop candidate consolidation slice.
+  verified for `1.3.13`; `v1.3.14` public GitHub source and tag handoff is
+  complete, while public GitHub release publication and Marketplace mutation
+  remain separate governed actions.
 - The active public validation path is admitted for pre-release publication:
   Windows/LabVIEW settings may remain selectable with stable runtime error-code
   and proof-packet disclosure, with `vihs validate-fixture` retaining the
