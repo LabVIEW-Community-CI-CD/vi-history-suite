@@ -9,8 +9,10 @@ final installed-user distribution surface.
 ## Current State
 
 - Authority system: GitLab
-- Authority exact tag: `v1.3.9`
-- Authority `main`: `2f86063a35926fa67963af5ccd47e971157927c6`
+- Fully closed authority exact tag: `v1.3.9`
+- Fully closed authority `main`: `2f86063a35926fa67963af5ccd47e971157927c6`
+- Current authority exact tag: `v1.3.14`
+- Current authority `main`: `2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa`
 - GitLab release manifest:
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json`
 - Expected VSIX: `vi-history-suite-1.3.9.vsix`
@@ -18,13 +20,12 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
 - Active candidate release branch: `release/1.3.14`
-- Active candidate tag: none
+- Active candidate tag: `v1.3.14`
 - Active candidate package version: `1.3.14`
-- Active candidate state: release branch opened, reassessed, and preflighted
-  for protected `main` promotion; opening a release-to-main merge request is
-  admissible only as a separate governed action, while no public GitHub
-  release, Marketplace mutation, exact tag, `main` promotion, or release branch
-  deletion has been performed
+- Active candidate state: GitLab authority main promotion, exact authority
+  tagging, and public GitHub source/tag handoff are complete; public GitHub
+  release publication, Marketplace mutation, Windows Docker Desktop proof
+  admission, and release branch deletion remain blocked by boundary
 
 ## Develop Preview State
 

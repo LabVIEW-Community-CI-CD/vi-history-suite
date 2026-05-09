@@ -202,13 +202,15 @@ Latest landed ship target:
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
-- current published package line on `main`: `1.3.9`
+- current fully published exact package line: `1.3.9`
+- current authority package line on `main`: `1.3.14`
 - current develop package line on `develop`: `1.3.14`
 - active exact release candidate line on `develop`: `v1.3.14`
 - active release-candidate branch: `release/1.3.14`
 - active release-candidate state:
-  protected `main` promotion preflight admitted opening a release-to-main
-  merge request as the next separate governed action
+  GitLab authority main promotion, exact authority tagging, and public GitHub
+  source/tag handoff are complete; public GitHub release publication and
+  Marketplace publication remain open governed actions
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -272,10 +274,9 @@ Latest landed ship target:
   exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.14` release branch opened and
-  reassessed from `develop` with protected `main` promotion preflight now
-  admitting a release-to-main merge request as the next separate governed
-  action, all provider/year/bitness variants selectable, admitted Windows host
+- active governed release claim: `1.3.14` has completed GitLab authority main
+  promotion, GitLab authority exact tagging, and public GitHub source/tag
+  handoff, all provider/year/bitness variants selectable, admitted Windows host
   LabVIEW 2026 x64 proof, repo-owned Vagrant VSIX acceptance assertion, and
   Windows Docker Desktop Windows-container proof community/deferred through
   public issue #65
@@ -290,9 +291,11 @@ Latest landed ship target:
   `ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8` and pipeline `2511103937`
   retain Linux/Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX
   acceptance, public exact pre-tag, package preview, docs, and assurance
-  evidence for `1.3.14`, while exact tag, public GitHub release, VS Code
-  Marketplace mutation, Windows Docker Desktop Windows-container proof, and
-  `main` promotion remain unperformed
+  evidence for `1.3.14`; later protected `main` promotion, exact authority
+  tag, and public GitHub source/tag handoff are now complete, while public
+  GitHub release publication, VS Code Marketplace mutation, Windows Docker
+  Desktop Windows-container proof admission, and release branch deletion remain
+  blocked by boundary
 - current release-branch opening packet:
   [release-branch-opening-v1.3.14-2026-05-08.md](./release-branch-opening-v1.3.14-2026-05-08.md)
 - current release-branch opening packet JSON:
@@ -306,7 +309,7 @@ Latest landed ship target:
 - current release main-promotion preflight JSON:
   [release-main-promotion-preflight-v1.3.14-2026-05-08.json](./release-main-promotion-preflight-v1.3.14-2026-05-08.json)
 - current next admitted action:
-  `open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained`
+  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
@@ -314,11 +317,10 @@ Latest landed ship target:
 - exact-release candidate conversion boundary:
   the `2026-05-08` readiness assessment admitted the governed
   `release/1.3.14` branch opening as the next separate action; the branch is
-  now open, retained, reassessed, and preflighted for protected `main`
-  promotion, so the next conversion step is opening a protected
-  `release/1.3.14` to `main` merge request with source branch retention before
-  any exact tag, public GitHub release, VS Code Marketplace mutation, Windows
-  Docker Desktop proof admission, release branch deletion, or `main` merge
+  now open, retained, reassessed, preflighted, promoted to protected `main`,
+  tagged on GitLab authority, and handed off to public GitHub source/tag; the
+  next conversion step is retaining that blocked state until explicit public
+  GitHub exact-release publication is admitted
 - historical exact-release candidate reassessment:
   [exact-release-candidate-reassessment-2026-04-26.md](./exact-release-candidate-reassessment-2026-04-26.md)
 - historical exact-release candidate reassessment JSON:
@@ -433,8 +435,11 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.9`
 - current public GitHub source publication: public `main` now publishes
-  `220111eae3ac214e99f2233e2bfe6b320edf383d` after public PR #68 promoted
-  the Windows Docker Desktop proof-intake template and label; public PR #67
+  `f1cb60900820ea17328b9eec595579768491e22a` after public PR #69 completed the
+  `v1.3.14` source handoff; public annotated tag `v1.3.14` has tag object
+  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae` and peels to
+  `f1cb60900820ea17328b9eec595579768491e22a`; public PR #68 remains retained
+  for the Windows Docker Desktop proof-intake template and label, public PR #67
   remains the retained `1.3.13` public validation facade publication, and the
   exact `v1.3.9` tag/release remains retained separately
 - public GitHub public-validation pre-release:

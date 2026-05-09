@@ -246,18 +246,18 @@ describe('release publication state resolver', () => {
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+      mainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
       sourcePublication: {
         status:
-          'public-validation-prerelease-1.3.13-windows-docker-desktop-intake-promoted-and-verified',
-        currentMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
-        currentMainShortCommit: '220111e',
+          'public-source-and-tag-v1.3.14-promoted-release-publication-blocked',
+        currentMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+        currentMainShortCommit: 'f1cb609',
         exactReleaseRetainedCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
         priorCommunityValidationIntakeCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
         priorCommunityValidationIntakePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/45',
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
-        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
         latestPublicValidationFixturePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
         latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
@@ -265,6 +265,16 @@ describe('release publication state resolver', () => {
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
           publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
           publicMainShortCommit: '220111e',
+          marketplaceMutation: 'not-performed'
+        }),
+        latestPublicSourceAndTagHandoffCloseout: expect.objectContaining({
+          status: 'published-and-verified-release-publication-blocked',
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+          publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+          publicMainShortCommit: 'f1cb609',
+          publicTag: 'v1.3.14',
+          publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
+          publicGitHubReleasePublication: 'not-performed',
           marketplaceMutation: 'not-performed'
         }),
         publicDevelopSync: expect.objectContaining({
@@ -519,6 +529,37 @@ describe('release publication state resolver', () => {
       nextAdmittedAction:
         'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
     });
+    expect(state.currentAuthority).toMatchObject({
+      exactTag: 'v1.3.14',
+      packageVersion: '1.3.14',
+      mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+      tagObjectSha: '6d9773a0909e6a61a22d06e0d48cf91d8f49baa1',
+      tagCommitSha: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+      tagPipelineId: 2512680188,
+      releaseExtensionJobId: 14291969114,
+      vagrantWindowsVsixAcceptanceJobId: 14291969111,
+      expectedVsixAsset: 'vi-history-suite-1.3.14.vsix',
+      expectedVsixSha256:
+        '6458219dcac56b273404d502a60b83546690b1f30f0fad038aec725549c62b10'
+    });
+    expect(state.publicGitHubSourceAndTagHandoff).toMatchObject({
+      status: 'public-source-and-tag-published-release-publication-blocked',
+      publicPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+      publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicTag: 'v1.3.14',
+      publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
+      publicTagPeeledCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicSourcePackagePreviewRunId: 25609017771,
+      publicSourcePackagePreviewJobId: 75175830284,
+      publicWindowsInstalledUserContractRunId: 25609017782,
+      publicWindowsInstalledUserContractJobId: 75175830275,
+      publicLinuxInstalledUserSmokeRunId: 25609017773,
+      publicLinuxInstalledUserSmokeJobId: 75175830267,
+      publicGitHubReleasePublication: 'not-performed',
+      marketplaceMutation: 'not-performed',
+      windowsDockerDesktopProofAdmission: 'not-performed',
+      releaseBranchDeletion: 'not-performed'
+    });
     expect(state.windowsLabviewCommunityProofIntakeChecklist).toMatchObject({
       status: 'prepared-no-mutation',
       path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
@@ -559,6 +600,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Release Branch Opening');
     expect(stateDoc).toContain('## Release Branch Readiness Reassessment');
     expect(stateDoc).toContain('## Release Main Promotion Preflight');
+    expect(stateDoc).toContain('## Public GitHub Source And Tag Handoff');
     expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
     expect(stateDoc).toContain('## Exact Release Candidate Reassessment');
     expect(stateDoc).toContain('Exact-release readiness: release branch opening admissible');
@@ -569,6 +611,11 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Release branch pipeline: `2511168302` / `success`');
     expect(stateDoc).toContain('Protected develop retention pipeline: `2511236377` / `success`');
     expect(stateDoc).toContain('Protected develop retention pipeline: `2511333533` / `success`');
+    expect(stateDoc).toContain('Current authority exact tag: `v1.3.14`');
+    expect(stateDoc).toContain('Public PR: https://github.com/svelderrainruiz/vi-history-suite/pull/69');
+    expect(stateDoc).toContain('`f1cb60900820ea17328b9eec595579768491e22a`');
+    expect(stateDoc).toContain('`b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`');
+    expect(stateDoc).toContain('public GitHub release is absent; Marketplace still serves `1.3.13`');
     expect(stateDoc).toContain('Release-readiness MR: `!196` / merged');
     expect(stateDoc).toContain('Preview package job: `14284865650`');
     expect(stateDoc).toContain(
@@ -624,12 +671,12 @@ describe('release publication state resolver', () => {
     });
     expect(state.activeCandidate).toMatchObject({
       releaseBranch: 'release/1.3.14',
-      tag: null,
+      tag: 'v1.3.14',
       packageVersion: '1.3.14',
-      status: 'main-promotion-preflight-admitted-mr-pending'
+      status: 'public-source-and-tag-handoff-complete-release-publication-blocked'
     });
     expect(state.nextAdmittedAction).toBe(
-      'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
+      'retain-public-source-and-tag-handoff-with-release-publication-blocked'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

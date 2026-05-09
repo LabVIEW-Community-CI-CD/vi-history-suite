@@ -99,13 +99,13 @@ describe('public GitHub fixture docs promotion closeout', () => {
     }
 
     expect(releaseState.publicGitHub).toMatchObject({
-      mainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+      mainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
       sourcePublication: {
         status:
-          'public-validation-prerelease-1.3.13-windows-docker-desktop-intake-promoted-and-verified',
-        currentMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
-        currentMainShortCommit: '220111e',
-        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+          'public-source-and-tag-v1.3.14-promoted-release-publication-blocked',
+        currentMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+        currentMainShortCommit: 'f1cb609',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
         latestPublicValidationFixturePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
         latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
@@ -113,6 +113,16 @@ describe('public GitHub fixture docs promotion closeout', () => {
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
           publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
           publicMainShortCommit: '220111e',
+          marketplaceMutation: 'not-performed'
+        }),
+        latestPublicSourceAndTagHandoffCloseout: expect.objectContaining({
+          status: 'published-and-verified-release-publication-blocked',
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+          publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+          publicMainShortCommit: 'f1cb609',
+          publicTag: 'v1.3.14',
+          publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
+          publicGitHubReleasePublication: 'not-performed',
           marketplaceMutation: 'not-performed'
         }),
         publicDevelopSync: expect.objectContaining({
@@ -125,8 +135,8 @@ describe('public GitHub fixture docs promotion closeout', () => {
       'completed-through-public-pr-60-after-gitlab-authority-green'
     );
     expect(publicSourceLedger).toMatchObject({
-      publishedHeadCommit: '220111e',
-      publishedHeadCommitSha: '220111eae3ac214e99f2233e2bfe6b320edf383d'
+      publishedHeadCommit: 'f1cb609',
+      publishedHeadCommitSha: 'f1cb60900820ea17328b9eec595579768491e22a'
     });
     expect(publicSourceLedger.publications).toEqual(
       expect.arrayContaining([
@@ -140,8 +150,15 @@ describe('public GitHub fixture docs promotion closeout', () => {
       ])
     );
     expect(publicReleaseCandidate.publishedPublicSource).toMatchObject({
-      currentPublicSourceHead: '220111e',
-      currentPublicSourceHeadSha: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+      currentPublicSourceHead: 'f1cb609',
+      currentPublicSourceHeadSha: 'f1cb60900820ea17328b9eec595579768491e22a',
+      latestPublicSourceAndTagHandoff: expect.objectContaining({
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+        publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+        publicMainShortCommit: 'f1cb609',
+        publicTag: 'v1.3.14',
+        publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae'
+      }),
       latestPublicFacadeDocsPromotion: expect.objectContaining({
         pullRequest: publicPullRequest,
         publicMainCommit,

@@ -131,12 +131,12 @@ describe('release/1.3.14 branch opening packet', () => {
     });
     expect(releaseState.activeCandidate).toMatchObject({
       releaseBranch: 'release/1.3.14',
-      tag: null,
+      tag: 'v1.3.14',
       packageVersion: '1.3.14',
-      status: 'main-promotion-preflight-admitted-mr-pending'
+      status: 'public-source-and-tag-handoff-complete-release-publication-blocked'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
+      'retain-public-source-and-tag-handoff-with-release-publication-blocked'
     );
 
     expect(releaseStateDoc).toContain('## Release Branch Opening');
