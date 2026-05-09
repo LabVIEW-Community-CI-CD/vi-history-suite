@@ -305,8 +305,8 @@ describe('public release candidate control surface', () => {
 
     expect(currentState).toContain('current exact released line: `v1.3.9`');
     expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.3.14`');
-    expect(currentState).toContain('active release-candidate branch: `release/1.3.14`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.15`');
+    expect(currentState).toContain('active release-candidate branch: none for `1.3.15` yet');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');

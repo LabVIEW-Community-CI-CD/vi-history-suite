@@ -14,13 +14,13 @@
 - The current exact released line is `v1.3.9`.
 - The burned exact released line is `v1.0.2`.
 - The current authority package line on `main` is `1.3.14`.
-- The current develop package line on `develop` is `1.3.14`.
-- The active exact release candidate line on `develop` is `v1.3.14`.
-- The active release-candidate branch is `release/1.3.14`.
-- The active release-candidate state has completed GitLab authority main
-  promotion, exact authority tagging, and public GitHub source/tag handoff;
-  public GitHub release publication and Marketplace publication remain open
-  governed actions.
+- The current develop package line on `develop` is `1.3.15`.
+- The active exact release candidate line on `develop` is `v1.3.15`.
+- The active release-candidate branch is none for `1.3.15` yet.
+- The active release-candidate state is `1.3.15` installed-user stable patch
+  work open on the feature/develop line; no `release/1.3.15` branch, exact tag,
+  public GitHub release, or Marketplace publication has been created for this
+  line yet.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -79,12 +79,12 @@
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
-- The active governed release claim is the `1.3.14` develop patch candidate
-  consolidation with `release/1.3.14` now opened, reassessed, and preflighted
-  for protected `main` promotion as the governed release candidate branch, all
-  provider/year/bitness variants selectable, admitted Windows host proof
-  retained, Vagrant VSIX acceptance governed by repo-owned assertion, and
-  Windows Docker Desktop proof community/deferred.
+- The active governed release claim is the `1.3.15` installed-user stable patch
+  candidate on the feature/develop line, preserving the completed `v1.3.14`
+  GitLab authority and public source/tag handoff separately while focusing the
+  next candidate on local LabVIEW 2025+ installed users, the simplified compare
+  workflow, and a Windows Docker Desktop proof handoff that remains
+  community/deferred.
 - The next admitted release-control action under the current boundary is
   `retain-public-source-and-tag-handoff-with-release-publication-blocked`;
   if public GitHub release publication is explicitly admitted, the next
@@ -596,14 +596,14 @@ promotion still stays separate afterward.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
 - The current published package line on `main` is `1.3.9`, and the current
-  develop package line on `develop` is `1.3.14`; the closed exact line
+  develop package line on `develop` is `1.3.15`; the closed exact line
   must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
   exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
   `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, exact `v1.3.7`, or exact `v1.3.9` release
   evidence.
-- The current develop package line on `develop` is `1.3.14`, public GitHub
+- The current develop package line on `develop` is `1.3.15`, public GitHub
   `main` now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
   `312994104` is published, VS Code Marketplace serves `1.3.9`, and
   blocked `v1.3.8` historical incident evidence remains retained separately

@@ -43,7 +43,7 @@ describe('public validation pre-release 1.3.11', () => {
     );
     const promotionPlan = promotion.createPublicGithubSourcePromotionPlan();
 
-    expect(packageManifest.version).toBe('1.3.14');
+    expect(packageManifest.version).toBe('1.3.15');
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
       status: 'published-and-verified',

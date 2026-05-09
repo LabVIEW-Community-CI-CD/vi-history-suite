@@ -49,10 +49,10 @@ describe('repo-agnostic checkbox workflow docs', () => {
     }
 
     expect(srs).toContain('at least two commits as sufficient');
-    expect(srs).toContain('explicit compare-preflight pair');
+    expect(srs).toContain('explicit selected/base pair');
     expect(srs).toContain('oldest retained row explicitly selectable as the base side of a checkbox-selected compare');
     expect(rtm).toContain('two retained commits are enough to use VI History');
-    expect(rtm).toContain('explicit compare-preflight pair');
+    expect(rtm).toContain('explicit selected/base pair');
     expect(testPlan).toContain('checkbox-only');
     expect(bundledSync).toContain('`Checkboxes`: define the exact selected/base pair you want to compare');
     expect(bundledSync).toContain('`Compare`: generates or reopens retained comparison evidence for the exact admitted pair');

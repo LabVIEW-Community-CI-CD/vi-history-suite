@@ -1159,7 +1159,7 @@ describe('public GitHub exact-release transaction controller', () => {
 
       expect(jsonReport.authority).toMatchObject({
         packageVersion: '1.3.6',
-        branchPackageVersion: '1.3.14'
+        branchPackageVersion: '1.3.15'
       });
       expect(jsonReport.publicReleaseByIdLookup).toEqual({
         requestedDraftReleaseId: 312363117,

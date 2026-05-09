@@ -264,11 +264,11 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- current exact released line: `v1.3.9`');
     expect(currentState).toContain('- current fully published exact package line: `1.3.9`');
     expect(currentState).toContain('- current authority package line on `main`: `1.3.14`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.3.14`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.3.15`');
     expect(currentState).toContain(
-      '- active exact release candidate line on `develop`: `v1.3.14`'
+      '- active exact release candidate line on `develop`: `v1.3.15`'
     );
-    expect(currentState).toContain('- active release-candidate branch: `release/1.3.14`');
+    expect(currentState).toContain('- active release-candidate branch: none for `1.3.15` yet');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -348,12 +348,12 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('current exact released line is `v1.3.9`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
     expect(releaseProcedure).toContain('current authority package line on `main` is `1.3.14`');
-    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.14`");
+    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.15`");
     expect(releaseProcedure).toContain(
-      'active exact release candidate line on `develop` is `v1.3.14`'
+      'active exact release candidate line on `develop` is `v1.3.15`'
     );
     expect(releaseProcedure).toContain(
-      'The active release-candidate branch is `release/1.3.14`.'
+      'The active release-candidate branch is none for `1.3.15` yet.'
     );
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');

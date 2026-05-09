@@ -49,8 +49,11 @@ Installed-user help:
   first compare
 - the first Docker compare on a fresh machine may pull
   `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`
-- host Windows LabVIEW years `2020` through `2026` are selectable when they
-  are installed locally
+- host LabVIEW `2025`, `2026`, and newer local versions are selectable when
+  they are installed locally; LabVIEW `2024` and older cannot create the VI
+  Comparison Report that VI History Suite uses
+- LabVIEW `2025` and newer can open older LabVIEW VIs without migrating the
+  source file before generating the comparison report
 - `docker/windows` and `docker/linux` variants are selectable for community
   validation; the governed Docker runtime implementation is currently `2026`
   `x64`

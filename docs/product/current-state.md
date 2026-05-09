@@ -204,13 +204,13 @@ Latest landed ship target:
 - current exact released line: `v1.3.9`
 - current fully published exact package line: `1.3.9`
 - current authority package line on `main`: `1.3.14`
-- current develop package line on `develop`: `1.3.14`
-- active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: `release/1.3.14`
+- current develop package line on `develop`: `1.3.15`
+- active exact release candidate line on `develop`: `v1.3.15`
+- active release-candidate branch: none for `1.3.15` yet
 - active release-candidate state:
-  GitLab authority main promotion, exact authority tagging, and public GitHub
-  source/tag handoff are complete; public GitHub release publication and
-  Marketplace publication remain open governed actions
+  `1.3.15` installed-user stable patch work is open on the feature/develop
+  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
+  Marketplace publication has been created for this line yet
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:

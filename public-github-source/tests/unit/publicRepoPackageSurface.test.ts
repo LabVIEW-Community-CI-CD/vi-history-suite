@@ -41,7 +41,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-source-package-preview.yml');
 
-    expect(manifest.version).toBe('1.3.14');
+    expect(manifest.version).toBe('1.3.15');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -87,7 +87,9 @@ describe('public repo package surface', () => {
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Review the compare preflight');
     expect(readme).toContain('Choose `Compare`');
-    expect(readme).toContain('LabVIEW years `2020` through `2026`');
+    expect(readme).toContain('LabVIEW `2025`, `2026`, and newer local versions');
+    expect(readme).toContain('LabVIEW `2024` and older cannot create the VI');
+    expect(readme).toContain('LabVIEW `2025` and newer can open older LabVIEW VIs');
     expect(readme).toContain('runtimeErrorCode');
     expect(readme).toContain('Proof Status And Community Validation');
     expect(readme).toContain('svelderrainruiz.vi-history-suite@prerelease');
