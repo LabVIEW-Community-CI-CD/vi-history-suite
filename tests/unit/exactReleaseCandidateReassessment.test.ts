@@ -204,10 +204,10 @@ describe('exact release candidate reassessment', () => {
       releaseBranch: 'release/1.3.15',
       tag: 'v1.3.15',
       packageVersion: '1.3.15',
-      status: 'release-branch-opened-green-readiness-reassessment-pending'
+      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

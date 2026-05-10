@@ -284,10 +284,11 @@ Authority release facts:
 - active exact release candidate line on `develop`: `v1.3.15`
 - active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `release/1.3.15` is opened from protected `develop` and its release-branch
-  pipeline is green; exact tag, public GitHub release, Marketplace mutation,
-  Windows Docker Desktop proof admission, main promotion, and release branch
-  deletion remain blocked
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -347,13 +348,13 @@ Authority release facts:
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: `1.3.15` has an opened `release/1.3.15`
-  branch from protected `develop` with green branch CI, all provider/year/
-  bitness variants selectable, admitted Windows host proof retained, Vagrant
-  VSIX acceptance governed by repo-owned assertion, and Windows Docker Desktop
-  proof still community/deferred; completed `v1.3.14` GitLab authority and
-  public source/tag handoff remain retained separately
+  branch with green branch CI, all provider/year/bitness variants selectable,
+  admitted Windows host proof retained, Vagrant VSIX acceptance governed by
+  repo-owned assertion, and Windows Docker Desktop proof still
+  community/deferred; main-promotion preflight is blocked until a release-branch
+  topology refresh brings protected `main` into `release/1.3.15`
 - next admitted release-control action:
-  `reassess-release-1.3.15-branch-readiness-before-exact-tag`
+  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
 - active Marketplace stable target: `1.3.15`
 - retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:

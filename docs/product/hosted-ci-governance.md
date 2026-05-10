@@ -34,18 +34,19 @@ retained closed baseline.
 - active exact release candidate line on `develop`: `v1.3.15`
 - active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `release/1.3.15` is opened from protected `develop` with a green branch
-  pipeline; exact tag, public GitHub release, Marketplace mutation, Windows
-  Docker Desktop proof admission, main promotion, and release branch deletion
-  remain blocked
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - the active exact candidate line is `v1.3.15`; `release/1.3.15` is now the
   governed release-candidate branch with a green branch-created pipeline, while
-  release-branch readiness reassessment is the next admitted action before any
-  exact tag or protected main-promotion action
+  topology refresh is the next admitted action before any exact tag or
+  protected main-promotion action
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -68,9 +69,9 @@ retained closed baseline.
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
   the active exact candidate line is `v1.3.15`, `release/1.3.15` is the
-  governed release-candidate branch, and release-branch readiness reassessment
-  is the next admitted action while exact tag, public GitHub, Marketplace,
-  Windows Docker Desktop, `main` mutation, and branch deletion remain blocked
+  governed release-candidate branch, and topology refresh is the next admitted
+  action while exact tag, public GitHub, Marketplace, Windows Docker Desktop,
+  `main` mutation, and branch deletion remain blocked
 
 ## Current Linux/Docker Preview Claim
 
@@ -207,18 +208,25 @@ Runner operator hardening:
   `vihs/win11-labview2026`, golden VM
   `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
   serialized GitLab `resource_group: vihs-windows-vagrant`, and isolated
-  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host uses
-  `/run/media/sergio/Data/vihs-vagrant` as the large-drive storage root for
-  `VAGRANT_HOME`, box output/cache, export work, and the VirtualBox default
-  machine folder; runner creation uses the `POST /user/runners` API to set
+  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host keeps `VAGRANT_HOME` on
+  `/home/sergio/.vagrant.d` so Vagrant private keys stay on a chmod-capable
+  ext4 filesystem, while `/run/media/sergio/Data/vihs-vagrant` remains the
+  large-drive storage root for box payload cache, export work, and the
+  VirtualBox default machine folder; runner creation uses the
+  `POST /user/runners` API to set
   tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
   registers the local shell runner manager with the returned `glrt-`
   authentication token; the repo-owned disposable cleanup surface
-  `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
-  fails when the disposable CI VM is running, deletes only a stopped
+  `scripts/vagrant/prepare-vagrant-home.sh` links
+  `/home/sergio/.vagrant.d/boxes` to the large-drive box cache before Vagrant
+  runs; `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the
+  golden VM, fails when the disposable CI VM is running, deletes only a stopped
   `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
-  that point at the governed CI VM folder, and clears active `.vagrant-ci`
-  state before import; the repo-owned host doctor
+  that point at the governed CI VM folder, retries orphaned disposable
+  directory removal, quarantines that directory under the governed machine
+  folder when NTFS/FUSE leaves the original directory name present after
+  retries, and clears active `.vagrant-ci` state before import; the repo-owned
+  host doctor
   `scripts/vagrant/doctor-vagrant-host.sh` checks Vagrant,
   VirtualBox, Docker, Node, npm, `gitlab-runner`, the registered box, golden VM
   power state, stale CI VM state, stale inaccessible disposable registry
