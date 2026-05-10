@@ -328,7 +328,10 @@ Job ownership:
   fallback for LabVIEW prelaunch, validates the latest acceptance manifest,
   cold-start markers, host-native LabVIEWCLI facts, and generated report output
   through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
-  `vagrant/evidence/`; this job pins
+  `vagrant/evidence/`; its acceptance provisioner sets
+  `VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000` so canonical harness acquisition
+  fails closed instead of silently exhausting the runner no-output window; this
+  job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
   machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large
   Windows box and disposable VM clone do not land on the root filesystem; this

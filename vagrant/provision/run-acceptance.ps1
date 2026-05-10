@@ -22,7 +22,8 @@ param(
   [string]$SelectedHash   = '8741bb08026c104100720c0ef48621e4ab7762fd',
   [string]$BaseHash       = 'c188cdec606aac3b17d8b17274baa19eef3e4017',
   [int]   $ViServerTimeoutSec = 300,
-  [int]   $RuntimeTimeoutMs = 300000
+  [int]   $RuntimeTimeoutMs = 300000,
+  [int]   $GitTimeoutMs = 300000
 )
 
 Set-StrictMode -Version Latest
@@ -309,6 +310,8 @@ Write-Step "Evidence will be written to: $RunEvidenceRoot"
 # 6. Run the governed report-smoke proof
 # ---------------------------------------------------------------------------
 Write-Step "Running governed report-smoke proof (this invokes LabVIEWCLI and may take several minutes)..."
+$env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()
+Write-Step "Harness Git operations are bounded by ${GitTimeoutMs}ms."
 
 $proofArgs = @(
   $ProofCli,
