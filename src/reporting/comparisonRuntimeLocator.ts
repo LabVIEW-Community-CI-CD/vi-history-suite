@@ -161,7 +161,13 @@ interface BuildProviderDecisionsOptions {
 
 const WINDOWS_PROGRAM_FILES = 'C:\\Program Files';
 const WINDOWS_PROGRAM_FILES_X86 = 'C:\\Program Files (x86)';
-const WINDOWS_LABVIEW_FOLDERS = ['LabVIEW 2026 Q1', 'LabVIEW 2026'];
+const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
+const WINDOWS_LABVIEW_FOLDERS = [
+  'LabVIEW 2026 Q1',
+  'LabVIEW 2026',
+  'LabVIEW 2025 Q3',
+  'LabVIEW 2025'
+];
 const DEFAULT_WINDOWS_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-windows';
 const DEFAULT_LINUX_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-linux';
 const WINDOWS_CONTAINER_LABVIEW_EXE =
@@ -284,6 +290,20 @@ export function buildDocumentedRuntimeCandidates(
       {
         kind: 'labview-exe',
         path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        source: 'scan',
+        exists: false,
+        bitness: 'x64'
+      },
+      {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2025Q3-64/labview',
+        source: 'scan',
+        exists: false,
+        bitness: 'x64'
+      },
+      {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2025-64/labview',
         source: 'scan',
         exists: false,
         bitness: 'x64'
@@ -424,6 +444,37 @@ export async function locateComparisonRuntime(
         candidates: []
       };
     }
+  }
+
+  if (
+    requestedLabviewVersion &&
+    !isSupportedComparisonReportLabviewVersion(requestedLabviewVersion)
+  ) {
+    const blockedReason = 'labview-version-unsupported-for-comparison-report';
+    return {
+      platform,
+      executionMode,
+      requestedProvider: settings.requestedProvider,
+      bitness,
+      provider: 'unavailable',
+      blockedReason,
+      providerDecisions: buildProviderDecisions({
+        platform,
+        executionMode,
+        requestedProvider: settings.requestedProvider,
+        bitness,
+        configuredWindowsContainerImage: windowsContainerImage,
+        configuredLinuxContainerImage: linuxContainerImage,
+        containerAvailable: false,
+        blockedReason
+      }),
+      notes: [
+        `LabVIEW ${requestedLabviewVersion} cannot create the VI Comparison Report used by VI History Suite.`,
+        'Select LabVIEW 2025, LabVIEW 2026, or a newer local LabVIEW version; those versions can open earlier LabVIEW VIs without migrating the file before generating the report.'
+      ],
+      registryQueryPlans,
+      candidates: []
+    };
   }
 
   if (platform === 'darwin') {
@@ -897,7 +948,7 @@ export async function locateComparisonRuntime(
           configuredLinuxContainerImage: linuxContainerImage,
           selectedContainerFacts: containerFacts,
           selectionReason: 'host-runtime-unavailable',
-          prefixNote: 'No compatible host-native LabVIEW 2026 runtime was located;',
+          prefixNote: 'No compatible host-native LabVIEW 2025 or newer runtime was located;',
           providerDecisions: buildProviderDecisions({
             platform,
             containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
@@ -927,13 +978,13 @@ export async function locateComparisonRuntime(
 
       if (containerFacts) {
         notes.push(
-          `No compatible host-native LabVIEW 2026 runtime was located, and ${describeUnavailableContainerProvider(containerFacts, {
+          `No compatible host-native LabVIEW 2025 or newer runtime was located, and ${describeUnavailableContainerProvider(containerFacts, {
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage
           })}`
         );
       } else {
-        notes.push('No compatible host-native LabVIEW 2026 runtime was located.');
+        notes.push('No compatible host-native LabVIEW 2025 or newer runtime was located.');
       }
     }
     return {
@@ -1108,7 +1159,7 @@ export async function locateComparisonRuntime(
         configuredLinuxContainerImage: linuxContainerImage,
         selectedContainerFacts: containerFacts,
         selectionReason: 'host-comparison-tool-missing',
-        prefixNote: 'Host-native LabVIEW 2026 was available, but no host comparison tool was located;',
+        prefixNote: 'Host-native LabVIEW 2025 or newer was available, but no host comparison tool was located;',
         notes,
         hostLabviewIniPath,
         hostLabviewTcpPort,
@@ -1613,7 +1664,7 @@ function describeSelectedContainerProvider(options: {
   }
 
   if (options.selectionReason === 'host-runtime-unavailable') {
-    return `${capabilitySummary}, so isolated execution was selected because no compatible host-native LabVIEW 2026 runtime was located.`;
+    return `${capabilitySummary}, so isolated execution was selected because no compatible host-native LabVIEW 2025 or newer runtime was located.`;
   }
 
   if (options.selectionReason === 'host-comparison-tool-missing') {
@@ -1858,7 +1909,15 @@ function buildProviderDecisions(
       });
     } else if (options.executionMode === 'docker-only') {
       decisions.push(
-        options.blockedReason === 'docker-provider-labview-version-not-implemented'
+        options.blockedReason === 'labview-version-unsupported-for-comparison-report'
+          ? {
+              provider: selectedContainerProvider,
+              outcome: 'rejected',
+              reason: 'labview-version-unsupported-for-comparison-report',
+              detail:
+                'Docker provider execution was not selected because VI History Suite requires LabVIEW 2025 or newer to create VI Comparison Reports.'
+            }
+          : options.blockedReason === 'docker-provider-labview-version-not-implemented'
           ? {
               provider: selectedContainerProvider,
               outcome: 'rejected',
@@ -1951,6 +2010,14 @@ function buildProviderDecisions(
                   }
                 )}`
               }
+          : options.blockedReason === 'labview-version-unsupported-for-comparison-report'
+            ? {
+                provider: selectedContainerProvider,
+                outcome: 'rejected',
+                reason: 'labview-version-unsupported-for-comparison-report',
+                detail:
+                  'Docker container execution was not selected because VI History Suite requires LabVIEW 2025 or newer to create VI Comparison Reports.'
+              }
           : options.bitness === 'x86'
           ? {
               provider: selectedContainerProvider,
@@ -2031,14 +2098,14 @@ function buildProviderDecisions(
             : 'host-native-labview-cli-selected',
       detail:
         hostProviderRequested
-          ? 'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          ? 'Host provider was requested and host-native LabVIEW 2025 or newer plus LabVIEWCLI were available.'
           : options.executionMode === 'host-only'
-          ? 'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          ? 'Host-only execution was requested and host-native LabVIEW 2025 or newer plus LabVIEWCLI were available.'
           : windowsAutoDockerMissing
-            ? 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
+            ? 'Auto execution selected host-native LabVIEW 2025 or newer plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
             : options.bitness === 'x86'
-              ? 'Host-native LabVIEW 2026 and LabVIEWCLI were available, and the Windows x86 lane prefers host-native execution.'
-              : 'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
+              ? 'Host-native LabVIEW 2025 or newer and LabVIEWCLI were available, and the Windows x86 lane prefers host-native execution.'
+              : 'Host-native LabVIEW 2025 or newer and LabVIEWCLI were available for comparison-report execution.'
     });
     return decisions;
   }
@@ -2053,6 +2120,9 @@ function buildProviderDecisions(
 }
 
 function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-version-unsupported-for-comparison-report') {
+    return 'host-native-labview-version-unsupported-for-comparison-report';
+  }
   if (options.blockedReason === 'labview-runtime-selection-required') {
     return 'host-native-runtime-selection-required';
   }
@@ -2096,6 +2166,9 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
 }
 
 function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-version-unsupported-for-comparison-report') {
+    return 'Host-native execution was not selected because VI History Suite requires LabVIEW 2025 or newer to create VI Comparison Reports.';
+  }
   if (options.blockedReason === 'labview-runtime-selection-required') {
     return 'Host-native execution was not selected because installed compare requires both LabVIEW version and bitness settings before runtime preflight can proceed.';
   }
@@ -2133,9 +2206,9 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
     return `Configured ${options.configuredFailure.kind} path does not exist: ${options.configuredFailure.path}`;
   }
   if (options.blockedReason === 'labview-exe-not-found' || options.labviewExeFound === false) {
-    return 'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.';
+    return 'No supported LabVIEW 2025 or newer executable was located for host-native comparison-report execution.';
   }
-  return 'A supported LabVIEW 2026 executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.';
+  return 'A supported LabVIEW 2025 or newer executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.';
 }
 
 function describeWindowsTcpListeners(listeners: WindowsTcpListenerObservation[]): string {
@@ -2165,6 +2238,15 @@ function normalizeRequestedLabviewVersion(rawVersion: string | undefined): strin
 
   const yearMatch = trimmed.match(/\b(20\d{2})\b/u);
   return yearMatch?.[1] ?? trimmed;
+}
+
+function isSupportedComparisonReportLabviewVersion(requestedVersion: string): boolean {
+  const requestedYear = Number.parseInt(requestedVersion, 10);
+  if (!Number.isFinite(requestedYear)) {
+    return true;
+  }
+
+  return requestedYear >= MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR;
 }
 
 async function resolveConfiguredCandidates(
@@ -2278,6 +2360,12 @@ function resolveExactWindowsHostRuntime(
       blockedReason: 'labview-exe-not-found',
       notes: [
         `No supported LabVIEW ${requestedVersion} ${bitness} runtime was located for report generation.`,
+        ...describeDetectedWindowsHostAlternativeBitness({
+          candidates,
+          requestedVersion,
+          requestedBitness: bitness,
+          kind: 'labview-exe'
+        }),
         'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
       ]
     };
@@ -2328,6 +2416,12 @@ function resolveExactWindowsHostRuntime(
       blockedReason: 'labview-cli-not-found-for-bitness',
       notes: [
         `No matching LabVIEWCLI ${bitness} surface was located for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
+        ...describeDetectedWindowsHostAlternativeBitness({
+          candidates,
+          requestedVersion,
+          requestedBitness: bitness,
+          kind: 'labview-cli'
+        }),
         'Install the matching LabVIEWCLI surface for the requested bitness, or adjust viHistorySuite.runtimeProvider, viHistorySuite.labviewVersion, or viHistorySuite.labviewBitness before retrying compare.'
       ]
     };
@@ -2338,6 +2432,37 @@ function resolveExactWindowsHostRuntime(
     labviewCli,
     notes: notes.length > 0 ? notes : undefined
   };
+}
+
+function describeDetectedWindowsHostAlternativeBitness(options: {
+  candidates: RuntimeToolCandidate[];
+  requestedVersion: string;
+  requestedBitness: RuntimeBitness;
+  kind: Extract<RuntimeCandidateKind, 'labview-exe' | 'labview-cli'>;
+}): string[] {
+  const alternativeBitness = options.requestedBitness === 'x64' ? 'x86' : 'x64';
+  const alternativeCandidates = options.candidates.filter(
+    (candidate) =>
+      candidate.kind === options.kind &&
+      candidate.exists &&
+      candidate.bitness === alternativeBitness &&
+      (options.kind === 'labview-cli' ||
+        matchesRequestedLabviewVersion(candidate, options.requestedVersion))
+  );
+
+  if (alternativeCandidates.length === 0) {
+    return [];
+  }
+
+  const surface =
+    options.kind === 'labview-exe'
+      ? `LabVIEW ${options.requestedVersion} ${alternativeBitness} runtime`
+      : `LabVIEWCLI ${alternativeBitness} surface`;
+  const paths = alternativeCandidates.map((candidate) => candidate.path).join('; ');
+
+  return [
+    `Detected installed ${surface} at ${paths}, but VI History Suite will not auto-switch from selected ${options.requestedBitness} because bitness-specific dependencies may differ.`
+  ];
 }
 
 function matchesRequestedLabviewVersion(

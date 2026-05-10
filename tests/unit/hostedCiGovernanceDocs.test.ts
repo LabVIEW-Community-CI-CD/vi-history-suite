@@ -27,10 +27,10 @@ describe('hosted ci governance docs', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.9',
         currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.14',
+        currentDevelopPackageLine: '1.3.15',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
-        activeDevelopCandidateReleaseLine: 'v1.3.14',
-        activeReleaseCandidateBranch: null,
+        activeDevelopCandidateReleaseLine: 'v1.3.15',
+        activeReleaseCandidateBranch: 'release/1.3.15',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -137,11 +137,11 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('Marketplace both publish `1.3.9`');
     expect(matrixDoc).toContain('current exact release line: `v1.3.9`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.9`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.14`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.14`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.15`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.15`');
     expect(matrixDoc).toContain('active Marketplace public validation preview line: `1.3.13`');
     expect(matrixDoc).toContain('Marketplace public validation preview status: published and verified');
-    expect(matrixDoc).toContain('active release-candidate branch: none');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.15`');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
     expect(matrixDoc).toContain('chosen bump: patch');
     expect(matrixDoc).toContain(
@@ -151,7 +151,8 @@ describe('hosted ci governance docs', () => {
     expect(readme).toContain('- separate public GitHub exact release publication: published;');
     expect(readme).toContain('releases/tag/v1.3.9');
     expect(currentState).toContain('current exact released line: `v1.3.9`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.9`');
+    expect(currentState).toContain('current fully published exact package line: `1.3.9`');
+    expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.9`');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');

@@ -222,7 +222,7 @@ describe('Linux host LabVIEW 2026 proof docs', () => {
       'recognizes the Linux LabVIEW 2026 Community host runtime scan roots'
     );
     expect(locatorTests).toContain(
-      'filters Linux host runtime selection by requested LabVIEW version'
+      'rejects Linux host runtime selection when requested LabVIEW cannot create comparison reports'
     );
     expect(locatorTests).toContain(linuxLabviewPath);
   });

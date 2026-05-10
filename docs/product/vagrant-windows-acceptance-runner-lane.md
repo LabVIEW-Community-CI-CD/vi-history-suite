@@ -3,8 +3,8 @@
 ## Purpose
 
 Retain a GitLab self-hosted Vagrant lane that installs the packaged VSIX into
-a Windows 11 + LabVIEW 2026 VirtualBox guest and runs the governed
-`HARNESS-VHS-002` report-smoke proof.
+a Windows 11 + LabVIEW 2026 Community x86 VirtualBox guest and runs the
+governed `HARNESS-VHS-002` report-smoke proof.
 
 This lane proves the Vagrant VM acceptance path for the extension package. It
 does not replace the deferred native Windows x64 private-release proof or the
@@ -76,18 +76,23 @@ Official GitLab references:
 - Vagrant box: `vihs/win11-labview2026`
 - Vagrantfile surface: `vagrant/Vagrantfile`
 - Vagrant dotfile path: `vagrant/.vagrant-ci`
-- Vagrant home: `/run/media/sergio/Data/vihs-vagrant/vagrant-home`
+- Vagrant home: `/home/sergio/.vagrant.d`
+- Vagrant large box cache: `/run/media/sergio/Data/vihs-vagrant/vagrant-home`
 - box output file: `/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box`
 - box export work root: `/run/media/sergio/Data/vihs-vagrant/box-work`
 - VirtualBox default machine folder:
   `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
+- default LabVIEW VI Server startup timeout: `300` seconds after the
+  interactive scheduled-task launch; the prelaunch task is manually started
+  and also has a near-future trigger inside the wait window
 - disposable clone boot policy: Vagrant sets EFI firmware and preserves the
   exported golden VM UEFI variable store so BitLocker sees the same measured
   boot state in the disposable clone
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
+- Vagrant home prepare script: `scripts/vagrant/prepare-vagrant-home.sh`
 - disposable CI VM cleanup script:
   `scripts/vagrant/cleanup-disposable-ci-vm.sh`
 - guest cold-prep provisioner: `vagrant/provision/prepare-cold-labview.ps1`
@@ -102,11 +107,17 @@ golden-source and CI-runtime state remain distinct.
 CI first runs `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to
 touch the golden VM, fails if the disposable CI VM is running, deletes only a
 stopped VM named `vihs-ci-win11`, unregisters stale inaccessible disposable
-registry entries that still point at the governed CI VM folder, and removes the
-active `.vagrant-ci` state. The job then runs Vagrant with
+registry entries that still point at the governed CI VM folder, retries
+orphaned disposable VM directory removal, quarantines that directory under the
+governed machine folder when NTFS/FUSE leaves the original directory name
+present after retries, and removes the active `.vagrant-ci` state. The job then
+runs Vagrant with
 `VAGRANT_DOTFILE_PATH=.vagrant-ci` and
-`VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home`. The CI job
-also sets the VirtualBox default machine folder to
+`VAGRANT_HOME=/home/sergio/.vagrant.d` so Vagrant private-key chmod remains on
+the host ext4 filesystem. `scripts/vagrant/prepare-vagrant-home.sh` links
+`/home/sergio/.vagrant.d/boxes` to the large-drive box cache at
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`. The CI job also sets
+the VirtualBox default machine folder to
 `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs` before importing the
 disposable VM so the root filesystem does not need to hold the large Windows
 box or clone. The host doctor fails closed when the active VirtualBox machine
@@ -118,9 +129,14 @@ Golden box refresh is manual and variable-gated. Set
 `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true` only for an operator-controlled refresh.
 The bootstrap provisioner configures `vagrant` autologon and WinRM startup
 inside the disposable clone, normalizes public NAT network profiles for WinRM
-firewall readiness, and the job reloads the VM immediately after bootstrap so
-the scheduled-task LabVIEW launch has an interactive desktop session while the
-Vagrant communicator remains available.
+firewall readiness, creates the `VIHS LabVIEW 2026 VI Server TCP 3363`
+Windows Defender Firewall rule for `LabVIEW.exe`, and the job reloads the VM
+immediately after bootstrap so the scheduled-task LabVIEW launch has an
+interactive desktop session while the Vagrant communicator remains available.
+Acceptance retains `vagrant/evidence/labview-startup.json` during the
+prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
+observation, Explorer session observation, and VI Server listener state before
+the assertion script is allowed to run.
 
 ## GitLab Job
 
@@ -132,9 +148,15 @@ start as an independent DAG job without waiting for the separate Linux
 assurance runner lane. It packages the VSIX, stages it under `vagrant/shared/`,
 optionally refreshes the local box, runs the host doctor, boots the disposable
 VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
-runs the guest cold-prep provisioner, runs acceptance, validates the latest
-manifest and harness output through `npm run vagrant:acceptance:assert`, and
-always halts the VM.
+runs the guest cold-prep provisioner, runs acceptance, forces the generated
+`vihs` runtime-settings launcher to persist `host/2026/x86` so stale golden-VM
+user settings cannot retain x64, bounds harness Git acquisition with
+`VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000`, validates the latest manifest and
+harness output through `npm run vagrant:acceptance:assert`, and always halts
+the VM.
+The assertion requires the manifest and harness report to prove LabVIEW `2026` `x86`,
+`runtimeProvider=host-native`, `runtimeEngine=labview-cli`, and
+`runtimeExecutionState=succeeded`.
 
 The job retains `vagrant/evidence/`, including:
 
@@ -142,6 +164,7 @@ The job retains `vagrant/evidence/`, including:
 - `refresh-golden-box.log` when a manual refresh is requested
 - `labview-cold-prep.log`
 - `acceptance-provision.log`
+- `labview-startup.json`
 - `assertion/vagrant-vsix-acceptance-assertion.json`
 - `assertion/vagrant-vsix-acceptance-assertion.md`
 - `*/manifest.json`
@@ -167,6 +190,7 @@ The lane fails closed when:
   `vihs-ci-win11`
 - cold prep cannot clear `LabVIEW`, `LabVIEWCLI`, `LVCompare`, or VI Server
   port `3363`
+- canonical harness Git acquisition does not finish within `300000` ms
 - acceptance does not exercise the cold scheduled-task LabVIEW launch path
 - the repo-owned acceptance assertion cannot prove the latest manifest is
   schema-valid, `proofExitCode = 0`, `runtimeExecutionState = succeeded`,

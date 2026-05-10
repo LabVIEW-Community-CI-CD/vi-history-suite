@@ -1798,9 +1798,9 @@ Information-for-users review cases:
 - `TEST-UNIT-347`: verify Docker preflight derives the governed image family
   from the current engine and fails closed on unsupported Docker `x86` with
   host/`x64` corrective guidance
-- `TEST-UNIT-348`: verify compare preflight shows provider as read-only text
-  and retains an explicit CLI update hint when provider/runtime settings need
-  correction
+- `TEST-UNIT-348`: verify compare preflight retains an explicit CLI update hint
+  when provider/runtime settings need attention while the explicit Compare path
+  remains available after two revisions are selected
 - `TEST-349` / `TEST-UNIT-349`: verify installed compare preflight admits `ready` only
   after the governing runtime-selection layer confirms the active
   provider/version/bitness bundle, and that settings-only fallback cannot
@@ -1824,12 +1824,12 @@ Information-for-users review cases:
   with one actionable missing-or-stale runtime dependency message that
   restores the admitted terminal surface without hidden-path reconstruction
 - `TEST-UNIT-353`: verify `vihs` with no arguments seeds missing settings to
-  `host/windows/2026/x64`, reads back the current provider/platform/version/bitness
+  `host/windows/2026/x86`, reads back the current provider/platform/version/bitness
   bundle, prints exact copyable next commands, and, on interactive TTY
   surfaces, admits Enter-through confirmation or guided selection of supported
-  provider/platform/version/bitness values, including `docker/linux` `2026`
-  `x64` on Linux Docker Desktop/Docker Engine hosts, while failing closed with
-  explicit unsupported, host-mismatched, or not-yet-implemented path guidance
+  host provider/platform/version/bitness values, keeps Docker on `2026` `x64`,
+  and fails closed with explicit unsupported, host-mismatched, missing selected
+  bitness, or not-yet-implemented path guidance
 - `TEST-UNIT-354`: verify the `vihs` surface exposes `vihs --validate` as one
   governed validation action that reports persisted provider/version/bitness
   truth plus runtime-validation outcome, and that the no-argument interactive
@@ -1973,7 +1973,7 @@ Information-for-users review cases:
   materializes the admitted `vihs` launchers, derives platform from the
   current host, prompts only for provider/LabVIEW year/bitness when
   interactive, and on non-interactive surfaces seeds or retains the governed
-  default `host/windows/2026/x64` bundle plus exact follow-up `vihs` commands
+  default `host/windows/2026/x86` bundle plus exact follow-up `vihs` commands
   without claiming raw `code --install-extension` interactivity
 - `TEST-UNIT-368`: verify the governed runner startup/doctor substrate writes
   machine-readable Windows and Linux startup receipts, exposes repo-owned
@@ -2463,6 +2463,59 @@ Information-for-users review cases:
   VSIX acceptance is governed candidate evidence only, not a substitute for
   native Windows x64 private-release proof or Windows Docker Desktop
   Windows-container proof
+- `TEST-UNIT-399`: run `tests/unit/releaseBranchOpening.test.ts` and confirm
+  the `release/1.3.14` branch-opening packet retains branch ref
+  `refs/heads/release/1.3.14`, source commit `50bec33`, pipeline
+  `2511168302`, Vagrant job `14284865649`, package preview job `14284865650`,
+  preview VSIX SHA-256
+  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`,
+  no exact tag/public GitHub/Marketplace/main mutation, and the next
+  release-branch readiness reassessment action
+- `TEST-DOC-151`: review release-publication state, current-state,
+  public-release-candidate, post-release sustainment rules, hosted CI
+  governance, SRS, RTM, and this test plan and confirm `release/1.3.15` is
+  the active governed release-candidate branch while Windows Docker Desktop
+  Windows-container proof remains community/deferred and exact publication
+  remains blocked
+- `TEST-UNIT-400`: run
+  `tests/unit/releaseBranchReadinessReassessment.test.ts` and confirm the
+  `release/1.3.15` branch-readiness reassessment retains release branch
+  pipeline `2513019603`, protected develop retention pipeline `2513063788`,
+  release branch preview VSIX SHA-256
+  `bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14`,
+  protected develop preview VSIX SHA-256
+  `03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95`,
+  Vagrant jobs `14293424513` and `14293598040`, `main` not ancestor of
+  `release/1.3.15`, no exact
+  tag/public GitHub/Marketplace/Windows Docker Desktop/main mutation, and the
+  next topology-refresh action
+- `TEST-DOC-152`: review release-publication state, current-state,
+  public-release-candidate, post-release sustainment rules, hosted CI
+  governance, release procedure, README, SRS, RTM, and this test plan and
+  confirm release-branch readiness blocks protected `main` promotion until
+  topology refresh brings `main` into `release/1.3.15`, while exact tag, public
+  GitHub exact release, Marketplace mutation, Windows Docker Desktop proof
+  admission, `main` promotion, and release branch deletion remain unperformed
+  in the reassessment slice
+- `TEST-UNIT-401`: run
+  `tests/unit/releaseMainPromotionPreflight.test.ts` and confirm the
+  `release/1.3.14` protected-main-promotion preflight retains source commit
+  `50bec33`, target `main` commit `2f86063`, MR `!196`, protected develop
+  pipeline `2511333533`, branch topology showing `main` is an ancestor of the
+  release branch, protected develop preview VSIX SHA-256
+  `3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b`,
+  Vagrant job `14285909248`, no release-to-main MR, no exact
+  tag/public GitHub/Marketplace/Windows Docker Desktop/main mutation, no
+  release branch deletion, and the next source-branch-retained promotion MR
+  opening action
+- `TEST-DOC-153`: review release-publication state, current-state,
+  public-release-candidate, post-release sustainment rules, hosted CI
+  governance, release procedure, README, SRS, RTM, and this test plan and
+  confirm the protected-main-promotion preflight only admits opening a
+  `release/1.3.14` to `main` merge request with source branch retention while
+  the `main` merge, exact tag, public GitHub exact release, Marketplace
+  mutation, Windows Docker Desktop proof admission, and release branch deletion
+  remain unperformed
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

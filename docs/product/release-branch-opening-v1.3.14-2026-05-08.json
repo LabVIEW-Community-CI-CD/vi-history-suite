@@ -1,0 +1,244 @@
+{
+  "schema": "vi-history-suite/release-branch-opening@v1",
+  "recordedAt": "2026-05-08",
+  "authority": {
+    "repo": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+    "sourceBranch": "develop",
+    "sourceCommitSha": "50bec3391ea823739c2e8baddb33b77c283a37eb",
+    "releaseBranch": "release/1.3.14",
+    "releaseBranchRef": "refs/heads/release/1.3.14",
+    "packageVersion": "1.3.14",
+    "pipelineId": 2511168302,
+    "pipelineStatus": "success",
+    "pipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511168302"
+  },
+  "sourceAssessment": {
+    "path": "docs/product/exact-release-readiness-assessment-2026-05-08.md",
+    "jsonPath": "docs/product/exact-release-readiness-assessment-2026-05-08.json",
+    "assessedCommitSha": "ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8",
+    "assessedPipelineId": 2511103937,
+    "decision": "release-branch-opening-admissible"
+  },
+  "verdict": {
+    "releaseBranchOpening": "performed-and-retained",
+    "exactTag": "not-admitted-and-not-created",
+    "publicGitHubExactMutation": "not-admitted-and-not-performed",
+    "marketplaceExactMutation": "not-admitted-and-not-performed",
+    "windowsDockerDesktopWindowsContainerProof": "community-deferred",
+    "mainPromotion": "not-admitted-and-not-performed",
+    "selectedExactAuthorityVsix": null,
+    "nextAdmittedAction": "reassess-release-1.3.14-branch-readiness-before-exact-tag"
+  },
+  "pipelineJobs": [
+    {
+      "stage": "admission",
+      "name": "ubuntu_docker_runner_admission",
+      "id": 14284865636,
+      "status": "success",
+      "runner": "local-linux-docker-assurance",
+      "durationSeconds": 5.563853
+    },
+    {
+      "stage": "docs",
+      "name": "docs_link_check",
+      "id": 14284865637,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 13.974943
+    },
+    {
+      "stage": "docs",
+      "name": "docs_continuous_integration",
+      "id": 14284865638,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 46.756151
+    },
+    {
+      "stage": "docs",
+      "name": "docs_public_continuous_integration",
+      "id": 14284865639,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 39.926858
+    },
+    {
+      "stage": "docs",
+      "name": "docs_internal_continuous_integration",
+      "id": 14284865640,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 46.772321
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_release_gate",
+      "id": 14284865641,
+      "status": "success",
+      "runner": "local-linux-docker-assurance",
+      "durationSeconds": 12.383906
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_26514_authority",
+      "id": 14284865642,
+      "status": "success",
+      "runner": "local-linux-docker-assurance",
+      "durationSeconds": 10.786161
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_requirements_quality",
+      "id": 14284865643,
+      "status": "success",
+      "runner": "local-linux-docker-assurance",
+      "durationSeconds": 10.985776
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_external_user_information",
+      "id": 14284865644,
+      "status": "success",
+      "runner": "local-linux-docker-assurance",
+      "durationSeconds": 12.206048
+    },
+    {
+      "stage": "assurance",
+      "name": "assurance_audit_packet",
+      "id": 14284865645,
+      "status": "success",
+      "runner": "local-linux-docker-assurance",
+      "durationSeconds": 13.112514
+    },
+    {
+      "stage": "test",
+      "name": "test_extension",
+      "id": 14284865646,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 84.450467
+    },
+    {
+      "stage": "test",
+      "name": "public_exact_pretag_proof",
+      "id": 14284865647,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 49.887302
+    },
+    {
+      "stage": "test",
+      "name": "linux_docker_provider_lane",
+      "id": 14284865648,
+      "status": "success",
+      "runner": "local-linux-docker-assurance",
+      "durationSeconds": 17.365101
+    },
+    {
+      "stage": "test",
+      "name": "vagrant_windows_vsix_acceptance",
+      "id": 14284865649,
+      "status": "success",
+      "runner": "local-vagrant-windows-acceptance",
+      "durationSeconds": 388.429836
+    },
+    {
+      "stage": "package",
+      "name": "package_extension_preview",
+      "id": 14284865650,
+      "status": "success",
+      "runner": "GitLab SaaS Linux runner",
+      "durationSeconds": 78.032444
+    }
+  ],
+  "previewArtifact": {
+    "jobId": 14284865650,
+    "manifestPath": "preview-evidence/preview-manifest.json",
+    "vsixPath": "preview-evidence/vi-history-suite-1.3.14.vsix",
+    "packageVersion": "1.3.14",
+    "commitSha": "50bec3391ea823739c2e8baddb33b77c283a37eb",
+    "sha256": "d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91",
+    "sizeBytes": 1011702,
+    "role": "release-branch-preview-evidence-only"
+  },
+  "vagrantVsixAcceptance": {
+    "jobId": 14284865649,
+    "jobStatus": "success",
+    "assertionReceiptPath": "vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json",
+    "assertionReceiptRecordedAt": "2026-05-08T19:11:29.285Z",
+    "manifestPath": "vagrant/evidence/20260508-121101/manifest.json",
+    "manifestGeneratedAt": "2026-05-08T12:11:28.8437222-07:00",
+    "harnessReportJsonPath": "vagrant/evidence/20260508-121101/harness-report/comparison-report-smoke.json",
+    "generatedReportPath": "vagrant/evidence/20260508-121101/harness-report/workspace-storage/reports/c93467a8997c/b9efa479cf1e/diff-report-lv_icon.vi.html",
+    "generatedReportSha256": "0df0027e2386543bd3e4b4ba54186b382430e0b95c8663d2a3609829c42b3800",
+    "generatedReportSizeBytes": 4841,
+    "facts": {
+      "manifestSchema": "vi-history-suite/vagrant-vsix-acceptance@v1",
+      "assertionSchema": "vi-history-suite/vagrant-vsix-acceptance-assertion@v1",
+      "harnessId": "HARNESS-VHS-002",
+      "selectedHash": "8741bb08026c104100720c0ef48621e4ab7762fd",
+      "baseHash": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+      "labviewVersion": "2026",
+      "labviewBitness": "x86",
+      "proofExitCode": 0,
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "runtimeExecutionState": "succeeded",
+      "generatedReportExists": true,
+      "coldStartMarkers": [
+        "LabVIEW not running. Launching via scheduled task...",
+        "LabVIEW VI Server ready on port 3363."
+      ]
+    },
+    "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof"
+  },
+  "blockingOrDeferredGates": [
+    {
+      "id": "release-branch-readiness",
+      "status": "pending-reassessment",
+      "impact": "release/1.3.14 must be reassessed before any exact tag"
+    },
+    {
+      "id": "selected-exact-authority-vsix",
+      "status": "not-retained-yet",
+      "impact": "preview VSIX evidence is not the final exact release artifact"
+    },
+    {
+      "id": "windows-exact-vsix-install-proof",
+      "status": "missing-for-selected-1.3.14-exact-authority-vsix",
+      "impact": "must pass before any later Marketplace exact publication"
+    },
+    {
+      "id": "public-github-exact-release",
+      "status": "not-admitted",
+      "impact": "asset-first exact-release controller remains required after release-branch readiness closes"
+    },
+    {
+      "id": "marketplace-exact-release",
+      "status": "not-admitted",
+      "impact": "blocked until public GitHub exact verification and Windows exact-VSIX install proof are retained"
+    },
+    {
+      "id": "windows-docker-desktop-windows-container-proof",
+      "status": "community-deferred",
+      "impact": "public issue #65 remains the intake lane; no Windows-container proof claim is admitted here"
+    },
+    {
+      "id": "main-promotion",
+      "status": "not-admitted",
+      "impact": "main is not promoted by this packet"
+    }
+  ],
+  "releaseExtensionJob": {
+    "status": "not-run",
+    "reason": "release_extension is gated on exact vX.Y.Z tags and this packet opened only refs/heads/release/1.3.14"
+  },
+  "mutationBoundary": {
+    "exactTagCreated": false,
+    "publicGitHubReleaseCreated": false,
+    "publicGitHubReleasePublished": false,
+    "marketplaceTouched": false,
+    "mainPromoted": false,
+    "windowsDockerDesktopProofAdmitted": false
+  }
+}

@@ -246,18 +246,18 @@ describe('release publication state resolver', () => {
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
+      mainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
       sourcePublication: {
         status:
-          'public-validation-prerelease-1.3.13-windows-docker-desktop-intake-promoted-and-verified',
-        currentMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
-        currentMainShortCommit: '220111e',
+          'public-source-and-tag-v1.3.14-promoted-release-publication-blocked',
+        currentMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+        currentMainShortCommit: 'f1cb609',
         exactReleaseRetainedCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
         priorCommunityValidationIntakeCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
         priorCommunityValidationIntakePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/45',
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
-        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
         latestPublicValidationFixturePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
         latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
@@ -265,6 +265,16 @@ describe('release publication state resolver', () => {
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
           publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
           publicMainShortCommit: '220111e',
+          marketplaceMutation: 'not-performed'
+        }),
+        latestPublicSourceAndTagHandoffCloseout: expect.objectContaining({
+          status: 'published-and-verified-release-publication-blocked',
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+          publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+          publicMainShortCommit: 'f1cb609',
+          publicTag: 'v1.3.14',
+          publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
+          publicGitHubReleasePublication: 'not-performed',
           marketplaceMutation: 'not-performed'
         }),
         publicDevelopSync: expect.objectContaining({
@@ -442,6 +452,132 @@ describe('release publication state resolver', () => {
       nextAdmittedAction:
         'open-governed-release-1.3.14-branch-from-ce103d3-if-current-claim-boundary-remains-selected'
     });
+    expect(state.releaseBranchOpening).toMatchObject({
+      status: 'performed-and-retained',
+      packetPath: 'docs/product/release-branch-opening-v1.3.15-2026-05-09.md',
+      packetJsonPath: 'docs/product/release-branch-opening-v1.3.15-2026-05-09.json',
+      sourceBranch: 'develop',
+      sourceCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
+      releaseBranch: 'release/1.3.15',
+      releaseBranchRef: 'refs/heads/release/1.3.15',
+      packageVersion: '1.3.15',
+      pipelineId: 2513019603,
+      pipelineStatus: 'success',
+      pipelineSource: 'push',
+      duplicatePipelineId: 2513019188,
+      duplicatePipelineStatus: 'success',
+      duplicatePipelineSource: 'api',
+      vagrantVsixAcceptanceJobId: 14293424513,
+      vagrantVsixAcceptanceAssertionPath:
+        'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
+      vagrantVsixAcceptanceManifestPath: 'vagrant/evidence/20260509-171233/manifest.json',
+      labviewStartupReceiptPath: 'vagrant/evidence/labview-startup.json',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.15.vsix',
+      previewVsixSha256: 'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
+      previewVsixSizeBytes: 1014754,
+      selectedExactAuthorityVsix: null,
+      releaseExtensionJob: 'not-run-without-exact-tag',
+      publicGitHubExactMutation: 'not-admitted-and-not-performed',
+      marketplaceExactMutation: 'not-admitted-and-not-performed',
+      windowsDockerDesktopProofState: 'community-deferred',
+      mainPromotion: 'not-admitted-and-not-performed',
+      releaseBranchDeletion: 'not-admitted-and-not-performed',
+      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+    });
+    expect(state.releaseBranchReadinessReassessment).toMatchObject({
+      status: 'blocked-main-not-ancestor-topology-refresh-required',
+      packetPath:
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
+      packetJsonPath:
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json',
+      releaseBranch: 'release/1.3.15',
+      releaseBranchCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
+      releaseBranchPipelineId: 2513019603,
+      releaseBranchPipelineStatus: 'success',
+      protectedDevelopRetentionCommit: '801349167499b9d03b8244c42b03d88e15098034',
+      protectedDevelopRetentionPipelineId: 2513063788,
+      protectedDevelopRetentionPipelineStatus: 'success',
+      packageVersion: '1.3.15',
+      mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+      mainIsAncestorOfReleaseBranch: false,
+      mainReleaseBranchMergeBase: '50bec3391ea823739c2e8baddb33b77c283a37eb',
+      releaseBranchIsAncestorOfProtectedDevelop: true,
+      releaseBranchDevelopMergeBase: '67c2c3a188666eaad3cab2695092991c42f33470',
+      v1315TagExistsAtInspection: false,
+      releaseBranchPreviewVsixSha256:
+        'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
+      protectedDevelopPreviewVsixSha256:
+        '03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95',
+      releaseBranchVagrantVsixAcceptanceJobId: 14293424513,
+      protectedDevelopVagrantVsixAcceptanceJobId: 14293598040,
+      selectedExactAuthorityVsix: null,
+      mainPromotion: 'blocked-until-main-is-ancestor-of-release-branch',
+      exactTag:
+        'not-admitted-before-topology-refresh-protected-main-promotion-and-green-main-pipeline',
+      releaseExtensionJob: 'not-run-without-exact-tag',
+      publicGitHubExactMutation: 'not-admitted-and-not-performed',
+      marketplaceExactMutation: 'not-admitted-and-not-performed',
+      windowsDockerDesktopProofState: 'community-deferred',
+      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+    });
+    expect(state.releaseMainPromotionPreflight).toMatchObject({
+      status: 'protected-main-promotion-merge-request-opening-admissible',
+      packetPath: 'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md',
+      packetJsonPath:
+        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json',
+      sourceBranch: 'release/1.3.14',
+      sourceCommit: '50bec3391ea823739c2e8baddb33b77c283a37eb',
+      sourcePipelineId: 2511168302,
+      sourcePipelineStatus: 'success',
+      targetBranch: 'main',
+      targetCommit: '2f86063a35926fa67963af5ccd47e971157927c6',
+      mainIsAncestorOfReleaseBranch: true,
+      releaseBranchIsAncestorOfProtectedDevelop: true,
+      protectedDevelopRetentionCommit: '3557031442cbf85641544e07f9d75af59fe092d7',
+      protectedDevelopRetentionPipelineId: 2511333533,
+      protectedDevelopRetentionPipelineStatus: 'success',
+      releaseReadinessMergeRequestIid: 196,
+      protectedDevelopPreviewVsixSha256:
+        '3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b',
+      protectedDevelopVagrantVsixAcceptanceJobId: 14285909248,
+      promotionMergeRequest: 'admissible-as-separate-governed-action-not-opened',
+      mainPromotionMerge: 'not-performed-requires-green-protected-promotion-mr',
+      exactTag: 'not-admitted-before-protected-main-promotion-and-green-main-pipeline',
+      releaseBranchDeletion: 'not-admitted',
+      nextAdmittedAction:
+        'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
+    });
+    expect(state.currentAuthority).toMatchObject({
+      exactTag: 'v1.3.14',
+      packageVersion: '1.3.14',
+      mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+      tagObjectSha: '6d9773a0909e6a61a22d06e0d48cf91d8f49baa1',
+      tagCommitSha: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+      tagPipelineId: 2512680188,
+      releaseExtensionJobId: 14291969114,
+      vagrantWindowsVsixAcceptanceJobId: 14291969111,
+      expectedVsixAsset: 'vi-history-suite-1.3.14.vsix',
+      expectedVsixSha256:
+        '6458219dcac56b273404d502a60b83546690b1f30f0fad038aec725549c62b10'
+    });
+    expect(state.publicGitHubSourceAndTagHandoff).toMatchObject({
+      status: 'public-source-and-tag-published-release-publication-blocked',
+      publicPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+      publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicTag: 'v1.3.14',
+      publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
+      publicTagPeeledCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicSourcePackagePreviewRunId: 25609017771,
+      publicSourcePackagePreviewJobId: 75175830284,
+      publicWindowsInstalledUserContractRunId: 25609017782,
+      publicWindowsInstalledUserContractJobId: 75175830275,
+      publicLinuxInstalledUserSmokeRunId: 25609017773,
+      publicLinuxInstalledUserSmokeJobId: 75175830267,
+      publicGitHubReleasePublication: 'not-performed',
+      marketplaceMutation: 'not-performed',
+      windowsDockerDesktopProofAdmission: 'not-performed',
+      releaseBranchDeletion: 'not-performed'
+    });
     expect(state.windowsLabviewCommunityProofIntakeChecklist).toMatchObject({
       status: 'prepared-no-mutation',
       path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
@@ -479,6 +615,10 @@ describe('release publication state resolver', () => {
     });
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('## Exact Release Readiness Assessment');
+    expect(stateDoc).toContain('## Release Branch Opening');
+    expect(stateDoc).toContain('## Release Branch Readiness Reassessment');
+    expect(stateDoc).toContain('## Release Main Promotion Preflight');
+    expect(stateDoc).toContain('## Public GitHub Source And Tag Handoff');
     expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
     expect(stateDoc).toContain('## Exact Release Candidate Reassessment');
     expect(stateDoc).toContain('Exact-release readiness: release branch opening admissible');
@@ -486,6 +626,22 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Release branch opening: admissible as next governed action');
     expect(stateDoc).toContain('Admitted external Windows proof arrived: false');
     expect(stateDoc).toContain('Assessed pipeline: `2511103937` / `success`');
+    expect(stateDoc).toContain('Release branch pipeline: `2513019603` / `success`');
+    expect(stateDoc).toContain('Protected develop retention pipeline: `2513063788` / `success`');
+    expect(stateDoc).toContain('Protected develop retention pipeline: `2511333533` / `success`');
+    expect(stateDoc).toContain('Current authority exact tag: `v1.3.14`');
+    expect(stateDoc).toContain('Public PR: https://github.com/svelderrainruiz/vi-history-suite/pull/69');
+    expect(stateDoc).toContain('`f1cb60900820ea17328b9eec595579768491e22a`');
+    expect(stateDoc).toContain('`b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`');
+    expect(stateDoc).toContain('public GitHub release is absent; Marketplace still serves `1.3.13`');
+    expect(stateDoc).toContain('Release-readiness MR: `!196` / merged');
+    expect(stateDoc).toContain('Preview package job: `14293424514`');
+    expect(stateDoc).toContain(
+      'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14'
+    );
+    expect(stateDoc).toContain(
+      '3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b'
+    );
     expect(stateDoc).toContain(
       'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f'
     );
@@ -532,13 +688,13 @@ describe('release publication state resolver', () => {
       status: 'retained-history'
     });
     expect(state.activeCandidate).toMatchObject({
-      releaseBranch: null,
-      tag: null,
-      packageVersion: '1.3.14',
-      status: 'develop-patch-candidate-consolidation'
+      releaseBranch: 'release/1.3.15',
+      tag: 'v1.3.15',
+      packageVersion: '1.3.15',
+      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
     });
     expect(state.nextAdmittedAction).toBe(
-      'retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation'
+      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

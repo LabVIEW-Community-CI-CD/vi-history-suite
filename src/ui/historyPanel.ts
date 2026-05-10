@@ -225,49 +225,58 @@ export function renderHistoryPanelHtml(
       <strong>Latest compare runtime:</strong><br />
       <span data-testid="history-compare-runtime-summary" id="compare-runtime-summary">${escapeHtml(latestCompareRuntime.summary)}</span><br />
       <span data-testid="history-compare-runtime-next-action" id="compare-runtime-next-action">${escapeHtml(latestCompareRuntime.nextAction)}</span>
-      <div data-testid="history-compare-runtime-details" id="compare-runtime-details">${renderCompareRuntimeDetails(latestCompareRuntime.details)}</div>
+      <details data-testid="history-compare-runtime-details" id="compare-runtime-details">
+        <summary>Runtime details</summary>
+        ${renderCompareRuntimeDetails(latestCompareRuntime.details)}
+      </details>
     </div>
     <div class="status" data-testid="history-compare-preflight" id="compare-preflight" data-state="${escapeHtml(effectiveComparePreflightState.status)}" role="status" aria-live="polite">
       <strong>Compare preflight:</strong><br />
       <span data-testid="history-compare-preflight-summary" id="compare-preflight-summary">${escapeHtml(initialComparePreflightSummary)}</span><br />
       <span data-testid="history-compare-preflight-next-action" id="compare-preflight-next-action">${escapeHtml(effectiveComparePreflightState.nextAction)}</span>
-      <div data-testid="history-compare-preflight-details" id="compare-preflight-details">
+      <details data-testid="history-compare-preflight-details" id="compare-preflight-details">
+        <summary>Selected pair and runtime settings</summary>
         <div data-testid="history-compare-preflight-selected"><strong>Selected commit:</strong> <span id="compare-preflight-selected-value">Not selected yet.</span></div>
         <div data-testid="history-compare-preflight-base"><strong>Base commit:</strong> <span id="compare-preflight-base-value">Not selected yet.</span></div>
         <div data-testid="history-compare-preflight-provider"><strong>Provider:</strong> <span id="compare-preflight-provider-value">${escapeHtml(effectiveComparePreflightState.provider)}</span></div>
         <div data-testid="history-compare-preflight-version"><strong>LabVIEW version:</strong> <span id="compare-preflight-version-value">${escapeHtml(effectiveComparePreflightState.labviewVersion)}</span></div>
         <div data-testid="history-compare-preflight-bitness"><strong>LabVIEW bitness:</strong> <span id="compare-preflight-bitness-value">${escapeHtml(effectiveComparePreflightState.labviewBitness)}</span></div>
-      </div>
+      </details>
       <div data-testid="history-compare-preflight-cli-hint" id="compare-preflight-cli-hint">${escapeHtml(effectiveComparePreflightState.cliHint)}</div>
-      <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" ${comparisonSelectionEnabled && effectiveComparePreflightState.status === 'ready' ? 'disabled' : 'disabled'}>Compare</button>
+      <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" disabled>Compare</button>
     </div>
-    <div class="packet" data-testid="history-review-packet">
+    <details class="packet" data-testid="history-review-packet">
+      <summary>Review facts</summary>
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
       <div data-testid="history-retained-span"><strong>Retained revisions:</strong> ${model.commits.length}</div>
       <div data-testid="history-review-window"><strong>Window:</strong> ${escapeHtml(historyWindowSummary)}</div>
       <div data-testid="history-newest-commit"><strong>Newest:</strong> ${renderCommitSummary(newestCommit)}</div>
       <div data-testid="history-oldest-commit"><strong>Oldest:</strong> ${renderCommitSummary(oldestCommit)}</div>
-    </div>
-    <div class="meta" data-testid="history-meta">
+    </details>
+    <details class="meta" data-testid="history-meta">
+      <summary>Repository facts</summary>
       <div data-testid="history-meta-repository"><strong>Repository:</strong> ${escapeHtml(model.repositoryName)}</div>
       <div data-testid="history-meta-root"><strong>Root:</strong> ${escapeHtml(model.repositoryRoot)}</div>
       <div data-testid="history-meta-origin"><strong>Origin:</strong> ${escapeHtml(model.repositoryUrl ?? 'Unavailable')}</div>
       <div data-testid="history-meta-path"><strong>Path:</strong> ${escapeHtml(model.relativePath)}</div>
       <div data-testid="history-meta-surface"><strong>Surface:</strong> VI History</div>
       <div data-testid="history-meta-support"><strong>Repo support:</strong> ${escapeHtml(support?.supportLabel ?? 'Not classified in this build')}</div>
-    </div>
+    </details>
     ${repositorySupportHtml}
-    <div class="packet" data-testid="history-surface-capabilities">
-        <div data-testid="history-capability-comparison"><strong>Pair selection:</strong> ${capabilitySummary.comparisonGeneration}</div>
+    <details class="packet" data-testid="history-surface-capabilities">
+      <summary>Surface capabilities</summary>
+      <div data-testid="history-capability-comparison"><strong>Pair selection:</strong> ${capabilitySummary.comparisonGeneration}</div>
       <div data-testid="history-capability-open-compare"><strong>Retained pair review:</strong> ${capabilitySummary.openCompare}</div>
       <div data-testid="history-capability-documentation"><strong>Documentation:</strong> ${capabilitySummary.documentation}</div>
       ${benchmarkStatusCapabilityHtml}
       ${humanReviewCapabilityHtml}
-    </div>
-    <div class="limitations" data-testid="history-binary-limitations">
+    </details>
+    <details class="limitations" data-testid="history-binary-limitations">
+      <summary>Binary review limits</summary>
       <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; pairwise compare actions use retained LabVIEW comparison-report evidence and installed tooling instead of plain text diff.
-    </div>
-    <div class="guidance" data-testid="history-review-guidance">
+    </details>
+    <details class="guidance" data-testid="history-review-guidance">
+      <summary>Reviewer guidance</summary>
       <strong>Reviewer guidance:</strong>
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
@@ -277,8 +286,9 @@ export function renderHistoryPanelHtml(
         ${reviewGuidanceBenchmarkStep}
         ${reviewGuidanceHumanReviewStep}
       </ol>
-    </div>
-    <div class="confidence" data-testid="history-confidence-scope">
+    </details>
+    <details class="confidence" data-testid="history-confidence-scope">
+      <summary>Confidence and scope</summary>
       <strong>Confidence and scope:</strong>
       <div class="confidence-grid">
         <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
@@ -286,7 +296,7 @@ export function renderHistoryPanelHtml(
         <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, explicit selected/base compare preflight, and retained compare-pair summaries.</div>
         <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.</div>
       </div>
-    </div>
+    </details>
     ${reviewSubmissionHtml}
     <table data-testid="history-table">
       <thead>
@@ -421,7 +431,7 @@ export function renderHistoryPanelHtml(
           const selectedHash = checked[0].dataset.hash ?? '';
           updateComparePreflightPair(selectedHash.slice(0, 8), 'Not selected yet.');
           updateComparePreflightSummary('Select one more retained revision to populate compare preflight.');
-          updateComparePreflightNextAction('Next action: select one more retained revision, then review the selected/base pair before choosing Compare.');
+          updateComparePreflightNextAction('Next action: select one more retained revision, then choose Compare.');
           updateCompareButtonState(false);
           return;
         }
@@ -430,7 +440,7 @@ export function renderHistoryPanelHtml(
         if (!pair) {
           updateComparePreflightPair('Not selected yet.', 'Not selected yet.');
           updateComparePreflightSummary('Compare preflight could not resolve a stable selected/base pair from the current checkbox state.');
-          updateComparePreflightNextAction('Next action: clear the current checkbox state, select exactly two retained revisions again, and then review the compare preflight before choosing Compare.');
+          updateComparePreflightNextAction('Next action: clear the current checkbox state, then select exactly two retained revisions again.');
           updateCompareButtonState(false);
           return;
         }
@@ -443,9 +453,9 @@ export function renderHistoryPanelHtml(
           return;
         }
 
-        updateComparePreflightSummary('Compare preflight is blocked for ' + pair.selectedHash.slice(0, 8) + ' vs ' + pair.baseHash.slice(0, 8) + '.');
-        updateComparePreflightNextAction(comparePreflight.nextAction);
-        updateCompareButtonState(false);
+        updateComparePreflightSummary('Compare will try ' + pair.selectedHash.slice(0, 8) + ' vs ' + pair.baseHash.slice(0, 8) + ' and report runtime details if it cannot finish.');
+        updateComparePreflightNextAction('Next action: choose Compare to exercise the selected pair, then use runtime details if the local LabVIEW path fails.');
+        updateCompareButtonState(true);
       }
       function handleCommitSelectionChange(target) {
         if (!(target instanceof HTMLInputElement) || target.dataset.hash === undefined) {
@@ -639,13 +649,6 @@ export function renderHistoryPanelHtml(
             updateComparePreflightSelectionState();
             return;
           }
-          if (comparePreflight.status !== 'ready') {
-            vscode.postMessage({
-              command: 'notifyComparePreflightBlocked',
-              warningMessage: comparePreflight.warningMessage ?? comparePreflight.nextAction
-            });
-            return;
-          }
           payload.selectedHashes = [pair.selectedHash, pair.baseHash];
         }
         vscode.postMessage(payload);
@@ -727,10 +730,10 @@ function deriveComparePreflightState(
       provider: comparePreflightState?.provider ?? 'Unavailable in this build.',
       labviewVersion: comparePreflightState?.labviewVersion ?? 'Unavailable in this build.',
       labviewBitness: comparePreflightState?.labviewBitness ?? 'Unavailable in this build.',
-      nextAction: 'Next action: compare preflight is unavailable in this extension build.',
+      nextAction: 'Next action: compare generation is unavailable in this extension build.',
       cliHint:
         comparePreflightState?.cliHint ??
-        'Provider and runtime settings are read-only here; this build does not expose compare generation.',
+        'This build does not expose compare generation.',
       warningMessage: comparePreflightState?.warningMessage
     };
   }
@@ -742,11 +745,11 @@ function deriveComparePreflightState(
       labviewVersion: 'Unset',
       labviewBitness: 'Unset',
       nextAction:
-        'Next action: use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
+        'Next action: use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness. Compare can still be tried after selecting two revisions.',
       cliHint:
-        'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.',
+        'Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness.',
       warningMessage:
-        'Compare preflight is blocked. Use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+        'Runtime settings need attention. Use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, or try Compare to capture the exact failure.'
     }
   );
 }
@@ -762,7 +765,7 @@ function deriveInitialComparePreflightSummary(
     return 'Compare preflight is unavailable in this build.';
   }
 
-  return 'Compare preflight is blocked until provider/runtime settings are corrected.';
+  return 'Runtime settings need attention; select two retained revisions to try Compare and capture the exact failure if it cannot finish.';
 }
 
 function escapeHtml(value: string): string {
@@ -840,7 +843,7 @@ function renderCapabilitySummary(
         ? 'Blocked by the current repository support policy'
       : capabilities.comparisonGenerationAvailable === false
         ? 'Unavailable in this build'
-        : 'Available for any retained review window with at least two commits; selecting two revisions populates explicit compare preflight and Compare runs the explicit selected/base pair',
+        : 'Available for any retained review window with at least two commits; selecting two revisions enables Compare for the explicit selected/base pair',
     openCompare:
       coreReviewBlocked
         ? 'Blocked by the current repository support policy'

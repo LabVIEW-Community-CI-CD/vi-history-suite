@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.3.14');
+    expect(pkg.version).toBe('1.3.15');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -203,10 +203,11 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`');
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
     expect(readme).toContain('- current exact released line: `v1.3.9`');
-    expect(readme).toContain('- current published package line on `main`: `1.3.9`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.3.14`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.14`');
-    expect(readme).toContain('- active release-candidate branch: none');
+    expect(readme).toContain('- current fully published exact package line: `1.3.9`');
+    expect(readme).toContain('- current authority package line on `main`: `1.3.14`');
+    expect(readme).toContain('- current develop package line on `develop`: `1.3.15`');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.15`');
+    expect(readme).toContain('- active release-candidate branch: `release/1.3.15`');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
     expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -222,8 +223,9 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(readme).toContain('releases/tag/v1.3.9');
     expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(readme).toContain('`220111e` after public PR #68 promoted the Windows Docker Desktop');
-    expect(readme).toContain('public PR #60 remains retained for the');
+    expect(readme).toContain('`f1cb609` after public PR #69 completed the `v1.3.14` source handoff');
+    expect(readme).toContain('public PR #68 remains retained');
+    expect(readme).toContain('public PR #60');
     expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
@@ -260,12 +262,13 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.3.9`');
-    expect(currentState).toContain('- current published package line on `main`: `1.3.9`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.3.14`');
+    expect(currentState).toContain('- current fully published exact package line: `1.3.9`');
+    expect(currentState).toContain('- current authority package line on `main`: `1.3.14`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.3.15`');
     expect(currentState).toContain(
-      '- active exact release candidate line on `develop`: `v1.3.14`'
+      '- active exact release candidate line on `develop`: `v1.3.15`'
     );
-    expect(currentState).toContain('- active release-candidate branch: none');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.3.15`');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -281,8 +284,9 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(currentState).toContain('releases/tag/v1.3.9');
     expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(currentState).toContain('`220111eae3ac214e99f2233e2bfe6b320edf383d` after public PR #68');
-    expect(currentState).toContain('public PR #60 remains retained');
+    expect(currentState).toContain('`f1cb60900820ea17328b9eec595579768491e22a` after public PR #69');
+    expect(currentState).toContain('public PR #68 remains retained');
+    expect(currentState).toContain('public PR #60');
     expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.9`');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
@@ -343,12 +347,14 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
     expect(releaseProcedure).toContain('current exact released line is `v1.3.9`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
-    expect(releaseProcedure).toContain("current published package line on `main` is `1.3.9`");
-    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.14`");
+    expect(releaseProcedure).toContain('current authority package line on `main` is `1.3.14`');
+    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.15`");
     expect(releaseProcedure).toContain(
-      'active exact release candidate line on `develop` is `v1.3.14`'
+      'active exact release candidate line on `develop` is `v1.3.15`'
     );
-    expect(releaseProcedure).toContain('The active release-candidate branch is none.');
+    expect(releaseProcedure).toContain(
+      'The active release-candidate branch is `release/1.3.15`.'
+    );
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
     expect(releaseProcedure).toContain('The active feature-lane public GitHub release hardening branch on `develop`');

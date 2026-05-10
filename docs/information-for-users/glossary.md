@@ -35,7 +35,7 @@ See also:
 | Term | Meaning | Where it matters |
 | --- | --- | --- |
 | Assurance workbench | The published `repo-standards-review` container used for outer release-gate checks. | published `assurance-workbench:main` lane |
-| compare preflight | The explicit branch workflow that shows the selected pair plus provider, version, and bitness before compare starts. | active `develop` direction under `PROGRAM-0005` and `ISSUE-0412` |
+| compare preflight | The explicit branch workflow that shows the selected pair plus provider, version, and bitness while still allowing Compare to surface exact runtime failures. | active `develop` direction under `PROGRAM-0005` and `ISSUE-0412` |
 | docs workbench | The repo-native Docker-backed authoring surface for documentation-package iteration. | `docs/documentation-workbench.md`, docs gates, and wiki preparation |
 | exact released line | The published installed-user baseline that is already live. The current exact released line is `v1.2.2`. | installed-user truth versus active branch direction |
 | expert Docker provider | The non-default compare provider that remains available on the active branch only through the generated settings CLI. | runtime-provider selection and fail-closed Docker admission |

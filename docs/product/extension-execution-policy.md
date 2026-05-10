@@ -119,7 +119,7 @@ contract.
 The installed execution policy is meant to keep extension-user compare behavior
 deterministic and non-invasive.
 
-Important hard-stop factors include:
+Important runtime-failure factors include:
 
 - `viHistorySuite.labviewVersion` is missing
 - `viHistorySuite.labviewBitness` is missing
@@ -136,9 +136,11 @@ When any of those conditions hold, the installed extension:
 
 - does not switch provider classes implicitly
 - retains the next corrective action explicitly in the runtime surfaces
-- tells users to set or correct provider, version, and bitness and then
-  install the matching local LabVIEW surface or use Docker `x64` with a
-  compatible engine before retrying compare generation
+- allows an explicit two-revision Compare attempt to retain the exact local
+  failure when possible
+- tells users to set or correct provider, version, and bitness, then install
+  the matching local LabVIEW surface or use Docker `x64` with a compatible
+  engine before retrying successful report generation
 
 ## Public And Internal Reader Surfaces
 
@@ -179,9 +181,9 @@ They shall not publish:
 The internal GitLab wiki remains the maintainer-facing derived reader surface
 for the private control plane.
 
-When those conditions force a hard stop inside the active develop-line
-replacement direction, the required user-facing outcome is actionable
-guidance:
+When those conditions prevent successful report generation inside the active
+develop-line replacement direction, the required user-facing outcome is
+actionable guidance:
 
 - set or correct the required provider, version, and bitness facts
 - install the matching local LabVIEW surface when host is selected and missing
@@ -189,8 +191,8 @@ guidance:
   unsupported
 - retry after the requested local runtime resolves cleanly
 
-The extension is not allowed to silently continue past a local-runtime hard
-stop or to silently switch provider classes on the installed-user path.
+The extension is not allowed to silently switch provider classes on the
+installed-user path or represent a failed local runtime as a successful report.
 
 ## Bounded Expert Docker Provider
 

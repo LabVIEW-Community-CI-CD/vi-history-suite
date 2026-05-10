@@ -19,8 +19,10 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const githubWorkflow = readText('.github/workflows/vagrant-vsix-acceptance.yml');
     const vagrantfile = readText('vagrant/Vagrantfile');
     const bootstrap = readText('vagrant/provision/bootstrap.ps1');
+    const acceptance = readText('vagrant/provision/run-acceptance.ps1');
     const coldPrep = readText('vagrant/provision/prepare-cold-labview.ps1');
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
+    const prepareHome = readText('scripts/vagrant/prepare-vagrant-home.sh');
     const refreshBox = readText('scripts/vagrant/refresh-golden-box.sh');
     const cleanupCiVm = readText('scripts/vagrant/cleanup-disposable-ci-vm.sh');
     const laneDoc = readText('docs/product/vagrant-windows-acceptance-runner-lane.md');
@@ -32,6 +34,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('resource_group: vihs-windows-vagrant');
     expect(gitlabCi).toContain('needs: []');
     expect(gitlabCi).toContain('VAGRANT_DOTFILE_PATH: .vagrant-ci');
+    expect(gitlabCi).toContain('VAGRANT_HOME: /home/sergio/.vagrant.d');
+    expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_CACHE_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home');
+    expect(gitlabCi).toContain('bash scripts/vagrant/prepare-vagrant-home.sh');
     expect(gitlabCi).toContain('bash scripts/vagrant/cleanup-disposable-ci-vm.sh');
     expect(gitlabCi).toContain('rm -rf vagrant/.vagrant');
     expect(gitlabCi).toContain('- virtualbox');
@@ -39,7 +44,6 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden');
     expect(gitlabCi).toContain('VIHS_VAGRANT_CI_VM_NAME: vihs-ci-win11');
     expect(gitlabCi).toContain('VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data/vihs-vagrant');
-    expect(gitlabCi).toContain('VAGRANT_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work');
     expect(gitlabCi).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"');
@@ -86,6 +90,30 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('Set-NetConnectionProfile');
     expect(bootstrap).not.toContain('Enable-PSRemoting');
     expect(bootstrap).toContain('Test-WSMan -ComputerName localhost');
+    expect(bootstrap).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
+    expect(bootstrap).toContain('New-NetFirewallRule');
+    expect(bootstrap).toContain('-Program $lvExe');
+    expect(bootstrap).toContain('-LocalPort 3363');
+
+    expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 300');
+    expect(acceptance).toContain('[int]   $GitTimeoutMs = 300000');
+    expect(acceptance).toContain(
+      "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"
+    );
+    expect(acceptance).toContain(
+      'New-ScheduledTaskAction -Execute $lvExe -WorkingDirectory (Split-Path -Parent $lvExe)'
+    );
+    expect(acceptance).toContain('New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(15)');
+    expect(acceptance).toContain('-AllowStartIfOnBatteries');
+    expect(acceptance).toContain("Write-LabVIEWStartupEvidence -Phase 'timeout'");
+    expect(acceptance).toContain(
+      'Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
+    );
+    expect(acceptance).toContain('Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec');
+    expect(acceptance).toContain('$runtimeSettingsLauncher');
+    expect(acceptance).toContain('--labview-version $LabVIEWVersion');
+    expect(acceptance).toContain('--labview-bitness $LabVIEWBitness');
+    expect(acceptance).toContain('$env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -106,6 +134,13 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostDoctor).toContain("Vagrant CI VM '$CI_VM_NAME' is already running");
     expect(hostDoctor).toContain('Local Vagrant state points at');
     expect(hostDoctor).toContain('remove $VAGRANT_DOTFILE_ROOT before booting CI');
+
+    expect(prepareHome).toContain('prepare-vagrant-home');
+    expect(prepareHome).toContain('VAGRANT_HOME supports chmod');
+    expect(prepareHome).toContain('VIHS_VAGRANT_BOX_CACHE_HOME');
+    expect(prepareHome).toContain('Linked Vagrant boxes');
+    expect(prepareHome).toContain('does not support chmod');
+    expect(prepareHome).toContain('exists and is not an empty directory');
 
     expect(refreshBox).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME');
     expect(refreshBox).toContain('VIHS_VIRTUALBOX_VM_NAME');
@@ -132,6 +167,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(cleanupCiVm).toContain('is running; halt it before cleanup');
     expect(cleanupCiVm).toContain('VBoxManage unregistervm "$CI_VM_NAME" --delete');
     expect(cleanupCiVm).toContain('Removed orphaned disposable VM directory');
+    expect(cleanupCiVm).toContain('Removal attempt $attempt for orphaned disposable VM directory');
+    expect(cleanupCiVm).toContain('Quarantined orphaned disposable VM directory');
+    expect(cleanupCiVm).toContain('Could not remove or quarantine orphaned disposable VM directory');
     expect(cleanupCiVm).toContain('rm -rf "$VAGRANT_DOTFILE_ROOT"');
 
     expect(githubWorkflow).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME');
@@ -154,6 +192,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(githubWorkflow).not.toContain('VBoxManage guestcontrol');
 
     expect(laneDoc).toContain('local-vagrant-windows-acceptance');
+    expect(laneDoc).toContain('Windows 11 + LabVIEW 2026 Community x86 VirtualBox guest');
     expect(laneDoc).toContain('glrt-');
     expect(laneDoc).toContain('POST /user/runners');
     expect(laneDoc).toContain('not to legacy registration-token arguments');
@@ -165,21 +204,33 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('exported golden VM UEFI variable store');
     expect(laneDoc).toContain('vagrant/.vagrant');
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
+    expect(laneDoc).toContain('quarantines that directory under the');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
+    expect(laneDoc).toContain('default LabVIEW VI Server startup timeout: `300` seconds');
+    expect(laneDoc).toContain('near-future trigger inside the wait window');
+    expect(laneDoc).toContain('labview-startup.json');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
-    expect(laneDoc).toContain('job reloads the VM immediately after');
+    expect(laneDoc).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
+    expect(laneDoc).toContain('immediately after bootstrap');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: []');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
+    expect(laneDoc).toContain('stale golden-VM');
+    expect(laneDoc).toContain('LabVIEW `2026` `x86`');
+    expect(laneDoc).toContain('`runtimeProvider=host-native`');
+    expect(laneDoc).toContain('`runtimeEngine=labview-cli`');
     expect(laneDoc).toContain('assertion/vagrant-vsix-acceptance-assertion.json');
     expect(laneDoc).toContain('not replace the deferred native Windows x64 private-release proof');
+    expect(laneDoc).toContain('VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000');
 
     expect(hostedGovernanceDoc).toContain('vagrant-windows-vsix-acceptance');
     expect(hostedGovernanceDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(hostedGovernanceDoc).toContain('resource_group: vihs-windows-vagrant');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/doctor-vagrant-host.sh');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/refresh-golden-box.sh');
+    expect(hostedGovernanceDoc).toContain('quarantines that directory under the governed machine');
+    expect(hostedGovernanceDoc).toContain('near-future scheduled-task');
     expect(hostedGovernanceDoc).toContain('npm run vagrant:acceptance:assert');
 
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance).toEqual(
@@ -198,17 +249,25 @@ describe('Vagrant Windows acceptance runner lane', () => {
           resourceGroup: 'vihs-windows-vagrant',
           vagrantDotfilePath: '.vagrant-ci',
           storageRoot: '/run/media/sergio/Data/vihs-vagrant',
-          vagrantHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
+          vagrantHome: '/home/sergio/.vagrant.d',
+          vagrantBoxCacheHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
           boxFile: '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box',
           boxWorkdir: '/run/media/sergio/Data/vihs-vagrant/box-work',
           virtualBoxMachineFolder: '/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs',
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
+          repoOwnedPrepareHomeScript: 'scripts/vagrant/prepare-vagrant-home.sh',
           repoOwnedCleanupScript: 'scripts/vagrant/cleanup-disposable-ci-vm.sh',
+          disposableDirectoryCleanupPolicy:
+            'retry-orphaned-ci-vm-directory-removal-then-quarantine-under-governed-machine-folder',
           repoOwnedColdPrepScript: 'vagrant/provision/prepare-cold-labview.ps1',
           repoOwnedAcceptanceAssertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
           repoOwnedAcceptanceAssertionPackageScript: 'npm run vagrant:acceptance:assert',
           bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
+          labviewPrelaunchFallbackPolicy:
+            'manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window',
+          harnessGitTimeoutMs: 300000,
+          labviewStartupEvidencePath: 'vagrant/evidence/labview-startup.json',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'
         })
@@ -256,6 +315,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
 
     expect(packageManifest.scripts?.['vagrant:host:doctor']).toBe(
       'bash scripts/vagrant/doctor-vagrant-host.sh'
+    );
+    expect(packageManifest.scripts?.['vagrant:home:prepare']).toBe(
+      'bash scripts/vagrant/prepare-vagrant-home.sh'
     );
     expect(packageManifest.scripts?.['vagrant:ci:cleanup']).toBe(
       'bash scripts/vagrant/cleanup-disposable-ci-vm.sh'

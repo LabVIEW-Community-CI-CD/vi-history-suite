@@ -69,7 +69,8 @@ describe('install vihs extension bootstrap script', () => {
     expect(script).toContain("Provider");
     expect(script).toContain("LabVIEW year");
     expect(script).toContain("Bitness");
-    expect(script).toContain("LabVIEW $labviewVersion not installed.");
+    expect(script).toContain("LabVIEW $labviewVersion $labviewBitness not installed.");
+    expect(script).toContain("Docker images are 64-bit only");
     expect(script).toContain("Seeded default VI History runtime settings");
     expect(script).toContain("Interactive input was not available.");
     expect(script).toContain("Next commands:");
@@ -136,14 +137,14 @@ describe('install vihs extension bootstrap script', () => {
       expect(output).toContain(`settingsFilePath=${settingsPath}`);
       expect(output).toContain('viHistorySuite.runtimeProvider=host');
       expect(output).toContain('viHistorySuite.labviewVersion=2026');
-      expect(output).toContain('viHistorySuite.labviewBitness=x64');
+      expect(output).toContain('viHistorySuite.labviewBitness=x86');
       expect(output).toContain(`launcherRoot=${launcherRoot}`);
       expect(output).toContain('  vihs');
       expect(output).toContain('  vihs --validate');
 
       expect(settingsText).toContain('"viHistorySuite.runtimeProvider": "host"');
       expect(settingsText).toContain('"viHistorySuite.labviewVersion": "2026"');
-      expect(settingsText).toContain('"viHistorySuite.labviewBitness": "x64"');
+      expect(settingsText).toContain('"viHistorySuite.labviewBitness": "x86"');
       expect(settingsText.charCodeAt(0)).not.toBe(0xfeff);
       expect(fs.existsSync(path.join(launcherRoot, 'vihs.cmd'))).toBe(true);
       expect(fs.existsSync(path.join(launcherRoot, 'vihs-runtime-settings.cmd'))).toBe(true);

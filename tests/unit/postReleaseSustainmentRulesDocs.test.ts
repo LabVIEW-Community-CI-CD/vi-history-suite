@@ -30,10 +30,10 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.9',
         currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.14',
+        currentDevelopPackageLine: '1.3.15',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
-        activeDevelopCandidateReleaseLine: 'v1.3.14',
-        activeReleaseCandidateBranch: null,
+        activeDevelopCandidateReleaseLine: 'v1.3.15',
+        activeReleaseCandidateBranch: 'release/1.3.15',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -138,10 +138,10 @@ describe('post-release sustainment rules package', () => {
     );
 
     expect(rulesDoc).toContain('current exact released line: `v1.3.9`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.9`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.14`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.14`');
-    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('current authority package line on `main`: `1.3.14`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.15`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.15`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.15`');
     expect(rulesDoc).toContain('public release `312994104` is published on `v1.3.9`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
     expect(rulesDoc).toContain('asset-first GitHub release rule');

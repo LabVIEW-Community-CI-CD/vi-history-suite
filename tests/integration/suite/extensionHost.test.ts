@@ -530,7 +530,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   assert.equal(result.exampleCommand, result.nextCommand);
   assert.match(
     result.nextCommand!,
-    /^vihs --provider host --labview-version 2026 --labview-bitness x64$/
+    /^vihs --provider host --labview-version 2026 --labview-bitness x86$/
   );
   if (process.platform === 'win32') {
     assert.equal(result.currentPlatformLauncherPath, result.windowsLauncherPath);
@@ -782,7 +782,7 @@ async function testAdmittedLocalRuntimeSettingsTerminalEntrypoint(
     const discoveryRun = await runAdmittedLocalRuntimeSettingsCli(admitted, [], {
       cwd: arbitraryWorkingDirectory
     });
-    assert.match(discoveryRun.stdout, /vihs --provider host --labview-version 2026 --labview-bitness x64/);
+    assert.match(discoveryRun.stdout, /vihs --provider host --labview-version 2026 --labview-bitness x86/);
     assert.match(discoveryRun.stdout, /vihs --validate/);
 
     const hostRun = await runAdmittedLocalRuntimeSettingsCli(

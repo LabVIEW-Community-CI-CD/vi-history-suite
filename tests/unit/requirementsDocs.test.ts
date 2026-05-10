@@ -157,7 +157,7 @@ describe('requirements documentation coherence', () => {
     expect(srs).not.toContain(
       'Runtime tool settings shall allow explicit user override through `labviewCliPath`, `labviewExePath`, and `bitness`'
     );
-    expect(srs).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(srs).toContain('selecting two distinct retained revisions establishes one explicit selected/base pair');
     expect(srs).not.toContain(
       'selecting the second distinct retained revision triggers comparison-report generation automatically'
     );
@@ -185,7 +185,7 @@ describe('requirements documentation coherence', () => {
     expect(rtm).not.toContain(
       'executionMode, labviewCliPath, labviewExePath, windowsContainerImage, and bitness'
     );
-    expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit selected/base pair');
     expect(rtm).toContain('canonical proof-admission contract');
     expect(rtm).toContain('effective proof-admission bundle');
     expect(rtm).toContain('explicit proof-admission override bundles');
@@ -249,7 +249,7 @@ describe('requirements documentation coherence', () => {
       'bare `vihs` terminal entrypoint shall make its runtime dependency and recovery explicit'
     );
     expect(srs).toContain('bare `vihs` terminal entrypoint shall make terminal discoverability explicit');
-    expect(srs).toContain('seeding missing settings to `host/windows/2026/x64`');
+    expect(srs).toContain('seeding missing settings to `host/windows/2026/x86`');
     expect(srs).toContain('Enter-through confirmation or guided selection');
     expect(srs).toContain('installed-user `vihs` surface shall expose one governed validation action');
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');

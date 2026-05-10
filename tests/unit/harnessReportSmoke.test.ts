@@ -26,6 +26,7 @@ describe('harness report smoke renderers', () => {
     runtimeExecutionState: 'succeeded' as const,
     runtimeProvider: 'host-native' as const,
     runtimeEngine: 'labview-cli' as const,
+    runtimeBitness: 'x86' as const,
     executionSurfaceContext: 'windows-benchmark-image' as const,
     executionSurfaceMarkers: [
       'cloneDirectory',
@@ -75,6 +76,7 @@ describe('harness report smoke renderers', () => {
 
     expect(markdown).toContain('Harness Comparison Report Smoke');
     expect(markdown).toContain('Runtime execution: succeeded');
+    expect(markdown).toContain('Runtime bitness: x86');
     expect(markdown).toContain('Runtime diagnostic reason: labview-path-ignored-last-used-default');
     expect(markdown).toContain('Execution surface context: windows-benchmark-image');
     expect(markdown).toContain(
@@ -118,6 +120,7 @@ describe('harness report smoke renderers', () => {
 
     expect(html).toContain('Harness Comparison Report Smoke');
     expect(html).toContain('labview-cli');
+    expect(html).toContain('Runtime bitness:</strong> x86');
     expect(html).toContain('labview-path-ignored-last-used-default');
     expect(html).toContain('Execution surface context:</strong> windows-benchmark-image');
     expect(html).toContain(

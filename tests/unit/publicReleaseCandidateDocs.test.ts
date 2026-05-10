@@ -24,30 +24,60 @@ describe('public release candidate control surface', () => {
 
     expect(candidate.versionLine).toBe('1.3.9');
     expect(candidate.activeDevelopCandidate).toMatchObject({
-      candidateLine: 'v1.3.14',
-      packageVersion: '1.3.14',
-      state: 'develop-patch-candidate-consolidation',
+      candidateLine: 'v1.3.15',
+      packageVersion: '1.3.15',
+      state: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required',
       branch: 'develop',
-      sourceFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
-      mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
-      sourceHeadCommit: '97efa937a5317d69a1d65607c4f704d603edbe52',
-      developMergeCommit: '72899eb39e38ce34c697f0a227292ead6bcd8f2d',
-      mergedAt: '2026-05-08T17:52:32.814Z',
+      activeReleaseCandidateBranch: 'release/1.3.15',
+      releaseBranchOpeningPacketPath:
+        'docs/product/release-branch-opening-v1.3.15-2026-05-09.md',
+      releaseBranchOpeningPacketJsonPath:
+        'docs/product/release-branch-opening-v1.3.15-2026-05-09.json',
+      releaseBranchReadinessReassessmentPacketPath:
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
+      releaseBranchReadinessReassessmentPacketJsonPath:
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json',
+      releaseMainPromotionPreflightPacketPath: null,
+      releaseMainPromotionPreflightPacketJsonPath: null,
+      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight',
+      sourceFeatureBranch: 'feature/develop-1.3.15-vagrant-x86-settings',
+      mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/202',
+      sourceHeadCommit: '1114189b654b86fe829eb7648672d3565ebf71cf',
+      developMergeCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
+      mergedAt: '2026-05-09T23:28:19.982Z',
       postMergeDevelopPipeline: {
-        pipelineId: 2511040377,
+        pipelineId: 2512993895,
         status: 'success',
-        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511040377'
+        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2512993895'
+      },
+      releaseBranchPipeline: {
+        pipelineId: 2513019603,
+        duplicatePipelineId: 2513019188,
+        status: 'success',
+        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2513019603'
       },
       vagrantVsixAcceptanceReceipt: {
-        jobId: 14284054131,
+        jobId: 14293424513,
         jobName: 'vagrant_windows_vsix_acceptance',
         jobStatus: 'success',
-        jobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14284054131',
+        jobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14293424513',
         assertionReceipt: 'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
-        manifest: 'vagrant/evidence/20260508-105809/manifest.json',
-        recordedAt: '2026-05-08T17:58:36.620Z',
+        manifest: 'vagrant/evidence/20260509-171233/manifest.json',
+        recordedAt: '2026-05-09T17:13:28.3899871-07:00',
         runtimeExecutionState: 'succeeded',
+        runtimeProvider: 'host-native',
+        runtimeEngine: 'labview-cli',
+        runtimeBitness: 'x86',
         proofExitCode: 0
+      },
+      releaseBranchReadinessReassessment: {
+        status: 'blocked-main-not-ancestor-topology-refresh-required',
+        protectedDevelopRetentionCommit: '801349167499b9d03b8244c42b03d88e15098034',
+        protectedDevelopRetentionPipelineId: 2513063788,
+        mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+        mainIsAncestorOfReleaseBranch: false,
+        releaseBranchIsAncestorOfProtectedDevelop: true,
+        nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
       },
       productionMutationAllowed: false,
       claimBoundary: 'does-not-admit-windows-docker-desktop-windows-container-proof'
@@ -55,9 +85,19 @@ describe('public release candidate control surface', () => {
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: 'fb0ef2b',
-      currentPublicSourceHead: '220111e',
-      currentPublicSourceHeadSha: '220111eae3ac214e99f2233e2bfe6b320edf383d',
-      status: 'published-main-tag-and-release-v1.3.9'
+      currentPublicSourceHead: 'f1cb609',
+      currentPublicSourceHeadSha: 'f1cb60900820ea17328b9eec595579768491e22a',
+      status: 'published-main-and-tag-v1.3.14-release-publication-blocked'
+    });
+    expect(candidate.publishedPublicSource.latestPublicSourceAndTagHandoff).toMatchObject({
+      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
+      publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicMainShortCommit: 'f1cb609',
+      publicTag: 'v1.3.14',
+      publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
+      publicTagPeeledCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      publicGitHubReleasePublication: 'not-performed',
+      marketplaceMutation: 'not-performed'
     });
     expect(candidate.publishedPublicSource.latestPublicFacadeDocsPromotion).toMatchObject({
       pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/60',
@@ -217,24 +257,36 @@ describe('public release candidate control surface', () => {
     ]);
 
     expect(candidateMarkdown).toContain('Version line: `1.3.9`');
-    expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.14`');
-    expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.14`');
+    expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.15`');
+    expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.15`');
     expect(candidateMarkdown).toContain('Active develop candidate branch: `develop`');
+    expect(candidateMarkdown).toContain('Active release-candidate branch: `release/1.3.15`');
     expect(candidateMarkdown).toContain(
-      '`feature/develop-1.3.14-candidate-consolidation`'
+      'docs/product/release-branch-opening-v1.3.15-2026-05-09.md'
     );
-    expect(candidateMarkdown).toContain('Protected develop merge: GitLab MR `!192`');
-    expect(candidateMarkdown).toContain('`72899eb39e38ce34c697f0a227292ead6bcd8f2d`');
-    expect(candidateMarkdown).toContain('Protected develop pipeline: `2511040377` / `success`');
     expect(candidateMarkdown).toContain(
-      'Vagrant VSIX acceptance receipt: GitLab job `14284054131` / `success`'
+      'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md'
+    );
+    expect(candidateMarkdown).toContain('Release main-promotion preflight packet: not retained yet for `1.3.15`');
+    expect(candidateMarkdown).toContain(
+      '`refresh-release-1.3.15-with-main-before-main-promotion-preflight`'
+    );
+    expect(candidateMarkdown).toContain(
+      '`feature/develop-1.3.15-vagrant-x86-settings`'
+    );
+    expect(candidateMarkdown).toContain('Protected develop merge: GitLab MR `!202`');
+    expect(candidateMarkdown).toContain('`67c2c3a188666eaad3cab2695092991c42f33470`');
+    expect(candidateMarkdown).toContain('Protected develop pipeline: `2512993895` / `success`');
+    expect(candidateMarkdown).toContain('Release branch pipeline: `2513019603` / `success`');
+    expect(candidateMarkdown).toContain(
+      'Vagrant VSIX acceptance receipt: GitLab job `14293424513` / `success`'
     );
     expect(candidateMarkdown).toContain(
       'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json'
     );
-    expect(candidateMarkdown).toContain('vagrant/evidence/20260508-105809/manifest.json');
+    expect(candidateMarkdown).toContain('vagrant/evidence/20260509-171233/manifest.json');
     expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
-    expect(candidateMarkdown).toContain('Current public source head: `220111e`');
+    expect(candidateMarkdown).toContain('Current public source head: `f1cb609`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');
     expect(candidateMarkdown).toContain('`release-1.3.9-authority-candidate-package-line`');
     expect(candidateMarkdown).toContain(
@@ -247,7 +299,9 @@ describe('public release candidate control surface', () => {
       '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
     );
     expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.9`');
-    expect(candidateMarkdown).toContain('public PR #68');
+    expect(candidateMarkdown).toContain('public PR #69');
+    expect(candidateMarkdown).toContain('`b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`');
+    expect(candidateMarkdown).toContain('Public PR #68');
     expect(candidateMarkdown).toContain('public PR #60');
     expect(candidateMarkdown).toContain('VS Code Marketplace item');
     expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.9`');
@@ -264,9 +318,9 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('`published-immutable-release-assets-incomplete`');
 
     expect(currentState).toContain('current exact released line: `v1.3.9`');
-    expect(currentState).toContain('current published package line on `main`: `1.3.9`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.3.14`');
-    expect(currentState).toContain('active release-candidate branch: none');
+    expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.15`');
+    expect(currentState).toContain('active release-candidate branch: `release/1.3.15`');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');

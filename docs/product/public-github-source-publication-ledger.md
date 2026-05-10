@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `220111e`
+Current published public GitHub source HEAD: `f1cb609`
 
 ## Publications
 
@@ -49,23 +49,27 @@ Current published public GitHub source HEAD: `220111e`
 | Public source v1.3.10 community-validation intake publication | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-25` | `b56fde1` | `public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml`; `public-github-source/.github/labels.yml`; `public-github-source/README.md`; `public-github-source/SUPPORT.md`; `docs/product/public-github-community-validation-intake-promotion-plan-v1.3.10.md`; `docs/product/marketplace-community-validation-intake-v1.3.10.md`; `docs/product/release-publication-state.md` |
 | Public source v1.3.11 canonical Docker fixture docs promotion | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-26` | `ce6dbd0` | `README.md`; `INSTALL.md`; `.github/ISSUE_TEMPLATE/config.yml`; `docs/product/public-validation-prerelease-v1.3.11.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; `docs/product/public-github-source-publication-ledger.md` |
 | Public source v1.3.13 Windows Docker Desktop intake promotion | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-27` | `220111e` | `README.md`; `INSTALL.md`; `SUPPORT.md`; `.github/ISSUE_TEMPLATE/config.yml`; `.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml`; `.github/labels.yml`; `src/tooling/publicFixtureValidation.ts`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md`; `docs/product/release-publication-state.md` |
+| Public source v1.3.14 exact source and tag handoff | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-09` | `f1cb609` | `CHANGELOG.md`; `package.json`; `package-lock.json`; `.gitignore`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md`; `docs/product/release-publication-state.md` |
 
 Historical fixture-docs closeout: public PR #60 remains retained at `ce6dbd0`.
 
 ## Latest Public Facade Promotion
 
 - Public PR:
-  `https://github.com/svelderrainruiz/vi-history-suite/pull/68`
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/69`
 - Public `main` commit:
-  `220111eae3ac214e99f2233e2bfe6b320edf383d`
-- Promoted files: `README.md`, `INSTALL.md`, `SUPPORT.md`,
-  `.github/ISSUE_TEMPLATE/config.yml`,
-  `.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml`,
-  `.github/labels.yml`, `src/tooling/publicFixtureValidation.ts`, and
-  `tests/unit/publicRepoPackageSurface.test.ts`
-- Post-merge public checks: Public Source Package Preview `24977951913` /
-  success, Public Windows Installed-User Contract `24977951923` / success, and
-  Public Linux Installed-User Smoke `24977951904` / success
+  `f1cb60900820ea17328b9eec595579768491e22a`
+- Public exact tag:
+  `v1.3.14` tag object `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`,
+  peeling to `f1cb60900820ea17328b9eec595579768491e22a`
+- Promoted files: `.gitignore`, `CHANGELOG.md`, `package.json`,
+  `package-lock.json`, and `tests/unit/publicRepoPackageSurface.test.ts`
+- Post-merge public checks: Public Source Package Preview `25609017771` /
+  success, Public Windows Installed-User Contract `25609017782` / success, and
+  Public Linux Installed-User Smoke `25609017773` / success
+- Post-tag exact-release assessment:
+  `.cache/public-github-exact-v1.3.14-after-public-tag/public-github-exact-release-transaction.json`
+- Public GitHub release publication: not performed
 - Marketplace mutation: not performed
 
 ## Publication Rules

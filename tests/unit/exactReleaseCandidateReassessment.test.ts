@@ -201,20 +201,20 @@ describe('exact release candidate reassessment', () => {
     });
     expect(publicationState.activeCandidate).toMatchObject({
       sourceBranch: 'develop',
-      releaseBranch: null,
-      tag: null,
-      packageVersion: '1.3.14',
-      status: 'develop-patch-candidate-consolidation'
+      releaseBranch: 'release/1.3.15',
+      tag: 'v1.3.15',
+      packageVersion: '1.3.15',
+      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'retain-1.3.14-develop-candidate-consolidation-and-triage-community-validation'
+      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');
-    expect(currentState).toContain('current exact-release candidate reassessment');
+    expect(currentState).toContain('historical exact-release candidate reassessment');
     expect(srs).toContain('exact-release candidate reassessment');
     expect(rtm).toContain(
-      'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143'
+      'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-UNIT-399; TEST-UNIT-400; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143; TEST-DOC-151; TEST-DOC-152'
     );
     expect(testPlan).toContain('TEST-UNIT-390');
     expect(testPlan).toContain('TEST-DOC-143');

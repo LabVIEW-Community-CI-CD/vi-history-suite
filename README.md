@@ -84,8 +84,11 @@ Installed-user help:
   first compare
 - the first Docker compare on a fresh machine may pull
   `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`
-- host Windows LabVIEW years `2020` through `2026` are selectable when they
-  are installed locally
+- host LabVIEW `2025`, `2026`, and newer local versions are selectable when
+  they are installed locally; LabVIEW `2024` and older cannot create the VI
+  Comparison Report that VI History Suite uses
+- LabVIEW `2025` and newer can open older LabVIEW VIs without migrating the
+  source file before generating the comparison report
 - `docker/windows` and `docker/linux` variants are selectable for community
   validation; the governed Docker runtime implementation is currently `2026`
   `x64`
@@ -115,7 +118,8 @@ Proof-status matrix:
 | --- | --- | --- |
 | Linux/Docker `2026` `x64` | admitted | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
 | Linux host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 Community is installed on Linux | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out ./vihs-fixture-proof` |
-| Windows host LabVIEW `2026` `x64` | admitted when LabVIEW 2026 x64 is installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
+| Windows host LabVIEW `2026` `x86` | admitted on the governed Windows Community/golden-VM lane | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x86 --proof-out .\vihs-fixture-proof` |
+| Windows host LabVIEW `2026` `x64` | selectable when LabVIEW 2026 x64 is manually installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
 | Windows Docker Desktop Windows containers | community/deferred through public issue #65 | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000` after Docker Desktop is switched to Windows containers |
 | Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
 
@@ -274,10 +278,17 @@ Authority release facts:
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.9`
-- current published package line on `main`: `1.3.9`
-- current develop package line on `develop`: `1.3.14`
-- active exact release candidate line on `develop`: `v1.3.14`
-- active release-candidate branch: none
+- current fully published exact package line: `1.3.9`
+- current authority package line on `main`: `1.3.14`
+- current develop package line on `develop`: `1.3.15`
+- active exact release candidate line on `develop`: `v1.3.15`
+- active release-candidate branch: `release/1.3.15`
+- active release-candidate state:
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -336,11 +347,16 @@ Authority release facts:
 - exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.14` develop patch candidate
-  consolidation with all provider/year/bitness variants selectable, admitted
-  Windows host proof retained, Vagrant VSIX acceptance governed by repo-owned
-  assertion, and Windows Docker Desktop proof still community/deferred
-- active Marketplace public validation target: `1.3.13`
+- active governed release claim: `1.3.15` has an opened `release/1.3.15`
+  branch with green branch CI, all provider/year/bitness variants selectable,
+  admitted Windows host proof retained, Vagrant VSIX acceptance governed by
+  repo-owned assertion, and Windows Docker Desktop proof still
+  community/deferred; main-promotion preflight is blocked until a release-branch
+  topology refresh brings protected `main` into `release/1.3.15`
+- next admitted release-control action:
+  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
+- active Marketplace stable target: `1.3.15`
+- retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
   published through public GitHub PR #46 and pinned `vsce --pre-release`
 - retained Windows x64 private-release-prep slice: historical `release/1.3.1`
@@ -364,16 +380,20 @@ Authority release facts:
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
 - current public GitHub source publication: public `main` now publishes
-  `220111e` after public PR #68 promoted the Windows Docker Desktop
-  proof-intake template and label; public PR #60 remains retained for the
-  canonical public Docker fixture docs at `ce6dbd0`, and the exact `v1.3.9`
-  tag/release remains retained separately at `fb0ef2b`
+  `f1cb609` after public PR #69 completed the `v1.3.14` source handoff; public
+  annotated tag `v1.3.14` has tag object
+  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae` and peels to
+  `f1cb60900820ea17328b9eec595579768491e22a`; public PR #68 remains retained
+  for the Windows Docker Desktop proof-intake template and label, public PR #60
+  remains retained for the canonical public Docker fixture docs at `ce6dbd0`,
+  and the exact `v1.3.9` tag/release remains retained separately at `fb0ef2b`
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - VS Code Marketplace retained published version: `1.3.9`
 - VS Code Marketplace community-validation preview published version:
   `1.3.13`
 - VS Code Marketplace public validation target version: `1.3.13`
+- VS Code Marketplace next stable target version: `1.3.15`
 - VS Code Marketplace community-validation preview Marketplace last updated:
   `2026-04-27T04:24:05.457Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
@@ -403,7 +423,7 @@ Authority release facts:
 - `TRANCHE-010`: public-source facade and public-product acceptance is a closed tranche
 - active control-plane direction:
   [PROGRAM-0005](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md),
-  `TRANCHE-012`, `TRANCHE-016`, `ISSUE-0412`, and `ISSUE-0414`
+  `TRANCHE-012`, `TRANCHE-016`, `ISSUE-0412`, `ISSUE-0414`, and `ISSUE-0415`
 - preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - governed tagged release artifact and release manifest live under
   `release-evidence/`

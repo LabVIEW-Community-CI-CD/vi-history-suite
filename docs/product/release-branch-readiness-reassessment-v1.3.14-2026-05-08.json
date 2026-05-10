@@ -1,0 +1,365 @@
+{
+  "schema": "vi-history-suite/release-branch-readiness-reassessment@v1",
+  "recordedAt": "2026-05-08",
+  "authority": {
+    "repo": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+    "releaseBranch": "release/1.3.14",
+    "releaseBranchRef": "refs/heads/release/1.3.14",
+    "releaseBranchCommitSha": "50bec3391ea823739c2e8baddb33b77c283a37eb",
+    "releaseBranchPipelineId": 2511168302,
+    "releaseBranchPipelineStatus": "success",
+    "releaseBranchPipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511168302",
+    "protectedDevelopRetentionCommitSha": "c9cff58f5608289ec6acdaea64999b1e460cca96",
+    "protectedDevelopRetentionPipelineId": 2511236377,
+    "protectedDevelopRetentionPipelineStatus": "success",
+    "protectedDevelopRetentionPipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511236377",
+    "packageVersion": "1.3.14"
+  },
+  "sourcePackets": {
+    "exactReleaseReadinessAssessmentPath": "docs/product/exact-release-readiness-assessment-2026-05-08.md",
+    "exactReleaseReadinessAssessmentJsonPath": "docs/product/exact-release-readiness-assessment-2026-05-08.json",
+    "releaseBranchOpeningPacketPath": "docs/product/release-branch-opening-v1.3.14-2026-05-08.md",
+    "releaseBranchOpeningPacketJsonPath": "docs/product/release-branch-opening-v1.3.14-2026-05-08.json"
+  },
+  "verdict": {
+    "releaseBranchReadiness": "main-promotion-admissible-as-separate-governed-action",
+    "currentAdmissibleClaim": "release-branch-green-for-main-promotion-no-exact-publication",
+    "mainPromotion": "admissible-as-separate-governed-action-not-performed",
+    "exactTag": "not-admitted-before-protected-main-promotion",
+    "publicGitHubExactMutation": "not-admitted-and-not-performed",
+    "marketplaceExactMutation": "not-admitted-and-not-performed",
+    "windowsDockerDesktopWindowsContainerProof": "community-deferred",
+    "selectedExactAuthorityVsix": null,
+    "nextAdmittedAction": "promote-release-1.3.14-to-main-as-separate-governed-action"
+  },
+  "releaseBranchEvidence": {
+    "pipelineJobs": [
+      {
+        "stage": "admission",
+        "name": "ubuntu_docker_runner_admission",
+        "id": 14284865636,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_link_check",
+        "id": 14284865637,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_continuous_integration",
+        "id": 14284865638,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_public_continuous_integration",
+        "id": 14284865639,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_internal_continuous_integration",
+        "id": 14284865640,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_release_gate",
+        "id": 14284865641,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_26514_authority",
+        "id": 14284865642,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_requirements_quality",
+        "id": 14284865643,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_external_user_information",
+        "id": 14284865644,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_audit_packet",
+        "id": 14284865645,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "test_extension",
+        "id": 14284865646,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "public_exact_pretag_proof",
+        "id": 14284865647,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "linux_docker_provider_lane",
+        "id": 14284865648,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "vagrant_windows_vsix_acceptance",
+        "id": 14284865649,
+        "status": "success"
+      },
+      {
+        "stage": "package",
+        "name": "package_extension_preview",
+        "id": 14284865650,
+        "status": "success"
+      }
+    ],
+    "previewArtifact": {
+      "jobId": 14284865650,
+      "manifestPath": "preview-evidence/preview-manifest.json",
+      "vsixPath": "preview-evidence/vi-history-suite-1.3.14.vsix",
+      "packageVersion": "1.3.14",
+      "commitSha": "50bec3391ea823739c2e8baddb33b77c283a37eb",
+      "sha256": "d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91",
+      "sizeBytes": 1011702,
+      "role": "release-branch-preview-evidence-only"
+    },
+    "vagrantVsixAcceptance": {
+      "jobId": 14284865649,
+      "jobStatus": "success",
+      "assertionReceiptPath": "vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json",
+      "assertionReceiptRecordedAt": "2026-05-08T19:11:29.285Z",
+      "manifestPath": "vagrant/evidence/20260508-121101/manifest.json",
+      "manifestGeneratedAt": "2026-05-08T12:11:28.8437222-07:00",
+      "generatedReportSha256": "0df0027e2386543bd3e4b4ba54186b382430e0b95c8663d2a3609829c42b3800",
+      "generatedReportSizeBytes": 4841,
+      "facts": {
+        "manifestSchema": "vi-history-suite/vagrant-vsix-acceptance@v1",
+        "assertionSchema": "vi-history-suite/vagrant-vsix-acceptance-assertion@v1",
+        "harnessId": "HARNESS-VHS-002",
+        "selectedHash": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "baseHash": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+        "labviewVersion": "2026",
+        "labviewBitness": "x86",
+        "proofExitCode": 0,
+        "runtimeProvider": "host-native",
+        "runtimeEngine": "labview-cli",
+        "runtimeExecutionState": "succeeded",
+        "generatedReportExists": true,
+        "coldStartMarkers": [
+          "LabVIEW not running. Launching via scheduled task...",
+          "LabVIEW VI Server ready on port 3363."
+        ]
+      },
+      "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof"
+    },
+    "releaseExtensionJob": {
+      "status": "not-run",
+      "reason": "release_extension is gated on exact vX.Y.Z tags and this reassessment did not create an exact tag"
+    }
+  },
+  "protectedDevelopRetention": {
+    "mergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/195",
+    "mergeCommitSha": "c9cff58f5608289ec6acdaea64999b1e460cca96",
+    "pipelineId": 2511236377,
+    "pipelineStatus": "success",
+    "pipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511236377",
+    "pipelineJobs": [
+      {
+        "stage": "admission",
+        "name": "ubuntu_docker_runner_admission",
+        "id": 14285299147,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_link_check",
+        "id": 14285299148,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_continuous_integration",
+        "id": 14285299149,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_public_continuous_integration",
+        "id": 14285299150,
+        "status": "success"
+      },
+      {
+        "stage": "docs",
+        "name": "docs_internal_continuous_integration",
+        "id": 14285299151,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_release_gate",
+        "id": 14285299152,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_26514_authority",
+        "id": 14285299153,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_requirements_quality",
+        "id": 14285299154,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_external_user_information",
+        "id": 14285299155,
+        "status": "success"
+      },
+      {
+        "stage": "assurance",
+        "name": "assurance_audit_packet",
+        "id": 14285299156,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "test_extension",
+        "id": 14285299157,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "public_exact_pretag_proof",
+        "id": 14285299158,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "linux_docker_provider_lane",
+        "id": 14285299159,
+        "status": "success"
+      },
+      {
+        "stage": "test",
+        "name": "vagrant_windows_vsix_acceptance",
+        "id": 14285299160,
+        "status": "success"
+      },
+      {
+        "stage": "package",
+        "name": "package_extension_preview",
+        "id": 14285299161,
+        "status": "success"
+      }
+    ],
+    "previewArtifact": {
+      "jobId": 14285299161,
+      "manifestPath": "preview-evidence/preview-manifest.json",
+      "vsixPath": "preview-evidence/vi-history-suite-1.3.14.vsix",
+      "packageVersion": "1.3.14",
+      "commitSha": "c9cff58f5608289ec6acdaea64999b1e460cca96",
+      "sha256": "17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd",
+      "sizeBytes": 1011765,
+      "role": "protected-develop-retention-preview-evidence-only"
+    },
+    "vagrantVsixAcceptance": {
+      "jobId": 14285299160,
+      "jobStatus": "success",
+      "assertionReceiptPath": "vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json",
+      "assertionReceiptRecordedAt": "2026-05-08T19:53:41.975Z",
+      "manifestPath": "vagrant/evidence/20260508-125315/manifest.json",
+      "manifestGeneratedAt": "2026-05-08T12:53:41.4952671-07:00",
+      "generatedReportSha256": "371c486a2d68cbf2d0f29af34119f75afceac5c5dc14d3ad868b1ba249d8a71c",
+      "generatedReportSizeBytes": 4841,
+      "facts": {
+        "manifestSchema": "vi-history-suite/vagrant-vsix-acceptance@v1",
+        "assertionSchema": "vi-history-suite/vagrant-vsix-acceptance-assertion@v1",
+        "harnessId": "HARNESS-VHS-002",
+        "selectedHash": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "baseHash": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+        "labviewVersion": "2026",
+        "labviewBitness": "x86",
+        "proofExitCode": 0,
+        "runtimeProvider": "host-native",
+        "runtimeEngine": "labview-cli",
+        "runtimeExecutionState": "succeeded",
+        "generatedReportExists": true,
+        "coldStartMarkers": [
+          "LabVIEW not running. Launching via scheduled task...",
+          "LabVIEW VI Server ready on port 3363."
+        ]
+      },
+      "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof"
+    }
+  },
+  "blockingOrDeferredGates": [
+    {
+      "id": "main-promotion",
+      "status": "admissible-as-separate-governed-action-not-performed",
+      "impact": "release/1.3.14 may be promoted to main only through a separate protected merge action"
+    },
+    {
+      "id": "exact-tag",
+      "status": "not-admitted-before-protected-main-promotion",
+      "impact": "no v1.3.14 exact tag can be cut from this reassessment"
+    },
+    {
+      "id": "selected-exact-authority-vsix",
+      "status": "not-retained-yet",
+      "impact": "the exact tag pipeline must produce release evidence before public exact release or Marketplace gates"
+    },
+    {
+      "id": "windows-exact-vsix-install-proof",
+      "status": "missing-for-selected-1.3.14-exact-authority-vsix",
+      "impact": "must pass before any later Marketplace exact publication"
+    },
+    {
+      "id": "public-github-exact-release",
+      "status": "not-admitted",
+      "impact": "asset-first exact-release controller remains required after exact authority evidence is retained"
+    },
+    {
+      "id": "marketplace-exact-release",
+      "status": "not-admitted",
+      "impact": "blocked until public GitHub exact verification and Windows exact-VSIX install proof are retained"
+    },
+    {
+      "id": "windows-docker-desktop-windows-container-proof",
+      "status": "community-deferred",
+      "impact": "public issue #65 remains the intake lane; no Windows-container proof claim is admitted here"
+    }
+  ],
+  "mutationBoundary": {
+    "exactTagCreated": false,
+    "releaseBranchMergedToMain": false,
+    "publicGitHubReleaseCreated": false,
+    "publicGitHubReleasePublished": false,
+    "marketplaceTouched": false,
+    "mainPromoted": false,
+    "windowsDockerDesktopProofAdmitted": false,
+    "releaseBranchDeleted": false
+  },
+  "nextAdmittedActions": [
+    "promote-release-1.3.14-to-main-as-separate-governed-action",
+    "reassess-main-v1.3.14-readiness-before-exact-tag-after-protected-main-pipeline",
+    "create-v1.3.14-exact-tag-only-after-main-promotion-is-retained-and-green",
+    "retain-selected-exact-authority-vsix-and-checksum-before-public-exact-release",
+    "use-asset-first-public-github-exact-release-controller-only-after-exact-authority-evidence-is-retained",
+    "run-windows-exact-vsix-install-proof-before-marketplace-exact-publication"
+  ]
+}

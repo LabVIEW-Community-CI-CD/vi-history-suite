@@ -203,13 +203,15 @@ describe('exact release readiness assessment', () => {
     expect(informationItemMap).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(informationItemMap).toContain('pipeline `2511103937`');
     expect(currentState).toContain('exact-release-readiness-assessment-2026-05-08.md');
-    expect(currentState).toContain('release branch opening admissible as a separate governed action');
+    expect(currentState).toContain('release branch opening was admitted as a separate governed action');
+    expect(currentState).toContain('performed on `release/1.3.14`');
+    expect(currentState).toContain('release-branch readiness has now been');
     expect(currentState).toContain('`2511103937`');
     expect(srs).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(srs).toContain('current `1.3.14` exact-release readiness verdict');
     expect(rtm).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(rtm).toContain(
-      'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143'
+      'TEST-UNIT-388; TEST-UNIT-389; TEST-UNIT-390; TEST-UNIT-399; TEST-UNIT-400; TEST-DOC-133; TEST-DOC-141; TEST-DOC-142; TEST-DOC-143; TEST-DOC-151; TEST-DOC-152'
     );
     expect(testPlan).toContain('TEST-UNIT-388');
     expect(testPlan).toContain('TEST-DOC-141');
