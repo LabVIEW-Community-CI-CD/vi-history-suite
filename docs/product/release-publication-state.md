@@ -19,13 +19,13 @@ final installed-user distribution surface.
 - Expected checksum: `vi-history-suite-1.3.9.vsix.sha256`
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
-- Active candidate release branch: `release/1.3.14`
-- Active candidate tag: `v1.3.14`
-- Active candidate package version: `1.3.14`
-- Active candidate state: GitLab authority main promotion, exact authority
-  tagging, and public GitHub source/tag handoff are complete; public GitHub
-  release publication, Marketplace mutation, Windows Docker Desktop proof
-  admission, and release branch deletion remain blocked by boundary
+- Active candidate release branch: `release/1.3.15`
+- Active candidate tag: `v1.3.15`
+- Active candidate package version: `1.3.15`
+- Active candidate state: release branch opened from protected `develop` and
+  branch pipeline green; exact tag, public GitHub release publication,
+  Marketplace mutation, Windows Docker Desktop proof admission, main
+  promotion, and release branch deletion remain blocked by boundary
 
 ## Develop Preview State
 
@@ -458,27 +458,29 @@ state.
 
 - Status: performed and retained
 - Packet:
-  `docs/product/release-branch-opening-v1.3.14-2026-05-08.md`
+  `docs/product/release-branch-opening-v1.3.15-2026-05-09.md`
 - Packet JSON:
-  `docs/product/release-branch-opening-v1.3.14-2026-05-08.json`
+  `docs/product/release-branch-opening-v1.3.15-2026-05-09.json`
 - Source branch: `develop`
 - Source commit:
-  `50bec3391ea823739c2e8baddb33b77c283a37eb`
-- Release branch: `release/1.3.14`
-- Release branch pipeline: `2511168302` / `success`
-- Package version: `1.3.14`
+  `67c2c3a188666eaad3cab2695092991c42f33470`
+- Release branch: `release/1.3.15`
+- Release branch pipeline: `2513019603` / `success`
+- Duplicate operator pipeline: `2513019188` / `success`
+- Package version: `1.3.15`
 - Vagrant Windows VSIX acceptance: release branch CI receipt retained in job
-  `14284865649`
+  `14293424513`
 - Vagrant assertion receipt:
   `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
 - Vagrant manifest:
-  `vagrant/evidence/20260508-121101/manifest.json`
-- Preview package job: `14284865650`
+  `vagrant/evidence/20260509-171233/manifest.json`
+- LabVIEW startup receipt: `vagrant/evidence/labview-startup.json`
+- Preview package job: `14293424514`
 - Preview VSIX evidence:
-  `preview-evidence/vi-history-suite-1.3.14.vsix`
+  `preview-evidence/vi-history-suite-1.3.15.vsix`
 - Preview VSIX SHA-256:
-  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`
-- Preview VSIX size: `1011702` bytes
+  `bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14`
+- Preview VSIX size: `1014754` bytes
 - Exact tag: not admitted and not created
 - `release_extension` job: not run because no exact `vX.Y.Z` tag exists
 - Public GitHub exact mutation: not admitted and not performed
@@ -486,12 +488,17 @@ state.
 - Windows Docker Desktop Windows-container proof state: community/deferred
 - `main` promotion: not admitted and not performed
 - Next admitted action:
-  `reassess-release-1.3.14-branch-readiness-before-exact-tag`
+  `reassess-release-1.3.15-branch-readiness-before-exact-tag`
 
 This branch opening converts the current candidate from a `develop`-only patch
 candidate into an opened release-candidate branch while preserving the exact
 publication boundary. The branch preview artifact is still preview evidence
 only, not the selected exact authority VSIX.
+
+The `2513019188` pipeline was an operator-triggered duplicate on the same ref
+and SHA after GitLab did not immediately surface the delayed branch-created
+pipeline. It also passed, but the canonical branch-opening receipt is the
+`push` pipeline `2513019603`.
 
 ## Release Branch Readiness Reassessment
 
@@ -683,11 +690,11 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: retain the completed GitLab authority tag plus public
-  GitHub source/tag handoff, then perform the explicit asset-first public
-  GitHub exact-release publication handoff only when that boundary is admitted
+- Governed next line: reassess `release/1.3.15` branch readiness from the
+  green branch-created pipeline before any exact tag, public GitHub release
+  publication, Marketplace mutation, main promotion, or release branch deletion
 - Next admitted action under the current boundary:
-  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
+  `reassess-release-1.3.15-branch-readiness-before-exact-tag`
 - Next admitted action if public GitHub release publication is explicitly
   admitted:
   `run-public-github-exact-transaction-publish-for-v1.3.14`

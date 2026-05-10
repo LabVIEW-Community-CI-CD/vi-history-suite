@@ -128,20 +128,19 @@ describe('release/1.3.14 main promotion preflight packet', () => {
         'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
     });
     expect(releaseState.activeCandidate).toMatchObject({
-      releaseBranch: 'release/1.3.14',
-      tag: 'v1.3.14',
-      packageVersion: '1.3.14',
-      status: 'public-source-and-tag-handoff-complete-release-publication-blocked'
+      releaseBranch: 'release/1.3.15',
+      tag: 'v1.3.15',
+      packageVersion: '1.3.15',
+      status: 'release-branch-opened-green-readiness-reassessment-pending'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'retain-public-source-and-tag-handoff-with-release-publication-blocked'
+      'reassess-release-1.3.15-branch-readiness-before-exact-tag'
     );
     expect(publicCandidate.activeDevelopCandidate).toMatchObject({
-      state: 'public-source-and-tag-handoff-complete-release-publication-blocked',
-      releaseMainPromotionPreflightPacketPath:
-        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md',
-      nextAdmittedAction:
-        'retain-public-source-and-tag-handoff-with-release-publication-blocked'
+      state: 'release-branch-opened-green-readiness-reassessment-pending',
+      activeReleaseCandidateBranch: 'release/1.3.15',
+      releaseMainPromotionPreflightPacketPath: null,
+      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
     });
 
     expect(currentState).toContain('release-main-promotion-preflight-v1.3.14-2026-05-08.md');

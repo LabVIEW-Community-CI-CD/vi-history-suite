@@ -454,29 +454,35 @@ describe('release publication state resolver', () => {
     });
     expect(state.releaseBranchOpening).toMatchObject({
       status: 'performed-and-retained',
-      packetPath: 'docs/product/release-branch-opening-v1.3.14-2026-05-08.md',
-      packetJsonPath: 'docs/product/release-branch-opening-v1.3.14-2026-05-08.json',
+      packetPath: 'docs/product/release-branch-opening-v1.3.15-2026-05-09.md',
+      packetJsonPath: 'docs/product/release-branch-opening-v1.3.15-2026-05-09.json',
       sourceBranch: 'develop',
-      sourceCommit: '50bec3391ea823739c2e8baddb33b77c283a37eb',
-      releaseBranch: 'release/1.3.14',
-      releaseBranchRef: 'refs/heads/release/1.3.14',
-      packageVersion: '1.3.14',
-      pipelineId: 2511168302,
+      sourceCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
+      releaseBranch: 'release/1.3.15',
+      releaseBranchRef: 'refs/heads/release/1.3.15',
+      packageVersion: '1.3.15',
+      pipelineId: 2513019603,
       pipelineStatus: 'success',
-      vagrantVsixAcceptanceJobId: 14284865649,
+      pipelineSource: 'push',
+      duplicatePipelineId: 2513019188,
+      duplicatePipelineStatus: 'success',
+      duplicatePipelineSource: 'api',
+      vagrantVsixAcceptanceJobId: 14293424513,
       vagrantVsixAcceptanceAssertionPath:
         'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
-      vagrantVsixAcceptanceManifestPath: 'vagrant/evidence/20260508-121101/manifest.json',
-      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.14.vsix',
-      previewVsixSha256: 'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91',
-      previewVsixSizeBytes: 1011702,
+      vagrantVsixAcceptanceManifestPath: 'vagrant/evidence/20260509-171233/manifest.json',
+      labviewStartupReceiptPath: 'vagrant/evidence/labview-startup.json',
+      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.15.vsix',
+      previewVsixSha256: 'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
+      previewVsixSizeBytes: 1014754,
       selectedExactAuthorityVsix: null,
       releaseExtensionJob: 'not-run-without-exact-tag',
       publicGitHubExactMutation: 'not-admitted-and-not-performed',
       marketplaceExactMutation: 'not-admitted-and-not-performed',
       windowsDockerDesktopProofState: 'community-deferred',
       mainPromotion: 'not-admitted-and-not-performed',
-      nextAdmittedAction: 'reassess-release-1.3.14-branch-readiness-before-exact-tag'
+      releaseBranchDeletion: 'not-admitted-and-not-performed',
+      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
     });
     expect(state.releaseBranchReadinessReassessment).toMatchObject({
       status: 'main-promotion-admissible-as-separate-governed-action',
@@ -608,7 +614,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Release branch opening: admissible as next governed action');
     expect(stateDoc).toContain('Admitted external Windows proof arrived: false');
     expect(stateDoc).toContain('Assessed pipeline: `2511103937` / `success`');
-    expect(stateDoc).toContain('Release branch pipeline: `2511168302` / `success`');
+    expect(stateDoc).toContain('Release branch pipeline: `2513019603` / `success`');
     expect(stateDoc).toContain('Protected develop retention pipeline: `2511236377` / `success`');
     expect(stateDoc).toContain('Protected develop retention pipeline: `2511333533` / `success`');
     expect(stateDoc).toContain('Current authority exact tag: `v1.3.14`');
@@ -617,9 +623,9 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('`b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`');
     expect(stateDoc).toContain('public GitHub release is absent; Marketplace still serves `1.3.13`');
     expect(stateDoc).toContain('Release-readiness MR: `!196` / merged');
-    expect(stateDoc).toContain('Preview package job: `14284865650`');
+    expect(stateDoc).toContain('Preview package job: `14293424514`');
     expect(stateDoc).toContain(
-      'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91'
+      'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14'
     );
     expect(stateDoc).toContain(
       '3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b'
@@ -670,13 +676,13 @@ describe('release publication state resolver', () => {
       status: 'retained-history'
     });
     expect(state.activeCandidate).toMatchObject({
-      releaseBranch: 'release/1.3.14',
-      tag: 'v1.3.14',
-      packageVersion: '1.3.14',
-      status: 'public-source-and-tag-handoff-complete-release-publication-blocked'
+      releaseBranch: 'release/1.3.15',
+      tag: 'v1.3.15',
+      packageVersion: '1.3.15',
+      status: 'release-branch-opened-green-readiness-reassessment-pending'
     });
     expect(state.nextAdmittedAction).toBe(
-      'retain-public-source-and-tag-handoff-with-release-publication-blocked'
+      'reassess-release-1.3.15-branch-readiness-before-exact-tag'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

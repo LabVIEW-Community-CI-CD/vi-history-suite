@@ -32,19 +32,20 @@ retained closed baseline.
 - current `main` package line: `1.3.9`
 - current `develop` package line: `1.3.15`
 - active exact release candidate line on `develop`: `v1.3.15`
-- active release-candidate branch: none for `1.3.15` yet
+- active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `1.3.15` installed-user stable patch work is open on the feature/develop
-  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
-  Marketplace publication has been created for this line yet
+  `release/1.3.15` is opened from protected `develop` with a green branch
+  pipeline; exact tag, public GitHub release, Marketplace mutation, Windows
+  Docker Desktop proof admission, main promotion, and release branch deletion
+  remain blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- the active exact candidate line is `v1.3.14`; `release/1.3.14` is now the
-  governed release-candidate branch and has been preflighted for opening the
-  next protected release-to-main merge request, while later exact lines must
-  reopen through the same GitFlow and publication gates from `develop`
+- the active exact candidate line is `v1.3.15`; `release/1.3.15` is now the
+  governed release-candidate branch with a green branch-created pipeline, while
+  release-branch readiness reassessment is the next admitted action before any
+  exact tag or protected main-promotion action
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -59,17 +60,17 @@ retained closed baseline.
 - rationale: authority exact `v1.3.9` remains tagged on `main`, public
   GitHub release `312994104` is published with exact assets, and VS Code
   Marketplace serves regular `1.3.9`
-- rationale: `develop` now carries patch candidate package line `1.3.14` for
-  release-readiness consolidation after the published `1.3.13` public
-  validation pre-release
+- rationale: `develop` now carries patch candidate package line `1.3.15` for
+  installed-user UX and local LabVIEW 2025+ support after the completed
+  `v1.3.14` GitLab authority and public source/tag handoff
 - rationale: the Vagrant Windows VSIX acceptance lane now has a repo-owned
   evidence assertion contract without expanding the Windows Docker Desktop
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  the active exact candidate line is `v1.3.14`, and protected main-promotion
-  preflight admits only opening a release-to-main MR with source branch
-  retention while exact tag, public GitHub, Marketplace, Windows Docker
-  Desktop, `main` mutation, and branch deletion remain blocked
+  the active exact candidate line is `v1.3.15`, `release/1.3.15` is the
+  governed release-candidate branch, and release-branch readiness reassessment
+  is the next admitted action while exact tag, public GitHub, Marketplace,
+  Windows Docker Desktop, `main` mutation, and branch deletion remain blocked
 
 ## Current Linux/Docker Preview Claim
 

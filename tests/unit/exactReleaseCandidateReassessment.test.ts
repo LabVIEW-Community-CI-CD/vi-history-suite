@@ -200,14 +200,14 @@ describe('exact release candidate reassessment', () => {
       marketplaceExactMutation: 'gated-and-not-performed'
     });
     expect(publicationState.activeCandidate).toMatchObject({
-      sourceBranch: 'main',
-      releaseBranch: 'release/1.3.14',
-      tag: 'v1.3.14',
-      packageVersion: '1.3.14',
-      status: 'public-source-and-tag-handoff-complete-release-publication-blocked'
+      sourceBranch: 'develop',
+      releaseBranch: 'release/1.3.15',
+      tag: 'v1.3.15',
+      packageVersion: '1.3.15',
+      status: 'release-branch-opened-green-readiness-reassessment-pending'
     });
     expect(publicationState.nextAdmittedAction).toBe(
-      'retain-public-source-and-tag-handoff-with-release-publication-blocked'
+      'reassess-release-1.3.15-branch-readiness-before-exact-tag'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

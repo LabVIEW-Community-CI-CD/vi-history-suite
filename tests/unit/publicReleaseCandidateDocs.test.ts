@@ -24,44 +24,48 @@ describe('public release candidate control surface', () => {
 
     expect(candidate.versionLine).toBe('1.3.9');
     expect(candidate.activeDevelopCandidate).toMatchObject({
-      candidateLine: 'v1.3.14',
-      packageVersion: '1.3.14',
-      state: 'public-source-and-tag-handoff-complete-release-publication-blocked',
+      candidateLine: 'v1.3.15',
+      packageVersion: '1.3.15',
+      state: 'release-branch-opened-green-readiness-reassessment-pending',
       branch: 'develop',
-      activeReleaseCandidateBranch: 'release/1.3.14',
+      activeReleaseCandidateBranch: 'release/1.3.15',
       releaseBranchOpeningPacketPath:
-        'docs/product/release-branch-opening-v1.3.14-2026-05-08.md',
+        'docs/product/release-branch-opening-v1.3.15-2026-05-09.md',
       releaseBranchOpeningPacketJsonPath:
-        'docs/product/release-branch-opening-v1.3.14-2026-05-08.json',
-      releaseBranchReadinessReassessmentPacketPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md',
-      releaseBranchReadinessReassessmentPacketJsonPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.json',
-      releaseMainPromotionPreflightPacketPath:
-        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md',
-      releaseMainPromotionPreflightPacketJsonPath:
-        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json',
-      nextAdmittedAction:
-        'retain-public-source-and-tag-handoff-with-release-publication-blocked',
-      sourceFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
-      mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
-      sourceHeadCommit: '97efa937a5317d69a1d65607c4f704d603edbe52',
-      developMergeCommit: '72899eb39e38ce34c697f0a227292ead6bcd8f2d',
-      mergedAt: '2026-05-08T17:52:32.814Z',
+        'docs/product/release-branch-opening-v1.3.15-2026-05-09.json',
+      releaseBranchReadinessReassessmentPacketPath: null,
+      releaseBranchReadinessReassessmentPacketJsonPath: null,
+      releaseMainPromotionPreflightPacketPath: null,
+      releaseMainPromotionPreflightPacketJsonPath: null,
+      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag',
+      sourceFeatureBranch: 'feature/develop-1.3.15-vagrant-x86-settings',
+      mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/202',
+      sourceHeadCommit: '1114189b654b86fe829eb7648672d3565ebf71cf',
+      developMergeCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
+      mergedAt: '2026-05-09T23:28:19.982Z',
       postMergeDevelopPipeline: {
-        pipelineId: 2511040377,
+        pipelineId: 2512993895,
         status: 'success',
-        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511040377'
+        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2512993895'
+      },
+      releaseBranchPipeline: {
+        pipelineId: 2513019603,
+        duplicatePipelineId: 2513019188,
+        status: 'success',
+        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2513019603'
       },
       vagrantVsixAcceptanceReceipt: {
-        jobId: 14284054131,
+        jobId: 14293424513,
         jobName: 'vagrant_windows_vsix_acceptance',
         jobStatus: 'success',
-        jobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14284054131',
+        jobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14293424513',
         assertionReceipt: 'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
-        manifest: 'vagrant/evidence/20260508-105809/manifest.json',
-        recordedAt: '2026-05-08T17:58:36.620Z',
+        manifest: 'vagrant/evidence/20260509-171233/manifest.json',
+        recordedAt: '2026-05-09T17:13:28.3899871-07:00',
         runtimeExecutionState: 'succeeded',
+        runtimeProvider: 'host-native',
+        runtimeEngine: 'labview-cli',
+        runtimeBitness: 'x86',
         proofExitCode: 0
       },
       productionMutationAllowed: false,
@@ -242,35 +246,32 @@ describe('public release candidate control surface', () => {
     ]);
 
     expect(candidateMarkdown).toContain('Version line: `1.3.9`');
-    expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.14`');
-    expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.14`');
+    expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.15`');
+    expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.15`');
     expect(candidateMarkdown).toContain('Active develop candidate branch: `develop`');
-    expect(candidateMarkdown).toContain('Active release-candidate branch: `release/1.3.14`');
+    expect(candidateMarkdown).toContain('Active release-candidate branch: `release/1.3.15`');
     expect(candidateMarkdown).toContain(
-      'docs/product/release-branch-opening-v1.3.14-2026-05-08.md'
+      'docs/product/release-branch-opening-v1.3.15-2026-05-09.md'
+    );
+    expect(candidateMarkdown).toContain('Release-branch readiness reassessment packet: not retained yet for `1.3.15`');
+    expect(candidateMarkdown).toContain('Release main-promotion preflight packet: not retained yet for `1.3.15`');
+    expect(candidateMarkdown).toContain(
+      '`reassess-release-1.3.15-branch-readiness-before-exact-tag`'
     );
     expect(candidateMarkdown).toContain(
-      'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md'
+      '`feature/develop-1.3.15-vagrant-x86-settings`'
     );
+    expect(candidateMarkdown).toContain('Protected develop merge: GitLab MR `!202`');
+    expect(candidateMarkdown).toContain('`67c2c3a188666eaad3cab2695092991c42f33470`');
+    expect(candidateMarkdown).toContain('Protected develop pipeline: `2512993895` / `success`');
+    expect(candidateMarkdown).toContain('Release branch pipeline: `2513019603` / `success`');
     expect(candidateMarkdown).toContain(
-      'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md'
-    );
-    expect(candidateMarkdown).toContain(
-      '`retain-public-source-and-tag-handoff-with-release-publication-blocked`'
-    );
-    expect(candidateMarkdown).toContain(
-      '`feature/develop-1.3.14-candidate-consolidation`'
-    );
-    expect(candidateMarkdown).toContain('Protected develop merge: GitLab MR `!192`');
-    expect(candidateMarkdown).toContain('`72899eb39e38ce34c697f0a227292ead6bcd8f2d`');
-    expect(candidateMarkdown).toContain('Protected develop pipeline: `2511040377` / `success`');
-    expect(candidateMarkdown).toContain(
-      'Vagrant VSIX acceptance receipt: GitLab job `14284054131` / `success`'
+      'Vagrant VSIX acceptance receipt: GitLab job `14293424513` / `success`'
     );
     expect(candidateMarkdown).toContain(
       'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json'
     );
-    expect(candidateMarkdown).toContain('vagrant/evidence/20260508-105809/manifest.json');
+    expect(candidateMarkdown).toContain('vagrant/evidence/20260509-171233/manifest.json');
     expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
     expect(candidateMarkdown).toContain('Current public source head: `f1cb609`');
     expect(candidateMarkdown).toContain('Software-factory governance branch: none');
@@ -306,7 +307,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('current exact released line: `v1.3.9`');
     expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.15`');
-    expect(currentState).toContain('active release-candidate branch: none for `1.3.15` yet');
+    expect(currentState).toContain('active release-candidate branch: `release/1.3.15`');
     expect(currentState).toContain('active software-factory governance branch on `develop`:');
     expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
