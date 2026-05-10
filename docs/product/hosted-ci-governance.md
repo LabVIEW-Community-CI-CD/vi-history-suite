@@ -208,15 +208,19 @@ Runner operator hardening:
   `vihs/win11-labview2026`, golden VM
   `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
   serialized GitLab `resource_group: vihs-windows-vagrant`, and isolated
-  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host uses
-  `/run/media/sergio/Data/vihs-vagrant` as the large-drive storage root for
-  `VAGRANT_HOME`, box output/cache, export work, and the VirtualBox default
-  machine folder; runner creation uses the `POST /user/runners` API to set
+  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host keeps `VAGRANT_HOME` on
+  `/home/sergio/.vagrant.d` so Vagrant private keys stay on a chmod-capable
+  ext4 filesystem, while `/run/media/sergio/Data/vihs-vagrant` remains the
+  large-drive storage root for box payload cache, export work, and the
+  VirtualBox default machine folder; runner creation uses the
+  `POST /user/runners` API to set
   tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
   registers the local shell runner manager with the returned `glrt-`
   authentication token; the repo-owned disposable cleanup surface
-  `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
-  fails when the disposable CI VM is running, deletes only a stopped
+  `scripts/vagrant/prepare-vagrant-home.sh` links
+  `/home/sergio/.vagrant.d/boxes` to the large-drive box cache before Vagrant
+  runs; `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the
+  golden VM, fails when the disposable CI VM is running, deletes only a stopped
   `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
   that point at the governed CI VM folder, retries orphaned disposable
   directory removal, quarantines that directory under the governed machine

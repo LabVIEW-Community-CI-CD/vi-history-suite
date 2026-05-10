@@ -22,6 +22,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const acceptance = readText('vagrant/provision/run-acceptance.ps1');
     const coldPrep = readText('vagrant/provision/prepare-cold-labview.ps1');
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
+    const prepareHome = readText('scripts/vagrant/prepare-vagrant-home.sh');
     const refreshBox = readText('scripts/vagrant/refresh-golden-box.sh');
     const cleanupCiVm = readText('scripts/vagrant/cleanup-disposable-ci-vm.sh');
     const laneDoc = readText('docs/product/vagrant-windows-acceptance-runner-lane.md');
@@ -33,6 +34,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('resource_group: vihs-windows-vagrant');
     expect(gitlabCi).toContain('needs: []');
     expect(gitlabCi).toContain('VAGRANT_DOTFILE_PATH: .vagrant-ci');
+    expect(gitlabCi).toContain('VAGRANT_HOME: /home/sergio/.vagrant.d');
+    expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_CACHE_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home');
+    expect(gitlabCi).toContain('bash scripts/vagrant/prepare-vagrant-home.sh');
     expect(gitlabCi).toContain('bash scripts/vagrant/cleanup-disposable-ci-vm.sh');
     expect(gitlabCi).toContain('rm -rf vagrant/.vagrant');
     expect(gitlabCi).toContain('- virtualbox');
@@ -40,7 +44,6 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden');
     expect(gitlabCi).toContain('VIHS_VAGRANT_CI_VM_NAME: vihs-ci-win11');
     expect(gitlabCi).toContain('VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data/vihs-vagrant');
-    expect(gitlabCi).toContain('VAGRANT_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work');
     expect(gitlabCi).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"');
@@ -129,6 +132,13 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostDoctor).toContain("Vagrant CI VM '$CI_VM_NAME' is already running");
     expect(hostDoctor).toContain('Local Vagrant state points at');
     expect(hostDoctor).toContain('remove $VAGRANT_DOTFILE_ROOT before booting CI');
+
+    expect(prepareHome).toContain('prepare-vagrant-home');
+    expect(prepareHome).toContain('VAGRANT_HOME supports chmod');
+    expect(prepareHome).toContain('VIHS_VAGRANT_BOX_CACHE_HOME');
+    expect(prepareHome).toContain('Linked Vagrant boxes');
+    expect(prepareHome).toContain('does not support chmod');
+    expect(prepareHome).toContain('exists and is not an empty directory');
 
     expect(refreshBox).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME');
     expect(refreshBox).toContain('VIHS_VIRTUALBOX_VM_NAME');
@@ -236,12 +246,14 @@ describe('Vagrant Windows acceptance runner lane', () => {
           resourceGroup: 'vihs-windows-vagrant',
           vagrantDotfilePath: '.vagrant-ci',
           storageRoot: '/run/media/sergio/Data/vihs-vagrant',
-          vagrantHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
+          vagrantHome: '/home/sergio/.vagrant.d',
+          vagrantBoxCacheHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
           boxFile: '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box',
           boxWorkdir: '/run/media/sergio/Data/vihs-vagrant/box-work',
           virtualBoxMachineFolder: '/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs',
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
+          repoOwnedPrepareHomeScript: 'scripts/vagrant/prepare-vagrant-home.sh',
           repoOwnedCleanupScript: 'scripts/vagrant/cleanup-disposable-ci-vm.sh',
           disposableDirectoryCleanupPolicy:
             'retry-orphaned-ci-vm-directory-removal-then-quarantine-under-governed-machine-folder',
@@ -299,6 +311,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
 
     expect(packageManifest.scripts?.['vagrant:host:doctor']).toBe(
       'bash scripts/vagrant/doctor-vagrant-host.sh'
+    );
+    expect(packageManifest.scripts?.['vagrant:home:prepare']).toBe(
+      'bash scripts/vagrant/prepare-vagrant-home.sh'
     );
     expect(packageManifest.scripts?.['vagrant:ci:cleanup']).toBe(
       'bash scripts/vagrant/cleanup-disposable-ci-vm.sh'

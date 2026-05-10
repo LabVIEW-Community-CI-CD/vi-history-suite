@@ -11,8 +11,9 @@ RestartSec=5
 KillSignal=SIGQUIT
 TimeoutStopSec=60
 Environment=PATH=%h/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
-Environment=VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home
+Environment=VAGRANT_HOME=%h/.vagrant.d
 Environment=VIHS_VAGRANT_STORAGE_ROOT=/run/media/sergio/Data/vihs-vagrant
+Environment=VIHS_VAGRANT_BOX_CACHE_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home
 Environment="VIHS_VIRTUALBOX_MACHINE_FOLDER=/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"
 
 [Install]
