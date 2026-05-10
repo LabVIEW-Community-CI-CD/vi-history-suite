@@ -282,11 +282,12 @@ Authority release facts:
 - current authority package line on `main`: `1.3.14`
 - current develop package line on `develop`: `1.3.15`
 - active exact release candidate line on `develop`: `v1.3.15`
-- active release-candidate branch: none for `1.3.15` yet
+- active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `1.3.15` installed-user stable patch work is open on the feature/develop
-  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
-  Marketplace publication has been created for this line yet
+  `release/1.3.15` is opened from protected `develop` and its release-branch
+  pipeline is green; exact tag, public GitHub release, Marketplace mutation,
+  Windows Docker Desktop proof admission, main promotion, and release branch
+  deletion remain blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -345,13 +346,14 @@ Authority release facts:
 - exact authority `v1.3.9` is now fully closed across public GitHub and VS
   Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.14` has completed GitLab authority main
-  promotion, GitLab authority exact tagging, and public GitHub source/tag
-  handoff, with all provider/year/bitness variants selectable, admitted Windows
-  host proof retained, Vagrant VSIX acceptance governed by repo-owned
-  assertion, and Windows Docker Desktop proof still community/deferred
+- active governed release claim: `1.3.15` has an opened `release/1.3.15`
+  branch from protected `develop` with green branch CI, all provider/year/
+  bitness variants selectable, admitted Windows host proof retained, Vagrant
+  VSIX acceptance governed by repo-owned assertion, and Windows Docker Desktop
+  proof still community/deferred; completed `v1.3.14` GitLab authority and
+  public source/tag handoff remain retained separately
 - next admitted release-control action:
-  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
+  `reassess-release-1.3.15-branch-readiness-before-exact-tag`
 - active Marketplace stable target: `1.3.15`
 - retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
