@@ -325,6 +325,7 @@
           "repoOwnedAcceptanceAssertionPackageScript": "npm run vagrant:acceptance:assert",
           "bootstrapInteractiveSessionPolicy": "bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview",
           "labviewPrelaunchFallbackPolicy": "manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window",
+          "harnessGitTimeoutMs": 300000,
           "labviewStartupEvidencePath": "vagrant/evidence/labview-startup.json",
           "vagrantfile": "vagrant/Vagrantfile",
           "goldenRefreshVariable": "VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true",

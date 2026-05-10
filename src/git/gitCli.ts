@@ -9,14 +9,22 @@ export interface GitHistoryEntry {
   subject: string;
 }
 
+export interface RunGitOptions {
+  timeoutMs?: number;
+}
+
 const HISTORY_RECORD_SEPARATOR = '\x1e';
 const HISTORY_FIELD_SEPARATOR = '\x1f';
+const DEFAULT_GIT_TIMEOUT_MS = 300000;
+const GIT_TIMEOUT_ENVIRONMENT_KEY = 'VI_HISTORY_SUITE_GIT_TIMEOUT_MS';
 
 export async function runGit(
   args: string[],
   cwd: string,
-  encoding: BufferEncoding | 'buffer' = 'utf8'
+  encoding: BufferEncoding | 'buffer' = 'utf8',
+  options: RunGitOptions = {}
 ): Promise<string | Buffer> {
+  const timeoutMs = options.timeoutMs ?? resolveGitTimeoutMs();
   return new Promise((resolve, reject) => {
     execFile(
       resolveGitExecutable(),
@@ -24,11 +32,12 @@ export async function runGit(
       {
         cwd,
         encoding,
-        maxBuffer: 16 * 1024 * 1024
+        maxBuffer: 16 * 1024 * 1024,
+        timeout: timeoutMs
       },
       (error, stdout) => {
         if (error) {
-          reject(error);
+          reject(describeGitSubprocessError(error, args, timeoutMs));
           return;
         }
 
@@ -36,6 +45,22 @@ export async function runGit(
       }
     );
   });
+}
+
+export function resolveGitTimeoutMs(environment: NodeJS.ProcessEnv = process.env): number {
+  const rawTimeout = environment[GIT_TIMEOUT_ENVIRONMENT_KEY]?.trim();
+  if (!rawTimeout) {
+    return DEFAULT_GIT_TIMEOUT_MS;
+  }
+
+  const timeoutMs = Number(rawTimeout);
+  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
+    throw new Error(
+      `Unsupported ${GIT_TIMEOUT_ENVIRONMENT_KEY} value '${rawTimeout}'. Use a positive integer timeout in milliseconds.`
+    );
+  }
+
+  return timeoutMs;
 }
 
 export function resolveGitExecutable(
@@ -77,6 +102,23 @@ export function getWindowsGitExecutableCandidates(
   }
 
   return [...candidates];
+}
+
+function describeGitSubprocessError(error: Error, args: string[], timeoutMs: number): Error {
+  const maybeTimedOut = error as Error & {
+    killed?: boolean;
+    signal?: NodeJS.Signals | null;
+  };
+
+  if (maybeTimedOut.killed || maybeTimedOut.signal === 'SIGTERM') {
+    return new Error(
+      `Git command timed out after ${timeoutMs} ms: git ${args.join(' ')}. ` +
+        `Set ${GIT_TIMEOUT_ENVIRONMENT_KEY} to a larger value for slow networks.`,
+      { cause: error }
+    );
+  }
+
+  return error;
 }
 
 export function normalizeRelativeGitPath(input: string): string {
