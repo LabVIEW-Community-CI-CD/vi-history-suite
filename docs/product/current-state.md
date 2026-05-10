@@ -66,20 +66,24 @@ Read these in order:
 48. [Release Branch Readiness Reassessment v1.3.14 2026-05-08 JSON](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.json)
 49. [Release Main Promotion Preflight v1.3.14 2026-05-08](./release-main-promotion-preflight-v1.3.14-2026-05-08.md)
 50. [Release Main Promotion Preflight v1.3.14 2026-05-08 JSON](./release-main-promotion-preflight-v1.3.14-2026-05-08.json)
-51. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
-52. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
-53. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
-54. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
-55. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
-56. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
-57. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
-58. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
-51. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-52. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-53. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-54. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-55. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-56. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+51. [Release Branch Opening v1.3.15 2026-05-09](./release-branch-opening-v1.3.15-2026-05-09.md)
+52. [Release Branch Opening v1.3.15 2026-05-09 JSON](./release-branch-opening-v1.3.15-2026-05-09.json)
+53. [Release Branch Readiness Reassessment v1.3.15 2026-05-09](./release-branch-readiness-reassessment-v1.3.15-2026-05-09.md)
+54. [Release Branch Readiness Reassessment v1.3.15 2026-05-09 JSON](./release-branch-readiness-reassessment-v1.3.15-2026-05-09.json)
+55. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
+56. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26 JSON](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
+57. [Exact Release Candidate Reassessment 2026-04-26](./exact-release-candidate-reassessment-2026-04-26.md)
+58. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
+59. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
+60. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
+61. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+62. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+63. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+64. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+65. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+66. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+67. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+68. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -206,11 +210,13 @@ Latest landed ship target:
 - current authority package line on `main`: `1.3.14`
 - current develop package line on `develop`: `1.3.15`
 - active exact release candidate line on `develop`: `v1.3.15`
-- active release-candidate branch: none for `1.3.15` yet
+- active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `1.3.15` installed-user stable patch work is open on the feature/develop
-  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
-  Marketplace publication has been created for this line yet
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -297,30 +303,29 @@ Latest landed ship target:
   Desktop Windows-container proof admission, and release branch deletion remain
   blocked by boundary
 - current release-branch opening packet:
-  [release-branch-opening-v1.3.14-2026-05-08.md](./release-branch-opening-v1.3.14-2026-05-08.md)
+  [release-branch-opening-v1.3.15-2026-05-09.md](./release-branch-opening-v1.3.15-2026-05-09.md)
 - current release-branch opening packet JSON:
-  [release-branch-opening-v1.3.14-2026-05-08.json](./release-branch-opening-v1.3.14-2026-05-08.json)
+  [release-branch-opening-v1.3.15-2026-05-09.json](./release-branch-opening-v1.3.15-2026-05-09.json)
 - current release-branch readiness reassessment:
-  [release-branch-readiness-reassessment-v1.3.14-2026-05-08.md](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.md)
+  [release-branch-readiness-reassessment-v1.3.15-2026-05-09.md](./release-branch-readiness-reassessment-v1.3.15-2026-05-09.md)
 - current release-branch readiness reassessment JSON:
-  [release-branch-readiness-reassessment-v1.3.14-2026-05-08.json](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.json)
+  [release-branch-readiness-reassessment-v1.3.15-2026-05-09.json](./release-branch-readiness-reassessment-v1.3.15-2026-05-09.json)
 - current release main-promotion preflight:
-  [release-main-promotion-preflight-v1.3.14-2026-05-08.md](./release-main-promotion-preflight-v1.3.14-2026-05-08.md)
-- current release main-promotion preflight JSON:
-  [release-main-promotion-preflight-v1.3.14-2026-05-08.json](./release-main-promotion-preflight-v1.3.14-2026-05-08.json)
+  not retained yet for `1.3.15`
 - current next admitted action:
-  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
+  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
   [windows-labview-community-proof-intake-checklist-2026-04-26.json](./windows-labview-community-proof-intake-checklist-2026-04-26.json)
 - exact-release candidate conversion boundary:
-  the `2026-05-08` readiness assessment admitted the governed
-  `release/1.3.14` branch opening as the next separate action; the branch is
-  now open, retained, reassessed, preflighted, promoted to protected `main`,
-  tagged on GitLab authority, and handed off to public GitHub source/tag; the
-  next conversion step is retaining that blocked state until explicit public
-  GitHub exact-release publication is admitted
+  the `2026-05-08` readiness path for `1.3.14` is complete through GitLab
+  authority and public GitHub source/tag handoff; the active `1.3.15` line is
+  now an opened `release/1.3.15` branch with green branch and protected
+  `develop` pipelines, but `main` is not yet an ancestor of the release branch;
+  the next conversion step is a topology refresh before any main-promotion
+  preflight, exact tag, public GitHub release publication, Marketplace
+  mutation, main promotion, or release branch deletion
 - historical exact-release candidate reassessment:
   [exact-release-candidate-reassessment-2026-04-26.md](./exact-release-candidate-reassessment-2026-04-26.md)
 - historical exact-release candidate reassessment JSON:

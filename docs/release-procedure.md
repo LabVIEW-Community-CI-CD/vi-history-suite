@@ -16,11 +16,12 @@
 - The current authority package line on `main` is `1.3.14`.
 - The current develop package line on `develop` is `1.3.15`.
 - The active exact release candidate line on `develop` is `v1.3.15`.
-- The active release-candidate branch is none for `1.3.15` yet.
-- The active release-candidate state is `1.3.15` installed-user stable patch
-  work open on the feature/develop line; no `release/1.3.15` branch, exact tag,
-  public GitHub release, or Marketplace publication has been created for this
-  line yet.
+- The active release-candidate branch is `release/1.3.15`.
+- The active release-candidate state is `release/1.3.15` opened with a green
+  branch pipeline, but main-promotion preflight is blocked until protected
+  `main` becomes an ancestor of the release branch; no exact tag, public GitHub
+  release, Marketplace mutation, Windows Docker Desktop proof admission, main
+  promotion, or release branch deletion has been admitted for this line.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -86,11 +87,10 @@
   workflow, and a Windows Docker Desktop proof handoff that remains
   community/deferred.
 - The next admitted release-control action under the current boundary is
-  `retain-public-source-and-tag-handoff-with-release-publication-blocked`;
-  if public GitHub release publication is explicitly admitted, the next
-  governed action is the asset-first `public:github:exact:transaction:publish`
-  handoff for `v1.3.14`. Marketplace mutation, Windows Docker Desktop proof
-  admission, and release branch deletion remain blocked.
+  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`; public
+  GitHub release publication for `v1.3.14`, Marketplace mutation, Windows
+  Docker Desktop proof admission, main promotion, exact tag creation, and
+  release branch deletion remain blocked unless explicitly admitted separately.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer
   authorization for public GitHub and Marketplace publication.

@@ -76,7 +76,8 @@ Official GitLab references:
 - Vagrant box: `vihs/win11-labview2026`
 - Vagrantfile surface: `vagrant/Vagrantfile`
 - Vagrant dotfile path: `vagrant/.vagrant-ci`
-- Vagrant home: `/run/media/sergio/Data/vihs-vagrant/vagrant-home`
+- Vagrant home: `/home/sergio/.vagrant.d`
+- Vagrant large box cache: `/run/media/sergio/Data/vihs-vagrant/vagrant-home`
 - box output file: `/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box`
 - box export work root: `/run/media/sergio/Data/vihs-vagrant/box-work`
 - VirtualBox default machine folder:
@@ -91,6 +92,7 @@ Official GitLab references:
   boot state in the disposable clone
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
+- Vagrant home prepare script: `scripts/vagrant/prepare-vagrant-home.sh`
 - disposable CI VM cleanup script:
   `scripts/vagrant/cleanup-disposable-ci-vm.sh`
 - guest cold-prep provisioner: `vagrant/provision/prepare-cold-labview.ps1`
@@ -105,11 +107,17 @@ golden-source and CI-runtime state remain distinct.
 CI first runs `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to
 touch the golden VM, fails if the disposable CI VM is running, deletes only a
 stopped VM named `vihs-ci-win11`, unregisters stale inaccessible disposable
-registry entries that still point at the governed CI VM folder, and removes the
-active `.vagrant-ci` state. The job then runs Vagrant with
+registry entries that still point at the governed CI VM folder, retries
+orphaned disposable VM directory removal, quarantines that directory under the
+governed machine folder when NTFS/FUSE leaves the original directory name
+present after retries, and removes the active `.vagrant-ci` state. The job then
+runs Vagrant with
 `VAGRANT_DOTFILE_PATH=.vagrant-ci` and
-`VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home`. The CI job
-also sets the VirtualBox default machine folder to
+`VAGRANT_HOME=/home/sergio/.vagrant.d` so Vagrant private-key chmod remains on
+the host ext4 filesystem. `scripts/vagrant/prepare-vagrant-home.sh` links
+`/home/sergio/.vagrant.d/boxes` to the large-drive box cache at
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`. The CI job also sets
+the VirtualBox default machine folder to
 `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs` before importing the
 disposable VM so the root filesystem does not need to hold the large Windows
 box or clone. The host doctor fails closed when the active VirtualBox machine

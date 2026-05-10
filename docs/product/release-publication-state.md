@@ -19,13 +19,14 @@ final installed-user distribution surface.
 - Expected checksum: `vi-history-suite-1.3.9.vsix.sha256`
 - Expected VSIX SHA-256:
   `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
-- Active candidate release branch: `release/1.3.14`
-- Active candidate tag: `v1.3.14`
-- Active candidate package version: `1.3.14`
-- Active candidate state: GitLab authority main promotion, exact authority
-  tagging, and public GitHub source/tag handoff are complete; public GitHub
-  release publication, Marketplace mutation, Windows Docker Desktop proof
-  admission, and release branch deletion remain blocked by boundary
+- Active candidate release branch: `release/1.3.15`
+- Active candidate tag: `v1.3.15`
+- Active candidate package version: `1.3.15`
+- Active candidate state: release branch opened and green, but
+  main-promotion preflight is blocked until protected `main` becomes an
+  ancestor of `release/1.3.15`; exact tag, public GitHub release publication,
+  Marketplace mutation, Windows Docker Desktop proof admission, main
+  promotion, and release branch deletion remain blocked by boundary
 
 ## Develop Preview State
 
@@ -458,27 +459,29 @@ state.
 
 - Status: performed and retained
 - Packet:
-  `docs/product/release-branch-opening-v1.3.14-2026-05-08.md`
+  `docs/product/release-branch-opening-v1.3.15-2026-05-09.md`
 - Packet JSON:
-  `docs/product/release-branch-opening-v1.3.14-2026-05-08.json`
+  `docs/product/release-branch-opening-v1.3.15-2026-05-09.json`
 - Source branch: `develop`
 - Source commit:
-  `50bec3391ea823739c2e8baddb33b77c283a37eb`
-- Release branch: `release/1.3.14`
-- Release branch pipeline: `2511168302` / `success`
-- Package version: `1.3.14`
+  `67c2c3a188666eaad3cab2695092991c42f33470`
+- Release branch: `release/1.3.15`
+- Release branch pipeline: `2513019603` / `success`
+- Duplicate operator pipeline: `2513019188` / `success`
+- Package version: `1.3.15`
 - Vagrant Windows VSIX acceptance: release branch CI receipt retained in job
-  `14284865649`
+  `14293424513`
 - Vagrant assertion receipt:
   `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
 - Vagrant manifest:
-  `vagrant/evidence/20260508-121101/manifest.json`
-- Preview package job: `14284865650`
+  `vagrant/evidence/20260509-171233/manifest.json`
+- LabVIEW startup receipt: `vagrant/evidence/labview-startup.json`
+- Preview package job: `14293424514`
 - Preview VSIX evidence:
-  `preview-evidence/vi-history-suite-1.3.14.vsix`
+  `preview-evidence/vi-history-suite-1.3.15.vsix`
 - Preview VSIX SHA-256:
-  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`
-- Preview VSIX size: `1011702` bytes
+  `bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14`
+- Preview VSIX size: `1014754` bytes
 - Exact tag: not admitted and not created
 - `release_extension` job: not run because no exact `vX.Y.Z` tag exists
 - Public GitHub exact mutation: not admitted and not performed
@@ -486,48 +489,59 @@ state.
 - Windows Docker Desktop Windows-container proof state: community/deferred
 - `main` promotion: not admitted and not performed
 - Next admitted action:
-  `reassess-release-1.3.14-branch-readiness-before-exact-tag`
+  `reassess-release-1.3.15-branch-readiness-before-exact-tag`
 
 This branch opening converts the current candidate from a `develop`-only patch
 candidate into an opened release-candidate branch while preserving the exact
 publication boundary. The branch preview artifact is still preview evidence
 only, not the selected exact authority VSIX.
 
+The `2513019188` pipeline was an operator-triggered duplicate on the same ref
+and SHA after GitLab did not immediately surface the delayed branch-created
+pipeline. It also passed, but the canonical branch-opening receipt is the
+`push` pipeline `2513019603`.
+
 ## Release Branch Readiness Reassessment
 
-- Status: main promotion admissible as a separate governed action
+- Status: blocked because `main` is not an ancestor of `release/1.3.15`
 - Reassessment:
-  `docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md`
+  `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md`
 - Reassessment JSON:
-  `docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.json`
-- Release branch: `release/1.3.14`
+  `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json`
+- Release branch: `release/1.3.15`
 - Release branch commit:
-  `50bec3391ea823739c2e8baddb33b77c283a37eb`
-- Release branch pipeline: `2511168302` / `success`
+  `67c2c3a188666eaad3cab2695092991c42f33470`
+- Release branch pipeline: `2513019603` / `success`
 - Protected develop retention commit:
-  `c9cff58f5608289ec6acdaea64999b1e460cca96`
-- Protected develop retention pipeline: `2511236377` / `success`
+  `801349167499b9d03b8244c42b03d88e15098034`
+- Protected develop retention pipeline: `2513063788` / `success`
+- Topology: protected `main`
+  `2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa` is not an ancestor of
+  `release/1.3.15`; the merge base is
+  `50bec3391ea823739c2e8baddb33b77c283a37eb`
+- Release branch is ancestor of protected `develop`: yes
 - Release branch preview VSIX SHA-256:
-  `d5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91`
+  `bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14`
 - Protected develop retention preview VSIX SHA-256:
-  `17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd`
-- Release branch Vagrant job: `14284865649`
-- Protected develop Vagrant job: `14285299160`
+  `03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95`
+- Release branch Vagrant job: `14293424513`
+- Protected develop Vagrant job: `14293598040`
 - Selected exact authority VSIX: not retained yet
-- Main promotion: admissible only as a separate governed action; not
-  performed by this reassessment
-- Exact tag: not admitted before protected `main` promotion
+- Main promotion: blocked until topology refresh is retained; not performed by
+  this reassessment
+- Exact tag: not admitted before topology refresh, protected `main` promotion,
+  and green protected `main` pipeline
 - Public GitHub exact mutation: not admitted and not performed
 - VS Code Marketplace exact mutation: not admitted and not performed
 - Windows Docker Desktop Windows-container proof state: community/deferred
-- Next admitted action at the time of reassessment:
-  `promote-release-1.3.14-to-main-as-separate-governed-action`
-- Superseded by later state: protected main promotion, exact authority tag, and
-  public GitHub source/tag handoff are now complete
+- Next admitted action:
+  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
 
-This reassessment closed the release-branch-readiness question without
-collapsing it into exact publication. The later protected `main` promotion and
-exact authority tag evidence supersede this historical next-action pointer.
+This reassessment keeps the release branch green evidence but blocks
+main-promotion preflight on topology. The next governed action is to bring
+protected `main` into `release/1.3.15` through a separate protected path, then
+rerun the release-branch pipeline and reassess again before any main-promotion
+or exact-tag action.
 
 ## Release Main Promotion Preflight
 
@@ -683,11 +697,13 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 
 ## Next Admitted Action
 
-- Governed next line: retain the completed GitLab authority tag plus public
-  GitHub source/tag handoff, then perform the explicit asset-first public
-  GitHub exact-release publication handoff only when that boundary is admitted
+- Governed next line: refresh `release/1.3.15` with protected `main` because
+  `main` is not yet an ancestor of the release branch, then rerun the release
+  branch pipeline before any main-promotion preflight, exact tag, public GitHub
+  release publication, Marketplace mutation, main promotion, or release branch
+  deletion
 - Next admitted action under the current boundary:
-  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
+  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
 - Next admitted action if public GitHub release publication is explicitly
   admitted:
   `run-public-github-exact-transaction-publish-for-v1.3.14`

@@ -79,11 +79,13 @@ Current version-line contract:
 - current authority package line on `main`: `1.3.14`
 - current develop package line on `develop`: `1.3.15`
 - active exact release candidate line on `develop`: `v1.3.15`
-- active release-candidate branch: none for `1.3.15` yet
+- active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `1.3.15` installed-user stable patch work is open on the feature/develop
-  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
-  Marketplace publication has been created for this line yet
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -153,10 +155,12 @@ Current control decision for public exact hardening:
 - rationale: Vagrant Windows VSIX acceptance now has a repo-owned evidence
   assertion surface and retained CI receipt contract
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  the active exact release candidate line is `v1.3.15`, no `release/1.3.15`
-  branch or exact tag exists yet, and public GitHub release publication,
-  Marketplace mutation, Windows Docker Desktop proof admission, and release
-  branch deletion remain blocked by boundary
+  the active exact release candidate line is `v1.3.15`, `release/1.3.15`
+  is opened and green, main-promotion preflight is blocked until topology
+  refresh brings protected `main` into the release branch, no exact tag exists
+  yet, and public GitHub release publication, Marketplace mutation, Windows
+  Docker Desktop proof admission, and release branch deletion remain blocked
+  by boundary
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`
