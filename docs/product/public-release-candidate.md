@@ -1,31 +1,37 @@
 # Public Release Candidate
 
 - Version line: `1.3.9`
-- Active develop candidate line: `v1.3.14`
-- Active develop candidate package: `1.3.14`
-- Active develop candidate state: GitLab authority main promotion, exact
-  authority tagging, and public GitHub source/tag handoff are complete; public
-  GitHub release publication, Marketplace mutation, Windows Docker Desktop
-  proof admission, and release branch deletion remain blocked by boundary
+- Active develop candidate line: `v1.3.15`
+- Active develop candidate package: `1.3.15`
+- Active develop candidate state: release branch opened and green, but
+  main-promotion preflight is blocked until protected `main` becomes an
+  ancestor of `release/1.3.15`; exact tag, public GitHub release publication,
+  Marketplace mutation, Windows Docker Desktop proof admission, main
+  promotion, and release branch deletion remain blocked by boundary
 - Active develop candidate branch: `develop`
-- Active release-candidate branch: `release/1.3.14`
+- Active release-candidate branch: `release/1.3.15`
 - Release-branch opening packet:
-  `docs/product/release-branch-opening-v1.3.14-2026-05-08.md`
+  `docs/product/release-branch-opening-v1.3.15-2026-05-09.md`
 - Release-branch readiness reassessment packet:
-  `docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md`
-- Release main-promotion preflight packet:
-  `docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md`
+  `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md`
+- Release main-promotion preflight packet: not retained yet for `1.3.15`
 - Next admitted action:
-  `retain-public-source-and-tag-handoff-with-release-publication-blocked`
+  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
 - Source consolidation branch:
-  `feature/develop-1.3.14-candidate-consolidation`
-- Protected develop merge: GitLab MR `!192` merged
-  `97efa937a5317d69a1d65607c4f704d603edbe52` into `develop` as
-  `72899eb39e38ce34c697f0a227292ead6bcd8f2d`
-- Protected develop pipeline: `2511040377` / `success`
-- Vagrant VSIX acceptance receipt: GitLab job `14284054131` / `success`,
+  `feature/develop-1.3.15-vagrant-x86-settings`
+- Protected develop merge: GitLab MR `!202` merged
+  `1114189b654b86fe829eb7648672d3565ebf71cf` into `develop` as
+  `67c2c3a188666eaad3cab2695092991c42f33470`
+- Protected develop pipeline: `2512993895` / `success`
+- Release branch pipeline: `2513019603` / `success`; duplicate operator
+  pipeline `2513019188` also passed on the same ref and SHA
+- Release branch readiness reassessment: blocked because protected `main`
+  `2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa` is not an ancestor of
+  `release/1.3.15`; protected `develop` retention pipeline `2513063788`
+  passed
+- Vagrant VSIX acceptance receipt: GitLab job `14293424513` / `success`,
   retaining `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
-  and `vagrant/evidence/20260508-105809/manifest.json`
+  and `vagrant/evidence/20260509-171233/manifest.json`
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-23`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
@@ -43,7 +49,7 @@
   public GitHub, and VS Code Marketplace, while blocked historical public
   GitHub incident evidence for `v1.3.8` remains retained separately
 - Protected exact-release line: `main`
-- Active release-candidate branch: `release/1.3.14`
+- Active release-candidate branch: `release/1.3.15`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
 - Required checks:

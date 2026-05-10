@@ -140,7 +140,10 @@ describe('runner lane operator assets', () => {
     expect(linuxService).toContain(
       'ExecStart=%h/.local/bin/gitlab-runner run --config %h/.gitlab-runner/config.toml --working-directory %h'
     );
-    expect(linuxService).toContain('Environment=VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home');
+    expect(linuxService).toContain('Environment=VAGRANT_HOME=%h/.vagrant.d');
+    expect(linuxService).toContain(
+      'Environment=VIHS_VAGRANT_BOX_CACHE_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home'
+    );
     expect(linuxService).toContain(
       'Environment="VIHS_VIRTUALBOX_MACHINE_FOLDER=/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"'
     );

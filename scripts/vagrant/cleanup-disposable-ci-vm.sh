@@ -65,8 +65,29 @@ remove_directory_if_under() {
   local path="$1"
   local parent="$2"
   if [[ -d "$path" && -n "$parent" && "$path" == "$parent"/* && "$path" != "$parent" ]]; then
-    rm -rf "$path"
-    info "Removed orphaned disposable VM directory $path"
+    local attempt
+    local rm_error
+    for attempt in 1 2 3; do
+      rm_error=""
+      if rm_error="$(rm -rf "$path" 2>&1)" && [[ ! -e "$path" ]]; then
+        info "Removed orphaned disposable VM directory $path"
+        return 0
+      fi
+      if [[ -n "$rm_error" ]]; then
+        info "Removal attempt $attempt for orphaned disposable VM directory $path failed: $rm_error"
+      else
+        info "Removal attempt $attempt for orphaned disposable VM directory $path left the directory present"
+      fi
+      sleep 1
+    done
+
+    local quarantine_path
+    quarantine_path="${path}.stale.$(date -u +%Y%m%dT%H%M%SZ).$$"
+    if mv "$path" "$quarantine_path"; then
+      info "Quarantined orphaned disposable VM directory $path at $quarantine_path"
+      return 0
+    fi
+    fail "Could not remove or quarantine orphaned disposable VM directory $path"
   fi
 }
 

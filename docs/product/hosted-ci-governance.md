@@ -32,19 +32,21 @@ retained closed baseline.
 - current `main` package line: `1.3.9`
 - current `develop` package line: `1.3.15`
 - active exact release candidate line on `develop`: `v1.3.15`
-- active release-candidate branch: none for `1.3.15` yet
+- active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `1.3.15` installed-user stable patch work is open on the feature/develop
-  line; no `release/1.3.15` branch, exact tag, public GitHub release, or
-  Marketplace publication has been created for this line yet
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- the active exact candidate line is `v1.3.14`; `release/1.3.14` is now the
-  governed release-candidate branch and has been preflighted for opening the
-  next protected release-to-main merge request, while later exact lines must
-  reopen through the same GitFlow and publication gates from `develop`
+- the active exact candidate line is `v1.3.15`; `release/1.3.15` is now the
+  governed release-candidate branch with a green branch-created pipeline, while
+  topology refresh is the next admitted action before any exact tag or
+  protected main-promotion action
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -59,17 +61,17 @@ retained closed baseline.
 - rationale: authority exact `v1.3.9` remains tagged on `main`, public
   GitHub release `312994104` is published with exact assets, and VS Code
   Marketplace serves regular `1.3.9`
-- rationale: `develop` now carries patch candidate package line `1.3.14` for
-  release-readiness consolidation after the published `1.3.13` public
-  validation pre-release
+- rationale: `develop` now carries patch candidate package line `1.3.15` for
+  installed-user UX and local LabVIEW 2025+ support after the completed
+  `v1.3.14` GitLab authority and public source/tag handoff
 - rationale: the Vagrant Windows VSIX acceptance lane now has a repo-owned
   evidence assertion contract without expanding the Windows Docker Desktop
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  the active exact candidate line is `v1.3.14`, and protected main-promotion
-  preflight admits only opening a release-to-main MR with source branch
-  retention while exact tag, public GitHub, Marketplace, Windows Docker
-  Desktop, `main` mutation, and branch deletion remain blocked
+  the active exact candidate line is `v1.3.15`, `release/1.3.15` is the
+  governed release-candidate branch, and topology refresh is the next admitted
+  action while exact tag, public GitHub, Marketplace, Windows Docker Desktop,
+  `main` mutation, and branch deletion remain blocked
 
 ## Current Linux/Docker Preview Claim
 
@@ -206,18 +208,25 @@ Runner operator hardening:
   `vihs/win11-labview2026`, golden VM
   `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
   serialized GitLab `resource_group: vihs-windows-vagrant`, and isolated
-  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host uses
-  `/run/media/sergio/Data/vihs-vagrant` as the large-drive storage root for
-  `VAGRANT_HOME`, box output/cache, export work, and the VirtualBox default
-  machine folder; runner creation uses the `POST /user/runners` API to set
+  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host keeps `VAGRANT_HOME` on
+  `/home/sergio/.vagrant.d` so Vagrant private keys stay on a chmod-capable
+  ext4 filesystem, while `/run/media/sergio/Data/vihs-vagrant` remains the
+  large-drive storage root for box payload cache, export work, and the
+  VirtualBox default machine folder; runner creation uses the
+  `POST /user/runners` API to set
   tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
   registers the local shell runner manager with the returned `glrt-`
   authentication token; the repo-owned disposable cleanup surface
-  `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
-  fails when the disposable CI VM is running, deletes only a stopped
+  `scripts/vagrant/prepare-vagrant-home.sh` links
+  `/home/sergio/.vagrant.d/boxes` to the large-drive box cache before Vagrant
+  runs; `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the
+  golden VM, fails when the disposable CI VM is running, deletes only a stopped
   `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
-  that point at the governed CI VM folder, and clears active `.vagrant-ci`
-  state before import; the repo-owned host doctor
+  that point at the governed CI VM folder, retries orphaned disposable
+  directory removal, quarantines that directory under the governed machine
+  folder when NTFS/FUSE leaves the original directory name present after
+  retries, and clears active `.vagrant-ci` state before import; the repo-owned
+  host doctor
   `scripts/vagrant/doctor-vagrant-host.sh` checks Vagrant,
   VirtualBox, Docker, Node, npm, `gitlab-runner`, the registered box, golden VM
   power state, stale CI VM state, stale inaccessible disposable registry

@@ -140,7 +140,7 @@ describe('release governance package', () => {
     expect(hostedGovernance).toContain(
       'active exact release candidate line on `develop`: `v1.3.15`'
     );
-    expect(hostedGovernance).toContain('active release-candidate branch: none for `1.3.15` yet');
+    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.15`');
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
     expect(hostedGovernance).toContain('active hotfix branch: none');
     expect(hostedGovernance).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
