@@ -113,7 +113,7 @@ describe('public validation pre-release 1.3.11', () => {
 
     expect(releaseState.activeCandidate).toMatchObject({
       packageVersion: '1.3.15',
-      status: 'release-branch-opened-green-readiness-reassessment-pending'
+      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
     });
     expect(releaseState.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
@@ -141,7 +141,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',

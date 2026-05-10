@@ -26,18 +26,20 @@ describe('public release candidate control surface', () => {
     expect(candidate.activeDevelopCandidate).toMatchObject({
       candidateLine: 'v1.3.15',
       packageVersion: '1.3.15',
-      state: 'release-branch-opened-green-readiness-reassessment-pending',
+      state: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required',
       branch: 'develop',
       activeReleaseCandidateBranch: 'release/1.3.15',
       releaseBranchOpeningPacketPath:
         'docs/product/release-branch-opening-v1.3.15-2026-05-09.md',
       releaseBranchOpeningPacketJsonPath:
         'docs/product/release-branch-opening-v1.3.15-2026-05-09.json',
-      releaseBranchReadinessReassessmentPacketPath: null,
-      releaseBranchReadinessReassessmentPacketJsonPath: null,
+      releaseBranchReadinessReassessmentPacketPath:
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
+      releaseBranchReadinessReassessmentPacketJsonPath:
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json',
       releaseMainPromotionPreflightPacketPath: null,
       releaseMainPromotionPreflightPacketJsonPath: null,
-      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag',
+      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight',
       sourceFeatureBranch: 'feature/develop-1.3.15-vagrant-x86-settings',
       mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/202',
       sourceHeadCommit: '1114189b654b86fe829eb7648672d3565ebf71cf',
@@ -67,6 +69,15 @@ describe('public release candidate control surface', () => {
         runtimeEngine: 'labview-cli',
         runtimeBitness: 'x86',
         proofExitCode: 0
+      },
+      releaseBranchReadinessReassessment: {
+        status: 'blocked-main-not-ancestor-topology-refresh-required',
+        protectedDevelopRetentionCommit: '801349167499b9d03b8244c42b03d88e15098034',
+        protectedDevelopRetentionPipelineId: 2513063788,
+        mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+        mainIsAncestorOfReleaseBranch: false,
+        releaseBranchIsAncestorOfProtectedDevelop: true,
+        nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
       },
       productionMutationAllowed: false,
       claimBoundary: 'does-not-admit-windows-docker-desktop-windows-container-proof'
@@ -253,10 +264,12 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain(
       'docs/product/release-branch-opening-v1.3.15-2026-05-09.md'
     );
-    expect(candidateMarkdown).toContain('Release-branch readiness reassessment packet: not retained yet for `1.3.15`');
+    expect(candidateMarkdown).toContain(
+      'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md'
+    );
     expect(candidateMarkdown).toContain('Release main-promotion preflight packet: not retained yet for `1.3.15`');
     expect(candidateMarkdown).toContain(
-      '`reassess-release-1.3.15-branch-readiness-before-exact-tag`'
+      '`refresh-release-1.3.15-with-main-before-main-promotion-preflight`'
     );
     expect(candidateMarkdown).toContain(
       '`feature/develop-1.3.15-vagrant-x86-settings`'

@@ -13,13 +13,13 @@ function readJson<T>(relativePath: string): T {
   return JSON.parse(readText(relativePath)) as T;
 }
 
-describe('release/1.3.14 branch readiness reassessment packet', () => {
-  it('admits protected main promotion as a separate action without performing publication mutation', () => {
+describe('release/1.3.15 branch readiness reassessment packet', () => {
+  it('blocks main promotion preflight until main is brought into the release branch', () => {
     const packet = readText(
-      'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md'
+      'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md'
     );
     const packetJson = readJson<any>(
-      'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.json'
+      'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json'
     );
     const releaseState = readJson<any>('docs/product/release-publication-state.json');
     const releaseStateDoc = readText('docs/product/release-publication-state.md');
@@ -30,77 +30,93 @@ describe('release/1.3.14 branch readiness reassessment packet', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(packet).toContain('# Release Branch Readiness Reassessment v1.3.14 - 2026-05-08');
+    expect(packet).toContain('# Release Branch Readiness Reassessment v1.3.15 - 2026-05-09');
     expect(packet).toContain(
-      '| Release-branch readiness | `main-promotion-admissible-as-separate-governed-action` |'
+      '| Release-branch readiness | `blocked-main-not-ancestor-topology-refresh-required` |'
     );
-    expect(packet).toContain('`2511168302` / `success`');
-    expect(packet).toContain('`2511236377` / `success`');
-    expect(packet).toContain('`14284865649`');
-    expect(packet).toContain('`14285299160`');
+    expect(packet).toContain('`2513019603` / `success`');
+    expect(packet).toContain('`2513063788` / `success`');
+    expect(packet).toContain('`14293424513`');
+    expect(packet).toContain('`14293598040`');
     expect(packet).toContain(
-      'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91'
+      'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14'
     );
     expect(packet).toContain(
-      '17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd'
+      '03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95'
     );
-    expect(packet).toContain('| Exact tag | not admitted before protected `main` promotion |');
-    expect(packet).toContain('This reassessment did not create `v1.3.14`');
-    expect(packet).toContain('`promote-release-1.3.14-to-main-as-separate-governed-action`');
+    expect(packet).toContain('`main` is not yet an ancestor of `release/1.3.15`');
+    expect(packet).toContain('`50bec3391ea823739c2e8baddb33b77c283a37eb`');
+    expect(packet).toContain('`vihs-lv-prelaunch`');
+    expect(packet).toContain('`C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe`');
+    expect(packet).toContain(
+      '`refresh-release-1.3.15-with-main-before-main-promotion-preflight`'
+    );
 
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/release-branch-readiness-reassessment@v1',
-      recordedAt: '2026-05-08',
+      recordedAt: '2026-05-09',
       authority: {
-        releaseBranch: 'release/1.3.14',
-        releaseBranchCommitSha: '50bec3391ea823739c2e8baddb33b77c283a37eb',
-        releaseBranchPipelineId: 2511168302,
+        releaseBranch: 'release/1.3.15',
+        releaseBranchCommitSha: '67c2c3a188666eaad3cab2695092991c42f33470',
+        releaseBranchPipelineId: 2513019603,
         releaseBranchPipelineStatus: 'success',
-        protectedDevelopRetentionCommitSha: 'c9cff58f5608289ec6acdaea64999b1e460cca96',
-        protectedDevelopRetentionPipelineId: 2511236377,
+        protectedDevelopRetentionCommitSha: '801349167499b9d03b8244c42b03d88e15098034',
+        protectedDevelopRetentionPipelineId: 2513063788,
         protectedDevelopRetentionPipelineStatus: 'success',
-        packageVersion: '1.3.14'
+        packageVersion: '1.3.15'
+      },
+      topology: {
+        mainCommitSha: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+        mainIsAncestorOfReleaseBranch: false,
+        mainReleaseBranchMergeBase: '50bec3391ea823739c2e8baddb33b77c283a37eb',
+        releaseBranchIsAncestorOfProtectedDevelop: true,
+        releaseBranchDevelopMergeBase: '67c2c3a188666eaad3cab2695092991c42f33470',
+        v1315TagExistsAtInspection: false,
+        topologyRefreshRequired: true
       },
       verdict: {
-        releaseBranchReadiness: 'main-promotion-admissible-as-separate-governed-action',
-        currentAdmissibleClaim: 'release-branch-green-for-main-promotion-no-exact-publication',
-        mainPromotion: 'admissible-as-separate-governed-action-not-performed',
-        exactTag: 'not-admitted-before-protected-main-promotion',
+        releaseBranchReadiness: 'blocked-main-not-ancestor-topology-refresh-required',
+        currentAdmissibleClaim:
+          'release-branch-green-but-main-topology-refresh-required-no-exact-publication',
+        mainPromotion: 'blocked-until-main-is-ancestor-of-release-branch',
+        exactTag:
+          'not-admitted-before-topology-refresh-protected-main-promotion-and-green-main-pipeline',
         publicGitHubExactMutation: 'not-admitted-and-not-performed',
         marketplaceExactMutation: 'not-admitted-and-not-performed',
         windowsDockerDesktopWindowsContainerProof: 'community-deferred',
         selectedExactAuthorityVsix: null,
-        nextAdmittedAction: 'promote-release-1.3.14-to-main-as-separate-governed-action'
+        nextAdmittedAction:
+          'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
       }
     });
     expect(packetJson.releaseBranchEvidence.previewArtifact).toMatchObject({
-      jobId: 14284865650,
-      commitSha: '50bec3391ea823739c2e8baddb33b77c283a37eb',
-      sha256: 'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91',
-      sizeBytes: 1011702,
+      jobId: 14293424514,
+      commitSha: '67c2c3a188666eaad3cab2695092991c42f33470',
+      sha256: 'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
+      sizeBytes: 1014754,
       role: 'release-branch-preview-evidence-only'
     });
     expect(packetJson.protectedDevelopRetention.previewArtifact).toMatchObject({
-      jobId: 14285299161,
-      commitSha: 'c9cff58f5608289ec6acdaea64999b1e460cca96',
-      sha256: '17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd',
-      sizeBytes: 1011765,
+      jobId: 14293598041,
+      commitSha: '801349167499b9d03b8244c42b03d88e15098034',
+      sha256: '03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95',
+      sizeBytes: 1014773,
       role: 'protected-develop-retention-preview-evidence-only'
     });
     expect(packetJson.releaseBranchEvidence.vagrantVsixAcceptance).toMatchObject({
-      jobId: 14284865649,
+      jobId: 14293424513,
       generatedReportSha256:
-        '0df0027e2386543bd3e4b4ba54186b382430e0b95c8663d2a3609829c42b3800',
-      generatedReportSizeBytes: 4841
+        '39e42c208e518382a4d7870b9d132796ad61195e319575f6b9534080914c17a9',
+      generatedReportSizeBytes: 6737
     });
     expect(packetJson.protectedDevelopRetention.vagrantVsixAcceptance).toMatchObject({
-      jobId: 14285299160,
-      manifestPath: 'vagrant/evidence/20260508-125315/manifest.json',
+      jobId: 14293598040,
+      manifestPath: 'vagrant/evidence/20260509-174735/manifest.json',
       generatedReportSha256:
-        '371c486a2d68cbf2d0f29af34119f75afceac5c5dc14d3ad868b1ba249d8a71c',
-      generatedReportSizeBytes: 4841
+        '28af59de34ee10f1b549019fd5da4dd9625c48e27ca3aa7221f897b29411e180',
+      generatedReportSizeBytes: 6737
     });
-    expect(packetJson.releaseBranchEvidence.vagrantVsixAcceptance.facts).toMatchObject({
+    expect(packetJson.protectedDevelopRetention.vagrantVsixAcceptance.facts).toMatchObject({
       harnessId: 'HARNESS-VHS-002',
       selectedHash: '8741bb08026c104100720c0ef48621e4ab7762fd',
       baseHash: 'c188cdec606aac3b17d8b17274baa19eef3e4017',
@@ -109,58 +125,68 @@ describe('release/1.3.14 branch readiness reassessment packet', () => {
       proofExitCode: 0,
       runtimeProvider: 'host-native',
       runtimeEngine: 'labview-cli',
+      runtimeBitness: 'x86',
       runtimeExecutionState: 'succeeded',
-      generatedReportExists: true
+      generatedReportExists: true,
+      prelaunchTaskName: 'vihs-lv-prelaunch',
+      labviewExe: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      labviewSessionId: 1,
+      explorerSessionId: 1
     });
     expect(packetJson.mutationBoundary).toEqual({
-      exactTagCreated: false,
+      topologyRefreshPerformed: false,
       releaseBranchMergedToMain: false,
+      mainPromoted: false,
+      exactTagCreated: false,
       publicGitHubReleaseCreated: false,
       publicGitHubReleasePublished: false,
       marketplaceTouched: false,
-      mainPromoted: false,
       windowsDockerDesktopProofAdmitted: false,
       releaseBranchDeleted: false
     });
     expect(packetJson.nextAdmittedActions).toContain(
-      'promote-release-1.3.14-to-main-as-separate-governed-action'
+      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     );
 
     expect(releaseState.releaseBranchReadinessReassessment).toMatchObject({
-      status: 'main-promotion-admissible-as-separate-governed-action',
-      releaseBranch: 'release/1.3.14',
-      releaseBranchPipelineId: 2511168302,
-      protectedDevelopRetentionPipelineId: 2511236377,
+      status: 'blocked-main-not-ancestor-topology-refresh-required',
+      releaseBranch: 'release/1.3.15',
+      releaseBranchPipelineId: 2513019603,
+      protectedDevelopRetentionPipelineId: 2513063788,
+      mainIsAncestorOfReleaseBranch: false,
+      releaseBranchIsAncestorOfProtectedDevelop: true,
       releaseBranchPreviewVsixSha256:
-        'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91',
+        'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
       protectedDevelopPreviewVsixSha256:
-        '17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd',
-      releaseBranchVagrantVsixAcceptanceJobId: 14284865649,
-      protectedDevelopVagrantVsixAcceptanceJobId: 14285299160,
-      mainPromotion: 'admissible-as-separate-governed-action-not-performed',
-      exactTag: 'not-admitted-before-protected-main-promotion',
-      nextAdmittedAction: 'promote-release-1.3.14-to-main-as-separate-governed-action'
+        '03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95',
+      releaseBranchVagrantVsixAcceptanceJobId: 14293424513,
+      protectedDevelopVagrantVsixAcceptanceJobId: 14293598040,
+      mainPromotion: 'blocked-until-main-is-ancestor-of-release-branch',
+      exactTag:
+        'not-admitted-before-topology-refresh-protected-main-promotion-and-green-main-pipeline',
+      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     });
     expect(releaseState.activeCandidate).toMatchObject({
       releaseBranch: 'release/1.3.15',
       tag: 'v1.3.15',
       packageVersion: '1.3.15',
-      status: 'release-branch-opened-green-readiness-reassessment-pending'
+      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     );
     expect(publicCandidate.activeDevelopCandidate).toMatchObject({
-      state: 'release-branch-opened-green-readiness-reassessment-pending',
-      activeReleaseCandidateBranch: 'release/1.3.15',
-      releaseBranchReadinessReassessmentPacketPath: null,
-      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      state: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required',
+      releaseBranchReadinessReassessmentPacketPath:
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
+      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     });
 
     expect(releaseStateDoc).toContain('## Release Branch Readiness Reassessment');
-    expect(currentState).toContain('release-branch-readiness-reassessment-v1.3.14-2026-05-08.md');
-    expect(informationItemMap).toContain('Release branch readiness reassessment');
-    expect(srs).toContain('release-branch-readiness reassessment');
+    expect(releaseStateDoc).toContain('main-promotion preflight is blocked');
+    expect(currentState).toContain('release-branch-readiness-reassessment-v1.3.15-2026-05-09.md');
+    expect(informationItemMap).toContain('Release branch readiness reassessment packet v1.3.15');
+    expect(srs).toContain('blocking protected `main` promotion while `main` is not an ancestor');
     expect(rtm).toContain('VHS-REQ-592');
     expect(rtm).toContain('TEST-UNIT-400; TEST-DOC-152');
     expect(testPlan).toContain('TEST-UNIT-400');

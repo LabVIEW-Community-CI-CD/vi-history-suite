@@ -34,18 +34,19 @@ retained closed baseline.
 - active exact release candidate line on `develop`: `v1.3.15`
 - active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `release/1.3.15` is opened from protected `develop` with a green branch
-  pipeline; exact tag, public GitHub release, Marketplace mutation, Windows
-  Docker Desktop proof admission, main promotion, and release branch deletion
-  remain blocked
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - the active exact candidate line is `v1.3.15`; `release/1.3.15` is now the
   governed release-candidate branch with a green branch-created pipeline, while
-  release-branch readiness reassessment is the next admitted action before any
-  exact tag or protected main-promotion action
+  topology refresh is the next admitted action before any exact tag or
+  protected main-promotion action
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -68,9 +69,9 @@ retained closed baseline.
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
   the active exact candidate line is `v1.3.15`, `release/1.3.15` is the
-  governed release-candidate branch, and release-branch readiness reassessment
-  is the next admitted action while exact tag, public GitHub, Marketplace,
-  Windows Docker Desktop, `main` mutation, and branch deletion remain blocked
+  governed release-candidate branch, and topology refresh is the next admitted
+  action while exact tag, public GitHub, Marketplace, Windows Docker Desktop,
+  `main` mutation, and branch deletion remain blocked
 
 ## Current Linux/Docker Preview Claim
 

@@ -81,10 +81,11 @@ Current version-line contract:
 - active exact release candidate line on `develop`: `v1.3.15`
 - active release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `release/1.3.15` is opened from protected `develop` with a green branch
-  pipeline; exact tag, public GitHub release, Marketplace mutation, Windows
-  Docker Desktop proof admission, main promotion, and release branch deletion
-  remain blocked
+  `release/1.3.15` is opened and green, but main-promotion preflight is
+  blocked until protected `main` becomes an ancestor of the release branch;
+  exact tag, public GitHub release, Marketplace mutation, Windows Docker
+  Desktop proof admission, main promotion, and release branch deletion remain
+  blocked
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -155,9 +156,11 @@ Current control decision for public exact hardening:
   assertion surface and retained CI receipt contract
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
   the active exact release candidate line is `v1.3.15`, `release/1.3.15`
-  is opened and green, no exact tag exists yet, and public GitHub release publication,
-  Marketplace mutation, Windows Docker Desktop proof admission, and release
-  branch deletion remain blocked by boundary
+  is opened and green, main-promotion preflight is blocked until topology
+  refresh brings protected `main` into the release branch, no exact tag exists
+  yet, and public GitHub release publication, Marketplace mutation, Windows
+  Docker Desktop proof admission, and release branch deletion remain blocked
+  by boundary
 - rejected `hotfix`: the installed launcher fix was already merged to
   `develop` and should promote through the normal `release/*` path rather than
   bypassing GitFlow from `main`

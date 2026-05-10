@@ -485,28 +485,40 @@ describe('release publication state resolver', () => {
       nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
     });
     expect(state.releaseBranchReadinessReassessment).toMatchObject({
-      status: 'main-promotion-admissible-as-separate-governed-action',
+      status: 'blocked-main-not-ancestor-topology-refresh-required',
       packetPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.md',
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
       packetJsonPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.14-2026-05-08.json',
-      releaseBranch: 'release/1.3.14',
-      releaseBranchCommit: '50bec3391ea823739c2e8baddb33b77c283a37eb',
-      releaseBranchPipelineId: 2511168302,
+        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json',
+      releaseBranch: 'release/1.3.15',
+      releaseBranchCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
+      releaseBranchPipelineId: 2513019603,
       releaseBranchPipelineStatus: 'success',
-      protectedDevelopRetentionCommit: 'c9cff58f5608289ec6acdaea64999b1e460cca96',
-      protectedDevelopRetentionPipelineId: 2511236377,
+      protectedDevelopRetentionCommit: '801349167499b9d03b8244c42b03d88e15098034',
+      protectedDevelopRetentionPipelineId: 2513063788,
       protectedDevelopRetentionPipelineStatus: 'success',
+      packageVersion: '1.3.15',
+      mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
+      mainIsAncestorOfReleaseBranch: false,
+      mainReleaseBranchMergeBase: '50bec3391ea823739c2e8baddb33b77c283a37eb',
+      releaseBranchIsAncestorOfProtectedDevelop: true,
+      releaseBranchDevelopMergeBase: '67c2c3a188666eaad3cab2695092991c42f33470',
+      v1315TagExistsAtInspection: false,
       releaseBranchPreviewVsixSha256:
-        'd5208f9092bd7e3c7b7c075c91fc8fbf08851e116df7bedbf1f6279985dd4f91',
+        'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
       protectedDevelopPreviewVsixSha256:
-        '17c73f9e011499d1d77ae758e0c0ef13dcb2b8304e29a0fa4cf29cb6e8559ebd',
-      releaseBranchVagrantVsixAcceptanceJobId: 14284865649,
-      protectedDevelopVagrantVsixAcceptanceJobId: 14285299160,
+        '03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95',
+      releaseBranchVagrantVsixAcceptanceJobId: 14293424513,
+      protectedDevelopVagrantVsixAcceptanceJobId: 14293598040,
       selectedExactAuthorityVsix: null,
-      mainPromotion: 'admissible-as-separate-governed-action-not-performed',
-      exactTag: 'not-admitted-before-protected-main-promotion',
-      nextAdmittedAction: 'promote-release-1.3.14-to-main-as-separate-governed-action'
+      mainPromotion: 'blocked-until-main-is-ancestor-of-release-branch',
+      exactTag:
+        'not-admitted-before-topology-refresh-protected-main-promotion-and-green-main-pipeline',
+      releaseExtensionJob: 'not-run-without-exact-tag',
+      publicGitHubExactMutation: 'not-admitted-and-not-performed',
+      marketplaceExactMutation: 'not-admitted-and-not-performed',
+      windowsDockerDesktopProofState: 'community-deferred',
+      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     });
     expect(state.releaseMainPromotionPreflight).toMatchObject({
       status: 'protected-main-promotion-merge-request-opening-admissible',
@@ -615,7 +627,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('Admitted external Windows proof arrived: false');
     expect(stateDoc).toContain('Assessed pipeline: `2511103937` / `success`');
     expect(stateDoc).toContain('Release branch pipeline: `2513019603` / `success`');
-    expect(stateDoc).toContain('Protected develop retention pipeline: `2511236377` / `success`');
+    expect(stateDoc).toContain('Protected develop retention pipeline: `2513063788` / `success`');
     expect(stateDoc).toContain('Protected develop retention pipeline: `2511333533` / `success`');
     expect(stateDoc).toContain('Current authority exact tag: `v1.3.14`');
     expect(stateDoc).toContain('Public PR: https://github.com/svelderrainruiz/vi-history-suite/pull/69');
@@ -679,10 +691,10 @@ describe('release publication state resolver', () => {
       releaseBranch: 'release/1.3.15',
       tag: 'v1.3.15',
       packageVersion: '1.3.15',
-      status: 'release-branch-opened-green-readiness-reassessment-pending'
+      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
     });
     expect(state.nextAdmittedAction).toBe(
-      'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
