@@ -28,6 +28,7 @@ export interface HarnessReportSmokeCliArgs {
   bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
+  allowExistingWindowsHostRuntime: boolean;
 }
 
 export interface HarnessReportSmokeCliDeps {
@@ -51,7 +52,7 @@ export interface HarnessReportSmokeCliDeps {
 
 export function getHarnessReportSmokeUsage(): string {
   return [
-    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--selected-hash <hash>] [--base-hash <hash>] [--runtime-timeout-ms <ms>] [--platform <win32|linux|darwin>] [--execution-mode <auto|host-only|docker-only>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--help]',
+    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--selected-hash <hash>] [--base-hash <hash>] [--runtime-timeout-ms <ms>] [--platform <win32|linux|darwin>] [--execution-mode <auto|host-only|docker-only>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--allow-existing-windows-host-runtime] [--help]',
     '',
     'Options:',
     '  --harness-id <id>         Select the canonical harness to run.',
@@ -64,6 +65,7 @@ export function getHarnessReportSmokeUsage(): string {
     '  --bitness <value>         Set explicit proof-admission runtime bitness for report-tool selection.',
     '  --labview-cli-path <path> Provide an explicit proof-admission LabVIEWCLI path for report-tool selection.',
     '  --labview-exe-path <path> Provide an explicit proof-admission LabVIEW executable path for report-tool selection.',
+    '  --allow-existing-windows-host-runtime Admit an already-open selected LabVIEW host session for installed-user proof.',
     '  --help                    Print this help and exit without running the harness.',
     '',
     'Canonical diagnosis rules:',
@@ -85,6 +87,7 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
   let bitness: 'x86' | 'x64' | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
+  let allowExistingWindowsHostRuntime = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const current = argv[index];
@@ -173,6 +176,11 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
       continue;
     }
 
+    if (current === '--allow-existing-windows-host-runtime') {
+      allowExistingWindowsHostRuntime = true;
+      continue;
+    }
+
     if (current === '--help' || current === '-h') {
       helpRequested = true;
       continue;
@@ -196,7 +204,8 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
     executionMode,
     bitness,
     labviewCliPath,
-    labviewExePath
+    labviewExePath,
+    allowExistingWindowsHostRuntime
   };
 
   validateCanonicalHarnessReportSmokeArgs(parsedArgs);
@@ -220,7 +229,9 @@ export async function runHarnessReportSmokeCli(
     hostPlatform: deps.hostPlatform ?? process.platform
   });
 
-  await maybeCleanupHarnessReportSmokeWindowsRuntimeSurface(args, deps);
+  if (!args.allowExistingWindowsHostRuntime) {
+    await maybeCleanupHarnessReportSmokeWindowsRuntimeSurface(args, deps);
+  }
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
   const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');
@@ -240,7 +251,8 @@ export async function runHarnessReportSmokeCli(
         executionMode: args.executionMode,
         bitness: args.bitness,
         labviewCliPath: args.labviewCliPath,
-        labviewExePath: args.labviewExePath
+        labviewExePath: args.labviewExePath,
+        allowExistingWindowsHostRuntime: args.allowExistingWindowsHostRuntime
       }
     });
   } finally {

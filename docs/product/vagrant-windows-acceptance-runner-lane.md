@@ -150,10 +150,11 @@ optionally refreshes the local box, runs the host doctor, boots the disposable
 VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
 runs the guest cold-prep provisioner, runs acceptance, forces the generated
 `vihs` runtime-settings launcher to persist `host/2026/x86` so stale golden-VM
-user settings cannot retain x64, bounds harness Git acquisition with
-`VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000`, validates the latest manifest and
-harness output through `npm run vagrant:acceptance:assert`, and always halts
-the VM.
+user settings cannot retain x64, explicitly admits the governed prelaunched
+interactive LabVIEW host session for the installed-user proof, bounds harness
+Git acquisition with `VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000`, validates the
+latest manifest and harness output through `npm run vagrant:acceptance:assert`,
+and always halts the VM.
 The assertion requires the manifest and harness report to prove LabVIEW `2026` `x86`,
 `runtimeProvider=host-native`, `runtimeEngine=labview-cli`, and
 `runtimeExecutionState=succeeded`.

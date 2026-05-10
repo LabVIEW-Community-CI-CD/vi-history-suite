@@ -58,21 +58,20 @@ directly to the public GitHub source repo.
   mirror of the authority repo.
 - Public source publication shall be one-way: normalize in GitLab authority
   first, then promote outward.
-- Exact public `main` now publishes the exact released `v1.3.9` source line at
-  `fb0ef2b`, and the separate GitHub release record for `v1.3.9` is now
-  published while VS Code Marketplace now serves `1.3.9`.
+- Exact public `main` now publishes the exact released `v1.3.15` source line
+  at `427ab27`, and the separate GitHub release record for `v1.3.15` is now
+  published while VS Code Marketplace now serves `1.3.15`.
 - The earlier Marketplace community-validation intake facade remains retained
   at `b56fde1` through public PR #45.
-- Current public `main` now publishes the `1.3.14` exact source and
-  tag handoff at `f1cb609` through public PR #69, with public tag
-  `v1.3.14` retained as tag object
-  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae` peeling to `f1cb609`.
-  This handoff does not publish a public GitHub release, mutate the VS Code
-  Marketplace listing, admit Windows Docker Desktop proof, or delete
-  `release/1.3.14`; the earlier `1.3.13` Windows Docker Desktop proof-intake
-  promotion remains retained at `220111e` through public PR #68, and the
-  earlier `1.3.11` canonical Docker fixture docs promotion remains retained at
-  `ce6dbd0` through public PR #60.
+- Current public `main` publishes the `1.3.15` exact source/release/Marketplace
+  closeout at `427ab27` through public PR #83, with public tag `v1.3.15`
+  retained as tag object `28ea4253813e6f322cbcc25cdce865cdeac219a6` peeling
+  to `427ab27`. The earlier `1.3.14` source/tag handoff remains retained at
+  `f1cb609` through public PR #69, with public tag object
+  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`; the earlier `1.3.13` Windows
+  Docker Desktop proof-intake promotion remains retained at `220111e` through
+  public PR #68, and the earlier `1.3.11` canonical Docker fixture docs
+  promotion remains retained at `ce6dbd0` through public PR #60.
 - The maintained public `develop` candidate for the retained `1.3.9`
   admission-matrix baseline now publishes `11051ac`, and the current retained
   published candidate heads `11051ac` / `141c39e` are now carried in

@@ -1224,7 +1224,8 @@ export function readComparisonRuntimeSettings(
     invalidRequestedProvider: configuredProvider.invalidProvider,
     requireVersionAndBitness: true,
     labviewVersion,
-    bitness: labviewBitness
+    bitness: labviewBitness,
+    allowExistingWindowsHostRuntime: configuredProvider.provider !== 'docker'
   };
 }
 

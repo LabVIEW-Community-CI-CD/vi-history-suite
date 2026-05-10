@@ -111,10 +111,7 @@ describe('public validation pre-release 1.3.11', () => {
     expect(packet).toContain('Windows installed-user LabVIEW proof: community/deferred');
     expect(packet).toContain('Prior extension testing of Windows 64-bit LabVIEW');
 
-    expect(releaseState.activeCandidate).toMatchObject({
-      packageVersion: '1.3.15',
-      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
-    });
+    expect(releaseState.activeCandidate).toBeNull();
     expect(releaseState.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
       packageVersion: '1.3.11',
@@ -141,7 +138,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+      'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
@@ -171,7 +168,7 @@ describe('public validation pre-release 1.3.11', () => {
     expect(successTemplate).toContain('runtimeErrorCode=VIHS_OK');
     expect(failureTemplate).toContain('runtime_error_code');
     expect(notImplementedTemplate).toContain('runtimeImplementationStatus=not-implemented');
-    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.13`)');
+    expect(bugReport).toContain('Marketplace stable `1.3.15`');
     expect(bugReport).toContain('runtime_error_code');
     expect(communityTemplate).toContain('Expected `1.3.13`');
     expect(communityTemplate).toContain('runtime_error_code');

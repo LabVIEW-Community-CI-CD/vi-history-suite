@@ -1,22 +1,22 @@
 {
   "schema": "vi-history-suite/vscode-marketplace-publication-ledger@v1",
   "publicationSurface": "vscode-marketplace",
-  "status": "published-public-validation-prerelease-1.3.13",
+  "status": "published-exact-release-1.3.15",
   "publisherId": "svelderrainruiz",
   "extensionId": "vi-history-suite",
   "marketplaceItemName": "svelderrainruiz.vi-history-suite",
   "listingUrl": "https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite",
   "homepageUrl": "https://github.com/svelderrainruiz/vi-history-suite/wiki",
-  "currentPublishedVersion": "1.3.13",
-  "currentPublishedDate": "2026-04-27",
+  "currentPublishedVersion": "1.3.15",
+  "currentPublishedDate": "2026-05-10",
   "currentVerificationSurface": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install",
   "pendingPublicationVersion": null,
   "pendingPublicationInstallProofPackageScript": "npm run vscode:marketplace:install-proof",
   "pendingPublicationInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
-  "pendingPublicationInstallProofStatus": "not-required-for-community-validation-prerelease-windows-docker-desktop-proof-deferred",
+  "pendingPublicationInstallProofStatus": "passed-v1.3.15-isolated-exact-vsix-install",
   "pendingPublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
-  "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
-  "pendingPublicationPrepStatus": "closed-public-validation-prerelease-1.3.13-published-and-verified",
+  "pendingPublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json",
+  "pendingPublicationPrepStatus": "closed-exact-release-1.3.15-published-and-verified",
   "communityValidationPreviewPreparation": {
     "status": "published-and-verified",
     "publicationClaim": "public-validation-prerelease",
@@ -228,11 +228,25 @@
         "public GitHub PR #67",
         "corrected public GitHub release v1.3.13-public-validation-prerelease-1"
       ]
+    },
+    {
+      "status": "published",
+      "publishedDate": "2026-05-10",
+      "version": "1.3.15",
+      "publicationMode": "pinned-vsce-cli",
+      "primaryAuthority": [
+        "docs/product/release-publication-state.md",
+        "docs/product/public-release-candidate.md",
+        "docs/product/vscode-marketplace-publication-ledger.md",
+        "public GitHub PR #83",
+        "GitHub release v1.3.15",
+        "Windows exact-VSIX install proof receipt"
+      ]
     }
   ],
-  "currentPublishedKind": "public-validation-pre-release",
-  "currentRegularPublishedVersion": "1.3.9",
-  "currentRegularPublishedDate": "2026-04-23",
+  "currentPublishedKind": "exact-release",
+  "currentRegularPublishedVersion": "1.3.15",
+  "currentRegularPublishedDate": "2026-05-10",
   "currentPreReleaseVersion": "1.3.13",
   "currentPreReleasePublishedDate": "2026-04-27",
   "currentPreReleaseLastUpdated": "2026-04-27T04:24:05.457Z",
@@ -599,5 +613,22 @@
     "supersededImmutablePublicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease",
     "supersededImmutablePublicGitHubVsixSha256": "92b101f0ae80f213cb090c368c545465d74e8b3476f9a2316dbdce4435d6bd66",
     "supersededImmutablePublicGitHubReason": "immutable-release-asset-packaged-without-vscode-prerelease-marker"
+  },
+  "currentRegularLastUpdated": "2026-05-10T22:22:37.663Z",
+  "latestExactRelease": {
+    "status": "published-and-verified",
+    "version": "1.3.15",
+    "authorityTag": "v1.3.15",
+    "authorityMainCommit": "196dd70878bf26e9722c031b9192581e5147bafb",
+    "publicMainCommit": "427ab27245f6f66d186e07865f1fc0a00795611a",
+    "publicGitHubPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/83",
+    "publicGitHubReleaseId": 320197692,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15",
+    "publicGitHubReleasePublishedAt": "2026-05-10T22:02:02Z",
+    "marketplaceLastUpdated": "2026-05-10T22:22:37.663Z",
+    "vsixSha256": "157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7",
+    "windowsExactVsixInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
+    "marketplacePrepReceiptPath": ".cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json",
+    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json"
   }
 }

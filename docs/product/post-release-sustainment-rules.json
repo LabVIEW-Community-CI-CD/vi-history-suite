@@ -42,26 +42,28 @@
         "v1.3.6",
         "v1.3.7",
         "v1.3.8",
-        "v1.3.9"
+        "v1.3.9",
+        "v1.3.14",
+        "v1.3.15"
       ],
       "burnedExactVersionReleases": [
         "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.3.9",
-      "currentMainPackageLine": "1.3.9",
-      "currentAuthorityPackageLine": "1.3.14",
+      "currentExactReleaseLine": "v1.3.15",
+      "currentMainPackageLine": "1.3.15",
+      "currentAuthorityPackageLine": "1.3.15",
       "currentDevelopPackageLine": "1.3.15",
-      "activeDevelopCandidateReleaseLine": "v1.3.15",
+      "activeDevelopCandidateReleaseLine": null,
       "activeReleaseCandidateBranch": "release/1.3.15",
-      "activeReleaseCandidateState": "release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required",
-      "nextAdmittedAction": "refresh-release-1.3.15-with-main-before-main-promotion-preflight",
+      "activeReleaseCandidateState": "closed-retained-after-v1.3.15-publication",
+      "nextAdmittedAction": "normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention",
       "activeHotfixCandidateReleaseLine": null,
       "activeHotfixBranch": null,
       "activeFeatureBranch": null,
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
-      "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+      "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json",
       "publicGitHubV1314SourceAndTagHandoff": {
         "status": "public-source-and-tag-published-release-publication-blocked",
         "publicPullRequest": 69,
@@ -86,18 +88,18 @@
         "immutableReleasePolicyStatusCode": 200,
         "immutableReleasesEnabled": true,
         "immutableReleasesEnforcedByOwner": false,
-        "draftReleaseId": 312994104,
+        "draftReleaseId": 320197692,
         "draftReleaseTargetCommitish": "main",
         "draftReleaseLookupStatusCode": 200,
         "draftReleaseHtmlUrlUsesUntaggedPath": false
       },
       "publicGitHubExactDraftPublishabilityProbe": {
-        "status": "not-applicable",
-        "blockerCode": "draft-release-not-draft",
-        "draftReleaseId": 312994104,
+        "status": "not-applicable-already-published",
+        "blockerCode": null,
+        "draftReleaseId": 320197692,
         "draftReleaseByIdStatusCode": 200,
         "draftReleaseTagMatchesAuthority": true,
-        "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json",
+        "authorityReleaseManifestPath": ".cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json",
         "releaseAssetsRetainedAgainstManifest": true,
         "safeToAttemptPublish": false
       },
@@ -108,7 +110,7 @@
         "publicGitHubReleaseImmutable": true,
         "publicGitHubReleaseAssetCount": 0,
         "blockerCode": "published-immutable-release-assets-incomplete",
-        "marketplaceVersionRetained": "1.3.9",
+        "marketplaceVersionRetained": "1.3.15",
         "requiredPublisherRule": "create-draft-upload-verify-assets-before-publish"
       },
       "publicDefaultBranch": "main",
@@ -125,7 +127,21 @@
       "vscodeMarketplaceCommunityValidationPreviewLastUpdated": "2026-04-27T04:24:05.457Z",
       "vscodeMarketplaceCommunityValidationPreviewVsixSha256": "3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f",
       "publicValidationPrereleasePacketPath": "docs/product/public-validation-prerelease-v1.3.13.md",
-      "publicValidationPrereleasePacketJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json"
+      "publicValidationPrereleasePacketJsonPath": "docs/product/public-validation-prerelease-v1.3.13.json",
+      "publicGitHubV1315ExactReleaseCloseout": {
+        "status": "published-and-verified",
+        "publicPullRequest": 83,
+        "publicMainCommit": "427ab27245f6f66d186e07865f1fc0a00795611a",
+        "publicTag": "v1.3.15",
+        "publicTagObjectSha": "28ea4253813e6f322cbcc25cdce865cdeac219a6",
+        "publicGitHubReleaseId": 320197692,
+        "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15",
+        "marketplaceVersion": "1.3.15",
+        "marketplaceLastUpdated": "2026-05-10T22:22:37.663Z",
+        "windowsExactVsixInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",
+        "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json",
+        "marketplacePrepReceiptPath": ".cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json"
+      }
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -243,7 +259,7 @@
     ]
   },
   "softwareFactoryGovernance": {
-    "status": "authority-v1.3.9-fully-published-no-open-release-line",
+    "status": "authority-v1.3.15-fully-published-no-open-release-line",
     "activeFeatureBranch": null,
     "packageScripts": {
       "assess": "npm run software:factory:assess",
@@ -286,7 +302,7 @@
     ],
     "recoveryBoundary": [
       "repair-in-place first when public GitHub main, tag, or draft release already exist",
-      "current exact GitHub and VS Code Marketplace acts are fully closed for v1.3.9 while v1.3.8 is retained as blocked historical incident evidence"
+      "current exact GitHub and VS Code Marketplace acts are fully closed for v1.3.15 while v1.3.8 is retained as blocked historical incident evidence"
     ],
     "trustModel": [
       "Windows operator host",
@@ -321,7 +337,7 @@
       "publish and verify are repo-owned and automatic guarded non-mutating contract phases",
       "later VS Code Marketplace publish requires explicit production approval through the repo-owned publication path"
     ],
-    "rule": "Exact v1.3.9 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence."
+    "rule": "Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence."
   },
   "benchmarkRefreshCadence": {
     "model": "event-driven-bounded",

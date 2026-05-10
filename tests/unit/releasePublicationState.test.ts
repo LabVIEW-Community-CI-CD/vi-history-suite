@@ -30,7 +30,7 @@ const publicationState = require(path.join(
 };
 
 describe('release publication state resolver', () => {
-  it('retains the closed v1.3.9 authority/public publication state while keeping v1.3.8 as blocked history', () => {
+  it('retains the closed v1.3.15 authority/public/Marketplace state while keeping historical lanes explicit', () => {
     const state = publicationState.resolvePublicationState();
     const stateDoc = fs.readFileSync(
       path.join(repoRoot, 'docs', 'product', 'release-publication-state.md'),
@@ -39,662 +39,153 @@ describe('release publication state resolver', () => {
 
     expect(state.authority).toMatchObject({
       system: 'gitlab',
-      exactTag: 'v1.3.9',
-      packageVersion: '1.3.9',
-      mainCommit: '2f86063a35926fa67963af5ccd47e971157927c6',
+      exactTag: 'v1.3.15',
+      packageVersion: '1.3.15',
+      mainCommit: '196dd70878bf26e9722c031b9192581e5147bafb',
+      tagObjectSha: '08102dafaab6b4e05ac4e62b9c7a13e1293d388b',
+      tagCommitSha: '196dd70878bf26e9722c031b9192581e5147bafb',
+      tagPipelineId: 2514112734,
+      releaseExtensionJobId: 14297942289,
+      vagrantWindowsVsixAcceptanceJobId: 14297942286,
       gitlabReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
+        '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json',
+      expectedVsixAsset: 'vi-history-suite-1.3.15.vsix',
+      expectedVsixSha256:
+        '157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7'
     });
-    expect(state.developPreview).toMatchObject({
-      classification:
-        'linux-docker-linux-host-windows-host-labview-and-vagrant-vsix-validated-preview',
-      stateRole: 'retained-provider-lane-linux-host-windows-host-and-vagrant-acceptance-evidence',
-      headTrackingPolicy:
-        'do-not-track-latest-develop-head; read live develop commit and pipeline state from GitLab when needed',
-      retainedPacketPath:
-        'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.md',
-      retainedPacketJsonPath:
-        'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json',
-      previewEvidenceCommit: '21774a91710b71c6b63629cc0cf3cf37ce9abc0a',
-      packetEvidencePipelineId: 2480195741,
-      packetEvidencePipelineStatus: 'success',
-      packetMergeTrackingPolicy:
-        'do-not-track-packet-merge-commit; packet retention is governed by Git history and CI',
-      providerLaneEvidence: expect.objectContaining({
-        packageScript: 'npm run linux:docker:provider:lane',
-        gitLabJob: 'linux_docker_provider_lane',
-        jobId: 14091891709,
-        evidenceRoot: 'linux-docker-provider-lane-evidence/',
-        schema: 'vi-history-suite/linux-docker-provider-lane@v1',
-        status: 'passed',
-        docker: expect.objectContaining({
-          ostype: 'linux',
-          serverVersion: '29.4.1',
-          driver: 'overlayfs'
-        }),
-        windowsInstalledUserProofState: 'admitted-separate-windows-host-proof'
-      }),
-      linuxHostLabviewEvidence: expect.objectContaining({
-        packetPath:
-          'docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md',
-        packetJsonPath:
-          'docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json',
-        schema: 'vi-history-suite/linux-host-labview-2026-create-comparison-proof@v1',
-        status: 'passed',
-        platform: 'linux',
-        runtime: expect.objectContaining({
-          errorCode: 'VIHS_OK',
-          validationOutcome: 'ready',
-          provider: 'host-native',
-          engine: 'labview-cli',
-          labviewExePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
-          labviewCliPath: '/usr/local/bin/LabVIEWCLI'
-        }),
-        fixture: expect.objectContaining({
-          repository: 'https://github.com/ni/labview-icon-editor',
-          viPath: 'resource/plugins/lv_icon.vi',
-          oldCommit: 'ab94f6c4b375062492036c63a6dab7ea8824748a',
-          newCommit: '8741bb08026c104100720c0ef48621e4ab7762fd'
-        }),
-        compare: expect.objectContaining({
-          operation: 'CreateComparisonReport',
-          exitCode: 0,
-          result: 'succeeded',
-          reportFile: 'diff-report-lv_icon.vi.html',
-          reportSizeBytes: 214412,
-          reportSha256:
-            '637055a103b25ecc77e4e308a6d216fc7adab0e1741038502bb53f129e5eb864'
-        }),
-        linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
-        windowsInstalledUserLabviewProofState: 'admitted-separate-windows-host-proof',
-        linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
-        publicGitHubMutation: 'not-performed',
-        marketplaceMutation: 'not-performed'
-      }),
-      windowsHostLabviewEvidence: expect.objectContaining({
-        packetPath:
-          'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
-        packetJsonPath:
-          'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json',
-        schema: 'vi-history-suite/windows-host-labview-installed-user-proof@v1',
-        status: 'passed',
-        platform: 'win32',
-        runtime: expect.objectContaining({
-          errorCode: 'VIHS_OK',
-          validationOutcome: 'ready',
-          provider: 'host-native',
-          engine: 'labview-cli',
-          labviewExePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
-          labviewCliPath:
-            'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
-        }),
-        fixture: expect.objectContaining({
-          repository: 'https://github.com/ni/labview-icon-editor',
-          viPath: 'resource/plugins/lv_icon.vi',
-          oldCommit: 'ab94f6c4b375062492036c63a6dab7ea8824748a',
-          newCommit: '8741bb08026c104100720c0ef48621e4ab7762fd'
-        }),
-        compare: expect.objectContaining({
-          operation: 'CreateComparisonReport',
-          exitCode: 0,
-          result: 'succeeded',
-          reportFile: 'diff-report-lv_icon.vi.html',
-          reportSizeBytes: 146915,
-          evidence: 'CreateComparisonReport operation succeeded.'
-        })
-      }),
-      vagrantVsixAcceptanceEvidence: expect.objectContaining({
-        status: 'protected-develop-ci-receipt-retained',
-        packageScript: 'npm run vagrant:acceptance:assert',
-        assertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
-        evidenceRoot: 'vagrant/evidence/',
-        assertionReceiptRoot: 'vagrant/evidence/assertion',
-        protectedDevelopMergeRequest:
-          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/192',
-        protectedDevelopMergeCommit: '72899eb39e38ce34c697f0a227292ead6bcd8f2d',
-        protectedDevelopPipelineId: 2511040377,
-        protectedDevelopPipelineStatus: 'success',
-        protectedDevelopPipelineUrl:
-          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2511040377',
-        gitLabJob: 'vagrant_windows_vsix_acceptance',
-        gitLabJobId: 14284054131,
-        gitLabJobStatus: 'success',
-        gitLabJobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14284054131',
-        artifactRoot: 'vagrant/evidence/',
-        runDirectory: 'vagrant/evidence/20260508-105809',
-        manifestPath: 'vagrant/evidence/20260508-105809/manifest.json',
-        acceptanceLogPath: 'vagrant/evidence/acceptance-provision.log',
-        coldPrepLogPath: 'vagrant/evidence/labview-cold-prep.log',
-        hostDoctorLogPath: 'vagrant/evidence/vagrant-host-doctor.log',
-        assertionReceiptPath: 'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
-        assertionRecordedAt: '2026-05-08T17:58:36.620Z',
-        manifestGeneratedAt: '2026-05-08T10:58:36.0049159-07:00',
-        schema: 'vi-history-suite/vagrant-vsix-acceptance@v1',
-        assertionSchema: 'vi-history-suite/vagrant-vsix-acceptance-assertion@v1',
-        harnessId: 'HARNESS-VHS-002',
-        selectedHash: '8741bb08026c104100720c0ef48621e4ab7762fd',
-        baseHash: 'c188cdec606aac3b17d8b17274baa19eef3e4017',
-        labviewVersion: '2026',
-        labviewBitness: 'x86',
-        proofExitCode: 0,
-        runtimeProvider: 'host-native',
-        runtimeEngine: 'labview-cli',
-        runtimeExecutionState: 'succeeded',
-        requiredRuntimeExecutionState: 'succeeded',
-        generatedReportExists: true,
-        requiredGeneratedReportExists: true,
-        coldStartMarkers: [
-          'LabVIEW not running. Launching via scheduled task...',
-          'LabVIEW VI Server ready on port 3363.'
-        ],
-        publicGitHubMutation: 'not-performed',
-        marketplaceMutation: 'not-performed',
-        claimBoundary:
-          'vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof'
-      }),
-      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.10.vsix',
-      previewVsixSha256: 'bbe08e60d3d9a0275e5f734b002d115e648ab1a75b5b2641f34d7cf9f33a2c02',
-      publicationState: 'develop-provider-lane-linux-host-and-windows-host-labview-evidence',
-      linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
-      windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
-      windowsDockerDesktopProofState: 'community-deferred',
-      linuxHostLabviewProofMayProveWindowsInstalledUserLabview: false,
-      windowsInstalledUserProofDeferred: false,
-      publicGitHubMutation: 'not-performed-by-this-packet',
-      marketplaceMutation: 'not-performed-by-this-packet'
-    });
-    expect(stateDoc).toContain('## Develop Preview State');
-    expect(stateDoc).toContain('Vagrant Windows VSIX acceptance validated preview');
-    expect(stateDoc).toContain('Windows proof state: host LabVIEW 2026 x64 admitted');
-    expect(stateDoc).toContain('Windows-container proof community/deferred');
-    expect(stateDoc).toContain('Vagrant Windows VSIX acceptance evidence');
-    expect(stateDoc).toContain('protected `develop` pipeline `2511040377`');
-    expect(stateDoc).toContain('GitLab job `14284054131`');
-    expect(stateDoc).toContain('`npm run vagrant:acceptance:assert`');
-    expect(stateDoc).toContain(
-      'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json'
-    );
-    expect(stateDoc).toContain('vagrant/evidence/20260508-105809/manifest.json');
-    expect(stateDoc).toContain('`proofExitCode=0`');
-    expect(stateDoc).toContain('`runtimeExecutionState=succeeded`');
-    expect(stateDoc).toContain('`generatedReportExists=true`');
-    expect(stateDoc).toContain(
-      'HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.json'
-    );
-    expect(stateDoc).toContain(
-      'HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.json'
-    );
-    expect(stateDoc).toContain('Linux host proof may prove Windows installed-user LabVIEW behavior: no');
-    expect(stateDoc).toContain(
-      'docs/product/linux-docker-provider-lane-release-control-packet-2026-04-26.json'
-    );
-    expect(stateDoc).toContain(
-      'Preview state role: retained provider-lane, Linux host, Windows host, and'
-    );
-    expect(stateDoc).toContain('Develop head tracking policy: do not persist the latest live');
-    expect(stateDoc).toContain('Packet evidence pipeline: `2480195741` / `success`');
-    expect(stateDoc).toContain('Public GitHub mutation: not performed by this packet');
-    expect(stateDoc).toContain('VS Code Marketplace mutation: not performed by this packet');
-    expect(state.developPreview.currentDevelopCommit).toBeUndefined();
-    expect(state.developPreview.currentDevelopPipelineId).toBeUndefined();
+    expect(state.currentAuthority).toMatchObject(state.authority);
     expect(state.publicGitHub.release).toMatchObject({
-      id: 312994104,
-      tag: 'v1.3.9',
+      id: 320197692,
+      tag: 'v1.3.15',
       published: true,
       immutable: true,
       assetCount: 2,
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
+      mainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
+      tag: 'v1.3.15',
+      tagObjectSha: '28ea4253813e6f322cbcc25cdce865cdeac219a6',
       sourcePublication: {
-        status:
-          'public-source-and-tag-v1.3.14-promoted-release-publication-blocked',
-        currentMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
-        currentMainShortCommit: 'f1cb609',
-        exactReleaseRetainedCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
-        priorCommunityValidationIntakeCommit: 'b56fde158fe151a736fe72c833efdfd0874d8537',
-        priorCommunityValidationIntakePullRequest:
-          'https://github.com/svelderrainruiz/vi-history-suite/pull/45',
-        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46',
-        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
-        latestPublicValidationFixturePullRequest:
-          'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
-        latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
+        status: 'public-source-tag-release-and-marketplace-v1.3.15-published-and-verified',
+        currentMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
+        currentMainShortCommit: '427ab27',
+        latestPublicExactReleaseCloseout: expect.objectContaining({
           status: 'published-and-verified',
-          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
-          publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
-          publicMainShortCommit: '220111e',
-          marketplaceMutation: 'not-performed'
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/83',
+          publicTag: 'v1.3.15',
+          publicGitHubReleaseId: 320197692,
+          marketplaceVersion: '1.3.15',
+          marketplaceMutation: 'published-and-verified'
         }),
         latestPublicSourceAndTagHandoffCloseout: expect.objectContaining({
-          status: 'published-and-verified-release-publication-blocked',
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
-          publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
-          publicMainShortCommit: 'f1cb609',
           publicTag: 'v1.3.14',
-          publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
           publicGitHubReleasePublication: 'not-performed',
           marketplaceMutation: 'not-performed'
         }),
-        publicDevelopSync: expect.objectContaining({
-          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
-          status: 'not-applied-requires-separate-branch-policy-decision'
+        latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
+          publicLabelsApplied: ['windows-docker-desktop'],
+          marketplaceMutation: 'not-performed'
         })
       }
     });
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
-      currentPublishedVersion: '1.3.13',
-      currentPublishedKind: 'public-validation-pre-release',
-      currentRegularPublishedVersion: '1.3.9',
+      currentPublishedVersion: '1.3.15',
+      currentPublishedKind: 'exact-release',
+      currentRegularPublishedVersion: '1.3.15',
       currentPreReleaseVersion: '1.3.13',
-      expectedVersion: '1.3.14',
-      status: 'published-public-validation-prerelease-1.3.13',
+      expectedVersion: '1.3.15',
+      status: 'published-exact-release-1.3.15',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
         receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
         status: 'passed',
-        authorityTag: 'v1.3.9',
+        authorityTag: 'v1.3.15',
+        packageVersion: '1.3.15',
         runtimeValidationOutcome: 'ready',
         launcherPathStrippedToLauncherAndSystem32: true,
         ambientNodeOnPathRequired: false
       }
     });
+    expect(state.exactReleaseCloseoutV1315).toMatchObject({
+      status: 'published-and-verified',
+      authority: expect.objectContaining({
+        exactTag: 'v1.3.15',
+        mainCommit: '196dd70878bf26e9722c031b9192581e5147bafb'
+      }),
+      publicGitHub: expect.objectContaining({
+        mainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
+        tag: 'v1.3.15',
+        releaseId: 320197692
+      }),
+      marketplace: expect.objectContaining({
+        currentPublishedVersion: '1.3.15',
+        lastUpdated: '2026-05-10T22:22:37.663Z'
+      })
+    });
+    expect(state.developPreview).toMatchObject({
+      classification:
+        'linux-docker-linux-host-windows-host-labview-and-vagrant-vsix-validated-preview',
+      linuxHostLabviewProofState: 'admitted-local-maintainer-proof',
+      windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
+      windowsDockerDesktopProofState: 'community-deferred'
+    });
     expect(state.marketplaceCommunityValidationPreview).toMatchObject({
       status: 'published-and-verified',
-      publicationClaim: 'public-validation-prerelease',
-      preparePackageScript: 'npm run vscode:marketplace:community-preview:prepare',
-      prepReceiptPath:
-        '.cache/vscode-marketplace-community-validation-preview-prep/latest/vscode-marketplace-community-validation-preview-prep.json',
-      preferredVsceMode: 'pre-release',
-      targetVersionPolicy:
-        'must-be-distinct-higher-major-minor-patch-than-current-marketplace-version',
-      currentMarketplaceVersion: '1.3.13',
       targetVersion: '1.3.13',
-      packageVersion: '1.3.13',
       publishedVersion: '1.3.13',
-      publishedDate: '2026-04-27',
       marketplaceLastUpdated: '2026-04-27T04:24:05.457Z',
-      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.13.vsix',
-      previewVsixSha256: '3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f',
-      publishTrigger: 'maintainer-authorized-public-github-and-marketplace-public-validation-publication',
-      windowsLabviewFeaturePolicy:
-        'all-provider-year-bitness-variants-selectable-with-runtime-error-code-and-proof-packet-disclosure',
-      windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64',
-      traceabilityMatrixPath: 'docs/requirements/rtm.csv',
-      publicGitHubMutation: 'not-mutated-by-community-validation-preview-publication',
-      marketplaceMutation: 'published-and-verified',
-      intakeStatus: 'prepared-authorized-for-1.3.13',
-      intakePacketPath: 'docs/product/public-validation-prerelease-v1.3.13.md',
-      intakePacketJsonPath: 'docs/product/public-validation-prerelease-v1.3.13.json',
-      preparedPublicIssueTemplatePath:
-        'public-github-source/.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml',
-      preparedPublicLabelManifestPath: 'public-github-source/.github/labels.yml',
-      publicGitHubIntakePromotionPlanStatus: 'superseded-by-1.3.11-public-validation-lane',
-      publicGitHubIntakePublishedShortCommit: '5e67194',
-      publicGitHubIntakeLabelsApplied: true,
-      publicGitHubReleaseMutation: 'published-and-verified-with-corrected-asset-release',
-      publicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease-1',
-      publicGitHubReleaseId: 313873748,
-      supersededPublicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease'
-    });
-    expect(state.publicValidationPrereleaseV1313).toMatchObject({
-      status: 'published-and-verified',
-      marketplaceTargetVersion: '1.3.13',
-      marketplacePublishedVersion: '1.3.13',
-      publicGitHubReleaseTarget: 'v1.3.13-public-validation-prerelease-1',
-      publicGitHubReleaseId: 313873748,
-      publicGitHubMainCommit: '769cf180c1d5e94d1462d90e4e7366b1e050e7b1',
-      publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/67',
-      publicGitHubMutationAuthorized: true,
-      marketplaceMutationAuthorized: true,
-      windowsInstalledUserLabviewProof: 'admitted-for-host-labview-2026-x64',
-      windowsDockerDesktopProof: 'community-deferred',
-      previewVsixSha256: '3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f',
-      supersededImmutablePublicGitHubReleaseTag: 'v1.3.13-public-validation-prerelease',
-      diagnosticNoteFix: expect.objectContaining({
-        status: 'published-to-public-facade-and-marketplace',
-        source: 'src/reporting/comparisonReportRuntimeExecution.ts',
-        publicIssue: 'https://github.com/svelderrainruiz/vi-history-suite/issues/66'
-      })
-    });
-    expect(state.publicValidationPrereleaseV1312).toMatchObject({
-      status: 'published-and-verified',
-      marketplacePublishedVersion: '1.3.12',
-      publicGitHubReleaseTarget: 'v1.3.12-public-validation-prerelease',
-      publicGitHubReleaseId: 313840265,
-      publicGitHubMainCommit: '1853a4332eff40665e30db6e632febaa9821cf98',
-      publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
-      previewVsixSha256: 'e0d72bc198756d0f3302779830fc4e187d4bc63818769ffedaedaffb23d4dc25',
-      windowsInstalledUserLabviewProof: 'admitted-for-host-labview-2026-x64',
-      windowsHostLabview2026x64: 'admitted',
-      windowsDockerDesktopProof: 'community-deferred',
-      retainedWindowsHostValidateFixtureProofPath:
-        'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-windows-host-labview-2026-v1.3.12-2026-04-26.md',
-      windowsHostProofAdmission: expect.objectContaining({
-        status: 'admitted-after-publication',
-        runtimeExecutionState: 'succeeded',
-        runtimeProvider: 'host-native',
-        runtimeErrorCode: 'VIHS_OK'
-      }),
-      branchHygiene: expect.objectContaining({
-        publicDevelopSyncPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
-        status: 'not-applied-requires-separate-branch-policy-decision'
-      })
-    });
-    expect(state.publicValidationPrerelease).toMatchObject({
-      status: 'published-and-verified',
-      packageVersion: '1.3.11',
-      runtimeProofCommand: 'vihs --validate --proof-out ./vihs-proof',
-      windowsInstalledUserLabviewProof: 'community-deferred',
-      exactReleaseGateBlockedByMissingWindowsProof: false,
-      publicAndMarketplaceMutationAuthorizedByMaintainer: true
-    });
-    expect(state.publicValidationPrerelease.publicGitHub).toMatchObject({
-      tag: 'v1.3.11-public-validation',
-      releaseMutation: 'published-and-verified',
-      sourceFacadeMutation: 'published-through-protected-pr',
-      releaseId: 313782074,
-      mainCommit: '5e67194992af021ada2903ea868e8b84678d72d6',
-      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/46'
-    });
-    expect(state.publicValidationPrerelease.marketplace).toMatchObject({
-      mutation: 'published-and-verified',
-      publishedVersion: '1.3.11',
-      lastUpdated: '2026-04-26T16:51:22.260Z'
-    });
-    expect(state.exactReleaseReadinessAssessment).toMatchObject({
-      status: 'release-branch-opening-admissible',
-      assessmentPath: 'docs/product/exact-release-readiness-assessment-2026-05-08.md',
-      assessmentJsonPath: 'docs/product/exact-release-readiness-assessment-2026-05-08.json',
-      supersedesCurrentAssessmentPath: 'docs/product/exact-release-readiness-assessment-2026-04-26.md',
-      assessedBranch: 'develop',
-      assessedCommit: 'ce103d3d22a2d65e75dc6f5aaa75bc9e5e30c6a8',
-      assessedPipelineId: 2511103937,
-      assessedPipelineStatus: 'success',
-      packageVersion: '1.3.14',
-      currentAdmissibleClaim:
-        'develop-candidate-release-readiness-consolidated-no-exact-publication',
-      retainedExactBaseline: 'v1.3.9',
-      blockingReason: null,
-      releaseBranchOpening: 'admissible-as-separate-governed-action',
-      releaseBranch: null,
-      exactTag: null,
-      windowsInstalledUserLabviewProofState: 'admitted-for-host-labview-2026-x64',
-      vagrantVsixAcceptanceState: 'protected-develop-ci-receipt-retained',
-      vagrantVsixAcceptanceJobId: 14284448828,
-      vagrantVsixAcceptanceAssertionPath:
-        'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
-      vagrantVsixAcceptanceManifestPath: 'vagrant/evidence/20260508-113126/manifest.json',
-      windowsDockerDesktopProofState: 'community-deferred',
-      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.14.vsix',
-      previewVsixSha256: 'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f',
-      previewVsixSizeBytes: 1011604,
-      linuxDockerProviderLaneJobId: 14284448827,
-      publicExactPretagProofJobId: 14284448826,
-      packageExtensionPreviewJobId: 14284448829,
-      selectedExactAuthorityVsix: null,
-      windowsExactVsixInstallProofState:
-        'missing-for-selected-1.3.14-exact-authority-vsix',
-      publicGitHubExactMutation: 'not-admitted-and-not-performed',
-      marketplaceExactMutation: 'not-admitted-and-not-performed',
-      mainPromotion: 'not-admitted-and-not-performed',
-      communityProofIntakeChecklistPath:
-        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
-      communityProofIntakeChecklistJsonPath:
-        'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
-      exactCandidateConversionPaths: [
-        'open-governed-release-1.3.14-branch-with-current-evidence-boundary',
-        'reassess-release-branch-before-exact-tag',
-        'retain-selected-exact-authority-vsix-before-public-exact-release'
-      ],
-      nextAdmittedAction:
-        'open-governed-release-1.3.14-branch-from-ce103d3-if-current-claim-boundary-remains-selected'
+      windowsInstalledUserProofState: 'admitted-for-host-labview-2026-x64'
     });
     expect(state.releaseBranchOpening).toMatchObject({
       status: 'performed-and-retained',
-      packetPath: 'docs/product/release-branch-opening-v1.3.15-2026-05-09.md',
-      packetJsonPath: 'docs/product/release-branch-opening-v1.3.15-2026-05-09.json',
-      sourceBranch: 'develop',
-      sourceCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
       releaseBranch: 'release/1.3.15',
-      releaseBranchRef: 'refs/heads/release/1.3.15',
-      packageVersion: '1.3.15',
-      pipelineId: 2513019603,
       pipelineStatus: 'success',
-      pipelineSource: 'push',
-      duplicatePipelineId: 2513019188,
-      duplicatePipelineStatus: 'success',
-      duplicatePipelineSource: 'api',
-      vagrantVsixAcceptanceJobId: 14293424513,
-      vagrantVsixAcceptanceAssertionPath:
-        'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
-      vagrantVsixAcceptanceManifestPath: 'vagrant/evidence/20260509-171233/manifest.json',
-      labviewStartupReceiptPath: 'vagrant/evidence/labview-startup.json',
-      previewVsixPath: 'preview-evidence/vi-history-suite-1.3.15.vsix',
-      previewVsixSha256: 'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
-      previewVsixSizeBytes: 1014754,
-      selectedExactAuthorityVsix: null,
-      releaseExtensionJob: 'not-run-without-exact-tag',
-      publicGitHubExactMutation: 'not-admitted-and-not-performed',
-      marketplaceExactMutation: 'not-admitted-and-not-performed',
-      windowsDockerDesktopProofState: 'community-deferred',
-      mainPromotion: 'not-admitted-and-not-performed',
-      releaseBranchDeletion: 'not-admitted-and-not-performed',
-      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      vagrantVsixAcceptanceJobId: 14293424513
     });
     expect(state.releaseBranchReadinessReassessment).toMatchObject({
       status: 'blocked-main-not-ancestor-topology-refresh-required',
-      packetPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
-      packetJsonPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json',
       releaseBranch: 'release/1.3.15',
-      releaseBranchCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
-      releaseBranchPipelineId: 2513019603,
-      releaseBranchPipelineStatus: 'success',
-      protectedDevelopRetentionCommit: '801349167499b9d03b8244c42b03d88e15098034',
-      protectedDevelopRetentionPipelineId: 2513063788,
-      protectedDevelopRetentionPipelineStatus: 'success',
-      packageVersion: '1.3.15',
-      mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
-      mainIsAncestorOfReleaseBranch: false,
-      mainReleaseBranchMergeBase: '50bec3391ea823739c2e8baddb33b77c283a37eb',
-      releaseBranchIsAncestorOfProtectedDevelop: true,
-      releaseBranchDevelopMergeBase: '67c2c3a188666eaad3cab2695092991c42f33470',
-      v1315TagExistsAtInspection: false,
-      releaseBranchPreviewVsixSha256:
-        'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
-      protectedDevelopPreviewVsixSha256:
-        '03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95',
-      releaseBranchVagrantVsixAcceptanceJobId: 14293424513,
-      protectedDevelopVagrantVsixAcceptanceJobId: 14293598040,
-      selectedExactAuthorityVsix: null,
-      mainPromotion: 'blocked-until-main-is-ancestor-of-release-branch',
-      exactTag:
-        'not-admitted-before-topology-refresh-protected-main-promotion-and-green-main-pipeline',
-      releaseExtensionJob: 'not-run-without-exact-tag',
-      publicGitHubExactMutation: 'not-admitted-and-not-performed',
-      marketplaceExactMutation: 'not-admitted-and-not-performed',
-      windowsDockerDesktopProofState: 'community-deferred',
       nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
-    });
-    expect(state.releaseMainPromotionPreflight).toMatchObject({
-      status: 'protected-main-promotion-merge-request-opening-admissible',
-      packetPath: 'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.md',
-      packetJsonPath:
-        'docs/product/release-main-promotion-preflight-v1.3.14-2026-05-08.json',
-      sourceBranch: 'release/1.3.14',
-      sourceCommit: '50bec3391ea823739c2e8baddb33b77c283a37eb',
-      sourcePipelineId: 2511168302,
-      sourcePipelineStatus: 'success',
-      targetBranch: 'main',
-      targetCommit: '2f86063a35926fa67963af5ccd47e971157927c6',
-      mainIsAncestorOfReleaseBranch: true,
-      releaseBranchIsAncestorOfProtectedDevelop: true,
-      protectedDevelopRetentionCommit: '3557031442cbf85641544e07f9d75af59fe092d7',
-      protectedDevelopRetentionPipelineId: 2511333533,
-      protectedDevelopRetentionPipelineStatus: 'success',
-      releaseReadinessMergeRequestIid: 196,
-      protectedDevelopPreviewVsixSha256:
-        '3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b',
-      protectedDevelopVagrantVsixAcceptanceJobId: 14285909248,
-      promotionMergeRequest: 'admissible-as-separate-governed-action-not-opened',
-      mainPromotionMerge: 'not-performed-requires-green-protected-promotion-mr',
-      exactTag: 'not-admitted-before-protected-main-promotion-and-green-main-pipeline',
-      releaseBranchDeletion: 'not-admitted',
-      nextAdmittedAction:
-        'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
-    });
-    expect(state.currentAuthority).toMatchObject({
-      exactTag: 'v1.3.14',
-      packageVersion: '1.3.14',
-      mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
-      tagObjectSha: '6d9773a0909e6a61a22d06e0d48cf91d8f49baa1',
-      tagCommitSha: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
-      tagPipelineId: 2512680188,
-      releaseExtensionJobId: 14291969114,
-      vagrantWindowsVsixAcceptanceJobId: 14291969111,
-      expectedVsixAsset: 'vi-history-suite-1.3.14.vsix',
-      expectedVsixSha256:
-        '6458219dcac56b273404d502a60b83546690b1f30f0fad038aec725549c62b10'
     });
     expect(state.publicGitHubSourceAndTagHandoff).toMatchObject({
       status: 'public-source-and-tag-published-release-publication-blocked',
       publicPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
-      publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
       publicTag: 'v1.3.14',
-      publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
-      publicTagPeeledCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
-      publicSourcePackagePreviewRunId: 25609017771,
-      publicSourcePackagePreviewJobId: 75175830284,
-      publicWindowsInstalledUserContractRunId: 25609017782,
-      publicWindowsInstalledUserContractJobId: 75175830275,
-      publicLinuxInstalledUserSmokeRunId: 25609017773,
-      publicLinuxInstalledUserSmokeJobId: 75175830267,
       publicGitHubReleasePublication: 'not-performed',
-      marketplaceMutation: 'not-performed',
-      windowsDockerDesktopProofAdmission: 'not-performed',
-      releaseBranchDeletion: 'not-performed'
-    });
-    expect(state.windowsLabviewCommunityProofIntakeChecklist).toMatchObject({
-      status: 'prepared-no-mutation',
-      path: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md',
-      jsonPath: 'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.json',
-      preparedFromDevelopCommit: '3c0404a5cc51f3e131dfb29474fb36a338aec4ec',
-      sourceAssessedPipelineId: 2480212103,
-      packageVersion: '1.3.10',
-      candidateAdmissionPaths: ['windows-proof-claim', 'community-deferred-claim'],
-      communityReportsBecomeMaintainerProofAutomatically: false,
-      linuxDockerEvidenceMayProveWindowsLabviewInstalledUserBehavior: false,
-      publicGitHubMutation: 'not-performed',
       marketplaceMutation: 'not-performed'
     });
-    expect(state.exactReleaseCandidateReassessment).toMatchObject({
-      status: 'prepared',
-      path: 'docs/product/exact-release-candidate-reassessment-2026-04-26.md',
-      jsonPath: 'docs/product/exact-release-candidate-reassessment-2026-04-26.json',
-      sourceBranch: 'develop',
-      sourceCommit: '14243fd0ee647736124b06edb5a9947eae178d38',
-      sourcePipelineId: 2480546719,
-      sourcePipelineStatus: 'success',
-      packageVersion: '1.3.10',
-      selectedCandidatePath: 'community-deferred-windows-labview-claim',
-      releaseBranchOpening: 'admissible-as-next-governed-action',
-      releaseBranch: null,
-      exactTag: null,
-      candidateSourceVsixSha256:
-        'afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783',
-      admittedExternalWindowsProofArrived: false,
-      windowsInstalledUserLabviewProofClaimMade: false,
-      publicGitHubExactMutation: 'gated-and-not-performed',
-      marketplaceExactMutation: 'gated-and-not-performed',
-      nextAdmittedAction:
-        'open-governed-release-1.3.10-branch-from-14243fd-community-deferred-windows-claim'
-    });
-    expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
-    expect(stateDoc).toContain('## Exact Release Readiness Assessment');
-    expect(stateDoc).toContain('## Release Branch Opening');
-    expect(stateDoc).toContain('## Release Branch Readiness Reassessment');
-    expect(stateDoc).toContain('## Release Main Promotion Preflight');
-    expect(stateDoc).toContain('## Public GitHub Source And Tag Handoff');
-    expect(stateDoc).toContain('## Windows/LabVIEW Community Proof Intake Checklist');
-    expect(stateDoc).toContain('## Exact Release Candidate Reassessment');
-    expect(stateDoc).toContain('Exact-release readiness: release branch opening admissible');
-    expect(stateDoc).toContain('Source pipeline: `2480546719` / `success`');
-    expect(stateDoc).toContain('Release branch opening: admissible as next governed action');
-    expect(stateDoc).toContain('Admitted external Windows proof arrived: false');
-    expect(stateDoc).toContain('Assessed pipeline: `2511103937` / `success`');
-    expect(stateDoc).toContain('Release branch pipeline: `2513019603` / `success`');
-    expect(stateDoc).toContain('Protected develop retention pipeline: `2513063788` / `success`');
-    expect(stateDoc).toContain('Protected develop retention pipeline: `2511333533` / `success`');
-    expect(stateDoc).toContain('Current authority exact tag: `v1.3.14`');
-    expect(stateDoc).toContain('Public PR: https://github.com/svelderrainruiz/vi-history-suite/pull/69');
-    expect(stateDoc).toContain('`f1cb60900820ea17328b9eec595579768491e22a`');
-    expect(stateDoc).toContain('`b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`');
-    expect(stateDoc).toContain('public GitHub release is absent; Marketplace still serves `1.3.13`');
-    expect(stateDoc).toContain('Release-readiness MR: `!196` / merged');
-    expect(stateDoc).toContain('Preview package job: `14293424514`');
-    expect(stateDoc).toContain(
-      'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14'
-    );
-    expect(stateDoc).toContain(
-      '3d377d660af33c0fd5a36ee5f2e98a02204d4e1768e04cb3842f8d16b878005b'
-    );
-    expect(stateDoc).toContain(
-      'cc3f71882328dd9d1b096860bafd49a90b7a5b6fc0c3726e363121f304c85c0f'
-    );
-    expect(stateDoc).toContain('Vagrant Windows VSIX acceptance: protected `develop` CI receipt');
-    expect(stateDoc).toContain('Windows Docker Desktop Windows-container proof state: community/deferred');
-    expect(stateDoc).toContain('`main` promotion: not admitted and not performed');
-    expect(stateDoc).toContain('`npm run vscode:marketplace:community-preview:prepare`');
-    expect(stateDoc).toContain('Status: published and verified');
-    expect(stateDoc).toContain('Target preview version: `1.3.13`');
-    expect(stateDoc).toContain('Published preview version: `1.3.13`');
-    expect(stateDoc).toContain('Windows host LabVIEW 2026 x64');
-    expect(stateDoc).toContain(
-      'HARNESS-VHS-002-public-fixture-validate-fixture-windows-host'
-    );
-    expect(stateDoc).toContain(
-      'Windows/LabVIEW feature policy: all provider, year, and bitness choices may'
-    );
-    expect(stateDoc).toContain(
-      'docs/product/public-validation-prerelease-v1.3.12.md'
-    );
-    expect(stateDoc).toContain(
-      'docs/product/public-validation-prerelease-v1.3.13.md'
-    );
-    expect(stateDoc).toContain(
-      'docs/product/windows-labview-community-proof-intake-checklist-2026-04-26.md'
-    );
-    expect(stateDoc).toContain('docs/product/exact-release-candidate-reassessment-2026-04-26.md');
-    expect(stateDoc).toContain(
-      'afb9a78ccd4ef73f588deb8dbb0a73f1465431d3510db5d4a8a1b7a2f90b2783'
-    );
-    expect(stateDoc).toContain('Community reports become maintainer proof automatically: false');
-    expect(stateDoc).toContain('community-deferred-windows-labview-claim');
-    expect(stateDoc).toContain('public-github-source/.github/labels.yml');
-    expect(stateDoc).toContain(
-      'Public GitHub intake promotion state: published and verified through public'
-    );
-    expect(stateDoc).toContain(
-      'Public GitHub release/tag mutation: published and verified'
-    );
     expect(state.incident).toMatchObject({
       active: false,
       classification: 'externally-blocked-publication',
       blockerCode: 'published-immutable-release-assets-incomplete',
       status: 'retained-history'
     });
-    expect(state.activeCandidate).toMatchObject({
-      releaseBranch: 'release/1.3.15',
-      tag: 'v1.3.15',
-      packageVersion: '1.3.15',
-      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
-    });
+    expect(state.activeCandidate).toBeNull();
     expect(state.nextAdmittedAction).toBe(
-      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+      'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention'
+    );
+
+    expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.15`');
+    expect(stateDoc).toContain('Current authority exact tag: `v1.3.15`');
+    expect(stateDoc).toContain('Public GitHub `main`: `427ab27245f6f66d186e07865f1fc0a00795611a`');
+    expect(stateDoc).toContain('Public GitHub release id: `320197692`');
+    expect(stateDoc).toContain('## Exact Release Closeout v1.3.15');
+    expect(stateDoc).toContain('VS Code Marketplace version: `1.3.15`');
+    expect(stateDoc).toContain(
+      '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json'
+    );
+    expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
+    expect(stateDoc).toContain('## Release Branch Opening');
+    expect(stateDoc).toContain('## Release Branch Readiness Reassessment');
+    expect(stateDoc).toContain('## Public GitHub Source And Tag Handoff');
+    expect(stateDoc).toContain('## Incident Classification');
+    expect(stateDoc).toContain('blocked historical incident');
+    expect(stateDoc).toContain(
+      '`normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
@@ -725,7 +216,7 @@ describe('release publication state resolver', () => {
       tag: 'v9.8.7',
       packageVersion: '9.8.7',
       marketplaceItem: 'svelderrainruiz.vi-history-suite',
-      currentMarketplaceVersion: '1.3.13'
+      currentMarketplaceVersion: '1.3.15'
     });
   });
 });

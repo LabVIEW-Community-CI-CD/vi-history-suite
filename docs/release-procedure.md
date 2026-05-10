@@ -11,22 +11,20 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.3.9`.
+- The current exact released line is `v1.3.15`.
 - The burned exact released line is `v1.0.2`.
-- The current authority package line on `main` is `1.3.14`.
+- The current authority package line on `main` is `1.3.15`.
 - The current develop package line on `develop` is `1.3.15`.
-- The active exact release candidate line on `develop` is `v1.3.15`.
-- The active release-candidate branch is `release/1.3.15`.
-- The active release-candidate state is `release/1.3.15` opened with a green
-  branch pipeline, but main-promotion preflight is blocked until protected
-  `main` becomes an ancestor of the release branch; no exact tag, public GitHub
-  release, Marketplace mutation, Windows Docker Desktop proof admission, main
-  promotion, or release branch deletion has been admitted for this line.
+- The active exact release candidate line on `develop` is none.
+- The retained release-candidate branch is `release/1.3.15`.
+- The active release-candidate state is closed for publication: exact
+  `v1.3.15` is fully published across GitLab authority, public GitHub, and
+  VS Code Marketplace, and `release/1.3.15` remains retained.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
   is none.
-- Exact authority `v1.3.9` is now fully published across GitLab authority,
+- Exact authority `v1.3.15` is now fully published across GitLab authority,
   public GitHub, and VS Code Marketplace, while blocked historical public
   GitHub incident evidence for `v1.3.8` remains retained separately.
 - The pre-tag public-exact proof package script is
@@ -80,24 +78,17 @@
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
-- The active governed release claim is the `1.3.15` installed-user stable patch
-  candidate on the feature/develop line, preserving the completed `v1.3.14`
-  GitLab authority and public source/tag handoff separately while focusing the
-  next candidate on local LabVIEW 2025+ installed users, the simplified compare
-  workflow, and a Windows Docker Desktop proof handoff that remains
-  community/deferred.
+- The active governed release claim is exact `v1.3.15`, fully closed across
+  GitLab authority, public GitHub, and VS Code Marketplace.
 - The next admitted release-control action under the current boundary is
-  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`; public
-  GitHub release publication for `v1.3.14`, Marketplace mutation, Windows
-  Docker Desktop proof admission, main promotion, exact tag creation, and
-  release branch deletion remain blocked unless explicitly admitted separately.
+  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`;
+  release branch deletion remains blocked unless explicitly admitted separately.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer
   authorization for public GitHub and Marketplace publication.
-- The active Marketplace public validation preview status is published and
-  verified for `1.3.13`; `v1.3.14` public GitHub source and tag handoff is
-  complete, while public GitHub release publication and Marketplace mutation
-  remain separate governed actions.
+- The active Marketplace public validation preview status is historical and
+  verified for `1.3.13`; exact `1.3.15` is now the regular Marketplace
+  release.
 - The active public validation path is admitted for pre-release publication:
   Windows/LabVIEW settings may remain selectable with stable runtime error-code
   and proof-packet disclosure, with `vihs validate-fixture` retaining the
@@ -129,18 +120,19 @@
   blocker for the Linux/Docker validated preview claim.
 - That private-release act does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
-- Public GitHub `main` now publishes `fb0ef2b`, public tag `v1.3.9` is live,
-  GitHub release `312994104` is published at
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
+- Public GitHub `main` now publishes
+  `427ab27245f6f66d186e07865f1fc0a00795611a`, public tag `v1.3.15` is live,
+  GitHub release `320197692` is published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`,
   the uploaded exact assets match the retained authority manifest under
-  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`, the
+  `.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/`, the
   retained verify receipt records `verifyGateStatus=pass` and
-  `verifyGateAllowed=true`, and VS Code Marketplace now serves `1.3.9`.
+  `verifyGateAllowed=true`, and VS Code Marketplace now serves `1.3.15`.
 - Publication incident `v1.3.8` is retained as blocked historical evidence:
   GitLab authority exact tag `v1.3.8` exists, but public GitHub release
   `312768592` is already published and immutable with zero assets. Treat this
   as `published-immutable-release-assets-incomplete`; VS Code Marketplace now
-  serves `1.3.9`, and no in-place repair attempt is admitted for the blocked
+  serves `1.3.15`, and no in-place repair attempt is admitted for the blocked
   historical line.
 - Future public GitHub exact publication must be asset-first: create a draft,
   upload the VSIX and checksum from GitLab authority evidence, verify the draft
@@ -278,7 +270,7 @@
   published and verified, the exact release can be retained as closed.
 - No GitHub release publication, Marketplace publication, or other production
   mutation shall occur outside the repo-owned factory/orchestrator contract.
-- Exact `v1.3.9` is the current authority exact line and is now fully
+- Exact `v1.3.15` is the current authority exact line and is now fully
   published across GitLab authority, public GitHub, and VS Code Marketplace;
   exact `v1.3.8` remains retained separately as blocked historical incident
   evidence.
@@ -445,7 +437,7 @@ promotion still stays separate afterward.
       `npm run vscode:marketplace:install-proof`
     - retain the VS Code Marketplace publication prep receipt through
       `npm run vscode:marketplace:prepare`
-    - the retained `v1.3.9` verify receipt now proves the public GitHub exact
+    - the retained `v1.3.15` verify receipt now proves the public GitHub exact
       act closed with manifest-matched assets and `verifyGateStatus=pass`
     - fail closed if that controller no longer verifies the published public
       GitHub exact line cleanly
@@ -492,9 +484,9 @@ promotion still stays separate afterward.
       `System32`, and no ambient Node on PATH was required.
     - Then run
       `npm run vscode:marketplace:prepare` and require its receipt to show the
-      GitHub `v1.3.9` verify gate passed, exact VSIX/checksum evidence matched,
+      GitHub `v1.3.15` verify gate passed, exact VSIX/checksum evidence matched,
       live Marketplace served the expected pre-publication stale version before
-      the act and serves `1.3.9` after the act, the local PAT locator was ready
+      the act and serves `1.3.15` after the act, the local PAT locator was ready
       without secret retention, and the pinned `vsce` publish command shape was
       retained.
     - The preferred CLI path is the pinned `@vscode/vsce` helper through
@@ -595,19 +587,21 @@ promotion still stays separate afterward.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.3.9`, and the current
+- The current published package line on `main` is `1.3.15`, and the current
   develop package line on `develop` is `1.3.15`; the closed exact line
   must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
   exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`, exact
-  `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, exact `v1.3.7`, or exact `v1.3.9` release
+  `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, exact `v1.3.7`, exact `v1.3.9`,
+  exact `v1.3.14`, or exact `v1.3.15` release
   evidence.
 - The current develop package line on `develop` is `1.3.15`, public GitHub
-  `main` now publishes `fb0ef2b`, public tag `v1.3.9` is live, GitHub release
-  `312994104` is published, VS Code Marketplace serves `1.3.9`, and
+  `main` now publishes `427ab27245f6f66d186e07865f1fc0a00795611a`, public tag
+  `v1.3.15` is live, GitHub release `320197692` is published, VS Code
+  Marketplace serves `1.3.15`, and
   blocked `v1.3.8` historical incident evidence remains retained separately
-  from the now-closed exact `v1.3.9` line.
+  from the now-closed exact `v1.3.15` line.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

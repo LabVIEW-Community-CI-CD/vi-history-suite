@@ -166,24 +166,14 @@ describe('release/1.3.15 branch readiness reassessment packet', () => {
         'not-admitted-before-topology-refresh-protected-main-promotion-and-green-main-pipeline',
       nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
     });
-    expect(releaseState.activeCandidate).toMatchObject({
-      releaseBranch: 'release/1.3.15',
-      tag: 'v1.3.15',
-      packageVersion: '1.3.15',
-      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
-    });
+    expect(releaseState.activeCandidate).toBeNull();
     expect(releaseState.nextAdmittedAction).toBe(
-      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+      'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention'
     );
-    expect(publicCandidate.activeDevelopCandidate).toMatchObject({
-      state: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required',
-      releaseBranchReadinessReassessmentPacketPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
-      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
-    });
+    expect(publicCandidate.activeDevelopCandidate).toBeNull();
 
     expect(releaseStateDoc).toContain('## Release Branch Readiness Reassessment');
-    expect(releaseStateDoc).toContain('main-promotion preflight is blocked');
+    expect(releaseStateDoc).toContain('Main promotion: blocked until topology refresh');
     expect(currentState).toContain('release-branch-readiness-reassessment-v1.3.15-2026-05-09.md');
     expect(informationItemMap).toContain('Release branch readiness reassessment packet v1.3.15');
     expect(srs).toContain('blocking protected `main` promotion while `main` is not an ancestor');

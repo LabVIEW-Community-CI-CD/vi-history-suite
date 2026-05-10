@@ -203,10 +203,12 @@ describe('exact release readiness assessment', () => {
     expect(informationItemMap).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(informationItemMap).toContain('pipeline `2511103937`');
     expect(currentState).toContain('exact-release-readiness-assessment-2026-05-08.md');
-    expect(currentState).toContain('release branch opening was admitted as a separate governed action');
-    expect(currentState).toContain('performed on `release/1.3.14`');
-    expect(currentState).toContain('release-branch readiness has now been');
-    expect(currentState).toContain('`2511103937`');
+    expect(currentState).toContain('historical readiness assessments for `v1.3.14`');
+    expect(currentState).toContain('`release/1.3.15` branch opening remain retained');
+    expect(currentState).toContain('exact `v1.3.15` is now');
+    expect(currentState).toContain(
+      '`normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`'
+    );
     expect(srs).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(srs).toContain('current `1.3.14` exact-release readiness verdict');
     expect(rtm).toContain('exact-release-readiness-assessment-2026-05-08.md');
