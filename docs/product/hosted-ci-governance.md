@@ -218,8 +218,11 @@ Runner operator hardening:
   `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the golden VM,
   fails when the disposable CI VM is running, deletes only a stopped
   `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
-  that point at the governed CI VM folder, and clears active `.vagrant-ci`
-  state before import; the repo-owned host doctor
+  that point at the governed CI VM folder, retries orphaned disposable
+  directory removal, quarantines that directory under the governed machine
+  folder when NTFS/FUSE leaves the original directory name present after
+  retries, and clears active `.vagrant-ci` state before import; the repo-owned
+  host doctor
   `scripts/vagrant/doctor-vagrant-host.sh` checks Vagrant,
   VirtualBox, Docker, Node, npm, `gitlab-runner`, the registered box, golden VM
   power state, stale CI VM state, stale inaccessible disposable registry

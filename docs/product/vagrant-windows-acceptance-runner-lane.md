@@ -105,8 +105,11 @@ golden-source and CI-runtime state remain distinct.
 CI first runs `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to
 touch the golden VM, fails if the disposable CI VM is running, deletes only a
 stopped VM named `vihs-ci-win11`, unregisters stale inaccessible disposable
-registry entries that still point at the governed CI VM folder, and removes the
-active `.vagrant-ci` state. The job then runs Vagrant with
+registry entries that still point at the governed CI VM folder, retries
+orphaned disposable VM directory removal, quarantines that directory under the
+governed machine folder when NTFS/FUSE leaves the original directory name
+present after retries, and removes the active `.vagrant-ci` state. The job then
+runs Vagrant with
 `VAGRANT_DOTFILE_PATH=.vagrant-ci` and
 `VAGRANT_HOME=/run/media/sergio/Data/vihs-vagrant/vagrant-home`. The CI job
 also sets the VirtualBox default machine folder to

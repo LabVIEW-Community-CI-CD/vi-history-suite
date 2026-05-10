@@ -317,6 +317,7 @@
           "repoOwnedDoctorScript": "scripts/vagrant/doctor-vagrant-host.sh",
           "repoOwnedRefreshScript": "scripts/vagrant/refresh-golden-box.sh",
           "repoOwnedCleanupScript": "scripts/vagrant/cleanup-disposable-ci-vm.sh",
+          "disposableDirectoryCleanupPolicy": "retry-orphaned-ci-vm-directory-removal-then-quarantine-under-governed-machine-folder",
           "repoOwnedColdPrepScript": "vagrant/provision/prepare-cold-labview.ps1",
           "repoOwnedAcceptanceAssertionScript": "scripts/assertVagrantVsixAcceptanceEvidence.js",
           "repoOwnedAcceptanceAssertionPackageScript": "npm run vagrant:acceptance:assert",

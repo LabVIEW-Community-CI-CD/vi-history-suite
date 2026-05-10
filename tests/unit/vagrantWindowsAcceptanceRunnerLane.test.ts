@@ -155,6 +155,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(cleanupCiVm).toContain('is running; halt it before cleanup');
     expect(cleanupCiVm).toContain('VBoxManage unregistervm "$CI_VM_NAME" --delete');
     expect(cleanupCiVm).toContain('Removed orphaned disposable VM directory');
+    expect(cleanupCiVm).toContain('Removal attempt $attempt for orphaned disposable VM directory');
+    expect(cleanupCiVm).toContain('Quarantined orphaned disposable VM directory');
+    expect(cleanupCiVm).toContain('Could not remove or quarantine orphaned disposable VM directory');
     expect(cleanupCiVm).toContain('rm -rf "$VAGRANT_DOTFILE_ROOT"');
 
     expect(githubWorkflow).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME');
@@ -189,6 +192,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('exported golden VM UEFI variable store');
     expect(laneDoc).toContain('vagrant/.vagrant');
     expect(laneDoc).toContain('VAGRANT_DOTFILE_PATH=.vagrant-ci');
+    expect(laneDoc).toContain('quarantines that directory under the');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
     expect(laneDoc).toContain('default LabVIEW VI Server startup timeout: `300` seconds');
@@ -212,6 +216,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostedGovernanceDoc).toContain('resource_group: vihs-windows-vagrant');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/doctor-vagrant-host.sh');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/refresh-golden-box.sh');
+    expect(hostedGovernanceDoc).toContain('quarantines that directory under the governed machine');
     expect(hostedGovernanceDoc).toContain('near-future scheduled-task');
     expect(hostedGovernanceDoc).toContain('npm run vagrant:acceptance:assert');
 
@@ -238,6 +243,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedCleanupScript: 'scripts/vagrant/cleanup-disposable-ci-vm.sh',
+          disposableDirectoryCleanupPolicy:
+            'retry-orphaned-ci-vm-directory-removal-then-quarantine-under-governed-machine-folder',
           repoOwnedColdPrepScript: 'vagrant/provision/prepare-cold-labview.ps1',
           repoOwnedAcceptanceAssertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
           repoOwnedAcceptanceAssertionPackageScript: 'npm run vagrant:acceptance:assert',
