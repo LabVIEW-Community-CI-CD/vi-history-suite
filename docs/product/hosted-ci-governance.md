@@ -8,8 +8,8 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.15`, public GitHub and VS Code
-Marketplace both publish `1.3.15`, public GitHub release `312768592` for
+Authority exact `main` now carries tagged `v1.3.16`, public GitHub and VS Code
+Marketplace both publish `1.3.16`, public GitHub release `312768592` for
 `v1.3.8` remains retained as immutable zero-asset historical incident
 evidence, and later exact lines must reopen through normal GitFlow from this
 retained closed baseline.
@@ -28,25 +28,23 @@ retained closed baseline.
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.15`
-- current `main` package line: `1.3.15`
+- current exact release line: `v1.3.16`
+- current `main` package line: `1.3.16`
 - current `develop` package line: `1.3.16`
-- active exact release candidate line on `develop`: `v1.3.16`
-- active release-candidate branch: `release/1.3.16`
-- retained prior release-candidate branch: `release/1.3.15`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
+- retained prior release-candidate branch: `release/1.3.16`
 - active release-candidate state:
-  `release/1.3.16` is open from protected `develop` commit `2443e601`, branch
-  pipeline `2516207722` is green, protected `develop` retention pipeline
-  `2516304744` is green, and readiness reassessment admits main promotion only
-  as the next separate governed action
+  exact `v1.3.16` is published across GitLab authority, public GitHub, and VS
+  Code Marketplace; protected `main` has been merged into the closeout branch
+  for protected `develop` retention
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- exact `v1.3.15` is closed and `v1.3.16` is the active patch candidate line
-  on `release/1.3.16`; the next admitted action is the protected
-  main-promotion path after readiness reassessment confirmed the branch
-  topology is clean
+- exact `v1.3.16` is closed across GitLab authority, public GitHub, Windows
+  exact-VSIX install proof, and VS Code Marketplace; the next admitted action
+  is only closeout retention on protected `develop`
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -58,19 +56,18 @@ retained closed baseline.
   `1.3.13`
 - Marketplace public validation preview last updated:
   `2026-04-27T04:24:05.457Z`
-- rationale: authority exact `v1.3.15` remains tagged on `main`, public
-  GitHub release `320197692` is published with exact assets, and VS Code
-  Marketplace serves regular `1.3.15`
-- rationale: `develop` now carries patch candidate package line `1.3.16` for
-  installed-user host-runtime admission after the completed exact `v1.3.15`
-  GitLab authority, public GitHub, and Marketplace closeout
+- rationale: authority exact `v1.3.16` remains tagged on `main`, public
+  GitHub release `320824958` is published with exact assets, and VS Code
+  Marketplace serves regular `1.3.16`
+- rationale: `develop` now carries package line `1.3.16` after the completed
+  exact `v1.3.16` GitLab authority, public GitHub, and Marketplace closeout
 - rationale: the Vagrant Windows VSIX acceptance lane now has a repo-owned
   evidence assertion contract without expanding the Windows Docker Desktop
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  exact `v1.3.15` is now closed across GitLab authority, public GitHub, Windows
-  exact-VSIX install proof, and VS Code Marketplace; patch candidate
-  `v1.3.16` follows normal GitFlow and release branch deletion remains blocked
+  exact `v1.3.16` is now closed across GitLab authority, public GitHub, Windows
+  exact-VSIX install proof, and VS Code Marketplace; later SemVer lines follow
+  normal GitFlow and release branch deletion remains blocked
   unless explicitly admitted separately
 
 ## Current Linux/Docker Preview Claim

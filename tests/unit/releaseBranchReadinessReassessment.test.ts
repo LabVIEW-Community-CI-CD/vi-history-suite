@@ -161,19 +161,11 @@ describe('release/1.3.16 branch readiness reassessment packet', () => {
       exactTag: 'not-admitted-before-protected-main-promotion-and-green-main-pipeline',
       nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action'
     });
-    expect(releaseState.activeCandidate).toMatchObject({
-      packageVersion: '1.3.16',
-      tag: 'v1.3.16',
-      state: 'release-branch-readiness-reassessed-main-promotion-admissible'
-    });
+    expect(releaseState.activeCandidate).toBeNull();
     expect(releaseState.nextAdmittedAction).toBe(
-      'promote-release-1.3.16-to-main-as-separate-governed-action'
+      'retain-v1.3.16-marketplace-closeout-on-protected-develop'
     );
-    expect(publicCandidate.activeDevelopCandidate).toMatchObject({
-      packageVersion: '1.3.16',
-      tag: 'v1.3.16',
-      status: 'release-branch-readiness-reassessed-main-promotion-admissible'
-    });
+    expect(publicCandidate.activeDevelopCandidate).toBeNull();
 
     expect(releaseStateDoc).toContain('## Release Branch Readiness Reassessment');
     expect(releaseStateDoc).toContain('Main promotion: admissible only as a separate governed action');

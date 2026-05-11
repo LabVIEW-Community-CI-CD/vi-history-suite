@@ -35,18 +35,18 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
 
     expect(ledger.publicationSurface).toBe('vscode-marketplace');
-    expect(ledger.status).toBe('published-exact-release-1.3.15');
+    expect(ledger.status).toBe('published-exact-release-1.3.16');
     expect(ledger.publisherId).toBe('svelderrainruiz');
     expect(ledger.marketplaceItemName).toBe('svelderrainruiz.vi-history-suite');
     expect(ledger.listingUrl).toBe(
       'https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite'
     );
     expect(ledger.homepageUrl).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
-    expect(ledger.currentPublishedVersion).toBe('1.3.15');
-    expect(ledger.currentPublishedDate).toBe('2026-05-10');
+    expect(ledger.currentPublishedVersion).toBe('1.3.16');
+    expect(ledger.currentPublishedDate).toBe('2026-05-11');
     expect(ledger.currentPublishedKind).toBe('exact-release');
-    expect(ledger.currentRegularPublishedVersion).toBe('1.3.15');
-    expect(ledger.currentRegularLastUpdated).toBe('2026-05-10T22:22:37.663Z');
+    expect(ledger.currentRegularPublishedVersion).toBe('1.3.16');
+    expect(ledger.currentRegularLastUpdated).toBe('2026-05-11T23:10:13.317Z');
     expect(ledger.currentPreReleaseVersion).toBe('1.3.13');
     expect(ledger.currentPreReleaseLastUpdated).toBe('2026-04-27T04:24:05.457Z');
     expect(ledger.currentVerificationSurface).toBe(
@@ -57,30 +57,30 @@ describe('vs code marketplace publication and installed-user docs', () => {
       'npm run vscode:marketplace:install-proof'
     );
     expect(ledger.pendingPublicationInstallProofStatus).toBe(
-      'passed-v1.3.15-isolated-exact-vsix-install'
+      'passed-v1.3.16-isolated-exact-vsix-install'
     );
     expect(ledger.pendingPublicationPrepPackageScript).toBe(
       'npm run vscode:marketplace:prepare'
     );
     expect(ledger.pendingPublicationPrepStatus).toBe(
-      'closed-exact-release-1.3.15-published-and-verified'
+      'closed-exact-release-1.3.16-published-and-verified'
     );
     expect(ledger.latestExactRelease).toMatchObject({
       status: 'published-and-verified',
-      version: '1.3.15',
-      authorityTag: 'v1.3.15',
-      authorityMainCommit: '196dd70878bf26e9722c031b9192581e5147bafb',
-      publicMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
-      publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/83',
-      publicGitHubReleaseId: 320197692,
-      marketplaceLastUpdated: '2026-05-10T22:22:37.663Z',
-      vsixSha256: '157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7',
+      version: '1.3.16',
+      authorityTag: 'v1.3.16',
+      authorityMainCommit: '9c8e0a8503a84cba5d0ea722dd1497a35f52326c',
+      publicMainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+      publicGitHubPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
+      publicGitHubReleaseId: 320824958,
+      marketplaceLastUpdated: '2026-05-11T23:10:13.317Z',
+      vsixSha256: '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170',
       windowsExactVsixInstallProofReceiptPath:
         '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
       marketplacePrepReceiptPath:
-        '.cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json',
+        '.cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json',
       publicGitHubExactTransactionReceiptPath:
-        '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json'
+        '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json'
     });
     expect(ledger.communityValidationPreviewPreparation).toMatchObject({
       status: 'published-and-verified',
@@ -104,22 +104,22 @@ describe('vs code marketplace publication and installed-user docs', () => {
       expect.arrayContaining([
         expect.objectContaining({
           status: 'published',
-          publishedDate: '2026-05-10',
-          version: '1.3.15',
+          publishedDate: '2026-05-11',
+          version: '1.3.16',
           publicationMode: 'pinned-vsce-cli'
         })
       ])
     );
 
-    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.15`');
-    expect(ledgerDoc).toContain('Current regular Marketplace version: `1.3.15`');
+    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.16`');
+    expect(ledgerDoc).toContain('Current regular Marketplace version: `1.3.16`');
     expect(ledgerDoc).toContain('Current pre-release Marketplace version: `1.3.13`');
-    expect(ledgerDoc).toContain('closed-exact-release-1.3.15-published-and-verified');
-    expect(ledgerDoc).toContain('## Exact Release 1.3.15');
-    expect(ledgerDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/83');
-    expect(ledgerDoc).toContain('320197692');
+    expect(ledgerDoc).toContain('closed-exact-release-1.3.16-published-and-verified');
+    expect(ledgerDoc).toContain('## Exact Release 1.3.16');
+    expect(ledgerDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/88');
+    expect(ledgerDoc).toContain('320824958');
     expect(ledgerDoc).toContain(
-      '157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7'
+      '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170'
     );
     expect(ledgerDoc).toContain('## Community-Validation Preview Preparation');
     expect(ledgerDoc).toContain('Target preview version: `1.3.13`');
@@ -132,12 +132,12 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
     expect(ledgerDoc).toContain(
-      '| VS Code Marketplace exact release | published | `2026-05-10` | `1.3.15` | `pinned-vsce-cli` |'
+      '| VS Code Marketplace exact release | published | `2026-05-11` | `1.3.16` | `pinned-vsce-cli` |'
     );
     expect(ledgerDoc).toContain('official gallery extension query');
     expect(currentState).toContain('VS Code Marketplace listing');
     expect(currentState).toContain('[vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)');
-    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.15`');
+    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.16`');
     expect(releaseProcedure).toContain('VS Code Marketplace version are all published');
     expect(releaseProcedure).toContain('npm run vscode:marketplace:install-proof');
     expect(releaseProcedure).toContain('npm run vscode:marketplace:community-preview:prepare');
@@ -182,7 +182,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(readme).toContain('The packaged Marketplace listing is intentionally installed-user first');
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Proof Status And Community Validation');
-    expect(readme).toContain('Marketplace stable `1.3.15` is the regular installed-user release');
+    expect(readme).toContain('Marketplace stable `1.3.16` is the regular installed-user release');
     expect(readme).toContain('Traceability Matrix');
     expect(readme).toContain('Report A Problem Or Request Support');
     expect(readme).toContain('Issue Chooser');
@@ -200,7 +200,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
     expect(publicReadme).toContain('vihs --validate');
     expect(publicReadme).toContain('Proof Status And Community Validation');
-    expect(publicReadme).toContain('Stable `1.3.15` is the current installed-user release line');
+    expect(publicReadme).toContain('Stable `1.3.16` is the current installed-user release line');
     expect(publicReadme).toContain('Report A Problem Or Request Support');
     expect(publicReadme).toContain('Marketplace Community Validation Report');
     expect(publicReadme).toContain('LabVIEW Version Support Request');
@@ -222,8 +222,8 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(publicSupport).toContain('proof:reported');
     expect(publicBugReport).toContain('install, settings, validation, or compare problem');
     expect(publicBugReport).toContain('Install route');
-    expect(publicBugReport).toContain('Marketplace stable installed-user `1.3.15`');
-    expect(publicBugReport).toContain('Exact released Marketplace line (`1.3.15`)');
+    expect(publicBugReport).toContain('Marketplace stable installed-user `1.3.16`');
+    expect(publicBugReport).toContain('Exact released Marketplace line (`1.3.16`)');
     expect(publicBugReport).toContain('Marketplace pre-release channel (latest pre-release)');
     expect(publicBugReport).toContain('runtime_error_code');
     expect(publicBugReport).toContain('`vihs --validate` output');

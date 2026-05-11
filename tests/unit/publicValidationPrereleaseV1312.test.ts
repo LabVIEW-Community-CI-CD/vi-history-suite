@@ -234,8 +234,8 @@ describe('public validation pre-release 1.3.12', () => {
       expect(surface).toContain('Windows host LabVIEW');
       expect(surface).toContain('admitted');
     }
-    expect(readme).toContain('Marketplace stable `1.3.15` is the regular installed-user release');
-    expect(publicReadme).toContain('Stable `1.3.15` is the current installed-user release line');
+    expect(readme).toContain('Marketplace stable `1.3.16` is the regular installed-user release');
+    expect(publicReadme).toContain('Stable `1.3.16` is the current installed-user release line');
     expect(changelog).toContain('## [1.3.13] - 2026-04-27');
   });
 });
