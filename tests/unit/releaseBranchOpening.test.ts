@@ -154,7 +154,7 @@ describe('release/1.3.16 branch opening packet', () => {
       branch: 'release/1.3.16'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'reassess-release-1.3.16-branch-readiness-before-exact-tag'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
 
     expect(releaseStateDoc).toContain('## Release Branch Opening');

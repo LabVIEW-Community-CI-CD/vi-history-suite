@@ -207,7 +207,7 @@ describe('exact release readiness assessment', () => {
     expect(currentState).toContain('`release/1.3.15` branch opening remain retained');
     expect(currentState).toContain('exact `v1.3.15` is now');
     expect(currentState).toContain(
-      '`reassess-release-1.3.16-branch-readiness-before-exact-tag`'
+      '`promote-release-1.3.16-to-main-as-separate-governed-action`'
     );
     expect(srs).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(srs).toContain('current `1.3.14` exact-release readiness verdict');

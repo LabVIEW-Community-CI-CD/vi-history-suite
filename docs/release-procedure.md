@@ -18,11 +18,12 @@
 - The active exact release candidate line on `develop` is `v1.3.16`.
 - The active release-candidate branch is `release/1.3.16`; the retained prior
   release-candidate branch is `release/1.3.15`.
-- The active release-candidate state is release-branch-opened: exact
+- The active release-candidate state is release-branch-readiness-reassessed:
   `v1.3.15` is fully published across GitLab authority, public GitHub, and
   VS Code Marketplace, patch candidate `v1.3.16` is open on
-  `release/1.3.16`, branch pipeline `2516207722` is green, and readiness
-  reassessment is required before any exact tag or main-promotion action.
+  `release/1.3.16`, branch pipeline `2516207722` is green, protected
+  `develop` retention pipeline `2516304744` is green, and main promotion is
+  admitted only as the next separate governed action.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -86,7 +87,7 @@
   `v1.3.15` closed across GitLab authority, public GitHub, and VS Code
   Marketplace.
 - The next admitted release-control action under the current boundary is
-  `reassess-release-1.3.16-branch-readiness-before-exact-tag`;
+  `promote-release-1.3.16-to-main-as-separate-governed-action`;
   release branch deletion remains blocked unless explicitly admitted separately.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer

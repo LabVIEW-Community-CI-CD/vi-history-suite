@@ -14,10 +14,12 @@
   `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md`
 - Active `release/1.3.16` branch-opening packet:
   `docs/product/release-branch-opening-v1.3.16-2026-05-11.md`
+- Active `release/1.3.16` readiness reassessment packet:
+  `docs/product/release-branch-readiness-reassessment-v1.3.16-2026-05-11.md`
 - Retained `v1.3.15` main-promotion preflight packet: closed by protected main
   promotion and exact publication
 - Next admitted action:
-  `reassess-release-1.3.16-branch-readiness-before-exact-tag`
+  `promote-release-1.3.16-to-main-as-separate-governed-action`
 - Source consolidation branch:
   `feature/develop-1.3.16-candidate-opening`
 - Active protected develop merge: GitLab MR `!209` merged
@@ -29,6 +31,10 @@
   `14309562384` / `success`, retaining
   `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json` and
   `vagrant/evidence/20260511-070846/manifest.json`
+- Active release branch readiness reassessment: `release/1.3.16` is green,
+  protected `main` is an ancestor of the release branch, and protected
+  `develop` pipeline `2516304744` retained the branch-opening packet before
+  the main-promotion path was admitted as a separate governed action
 - Retained `release/1.3.15` branch pipeline: `2513019603` / `success`;
   duplicate operator pipeline `2513019188` also passed on the same ref and SHA
 - Retained `release/1.3.15` readiness reassessment: historical

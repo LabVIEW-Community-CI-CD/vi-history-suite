@@ -32,8 +32,8 @@ describe('hosted ci governance docs', () => {
         activeDevelopCandidateReleaseLine: 'v1.3.16',
         activeReleaseCandidateBranch: 'release/1.3.16',
         activeReleaseCandidateState:
-          'release-branch-opened-pipeline-green-readiness-reassessment-pending',
-        nextAdmittedAction: 'reassess-release-1.3.16-branch-readiness-before-exact-tag',
+          'release-branch-readiness-reassessed-main-promotion-admissible',
+        nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action',
         retainedReleaseCandidateBranch: 'release/1.3.15',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
@@ -115,7 +115,7 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrix.activeReleaseClaim).toEqual(
       expect.objectContaining({
-        classification: 'exact-patch-release-branch-opened-readiness-pending',
+        classification: 'exact-patch-release-branch-readiness-reassessed-main-promotion-admissible',
         publicGitHubMutation: 'not-performed-by-release-branch-opening',
         marketplaceMutation: 'not-performed-by-release-branch-opening'
       })

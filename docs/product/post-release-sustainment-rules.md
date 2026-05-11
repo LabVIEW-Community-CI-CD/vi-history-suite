@@ -83,8 +83,9 @@ Current version-line contract:
 - retained prior release-candidate branch: `release/1.3.15`
 - active release-candidate state:
   `release/1.3.16` is open from protected `develop` commit `2443e601`, branch
-  pipeline `2516207722` is green, and readiness reassessment is required before
-  any exact tag or main-promotion action
+  pipeline `2516207722` is green, protected `develop` retention pipeline
+  `2516304744` is green, and readiness reassessment admits main promotion only
+  as the next separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
