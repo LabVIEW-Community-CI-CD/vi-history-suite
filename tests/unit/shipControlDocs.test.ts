@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.3.15');
+    expect(pkg.version).toBe('1.3.16');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -205,8 +205,8 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- current exact released line: `v1.3.15`');
     expect(readme).toContain('- current fully published exact package line: `1.3.15`');
     expect(readme).toContain('- current authority package line on `main`: `1.3.15`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.3.15`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: none');
+    expect(readme).toContain('- current develop package line on `develop`: `1.3.16`');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.16`');
     expect(readme).toContain('- retained release-candidate branch: `release/1.3.15`');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
@@ -263,9 +263,9 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- current exact released line: `v1.3.15`');
     expect(currentState).toContain('- current fully published exact package line: `1.3.15`');
     expect(currentState).toContain('- current authority package line on `main`: `1.3.15`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.3.15`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.3.16`');
     expect(currentState).toContain(
-      '- active exact release candidate line on `develop`: none'
+      '- active exact release candidate line on `develop`: `v1.3.16`'
     );
     expect(currentState).toContain('- active release-candidate branch: retained `release/1.3.15`');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
@@ -347,9 +347,9 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('current exact released line is `v1.3.15`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
     expect(releaseProcedure).toContain('current authority package line on `main` is `1.3.15`');
-    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.15`");
+    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.16`");
     expect(releaseProcedure).toContain(
-      'active exact release candidate line on `develop` is none'
+      'active exact release candidate line on `develop` is `v1.3.16`'
     );
     expect(releaseProcedure).toContain(
       'The retained release-candidate branch is `release/1.3.15`.'

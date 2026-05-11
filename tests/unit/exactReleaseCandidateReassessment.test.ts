@@ -199,9 +199,9 @@ describe('exact release candidate reassessment', () => {
       publicGitHubExactMutation: 'gated-and-not-performed',
       marketplaceExactMutation: 'gated-and-not-performed'
     });
-    expect(publicationState.activeCandidate).toBeNull();
+    expect(publicationState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(publicationState.nextAdmittedAction).toBe(
-      'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention'
+      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

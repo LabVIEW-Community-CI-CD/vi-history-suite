@@ -22,8 +22,12 @@ describe('public release candidate control surface', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(candidate.versionLine).toBe('1.3.15');
-    expect(candidate.activeDevelopCandidate).toBeNull();
+    expect(candidate.versionLine).toBe('1.3.16');
+    expect(candidate.activeDevelopCandidate).toMatchObject({
+      packageVersion: '1.3.16',
+      tag: 'v1.3.16',
+      status: 'candidate-open-on-develop-release-branch-not-yet-open'
+    });
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: '427ab27',
@@ -53,9 +57,11 @@ describe('public release candidate control surface', () => {
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline:
         'v1.3.15-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained',
-      localInstalledVsix: 'release-1.3.15-authority-candidate-package-line',
-      publicGitHubExactTransactionGate: 'closed-for-v1.3.15',
-      windowsExactVsixInstallProofGate: 'closed-for-v1.3.15',
+      localInstalledVsix: 'develop-1.3.16-authority-candidate-package-line',
+      publicGitHubExactTransactionGate:
+        'closed-for-v1.3.15-required-again-for-v1.3.16-after-authority-tag',
+      windowsExactVsixInstallProofGate:
+        'closed-for-v1.3.15-required-again-before-v1.3.16-marketplace-publication',
       exactPublicRelease:
         'v1.3.15-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history'
     });
@@ -68,11 +74,11 @@ describe('public release candidate control surface', () => {
       marketplaceVersion: '1.3.15'
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
-      status: 'authority-v1.3.15-published-v1.3.8-history-retained-no-open-release-line',
+      status: 'v1.3.16-candidate-open-on-develop-after-v1.3.15-closeout',
       authorityTag: 'v1.3.15',
       publicGitHubExactTag: 'v1.3.15',
       publicGitHubReleaseId: 320197692,
-      nextSeparateAct: 'normal-next-line-governance-after-v1.3.15-retention',
+      nextSeparateAct: 'open-release-1.3.16-after-protected-develop-candidate-pipeline',
       marketplaceVersionRetained: '1.3.15',
       publicGitHubExactTransactionReceiptPath:
         '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json',
@@ -88,17 +94,16 @@ describe('public release candidate control surface', () => {
       blockerCode: 'published-immutable-release-assets-incomplete'
     });
     expect(candidate.softwareFactoryGovernance).toMatchObject({
-      status: 'authority-v1.3.15-fully-published-no-active-feature-branch',
+      status: 'authority-v1.3.16-candidate-open-on-develop',
       activeFeatureBranch: null,
       productionMutationAllowed: false,
       rule:
-        'Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence.'
+        'Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; v1.3.16 is the active patch candidate on develop and must proceed through normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence.'
     });
     expect(candidate.localProofs.localInstalledVsixPreview).toMatchObject({
-      status: 'release-1.3.15-authority-candidate-package-line',
-      version: '1.3.15',
-      vsixPath:
-        '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/vi-history-suite-1.3.15.vsix'
+      status: 'develop-1.3.16-authority-candidate-package-line',
+      version: '1.3.16',
+      vsixPath: 'preview-evidence/vi-history-suite-1.3.16.vsix'
     });
     expect(candidate.localProofs.windowsExactVsixInstallProof).toMatchObject({
       status: 'passed-v1.3.15-isolated-exact-vsix-install',
@@ -139,11 +144,12 @@ describe('public release candidate control surface', () => {
       })
     ]);
 
-    expect(candidateMarkdown).toContain('Version line: `1.3.15`');
-    expect(candidateMarkdown).toContain('Active develop candidate line: none');
+    expect(candidateMarkdown).toContain('Version line: `1.3.16`');
+    expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.16`');
+    expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.16`');
     expect(candidateMarkdown).toContain('Retained release-candidate branch: `release/1.3.15`');
     expect(candidateMarkdown).toContain(
-      '`normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`'
+      '`open-release-1.3.16-after-protected-develop-candidate-pipeline`'
     );
     expect(candidateMarkdown).toContain('Published exact public source commit: `427ab27`');
     expect(candidateMarkdown).toContain('Current public source head: `427ab27`');
@@ -165,7 +171,8 @@ describe('public release candidate control surface', () => {
 
     expect(currentState).toContain('current exact released line: `v1.3.15`');
     expect(currentState).toContain('current authority package line on `main`: `1.3.15`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.3.15`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.16`');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.16`');
     expect(currentState).toContain('active release-candidate branch: retained `release/1.3.15`');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
     expect(currentState).toContain('npm run vscode:marketplace:install-proof');

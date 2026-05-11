@@ -31,12 +31,13 @@ describe('post-release sustainment rules package', () => {
         currentExactReleaseLine: 'v1.3.15',
         currentMainPackageLine: '1.3.15',
         currentAuthorityPackageLine: '1.3.15',
-        currentDevelopPackageLine: '1.3.15',
+        currentDevelopPackageLine: '1.3.16',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
-        activeDevelopCandidateReleaseLine: null,
-        activeReleaseCandidateBranch: 'release/1.3.15',
-        activeReleaseCandidateState: 'closed-retained-after-v1.3.15-publication',
-        nextAdmittedAction: 'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention',
+        activeDevelopCandidateReleaseLine: 'v1.3.16',
+        activeReleaseCandidateBranch: null,
+        retainedReleaseCandidateBranch: 'release/1.3.15',
+        activeReleaseCandidateState: 'candidate-open-on-develop-release-branch-not-yet-open',
+        nextAdmittedAction: 'open-release-1.3.16-after-protected-develop-candidate-pipeline',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -113,10 +114,10 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
-        recordedAt: '2026-05-08',
+        recordedAt: '2026-05-11',
         chosenBump: 'patch',
-        targetFeatureBranch: 'feature/develop-1.3.14-candidate-consolidation',
-        targetDevelopCandidateReleaseLine: 'v1.3.14',
+        targetFeatureBranch: 'feature/develop-1.3.16-candidate-opening',
+        targetDevelopCandidateReleaseLine: 'v1.3.16',
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify'
       })
     );
@@ -144,8 +145,8 @@ describe('post-release sustainment rules package', () => {
 
     expect(rulesDoc).toContain('current exact released line: `v1.3.15`');
     expect(rulesDoc).toContain('current authority package line on `main`: `1.3.15`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.15`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.16`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.16`');
     expect(rulesDoc).toContain('retained release-candidate branch: `release/1.3.15`');
     expect(rulesDoc).toContain('public release `320197692` is published on `v1.3.15`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');

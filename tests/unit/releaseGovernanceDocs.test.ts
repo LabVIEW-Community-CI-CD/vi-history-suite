@@ -70,7 +70,7 @@ describe('release governance package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('patch');
     expect(rules.releaseCadence.activeOpeningDecision.targetFeatureBranch).toBe(
-      'feature/develop-1.3.14-candidate-consolidation'
+      'feature/develop-1.3.16-candidate-opening'
     );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
@@ -136,8 +136,8 @@ describe('release governance package', () => {
     expect(adr9).toContain('published immutable');
     expect(adr9).toContain('release with missing or mismatched assets is externally blocked');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.3.15`');
-    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: none');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.3.16`');
+    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.3.16`');
     expect(hostedGovernance).toContain('retained release-candidate branch: `release/1.3.15`');
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
     expect(hostedGovernance).toContain('active hotfix branch: none');

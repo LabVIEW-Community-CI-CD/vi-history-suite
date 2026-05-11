@@ -32,7 +32,7 @@ describe('private release assurance contradiction guards', () => {
     expect(readme).toContain('Windows defaults to local `LabVIEWCLI`');
     expect(readme).toContain('if Docker is selected, install or start Docker Desktop or Docker');
     expect(currentState).toContain('current exact released line: `v1.3.15`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.16`');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');

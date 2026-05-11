@@ -127,11 +127,11 @@ describe('release/1.3.14 main promotion preflight packet', () => {
       nextAdmittedAction:
         'open-protected-release-1.3.14-to-main-merge-request-with-source-branch-retained'
     });
-    expect(releaseState.activeCandidate).toBeNull();
+    expect(releaseState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(releaseState.nextAdmittedAction).toBe(
-      'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention'
+      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
     );
-    expect(publicCandidate.activeDevelopCandidate).toBeNull();
+    expect(publicCandidate.activeDevelopCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
 
     expect(currentState).toContain('release-main-promotion-preflight-v1.3.14-2026-05-08.md');
     expect(informationItemMap).toContain('Release main promotion preflight');

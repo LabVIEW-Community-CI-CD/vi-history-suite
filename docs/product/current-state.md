@@ -208,13 +208,13 @@ Latest landed ship target:
 - current exact released line: `v1.3.15`
 - current fully published exact package line: `1.3.15`
 - current authority package line on `main`: `1.3.15`
-- current develop package line on `develop`: `1.3.15`
-- active exact release candidate line on `develop`: none
+- current develop package line on `develop`: `1.3.16`
+- active exact release candidate line on `develop`: `v1.3.16`
 - active release-candidate branch: retained `release/1.3.15`
 - active release-candidate state:
-  no active release candidate is open for publication; exact `v1.3.15` is
-  fully published across GitLab authority, public GitHub, and VS Code
-  Marketplace, and `release/1.3.15` remains retained
+  patch candidate `v1.3.16` is open on `develop` after exact `v1.3.15`
+  closeout; no `release/1.3.16` branch is open yet, and `release/1.3.15`
+  remains retained
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -277,13 +277,14 @@ Latest landed ship target:
 - current software-factory mutation policy:
   exact authority `v1.3.15` is now fully closed across public GitHub and VS Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: exact `v1.3.15` is fully published across
-  GitLab authority, public GitHub source/tag/release, and VS Code Marketplace;
-  all provider/year/bitness variants remain selectable with proof-status
-  disclosure, Vagrant Windows VSIX acceptance is retained for LabVIEW 2026
-  `x86`, Windows exact-VSIX install proof is retained, and Windows Docker
-  Desktop Windows-container proof remains community/deferred through public
-  issue #65
+- active governed release claim: patch candidate `v1.3.16` is open on
+  `develop` for installed-user host runtime admission after exact `v1.3.15`
+  was fully published across GitLab authority, public GitHub source/tag/release,
+  and VS Code Marketplace; all provider/year/bitness variants remain
+  selectable with proof-status disclosure, Vagrant Windows VSIX acceptance is
+  retained for LabVIEW 2026 `x86`, Windows exact-VSIX install proof is
+  retained for the closed `v1.3.15` line, and Windows Docker Desktop
+  Windows-container proof remains community/deferred through public issue #65
 - current exact-release readiness assessment:
   [exact-release-readiness-assessment-2026-05-08.md](./exact-release-readiness-assessment-2026-05-08.md)
 - current exact-release readiness assessment JSON:
@@ -305,7 +306,7 @@ Latest landed ship target:
 - current release main-promotion preflight:
   closed by protected main promotion and exact `v1.3.15` publication
 - current next admitted action:
-  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`
+  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
@@ -313,10 +314,11 @@ Latest landed ship target:
 - exact-release candidate conversion boundary:
   exact `v1.3.15` is complete through protected main promotion, GitLab
   authority tagging, public GitHub source/tag/release publication, Windows
-  exact-VSIX install proof, and VS Code Marketplace publication. The next
-  conversion step is this closeout retention and protected back-merge to
-  `develop`; release branch deletion remains separately blocked unless
-  explicitly admitted.
+  exact-VSIX install proof, VS Code Marketplace publication, and protected
+  back-merge to `develop`. The next conversion step is opening a retained
+  `release/1.3.16` branch only after the protected `develop` candidate pipeline
+  is green; release branch deletion remains separately blocked unless explicitly
+  admitted.
 - historical exact-release candidate reassessment:
   [exact-release-candidate-reassessment-2026-04-26.md](./exact-release-candidate-reassessment-2026-04-26.md)
 - historical exact-release candidate reassessment JSON:

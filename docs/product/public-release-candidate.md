@@ -1,36 +1,40 @@
 # Public Release Candidate
 
-- Version line: `1.3.15`
-- Active develop candidate line: none
-- Active develop candidate package: none
-- Active develop candidate state: exact `v1.3.15` is fully published across
-  GitLab authority, public GitHub, and VS Code Marketplace
-- Active develop candidate branch: none
+- Version line: `1.3.16`
+- Active develop candidate line: `v1.3.16`
+- Active develop candidate package: `1.3.16`
+- Active develop candidate state: patch candidate opened on `develop` after
+  exact `v1.3.15` was fully published across GitLab authority, public GitHub,
+  and VS Code Marketplace
+- Active develop candidate branch: `feature/develop-1.3.16-candidate-opening`
 - Retained release-candidate branch: `release/1.3.15`
-- Release-branch opening packet:
+- Retained `release/1.3.15` opening packet:
   `docs/product/release-branch-opening-v1.3.15-2026-05-09.md`
-- Release-branch readiness reassessment packet:
+- Retained `release/1.3.15` readiness reassessment packet:
   `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md`
-- Release main-promotion preflight packet: closed by protected main promotion
-  and exact publication
+- Active `release/1.3.16` branch-opening packet: pending until the protected
+  `develop` candidate-opening pipeline is green
+- Retained `v1.3.15` main-promotion preflight packet: closed by protected main
+  promotion and exact publication
 - Next admitted action:
-  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`
+  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
 - Source consolidation branch:
-  `feature/develop-1.3.15-marketplace-closeout-ledger`
-- Protected develop merge: GitLab MR `!202` merged
-  `1114189b654b86fe829eb7648672d3565ebf71cf` into `develop` as
-  `67c2c3a188666eaad3cab2695092991c42f33470`
-- Protected develop pipeline: `2512993895` / `success`
-- Release branch pipeline: `2513019603` / `success`; duplicate operator
-  pipeline `2513019188` also passed on the same ref and SHA
-- Release branch readiness reassessment: historical pre-main-promotion blocker;
-  protected `main` now publishes `196dd70878bf26e9722c031b9192581e5147bafb`
-  for exact `v1.3.15`
-- Vagrant VSIX acceptance receipt: GitLab job `14293424513` / `success`,
-  retaining `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
-  and `vagrant/evidence/20260509-171233/manifest.json`
+  `feature/develop-1.3.16-candidate-opening`
+- Active protected develop merge: pending for the `v1.3.16`
+  candidate-opening MR
+- Active protected develop pipeline: pending for the `v1.3.16`
+  candidate-opening MR
+- Retained `release/1.3.15` branch pipeline: `2513019603` / `success`;
+  duplicate operator pipeline `2513019188` also passed on the same ref and SHA
+- Retained `release/1.3.15` readiness reassessment: historical
+  pre-main-promotion blocker; protected `main` now publishes
+  `196dd70878bf26e9722c031b9192581e5147bafb` for exact `v1.3.15`
+- Retained `release/1.3.15` Vagrant VSIX acceptance receipt: GitLab job
+  `14293424513` / `success`, retaining
+  `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json` and
+  `vagrant/evidence/20260509-171233/manifest.json`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-05-10`
+- Recorded at: `2026-05-11`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published exact public source commit: `427ab27`
 - Current public source head: `427ab27`
@@ -65,7 +69,7 @@
 - Authority baseline:
   `v1.3.15-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained`
 - Local installed VSIX build:
-  `release-1.3.15-authority-candidate-package-line`
+  `develop-1.3.16-authority-candidate-package-line`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -79,11 +83,11 @@
 - Runtime-provider public-acceptance gate:
   `closed-on-published-v1.3.0-candidate-heads-retained`
 - Pre-tag public-exact proof gate:
-  `required-before-any-later-exact-reopen`
+  `required-before-v1.3.16-exact-tag`
 - Public GitHub exact transaction gate:
-  `closed-for-v1.3.15`
+  `closed-for-v1.3.15; required-again-for-v1.3.16-after-authority-tag`
 - Windows exact-VSIX install proof gate:
-  `closed-for-v1.3.15`
+  `closed-for-v1.3.15; required-again-before-v1.3.16-marketplace-publication`
 - Exact public release:
   `v1.3.15-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`
 

@@ -25,12 +25,13 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.9',
-        currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.15',
+        currentExactReleaseLine: 'v1.3.15',
+        currentMainPackageLine: '1.3.15',
+        currentDevelopPackageLine: '1.3.16',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
-        activeDevelopCandidateReleaseLine: 'v1.3.15',
-        activeReleaseCandidateBranch: 'release/1.3.15',
+        activeDevelopCandidateReleaseLine: 'v1.3.16',
+        activeReleaseCandidateBranch: null,
+        retainedReleaseCandidateBranch: 'release/1.3.15',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -111,9 +112,9 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrix.activeReleaseClaim).toEqual(
       expect.objectContaining({
-        classification: 'linux-docker-validated-preview',
-        publicGitHubMutation: 'not-admitted-by-this-claim',
-        marketplaceMutation: 'not-admitted-by-this-claim'
+        classification: 'exact-patch-candidate-open-on-develop',
+        publicGitHubMutation: 'not-performed-by-candidate-opening',
+        marketplaceMutation: 'not-performed-by-candidate-opening'
       })
     );
     expect(matrix.authorityGitLab.runnerLanes.linuxAssurance.operatorModel.helperVerification).toEqual(
@@ -137,8 +138,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('Marketplace both publish `1.3.15`');
     expect(matrixDoc).toContain('current exact release line: `v1.3.15`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.15`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.15`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: none');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.16`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.16`');
     expect(matrixDoc).toContain('active Marketplace public validation preview line: `1.3.13`');
     expect(matrixDoc).toContain('Marketplace public validation preview status: published and verified');
     expect(matrixDoc).toContain('retained release-candidate branch: `release/1.3.15`');

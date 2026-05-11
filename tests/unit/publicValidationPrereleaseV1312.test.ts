@@ -35,7 +35,7 @@ describe('public validation pre-release 1.3.12', () => {
     const commandReference = readText('docs/information-for-users/command-reference.md');
     const changelog = readText('CHANGELOG.md');
 
-    expect(packageManifest.version).toBe('1.3.15');
+    expect(packageManifest.version).toBe('1.3.16');
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
       status: 'published-and-verified',
