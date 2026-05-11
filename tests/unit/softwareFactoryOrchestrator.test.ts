@@ -29,44 +29,44 @@ const orchestrator = require(path.join(
 const baseFacts = {
   recordedAt: '2026-04-23T23:59:59.000Z',
   repoRoot: 'C:/dev/vihs',
-  currentBranch: 'feature/v1.3.9-publication-retention',
+  currentBranch: 'feature/develop-1.3.15-marketplace-closeout-ledger',
   activeFeatureBranch: null,
   integrationBranch: 'develop',
   exactReleaseLineBranch: 'main',
   releaseBranchFamily: 'release/*',
   hotfixBranchFamily: 'hotfix/*',
   featureBranchFamily: 'feature/*',
-  exactLine: 'v1.3.9',
-  packageLine: '1.3.9',
-  developPackageLine: '1.3.9',
+  exactLine: 'v1.3.15',
+  packageLine: '1.3.15',
+  developPackageLine: '1.3.15',
   semverFrozen: false,
   semverFreezeRationale:
-    'Exact v1.3.9 is fully published across public GitHub and VS Code Marketplace.',
+    'Exact v1.3.15 is fully published across public GitHub and VS Code Marketplace.',
   requiredChecks: ['public_exact_pretag_proof', 'test_extension'],
   preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
   publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
   publicGitHubExactTransactionReceiptPath:
-    '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-  publicGitHubMainCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
-  publicGitHubTag: 'v1.3.9',
-  publicGitHubDraftReleaseId: 312994104,
-  publicGitHubLastPublishedRelease: 'v1.3.9',
+    '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json',
+  publicGitHubMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
+  publicGitHubTag: 'v1.3.15',
+  publicGitHubDraftReleaseId: 320197692,
+  publicGitHubLastPublishedRelease: 'v1.3.15',
   blockerCode: null,
   blockerSummary: null,
   repairInPlaceRequired: false,
   repairInPlaceAllowed: false,
-  nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention',
+  nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention',
   publicGitHubReleasePublished: true,
   marketplaceItem: 'svelderrainruiz.vi-history-suite',
-  marketplaceVersion: '1.3.9',
+  marketplaceVersion: '1.3.15',
   authorityReleaseManifestPath:
-    '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json',
+    '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json',
   releaseAssetsRetainedAgainstManifest: true,
   draftPublishabilityByIdStatusCode: 200,
   draftPublishabilityTagMatchesAuthority: true,
   safeToAttemptRepairPublish: false,
   draftReleaseUrl:
-    'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9',
+    'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15',
   draftReleaseTargetCommitish: 'main',
   draftReleaseLookupStatusCode: 200,
   immutableReleasesEnabled: true,
@@ -91,7 +91,7 @@ describe('software factory orchestrator contract', () => {
     );
   });
 
-  it('retains an assess-phase factory state for GitHub and Marketplace closed v1.3.9', () => {
+  it('retains an assess-phase factory state for GitHub and Marketplace closed v1.3.15', () => {
     const report = orchestrator.assessFactoryState(baseFacts);
 
     expect(report.status).toBe('pass');
@@ -129,8 +129,8 @@ describe('software factory orchestrator contract', () => {
       noBumpRule: false,
       receiptDrivenRecovery: true,
       publicGitHubExactTransactionReceiptPath:
-        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention'
+        '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json',
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention'
     });
     expect(report.phases).toEqual(
       expect.arrayContaining([
@@ -153,19 +153,19 @@ describe('software factory orchestrator contract', () => {
       packageScript: 'npm run software:factory:rehearse',
       receiptPath: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
       transactionReceiptPath:
-        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-      targetTag: 'v1.3.9',
-      targetDraftReleaseId: 312994104,
+        '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json',
+      targetTag: 'v1.3.15',
+      targetDraftReleaseId: 320197692,
       targetDraftReleaseUrl:
-        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9',
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15',
       authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json',
+        '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json',
       exactAssetsRetainedAgainstManifest: true,
       draftReleaseReadableById: true,
       draftReleaseTagMatchesAuthority: true,
       immutableReleasesEnabled: true,
       safePublishTransitionProven: false,
-      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention'
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention'
     });
     expect(report.phases).toEqual(
       expect.arrayContaining([
@@ -187,18 +187,18 @@ describe('software factory orchestrator contract', () => {
       packageScript: 'npm run software:factory:repair',
       receiptPath: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
       targetMode: 'no-repair-required-final-publication-retained',
-      targetTag: 'v1.3.9',
-      targetDraftReleaseId: 312994104,
+      targetTag: 'v1.3.15',
+      targetDraftReleaseId: 320197692,
       targetDraftReleaseUrl:
-        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9',
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15',
       authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json',
+        '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json',
       exactAssetsRetainedAgainstManifest: true,
       draftReleaseReadableById: true,
       draftReleaseTagMatchesAuthority: true,
       safePublishTransitionProven: false,
       currentBlockerCode: null,
-      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention',
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention',
       deferredWriteActions: [],
       rule:
         'This repair contract remains non-mutating; GitHub and VS Code Marketplace closeout are already retained for the current exact line.'
@@ -223,19 +223,19 @@ describe('software factory orchestrator contract', () => {
       packageScript: 'npm run software:factory:publish',
       receiptPath: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
       targetMode: 'publication-retained-no-publish-required',
-      targetTag: 'v1.3.9',
-      targetDraftReleaseId: 312994104,
+      targetTag: 'v1.3.15',
+      targetDraftReleaseId: 320197692,
       targetDraftReleaseUrl:
-        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9',
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15',
       authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json',
+        '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json',
       exactAssetsRetainedAgainstManifest: true,
       draftReleaseReadableById: true,
       draftReleaseTagMatchesAuthority: true,
       safePublishTransitionProven: false,
       currentBlockerCode: null,
       deferredWriteAction: 'none-final-publication-retained',
-      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention',
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention',
       rule:
         'This guarded publish contract remains non-mutating; the current exact line is already published and retained across public GitHub and VS Code Marketplace.'
     });
@@ -259,20 +259,20 @@ describe('software factory orchestrator contract', () => {
       packageScript: 'npm run software:factory:verify',
       receiptPath: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json',
       targetMode: 'post-publish-verify-guard',
-      targetTag: 'v1.3.9',
-      targetDraftReleaseId: 312994104,
-      expectedGitHubRelease: 'v1.3.9',
-      expectedMarketplaceVersion: '1.3.9',
-      currentPublishedGitHubRelease: 'v1.3.9',
-      currentMarketplaceVersion: '1.3.9',
+      targetTag: 'v1.3.15',
+      targetDraftReleaseId: 320197692,
+      expectedGitHubRelease: 'v1.3.15',
+      expectedMarketplaceVersion: '1.3.15',
+      currentPublishedGitHubRelease: 'v1.3.15',
+      currentMarketplaceVersion: '1.3.15',
       currentBlockerCode: null,
       deferredReadActions: [
         'verify-public-github-release-publication',
         'verify-public-github-release-assets-and-checksums',
-        'prepare-vscode-marketplace-v1.3.9-publication',
-        'verify-marketplace-v1.3.9-after-marketplace-publication'
+        'prepare-vscode-marketplace-v1.3.15-publication',
+        'verify-marketplace-v1.3.15-after-marketplace-publication'
       ],
-      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention',
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention',
       rule:
         'This guarded verify contract remains non-mutating; it retains the exact post-publish verification expectations and still forbids any production mutation in this slice.'
     });

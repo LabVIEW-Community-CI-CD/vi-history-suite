@@ -43,7 +43,7 @@ describe('public validation pre-release 1.3.11', () => {
     );
     const promotionPlan = promotion.createPublicGithubSourcePromotionPlan();
 
-    expect(packageManifest.version).toBe('1.3.15');
+    expect(packageManifest.version).toBe('1.3.16');
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
       status: 'published-and-verified',
@@ -111,10 +111,7 @@ describe('public validation pre-release 1.3.11', () => {
     expect(packet).toContain('Windows installed-user LabVIEW proof: community/deferred');
     expect(packet).toContain('Prior extension testing of Windows 64-bit LabVIEW');
 
-    expect(releaseState.activeCandidate).toMatchObject({
-      packageVersion: '1.3.15',
-      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
-    });
+    expect(releaseState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(releaseState.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
       packageVersion: '1.3.11',
@@ -141,7 +138,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
@@ -171,9 +168,9 @@ describe('public validation pre-release 1.3.11', () => {
     expect(successTemplate).toContain('runtimeErrorCode=VIHS_OK');
     expect(failureTemplate).toContain('runtime_error_code');
     expect(notImplementedTemplate).toContain('runtimeImplementationStatus=not-implemented');
-    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.13`)');
+    expect(bugReport).toContain('Marketplace stable installed-user `1.3.15`');
     expect(bugReport).toContain('runtime_error_code');
-    expect(communityTemplate).toContain('Expected `1.3.13`');
+    expect(communityTemplate).toContain('Expected `1.3.15`');
     expect(communityTemplate).toContain('runtime_error_code');
 
     for (const label of [
@@ -182,7 +179,7 @@ describe('public validation pre-release 1.3.11', () => {
       'feature:not-implemented',
       'error-code',
       'proof:packet-attached',
-      'version:1.3.13'
+      'version:1.3.15'
     ]) {
       expect(labels).toContain(`name: ${label}`);
     }

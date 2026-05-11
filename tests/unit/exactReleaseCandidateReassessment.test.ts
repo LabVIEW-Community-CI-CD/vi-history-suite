@@ -199,15 +199,9 @@ describe('exact release candidate reassessment', () => {
       publicGitHubExactMutation: 'gated-and-not-performed',
       marketplaceExactMutation: 'gated-and-not-performed'
     });
-    expect(publicationState.activeCandidate).toMatchObject({
-      sourceBranch: 'develop',
-      releaseBranch: 'release/1.3.15',
-      tag: 'v1.3.15',
-      packageVersion: '1.3.15',
-      status: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required'
-    });
+    expect(publicationState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(publicationState.nextAdmittedAction).toBe(
-      'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

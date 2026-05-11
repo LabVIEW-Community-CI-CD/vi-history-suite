@@ -244,6 +244,79 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('skips the clean-host Windows preflight when installed-user host compare admits an existing LabVIEW session', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.allowExistingWindowsHostRuntime = true;
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'command stdout',
+      stderr: ''
+    });
+    const observeWindowsProcesses = vi.fn().mockResolvedValue({
+      capturedAt: '2026-05-11T12:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger: 'preflight',
+      observedProcesses: [
+        {
+          imageName: 'LabVIEW.exe',
+          pid: 7320
+        }
+      ],
+      observedProcessNames: ['LabVIEW.exe'],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false
+    });
+    const observeWindowsTcpListeners = vi.fn().mockResolvedValue([
+      {
+        localAddress: '0.0.0.0',
+        localPort: 3363,
+        pid: 7320,
+        processName: 'LabVIEW.exe'
+      }
+    ]);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\nserver.tcp.port=3363\n') as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-05-11T12:00:00.000Z')
+          .mockReturnValueOnce('2026-05-11T12:00:03.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(4000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses,
+        observeWindowsTcpListeners
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(observeWindowsProcesses).not.toHaveBeenCalled();
+    expect(observeWindowsTcpListeners).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.attempted).toBe(true);
+    expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
+  });
+
   it('retains a bounded host timeout diagnostic when LabVIEWCLI is observed without LabVIEW through exit', async () => {
     const record = createReadyRecord();
     const result = await executeComparisonReport(

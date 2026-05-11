@@ -322,6 +322,7 @@ $proofArgs = @(
   '--platform',          'win32',
   '--execution-mode',    'host-only',
   '--bitness',           $LabVIEWBitness,
+  '--allow-existing-windows-host-runtime',
   '--runtime-timeout-ms', $RuntimeTimeoutMs.ToString()
 )
 

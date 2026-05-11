@@ -309,6 +309,13 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
             ? 'yes'
             : 'no'
       )}</div>
+      <div><strong>Existing host runtime admitted:</strong> ${escapeHtml(
+        runtimeSelection.allowExistingWindowsHostRuntime === undefined
+          ? 'none'
+          : runtimeSelection.allowExistingWindowsHostRuntime
+            ? 'yes'
+            : 'no'
+      )}</div>
       <div><strong>Platform:</strong> ${escapeHtml(runtimeSelection.platform)}</div>
     </div>
     <div class="note" data-testid="comparison-report-runtime-selection-notes">

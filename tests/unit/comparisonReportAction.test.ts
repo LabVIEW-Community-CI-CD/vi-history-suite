@@ -3714,7 +3714,8 @@ describe('comparisonReportAction', () => {
       requestedProvider: 'docker',
       requireVersionAndBitness: true,
       labviewVersion: '2026',
-      bitness: 'x86'
+      bitness: 'x86',
+      allowExistingWindowsHostRuntime: false
     });
     expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');
   });
@@ -3736,7 +3737,8 @@ describe('comparisonReportAction', () => {
       invalidRequestedProvider: 'weird',
       requireVersionAndBitness: true,
       labviewVersion: '2026',
-      bitness: 'x64'
+      bitness: 'x64',
+      allowExistingWindowsHostRuntime: true
     });
   });
 });

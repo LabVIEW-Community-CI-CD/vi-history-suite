@@ -35,7 +35,8 @@ describe('runHarnessReportSmokeCli', () => {
       executionMode: undefined,
       bitness: undefined,
       labviewCliPath: undefined,
-      labviewExePath: undefined
+      labviewExePath: undefined,
+      allowExistingWindowsHostRuntime: false
     });
 
     expect(
@@ -58,7 +59,8 @@ describe('runHarnessReportSmokeCli', () => {
         '--labview-cli-path',
         WINDOWS_LABVIEW_CLI_PATH,
         '--labview-exe-path',
-        WINDOWS_LABVIEW_EXE_PATH
+        WINDOWS_LABVIEW_EXE_PATH,
+        '--allow-existing-windows-host-runtime'
       ])
     ).toEqual({
       harnessId: 'HARNESS-VHS-001',
@@ -71,7 +73,8 @@ describe('runHarnessReportSmokeCli', () => {
       executionMode: 'host-only',
       bitness: 'x86',
       labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
-      labviewExePath: WINDOWS_LABVIEW_EXE_PATH
+      labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+      allowExistingWindowsHostRuntime: true
     });
 
     expect(parseHarnessReportSmokeArgs(['--help'])).toEqual({
@@ -85,7 +88,8 @@ describe('runHarnessReportSmokeCli', () => {
       executionMode: undefined,
       bitness: undefined,
       labviewCliPath: undefined,
-      labviewExePath: undefined
+      labviewExePath: undefined,
+      allowExistingWindowsHostRuntime: false
     });
 
     expect(() => parseHarnessReportSmokeArgs(['--platform', 'weird'])).toThrow(
@@ -186,6 +190,7 @@ describe('runHarnessReportSmokeCli', () => {
     expect(getHarnessReportSmokeUsage()).toContain('--selected-hash');
     expect(getHarnessReportSmokeUsage()).toContain('--execution-mode');
     expect(getHarnessReportSmokeUsage()).toContain('--labview-cli-path');
+    expect(getHarnessReportSmokeUsage()).toContain('--allow-existing-windows-host-runtime');
     expect(getHarnessReportSmokeUsage()).toContain('Canonical diagnosis rules:');
     expect(getHarnessReportSmokeUsage()).toContain('proof-admission provider override');
   });
@@ -262,7 +267,8 @@ describe('runHarnessReportSmokeCli', () => {
         executionMode: 'host-only',
         bitness: 'x86',
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
-        labviewExePath: WINDOWS_LABVIEW_EXE_PATH
+        labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+        allowExistingWindowsHostRuntime: false
       }
     });
     expect(cleanupWindowsHostRuntimeSurface).toHaveBeenCalledTimes(2);
@@ -314,6 +320,70 @@ describe('runHarnessReportSmokeCli', () => {
     ).rejects.toThrow('runner failed');
 
     expect(cleanupWindowsHostRuntimeSurface).toHaveBeenCalledTimes(2);
+  });
+
+  it('admits an existing Windows host runtime for installed-user proof without pre-cleaning the prelaunch', async () => {
+    const cleanupWindowsHostRuntimeSurface = vi.fn().mockResolvedValue(undefined);
+    const runner = vi.fn().mockResolvedValue({
+      report: {
+        harnessId: 'HARNESS-VHS-002',
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor',
+        cloneDirectory: '/tmp/harness',
+        targetRelativePath: 'resource/plugins/lv_icon.vi',
+        head: 'abcdef1234567890',
+        generatedAt: '2026-05-11T00:00:00.000Z',
+        selectedHash: FULL_SELECTED_HASH,
+        baseHash: FULL_BASE_HASH,
+        comparePairAvailable: true,
+        eligible: true,
+        signature: 'LVIN',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded',
+        runtimeProvider: 'host-native',
+        runtimeEngine: 'labview-cli',
+        generatedReportExists: true
+      },
+      reportJsonPath: '/tmp/reports/HARNESS-VHS-002/comparison-report-smoke.json',
+      reportMarkdownPath: '/tmp/reports/HARNESS-VHS-002/comparison-report-smoke.md',
+      reportHtmlPath: '/tmp/reports/HARNESS-VHS-002/comparison-report-smoke.html'
+    });
+
+    await expect(
+      runHarnessReportSmokeCli(
+        [
+          '--harness-id',
+          'HARNESS-VHS-002',
+          '--platform',
+          'win32',
+          '--execution-mode',
+          'host-only',
+          '--bitness',
+          'x86',
+          '--selected-hash',
+          FULL_SELECTED_HASH,
+          '--base-hash',
+          FULL_BASE_HASH,
+          '--allow-existing-windows-host-runtime'
+        ],
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner,
+          cleanupWindowsHostRuntimeSurface
+        }
+      )
+    ).resolves.toBe('pass');
+
+    expect(runner).toHaveBeenCalledWith(
+      'HARNESS-VHS-002',
+      expect.objectContaining({
+        runtimeSettings: expect.objectContaining({
+          executionMode: 'host-only',
+          bitness: 'x86',
+          allowExistingWindowsHostRuntime: true
+        })
+      })
+    );
+    expect(cleanupWindowsHostRuntimeSurface).toHaveBeenCalledTimes(1);
   });
 
   it('skips Windows host cleanup for docker-only proof runs', async () => {

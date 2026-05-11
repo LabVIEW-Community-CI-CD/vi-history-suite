@@ -1002,7 +1002,8 @@ function buildFixtureRuntimeSettings(
       provider && provider !== 'host' && provider !== 'docker' ? provider : undefined,
     requireVersionAndBitness: true,
     labviewVersion,
-    bitness: bitness === 'x86' || bitness === 'x64' ? bitness : undefined
+    bitness: bitness === 'x86' || bitness === 'x64' ? bitness : undefined,
+    allowExistingWindowsHostRuntime: provider !== 'docker'
   };
 }
 
@@ -1370,7 +1371,8 @@ async function readPersistedRuntimeSettingsFacts(
       bitness:
         persistedLabviewBitness === 'x86' || persistedLabviewBitness === 'x64'
           ? persistedLabviewBitness
-          : undefined
+          : undefined,
+      allowExistingWindowsHostRuntime: persistedProvider !== 'docker'
     }
   };
 }

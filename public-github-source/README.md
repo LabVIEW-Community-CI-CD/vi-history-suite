@@ -65,7 +65,7 @@ Installed-user help:
 
 ## Proof Status And Community Validation
 
-Marketplace pre-release `1.3.13` is the public validation lane. The extension
+Stable `1.3.15` is the current installed-user release line. The extension
 intentionally exposes all intended provider/year/bitness variants so the
 runtime and error-reporting layer can be exercised on real user machines.
 
@@ -83,7 +83,7 @@ Proof-status matrix:
 To join from the command line:
 
 ```bash
-code --install-extension svelderrainruiz.vi-history-suite@prerelease
+code --install-extension svelderrainruiz.vi-history-suite
 ```
 
 When a selectable Windows/LabVIEW path works or fails on your machine, include

@@ -85,6 +85,7 @@ describe('public GitHub source promotion', () => {
         'resources',
         'scripts',
         'tests',
+        'AGENTS.md',
         'README.md',
         'package.json',
         'acceptance',
@@ -92,6 +93,7 @@ describe('public GitHub source promotion', () => {
       ])
     );
     expect(plan.templateCopyPaths).toContain('README.md');
+    expect(plan.templateCopyPaths).toContain('AGENTS.md');
     expect(plan.templateCopyPaths).toContain(
       '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
     );
@@ -166,7 +168,7 @@ describe('public GitHub source promotion', () => {
   it('renders a narrower public package contract than authority', () => {
     const manifest = promotion.renderPublicPackageManifest();
 
-    expect(manifest.version).toBe('1.3.15');
+    expect(manifest.version).toBe('1.3.16');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -219,6 +221,7 @@ describe('public GitHub source promotion', () => {
       const comparison = promotion.compareFileTrees(expectedRoot, actualRoot);
 
       expect(expectedFiles).toContain('README.md');
+      expect(expectedFiles).toContain('AGENTS.md');
       expect(expectedFiles).toContain('INSTALL.md');
       expect(expectedFiles).toContain('SUPPORT.md');
       expect(expectedFiles).toContain('CONTRIBUTING.md');

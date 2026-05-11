@@ -113,6 +113,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('$runtimeSettingsLauncher');
     expect(acceptance).toContain('--labview-version $LabVIEWVersion');
     expect(acceptance).toContain('--labview-bitness $LabVIEWBitness');
+    expect(acceptance).toContain("'--allow-existing-windows-host-runtime'");
     expect(acceptance).toContain('$env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');

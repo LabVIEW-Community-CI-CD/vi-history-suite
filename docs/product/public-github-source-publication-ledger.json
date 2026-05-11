@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "f1cb609",
+  "publishedHeadCommit": "427ab27",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -665,9 +665,47 @@
         "docs/product/public-github-source-publication-ledger.md",
         "docs/product/release-publication-state.md"
       ]
+    },
+    {
+      "id": "public-source-v1-3-15-exact-source-release-and-marketplace-closeout",
+      "title": "Public source v1.3.15 exact source, release, and Marketplace closeout",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-05-10",
+      "publishedAt": "2026-05-10T22:02:02Z",
+      "repoCommit": "427ab27",
+      "repoCommitSha": "427ab27245f6f66d186e07865f1fc0a00795611a",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/83",
+      "publicationMode": "protected-branch-pull-request-squash-plus-exact-release-publication",
+      "publicExactTag": {
+        "tag": "v1.3.15",
+        "tagObjectSha": "28ea4253813e6f322cbcc25cdce865cdeac219a6",
+        "tagCommitSha": "427ab27245f6f66d186e07865f1fc0a00795611a"
+      },
+      "publicGitHubRelease": {
+        "id": 320197692,
+        "url": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15",
+        "publishedAt": "2026-05-10T22:02:02Z",
+        "immutable": true
+      },
+      "marketplace": {
+        "item": "svelderrainruiz.vi-history-suite",
+        "version": "1.3.15",
+        "lastUpdated": "2026-05-10T22:22:37.663Z"
+      },
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "package.json",
+        "package-lock.json",
+        "docs/product/public-github-source-publication-ledger.md",
+        "docs/product/public-release-candidate.md",
+        "docs/product/release-publication-state.md",
+        "docs/product/vscode-marketplace-publication-ledger.md"
+      ]
     }
   ],
-  "publishedHeadCommitSha": "f1cb60900820ea17328b9eec595579768491e22a",
+  "publishedHeadCommitSha": "427ab27245f6f66d186e07865f1fc0a00795611a",
   "windowsDockerDesktopIntakePromotionCloseout": {
     "status": "published-and-verified",
     "repository": "github.com/svelderrainruiz/vi-history-suite",
@@ -873,5 +911,21 @@
     "windowsDockerDesktopProofAdmission": "not-performed",
     "releaseBranchDeletion": "not-performed",
     "nextGovernedAction": "explicit-public-github-exact-release-publication-handoff-when-boundary-allows"
+  },
+  "publicExactV1315ReleaseCloseout": {
+    "status": "published-and-verified",
+    "publicPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/83",
+    "publicMainCommit": "427ab27245f6f66d186e07865f1fc0a00795611a",
+    "publicMainShortCommit": "427ab27",
+    "publicTag": "v1.3.15",
+    "publicTagObjectSha": "28ea4253813e6f322cbcc25cdce865cdeac219a6",
+    "publicTagCommitSha": "427ab27245f6f66d186e07865f1fc0a00795611a",
+    "publicGitHubReleaseId": 320197692,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15",
+    "marketplaceVersion": "1.3.15",
+    "marketplaceLastUpdated": "2026-05-10T22:22:37.663Z",
+    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json",
+    "marketplacePrepReceiptPath": ".cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json",
+    "windowsExactVsixInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json"
   }
 }

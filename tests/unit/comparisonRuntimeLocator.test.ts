@@ -1700,6 +1700,46 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
     ]);
   });
 
+  it('admits an existing selected LabVIEW session when installed-user host compare opts in', async () => {
+    const conflictedHost = buildConflictedWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x86',
+        allowExistingWindowsHostRuntime: true
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...conflictedHost
+      }
+    );
+
+    expect(result.provider).toBe('host-native');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.hostRuntimeConflictDetected).toBe(true);
+    expect(result.allowExistingWindowsHostRuntime).toBe(true);
+    expect(result.notes).toContain(
+      'Admitted existing Windows host runtime surface because installed-user host compare may attach to an already-open selected LabVIEW session.'
+    );
+    expect(result.providerDecisions).toContainEqual({
+      provider: 'host-native',
+      outcome: 'selected',
+      reason: 'provider-request-host-selected-host-native',
+      detail:
+        'Host provider was requested and host-native LabVIEW 2025 or newer plus LabVIEWCLI were available.'
+    });
+  });
+
   it('uses provider-aware contamination notes when the persisted host provider is blocked', async () => {
     const conflictedHost = buildConflictedWindowsHostDeps();
     const result = await locateComparisonRuntime(

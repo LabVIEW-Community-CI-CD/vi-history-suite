@@ -489,7 +489,8 @@ describe('localRuntimeSettingsCli', () => {
           invalidRequestedProvider: undefined,
           requireVersionAndBitness: true,
           labviewVersion: '2026',
-          bitness: 'x64'
+          bitness: 'x64',
+          allowExistingWindowsHostRuntime: false
         }
       },
       expect.objectContaining({

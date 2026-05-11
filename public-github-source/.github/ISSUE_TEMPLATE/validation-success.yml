@@ -1,26 +1,25 @@
 name: Validation success
-description: Report a working v1.3.13 pre-release provider/year/bitness path
+description: Report a working v1.3.15 stable installed-user provider/year/bitness path
 title: "[Validation success]: "
 labels:
   - community-validation
-  - marketplace-preview
   - validation:success
   - proof:reported
   - proof:packet-attached
-  - version:1.3.13
+  - version:1.3.15
   - needs-triage
 body:
   - type: markdown
     attributes:
       value: |
-        Use this template when Marketplace pre-release `1.3.13` worked for a selected provider, LabVIEW year, and bitness.
+        Use this template when Marketplace stable installed-user `1.3.15` worked for a selected provider, LabVIEW year, and bitness.
 
         Run `vihs --validate --proof-out ./vihs-proof` when possible and attach or paste facts from `vihs-validation-proof.json`.
   - type: input
     id: extension_version
     attributes:
       label: Extension version
-      value: "1.3.13"
+      value: "1.3.15"
     validations:
       required: true
   - type: textarea

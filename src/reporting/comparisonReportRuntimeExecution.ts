@@ -947,7 +947,8 @@ async function preflightWindowsHostRuntimeSurface(
   if (
     !deps.enforceWindowsHostPreflight ||
     record.runtimeSelection.platform !== 'win32' ||
-    record.runtimeSelection.provider !== 'host-native'
+    record.runtimeSelection.provider !== 'host-native' ||
+    record.runtimeSelection.allowExistingWindowsHostRuntime === true
   ) {
     return undefined;
   }

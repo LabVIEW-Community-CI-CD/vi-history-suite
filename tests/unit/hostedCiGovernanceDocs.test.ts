@@ -25,12 +25,16 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.9',
-        currentMainPackageLine: '1.3.9',
-        currentDevelopPackageLine: '1.3.15',
+        currentExactReleaseLine: 'v1.3.15',
+        currentMainPackageLine: '1.3.15',
+        currentDevelopPackageLine: '1.3.16',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
-        activeDevelopCandidateReleaseLine: 'v1.3.15',
-        activeReleaseCandidateBranch: 'release/1.3.15',
+        activeDevelopCandidateReleaseLine: 'v1.3.16',
+        activeReleaseCandidateBranch: 'release/1.3.16',
+        activeReleaseCandidateState:
+          'release-branch-readiness-reassessed-main-promotion-admissible',
+        nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action',
+        retainedReleaseCandidateBranch: 'release/1.3.15',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -111,9 +115,9 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrix.activeReleaseClaim).toEqual(
       expect.objectContaining({
-        classification: 'linux-docker-validated-preview',
-        publicGitHubMutation: 'not-admitted-by-this-claim',
-        marketplaceMutation: 'not-admitted-by-this-claim'
+        classification: 'exact-patch-release-branch-readiness-reassessed-main-promotion-admissible',
+        publicGitHubMutation: 'not-performed-by-release-branch-opening',
+        marketplaceMutation: 'not-performed-by-release-branch-opening'
       })
     );
     expect(matrix.authorityGitLab.runnerLanes.linuxAssurance.operatorModel.helperVerification).toEqual(
@@ -130,18 +134,18 @@ describe('hosted ci governance docs', () => {
         distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO'
       })
     );
-    expect(matrixDoc).toContain('Authority exact `main` now carries tagged `v1.3.9`');
+    expect(matrixDoc).toContain('Authority exact `main` now carries tagged `v1.3.15`');
     expect(matrixDoc).toContain('public GitHub release `312768592` for');
     expect(matrixDoc).toContain('`v1.3.8` remains retained as immutable zero-asset historical incident');
     expect(matrixDoc).toContain('public GitHub and VS Code');
-    expect(matrixDoc).toContain('Marketplace both publish `1.3.9`');
-    expect(matrixDoc).toContain('current exact release line: `v1.3.9`');
-    expect(matrixDoc).toContain('current `main` package line: `1.3.9`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.15`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.15`');
+    expect(matrixDoc).toContain('Marketplace both publish `1.3.15`');
+    expect(matrixDoc).toContain('current exact release line: `v1.3.15`');
+    expect(matrixDoc).toContain('current `main` package line: `1.3.15`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.16`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.16`');
     expect(matrixDoc).toContain('active Marketplace public validation preview line: `1.3.13`');
     expect(matrixDoc).toContain('Marketplace public validation preview status: published and verified');
-    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.15`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.16`');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
     expect(matrixDoc).toContain('chosen bump: patch');
     expect(matrixDoc).toContain(
@@ -149,11 +153,11 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrixDoc).toContain('no longer depends on drift-prone `lycheeverse/lychee:latest`');
     expect(readme).toContain('- separate public GitHub exact release publication: published;');
-    expect(readme).toContain('releases/tag/v1.3.9');
-    expect(currentState).toContain('current exact released line: `v1.3.9`');
-    expect(currentState).toContain('current fully published exact package line: `1.3.9`');
-    expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
-    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.9`');
+    expect(readme).toContain('releases/tag/v1.3.15');
+    expect(currentState).toContain('current exact released line: `v1.3.15`');
+    expect(currentState).toContain('current fully published exact package line: `1.3.15`');
+    expect(currentState).toContain('current authority package line on `main`: `1.3.15`');
+    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.15`');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:verify');
     expect(gitlabCi).toContain('governed_runner_admission');

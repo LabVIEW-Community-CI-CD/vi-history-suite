@@ -5,9 +5,24 @@ This changelog is the governed version-line summary for `vi-history-suite`.
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
 `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`,
-`v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, and `v1.3.9`.
+`v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`, and
+`v1.3.15`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.3.16] - 2026-05-11
+
+### Changed
+
+- Opened the next patch candidate line after exact `v1.3.15` closed across
+  GitLab authority, public GitHub, and VS Code Marketplace.
+- Installed-user Windows host compare now admits the selected already-open
+  LabVIEW session when the user targets a local host runtime, so Compare can
+  attach to the running LabVIEW 2025+ session instead of blocking as a
+  contaminated host surface.
+- Canonical clean-host proof and benchmark lanes still fail closed on ambient
+  LabVIEW contamination unless they explicitly opt in to installed-user host
+  session admission.
 
 ## [1.3.15] - 2026-05-09
 
@@ -26,6 +41,9 @@ Burned exact-version releases now include `v1.0.2`.
   local versions; LabVIEW `2024` and older are rejected as unsupported for VI
   Comparison Report generation because LabVIEW `2025` and newer can open older
   VIs without migrating them.
+- Closed the exact `v1.3.15` authority/publication line across GitLab
+  authority, public GitHub source/tag/release, Windows exact-VSIX install
+  proof, and VS Code Marketplace publication.
 
 ## [1.3.14] - 2026-05-08
 

@@ -100,7 +100,7 @@ Installed-user help:
 
 ## Proof Status And Community Validation
 
-Marketplace pre-release `1.3.13` is the public validation lane. The extension
+Marketplace stable `1.3.15` is the regular installed-user release. The extension
 intentionally exposes all intended provider/year/bitness variants so the
 runtime and error-reporting layer can be exercised on real user machines.
 
@@ -123,10 +123,10 @@ Proof-status matrix:
 | Windows Docker Desktop Windows containers | community/deferred through public issue #65 | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000` after Docker Desktop is switched to Windows containers |
 | Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
 
-To join the `1.3.13` pre-release validation lane from the command line, use:
+To install the stable Marketplace release from the command line, use:
 
 ```bash
-code --install-extension svelderrainruiz.vi-history-suite@prerelease
+code --install-extension svelderrainruiz.vi-history-suite
 ```
 
 When a selectable Windows/LabVIEW path works or fails on your machine, include
@@ -275,27 +275,27 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`, `v1.3.15`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.9`
-- current fully published exact package line: `1.3.9`
-- current authority package line on `main`: `1.3.14`
-- current develop package line on `develop`: `1.3.15`
-- active exact release candidate line on `develop`: `v1.3.15`
-- active release-candidate branch: `release/1.3.15`
+- current exact released line: `v1.3.15`
+- current fully published exact package line: `1.3.15`
+- current authority package line on `main`: `1.3.15`
+- current develop package line on `develop`: `1.3.16`
+- active exact release candidate line on `develop`: `v1.3.16`
+- active release-candidate branch: `release/1.3.16`
+- retained prior release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `release/1.3.15` is opened and green, but main-promotion preflight is
-  blocked until protected `main` becomes an ancestor of the release branch;
-  exact tag, public GitHub release, Marketplace mutation, Windows Docker
-  Desktop proof admission, main promotion, and release branch deletion remain
-  blocked
+  `release/1.3.16` is open from protected `develop` commit `2443e601`, branch
+  pipeline `2516207722` is green, protected `develop` retention pipeline
+  `2516304744` is green, and readiness reassessment admits main promotion only
+  as the next separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
   none
-- exact authority `v1.3.9` is now fully published across GitLab authority,
+- exact authority `v1.3.15` is now fully published across GitLab authority,
   public GitHub, and VS Code Marketplace, while blocked historical public
   GitHub incident evidence for `v1.3.8` remains retained separately
 - active pre-tag public-exact proof package script:
@@ -344,18 +344,14 @@ Authority release facts:
 - software-factory phase contract:
   assess, rehearse, and repair remain admitted non-production phases, and
   publish / verify are now retained as guarded non-mutating contract phases
-- exact authority `v1.3.9` is now fully closed across public GitHub and VS
-  Code Marketplace; later SemVer openings return to normal GitFlow governance
+- exact authority `v1.3.15` is now fully closed across public GitHub and VS Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: `1.3.15` has an opened `release/1.3.15`
-  branch with green branch CI, all provider/year/bitness variants selectable,
-  admitted Windows host proof retained, Vagrant VSIX acceptance governed by
-  repo-owned assertion, and Windows Docker Desktop proof still
-  community/deferred; main-promotion preflight is blocked until a release-branch
-  topology refresh brings protected `main` into `release/1.3.15`
+- active governed release claim: patch candidate `v1.3.16` is open on
+  `release/1.3.16` for installed-user host runtime admission after exact
+  `v1.3.15` was fully published and retained
 - next admitted release-control action:
-  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
-- active Marketplace stable target: `1.3.15`
+  `promote-release-1.3.16-to-main-as-separate-governed-action`
+- current Marketplace stable version: `1.3.15`
 - retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
   published through public GitHub PR #46 and pinned `vsce --pre-release`
@@ -374,38 +370,35 @@ Authority release facts:
   `windows-private-release-evidence/manifest.json` is deferred on this
   Ubuntu-only machine unless `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`
 - separate public GitHub exact release publication: published; public tag
-  `v1.3.9` remains live at `fb0ef2b`, GitHub release `312994104` is
-  published at
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`,
+  `v1.3.15` peels to `427ab27245f6f66d186e07865f1fc0a00795611a`, GitHub
+  release `320197692` is published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`,
   and the exact assets match the retained authority manifest under
-  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/`
+  `.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/`
 - current public GitHub source publication: public `main` now publishes
-  `f1cb609` after public PR #69 completed the `v1.3.14` source handoff; public
-  annotated tag `v1.3.14` has tag object
-  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae` and peels to
-  `f1cb60900820ea17328b9eec595579768491e22a`; public PR #68 remains retained
-  for the Windows Docker Desktop proof-intake template and label, public PR #60
-  remains retained for the canonical public Docker fixture docs at `ce6dbd0`,
-  and the exact `v1.3.9` tag/release remains retained separately at `fb0ef2b`
+  `427ab27` after public PR #83 completed the `v1.3.15` source handoff;
+  public PR #69, PR #68, and PR #60 remain retained historical public-facade
+  evidence for earlier source, intake, and fixture-docs promotions at
+  `f1cb609`, `220111e`, and `ce6dbd0`
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
-- VS Code Marketplace retained published version: `1.3.9`
+- VS Code Marketplace retained published version: `1.3.15`
 - VS Code Marketplace community-validation preview published version:
   `1.3.13`
 - VS Code Marketplace public validation target version: `1.3.13`
-- VS Code Marketplace next stable target version: `1.3.15`
+- VS Code Marketplace stable published version: `1.3.15`
 - VS Code Marketplace community-validation preview Marketplace last updated:
   `2026-04-27T04:24:05.457Z`
 - VS Code Marketplace community-validation preview VSIX SHA-256:
   `3b1d83632b8126b597a9db8c98f2737fd988458ecf6c4d74e4f5c3349d16036f`
 - blocked historical publication incident: public GitHub release `312768592`
   for `v1.3.8` is published and immutable with zero assets; retain it as
-  historical evidence only while the current live Marketplace version remains
-  `1.3.9`
+  historical evidence only while the current live Marketplace version is
+  `1.3.15`
 - VS Code Marketplace publication prep and final publication are retained:
-  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.9`
+  `npm run vscode:marketplace:prepare` proves the public GitHub `v1.3.15`
   verify gate, exact authority VSIX/checksum evidence, live Marketplace
-  `1.3.9` readback, local PAT locator, and pinned `vsce` publish command
+  `1.3.15` readback, local PAT locator, and pinned `vsce` publish command
   shape without retaining secret material.
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
