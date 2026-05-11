@@ -54,9 +54,9 @@
       "currentAuthorityPackageLine": "1.3.15",
       "currentDevelopPackageLine": "1.3.16",
       "activeDevelopCandidateReleaseLine": "v1.3.16",
-      "activeReleaseCandidateBranch": null,
-      "activeReleaseCandidateState": "candidate-open-on-develop-release-branch-not-yet-open",
-      "nextAdmittedAction": "open-release-1.3.16-after-protected-develop-candidate-pipeline",
+      "activeReleaseCandidateBranch": "release/1.3.16",
+      "activeReleaseCandidateState": "release-branch-opened-pipeline-green-readiness-reassessment-pending",
+      "nextAdmittedAction": "reassess-release-1.3.16-branch-readiness-before-exact-tag",
       "activeHotfixCandidateReleaseLine": null,
       "activeHotfixBranch": null,
       "activeFeatureBranch": null,
@@ -142,7 +142,31 @@
         "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json",
         "marketplacePrepReceiptPath": ".cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json"
       },
-      "retainedReleaseCandidateBranch": "release/1.3.15"
+      "retainedReleaseCandidateBranch": "release/1.3.15",
+      "activeOpeningDecision": {
+        "recordedAt": "2026-05-11",
+        "targetFeatureBranch": "feature/develop-1.3.16-candidate-opening",
+        "targetDevelopCandidateReleaseLine": "v1.3.16",
+        "targetReleaseBranch": "release/1.3.16",
+        "releaseBranchOpeningPipeline": 2516207722,
+        "releaseBranchOpeningCommit": "2443e601c2b1aa78122af785516376b9905ba43f",
+        "status": "release-branch-opened-pipeline-green-readiness-reassessment-pending",
+        "nextAdmittedAction": "reassess-release-1.3.16-branch-readiness-before-exact-tag",
+        "rationale": [
+          "exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace",
+          "protected develop pipeline 2516180885 passed after the v1.3.16 candidate-opening MR merged",
+          "release/1.3.16 was opened from protected develop commit 2443e601c2b1aa78122af785516376b9905ba43f and branch pipeline 2516207722 passed",
+          "the next governed act is release-branch readiness reassessment before any exact tag or main-promotion action"
+        ],
+        "boundary": {
+          "exactTagCreated": false,
+          "publicGitHubReleasePublished": false,
+          "marketplaceMutated": false,
+          "windowsDockerDesktopProofAdmitted": false,
+          "mainPromoted": false,
+          "releaseBranchDeleted": false
+        }
+      }
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -235,6 +259,11 @@
       "chosenBump": "patch",
       "targetFeatureBranch": "feature/develop-1.3.16-candidate-opening",
       "targetDevelopCandidateReleaseLine": "v1.3.16",
+      "targetReleaseBranch": "release/1.3.16",
+      "releaseBranchOpeningPipeline": 2516207722,
+      "releaseBranchOpeningCommit": "2443e601c2b1aa78122af785516376b9905ba43f",
+      "status": "release-branch-opened-pipeline-green-readiness-reassessment-pending",
+      "nextAdmittedAction": "reassess-release-1.3.16-branch-readiness-before-exact-tag",
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:verify",
@@ -242,13 +271,21 @@
       "vscodeMarketplacePublicationPrepPackageScript": "npm run vscode:marketplace:prepare",
       "vscodeMarketplacePublicationPrepReceiptPath": ".cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json",
       "rationale": [
-        "exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace, so the no-bump repair freeze is clear",
-        "develop now carries package line 1.3.16 as a patch candidate for installed-user host runtime admission after the v1.3.15 closeout back-merge",
-        "the candidate admits an already-open selected Windows LabVIEW host session only for installed-user host compare while canonical proof and benchmark lanes stay clean-host unless they explicitly opt in",
-        "blocked historical v1.3.8 incident evidence remains retained, release/1.3.15 remains retained, and no release/1.3.16 branch, exact tag, public GitHub release, Marketplace mutation, Windows Docker Desktop proof admission, main promotion, or release branch deletion is performed by the candidate opening"
+        "exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace",
+        "protected develop pipeline 2516180885 passed after the v1.3.16 candidate-opening MR merged",
+        "release/1.3.16 was opened from protected develop commit 2443e601c2b1aa78122af785516376b9905ba43f and branch pipeline 2516207722 passed",
+        "the next governed act is release-branch readiness reassessment before any exact tag or main-promotion action"
       ],
+      "boundary": {
+        "exactTagCreated": false,
+        "publicGitHubReleasePublished": false,
+        "marketplaceMutated": false,
+        "windowsDockerDesktopProofAdmitted": false,
+        "mainPromoted": false,
+        "releaseBranchDeleted": false
+      },
       "rejectedAlternatives": {
-        "hotfix": "the patch is already on develop after the v1.3.15 closeout and should promote through the normal release/* path rather than bypassing GitFlow from main",
+        "hotfix": "the patch is already on develop after the v1.3.15 closeout and is now on release/1.3.16 through the normal release/* path rather than bypassing GitFlow from main",
         "minor": "the change hardens an existing installed-user host compare workflow instead of adding a new governed capability or supported workflow",
         "major": "no governed public or maintainer contract is intentionally broken or removed; the current exact line is already published on GitHub and Marketplace"
       }

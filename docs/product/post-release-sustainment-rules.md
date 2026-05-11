@@ -79,11 +79,12 @@ Current version-line contract:
 - current authority package line on `main`: `1.3.15`
 - current develop package line on `develop`: `1.3.16`
 - active exact release candidate line on `develop`: `v1.3.16`
-- retained release-candidate branch: `release/1.3.15`
+- active release-candidate branch: `release/1.3.16`
+- retained prior release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  patch candidate `v1.3.16` is open on `develop` after exact `v1.3.15`
-  closeout; no `release/1.3.16` branch is open yet, and `release/1.3.15`
-  remains retained
+  `release/1.3.16` is open from protected `develop` commit `2443e601`, branch
+  pipeline `2516207722` is green, and readiness reassessment is required before
+  any exact tag or main-promotion action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:

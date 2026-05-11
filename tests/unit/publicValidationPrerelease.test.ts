@@ -138,7 +138,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
+      'reassess-release-1.3.16-branch-readiness-before-exact-tag'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',

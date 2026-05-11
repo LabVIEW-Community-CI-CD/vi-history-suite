@@ -30,7 +30,10 @@ describe('hosted ci governance docs', () => {
         currentDevelopPackageLine: '1.3.16',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
         activeDevelopCandidateReleaseLine: 'v1.3.16',
-        activeReleaseCandidateBranch: null,
+        activeReleaseCandidateBranch: 'release/1.3.16',
+        activeReleaseCandidateState:
+          'release-branch-opened-pipeline-green-readiness-reassessment-pending',
+        nextAdmittedAction: 'reassess-release-1.3.16-branch-readiness-before-exact-tag',
         retainedReleaseCandidateBranch: 'release/1.3.15',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
@@ -112,9 +115,9 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrix.activeReleaseClaim).toEqual(
       expect.objectContaining({
-        classification: 'exact-patch-candidate-open-on-develop',
-        publicGitHubMutation: 'not-performed-by-candidate-opening',
-        marketplaceMutation: 'not-performed-by-candidate-opening'
+        classification: 'exact-patch-release-branch-opened-readiness-pending',
+        publicGitHubMutation: 'not-performed-by-release-branch-opening',
+        marketplaceMutation: 'not-performed-by-release-branch-opening'
       })
     );
     expect(matrix.authorityGitLab.runnerLanes.linuxAssurance.operatorModel.helperVerification).toEqual(
@@ -142,7 +145,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.16`');
     expect(matrixDoc).toContain('active Marketplace public validation preview line: `1.3.13`');
     expect(matrixDoc).toContain('Marketplace public validation preview status: published and verified');
-    expect(matrixDoc).toContain('retained release-candidate branch: `release/1.3.15`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.16`');
     expect(matrixDoc).toContain('npm run public:github:exact:transaction:verify');
     expect(matrixDoc).toContain('chosen bump: patch');
     expect(matrixDoc).toContain(

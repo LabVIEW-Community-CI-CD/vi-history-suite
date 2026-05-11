@@ -142,9 +142,9 @@ describe('release publication state resolver', () => {
     });
     expect(state.releaseBranchOpening).toMatchObject({
       status: 'performed-and-retained',
-      releaseBranch: 'release/1.3.15',
+      releaseBranch: 'release/1.3.16',
       pipelineStatus: 'success',
-      vagrantVsixAcceptanceJobId: 14293424513
+      vagrantVsixAcceptanceJobId: 14309562384
     });
     expect(state.releaseBranchReadinessReassessment).toMatchObject({
       status: 'blocked-main-not-ancestor-topology-refresh-required',
@@ -164,9 +164,14 @@ describe('release publication state resolver', () => {
       blockerCode: 'published-immutable-release-assets-incomplete',
       status: 'retained-history'
     });
-    expect(state.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
+    expect(state.activeCandidate).toMatchObject({
+      packageVersion: '1.3.16',
+      tag: 'v1.3.16',
+      branch: 'release/1.3.16',
+      state: 'release-branch-opened-pipeline-green-readiness-reassessment-pending'
+    });
     expect(state.nextAdmittedAction).toBe(
-      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
+      'reassess-release-1.3.16-branch-readiness-before-exact-tag'
     );
 
     expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.15`');
@@ -185,7 +190,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Incident Classification');
     expect(stateDoc).toContain('blocked historical incident');
     expect(stateDoc).toContain(
-      '`open-release-1.3.16-after-protected-develop-candidate-pipeline`'
+      '`reassess-release-1.3.16-branch-readiness-before-exact-tag`'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

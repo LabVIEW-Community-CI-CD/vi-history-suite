@@ -19,12 +19,14 @@ final installed-user distribution surface.
 - Expected checksum: `vi-history-suite-1.3.15.vsix.sha256`
 - Expected VSIX SHA-256:
   `157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7`
-- Active candidate release branch: none; `release/1.3.15` is retained
+- Active candidate release branch: `release/1.3.16`; prior
+  `release/1.3.15` is retained
 - Active candidate tag: `v1.3.16`
 - Active candidate package version: `1.3.16`
-- Active candidate state: patch candidate `v1.3.16` is open on `develop`
-  after exact `v1.3.15` was fully published across GitLab authority, public
-  GitHub, and VS Code Marketplace; no `release/1.3.16` branch is open yet
+- Active candidate state: `release/1.3.16` is open from protected `develop`
+  commit `2443e601c2b1aa78122af785516376b9905ba43f`; branch pipeline
+  `2516207722` is green, and readiness reassessment is required before any
+  exact tag or main-promotion action
 
 ## Develop Preview State
 
@@ -453,7 +455,7 @@ preview. It is a `1.3.14` release-readiness consolidation line with Linux
 Docker, Linux host LabVIEW, Windows host LabVIEW, Vagrant VSIX acceptance,
 public exact pre-tag, package preview, docs, and assurance evidence retained.
 That made release-branch opening admissible as a separate governed action. The
-release branch has since been opened and reassessed, but exact tag, public
+release branch has since been opened, but readiness reassessment, exact tag, public
 GitHub release, VS Code Marketplace publication, Windows Docker Desktop
 Windows-container proof claim, and `main` promotion remain unperformed in this
 state.
@@ -462,29 +464,29 @@ state.
 
 - Status: performed and retained
 - Packet:
-  `docs/product/release-branch-opening-v1.3.15-2026-05-09.md`
+  `docs/product/release-branch-opening-v1.3.16-2026-05-11.md`
 - Packet JSON:
-  `docs/product/release-branch-opening-v1.3.15-2026-05-09.json`
+  `docs/product/release-branch-opening-v1.3.16-2026-05-11.json`
 - Source branch: `develop`
 - Source commit:
-  `67c2c3a188666eaad3cab2695092991c42f33470`
-- Release branch: `release/1.3.15`
-- Release branch pipeline: `2513019603` / `success`
-- Duplicate operator pipeline: `2513019188` / `success`
-- Package version: `1.3.15`
+  `2443e601c2b1aa78122af785516376b9905ba43f`
+- Release branch: `release/1.3.16`
+- Release branch pipeline: `2516207722` / `success`
+- Duplicate operator pipeline: none
+- Package version: `1.3.16`
 - Vagrant Windows VSIX acceptance: release branch CI receipt retained in job
-  `14293424513`
+  `14309562384`
 - Vagrant assertion receipt:
   `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
 - Vagrant manifest:
-  `vagrant/evidence/20260509-171233/manifest.json`
+  `vagrant/evidence/20260511-070846/manifest.json`
 - LabVIEW startup receipt: `vagrant/evidence/labview-startup.json`
-- Preview package job: `14293424514`
+- Preview package job: `14309562385`
 - Preview VSIX evidence:
-  `preview-evidence/vi-history-suite-1.3.15.vsix`
+  `preview-evidence/vi-history-suite-1.3.16.vsix`
 - Preview VSIX SHA-256:
-  `bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14`
-- Preview VSIX size: `1014754` bytes
+  `84ff12e25793406a29ca1ce23a670e6aab8b3519594ef0019605564034f964da`
+- Preview VSIX size: `1015904` bytes
 - Exact tag: not admitted and not created
 - `release_extension` job: not run because no exact `vX.Y.Z` tag exists
 - Public GitHub exact mutation: not admitted and not performed
@@ -492,17 +494,15 @@ state.
 - Windows Docker Desktop Windows-container proof state: community/deferred
 - `main` promotion: not admitted and not performed
 - Next admitted action:
-  `reassess-release-1.3.15-branch-readiness-before-exact-tag`
+  `reassess-release-1.3.16-branch-readiness-before-exact-tag`
 
 This branch opening converts the current candidate from a `develop`-only patch
 candidate into an opened release-candidate branch while preserving the exact
 publication boundary. The branch preview artifact is still preview evidence
 only, not the selected exact authority VSIX.
 
-The `2513019188` pipeline was an operator-triggered duplicate on the same ref
-and SHA after GitLab did not immediately surface the delayed branch-created
-pipeline. It also passed, but the canonical branch-opening receipt is the
-`push` pipeline `2513019603`.
+No duplicate operator pipeline was started for `release/1.3.16`; the canonical
+branch-opening receipt is the branch-created `push` pipeline `2516207722`.
 
 ## Release Branch Readiness Reassessment
 
@@ -662,7 +662,7 @@ until that later public GitHub release gate is complete.
 - VS Code Marketplace version: `1.3.15`
 - Marketplace last updated: `2026-05-10T22:22:37.663Z`
 - Next admitted action:
-  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
+  `reassess-release-1.3.16-branch-readiness-before-exact-tag`
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
@@ -744,7 +744,7 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
   `develop` closeout retention. Patch candidate `v1.3.16` is open on
   `develop` for installed-user host runtime admission.
 - Next admitted action under the current boundary:
-  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
+  `reassess-release-1.3.16-branch-readiness-before-exact-tag`
 - Release branch deletion:
   not admitted unless explicitly authorized separately
 
