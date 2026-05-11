@@ -9,25 +9,23 @@ final installed-user distribution surface.
 ## Current State
 
 - Authority system: GitLab
-- Fully closed authority exact tag: `v1.3.15`
-- Fully closed authority `main`: `196dd70878bf26e9722c031b9192581e5147bafb`
-- Current authority exact tag: `v1.3.15`
-- Current authority `main`: `196dd70878bf26e9722c031b9192581e5147bafb`
+- Fully closed authority exact tag: `v1.3.16`
+- Fully closed authority `main`: `9c8e0a8503a84cba5d0ea722dd1497a35f52326c`
+- Current authority exact tag: `v1.3.16`
+- Current authority `main`: `9c8e0a8503a84cba5d0ea722dd1497a35f52326c`
 - GitLab release manifest:
-  `.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json`
-- Expected VSIX: `vi-history-suite-1.3.15.vsix`
-- Expected checksum: `vi-history-suite-1.3.15.vsix.sha256`
+  `.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/release-manifest.json`
+- Expected VSIX: `vi-history-suite-1.3.16.vsix`
+- Expected checksum: `vi-history-suite-1.3.16.vsix.sha256`
 - Expected VSIX SHA-256:
-  `157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7`
-- Active candidate release branch: `release/1.3.16`; prior
-  `release/1.3.15` is retained
-- Active candidate tag: `v1.3.16`
-- Active candidate package version: `1.3.16`
-- Active candidate state: `release/1.3.16` is open from protected `develop`
-  commit `2443e601c2b1aa78122af785516376b9905ba43f`; branch pipeline
-  `2516207722` is green, protected `develop` retention pipeline `2516304744`
-  is green, and readiness reassessment admits main promotion only as the next
-  separate governed action
+  `56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170`
+- Active candidate release branch: none; retained release branches include
+  `release/1.3.15` and `release/1.3.16`
+- Active candidate tag: none
+- Active candidate package version: none
+- Active candidate state: exact `v1.3.16` is published across GitLab
+  authority, public GitHub, and VS Code Marketplace; protected `main` has been
+  merged into the closeout branch for protected `develop` retention
 
 ## Develop Preview State
 
@@ -132,18 +130,18 @@ final installed-user distribution surface.
 
 ## Public GitHub State
 
-- Public GitHub `main`: `427ab27245f6f66d186e07865f1fc0a00795611a`
-- Public GitHub tag: `v1.3.15`
+- Public GitHub `main`: `f679023ed760963779d9331a9395128ad01c7e54`
+- Public GitHub tag: `v1.3.16`
 - Public GitHub tag object:
-  `28ea4253813e6f322cbcc25cdce865cdeac219a6`
-- Public GitHub release id: `320197692`
+  `f6ca389269dac140dc416d76bb4c2ac142664567`
+- Public GitHub release id: `320824958`
 - Public GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.16`
 - Public GitHub release status: published, immutable, exact assets retained
 - Asset status: `published-complete`
 - Public GitHub source status: current public `main` publishes
-  `427ab27245f6f66d186e07865f1fc0a00795611a` after public PR #83 promoted
-  the `v1.3.15` source/authority handoff; the earlier `v1.3.14` source/tag
+  `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88 promoted
+  the `v1.3.16` source/authority handoff; the earlier `v1.3.14` source/tag
   handoff remains retained at public PR #69, the Windows Docker Desktop
   proof-intake template and label remain retained at public PR #68, the
   canonical Docker fixture docs remain retained at `ce6dbd0` through public PR
@@ -180,22 +178,22 @@ final installed-user distribution surface.
 ## Marketplace State
 
 - Marketplace item: `svelderrainruiz.vi-history-suite`
-- Current Marketplace version: `1.3.15`
+- Current Marketplace version: `1.3.16`
 - Current Marketplace publication kind: exact release
-- Current regular Marketplace version: `1.3.15`
-- Current regular Marketplace last updated: `2026-05-10T22:22:37.663Z`
+- Current regular Marketplace version: `1.3.16`
+- Current regular Marketplace last updated: `2026-05-11T23:10:13.317Z`
 - Current pre-release Marketplace version: `1.3.13`
 - Current pre-release last updated: `2026-04-27T04:24:05.457Z`
 - Expected exact-candidate version for the active governed candidate line:
-  `1.3.16`
-- Marketplace status: exact `1.3.15` is published and verified; public
+  none
+- Marketplace status: exact `1.3.16` is published and verified; public
   validation pre-release `1.3.13` remains retained as historical validation
   evidence.
 - Windows exact-VSIX install proof package script:
   `npm run vscode:marketplace:install-proof`
 - Windows exact-VSIX install proof receipt:
   `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
-- Windows exact-VSIX install proof status: passed for `v1.3.15` with
+- Windows exact-VSIX install proof status: passed for `v1.3.16` with
   `runtimeValidationOutcome=ready`, launcher PATH stripped to the isolated
   launcher root plus `System32`, and no ambient Node requirement.
 
@@ -630,42 +628,42 @@ retained assessment keeps the line frozen until the asset-first public GitHub
 release is published and verified, and Marketplace publication remains blocked
 until that later public GitHub release gate is complete.
 
-## Exact Release Closeout v1.3.15
+## Exact Release Closeout v1.3.16
 
 - Status: published and verified
-- Authority tag: `v1.3.15`
+- Authority tag: `v1.3.16`
 - Authority `main`:
-  `196dd70878bf26e9722c031b9192581e5147bafb`
+  `9c8e0a8503a84cba5d0ea722dd1497a35f52326c`
 - Authority tag object:
-  `08102dafaab6b4e05ac4e62b9c7a13e1293d388b`
-- GitLab tag pipeline: `2514112734` / `success`
-- GitLab release job: `14297942289`
-- GitLab Vagrant tag job: `14297942286`
+  `a1f3d173ed8f89eaf4b71bdcd799a0c3eb01a84d`
+- GitLab tag pipeline: `2517275332` / `success`
+- GitLab release job: `14317413309`
+- GitLab Vagrant tag job: `14317413306`
 - Public GitHub PR:
-  `https://github.com/svelderrainruiz/vi-history-suite/pull/83`
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/88`
 - Public GitHub `main`:
-  `427ab27245f6f66d186e07865f1fc0a00795611a`
-- Public tag: `v1.3.15`
+  `f679023ed760963779d9331a9395128ad01c7e54`
+- Public tag: `v1.3.16`
 - Public tag object:
-  `28ea4253813e6f322cbcc25cdce865cdeac219a6`
+  `f6ca389269dac140dc416d76bb4c2ac142664567`
 - Public GitHub release:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`
-- Public GitHub release id: `320197692`
-- Public GitHub release published at: `2026-05-10T22:02:02Z`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.16`
+- Public GitHub release id: `320824958`
+- Public GitHub release published at: `2026-05-11T22:38:02Z`
 - VSIX SHA-256:
-  `157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7`
+  `56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170`
 - Checksum asset SHA-256:
-  `6c7be192f19d3eadf68a80fe4e75e3e393d1805cab6c4ab7c76571c411fa6147`
+  `ef3b3091fbea95924cf5dc51847abebd658f0a21ebe49c81422664fa97f7a23d`
 - Windows exact-VSIX install proof:
   `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - Public GitHub exact transaction receipt:
-  `.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json`
+  `.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json`
 - VS Code Marketplace prep receipt:
-  `.cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json`
-- VS Code Marketplace version: `1.3.15`
-- Marketplace last updated: `2026-05-10T22:22:37.663Z`
+  `.cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json`
+- VS Code Marketplace version: `1.3.16`
+- Marketplace last updated: `2026-05-11T23:10:13.317Z`
 - Next admitted action:
-  `promote-release-1.3.16-to-main-as-separate-governed-action`
+  `retain-v1.3.16-marketplace-closeout-on-protected-develop`
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
@@ -736,18 +734,18 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 - Summary: public GitHub release `312768592` for `v1.3.8` is already published
   and immutable with zero assets, so the exact VSIX and checksum could not be
   uploaded after publication; retain this only as blocked historical incident
-  evidence while `v1.3.15` remains the fully closed exact line.
+  evidence while `v1.3.16` remains the fully closed exact line.
 - Repair rule: do not attempt in-place asset upload; require the next exact
   release line to use the asset-first publisher.
 
 ## Next Admitted Action
 
-- Governed next line: exact `v1.3.15` is closed across GitLab authority,
-  public GitHub source/tag/release, VS Code Marketplace, and protected
-  `develop` closeout retention. Patch candidate `v1.3.16` is open on
-  `release/1.3.16` for installed-user host runtime admission.
+- Governed next line: exact `v1.3.16` is closed across GitLab authority,
+  public GitHub source/tag/release, and VS Code Marketplace; this branch
+  retains the protected `main` merge into `develop` plus the Marketplace
+  publication ledger closeout.
 - Next admitted action under the current boundary:
-  `promote-release-1.3.16-to-main-as-separate-governed-action`
+  `retain-v1.3.16-marketplace-closeout-on-protected-develop`
 - Release branch deletion:
   not admitted unless explicitly authorized separately
 

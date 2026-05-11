@@ -30,7 +30,7 @@ const publicationState = require(path.join(
 };
 
 describe('release publication state resolver', () => {
-  it('retains the closed v1.3.15 authority/public/Marketplace state while keeping historical lanes explicit', () => {
+  it('retains the closed v1.3.16 authority/public/Marketplace state while keeping historical lanes explicit', () => {
     const state = publicationState.resolvePublicationState();
     const stateDoc = fs.readFileSync(
       path.join(repoRoot, 'docs', 'product', 'release-publication-state.md'),
@@ -39,43 +39,43 @@ describe('release publication state resolver', () => {
 
     expect(state.authority).toMatchObject({
       system: 'gitlab',
-      exactTag: 'v1.3.15',
-      packageVersion: '1.3.15',
-      mainCommit: '196dd70878bf26e9722c031b9192581e5147bafb',
-      tagObjectSha: '08102dafaab6b4e05ac4e62b9c7a13e1293d388b',
-      tagCommitSha: '196dd70878bf26e9722c031b9192581e5147bafb',
-      tagPipelineId: 2514112734,
-      releaseExtensionJobId: 14297942289,
-      vagrantWindowsVsixAcceptanceJobId: 14297942286,
+      exactTag: 'v1.3.16',
+      packageVersion: '1.3.16',
+      mainCommit: '9c8e0a8503a84cba5d0ea722dd1497a35f52326c',
+      tagObjectSha: 'a1f3d173ed8f89eaf4b71bdcd799a0c3eb01a84d',
+      tagCommitSha: '9c8e0a8503a84cba5d0ea722dd1497a35f52326c',
+      tagPipelineId: 2517275332,
+      releaseExtensionJobId: 14317413309,
+      vagrantWindowsVsixAcceptanceJobId: 14317413306,
       gitlabReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json',
-      expectedVsixAsset: 'vi-history-suite-1.3.15.vsix',
+        '.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/release-manifest.json',
+      expectedVsixAsset: 'vi-history-suite-1.3.16.vsix',
       expectedVsixSha256:
-        '157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7'
+        '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170'
     });
     expect(state.currentAuthority).toMatchObject(state.authority);
     expect(state.publicGitHub.release).toMatchObject({
-      id: 320197692,
-      tag: 'v1.3.15',
+      id: 320824958,
+      tag: 'v1.3.16',
       published: true,
       immutable: true,
       assetCount: 2,
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
-      tag: 'v1.3.15',
-      tagObjectSha: '28ea4253813e6f322cbcc25cdce865cdeac219a6',
+      mainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+      tag: 'v1.3.16',
+      tagObjectSha: 'f6ca389269dac140dc416d76bb4c2ac142664567',
       sourcePublication: {
-        status: 'public-source-tag-release-and-marketplace-v1.3.15-published-and-verified',
-        currentMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
-        currentMainShortCommit: '427ab27',
+        status: 'public-source-tag-release-and-marketplace-v1.3.16-published-and-verified',
+        currentMainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+        currentMainShortCommit: 'f679023',
         latestPublicExactReleaseCloseout: expect.objectContaining({
           status: 'published-and-verified',
-          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/83',
-          publicTag: 'v1.3.15',
-          publicGitHubReleaseId: 320197692,
-          marketplaceVersion: '1.3.15',
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
+          publicTag: 'v1.3.16',
+          publicGitHubReleaseId: 320824958,
+          marketplaceVersion: '1.3.16',
           marketplaceMutation: 'published-and-verified'
         }),
         latestPublicSourceAndTagHandoffCloseout: expect.objectContaining({
@@ -93,22 +93,32 @@ describe('release publication state resolver', () => {
     });
     expect(state.marketplace).toMatchObject({
       itemName: 'svelderrainruiz.vi-history-suite',
-      currentPublishedVersion: '1.3.15',
+      currentPublishedVersion: '1.3.16',
       currentPublishedKind: 'exact-release',
-      currentRegularPublishedVersion: '1.3.15',
+      currentRegularPublishedVersion: '1.3.16',
       currentPreReleaseVersion: '1.3.13',
       expectedVersion: '1.3.16',
-      status: 'published-exact-release-1.3.15',
+      status: 'published-exact-release-1.3.16',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
         receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
         status: 'passed',
-        authorityTag: 'v1.3.15',
-        packageVersion: '1.3.15',
+        authorityTag: 'v1.3.16',
+        packageVersion: '1.3.16',
         runtimeValidationOutcome: 'ready',
         launcherPathStrippedToLauncherAndSystem32: true,
         ambientNodeOnPathRequired: false
       }
+    });
+    expect(state.exactReleaseCloseout).toMatchObject({
+      status: 'published-and-verified',
+      version: '1.3.16',
+      tag: 'v1.3.16',
+      authorityMainCommit: '9c8e0a8503a84cba5d0ea722dd1497a35f52326c',
+      publicMainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+      publicGitHubReleaseId: 320824958,
+      marketplaceVersion: '1.3.16',
+      marketplaceLastUpdated: '2026-05-11T23:10:13.317Z'
     });
     expect(state.exactReleaseCloseoutV1315).toMatchObject({
       status: 'published-and-verified',
@@ -168,24 +178,19 @@ describe('release publication state resolver', () => {
       blockerCode: 'published-immutable-release-assets-incomplete',
       status: 'retained-history'
     });
-    expect(state.activeCandidate).toMatchObject({
-      packageVersion: '1.3.16',
-      tag: 'v1.3.16',
-      branch: 'release/1.3.16',
-      state: 'release-branch-readiness-reassessed-main-promotion-admissible'
-    });
+    expect(state.activeCandidate).toBeNull();
     expect(state.nextAdmittedAction).toBe(
-      'promote-release-1.3.16-to-main-as-separate-governed-action'
+      'retain-v1.3.16-marketplace-closeout-on-protected-develop'
     );
 
-    expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.15`');
-    expect(stateDoc).toContain('Current authority exact tag: `v1.3.15`');
-    expect(stateDoc).toContain('Public GitHub `main`: `427ab27245f6f66d186e07865f1fc0a00795611a`');
-    expect(stateDoc).toContain('Public GitHub release id: `320197692`');
-    expect(stateDoc).toContain('## Exact Release Closeout v1.3.15');
-    expect(stateDoc).toContain('VS Code Marketplace version: `1.3.15`');
+    expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.16`');
+    expect(stateDoc).toContain('Current authority exact tag: `v1.3.16`');
+    expect(stateDoc).toContain('Public GitHub `main`: `f679023ed760963779d9331a9395128ad01c7e54`');
+    expect(stateDoc).toContain('Public GitHub release id: `320824958`');
+    expect(stateDoc).toContain('## Exact Release Closeout v1.3.16');
+    expect(stateDoc).toContain('VS Code Marketplace version: `1.3.16`');
     expect(stateDoc).toContain(
-      '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json'
+      '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json'
     );
     expect(stateDoc).toContain('## Marketplace Community-Validation Preview Path');
     expect(stateDoc).toContain('## Release Branch Opening');
@@ -194,7 +199,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Incident Classification');
     expect(stateDoc).toContain('blocked historical incident');
     expect(stateDoc).toContain(
-      '`promote-release-1.3.16-to-main-as-separate-governed-action`'
+      '`retain-v1.3.16-marketplace-closeout-on-protected-develop`'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
@@ -225,7 +230,7 @@ describe('release publication state resolver', () => {
       tag: 'v9.8.7',
       packageVersion: '9.8.7',
       marketplaceItem: 'svelderrainruiz.vi-history-suite',
-      currentMarketplaceVersion: '1.3.15'
+      currentMarketplaceVersion: '1.3.16'
     });
   });
 });

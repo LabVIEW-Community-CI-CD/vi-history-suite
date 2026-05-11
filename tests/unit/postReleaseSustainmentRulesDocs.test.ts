@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('post-release sustainment rules package', () => {
-  it('retains the fully closed v1.3.15 line while keeping v1.3.8 as blocked historical evidence', () => {
+  it('retains the fully closed v1.3.16 line while keeping v1.3.8 as blocked historical evidence', () => {
     const rules = readJson<any>('docs/product/post-release-sustainment-rules.json');
     const rulesDoc = readText('docs/product/post-release-sustainment-rules.md');
     const readme = readText('README.md');
@@ -28,16 +28,16 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.15',
-        currentMainPackageLine: '1.3.15',
-        currentAuthorityPackageLine: '1.3.15',
+        currentExactReleaseLine: 'v1.3.16',
+        currentMainPackageLine: '1.3.16',
+        currentAuthorityPackageLine: '1.3.16',
         currentDevelopPackageLine: '1.3.16',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
-        activeDevelopCandidateReleaseLine: 'v1.3.16',
-        activeReleaseCandidateBranch: 'release/1.3.16',
-        retainedReleaseCandidateBranch: 'release/1.3.15',
-        activeReleaseCandidateState: 'release-branch-readiness-reassessed-main-promotion-admissible',
-        nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action',
+        activeDevelopCandidateReleaseLine: null,
+        activeReleaseCandidateBranch: null,
+        retainedReleaseCandidateBranch: 'release/1.3.16',
+        activeReleaseCandidateState: null,
+        nextAdmittedAction: 'retain-v1.3.16-marketplace-closeout-on-protected-develop',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -45,7 +45,7 @@ describe('post-release sustainment rules package', () => {
         preTagPublicExactProofJob: 'public_exact_pretag_proof',
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
         publicGitHubExactTransactionReceiptPath:
-          '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json',
+          '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json',
         windowsExactVsixInstallProofPackageScript: 'npm run vscode:marketplace:install-proof',
         windowsExactVsixInstallProofReceiptPath:
           '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
@@ -77,12 +77,12 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.8');
     expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.9');
     expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.14');
-    expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.15');
+    expect(rules.releaseCadence.versionLineContract.retainedExactVersionReleases).toContain('v1.3.16');
     expect(rules.releaseCadence.versionLineContract.publicGitHubExactPublishabilityProbe).toEqual(
       expect.objectContaining({
         status: 'published',
         blockerCode: null,
-        draftReleaseId: 320197692,
+        draftReleaseId: 320824958,
         draftReleaseLookupStatusCode: 200,
         draftReleaseHtmlUrlUsesUntaggedPath: false
       })
@@ -93,11 +93,11 @@ describe('post-release sustainment rules package', () => {
       expect.objectContaining({
         status: 'not-applicable-already-published',
         blockerCode: null,
-        draftReleaseId: 320197692,
+        draftReleaseId: 320824958,
         draftReleaseByIdStatusCode: 200,
         draftReleaseTagMatchesAuthority: true,
         authorityReleaseManifestPath:
-          '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json',
+          '.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/release-manifest.json',
         releaseAssetsRetainedAgainstManifest: true
       })
     );
@@ -109,7 +109,7 @@ describe('post-release sustainment rules package', () => {
         publicGitHubReleaseImmutable: true,
         publicGitHubReleaseAssetCount: 0,
         blockerCode: 'published-immutable-release-assets-incomplete',
-        marketplaceVersionRetained: '1.3.15'
+        marketplaceVersionRetained: '1.3.16'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
@@ -128,7 +128,7 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.softwareFactoryGovernance).toEqual(
       expect.objectContaining({
-        status: 'authority-v1.3.15-fully-published-no-open-release-line',
+        status: 'authority-v1.3.16-fully-published-no-open-release-line',
         activeFeatureBranch: null,
         soleProductionRecoveryTarget: null,
         productionMutationAllowed: false
@@ -137,7 +137,7 @@ describe('post-release sustainment rules package', () => {
     expect(rules.softwareFactoryGovernance.recoveryBoundary).toEqual(
       expect.arrayContaining([
         'repair-in-place first when public GitHub main, tag, or draft release already exist',
-        'current exact GitHub and VS Code Marketplace acts are fully closed for v1.3.15 while v1.3.8 is retained as blocked historical incident evidence'
+        'current exact GitHub and VS Code Marketplace acts are fully closed for v1.3.16 while v1.3.8 is retained as blocked historical incident evidence'
       ])
     );
     expect(rules.softwareFactoryGovernance.approvalModel).toEqual(
@@ -148,13 +148,13 @@ describe('post-release sustainment rules package', () => {
       ])
     );
 
-    expect(rulesDoc).toContain('current exact released line: `v1.3.15`');
-    expect(rulesDoc).toContain('current authority package line on `main`: `1.3.15`');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.16`');
+    expect(rulesDoc).toContain('current authority package line on `main`: `1.3.16`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.16`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.16`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.16`');
-    expect(rulesDoc).toContain('retained prior release-candidate branch: `release/1.3.15`');
-    expect(rulesDoc).toContain('public release `320197692` is published on `v1.3.15`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
+    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('retained prior release-candidate branch: `release/1.3.16`');
+    expect(rulesDoc).toContain('public release `320824958` is published on `v1.3.16`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
     expect(rulesDoc).toContain('asset-first GitHub release rule');
     expect(rulesDoc).toContain('`npm run vscode:marketplace:install-proof`');
@@ -169,19 +169,19 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('Marketplace public validation preview last updated:');
     expect(rulesDoc).toContain('Marketplace public validation preview VSIX SHA-256:');
     expect(rulesDoc).toContain(
-      '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/'
+      '.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/'
     );
     expect(rulesDoc).toContain('active software-factory branch on `develop`:');
     expect(rulesDoc).toContain('none');
     expect(rulesDoc).toContain('sole production recovery target: none');
     expect(rulesDoc).toContain('current');
-    expect(rulesDoc).toContain('exact GitHub and VS Code Marketplace acts are fully closed for `v1.3.15`');
-    expect(rulesDoc).toContain('published `v1.3.15` host-default Windows local');
+    expect(rulesDoc).toContain('exact GitHub and VS Code Marketplace acts are fully closed for `v1.3.16`');
+    expect(rulesDoc).toContain('published `v1.3.16` host-default Windows local');
     expect(rulesDoc).toContain('`LabVIEWCLI` contract with bounded expert Docker');
     expect(rulesDoc).toContain('Marketplace prep rule');
-    expect(readme).toContain('current exact released line: `v1.3.15`');
-    expect(currentState).toContain('current exact released line: `v1.3.15`');
-    expect(releaseProcedure).toContain('The current exact released line is `v1.3.15`.');
+    expect(readme).toContain('current exact released line: `v1.3.16`');
+    expect(currentState).toContain('current exact released line: `v1.3.16`');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.3.16`.');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
     expect(releaseProcedure).toContain('The Windows exact-VSIX install proof package script is');
   });

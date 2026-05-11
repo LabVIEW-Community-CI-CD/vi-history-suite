@@ -205,9 +205,9 @@ describe('exact release readiness assessment', () => {
     expect(currentState).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(currentState).toContain('historical readiness assessments for `v1.3.14`');
     expect(currentState).toContain('`release/1.3.15` branch opening remain retained');
-    expect(currentState).toContain('exact `v1.3.15` is now');
+    expect(currentState).toContain('exact `v1.3.16` is now');
     expect(currentState).toContain(
-      '`promote-release-1.3.16-to-main-as-separate-governed-action`'
+      '`retain-v1.3.16-marketplace-closeout-on-protected-develop`'
     );
     expect(srs).toContain('exact-release-readiness-assessment-2026-05-08.md');
     expect(srs).toContain('current `1.3.14` exact-release readiness verdict');

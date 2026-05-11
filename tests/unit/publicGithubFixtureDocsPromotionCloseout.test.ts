@@ -99,13 +99,13 @@ describe('public GitHub fixture docs promotion closeout', () => {
     }
 
     expect(releaseState.publicGitHub).toMatchObject({
-      mainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
+      mainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
       sourcePublication: {
         status:
-          'public-source-tag-release-and-marketplace-v1.3.15-published-and-verified',
-        currentMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
-        currentMainShortCommit: '427ab27',
-        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/83',
+          'public-source-tag-release-and-marketplace-v1.3.16-published-and-verified',
+        currentMainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+        currentMainShortCommit: 'f679023',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
         latestPublicValidationFixturePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
         latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
@@ -127,12 +127,12 @@ describe('public GitHub fixture docs promotion closeout', () => {
         }),
         latestPublicExactReleaseCloseout: expect.objectContaining({
           status: 'published-and-verified',
-          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/83',
-          publicMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
-          publicMainShortCommit: '427ab27',
-          publicTag: 'v1.3.15',
-          publicGitHubReleaseId: 320197692,
-          marketplaceVersion: '1.3.15'
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
+          publicMainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+          publicMainShortCommit: 'f679023',
+          publicTag: 'v1.3.16',
+          publicGitHubReleaseId: 320824958,
+          marketplaceVersion: '1.3.16'
         }),
         publicDevelopSync: expect.objectContaining({
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
@@ -159,8 +159,8 @@ describe('public GitHub fixture docs promotion closeout', () => {
       ])
     );
     expect(publicReleaseCandidate.publishedPublicSource).toMatchObject({
-      currentPublicSourceHead: '427ab27',
-      currentPublicSourceHeadSha: '427ab27245f6f66d186e07865f1fc0a00795611a',
+      currentPublicSourceHead: 'f679023',
+      currentPublicSourceHeadSha: 'f679023ed760963779d9331a9395128ad01c7e54',
       latestPublicSourceAndTagHandoff: expect.objectContaining({
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
         publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
@@ -169,12 +169,12 @@ describe('public GitHub fixture docs promotion closeout', () => {
         publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae'
       }),
       latestPublicExactReleaseCloseout: expect.objectContaining({
-        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/83',
-        publicMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
-        publicMainShortCommit: '427ab27',
-        publicTag: 'v1.3.15',
-        publicGitHubReleaseId: 320197692,
-        marketplaceVersion: '1.3.15'
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
+        publicMainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+        publicMainShortCommit: 'f679023',
+        publicTag: 'v1.3.16',
+        publicGitHubReleaseId: 320824958,
+        marketplaceVersion: '1.3.16'
       }),
       latestPublicFacadeDocsPromotion: expect.objectContaining({
         pullRequest: publicPullRequest,

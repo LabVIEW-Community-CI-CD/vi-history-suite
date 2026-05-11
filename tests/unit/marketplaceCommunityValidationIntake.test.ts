@@ -113,7 +113,7 @@ describe('Marketplace community-validation intake packet', () => {
     const labels = readText('public-github-source/.github/labels.yml');
 
     expect(template).toContain('Marketplace community validation report');
-    expect(template).toContain('Marketplace stable installed-user `1.3.15`');
+    expect(template).toContain('Marketplace stable installed-user `1.3.16`');
     expect(template).toContain('runtimeErrorCode');
     expect(template).toContain('Validation outcome');
     expect(template).toContain('Proof-status acknowledgement');
@@ -122,7 +122,7 @@ describe('Marketplace community-validation intake packet', () => {
     expect(template).not.toContain('PAT ');
 
     expect(bugReport).toContain('community-validation');
-    expect(bugReport).toContain('Marketplace stable installed-user `1.3.15`');
+    expect(bugReport).toContain('Marketplace stable installed-user `1.3.16`');
     expect(bugReport).toContain('runtime_error_code');
     expect(labviewRequest).toContain('proof:deferred');
     expect(labviewRequest).toContain('runtimeErrorCode');
@@ -137,7 +137,7 @@ describe('Marketplace community-validation intake packet', () => {
       'feature:not-implemented',
       'error-code',
       'proof:packet-attached',
-      'version:1.3.15',
+      'version:1.3.16',
       'windows-labview',
       'windows-docker-desktop',
       'proof:reported',

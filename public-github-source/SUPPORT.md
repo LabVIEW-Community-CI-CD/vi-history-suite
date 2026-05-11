@@ -60,7 +60,7 @@ docker info --format "{{.OSType}} {{.OperatingSystem}}"
 
 ## Community Validation Triage
 
-Stable installed-user `1.3.15` accepts Windows/LabVIEW community validation
+Stable installed-user `1.3.16` accepts Windows/LabVIEW community validation
 reports and not-yet-implemented feature reports before every selectable
 combination has maintainer-retained proof.
 

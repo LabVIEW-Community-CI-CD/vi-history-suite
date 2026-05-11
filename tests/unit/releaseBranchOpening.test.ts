@@ -148,18 +148,14 @@ describe('release/1.3.16 branch opening packet', () => {
       releaseExtensionJob: 'not-run-without-exact-tag',
       nextAdmittedAction: 'reassess-release-1.3.16-branch-readiness-before-exact-tag'
     });
-    expect(releaseState.activeCandidate).toMatchObject({
-      packageVersion: '1.3.16',
-      tag: 'v1.3.16',
-      branch: 'release/1.3.16'
-    });
+    expect(releaseState.activeCandidate).toBeNull();
     expect(releaseState.nextAdmittedAction).toBe(
-      'promote-release-1.3.16-to-main-as-separate-governed-action'
+      'retain-v1.3.16-marketplace-closeout-on-protected-develop'
     );
 
     expect(releaseStateDoc).toContain('## Release Branch Opening');
     expect(releaseStateDoc).toContain('Release branch pipeline: `2516207722` / `success`');
-    expect(currentState).toContain('active release-candidate branch: `release/1.3.16`');
+    expect(currentState).toContain('active release-candidate branch: none; retained release-candidate branches:');
     expect(currentState).toContain('release-branch-opening-v1.3.16-2026-05-11.md');
     expect(informationItemMap).toContain('Release branch opening packet v1.3.16');
     expect(srs).toContain('governed release-branch opening');

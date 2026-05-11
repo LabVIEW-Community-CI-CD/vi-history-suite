@@ -99,7 +99,8 @@ describe('strict semver discipline', () => {
       'v1.3.8',
       'v1.3.9',
       'v1.3.14',
-      'v1.3.15'
+      'v1.3.15',
+      'v1.3.16'
     ]);
     expect(versionLineContract.burnedExactVersionReleases).toEqual(['v1.0.2']);
     expect(versionLineContract.integrationBranch).toBe('develop');
@@ -107,13 +108,13 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.hotfixBranch).toBe('hotfix/*');
     expect(versionLineContract.exactReleaseLineBranch).toBe('main');
     expect(pkg.version).toBe('1.3.16');
-    expect(versionLineContract.currentMainPackageLine).toBe('1.3.15');
-    expect(versionLineContract.currentAuthorityPackageLine).toBe('1.3.15');
+    expect(versionLineContract.currentMainPackageLine).toBe('1.3.16');
+    expect(versionLineContract.currentAuthorityPackageLine).toBe('1.3.16');
     expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.16');
     expect(versionLineContract.activeMarketplaceCommunityPreviewLine).toBe('1.3.13');
-    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBe('v1.3.16');
-    expect(versionLineContract.activeReleaseCandidateBranch).toBe('release/1.3.16');
-    expect((versionLineContract as any).retainedReleaseCandidateBranch).toBe('release/1.3.15');
+    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBeNull();
+    expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
+    expect((versionLineContract as any).retainedReleaseCandidateBranch).toBe('release/1.3.16');
     expect(versionLineContract.activeHotfixCandidateReleaseLine).toBeNull();
     expect(versionLineContract.activeHotfixBranch).toBeNull();
     expect((versionLineContract as any).activeFeatureBranch).toBeNull();
@@ -123,12 +124,12 @@ describe('strict semver discipline', () => {
     expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
     expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThanOrEqual(0);
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.3.15`');
-    expect(readme).toContain('- current fully published exact package line: `1.3.15`');
-    expect(readme).toContain('- current authority package line on `main`: `1.3.15`');
+    expect(readme).toContain('- current exact released line: `v1.3.16`');
+    expect(readme).toContain('- current fully published exact package line: `1.3.16`');
+    expect(readme).toContain('- current authority package line on `main`: `1.3.16`');
     expect(readme).toContain('- current develop package line on `develop`: `1.3.16`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.16`');
-    expect(readme).toContain('- active release-candidate branch: `release/1.3.16`');
+    expect(readme).toContain('- active exact release candidate line on `develop`: none');
+    expect(readme).toContain('- active release-candidate branch: none; retained release-candidate branches:');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
     expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -145,16 +146,16 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- release-candidate branch family: `release/*`');
     expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(readme).toContain('`427ab27` after public PR #83 completed the `v1.3.15` source handoff');
+    expect(readme).toContain('`f679023` after public PR #88 completed the `v1.3.16` source handoff');
     expect(readme).toContain('public PR #69, PR #68, and PR #60 remain retained');
-    expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.15`');
+    expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.16`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
-    expect(currentState).toContain('- current exact released line: `v1.3.15`');
-    expect(currentState).toContain('- current fully published exact package line: `1.3.15`');
-    expect(currentState).toContain('- current authority package line on `main`: `1.3.15`');
+    expect(currentState).toContain('- current exact released line: `v1.3.16`');
+    expect(currentState).toContain('- current fully published exact package line: `1.3.16`');
+    expect(currentState).toContain('- current authority package line on `main`: `1.3.16`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.3.16`');
-    expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.3.16`');
-    expect(currentState).toContain('- active release-candidate branch: `release/1.3.16`');
+    expect(currentState).toContain('- active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('- active release-candidate branch: none; retained release-candidate branches:');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
@@ -171,17 +172,17 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- release-candidate branch family: `release/*`');
     expect(currentState).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(currentState).toContain('`427ab27245f6f66d186e07865f1fc0a00795611a` after public PR #83');
+    expect(currentState).toContain('`f679023ed760963779d9331a9395128ad01c7e54` after public PR #88');
     expect(currentState).toContain('public PR #68 remains retained');
-    expect(currentState).toContain('public PR #60');
-    expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.15`');
-    expect(releaseProcedure).toContain('The current exact released line is `v1.3.15`.');
+    expect(currentState).toContain('public PR #67');
+    expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.16`');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.3.16`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
-    expect(releaseProcedure).toContain('The current authority package line on `main` is `1.3.15`.');
+    expect(releaseProcedure).toContain('The current authority package line on `main` is `1.3.16`.');
     expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.16`.');
-    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is `v1.3.16`.');
+    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is none.');
     expect(releaseProcedure).toContain(
-      'The active release-candidate branch is `release/1.3.16`;'
+      'The active release-candidate branch is none; retained release-candidate'
     );
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
