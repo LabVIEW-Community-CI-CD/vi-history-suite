@@ -142,14 +142,18 @@ describe('release publication state resolver', () => {
     });
     expect(state.releaseBranchOpening).toMatchObject({
       status: 'performed-and-retained',
-      releaseBranch: 'release/1.3.15',
+      releaseBranch: 'release/1.3.16',
       pipelineStatus: 'success',
-      vagrantVsixAcceptanceJobId: 14293424513
+      vagrantVsixAcceptanceJobId: 14309562384
     });
     expect(state.releaseBranchReadinessReassessment).toMatchObject({
-      status: 'blocked-main-not-ancestor-topology-refresh-required',
-      releaseBranch: 'release/1.3.15',
-      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+      status: 'main-promotion-admissible-as-separate-governed-action',
+      releaseBranch: 'release/1.3.16',
+      mainIsAncestorOfReleaseBranch: true,
+      topologyRefreshRequired: false,
+      releaseBranchVagrantVsixAcceptanceJobId: 14309562384,
+      protectedDevelopVagrantVsixAcceptanceJobId: 14310323541,
+      nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action'
     });
     expect(state.publicGitHubSourceAndTagHandoff).toMatchObject({
       status: 'public-source-and-tag-published-release-publication-blocked',
@@ -164,9 +168,14 @@ describe('release publication state resolver', () => {
       blockerCode: 'published-immutable-release-assets-incomplete',
       status: 'retained-history'
     });
-    expect(state.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
+    expect(state.activeCandidate).toMatchObject({
+      packageVersion: '1.3.16',
+      tag: 'v1.3.16',
+      branch: 'release/1.3.16',
+      state: 'release-branch-readiness-reassessed-main-promotion-admissible'
+    });
     expect(state.nextAdmittedAction).toBe(
-      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
 
     expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.15`');
@@ -185,7 +194,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Incident Classification');
     expect(stateDoc).toContain('blocked historical incident');
     expect(stateDoc).toContain(
-      '`open-release-1.3.16-after-protected-develop-candidate-pipeline`'
+      '`promote-release-1.3.16-to-main-as-separate-governed-action`'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

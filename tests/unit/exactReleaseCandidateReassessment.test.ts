@@ -201,7 +201,7 @@ describe('exact release candidate reassessment', () => {
     });
     expect(publicationState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(publicationState.nextAdmittedAction).toBe(
-      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
 
     expect(informationItemMap).toContain('Exact release candidate reassessment');

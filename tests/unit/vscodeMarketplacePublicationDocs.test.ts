@@ -200,7 +200,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
     expect(publicReadme).toContain('vihs --validate');
     expect(publicReadme).toContain('Proof Status And Community Validation');
-    expect(publicReadme).toContain('Marketplace stable `1.3.15` is the regular installed-user release');
+    expect(publicReadme).toContain('Stable `1.3.15` is the current installed-user release line');
     expect(publicReadme).toContain('Report A Problem Or Request Support');
     expect(publicReadme).toContain('Marketplace Community Validation Report');
     expect(publicReadme).toContain('LabVIEW Version Support Request');
@@ -222,9 +222,9 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(publicSupport).toContain('proof:reported');
     expect(publicBugReport).toContain('install, settings, validation, or compare problem');
     expect(publicBugReport).toContain('Install route');
-    expect(publicBugReport).toContain('Marketplace stable `1.3.15`');
+    expect(publicBugReport).toContain('Marketplace stable installed-user `1.3.15`');
     expect(publicBugReport).toContain('Exact released Marketplace line (`1.3.15`)');
-    expect(publicBugReport).toContain('Marketplace public-validation pre-release (`1.3.13`)');
+    expect(publicBugReport).toContain('Marketplace pre-release channel (latest pre-release)');
     expect(publicBugReport).toContain('runtime_error_code');
     expect(publicBugReport).toContain('`vihs --validate` output');
     expect(publicBugReport).toContain('What command or surface failed?');

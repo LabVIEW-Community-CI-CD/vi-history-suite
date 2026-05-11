@@ -92,7 +92,7 @@ describe('public repo package surface', () => {
     expect(readme).toContain('LabVIEW `2025` and newer can open older LabVIEW VIs');
     expect(readme).toContain('runtimeErrorCode');
     expect(readme).toContain('Proof Status And Community Validation');
-    expect(readme).toContain('Marketplace stable `1.3.15`');
+    expect(readme).not.toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(readme).toContain('Report A Problem Or Request Support');
     expect(readme).toContain('[Marketplace Community Validation Report]');
     expect(readme).toContain('[LabVIEW Version Support Request]');
@@ -141,12 +141,12 @@ describe('public repo package surface', () => {
     expect(bugReport).toContain('`code --install-extension svelderrainruiz.vi-history-suite`');
     expect(bugReport).toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(bugReport).toContain('Exact released Marketplace line (`1.3.15`)');
-    expect(bugReport).toContain('Marketplace public-validation pre-release (`1.3.13`)');
+    expect(bugReport).toContain('Marketplace pre-release channel (latest pre-release)');
     expect(bugReport).toContain('runtime_error_code');
     expect(bugReport).toContain('What command or surface failed?');
     expect(bugReport).toContain('`vihs --validate` output');
     expect(communityValidation).toContain('Marketplace community validation report');
-    expect(communityValidation).toContain('Expected `1.3.13`');
+    expect(communityValidation).toContain('Expected `1.3.15`');
     expect(communityValidation).toContain('runtime_error_code');
     expect(communityValidation).toContain('Proof-status acknowledgement');
     expect(windowsDockerDesktopValidation).toContain('Windows Docker Desktop validation');

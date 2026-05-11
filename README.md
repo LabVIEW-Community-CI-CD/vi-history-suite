@@ -282,11 +282,13 @@ Authority release facts:
 - current authority package line on `main`: `1.3.15`
 - current develop package line on `develop`: `1.3.16`
 - active exact release candidate line on `develop`: `v1.3.16`
-- retained release-candidate branch: `release/1.3.15`
+- active release-candidate branch: `release/1.3.16`
+- retained prior release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  patch candidate `v1.3.16` is open on `develop` after exact `v1.3.15`
-  closeout; no `release/1.3.16` branch is open yet, and `release/1.3.15`
-  remains retained
+  `release/1.3.16` is open from protected `develop` commit `2443e601`, branch
+  pipeline `2516207722` is green, protected `develop` retention pipeline
+  `2516304744` is green, and readiness reassessment admits main promotion only
+  as the next separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -345,10 +347,10 @@ Authority release facts:
 - exact authority `v1.3.15` is now fully closed across public GitHub and VS Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: patch candidate `v1.3.16` is open on
-  `develop` for installed-user host runtime admission after exact `v1.3.15`
-  was fully published and retained
+  `release/1.3.16` for installed-user host runtime admission after exact
+  `v1.3.15` was fully published and retained
 - next admitted release-control action:
-  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
+  `promote-release-1.3.16-to-main-as-separate-governed-action`
 - current Marketplace stable version: `1.3.15`
 - retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:
