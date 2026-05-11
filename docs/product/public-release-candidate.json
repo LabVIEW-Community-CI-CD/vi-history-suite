@@ -4,10 +4,10 @@
   "activeDevelopCandidate": {
     "tag": "v1.3.16",
     "packageVersion": "1.3.16",
-    "status": "release-branch-opened-pipeline-green-readiness-reassessment-pending",
+    "status": "release-branch-readiness-reassessed-main-promotion-admissible",
     "branch": "release/1.3.16",
-    "basis": "release-branch-opened-after-protected-develop-candidate-pipeline",
-    "nextAdmittedAction": "reassess-release-1.3.16-branch-readiness-before-exact-tag"
+    "basis": "release-branch-readiness-reassessed-after-protected-develop-retention-pipeline",
+    "nextAdmittedAction": "promote-release-1.3.16-to-main-as-separate-governed-action"
   },
   "burnedExactReleaseLine": "v1.0.2",
   "recordedAt": "2026-05-11",
@@ -339,7 +339,7 @@
     "summary": "v1.3.8 remains retained as blocked historical incident evidence after public GitHub release 312768592 published immutable with zero assets; exact v1.3.9 now closes cleanly across GitLab authority, public GitHub, and VS Code Marketplace."
   },
   "exactReleaseReopening": {
-    "status": "v1.3.16-release-branch-opened-readiness-reassessment-pending",
+    "status": "v1.3.16-release-branch-readiness-reassessed-main-promotion-admissible",
     "hotfixBranch": null,
     "featureBranch": null,
     "authorityMainCommit": "196dd70878bf26e9722c031b9192581e5147bafb",
@@ -362,7 +362,7 @@
     "publicGitHubDraftReleaseTargetCommitish": "main",
     "publicGitHubReleaseLookupStatusCode": 200,
     "publicGitHubDraftReleaseUsesUntaggedUrl": false,
-    "nextSeparateAct": "reassess-release-1.3.16-branch-readiness-before-exact-tag",
+    "nextSeparateAct": "promote-release-1.3.16-to-main-as-separate-governed-action",
     "marketplaceVersionRetained": "1.3.15",
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
     "preTagPublicExactProofJob": "public_exact_pretag_proof",
@@ -375,7 +375,7 @@
     "releaseBranch": "release/1.3.16"
   },
   "softwareFactoryGovernance": {
-    "status": "authority-v1.3.16-release-branch-opened",
+    "status": "authority-v1.3.16-release-branch-readiness-reassessed",
     "activeFeatureBranch": null,
     "packageScripts": {
       "assess": "npm run software:factory:assess",
@@ -406,7 +406,7 @@
     ],
     "soleProductionRecoveryTarget": null,
     "productionMutationAllowed": false,
-    "rule": "Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; release/1.3.16 is open and green and must be reassessed for branch readiness before any exact tag or main-promotion action while the retained v1.3.8 authority exact line remains blocked historical publication evidence."
+    "rule": "Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; release/1.3.16 is open and green, protected main is already an ancestor of the release branch, and main promotion is admitted only as the next separate governed action while the retained v1.3.8 authority exact line remains blocked historical publication evidence."
   },
   "localProofs": {
     "localInstalledVsixPreview": {

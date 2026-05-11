@@ -36,15 +36,17 @@ retained closed baseline.
 - retained prior release-candidate branch: `release/1.3.15`
 - active release-candidate state:
   `release/1.3.16` is open from protected `develop` commit `2443e601`, branch
-  pipeline `2516207722` is green, and readiness reassessment is required before
-  any exact tag or main-promotion action
+  pipeline `2516207722` is green, protected `develop` retention pipeline
+  `2516304744` is green, and readiness reassessment admits main promotion only
+  as the next separate governed action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - exact `v1.3.15` is closed and `v1.3.16` is the active patch candidate line
-  on `release/1.3.16`; the next admitted action is release-branch readiness
-  reassessment after the branch-opening pipeline passed
+  on `release/1.3.16`; the next admitted action is the protected
+  main-promotion path after readiness reassessment confirmed the branch
+  topology is clean
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`

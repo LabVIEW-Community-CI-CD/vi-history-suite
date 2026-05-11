@@ -1,0 +1,199 @@
+{
+  "schema": "vi-history-suite/release-branch-readiness-reassessment@v1",
+  "recordedAt": "2026-05-11",
+  "authority": {
+    "repo": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+    "releaseBranch": "release/1.3.16",
+    "releaseBranchRef": "refs/heads/release/1.3.16",
+    "releaseBranchCommitSha": "2443e601c2b1aa78122af785516376b9905ba43f",
+    "releaseBranchPipelineId": 2516207722,
+    "releaseBranchPipelineStatus": "success",
+    "releaseBranchPipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2516207722",
+    "protectedDevelopRetentionCommitSha": "50faa3a07d8351db45b5fd13c479033c0debbb71",
+    "protectedDevelopRetentionPipelineId": 2516304744,
+    "protectedDevelopRetentionPipelineStatus": "success",
+    "protectedDevelopRetentionPipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2516304744",
+    "packageVersion": "1.3.16"
+  },
+  "sourcePackets": {
+    "releaseBranchOpeningPacketPath": "docs/product/release-branch-opening-v1.3.16-2026-05-11.md",
+    "releaseBranchOpeningPacketJsonPath": "docs/product/release-branch-opening-v1.3.16-2026-05-11.json"
+  },
+  "topology": {
+    "mainCommitSha": "196dd70878bf26e9722c031b9192581e5147bafb",
+    "releaseBranchCommitSha": "2443e601c2b1aa78122af785516376b9905ba43f",
+    "protectedDevelopCommitSha": "50faa3a07d8351db45b5fd13c479033c0debbb71",
+    "mainIsAncestorOfReleaseBranch": true,
+    "mainReleaseBranchMergeBase": "196dd70878bf26e9722c031b9192581e5147bafb",
+    "releaseBranchIsAncestorOfProtectedDevelop": true,
+    "releaseBranchDevelopMergeBase": "2443e601c2b1aa78122af785516376b9905ba43f",
+    "v1316TagExistsAtInspection": false,
+    "topologyRefreshRequired": false
+  },
+  "verdict": {
+    "releaseBranchReadiness": "main-promotion-admissible-as-separate-governed-action",
+    "currentAdmissibleClaim": "release-branch-green-for-main-promotion-no-exact-publication",
+    "mainPromotion": "admissible-as-separate-governed-action-not-performed",
+    "exactTag": "not-admitted-before-protected-main-promotion-and-green-main-pipeline",
+    "publicGitHubExactMutation": "not-admitted-and-not-performed",
+    "marketplaceExactMutation": "not-admitted-and-not-performed",
+    "windowsDockerDesktopWindowsContainerProof": "community-deferred",
+    "releaseBranchDeletion": "not-admitted",
+    "selectedExactAuthorityVsix": null,
+    "nextAdmittedAction": "promote-release-1.3.16-to-main-as-separate-governed-action"
+  },
+  "releaseBranchEvidence": {
+    "pipelineJobs": [
+      { "stage": "admission", "name": "ubuntu_docker_runner_admission", "id": 14309562370, "status": "success" },
+      { "stage": "docs", "name": "docs_link_check", "id": 14309562371, "status": "success" },
+      { "stage": "docs", "name": "docs_continuous_integration", "id": 14309562372, "status": "success" },
+      { "stage": "docs", "name": "docs_public_continuous_integration", "id": 14309562373, "status": "success" },
+      { "stage": "docs", "name": "docs_internal_continuous_integration", "id": 14309562374, "status": "success" },
+      { "stage": "assurance", "name": "assurance_release_gate", "id": 14309562375, "status": "success" },
+      { "stage": "assurance", "name": "assurance_26514_authority", "id": 14309562376, "status": "success" },
+      { "stage": "assurance", "name": "assurance_requirements_quality", "id": 14309562377, "status": "success" },
+      { "stage": "assurance", "name": "assurance_external_user_information", "id": 14309562378, "status": "success" },
+      { "stage": "assurance", "name": "assurance_audit_packet", "id": 14309562379, "status": "success" },
+      { "stage": "test", "name": "test_extension", "id": 14309562381, "status": "success" },
+      { "stage": "test", "name": "public_exact_pretag_proof", "id": 14309562382, "status": "success" },
+      { "stage": "test", "name": "linux_docker_provider_lane", "id": 14309562383, "status": "success" },
+      { "stage": "test", "name": "vagrant_windows_vsix_acceptance", "id": 14309562384, "status": "success" },
+      { "stage": "package", "name": "package_extension_preview", "id": 14309562385, "status": "success" }
+    ],
+    "previewArtifact": {
+      "jobId": 14309562385,
+      "manifestPath": "preview-evidence/preview-manifest.json",
+      "vsixPath": "preview-evidence/vi-history-suite-1.3.16.vsix",
+      "packageVersion": "1.3.16",
+      "commitSha": "2443e601c2b1aa78122af785516376b9905ba43f",
+      "sha256": "84ff12e25793406a29ca1ce23a670e6aab8b3519594ef0019605564034f964da",
+      "sizeBytes": 1015904,
+      "role": "release-branch-preview-evidence-only"
+    },
+    "vagrantVsixAcceptance": {
+      "jobId": 14309562384,
+      "jobStatus": "success",
+      "assertionReceiptPath": "vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json",
+      "assertionReceiptRecordedAt": "2026-05-11T14:09:04.163Z",
+      "manifestPath": "vagrant/evidence/20260511-070846/manifest.json",
+      "manifestGeneratedAt": "2026-05-11T07:09:03.6874782-07:00",
+      "labviewStartupReceiptPath": "vagrant/evidence/labview-startup.json",
+      "generatedReportSha256": "d98a1d5271ee451b61f798af51cb845b37286d382d950b2f7053c587697939ae",
+      "generatedReportSizeBytes": 6926,
+      "facts": {
+        "manifestSchema": "vi-history-suite/vagrant-vsix-acceptance@v1",
+        "assertionSchema": "vi-history-suite/vagrant-vsix-acceptance-assertion@v1",
+        "startupSchema": "vi-history-suite/vagrant-labview-startup@v1",
+        "harnessId": "HARNESS-VHS-002",
+        "selectedHash": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "baseHash": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+        "labviewVersion": "2026",
+        "labviewBitness": "x86",
+        "proofExitCode": 0,
+        "runtimeProvider": "host-native",
+        "runtimeEngine": "labview-cli",
+        "runtimeBitness": "x86",
+        "runtimeExecutionState": "succeeded",
+        "generatedReportExists": true,
+        "prelaunchTaskName": "vihs-lv-prelaunch",
+        "labviewExe": "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+        "labviewSessionId": 1,
+        "explorerSessionId": 1,
+        "viServerPortLine": "TCP 0.0.0.0:3363 LISTENING",
+        "coldStartMarkers": [
+          "LabVIEW not running. Launching via scheduled task...",
+          "LabVIEW VI Server ready on port 3363."
+        ]
+      },
+      "claimBoundary": "vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof"
+    },
+    "releaseExtensionJob": {
+      "status": "not-run",
+      "reason": "release_extension is gated on exact vX.Y.Z tags and this reassessment did not create an exact tag"
+    }
+  },
+  "protectedDevelopRetention": {
+    "mergeRequest": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/210",
+    "mergeCommitSha": "50faa3a07d8351db45b5fd13c479033c0debbb71",
+    "pipelineId": 2516304744,
+    "pipelineStatus": "success",
+    "pipelineUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2516304744",
+    "pipelineJobs": [
+      { "stage": "admission", "name": "ubuntu_docker_runner_admission", "id": 14310323528, "status": "success" },
+      { "stage": "docs", "name": "docs_link_check", "id": 14310323529, "status": "success" },
+      { "stage": "docs", "name": "docs_continuous_integration", "id": 14310323530, "status": "success" },
+      { "stage": "docs", "name": "docs_public_continuous_integration", "id": 14310323531, "status": "success" },
+      { "stage": "docs", "name": "docs_internal_continuous_integration", "id": 14310323532, "status": "success" },
+      { "stage": "assurance", "name": "assurance_release_gate", "id": 14310323533, "status": "success" },
+      { "stage": "assurance", "name": "assurance_26514_authority", "id": 14310323534, "status": "success" },
+      { "stage": "assurance", "name": "assurance_requirements_quality", "id": 14310323535, "status": "success" },
+      { "stage": "assurance", "name": "assurance_external_user_information", "id": 14310323536, "status": "success" },
+      { "stage": "assurance", "name": "assurance_audit_packet", "id": 14310323537, "status": "success" },
+      { "stage": "test", "name": "test_extension", "id": 14310323538, "status": "success" },
+      { "stage": "test", "name": "public_exact_pretag_proof", "id": 14310323539, "status": "success" },
+      { "stage": "test", "name": "linux_docker_provider_lane", "id": 14310323540, "status": "success" },
+      { "stage": "test", "name": "vagrant_windows_vsix_acceptance", "id": 14310323541, "status": "success" },
+      { "stage": "package", "name": "package_extension_preview", "id": 14310323542, "status": "success" }
+    ],
+    "previewArtifact": {
+      "jobId": 14310323542,
+      "manifestPath": "preview-evidence/preview-manifest.json",
+      "vsixPath": "preview-evidence/vi-history-suite-1.3.16.vsix",
+      "packageVersion": "1.3.16",
+      "commitSha": "50faa3a07d8351db45b5fd13c479033c0debbb71",
+      "sha256": "0944e92e28a01b5a8a7fb1d51c403c30fb67db551b263dc3970afadb34ba5e72",
+      "sizeBytes": 1015961,
+      "role": "protected-develop-retention-preview-evidence-only"
+    },
+    "vagrantVsixAcceptance": {
+      "jobId": 14310323541,
+      "assertionReceiptRecordedAt": "2026-05-11T14:40:46.248Z",
+      "manifestPath": "vagrant/evidence/20260511-074020/manifest.json",
+      "manifestGeneratedAt": "2026-05-11T07:40:45.7988393-07:00",
+      "labviewStartupReceiptPath": "vagrant/evidence/labview-startup.json",
+      "generatedReportSha256": "79445880545899ebb2d37a5493aa027bf5fe0409db19e72b5e0f2acbc9c094d2",
+      "generatedReportSizeBytes": 6928,
+      "facts": {
+        "harnessId": "HARNESS-VHS-002",
+        "selectedHash": "8741bb08026c104100720c0ef48621e4ab7762fd",
+        "baseHash": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+        "labviewVersion": "2026",
+        "labviewBitness": "x86",
+        "proofExitCode": 0,
+        "runtimeProvider": "host-native",
+        "runtimeEngine": "labview-cli",
+        "runtimeBitness": "x86",
+        "runtimeExecutionState": "succeeded",
+        "generatedReportExists": true,
+        "prelaunchTaskName": "vihs-lv-prelaunch",
+        "labviewExe": "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+        "labviewSessionId": 1,
+        "explorerSessionId": 1,
+        "viServerPortLine": "TCP 0.0.0.0:3363 LISTENING"
+      }
+    }
+  },
+  "remainingGates": {
+    "mainPromotion": "admitted-as-separate-governed-action-not-performed",
+    "exactTag": "not-admitted-until-protected-main-promotion-and-green-main-pipeline",
+    "selectedExactAuthorityVsix": null,
+    "publicGitHubExactRelease": "not-admitted",
+    "marketplaceExactPublication": "not-admitted",
+    "windowsDockerDesktopWindowsContainerProof": "community-deferred",
+    "releaseBranchDeletion": "not-admitted"
+  },
+  "mutationBoundary": {
+    "topologyRefreshPerformed": false,
+    "releaseBranchMergedToMain": false,
+    "mainPromoted": false,
+    "exactTagCreated": false,
+    "publicGitHubReleaseCreated": false,
+    "publicGitHubReleasePublished": false,
+    "marketplaceTouched": false,
+    "windowsDockerDesktopProofAdmitted": false,
+    "releaseBranchDeleted": false
+  },
+  "nextAdmittedActions": [
+    "promote-release-1.3.16-to-main-as-separate-governed-action"
+  ]
+}

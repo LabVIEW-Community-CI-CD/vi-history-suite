@@ -25,8 +25,9 @@ final installed-user distribution surface.
 - Active candidate package version: `1.3.16`
 - Active candidate state: `release/1.3.16` is open from protected `develop`
   commit `2443e601c2b1aa78122af785516376b9905ba43f`; branch pipeline
-  `2516207722` is green, and readiness reassessment is required before any
-  exact tag or main-promotion action
+  `2516207722` is green, protected `develop` retention pipeline `2516304744`
+  is green, and readiness reassessment admits main promotion only as the next
+  separate governed action
 
 ## Develop Preview State
 
@@ -495,6 +496,9 @@ state.
 - `main` promotion: not admitted and not performed
 - Next admitted action:
   `reassess-release-1.3.16-branch-readiness-before-exact-tag`
+- Superseded by later state: release-branch readiness was reassessed for
+  `release/1.3.16`, and main-promotion preflight is now admissible as the next
+  separate governed action
 
 This branch opening converts the current candidate from a `develop`-only patch
 candidate into an opened release-candidate branch while preserving the exact
@@ -506,45 +510,44 @@ branch-opening receipt is the branch-created `push` pipeline `2516207722`.
 
 ## Release Branch Readiness Reassessment
 
-- Status: blocked because `main` is not an ancestor of `release/1.3.15`
+- Status: main-promotion admissible as a separate governed action
 - Reassessment:
-  `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md`
+  `docs/product/release-branch-readiness-reassessment-v1.3.16-2026-05-11.md`
 - Reassessment JSON:
-  `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json`
-- Release branch: `release/1.3.15`
+  `docs/product/release-branch-readiness-reassessment-v1.3.16-2026-05-11.json`
+- Release branch: `release/1.3.16`
 - Release branch commit:
-  `67c2c3a188666eaad3cab2695092991c42f33470`
-- Release branch pipeline: `2513019603` / `success`
+  `2443e601c2b1aa78122af785516376b9905ba43f`
+- Release branch pipeline: `2516207722` / `success`
 - Protected develop retention commit:
-  `801349167499b9d03b8244c42b03d88e15098034`
-- Protected develop retention pipeline: `2513063788` / `success`
+  `50faa3a07d8351db45b5fd13c479033c0debbb71`
+- Protected develop retention pipeline: `2516304744` / `success`
 - Topology: protected `main`
-  `2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa` is not an ancestor of
-  `release/1.3.15`; the merge base is
-  `50bec3391ea823739c2e8baddb33b77c283a37eb`
+  `196dd70878bf26e9722c031b9192581e5147bafb` is an ancestor of
+  `release/1.3.16`; the merge base is
+  `196dd70878bf26e9722c031b9192581e5147bafb`
 - Release branch is ancestor of protected `develop`: yes
 - Release branch preview VSIX SHA-256:
-  `bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14`
+  `84ff12e25793406a29ca1ce23a670e6aab8b3519594ef0019605564034f964da`
 - Protected develop retention preview VSIX SHA-256:
-  `03699261fc3937b1f0676f60230e4e9b4cbe4b1daff86fba1d3730cb908bcc95`
-- Release branch Vagrant job: `14293424513`
-- Protected develop Vagrant job: `14293598040`
+  `0944e92e28a01b5a8a7fb1d51c403c30fb67db551b263dc3970afadb34ba5e72`
+- Release branch Vagrant job: `14309562384`
+- Protected develop Vagrant job: `14310323541`
 - Selected exact authority VSIX: not retained yet
-- Main promotion: blocked until topology refresh is retained; not performed by
-  this reassessment
-- Exact tag: not admitted before topology refresh, protected `main` promotion,
-  and green protected `main` pipeline
+- Main promotion: admissible only as a separate governed action; not performed
+  by this reassessment
+- Exact tag: not admitted before protected `main` promotion and green protected
+  `main` pipeline
 - Public GitHub exact mutation: not admitted and not performed
 - VS Code Marketplace exact mutation: not admitted and not performed
 - Windows Docker Desktop Windows-container proof state: community/deferred
 - Next admitted action:
-  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
+  `promote-release-1.3.16-to-main-as-separate-governed-action`
 
-This reassessment keeps the release branch green evidence but blocks
-main-promotion preflight on topology. The next governed action is to bring
-protected `main` into `release/1.3.15` through a separate protected path, then
-rerun the release-branch pipeline and reassess again before any main-promotion
-or exact-tag action.
+This reassessment keeps the release branch green evidence and confirms no
+topology refresh is required. The next governed action is to retain the
+main-promotion preflight and then open the protected release-to-main merge
+request only after that preflight is green.
 
 ## Release Main Promotion Preflight
 
@@ -662,7 +665,7 @@ until that later public GitHub release gate is complete.
 - VS Code Marketplace version: `1.3.15`
 - Marketplace last updated: `2026-05-10T22:22:37.663Z`
 - Next admitted action:
-  `reassess-release-1.3.16-branch-readiness-before-exact-tag`
+  `promote-release-1.3.16-to-main-as-separate-governed-action`
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
@@ -742,9 +745,9 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 - Governed next line: exact `v1.3.15` is closed across GitLab authority,
   public GitHub source/tag/release, VS Code Marketplace, and protected
   `develop` closeout retention. Patch candidate `v1.3.16` is open on
-  `develop` for installed-user host runtime admission.
+  `release/1.3.16` for installed-user host runtime admission.
 - Next admitted action under the current boundary:
-  `reassess-release-1.3.16-branch-readiness-before-exact-tag`
+  `promote-release-1.3.16-to-main-as-separate-governed-action`
 - Release branch deletion:
   not admitted unless explicitly authorized separately
 

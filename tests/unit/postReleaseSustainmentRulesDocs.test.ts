@@ -36,8 +36,8 @@ describe('post-release sustainment rules package', () => {
         activeDevelopCandidateReleaseLine: 'v1.3.16',
         activeReleaseCandidateBranch: 'release/1.3.16',
         retainedReleaseCandidateBranch: 'release/1.3.15',
-        activeReleaseCandidateState: 'release-branch-opened-pipeline-green-readiness-reassessment-pending',
-        nextAdmittedAction: 'reassess-release-1.3.16-branch-readiness-before-exact-tag',
+        activeReleaseCandidateState: 'release-branch-readiness-reassessed-main-promotion-admissible',
+        nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -121,8 +121,8 @@ describe('post-release sustainment rules package', () => {
         targetReleaseBranch: 'release/1.3.16',
         releaseBranchOpeningPipeline: 2516207722,
         releaseBranchOpeningCommit: '2443e601c2b1aa78122af785516376b9905ba43f',
-        status: 'release-branch-opened-pipeline-green-readiness-reassessment-pending',
-        nextAdmittedAction: 'reassess-release-1.3.16-branch-readiness-before-exact-tag',
+        status: 'release-branch-readiness-reassessed-main-promotion-admissible',
+        nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action',
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify'
       })
     );

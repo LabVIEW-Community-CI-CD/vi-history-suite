@@ -147,9 +147,13 @@ describe('release publication state resolver', () => {
       vagrantVsixAcceptanceJobId: 14309562384
     });
     expect(state.releaseBranchReadinessReassessment).toMatchObject({
-      status: 'blocked-main-not-ancestor-topology-refresh-required',
-      releaseBranch: 'release/1.3.15',
-      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
+      status: 'main-promotion-admissible-as-separate-governed-action',
+      releaseBranch: 'release/1.3.16',
+      mainIsAncestorOfReleaseBranch: true,
+      topologyRefreshRequired: false,
+      releaseBranchVagrantVsixAcceptanceJobId: 14309562384,
+      protectedDevelopVagrantVsixAcceptanceJobId: 14310323541,
+      nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action'
     });
     expect(state.publicGitHubSourceAndTagHandoff).toMatchObject({
       status: 'public-source-and-tag-published-release-publication-blocked',
@@ -168,10 +172,10 @@ describe('release publication state resolver', () => {
       packageVersion: '1.3.16',
       tag: 'v1.3.16',
       branch: 'release/1.3.16',
-      state: 'release-branch-opened-pipeline-green-readiness-reassessment-pending'
+      state: 'release-branch-readiness-reassessed-main-promotion-admissible'
     });
     expect(state.nextAdmittedAction).toBe(
-      'reassess-release-1.3.16-branch-readiness-before-exact-tag'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
 
     expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.15`');
@@ -190,7 +194,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Incident Classification');
     expect(stateDoc).toContain('blocked historical incident');
     expect(stateDoc).toContain(
-      '`reassess-release-1.3.16-branch-readiness-before-exact-tag`'
+      '`promote-release-1.3.16-to-main-as-separate-governed-action`'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');
