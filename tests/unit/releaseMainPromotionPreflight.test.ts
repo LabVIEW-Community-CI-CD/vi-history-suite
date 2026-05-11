@@ -129,7 +129,7 @@ describe('release/1.3.14 main promotion preflight packet', () => {
     });
     expect(releaseState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(releaseState.nextAdmittedAction).toBe(
-      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
     expect(publicCandidate.activeDevelopCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
 

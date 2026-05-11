@@ -34,10 +34,10 @@ describe('post-release sustainment rules package', () => {
         currentDevelopPackageLine: '1.3.16',
         activeMarketplaceCommunityPreviewLine: '1.3.13',
         activeDevelopCandidateReleaseLine: 'v1.3.16',
-        activeReleaseCandidateBranch: null,
+        activeReleaseCandidateBranch: 'release/1.3.16',
         retainedReleaseCandidateBranch: 'release/1.3.15',
-        activeReleaseCandidateState: 'candidate-open-on-develop-release-branch-not-yet-open',
-        nextAdmittedAction: 'open-release-1.3.16-after-protected-develop-candidate-pipeline',
+        activeReleaseCandidateState: 'release-branch-readiness-reassessed-main-promotion-admissible',
+        nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -118,6 +118,11 @@ describe('post-release sustainment rules package', () => {
         chosenBump: 'patch',
         targetFeatureBranch: 'feature/develop-1.3.16-candidate-opening',
         targetDevelopCandidateReleaseLine: 'v1.3.16',
+        targetReleaseBranch: 'release/1.3.16',
+        releaseBranchOpeningPipeline: 2516207722,
+        releaseBranchOpeningCommit: '2443e601c2b1aa78122af785516376b9905ba43f',
+        status: 'release-branch-readiness-reassessed-main-promotion-admissible',
+        nextAdmittedAction: 'promote-release-1.3.16-to-main-as-separate-governed-action',
         publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify'
       })
     );
@@ -147,7 +152,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('current authority package line on `main`: `1.3.15`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.16`');
     expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.16`');
-    expect(rulesDoc).toContain('retained release-candidate branch: `release/1.3.15`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.16`');
+    expect(rulesDoc).toContain('retained prior release-candidate branch: `release/1.3.15`');
     expect(rulesDoc).toContain('public release `320197692` is published on `v1.3.15`');
     expect(rulesDoc).toContain('`312768592` is already published and immutable with zero assets');
     expect(rulesDoc).toContain('asset-first GitHub release rule');

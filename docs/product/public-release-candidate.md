@@ -3,27 +3,38 @@
 - Version line: `1.3.16`
 - Active develop candidate line: `v1.3.16`
 - Active develop candidate package: `1.3.16`
-- Active develop candidate state: patch candidate opened on `develop` after
-  exact `v1.3.15` was fully published across GitLab authority, public GitHub,
-  and VS Code Marketplace
-- Active develop candidate branch: `feature/develop-1.3.16-candidate-opening`
-- Retained release-candidate branch: `release/1.3.15`
+- Active develop candidate state: `release/1.3.16` opened from protected
+  `develop` after exact `v1.3.15` was fully published across GitLab authority,
+  public GitHub, and VS Code Marketplace
+- Active release-candidate branch: `release/1.3.16`
+- Retained prior release-candidate branch: `release/1.3.15`
 - Retained `release/1.3.15` opening packet:
   `docs/product/release-branch-opening-v1.3.15-2026-05-09.md`
 - Retained `release/1.3.15` readiness reassessment packet:
   `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md`
-- Active `release/1.3.16` branch-opening packet: pending until the protected
-  `develop` candidate-opening pipeline is green
+- Active `release/1.3.16` branch-opening packet:
+  `docs/product/release-branch-opening-v1.3.16-2026-05-11.md`
+- Active `release/1.3.16` readiness reassessment packet:
+  `docs/product/release-branch-readiness-reassessment-v1.3.16-2026-05-11.md`
 - Retained `v1.3.15` main-promotion preflight packet: closed by protected main
   promotion and exact publication
 - Next admitted action:
-  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
+  `promote-release-1.3.16-to-main-as-separate-governed-action`
 - Source consolidation branch:
   `feature/develop-1.3.16-candidate-opening`
-- Active protected develop merge: pending for the `v1.3.16`
-  candidate-opening MR
-- Active protected develop pipeline: pending for the `v1.3.16`
-  candidate-opening MR
+- Active protected develop merge: GitLab MR `!209` merged
+  `cb7d568af69cf4e8d0e2006b7fdfd0305736e6d9` into `develop` as
+  `2443e601c2b1aa78122af785516376b9905ba43f`
+- Active protected develop pipeline: `2516180885` / `success`
+- Active release branch pipeline: `2516207722` / `success`
+- Active release branch Vagrant VSIX acceptance receipt: GitLab job
+  `14309562384` / `success`, retaining
+  `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json` and
+  `vagrant/evidence/20260511-070846/manifest.json`
+- Active release branch readiness reassessment: `release/1.3.16` is green,
+  protected `main` is an ancestor of the release branch, and protected
+  `develop` pipeline `2516304744` retained the branch-opening packet before
+  the main-promotion path was admitted as a separate governed action
 - Retained `release/1.3.15` branch pipeline: `2513019603` / `success`;
   duplicate operator pipeline `2513019188` also passed on the same ref and SHA
 - Retained `release/1.3.15` readiness reassessment: historical

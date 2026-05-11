@@ -138,7 +138,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
+      'promote-release-1.3.16-to-main-as-separate-governed-action'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
@@ -168,9 +168,9 @@ describe('public validation pre-release 1.3.11', () => {
     expect(successTemplate).toContain('runtimeErrorCode=VIHS_OK');
     expect(failureTemplate).toContain('runtime_error_code');
     expect(notImplementedTemplate).toContain('runtimeImplementationStatus=not-implemented');
-    expect(bugReport).toContain('Marketplace stable `1.3.15`');
+    expect(bugReport).toContain('Marketplace stable installed-user `1.3.15`');
     expect(bugReport).toContain('runtime_error_code');
-    expect(communityTemplate).toContain('Expected `1.3.13`');
+    expect(communityTemplate).toContain('Expected `1.3.15`');
     expect(communityTemplate).toContain('runtime_error_code');
 
     for (const label of [
@@ -179,7 +179,7 @@ describe('public validation pre-release 1.3.11', () => {
       'feature:not-implemented',
       'error-code',
       'proof:packet-attached',
-      'version:1.3.13'
+      'version:1.3.15'
     ]) {
       expect(labels).toContain(`name: ${label}`);
     }

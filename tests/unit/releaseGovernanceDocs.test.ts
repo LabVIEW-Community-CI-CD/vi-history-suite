@@ -138,7 +138,7 @@ describe('release governance package', () => {
     expect(hostedGovernance).toContain('# Hosted CI Governance');
     expect(hostedGovernance).toContain('current `develop` package line: `1.3.16`');
     expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.3.16`');
-    expect(hostedGovernance).toContain('retained release-candidate branch: `release/1.3.15`');
+    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.16`');
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
     expect(hostedGovernance).toContain('active hotfix branch: none');
     expect(hostedGovernance).toContain('active feature-lane public GitHub release hardening branch on `develop`:');

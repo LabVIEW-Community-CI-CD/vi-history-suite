@@ -1,13 +1,12 @@
 name: Windows Docker Desktop validation
-description: Report v1.3.13 Windows Docker Desktop Windows-container fixture proof
+description: Proof-intake for v1.3.15 Windows Docker Desktop Windows-container fixture validation
 title: "[Windows Docker Desktop validation]: "
 labels:
   - community-validation
-  - marketplace-preview
   - provider:docker
   - windows-labview
   - windows-docker-desktop
-  - version:1.3.13
+  - version:1.3.15
   - proof:reported
   - needs-triage
 body:
@@ -16,7 +15,7 @@ body:
       value: |
         Use this template only for public issue #65: real Windows 10/11 plus Docker Desktop switched to Windows containers.
 
-        Run the canonical public fixture with Marketplace pre-release `1.3.13`:
+        Run the canonical public fixture with Marketplace stable installed-user `1.3.15`:
 
         `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000`
 
@@ -38,8 +37,8 @@ body:
     id: extension_version
     attributes:
       label: Extension version
-      description: Expected `1.3.13` for this intake.
-      value: "1.3.13"
+      description: Expected `1.3.15` for this intake.
+      value: "1.3.15"
     validations:
       required: true
   - type: textarea
