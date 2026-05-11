@@ -200,9 +200,9 @@ describe('public repo package surface', () => {
       'Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,'
     );
     expect(normalizedChangelog).toContain(
-      '`v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`, and `v1.3.16`.'
+      '`v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`, `v1.3.15`, and `v1.3.16`.'
     );
-    expect(normalizedChangelog).toContain('## [1.3.16] - 2026-05-09');
+    expect(normalizedChangelog).toContain('## [1.3.16] - 2026-05-11');
     expect(normalizedChangelog).toContain('Closed the exact `v1.3.16` authority/publication line');
     expect(normalizedChangelog).toContain('## [1.3.14] - 2026-05-08');
     expect(normalizedChangelog).toContain('## [1.3.13] - 2026-04-27');
