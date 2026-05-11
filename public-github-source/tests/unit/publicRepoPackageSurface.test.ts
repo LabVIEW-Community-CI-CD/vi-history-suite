@@ -41,7 +41,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-source-package-preview.yml');
 
-    expect(manifest.version).toBe('1.3.15');
+    expect(manifest.version).toBe('1.3.16');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
