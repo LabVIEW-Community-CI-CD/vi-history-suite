@@ -19,9 +19,9 @@
 - name: proof:packet-attached
   color: "BFD4F2"
   description: Report includes or references a vihs-validation-proof packet.
-- name: version:1.3.13
+- name: version:1.3.15
   color: "F9D0C4"
-  description: Report targets the v1.3.13 public validation pre-release.
+  description: Report targets the v1.3.15 stable installed-user release.
 - name: windows-labview
   color: "1D76DB"
   description: Windows host or Docker Desktop Windows-container LabVIEW report.
@@ -55,3 +55,18 @@
 - name: labview:x86
   color: "F9D0C4"
   description: x86 LabVIEW request or report.
+- name: ready-for-github-agent
+  color: "0E8A16"
+  description: Ready for GitHub Copilot/coding-agent implementation in the public repo.
+- name: needs-refinement
+  color: "FBCA04"
+  description: Needs sharper scope or acceptance criteria before agent assignment.
+- name: authority-only
+  color: "B60205"
+  description: Governed authority work; keep in GitLab/private release lane unless split.
+- name: blocked-local-windows
+  color: "D93F0B"
+  description: Requires a local Windows host/session before implementation or proof admission.
+- name: public-facade
+  color: "C5DEF5"
+  description: Public GitHub source facade or public-facing handoff artifact.

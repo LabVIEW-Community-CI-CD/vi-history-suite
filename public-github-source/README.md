@@ -65,7 +65,7 @@ Installed-user help:
 
 ## Proof Status And Community Validation
 
-Marketplace stable `1.3.15` is the regular installed-user release. The extension
+Stable `1.3.15` is the current installed-user release line. The extension
 intentionally exposes all intended provider/year/bitness variants so the
 runtime and error-reporting layer can be exercised on real user machines.
 

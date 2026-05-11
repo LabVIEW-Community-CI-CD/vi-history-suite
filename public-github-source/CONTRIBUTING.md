@@ -3,6 +3,9 @@
 This repository is source-available and intentionally restrictive. It is not an
 open-source project.
 
+Public GitHub agent execution conventions are documented in
+[`AGENTS.md`](./AGENTS.md).
+
 ## Public Development Loop
 
 The public source facade is intended to be usable in a Docker-capable
