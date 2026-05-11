@@ -97,7 +97,7 @@ describe('release publication state resolver', () => {
       currentPublishedKind: 'exact-release',
       currentRegularPublishedVersion: '1.3.15',
       currentPreReleaseVersion: '1.3.13',
-      expectedVersion: '1.3.15',
+      expectedVersion: '1.3.16',
       status: 'published-exact-release-1.3.15',
       windowsExactVsixInstallProof: {
         packageScript: 'npm run vscode:marketplace:install-proof',
@@ -164,9 +164,9 @@ describe('release publication state resolver', () => {
       blockerCode: 'published-immutable-release-assets-incomplete',
       status: 'retained-history'
     });
-    expect(state.activeCandidate).toBeNull();
+    expect(state.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(state.nextAdmittedAction).toBe(
-      'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention'
+      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
     );
 
     expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.15`');
@@ -185,7 +185,7 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Incident Classification');
     expect(stateDoc).toContain('blocked historical incident');
     expect(stateDoc).toContain(
-      '`normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`'
+      '`open-release-1.3.16-after-protected-develop-candidate-pipeline`'
     );
 
     expect(publicationState.normalizeTag('1.4.2')).toBe('v1.4.2');

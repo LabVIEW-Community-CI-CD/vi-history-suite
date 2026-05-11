@@ -20,11 +20,11 @@ final installed-user distribution surface.
 - Expected VSIX SHA-256:
   `157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7`
 - Active candidate release branch: none; `release/1.3.15` is retained
-- Active candidate tag: none
-- Active candidate package version: none
-- Active candidate state: exact `v1.3.15` is fully published across GitLab
-  authority, public GitHub, and VS Code Marketplace; normal next-line
-  governance may proceed after this closeout retention
+- Active candidate tag: `v1.3.16`
+- Active candidate package version: `1.3.16`
+- Active candidate state: patch candidate `v1.3.16` is open on `develop`
+  after exact `v1.3.15` was fully published across GitLab authority, public
+  GitHub, and VS Code Marketplace; no `release/1.3.16` branch is open yet
 
 ## Develop Preview State
 
@@ -184,7 +184,7 @@ final installed-user distribution surface.
 - Current pre-release Marketplace version: `1.3.13`
 - Current pre-release last updated: `2026-04-27T04:24:05.457Z`
 - Expected exact-candidate version for the active governed candidate line:
-  none; exact `1.3.15` is already published
+  `1.3.16`
 - Marketplace status: exact `1.3.15` is published and verified; public
   validation pre-release `1.3.13` remains retained as historical validation
   evidence.
@@ -662,7 +662,7 @@ until that later public GitHub release gate is complete.
 - VS Code Marketplace version: `1.3.15`
 - Marketplace last updated: `2026-05-10T22:22:37.663Z`
 - Next admitted action:
-  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`
+  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
@@ -740,11 +740,11 @@ claim boundary that lets the next governed `release/1.3.10` branch open from
 ## Next Admitted Action
 
 - Governed next line: exact `v1.3.15` is closed across GitLab authority,
-  public GitHub source/tag/release, and VS Code Marketplace. Normal next
-  SemVer opening may proceed after this closeout retention is merged back to
-  protected `develop`.
+  public GitHub source/tag/release, VS Code Marketplace, and protected
+  `develop` closeout retention. Patch candidate `v1.3.16` is open on
+  `develop` for installed-user host runtime admission.
 - Next admitted action under the current boundary:
-  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`
+  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
 - Release branch deletion:
   not admitted unless explicitly authorized separately
 

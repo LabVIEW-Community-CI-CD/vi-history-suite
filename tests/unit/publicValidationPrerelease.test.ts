@@ -43,7 +43,7 @@ describe('public validation pre-release 1.3.11', () => {
     );
     const promotionPlan = promotion.createPublicGithubSourcePromotionPlan();
 
-    expect(packageManifest.version).toBe('1.3.15');
+    expect(packageManifest.version).toBe('1.3.16');
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
       status: 'published-and-verified',
@@ -111,7 +111,7 @@ describe('public validation pre-release 1.3.11', () => {
     expect(packet).toContain('Windows installed-user LabVIEW proof: community/deferred');
     expect(packet).toContain('Prior extension testing of Windows 64-bit LabVIEW');
 
-    expect(releaseState.activeCandidate).toBeNull();
+    expect(releaseState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
     expect(releaseState.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',
       packageVersion: '1.3.11',
@@ -138,7 +138,7 @@ describe('public validation pre-release 1.3.11', () => {
       lastUpdated: '2026-04-26T16:51:22.260Z'
     });
     expect(releaseState.nextAdmittedAction).toBe(
-      'normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention'
+      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
     );
     expect(marketplaceLedger.publicValidationPrerelease).toMatchObject({
       status: 'published-and-verified',

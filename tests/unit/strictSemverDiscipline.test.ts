@@ -106,13 +106,14 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.releaseBranch).toBe('release/*');
     expect(versionLineContract.hotfixBranch).toBe('hotfix/*');
     expect(versionLineContract.exactReleaseLineBranch).toBe('main');
-    expect(pkg.version).toBe('1.3.15');
+    expect(pkg.version).toBe('1.3.16');
     expect(versionLineContract.currentMainPackageLine).toBe('1.3.15');
     expect(versionLineContract.currentAuthorityPackageLine).toBe('1.3.15');
-    expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.15');
+    expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.16');
     expect(versionLineContract.activeMarketplaceCommunityPreviewLine).toBe('1.3.13');
-    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBeNull();
-    expect(versionLineContract.activeReleaseCandidateBranch).toBe('release/1.3.15');
+    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBe('v1.3.16');
+    expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
+    expect((versionLineContract as any).retainedReleaseCandidateBranch).toBe('release/1.3.15');
     expect(versionLineContract.activeHotfixCandidateReleaseLine).toBeNull();
     expect(versionLineContract.activeHotfixBranch).toBeNull();
     expect((versionLineContract as any).activeFeatureBranch).toBeNull();
@@ -125,8 +126,8 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- current exact released line: `v1.3.15`');
     expect(readme).toContain('- current fully published exact package line: `1.3.15`');
     expect(readme).toContain('- current authority package line on `main`: `1.3.15`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.3.15`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: none');
+    expect(readme).toContain('- current develop package line on `develop`: `1.3.16`');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.16`');
     expect(readme).toContain('- retained release-candidate branch: `release/1.3.15`');
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
@@ -151,8 +152,8 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- current exact released line: `v1.3.15`');
     expect(currentState).toContain('- current fully published exact package line: `1.3.15`');
     expect(currentState).toContain('- current authority package line on `main`: `1.3.15`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.3.15`');
-    expect(currentState).toContain('- active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.3.16`');
+    expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.3.16`');
     expect(currentState).toContain('- active release-candidate branch: retained `release/1.3.15`');
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
@@ -177,8 +178,8 @@ describe('strict semver discipline', () => {
     expect(releaseProcedure).toContain('The current exact released line is `v1.3.15`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
     expect(releaseProcedure).toContain('The current authority package line on `main` is `1.3.15`.');
-    expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.15`.');
-    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is none.');
+    expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.16`.');
+    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is `v1.3.16`.');
     expect(releaseProcedure).toContain(
       'The retained release-candidate branch is `release/1.3.15`.'
     );

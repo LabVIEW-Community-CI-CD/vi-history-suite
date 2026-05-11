@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.16] - 2026-05-11
+
+### Changed
+
+- Opened the next patch candidate line after exact `v1.3.15` closed across
+  GitLab authority, public GitHub, and VS Code Marketplace.
+- Installed-user Windows host compare now admits the selected already-open
+  LabVIEW session when the user targets a local host runtime, so Compare can
+  attach to the running LabVIEW 2025+ session instead of blocking as a
+  contaminated host surface.
+- Canonical clean-host proof and benchmark lanes still fail closed on ambient
+  LabVIEW contamination unless they explicitly opt in to installed-user host
+  session admission.
+
 ## [1.3.15] - 2026-05-09
 
 ### Changed

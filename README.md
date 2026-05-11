@@ -280,13 +280,13 @@ Authority release facts:
 - current exact released line: `v1.3.15`
 - current fully published exact package line: `1.3.15`
 - current authority package line on `main`: `1.3.15`
-- current develop package line on `develop`: `1.3.15`
-- active exact release candidate line on `develop`: none
+- current develop package line on `develop`: `1.3.16`
+- active exact release candidate line on `develop`: `v1.3.16`
 - retained release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  no active release candidate is open for publication; `v1.3.15` is fully
-  published across GitLab authority, public GitHub, and VS Code Marketplace,
-  and `release/1.3.15` remains retained
+  patch candidate `v1.3.16` is open on `develop` after exact `v1.3.15`
+  closeout; no `release/1.3.16` branch is open yet, and `release/1.3.15`
+  remains retained
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -344,10 +344,11 @@ Authority release facts:
   publish / verify are now retained as guarded non-mutating contract phases
 - exact authority `v1.3.15` is now fully closed across public GitHub and VS Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
-- active governed release claim: exact `v1.3.15` is fully published and
-  retained; normal next-line governance may proceed after this closeout packet
+- active governed release claim: patch candidate `v1.3.16` is open on
+  `develop` for installed-user host runtime admission after exact `v1.3.15`
+  was fully published and retained
 - next admitted release-control action:
-  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`
+  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
 - current Marketplace stable version: `1.3.15`
 - retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:

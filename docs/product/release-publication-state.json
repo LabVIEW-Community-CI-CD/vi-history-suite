@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/release-publication-state@v1",
-  "recordedAt": "2026-05-10",
+  "recordedAt": "2026-05-11",
   "authority": {
     "system": "gitlab",
     "integrationBranch": "develop",
@@ -461,7 +461,7 @@
     "role": "final-user-distribution",
     "itemName": "svelderrainruiz.vi-history-suite",
     "currentPublishedVersion": "1.3.15",
-    "expectedVersion": "1.3.15",
+    "expectedVersion": "1.3.16",
     "status": "published-exact-release-1.3.15",
     "windowsExactVsixInstallProof": {
       "packageScript": "npm run vscode:marketplace:install-proof",
@@ -780,9 +780,15 @@
     "windowsDockerDesktopProofAdmission": "not-performed",
     "releaseBranchDeletion": "not-performed"
   },
-  "nextAdmittedAction": "normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention",
+  "nextAdmittedAction": "open-release-1.3.16-after-protected-develop-candidate-pipeline",
   "productionMutationAllowed": false,
-  "activeCandidate": null,
+  "activeCandidate": {
+    "packageVersion": "1.3.16",
+    "tag": "v1.3.16",
+    "branch": "feature/develop-1.3.16-candidate-opening",
+    "state": "candidate-open-on-develop-release-branch-not-yet-open",
+    "nextAdmittedAction": "open-release-1.3.16-after-protected-develop-candidate-pipeline"
+  },
   "publicValidationPrerelease": {
     "status": "published-and-verified",
     "packageVersion": "1.3.11",

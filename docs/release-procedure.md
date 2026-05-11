@@ -14,12 +14,13 @@
 - The current exact released line is `v1.3.15`.
 - The burned exact released line is `v1.0.2`.
 - The current authority package line on `main` is `1.3.15`.
-- The current develop package line on `develop` is `1.3.15`.
-- The active exact release candidate line on `develop` is none.
+- The current develop package line on `develop` is `1.3.16`.
+- The active exact release candidate line on `develop` is `v1.3.16`.
 - The retained release-candidate branch is `release/1.3.15`.
-- The active release-candidate state is closed for publication: exact
+- The active release-candidate state is candidate-open-on-develop: exact
   `v1.3.15` is fully published across GitLab authority, public GitHub, and
-  VS Code Marketplace, and `release/1.3.15` remains retained.
+  VS Code Marketplace, patch candidate `v1.3.16` is open on `develop`, no
+  `release/1.3.16` branch is open yet, and `release/1.3.15` remains retained.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -78,10 +79,11 @@
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
-- The active governed release claim is exact `v1.3.15`, fully closed across
-  GitLab authority, public GitHub, and VS Code Marketplace.
+- The active governed release claim is patch candidate `v1.3.16` on `develop`
+  for installed-user host runtime admission after exact `v1.3.15` closed
+  across GitLab authority, public GitHub, and VS Code Marketplace.
 - The next admitted release-control action under the current boundary is
-  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`;
+  `open-release-1.3.16-after-protected-develop-candidate-pipeline`;
   release branch deletion remains blocked unless explicitly admitted separately.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer
@@ -588,7 +590,7 @@ promotion still stays separate afterward.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
 - The current published package line on `main` is `1.3.15`, and the current
-  develop package line on `develop` is `1.3.15`; the closed exact line
+  develop package line on `develop` is `1.3.16`; the closed exact line
   must not rewrite the retained `v0.2.0`, `v1.0.0`, `v1.0.1`,
   burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`, exact
   `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact `v1.2.2`,
@@ -596,7 +598,7 @@ promotion still stays separate afterward.
   `v1.3.4`, exact `v1.3.5`, exact `v1.3.6`, exact `v1.3.7`, exact `v1.3.9`,
   exact `v1.3.14`, or exact `v1.3.15` release
   evidence.
-- The current develop package line on `develop` is `1.3.15`, public GitHub
+- The current develop package line on `develop` is `1.3.16`, public GitHub
   `main` now publishes `427ab27245f6f66d186e07865f1fc0a00795611a`, public tag
   `v1.3.15` is live, GitHub release `320197692` is published, VS Code
   Marketplace serves `1.3.15`, and
