@@ -17,7 +17,8 @@ import {
   parseHistoryEntries,
   parseLsFilesZ,
   runGit,
-  resolveGitExecutable
+  resolveGitExecutable,
+  resolveGitTimeoutMs
 } from '../../src/git/gitCli';
 
 const tempDirectories: string[] = [];
@@ -121,6 +122,14 @@ describe('gitCli parsing', () => {
     ]);
   });
 
+  it('uses a bounded Git subprocess timeout with an operator override', () => {
+    expect(resolveGitTimeoutMs({})).toBe(300000);
+    expect(resolveGitTimeoutMs({ VI_HISTORY_SUITE_GIT_TIMEOUT_MS: '450000' })).toBe(450000);
+    expect(() =>
+      resolveGitTimeoutMs({ VI_HISTORY_SUITE_GIT_TIMEOUT_MS: 'not-a-number' })
+    ).toThrow(/Unsupported VI_HISTORY_SUITE_GIT_TIMEOUT_MS value/);
+  });
+
   it('returns trimmed HEAD, repository root, and tracked files from a real temporary Git repo', async () => {
     const repoRoot = await createTempGitRepo();
     const nestedRoot = path.join(repoRoot, 'nested');
@@ -182,4 +191,26 @@ describe('gitCli parsing', () => {
 
     await expect(runGit(['definitely-not-a-real-subcommand'], repoRoot, 'utf8')).rejects.toThrow();
   });
+
+  it.skipIf(process.platform === 'win32')(
+    'fails closed when a Git subprocess exceeds its timeout',
+    async () => {
+      const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-timeout-'));
+      tempDirectories.push(repoRoot);
+      const previousGitExe = process.env.VI_HISTORY_SUITE_GIT_EXE;
+      process.env.VI_HISTORY_SUITE_GIT_EXE = '/bin/sleep';
+
+      try {
+        await expect(runGit(['1'], repoRoot, 'utf8', { timeoutMs: 1 })).rejects.toThrow(
+          /Git command timed out after 1 ms/
+        );
+      } finally {
+        if (previousGitExe === undefined) {
+          delete process.env.VI_HISTORY_SUITE_GIT_EXE;
+        } else {
+          process.env.VI_HISTORY_SUITE_GIT_EXE = previousGitExe;
+        }
+      }
+    }
+  );
 });

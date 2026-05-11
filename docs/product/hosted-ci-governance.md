@@ -8,8 +8,8 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.9`, public GitHub and VS Code
-Marketplace both publish `1.3.9`, public GitHub release `312768592` for
+Authority exact `main` now carries tagged `v1.3.15`, public GitHub and VS Code
+Marketplace both publish `1.3.15`, public GitHub release `312768592` for
 `v1.3.8` remains retained as immutable zero-asset historical incident
 evidence, and later exact lines must reopen through normal GitFlow from this
 retained closed baseline.
@@ -28,25 +28,21 @@ retained closed baseline.
 
 ## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.9`
-- current `main` package line: `1.3.9`
+- current exact release line: `v1.3.15`
+- current `main` package line: `1.3.15`
 - current `develop` package line: `1.3.15`
-- active exact release candidate line on `develop`: `v1.3.15`
-- active release-candidate branch: `release/1.3.15`
+- active exact release candidate line on `develop`: none
+- retained release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  `release/1.3.15` is opened and green, but main-promotion preflight is
-  blocked until protected `main` becomes an ancestor of the release branch;
-  exact tag, public GitHub release, Marketplace mutation, Windows Docker
-  Desktop proof admission, main promotion, and release branch deletion remain
-  blocked
+  exact `v1.3.15` is fully published across GitLab authority, public GitHub,
+  and VS Code Marketplace, and `release/1.3.15` remains retained
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- the active exact candidate line is `v1.3.15`; `release/1.3.15` is now the
-  governed release-candidate branch with a green branch-created pipeline, while
-  topology refresh is the next admitted action before any exact tag or
-  protected main-promotion action
+- no active exact candidate line remains open; exact `v1.3.15` is closed and
+  the next admitted action is normal next-line governance after closeout
+  retention
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
@@ -58,9 +54,9 @@ retained closed baseline.
   `1.3.13`
 - Marketplace public validation preview last updated:
   `2026-04-27T04:24:05.457Z`
-- rationale: authority exact `v1.3.9` remains tagged on `main`, public
-  GitHub release `312994104` is published with exact assets, and VS Code
-  Marketplace serves regular `1.3.9`
+- rationale: authority exact `v1.3.15` remains tagged on `main`, public
+  GitHub release `320197692` is published with exact assets, and VS Code
+  Marketplace serves regular `1.3.15`
 - rationale: `develop` now carries patch candidate package line `1.3.15` for
   installed-user UX and local LabVIEW 2025+ support after the completed
   `v1.3.14` GitLab authority and public source/tag handoff
@@ -68,10 +64,9 @@ retained closed baseline.
   evidence assertion contract without expanding the Windows Docker Desktop
   proof claim
 - rationale: blocked historical `v1.3.8` incident evidence remains retained,
-  the active exact candidate line is `v1.3.15`, `release/1.3.15` is the
-  governed release-candidate branch, and topology refresh is the next admitted
-  action while exact tag, public GitHub, Marketplace, Windows Docker Desktop,
-  `main` mutation, and branch deletion remain blocked
+  exact `v1.3.15` is now closed across GitLab authority, public GitHub, Windows
+  exact-VSIX install proof, and VS Code Marketplace; release branch deletion
+  remains blocked unless explicitly admitted separately
 
 ## Current Linux/Docker Preview Claim
 
@@ -328,7 +323,10 @@ Job ownership:
   fallback for LabVIEW prelaunch, validates the latest acceptance manifest,
   cold-start markers, host-native LabVIEWCLI facts, and generated report output
   through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
-  `vagrant/evidence/`; this job pins
+  `vagrant/evidence/`; its acceptance provisioner sets
+  `VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000` so canonical harness acquisition
+  fails closed instead of silently exhausting the runner no-output window; this
+  job pins
   `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
   machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large
   Windows box and disposable VM clone do not land on the root filesystem; this

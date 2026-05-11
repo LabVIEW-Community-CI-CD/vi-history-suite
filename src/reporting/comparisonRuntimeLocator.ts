@@ -43,6 +43,7 @@ export interface ComparisonRuntimeSettings {
   bitness?: RuntimeBitness;
   windowsContainerImage?: string;
   linuxContainerImage?: string;
+  allowExistingWindowsHostRuntime?: boolean;
 }
 
 export interface WindowsRegistryQueryPlan {
@@ -90,6 +91,7 @@ export interface ComparisonRuntimeSelection {
   hostLabviewIniPath?: string;
   hostLabviewTcpPort?: number;
   hostRuntimeConflictDetected?: boolean;
+  allowExistingWindowsHostRuntime?: boolean;
   dockerCliAvailable?: boolean;
   dockerDaemonReachable?: boolean;
   containerCapabilityAvailable?: boolean;
@@ -359,6 +361,7 @@ export async function locateComparisonRuntime(
   const requireVersionAndBitness = settings.requireVersionAndBitness === true;
   const requestedLabviewVersion = normalizeRequestedLabviewVersion(settings.labviewVersion);
   const bitness = settings.bitness ?? 'x64';
+  const allowExistingWindowsHostRuntime = settings.allowExistingWindowsHostRuntime === true;
   const notes: string[] = [];
   const registryQueryPlans = platform === 'win32' ? buildWindowsRegistryQueryPlans() : [];
   const pathExists = deps.pathExists ?? defaultPathExists;
@@ -1035,8 +1038,12 @@ export async function locateComparisonRuntime(
   const hostLabviewIniPath = hostRuntimeSurfaceFacts?.hostLabviewIniPath;
   const hostLabviewTcpPort = hostRuntimeSurfaceFacts?.hostLabviewTcpPort;
   const hostRuntimeConflictDetected = hostRuntimeSurfaceFacts?.hostRuntimeConflictDetected;
+  const hostRuntimeConflictAdmitted =
+    platform === 'win32' &&
+    hostRuntimeConflictDetected === true &&
+    allowExistingWindowsHostRuntime;
 
-  if (platform === 'win32' && hostRuntimeConflictDetected) {
+  if (platform === 'win32' && hostRuntimeConflictDetected && !hostRuntimeConflictAdmitted) {
     if (executionMode === 'auto' && bitness === 'x64') {
       containerAvailable = await ensureContainerAvailability();
       if (containerAvailable && containerFacts) {
@@ -1141,6 +1148,12 @@ export async function locateComparisonRuntime(
     };
   }
 
+  if (hostRuntimeConflictAdmitted) {
+    notes.push(
+      'Admitted existing Windows host runtime surface because installed-user host compare may attach to an already-open selected LabVIEW session.'
+    );
+  }
+
   if (
     platform === 'win32' &&
     executionMode === 'auto' &&
@@ -1234,6 +1247,7 @@ export async function locateComparisonRuntime(
       hostLabviewIniPath,
       hostLabviewTcpPort,
       hostRuntimeConflictDetected,
+      allowExistingWindowsHostRuntime,
       notes,
       registryQueryPlans,
       candidates

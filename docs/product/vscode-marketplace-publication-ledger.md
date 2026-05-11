@@ -18,28 +18,52 @@ The machine-readable companion surface for this ledger is:
   `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - Installed-user homepage:
   `https://github.com/svelderrainruiz/vi-history-suite/wiki`
-- Current published Marketplace version: `1.3.13`
-- Current publication date: `2026-04-27`
-- Current publication kind: public-validation pre-release
-- Current regular Marketplace version: `1.3.9`
-- Current regular publication date: `2026-04-23`
+- Current published Marketplace version: `1.3.15`
+- Current publication date: `2026-05-10`
+- Current publication kind: exact release
+- Current regular Marketplace version: `1.3.15`
+- Current regular publication date: `2026-05-10`
 - Current pre-release Marketplace version: `1.3.13`
 - Current pre-release last updated: `2026-04-27T04:24:05.457Z`
 - Current verification surface: official gallery extension query, `vsce show`,
   and isolated VS Code CLI install readback
-- Current pending publication: none; `1.3.13` public validation pre-release is
-  published and verified
+- Current pending publication: none; exact `1.3.15` is published and verified
 - Pending publication install-proof command:
   `npm run vscode:marketplace:install-proof`
 - Pending publication install-proof receipt:
   `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - Pending publication install-proof status:
-  not-required-for-community-validation-prerelease-windows-docker-desktop-proof-deferred
+  passed-v1.3.15-isolated-exact-vsix-install
 - Pending publication prep command: `npm run vscode:marketplace:prepare`
 - Pending publication prep receipt:
   `.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json`
 - Pending publication prep status:
-  closed-public-validation-prerelease-published-and-verified
+  closed-exact-release-1.3.15-published-and-verified
+
+## Exact Release 1.3.15
+
+- Status: published and verified
+- Authority tag: `v1.3.15`
+- Authority `main` commit:
+  `196dd70878bf26e9722c031b9192581e5147bafb`
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/83`
+- Public GitHub `main` commit:
+  `427ab27245f6f66d186e07865f1fc0a00795611a`
+- Public GitHub release:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`
+- Public GitHub release id: `320197692`
+- Public GitHub release published at: `2026-05-10T22:02:02Z`
+- Marketplace version: `1.3.15`
+- Marketplace last updated: `2026-05-10T22:22:37.663Z`
+- VSIX SHA-256:
+  `157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7`
+- Windows exact-VSIX install proof receipt:
+  `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
+- Public GitHub exact transaction receipt:
+  `.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json`
+- Marketplace prep receipt:
+  `.cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json`
 
 ## Community-Validation Preview Preparation
 
@@ -260,7 +284,7 @@ The machine-readable companion surface for this ledger is:
 | VS Code Marketplace public-validation preview | published | `2026-04-26` | `1.3.11` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.11.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; public GitHub PR #46 |
 | VS Code Marketplace public-validation preview | published | `2026-04-27` | `1.3.12` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.12.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; public GitHub PR #63 |
 | VS Code Marketplace public-validation preview | published | `2026-04-27` | `1.3.13` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.13.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md`; public GitHub PR #67; corrected public GitHub release `v1.3.13-public-validation-prerelease-1` |
-| VS Code Marketplace public-validation preview | pending | pending | `1.3.13` | `pinned-vsce-cli-pre-release` | `docs/product/public-validation-prerelease-v1.3.13.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
+| VS Code Marketplace exact release | published | `2026-05-10` | `1.3.15` | `pinned-vsce-cli` | `docs/product/release-publication-state.md`; `docs/product/public-release-candidate.md`; `docs/product/vscode-marketplace-publication-ledger.md`; public GitHub PR #83; GitHub release `v1.3.15`; Windows exact-VSIX install proof receipt |
 
 ## Publication Rules
 

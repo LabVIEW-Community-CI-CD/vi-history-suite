@@ -1,42 +1,39 @@
 # Public Release Candidate
 
-- Version line: `1.3.9`
-- Active develop candidate line: `v1.3.15`
-- Active develop candidate package: `1.3.15`
-- Active develop candidate state: release branch opened and green, but
-  main-promotion preflight is blocked until protected `main` becomes an
-  ancestor of `release/1.3.15`; exact tag, public GitHub release publication,
-  Marketplace mutation, Windows Docker Desktop proof admission, main
-  promotion, and release branch deletion remain blocked by boundary
-- Active develop candidate branch: `develop`
-- Active release-candidate branch: `release/1.3.15`
+- Version line: `1.3.15`
+- Active develop candidate line: none
+- Active develop candidate package: none
+- Active develop candidate state: exact `v1.3.15` is fully published across
+  GitLab authority, public GitHub, and VS Code Marketplace
+- Active develop candidate branch: none
+- Retained release-candidate branch: `release/1.3.15`
 - Release-branch opening packet:
   `docs/product/release-branch-opening-v1.3.15-2026-05-09.md`
 - Release-branch readiness reassessment packet:
   `docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md`
-- Release main-promotion preflight packet: not retained yet for `1.3.15`
+- Release main-promotion preflight packet: closed by protected main promotion
+  and exact publication
 - Next admitted action:
-  `refresh-release-1.3.15-with-main-before-main-promotion-preflight`
+  `normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`
 - Source consolidation branch:
-  `feature/develop-1.3.15-vagrant-x86-settings`
+  `feature/develop-1.3.15-marketplace-closeout-ledger`
 - Protected develop merge: GitLab MR `!202` merged
   `1114189b654b86fe829eb7648672d3565ebf71cf` into `develop` as
   `67c2c3a188666eaad3cab2695092991c42f33470`
 - Protected develop pipeline: `2512993895` / `success`
 - Release branch pipeline: `2513019603` / `success`; duplicate operator
   pipeline `2513019188` also passed on the same ref and SHA
-- Release branch readiness reassessment: blocked because protected `main`
-  `2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa` is not an ancestor of
-  `release/1.3.15`; protected `develop` retention pipeline `2513063788`
-  passed
+- Release branch readiness reassessment: historical pre-main-promotion blocker;
+  protected `main` now publishes `196dd70878bf26e9722c031b9192581e5147bafb`
+  for exact `v1.3.15`
 - Vagrant VSIX acceptance receipt: GitLab job `14293424513` / `success`,
   retaining `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json`
   and `vagrant/evidence/20260509-171233/manifest.json`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-23`
+- Recorded at: `2026-05-10`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
-- Published exact public source commit: `fb0ef2b`
-- Current public source head: `f1cb609`
+- Published exact public source commit: `427ab27`
+- Current public source head: `427ab27`
 - Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
@@ -45,11 +42,11 @@
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
 - Software-factory governance branch: none
-- Exact authority `v1.3.9` is now fully published across GitLab authority,
+- Exact authority `v1.3.15` is now fully published across GitLab authority,
   public GitHub, and VS Code Marketplace, while blocked historical public
   GitHub incident evidence for `v1.3.8` remains retained separately
 - Protected exact-release line: `main`
-- Active release-candidate branch: `release/1.3.15`
+- Retained release-candidate branch: `release/1.3.15`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
 - Required checks:
@@ -66,9 +63,9 @@
 ## Readiness
 
 - Authority baseline:
-  `v1.3.9-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained`
+  `v1.3.15-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained`
 - Local installed VSIX build:
-  `release-1.3.9-authority-candidate-package-line`
+  `release-1.3.15-authority-candidate-package-line`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -84,44 +81,44 @@
 - Pre-tag public-exact proof gate:
   `required-before-any-later-exact-reopen`
 - Public GitHub exact transaction gate:
-  `required-before-any-further-public-github-release-or-marketplace-act`
+  `closed-for-v1.3.15`
 - Windows exact-VSIX install proof gate:
-  `required-before-any-later-marketplace-act`
+  `closed-for-v1.3.15`
 - Exact public release:
-  `v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`
+  `v1.3.15-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`
 
 ## Exact Release Baseline
 
-- GitHub release: `v1.3.9`
+- GitHub release: `v1.3.15`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`
-- GitHub release id: `312994104`
-- GitHub asset: `vi-history-suite-1.3.9.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`
+- GitHub release id: `320197692`
+- GitHub asset: `vi-history-suite-1.3.15.vsix`
 - GitHub asset SHA-256:
-  `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`
+  `157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7`
 - VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
-- VS Code Marketplace version: `1.3.9`
+- VS Code Marketplace version: `1.3.15`
 
 ## Public Publication
 
-- The exact `v1.3.9` public source publication is retained at `fb0ef2b`, and
+- The exact `v1.3.15` public source publication is retained at `427ab27`, and
   the separate public source publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - Public GitHub `main` now publishes
-  `f1cb60900820ea17328b9eec595579768491e22a` for the `v1.3.14` source
-  handoff after public PR #69. Public annotated tag `v1.3.14` has tag object
-  `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae` and peels to
-  `f1cb60900820ea17328b9eec595579768491e22a`; public GitHub release
-  publication and Marketplace mutation remain unperformed. Public PR #68
-  remains retained for the `1.3.13` Windows Docker Desktop proof-intake
-  promotion, and public PR #60 remains retained at `ce6dbd0` for the `1.3.11`
-  canonical Docker fixture docs promotion.
-- Public GitHub tag `v1.3.9` is now live, and GitHub release `312994104` is
-  now published separately at
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.9`.
+  `427ab27245f6f66d186e07865f1fc0a00795611a` for the `v1.3.15` source
+  handoff after public PR #83. Public annotated tag `v1.3.15` has tag object
+  `28ea4253813e6f322cbcc25cdce865cdeac219a6` and peels to
+  `427ab27245f6f66d186e07865f1fc0a00795611a`.
+- Public GitHub release `320197692` is published at
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`,
+  is immutable, and retains the manifest-matched exact assets. Public PR #69
+  remains retained as the `v1.3.14` source/tag handoff, public PR #68 remains
+  retained for the `1.3.13` Windows Docker Desktop proof-intake promotion, and
+  public PR #60 remains retained at `ce6dbd0` for the `1.3.11` canonical
+  Docker fixture docs promotion.
 - The published GitHub release now retains the exact authority assets:
-  `vi-history-suite-1.3.9.vsix` and
-  `vi-history-suite-1.3.9.vsix.sha256`.
+  `vi-history-suite-1.3.15.vsix` and
+  `vi-history-suite-1.3.15.vsix.sha256`.
 - The repo-owned verify receipt now proves:
   `verifyGateStatus=pass`,
   `verifyGateAllowed=true`,
@@ -155,21 +152,21 @@
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
-  `npm run design:gate`, and `npm run design:gate:assert-complete` passed on
-  the authority tranche before `v1.3.9` exact tagging.
+  `npm run design:gate`, and `npm run design:gate:assert-complete` remain the
+  retained local authority gates before exact tagging.
 - `npm run public:exact:pretag:proof` remains the fail-closed local proof
   surface for any later exact reopen, and GitLab `public_exact_pretag_proof`
   retains the matching CI proof through
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`.
-- The retained authority exact `v1.3.9` VSIX evidence now lives at
-  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/vi-history-suite-1.3.9.vsix`
+- The retained authority exact `v1.3.15` VSIX evidence now lives at
+  `.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/vi-history-suite-1.3.15.vsix`
   with matching checksum file
-  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/vi-history-suite-1.3.9.vsix.sha256`.
+  `.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/vi-history-suite-1.3.15.vsix.sha256`.
 - Public GitHub exact transaction verification is now the retained local proof
   surface for the completed GitHub act:
-  `npm run public:github:exact:transaction:verify -- --tag v1.3.9`.
+  `npm run public:github:exact:transaction:verify -- --tag v1.3.15`.
 - The retained transaction receipt path is
-  `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
+  `.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json`.
 - VS Code Marketplace publication prep is now the retained local proof surface
   for the completed Marketplace act:
   `npm run vscode:marketplace:prepare`.
@@ -181,7 +178,7 @@
 - The retained Windows exact-VSIX install proof receipt path is
   `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`.
 - That retained Windows exact-VSIX install proof proves bare `vihs` and
-  `vihs --validate` both passed for the exact `v1.3.9` VSIX in isolated VS
+  `vihs --validate` both passed for the exact `v1.3.15` VSIX in isolated VS
   Code user-data/extensions roots with `runtimeValidationOutcome=ready`,
   `pathStrippedToLauncherAndSystem32=true`, and `ambientNodeOnPathRequired=false`.
 - The software-factory orchestrator still retains separate non-production local
@@ -199,23 +196,23 @@
   and
   `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
 - The Marketplace prep receipt proves `status=ready`,
-  `productionMutationAttempted=false`, `publicGitHub.verifyGateStatus=pass`,
-  `currentMarketplaceVersion=1.3.9`, `expectedMarketplaceVersion=1.3.9`,
+  `productionMutationAttempted=true`, `publicGitHub.verifyGateStatus=pass`,
+  `currentMarketplaceVersion=1.3.15`, `expectedMarketplaceVersion=1.3.15`,
   `vsixSha256Verified=true`, `windowsExactVsixInstallProofStatus=pass`,
   `vscePatLocatorStatus=ok`, and the pinned `vsce` command shape with
   `<redacted>` PAT handling.
 - The current software-factory closeout posture is now:
-  exact authority `v1.3.9` is fully closed across public GitHub and VS Code
+  exact authority `v1.3.15` is fully closed across public GitHub and VS Code
   Marketplace, `v1.3.8` remains retained as blocked historical publication
   evidence, and later SemVer openings now return to normal GitFlow.
-- Current retained exact transaction facts: public exact source `fb0ef2b`, public tag
-  `v1.3.9`, GitHub release `312994104`, exact VSIX
-  `vi-history-suite-1.3.9.vsix`, VSIX SHA-256
-  `62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353`,
+- Current retained exact transaction facts: public exact source `427ab27`,
+  public tag `v1.3.15`, GitHub release `320197692`, exact VSIX
+  `vi-history-suite-1.3.15.vsix`, VSIX SHA-256
+  `157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7`,
   checksum-asset SHA-256
-  `25b4ff9a9c00b1a3e3a15946ce061b4b0c3f998dfb1fcaf6c342953bbd0d7ff6`,
+  `6c7be192f19d3eadf68a80fe4e75e3e393d1805cab6c4ab7c76571c411fa6147`,
   retained authority manifest
-  `.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json`,
+  `.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/release-manifest.json`,
   `releaseAssetsRetainedAgainstManifest=true`,
   `publicSourcePromotionStatus=passed`,
   `verifyGateStatus=pass`,
@@ -223,7 +220,7 @@
   `openingNewSemverAllowed=true`,
   `repairInPlaceRequired=false`,
   `repairInPlaceAllowed=false`, and
-  `nextAllowedAction=normal-next-line-governance-after-v1.3.9-retention`.
+  `nextAllowedAction=normal-next-line-governance-after-v1.3.15-retention`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -316,8 +313,8 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- Public GitHub exact now publishes `v1.3.9`, VS Code Marketplace now serves
-  `1.3.9`, and `v1.3.8` remains retained as blocked historical incident
+- Public GitHub exact now publishes `v1.3.15`, VS Code Marketplace now serves
+  `1.3.15`, and `v1.3.8` remains retained as blocked historical incident
   evidence only.
 - The current exact closeout blocker is closed after final Marketplace
   publication retention.

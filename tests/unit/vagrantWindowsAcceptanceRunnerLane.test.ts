@@ -96,6 +96,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('-LocalPort 3363');
 
     expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 300');
+    expect(acceptance).toContain('[int]   $GitTimeoutMs = 300000');
     expect(acceptance).toContain(
       "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"
     );
@@ -112,6 +113,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('$runtimeSettingsLauncher');
     expect(acceptance).toContain('--labview-version $LabVIEWVersion');
     expect(acceptance).toContain('--labview-bitness $LabVIEWBitness');
+    expect(acceptance).toContain("'--allow-existing-windows-host-runtime'");
+    expect(acceptance).toContain('$env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()');
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -220,6 +223,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('`runtimeEngine=labview-cli`');
     expect(laneDoc).toContain('assertion/vagrant-vsix-acceptance-assertion.json');
     expect(laneDoc).toContain('not replace the deferred native Windows x64 private-release proof');
+    expect(laneDoc).toContain('VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000');
 
     expect(hostedGovernanceDoc).toContain('vagrant-windows-vsix-acceptance');
     expect(hostedGovernanceDoc).toContain('vagrant_windows_vsix_acceptance');
@@ -263,6 +267,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
           bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
           labviewPrelaunchFallbackPolicy:
             'manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window',
+          harnessGitTimeoutMs: 300000,
           labviewStartupEvidencePath: 'vagrant/evidence/labview-startup.json',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'

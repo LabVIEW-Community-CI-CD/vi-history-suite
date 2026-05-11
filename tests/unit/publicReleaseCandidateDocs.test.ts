@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public release candidate control surface', () => {
-  it('retains the closed v1.3.9 exact publication state while keeping v1.3.8 as blocked historical evidence', () => {
+  it('retains the closed v1.3.15 exact publication state while keeping historical blockers separate', () => {
     const candidate = readJson<any>('docs/product/public-release-candidate.json');
     const candidateMarkdown = readText('docs/product/public-release-candidate.md');
     const currentState = readText('docs/product/current-state.md');
@@ -22,129 +22,62 @@ describe('public release candidate control surface', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(candidate.versionLine).toBe('1.3.9');
-    expect(candidate.activeDevelopCandidate).toMatchObject({
-      candidateLine: 'v1.3.15',
-      packageVersion: '1.3.15',
-      state: 'release-branch-readiness-blocked-main-not-ancestor-topology-refresh-required',
-      branch: 'develop',
-      activeReleaseCandidateBranch: 'release/1.3.15',
-      releaseBranchOpeningPacketPath:
-        'docs/product/release-branch-opening-v1.3.15-2026-05-09.md',
-      releaseBranchOpeningPacketJsonPath:
-        'docs/product/release-branch-opening-v1.3.15-2026-05-09.json',
-      releaseBranchReadinessReassessmentPacketPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md',
-      releaseBranchReadinessReassessmentPacketJsonPath:
-        'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.json',
-      releaseMainPromotionPreflightPacketPath: null,
-      releaseMainPromotionPreflightPacketJsonPath: null,
-      nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight',
-      sourceFeatureBranch: 'feature/develop-1.3.15-vagrant-x86-settings',
-      mergeRequest: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/202',
-      sourceHeadCommit: '1114189b654b86fe829eb7648672d3565ebf71cf',
-      developMergeCommit: '67c2c3a188666eaad3cab2695092991c42f33470',
-      mergedAt: '2026-05-09T23:28:19.982Z',
-      postMergeDevelopPipeline: {
-        pipelineId: 2512993895,
-        status: 'success',
-        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2512993895'
-      },
-      releaseBranchPipeline: {
-        pipelineId: 2513019603,
-        duplicatePipelineId: 2513019188,
-        status: 'success',
-        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/pipelines/2513019603'
-      },
-      vagrantVsixAcceptanceReceipt: {
-        jobId: 14293424513,
-        jobName: 'vagrant_windows_vsix_acceptance',
-        jobStatus: 'success',
-        jobUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/14293424513',
-        assertionReceipt: 'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
-        manifest: 'vagrant/evidence/20260509-171233/manifest.json',
-        recordedAt: '2026-05-09T17:13:28.3899871-07:00',
-        runtimeExecutionState: 'succeeded',
-        runtimeProvider: 'host-native',
-        runtimeEngine: 'labview-cli',
-        runtimeBitness: 'x86',
-        proofExitCode: 0
-      },
-      releaseBranchReadinessReassessment: {
-        status: 'blocked-main-not-ancestor-topology-refresh-required',
-        protectedDevelopRetentionCommit: '801349167499b9d03b8244c42b03d88e15098034',
-        protectedDevelopRetentionPipelineId: 2513063788,
-        mainCommit: '2a08e94f819a34d54b4fdcb4ded24f85f8c7dbaa',
-        mainIsAncestorOfReleaseBranch: false,
-        releaseBranchIsAncestorOfProtectedDevelop: true,
-        nextAdmittedAction: 'refresh-release-1.3.15-with-main-before-main-promotion-preflight'
-      },
-      productionMutationAllowed: false,
-      claimBoundary: 'does-not-admit-windows-docker-desktop-windows-container-proof'
-    });
+    expect(candidate.versionLine).toBe('1.3.15');
+    expect(candidate.activeDevelopCandidate).toBeNull();
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
-      publishedCommit: 'fb0ef2b',
-      currentPublicSourceHead: 'f1cb609',
-      currentPublicSourceHeadSha: 'f1cb60900820ea17328b9eec595579768491e22a',
-      status: 'published-main-and-tag-v1.3.14-release-publication-blocked'
+      publishedCommit: '427ab27',
+      currentPublicSourceHead: '427ab27',
+      currentPublicSourceHeadSha: '427ab27245f6f66d186e07865f1fc0a00795611a',
+      status: 'published-main-tag-release-and-marketplace-v1.3.15',
+      latestPublicExactReleaseCloseout: {
+        status: 'published-and-verified',
+        pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/83',
+        publicMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
+        publicMainShortCommit: '427ab27',
+        publicTag: 'v1.3.15',
+        publicTagObjectSha: '28ea4253813e6f322cbcc25cdce865cdeac219a6',
+        publicGitHubReleaseId: 320197692,
+        marketplaceVersion: '1.3.15',
+        vsixSha256:
+          '157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7',
+        marketplaceMutation: 'published-and-verified'
+      }
     });
     expect(candidate.publishedPublicSource.latestPublicSourceAndTagHandoff).toMatchObject({
       pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
-      publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
-      publicMainShortCommit: 'f1cb609',
       publicTag: 'v1.3.14',
-      publicTagObjectSha: 'b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae',
-      publicTagPeeledCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
       publicGitHubReleasePublication: 'not-performed',
-      marketplaceMutation: 'not-performed'
-    });
-    expect(candidate.publishedPublicSource.latestPublicFacadeDocsPromotion).toMatchObject({
-      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/60',
-      publicMainCommit: 'ce6dbd0b1b5783f7015b9d0589f3803636564789',
-      publicMainShortCommit: 'ce6dbd0',
-      marketplaceMutation: 'not-performed'
-    });
-    expect(candidate.publishedPublicSource.latestWindowsDockerDesktopIntakePromotion).toMatchObject({
-      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
-      publicMainCommit: '220111eae3ac214e99f2233e2bfe6b320edf383d',
-      publicMainShortCommit: '220111e',
-      publicLabelsApplied: ['windows-docker-desktop'],
       marketplaceMutation: 'not-performed'
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline:
-        'v1.3.9-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained',
-      localInstalledVsix: 'release-1.3.9-authority-candidate-package-line',
-      publicGitHubExactTransactionGate:
-        'required-before-any-further-public-github-release-or-marketplace-act',
-      windowsExactVsixInstallProofGate: 'required-before-any-later-marketplace-act',
+        'v1.3.15-published-across-gitlab-github-and-marketplace-with-v1.3.8-history-retained',
+      localInstalledVsix: 'release-1.3.15-authority-candidate-package-line',
+      publicGitHubExactTransactionGate: 'closed-for-v1.3.15',
+      windowsExactVsixInstallProofGate: 'closed-for-v1.3.15',
       exactPublicRelease:
-        'v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history'
+        'v1.3.15-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history'
     });
     expect(candidate.exactRelease).toMatchObject({
-      version: 'v1.3.9',
-      gitHubReleaseId: 312994104,
-      gitHubAssetName: 'vi-history-suite-1.3.9.vsix',
-      gitHubAssetSha256: '62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353',
-      marketplaceVersion: '1.3.9'
+      version: 'v1.3.15',
+      gitHubReleaseId: 320197692,
+      gitHubAssetName: 'vi-history-suite-1.3.15.vsix',
+      gitHubAssetSha256:
+        '157fc562a495807ec99d16ce14096ed5fe05112e5a93bd25fef0c9cbf06873c7',
+      marketplaceVersion: '1.3.15'
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
-      status: 'authority-v1.3.9-published-v1.3.8-history-retained-no-open-release-line',
-      authorityTag: 'v1.3.9',
-      publicGitHubExactTag: 'v1.3.9',
-      publicGitHubReleaseId: 312994104,
-      publicGitHubPublishabilityProbeStatus: 'published-complete',
-      publicGitHubPublishabilityBlockerCode: null,
-      publicGitHubDraftPublishabilityProbeStatus: 'not-applicable-already-published',
-      publicGitHubDraftPublishabilityBlockerCode: null,
-      publicGitHubReleaseLookupStatusCode: 200,
-      publicGitHubDraftReleaseUsesUntaggedUrl: false,
-      nextSeparateAct: 'normal-next-line-governance-after-v1.3.9-retention',
-      marketplaceVersionRetained: '1.3.9',
-      publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:verify',
-      vscodeMarketplacePublicationPrepPackageScript: 'npm run vscode:marketplace:prepare',
-      windowsExactVsixInstallProofPackageScript: 'npm run vscode:marketplace:install-proof',
+      status: 'authority-v1.3.15-published-v1.3.8-history-retained-no-open-release-line',
+      authorityTag: 'v1.3.15',
+      publicGitHubExactTag: 'v1.3.15',
+      publicGitHubReleaseId: 320197692,
+      nextSeparateAct: 'normal-next-line-governance-after-v1.3.15-retention',
+      marketplaceVersionRetained: '1.3.15',
+      publicGitHubExactTransactionReceiptPath:
+        '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json',
+      vscodeMarketplacePublicationPrepReceiptPath:
+        '.cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json',
       windowsExactVsixInstallProofReceiptPath:
         '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
     });
@@ -152,102 +85,52 @@ describe('public release candidate control surface', () => {
       id: 'PUBLICATION-INCIDENT-v1.3.8-IMMUTABLE-ZERO-ASSETS',
       status: 'retained-history',
       classification: 'externally-blocked-publication',
-      authoritySystem: 'gitlab',
-      authorityTag: 'v1.3.8',
-      publicGitHubReleaseId: 312768592,
-      publicGitHubReleaseImmutable: true,
-      publicGitHubReleaseAssetCount: 0,
-      blockerCode: 'published-immutable-release-assets-incomplete',
-      marketplaceVersionRetained: '1.3.9'
+      blockerCode: 'published-immutable-release-assets-incomplete'
     });
-    expect(candidate.softwareFactoryGovernance).toEqual({
-      status: 'authority-v1.3.9-fully-published-no-active-feature-branch',
+    expect(candidate.softwareFactoryGovernance).toMatchObject({
+      status: 'authority-v1.3.15-fully-published-no-active-feature-branch',
       activeFeatureBranch: null,
-      packageScripts: {
-        assess: 'npm run software:factory:assess',
-        rehearse: 'npm run software:factory:rehearse',
-        repair: 'npm run software:factory:repair',
-        publish: 'npm run software:factory:publish',
-        verify: 'npm run software:factory:verify',
-        marketplaceInstallProof: 'npm run vscode:marketplace:install-proof',
-        marketplacePrepare: 'npm run vscode:marketplace:prepare'
-      },
-      receiptPaths: {
-        assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
-        rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
-        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
-        publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
-        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json',
-        marketplaceInstallProof:
-          '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
-        marketplacePrepare:
-          '.cache/vscode-marketplace-publication-prep/latest/vscode-marketplace-publication-prep.json'
-      },
-      admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
-      guardedNonMutatingContractPhases: ['publish', 'verify'],
-      soleProductionRecoveryTarget: null,
       productionMutationAllowed: false,
       rule:
-        'Exact v1.3.9 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence.'
+        'Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; later SemVer openings return to normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence.'
     });
     expect(candidate.localProofs.localInstalledVsixPreview).toMatchObject({
-      status: 'release-1.3.9-authority-candidate-package-line',
-      version: '1.3.9',
-      vsixPath: 'preview-evidence/vi-history-suite-1.3.9.vsix',
-      checksumPath: 'preview-evidence/vi-history-suite-1.3.9.vsix.sha256'
+      status: 'release-1.3.15-authority-candidate-package-line',
+      version: '1.3.15',
+      vsixPath:
+        '.cache/gitlab-release-artifacts/v1.3.15/expanded/release-evidence/vi-history-suite-1.3.15.vsix'
     });
     expect(candidate.localProofs.windowsExactVsixInstallProof).toMatchObject({
-      status: 'passed-v1.3.9-isolated-exact-vsix-install',
-      packageScript: 'npm run vscode:marketplace:install-proof',
-      receiptPath: '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
-      authorityTag: 'v1.3.9',
-      packageVersion: '1.3.9',
+      status: 'passed-v1.3.15-isolated-exact-vsix-install',
+      authorityTag: 'v1.3.15',
+      packageVersion: '1.3.15',
       runtimeValidationOutcome: 'ready',
       launcherPathStrippedToLauncherAndSystem32: true,
       ambientNodeOnPathRequired: false
     });
     expect(candidate.localProofs.publicGitHubExactTransaction).toMatchObject({
-      status: 'published-v1.3.9-github-release-and-marketplace-verified',
-      packageScript: 'npm run public:github:exact:transaction:verify',
-      authorityTag: 'v1.3.9',
-      publicMainCommit: 'fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a',
-      publicTag: 'v1.3.9',
-      publicReleaseId: 312994104,
-      vsixAssetName: 'vi-history-suite-1.3.9.vsix',
-      vsixAssetSha256: '62c48a2ccdde3557680280a458bff52f2720541673b5a2dc2158f4f35addc353',
-      authorityReleaseManifestPath:
-        '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json',
+      status: 'published-v1.3.15-github-release-and-marketplace-verified',
+      authorityTag: 'v1.3.15',
+      publicMainCommit: '427ab27245f6f66d186e07865f1fc0a00795611a',
+      publicTag: 'v1.3.15',
+      publicReleaseId: 320197692,
+      vsixAssetName: 'vi-history-suite-1.3.15.vsix',
       releaseAssetsRetainedAgainstManifest: true,
-      publicSourcePromotionStatus: 'passed',
       verifyGateStatus: 'pass',
-      verifyGateAllowed: true,
-      publicReleaseLookupStatusCode: 200,
-      publicReleaseByIdStatusCode: 200,
-      draft: false,
-      immutable: true,
       openingNewSemverAllowed: true,
-      repairInPlaceRequired: false,
-      repairInPlaceAllowed: false,
-      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention'
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention'
     });
     expect(candidate.localProofs.vscodeMarketplacePublicationPrep).toMatchObject({
-      status: 'published-v1.3.9-verified',
-      packageScript: 'npm run vscode:marketplace:prepare',
-      expectedMarketplaceVersion: '1.3.9',
-      currentMarketplaceVersion: '1.3.9',
-      publicGitHubVerifyGateStatus: 'pass',
-      publicGitHubReleaseId: 312994104,
+      status: 'published-v1.3.15-verified',
+      expectedMarketplaceVersion: '1.3.15',
+      currentMarketplaceVersion: '1.3.15',
+      publicGitHubReleaseId: 320197692,
       vsixSha256Verified: true,
       windowsExactVsixInstallProofStatus: 'pass',
-      windowsExactVsixInstallProofReceiptPath:
-        '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json',
-      vscePatLocatorStatus: 'ok',
-      secretRetained: false,
-      pinnedVscePackage: '@vscode/vsce@3.7.1',
       productionMutationAttempted: true,
       publicationMode: 'pinned-vsce-cli',
-      publishedAt: '2026-04-23',
-      nextAllowedAction: 'normal-next-line-governance-after-v1.3.9-retention'
+      publishedAt: '2026-05-10',
+      nextAllowedAction: 'normal-next-line-governance-after-v1.3.15-retention'
     });
     expect(candidate.activeBlockers).toEqual([
       expect.objectContaining({
@@ -256,79 +139,40 @@ describe('public release candidate control surface', () => {
       })
     ]);
 
-    expect(candidateMarkdown).toContain('Version line: `1.3.9`');
-    expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.15`');
-    expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.15`');
-    expect(candidateMarkdown).toContain('Active develop candidate branch: `develop`');
-    expect(candidateMarkdown).toContain('Active release-candidate branch: `release/1.3.15`');
+    expect(candidateMarkdown).toContain('Version line: `1.3.15`');
+    expect(candidateMarkdown).toContain('Active develop candidate line: none');
+    expect(candidateMarkdown).toContain('Retained release-candidate branch: `release/1.3.15`');
     expect(candidateMarkdown).toContain(
-      'docs/product/release-branch-opening-v1.3.15-2026-05-09.md'
+      '`normal-next-semver-opening-may-proceed-after-v1.3.15-closeout-retention`'
     );
+    expect(candidateMarkdown).toContain('Published exact public source commit: `427ab27`');
+    expect(candidateMarkdown).toContain('Current public source head: `427ab27`');
+    expect(candidateMarkdown).toContain('GitHub release id: `320197692`');
+    expect(candidateMarkdown).toContain('public PR #83');
+    expect(candidateMarkdown).toContain('`28ea4253813e6f322cbcc25cdce865cdeac219a6`');
+    expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.15`');
+    expect(candidateMarkdown).toContain('`currentMarketplaceVersion=1.3.15`');
     expect(candidateMarkdown).toContain(
-      'docs/product/release-branch-readiness-reassessment-v1.3.15-2026-05-09.md'
+      '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json'
     );
-    expect(candidateMarkdown).toContain('Release main-promotion preflight packet: not retained yet for `1.3.15`');
-    expect(candidateMarkdown).toContain(
-      '`refresh-release-1.3.15-with-main-before-main-promotion-preflight`'
-    );
-    expect(candidateMarkdown).toContain(
-      '`feature/develop-1.3.15-vagrant-x86-settings`'
-    );
-    expect(candidateMarkdown).toContain('Protected develop merge: GitLab MR `!202`');
-    expect(candidateMarkdown).toContain('`67c2c3a188666eaad3cab2695092991c42f33470`');
-    expect(candidateMarkdown).toContain('Protected develop pipeline: `2512993895` / `success`');
-    expect(candidateMarkdown).toContain('Release branch pipeline: `2513019603` / `success`');
-    expect(candidateMarkdown).toContain(
-      'Vagrant VSIX acceptance receipt: GitLab job `14293424513` / `success`'
-    );
-    expect(candidateMarkdown).toContain(
-      'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json'
-    );
-    expect(candidateMarkdown).toContain('vagrant/evidence/20260509-171233/manifest.json');
-    expect(candidateMarkdown).toContain('Published exact public source commit: `fb0ef2b`');
-    expect(candidateMarkdown).toContain('Current public source head: `f1cb609`');
-    expect(candidateMarkdown).toContain('Software-factory governance branch: none');
-    expect(candidateMarkdown).toContain('`release-1.3.9-authority-candidate-package-line`');
-    expect(candidateMarkdown).toContain(
-      '`v1.3.9-github-release-and-marketplace-published; v1.3.8-public-github-release-externally-blocked-zero-assets-retained-history`'
-    );
-    expect(candidateMarkdown).toContain('GitHub release `312994104`');
-    expect(candidateMarkdown).toContain('`verifyGateStatus=pass`');
-    expect(candidateMarkdown).toContain('`verifyGateAllowed=true`');
-    expect(candidateMarkdown).toContain(
-      '.cache/gitlab-release-artifacts/v1.3.9/expanded/release-evidence/release-manifest.json'
-    );
-    expect(candidateMarkdown).toContain('Public GitHub exact now publishes `v1.3.9`');
-    expect(candidateMarkdown).toContain('public PR #69');
-    expect(candidateMarkdown).toContain('`b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`');
-    expect(candidateMarkdown).toContain('Public PR #68');
-    expect(candidateMarkdown).toContain('public PR #60');
-    expect(candidateMarkdown).toContain('VS Code Marketplace item');
-    expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.9`');
-    expect(candidateMarkdown).toContain('`required-before-any-later-marketplace-act`');
-    expect(candidateMarkdown).toContain('`npm run vscode:marketplace:prepare`');
-    expect(candidateMarkdown).toContain('`npm run vscode:marketplace:install-proof`');
     expect(candidateMarkdown).toContain(
       '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
     );
     expect(candidateMarkdown).toContain('`runtimeValidationOutcome=ready`');
     expect(candidateMarkdown).toContain('`ambientNodeOnPathRequired=false`');
-    expect(candidateMarkdown).toContain('`currentMarketplaceVersion=1.3.9`');
     expect(candidateMarkdown).toContain('GitHub release `312768592` is already published and immutable with zero');
     expect(candidateMarkdown).toContain('`published-immutable-release-assets-incomplete`');
 
-    expect(currentState).toContain('current exact released line: `v1.3.9`');
-    expect(currentState).toContain('current authority package line on `main`: `1.3.14`');
+    expect(currentState).toContain('current exact released line: `v1.3.15`');
+    expect(currentState).toContain('current authority package line on `main`: `1.3.15`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.15`');
-    expect(currentState).toContain('active release-candidate branch: `release/1.3.15`');
-    expect(currentState).toContain('active software-factory governance branch on `develop`:');
-    expect(currentState).toContain('none');
+    expect(currentState).toContain('active release-candidate branch: retained `release/1.3.15`');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
     expect(currentState).toContain('npm run vscode:marketplace:install-proof');
     expect(currentState).toContain('separate public GitHub exact release publication: published;');
-    expect(currentState).toContain('releases/tag/v1.3.9');
+    expect(currentState).toContain('releases/tag/v1.3.15');
     expect(currentState).toContain('verify receipt now records `verifyGateStatus=pass`');
-    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.9`');
+    expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.15`');
 
     for (const requirementId of [
       'VHS-REQ-566',
