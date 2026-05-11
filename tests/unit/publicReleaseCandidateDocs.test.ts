@@ -26,7 +26,8 @@ describe('public release candidate control surface', () => {
     expect(candidate.activeDevelopCandidate).toMatchObject({
       packageVersion: '1.3.16',
       tag: 'v1.3.16',
-      status: 'candidate-open-on-develop-release-branch-not-yet-open'
+      status: 'release-branch-opened-pipeline-green-readiness-reassessment-pending',
+      branch: 'release/1.3.16'
     });
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
@@ -74,11 +75,12 @@ describe('public release candidate control surface', () => {
       marketplaceVersion: '1.3.15'
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
-      status: 'v1.3.16-candidate-open-on-develop-after-v1.3.15-closeout',
+      status: 'v1.3.16-release-branch-opened-readiness-reassessment-pending',
+      releaseBranch: 'release/1.3.16',
       authorityTag: 'v1.3.15',
       publicGitHubExactTag: 'v1.3.15',
       publicGitHubReleaseId: 320197692,
-      nextSeparateAct: 'open-release-1.3.16-after-protected-develop-candidate-pipeline',
+      nextSeparateAct: 'reassess-release-1.3.16-branch-readiness-before-exact-tag',
       marketplaceVersionRetained: '1.3.15',
       publicGitHubExactTransactionReceiptPath:
         '.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json',
@@ -94,11 +96,11 @@ describe('public release candidate control surface', () => {
       blockerCode: 'published-immutable-release-assets-incomplete'
     });
     expect(candidate.softwareFactoryGovernance).toMatchObject({
-      status: 'authority-v1.3.16-candidate-open-on-develop',
+      status: 'authority-v1.3.16-release-branch-opened',
       activeFeatureBranch: null,
       productionMutationAllowed: false,
       rule:
-        'Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; v1.3.16 is the active patch candidate on develop and must proceed through normal GitFlow while the retained v1.3.8 authority exact line remains blocked historical publication evidence.'
+        'Exact v1.3.15 is fully published across GitLab authority, public GitHub, and VS Code Marketplace; release/1.3.16 is open and green and must be reassessed for branch readiness before any exact tag or main-promotion action while the retained v1.3.8 authority exact line remains blocked historical publication evidence.'
     });
     expect(candidate.localProofs.localInstalledVsixPreview).toMatchObject({
       status: 'develop-1.3.16-authority-candidate-package-line',
@@ -147,9 +149,11 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Version line: `1.3.16`');
     expect(candidateMarkdown).toContain('Active develop candidate line: `v1.3.16`');
     expect(candidateMarkdown).toContain('Active develop candidate package: `1.3.16`');
-    expect(candidateMarkdown).toContain('Retained release-candidate branch: `release/1.3.15`');
+    expect(candidateMarkdown).toContain('Active release-candidate branch: `release/1.3.16`');
+    expect(candidateMarkdown).toContain('Retained prior release-candidate branch: `release/1.3.15`');
+    expect(candidateMarkdown).toContain('Active release branch pipeline: `2516207722` / `success`');
     expect(candidateMarkdown).toContain(
-      '`open-release-1.3.16-after-protected-develop-candidate-pipeline`'
+      '`reassess-release-1.3.16-branch-readiness-before-exact-tag`'
     );
     expect(candidateMarkdown).toContain('Published exact public source commit: `427ab27`');
     expect(candidateMarkdown).toContain('Current public source head: `427ab27`');
@@ -173,7 +177,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('current authority package line on `main`: `1.3.15`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.16`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.16`');
-    expect(currentState).toContain('active release-candidate branch: retained `release/1.3.15`');
+    expect(currentState).toContain('active release-candidate branch: `release/1.3.16`');
     expect(currentState).toContain('npm run public:github:exact:transaction:verify');
     expect(currentState).toContain('npm run vscode:marketplace:install-proof');
     expect(currentState).toContain('separate public GitHub exact release publication: published;');

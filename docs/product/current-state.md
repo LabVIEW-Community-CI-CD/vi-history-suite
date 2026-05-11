@@ -66,8 +66,8 @@ Read these in order:
 48. [Release Branch Readiness Reassessment v1.3.14 2026-05-08 JSON](./release-branch-readiness-reassessment-v1.3.14-2026-05-08.json)
 49. [Release Main Promotion Preflight v1.3.14 2026-05-08](./release-main-promotion-preflight-v1.3.14-2026-05-08.md)
 50. [Release Main Promotion Preflight v1.3.14 2026-05-08 JSON](./release-main-promotion-preflight-v1.3.14-2026-05-08.json)
-51. [Release Branch Opening v1.3.15 2026-05-09](./release-branch-opening-v1.3.15-2026-05-09.md)
-52. [Release Branch Opening v1.3.15 2026-05-09 JSON](./release-branch-opening-v1.3.15-2026-05-09.json)
+51. [Release Branch Opening v1.3.16 2026-05-11](./release-branch-opening-v1.3.16-2026-05-11.md)
+52. [Release Branch Opening v1.3.16 2026-05-11 JSON](./release-branch-opening-v1.3.16-2026-05-11.json)
 53. [Release Branch Readiness Reassessment v1.3.15 2026-05-09](./release-branch-readiness-reassessment-v1.3.15-2026-05-09.md)
 54. [Release Branch Readiness Reassessment v1.3.15 2026-05-09 JSON](./release-branch-readiness-reassessment-v1.3.15-2026-05-09.json)
 55. [Windows/LabVIEW Community Proof Intake Checklist 2026-04-26](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
@@ -210,11 +210,12 @@ Latest landed ship target:
 - current authority package line on `main`: `1.3.15`
 - current develop package line on `develop`: `1.3.16`
 - active exact release candidate line on `develop`: `v1.3.16`
-- active release-candidate branch: retained `release/1.3.15`
+- active release-candidate branch: `release/1.3.16`; retained prior
+  release-candidate branch: `release/1.3.15`
 - active release-candidate state:
-  patch candidate `v1.3.16` is open on `develop` after exact `v1.3.15`
-  closeout; no `release/1.3.16` branch is open yet, and `release/1.3.15`
-  remains retained
+  `release/1.3.16` is open from protected `develop` commit `2443e601`, branch
+  pipeline `2516207722` is green, and readiness reassessment is required before
+  any exact tag or main-promotion action
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
@@ -278,9 +279,10 @@ Latest landed ship target:
   exact authority `v1.3.15` is now fully closed across public GitHub and VS Code Marketplace; later SemVer openings return to normal GitFlow governance
   while `v1.3.8` remains retained as blocked historical publication evidence
 - active governed release claim: patch candidate `v1.3.16` is open on
-  `develop` for installed-user host runtime admission after exact `v1.3.15`
-  was fully published across GitLab authority, public GitHub source/tag/release,
-  and VS Code Marketplace; all provider/year/bitness variants remain
+  `release/1.3.16` for installed-user host runtime admission after exact
+  `v1.3.15` was fully published across GitLab authority, public GitHub
+  source/tag/release, and VS Code Marketplace; all provider/year/bitness
+  variants remain
   selectable with proof-status disclosure, Vagrant Windows VSIX acceptance is
   retained for LabVIEW 2026 `x86`, Windows exact-VSIX install proof is
   retained for the closed `v1.3.15` line, and Windows Docker Desktop
@@ -296,9 +298,9 @@ Latest landed ship target:
   source/tag/release publication, Windows exact-VSIX install proof, and VS
   Code Marketplace publication.
 - current release-branch opening packet:
-  [release-branch-opening-v1.3.15-2026-05-09.md](./release-branch-opening-v1.3.15-2026-05-09.md)
+  [release-branch-opening-v1.3.16-2026-05-11.md](./release-branch-opening-v1.3.16-2026-05-11.md)
 - current release-branch opening packet JSON:
-  [release-branch-opening-v1.3.15-2026-05-09.json](./release-branch-opening-v1.3.15-2026-05-09.json)
+  [release-branch-opening-v1.3.16-2026-05-11.json](./release-branch-opening-v1.3.16-2026-05-11.json)
 - current release-branch readiness reassessment:
   [release-branch-readiness-reassessment-v1.3.15-2026-05-09.md](./release-branch-readiness-reassessment-v1.3.15-2026-05-09.md)
 - current release-branch readiness reassessment JSON:
@@ -306,7 +308,7 @@ Latest landed ship target:
 - current release main-promotion preflight:
   closed by protected main promotion and exact `v1.3.15` publication
 - current next admitted action:
-  `open-release-1.3.16-after-protected-develop-candidate-pipeline`
+  `reassess-release-1.3.16-branch-readiness-before-exact-tag`
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
@@ -315,10 +317,9 @@ Latest landed ship target:
   exact `v1.3.15` is complete through protected main promotion, GitLab
   authority tagging, public GitHub source/tag/release publication, Windows
   exact-VSIX install proof, VS Code Marketplace publication, and protected
-  back-merge to `develop`. The next conversion step is opening a retained
-  `release/1.3.16` branch only after the protected `develop` candidate pipeline
-  is green; release branch deletion remains separately blocked unless explicitly
-  admitted.
+  back-merge to `develop`. The next conversion step is reassessing
+  `release/1.3.16` readiness after the branch-opening pipeline passed; release
+  branch deletion remains separately blocked unless explicitly admitted.
 - historical exact-release candidate reassessment:
   [exact-release-candidate-reassessment-2026-04-26.md](./exact-release-candidate-reassessment-2026-04-26.md)
 - historical exact-release candidate reassessment JSON:

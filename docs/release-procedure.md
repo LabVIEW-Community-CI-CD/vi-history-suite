@@ -16,11 +16,13 @@
 - The current authority package line on `main` is `1.3.15`.
 - The current develop package line on `develop` is `1.3.16`.
 - The active exact release candidate line on `develop` is `v1.3.16`.
-- The retained release-candidate branch is `release/1.3.15`.
-- The active release-candidate state is candidate-open-on-develop: exact
+- The active release-candidate branch is `release/1.3.16`; the retained prior
+  release-candidate branch is `release/1.3.15`.
+- The active release-candidate state is release-branch-opened: exact
   `v1.3.15` is fully published across GitLab authority, public GitHub, and
-  VS Code Marketplace, patch candidate `v1.3.16` is open on `develop`, no
-  `release/1.3.16` branch is open yet, and `release/1.3.15` remains retained.
+  VS Code Marketplace, patch candidate `v1.3.16` is open on
+  `release/1.3.16`, branch pipeline `2516207722` is green, and readiness
+  reassessment is required before any exact tag or main-promotion action.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public GitHub release hardening branch on `develop`
@@ -79,11 +81,12 @@
 - The software-factory contract admits non-production `assess`,
   `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
   contract phases; no production mutation is admitted in this slice.
-- The active governed release claim is patch candidate `v1.3.16` on `develop`
-  for installed-user host runtime admission after exact `v1.3.15` closed
-  across GitLab authority, public GitHub, and VS Code Marketplace.
+- The active governed release claim is patch candidate `v1.3.16` on
+  `release/1.3.16` for installed-user host runtime admission after exact
+  `v1.3.15` closed across GitLab authority, public GitHub, and VS Code
+  Marketplace.
 - The next admitted release-control action under the current boundary is
-  `open-release-1.3.16-after-protected-develop-candidate-pipeline`;
+  `reassess-release-1.3.16-branch-readiness-before-exact-tag`;
   release branch deletion remains blocked unless explicitly admitted separately.
 - The active Marketplace public validation preview line is `1.3.13`.
 - The active Marketplace public validation preview trigger is maintainer

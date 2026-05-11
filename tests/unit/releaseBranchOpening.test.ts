@@ -13,11 +13,11 @@ function readJson<T>(relativePath: string): T {
   return JSON.parse(readText(relativePath)) as T;
 }
 
-describe('release/1.3.15 branch opening packet', () => {
+describe('release/1.3.16 branch opening packet', () => {
   it('retains governed branch-opening evidence without admitting publication mutation', () => {
-    const packet = readText('docs/product/release-branch-opening-v1.3.15-2026-05-09.md');
+    const packet = readText('docs/product/release-branch-opening-v1.3.16-2026-05-11.md');
     const packetJson = readJson<any>(
-      'docs/product/release-branch-opening-v1.3.15-2026-05-09.json'
+      'docs/product/release-branch-opening-v1.3.16-2026-05-11.json'
     );
     const releaseState = readJson<any>('docs/product/release-publication-state.json');
     const releaseStateDoc = readText('docs/product/release-publication-state.md');
@@ -27,34 +27,30 @@ describe('release/1.3.15 branch opening packet', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(packet).toContain('# Release Branch Opening v1.3.15 - 2026-05-09');
+    expect(packet).toContain('# Release Branch Opening v1.3.16 - 2026-05-11');
     expect(packet).toContain('| Release branch opening | `performed-and-retained` |');
-    expect(packet).toContain('| Release branch | `release/1.3.15` |');
-    expect(packet).toContain('`67c2c3a188666eaad3cab2695092991c42f33470`');
-    expect(packet).toContain('`2513019603` / `success`');
-    expect(packet).toContain('`2513019188`');
-    expect(packet).toContain('`14293424513`');
-    expect(packet).toContain('`14293424514`');
+    expect(packet).toContain('| Release branch | `release/1.3.16` |');
+    expect(packet).toContain('`2443e601c2b1aa78122af785516376b9905ba43f`');
+    expect(packet).toContain('`2516207722` / `success`');
+    expect(packet).toContain('`14309562384`');
+    expect(packet).toContain('`14309562385`');
     expect(packet).toContain(
-      'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14'
-    );
-    expect(packet).toContain(
-      'ae2305cf4a08eceb207e15db4d2a3f2e589f5a664ecf5d8197b2eba5a5184fe0'
+      '84ff12e25793406a29ca1ce23a670e6aab8b3519594ef0019605564034f964da'
     );
     expect(packet).toContain('`release_extension` job did not run');
     expect(packet).toContain('| Windows Docker Desktop Windows-container proof | community/deferred |');
     expect(packet).toContain('| `main` promotion | not admitted and not performed |');
     expect(packet).toContain('`C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe`');
     expect(packet).toContain('`runtimeBitness=x86`');
-    expect(packet).toContain('stale `viHistorySuite.labviewBitness=x64`');
+    expect(packet).toContain('`--allow-existing-windows-host-runtime`');
 
     expect(packetJson.authority).toMatchObject({
       sourceBranch: 'develop',
-      sourceCommitSha: '67c2c3a188666eaad3cab2695092991c42f33470',
-      releaseBranch: 'release/1.3.15',
-      releaseBranchRef: 'refs/heads/release/1.3.15',
-      packageVersion: '1.3.15',
-      pipelineId: 2513019603,
+      sourceCommitSha: '2443e601c2b1aa78122af785516376b9905ba43f',
+      releaseBranch: 'release/1.3.16',
+      releaseBranchRef: 'refs/heads/release/1.3.16',
+      packageVersion: '1.3.16',
+      pipelineId: 2516207722,
       pipelineStatus: 'success',
       pipelineSource: 'push'
     });
@@ -67,37 +63,26 @@ describe('release/1.3.15 branch opening packet', () => {
       mainPromotion: 'not-admitted-and-not-performed',
       releaseBranchDeletion: 'not-admitted-and-not-performed',
       selectedExactAuthorityVsix: null,
-      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      nextAdmittedAction: 'reassess-release-1.3.16-branch-readiness-before-exact-tag'
     });
-    expect(packetJson.duplicatePipeline).toMatchObject({
-      status: 'passed-duplicate-operator-validation',
-      pipelineId: 2513019188,
-      pipelineStatus: 'success',
-      pipelineSource: 'api',
-      sourceCommitSha: '67c2c3a188666eaad3cab2695092991c42f33470',
-      releaseBranch: 'release/1.3.15',
-      previewVsixSha256: 'ae2305cf4a08eceb207e15db4d2a3f2e589f5a664ecf5d8197b2eba5a5184fe0',
-      vagrantVsixAcceptanceJobId: 14293422370,
-      packageExtensionPreviewJobId: 14293422371,
-      canonicalForBranchOpening: false
-    });
+    expect(packetJson.duplicatePipeline).toBeNull();
     expect(packetJson.previewArtifact).toMatchObject({
-      jobId: 14293424514,
-      vsixPath: 'preview-evidence/vi-history-suite-1.3.15.vsix',
-      sha256: 'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
-      sizeBytes: 1014754,
+      jobId: 14309562385,
+      vsixPath: 'preview-evidence/vi-history-suite-1.3.16.vsix',
+      sha256: '84ff12e25793406a29ca1ce23a670e6aab8b3519594ef0019605564034f964da',
+      sizeBytes: 1015904,
       role: 'release-branch-preview-evidence-only'
     });
     expect(packetJson.vagrantVsixAcceptance).toMatchObject({
-      jobId: 14293424513,
+      jobId: 14309562384,
       jobStatus: 'success',
       assertionReceiptPath: 'vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json',
       assertionStatus: 'passed',
-      manifestPath: 'vagrant/evidence/20260509-171233/manifest.json',
+      manifestPath: 'vagrant/evidence/20260511-070846/manifest.json',
       labviewStartupReceiptPath: 'vagrant/evidence/labview-startup.json',
       generatedReportSha256:
-        '39e42c208e518382a4d7870b9d132796ad61195e319575f6b9534080914c17a9',
-      generatedReportSizeBytes: 6737,
+        'd98a1d5271ee451b61f798af51cb845b37286d382d950b2f7053c587697939ae',
+      generatedReportSizeBytes: 6926,
       claimBoundary:
         'vagrant-vsix-acceptance-only; does-not-replace-native-windows-x64-private-release-or-windows-container-proof'
     });
@@ -121,7 +106,7 @@ describe('release/1.3.15 branch opening packet', () => {
       labviewSessionId: 1,
       explorerSessionId: 1,
       viServerPortLine: 'TCP 0.0.0.0:3363 LISTENING',
-      settingsCorrection: 'stale-x64-overwritten-by-forced-vihs-launcher-x86'
+      installedUserHostRuntimeAdmission: true
     });
     expect(packetJson.mutationBoundary).toMatchObject({
       exactTagCreated: false,
@@ -152,27 +137,31 @@ describe('release/1.3.15 branch opening packet', () => {
 
     expect(releaseState.releaseBranchOpening).toMatchObject({
       status: 'performed-and-retained',
-      releaseBranch: 'release/1.3.15',
-      pipelineId: 2513019603,
+      releaseBranch: 'release/1.3.16',
+      pipelineId: 2516207722,
       pipelineStatus: 'success',
       pipelineSource: 'push',
-      duplicatePipelineId: 2513019188,
-      vagrantVsixAcceptanceJobId: 14293424513,
-      packageVersion: '1.3.15',
-      previewVsixSha256: 'bf5b15c944536a2e23872ebcf993e64351f01ed35e56793ae3e5005a520e0a14',
+      duplicatePipelineId: null,
+      vagrantVsixAcceptanceJobId: 14309562384,
+      packageVersion: '1.3.16',
+      previewVsixSha256: '84ff12e25793406a29ca1ce23a670e6aab8b3519594ef0019605564034f964da',
       releaseExtensionJob: 'not-run-without-exact-tag',
-      nextAdmittedAction: 'reassess-release-1.3.15-branch-readiness-before-exact-tag'
+      nextAdmittedAction: 'reassess-release-1.3.16-branch-readiness-before-exact-tag'
     });
-    expect(releaseState.activeCandidate).toMatchObject({ packageVersion: '1.3.16', tag: 'v1.3.16' });
+    expect(releaseState.activeCandidate).toMatchObject({
+      packageVersion: '1.3.16',
+      tag: 'v1.3.16',
+      branch: 'release/1.3.16'
+    });
     expect(releaseState.nextAdmittedAction).toBe(
-      'open-release-1.3.16-after-protected-develop-candidate-pipeline'
+      'reassess-release-1.3.16-branch-readiness-before-exact-tag'
     );
 
     expect(releaseStateDoc).toContain('## Release Branch Opening');
-    expect(releaseStateDoc).toContain('Release branch pipeline: `2513019603` / `success`');
-    expect(currentState).toContain('active release-candidate branch: retained `release/1.3.15`');
-    expect(currentState).toContain('release-branch-opening-v1.3.15-2026-05-09.md');
-    expect(informationItemMap).toContain('Release branch opening packet');
+    expect(releaseStateDoc).toContain('Release branch pipeline: `2516207722` / `success`');
+    expect(currentState).toContain('active release-candidate branch: `release/1.3.16`');
+    expect(currentState).toContain('release-branch-opening-v1.3.16-2026-05-11.md');
+    expect(informationItemMap).toContain('Release branch opening packet v1.3.16');
     expect(srs).toContain('governed release-branch opening');
     expect(rtm).toContain('TEST-UNIT-399');
     expect(testPlan).toContain('TEST-DOC-151');
