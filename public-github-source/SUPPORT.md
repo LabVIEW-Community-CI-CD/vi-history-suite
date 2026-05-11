@@ -60,11 +60,11 @@ docker info --format "{{.OSType}} {{.OperatingSystem}}"
 
 ## Community Validation Triage
 
-Marketplace pre-release `1.3.13` accepts Windows/LabVIEW community validation
+Stable installed-user `1.3.15` accepts Windows/LabVIEW community validation
 reports and not-yet-implemented feature reports before every selectable
 combination has maintainer-retained proof.
 
-Triage labels start with `community-validation`, `marketplace-preview`,
+Triage labels start with `community-validation`,
 `windows-labview`, and `needs-triage`. A report moves to
 `validation:success`, `validation:failure`, or `feature:not-implemented`
 based on the submitted proof packet, with `proof:reported` retained when user
