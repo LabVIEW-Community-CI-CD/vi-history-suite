@@ -32,6 +32,8 @@ describe('public facade boundary docs', () => {
     expect(publicSourceMap).toContain('Marketplace community-validation intake templates and labels');
     expect(publicSourceMap).toContain('protected-branch PR');
     expect(publicSourceMap).toContain('b56fde1');
+    expect(publicSourceMap).toContain('fad5193f');
+    expect(publicSourceMap).toContain('public PR #91');
     expect(publicSourceMap).toContain('fe4b1589');
     expect(publicSourceMap).toContain('public PR #90');
     expect(publicSourceMap).toContain('90b6e600');
@@ -46,7 +48,7 @@ describe('public facade boundary docs', () => {
     expect(publicSourceMap).toContain('public PR #68');
     expect(publicSourceMap).toContain('ce6dbd0');
     expect(publicSourceMap).toContain('public PR #60');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `fe4b1589`');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `fad5193f`');
     expect(publicSourceLedger).toContain('Public source v1.3.9 exact source publication');
     expect(publicSourceLedger).toContain('Public source v1.3.10 community-validation intake publication');
     expect(publicSourceLedger).toContain('Public source v1.3.11 canonical Docker fixture docs promotion');
@@ -56,6 +58,7 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedger).toContain('Public source v1.3.16 exact source, release, and Marketplace closeout');
     expect(publicSourceLedger).toContain('Public source post-v1.3.16 installed-user support matrix adoption');
     expect(publicSourceLedger).toContain('Public source v1.3.16 intake surface normalization');
+    expect(publicSourceLedger).toContain('Public source post-v1.3.16 first-run local LabVIEW guide adoption');
     expect(publicSourceLedger).toContain('fb0ef2b');
     expect(publicSourceLedger).toContain('b56fde1');
     expect(publicSourceLedger).toContain('ce6dbd0');
@@ -65,10 +68,11 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedger).toContain('f679023');
     expect(publicSourceLedger).toContain('90b6e600');
     expect(publicSourceLedger).toContain('fe4b1589');
+    expect(publicSourceLedger).toContain('fad5193f');
     expect(publicSourceLedger).toContain('b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae');
     expect(publicSourceLedger).toContain('not performed for that historical line');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "fe4b1589"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "fad5193f"');
     expect(publicSourceLedgerJson).toContain('"id": "public-source-v1-3-9-exact-source-publication"');
     expect(publicSourceLedgerJson).toContain(
       '"id": "public-source-v1-3-10-community-validation-intake-publication"'
@@ -94,6 +98,9 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedgerJson).toContain(
       '"id": "public-source-v1-3-16-intake-surface-normalization"'
     );
+    expect(publicSourceLedgerJson).toContain(
+      '"id": "public-source-post-v1-3-16-first-run-local-labview-guide-adoption"'
+    );
     expect(publicSourceLedgerJson).toContain('"repoCommit": "fb0ef2b"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "b56fde1"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "ce6dbd0"');
@@ -103,6 +110,7 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedgerJson).toContain('"repoCommit": "f679023"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "90b6e600"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "fe4b1589"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "fad5193f"');
     expect(publicSourceLedgerJson).toContain(
       '"repoCommitSha": "ce6dbd0b1b5783f7015b9d0589f3803636564789"'
     );
@@ -123,6 +131,9 @@ describe('public facade boundary docs', () => {
     );
     expect(publicSourceLedgerJson).toContain(
       '"repoCommitSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"'
+    );
+    expect(publicSourceLedgerJson).toContain(
+      '"repoCommitSha": "fad5193f7aa0b9f543687eebf607cf2e94956afb"'
     );
     expect(publicSourceLedgerJson).toContain(
       '"tagObjectSha": "b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae"'

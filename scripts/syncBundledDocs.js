@@ -133,7 +133,7 @@ const bundledPageConfigs = {
         'LabVIEW support matrix and short installed-user guides:',
         '',
         '- [README Installed-user LabVIEW support matrix](https://github.com/svelderrainruiz/vi-history-suite#installed-user-labview-support-matrix)',
-        '- [First-run guide (#79)](https://github.com/svelderrainruiz/vi-history-suite/issues/79)',
+        '- [First-run guide](https://github.com/svelderrainruiz/vi-history-suite/blob/main/FIRST-RUN.md)',
         '- [Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80)'
       ].join('\n'),
       'Release Procedure Summary': [

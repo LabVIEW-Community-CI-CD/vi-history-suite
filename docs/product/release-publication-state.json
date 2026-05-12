@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/release-publication-state@v1",
-  "recordedAt": "2026-05-11",
+  "recordedAt": "2026-05-12",
   "authority": {
     "system": "gitlab",
     "integrationBranch": "develop",
@@ -263,7 +263,7 @@
   "publicGitHub": {
     "role": "downstream-public-distribution",
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "mainCommit": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3",
+    "mainCommit": "fad5193f7aa0b9f543687eebf607cf2e94956afb",
     "tag": "v1.3.16",
     "tagRef": "refs/tags/v1.3.16",
     "tagObjectType": "tag",
@@ -288,9 +288,9 @@
       "safeToPublish": false
     },
     "sourcePublication": {
-      "status": "public-main-post-v1.3.16-installed-user-support-matrix-and-intake-normalization; exact-v1.3.16-tag-release-and-marketplace-retained",
-      "currentMainCommit": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3",
-      "currentMainShortCommit": "fe4b1589",
+      "status": "public-main-post-v1.3.16-first-run-guide-adoption; exact-v1.3.16-tag-release-and-marketplace-retained",
+      "currentMainCommit": "fad5193f7aa0b9f543687eebf607cf2e94956afb",
+      "currentMainShortCommit": "fad5193f",
       "exactReleaseRetainedCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
       "priorCommunityValidationIntakeCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
       "priorCommunityValidationIntakePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
@@ -524,6 +524,44 @@
             "runId": 25705500124,
             "conclusion": "success",
             "headSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"
+          }
+        ],
+        "marketplaceMutation": "not-performed",
+        "releaseMutation": "not-performed"
+      },
+      "latestFirstRunLocalLabviewGuideAdoption": {
+        "status": "published-and-verified",
+        "publicPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/91",
+        "issue": "https://github.com/svelderrainruiz/vi-history-suite/issues/79",
+        "publicMainCommit": "fad5193f7aa0b9f543687eebf607cf2e94956afb",
+        "publicMainShortCommit": "fad5193f",
+        "mergedAt": "2026-05-12T11:12:05Z",
+        "promotedFiles": [
+          "FIRST-RUN.md",
+          "README.md",
+          "INSTALL.md",
+          "SUPPORT.md",
+          "resources/bundled-docs/pages/install-and-release.html",
+          "tests/unit/publicRepoPackageSurface.test.ts"
+        ],
+        "postMergeChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 25730733192,
+            "conclusion": "success",
+            "headSha": "fad5193f7aa0b9f543687eebf607cf2e94956afb"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 25730733157,
+            "conclusion": "success",
+            "headSha": "fad5193f7aa0b9f543687eebf607cf2e94956afb"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 25730733137,
+            "conclusion": "success",
+            "headSha": "fad5193f7aa0b9f543687eebf607cf2e94956afb"
           }
         ],
         "marketplaceMutation": "not-performed",

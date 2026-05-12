@@ -63,7 +63,7 @@ operation acquires the image when it is not cached yet.
 - installed-user LabVIEW support matrix:
   [README Installed-user LabVIEW support matrix](./README.md#installed-user-labview-support-matrix)
 - setup and troubleshooting guides:
-  [First-run guide (#79)](https://github.com/svelderrainruiz/vi-history-suite/issues/79)
+  [First-run guide](./FIRST-RUN.md)
   and [Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80)
 
 ## Source Evaluation And Codespaces

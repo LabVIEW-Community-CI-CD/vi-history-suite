@@ -86,6 +86,7 @@ describe('public GitHub source promotion', () => {
         'scripts',
         'tests',
         'AGENTS.md',
+        'FIRST-RUN.md',
         'README.md',
         'package.json',
         'acceptance',
@@ -94,6 +95,7 @@ describe('public GitHub source promotion', () => {
     );
     expect(plan.templateCopyPaths).toContain('README.md');
     expect(plan.templateCopyPaths).toContain('AGENTS.md');
+    expect(plan.templateCopyPaths).toContain('FIRST-RUN.md');
     expect(plan.templateCopyPaths).toContain(
       '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
     );
@@ -222,6 +224,7 @@ describe('public GitHub source promotion', () => {
 
       expect(expectedFiles).toContain('README.md');
       expect(expectedFiles).toContain('AGENTS.md');
+      expect(expectedFiles).toContain('FIRST-RUN.md');
       expect(expectedFiles).toContain('INSTALL.md');
       expect(expectedFiles).toContain('SUPPORT.md');
       expect(expectedFiles).toContain('CONTRIBUTING.md');

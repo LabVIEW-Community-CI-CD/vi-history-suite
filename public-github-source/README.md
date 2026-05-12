@@ -77,8 +77,8 @@ workflow without requiring migration of the source files before report
 generation.
 
 For setup and troubleshooting details without overloading extension UI text, use
-the installed-user guides tracked in [First-run guide (#79)](https://github.com/svelderrainruiz/vi-history-suite/issues/79)
-and [Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80).
+the installed-user guides: [First-run guide](./FIRST-RUN.md) and
+[Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80).
 
 ## Proof Status And Community Validation
 
