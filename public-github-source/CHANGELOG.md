@@ -3,25 +3,315 @@
 This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, and
-`v1.2.1`.
+`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
+`v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`,
+`v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`,
+`v1.3.15`, and `v1.3.16`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.3.16] - 2026-05-11
+
+### Changed
+
+- Opened the next patch candidate line after exact `v1.3.15` closed across
+  GitLab authority, public GitHub, and VS Code Marketplace.
+- Installed-user Windows host compare now admits the selected already-open
+  LabVIEW session when the user targets a local host runtime, so Compare can
+  attach to the running LabVIEW 2025+ session instead of blocking as a
+  contaminated host surface.
+- Canonical clean-host proof and benchmark lanes still fail closed on ambient
+  LabVIEW contamination unless they explicitly opt in to installed-user host
+  session admission.
+- Closed the exact `v1.3.16` authority/publication line across GitLab
+  authority, public GitHub source/tag/release, Windows exact-VSIX install
+  proof, and VS Code Marketplace publication.
+
+## [1.3.15] - 2026-05-09
+
+### Changed
+
+- Started the installed-user stable patch line for Marketplace readiness after
+  the `1.3.14` authority handoff.
+- Reduced the VI History panel's default explanatory clutter by keeping
+  secondary runtime, repository, capability, guidance, and confidence details
+  behind disclosure rows.
+- Compare now remains available after exactly two retained revisions are
+  selected, even when local runtime preflight is not ready, so runtime failures
+  are exposed through the comparison-report path instead of hidden by a disabled
+  button.
+- Installed runtime selection now centers LabVIEW `2025`, `2026`, and newer
+  local versions; LabVIEW `2024` and older are rejected as unsupported for VI
+  Comparison Report generation because LabVIEW `2025` and newer can open older
+  VIs without migrating them.
+- Closed the exact `v1.3.15` authority/publication line across GitLab
+  authority, public GitHub source/tag/release, Windows exact-VSIX install
+  proof, and VS Code Marketplace publication.
+
+## [1.3.14] - 2026-05-08
+
+### Changed
+
+- Opened the next `develop` patch candidate line for release-readiness
+  consolidation after the `1.3.13` public-validation pre-release.
+- Vagrant Windows VSIX acceptance is now governed by a repo-owned evidence
+  assertion surface that retains reusable CI receipts without expanding the
+  Windows Docker Desktop proof claim.
+- Exact-release readiness now has a current `2026-05-08` assessment for the
+  `1.3.14` `develop` line, making release-branch opening admissible as a
+  separate governed action while exact tag, public GitHub release, Marketplace
+  mutation, and `main` promotion remain gated and not performed.
+- Opened `release/1.3.14` as the governed release-candidate branch and
+  retained the branch-opening boundary without creating an exact tag,
+  publishing GitHub/Marketplace assets, admitting Windows Docker Desktop
+  proof, or promoting `main`.
+- Reassessed `release/1.3.14` branch readiness after the branch pipeline and
+  protected `develop` retention pipeline both passed, making protected `main`
+  promotion admissible only as a separate governed action while exact tag,
+  public GitHub release, Marketplace mutation, Windows Docker Desktop proof,
+  and `main` promotion remain unperformed in this slice.
+- Added a protected `release/1.3.14` to `main` promotion preflight that records
+  clean branch ancestry, MR `!196`, protected `develop` pipeline `2511333533`,
+  and source-branch-retention requirements before opening a release-to-main
+  merge request; no exact tag, public release, Marketplace mutation, Windows
+  Docker Desktop proof admission, `main` merge, or release branch deletion was
+  performed.
+
+## [1.3.13] - 2026-04-27
+
+### Changed
+
+- Public validation pre-release refresh carries the admitted Windows host
+  LabVIEW 2026 x64 proof wording into the public facade and Marketplace
+  package line.
+- Successful LabVIEWCLI `CreateComparisonReport` diagnostics no longer retain
+  a stale success-before-failure note when the operation succeeded.
+
+## [1.3.12] - 2026-04-26
+
+### Added
+
+- `vihs validate-fixture` for running the canonical public
+  `ni/labview-icon-editor` / `resource/plugins/lv_icon.vi` compare battery
+  from the installed CLI and retaining public proof packets.
+- Public proof-status matrix that distinguishes admitted Linux/Docker,
+  admitted Linux host LabVIEW, community/deferred Windows host LabVIEW, and
+  community/deferred Windows Docker Desktop Windows-container evidence.
+
+### Changed
+
+- Public validation docs now treat the canonical fixture as an executable
+  validation recipe, not only retained issue evidence.
+- Linux host comparison execution now returns cleanly after `LabVIEWCLI` exits
+  even when headless LabVIEW keeps inherited stdio handles open long enough to
+  outlive the CLI process.
+
+## [1.3.11] - 2026-04-26
+
+### Added
+
+- Public validation pre-release lane for publishing `1.3.11` to public GitHub
+  and VS Code Marketplace so users can report validation success, validation
+  failure, bug, and feature-not-implemented results.
+- `vihs --validate --proof-out <dir>` proof packets with stable `VIHS_E_*`
+  runtime codes, GitHub-ready issue body output, and diagnostic path/env
+  evidence with secret-looking environment variables redacted.
+
+### Changed
+
+- Runtime provider selection now keeps all provider/year/bitness variants
+  selectable for public validation reporting, including paths that currently
+  return not-yet-implemented or blocked runtime codes.
+
+## [1.3.10] - 2026-04-25
+
+### Added
+
+- Marketplace community-validation preview package line for publishing a VS
+  Code Marketplace pre-release while Windows installed-user proof remains
+  explicitly deferred.
+- Proof-status disclosure for selectable Windows/LabVIEW provider, year, and
+  bitness settings through `vihs --validate` and the requirements traceability
+  matrix.
+
+## [1.3.9] - 2026-04-23
+
+### Changed
+
+- exact authority `v1.3.8` is retained as blocked historical incident
+  evidence after public GitHub release `312768592` published immutable with
+  zero assets
+- `release/1.3.9` opens from the retained `v1.3.8` authority line through the
+  asset-first GitHub publication path so the installed `vihs` Windows launcher
+  fix can close across GitLab, public GitHub, and VS Code Marketplace
+
+## [1.3.8] - 2026-04-23
+
+### Fixed
+
+- `release/1.3.8` opened from the closed `v1.3.7` public GitHub and VS Code
+  Marketplace baseline to promote the installed `vihs` Windows launcher fix
+  for users who do not have global `node` on `PATH`
+- generated Windows launchers now prefer `VI_HISTORY_SUITE_NODE_EXE`, then
+  standard VS Code `Code.exe` with `ELECTRON_RUN_AS_NODE=1`, before falling
+  back to ambient `node.exe`
+
+## [1.3.7] - 2026-04-22
+
+### Changed
+
+- exact authority `v1.3.6` on `main` remains immutable while public GitHub
+  `main` plus tag already publish `v1.3.6`, but the repo-owned in-place
+  GitHub release publish attempt against draft `312363117` now proves an
+  external immutable-release boundary (`422 tag_name was used by an immutable
+  release`), so `release/1.3.7` opens from merged-green `develop` as the next
+  governed exact line
+- the repo-owned exact-release publish/verify controller remains retained on
+  `develop` so the next exact line can close through one governed GitHub
+  release act instead of another draft-only partial transaction
+
+## [1.3.6] - 2026-04-22
+
+### Changed
+
+- exact authority `v1.3.5` on `main` remains immutable while the separate
+  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
+  still serves `1.3.0`, so `release/1.3.6` now opens from merged-green
+  `develop` for the next governed public-exact retry
+- the fail-closed public exact pre-tag proof remains retained directly on
+  `develop` while `release/1.3.6` carries the next exact-retry line
+
+## [1.3.5] - 2026-04-21
+
+### Changed
+
+- exact authority `v1.3.4` on `main` remains immutable while the public GitHub
+  exact release still serves `v1.3.1` and VS Code Marketplace still serves
+  `1.3.0`, so `v1.3.5` reopens the exact line narrowly from `main`
+- the authority-side public-source validation surfaces now relax the remaining
+  stale public facade changelog expectation before the next public GitHub exact-release retry
+
+## [1.3.4] - 2026-04-21
+
+### Changed
+
+- exact authority `v1.3.3` on `main` remains immutable while the public GitHub
+  exact release still serves `v1.3.1` and VS Code Marketplace still serves
+  `1.3.0`, so `v1.3.4` reopens the exact line narrowly from `main`
+- the authority-side public-source validation surfaces now fix the last stale
+  public facade changelog expectation before the next public GitHub exact-release retry
+
+## [1.3.3] - 2026-04-21
+
+### Changed
+
+- exact authority `v1.3.2` on `main` remains immutable while the public GitHub
+  exact release still serves `v1.3.1` and VS Code Marketplace still serves
+  `1.3.0`, so `v1.3.3` reopens the exact line narrowly from `main`
+- the authority-side public-source validation surfaces now align with the
+  promoted public facade by expecting the current README source-evaluation
+  headings and the reopened `1.3.3` package/changelog line before the next
+  public GitHub exact-release retry
+
+## [1.3.2] - 2026-04-21
+
+### Changed
+
+- exact public GitHub `v1.3.1` remains immutable while VS Code Marketplace
+  still serves `1.3.0`, so `v1.3.2` opens as a governed hotfix line from
+  exact `main` instead of mutating the already-published `v1.3.1` GitHub
+  asset
+- the packaged extension surface now carries the first governed Marketplace
+  icon path at `resources/marketplace/vi-history-suite-icon.png` through the
+  extension manifest instead of relying on listing-only operator memory
+
+## [1.3.1] - 2026-04-20
+
+### Changed
+
+- `v1.3.0` remains the exact public release line on `main`, while `develop`
+  now carries `1.3.1` as the next exact candidate line
+- the `1.3.1` opening decision is now governed as a `patch` line because the
+  remaining active work hardens the published host-default Windows local
+  `LabVIEWCLI` workflow and retained live-session proof/control surfaces
+  without adding a new public workflow or breaking the exact `v1.3.0`
+  contract
+- the first `ISSUE-0414` implementation slice now aligns the installed
+  settings CLI, compare-preflight, and runtime-doctor guidance to the retained
+  conditional stale-result rule: review Compare or runtime validation again
+  after CLI updates and reload or restart only if the current session still
+  shows stale provider or runtime facts
+- the retained `ISSUE-0414` proof bundle now also carries and enforces
+  bidirectional provider-selection coverage plus explicit
+  alignment/baseline-switch receipts on latest-packet, policy-boundary, and
+  proof-receipt surfaces, and a fresh governed Windows proof receipt dated
+  `2026-04-21T06:48:16.064Z` satisfies that strengthened boundary on the
+  admitted host
+- exact `v1.3.0` closeout remains retained complete on authority, while
+  `v1.3.1` remains a pre-release candidate line that still requires current
+  public-candidate review plus later exact-release publication gates
+
+## [1.3.0] - 2026-04-14
+
+### Changed
+
+- `v1.2.2` remains the exact public release line on `main`, while `develop`
+  now carries `1.3.0` as the next exact candidate line
+- the `1.3.0` opening decision is now governed as a `minor` line because the
+  active branch adds a new installed-user capability and supported workflow:
+  host-default Windows local `LabVIEWCLI` with bounded expert Docker instead
+  of only hardening the released Docker-only path
+- the public candidate package now distinguishes the published exact `v1.2.2`
+  baseline from the unreleased `v1.3.0` candidate line, keeping the next
+  public/wiki publication and expert-agent review gates explicit instead of
+  continuing to treat exact `1.2.2` publication closeout as the active
+  candidate state
 
 ## [1.2.2] - 2026-04-07
 
 ### Changed
 
 - `v1.2.1` remains the exact public release line on `main`, while `develop`
-  now carries `1.2.2` and the active exact public release candidate line is
-  `v1.2.2`
-- exact release closeout is now retained as incomplete until the matching
-  released `main` line has been back-merged into `develop` through the
-  protected path and the resulting `develop` pipeline is green
-- installed-user docs and runtime-doctor next actions now treat missing Docker
-  CLI or a stopped daemon as an explicit first-run prerequisite boundary,
-  telling users to install or start Docker and confirm `docker info` succeeds
-  before image acquisition is expected
+  now carries `1.2.2` as the next exact candidate line
+- exact release closeout now remains incomplete until the exact released
+  `main` line has been back-merged into `develop` through the protected path
+  and the resulting `develop` pipeline is green, so future sessions do not
+  wait for Sergio to elicit that follow-through explicitly
+- the sustainment control plane now treats missing or not-yet-running Docker
+  as an expected first-run installed-user boundary instead of assuming image
+  acquisition is always the first runtime step on a fresh machine
+- installed-user entry docs and runtime-doctor next actions now tell first-use
+  users to install or start Docker, confirm `docker info` works, and then
+  retry the checkbox-selected compare flow without implying host-LabVIEW
+  fallback
+
+## [1.2.1] - 2026-04-07
+
+### Changed
+
+- `v1.2.1` is now the exact public release line on `main`, while `develop`
+  remains aligned to `1.2.1` until the next exact release candidate opens
+- exact release closeout is now governed through a retained VS Code
+  Marketplace publication surface for `svelderrainruiz.vi-history-suite`
+  instead of relying on operator memory after the GitHub release and GitLab
+  tag are already green
+- the release control plane now records the governed publisher id, Marketplace
+  item id, publication URL, publication mode, and exact published version in a
+  dedicated Marketplace publication ledger
+- exact SemVer closeout now remains incomplete until the matching VSIX version
+  is verified on the VS Code Marketplace, and the release procedure now
+  records both the pinned `vsce` path and the manual portal-upload fallback
+- the packaged extension homepage now points Marketplace users to the
+  maintained public wiki home surface instead of the repo root, so the next
+  exact release does not route installed users into branch-specific source
+  guidance first
+- the root README, public source README, public install page, and public wiki
+  home/install pages now lead with the installed-extension local workflow and
+  keep repo/fork/Codespaces evaluation as an explicit secondary lane
+- the exact public GitHub release `v1.2.1` now publishes merged public `main`
+  commit `2547344`, and the VS Code Marketplace item
+  `svelderrainruiz.vi-history-suite` now verifies `1.2.1` through the
+  official gallery extension query after pinned `vsce` publication
 
 ## [1.2.0] - 2026-04-07
 

@@ -36,6 +36,7 @@ describe('public repo package surface', () => {
     const issueConfig = readText('.github/ISSUE_TEMPLATE/config.yml');
     const labels = readText('.github/labels.yml');
     const bundledUserWorkflow = readText('resources/bundled-docs/pages/user-workflow.html');
+    const bundledInstallAndRelease = readText('resources/bundled-docs/pages/install-and-release.html');
     const bundledComparisonReview = readText(
       'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
     );
@@ -90,6 +91,9 @@ describe('public repo package surface', () => {
     expect(readme).toContain('LabVIEW `2025`, `2026`, and newer local versions');
     expect(readme).toContain('LabVIEW `2024` and older cannot create the VI');
     expect(readme).toContain('LabVIEW `2025` and newer can open older LabVIEW VIs');
+    expect(readme).toContain('### Installed-user LabVIEW support matrix');
+    expect(readme).toContain('First-run guide (#79)');
+    expect(readme).toContain('Troubleshooting guide (#80)');
     expect(readme).toContain('runtimeErrorCode');
     expect(readme).toContain('Proof Status And Community Validation');
     expect(readme).not.toContain('svelderrainruiz.vi-history-suite@prerelease');
@@ -123,6 +127,9 @@ describe('public repo package surface', () => {
     expect(install).toContain('That generic bootstrap is intentionally limited to public');
     expect(install).toContain("docker info --format '{{.OSType}}'");
     expect(install).toContain('If those checks fail, correct provider, version, bitness, or Docker readiness');
+    expect(install).toContain('README Installed-user LabVIEW support matrix');
+    expect(install).toContain('First-run guide (#79)');
+    expect(install).toContain('Troubleshooting guide (#80)');
     expect(install).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(install).toContain('Refresh-Codespace-Repositories');
     expect(install).not.toContain('Manual-Actor-Framework-Clone');
@@ -137,6 +144,10 @@ describe('public repo package surface', () => {
     expect(support).toContain('Windows defaults to local `LabVIEWCLI`');
     expect(support).toContain('Community Validation Triage');
     expect(support).toContain('Linux/Docker and Linux host LabVIEW success do not prove');
+    expect(support).toContain('LabVIEW Support Matrix And Guides');
+    expect(support).toContain('README Installed-user LabVIEW support matrix');
+    expect(support).toContain('issues/79');
+    expect(support).toContain('issues/80');
     expect(bugReport).toContain('install, settings, validation, or compare problem');
     expect(bugReport).toContain('`code --install-extension svelderrainruiz.vi-history-suite`');
     expect(bugReport).toContain('svelderrainruiz.vi-history-suite@prerelease');
@@ -175,6 +186,9 @@ describe('public repo package surface', () => {
     expect(contributing).toContain('npm run public:fixture:icon-editor');
     expect(contributing).toContain('npm run public:repo:clone');
     expect(bundledUserWorkflow).not.toContain('<code>Diff prev</code>');
+    expect(bundledInstallAndRelease).toContain('README Installed-user LabVIEW support matrix');
+    expect(bundledInstallAndRelease).toContain('First-run guide (#79)');
+    expect(bundledInstallAndRelease).toContain('Troubleshooting guide (#80)');
     expect(bundledComparisonReview).toContain(
       'retained comparison evidence opens from the checkbox-selected pair'
     );

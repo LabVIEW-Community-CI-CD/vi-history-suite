@@ -235,7 +235,10 @@ describe('public validation pre-release 1.3.12', () => {
       expect(surface).toContain('admitted');
     }
     expect(readme).toContain('Marketplace stable `1.3.16` is the regular installed-user release');
-    expect(publicReadme).toContain('Stable `1.3.16` is the current installed-user release line');
+    expect(publicReadme).toContain(
+      'The Marketplace stable release is the current installed-user release line'
+    );
+    expect(publicReadme).toContain('Installed-user LabVIEW support matrix');
     expect(changelog).toContain('## [1.3.13] - 2026-04-27');
   });
 });

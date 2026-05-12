@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "427ab27",
+  "publishedHeadCommit": "fe4b1589",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -703,9 +703,154 @@
         "docs/product/release-publication-state.md",
         "docs/product/vscode-marketplace-publication-ledger.md"
       ]
+    },
+    {
+      "id": "public-source-v1-3-16-exact-source-release-and-marketplace-closeout",
+      "title": "Public source v1.3.16 exact source, release, and Marketplace closeout",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-05-11",
+      "publishedAt": "2026-05-11T22:38:02Z",
+      "repoCommit": "f679023",
+      "repoCommitSha": "f679023ed760963779d9331a9395128ad01c7e54",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/88",
+      "publicationMode": "protected-branch-pull-request-squash-plus-exact-release-publication",
+      "publicExactTag": {
+        "tag": "v1.3.16",
+        "tagObjectSha": "f6ca389269dac140dc416d76bb4c2ac142664567",
+        "tagCommitSha": "f679023ed760963779d9331a9395128ad01c7e54"
+      },
+      "publicGitHubRelease": {
+        "id": 320824958,
+        "url": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.16",
+        "publishedAt": "2026-05-11T22:38:02Z",
+        "immutable": true
+      },
+      "marketplace": {
+        "item": "svelderrainruiz.vi-history-suite",
+        "version": "1.3.16",
+        "lastUpdated": "2026-05-11T23:10:13.317Z"
+      },
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "package.json",
+        "package-lock.json",
+        "docs/product/public-github-source-publication-ledger.md",
+        "docs/product/public-release-candidate.md",
+        "docs/product/release-publication-state.md",
+        "docs/product/vscode-marketplace-publication-ledger.md"
+      ]
+    },
+    {
+      "id": "public-source-post-v1-3-16-installed-user-support-matrix-adoption",
+      "title": "Public source post-v1.3.16 installed-user support matrix adoption",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-05-12",
+      "publishedAt": "2026-05-12T00:17:36Z",
+      "repoCommit": "90b6e600",
+      "repoCommitSha": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/89",
+      "issue": "https://github.com/svelderrainruiz/vi-history-suite/issues/78",
+      "publicationMode": "protected-branch-pull-request-squash-public-docs-adoption",
+      "promotedFiles": [
+        "README.md",
+        "INSTALL.md",
+        "SUPPORT.md",
+        "resources/bundled-docs/pages/install-and-release.html",
+        "tests/unit/publicRepoPackageSurface.test.ts"
+      ],
+      "postMergeChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 25705189099,
+          "conclusion": "success",
+          "headSha": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 25705189121,
+          "conclusion": "success",
+          "headSha": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 25705189131,
+          "conclusion": "success",
+          "headSha": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8"
+        }
+      ],
+      "marketplaceMutation": "not-performed",
+      "releaseMutation": "not-performed",
+      "primaryAuthority": [
+        "public-github-source/README.md",
+        "public-github-source/INSTALL.md",
+        "public-github-source/SUPPORT.md",
+        "resources/bundled-docs/pages/install-and-release.html",
+        "public-github-source/tests/unit/publicRepoPackageSurface.test.ts",
+        "docs/product/public-github-source-publication-ledger.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-16-intake-surface-normalization",
+      "title": "Public source v1.3.16 intake surface normalization",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-05-12",
+      "publishedAt": "2026-05-12T00:26:38Z",
+      "repoCommit": "fe4b1589",
+      "repoCommitSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3",
+      "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/90",
+      "issue": "https://github.com/svelderrainruiz/vi-history-suite/issues/78",
+      "publicationMode": "protected-branch-pull-request-squash-public-docs-normalization",
+      "promotedFiles": [
+        ".github/ISSUE_TEMPLATE/bug-report.yml",
+        ".github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
+        ".github/ISSUE_TEMPLATE/config.yml",
+        ".github/ISSUE_TEMPLATE/feature-not-implemented.yml",
+        ".github/ISSUE_TEMPLATE/labview-version-support.yml",
+        ".github/ISSUE_TEMPLATE/validation-failure.yml",
+        ".github/ISSUE_TEMPLATE/validation-success.yml",
+        ".github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+        ".github/labels.yml",
+        "CHANGELOG.md",
+        "SUPPORT.md",
+        "tests/unit/publicRepoPackageSurface.test.ts"
+      ],
+      "postMergeChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 25705500127,
+          "conclusion": "success",
+          "headSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 25705500132,
+          "conclusion": "success",
+          "headSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 25705500124,
+          "conclusion": "success",
+          "headSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"
+        }
+      ],
+      "marketplaceMutation": "not-performed",
+      "releaseMutation": "not-performed",
+      "primaryAuthority": [
+        "public-github-source/.github/ISSUE_TEMPLATE/",
+        "public-github-source/.github/labels.yml",
+        "public-github-source/CHANGELOG.md",
+        "public-github-source/SUPPORT.md",
+        "public-github-source/tests/unit/publicRepoPackageSurface.test.ts",
+        "docs/product/public-github-source-publication-ledger.md"
+      ]
     }
   ],
-  "publishedHeadCommitSha": "427ab27245f6f66d186e07865f1fc0a00795611a",
+  "publishedHeadCommitSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3",
   "windowsDockerDesktopIntakePromotionCloseout": {
     "status": "published-and-verified",
     "repository": "github.com/svelderrainruiz/vi-history-suite",
@@ -927,5 +1072,103 @@
     "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json",
     "marketplacePrepReceiptPath": ".cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json",
     "windowsExactVsixInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json"
+  },
+  "publicExactV1316ReleaseCloseout": {
+    "status": "published-and-verified",
+    "publicPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/88",
+    "publicMainCommit": "f679023ed760963779d9331a9395128ad01c7e54",
+    "publicMainShortCommit": "f679023",
+    "publicTag": "v1.3.16",
+    "publicTagObjectSha": "f6ca389269dac140dc416d76bb4c2ac142664567",
+    "publicTagCommitSha": "f679023ed760963779d9331a9395128ad01c7e54",
+    "publicGitHubReleaseId": 320824958,
+    "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.16",
+    "publicGitHubReleasePublishedAt": "2026-05-11T22:38:02Z",
+    "marketplaceVersion": "1.3.16",
+    "marketplaceLastUpdated": "2026-05-11T23:10:13.317Z",
+    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json",
+    "marketplacePrepReceiptPath": ".cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json",
+    "windowsExactVsixInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json"
+  },
+  "publicInstalledUserSupportMatrixAdoption": {
+    "status": "published-and-verified",
+    "publicPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/89",
+    "publicMainCommit": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8",
+    "publicMainShortCommit": "90b6e600",
+    "mergedAt": "2026-05-12T00:17:36Z",
+    "issue": "https://github.com/svelderrainruiz/vi-history-suite/issues/78",
+    "promotedFiles": [
+      "README.md",
+      "INSTALL.md",
+      "SUPPORT.md",
+      "resources/bundled-docs/pages/install-and-release.html",
+      "tests/unit/publicRepoPackageSurface.test.ts"
+    ],
+    "postMergeChecks": [
+      {
+        "workflowName": "Public Source Package Preview",
+        "runId": 25705189099,
+        "conclusion": "success",
+        "headSha": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8"
+      },
+      {
+        "workflowName": "Public Linux Installed-User Smoke",
+        "runId": 25705189121,
+        "conclusion": "success",
+        "headSha": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8"
+      },
+      {
+        "workflowName": "Public Windows Installed-User Contract",
+        "runId": 25705189131,
+        "conclusion": "success",
+        "headSha": "90b6e600ea025aeb238832cf91fe15ff2b0c7db8"
+      }
+    ],
+    "marketplaceMutation": "not-performed",
+    "releaseMutation": "not-performed"
+  },
+  "publicV1316IntakeSurfaceNormalization": {
+    "status": "published-and-verified",
+    "publicPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/90",
+    "publicMainCommit": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3",
+    "publicMainShortCommit": "fe4b1589",
+    "mergedAt": "2026-05-12T00:26:38Z",
+    "issue": "https://github.com/svelderrainruiz/vi-history-suite/issues/78",
+    "promotedFiles": [
+      ".github/ISSUE_TEMPLATE/bug-report.yml",
+      ".github/ISSUE_TEMPLATE/community-validation-windows-labview.yml",
+      ".github/ISSUE_TEMPLATE/config.yml",
+      ".github/ISSUE_TEMPLATE/feature-not-implemented.yml",
+      ".github/ISSUE_TEMPLATE/labview-version-support.yml",
+      ".github/ISSUE_TEMPLATE/validation-failure.yml",
+      ".github/ISSUE_TEMPLATE/validation-success.yml",
+      ".github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml",
+      ".github/labels.yml",
+      "CHANGELOG.md",
+      "SUPPORT.md",
+      "tests/unit/publicRepoPackageSurface.test.ts"
+    ],
+    "postMergeChecks": [
+      {
+        "workflowName": "Public Source Package Preview",
+        "runId": 25705500127,
+        "conclusion": "success",
+        "headSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"
+      },
+      {
+        "workflowName": "Public Linux Installed-User Smoke",
+        "runId": 25705500132,
+        "conclusion": "success",
+        "headSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"
+      },
+      {
+        "workflowName": "Public Windows Installed-User Contract",
+        "runId": 25705500124,
+        "conclusion": "success",
+        "headSha": "fe4b15894d8417e6f1e0d234cb19bd945ef716c3"
+      }
+    ],
+    "marketplaceMutation": "not-performed",
+    "releaseMutation": "not-performed"
   }
 }

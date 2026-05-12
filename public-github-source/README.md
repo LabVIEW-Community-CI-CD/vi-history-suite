@@ -63,9 +63,26 @@ Installed-user help:
 - blocked, missing, or not-yet-implemented paths fail closed with explicit
   next-step guidance and can write a GitHub-ready proof packet
 
+### Installed-user LabVIEW support matrix
+
+| Runtime provider | LabVIEW target | VI Comparison Report generation | Bitness guidance |
+| --- | --- | --- | --- |
+| Windows local host (`provider=host`) | `2025`, `2026`, and newer/manual local paths | supported | local installs can be `x86` (32-bit) or `x64` (64-bit), and both are selectable when installed |
+| Windows local host (`provider=host`) | `2024` and older | unsupported for this workflow | use LabVIEW `2025`/`2026` or newer to generate reports |
+| Linux local host (`provider=host`) | admitted `2026` `x64` today; newer/manual local `x64` paths are selectable for validation | conditionally supported (requires an admitted local runtime bundle) | Linux host behavior in this workflow is `x64` only |
+| Docker (`provider=docker`) | governed `2026` image family today; other selectable bundles are validation/reporting paths | conditionally supported (admitted bundles run; blocked bundles fail closed with `VIHS_E_*` guidance) | container images are `x64` only on Linux and Windows Docker engines |
+
+LabVIEW `2025` and `2026` can open older VI source for comparison in this
+workflow without requiring migration of the source files before report
+generation.
+
+For setup and troubleshooting details without overloading extension UI text, use
+the installed-user guides tracked in [First-run guide (#79)](https://github.com/svelderrainruiz/vi-history-suite/issues/79)
+and [Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80).
+
 ## Proof Status And Community Validation
 
-Stable `1.3.16` is the current installed-user release line. The extension
+The Marketplace stable release is the current installed-user release line. The extension
 intentionally exposes all intended provider/year/bitness variants so the
 runtime and error-reporting layer can be exercised on real user machines.
 

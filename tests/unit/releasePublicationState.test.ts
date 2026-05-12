@@ -63,13 +63,14 @@ describe('release publication state resolver', () => {
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
+      mainCommit: 'fe4b15894d8417e6f1e0d234cb19bd945ef716c3',
       tag: 'v1.3.16',
       tagObjectSha: 'f6ca389269dac140dc416d76bb4c2ac142664567',
       sourcePublication: {
-        status: 'public-source-tag-release-and-marketplace-v1.3.16-published-and-verified',
-        currentMainCommit: 'f679023ed760963779d9331a9395128ad01c7e54',
-        currentMainShortCommit: 'f679023',
+        status:
+          'public-main-post-v1.3.16-installed-user-support-matrix-and-intake-normalization; exact-v1.3.16-tag-release-and-marketplace-retained',
+        currentMainCommit: 'fe4b15894d8417e6f1e0d234cb19bd945ef716c3',
+        currentMainShortCommit: 'fe4b1589',
         latestPublicExactReleaseCloseout: expect.objectContaining({
           status: 'published-and-verified',
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
@@ -88,6 +89,22 @@ describe('release publication state resolver', () => {
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/68',
           publicLabelsApplied: ['windows-docker-desktop'],
           marketplaceMutation: 'not-performed'
+        }),
+        latestInstalledUserSupportMatrixAdoption: expect.objectContaining({
+          status: 'published-and-verified',
+          pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/89',
+          publicMainCommit: '90b6e600ea025aeb238832cf91fe15ff2b0c7db8',
+          publicMainShortCommit: '90b6e600',
+          marketplaceMutation: 'not-performed',
+          releaseMutation: 'not-performed'
+        }),
+        latestV1316IntakeSurfaceNormalization: expect.objectContaining({
+          status: 'published-and-verified',
+          publicPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/90',
+          publicMainCommit: 'fe4b15894d8417e6f1e0d234cb19bd945ef716c3',
+          publicMainShortCommit: 'fe4b1589',
+          marketplaceMutation: 'not-performed',
+          releaseMutation: 'not-performed'
         })
       }
     });
@@ -185,9 +202,11 @@ describe('release publication state resolver', () => {
 
     expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.16`');
     expect(stateDoc).toContain('Current authority exact tag: `v1.3.16`');
-    expect(stateDoc).toContain('Public GitHub `main`: `f679023ed760963779d9331a9395128ad01c7e54`');
+    expect(stateDoc).toContain('Public GitHub `main`: `fe4b15894d8417e6f1e0d234cb19bd945ef716c3`');
     expect(stateDoc).toContain('Public GitHub release id: `320824958`');
     expect(stateDoc).toContain('## Exact Release Closeout v1.3.16');
+    expect(stateDoc).toContain('## Public GitHub Installed-User Support Matrix Adoption');
+    expect(stateDoc).toContain('## Public GitHub v1.3.16 Intake Surface Normalization');
     expect(stateDoc).toContain('VS Code Marketplace version: `1.3.16`');
     expect(stateDoc).toContain(
       '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json'

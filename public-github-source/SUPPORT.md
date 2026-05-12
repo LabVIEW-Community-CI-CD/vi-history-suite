@@ -91,3 +91,10 @@ OSType `windows`; Docker images are 64-bit only.
 - if the selected host or Docker bundle is missing, contradictory,
   unsupported, or blocked, the product should fail closed with visible
   next-step guidance instead of silently switching provider classes
+
+## LabVIEW Support Matrix And Guides
+
+- Installed-user LabVIEW support matrix:
+  [README Installed-user LabVIEW support matrix](./README.md#installed-user-labview-support-matrix)
+- First-run guide: [#79](https://github.com/svelderrainruiz/vi-history-suite/issues/79)
+- Troubleshooting guide: [#80](https://github.com/svelderrainruiz/vi-history-suite/issues/80)

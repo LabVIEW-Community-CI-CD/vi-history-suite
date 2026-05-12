@@ -130,7 +130,7 @@ final installed-user distribution surface.
 
 ## Public GitHub State
 
-- Public GitHub `main`: `f679023ed760963779d9331a9395128ad01c7e54`
+- Public GitHub `main`: `fe4b15894d8417e6f1e0d234cb19bd945ef716c3`
 - Public GitHub tag: `v1.3.16`
 - Public GitHub tag object:
   `f6ca389269dac140dc416d76bb4c2ac142664567`
@@ -140,13 +140,15 @@ final installed-user distribution surface.
 - Public GitHub release status: published, immutable, exact assets retained
 - Asset status: `published-complete`
 - Public GitHub source status: current public `main` publishes
-  `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88 promoted
-  the `v1.3.16` source/authority handoff; the earlier `v1.3.14` source/tag
-  handoff remains retained at public PR #69, the Windows Docker Desktop
-  proof-intake template and label remain retained at public PR #68, the
-  canonical Docker fixture docs remain retained at `ce6dbd0` through public PR
-  #60, and the earlier community-validation intake facade remains retained at
-  `b56fde1`
+  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90 normalized
+  the `v1.3.16` public intake surfaces that PR #89 exposed while adopting the
+  installed-user LabVIEW support matrix; exact `v1.3.16` remains retained at
+  `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88 promoted the
+  source/authority handoff, the earlier `v1.3.14` source/tag handoff remains
+  retained at public PR #69, the Windows Docker Desktop proof-intake template
+  and label remain retained at public PR #68, the canonical Docker fixture docs
+  remain retained at `ce6dbd0` through public PR #60, and the earlier
+  community-validation intake facade remains retained at `b56fde1`
 - Public validation source status: `1.3.11` facade published through public
   PR #46, canonical fixture docs promoted through public PR #60, and Windows
   Docker Desktop proof-intake promoted through public PR #68
@@ -664,6 +666,34 @@ until that later public GitHub release gate is complete.
 - Marketplace last updated: `2026-05-11T23:10:13.317Z`
 - Next admitted action:
   `retain-v1.3.16-marketplace-closeout-on-protected-develop`
+
+## Public GitHub Installed-User Support Matrix Adoption
+
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/89`
+- Public GitHub `main`:
+  `90b6e600ea025aeb238832cf91fe15ff2b0c7db8`
+- Public issue: `https://github.com/svelderrainruiz/vi-history-suite/issues/78`
+- Public Source Package Preview: `25705189099` / `success`
+- Public Linux Installed-User Smoke: `25705189121` / `success`
+- Public Windows Installed-User Contract: `25705189131` / `success`
+- Public GitHub release/tag mutation: not performed
+- VS Code Marketplace mutation: not performed
+- Release proof admission: not performed
+
+## Public GitHub v1.3.16 Intake Surface Normalization
+
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/90`
+- Public GitHub `main`:
+  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3`
+- Public issue: `https://github.com/svelderrainruiz/vi-history-suite/issues/78`
+- Public Source Package Preview: `25705500127` / `success`
+- Public Linux Installed-User Smoke: `25705500132` / `success`
+- Public Windows Installed-User Contract: `25705500124` / `success`
+- Public GitHub release/tag mutation: not performed
+- VS Code Marketplace mutation: not performed
+- Release proof admission: not performed
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 
