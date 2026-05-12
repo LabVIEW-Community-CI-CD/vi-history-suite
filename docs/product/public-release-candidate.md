@@ -45,10 +45,10 @@
   `vagrant/evidence/assertion/vagrant-vsix-acceptance-assertion.json` and
   `vagrant/evidence/20260509-171233/manifest.json`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-05-11`
+- Recorded at: `2026-05-12`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published exact public source commit: `f679023`
-- Current public source head: `fe4b1589`
+- Current public source head: `fad5193f`
 - Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
@@ -120,11 +120,12 @@
   the separate public source publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - Public GitHub `main` now publishes
-  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90 normalized
-  the `v1.3.16` public intake surfaces that PR #89 exposed while adopting the
-  installed-user LabVIEW support matrix. The exact `v1.3.16` source handoff
-  remains retained at `f679023ed760963779d9331a9395128ad01c7e54` after public
-  PR #88, and public annotated tag `v1.3.16` has tag object
+  `fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91 adopted the
+  first-run local LabVIEW guide that follows PR #90's public intake-surface
+  normalization and PR #89's installed-user LabVIEW support matrix. The exact
+  `v1.3.16` source handoff remains retained at
+  `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88, and public
+  annotated tag `v1.3.16` has tag object
   `f6ca389269dac140dc416d76bb4c2ac142664567` peeling to that exact release
   source commit.
 - Public GitHub release `320824958` is published at
@@ -158,6 +159,12 @@
   Smoke `25705500132`, and Public Windows Installed-User Contract
   `25705500124` all passed. No public release, tag, Marketplace, or proof
   admission mutation was performed by PR #90.
+- The follow-up public first-run local LabVIEW guide adoption is retained at
+  public PR #91 and public `main` commit
+  `fad5193f7aa0b9f543687eebf607cf2e94956afb`; Public Source Package Preview
+  `25730733192`, Public Linux Installed-User Smoke `25730733157`, and Public
+  Windows Installed-User Contract `25730733137` all passed. No public release,
+  tag, Marketplace, or proof admission mutation was performed by PR #91.
 - The maintained public `develop` admission-matrix baseline for `1.3.9` now
   publishes `11051ac` through GitHub PR `#43` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.

@@ -374,13 +374,14 @@ Authority release facts:
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/`
 - current public GitHub source publication: public `main` now publishes
-  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90 normalized
-  the `v1.3.16` public intake surfaces following the public PR #89
-  installed-user support matrix adoption; the exact `v1.3.16` source remains
-  retained at `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88,
-  and public PR #69, PR #68, and PR #60 remain retained historical
-  public-facade evidence for earlier source, intake, and fixture-docs
-  promotions at `f1cb609`, `220111e`, and `ce6dbd0`
+  `fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91 adopted the
+  first-run local LabVIEW guide following public PR #90's intake-surface
+  normalization and public PR #89's installed-user support matrix adoption; the
+  exact `v1.3.16` source remains retained at
+  `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88, and public
+  PR #69, PR #68, and PR #60 remain retained historical public-facade evidence
+  for earlier source, intake, and fixture-docs promotions at `f1cb609`,
+  `220111e`, and `ce6dbd0`
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - VS Code Marketplace retained published version: `1.3.16`

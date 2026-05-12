@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `fe4b1589`
+Current published public GitHub source HEAD: `fad5193f`
 
 ## Publications
 
@@ -54,15 +54,16 @@ Current published public GitHub source HEAD: `fe4b1589`
 | Public source v1.3.16 exact source, release, and Marketplace closeout | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-11` | `f679023` | `README.md`; `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/product/public-github-source-publication-ledger.md`; `docs/product/public-release-candidate.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
 | Public source post-v1.3.16 installed-user support matrix adoption | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `90b6e600` | `README.md`; `INSTALL.md`; `SUPPORT.md`; `resources/bundled-docs/pages/install-and-release.html`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
 | Public source v1.3.16 intake surface normalization | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `fe4b1589` | `.github/ISSUE_TEMPLATE/`; `.github/labels.yml`; `CHANGELOG.md`; `SUPPORT.md`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
+| Public source post-v1.3.16 first-run local LabVIEW guide adoption | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `fad5193f` | `FIRST-RUN.md`; `README.md`; `INSTALL.md`; `SUPPORT.md`; `resources/bundled-docs/pages/install-and-release.html`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
 
 Historical fixture-docs closeout: public PR #60 remains retained at `ce6dbd0`.
 
 ## Latest Public Facade Promotion
 
 - Public PR:
-  `https://github.com/svelderrainruiz/vi-history-suite/pull/90`
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/91`
 - Public `main` commit:
-  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3`
+  `fad5193f7aa0b9f543687eebf607cf2e94956afb`
 - Latest public source adoption:
   installed-user LabVIEW support matrix from issue #78, merged by public PR
   #89 after Public Source Package Preview `25705189099`, Public Linux
@@ -73,6 +74,12 @@ Historical fixture-docs closeout: public PR #60 remains retained at `ce6dbd0`.
   Source Package Preview `25705500127`, Public Linux Installed-User Smoke
   `25705500132`, and Public Windows Installed-User Contract `25705500124` all
   passed.
+- Latest public first-run guide adoption:
+  public PR #91 advanced the public source head to `fad5193f` for issue #79
+  after Public Source Package Preview `25730733192`, Public Linux
+  Installed-User Smoke `25730733157`, and Public Windows Installed-User
+  Contract `25730733137` all passed. No public release, tag, Marketplace, or
+  proof admission mutation was performed.
 - Current exact public tag:
   `v1.3.16` tag object `f6ca389269dac140dc416d76bb4c2ac142664567`,
   peeling to `f679023ed760963779d9331a9395128ad01c7e54`

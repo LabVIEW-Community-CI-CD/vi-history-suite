@@ -60,11 +60,12 @@ directly to the public GitHub source repo.
   first, then promote outward.
 - Exact public `v1.3.16` remains retained at public tag `v1.3.16` peeling to
   `f679023`, while current public `main` now publishes the post-release
-  intake-surface normalization at `fe4b1589`.
+  first-run local LabVIEW guide adoption at `fad5193f`.
 - The earlier Marketplace community-validation intake facade remains retained
   at `b56fde1` through public PR #45.
-- Current public `main` publishes the intake-surface normalization at
-  `fe4b1589` through public PR #90 after the installed-user support matrix
+- Current public `main` publishes the first-run local LabVIEW guide adoption at
+  `fad5193f` through public PR #91 after the intake-surface normalization at
+  `fe4b1589` through public PR #90 and the installed-user support matrix
   adoption at `90b6e600` through public PR #89; the `1.3.16` exact
   source/release/Marketplace closeout remains retained at `f679023` through
   public PR #88, with public tag `v1.3.16` retained as tag object

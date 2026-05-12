@@ -146,10 +146,12 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- release-candidate branch family: `release/*`');
     expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(readme).toContain('`fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90');
-    expect(readme).toContain('the `v1.3.16` public intake surfaces following the public PR #89');
-    expect(readme).toContain('retained at `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88');
-    expect(readme).toContain('public PR #69, PR #68, and PR #60 remain retained');
+    expect(readme).toContain('`fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91');
+    expect(readme).toContain("public PR #90's intake-surface");
+    expect(readme).toContain("public PR #89's installed-user support matrix adoption");
+    expect(readme).toContain('retained at');
+    expect(readme).toContain('`f679023ed760963779d9331a9395128ad01c7e54` after public PR #88');
+    expect(readme).toContain('PR #69, PR #68, and PR #60 remain retained');
     expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.16`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.3.16`');
@@ -174,11 +176,11 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- release-candidate branch family: `release/*`');
     expect(currentState).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(currentState).toContain('`fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90');
-    expect(currentState).toContain('the `v1.3.16` public intake surfaces following the public PR #89');
-    expect(currentState).toContain(
-      'retained at `f679023ed760963779d9331a9395128ad01c7e54` after public'
-    );
+    expect(currentState).toContain('`fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91');
+    expect(currentState).toContain("public PR #90's intake-surface");
+    expect(currentState).toContain("public PR #89's installed-user LabVIEW support matrix");
+    expect(currentState).toContain('retained at');
+    expect(currentState).toContain('`f679023ed760963779d9331a9395128ad01c7e54` after public');
     expect(currentState).toContain('public PR #68 remains retained');
     expect(currentState).toContain('public PR #67');
     expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.16`');

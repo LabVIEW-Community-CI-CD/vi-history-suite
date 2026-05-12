@@ -130,7 +130,7 @@ final installed-user distribution surface.
 
 ## Public GitHub State
 
-- Public GitHub `main`: `fe4b15894d8417e6f1e0d234cb19bd945ef716c3`
+- Public GitHub `main`: `fad5193f7aa0b9f543687eebf607cf2e94956afb`
 - Public GitHub tag: `v1.3.16`
 - Public GitHub tag object:
   `f6ca389269dac140dc416d76bb4c2ac142664567`
@@ -140,9 +140,10 @@ final installed-user distribution surface.
 - Public GitHub release status: published, immutable, exact assets retained
 - Asset status: `published-complete`
 - Public GitHub source status: current public `main` publishes
-  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90 normalized
-  the `v1.3.16` public intake surfaces that PR #89 exposed while adopting the
-  installed-user LabVIEW support matrix; exact `v1.3.16` remains retained at
+  `fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91 adopted the
+  first-run local LabVIEW guide that follows PR #90's public intake-surface
+  normalization and PR #89's installed-user LabVIEW support matrix; exact
+  `v1.3.16` remains retained at
   `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88 promoted the
   source/authority handoff, the earlier `v1.3.14` source/tag handoff remains
   retained at public PR #69, the Windows Docker Desktop proof-intake template
@@ -691,6 +692,20 @@ until that later public GitHub release gate is complete.
 - Public Source Package Preview: `25705500127` / `success`
 - Public Linux Installed-User Smoke: `25705500132` / `success`
 - Public Windows Installed-User Contract: `25705500124` / `success`
+- Public GitHub release/tag mutation: not performed
+- VS Code Marketplace mutation: not performed
+- Release proof admission: not performed
+
+## Public GitHub First-Run Local LabVIEW Guide Adoption
+
+- Public GitHub PR:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/91`
+- Public GitHub `main`:
+  `fad5193f7aa0b9f543687eebf607cf2e94956afb`
+- Public issue: `https://github.com/svelderrainruiz/vi-history-suite/issues/79`
+- Public Source Package Preview: `25730733192` / `success`
+- Public Linux Installed-User Smoke: `25730733157` / `success`
+- Public Windows Installed-User Contract: `25730733137` / `success`
 - Public GitHub release/tag mutation: not performed
 - VS Code Marketplace mutation: not performed
 - Release proof admission: not performed
