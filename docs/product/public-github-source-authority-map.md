@@ -58,16 +58,19 @@ directly to the public GitHub source repo.
   mirror of the authority repo.
 - Public source publication shall be one-way: normalize in GitLab authority
   first, then promote outward.
-- Exact public `main` now publishes the exact released `v1.3.15` source line
-  at `427ab27`, and the separate GitHub release record for `v1.3.15` is now
-  published while VS Code Marketplace now serves `1.3.15`.
+- Exact public `v1.3.16` remains retained at public tag `v1.3.16` peeling to
+  `f679023`, while current public `main` now publishes the post-release
+  intake-surface normalization at `fe4b1589`.
 - The earlier Marketplace community-validation intake facade remains retained
   at `b56fde1` through public PR #45.
-- Current public `main` publishes the `1.3.15` exact source/release/Marketplace
-  closeout at `427ab27` through public PR #83, with public tag `v1.3.15`
-  retained as tag object `28ea4253813e6f322cbcc25cdce865cdeac219a6` peeling
-  to `427ab27`. The earlier `1.3.14` source/tag handoff remains retained at
-  `f1cb609` through public PR #69, with public tag object
+- Current public `main` publishes the intake-surface normalization at
+  `fe4b1589` through public PR #90 after the installed-user support matrix
+  adoption at `90b6e600` through public PR #89; the `1.3.16` exact
+  source/release/Marketplace closeout remains retained at `f679023` through
+  public PR #88, with public tag `v1.3.16` retained as tag object
+  `f6ca389269dac140dc416d76bb4c2ac142664567` peeling to `f679023`. The
+  earlier `1.3.14` source/tag handoff remains retained at `f1cb609` through
+  public PR #69, with public tag object
   `b6cea29ac68e542a1c792ba18d1cef8cb7ded3ae`; the earlier `1.3.13` Windows
   Docker Desktop proof-intake promotion remains retained at `220111e` through
   public PR #68, and the earlier `1.3.11` canonical Docker fixture docs

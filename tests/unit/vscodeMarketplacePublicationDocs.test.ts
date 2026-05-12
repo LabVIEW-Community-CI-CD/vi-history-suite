@@ -200,7 +200,8 @@ describe('vs code marketplace publication and installed-user docs', () => {
     );
     expect(publicReadme).toContain('vihs --validate');
     expect(publicReadme).toContain('Proof Status And Community Validation');
-    expect(publicReadme).toContain('Stable `1.3.16` is the current installed-user release line');
+    expect(publicReadme).toContain('The Marketplace stable release is the current installed-user release line');
+    expect(publicReadme).toContain('Installed-user LabVIEW support matrix');
     expect(publicReadme).toContain('Report A Problem Or Request Support');
     expect(publicReadme).toContain('Marketplace Community Validation Report');
     expect(publicReadme).toContain('LabVIEW Version Support Request');

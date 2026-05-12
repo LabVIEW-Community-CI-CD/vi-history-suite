@@ -128,7 +128,13 @@ const bundledPageConfigs = {
         '- if `vihs` is not available yet, run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette, then run `vihs` again',
         '- if VS Code was already open when `vihs` or the generated settings CLI changed settings, reload or restart only if stale facts remain',
         '- run `vihs --validate` before the first compare on a fresh machine',
-        '- if Docker is selected, confirm `docker info` works in the same session that runs VS Code'
+        '- if Docker is selected, confirm `docker info` works in the same session that runs VS Code',
+        '',
+        'LabVIEW support matrix and short installed-user guides:',
+        '',
+        '- [README Installed-user LabVIEW support matrix](https://github.com/svelderrainruiz/vi-history-suite#installed-user-labview-support-matrix)',
+        '- [First-run guide (#79)](https://github.com/svelderrainruiz/vi-history-suite/issues/79)',
+        '- [Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80)'
       ].join('\n'),
       'Release Procedure Summary': [
         'Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.',
@@ -377,6 +383,10 @@ function rewriteAnchors(html, pagesByWikiTarget) {
       return `<a href="#" data-page-id="${escapeAttribute(matchingPage.id)}"${rest}>${body}</a>`;
     }
 
+    if (/^https:\/\/github\.com\/svelderrainruiz\/vi-history-suite(?:\/|#|$)/i.test(normalizedHref)) {
+      return `<a href="${escapeAttribute(normalizedHref)}"${rest}>${body}</a>`;
+    }
+
     if (/^https?:\/\//i.test(normalizedHref)) {
       return body;
     }
@@ -482,6 +492,10 @@ function stripExcludedListOnlyLinks(markdown, pagesByWikiTarget) {
     }
 
     const href = match[1]?.trim() ?? '';
+    if (/^https:\/\/github\.com\/svelderrainruiz\/vi-history-suite(?:\/|#|$)/i.test(href)) {
+      return true;
+    }
+
     if (/^https?:\/\//i.test(href)) {
       return false;
     }

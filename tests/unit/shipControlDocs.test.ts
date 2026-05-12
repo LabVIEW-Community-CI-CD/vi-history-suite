@@ -223,7 +223,9 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(readme).toContain('releases/tag/v1.3.16');
     expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(readme).toContain('`f679023` after public PR #88 completed the `v1.3.16` source handoff');
+    expect(readme).toContain('`fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90');
+    expect(readme).toContain('the `v1.3.16` public intake surfaces following the public PR #89');
+    expect(readme).toContain('retained at `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88');
     expect(readme).toContain('public PR #69, PR #68, and PR #60 remain retained');
     expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.16`');
     expect(readme).toContain('- public GitHub default branch: `main`');
@@ -284,7 +286,11 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('releases/tag/v1.3.16');
     expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
     expect(currentState).toContain(
-      '`f679023ed760963779d9331a9395128ad01c7e54` after public PR #88'
+      '`fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90'
+    );
+    expect(currentState).toContain('the `v1.3.16` public intake surfaces following the public PR #89');
+    expect(currentState).toContain(
+      'retained at `f679023ed760963779d9331a9395128ad01c7e54` after public'
     );
     expect(currentState).toContain('public PR #68 remains retained');
     expect(currentState).toContain('public PR #67');

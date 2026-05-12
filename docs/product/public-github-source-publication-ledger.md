@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `427ab27`
+Current published public GitHub source HEAD: `fe4b1589`
 
 ## Publications
 
@@ -51,26 +51,39 @@ Current published public GitHub source HEAD: `427ab27`
 | Public source v1.3.13 Windows Docker Desktop intake promotion | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-27` | `220111e` | `README.md`; `INSTALL.md`; `SUPPORT.md`; `.github/ISSUE_TEMPLATE/config.yml`; `.github/ISSUE_TEMPLATE/windows-docker-desktop-validation.yml`; `.github/labels.yml`; `src/tooling/publicFixtureValidation.ts`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/windows-docker-desktop-proof-intake-v1.3.13.md`; `docs/product/release-publication-state.md` |
 | Public source v1.3.14 exact source and tag handoff | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-09` | `f1cb609` | `CHANGELOG.md`; `package.json`; `package-lock.json`; `.gitignore`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md`; `docs/product/release-publication-state.md` |
 | Public source v1.3.15 exact source, release, and Marketplace closeout | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-10` | `427ab27` | `README.md`; `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/product/public-github-source-publication-ledger.md`; `docs/product/public-release-candidate.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
+| Public source v1.3.16 exact source, release, and Marketplace closeout | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-11` | `f679023` | `README.md`; `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/product/public-github-source-publication-ledger.md`; `docs/product/public-release-candidate.md`; `docs/product/release-publication-state.md`; `docs/product/vscode-marketplace-publication-ledger.md` |
+| Public source post-v1.3.16 installed-user support matrix adoption | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `90b6e600` | `README.md`; `INSTALL.md`; `SUPPORT.md`; `resources/bundled-docs/pages/install-and-release.html`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
+| Public source v1.3.16 intake surface normalization | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `fe4b1589` | `.github/ISSUE_TEMPLATE/`; `.github/labels.yml`; `CHANGELOG.md`; `SUPPORT.md`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
 
 Historical fixture-docs closeout: public PR #60 remains retained at `ce6dbd0`.
 
 ## Latest Public Facade Promotion
 
 - Public PR:
-  `https://github.com/svelderrainruiz/vi-history-suite/pull/83`
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/90`
 - Public `main` commit:
-  `427ab27245f6f66d186e07865f1fc0a00795611a`
-- Public exact tag:
-  `v1.3.15` tag object `28ea4253813e6f322cbcc25cdce865cdeac219a6`,
-  peeling to `427ab27245f6f66d186e07865f1fc0a00795611a`
+  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3`
+- Latest public source adoption:
+  installed-user LabVIEW support matrix from issue #78, merged by public PR
+  #89 after Public Source Package Preview `25705189099`, Public Linux
+  Installed-User Smoke `25705189121`, and Public Windows Installed-User
+  Contract `25705189131` all passed.
+- Latest public intake normalization:
+  public PR #90 advanced the public source head to `fe4b1589` after Public
+  Source Package Preview `25705500127`, Public Linux Installed-User Smoke
+  `25705500132`, and Public Windows Installed-User Contract `25705500124` all
+  passed.
+- Current exact public tag:
+  `v1.3.16` tag object `f6ca389269dac140dc416d76bb4c2ac142664567`,
+  peeling to `f679023ed760963779d9331a9395128ad01c7e54`
 - Public GitHub exact release:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.15`
-  / `320197692`
-- VS Code Marketplace version: `1.3.15`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.16`
+  / `320824958`
+- VS Code Marketplace version: `1.3.16`
 - Public GitHub exact transaction receipt:
-  `.cache/public-github-exact-v1.3.15-verify-after-marketplace/public-github-exact-release-transaction.json`
+  `.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json`
 - VS Code Marketplace prep receipt:
-  `.cache/vscode-marketplace-publication-prep/v1.3.15-marketplace-verified/vscode-marketplace-publication-prep.json`
+  `.cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json`
 - Windows exact-VSIX install proof receipt:
   `.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json`
 - Earlier source/tag-only handoff: public PR #69 remains retained for

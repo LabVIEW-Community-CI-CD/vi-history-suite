@@ -123,8 +123,11 @@
 - That private-release act does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
 - Public GitHub `main` now publishes
-  `f679023ed760963779d9331a9395128ad01c7e54`, public tag `v1.3.16` is live,
-  GitHub release `320824958` is published at
+  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90 normalized
+  the `v1.3.16` intake surfaces following public PR #89's installed-user
+  support matrix adoption, while exact public tag `v1.3.16` still peels to
+  `f679023ed760963779d9331a9395128ad01c7e54`; GitHub release `320824958` is
+  published at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.16`,
   the uploaded exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/`, the
@@ -599,9 +602,10 @@ promotion still stays separate afterward.
   exact `v1.3.14`, exact `v1.3.15`, or exact `v1.3.16` release
   evidence.
 - The current develop package line on `develop` is `1.3.16`, public GitHub
-  `main` now publishes `f679023ed760963779d9331a9395128ad01c7e54`, public tag
-  `v1.3.16` is live, GitHub release `320824958` is published, VS Code
-  Marketplace serves `1.3.16`, and
+  `main` now publishes `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after
+  public PR #90, exact public tag `v1.3.16` peels to
+  `f679023ed760963779d9331a9395128ad01c7e54`, GitHub release `320824958` is
+  published, VS Code Marketplace serves `1.3.16`, and
   blocked `v1.3.8` historical incident evidence remains retained separately
   from the now-closed exact `v1.3.16` line.
 - The packaged extension homepage now points installed users to the maintained

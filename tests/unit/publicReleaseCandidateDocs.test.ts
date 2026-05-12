@@ -27,9 +27,10 @@ describe('public release candidate control surface', () => {
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: 'f679023',
-      currentPublicSourceHead: 'f679023',
-      currentPublicSourceHeadSha: 'f679023ed760963779d9331a9395128ad01c7e54',
-      status: 'published-main-tag-release-and-marketplace-v1.3.16',
+      currentPublicSourceHead: 'fe4b1589',
+      currentPublicSourceHeadSha: 'fe4b15894d8417e6f1e0d234cb19bd945ef716c3',
+      status:
+        'published-main-post-v1.3.16-installed-user-support-matrix-and-intake-normalization; exact-v1.3.16-remains-tagged-and-released',
       latestPublicExactReleaseCloseout: {
         status: 'published-and-verified',
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
@@ -43,6 +44,24 @@ describe('public release candidate control surface', () => {
           '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170',
         marketplaceMutation: 'published-and-verified'
       }
+    });
+    expect(candidate.publishedPublicSource.latestInstalledUserSupportMatrixAdoption).toMatchObject({
+      status: 'published-and-verified',
+      pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/89',
+      publicMainCommit: '90b6e600ea025aeb238832cf91fe15ff2b0c7db8',
+      publicMainShortCommit: '90b6e600',
+      issue: 'https://github.com/svelderrainruiz/vi-history-suite/issues/78',
+      marketplaceMutation: 'not-performed',
+      releaseMutation: 'not-performed'
+    });
+    expect(candidate.publishedPublicSource.latestV1316IntakeSurfaceNormalization).toMatchObject({
+      status: 'published-and-verified',
+      publicPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/90',
+      publicMainCommit: 'fe4b15894d8417e6f1e0d234cb19bd945ef716c3',
+      publicMainShortCommit: 'fe4b1589',
+      issue: 'https://github.com/svelderrainruiz/vi-history-suite/issues/78',
+      marketplaceMutation: 'not-performed',
+      releaseMutation: 'not-performed'
     });
     expect(candidate.publishedPublicSource.latestPublicSourceAndTagHandoff).toMatchObject({
       pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
@@ -149,9 +168,13 @@ describe('public release candidate control surface', () => {
       '`retain-v1.3.16-marketplace-closeout-on-protected-develop`'
     );
     expect(candidateMarkdown).toContain('Published exact public source commit: `f679023`');
-    expect(candidateMarkdown).toContain('Current public source head: `f679023`');
+    expect(candidateMarkdown).toContain('Current public source head: `fe4b1589`');
     expect(candidateMarkdown).toContain('GitHub release id: `320824958`');
-    expect(candidateMarkdown).toContain('public PR #88');
+    expect(candidateMarkdown).toContain('PR #89');
+    expect(candidateMarkdown).toContain('PR #90');
+    expect(candidateMarkdown).toContain('25705189099');
+    expect(candidateMarkdown).toContain('25705500127');
+    expect(candidateMarkdown).toContain('PR #88');
     expect(candidateMarkdown).toContain('`f6ca389269dac140dc416d76bb4c2ac142664567`');
     expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.16`');
     expect(candidateMarkdown).toContain('`currentMarketplaceVersion=1.3.16`');

@@ -48,7 +48,7 @@
 - Recorded at: `2026-05-11`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published exact public source commit: `f679023`
-- Current public source head: `f679023`
+- Current public source head: `fe4b1589`
 - Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
@@ -120,10 +120,13 @@
   the separate public source publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - Public GitHub `main` now publishes
-  `f679023ed760963779d9331a9395128ad01c7e54` for the `v1.3.16` source
-  handoff after public PR #88. Public annotated tag `v1.3.16` has tag object
-  `f6ca389269dac140dc416d76bb4c2ac142664567` and peels to
-  `f679023ed760963779d9331a9395128ad01c7e54`.
+  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90 normalized
+  the `v1.3.16` public intake surfaces that PR #89 exposed while adopting the
+  installed-user LabVIEW support matrix. The exact `v1.3.16` source handoff
+  remains retained at `f679023ed760963779d9331a9395128ad01c7e54` after public
+  PR #88, and public annotated tag `v1.3.16` has tag object
+  `f6ca389269dac140dc416d76bb4c2ac142664567` peeling to that exact release
+  source commit.
 - Public GitHub release `320824958` is published at
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.16`,
   is immutable, and retains the manifest-matched exact assets. Public PR #69
@@ -143,6 +146,18 @@
   `immutable=true`.
 - The separate public-source promotion check also now passes and is retained at
   `.cache/public-github-source-promotion/latest/public-github-source-promotion.json`.
+- The post-release installed-user support matrix adoption is retained at public
+  PR #89 and public `main` commit `90b6e600ea025aeb238832cf91fe15ff2b0c7db8`;
+  Public Source Package Preview `25705189099`, Public Linux Installed-User
+  Smoke `25705189121`, and Public Windows Installed-User Contract
+  `25705189131` all passed. No public release, tag, Marketplace, or proof
+  admission mutation was performed by PR #89.
+- The follow-up public intake-surface normalization is retained at public PR
+  #90 and public `main` commit `fe4b15894d8417e6f1e0d234cb19bd945ef716c3`;
+  Public Source Package Preview `25705500127`, Public Linux Installed-User
+  Smoke `25705500132`, and Public Windows Installed-User Contract
+  `25705500124` all passed. No public release, tag, Marketplace, or proof
+  admission mutation was performed by PR #90.
 - The maintained public `develop` admission-matrix baseline for `1.3.9` now
   publishes `11051ac` through GitHub PR `#43` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.

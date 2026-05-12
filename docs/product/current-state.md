@@ -433,13 +433,16 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.16`
 - current public GitHub source publication: public `main` now publishes
-  `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88 completed the
-  `v1.3.16` source handoff; public annotated tag `v1.3.16` has tag object
-  `f6ca389269dac140dc416d76bb4c2ac142664567` and peels to
-  `f679023ed760963779d9331a9395128ad01c7e54`; public PR #69 remains retained
-  for the `v1.3.14` source/tag handoff, public PR #68 remains retained for the
-  Windows Docker Desktop proof-intake template and label, and public PR #67
-  remains the retained `1.3.13` public validation facade publication
+  `fe4b15894d8417e6f1e0d234cb19bd945ef716c3` after public PR #90 normalized
+  the `v1.3.16` public intake surfaces following the public PR #89
+  installed-user LabVIEW support matrix adoption; exact `v1.3.16` source
+  remains retained at `f679023ed760963779d9331a9395128ad01c7e54` after public
+  PR #88, and public annotated tag `v1.3.16` has tag object
+  `f6ca389269dac140dc416d76bb4c2ac142664567` peeling to that exact release
+  source commit; public PR #69 remains retained for the `v1.3.14` source/tag
+  handoff, public PR #68 remains retained for the Windows Docker Desktop
+  proof-intake template and label, and public PR #67 remains the retained
+  `1.3.13` public validation facade publication
 - public GitHub public-validation pre-release:
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.13-public-validation-prerelease-1`
 - VS Code Marketplace retained published version: `1.3.16`
@@ -592,8 +595,10 @@ Latest landed ship target:
 - remaining blockers: none on the exact `v1.3.16` publication path; authority
   exact `v1.3.16` is now tagged on `main`
   `9c8e0a8503a84cba5d0ea722dd1497a35f52326c`, public GitHub `main` now
-  publishes `f679023` after the `v1.3.16` source handoff through public PR #88,
-  public PR #68 remains retained for the Windows Docker Desktop proof-intake
+  publishes `fe4b1589` after public PR #90 normalized the `v1.3.16` intake
+  surfaces following the public PR #89 installed-user support matrix adoption,
+  exact `v1.3.16` source remains retained at `f679023`, public PR #68 remains
+  retained for the Windows Docker Desktop proof-intake
   template and label, public PR #60 remains retained for the canonical public
   Docker fixture docs, public tag `v1.3.16` is live, GitHub release
   `320824958` is published with manifest-matched assets, the official gallery
