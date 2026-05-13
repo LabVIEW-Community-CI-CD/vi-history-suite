@@ -97,4 +97,4 @@ OSType `windows`; Docker images are 64-bit only.
 - Installed-user LabVIEW support matrix:
   [README Installed-user LabVIEW support matrix](./README.md#installed-user-labview-support-matrix)
 - First-run guide: [FIRST-RUN.md](./FIRST-RUN.md)
-- Troubleshooting guide: [#80](https://github.com/svelderrainruiz/vi-history-suite/issues/80)
+- Troubleshooting guide: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)

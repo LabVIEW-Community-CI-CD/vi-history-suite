@@ -1526,7 +1526,7 @@ describe('createOpenViHistoryCommand', () => {
     expect(panel?.webview.html).not.toContain('data-testid="history-action-decision-record"');
     expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');
     expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
-    expect(panel?.webview.html).toContain('Documentation:</strong> Unavailable in this build');
+    expect(panel?.webview.html).not.toContain('data-testid="history-surface-capabilities"');
   });
 
   it('keeps review surfaces available when the loaded repo is outside the canonical governed family', async () => {
@@ -1583,9 +1583,8 @@ describe('createOpenViHistoryCommand', () => {
     expect(showWarningMessageMock).not.toHaveBeenCalled();
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
     expect(panel?.webview.html).toContain('Repo-agnostic support');
-    expect(panel?.webview.html).toContain(
-      'Pair selection:</strong> Unavailable in this build'
-    );
+    expect(panel?.webview.html).toContain('data-testid="history-primary-instruction"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-surface-capabilities"');
     expect(panel?.webview.html).not.toContain('data-testid="history-action-dashboard"');
     expect(panel?.webview.html).not.toContain('data-testid="history-action-decision-record"');
   });

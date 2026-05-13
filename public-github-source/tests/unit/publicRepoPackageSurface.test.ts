@@ -24,6 +24,7 @@ describe('public repo package surface', () => {
     const install = readText('INSTALL.md');
     const support = readText('SUPPORT.md');
     const firstRun = readText('FIRST-RUN.md');
+    const troubleshooting = readText('TROUBLESHOOTING.md');
     const contributing = readText('CONTRIBUTING.md');
     const bugReport = readText('.github/ISSUE_TEMPLATE/bug-report.yml');
     const communityValidation = readText(
@@ -68,7 +69,7 @@ describe('public repo package surface', () => {
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/historyPanel.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -94,9 +95,17 @@ describe('public repo package surface', () => {
     expect(readme).toContain('LabVIEW `2025` and newer can open older LabVIEW VIs');
     expect(readme).toContain('### Installed-user LabVIEW support matrix');
     expect(readme).toContain('[First-run guide](./FIRST-RUN.md)');
-    expect(readme).toContain('Troubleshooting guide (#80)');
+    expect(readme).toContain('[Troubleshooting guide](./TROUBLESHOOTING.md)');
     expect(readme).toContain('runtimeErrorCode');
     expect(readme).toContain('Proof Status And Community Validation');
+    expect(readme).toContain(
+      'Windows host-native LabVIEW `2026` `x64` proof handoff (`blocked-local-windows`)'
+    );
+    expect(readme).toContain('HARNESS-VHS-002');
+    expect(readme).toContain('resource/plugins/lv_icon.vi');
+    expect(readme).toContain('runtimeBlockedReason=labview-cli-not-found-for-bitness');
+    expect(readme).toContain('runtimeFailureReason=labview-cli-connection-failed');
+    expect(readme).toContain('does not replace Windows Docker Desktop Windows-container proof');
     expect(readme).not.toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(readme).toContain('Report A Problem Or Request Support');
     expect(readme).toContain('[Marketplace Community Validation Report]');
@@ -130,7 +139,7 @@ describe('public repo package surface', () => {
     expect(install).toContain('If those checks fail, correct provider, version, bitness, or Docker readiness');
     expect(install).toContain('README Installed-user LabVIEW support matrix');
     expect(install).toContain('[First-run guide](./FIRST-RUN.md)');
-    expect(install).toContain('Troubleshooting guide (#80)');
+    expect(install).toContain('[Troubleshooting guide](./TROUBLESHOOTING.md)');
     expect(install).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(install).toContain('Refresh-Codespace-Repositories');
     expect(install).not.toContain('Manual-Actor-Framework-Clone');
@@ -148,7 +157,7 @@ describe('public repo package surface', () => {
     expect(support).toContain('LabVIEW Support Matrix And Guides');
     expect(support).toContain('README Installed-user LabVIEW support matrix');
     expect(support).toContain('FIRST-RUN.md');
-    expect(support).toContain('issues/80');
+    expect(support).toContain('TROUBLESHOOTING.md');
     expect(bugReport).toContain('install, settings, validation, or compare problem');
     expect(bugReport).toContain('`code --install-extension svelderrainruiz.vi-history-suite`');
     expect(bugReport).toContain('svelderrainruiz.vi-history-suite@prerelease');
@@ -210,7 +219,20 @@ describe('public repo package surface', () => {
     expect(firstRun).toContain('VI Server or session readiness');
     expect(firstRun).toContain('Docker is an expert/validation path');
     expect(firstRun).toContain('README.md#installed-user-labview-support-matrix');
-    expect(firstRun).toContain('issues/80');
+    expect(firstRun).toContain('./TROUBLESHOOTING.md');
+    expect(troubleshooting).toContain('# Troubleshooting Compare Report Generation');
+    expect(troubleshooting).toContain('Symptom → likely cause → next action');
+    expect(troubleshooting).toContain('LabVIEW `2024`/older is not supported');
+    expect(troubleshooting).toContain('does not auto-switch bitness');
+    expect(troubleshooting).toContain('labview-cli-not-found-for-bitness');
+    expect(troubleshooting).toContain('labview-cli-connection-failed');
+    expect(troubleshooting).toContain('Docker is a bounded expert provider');
+    expect(troubleshooting).toContain('vihs-runtime-validation-proof.json');
+    expect(troubleshooting).toContain('vihs-fixture-validation-proof.json');
+    expect(troubleshooting).toContain('comparison-report-smoke.html');
+    expect(troubleshooting).toContain('README.md#installed-user-labview-support-matrix');
+    expect(troubleshooting).toContain('./FIRST-RUN.md');
+    expect(troubleshooting).toContain('public issue #65');
     expect(firstRun).not.toContain('GitLab');
     expect(firstRun).not.toContain('release pipeline');
     expect(firstRun).not.toContain('Vagrant');
@@ -218,7 +240,7 @@ describe('public repo package surface', () => {
     expect(bundledUserWorkflow).not.toContain('<code>Diff prev</code>');
     expect(bundledInstallAndRelease).toContain('README Installed-user LabVIEW support matrix');
     expect(bundledInstallAndRelease).toContain('FIRST-RUN.md');
-    expect(bundledInstallAndRelease).toContain('Troubleshooting guide (#80)');
+    expect(bundledInstallAndRelease).toContain('blob/main/TROUBLESHOOTING.md');
     expect(bundledComparisonReview).toContain(
       'retained comparison evidence opens from the checkbox-selected pair'
     );

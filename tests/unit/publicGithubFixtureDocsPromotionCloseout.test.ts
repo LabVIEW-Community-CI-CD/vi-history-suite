@@ -99,13 +99,13 @@ describe('public GitHub fixture docs promotion closeout', () => {
     }
 
     expect(releaseState.publicGitHub).toMatchObject({
-      mainCommit: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
+      mainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
       sourcePublication: {
         status:
-          'public-main-post-v1.3.16-first-run-guide-adoption; exact-v1.3.16-tag-release-and-marketplace-retained',
-        currentMainCommit: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
-        currentMainShortCommit: 'fad5193f',
-        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
+          'public-main-post-v1.3.16-troubleshooting-and-ux-adoption; exact-v1.3.16-tag-release-and-marketplace-retained',
+        currentMainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
+        currentMainShortCommit: '12798e4',
+        latestPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/97',
         latestPublicValidationFixturePullRequest:
           'https://github.com/svelderrainruiz/vi-history-suite/pull/63',
         latestWindowsDockerDesktopIntakePromotionCloseout: expect.objectContaining({
@@ -152,6 +152,14 @@ describe('public GitHub fixture docs promotion closeout', () => {
           publicMainCommit: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
           publicMainShortCommit: 'fad5193f'
         }),
+        latestInstalledUserTroubleshootingAndUxAdoption: expect.objectContaining({
+          status: 'published-and-verified',
+          publicMainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
+          publicMainShortCommit: '12798e4',
+          marketplaceMutation: 'not-performed',
+          releaseMutation: 'not-performed',
+          proofAdmissionMutation: 'not-performed'
+        }),
         publicDevelopSync: expect.objectContaining({
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/64',
           status: 'not-applied-requires-separate-branch-policy-decision'
@@ -162,8 +170,8 @@ describe('public GitHub fixture docs promotion closeout', () => {
       'completed-through-public-pr-60-after-gitlab-authority-green'
     );
     expect(publicSourceLedger).toMatchObject({
-      publishedHeadCommit: 'fad5193f',
-      publishedHeadCommitSha: 'fad5193f7aa0b9f543687eebf607cf2e94956afb'
+      publishedHeadCommit: '12798e4',
+      publishedHeadCommitSha: '12798e46f14d6cac14eaf7381bbb62cc5ee012db'
     });
     expect(publicSourceLedger.publications).toEqual(
       expect.arrayContaining([
@@ -177,8 +185,8 @@ describe('public GitHub fixture docs promotion closeout', () => {
       ])
     );
     expect(publicReleaseCandidate.publishedPublicSource).toMatchObject({
-      currentPublicSourceHead: 'fad5193f',
-      currentPublicSourceHeadSha: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
+      currentPublicSourceHead: '12798e4',
+      currentPublicSourceHeadSha: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
       latestPublicSourceAndTagHandoff: expect.objectContaining({
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
         publicMainCommit: 'f1cb60900820ea17328b9eec595579768491e22a',
@@ -213,6 +221,11 @@ describe('public GitHub fixture docs promotion closeout', () => {
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/91',
         publicMainCommit: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
         publicMainShortCommit: 'fad5193f'
+      }),
+      latestInstalledUserTroubleshootingAndUxAdoption: expect.objectContaining({
+        status: 'published-and-verified',
+        publicMainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
+        publicMainShortCommit: '12798e4'
       })
     });
   });

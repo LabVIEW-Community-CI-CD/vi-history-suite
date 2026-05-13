@@ -63,14 +63,14 @@ describe('release publication state resolver', () => {
       assetStatus: 'published-complete'
     });
     expect(state.publicGitHub).toMatchObject({
-      mainCommit: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
+      mainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
       tag: 'v1.3.16',
       tagObjectSha: 'f6ca389269dac140dc416d76bb4c2ac142664567',
       sourcePublication: {
         status:
-          'public-main-post-v1.3.16-first-run-guide-adoption; exact-v1.3.16-tag-release-and-marketplace-retained',
-        currentMainCommit: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
-        currentMainShortCommit: 'fad5193f',
+          'public-main-post-v1.3.16-troubleshooting-and-ux-adoption; exact-v1.3.16-tag-release-and-marketplace-retained',
+        currentMainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
+        currentMainShortCommit: '12798e4',
         latestPublicExactReleaseCloseout: expect.objectContaining({
           status: 'published-and-verified',
           pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
@@ -113,6 +113,14 @@ describe('release publication state resolver', () => {
           publicMainShortCommit: 'fad5193f',
           marketplaceMutation: 'not-performed',
           releaseMutation: 'not-performed'
+        }),
+        latestInstalledUserTroubleshootingAndUxAdoption: expect.objectContaining({
+          status: 'published-and-verified',
+          publicMainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
+          publicMainShortCommit: '12798e4',
+          marketplaceMutation: 'not-performed',
+          releaseMutation: 'not-performed',
+          proofAdmissionMutation: 'not-performed'
         })
       }
     });
@@ -210,12 +218,13 @@ describe('release publication state resolver', () => {
 
     expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.16`');
     expect(stateDoc).toContain('Current authority exact tag: `v1.3.16`');
-    expect(stateDoc).toContain('Public GitHub `main`: `fad5193f7aa0b9f543687eebf607cf2e94956afb`');
+    expect(stateDoc).toContain('Public GitHub `main`: `12798e46f14d6cac14eaf7381bbb62cc5ee012db`');
     expect(stateDoc).toContain('Public GitHub release id: `320824958`');
     expect(stateDoc).toContain('## Exact Release Closeout v1.3.16');
     expect(stateDoc).toContain('## Public GitHub Installed-User Support Matrix Adoption');
     expect(stateDoc).toContain('## Public GitHub v1.3.16 Intake Surface Normalization');
     expect(stateDoc).toContain('## Public GitHub First-Run Local LabVIEW Guide Adoption');
+    expect(stateDoc).toContain('## Public GitHub Troubleshooting And UX Adoption');
     expect(stateDoc).toContain('VS Code Marketplace version: `1.3.16`');
     expect(stateDoc).toContain(
       '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json'

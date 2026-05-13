@@ -20,8 +20,11 @@ const EXPECTED_TARGET_REMOTE = 'https://github.com/svelderrainruiz/vi-history-su
 
 const PUBLIC_DESIGN_CONTRACT_TESTS = [
   'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
+  'tests/unit/comparisonRuntimeLocator.test.ts',
   'tests/unit/comparisonReportPreflight.test.ts',
   'tests/unit/comparisonReportRuntimeExecution.test.ts',
+  'tests/unit/historyPanel.test.ts',
+  'tests/unit/localRuntimeSettingsCli.test.ts',
   'tests/unit/preparePublicRepoCloneScript.test.ts',
   'tests/unit/preparePublicTestFixtureScript.test.ts',
   'tests/unit/publicRepoPackageSurface.test.ts',
@@ -45,6 +48,7 @@ const MANAGED_ROOT_PATHS = [
   'AGENTS.md',
   'INSTALL.md',
   'SUPPORT.md',
+  'TROUBLESHOOTING.md',
   'CONTRIBUTING.md',
   'CHANGELOG.md',
   'LICENSE',
@@ -89,8 +93,10 @@ const AUTHORITY_COPY_PATHS = [
   'src',
   'tests/integration',
   'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
+  'tests/unit/comparisonRuntimeLocator.test.ts',
   'tests/unit/comparisonReportPreflight.test.ts',
   'tests/unit/comparisonReportRuntimeExecution.test.ts',
+  'tests/unit/historyPanel.test.ts',
   'tests/unit/preparePublicRepoCloneScript.test.ts',
   'tests/unit/preparePublicTestFixtureScript.test.ts',
   'tests/unit/publicDevcontainerSurface.test.ts',
@@ -122,6 +128,7 @@ const TEMPLATE_COPY_PATHS = [
   'INSTALL.md',
   'README.md',
   'SUPPORT.md',
+  'TROUBLESHOOTING.md',
   'tests/unit/publicRepoPackageSurface.test.ts'
 ];
 

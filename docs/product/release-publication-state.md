@@ -130,7 +130,7 @@ final installed-user distribution surface.
 
 ## Public GitHub State
 
-- Public GitHub `main`: `fad5193f7aa0b9f543687eebf607cf2e94956afb`
+- Public GitHub `main`: `12798e46f14d6cac14eaf7381bbb62cc5ee012db`
 - Public GitHub tag: `v1.3.16`
 - Public GitHub tag object:
   `f6ca389269dac140dc416d76bb4c2ac142664567`
@@ -140,9 +140,11 @@ final installed-user distribution surface.
 - Public GitHub release status: published, immutable, exact assets retained
 - Asset status: `published-complete`
 - Public GitHub source status: current public `main` publishes
-  `fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91 adopted the
-  first-run local LabVIEW guide that follows PR #90's public intake-surface
-  normalization and PR #89's installed-user LabVIEW support matrix; exact
+  `12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97
+  adopted the Windows proof handoff, installed-user troubleshooting, runtime
+  bitness UX, history-panel decluttering, and focused UX tests that follow PR
+  #91's first-run local LabVIEW guide, PR #90's public intake-surface
+  normalization, and PR #89's installed-user LabVIEW support matrix; exact
   `v1.3.16` remains retained at
   `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88 promoted the
   source/authority handoff, the earlier `v1.3.14` source/tag handoff remains
@@ -709,6 +711,35 @@ until that later public GitHub release gate is complete.
 - Public GitHub release/tag mutation: not performed
 - VS Code Marketplace mutation: not performed
 - Release proof admission: not performed
+
+## Public GitHub Troubleshooting And UX Adoption
+
+- Public GitHub PRs:
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/93`,
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/94`,
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/95`,
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/96`, and
+  `https://github.com/svelderrainruiz/vi-history-suite/pull/97`
+- Public GitHub `main`:
+  `12798e46f14d6cac14eaf7381bbb62cc5ee012db`
+- Public issues:
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/77`,
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/80`,
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/74`,
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/72`, and
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/73`
+- Final-head Public Source Package Preview:
+  `25750125305` / job `75623921597` / `success`
+- Final-head Public Linux Installed-User Smoke:
+  `25750125270` / job `75623921722` / `success`
+- Final-head Public Windows Installed-User Contract:
+  `25750125292` / job `75623921499` / `success`
+- Public GitHub release/tag mutation: not performed
+- VS Code Marketplace mutation: not performed
+- Release proof admission: not performed
+- Authority adjustment: GitLab adoption keeps selected LabVIEW bitness
+  fail-closed; detected alternatives are reported without silently switching
+  runtime bitness.
 
 ## Windows/LabVIEW Community Proof Intake Checklist
 

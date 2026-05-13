@@ -48,7 +48,7 @@
 - Recorded at: `2026-05-12`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published exact public source commit: `f679023`
-- Current public source head: `fad5193f`
+- Current public source head: `12798e4`
 - Public `develop` candidate commit: `11051ac`
 - Published public wiki head: `141c39e`
 
@@ -120,10 +120,12 @@
   the separate public source publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
 - Public GitHub `main` now publishes
-  `fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91 adopted the
-  first-run local LabVIEW guide that follows PR #90's public intake-surface
-  normalization and PR #89's installed-user LabVIEW support matrix. The exact
-  `v1.3.16` source handoff remains retained at
+  `12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97
+  adopted the Windows proof handoff, installed-user troubleshooting guide,
+  runtime bitness UX, history-panel decluttering, and focused UX tests that
+  follow PR #91's first-run local LabVIEW guide, PR #90's public
+  intake-surface normalization, and PR #89's installed-user LabVIEW support
+  matrix. The exact `v1.3.16` source handoff remains retained at
   `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88, and public
   annotated tag `v1.3.16` has tag object
   `f6ca389269dac140dc416d76bb4c2ac142664567` peeling to that exact release
@@ -165,6 +167,13 @@
   `25730733192`, Public Linux Installed-User Smoke `25730733157`, and Public
   Windows Installed-User Contract `25730733137` all passed. No public release,
   tag, Marketplace, or proof admission mutation was performed by PR #91.
+- The follow-up public troubleshooting and UX adoption is retained across
+  public PRs #93, #94, #95, #96, and #97 at public `main` commit
+  `12798e46f14d6cac14eaf7381bbb62cc5ee012db`; final-head Public Source
+  Package Preview `25750125305`, Public Linux Installed-User Smoke
+  `25750125270`, and Public Windows Installed-User Contract `25750125292` all
+  passed. No public release, tag, Marketplace, or proof admission mutation was
+  performed by PRs #93-#97.
 - The maintained public `develop` admission-matrix baseline for `1.3.9` now
   publishes `11051ac` through GitHub PR `#43` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.

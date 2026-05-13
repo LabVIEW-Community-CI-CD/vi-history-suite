@@ -1,7 +1,6 @@
 import {
   ViHistoryCommit,
   ViHistoryRepositorySupport,
-  ViHistorySurfaceCapabilities,
   ViHistoryViewModel
 } from '../services/viHistoryModel';
 import { HistoryPanelActionSummary } from './historyPanelTracker';
@@ -48,13 +47,6 @@ export function renderHistoryPanelHtml(
       : '<button data-testid="history-action-documentation" disabled>Open docs</button>';
   const benchmarkStatusButton = showBenchmarkStatus
     ? '<button data-testid="history-action-benchmark-status" data-command="openBenchmarkStatus">Open benchmark status</button>'
-    : '';
-  const capabilitySummary = renderCapabilitySummary(model);
-  const benchmarkStatusCapabilityHtml = capabilitySummary.benchmarkStatus
-    ? `<div data-testid="history-capability-benchmark-status"><strong>Benchmark status:</strong> ${capabilitySummary.benchmarkStatus}</div>`
-    : '';
-  const humanReviewCapabilityHtml = capabilitySummary.humanReviewSubmission
-    ? `<div data-testid="history-capability-human-review"><strong>Host review submission:</strong> ${capabilitySummary.humanReviewSubmission}</div>`
     : '';
   const reviewGuidanceBenchmarkStep = showBenchmarkStatus
     ? '<li data-testid="history-guidance-step">Use <code>Open benchmark status</code> on the canonical Windows 11 host when you need the retained Windows baseline plus the live or completed Linux benchmark state inside VS Code instead of background processes or shell logs.</li>'
@@ -234,6 +226,7 @@ export function renderHistoryPanelHtml(
       <strong>Compare preflight:</strong><br />
       <span data-testid="history-compare-preflight-summary" id="compare-preflight-summary">${escapeHtml(initialComparePreflightSummary)}</span><br />
       <span data-testid="history-compare-preflight-next-action" id="compare-preflight-next-action">${escapeHtml(effectiveComparePreflightState.nextAction)}</span>
+      <div data-testid="history-primary-instruction"><strong>Quick start:</strong> Select exactly two retained revisions, then choose <code>Compare</code>.</div>
       <details data-testid="history-compare-preflight-details" id="compare-preflight-details">
         <summary>Selected pair and runtime settings</summary>
         <div data-testid="history-compare-preflight-selected"><strong>Selected commit:</strong> <span id="compare-preflight-selected-value">Not selected yet.</span></div>
@@ -245,6 +238,22 @@ export function renderHistoryPanelHtml(
       <div data-testid="history-compare-preflight-cli-hint" id="compare-preflight-cli-hint">${escapeHtml(effectiveComparePreflightState.cliHint)}</div>
       <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" disabled>Compare</button>
     </div>
+    <table data-testid="history-table">
+      <thead>
+        <tr>
+          <th>Select</th>
+          <th>Commit</th>
+          <th>Date</th>
+          <th>Author</th>
+          <th>Subject</th>
+          <th>Adjacent pair</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
     <details class="packet" data-testid="history-review-packet">
       <summary>Review facts</summary>
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -263,14 +272,6 @@ export function renderHistoryPanelHtml(
       <div data-testid="history-meta-support"><strong>Repo support:</strong> ${escapeHtml(support?.supportLabel ?? 'Not classified in this build')}</div>
     </details>
     ${repositorySupportHtml}
-    <details class="packet" data-testid="history-surface-capabilities">
-      <summary>Surface capabilities</summary>
-      <div data-testid="history-capability-comparison"><strong>Pair selection:</strong> ${capabilitySummary.comparisonGeneration}</div>
-      <div data-testid="history-capability-open-compare"><strong>Retained pair review:</strong> ${capabilitySummary.openCompare}</div>
-      <div data-testid="history-capability-documentation"><strong>Documentation:</strong> ${capabilitySummary.documentation}</div>
-      ${benchmarkStatusCapabilityHtml}
-      ${humanReviewCapabilityHtml}
-    </details>
     <details class="limitations" data-testid="history-binary-limitations">
       <summary>Binary review limits</summary>
       <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; pairwise compare actions use retained LabVIEW comparison-report evidence and installed tooling instead of plain text diff.
@@ -298,22 +299,6 @@ export function renderHistoryPanelHtml(
       </div>
     </details>
     ${reviewSubmissionHtml}
-    <table data-testid="history-table">
-      <thead>
-        <tr>
-          <th>Select</th>
-          <th>Commit</th>
-          <th>Date</th>
-          <th>Author</th>
-          <th>Subject</th>
-          <th>Adjacent pair</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows}
-      </tbody>
-    </table>
     <script>
       const vscode = acquireVsCodeApi();
       let panelState = vscode.getState() ?? {};
@@ -821,56 +806,6 @@ function renderHistoryWindowSummary(model: ViHistoryViewModel): string {
   return historyWindow.mode === 'auto'
     ? `loaded ${historyWindow.loadedCommitCount} commits under auto mode; total history count was unavailable`
     : `loaded ${historyWindow.loadedCommitCount} commits under capped mode; total history count was unavailable`;
-}
-
-function renderCapabilitySummary(
-  model: ViHistoryViewModel
-): {
-  comparisonGeneration: string;
-  openCompare: string;
-  documentation: string;
-  benchmarkStatus?: string;
-  humanReviewSubmission?: string;
-} {
-  const capabilities = model.surfaceCapabilities ?? {};
-  const support = model.repositorySupport;
-  const coreReviewBlocked = support?.allowCoreReviewActions === false;
-  const benchmarkBlocked = support?.allowBenchmarkStatus === false;
-  const humanReviewBlocked = support?.allowHumanReviewSubmission === false;
-  return {
-    comparisonGeneration:
-      coreReviewBlocked
-        ? 'Blocked by the current repository support policy'
-      : capabilities.comparisonGenerationAvailable === false
-        ? 'Unavailable in this build'
-        : 'Available for any retained review window with at least two commits; selecting two revisions enables Compare for the explicit selected/base pair',
-    openCompare:
-      coreReviewBlocked
-        ? 'Blocked by the current repository support policy'
-      : capabilities.retainedComparisonOpenAvailable === false
-        ? 'Retained comparison opening is unavailable in this build'
-        : 'Retained comparison evidence opens through the dedicated compare preflight workflow when available; no separate compare button is exposed on commit rows',
-    documentation:
-      capabilities.documentationAvailable === false
-        ? 'Unavailable in this build'
-        : 'Available in this build',
-    benchmarkStatus:
-      capabilities.benchmarkStatusAvailable === false
-        ? benchmarkBlocked
-          ? support?.tier === 'unsupported'
-            ? 'Blocked outside the governed repo family'
-            : 'Not yet governed for this repo family'
-          : undefined
-        : "Available only on Sergio Velderrain's canonical Windows 11 host machine",
-    humanReviewSubmission:
-      capabilities.humanReviewSubmissionAvailable === false
-        ? humanReviewBlocked
-          ? support?.tier === 'unsupported'
-            ? 'Blocked outside the governed repo family'
-            : 'Not yet governed for this repo family'
-          : undefined
-        : "Available only on Sergio Velderrain's canonical Windows 11 host machine"
-  };
 }
 
 function renderRepositorySupportSection(

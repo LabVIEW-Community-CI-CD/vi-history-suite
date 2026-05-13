@@ -2373,7 +2373,7 @@ function resolveExactWindowsHostRuntime(
     return {
       blockedReason: 'labview-exe-not-found',
       notes: [
-        `No supported LabVIEW ${requestedVersion} ${bitness} runtime was located for report generation.`,
+        `No supported LabVIEW ${requestedVersion} ${bitness} (${describeBitness(bitness)}) runtime was located for report generation.`,
         ...describeDetectedWindowsHostAlternativeBitness({
           candidates,
           requestedVersion,
@@ -2399,37 +2399,13 @@ function resolveExactWindowsHostRuntime(
     };
   }
 
-  let labviewCli = matchingLabviewCliCandidates[0];
-  const notes: string[] = [];
-
-  if (!labviewCli && bitness === 'x64') {
-    const canonicalX86FallbackCandidates = candidates.filter(
-      (candidate) =>
-        candidate.kind === 'labview-cli' && candidate.exists && candidate.bitness === 'x86'
-    );
-
-    if (canonicalX86FallbackCandidates.length > 1) {
-      return {
-        blockedReason: 'labview-cli-ambiguous-for-bitness',
-        notes: [
-          `Installed compare found multiple canonical x86 LabVIEWCLI fallback surfaces while resolving requested LabVIEW ${requestedVersion} x64 execution, so local runtime preflight could not resolve one exact CLI path.`
-        ]
-      };
-    }
-
-    labviewCli = canonicalX86FallbackCandidates[0];
-    if (labviewCli) {
-      notes.push(
-        `Installed compare accepted the canonical x86 LabVIEWCLI surface for requested LabVIEW ${requestedVersion} x64 execution because no x64 LabVIEWCLI surface was present on the host.`
-      );
-    }
-  }
+  const labviewCli = matchingLabviewCliCandidates[0];
 
   if (!labviewCli) {
     return {
       blockedReason: 'labview-cli-not-found-for-bitness',
       notes: [
-        `No matching LabVIEWCLI ${bitness} surface was located for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
+        `No matching LabVIEWCLI ${bitness} (${describeBitness(bitness)}) surface was located for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
         ...describeDetectedWindowsHostAlternativeBitness({
           candidates,
           requestedVersion,
@@ -2444,7 +2420,7 @@ function resolveExactWindowsHostRuntime(
   return {
     labviewExe,
     labviewCli,
-    notes: notes.length > 0 ? notes : undefined
+    notes: undefined
   };
 }
 
@@ -2470,13 +2446,17 @@ function describeDetectedWindowsHostAlternativeBitness(options: {
 
   const surface =
     options.kind === 'labview-exe'
-      ? `LabVIEW ${options.requestedVersion} ${alternativeBitness} runtime`
-      : `LabVIEWCLI ${alternativeBitness} surface`;
+      ? `LabVIEW ${options.requestedVersion} ${alternativeBitness} (${describeBitness(alternativeBitness)}) runtime`
+      : `LabVIEWCLI ${alternativeBitness} (${describeBitness(alternativeBitness)}) surface`;
   const paths = alternativeCandidates.map((candidate) => candidate.path).join('; ');
 
   return [
-    `Detected installed ${surface} at ${paths}, but VI History Suite will not auto-switch from selected ${options.requestedBitness} because bitness-specific dependencies may differ.`
+    `Detected installed ${surface} at ${paths}, but VI History Suite will not auto-switch from selected ${options.requestedBitness} (${describeBitness(options.requestedBitness)}) to ${alternativeBitness} (${describeBitness(alternativeBitness)}) because bitness-specific dependencies may differ.`
   ];
+}
+
+function describeBitness(bitness: RuntimeBitness): string {
+  return bitness === 'x86' ? '32-bit' : '64-bit';
 }
 
 function matchesRequestedLabviewVersion(

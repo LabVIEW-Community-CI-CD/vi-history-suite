@@ -263,7 +263,7 @@
   "publicGitHub": {
     "role": "downstream-public-distribution",
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "mainCommit": "fad5193f7aa0b9f543687eebf607cf2e94956afb",
+    "mainCommit": "12798e46f14d6cac14eaf7381bbb62cc5ee012db",
     "tag": "v1.3.16",
     "tagRef": "refs/tags/v1.3.16",
     "tagObjectType": "tag",
@@ -288,9 +288,9 @@
       "safeToPublish": false
     },
     "sourcePublication": {
-      "status": "public-main-post-v1.3.16-first-run-guide-adoption; exact-v1.3.16-tag-release-and-marketplace-retained",
-      "currentMainCommit": "fad5193f7aa0b9f543687eebf607cf2e94956afb",
-      "currentMainShortCommit": "fad5193f",
+      "status": "public-main-post-v1.3.16-troubleshooting-and-ux-adoption; exact-v1.3.16-tag-release-and-marketplace-retained",
+      "currentMainCommit": "12798e46f14d6cac14eaf7381bbb62cc5ee012db",
+      "currentMainShortCommit": "12798e4",
       "exactReleaseRetainedCommit": "fb0ef2b5342c230d5372e61859dd0fca3dbc0b6a",
       "priorCommunityValidationIntakeCommit": "b56fde158fe151a736fe72c833efdfd0874d8537",
       "priorCommunityValidationIntakePullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/45",
@@ -316,7 +316,7 @@
           "conclusion": "success"
         }
       ],
-      "latestPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/88",
+      "latestPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/97",
       "latestWindowsDockerDesktopIntakePromotionCloseout": {
         "status": "published-and-verified",
         "pullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/68",
@@ -566,6 +566,70 @@
         ],
         "marketplaceMutation": "not-performed",
         "releaseMutation": "not-performed"
+      },
+      "latestInstalledUserTroubleshootingAndUxAdoption": {
+        "status": "published-and-verified",
+        "publicPullRequests": [
+          "https://github.com/svelderrainruiz/vi-history-suite/pull/93",
+          "https://github.com/svelderrainruiz/vi-history-suite/pull/94",
+          "https://github.com/svelderrainruiz/vi-history-suite/pull/95",
+          "https://github.com/svelderrainruiz/vi-history-suite/pull/96",
+          "https://github.com/svelderrainruiz/vi-history-suite/pull/97"
+        ],
+        "issues": [
+          "https://github.com/svelderrainruiz/vi-history-suite/issues/77",
+          "https://github.com/svelderrainruiz/vi-history-suite/issues/80",
+          "https://github.com/svelderrainruiz/vi-history-suite/issues/74",
+          "https://github.com/svelderrainruiz/vi-history-suite/issues/72",
+          "https://github.com/svelderrainruiz/vi-history-suite/issues/73"
+        ],
+        "publicMainCommit": "12798e46f14d6cac14eaf7381bbb62cc5ee012db",
+        "publicMainShortCommit": "12798e4",
+        "mergedAt": "2026-05-12T17:11:17Z",
+        "promotedFiles": [
+          "README.md",
+          "FIRST-RUN.md",
+          "INSTALL.md",
+          "SUPPORT.md",
+          "TROUBLESHOOTING.md",
+          "resources/bundled-docs/pages/install-and-release.html",
+          "src/reporting/comparisonRuntimeLocator.ts",
+          "src/tooling/localRuntimeSettingsCli.ts",
+          "src/ui/historyPanel.ts",
+          "tests/unit/comparisonRuntimeLocator.test.ts",
+          "tests/unit/historyPanel.test.ts",
+          "tests/unit/localRuntimeSettingsCli.test.ts",
+          "tests/unit/openViHistoryCommand.test.ts",
+          "tests/unit/publicRepoPackageSurface.test.ts"
+        ],
+        "postMergeChecks": [
+          {
+            "workflowName": "Public Source Package Preview",
+            "runId": 25750125305,
+            "jobId": 75623921597,
+            "conclusion": "success",
+            "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+          },
+          {
+            "workflowName": "Public Linux Installed-User Smoke",
+            "runId": 25750125270,
+            "jobId": 75623921722,
+            "conclusion": "success",
+            "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+          },
+          {
+            "workflowName": "Public Windows Installed-User Contract",
+            "runId": 25750125292,
+            "jobId": 75623921499,
+            "conclusion": "success",
+            "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+          }
+        ],
+        "marketplaceMutation": "not-performed",
+        "releaseMutation": "not-performed",
+        "proofAdmissionMutation": "not-performed",
+        "releaseEvidenceMutation": "not-performed",
+        "authorityAdjustment": "GitLab adoption keeps selected LabVIEW bitness fail-closed; detected installed alternatives are reported without silently switching runtime bitness."
       }
     }
   },

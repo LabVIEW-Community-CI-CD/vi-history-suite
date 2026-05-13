@@ -88,6 +88,7 @@ describe('public GitHub source promotion', () => {
         'AGENTS.md',
         'FIRST-RUN.md',
         'README.md',
+        'TROUBLESHOOTING.md',
         'package.json',
         'acceptance',
         'releases'
@@ -96,6 +97,7 @@ describe('public GitHub source promotion', () => {
     expect(plan.templateCopyPaths).toContain('README.md');
     expect(plan.templateCopyPaths).toContain('AGENTS.md');
     expect(plan.templateCopyPaths).toContain('FIRST-RUN.md');
+    expect(plan.templateCopyPaths).toContain('TROUBLESHOOTING.md');
     expect(plan.templateCopyPaths).toContain(
       '.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml'
     );
@@ -111,10 +113,16 @@ describe('public GitHub source promotion', () => {
     expect(plan.authorityCopyPaths).toContain(
       '.github/workflows/public-windows-installed-user-contract.yml'
     );
+    expect(plan.authorityCopyPaths).toContain('tests/unit/comparisonRuntimeLocator.test.ts');
+    expect(plan.authorityCopyPaths).toContain('tests/unit/historyPanel.test.ts');
+    expect(plan.authorityCopyPaths).toContain('tests/unit/localRuntimeSettingsCli.test.ts');
     expect(plan.publicDesignContractTests).toEqual([
       'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
+      'tests/unit/comparisonRuntimeLocator.test.ts',
       'tests/unit/comparisonReportPreflight.test.ts',
       'tests/unit/comparisonReportRuntimeExecution.test.ts',
+      'tests/unit/historyPanel.test.ts',
+      'tests/unit/localRuntimeSettingsCli.test.ts',
       'tests/unit/preparePublicRepoCloneScript.test.ts',
       'tests/unit/preparePublicTestFixtureScript.test.ts',
       'tests/unit/publicRepoPackageSurface.test.ts',
@@ -195,7 +203,7 @@ describe('public GitHub source promotion', () => {
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/historyPanel.test.ts tests/unit/localRuntimeSettingsCli.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts.package).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -227,6 +235,7 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('FIRST-RUN.md');
       expect(expectedFiles).toContain('INSTALL.md');
       expect(expectedFiles).toContain('SUPPORT.md');
+      expect(expectedFiles).toContain('TROUBLESHOOTING.md');
       expect(expectedFiles).toContain('CONTRIBUTING.md');
       expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/community-validation-windows-labview.yml');
       expect(expectedFiles).toContain('.github/ISSUE_TEMPLATE/validation-success.yml');
@@ -245,8 +254,11 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('scripts/preparePublicTestFixture.js');
       expect(expectedFiles).toContain('scripts/runLinuxIntegrationHost.js');
       expect(expectedFiles).toContain('tests/unit/bootstrapLinuxVsCodeHost.test.ts');
+      expect(expectedFiles).toContain('tests/unit/comparisonRuntimeLocator.test.ts');
       expect(expectedFiles).toContain('tests/unit/comparisonReportPreflight.test.ts');
       expect(expectedFiles).toContain('tests/unit/comparisonReportRuntimeExecution.test.ts');
+      expect(expectedFiles).toContain('tests/unit/historyPanel.test.ts');
+      expect(expectedFiles).toContain('tests/unit/localRuntimeSettingsCli.test.ts');
       expect(expectedFiles).toContain('tests/unit/preparePublicRepoCloneScript.test.ts');
       expect(expectedFiles).toContain('tests/unit/preparePublicTestFixtureScript.test.ts');
       expect(expectedFiles).toContain('tests/unit/publicRepoPackageSurface.test.ts');

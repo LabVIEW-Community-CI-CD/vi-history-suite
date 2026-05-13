@@ -374,9 +374,11 @@ Authority release facts:
   and the exact assets match the retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/`
 - current public GitHub source publication: public `main` now publishes
-  `fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91 adopted the
-  first-run local LabVIEW guide following public PR #90's intake-surface
-  normalization and public PR #89's installed-user support matrix adoption; the
+  `12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97 adopted
+  the Windows proof handoff, installed-user troubleshooting guide, runtime
+  bitness UX, history-panel decluttering, and focused UX tests following public
+  PR #91's first-run local LabVIEW guide, public PR #90's intake-surface
+  normalization, and public PR #89's installed-user support matrix adoption; the
   exact `v1.3.16` source remains retained at
   `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88, and public
   PR #69, PR #68, and PR #60 remain retained historical public-facade evidence
