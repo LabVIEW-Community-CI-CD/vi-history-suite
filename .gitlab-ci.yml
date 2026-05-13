@@ -575,7 +575,9 @@ vagrant_windows_vsix_acceptance:
   script:
     - set -euo pipefail
     - rm -f ./*.vsix
-    - mkdir -p vagrant/shared vagrant/evidence "${VAGRANT_HOME}" "${VIHS_VAGRANT_BOX_CACHE_HOME}" "$(dirname "${VIHS_VAGRANT_BOX_FILE}")" "${VIHS_VAGRANT_BOX_WORKDIR}" "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
+    - mkdir -p vagrant/shared vagrant/evidence
+    - node scripts/doctorVagrantStorage.js --active-root "${VIHS_VAGRANT_STORAGE_ROOT}" --standby-root /run/media/sergio/Data1/vihs-vagrant --archive-root "/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence" --evidence-dir vagrant/evidence --fail-on-active-drift
+    - mkdir -p "${VAGRANT_HOME}" "${VIHS_VAGRANT_BOX_CACHE_HOME}" "$(dirname "${VIHS_VAGRANT_BOX_FILE}")" "${VIHS_VAGRANT_BOX_WORKDIR}" "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
     - bash scripts/vagrant/prepare-vagrant-home.sh
     - VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
     - bash scripts/vagrant/cleanup-disposable-ci-vm.sh

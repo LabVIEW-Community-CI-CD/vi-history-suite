@@ -22,6 +22,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const acceptance = readText('vagrant/provision/run-acceptance.ps1');
     const coldPrep = readText('vagrant/provision/prepare-cold-labview.ps1');
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
+    const storageDoctor = readText('scripts/doctorVagrantStorage.js');
     const prepareHome = readText('scripts/vagrant/prepare-vagrant-home.sh');
     const refreshBox = readText('scripts/vagrant/refresh-golden-box.sh');
     const cleanupCiVm = readText('scripts/vagrant/cleanup-disposable-ci-vm.sh');
@@ -47,6 +48,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work');
     expect(gitlabCi).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"');
+    expect(gitlabCi).toContain('mkdir -p vagrant/shared vagrant/evidence');
+    expect(gitlabCi).toContain('node scripts/doctorVagrantStorage.js --active-root "${VIHS_VAGRANT_STORAGE_ROOT}"');
+    expect(gitlabCi).toContain('--standby-root /run/media/sergio/Data1/vihs-vagrant');
+    expect(gitlabCi).toContain('--archive-root "/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence"');
+    expect(gitlabCi).toContain('--evidence-dir vagrant/evidence --fail-on-active-drift');
     expect(gitlabCi).toContain('VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"');
     expect(gitlabCi).toContain('bash scripts/vagrant/doctor-vagrant-host.sh');
     expect(gitlabCi).toContain('bash scripts/vagrant/refresh-golden-box.sh');
@@ -136,6 +142,15 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostDoctor).toContain('Local Vagrant state points at');
     expect(hostDoctor).toContain('remove $VAGRANT_DOTFILE_ROOT before booting CI');
 
+    expect(storageDoctor).toContain('vi-history-suite/vagrant-storage-doctor@v1');
+    expect(storageDoctor).toContain('/run/media/sergio/Data/vihs-vagrant');
+    expect(storageDoctor).toContain('/run/media/sergio/Data1/vihs-vagrant');
+    expect(storageDoctor).toContain('/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence');
+    expect(storageDoctor).toContain('vagrant-storage-doctor.json');
+    expect(storageDoctor).toContain('vagrant-storage-doctor.md');
+    expect(storageDoctor).toContain('Vagrant active storage drift detected');
+    expect(storageDoctor).toContain('Vagrant boxes symlink points at');
+
     expect(prepareHome).toContain('prepare-vagrant-home');
     expect(prepareHome).toContain('VAGRANT_HOME supports chmod');
     expect(prepareHome).toContain('VIHS_VAGRANT_BOX_CACHE_HOME');
@@ -176,8 +191,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(githubWorkflow).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME');
     expect(githubWorkflow).toContain('VIHS_VAGRANT_CI_VM_NAME');
     expect(githubWorkflow).toContain('VIHS_VAGRANT_STORAGE_ROOT');
+    expect(githubWorkflow).toContain('VIHS_VAGRANT_STANDBY_ROOT');
+    expect(githubWorkflow).toContain('VIHS_EVIDENCE_ARCHIVE_ROOT');
     expect(githubWorkflow).toContain('VAGRANT_HOME');
     expect(githubWorkflow).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER');
+    expect(githubWorkflow).toContain('node scripts/doctorVagrantStorage.js');
+    expect(githubWorkflow).toContain('--fail-on-active-drift');
     expect(githubWorkflow).toContain('VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"');
     expect(githubWorkflow).toContain('VAGRANT_DOTFILE_PATH: .vagrant-ci');
     expect(githubWorkflow).toContain('bash scripts/vagrant/cleanup-disposable-ci-vm.sh');
@@ -201,6 +220,10 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vihs-win11-labview2026-golden');
     expect(laneDoc).toContain('vihs-ci-win11');
     expect(laneDoc).toContain('/run/media/sergio/Data/vihs-vagrant');
+    expect(laneDoc).toContain('/run/media/sergio/Data1/vihs-vagrant');
+    expect(laneDoc).toContain('/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence');
+    expect(laneDoc).toContain('scripts/doctorVagrantStorage.js');
+    expect(laneDoc).toContain('vagrant-storage-doctor.json');
     expect(laneDoc).toContain('preserves the');
     expect(laneDoc).toContain('exported golden VM UEFI variable store');
     expect(laneDoc).toContain('vagrant/.vagrant');
@@ -228,6 +251,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostedGovernanceDoc).toContain('vagrant-windows-vsix-acceptance');
     expect(hostedGovernanceDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(hostedGovernanceDoc).toContain('resource_group: vihs-windows-vagrant');
+    expect(hostedGovernanceDoc).toContain('scripts/doctorVagrantStorage.js');
+    expect(hostedGovernanceDoc).toContain('vagrant-storage-doctor.json');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/doctor-vagrant-host.sh');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/refresh-golden-box.sh');
     expect(hostedGovernanceDoc).toContain('quarantines that directory under the governed machine');
@@ -250,11 +275,15 @@ describe('Vagrant Windows acceptance runner lane', () => {
           resourceGroup: 'vihs-windows-vagrant',
           vagrantDotfilePath: '.vagrant-ci',
           storageRoot: '/run/media/sergio/Data/vihs-vagrant',
+          standbyStorageRoot: '/run/media/sergio/Data1/vihs-vagrant',
+          evidenceVaultRoot: '/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence',
           vagrantHome: '/home/sergio/.vagrant.d',
           vagrantBoxCacheHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
           boxFile: '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box',
           boxWorkdir: '/run/media/sergio/Data/vihs-vagrant/box-work',
           virtualBoxMachineFolder: '/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs',
+          repoOwnedStorageDoctorScript: 'scripts/doctorVagrantStorage.js',
+          repoOwnedStorageDoctorPackageScript: 'npm run vagrant:storage:doctor',
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedPrepareHomeScript: 'scripts/vagrant/prepare-vagrant-home.sh',
@@ -293,6 +322,10 @@ describe('Vagrant Windows acceptance runner lane', () => {
     ).toContain('no-stale-inaccessible-disposable-registry-entry');
     expect(
       hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance.operatorModel
+        .storageDoctorChecks
+    ).toContain('active-root-mounted');
+    expect(
+      hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance.operatorModel
         .cleanupChecks
     ).toContain('unregister-stale-inaccessible-disposable-registry-entry');
     expect(hostedGovernanceJson.authorityGitLab.jobs.vagrant_windows_vsix_acceptance).toEqual(
@@ -303,6 +336,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
         requiredNeeds: [],
         dagStart: true,
         evidenceRoot: 'vagrant/evidence/',
+        storageDoctorScript: 'scripts/doctorVagrantStorage.js',
+        storageDoctorPackageScript: 'npm run vagrant:storage:doctor',
         assertionPackageScript: 'npm run vagrant:acceptance:assert',
         assertionReceiptRoot: 'vagrant/evidence/assertion'
       })
@@ -322,6 +357,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     );
     expect(packageManifest.scripts?.['vagrant:ci:cleanup']).toBe(
       'bash scripts/vagrant/cleanup-disposable-ci-vm.sh'
+    );
+    expect(packageManifest.scripts?.['vagrant:storage:doctor']).toBe(
+      'node scripts/doctorVagrantStorage.js'
     );
     expect(packageManifest.scripts?.['vagrant:golden:refresh']).toBe(
       'bash scripts/vagrant/refresh-golden-box.sh'

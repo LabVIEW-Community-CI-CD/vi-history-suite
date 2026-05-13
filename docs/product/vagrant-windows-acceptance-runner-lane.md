@@ -30,6 +30,34 @@ Governed registration contract:
 - maximum timeout: `7200`
 - large-drive storage root: `/run/media/sergio/Data/vihs-vagrant`
 
+## Runner Storage Topology
+
+The lane uses a fixed three-drive topology:
+
+- active Vagrant execution root: `/run/media/sergio/Data/vihs-vagrant`
+- standby Vagrant mirror root: `/run/media/sergio/Data1/vihs-vagrant`
+- local evidence vault:
+  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
+
+Active Vagrant and VirtualBox execution stays on `Data`. `Data1` is a manual
+standby/mirror and is not an automatic CI fallback. The Seagate drive is for
+retained evidence packets, VSIX snapshots, and release/archive bundles; it is
+not used as an active VM execution root. Operator-controlled evidence copies
+can use `scripts/local/archiveReleaseEvidence.sh --source <evidence-dir>
+--release <version>`, which copies evidence into the Seagate vault and writes
+an archive manifest plus SHA-256 list without deleting or moving the source.
+
+The repo-owned storage doctor is `scripts/doctorVagrantStorage.js`, exposed as
+`npm run vagrant:storage:doctor`. It runs before the job creates Data-drive
+Vagrant directories and retains `vagrant/evidence/vagrant-storage-doctor.json`
+plus `vagrant/evidence/vagrant-storage-doctor.md`. The doctor fails closed for
+active storage drift: missing or unmounted active root, non-writable active
+root, missing active core assets, or a `/home/sergio/.vagrant.d/boxes` symlink
+that points anywhere other than
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`. Standby and archive
+availability are reported as warnings unless the doctor is explicitly run with
+stricter flags.
+
 Registration uses GitLab's current runner creation workflow: create the runner
 configuration first, receive a runner authentication token with the `glrt-`
 prefix, then register the local runner manager with that token. Tags, locked
@@ -82,6 +110,9 @@ Official GitLab references:
 - box export work root: `/run/media/sergio/Data/vihs-vagrant/box-work`
 - VirtualBox default machine folder:
   `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs`
+- standby Vagrant mirror root: `/run/media/sergio/Data1/vihs-vagrant`
+- evidence vault root:
+  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
 - default LabVIEW VI Server startup timeout: `300` seconds after the
@@ -91,6 +122,7 @@ Official GitLab references:
   exported golden VM UEFI variable store so BitLocker sees the same measured
   boot state in the disposable clone
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
+- storage doctor script: `scripts/doctorVagrantStorage.js`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
 - Vagrant home prepare script: `scripts/vagrant/prepare-vagrant-home.sh`
 - disposable CI VM cleanup script:
@@ -104,14 +136,17 @@ must not run acceptance directly on the golden VM. The GitLab job uses the
 registered Vagrant box and names the imported VirtualBox VM `vihs-ci-win11` so
 golden-source and CI-runtime state remain distinct.
 
-CI first runs `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to
-touch the golden VM, fails if the disposable CI VM is running, deletes only a
-stopped VM named `vihs-ci-win11`, unregisters stale inaccessible disposable
-registry entries that still point at the governed CI VM folder, retries
-orphaned disposable VM directory removal, quarantines that directory under the
-governed machine folder when NTFS/FUSE leaves the original directory name
-present after retries, and removes the active `.vagrant-ci` state. The job then
-runs Vagrant with
+CI first creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
+then runs `scripts/doctorVagrantStorage.js` so missing mounts and wrong
+Vagrant box-cache links are reported as storage drift before any Data-drive
+directories are created. It then runs
+`scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to touch the
+golden VM, fails if the disposable CI VM is running, deletes only a stopped VM
+named `vihs-ci-win11`, unregisters stale inaccessible disposable registry
+entries that still point at the governed CI VM folder, retries orphaned
+disposable VM directory removal, quarantines that directory under the governed
+machine folder when NTFS/FUSE leaves the original directory name present after
+retries, and removes the active `.vagrant-ci` state. The job then runs Vagrant with
 `VAGRANT_DOTFILE_PATH=.vagrant-ci` and
 `VAGRANT_HOME=/home/sergio/.vagrant.d` so Vagrant private-key chmod remains on
 the host ext4 filesystem. `scripts/vagrant/prepare-vagrant-home.sh` links
@@ -161,6 +196,8 @@ The assertion requires the manifest and harness report to prove LabVIEW `2026` `
 
 The job retains `vagrant/evidence/`, including:
 
+- `vagrant-storage-doctor.json`
+- `vagrant-storage-doctor.md`
 - `vagrant-host-doctor.log`
 - `refresh-golden-box.log` when a manual refresh is requested
 - `labview-cold-prep.log`
@@ -176,6 +213,11 @@ The job retains `vagrant/evidence/`, including:
 
 The lane fails closed when:
 
+- the active storage root `/run/media/sergio/Data/vihs-vagrant` is missing,
+  unmounted, or not writable
+- the active storage root is missing the governed Windows box cache assets
+- `/home/sergio/.vagrant.d/boxes` points at any target other than
+  `/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`
 - `gitlab-runner`, Vagrant, VirtualBox, Docker, Node, npm, or `vagrant-reload`
   are missing from the host contract
 - the registered `vihs/win11-labview2026` box is missing
