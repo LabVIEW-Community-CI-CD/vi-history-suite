@@ -16,6 +16,8 @@ name: Vagrant VSIX Acceptance
 #   VIHS_VAGRANT_CI_VM_NAME – disposable Vagrant-imported VM name
 #     (e.g. "vihs-ci-win11")
 #   VIHS_VAGRANT_STORAGE_ROOT – large local filesystem root for Vagrant state
+#   VIHS_VAGRANT_STANDBY_ROOT – optional manual standby mirror root
+#   VIHS_EVIDENCE_ARCHIVE_ROOT – optional long-term evidence archive root
 #   VIHS_VAGRANT_REFRESH_GOLDEN_BOX – set to "true" to refresh the box
 #
 # No secrets required: LabVIEW and VS Code are already inside the VM box.
@@ -134,6 +136,8 @@ jobs:
       VIHS_VAGRANT_GOLDEN_VM_NAME: ${{ vars.VIHS_VAGRANT_GOLDEN_VM_NAME || vars.VIHS_VIRTUALBOX_VM_NAME || 'vihs-win11-labview2026-golden' }}
       VIHS_VAGRANT_CI_VM_NAME: ${{ vars.VIHS_VAGRANT_CI_VM_NAME || 'vihs-ci-win11' }}
       VIHS_VAGRANT_STORAGE_ROOT: ${{ vars.VIHS_VAGRANT_STORAGE_ROOT || '/run/media/sergio/Data/vihs-vagrant' }}
+      VIHS_VAGRANT_STANDBY_ROOT: ${{ vars.VIHS_VAGRANT_STANDBY_ROOT || '/run/media/sergio/Data1/vihs-vagrant' }}
+      VIHS_EVIDENCE_ARCHIVE_ROOT: ${{ vars.VIHS_EVIDENCE_ARCHIVE_ROOT || '/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence' }}
       VAGRANT_HOME: ${{ vars.VAGRANT_HOME || '/home/sergio/.vagrant.d' }}
       VIHS_VAGRANT_BOX_CACHE_HOME: ${{ vars.VIHS_VAGRANT_BOX_CACHE_HOME || '/run/media/sergio/Data/vihs-vagrant/vagrant-home' }}
       VIHS_VAGRANT_BOX_FILE: ${{ vars.VIHS_VAGRANT_BOX_FILE || '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box' }}
@@ -167,6 +171,15 @@ jobs:
       - name: Prepare evidence directory
         run: |
           mkdir -p vagrant/evidence
+
+      - name: Verify Vagrant storage topology
+        run: |
+          node scripts/doctorVagrantStorage.js \
+            --active-root "${VIHS_VAGRANT_STORAGE_ROOT}" \
+            --standby-root "${VIHS_VAGRANT_STANDBY_ROOT}" \
+            --archive-root "${VIHS_EVIDENCE_ARCHIVE_ROOT}" \
+            --evidence-dir vagrant/evidence \
+            --fail-on-active-drift
 
       - name: Prepare large-drive Vagrant storage
         run: |

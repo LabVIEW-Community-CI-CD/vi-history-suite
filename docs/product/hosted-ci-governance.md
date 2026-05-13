@@ -209,11 +209,21 @@ Runner operator hardening:
   `/home/sergio/.vagrant.d` so Vagrant private keys stay on a chmod-capable
   ext4 filesystem, while `/run/media/sergio/Data/vihs-vagrant` remains the
   large-drive storage root for box payload cache, export work, and the
-  VirtualBox default machine folder; runner creation uses the
+  VirtualBox default machine folder; `/run/media/sergio/Data1/vihs-vagrant`
+  remains a manual standby mirror, and
+  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
+  remains the local evidence vault rather than an active VM execution root;
+  runner creation uses the
   `POST /user/runners` API to set
   tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
   registers the local shell runner manager with the returned `glrt-`
-  authentication token; the repo-owned disposable cleanup surface
+  authentication token; the repo-owned storage doctor
+  `scripts/doctorVagrantStorage.js` runs before Data-drive Vagrant directory
+  creation and retains `vagrant-storage-doctor.json` plus
+  `vagrant-storage-doctor.md`, failing closed when the active storage root is
+  missing, unmounted, not writable, missing the governed Windows box cache, or
+  when `/home/sergio/.vagrant.d/boxes` points anywhere except the active
+  large-drive box cache; the repo-owned disposable cleanup surface
   `scripts/vagrant/prepare-vagrant-home.sh` links
   `/home/sergio/.vagrant.d/boxes` to the large-drive box cache before Vagrant
   runs; `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the
@@ -316,7 +326,8 @@ Job ownership:
   `linux,x64,virtualbox,vagrant,private-release`, serializes with
   `resource_group: vihs-windows-vagrant`, declares `needs: []` so it can start
   independently of the separate Linux assurance runner lane, packages the VSIX,
-  stages it under `vagrant/shared/`, optionally refreshes the local box when
+  stages it under `vagrant/shared/`, runs the storage doctor before creating
+  Data-drive Vagrant directories, optionally refreshes the local box when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
   disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
   autologon creates the interactive LabVIEW desktop session while clone-local
