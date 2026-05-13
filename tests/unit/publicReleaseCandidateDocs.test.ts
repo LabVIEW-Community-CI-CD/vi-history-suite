@@ -27,10 +27,10 @@ describe('public release candidate control surface', () => {
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.publishedPublicSource).toMatchObject({
       publishedCommit: 'f679023',
-      currentPublicSourceHead: 'fad5193f',
-      currentPublicSourceHeadSha: 'fad5193f7aa0b9f543687eebf607cf2e94956afb',
+      currentPublicSourceHead: '12798e4',
+      currentPublicSourceHeadSha: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
       status:
-        'published-main-post-v1.3.16-first-run-guide-adoption; exact-v1.3.16-remains-tagged-and-released',
+        'published-main-post-v1.3.16-troubleshooting-and-ux-adoption; exact-v1.3.16-remains-tagged-and-released',
       latestPublicExactReleaseCloseout: {
         status: 'published-and-verified',
         pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/88',
@@ -71,6 +71,14 @@ describe('public release candidate control surface', () => {
       issue: 'https://github.com/svelderrainruiz/vi-history-suite/issues/79',
       marketplaceMutation: 'not-performed',
       releaseMutation: 'not-performed'
+    });
+    expect(candidate.publishedPublicSource.latestInstalledUserTroubleshootingAndUxAdoption).toMatchObject({
+      status: 'published-and-verified',
+      publicMainCommit: '12798e46f14d6cac14eaf7381bbb62cc5ee012db',
+      publicMainShortCommit: '12798e4',
+      marketplaceMutation: 'not-performed',
+      releaseMutation: 'not-performed',
+      proofAdmissionMutation: 'not-performed'
     });
     expect(candidate.publishedPublicSource.latestPublicSourceAndTagHandoff).toMatchObject({
       pullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/69',
@@ -177,14 +185,16 @@ describe('public release candidate control surface', () => {
       '`retain-v1.3.16-marketplace-closeout-on-protected-develop`'
     );
     expect(candidateMarkdown).toContain('Published exact public source commit: `f679023`');
-    expect(candidateMarkdown).toContain('Current public source head: `fad5193f`');
+    expect(candidateMarkdown).toContain('Current public source head: `12798e4`');
     expect(candidateMarkdown).toContain('GitHub release id: `320824958`');
+    expect(candidateMarkdown).toContain('public PRs #93, #94, #95, #96, and #97');
     expect(candidateMarkdown).toContain('PR #89');
     expect(candidateMarkdown).toContain('PR #90');
     expect(candidateMarkdown).toContain('PR #91');
     expect(candidateMarkdown).toContain('25705189099');
     expect(candidateMarkdown).toContain('25705500127');
     expect(candidateMarkdown).toContain('25730733192');
+    expect(candidateMarkdown).toContain('25750125305');
     expect(candidateMarkdown).toContain('PR #88');
     expect(candidateMarkdown).toContain('`f6ca389269dac140dc416d76bb4c2ac142664567`');
     expect(candidateMarkdown).toContain('VS Code Marketplace version: `1.3.16`');

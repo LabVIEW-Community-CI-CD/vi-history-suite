@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `fad5193f`
+Current published public GitHub source HEAD: `12798e4`
 
 ## Publications
 
@@ -55,6 +55,7 @@ Current published public GitHub source HEAD: `fad5193f`
 | Public source post-v1.3.16 installed-user support matrix adoption | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `90b6e600` | `README.md`; `INSTALL.md`; `SUPPORT.md`; `resources/bundled-docs/pages/install-and-release.html`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
 | Public source v1.3.16 intake surface normalization | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `fe4b1589` | `.github/ISSUE_TEMPLATE/`; `.github/labels.yml`; `CHANGELOG.md`; `SUPPORT.md`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
 | Public source post-v1.3.16 first-run local LabVIEW guide adoption | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `fad5193f` | `FIRST-RUN.md`; `README.md`; `INSTALL.md`; `SUPPORT.md`; `resources/bundled-docs/pages/install-and-release.html`; `tests/unit/publicRepoPackageSurface.test.ts`; `docs/product/public-github-source-publication-ledger.md` |
+| Public source post-v1.3.16 troubleshooting and UX adoption | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-05-12` | `12798e4` | `README.md`; `FIRST-RUN.md`; `INSTALL.md`; `SUPPORT.md`; `TROUBLESHOOTING.md`; `src/reporting/comparisonRuntimeLocator.ts`; `src/tooling/localRuntimeSettingsCli.ts`; `src/ui/historyPanel.ts`; `tests/unit/`; `docs/product/public-github-source-publication-ledger.md` |
 
 Historical fixture-docs closeout: public PR #60 remains retained at `ce6dbd0`.
 
@@ -80,6 +81,19 @@ Historical fixture-docs closeout: public PR #60 remains retained at `ce6dbd0`.
   Installed-User Smoke `25730733157`, and Public Windows Installed-User
   Contract `25730733137` all passed. No public release, tag, Marketplace, or
   proof admission mutation was performed.
+- Latest public troubleshooting and UX adoption:
+  public PRs #93, #94, #95, #96, and #97 advanced the public source head to
+  `12798e4` for issues #77, #80, #74, #72, and #73. The final public head
+  `12798e46f14d6cac14eaf7381bbb62cc5ee012db` passed Public Source Package
+  Preview `25750125305` / job `75623921597`, Public Linux Installed-User
+  Smoke `25750125270` / job `75623921722`, and Public Windows Installed-User
+  Contract `25750125292` / job `75623921499`. No public release, tag,
+  Marketplace, proof admission, or release evidence mutation was performed.
+- GitLab authority adjustment:
+  the public PR #95 runtime UX direction is adopted with a stricter
+  installed-user rule: when a user selects a LabVIEW bitness, VI History Suite
+  reports detected alternatives but does not auto-switch to a different
+  LabVIEWCLI bitness.
 - Current exact public tag:
   `v1.3.16` tag object `f6ca389269dac140dc416d76bb4c2ac142664567`,
   peeling to `f679023ed760963779d9331a9395128ad01c7e54`

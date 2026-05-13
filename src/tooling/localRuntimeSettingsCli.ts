@@ -558,10 +558,14 @@ export async function runInteractiveLocalRuntimeSettingsCli(
         selection.labviewVersion = await promptLabviewVersion(selection.labviewVersion, promptLine);
 
         while (true) {
+          const hostBitnessChoices: readonly LocalRuntimeSettingsCliBitness[] =
+            selection.platform === 'linux' ? ['x64'] : ['x86', 'x64'];
+          const hostBitnessDefault: LocalRuntimeSettingsCliBitness =
+            selection.platform === 'linux' ? 'x64' : selection.labviewBitness;
           selection.labviewBitness = await promptEnum(
             'Bitness',
-            selection.labviewBitness,
-            ['x86', 'x64'],
+            hostBitnessDefault,
+            hostBitnessChoices,
             promptLine
           );
 

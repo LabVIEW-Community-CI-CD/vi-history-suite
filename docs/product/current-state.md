@@ -433,9 +433,11 @@ Latest landed ship target:
   verify receipt now records `verifyGateStatus=pass`, and VS Code Marketplace
   now serves `1.3.16`
 - current public GitHub source publication: public `main` now publishes
-  `fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91 adopted the
-  first-run local LabVIEW guide following public PR #90's intake-surface
-  normalization and public PR #89's installed-user LabVIEW support matrix
+  `12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97 adopted
+  the Windows proof handoff, installed-user troubleshooting guide, runtime
+  bitness UX, history-panel decluttering, and focused UX tests following public
+  PR #91's first-run local LabVIEW guide, public PR #90's intake-surface
+  normalization, and public PR #89's installed-user LabVIEW support matrix
   adoption; exact `v1.3.16` source remains retained at
   `f679023ed760963779d9331a9395128ad01c7e54` after public PR #88, and public
   annotated tag `v1.3.16` has tag object
@@ -596,9 +598,10 @@ Latest landed ship target:
 - remaining blockers: none on the exact `v1.3.16` publication path; authority
   exact `v1.3.16` is now tagged on `main`
   `9c8e0a8503a84cba5d0ea722dd1497a35f52326c`, public GitHub `main` now
-  publishes `fad5193f` after public PR #91 adopted the first-run local LabVIEW
-  guide following public PR #90's `v1.3.16` intake-surface normalization and
-  public PR #89's installed-user support matrix adoption, exact `v1.3.16`
+  publishes `12798e4` after public PRs #93-#97 adopted troubleshooting and UX
+  refinements following public PR #91's first-run local LabVIEW guide, public
+  PR #90's `v1.3.16` intake-surface normalization, and public PR #89's
+  installed-user support matrix adoption, exact `v1.3.16`
   source remains retained at `f679023`, public PR #68 remains retained for the
   Windows Docker Desktop proof-intake
   template and label, public PR #60 remains retained for the canonical public

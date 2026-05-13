@@ -134,7 +134,7 @@ const bundledPageConfigs = {
         '',
         '- [README Installed-user LabVIEW support matrix](https://github.com/svelderrainruiz/vi-history-suite#installed-user-labview-support-matrix)',
         '- [First-run guide](https://github.com/svelderrainruiz/vi-history-suite/blob/main/FIRST-RUN.md)',
-        '- [Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80)'
+        '- [Troubleshooting guide](https://github.com/svelderrainruiz/vi-history-suite/blob/main/TROUBLESHOOTING.md)'
       ].join('\n'),
       'Release Procedure Summary': [
         'Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.',

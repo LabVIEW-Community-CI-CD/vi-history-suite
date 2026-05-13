@@ -78,7 +78,7 @@ generation.
 
 For setup and troubleshooting details without overloading extension UI text, use
 the installed-user guides: [First-run guide](./FIRST-RUN.md) and
-[Troubleshooting guide (#80)](https://github.com/svelderrainruiz/vi-history-suite/issues/80).
+[Troubleshooting guide](./TROUBLESHOOTING.md).
 
 ## Proof Status And Community Validation
 
@@ -96,6 +96,58 @@ Proof-status matrix:
 | Windows host LabVIEW `2026` `x64` | selectable when LabVIEW 2026 x64 is manually installed on Windows | `vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof` |
 | Windows Docker Desktop Windows containers | community/deferred through public issue #65 | `vihs validate-fixture --provider docker --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof --runtime-timeout-ms 300000` after Docker Desktop is switched to Windows containers |
 | Unsupported or missing provider/year/bitness variants | selectable/reportable | expected to fail closed with an actionable `VIHS_E_*` code or a feature-not-implemented report |
+
+### Windows host-native LabVIEW `2026` `x64` proof handoff (`blocked-local-windows`)
+
+This handoff is documentation-only for cloud agents. Admit Windows host-native
+`x64` proof only from retained evidence captured on a real Windows host with
+LabVIEW `2026` `x64` installed; do not claim this proof from Vagrant `x86` or
+cloud-only execution.
+
+Required host state:
+
+- Windows host session (outside the Vagrant/golden-VM `x86` lane)
+- LabVIEW `2026` `x64` installed with matching `LabVIEWCLI` `x64`
+- VI History Suite installed and `vihs` available
+- no stale LabVIEW/LabVIEWCLI/LVCompare process or governed VI Server listener
+  conflict before running proof commands
+
+Run and retain:
+
+```powershell
+vihs --validate --proof-out .\vihs-validate-proof-x64
+vihs validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .\vihs-fixture-proof-x64
+```
+
+The canonical fixture command above runs `HARNESS-VHS-002` against
+`resource/plugins/lv_icon.vi`. Retain at minimum:
+
+- `.\vihs-fixture-proof-x64\vihs-fixture-validation-proof.json`
+- `.\vihs-fixture-proof-x64\vihs-fixture-validation-issue.md`
+- `.\vihs-fixture-proof-x64\reports\HARNESS-VHS-002\comparison-report-smoke.json`
+- `.\vihs-fixture-proof-x64\reports\HARNESS-VHS-002\comparison-report-smoke.md`
+- `.\vihs-fixture-proof-x64\reports\HARNESS-VHS-002\comparison-report-smoke.html`
+
+Required facts in retained evidence:
+
+- `fixture.harnessId=HARNESS-VHS-002` and `fixture.viPath=resource/plugins/lv_icon.vi`
+- selected variant shows `provider=host`, `labviewVersion=2026`, `labviewBitness=x64`
+- runtime facts include `runtimeProvider=host-native` and `runtimeEngine=labview-cli`
+- admitted success retains `generatedReportExists=true`
+
+Failure classification for this handoff:
+
+| Failure class | Expected signal(s) |
+| --- | --- |
+| Missing LabVIEW `2026` `x64` runtime | `runtimeBlockedReason=labview-exe-not-found` or `runtimeBlockedReason=labview-cli-not-found-for-bitness`; `vihs --validate` typically reports `runtimeErrorCode=VIHS_E_LABVIEW_NOT_FOUND` or `runtimeErrorCode=VIHS_E_LABVIEW_CLI_BITNESS_NOT_FOUND`. |
+| VI Server/session readiness issue | `runtimeBlockedReason=windows-host-runtime-surface-contaminated` or `runtimeFailureReason=labview-cli-connection-failed`; `vihs --validate` may report `runtimeErrorCode=VIHS_E_RUNTIME_SURFACE_CONTAMINATED`. |
+| LabVIEWCLI execution error | `validationClassification=validation-failure` with a `runtimeFailureReason` beginning with `labview-cli-` (for example timeout, non-zero exit, or call-by-reference failure). |
+
+This handoff does not replace Windows Docker Desktop Windows-container proof
+tracked by [public issue #65](https://github.com/svelderrainruiz/vi-history-suite/issues/65).
+That proof still requires retained
+evidence from a real Windows host running Docker Desktop in Windows-container
+mode.
 
 To join from the command line:
 

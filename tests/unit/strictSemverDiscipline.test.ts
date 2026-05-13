@@ -146,7 +146,9 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- release-candidate branch family: `release/*`');
     expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(readme).toContain('`fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91');
+    expect(readme).toContain('`12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97');
+    expect(readme).toContain('installed-user troubleshooting guide');
+    expect(readme).toContain("PR #91's first-run local LabVIEW guide");
     expect(readme).toContain("public PR #90's intake-surface");
     expect(readme).toContain("public PR #89's installed-user support matrix adoption");
     expect(readme).toContain('retained at');
@@ -176,9 +178,11 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- release-candidate branch family: `release/*`');
     expect(currentState).toContain('- separate public GitHub exact release publication: published; public tag');
     expect(currentState).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(currentState).toContain('`fad5193f7aa0b9f543687eebf607cf2e94956afb` after public PR #91');
+    expect(currentState).toContain('`12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97');
+    expect(currentState).toContain('installed-user troubleshooting guide');
+    expect(currentState).toContain("PR #91's first-run local LabVIEW guide");
     expect(currentState).toContain("public PR #90's intake-surface");
-    expect(currentState).toContain("public PR #89's installed-user LabVIEW support matrix");
+    expect(currentState).toContain('installed-user support matrix');
     expect(currentState).toContain('retained at');
     expect(currentState).toContain('`f679023ed760963779d9331a9395128ad01c7e54` after public');
     expect(currentState).toContain('public PR #68 remains retained');

@@ -1002,6 +1002,100 @@ describe('localRuntimeSettingsCli', () => {
     });
   });
 
+  it('reports VIHS_E_LABVIEW_VERSION_UNSUPPORTED when LabVIEW 2024 or older is configured', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-lv2024-'));
+    tempDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    await fs.writeFile(
+      settingsFilePath,
+      [
+        '{',
+        '  "viHistorySuite.runtimeProvider": "host",',
+        '  "viHistorySuite.labviewVersion": "2024",',
+        '  "viHistorySuite.labviewBitness": "x64"',
+        '}',
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+    const stdout: string[] = [];
+
+    const result = await runLocalRuntimeSettingsCli(
+      ['--validate', '--settings-file', settingsFilePath],
+      {
+        platform: 'win32',
+        stdout: {
+          write(text: string) {
+            stdout.push(text);
+          }
+        }
+      }
+    );
+
+    expect(result.runtimeValidationOutcome).toBe('blocked');
+    expect(result.runtimeBlockedReason).toBe('labview-version-unsupported-for-comparison-report');
+    expect(result.runtimeErrorCode).toBe('VIHS_E_LABVIEW_VERSION_UNSUPPORTED');
+    expect(stdout.join('')).toContain('runtimeBlockedReason=labview-version-unsupported-for-comparison-report');
+    expect(stdout.join('')).toContain('runtimeErrorCode=VIHS_E_LABVIEW_VERSION_UNSUPPORTED');
+  });
+
+  it('restricts Linux host interactive bitness prompt to x64 only and does not offer x86', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-linux-host-bitness-'));
+    tempDirectories.push(tempRoot);
+
+    const configRoot = path.join(tempRoot, '.config');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'linux',
+      { XDG_CONFIG_HOME: configRoot },
+      () => tempRoot
+    );
+    const stdout: string[] = [];
+    const promptedBitnessValues: string[] = [];
+    const prompts = ['host', 'linux', '', ''];
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      platform: 'linux',
+      env: {
+        XDG_CONFIG_HOME: configRoot
+      },
+      homedir: () => tempRoot,
+      stdout: {
+        write(text: string) {
+          stdout.push(text);
+        }
+      },
+      promptLine: async (prompt: string) => {
+        if (prompt.toLowerCase().includes('bitness')) {
+          promptedBitnessValues.push(prompt);
+        }
+        return prompts.shift() ?? '';
+      },
+      locateRuntime: async (_platform, settings) => ({
+        platform: 'linux',
+        requestedProvider: settings.requestedProvider,
+        bitness: settings.bitness ?? 'x64',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      })
+    });
+
+    expect(result.runtimeValidationOutcome).toBe('ready');
+    expect(result.persistedLabviewBitness).toBe('x64');
+    for (const promptText of promptedBitnessValues) {
+      expect(promptText).not.toContain('x86');
+      expect(promptText).toContain('x64');
+    }
+    expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual(
+      expect.objectContaining({
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    expect(stdout.join('')).toContain('viHistorySuite.labviewBitness=x64');
+  });
+
   it('fails closed with a stable stale-launcher message when the generated module is missing', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-stale-launcher-'));
     tempDirectories.push(tempRoot);

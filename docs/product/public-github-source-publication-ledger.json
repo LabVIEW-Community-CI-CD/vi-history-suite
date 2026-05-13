@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "fad5193f",
+  "publishedHeadCommit": "12798e4",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -900,9 +900,90 @@
         "public-github-source/tests/unit/publicRepoPackageSurface.test.ts",
         "docs/product/public-github-source-publication-ledger.md"
       ]
+    },
+    {
+      "id": "public-source-post-v1-3-16-troubleshooting-and-ux-adoption",
+      "title": "Public source post-v1.3.16 troubleshooting and UX adoption",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-05-12",
+      "publishedAt": "2026-05-12T17:11:17Z",
+      "repoCommit": "12798e4",
+      "repoCommitSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db",
+      "pullRequests": [
+        "https://github.com/svelderrainruiz/vi-history-suite/pull/93",
+        "https://github.com/svelderrainruiz/vi-history-suite/pull/94",
+        "https://github.com/svelderrainruiz/vi-history-suite/pull/95",
+        "https://github.com/svelderrainruiz/vi-history-suite/pull/96",
+        "https://github.com/svelderrainruiz/vi-history-suite/pull/97"
+      ],
+      "issues": [
+        "https://github.com/svelderrainruiz/vi-history-suite/issues/77",
+        "https://github.com/svelderrainruiz/vi-history-suite/issues/80",
+        "https://github.com/svelderrainruiz/vi-history-suite/issues/74",
+        "https://github.com/svelderrainruiz/vi-history-suite/issues/72",
+        "https://github.com/svelderrainruiz/vi-history-suite/issues/73"
+      ],
+      "publicationMode": "protected-branch-pull-request-squash-public-docs-and-ux-adoption",
+      "promotedFiles": [
+        "README.md",
+        "FIRST-RUN.md",
+        "INSTALL.md",
+        "SUPPORT.md",
+        "TROUBLESHOOTING.md",
+        "resources/bundled-docs/pages/install-and-release.html",
+        "src/reporting/comparisonRuntimeLocator.ts",
+        "src/tooling/localRuntimeSettingsCli.ts",
+        "src/ui/historyPanel.ts",
+        "tests/unit/comparisonRuntimeLocator.test.ts",
+        "tests/unit/historyPanel.test.ts",
+        "tests/unit/localRuntimeSettingsCli.test.ts",
+        "tests/unit/openViHistoryCommand.test.ts",
+        "tests/unit/publicRepoPackageSurface.test.ts"
+      ],
+      "postMergeChecks": [
+        {
+          "workflowName": "Public Source Package Preview",
+          "runId": 25750125305,
+          "jobId": 75623921597,
+          "conclusion": "success",
+          "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+        },
+        {
+          "workflowName": "Public Linux Installed-User Smoke",
+          "runId": 25750125270,
+          "jobId": 75623921722,
+          "conclusion": "success",
+          "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+        },
+        {
+          "workflowName": "Public Windows Installed-User Contract",
+          "runId": 25750125292,
+          "jobId": 75623921499,
+          "conclusion": "success",
+          "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+        }
+      ],
+      "marketplaceMutation": "not-performed",
+      "releaseMutation": "not-performed",
+      "proofAdmissionMutation": "not-performed",
+      "releaseEvidenceMutation": "not-performed",
+      "authorityAdjustment": "GitLab adoption keeps selected LabVIEW bitness fail-closed; detected installed alternatives are reported without silently switching runtime bitness.",
+      "primaryAuthority": [
+        "public-github-source/README.md",
+        "public-github-source/FIRST-RUN.md",
+        "public-github-source/INSTALL.md",
+        "public-github-source/SUPPORT.md",
+        "public-github-source/TROUBLESHOOTING.md",
+        "src/reporting/comparisonRuntimeLocator.ts",
+        "src/tooling/localRuntimeSettingsCli.ts",
+        "src/ui/historyPanel.ts",
+        "tests/unit/",
+        "docs/product/public-github-source-publication-ledger.md"
+      ]
     }
   ],
-  "publishedHeadCommitSha": "fad5193f7aa0b9f543687eebf607cf2e94956afb",
+  "publishedHeadCommitSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db",
   "windowsDockerDesktopIntakePromotionCloseout": {
     "status": "published-and-verified",
     "repository": "github.com/svelderrainruiz/vi-history-suite",
@@ -1260,5 +1341,69 @@
     ],
     "marketplaceMutation": "not-performed",
     "releaseMutation": "not-performed"
+  },
+  "publicInstalledUserTroubleshootingAndUxAdoption": {
+    "status": "published-and-verified",
+    "publicPullRequests": [
+      "https://github.com/svelderrainruiz/vi-history-suite/pull/93",
+      "https://github.com/svelderrainruiz/vi-history-suite/pull/94",
+      "https://github.com/svelderrainruiz/vi-history-suite/pull/95",
+      "https://github.com/svelderrainruiz/vi-history-suite/pull/96",
+      "https://github.com/svelderrainruiz/vi-history-suite/pull/97"
+    ],
+    "issues": [
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/77",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/80",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/74",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/72",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/73"
+    ],
+    "publicMainCommit": "12798e46f14d6cac14eaf7381bbb62cc5ee012db",
+    "publicMainShortCommit": "12798e4",
+    "mergedAt": "2026-05-12T17:11:17Z",
+    "promotedFiles": [
+      "README.md",
+      "FIRST-RUN.md",
+      "INSTALL.md",
+      "SUPPORT.md",
+      "TROUBLESHOOTING.md",
+      "resources/bundled-docs/pages/install-and-release.html",
+      "src/reporting/comparisonRuntimeLocator.ts",
+      "src/tooling/localRuntimeSettingsCli.ts",
+      "src/ui/historyPanel.ts",
+      "tests/unit/comparisonRuntimeLocator.test.ts",
+      "tests/unit/historyPanel.test.ts",
+      "tests/unit/localRuntimeSettingsCli.test.ts",
+      "tests/unit/openViHistoryCommand.test.ts",
+      "tests/unit/publicRepoPackageSurface.test.ts"
+    ],
+    "postMergeChecks": [
+      {
+        "workflowName": "Public Source Package Preview",
+        "runId": 25750125305,
+        "jobId": 75623921597,
+        "conclusion": "success",
+        "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+      },
+      {
+        "workflowName": "Public Linux Installed-User Smoke",
+        "runId": 25750125270,
+        "jobId": 75623921722,
+        "conclusion": "success",
+        "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+      },
+      {
+        "workflowName": "Public Windows Installed-User Contract",
+        "runId": 25750125292,
+        "jobId": 75623921499,
+        "conclusion": "success",
+        "headSha": "12798e46f14d6cac14eaf7381bbb62cc5ee012db"
+      }
+    ],
+    "marketplaceMutation": "not-performed",
+    "releaseMutation": "not-performed",
+    "proofAdmissionMutation": "not-performed",
+    "releaseEvidenceMutation": "not-performed",
+    "authorityAdjustment": "GitLab adoption keeps selected LabVIEW bitness fail-closed; detected installed alternatives are reported without silently switching runtime bitness."
   }
 }
