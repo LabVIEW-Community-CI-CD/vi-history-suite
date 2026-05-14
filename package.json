@@ -176,6 +176,7 @@
     "vagrant:ci:cleanup": "bash scripts/vagrant/cleanup-disposable-ci-vm.sh",
     "vagrant:storage:doctor": "node scripts/doctorVagrantStorage.js",
     "vagrant:runner:readiness": "node scripts/runVagrantAcceptanceRunnerReadiness.js",
+    "vagrant:runner:readiness:history": "node scripts/summarizeVagrantRunnerReadinessHistory.js",
     "vagrant:labview-startup:history": "node scripts/summarizeVagrantLabviewStartupHistory.js",
     "vagrant:host:doctor": "bash scripts/vagrant/doctor-vagrant-host.sh",
     "vagrant:golden:refresh": "bash scripts/vagrant/refresh-golden-box.sh",

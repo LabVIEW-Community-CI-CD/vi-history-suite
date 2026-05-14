@@ -225,8 +225,13 @@ Runner operator hardening:
   `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer` to
   publish latest/timestamped receipts under
   `/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness`; the
-  readiness wrapper keeps `Data1` as a manual standby mirror and fails closed
-  instead of falling back when active `/run/media/sergio/Data` storage drifts;
+  repo-owned history surface `npm run vagrant:runner:readiness:history`
+  summarizes those timestamped receipts for timer tuning, with the `2026-05-14`
+  closeout retaining the current `OnUnitActiveSec=5min` cadence because it
+  catches active-root drift before Vagrant boot while avoiding more noisy
+  busy-state receipts from intentional VM activity; the readiness wrapper keeps
+  `Data1` as a manual standby mirror and fails closed instead of falling back
+  when active `/run/media/sergio/Data` storage drifts;
   the repo-owned storage doctor `scripts/doctorVagrantStorage.js` still runs
   before Data-drive Vagrant directory creation and retains
   `vagrant-storage-doctor.json` plus `vagrant-storage-doctor.md`, failing
