@@ -155,7 +155,13 @@ function calculateStats(values) {
 }
 
 function normalizeStatus(receipt) {
-  return receipt.status === 'passed' && receipt.healthy !== false ? 'passed' : 'failed';
+  if (receipt.status === 'passed' && receipt.healthy !== false) {
+    return 'passed';
+  }
+  if (receipt.status === 'busy') {
+    return 'busy';
+  }
+  return 'failed';
 }
 
 function classifyIssue(issue) {
@@ -169,7 +175,7 @@ function classifyIssue(issue) {
     return 'runner-busy';
   }
   if (/Golden VM 'vihs-win11-labview2026-golden' exists but is/u.test(issue)) {
-    return 'golden-vm-not-powered-off';
+    return 'golden-vm-active';
   }
   if (/Vagrant box 'vihs\/win11-labview2026' is not registered|vagrant-reload plugin is not installed/u.test(issue)) {
     return 'host-tooling-drift';
@@ -189,7 +195,7 @@ function classifyReceipt(receipt) {
   for (const issue of issues) {
     categories.add(classifyIssue(String(issue)));
   }
-  if (normalizeStatus(receipt) === 'failed' && categories.size === 0) {
+  if (normalizeStatus(receipt) !== 'passed' && categories.size === 0) {
     categories.add('other');
   }
   return [...categories].sort();
@@ -330,7 +336,7 @@ function buildRecommendation(summary) {
 
   const busyFailureCount =
     (summary.categoryCounts['runner-busy'] ?? 0) +
-    (summary.categoryCounts['golden-vm-not-powered-off'] ?? 0);
+    (summary.categoryCounts['golden-vm-active'] ?? 0);
   const activeDriftIncidents = summary.incidents.filter((incident) =>
     incident.categories.includes('active-storage-drift')
   );
@@ -374,7 +380,7 @@ function summarizeVagrantRunnerReadinessHistory(options = {}, deps = {}) {
   const statusCounts = countBy(receipts.map((receipt) => receipt.status));
   const categoryCounts = {};
   for (const receipt of receipts) {
-    if (receipt.status !== 'failed') {
+    if (receipt.status === 'passed') {
       continue;
     }
     for (const category of receipt.categories) {

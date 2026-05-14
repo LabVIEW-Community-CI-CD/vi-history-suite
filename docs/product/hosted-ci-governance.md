@@ -229,9 +229,12 @@ Runner operator hardening:
   summarizes those timestamped receipts for timer tuning, with the `2026-05-14`
   closeout retaining the current `OnUnitActiveSec=5min` cadence because it
   catches active-root drift before Vagrant boot while avoiding more noisy
-  busy-state receipts from intentional VM activity; the readiness wrapper keeps
-  `Data1` as a manual standby mirror and fails closed instead of falling back
-  when active `/run/media/sergio/Data` storage drifts;
+  busy-state receipts from intentional VM activity; GitLab admission remains
+  fail-closed, while the systemd timer passes `--allow-busy` so expected
+  `vihs-ci-win11` or golden-VM activity is retained as `status: busy` without
+  turning the timer unit red; the readiness wrapper keeps `Data1` as a manual
+  standby mirror and fails closed instead of falling back when active
+  `/run/media/sergio/Data` storage drifts;
   the repo-owned storage doctor `scripts/doctorVagrantStorage.js` still runs
   before Data-drive Vagrant directory creation and retains
   `vagrant-storage-doctor.json` plus `vagrant-storage-doctor.md`, failing

@@ -17,4 +17,5 @@ Environment=VIHS_VAGRANT_BOX_WORKDIR=/run/media/sergio/Data/vihs-vagrant/box-wor
 Environment="VIHS_VIRTUALBOX_MACHINE_FOLDER=/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"
 Environment=VAGRANT_DOTFILE_PATH=.vagrant-ci
 Environment=VIHS_VAGRANT_READINESS_RECEIPT_ROOT=/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness
-ExecStart=/usr/bin/env npm run vagrant:runner:readiness -- --receipt-root /home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness
+Environment=VIHS_VAGRANT_READINESS_ALLOW_BUSY=true
+ExecStart=/usr/bin/env npm run vagrant:runner:readiness -- --receipt-root /home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness --allow-busy

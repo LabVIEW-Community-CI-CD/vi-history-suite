@@ -155,14 +155,19 @@ user-mode readiness timer, which publishes latest/timestamped receipts under
 checks keep `/run/media/sergio/Data1/vihs-vagrant` as a manual standby mirror:
 they tell the operator to mount `/run/media/sergio/Data` or restore the active
 mirror, and they do not automatically fall back to the standby drive.
+GitLab admission does not allow busy states: if `vihs-ci-win11` is already
+running or the golden VM is active, admission fails before the long lane starts.
+The systemd timer runs the same wrapper with `--allow-busy` so expected VM
+activity is retained as a `status: busy` receipt and does not mark the timer
+unit failed; active storage drift and unrelated host-doctor drift still fail.
 `npm run vagrant:runner:readiness:history` summarizes those timestamped
 receipts for timer tuning. The `2026-05-14` closeout history retained 119
 receipts across the repair window, with p50/p90 receipt intervals around
 323/330 seconds and active-root drift detected before Vagrant boot. Because the
 same history also contains expected busy receipts while `vihs-ci-win11` or the
 golden VM was intentionally active, the governed timer remains
-`OnUnitActiveSec=5min`; any future shrink should first classify expected busy
-periods or become adaptive rather than increasing noisy unhealthy receipts.
+`OnUnitActiveSec=5min`; future cadence changes should be based on busy-vs-drift
+history rather than increasing noisy unhealthy receipts.
 
 CI then creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
 then runs `scripts/doctorVagrantStorage.js` again so missing mounts and wrong

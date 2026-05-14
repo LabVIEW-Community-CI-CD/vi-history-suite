@@ -215,6 +215,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(runnerReadinessService).toContain('vihs-vagrant-acceptance-readiness.service');
     expect(runnerReadinessService).toContain('/home/sergio/repos/gl/vi-history-suite');
     expect(runnerReadinessService).toContain('npm run vagrant:runner:readiness');
+    expect(runnerReadinessService).toContain('--allow-busy');
+    expect(runnerReadinessService).toContain('VIHS_VAGRANT_READINESS_ALLOW_BUSY=true');
     expect(runnerReadinessService).toContain(
       '/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness'
     );
@@ -322,6 +324,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vagrant-runner-readiness-evidence/');
     expect(laneDoc).toContain('/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness');
     expect(laneDoc).toContain('npm run vagrant:runner:readiness:history');
+    expect(laneDoc).toContain('status: busy');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
     expect(laneDoc).toContain('stale golden-VM');
     expect(laneDoc).toContain('LabVIEW `2026` `x86`');
@@ -378,6 +381,10 @@ describe('Vagrant Windows acceptance runner lane', () => {
             'scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service',
           runnerReadinessSystemdTimer:
             'scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer',
+          runnerReadinessSystemdBusyMode: '--allow-busy',
+          runnerReadinessBusyStatus: 'busy',
+          runnerReadinessAdmissionBusyPolicy:
+            'fail-closed-before-vagrant-windows-vsix-acceptance',
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedPrepareHomeScript: 'scripts/vagrant/prepare-vagrant-home.sh',
