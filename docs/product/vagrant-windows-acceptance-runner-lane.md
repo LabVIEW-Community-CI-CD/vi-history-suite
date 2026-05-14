@@ -128,6 +128,8 @@ Official GitLab references:
 - storage doctor script: `scripts/doctorVagrantStorage.js`
 - runner readiness script: `scripts/runVagrantAcceptanceRunnerReadiness.js`
 - runner readiness package command: `npm run vagrant:runner:readiness`
+- runner readiness history package command:
+  `npm run vagrant:runner:readiness:history`
 - runner readiness systemd assets:
   `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service` and
   `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer`
@@ -153,6 +155,14 @@ user-mode readiness timer, which publishes latest/timestamped receipts under
 checks keep `/run/media/sergio/Data1/vihs-vagrant` as a manual standby mirror:
 they tell the operator to mount `/run/media/sergio/Data` or restore the active
 mirror, and they do not automatically fall back to the standby drive.
+`npm run vagrant:runner:readiness:history` summarizes those timestamped
+receipts for timer tuning. The `2026-05-14` closeout history retained 119
+receipts across the repair window, with p50/p90 receipt intervals around
+323/330 seconds and active-root drift detected before Vagrant boot. Because the
+same history also contains expected busy receipts while `vihs-ci-win11` or the
+golden VM was intentionally active, the governed timer remains
+`OnUnitActiveSec=5min`; any future shrink should first classify expected busy
+periods or become adaptive rather than increasing noisy unhealthy receipts.
 
 CI then creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
 then runs `scripts/doctorVagrantStorage.js` again so missing mounts and wrong

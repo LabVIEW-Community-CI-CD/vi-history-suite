@@ -321,6 +321,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vagrant_runner_admission');
     expect(laneDoc).toContain('vagrant-runner-readiness-evidence/');
     expect(laneDoc).toContain('/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness');
+    expect(laneDoc).toContain('npm run vagrant:runner:readiness:history');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
     expect(laneDoc).toContain('stale golden-VM');
     expect(laneDoc).toContain('LabVIEW `2026` `x86`');
@@ -479,6 +480,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     );
     expect(packageManifest.scripts?.['vagrant:runner:readiness']).toBe(
       'node scripts/runVagrantAcceptanceRunnerReadiness.js'
+    );
+    expect(packageManifest.scripts?.['vagrant:runner:readiness:history']).toBe(
+      'node scripts/summarizeVagrantRunnerReadinessHistory.js'
     );
     expect(packageManifest.scripts?.['vagrant:labview-startup:history']).toBe(
       'node scripts/summarizeVagrantLabviewStartupHistory.js'

@@ -244,6 +244,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['vagrant:labview-startup:history']).toBe(
       'node scripts/summarizeVagrantLabviewStartupHistory.js'
     );
+    expect(manifest.scripts?.['vagrant:runner:readiness:history']).toBe(
+      'node scripts/summarizeVagrantRunnerReadinessHistory.js'
+    );
     expect(manifest.scripts?.['wiki:workbench:sync-bundled-docs']).toBe(
       'npm run compile && node out/cli/runWikiWorkbench.js sync-bundled-docs'
     );
