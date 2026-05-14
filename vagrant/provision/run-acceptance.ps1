@@ -242,7 +242,7 @@ try {
     Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
     $taskAction = New-ScheduledTaskAction `
       -Execute 'powershell.exe' `
-      -Argument "-NoLogo -NoProfile -EncodedCommand $encodedScreenshotCommand" `
+      -Argument "-NoLogo -NoProfile -WindowStyle Hidden -EncodedCommand $encodedScreenshotCommand" `
       -WorkingDirectory $EvidenceRoot
     $taskTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(5)
     $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'vagrant' -LogonType Interactive -RunLevel Highest

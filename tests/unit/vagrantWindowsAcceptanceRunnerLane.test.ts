@@ -99,6 +99,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(coldPrep).toContain("'LVCompare'");
     expect(coldPrep).toContain('taskkill.exe /PID $Process.Id /T /F');
     expect(coldPrep).toContain('taskkill.exe /IM "$processName.exe" /T /F');
+    expect(coldPrep).toContain('$startupInterloperProcessNames');
+    expect(coldPrep).toContain("'msedge'");
+    expect(coldPrep).toContain("'OneDrive'");
+    expect(coldPrep).toContain("'UserOOBEBroker'");
+    expect(coldPrep).toContain('Closing first-run desktop interlopers before LabVIEW launch');
     expect(coldPrep).toContain('Port $ViServerPort is no longer LISTENING.');
     expect(coldPrep).toContain('throw "Port $ViServerPort remained LISTENING');
 
@@ -114,6 +119,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('DisableWindowsSpotlightWindowsWelcomeExperience');
     expect(bootstrap).toContain('DisableFileSyncNGSC');
     expect(bootstrap).toContain('ScoobeSystemSettingEnabled');
+    expect(bootstrap).toContain('HideFirstRunExperience');
+    expect(bootstrap).toContain('BrowserSignin');
+    expect(bootstrap).toContain('SyncDisabled');
     expect(bootstrap).toContain('Configuring WinRM for Vagrant communicator after reload');
     expect(bootstrap).toContain('sc.exe config winrm start= auto');
     expect(bootstrap).toContain('Set-NetConnectionProfile');
@@ -147,7 +155,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('lastTaskResultHex  = Format-UnsignedHex32');
     expect(acceptance).toContain("vihs-lv-timeout-screenshot");
     expect(acceptance).toContain('[System.Windows.Forms.Screen]::PrimaryScreen.Bounds');
-    expect(acceptance).toContain('-EncodedCommand $encodedScreenshotCommand');
+    expect(acceptance).toContain('-WindowStyle Hidden -EncodedCommand $encodedScreenshotCommand');
     expect(acceptance).toContain('netstat -ano');
     expect(acceptance).toContain(
       'Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
@@ -290,6 +298,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('interactive window titles');
     expect(laneDoc).toContain('recent Windows event');
     expect(laneDoc).toContain('suppresses Windows consumer backup and welcome');
+    expect(laneDoc).toContain('closes first-run browser/OOBE interlopers');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
     expect(laneDoc).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
     expect(laneDoc).toContain('immediately after bootstrap');
@@ -365,6 +374,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
           bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
           bootstrapPromptSuppressionPolicy:
             'disable-windows-consumer-backup-and-welcome-prompts-before-post-bootstrap-reload',
+          coldPrepDesktopInterloperPolicy:
+            'close-first-run-browser-oobe-interlopers-before-labview-launch',
           labviewPrelaunchFallbackPolicy:
             'manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window',
           labviewViServerTimeoutSeconds: 60,

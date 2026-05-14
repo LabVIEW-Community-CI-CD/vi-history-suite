@@ -349,7 +349,8 @@ Job ownership:
   backup and welcome prompts for the CI desktop, reloads once so `vagrant`
   autologon creates the interactive LabVIEW desktop session while clone-local
   WinRM network/firewall readiness remains available for Vagrant, runs the
-  guest cold-prep provisioner, runs acceptance with a near-future scheduled-task
+  guest cold-prep provisioner to clear stale LabVIEW processes and first-run
+  browser/OOBE interlopers, runs acceptance with a near-future scheduled-task
   fallback for LabVIEW prelaunch, waits `60` seconds by default for VI Server
   while retaining `labview-startup.json` with interactive window titles, recent
   Windows event entries, decoded scheduled-task result hex, and a best-effort

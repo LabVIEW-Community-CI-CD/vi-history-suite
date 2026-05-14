@@ -196,6 +196,14 @@ $oneDrivePolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive'
 Set-RegistryDwordValue -Path $oneDrivePolicyPath -Name 'DisableFileSyncNGSC' -Value 1
 Set-RegistryDwordValue -Path $oneDrivePolicyPath -Name 'DisableFileSync' -Value 1
 
+$edgePolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
+Set-RegistryDwordValue -Path $edgePolicyPath -Name 'HideFirstRunExperience' -Value 1
+Set-RegistryDwordValue -Path $edgePolicyPath -Name 'BrowserSignin' -Value 0
+Set-RegistryDwordValue -Path $edgePolicyPath -Name 'SyncDisabled' -Value 1
+Set-RegistryDwordValue -Path $edgePolicyPath -Name 'NonRemovableProfileEnabled' -Value 0
+Set-RegistryDwordValue -Path $edgePolicyPath -Name 'WebToBrowserSignInEnabled' -Value 0
+Set-RegistryDwordValue -Path $edgePolicyPath -Name 'StartupBoostEnabled' -Value 0
+
 $userCloudContentPolicyPath = 'Software\Policies\Microsoft\Windows\CloudContent'
 Set-VagrantUserDwordValue -RelativePath $userCloudContentPolicyPath -Name 'DisableWindowsSpotlightFeatures' -Value 1
 Set-VagrantUserDwordValue -RelativePath $userCloudContentPolicyPath -Name 'DisableWindowsSpotlightWindowsWelcomeExperience' -Value 1

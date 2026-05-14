@@ -185,6 +185,9 @@ firewall readiness, creates the `VIHS LabVIEW 2026 VI Server TCP 3363`
 Windows Defender Firewall rule for `LabVIEW.exe`, and the job reloads the VM
 immediately after bootstrap so the scheduled-task LabVIEW launch has an
 interactive desktop session while the Vagrant communicator remains available.
+Cold prep closes first-run browser/OOBE interlopers such as Edge, OneDrive, and
+UserOOBEBroker before LabVIEW is launched so the scheduled task starts from a
+clean desktop.
 Acceptance retains `vagrant/evidence/labview-startup.json` during the
 prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
 observation, Explorer session observation, LabVIEW.ini VI Server settings,
