@@ -23,6 +23,13 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const coldPrep = readText('vagrant/provision/prepare-cold-labview.ps1');
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
     const storageDoctor = readText('scripts/doctorVagrantStorage.js');
+    const runnerReadiness = readText('scripts/runVagrantAcceptanceRunnerReadiness.js');
+    const runnerReadinessService = readText(
+      'scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service'
+    );
+    const runnerReadinessTimer = readText(
+      'scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer'
+    );
     const prepareHome = readText('scripts/vagrant/prepare-vagrant-home.sh');
     const refreshBox = readText('scripts/vagrant/refresh-golden-box.sh');
     const cleanupCiVm = readText('scripts/vagrant/cleanup-disposable-ci-vm.sh');
@@ -31,9 +38,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
     const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
 
+    expect(gitlabCi).toContain('vagrant_runner_admission:');
+    expect(gitlabCi).toContain('npm run vagrant:runner:readiness');
+    expect(gitlabCi).toContain('vagrant-runner-readiness-evidence/');
     expect(gitlabCi).toContain('vagrant_windows_vsix_acceptance:');
     expect(gitlabCi).toContain('resource_group: vihs-windows-vagrant');
-    expect(gitlabCi).toContain('needs: []');
+    expect(gitlabCi).toContain('needs:\n    - vagrant_runner_admission');
     expect(gitlabCi).toContain('VAGRANT_DOTFILE_PATH: .vagrant-ci');
     expect(gitlabCi).toContain('VAGRANT_HOME: /home/sergio/.vagrant.d');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_CACHE_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home');
@@ -45,13 +55,15 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden');
     expect(gitlabCi).toContain('VIHS_VAGRANT_CI_VM_NAME: vihs-ci-win11');
     expect(gitlabCi).toContain('VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data/vihs-vagrant');
+    expect(gitlabCi).toContain('VIHS_VAGRANT_STANDBY_ROOT: /run/media/sergio/Data1/vihs-vagrant');
+    expect(gitlabCi).toContain('VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC: "60"');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box');
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work');
     expect(gitlabCi).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"');
     expect(gitlabCi).toContain('mkdir -p vagrant/shared vagrant/evidence');
     expect(gitlabCi).toContain('node scripts/doctorVagrantStorage.js --active-root "${VIHS_VAGRANT_STORAGE_ROOT}"');
-    expect(gitlabCi).toContain('--standby-root /run/media/sergio/Data1/vihs-vagrant');
-    expect(gitlabCi).toContain('--archive-root "/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence"');
+    expect(gitlabCi).toContain('--standby-root "${VIHS_VAGRANT_STANDBY_ROOT}"');
+    expect(gitlabCi).toContain('--archive-root "${VIHS_EVIDENCE_ARCHIVE_ROOT}"');
     expect(gitlabCi).toContain('--evidence-dir vagrant/evidence --fail-on-active-drift');
     expect(gitlabCi).toContain('VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"');
     expect(gitlabCi).toContain('bash scripts/vagrant/doctor-vagrant-host.sh');
@@ -68,6 +80,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(vagrantfile).toContain('VM_NAME     = ENV.fetch("VIHS_VAGRANT_CI_VM_NAME", "vihs-ci-win11")');
     expect(vagrantfile).toContain('BOOT_TIMEOUT = ENV.fetch("VIHS_VAGRANT_BOOT_TIMEOUT", "1800").to_i');
     expect(vagrantfile).toContain('WINRM_TIMEOUT = ENV.fetch("VIHS_VAGRANT_WINRM_TIMEOUT", "1800").to_i');
+    expect(vagrantfile).toContain(
+      'VI_SERVER_TIMEOUT = ENV.fetch("VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC", "60").to_i'
+    );
     expect(vagrantfile).toContain('vb.name   = VM_NAME');
     expect(vagrantfile).toContain('vb.customize ["modifyvm", :id, "--firmware", "efi"]');
     expect(vagrantfile).toContain("Preserve the exported golden VM's UEFI variable store");
@@ -76,6 +91,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(vagrantfile).toContain('config.vm.boot_timeout = BOOT_TIMEOUT');
     expect(vagrantfile).toContain('config.vm.provision "cold-labview"');
     expect(vagrantfile).toContain('path:       "provision/prepare-cold-labview.ps1"');
+    expect(vagrantfile).toContain('args:       ["-ViServerTimeoutSec", VI_SERVER_TIMEOUT.to_s]');
     expect(vagrantfile).not.toContain('vb.name   = "windows11"');
 
     expect(coldPrep).toContain("'LabVIEW'");
@@ -83,6 +99,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(coldPrep).toContain("'LVCompare'");
     expect(coldPrep).toContain('taskkill.exe /PID $Process.Id /T /F');
     expect(coldPrep).toContain('taskkill.exe /IM "$processName.exe" /T /F');
+    expect(coldPrep).toContain('$startupInterloperProcessNames');
+    expect(coldPrep).toContain("'msedge'");
+    expect(coldPrep).toContain("'OneDrive'");
+    expect(coldPrep).toContain("'UserOOBEBroker'");
+    expect(coldPrep).toContain('Closing first-run desktop interlopers before LabVIEW launch');
     expect(coldPrep).toContain('Port $ViServerPort is no longer LISTENING.');
     expect(coldPrep).toContain('throw "Port $ViServerPort remained LISTENING');
 
@@ -91,6 +112,16 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('DefaultUserName');
     expect(bootstrap).toContain('DefaultPassword');
     expect(bootstrap).toContain('Configuring vagrant autologon for interactive LabVIEW launch');
+    expect(bootstrap).toContain('Suppressing Windows consumer backup and welcome prompts for CI desktop');
+    expect(bootstrap).toContain('DisableWindowsConsumerFeatures');
+    expect(bootstrap).toContain('DisableCloudOptimizedContent');
+    expect(bootstrap).toContain('DisableConsumerAccountStateContent');
+    expect(bootstrap).toContain('DisableWindowsSpotlightWindowsWelcomeExperience');
+    expect(bootstrap).toContain('DisableFileSyncNGSC');
+    expect(bootstrap).toContain('ScoobeSystemSettingEnabled');
+    expect(bootstrap).toContain('HideFirstRunExperience');
+    expect(bootstrap).toContain('BrowserSignin');
+    expect(bootstrap).toContain('SyncDisabled');
     expect(bootstrap).toContain('Configuring WinRM for Vagrant communicator after reload');
     expect(bootstrap).toContain('sc.exe config winrm start= auto');
     expect(bootstrap).toContain('Set-NetConnectionProfile');
@@ -101,10 +132,13 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('-Program $lvExe');
     expect(bootstrap).toContain('-LocalPort 3363');
 
-    expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 300');
+    expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 60');
     expect(acceptance).toContain('[int]   $GitTimeoutMs = 300000');
     expect(acceptance).toContain(
       "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"
+    );
+    expect(acceptance).toContain(
+      "$LabVIEWTimeoutScreenshotPath = Join-Path $EvidenceRoot 'labview-timeout-desktop.png'"
     );
     expect(acceptance).toContain(
       'New-ScheduledTaskAction -Execute $lvExe -WorkingDirectory (Split-Path -Parent $lvExe)'
@@ -112,6 +146,23 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(15)');
     expect(acceptance).toContain('-AllowStartIfOnBatteries');
     expect(acceptance).toContain("Write-LabVIEWStartupEvidence -Phase 'timeout'");
+    expect(acceptance).toContain('labviewIni              = Get-LabVIEWIniSnapshot');
+    expect(acceptance).toContain('firewallRules           = @(Get-LabVIEWFirewallSnapshot)');
+    expect(acceptance).toContain('interactiveWindows      = @(Get-InteractiveWindowSnapshot)');
+    expect(acceptance).toContain('recentEvents            = @(Get-RecentLabVIEWEventSnapshot)');
+    expect(acceptance).toContain('timeoutDesktopScreenshot = $desktopScreenshot');
+    expect(acceptance).toContain('principalLogonType');
+    expect(acceptance).toContain('lastTaskResultHex  = Format-UnsignedHex32');
+    expect(acceptance).toContain("vihs-lv-timeout-screenshot");
+    expect(acceptance).toContain('[System.Windows.Forms.Screen]::PrimaryScreen.Bounds');
+    expect(acceptance).toContain('-WindowStyle Hidden -EncodedCommand $encodedScreenshotCommand');
+    expect(acceptance).toContain('$desktopInterloperProcessNames');
+    expect(acceptance).toContain("'msedge'");
+    expect(acceptance).toContain("'msedgewebview2'");
+    expect(acceptance).toContain("'UserOOBEBroker'");
+    expect(acceptance).toContain("Stop-DesktopInterloperProcesses -Reason 'before LabVIEW launch'");
+    expect(acceptance).toContain("Stop-DesktopInterloperProcesses -Reason 'during VI Server wait'");
+    expect(acceptance).toContain('netstat -ano');
     expect(acceptance).toContain(
       'Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
     );
@@ -121,6 +172,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('--labview-bitness $LabVIEWBitness');
     expect(acceptance).toContain("'--allow-existing-windows-host-runtime'");
     expect(acceptance).toContain('$env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()');
+    expect(acceptance).toContain("$env:NPM_CONFIG_UPDATE_NOTIFIER = 'false'");
+    expect(acceptance).toContain("$env:NO_UPDATE_NOTIFIER = '1'");
+    expect(acceptance).toContain(
+      "cmd.exe /d /s /c 'npm.cmd install --omit=dev --no-audit --no-fund --update-notifier=false --loglevel=error 2>&1'"
+    );
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');
@@ -145,16 +201,32 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(storageDoctor).toContain('vi-history-suite/vagrant-storage-doctor@v1');
     expect(storageDoctor).toContain('/run/media/sergio/Data/vihs-vagrant');
     expect(storageDoctor).toContain('/run/media/sergio/Data1/vihs-vagrant');
-    expect(storageDoctor).toContain('/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence');
+    expect(storageDoctor).toContain('/run/media/sergio/MAJOR GENER/VI History Suite Evidence');
     expect(storageDoctor).toContain('vagrant-storage-doctor.json');
     expect(storageDoctor).toContain('vagrant-storage-doctor.md');
     expect(storageDoctor).toContain('Vagrant active storage drift detected');
-    expect(storageDoctor).toContain('Vagrant boxes symlink points at');
+    expect(storageDoctor).toContain('Vagrant ${label} symlink points at');
+    expect(storageDoctor).toContain('expectedTmpTarget');
+
+    expect(runnerReadiness).toContain('vi-history-suite/vagrant-acceptance-runner-readiness@v1');
+    expect(runnerReadiness).toContain('vagrant-runner-readiness-evidence');
+    expect(runnerReadiness).toContain('Mount ${activeMountPoint} or restore the active mirror');
+    expect(runnerReadiness).toContain('vagrant-acceptance-readiness');
+    expect(runnerReadinessService).toContain('vihs-vagrant-acceptance-readiness.service');
+    expect(runnerReadinessService).toContain('/home/sergio/repos/gl/vi-history-suite');
+    expect(runnerReadinessService).toContain('npm run vagrant:runner:readiness');
+    expect(runnerReadinessService).toContain(
+      '/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness'
+    );
+    expect(runnerReadinessTimer).toContain('OnStartupSec=2min');
+    expect(runnerReadinessTimer).toContain('OnUnitActiveSec=5min');
 
     expect(prepareHome).toContain('prepare-vagrant-home');
     expect(prepareHome).toContain('VAGRANT_HOME supports chmod');
     expect(prepareHome).toContain('VIHS_VAGRANT_BOX_CACHE_HOME');
-    expect(prepareHome).toContain('Linked Vagrant boxes');
+    expect(prepareHome).toContain('Linked Vagrant $name to $target');
+    expect(prepareHome).toContain('link_cache_path boxes');
+    expect(prepareHome).toContain('link_cache_path tmp');
     expect(prepareHome).toContain('does not support chmod');
     expect(prepareHome).toContain('exists and is not an empty directory');
 
@@ -193,6 +265,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(githubWorkflow).toContain('VIHS_VAGRANT_STORAGE_ROOT');
     expect(githubWorkflow).toContain('VIHS_VAGRANT_STANDBY_ROOT');
     expect(githubWorkflow).toContain('VIHS_EVIDENCE_ARCHIVE_ROOT');
+    expect(githubWorkflow).toContain('VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC');
     expect(githubWorkflow).toContain('VAGRANT_HOME');
     expect(githubWorkflow).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER');
     expect(githubWorkflow).toContain('node scripts/doctorVagrantStorage.js');
@@ -221,7 +294,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vihs-ci-win11');
     expect(laneDoc).toContain('/run/media/sergio/Data/vihs-vagrant');
     expect(laneDoc).toContain('/run/media/sergio/Data1/vihs-vagrant');
-    expect(laneDoc).toContain('/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence');
+    expect(laneDoc).toContain('/run/media/sergio/MAJOR GENER/VI History Suite Evidence');
     expect(laneDoc).toContain('scripts/doctorVagrantStorage.js');
     expect(laneDoc).toContain('vagrant-storage-doctor.json');
     expect(laneDoc).toContain('preserves the');
@@ -231,14 +304,23 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('quarantines that directory under the');
     expect(laneDoc).toContain('VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true');
     expect(laneDoc).toContain('VIHS_VAGRANT_BOX_WORKDIR');
-    expect(laneDoc).toContain('default LabVIEW VI Server startup timeout: `300` seconds');
+    expect(laneDoc).toContain('default LabVIEW VI Server startup timeout: `60` seconds');
+    expect(laneDoc).toContain('npm run vagrant:labview-startup:history');
     expect(laneDoc).toContain('near-future trigger inside the wait window');
     expect(laneDoc).toContain('labview-startup.json');
+    expect(laneDoc).toContain('labview-timeout-desktop.png');
+    expect(laneDoc).toContain('interactive window titles');
+    expect(laneDoc).toContain('recent Windows event');
+    expect(laneDoc).toContain('suppresses Windows consumer backup and welcome');
+    expect(laneDoc).toContain('closes first-run browser/OOBE interlopers');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
     expect(laneDoc).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
     expect(laneDoc).toContain('immediately after bootstrap');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
-    expect(laneDoc).toContain('needs: []');
+    expect(laneDoc).toContain('needs: [vagrant_runner_admission]');
+    expect(laneDoc).toContain('vagrant_runner_admission');
+    expect(laneDoc).toContain('vagrant-runner-readiness-evidence/');
+    expect(laneDoc).toContain('/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
     expect(laneDoc).toContain('stale golden-VM');
     expect(laneDoc).toContain('LabVIEW `2026` `x86`');
@@ -276,14 +358,25 @@ describe('Vagrant Windows acceptance runner lane', () => {
           vagrantDotfilePath: '.vagrant-ci',
           storageRoot: '/run/media/sergio/Data/vihs-vagrant',
           standbyStorageRoot: '/run/media/sergio/Data1/vihs-vagrant',
-          evidenceVaultRoot: '/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence',
+          evidenceVaultRoot: '/run/media/sergio/MAJOR GENER/VI History Suite Evidence',
           vagrantHome: '/home/sergio/.vagrant.d',
           vagrantBoxCacheHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
+          vagrantTmpCacheHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp',
           boxFile: '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box',
           boxWorkdir: '/run/media/sergio/Data/vihs-vagrant/box-work',
           virtualBoxMachineFolder: '/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs',
           repoOwnedStorageDoctorScript: 'scripts/doctorVagrantStorage.js',
           repoOwnedStorageDoctorPackageScript: 'npm run vagrant:storage:doctor',
+          repoOwnedRunnerReadinessScript: 'scripts/runVagrantAcceptanceRunnerReadiness.js',
+          repoOwnedRunnerReadinessPackageScript: 'npm run vagrant:runner:readiness',
+          runnerReadinessSchema: 'vi-history-suite/vagrant-acceptance-runner-readiness@v1',
+          runnerReadinessEvidenceRoot: 'vagrant-runner-readiness-evidence/',
+          runnerReadinessReceiptRoot:
+            '/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness',
+          runnerReadinessSystemdService:
+            'scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service',
+          runnerReadinessSystemdTimer:
+            'scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer',
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedPrepareHomeScript: 'scripts/vagrant/prepare-vagrant-home.sh',
@@ -294,10 +387,19 @@ describe('Vagrant Windows acceptance runner lane', () => {
           repoOwnedAcceptanceAssertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
           repoOwnedAcceptanceAssertionPackageScript: 'npm run vagrant:acceptance:assert',
           bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
+          bootstrapPromptSuppressionPolicy:
+            'disable-windows-consumer-backup-and-welcome-prompts-before-post-bootstrap-reload',
+          coldPrepDesktopInterloperPolicy:
+            'close-first-run-browser-oobe-interlopers-before-labview-launch',
+          acceptanceDesktopInterloperPolicy:
+            'close-first-run-browser-oobe-interlopers-before-and-during-vi-server-wait',
           labviewPrelaunchFallbackPolicy:
             'manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window',
+          labviewViServerTimeoutSeconds: 60,
+          labviewStartupHistoryPackageScript: 'npm run vagrant:labview-startup:history',
           harnessGitTimeoutMs: 300000,
           labviewStartupEvidencePath: 'vagrant/evidence/labview-startup.json',
+          labviewTimeoutScreenshotPath: 'vagrant/evidence/labview-timeout-desktop.png',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'
         })
@@ -322,18 +424,32 @@ describe('Vagrant Windows acceptance runner lane', () => {
     ).toContain('no-stale-inaccessible-disposable-registry-entry');
     expect(
       hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance.operatorModel
+        .hostDoctorChecks
+    ).toContain('continuous-readiness-receipt');
+    expect(
+      hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance.operatorModel
         .storageDoctorChecks
     ).toContain('active-root-mounted');
     expect(
       hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance.operatorModel
         .cleanupChecks
     ).toContain('unregister-stale-inaccessible-disposable-registry-entry');
+    expect(hostedGovernanceJson.authorityGitLab.jobs.vagrant_runner_admission).toEqual(
+      expect.objectContaining({
+        classification: 'required-vagrant-runner-readiness-admission',
+        stage: 'admission',
+        evidenceRoot: 'vagrant-runner-readiness-evidence/',
+        readinessScript: 'scripts/runVagrantAcceptanceRunnerReadiness.js',
+        readinessPackageScript: 'npm run vagrant:runner:readiness',
+        failurePolicy: 'fail-closed-in-admission-before-vagrant-windows-vsix-acceptance'
+      })
+    );
     expect(hostedGovernanceJson.authorityGitLab.jobs.vagrant_windows_vsix_acceptance).toEqual(
       expect.objectContaining({
         classification: 'required-vagrant-windows-vsix-acceptance',
         stage: 'test',
         resourceGroup: 'vihs-windows-vagrant',
-        requiredNeeds: [],
+        requiredNeeds: ['vagrant_runner_admission'],
         dagStart: true,
         evidenceRoot: 'vagrant/evidence/',
         storageDoctorScript: 'scripts/doctorVagrantStorage.js',
@@ -360,6 +476,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     );
     expect(packageManifest.scripts?.['vagrant:storage:doctor']).toBe(
       'node scripts/doctorVagrantStorage.js'
+    );
+    expect(packageManifest.scripts?.['vagrant:runner:readiness']).toBe(
+      'node scripts/runVagrantAcceptanceRunnerReadiness.js'
+    );
+    expect(packageManifest.scripts?.['vagrant:labview-startup:history']).toBe(
+      'node scripts/summarizeVagrantLabviewStartupHistory.js'
     );
     expect(packageManifest.scripts?.['vagrant:golden:refresh']).toBe(
       'bash scripts/vagrant/refresh-golden-box.sh'

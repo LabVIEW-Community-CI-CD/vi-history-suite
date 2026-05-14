@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEFAULT_ARCHIVE_ROOT="/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence"
+DEFAULT_ARCHIVE_ROOT="/run/media/sergio/MAJOR GENER/VI History Suite Evidence"
 
 usage() {
   cat <<'USAGE'

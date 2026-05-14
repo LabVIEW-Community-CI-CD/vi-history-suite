@@ -5,7 +5,8 @@
 
 .DESCRIPTION
   Stops stale LabVIEW, LabVIEWCLI, and LVCompare processes from inside the
-  guest, then waits for VI Server TCP port 3363 to stop listening. This keeps
+  guest, closes first-run desktop interlopers that can steal the interactive
+  session, then waits for VI Server TCP port 3363 to stop listening. This keeps
   the acceptance provisioner on the governed cold-launch path.
 #>
 param(
@@ -18,6 +19,14 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $runtimeProcessNames = @('LabVIEW', 'LabVIEWCLI', 'LVCompare')
+$startupInterloperProcessNames = @(
+  'msedge',
+  'msedgewebview2',
+  'MicrosoftEdgeUpdate',
+  'OneDrive',
+  'UserOOBEBroker',
+  'SystemSettings'
+)
 
 function Write-Step([string]$Message) {
   $ts = Get-Date -Format 'HH:mm:ss'
@@ -60,6 +69,27 @@ foreach ($processName in $runtimeProcessNames) {
 }
 
 foreach ($processName in $runtimeProcessNames) {
+  try {
+    & taskkill.exe /IM "$processName.exe" /T /F 2>$null | Out-Host
+  } catch {
+    Write-Step "taskkill by image found no remaining $processName.exe processes."
+  }
+}
+
+Write-Step "Closing first-run desktop interlopers before LabVIEW launch."
+foreach ($processName in $startupInterloperProcessNames) {
+  $processes = @(Get-Process -Name $processName -ErrorAction SilentlyContinue)
+  if ($processes.Count -eq 0) {
+    Write-Step "$processName is not running."
+    continue
+  }
+
+  foreach ($process in $processes) {
+    Stop-RuntimeProcess -Process $process
+  }
+}
+
+foreach ($processName in $startupInterloperProcessNames) {
   try {
     & taskkill.exe /IM "$processName.exe" /T /F 2>$null | Out-Host
   } catch {

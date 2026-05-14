@@ -7,7 +7,7 @@ const os = require('node:os');
 const SCHEMA = 'vi-history-suite/vagrant-storage-doctor@v1';
 const DEFAULT_ACTIVE_ROOT = '/run/media/sergio/Data/vihs-vagrant';
 const DEFAULT_STANDBY_ROOT = '/run/media/sergio/Data1/vihs-vagrant';
-const DEFAULT_ARCHIVE_ROOT = '/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence';
+const DEFAULT_ARCHIVE_ROOT = '/run/media/sergio/MAJOR GENER/VI History Suite Evidence';
 const DEFAULT_VAGRANT_HOME = '/home/sergio/.vagrant.d';
 
 function getUsage() {
@@ -282,50 +282,69 @@ function inspectVagrantBoxesLink(options, deps = {}) {
   const fsApi = deps.fsApi ?? fs;
   const vagrantHome = normalizePath(options.vagrantHome);
   const expectedTarget = normalizePath(options.expectedTarget);
+  const expectedTmpTarget = normalizePath(options.expectedTmpTarget);
   const boxesPath = path.join(vagrantHome, 'boxes');
+  const tmpPath = path.join(vagrantHome, 'tmp');
   const issues = [];
   const warnings = [];
   const result = {
     vagrantHome,
     boxesPath,
     expectedTarget,
+    tmpPath,
+    expectedTmpTarget,
     exists: false,
     kind: 'missing',
     target: null,
+    tmpExists: false,
+    tmpKind: 'missing',
+    tmpTarget: null,
     healthy: true,
     issues,
     warnings
   };
 
-  let stat;
-  try {
-    stat = fsApi.lstatSync(boxesPath);
-  } catch {
-    warnings.push(`Vagrant boxes path is missing and will be created by prepare-vagrant-home: ${boxesPath}`);
-    return result;
+  function inspectLink(linkPath, expectedLinkTarget, label) {
+    let stat;
+    try {
+      stat = fsApi.lstatSync(linkPath);
+    } catch {
+      warnings.push(`Vagrant ${label} path is missing and will be created by prepare-vagrant-home: ${linkPath}`);
+      return { exists: false, kind: 'missing', target: null };
+    }
+
+    if (stat.isSymbolicLink()) {
+      const rawTarget = fsApi.readlinkSync(linkPath);
+      const target = normalizePath(path.resolve(path.dirname(linkPath), rawTarget));
+      if (target !== expectedLinkTarget) {
+        issues.push(`Vagrant ${label} symlink points at ${target}, expected ${expectedLinkTarget}`);
+      }
+      return { exists: true, kind: 'symlink', target };
+    }
+
+    if (stat.isDirectory()) {
+      const entries = fsApi.readdirSync(linkPath);
+      if (entries.length === 0) {
+        warnings.push(`Vagrant ${label} path is an empty directory; prepare-vagrant-home can replace it: ${linkPath}`);
+      } else {
+        issues.push(`Vagrant ${label} path is a non-empty directory instead of a symlink to ${expectedLinkTarget}`);
+      }
+      return { exists: true, kind: 'directory', target: null };
+    }
+
+    issues.push(`Vagrant ${label} path exists but is not a symlink or directory: ${linkPath}`);
+    return { exists: true, kind: 'other', target: null };
   }
 
-  result.exists = true;
-  if (stat.isSymbolicLink()) {
-    result.kind = 'symlink';
-    const rawTarget = fsApi.readlinkSync(boxesPath);
-    const target = normalizePath(path.resolve(path.dirname(boxesPath), rawTarget));
-    result.target = target;
-    if (target !== expectedTarget) {
-      issues.push(`Vagrant boxes symlink points at ${target}, expected ${expectedTarget}`);
-    }
-  } else if (stat.isDirectory()) {
-    result.kind = 'directory';
-    const entries = fsApi.readdirSync(boxesPath);
-    if (entries.length === 0) {
-      warnings.push(`Vagrant boxes path is an empty directory; prepare-vagrant-home can replace it: ${boxesPath}`);
-    } else {
-      issues.push(`Vagrant boxes path is a non-empty directory instead of a symlink to ${expectedTarget}`);
-    }
-  } else {
-    result.kind = 'other';
-    issues.push(`Vagrant boxes path exists but is not a symlink or directory: ${boxesPath}`);
-  }
+  const boxes = inspectLink(boxesPath, expectedTarget, 'boxes');
+  result.exists = boxes.exists;
+  result.kind = boxes.kind;
+  result.target = boxes.target;
+
+  const tmp = inspectLink(tmpPath, expectedTmpTarget, 'tmp');
+  result.tmpExists = tmp.exists;
+  result.tmpKind = tmp.kind;
+  result.tmpTarget = tmp.target;
 
   result.healthy = issues.length === 0;
   return result;
@@ -388,7 +407,11 @@ function buildMarkdown(report) {
     `- Boxes path: ${report.vagrantHome.boxesPath}`,
     `- Expected target: ${report.vagrantHome.expectedTarget}`,
     `- Kind: ${report.vagrantHome.kind}`,
-    `- Target: ${report.vagrantHome.target ?? '<none>'}`
+    `- Target: ${report.vagrantHome.target ?? '<none>'}`,
+    `- Tmp path: ${report.vagrantHome.tmpPath}`,
+    `- Expected tmp target: ${report.vagrantHome.expectedTmpTarget}`,
+    `- Tmp kind: ${report.vagrantHome.tmpKind}`,
+    `- Tmp target: ${report.vagrantHome.tmpTarget ?? '<none>'}`
   );
 
   return `${lines.join('\n')}\n`;
@@ -441,6 +464,12 @@ function runVagrantStorageDoctor(options = {}, deps = {}) {
           label: 'large-drive Vagrant boxes directory',
           type: 'dir',
           relativePath: 'vagrant-home/boxes'
+        },
+        {
+          id: 'vagrant-tmp',
+          label: 'large-drive Vagrant temporary directory',
+          type: 'dir',
+          relativePath: 'vagrant-home/tmp'
         }
       ]
     },
@@ -476,7 +505,8 @@ function runVagrantStorageDoctor(options = {}, deps = {}) {
   const vagrantHomeResult = inspectVagrantBoxesLink(
     {
       vagrantHome,
-      expectedTarget: path.join(activeRoot, 'vagrant-home', 'boxes')
+      expectedTarget: path.join(activeRoot, 'vagrant-home', 'boxes'),
+      expectedTmpTarget: path.join(activeRoot, 'vagrant-home', 'tmp')
     },
     { fsApi }
   );

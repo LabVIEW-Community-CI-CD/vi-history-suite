@@ -37,7 +37,7 @@ The lane uses a fixed three-drive topology:
 - active Vagrant execution root: `/run/media/sergio/Data/vihs-vagrant`
 - standby Vagrant mirror root: `/run/media/sergio/Data1/vihs-vagrant`
 - local evidence vault:
-  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
+  `/run/media/sergio/MAJOR GENER/VI History Suite Evidence`
 
 Active Vagrant and VirtualBox execution stays on `Data`. `Data1` is a manual
 standby/mirror and is not an automatic CI fallback. The Seagate drive is for
@@ -52,9 +52,11 @@ The repo-owned storage doctor is `scripts/doctorVagrantStorage.js`, exposed as
 Vagrant directories and retains `vagrant/evidence/vagrant-storage-doctor.json`
 plus `vagrant/evidence/vagrant-storage-doctor.md`. The doctor fails closed for
 active storage drift: missing or unmounted active root, non-writable active
-root, missing active core assets, or a `/home/sergio/.vagrant.d/boxes` symlink
+root, missing active core assets, a `/home/sergio/.vagrant.d/boxes` symlink
 that points anywhere other than
-`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`. Standby and archive
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`, or a
+`/home/sergio/.vagrant.d/tmp` symlink that points anywhere other than
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp`. Standby and archive
 availability are reported as warnings unless the doctor is explicitly run with
 stricter flags.
 
@@ -112,17 +114,23 @@ Official GitLab references:
   `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs`
 - standby Vagrant mirror root: `/run/media/sergio/Data1/vihs-vagrant`
 - evidence vault root:
-  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
+  `/run/media/sergio/MAJOR GENER/VI History Suite Evidence`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
-- default LabVIEW VI Server startup timeout: `300` seconds after the
-  interactive scheduled-task launch; the prelaunch task is manually started
+- default LabVIEW VI Server startup timeout: `60` seconds after the
+  interactive scheduled-task launch, overridable with
+  `VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC`; the prelaunch task is manually started
   and also has a near-future trigger inside the wait window
 - disposable clone boot policy: Vagrant sets EFI firmware and preserves the
   exported golden VM UEFI variable store so BitLocker sees the same measured
   boot state in the disposable clone
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
 - storage doctor script: `scripts/doctorVagrantStorage.js`
+- runner readiness script: `scripts/runVagrantAcceptanceRunnerReadiness.js`
+- runner readiness package command: `npm run vagrant:runner:readiness`
+- runner readiness systemd assets:
+  `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service` and
+  `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
 - Vagrant home prepare script: `scripts/vagrant/prepare-vagrant-home.sh`
 - disposable CI VM cleanup script:
@@ -136,8 +144,18 @@ must not run acceptance directly on the golden VM. The GitLab job uses the
 registered Vagrant box and names the imported VirtualBox VM `vihs-ci-win11` so
 golden-source and CI-runtime state remain distinct.
 
-CI first creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
-then runs `scripts/doctorVagrantStorage.js` so missing mounts and wrong
+GitLab first runs `vagrant_runner_admission`, which executes
+`npm run vagrant:runner:readiness` and retains
+`vagrant-runner-readiness-evidence/` before the long acceptance lane can start.
+The same readiness wrapper is also available to the runner host through the
+user-mode readiness timer, which publishes latest/timestamped receipts under
+`/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness`. Both
+checks keep `/run/media/sergio/Data1/vihs-vagrant` as a manual standby mirror:
+they tell the operator to mount `/run/media/sergio/Data` or restore the active
+mirror, and they do not automatically fall back to the standby drive.
+
+CI then creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
+then runs `scripts/doctorVagrantStorage.js` again so missing mounts and wrong
 Vagrant box-cache links are reported as storage drift before any Data-drive
 directories are created. It then runs
 `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to touch the
@@ -151,7 +169,10 @@ retries, and removes the active `.vagrant-ci` state. The job then runs Vagrant w
 `VAGRANT_HOME=/home/sergio/.vagrant.d` so Vagrant private-key chmod remains on
 the host ext4 filesystem. `scripts/vagrant/prepare-vagrant-home.sh` links
 `/home/sergio/.vagrant.d/boxes` to the large-drive box cache at
-`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`. The CI job also sets
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes` and links
+`/home/sergio/.vagrant.d/tmp` to
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp` so manual box refresh
+unpack work cannot fill the root filesystem. The CI job also sets
 the VirtualBox default machine folder to
 `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs` before importing the
 disposable VM so the root filesystem does not need to hold the large Windows
@@ -163,33 +184,50 @@ active dotfile path points at any VM other than `vihs-ci-win11`.
 Golden box refresh is manual and variable-gated. Set
 `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true` only for an operator-controlled refresh.
 The bootstrap provisioner configures `vagrant` autologon and WinRM startup
-inside the disposable clone, normalizes public NAT network profiles for WinRM
+inside the disposable clone, suppresses Windows consumer backup and welcome
+prompts for the CI desktop, normalizes public NAT network profiles for WinRM
 firewall readiness, creates the `VIHS LabVIEW 2026 VI Server TCP 3363`
 Windows Defender Firewall rule for `LabVIEW.exe`, and the job reloads the VM
 immediately after bootstrap so the scheduled-task LabVIEW launch has an
 interactive desktop session while the Vagrant communicator remains available.
+Cold prep closes first-run browser/OOBE interlopers such as Edge, OneDrive, and
+UserOOBEBroker before LabVIEW is launched so the scheduled task starts from a
+clean desktop. Acceptance repeats that interloper cleanup before the LabVIEW
+launch and during the VI Server wait because Edge/WebView prompts can respawn
+after the post-bootstrap reload and steal the foreground while LabVIEW is
+initializing.
 Acceptance retains `vagrant/evidence/labview-startup.json` during the
 prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
-observation, Explorer session observation, and VI Server listener state before
-the assertion script is allowed to run.
+observation, Explorer session observation, LabVIEW.ini VI Server settings,
+interactive window titles, recent Windows event log entries, firewall rule
+state, and VI Server listener state before the assertion script is allowed to
+run. On VI Server timeout, the provisioner also attempts to retain
+`vagrant/evidence/labview-timeout-desktop.png` from the interactive `vagrant`
+desktop so blocked startup prompts are visible from CI artifacts.
+`npm run vagrant:labview-startup:history` summarizes
+retained startup evidence; the current governed default is `60` seconds because
+the retained successful starts complete well inside that window while stuck
+interactive startups should fail quickly with evidence.
 
 ## GitLab Job
 
-The blocking job is `vagrant_windows_vsix_acceptance`.
+The blocking proof job is `vagrant_windows_vsix_acceptance`; the blocking
+readiness gate is `vagrant_runner_admission`.
 
-It runs in the `test` stage on the Vagrant runner tags, serializes access with
-`resource_group: vihs-windows-vagrant`, and declares `needs: []` so it can
-start as an independent DAG job without waiting for the separate Linux
-assurance runner lane. It packages the VSIX, stages it under `vagrant/shared/`,
-optionally refreshes the local box, runs the host doctor, boots the disposable
-VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
-runs the guest cold-prep provisioner, runs acceptance, forces the generated
-`vihs` runtime-settings launcher to persist `host/2026/x86` so stale golden-VM
-user settings cannot retain x64, explicitly admits the governed prelaunched
-interactive LabVIEW host session for the installed-user proof, bounds harness
-Git acquisition with `VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000`, validates the
-latest manifest and harness output through `npm run vagrant:acceptance:assert`,
-and always halts the VM.
+The proof job runs in the `test` stage on the Vagrant runner tags, serializes
+access with `resource_group: vihs-windows-vagrant`, and declares
+`needs: [vagrant_runner_admission]` so it can start as an early DAG job only
+after the readiness gate passes. It packages the VSIX, stages it under
+`vagrant/shared/`, optionally refreshes the local box, runs the host doctor,
+boots the disposable VM, runs bootstrap, reloads once for the `vagrant`
+interactive desktop session, runs the guest cold-prep provisioner, runs
+acceptance, forces the generated `vihs` runtime-settings launcher to persist
+`host/2026/x86` so stale golden-VM user settings cannot retain x64, explicitly
+admits the governed prelaunched interactive LabVIEW host session for the
+installed-user proof, bounds harness Git acquisition with
+`VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000`, validates the latest manifest and
+harness output through `npm run vagrant:acceptance:assert`, and always halts
+the VM.
 The assertion requires the manifest and harness report to prove LabVIEW `2026` `x86`,
 `runtimeProvider=host-native`, `runtimeEngine=labview-cli`, and
 `runtimeExecutionState=succeeded`.
@@ -218,6 +256,8 @@ The lane fails closed when:
 - the active storage root is missing the governed Windows box cache assets
 - `/home/sergio/.vagrant.d/boxes` points at any target other than
   `/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`
+- `/home/sergio/.vagrant.d/tmp` points at any target other than
+  `/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp`
 - `gitlab-runner`, Vagrant, VirtualBox, Docker, Node, npm, or `vagrant-reload`
   are missing from the host contract
 - the registered `vihs/win11-labview2026` box is missing

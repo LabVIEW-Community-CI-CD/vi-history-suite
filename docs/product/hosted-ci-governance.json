@@ -314,17 +314,18 @@
           "vagrantDotfilePath": ".vagrant-ci",
           "storageRoot": "/run/media/sergio/Data/vihs-vagrant",
           "standbyStorageRoot": "/run/media/sergio/Data1/vihs-vagrant",
-          "evidenceVaultRoot": "/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence",
+          "evidenceVaultRoot": "/run/media/sergio/MAJOR GENER/VI History Suite Evidence",
           "storageTopology": {
             "activeRoot": "/run/media/sergio/Data/vihs-vagrant",
             "standbyRoot": "/run/media/sergio/Data1/vihs-vagrant",
-            "archiveRoot": "/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence",
+            "archiveRoot": "/run/media/sergio/MAJOR GENER/VI History Suite Evidence",
             "activePolicy": "required-vagrant-virtualbox-execution-root",
             "standbyPolicy": "manual-standby-mirror-no-automatic-fallback",
             "archivePolicy": "retained-evidence-vault-not-active-vm-execution"
           },
           "vagrantHome": "/home/sergio/.vagrant.d",
           "vagrantBoxCacheHome": "/run/media/sergio/Data/vihs-vagrant/vagrant-home",
+          "vagrantTmpCacheHome": "/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp",
           "boxFile": "/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box",
           "boxWorkdir": "/run/media/sergio/Data/vihs-vagrant/box-work",
           "virtualBoxMachineFolder": "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs",
@@ -332,6 +333,13 @@
           "repoOwnedStorageDoctorPackageScript": "npm run vagrant:storage:doctor",
           "storageDoctorEvidenceJson": "vagrant/evidence/vagrant-storage-doctor.json",
           "storageDoctorEvidenceMarkdown": "vagrant/evidence/vagrant-storage-doctor.md",
+          "repoOwnedRunnerReadinessScript": "scripts/runVagrantAcceptanceRunnerReadiness.js",
+          "repoOwnedRunnerReadinessPackageScript": "npm run vagrant:runner:readiness",
+          "runnerReadinessSchema": "vi-history-suite/vagrant-acceptance-runner-readiness@v1",
+          "runnerReadinessEvidenceRoot": "vagrant-runner-readiness-evidence/",
+          "runnerReadinessReceiptRoot": "/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness",
+          "runnerReadinessSystemdService": "scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service",
+          "runnerReadinessSystemdTimer": "scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer",
           "repoOwnedDoctorScript": "scripts/vagrant/doctor-vagrant-host.sh",
           "repoOwnedRefreshScript": "scripts/vagrant/refresh-golden-box.sh",
           "repoOwnedPrepareHomeScript": "scripts/vagrant/prepare-vagrant-home.sh",
@@ -341,9 +349,15 @@
           "repoOwnedAcceptanceAssertionScript": "scripts/assertVagrantVsixAcceptanceEvidence.js",
           "repoOwnedAcceptanceAssertionPackageScript": "npm run vagrant:acceptance:assert",
           "bootstrapInteractiveSessionPolicy": "bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview",
+          "bootstrapPromptSuppressionPolicy": "disable-windows-consumer-backup-and-welcome-prompts-before-post-bootstrap-reload",
+          "coldPrepDesktopInterloperPolicy": "close-first-run-browser-oobe-interlopers-before-labview-launch",
+          "acceptanceDesktopInterloperPolicy": "close-first-run-browser-oobe-interlopers-before-and-during-vi-server-wait",
           "labviewPrelaunchFallbackPolicy": "manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window",
+          "labviewViServerTimeoutSeconds": 60,
+          "labviewStartupHistoryPackageScript": "npm run vagrant:labview-startup:history",
           "harnessGitTimeoutMs": 300000,
           "labviewStartupEvidencePath": "vagrant/evidence/labview-startup.json",
+          "labviewTimeoutScreenshotPath": "vagrant/evidence/labview-timeout-desktop.png",
           "vagrantfile": "vagrant/Vagrantfile",
           "goldenRefreshVariable": "VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true",
           "goldenRefreshWorkdirVariable": "VIHS_VAGRANT_BOX_WORKDIR",
@@ -372,7 +386,8 @@
             "local-vagrant-state-points-only-at-ci-vm",
             "virtualbox-machine-folder-on-large-drive",
             "virtualbox-machine-folder-has-vm-import-space",
-            "vagrant-reload-installed"
+            "vagrant-reload-installed",
+            "continuous-readiness-receipt"
           ],
           "storageDoctorChecks": [
             "active-root-mounted",
@@ -380,6 +395,7 @@
             "active-windows11-box-present",
             "active-vagrant-home-boxes-present",
             "vagrant-home-boxes-symlink-targets-active-root",
+            "vagrant-home-tmp-symlink-targets-active-root",
             "standby-root-warning-only-by-default",
             "archive-root-warning-only-by-default"
           ],
@@ -560,6 +576,32 @@
         "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true",
         "claimBoundary": "required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview"
       },
+      "vagrant_runner_admission": {
+        "classification": "required-vagrant-runner-readiness-admission",
+        "stage": "admission",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ],
+        "tags": [
+          "linux",
+          "x64",
+          "virtualbox",
+          "vagrant",
+          "private-release"
+        ],
+        "command": "npm run vagrant:runner:readiness -- --evidence-dir vagrant-runner-readiness-evidence",
+        "evidenceRoot": "vagrant-runner-readiness-evidence/",
+        "readinessScript": "scripts/runVagrantAcceptanceRunnerReadiness.js",
+        "readinessPackageScript": "npm run vagrant:runner:readiness",
+        "readinessEvidenceJson": "vagrant-runner-readiness-evidence/vagrant-acceptance-runner-readiness.json",
+        "readinessEvidenceMarkdown": "vagrant-runner-readiness-evidence/vagrant-acceptance-runner-readiness.md",
+        "failurePolicy": "fail-closed-in-admission-before-vagrant-windows-vsix-acceptance"
+      },
       "vagrant_windows_vsix_acceptance": {
         "classification": "required-vagrant-windows-vsix-acceptance",
         "stage": "test",
@@ -579,9 +621,11 @@
           "private-release"
         ],
         "resourceGroup": "vihs-windows-vagrant",
-        "requiredNeeds": [],
+        "requiredNeeds": [
+          "vagrant_runner_admission"
+        ],
         "dagStart": true,
-        "command": "npm run vagrant:storage:doctor -- --active-root /run/media/sergio/Data/vihs-vagrant --standby-root /run/media/sergio/Data1/vihs-vagrant --archive-root \"/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence\" --evidence-dir vagrant/evidence --fail-on-active-drift; npm ci; npm run compile; npm run package:audit; node scripts/runPinnedVsce.js package; vagrant up/provision/acceptance; npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion",
+        "command": "npm run vagrant:storage:doctor -- --active-root /run/media/sergio/Data/vihs-vagrant --standby-root /run/media/sergio/Data1/vihs-vagrant --archive-root \"/run/media/sergio/MAJOR GENER/VI History Suite Evidence\" --evidence-dir vagrant/evidence --fail-on-active-drift; npm ci; npm run compile; npm run package:audit; node scripts/runPinnedVsce.js package; vagrant up/provision/acceptance; npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion",
         "evidenceRoot": "vagrant/evidence/",
         "storageDoctorScript": "scripts/doctorVagrantStorage.js",
         "storageDoctorPackageScript": "npm run vagrant:storage:doctor",

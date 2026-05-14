@@ -29,34 +29,35 @@ ensure_chmod_capable_home() {
   info "VAGRANT_HOME supports chmod"
 }
 
-link_box_cache() {
+link_cache_path() {
+  local name="$1"
   [[ -n "$BOX_CACHE_HOME" ]] || return 0
   [[ "$VAGRANT_HOME_DIR" != "$BOX_CACHE_HOME" ]] || return 0
 
-  local target="$BOX_CACHE_HOME/boxes"
-  local link="$VAGRANT_HOME_DIR/boxes"
+  local target="$BOX_CACHE_HOME/$name"
+  local link="$VAGRANT_HOME_DIR/$name"
   mkdir -p "$target"
 
   if [[ -L "$link" ]]; then
     local current_target
     current_target="$(readlink "$link")"
     if [[ "$current_target" == "$target" ]]; then
-      info "Vagrant boxes already linked to $target"
+      info "Vagrant $name already linked to $target"
       return 0
     fi
-    fail "VAGRANT_HOME boxes link points at '$current_target', expected '$target'"
+    fail "VAGRANT_HOME $name link points at '$current_target', expected '$target'"
   fi
 
   if [[ -e "$link" ]]; then
     if [[ -d "$link" && -z "$(find "$link" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
       rmdir "$link"
     else
-      fail "VAGRANT_HOME boxes path '$link' exists and is not an empty directory"
+      fail "VAGRANT_HOME $name path '$link' exists and is not an empty directory"
     fi
   fi
 
   ln -s "$target" "$link"
-  info "Linked Vagrant boxes to $target"
+  info "Linked Vagrant $name to $target"
 }
 
 mkdir -p "$VAGRANT_HOME_DIR"
@@ -65,4 +66,5 @@ if [[ -n "$BOX_CACHE_HOME" ]]; then
   info "box-cache-home=$BOX_CACHE_HOME"
 fi
 ensure_chmod_capable_home
-link_box_cache
+link_cache_path boxes
+link_cache_path tmp

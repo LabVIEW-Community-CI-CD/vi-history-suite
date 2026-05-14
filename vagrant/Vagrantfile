@@ -20,6 +20,8 @@
 #                             (default: vihs-ci-win11)
 #   VIHS_VAGRANT_BOOT_TIMEOUT – seconds to wait for Windows boot (default: 1800)
 #   VIHS_VAGRANT_WINRM_TIMEOUT – seconds to wait for WinRM operations (default: 1800)
+#   VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC – seconds to wait for LabVIEW VI Server
+#                                          after interactive launch (default: 60)
 
 VAGRANTFILE_API_VERSION = "2"
 require 'fileutils'
@@ -30,6 +32,7 @@ VM_CPUS     = ENV.fetch("VIHS_VAGRANT_CPUS",   "4").to_i
 VM_NAME     = ENV.fetch("VIHS_VAGRANT_CI_VM_NAME", "vihs-ci-win11")
 BOOT_TIMEOUT = ENV.fetch("VIHS_VAGRANT_BOOT_TIMEOUT", "1800").to_i
 WINRM_TIMEOUT = ENV.fetch("VIHS_VAGRANT_WINRM_TIMEOUT", "1800").to_i
+VI_SERVER_TIMEOUT = ENV.fetch("VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC", "60").to_i
 
 # Paths shared into the VM
 REPO_ROOT   = File.expand_path("..", __dir__)
@@ -119,5 +122,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     type:       "shell",
     privileged: false,
     path:       "provision/run-acceptance.ps1",
+    args:       ["-ViServerTimeoutSec", VI_SERVER_TIMEOUT.to_s],
     run:        "never"
 end
