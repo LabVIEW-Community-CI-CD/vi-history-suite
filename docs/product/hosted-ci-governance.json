@@ -350,6 +350,7 @@
           "bootstrapInteractiveSessionPolicy": "bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview",
           "bootstrapPromptSuppressionPolicy": "disable-windows-consumer-backup-and-welcome-prompts-before-post-bootstrap-reload",
           "coldPrepDesktopInterloperPolicy": "close-first-run-browser-oobe-interlopers-before-labview-launch",
+          "acceptanceDesktopInterloperPolicy": "close-first-run-browser-oobe-interlopers-before-and-during-vi-server-wait",
           "labviewPrelaunchFallbackPolicy": "manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window",
           "labviewViServerTimeoutSeconds": 60,
           "labviewStartupHistoryPackageScript": "npm run vagrant:labview-startup:history",

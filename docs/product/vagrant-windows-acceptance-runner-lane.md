@@ -187,7 +187,10 @@ immediately after bootstrap so the scheduled-task LabVIEW launch has an
 interactive desktop session while the Vagrant communicator remains available.
 Cold prep closes first-run browser/OOBE interlopers such as Edge, OneDrive, and
 UserOOBEBroker before LabVIEW is launched so the scheduled task starts from a
-clean desktop.
+clean desktop. Acceptance repeats that interloper cleanup before the LabVIEW
+launch and during the VI Server wait because Edge/WebView prompts can respawn
+after the post-bootstrap reload and steal the foreground while LabVIEW is
+initializing.
 Acceptance retains `vagrant/evidence/labview-startup.json` during the
 prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
 observation, Explorer session observation, LabVIEW.ini VI Server settings,

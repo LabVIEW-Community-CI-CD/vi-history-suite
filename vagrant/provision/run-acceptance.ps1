@@ -35,6 +35,14 @@ $EvidenceRoot  = 'C:\vihs-evidence'
 $LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'
 $LabVIEWTimeoutScreenshotPath = Join-Path $EvidenceRoot 'labview-timeout-desktop.png'
 $LabVIEWTimeoutScreenshotScriptPath = Join-Path $EvidenceRoot 'capture-labview-timeout-desktop.ps1'
+$desktopInterloperProcessNames = @(
+  'msedge',
+  'msedgewebview2',
+  'MicrosoftEdgeUpdate',
+  'OneDrive',
+  'UserOOBEBroker',
+  'SystemSettings'
+)
 
 function Write-Step([string]$Message) {
   $ts = (Get-Date -Format 'HH:mm:ss')
@@ -78,6 +86,38 @@ $LabVIEWIniPath = Join-Path (Split-Path -Parent $lvExe) 'LabVIEW.ini'
 
 function Test-LabVIEWPortListening {
   return [bool](netstat -an 2>$null | Select-String ':3363.*LISTENING')
+}
+
+function Stop-DesktopInterloperProcesses {
+  param([string]$Reason = 'before LabVIEW launch')
+
+  foreach ($processName in $desktopInterloperProcessNames) {
+    $processes = @(Get-Process -Name $processName -ErrorAction SilentlyContinue)
+    if ($processes.Count -eq 0) {
+      continue
+    }
+
+    foreach ($process in $processes) {
+      Write-Step "Closing first-run desktop interloper $($process.ProcessName) pid=$($process.Id) $Reason."
+      try {
+        Stop-Process -Id $process.Id -Force -ErrorAction Stop
+      } catch {
+        Write-Step "Stop-Process failed for desktop interloper pid=$($process.Id): $($_.Exception.Message)"
+      }
+
+      try {
+        & taskkill.exe /PID $process.Id /T /F 2>$null | Out-Null
+      } catch {
+        Write-Step "taskkill by pid failed for desktop interloper pid=$($process.Id): $($_.Exception.Message)"
+      }
+    }
+
+    try {
+      & taskkill.exe /IM "$processName.exe" /T /F 2>$null | Out-Null
+    } catch {
+      Write-Step "taskkill by image found no remaining $processName.exe desktop interlopers."
+    }
+  }
 }
 
 function Get-LabVIEWProcessSnapshot {
@@ -406,6 +446,8 @@ function Wait-LabVIEWPort {
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
   $nextProgressLog = Get-Date
   while ((Get-Date) -lt $deadline) {
+    Stop-DesktopInterloperProcesses -Reason 'during VI Server wait'
+
     if (Test-LabVIEWPortListening) {
       Write-LabVIEWStartupEvidence -Phase 'vi-server-ready' -TaskName $TaskName
       return $true
@@ -431,6 +473,8 @@ function Wait-LabVIEWPort {
   Write-LabVIEWStartupEvidence -Phase 'timeout' -TaskName $TaskName -CaptureDesktopScreenshot
   return $false
 }
+
+Stop-DesktopInterloperProcesses -Reason 'before LabVIEW launch'
 
 # Check if VI Server port is already open (LabVIEW may already be running)
 $portAlreadyOpen = netstat -an 2>$null | Select-String ':3363.*LISTENING'

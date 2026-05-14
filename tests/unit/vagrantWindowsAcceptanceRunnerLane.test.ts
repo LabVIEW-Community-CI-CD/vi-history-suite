@@ -156,6 +156,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain("vihs-lv-timeout-screenshot");
     expect(acceptance).toContain('[System.Windows.Forms.Screen]::PrimaryScreen.Bounds');
     expect(acceptance).toContain('-WindowStyle Hidden -EncodedCommand $encodedScreenshotCommand');
+    expect(acceptance).toContain('$desktopInterloperProcessNames');
+    expect(acceptance).toContain("'msedge'");
+    expect(acceptance).toContain("'msedgewebview2'");
+    expect(acceptance).toContain("'UserOOBEBroker'");
+    expect(acceptance).toContain("Stop-DesktopInterloperProcesses -Reason 'before LabVIEW launch'");
+    expect(acceptance).toContain("Stop-DesktopInterloperProcesses -Reason 'during VI Server wait'");
     expect(acceptance).toContain('netstat -ano');
     expect(acceptance).toContain(
       'Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
@@ -376,6 +382,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
             'disable-windows-consumer-backup-and-welcome-prompts-before-post-bootstrap-reload',
           coldPrepDesktopInterloperPolicy:
             'close-first-run-browser-oobe-interlopers-before-labview-launch',
+          acceptanceDesktopInterloperPolicy:
+            'close-first-run-browser-oobe-interlopers-before-and-during-vi-server-wait',
           labviewPrelaunchFallbackPolicy:
             'manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window',
           labviewViServerTimeoutSeconds: 60,

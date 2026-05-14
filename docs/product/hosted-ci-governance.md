@@ -351,10 +351,12 @@ Job ownership:
   WinRM network/firewall readiness remains available for Vagrant, runs the
   guest cold-prep provisioner to clear stale LabVIEW processes and first-run
   browser/OOBE interlopers, runs acceptance with a near-future scheduled-task
-  fallback for LabVIEW prelaunch, waits `60` seconds by default for VI Server
-  while retaining `labview-startup.json` with interactive window titles, recent
-  Windows event entries, decoded scheduled-task result hex, and a best-effort
-  `labview-timeout-desktop.png` screenshot on VI Server timeout, validates the latest acceptance
+  fallback for LabVIEW prelaunch, repeats first-run browser/OOBE interloper
+  cleanup before and during the VI Server wait, waits `60` seconds by default
+  for VI Server while retaining `labview-startup.json` with interactive window
+  titles, recent Windows event entries, decoded scheduled-task result hex, and
+  a best-effort `labview-timeout-desktop.png` screenshot on VI Server timeout,
+  validates the latest acceptance
   manifest, cold-start markers, host-native LabVIEWCLI facts, and generated
   report output through `npm run vagrant:acceptance:assert`, always halts the
   VM, and retains `vagrant/evidence/`; its acceptance provisioner sets
