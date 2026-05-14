@@ -187,8 +187,12 @@ interactive desktop session while the Vagrant communicator remains available.
 Acceptance retains `vagrant/evidence/labview-startup.json` during the
 prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
 observation, Explorer session observation, LabVIEW.ini VI Server settings,
-firewall rule state, and VI Server listener state before the assertion script
-is allowed to run. `npm run vagrant:labview-startup:history` summarizes
+interactive window titles, recent Windows event log entries, firewall rule
+state, and VI Server listener state before the assertion script is allowed to
+run. On VI Server timeout, the provisioner also attempts to retain
+`vagrant/evidence/labview-timeout-desktop.png` from the interactive `vagrant`
+desktop so blocked startup prompts are visible from CI artifacts.
+`npm run vagrant:labview-startup:history` summarizes
 retained startup evidence; the current governed default is `60` seconds because
 the retained successful starts complete well inside that window while stuck
 interactive startups should fail quickly with evidence.

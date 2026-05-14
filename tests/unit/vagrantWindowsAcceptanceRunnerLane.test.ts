@@ -123,6 +123,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
       "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"
     );
     expect(acceptance).toContain(
+      "$LabVIEWTimeoutScreenshotPath = Join-Path $EvidenceRoot 'labview-timeout-desktop.png'"
+    );
+    expect(acceptance).toContain(
       'New-ScheduledTaskAction -Execute $lvExe -WorkingDirectory (Split-Path -Parent $lvExe)'
     );
     expect(acceptance).toContain('New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(15)');
@@ -130,7 +133,14 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain("Write-LabVIEWStartupEvidence -Phase 'timeout'");
     expect(acceptance).toContain('labviewIni              = Get-LabVIEWIniSnapshot');
     expect(acceptance).toContain('firewallRules           = @(Get-LabVIEWFirewallSnapshot)');
+    expect(acceptance).toContain('interactiveWindows      = @(Get-InteractiveWindowSnapshot)');
+    expect(acceptance).toContain('recentEvents            = @(Get-RecentLabVIEWEventSnapshot)');
+    expect(acceptance).toContain('timeoutDesktopScreenshot = $desktopScreenshot');
     expect(acceptance).toContain('principalLogonType');
+    expect(acceptance).toContain('lastTaskResultHex  = Format-UnsignedHex32');
+    expect(acceptance).toContain("vihs-lv-timeout-screenshot");
+    expect(acceptance).toContain('[System.Windows.Forms.Screen]::PrimaryScreen.Bounds');
+    expect(acceptance).toContain('-EncodedCommand $encodedScreenshotCommand');
     expect(acceptance).toContain('netstat -ano');
     expect(acceptance).toContain(
       'Scheduled task triggered with a near-future fallback. Waiting up to ${ViServerTimeoutSec}s for LabVIEW to initialise VI Server'
@@ -269,6 +279,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('npm run vagrant:labview-startup:history');
     expect(laneDoc).toContain('near-future trigger inside the wait window');
     expect(laneDoc).toContain('labview-startup.json');
+    expect(laneDoc).toContain('labview-timeout-desktop.png');
+    expect(laneDoc).toContain('interactive window titles');
+    expect(laneDoc).toContain('recent Windows event');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
     expect(laneDoc).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
     expect(laneDoc).toContain('immediately after bootstrap');
@@ -348,6 +361,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
           labviewStartupHistoryPackageScript: 'npm run vagrant:labview-startup:history',
           harnessGitTimeoutMs: 300000,
           labviewStartupEvidencePath: 'vagrant/evidence/labview-startup.json',
+          labviewTimeoutScreenshotPath: 'vagrant/evidence/labview-timeout-desktop.png',
           goldenRefreshVariable: 'VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true',
           goldenRefreshWorkdirVariable: 'VIHS_VAGRANT_BOX_WORKDIR'
         })

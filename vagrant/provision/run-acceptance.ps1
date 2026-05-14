@@ -33,6 +33,8 @@ $WorkspaceRoot = 'C:\vihs-workspace'
 $SharedRoot    = 'C:\vihs-shared'
 $EvidenceRoot  = 'C:\vihs-evidence'
 $LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'
+$LabVIEWTimeoutScreenshotPath = Join-Path $EvidenceRoot 'labview-timeout-desktop.png'
+$LabVIEWTimeoutScreenshotScriptPath = Join-Path $EvidenceRoot 'capture-labview-timeout-desktop.ps1'
 
 function Write-Step([string]$Message) {
   $ts = (Get-Date -Format 'HH:mm:ss')
@@ -81,10 +83,13 @@ function Test-LabVIEWPortListening {
 function Get-LabVIEWProcessSnapshot {
   return @(Get-Process -Name LabVIEW -ErrorAction SilentlyContinue | ForEach-Object {
     [ordered]@{
-      processName = $_.ProcessName
-      id          = $_.Id
-      sessionId   = $_.SessionId
-      path        = try { $_.Path } catch { $null }
+      processName     = $_.ProcessName
+      id              = $_.Id
+      sessionId       = $_.SessionId
+      path            = try { $_.Path } catch { $null };
+      mainWindowTitle = $_.MainWindowTitle
+      responding      = try { $_.Responding } catch { $null };
+      startTime       = try { $_.StartTime.ToString('o') } catch { $null }
     }
   })
 }
@@ -97,6 +102,178 @@ function Get-ExplorerSessionSnapshot {
       sessionId   = $_.SessionId
     }
   })
+}
+
+function Format-UnsignedHex32 {
+  param($Value)
+
+  if ($null -eq $Value) {
+    return $null
+  }
+
+  try {
+    return ('0x{0:X8}' -f ([uint32]$Value))
+  } catch {
+    return [string]$Value
+  }
+}
+
+function Limit-EvidenceText {
+  param(
+    [AllowNull()][string]$Text,
+    [int]$MaxLength = 1000
+  )
+
+  if ($null -eq $Text) {
+    return $null
+  }
+
+  $normalized = $Text -replace '\s+', ' '
+  if ($normalized.Length -le $MaxLength) {
+    return $normalized
+  }
+
+  return "$($normalized.Substring(0, $MaxLength))..."
+}
+
+function Get-EventMessageText {
+  param($Event)
+
+  try {
+    return [string]$Event.Message
+  } catch {
+    return ''
+  }
+}
+
+function Get-InteractiveWindowSnapshot {
+  try {
+    return @(Get-Process -ErrorAction SilentlyContinue |
+      Where-Object { $_.SessionId -ne 0 -and -not [string]::IsNullOrWhiteSpace($_.MainWindowTitle) } |
+      Sort-Object ProcessName, Id |
+      Select-Object -First 50 |
+      ForEach-Object {
+        [ordered]@{
+          processName     = $_.ProcessName
+          id              = $_.Id
+          sessionId       = $_.SessionId
+          mainWindowTitle = $_.MainWindowTitle
+          responding      = try { $_.Responding } catch { $null };
+          path            = try { $_.Path } catch { $null }
+        }
+      })
+  } catch {
+    return @([ordered]@{ error = $_.Exception.Message })
+  }
+}
+
+function Get-RecentLabVIEWEventSnapshot {
+  $events = New-Object System.Collections.Generic.List[object]
+  $since = (Get-Date).AddMinutes(-20)
+  $matchPattern = 'LabVIEW|National Instruments|VI Server|Application Error|Windows Error Reporting|TaskScheduler|Task Scheduler|SideBySide|\.NET Runtime'
+  foreach ($logName in @('Application', 'System', 'Microsoft-Windows-TaskScheduler/Operational')) {
+    try {
+      $matchingEvents = @(Get-WinEvent -FilterHashtable @{ LogName = $logName; StartTime = $since } -MaxEvents 80 -ErrorAction Stop |
+        Where-Object {
+          $eventMessage = Get-EventMessageText -Event $_
+          ($_.ProviderName -match $matchPattern) -or
+          ($eventMessage -match $matchPattern)
+        } |
+        Select-Object -First 15)
+
+      foreach ($event in $matchingEvents) {
+        $events.Add([ordered]@{
+          logName      = $logName
+          providerName = $event.ProviderName
+          id           = $event.Id
+          levelDisplay = $event.LevelDisplayName
+          timeCreated  = if ($event.TimeCreated) { $event.TimeCreated.ToString('o') } else { $null };
+          message      = Limit-EvidenceText -Text (Get-EventMessageText -Event $event) -MaxLength 900
+        }) | Out-Null
+      }
+    } catch {
+      $events.Add([ordered]@{
+        logName = $logName
+        error   = $_.Exception.Message
+      }) | Out-Null
+    }
+  }
+
+  return @($events | Select-Object -First 30)
+}
+
+function Save-LabVIEWTimeoutDesktopScreenshot {
+  $taskName = 'vihs-lv-timeout-screenshot'
+  $result = [ordered]@{
+    path          = $LabVIEWTimeoutScreenshotPath
+    exists        = $false
+    attempted     = $true
+    taskName      = $taskName
+    taskState     = $null
+    taskResult    = $null
+    taskResultHex = $null
+    error         = $null
+  }
+
+  try {
+    if (Test-Path -LiteralPath $LabVIEWTimeoutScreenshotPath) {
+      Remove-Item -LiteralPath $LabVIEWTimeoutScreenshotPath -Force
+    }
+
+    $escapedScreenshotPath = $LabVIEWTimeoutScreenshotPath.Replace("'", "''")
+    $screenshotScript = @"
+`$ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.Windows.Forms
+Add-Type -AssemblyName System.Drawing
+`$bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+`$bitmap = New-Object System.Drawing.Bitmap `$bounds.Width, `$bounds.Height
+`$graphics = [System.Drawing.Graphics]::FromImage(`$bitmap)
+try {
+  `$graphics.CopyFromScreen(`$bounds.Location, [System.Drawing.Point]::Empty, `$bounds.Size)
+  `$bitmap.Save('$escapedScreenshotPath', [System.Drawing.Imaging.ImageFormat]::Png)
+} finally {
+  `$graphics.Dispose()
+  `$bitmap.Dispose()
+}
+"@
+    $screenshotScript | Set-Content -LiteralPath $LabVIEWTimeoutScreenshotScriptPath -Encoding utf8
+    $encodedScreenshotCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($screenshotScript))
+
+    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+    $taskAction = New-ScheduledTaskAction `
+      -Execute 'powershell.exe' `
+      -Argument "-NoLogo -NoProfile -EncodedCommand $encodedScreenshotCommand" `
+      -WorkingDirectory $EvidenceRoot
+    $taskTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(5)
+    $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'vagrant' -LogonType Interactive -RunLevel Highest
+    $taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
+
+    Register-ScheduledTask -TaskName $taskName -Action $taskAction -Trigger $taskTrigger -Principal $taskPrincipal -Settings $taskSettings -Force | Out-Null
+    Start-ScheduledTask -TaskName $taskName
+
+    $deadline = (Get-Date).AddSeconds(15)
+    while ((Get-Date) -lt $deadline -and -not (Test-Path -LiteralPath $LabVIEWTimeoutScreenshotPath)) {
+      Start-Sleep -Seconds 1
+    }
+
+    try {
+      $task = Get-ScheduledTask -TaskName $taskName -ErrorAction Stop
+      $taskInfo = Get-ScheduledTaskInfo -TaskName $taskName -ErrorAction Stop
+      $result['taskState'] = [string]$task.State
+      $result['taskResult'] = $taskInfo.LastTaskResult
+      $result['taskResultHex'] = Format-UnsignedHex32 -Value $taskInfo.LastTaskResult
+    } catch {
+      $result['error'] = $_.Exception.Message
+    }
+
+    $result['exists'] = Test-Path -LiteralPath $LabVIEWTimeoutScreenshotPath
+  } catch {
+    $result['error'] = $_.Exception.Message
+  } finally {
+    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+  }
+
+  return $result
 }
 
 function Get-LabVIEWPrelaunchTaskSnapshot {
@@ -124,6 +301,7 @@ function Get-LabVIEWPrelaunchTaskSnapshot {
       })
       lastRunTime        = $taskInfo.LastRunTime
       lastTaskResult     = $taskInfo.LastTaskResult
+      lastTaskResultHex  = Format-UnsignedHex32 -Value $taskInfo.LastTaskResult
       nextRunTime        = $taskInfo.NextRunTime
       numberOfMissedRuns = $taskInfo.NumberOfMissedRuns
     }
@@ -190,8 +368,14 @@ function Get-LabVIEWFirewallSnapshot {
 function Write-LabVIEWStartupEvidence {
   param(
     [string]$Phase,
-    [string]$TaskName = ''
+    [string]$TaskName = '',
+    [switch]$CaptureDesktopScreenshot
   )
+
+  $desktopScreenshot = $null
+  if ($CaptureDesktopScreenshot) {
+    $desktopScreenshot = Save-LabVIEWTimeoutDesktopScreenshot
+  }
 
   $evidence = [ordered]@{
     schema                  = 'vi-history-suite/vagrant-labview-startup@v1'
@@ -203,9 +387,12 @@ function Write-LabVIEWStartupEvidence {
     prelaunchTask           = Get-LabVIEWPrelaunchTaskSnapshot -TaskName $TaskName
     labviewProcesses        = @(Get-LabVIEWProcessSnapshot)
     explorerSessions        = @(Get-ExplorerSessionSnapshot)
+    interactiveWindows      = @(Get-InteractiveWindowSnapshot)
     labviewIni              = Get-LabVIEWIniSnapshot
     firewallRules           = @(Get-LabVIEWFirewallSnapshot)
     viServerPortLines       = @(netstat -ano 2>$null | Select-String ':3363' | ForEach-Object { [string]$_ })
+    recentEvents            = @(Get-RecentLabVIEWEventSnapshot)
+    timeoutDesktopScreenshot = $desktopScreenshot
   }
 
   $evidence | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $LabVIEWStartupEvidencePath -Encoding utf8
@@ -241,7 +428,7 @@ function Wait-LabVIEWPort {
 
     Start-Sleep -Seconds 5
   }
-  Write-LabVIEWStartupEvidence -Phase 'timeout' -TaskName $TaskName
+  Write-LabVIEWStartupEvidence -Phase 'timeout' -TaskName $TaskName -CaptureDesktopScreenshot
   return $false
 }
 
@@ -276,7 +463,7 @@ if ($portAlreadyOpen) {
   }
 
   if (-not (Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec -TaskName $taskName)) {
-    throw "LabVIEW VI Server did not open port 3363 within $ViServerTimeoutSec s. Check LabVIEW.ini, Windows Firewall, scheduled-task state, and retained startup evidence at $LabVIEWStartupEvidencePath."
+    throw "LabVIEW VI Server did not open port 3363 within $ViServerTimeoutSec s. Check LabVIEW.ini, Windows Firewall, scheduled-task state, retained startup evidence at $LabVIEWStartupEvidencePath, and timeout desktop screenshot at $LabVIEWTimeoutScreenshotPath."
   }
   Write-Step "LabVIEW VI Server ready on port 3363."
 }
