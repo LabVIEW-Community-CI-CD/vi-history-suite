@@ -194,6 +194,17 @@ describe('hosted ci governance docs', () => {
     expect(gitlabCi).toContain('windows_installed_user_host_acceptance');
     expect(gitlabCi).toContain('VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED');
     expect(gitlabCi).toContain('npm run acceptance:windows:installed-user-host');
+    expect(gitlabCi).toContain(
+      "schema: 'vi-history-suite/ubuntu-docker-runner-admission@v3'"
+    );
+    expect(gitlabCi).toContain(
+      "windowsInstalledUserHostProofState: 'admitted-separate-release-claim-ledger'"
+    );
+    expect(gitlabCi).toContain('windowsInstalledUserProofDeferred: false');
+    expect(gitlabCi).toContain("windowsDockerDesktopProofState: 'blocked-not-admitted'");
+    expect(gitlabCi).toContain(
+      "releaseClaimLedger: 'docs/product/windows-installed-user-release-claim-ledger-2026-05-14.json'"
+    );
     expect(gitlabCi).toContain('VIHS_WINDOWS_LABVIEW_PROOF_ENABLED');
     expect(gitlabCi).toContain(
       'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
