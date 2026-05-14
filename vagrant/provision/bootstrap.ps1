@@ -59,6 +59,54 @@ function Install-NodeLts {
   Write-Step "Node.js installed. Version: $(node --version)"
 }
 
+function Set-RegistryDwordValue {
+  param(
+    [string]$Path,
+    [string]$Name,
+    [int]$Value
+  )
+
+  if (-not (Test-Path -LiteralPath $Path)) {
+    New-Item -Path $Path -Force | Out-Null
+  }
+
+  New-ItemProperty -LiteralPath $Path -Name $Name -PropertyType DWord -Value $Value -Force | Out-Null
+}
+
+function Resolve-LocalUserSid {
+  param([string]$UserName)
+
+  foreach ($candidate in @("$env:COMPUTERNAME\$UserName", $UserName)) {
+    try {
+      return ([System.Security.Principal.NTAccount]$candidate).Translate(
+        [System.Security.Principal.SecurityIdentifier]
+      ).Value
+    } catch {
+      # Try the next candidate.
+    }
+  }
+
+  return $null
+}
+
+function Set-VagrantUserDwordValue {
+  param(
+    [string]$RelativePath,
+    [string]$Name,
+    [int]$Value
+  )
+
+  Set-RegistryDwordValue -Path "HKCU:\$RelativePath" -Name $Name -Value $Value
+
+  $vagrantSid = Resolve-LocalUserSid -UserName 'vagrant'
+  if ($vagrantSid) {
+    $hkuRoot = "Registry::HKEY_USERS\$vagrantSid"
+    if (Test-Path -LiteralPath $hkuRoot) {
+      Set-RegistryDwordValue -Path "$hkuRoot\$RelativePath" -Name $Name -Value $Value
+    }
+  }
+}
+
 # ---------------------------------------------------------------------------
 # 1. Git
 # ---------------------------------------------------------------------------
@@ -134,6 +182,50 @@ Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultUserName' -Value 'vagr
 Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultPassword' -Value 'Vagrant1234!' -Type String
 Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultDomainName' -Value $computerName -Type String
 Write-Step "Autologon configured for $computerName\vagrant."
+
+Write-Step "Suppressing Windows consumer backup and welcome prompts for CI desktop..."
+$cloudContentPolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent'
+Set-RegistryDwordValue -Path $cloudContentPolicyPath -Name 'DisableWindowsConsumerFeatures' -Value 1
+Set-RegistryDwordValue -Path $cloudContentPolicyPath -Name 'DisableCloudOptimizedContent' -Value 1
+Set-RegistryDwordValue -Path $cloudContentPolicyPath -Name 'DisableConsumerAccountStateContent' -Value 1
+
+$oobePolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OOBE'
+Set-RegistryDwordValue -Path $oobePolicyPath -Name 'DisablePrivacyExperience' -Value 1
+
+$oneDrivePolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\OneDrive'
+Set-RegistryDwordValue -Path $oneDrivePolicyPath -Name 'DisableFileSyncNGSC' -Value 1
+Set-RegistryDwordValue -Path $oneDrivePolicyPath -Name 'DisableFileSync' -Value 1
+
+$userCloudContentPolicyPath = 'Software\Policies\Microsoft\Windows\CloudContent'
+Set-VagrantUserDwordValue -RelativePath $userCloudContentPolicyPath -Name 'DisableWindowsSpotlightFeatures' -Value 1
+Set-VagrantUserDwordValue -RelativePath $userCloudContentPolicyPath -Name 'DisableWindowsSpotlightWindowsWelcomeExperience' -Value 1
+Set-VagrantUserDwordValue -RelativePath $userCloudContentPolicyPath -Name 'DisableWindowsSpotlightOnActionCenter' -Value 1
+Set-VagrantUserDwordValue -RelativePath $userCloudContentPolicyPath -Name 'DisableWindowsSpotlightOnSettings' -Value 1
+
+$contentDeliveryPath = 'Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager'
+foreach ($contentDeliveryValue in @(
+  'ContentDeliveryAllowed',
+  'FeatureManagementEnabled',
+  'OemPreInstalledAppsEnabled',
+  'PreInstalledAppsEnabled',
+  'PreInstalledAppsEverEnabled',
+  'SilentInstalledAppsEnabled',
+  'SoftLandingEnabled',
+  'SubscribedContentEnabled',
+  'SubscribedContent-310093Enabled',
+  'SubscribedContent-338388Enabled',
+  'SubscribedContent-338389Enabled',
+  'SubscribedContent-338393Enabled',
+  'SubscribedContent-353694Enabled',
+  'SubscribedContent-353696Enabled',
+  'SystemPaneSuggestionsEnabled'
+)) {
+  Set-VagrantUserDwordValue -RelativePath $contentDeliveryPath -Name $contentDeliveryValue -Value 0
+}
+
+$userProfileEngagementPath = 'Software\Microsoft\Windows\CurrentVersion\UserProfileEngagement'
+Set-VagrantUserDwordValue -RelativePath $userProfileEngagementPath -Name 'ScoobeSystemSettingEnabled' -Value 0
+Write-Step "Windows consumer backup and welcome prompts suppressed for vagrant desktop."
 
 Write-Step "Configuring WinRM for Vagrant communicator after reload..."
 sc.exe config winrm start= auto | Out-Host

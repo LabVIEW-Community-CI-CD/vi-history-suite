@@ -348,6 +348,7 @@
           "repoOwnedAcceptanceAssertionScript": "scripts/assertVagrantVsixAcceptanceEvidence.js",
           "repoOwnedAcceptanceAssertionPackageScript": "npm run vagrant:acceptance:assert",
           "bootstrapInteractiveSessionPolicy": "bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview",
+          "bootstrapPromptSuppressionPolicy": "disable-windows-consumer-backup-and-welcome-prompts-before-post-bootstrap-reload",
           "labviewPrelaunchFallbackPolicy": "manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window",
           "labviewViServerTimeoutSeconds": 60,
           "labviewStartupHistoryPackageScript": "npm run vagrant:labview-startup:history",

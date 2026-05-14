@@ -345,7 +345,8 @@ Job ownership:
   the storage doctor again as defense in depth before creating Data-drive
   Vagrant directories, optionally refreshes the local box when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
-  disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
+  disposable `vihs-ci-win11` VM, runs bootstrap, suppresses Windows consumer
+  backup and welcome prompts for the CI desktop, reloads once so `vagrant`
   autologon creates the interactive LabVIEW desktop session while clone-local
   WinRM network/firewall readiness remains available for Vagrant, runs the
   guest cold-prep provisioner, runs acceptance with a near-future scheduled-task

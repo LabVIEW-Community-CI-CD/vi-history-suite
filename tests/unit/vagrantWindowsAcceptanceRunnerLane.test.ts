@@ -107,6 +107,13 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('DefaultUserName');
     expect(bootstrap).toContain('DefaultPassword');
     expect(bootstrap).toContain('Configuring vagrant autologon for interactive LabVIEW launch');
+    expect(bootstrap).toContain('Suppressing Windows consumer backup and welcome prompts for CI desktop');
+    expect(bootstrap).toContain('DisableWindowsConsumerFeatures');
+    expect(bootstrap).toContain('DisableCloudOptimizedContent');
+    expect(bootstrap).toContain('DisableConsumerAccountStateContent');
+    expect(bootstrap).toContain('DisableWindowsSpotlightWindowsWelcomeExperience');
+    expect(bootstrap).toContain('DisableFileSyncNGSC');
+    expect(bootstrap).toContain('ScoobeSystemSettingEnabled');
     expect(bootstrap).toContain('Configuring WinRM for Vagrant communicator after reload');
     expect(bootstrap).toContain('sc.exe config winrm start= auto');
     expect(bootstrap).toContain('Set-NetConnectionProfile');
@@ -282,6 +289,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('labview-timeout-desktop.png');
     expect(laneDoc).toContain('interactive window titles');
     expect(laneDoc).toContain('recent Windows event');
+    expect(laneDoc).toContain('suppresses Windows consumer backup and welcome');
     expect(laneDoc).toContain('bootstrap provisioner configures `vagrant` autologon and WinRM startup');
     expect(laneDoc).toContain('VIHS LabVIEW 2026 VI Server TCP 3363');
     expect(laneDoc).toContain('immediately after bootstrap');
@@ -355,6 +363,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
           repoOwnedAcceptanceAssertionScript: 'scripts/assertVagrantVsixAcceptanceEvidence.js',
           repoOwnedAcceptanceAssertionPackageScript: 'npm run vagrant:acceptance:assert',
           bootstrapInteractiveSessionPolicy: 'bootstrap-configures-vagrant-autologon-and-winrm-then-job-reloads-before-cold-labview',
+          bootstrapPromptSuppressionPolicy:
+            'disable-windows-consumer-backup-and-welcome-prompts-before-post-bootstrap-reload',
           labviewPrelaunchFallbackPolicy:
             'manual-start-plus-near-future-one-shot-trigger-inside-vi-server-wait-window',
           labviewViServerTimeoutSeconds: 60,
