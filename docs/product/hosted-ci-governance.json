@@ -311,6 +311,7 @@
           "goldenVmName": "vihs-win11-labview2026-golden",
           "ciVmName": "vihs-ci-win11",
           "resourceGroup": "vihs-windows-vagrant",
+          "resourceGroupProcessMode": "newest_ready_first",
           "vagrantDotfilePath": ".vagrant-ci",
           "storageRoot": "/run/media/sergio/Data/vihs-vagrant",
           "standbyStorageRoot": "/run/media/sergio/Data1/vihs-vagrant",
@@ -624,6 +625,7 @@
           "private-release"
         ],
         "resourceGroup": "vihs-windows-vagrant",
+        "resourceGroupProcessMode": "newest_ready_first",
         "requiredNeeds": [
           "vagrant_runner_admission"
         ],

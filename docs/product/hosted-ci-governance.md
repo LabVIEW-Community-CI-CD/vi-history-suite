@@ -204,8 +204,9 @@ Runner operator hardening:
   `linux,x64,virtualbox,vagrant,private-release`, Vagrant box
   `vihs/win11-labview2026`, golden VM
   `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
-  serialized GitLab `resource_group: vihs-windows-vagrant`, and isolated
-  `VAGRANT_DOTFILE_PATH=.vagrant-ci`; the host keeps `VAGRANT_HOME` on
+  serialized GitLab `resource_group: vihs-windows-vagrant` with
+  `process_mode: newest_ready_first`, and isolated `VAGRANT_DOTFILE_PATH=.vagrant-ci`;
+  the host keeps `VAGRANT_HOME` on
   `/home/sergio/.vagrant.d` so Vagrant private keys stay on a chmod-capable
   ext4 filesystem, while `/run/media/sergio/Data/vihs-vagrant` remains the
   large-drive storage root for box payload cache, export work, and the
@@ -359,9 +360,10 @@ Job ownership:
 - `vagrant_windows_vsix_acceptance`: blocking Vagrant Windows VSIX acceptance
   lane on merge requests, governed branch lanes, and exact tags; it runs on
   `linux,x64,virtualbox,vagrant,private-release`, serializes with
-  `resource_group: vihs-windows-vagrant`, declares
-  `needs: [vagrant_runner_admission]` so it can still start early after the
-  readiness gate, packages the VSIX, stages it under `vagrant/shared/`, runs
+  `resource_group: vihs-windows-vagrant` and GitLab resource-group
+  `process_mode: newest_ready_first`, declares `needs: [vagrant_runner_admission]`
+  so it can still start early after the readiness gate, packages the VSIX,
+  stages it under `vagrant/shared/`, runs
   the storage doctor again as defense in depth before creating Data-drive
   Vagrant directories, optionally refreshes the local box when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the

@@ -232,7 +232,10 @@ readiness gate is `vagrant_runner_admission`.
 The proof job runs in the `test` stage on the Vagrant runner tags, serializes
 access with `resource_group: vihs-windows-vagrant`, and declares
 `needs: [vagrant_runner_admission]` so it can start as an early DAG job only
-after the readiness gate passes. It packages the VSIX, stages it under
+after the readiness gate passes. The GitLab resource group is configured with
+`process_mode: newest_ready_first` so duplicate merge-request pipelines do not
+force the latest merge gate to wait behind an older ready Vagrant proof. It
+packages the VSIX, stages it under
 `vagrant/shared/`, optionally refreshes the local box, runs the host doctor,
 boots the disposable VM, runs bootstrap, reloads once for the `vagrant`
 interactive desktop session, runs the guest cold-prep provisioner, runs
