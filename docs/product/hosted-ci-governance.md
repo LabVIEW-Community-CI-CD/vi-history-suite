@@ -263,6 +263,16 @@ Runner operator hardening:
   `vagrant/.vagrant` state before boot, and the cleanup/doctor surfaces fail
   closed when any active Vagrant machine ID points at a VM other than
   `vihs-ci-win11`
+- Vagrant readiness incident closeout (`2026-05-14`): storage drift
+  prevention merged through MR `!221` on protected `develop` commit `179365c`;
+  post-merge `vagrant_runner_admission` job `14371317692` and
+  `vagrant_windows_vsix_acceptance` job `14371317705` passed, and the latest
+  runner receipt reports active root `/run/media/sergio/Data/vihs-vagrant`,
+  standby root `/run/media/sergio/Data1/vihs-vagrant`, archive root
+  `/run/media/sergio/MAJOR GENER/VI History Suite Evidence`, Vagrant home
+  boxes, and Vagrant tmp healthy. Retained protected-branch evidence remains
+  archived under
+  `/run/media/sergio/MAJOR GENER/VI History Suite Evidence/gitlab/job-14371317705/`.
 
 Job ownership:
 
