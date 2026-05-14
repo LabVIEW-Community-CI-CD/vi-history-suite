@@ -337,6 +337,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostedGovernanceDoc).toContain('vagrant-windows-vsix-acceptance');
     expect(hostedGovernanceDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(hostedGovernanceDoc).toContain('resource_group: vihs-windows-vagrant');
+    expect(hostedGovernanceDoc).toContain('process_mode: newest_ready_first');
     expect(hostedGovernanceDoc).toContain('scripts/doctorVagrantStorage.js');
     expect(hostedGovernanceDoc).toContain('vagrant-storage-doctor.json');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/doctor-vagrant-host.sh');
@@ -359,6 +360,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
           goldenVmName: 'vihs-win11-labview2026-golden',
           ciVmName: 'vihs-ci-win11',
           resourceGroup: 'vihs-windows-vagrant',
+          resourceGroupProcessMode: 'newest_ready_first',
           vagrantDotfilePath: '.vagrant-ci',
           storageRoot: '/run/media/sergio/Data/vihs-vagrant',
           standbyStorageRoot: '/run/media/sergio/Data1/vihs-vagrant',
@@ -457,6 +459,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
         classification: 'required-vagrant-windows-vsix-acceptance',
         stage: 'test',
         resourceGroup: 'vihs-windows-vagrant',
+        resourceGroupProcessMode: 'newest_ready_first',
         requiredNeeds: ['vagrant_runner_admission'],
         dagStart: true,
         evidenceRoot: 'vagrant/evidence/',
