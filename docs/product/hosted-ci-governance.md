@@ -233,10 +233,12 @@ Runner operator hardening:
   closed when the active storage root is missing, unmounted, not writable,
   missing the governed Windows box cache, or when
   `/home/sergio/.vagrant.d/boxes` points anywhere except the active large-drive
-  box cache; the repo-owned disposable cleanup surface
-  `scripts/vagrant/prepare-vagrant-home.sh` links
-  `/home/sergio/.vagrant.d/boxes` to the large-drive box cache before Vagrant
-  runs; `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the
+  box cache, or when `/home/sergio/.vagrant.d/tmp` points anywhere except the
+  active large-drive Vagrant temp cache; the repo-owned disposable cleanup
+  surface `scripts/vagrant/prepare-vagrant-home.sh` links both
+  `/home/sergio/.vagrant.d/boxes` and `/home/sergio/.vagrant.d/tmp` to the
+  large-drive Vagrant cache before Vagrant runs;
+  `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the
   golden VM, fails when the disposable CI VM is running, deletes only a stopped
   `vihs-ci-win11`, unregisters stale inaccessible disposable registry entries
   that point at the governed CI VM folder, retries orphaned disposable
@@ -363,9 +365,10 @@ Job ownership:
   `VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000` so canonical harness acquisition
   fails closed instead of silently exhausting the runner no-output window; this
   job pins
-  `VAGRANT_HOME`, the box file, the export work root, and the VirtualBox
-  machine folder to `/run/media/sergio/Data/vihs-vagrant` so the large
-  Windows box and disposable VM clone do not land on the root filesystem; this
+  `VAGRANT_HOME`, the box file, the export work root, Vagrant temp cache, and
+  the VirtualBox machine folder to `/run/media/sergio/Data/vihs-vagrant` so the
+  large Windows box, box-unpack temp files, and disposable VM clone do not land
+  on the root filesystem; this
   is Vagrant VSIX
   acceptance evidence, not a substitute for the deferred native Windows x64
   private-release and Windows-container proof lane

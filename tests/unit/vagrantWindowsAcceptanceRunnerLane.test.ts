@@ -200,7 +200,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(storageDoctor).toContain('vagrant-storage-doctor.json');
     expect(storageDoctor).toContain('vagrant-storage-doctor.md');
     expect(storageDoctor).toContain('Vagrant active storage drift detected');
-    expect(storageDoctor).toContain('Vagrant boxes symlink points at');
+    expect(storageDoctor).toContain('Vagrant ${label} symlink points at');
+    expect(storageDoctor).toContain('expectedTmpTarget');
 
     expect(runnerReadiness).toContain('vi-history-suite/vagrant-acceptance-runner-readiness@v1');
     expect(runnerReadiness).toContain('vagrant-runner-readiness-evidence');
@@ -218,7 +219,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(prepareHome).toContain('prepare-vagrant-home');
     expect(prepareHome).toContain('VAGRANT_HOME supports chmod');
     expect(prepareHome).toContain('VIHS_VAGRANT_BOX_CACHE_HOME');
-    expect(prepareHome).toContain('Linked Vagrant boxes');
+    expect(prepareHome).toContain('Linked Vagrant $name to $target');
+    expect(prepareHome).toContain('link_cache_path boxes');
+    expect(prepareHome).toContain('link_cache_path tmp');
     expect(prepareHome).toContain('does not support chmod');
     expect(prepareHome).toContain('exists and is not an empty directory');
 
@@ -353,6 +356,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
           evidenceVaultRoot: '/run/media/sergio/MAJOR GENER/VI History Suite Evidence',
           vagrantHome: '/home/sergio/.vagrant.d',
           vagrantBoxCacheHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home',
+          vagrantTmpCacheHome: '/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp',
           boxFile: '/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box',
           boxWorkdir: '/run/media/sergio/Data/vihs-vagrant/box-work',
           virtualBoxMachineFolder: '/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs',

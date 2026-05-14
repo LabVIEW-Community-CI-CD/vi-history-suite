@@ -52,9 +52,11 @@ The repo-owned storage doctor is `scripts/doctorVagrantStorage.js`, exposed as
 Vagrant directories and retains `vagrant/evidence/vagrant-storage-doctor.json`
 plus `vagrant/evidence/vagrant-storage-doctor.md`. The doctor fails closed for
 active storage drift: missing or unmounted active root, non-writable active
-root, missing active core assets, or a `/home/sergio/.vagrant.d/boxes` symlink
+root, missing active core assets, a `/home/sergio/.vagrant.d/boxes` symlink
 that points anywhere other than
-`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`. Standby and archive
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`, or a
+`/home/sergio/.vagrant.d/tmp` symlink that points anywhere other than
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp`. Standby and archive
 availability are reported as warnings unless the doctor is explicitly run with
 stricter flags.
 
@@ -167,7 +169,10 @@ retries, and removes the active `.vagrant-ci` state. The job then runs Vagrant w
 `VAGRANT_HOME=/home/sergio/.vagrant.d` so Vagrant private-key chmod remains on
 the host ext4 filesystem. `scripts/vagrant/prepare-vagrant-home.sh` links
 `/home/sergio/.vagrant.d/boxes` to the large-drive box cache at
-`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`. The CI job also sets
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes` and links
+`/home/sergio/.vagrant.d/tmp` to
+`/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp` so manual box refresh
+unpack work cannot fill the root filesystem. The CI job also sets
 the VirtualBox default machine folder to
 `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs` before importing the
 disposable VM so the root filesystem does not need to hold the large Windows
@@ -251,6 +256,8 @@ The lane fails closed when:
 - the active storage root is missing the governed Windows box cache assets
 - `/home/sergio/.vagrant.d/boxes` points at any target other than
   `/run/media/sergio/Data/vihs-vagrant/vagrant-home/boxes`
+- `/home/sergio/.vagrant.d/tmp` points at any target other than
+  `/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp`
 - `gitlab-runner`, Vagrant, VirtualBox, Docker, Node, npm, or `vagrant-reload`
   are missing from the host contract
 - the registered `vihs/win11-labview2026` box is missing

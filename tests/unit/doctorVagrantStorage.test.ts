@@ -89,6 +89,7 @@ function createHealthyTopology(): {
 
   fs.mkdirSync(path.join(activeRoot, 'box-cache'), { recursive: true });
   fs.mkdirSync(path.join(activeRoot, 'vagrant-home', 'boxes'), { recursive: true });
+  fs.mkdirSync(path.join(activeRoot, 'vagrant-home', 'tmp'), { recursive: true });
   fs.writeFileSync(path.join(activeRoot, 'box-cache', 'windows11.box'), 'box\n', 'utf8');
 
   fs.mkdirSync(path.join(standbyRoot, 'box-cache'), { recursive: true });
@@ -97,6 +98,7 @@ function createHealthyTopology(): {
 
   fs.mkdirSync(vagrantHome, { recursive: true });
   fs.symlinkSync(path.join(activeRoot, 'vagrant-home', 'boxes'), path.join(vagrantHome, 'boxes'));
+  fs.symlinkSync(path.join(activeRoot, 'vagrant-home', 'tmp'), path.join(vagrantHome, 'tmp'));
 
   return {
     activeMount,
@@ -193,6 +195,18 @@ describe('Vagrant storage doctor', () => {
     expect(report.status).toBe('failed');
     expect(report.issues.join('\n')).toContain('Vagrant boxes symlink points at');
     expect(report.issues.join('\n')).toContain(path.join(topology.activeRoot, 'vagrant-home', 'boxes'));
+  });
+
+  it('fails active drift when the Vagrant tmp symlink points at the wrong target', () => {
+    const topology = createHealthyTopology();
+    fs.rmSync(path.join(topology.vagrantHome, 'tmp'));
+    fs.mkdirSync(path.join(topology.standbyRoot, 'vagrant-home', 'tmp'), { recursive: true });
+    fs.symlinkSync(path.join(topology.standbyRoot, 'vagrant-home', 'tmp'), path.join(topology.vagrantHome, 'tmp'));
+
+    const report = runTopology(topology);
+    expect(report.status).toBe('failed');
+    expect(report.issues.join('\n')).toContain('Vagrant tmp symlink points at');
+    expect(report.issues.join('\n')).toContain(path.join(topology.activeRoot, 'vagrant-home', 'tmp'));
   });
 
   it('reports missing standby storage as a warning by default and as a failure when required', () => {

@@ -325,6 +325,7 @@
           },
           "vagrantHome": "/home/sergio/.vagrant.d",
           "vagrantBoxCacheHome": "/run/media/sergio/Data/vihs-vagrant/vagrant-home",
+          "vagrantTmpCacheHome": "/run/media/sergio/Data/vihs-vagrant/vagrant-home/tmp",
           "boxFile": "/run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box",
           "boxWorkdir": "/run/media/sergio/Data/vihs-vagrant/box-work",
           "virtualBoxMachineFolder": "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs",
@@ -394,6 +395,7 @@
             "active-windows11-box-present",
             "active-vagrant-home-boxes-present",
             "vagrant-home-boxes-symlink-targets-active-root",
+            "vagrant-home-tmp-symlink-targets-active-root",
             "standby-root-warning-only-by-default",
             "archive-root-warning-only-by-default"
           ],
