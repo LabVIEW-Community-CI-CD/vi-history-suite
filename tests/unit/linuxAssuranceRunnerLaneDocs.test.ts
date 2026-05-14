@@ -216,7 +216,9 @@ describe('linux assurance runner lane docs', () => {
         evidenceRoot: 'linux-docker-provider-lane-evidence/',
         evidenceSchema: 'vi-history-suite/linux-docker-provider-lane@v1',
         claimScope: 'linux-docker-validated-preview',
-        windowsInstalledUserProofDeferred: true
+        windowsInstalledUserHostProofState: 'admitted-separate-release-claim-ledger',
+        windowsInstalledUserProofDeferred: false,
+        windowsDockerDesktopProofState: 'blocked-not-admitted'
       })
     );
     expect(hostedGovernanceJson.authorityGitLab.jobs.assurance_audit_packet.classification).toBe(

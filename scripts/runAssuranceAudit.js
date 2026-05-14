@@ -45,7 +45,9 @@ const REPO_SCOPE_EXCLUDED_PREFIXES = [
   'assurance-requirements-quality-evidence/',
   'assurance-external-user-information-evidence/',
   'assurance-audit-packet-evidence/',
-  'windows-private-release-evidence/'
+  'windows-private-release-evidence/',
+  'windows-installed-user-host-evidence/',
+  'windows-installed-user-release-claim-evidence/'
 ];
 const LANE_CONFIG = {
   'release-gate': {

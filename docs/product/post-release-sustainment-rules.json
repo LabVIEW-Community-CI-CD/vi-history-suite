@@ -590,7 +590,7 @@
           },
           "classification": "deferred-windows-labview-proof-check",
           "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true",
-          "claimBoundary": "required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview"
+          "claimBoundary": "required-before-any-aggregate-windows-host-and-container-proof-claim; not required for host-only installed-user proof"
         },
         "linux_assurance": {
           "hostApplySurface": {
@@ -660,7 +660,9 @@
           "evidenceSchema": "vi-history-suite/linux-docker-provider-lane@v1",
           "claimScope": "linux-docker-validated-preview",
           "failurePolicy": "fail-closed-before-preview-or-exact-package-artifacts-when-the-governed-linux-docker-provider-cannot-be-validated",
-          "windowsInstalledUserProofDeferred": true
+          "windowsInstalledUserHostProofState": "admitted-separate-release-claim-ledger",
+          "windowsInstalledUserProofDeferred": false,
+          "windowsDockerDesktopProofState": "blocked-not-admitted"
         }
       },
       "laneResponsibilities": {
@@ -849,21 +851,21 @@
     ]
   },
   "activeReleaseClaim": {
-    "classification": "linux-docker-validated-preview",
-    "summary": "The governed develop/package preview claim is Linux/Docker validated on the self-hosted Ubuntu runner; Windows installed-user and Windows/LabVIEW proof are deferred until a real Windows host exists.",
+    "classification": "linux-docker-plus-windows-host-installed-user-proof",
+    "summary": "The governed develop/package preview claim retains Linux/Docker validation and separately admitted native Windows LabVIEW 2026 x64 host proof; Windows Docker Desktop Windows-container proof remains blocked-not-admitted.",
     "verifiedOnThisMachine": [
       "ubuntu-docker-runner-admission",
       "linux-docker-provider-lane",
       "linux-assurance-runner-lane",
       "docs-workbench-gate",
       "test-extension-linux-ci",
-      "preview-vsix-packaging"
+      "preview-vsix-packaging",
+      "native-windows-labview-2026-x64-host-proof",
+      "windows-exact-vsix-installed-user-proof"
     ],
     "deferredProof": [
-      "native Windows installed extension behavior",
-      "native Windows LabVIEW host execution",
       "Windows Docker Desktop Windows-container execution",
-      "windows_private_release_acceptance"
+      "windows_private_release_acceptance aggregate host+container proof"
     ],
     "publicGitHubMutation": "not-admitted-by-this-claim",
     "marketplaceMutation": "not-admitted-by-this-claim"

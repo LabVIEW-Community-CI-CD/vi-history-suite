@@ -31,7 +31,7 @@ describe('windows private release runner lane docs', () => {
     expect(gitlabCi).toContain('- windows');
     expect(gitlabCi).toContain('- docker-windows');
     expect(gitlabCi).toContain('npm run acceptance:windows:private-release');
-    expect(gitlabCi).toContain('- windows_private_release_acceptance');
+    expect(gitlabCi).toContain('job: windows_private_release_acceptance');
     expect(gitlabCi).toContain('windows-private-release-evidence/');
 
     expect(runnerLaneDoc).toContain('resource/plugins/lv_icon.vi');
@@ -97,7 +97,7 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('`governed_runner_admission`');
     expect(hostedGovernanceDoc).toContain('`ubuntu_docker_runner_admission`');
     expect(hostedGovernanceDoc).toContain('deferred tagged Windows shell-runner');
-    expect(hostedGovernanceDoc).toContain('required before any Windows installed-user proof claim');
+    expect(hostedGovernanceDoc).toContain('stricter aggregate proof');
     expect(hostedGovernanceDoc).toContain('VIHS Governed Runner Lanes');
     expect(hostedGovernanceDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('start-governed-runner-lanes.ps1');

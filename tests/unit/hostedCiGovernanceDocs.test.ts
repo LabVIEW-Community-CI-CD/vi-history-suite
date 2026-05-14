@@ -80,7 +80,9 @@ describe('hosted ci governance docs', () => {
         evidenceRoot: 'linux-docker-provider-lane-evidence/',
         evidenceSchema: 'vi-history-suite/linux-docker-provider-lane@v1',
         claimScope: 'linux-docker-validated-preview',
-        windowsInstalledUserProofDeferred: true
+        windowsInstalledUserHostProofState: 'admitted-separate-release-claim-ledger',
+        windowsInstalledUserProofDeferred: false,
+        windowsDockerDesktopProofState: 'blocked-not-admitted'
       })
     );
     expect(matrix.authorityGitLab.jobs.public_exact_pretag_proof).toEqual(
@@ -105,13 +107,31 @@ describe('hosted ci governance docs', () => {
         classification: 'deferred-windows-labview-proof-check',
         activationVariable: 'VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true',
         claimBoundary:
-          'required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview',
+          'required-before-any-aggregate-windows-host-and-container-proof-claim; not required for host-only installed-user proof',
         runtimeContaminationRecovery: expect.objectContaining({
           recoveryScript: 'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           retryDelayMs: 5000,
           maxProofRetries: 1
         })
       })
+    );
+    expect(matrix.authorityGitLab.jobs.windows_installed_user_host_acceptance).toEqual(
+      expect.objectContaining({
+        classification: 'deferred-windows-labview-host-only-proof-check',
+        packageScript: 'npm run acceptance:windows:installed-user-host',
+        evidenceRoot: 'windows-installed-user-host-evidence/',
+        evidenceSchema: 'vi-history-suite/windows-installed-user-host-acceptance@v1',
+        claimScope: 'installed-user-host-labview-2026-x64',
+        activationVariable: 'VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED=true',
+        claimBoundary:
+          'admits Windows installed-user host proof only; does not admit Windows Docker Desktop proof'
+      })
+    );
+    expect(matrix.authorityGitLab.jobs.package_extension_preview.optionalNeeds).toEqual(
+      expect.arrayContaining([
+        'windows_private_release_acceptance',
+        'windows_installed_user_host_acceptance'
+      ])
     );
     expect(matrix.activeReleaseClaim).toEqual(
       expect.objectContaining({
@@ -139,6 +159,10 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('`v1.3.8` remains retained as immutable zero-asset historical incident');
     expect(matrixDoc).toContain('public GitHub and VS Code');
     expect(matrixDoc).toContain('Marketplace both publish `1.3.16`');
+    expect(matrixDoc).toContain('active governed installed-user host claim');
+    expect(matrixDoc).toContain('npm run acceptance:windows:installed-user-host');
+    expect(matrixDoc).toContain('npm run proof:windows-installed-user-claim:assert');
+    expect(matrixDoc).toContain('host proof is not a substitute');
     expect(matrixDoc).toContain('current exact release line: `v1.3.16`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.16`');
     expect(matrixDoc).toContain('current `develop` package line: `1.3.16`');
@@ -167,6 +191,9 @@ describe('hosted ci governance docs', () => {
     expect(gitlabCi).toContain('npm run linux:docker:provider:lane');
     expect(gitlabCi).toContain('public_exact_pretag_proof');
     expect(gitlabCi).toContain('windows_private_release_acceptance');
+    expect(gitlabCi).toContain('windows_installed_user_host_acceptance');
+    expect(gitlabCi).toContain('VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED');
+    expect(gitlabCi).toContain('npm run acceptance:windows:installed-user-host');
     expect(gitlabCi).toContain('VIHS_WINDOWS_LABVIEW_PROOF_ENABLED');
     expect(gitlabCi).toContain(
       'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'

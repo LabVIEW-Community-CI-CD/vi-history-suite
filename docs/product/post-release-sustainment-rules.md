@@ -522,14 +522,16 @@ Hosted automation governance is now retained explicitly:
   `npm run linux:docker:provider:lane` and retained
   `linux-docker-provider-lane-evidence/` so preview and exact package lanes
   prove the Linux Docker provider before artifact publication while Windows
-  installed-user LabVIEW proof stays deferred
+  installed-user host LabVIEW proof is tracked separately in the release-claim
+  ledger
 - GitHub benchmark workflows are characterization-only experiment lanes and
   are not exact-release required checks
 - GitLab `governed_runner_admission` and
   `windows_private_release_acceptance` remain deferred Windows/LabVIEW proof
-  lanes behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`; they are required
-  before any Windows installed-user proof claim, but they are not required for
-  the active Linux/Docker validated preview claim
+  lanes behind `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`; the aggregate lane is
+  required before any combined Windows host+container proof claim, while the
+  host-only claim is owned by `npm run acceptance:windows:installed-user-host`
+  and `npm run proof:windows-installed-user-claim:assert`
 - When enabled, GitLab `windows_private_release_acceptance` retains one bounded
   host-native retry when the shared Windows cleanup seam fails before proof
   execution, preserving

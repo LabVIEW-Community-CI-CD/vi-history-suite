@@ -78,14 +78,16 @@ Read these in order:
 60. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
 61. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
 62. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
-61. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
-62. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
-63. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-64. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-65. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-66. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-67. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-68. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+63. [Windows Installed-User Release-Claim Ledger 2026-05-14](./windows-installed-user-release-claim-ledger-2026-05-14.md)
+64. [Windows Installed-User Release-Claim Ledger 2026-05-14 JSON](./windows-installed-user-release-claim-ledger-2026-05-14.json)
+65. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+66. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+67. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+68. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+69. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+70. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+71. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+72. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -153,15 +155,17 @@ Current control-plane surfaces:
 49. [Exact Release Candidate Reassessment 2026-04-26 JSON](./exact-release-candidate-reassessment-2026-04-26.json)
 50. [Public Validation Pre-Release v1.3.13](./public-validation-prerelease-v1.3.13.md)
 51. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
-52. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
-53. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
-52. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-53. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-54. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-55. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-56. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-57. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
-58. [Fast VS Code Loop](../dev-fast-loop.md)
+52. [Windows Installed-User Release-Claim Ledger 2026-05-14](./windows-installed-user-release-claim-ledger-2026-05-14.md)
+53. [Windows Installed-User Release-Claim Ledger 2026-05-14 JSON](./windows-installed-user-release-claim-ledger-2026-05-14.json)
+54. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+55. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+56. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+57. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+58. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+59. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+60. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+61. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+62. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -597,8 +601,8 @@ Current exact release truth:
     Docker Desktop/Docker Engine host can persist the `docker` / `2026` /
     `x64` runtime bundle through `vihs` and validate it as
     `linux-container` / `labview-cli`; native Windows host LabVIEW 2026 x64
-    proof is now admitted separately through the VirtualBox installed-user
-    proof packet
+    proof is now admitted separately through the Windows installed-user
+    release-claim ledger
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -1260,6 +1264,15 @@ These are generated locally and are not the committed source of truth:
 - public facade host-machine acceptance:
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json`
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
+- Windows installed-user release-claim assertion:
+  - tracked ledger:
+    `docs/product/windows-installed-user-release-claim-ledger-2026-05-14.json`
+  - local assertion receipt:
+    `.cache/windows-installed-user-release-claim-assertion/latest/windows-installed-user-release-claim-assertion.json`
+  - host-only acceptance evidence when the native Windows gate is run:
+    `windows-installed-user-host-evidence/manifest.json`
+  - local assertion gate:
+    `npm run proof:windows-installed-user-claim:assert`
 - public-facade Linux smoke:
   - `artifacts/public-linux-installed-user-smoke/public-linux-installed-user-smoke.json`
 - public product Gate D preflight:
@@ -1299,6 +1312,8 @@ npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-002
 npm run proof:run -- benchmark-windows --harness-id HARNESS-VHS-002
 npm run public:gate-d:preflight
 npm run public:gate-d:prepare-cold-pull
+npm run proof:windows-installed-user-claim:assert
+npm run acceptance:windows:installed-user-host
 npm run docs:gate
 npm run docs:bundle
 npm run docs:workbench:build

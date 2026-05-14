@@ -146,9 +146,9 @@ describe('Vagrant storage doctor', () => {
       '--fail-on-active-drift'
     ]);
 
-    expect(parsed.activeRoot).toBe('/active');
-    expect(parsed.standbyRoot).toBe('/standby');
-    expect(parsed.archiveRoot).toBe('/archive');
+    expect(parsed.activeRoot).toBe(path.resolve('/active'));
+    expect(parsed.standbyRoot).toBe(path.resolve('/standby'));
+    expect(parsed.archiveRoot).toBe(path.resolve('/archive'));
     expect(parsed.evidenceDir).toBe(path.resolve('vagrant/evidence'));
     expect(parsed.failOnActiveDrift).toBe(true);
     expect(doctor.getUsage()).toContain('--require-standby');

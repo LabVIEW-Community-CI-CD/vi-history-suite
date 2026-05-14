@@ -62,6 +62,8 @@ describe('run assurance audit script', () => {
       'coverage/coverage-summary.json',
       'docs-integration-evidence/public/report.json',
       'windows-private-release-evidence/manifest.json',
+      'windows-installed-user-host-evidence/manifest.json',
+      'windows-installed-user-release-claim-evidence/assertion.json',
       'src/extension.ts',
       'tests/unit/packageManifest.test.ts'
     ]);

@@ -1,3 +1,7 @@
+import * as fsp from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -1770,12 +1774,33 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
   });
 
   it('uses the default filesystem access path when no path-exists dependency is injected', async () => {
+    const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), 'vihs-runtime-locator-fs-'));
+    const labviewExePath = path.join(
+      tempRoot,
+      'Program Files',
+      'National Instruments',
+      'LabVIEW 2026',
+      'LabVIEW.exe'
+    );
+    const labviewCliPath = path.join(
+      tempRoot,
+      'Program Files',
+      'National Instruments',
+      'Shared',
+      'LabVIEW CLI',
+      'LabVIEWCLI.exe'
+    );
+    await fsp.mkdir(path.dirname(labviewExePath), { recursive: true });
+    await fsp.mkdir(path.dirname(labviewCliPath), { recursive: true });
+    await fsp.writeFile(labviewExePath, '');
+    await fsp.writeFile(labviewCliPath, '');
+
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
-        labviewExePath: __filename,
-        labviewCliPath: __filename
+        labviewExePath,
+        labviewCliPath
       },
       {
         queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
@@ -1786,7 +1811,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
 
     expect(result.engine).toBe('labview-cli');
     expect(result.provider).toBe('host-native');
-    expect(result.labviewExe?.path).toBe(__filename);
-    expect(result.labviewCli?.path).toBe(__filename);
+    expect(result.labviewExe?.path).toBe(labviewExePath);
+    expect(result.labviewCli?.path).toBe(labviewCliPath);
   });
 });

@@ -313,14 +313,15 @@ function buildLinuxDockerProviderLaneReport(options) {
     settingsFilePath: options.settingsFilePath,
     windowsLabviewProof: {
       included: false,
-      state: 'community-deferred',
+      state: 'admitted-separate-windows-host-proof',
       requiredForThisLane: false,
-      requiredBeforeWindowsInstalledUserClaim: true,
+      requiredBeforeWindowsInstalledUserClaim: false,
+      requiredBeforeWindowsDockerDesktopClaim: true,
+      releaseClaimLedger:
+        'docs/product/windows-installed-user-release-claim-ledger-2026-05-14.json',
       deferredEvidence: [
-        'native Windows installed extension behavior',
-        'native Windows LabVIEW host execution',
         'Windows Docker Desktop Windows-container execution',
-        'windows_private_release_acceptance'
+        'windows_private_release_acceptance aggregate host+container proof'
       ]
     },
     publicGitHubMutation: 'not-performed',

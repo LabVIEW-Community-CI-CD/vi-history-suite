@@ -232,6 +232,8 @@
     "proof:run": "npm run compile && node out/cli/runGovernedProof.js",
     "proof:runtime-settings-live-session": "node scripts/runRuntimeSettingsLiveSessionProof.js",
     "acceptance:windows:private-release": "scripts\\invoke-node-from-npm-execpath.cmd .\\node_modules\\typescript\\bin\\tsc -p . && scripts\\invoke-node-from-npm-execpath.cmd scripts/runWindowsPrivateReleaseAcceptance.js",
+    "acceptance:windows:installed-user-host": "scripts\\invoke-node-from-npm-execpath.cmd .\\node_modules\\typescript\\bin\\tsc -p . && scripts\\invoke-node-from-npm-execpath.cmd scripts/runWindowsPrivateReleaseAcceptance.js --scope host-only --evidence-dir windows-installed-user-host-evidence",
+    "proof:windows-installed-user-claim:assert": "node scripts/assertWindowsInstalledUserReleaseClaim.js",
     "proof:runtime-settings-live-session:assert": "node scripts/assertRuntimeSettingsLiveSessionProbePacket.js",
     "proof:runtime-settings-live-session:history": "node scripts/printRuntimeSettingsLiveSessionProbeHistory.js",
     "proof:runtime-settings-live-session:policy:assert": "node scripts/assertRuntimeSettingsLiveSessionPolicyBoundary.js",
