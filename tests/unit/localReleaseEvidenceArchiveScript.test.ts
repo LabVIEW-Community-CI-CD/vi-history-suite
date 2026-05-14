@@ -13,7 +13,7 @@ describe('local release evidence archive script', () => {
   it('copies retained evidence into the Seagate vault with a manifest and hashes', () => {
     const script = readText('scripts/local/archiveReleaseEvidence.sh');
 
-    expect(script).toContain('/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence');
+    expect(script).toContain('/run/media/sergio/MAJOR GENER/VI History Suite Evidence');
     expect(script).toContain('--source PATH');
     expect(script).toContain('--release VERSION');
     expect(script).toContain('cp -a "$SOURCE_DIR"/. "$PAYLOAD_DIR"/');

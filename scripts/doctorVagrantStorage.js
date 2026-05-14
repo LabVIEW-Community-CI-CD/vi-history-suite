@@ -7,7 +7,7 @@ const os = require('node:os');
 const SCHEMA = 'vi-history-suite/vagrant-storage-doctor@v1';
 const DEFAULT_ACTIVE_ROOT = '/run/media/sergio/Data/vihs-vagrant';
 const DEFAULT_STANDBY_ROOT = '/run/media/sergio/Data1/vihs-vagrant';
-const DEFAULT_ARCHIVE_ROOT = '/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence';
+const DEFAULT_ARCHIVE_ROOT = '/run/media/sergio/MAJOR GENER/VI History Suite Evidence';
 const DEFAULT_VAGRANT_HOME = '/home/sergio/.vagrant.d';
 
 function getUsage() {

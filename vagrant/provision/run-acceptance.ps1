@@ -21,7 +21,7 @@ param(
   [string]$HarnessId      = 'HARNESS-VHS-002',
   [string]$SelectedHash   = '8741bb08026c104100720c0ef48621e4ab7762fd',
   [string]$BaseHash       = 'c188cdec606aac3b17d8b17274baa19eef3e4017',
-  [int]   $ViServerTimeoutSec = 300,
+  [int]   $ViServerTimeoutSec = 60,
   [int]   $RuntimeTimeoutMs = 300000,
   [int]   $GitTimeoutMs = 300000
 )
@@ -72,6 +72,7 @@ Write-Step "Using vsix: $VsixPath"
 Write-Step "Checking LabVIEW is running in an interactive session (VI Server)..."
 
 $lvExe = "C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.exe"
+$LabVIEWIniPath = Join-Path (Split-Path -Parent $lvExe) 'LabVIEW.ini'
 
 function Test-LabVIEWPortListening {
   return [bool](netstat -an 2>$null | Select-String ':3363.*LISTENING')
@@ -111,6 +112,16 @@ function Get-LabVIEWPrelaunchTaskSnapshot {
     return [ordered]@{
       taskName           = $TaskName
       state              = [string]$task.State
+      principalUserId    = $task.Principal.UserId
+      principalLogonType = [string]$task.Principal.LogonType
+      principalRunLevel  = [string]$task.Principal.RunLevel
+      actions            = @($task.Actions | ForEach-Object {
+        [ordered]@{
+          execute          = $_.Execute
+          arguments        = $_.Arguments
+          workingDirectory = $_.WorkingDirectory
+        }
+      })
       lastRunTime        = $taskInfo.LastRunTime
       lastTaskResult     = $taskInfo.LastTaskResult
       nextRunTime        = $taskInfo.NextRunTime
@@ -121,6 +132,58 @@ function Get-LabVIEWPrelaunchTaskSnapshot {
       taskName = $TaskName
       error    = $_.Exception.Message
     }
+  }
+}
+
+function Get-LabVIEWIniSnapshot {
+  if (-not (Test-Path -LiteralPath $LabVIEWIniPath)) {
+    return [ordered]@{
+      path  = $LabVIEWIniPath
+      exists = $false
+      viServerLines = @()
+    }
+  }
+
+  $viServerLines = @(Get-Content -LiteralPath $LabVIEWIniPath -ErrorAction SilentlyContinue |
+    Where-Object { $_ -match '^(server\.tcp\.|server\.app\.)' } |
+    ForEach-Object { [string]$_ })
+
+  return [ordered]@{
+    path          = $LabVIEWIniPath
+    exists        = $true
+    viServerLines = $viServerLines
+  }
+}
+
+function Get-LabVIEWFirewallSnapshot {
+  try {
+    $rules = @(Get-NetFirewallRule -DisplayName '*LabVIEW*3363*' -ErrorAction SilentlyContinue)
+    return @($rules | ForEach-Object {
+      $portFilter = $_ | Get-NetFirewallPortFilter -ErrorAction SilentlyContinue
+      $appFilter = $_ | Get-NetFirewallApplicationFilter -ErrorAction SilentlyContinue
+      $protocol = $null
+      $localPort = $null
+      $program = $null
+      if ($portFilter) {
+        $protocol = [string]$portFilter.Protocol
+        $localPort = [string]$portFilter.LocalPort
+      }
+      if ($appFilter) {
+        $program = [string]$appFilter.Program
+      }
+      [ordered]@{
+        displayName = $_.DisplayName
+        enabled     = [string]$_.Enabled
+        direction   = [string]$_.Direction
+        action      = [string]$_.Action
+        profile     = [string]$_.Profile
+        protocol    = $protocol
+        localPort   = $localPort
+        program     = $program
+      }
+    })
+  } catch {
+    return @([ordered]@{ error = $_.Exception.Message })
   }
 }
 
@@ -140,7 +203,9 @@ function Write-LabVIEWStartupEvidence {
     prelaunchTask           = Get-LabVIEWPrelaunchTaskSnapshot -TaskName $TaskName
     labviewProcesses        = @(Get-LabVIEWProcessSnapshot)
     explorerSessions        = @(Get-ExplorerSessionSnapshot)
-    viServerPortLines       = @(netstat -an 2>$null | Select-String ':3363' | ForEach-Object { [string]$_ })
+    labviewIni              = Get-LabVIEWIniSnapshot
+    firewallRules           = @(Get-LabVIEWFirewallSnapshot)
+    viServerPortLines       = @(netstat -ano 2>$null | Select-String ':3363' | ForEach-Object { [string]$_ })
   }
 
   $evidence | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $LabVIEWStartupEvidencePath -Encoding utf8

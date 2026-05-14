@@ -37,7 +37,7 @@ The lane uses a fixed three-drive topology:
 - active Vagrant execution root: `/run/media/sergio/Data/vihs-vagrant`
 - standby Vagrant mirror root: `/run/media/sergio/Data1/vihs-vagrant`
 - local evidence vault:
-  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
+  `/run/media/sergio/MAJOR GENER/VI History Suite Evidence`
 
 Active Vagrant and VirtualBox execution stays on `Data`. `Data1` is a manual
 standby/mirror and is not an automatic CI fallback. The Seagate drive is for
@@ -112,17 +112,23 @@ Official GitLab references:
   `/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs`
 - standby Vagrant mirror root: `/run/media/sergio/Data1/vihs-vagrant`
 - evidence vault root:
-  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
+  `/run/media/sergio/MAJOR GENER/VI History Suite Evidence`
 - default Windows boot/WinRM timeout: `1800` seconds each, overridable with
   `VIHS_VAGRANT_BOOT_TIMEOUT` and `VIHS_VAGRANT_WINRM_TIMEOUT`
-- default LabVIEW VI Server startup timeout: `300` seconds after the
-  interactive scheduled-task launch; the prelaunch task is manually started
+- default LabVIEW VI Server startup timeout: `60` seconds after the
+  interactive scheduled-task launch, overridable with
+  `VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC`; the prelaunch task is manually started
   and also has a near-future trigger inside the wait window
 - disposable clone boot policy: Vagrant sets EFI firmware and preserves the
   exported golden VM UEFI variable store so BitLocker sees the same measured
   boot state in the disposable clone
 - box refresh script: `scripts/vagrant/refresh-golden-box.sh`
 - storage doctor script: `scripts/doctorVagrantStorage.js`
+- runner readiness script: `scripts/runVagrantAcceptanceRunnerReadiness.js`
+- runner readiness package command: `npm run vagrant:runner:readiness`
+- runner readiness systemd assets:
+  `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service` and
+  `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer`
 - host doctor script: `scripts/vagrant/doctor-vagrant-host.sh`
 - Vagrant home prepare script: `scripts/vagrant/prepare-vagrant-home.sh`
 - disposable CI VM cleanup script:
@@ -136,8 +142,18 @@ must not run acceptance directly on the golden VM. The GitLab job uses the
 registered Vagrant box and names the imported VirtualBox VM `vihs-ci-win11` so
 golden-source and CI-runtime state remain distinct.
 
-CI first creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
-then runs `scripts/doctorVagrantStorage.js` so missing mounts and wrong
+GitLab first runs `vagrant_runner_admission`, which executes
+`npm run vagrant:runner:readiness` and retains
+`vagrant-runner-readiness-evidence/` before the long acceptance lane can start.
+The same readiness wrapper is also available to the runner host through the
+user-mode readiness timer, which publishes latest/timestamped receipts under
+`/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness`. Both
+checks keep `/run/media/sergio/Data1/vihs-vagrant` as a manual standby mirror:
+they tell the operator to mount `/run/media/sergio/Data` or restore the active
+mirror, and they do not automatically fall back to the standby drive.
+
+CI then creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
+then runs `scripts/doctorVagrantStorage.js` again so missing mounts and wrong
 Vagrant box-cache links are reported as storage drift before any Data-drive
 directories are created. It then runs
 `scripts/vagrant/cleanup-disposable-ci-vm.sh`, which refuses to touch the
@@ -170,26 +186,32 @@ immediately after bootstrap so the scheduled-task LabVIEW launch has an
 interactive desktop session while the Vagrant communicator remains available.
 Acceptance retains `vagrant/evidence/labview-startup.json` during the
 prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
-observation, Explorer session observation, and VI Server listener state before
-the assertion script is allowed to run.
+observation, Explorer session observation, LabVIEW.ini VI Server settings,
+firewall rule state, and VI Server listener state before the assertion script
+is allowed to run. `npm run vagrant:labview-startup:history` summarizes
+retained startup evidence; the current governed default is `60` seconds because
+the retained successful starts complete well inside that window while stuck
+interactive startups should fail quickly with evidence.
 
 ## GitLab Job
 
-The blocking job is `vagrant_windows_vsix_acceptance`.
+The blocking proof job is `vagrant_windows_vsix_acceptance`; the blocking
+readiness gate is `vagrant_runner_admission`.
 
-It runs in the `test` stage on the Vagrant runner tags, serializes access with
-`resource_group: vihs-windows-vagrant`, and declares `needs: []` so it can
-start as an independent DAG job without waiting for the separate Linux
-assurance runner lane. It packages the VSIX, stages it under `vagrant/shared/`,
-optionally refreshes the local box, runs the host doctor, boots the disposable
-VM, runs bootstrap, reloads once for the `vagrant` interactive desktop session,
-runs the guest cold-prep provisioner, runs acceptance, forces the generated
-`vihs` runtime-settings launcher to persist `host/2026/x86` so stale golden-VM
-user settings cannot retain x64, explicitly admits the governed prelaunched
-interactive LabVIEW host session for the installed-user proof, bounds harness
-Git acquisition with `VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000`, validates the
-latest manifest and harness output through `npm run vagrant:acceptance:assert`,
-and always halts the VM.
+The proof job runs in the `test` stage on the Vagrant runner tags, serializes
+access with `resource_group: vihs-windows-vagrant`, and declares
+`needs: [vagrant_runner_admission]` so it can start as an early DAG job only
+after the readiness gate passes. It packages the VSIX, stages it under
+`vagrant/shared/`, optionally refreshes the local box, runs the host doctor,
+boots the disposable VM, runs bootstrap, reloads once for the `vagrant`
+interactive desktop session, runs the guest cold-prep provisioner, runs
+acceptance, forces the generated `vihs` runtime-settings launcher to persist
+`host/2026/x86` so stale golden-VM user settings cannot retain x64, explicitly
+admits the governed prelaunched interactive LabVIEW host session for the
+installed-user proof, bounds harness Git acquisition with
+`VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000`, validates the latest manifest and
+harness output through `npm run vagrant:acceptance:assert`, and always halts
+the VM.
 The assertion requires the manifest and harness report to prove LabVIEW `2026` `x86`,
 `runtimeProvider=host-native`, `runtimeEngine=labview-cli`, and
 `runtimeExecutionState=succeeded`.

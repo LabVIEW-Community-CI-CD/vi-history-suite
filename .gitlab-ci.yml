@@ -109,6 +109,43 @@ ubuntu_docker_runner_admission:
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
+vagrant_runner_admission:
+  stage: admission
+  tags:
+    - linux
+    - x64
+    - virtualbox
+    - vagrant
+    - private-release
+  variables:
+    VIHS_VAGRANT_BOX: vihs/win11-labview2026
+    VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden
+    VIHS_VAGRANT_CI_VM_NAME: vihs-ci-win11
+    VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data/vihs-vagrant
+    VIHS_VAGRANT_STANDBY_ROOT: /run/media/sergio/Data1/vihs-vagrant
+    VIHS_EVIDENCE_ARCHIVE_ROOT: "/run/media/sergio/MAJOR GENER/VI History Suite Evidence"
+    VAGRANT_HOME: /home/sergio/.vagrant.d
+    VIHS_VAGRANT_BOX_CACHE_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home
+    VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box
+    VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work
+    VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"
+    VAGRANT_DOTFILE_PATH: .vagrant-ci
+  script:
+    - set -euo pipefail
+    - npm run vagrant:runner:readiness -- --evidence-dir vagrant-runner-readiness-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - vagrant-runner-readiness-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
 docs_link_check:
   stage: docs
   image:
@@ -560,12 +597,16 @@ vagrant_windows_vsix_acceptance:
     - private-release
   resource_group: vihs-windows-vagrant
   timeout: 2 hours
-  needs: []
+  needs:
+    - vagrant_runner_admission
   variables:
     VIHS_VAGRANT_BOX: vihs/win11-labview2026
     VIHS_VAGRANT_GOLDEN_VM_NAME: vihs-win11-labview2026-golden
     VIHS_VAGRANT_CI_VM_NAME: vihs-ci-win11
     VIHS_VAGRANT_STORAGE_ROOT: /run/media/sergio/Data/vihs-vagrant
+    VIHS_VAGRANT_STANDBY_ROOT: /run/media/sergio/Data1/vihs-vagrant
+    VIHS_EVIDENCE_ARCHIVE_ROOT: "/run/media/sergio/MAJOR GENER/VI History Suite Evidence"
+    VIHS_VAGRANT_VI_SERVER_TIMEOUT_SEC: "60"
     VAGRANT_HOME: /home/sergio/.vagrant.d
     VIHS_VAGRANT_BOX_CACHE_HOME: /run/media/sergio/Data/vihs-vagrant/vagrant-home
     VIHS_VAGRANT_BOX_FILE: /run/media/sergio/Data/vihs-vagrant/box-cache/windows11.box
@@ -576,7 +617,7 @@ vagrant_windows_vsix_acceptance:
     - set -euo pipefail
     - rm -f ./*.vsix
     - mkdir -p vagrant/shared vagrant/evidence
-    - node scripts/doctorVagrantStorage.js --active-root "${VIHS_VAGRANT_STORAGE_ROOT}" --standby-root /run/media/sergio/Data1/vihs-vagrant --archive-root "/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence" --evidence-dir vagrant/evidence --fail-on-active-drift
+    - node scripts/doctorVagrantStorage.js --active-root "${VIHS_VAGRANT_STORAGE_ROOT}" --standby-root "${VIHS_VAGRANT_STANDBY_ROOT}" --archive-root "${VIHS_EVIDENCE_ARCHIVE_ROOT}" --evidence-dir vagrant/evidence --fail-on-active-drift
     - mkdir -p "${VAGRANT_HOME}" "${VIHS_VAGRANT_BOX_CACHE_HOME}" "$(dirname "${VIHS_VAGRANT_BOX_FILE}")" "${VIHS_VAGRANT_BOX_WORKDIR}" "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
     - bash scripts/vagrant/prepare-vagrant-home.sh
     - VBoxManage setproperty machinefolder "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"

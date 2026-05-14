@@ -211,19 +211,29 @@ Runner operator hardening:
   large-drive storage root for box payload cache, export work, and the
   VirtualBox default machine folder; `/run/media/sergio/Data1/vihs-vagrant`
   remains a manual standby mirror, and
-  `/run/media/sergio/Seagate Backup Plus Drive/VI History Suite Evidence`
+  `/run/media/sergio/MAJOR GENER/VI History Suite Evidence`
   remains the local evidence vault rather than an active VM execution root;
   runner creation uses the
   `POST /user/runners` API to set
   tags, locked state, untagged-job behavior, and `maximum_timeout=7200`, then
   registers the local shell runner manager with the returned `glrt-`
-  authentication token; the repo-owned storage doctor
-  `scripts/doctorVagrantStorage.js` runs before Data-drive Vagrant directory
-  creation and retains `vagrant-storage-doctor.json` plus
-  `vagrant-storage-doctor.md`, failing closed when the active storage root is
-  missing, unmounted, not writable, missing the governed Windows box cache, or
-  when `/home/sergio/.vagrant.d/boxes` points anywhere except the active
-  large-drive box cache; the repo-owned disposable cleanup surface
+  authentication token; the repo-owned readiness wrapper
+  `scripts/runVagrantAcceptanceRunnerReadiness.js` is exposed as
+  `npm run vagrant:runner:readiness`, retains
+  `vagrant-runner-readiness-evidence/` in GitLab admission, and is also run by
+  the user-mode
+  `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer` to
+  publish latest/timestamped receipts under
+  `/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness`; the
+  readiness wrapper keeps `Data1` as a manual standby mirror and fails closed
+  instead of falling back when active `/run/media/sergio/Data` storage drifts;
+  the repo-owned storage doctor `scripts/doctorVagrantStorage.js` still runs
+  before Data-drive Vagrant directory creation and retains
+  `vagrant-storage-doctor.json` plus `vagrant-storage-doctor.md`, failing
+  closed when the active storage root is missing, unmounted, not writable,
+  missing the governed Windows box cache, or when
+  `/home/sergio/.vagrant.d/boxes` points anywhere except the active large-drive
+  box cache; the repo-owned disposable cleanup surface
   `scripts/vagrant/prepare-vagrant-home.sh` links
   `/home/sergio/.vagrant.d/boxes` to the large-drive box cache before Vagrant
   runs; `scripts/vagrant/cleanup-disposable-ci-vm.sh` refuses to touch the
@@ -270,6 +280,11 @@ Job ownership:
   runs only when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true` and still uses
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   when a real Windows/LabVIEW host runner exists
+- `vagrant_runner_admission`: blocking Vagrant-runner `admission` stage lane on
+  merge requests, governed branch lanes, and exact tags; it runs
+  `npm run vagrant:runner:readiness`, retains
+  `vagrant-runner-readiness-evidence/`, and fails before Vagrant acceptance
+  when active storage or host readiness drifts
 - `public_exact_pretag_proof`: blocking pre-tag public-facade proof lane on
   merge requests, `develop`, `main`, `release/*`, and `hotfix/*`; it runs
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
@@ -324,19 +339,21 @@ Job ownership:
 - `vagrant_windows_vsix_acceptance`: blocking Vagrant Windows VSIX acceptance
   lane on merge requests, governed branch lanes, and exact tags; it runs on
   `linux,x64,virtualbox,vagrant,private-release`, serializes with
-  `resource_group: vihs-windows-vagrant`, declares `needs: []` so it can start
-  independently of the separate Linux assurance runner lane, packages the VSIX,
-  stages it under `vagrant/shared/`, runs the storage doctor before creating
-  Data-drive Vagrant directories, optionally refreshes the local box when
+  `resource_group: vihs-windows-vagrant`, declares
+  `needs: [vagrant_runner_admission]` so it can still start early after the
+  readiness gate, packages the VSIX, stages it under `vagrant/shared/`, runs
+  the storage doctor again as defense in depth before creating Data-drive
+  Vagrant directories, optionally refreshes the local box when
   `VIHS_VAGRANT_REFRESH_GOLDEN_BOX=true`, runs the host doctor, boots the
   disposable `vihs-ci-win11` VM, runs bootstrap, reloads once so `vagrant`
   autologon creates the interactive LabVIEW desktop session while clone-local
   WinRM network/firewall readiness remains available for Vagrant, runs the
   guest cold-prep provisioner, runs acceptance with a near-future scheduled-task
-  fallback for LabVIEW prelaunch, validates the latest acceptance manifest,
-  cold-start markers, host-native LabVIEWCLI facts, and generated report output
-  through `npm run vagrant:acceptance:assert`, always halts the VM, and retains
-  `vagrant/evidence/`; its acceptance provisioner sets
+  fallback for LabVIEW prelaunch, waits `60` seconds by default for VI Server
+  while retaining `labview-startup.json`, validates the latest acceptance
+  manifest, cold-start markers, host-native LabVIEWCLI facts, and generated
+  report output through `npm run vagrant:acceptance:assert`, always halts the
+  VM, and retains `vagrant/evidence/`; its acceptance provisioner sets
   `VI_HISTORY_SUITE_GIT_TIMEOUT_MS=300000` so canonical harness acquisition
   fails closed instead of silently exhausting the runner no-output window; this
   job pins

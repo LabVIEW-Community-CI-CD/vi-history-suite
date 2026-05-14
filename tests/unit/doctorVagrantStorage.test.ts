@@ -83,7 +83,7 @@ function createHealthyTopology(): {
   const activeRoot = path.join(activeMount, 'vihs-vagrant');
   const standbyMount = path.join(root, 'Data1');
   const standbyRoot = path.join(standbyMount, 'vihs-vagrant');
-  const archiveMount = path.join(root, 'Seagate Backup Plus Drive');
+  const archiveMount = path.join(root, 'MAJOR GENER');
   const archiveRoot = path.join(archiveMount, 'VI History Suite Evidence');
   const vagrantHome = path.join(root, '.vagrant.d');
 
