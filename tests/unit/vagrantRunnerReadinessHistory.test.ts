@@ -62,7 +62,12 @@ function timestampLeaf(value: string): string {
   return value.replace(/[:.]/gu, '-');
 }
 
-function writeReceipt(root: string, generatedAt: string, status: 'passed' | 'failed', issues: string[] = []) {
+function writeReceipt(
+  root: string,
+  generatedAt: string,
+  status: 'passed' | 'failed' | 'busy',
+  issues: string[] = []
+) {
   const payload = {
     schema: 'vi-history-suite/vagrant-acceptance-runner-readiness@v1',
     generatedAt,
@@ -75,7 +80,9 @@ function writeReceipt(root: string, generatedAt: string, status: 'passed' | 'fai
     issues,
     nextAction: status === 'passed'
       ? 'Runner ready for Vagrant Windows VSIX acceptance.'
-      : 'Mount /run/media/sergio/Data or restore the active mirror from /run/media/sergio/Data1/vihs-vagrant before retrying the Vagrant acceptance lane.'
+      : status === 'busy'
+        ? 'Runner is busy with the disposable Vagrant CI VM; let the current Vagrant job finish.'
+        : 'Mount /run/media/sergio/Data or restore the active mirror from /run/media/sergio/Data1/vihs-vagrant before retrying the Vagrant acceptance lane.'
   };
   fs.writeFileSync(
     path.join(root, `${timestampLeaf(generatedAt)}.json`),
@@ -92,6 +99,11 @@ describe('Vagrant runner readiness history summarizer', () => {
     expect(history.classifyIssue("ERROR: Vagrant CI VM 'vihs-ci-win11' is already running")).toBe(
       'runner-busy'
     );
+    expect(
+      history.classifyIssue(
+        "ERROR: Golden VM 'vihs-win11-labview2026-golden' exists but is 'running', expected 'poweroff'"
+      )
+    ).toBe('golden-vm-active');
   });
 
   it('keeps the five minute timer when history shows storage detection plus busy noise', () => {
@@ -105,7 +117,7 @@ describe('Vagrant runner readiness history summarizer', () => {
       'active mount point is not mounted: /run/media/sergio/Data'
     ]);
     writeReceipt(root, '2026-05-14T18:15:00.000Z', 'passed');
-    writeReceipt(root, '2026-05-14T18:20:00.000Z', 'failed', [
+    writeReceipt(root, '2026-05-14T18:20:00.000Z', 'busy', [
       "Vagrant host doctor failed with exit code 1",
       "ERROR: Vagrant CI VM 'vihs-ci-win11' is already running"
     ]);
@@ -121,13 +133,13 @@ describe('Vagrant runner readiness history summarizer', () => {
 
     expect(report.schema).toBe(history.SCHEMA);
     expect(report.receiptCount).toBe(6);
-    expect(report.statusCounts).toEqual({ passed: 3, failed: 3 });
+    expect(report.statusCounts).toEqual({ passed: 3, failed: 2, busy: 1 });
     expect(report.categoryCounts).toMatchObject({
       'active-storage-drift': 2,
       'runner-busy': 1
     });
     expect(report.intervalStatsSec).toMatchObject({ p50: 300, p90: 300 });
-    expect(report.incidents).toHaveLength(2);
+    expect(report.incidents).toHaveLength(1);
     expect(report.incidents[0]).toMatchObject({
       categories: ['active-storage-drift'],
       detectionWindowSec: 300,

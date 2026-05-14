@@ -16,6 +16,10 @@ const DEFAULT_RECEIPT_ROOT = path.join(
   'vagrant-acceptance-readiness'
 );
 const DEFAULT_CI_EVIDENCE_DIR = 'vagrant-runner-readiness-evidence';
+const BUSY_ISSUE_CATEGORIES = new Set([
+  'runner-busy',
+  'golden-vm-active'
+]);
 
 function getUsage() {
   return [
@@ -31,6 +35,7 @@ function getUsage() {
     `  --host-doctor PATH       Host doctor script. Defaults to ${DEFAULT_HOST_DOCTOR_SCRIPT}`,
     `  --evidence-dir PATH      Write CI readiness evidence under PATH. Defaults to ${DEFAULT_CI_EVIDENCE_DIR} when CI is set.`,
     `  --receipt-root PATH      Write latest/timestamped host receipts under PATH. Defaults to ${DEFAULT_RECEIPT_ROOT} when VIHS_VAGRANT_READINESS_RECEIPT_ROOT is set.`,
+    '  --allow-busy             Classify expected active VM states as nonfatal busy receipts for the systemd timer.',
     '  --help                  Show this help.'
   ].join('\n');
 }
@@ -44,7 +49,8 @@ function parseArgs(argv, env = process.env) {
     vagrantHome: env.VAGRANT_HOME || storageDoctor.DEFAULT_VAGRANT_HOME,
     hostDoctorScript: DEFAULT_HOST_DOCTOR_SCRIPT,
     evidenceDir: env.CI ? DEFAULT_CI_EVIDENCE_DIR : '',
-    receiptRoot: env.VIHS_VAGRANT_READINESS_RECEIPT_ROOT || ''
+    receiptRoot: env.VIHS_VAGRANT_READINESS_RECEIPT_ROOT || '',
+    allowBusy: env.VIHS_VAGRANT_READINESS_ALLOW_BUSY === 'true'
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -90,6 +96,10 @@ function parseArgs(argv, env = process.env) {
       parsed.receiptRoot = path.resolve(requireValue('--receipt-root'));
       continue;
     }
+    if (current === '--allow-busy') {
+      parsed.allowBusy = true;
+      continue;
+    }
 
     throw new Error(`Unknown argument: ${current}\n\n${getUsage()}`);
   }
@@ -107,6 +117,40 @@ function extractErrorLines(text) {
     .map((line) => line.trim())
     .filter((line) => line.includes('ERROR:'))
     .map((line) => line.replace(/^\[[^\]]+\]\s*/u, ''));
+}
+
+function classifyIssue(issue) {
+  if (/^Vagrant host doctor failed with exit code \d+$/u.test(issue)) {
+    return 'host-doctor-summary';
+  }
+  if (/^ERROR: Vagrant CI VM '[^']+' is already running$/u.test(issue)) {
+    return 'runner-busy';
+  }
+  if (/^ERROR: Golden VM '[^']+' exists but is '[^']+', expected 'poweroff'$/u.test(issue)) {
+    return 'golden-vm-active';
+  }
+  return 'host-doctor-drift';
+}
+
+function classifyBusyState(issues) {
+  const issueCategories = issues.map((issue) => ({
+    issue,
+    category: classifyIssue(issue)
+  }));
+  const actionableCategories = issueCategories
+    .map((entry) => entry.category)
+    .filter((category) => category !== 'host-doctor-summary');
+  const busyCategories = actionableCategories.filter((category) =>
+    BUSY_ISSUE_CATEGORIES.has(category)
+  );
+
+  return {
+    issueCategories,
+    busy: busyCategories.length > 0 &&
+      actionableCategories.length > 0 &&
+      busyCategories.length === actionableCategories.length,
+    busyCategories: [...new Set(busyCategories)].sort()
+  };
 }
 
 function normalizeHostDoctorResult(result) {
@@ -155,6 +199,12 @@ function buildNextAction(report) {
     const activeMountPoint = path.dirname(report.activeRoot);
     return `Mount ${activeMountPoint} or restore the active mirror from ${report.standbyRoot} before retrying the Vagrant acceptance lane.`;
   }
+  if (report.status === 'busy') {
+    if (report.busyCategories?.includes('golden-vm-active')) {
+      return 'Runner is busy because the golden VM is active; power it off before starting Vagrant acceptance. No storage repair is indicated.';
+    }
+    return 'Runner is busy with the disposable Vagrant CI VM; let the current Vagrant job finish or stop and clean the VM before admission. No storage repair is indicated.';
+  }
   if (!report.hostDoctor.healthy) {
     return 'Repair the Vagrant/VirtualBox host doctor issues before retrying the Vagrant acceptance lane.';
   }
@@ -176,6 +226,9 @@ function buildMarkdown(report) {
     `- Generated at: ${report.generatedAt}`,
     `- Hostname: ${report.hostname}`,
     `- Status: ${report.status}`,
+    `- Healthy: ${String(report.healthy)}`,
+    `- Admission eligible: ${String(report.admissionEligible)}`,
+    `- Busy categories: ${report.busyCategories?.length ? report.busyCategories.join(', ') : 'none'}`,
     `- Active root: ${report.activeRoot}`,
     `- Standby root: ${report.standbyRoot}`,
     `- Archive root: ${report.archiveRoot}`,
@@ -252,6 +305,7 @@ function runVagrantAcceptanceRunnerReadiness(options = {}, deps = {}) {
   );
   const hostDoctorReport = runHostDoctor({ hostDoctorScript }, deps);
   const issues = [];
+  let hostDoctorIssues = [];
 
   if (!storageDoctorReport.activeHealthy) {
     issues.push(...(storageDoctorReport.issues || []));
@@ -260,24 +314,43 @@ function runVagrantAcceptanceRunnerReadiness(options = {}, deps = {}) {
     }
   }
   if (!hostDoctorReport.healthy) {
-    issues.push(`Vagrant host doctor failed with exit code ${hostDoctorReport.exitCode}`);
-    issues.push(...extractErrorLines(hostDoctorReport.stderr));
+    hostDoctorIssues = [
+      `Vagrant host doctor failed with exit code ${hostDoctorReport.exitCode}`,
+      ...extractErrorLines(hostDoctorReport.stderr)
+    ];
     if (hostDoctorReport.error) {
-      issues.push(hostDoctorReport.error);
+      hostDoctorIssues.push(hostDoctorReport.error);
     }
   }
+
+  const busyState = classifyBusyState(hostDoctorIssues);
+  const busyAllowed = options.allowBusy === true;
+  const busyOnly = busyAllowed && storageDoctorReport.activeHealthy && busyState.busy;
+  if (hostDoctorIssues.length > 0) {
+    issues.push(...hostDoctorIssues);
+  }
+
+  const status = issues.length === 0
+    ? 'passed'
+    : busyOnly
+      ? 'busy'
+      : 'failed';
 
   const report = {
     schema: SCHEMA,
     generatedAt,
     hostname: deps.hostname ?? os.hostname(),
-    status: issues.length === 0 ? 'passed' : 'failed',
-    healthy: issues.length === 0,
+    status,
+    healthy: status === 'passed',
+    admissionEligible: status === 'passed',
     activeRoot,
     standbyRoot,
     archiveRoot,
     storageDoctor: storageDoctorReport,
     hostDoctor: hostDoctorReport,
+    issueCategories: busyState.issueCategories,
+    busy: status === 'busy',
+    busyCategories: status === 'busy' ? busyState.busyCategories : [],
     issues,
     nextAction: ''
   };
@@ -303,7 +376,7 @@ function runVagrantAcceptanceRunnerReadinessCli(argv, deps = {}) {
 
   const report = runVagrantAcceptanceRunnerReadiness(parsed, deps);
   stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-  if (!report.healthy) {
+  if (!report.healthy && report.status !== 'busy') {
     throw new Error(`Vagrant acceptance runner readiness failed.\n${report.issues.join('\n')}`);
   }
 
@@ -317,6 +390,8 @@ module.exports = {
   SCHEMA,
   buildMarkdown,
   buildNextAction,
+  classifyBusyState,
+  classifyIssue,
   getUsage,
   parseArgs,
   runVagrantAcceptanceRunnerReadiness,
