@@ -172,6 +172,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('--labview-bitness $LabVIEWBitness');
     expect(acceptance).toContain("'--allow-existing-windows-host-runtime'");
     expect(acceptance).toContain('$env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()');
+    expect(acceptance).toContain("$env:NPM_CONFIG_UPDATE_NOTIFIER = 'false'");
+    expect(acceptance).toContain("$env:NO_UPDATE_NOTIFIER = '1'");
+    expect(acceptance).toContain(
+      "cmd.exe /d /s /c 'npm.cmd install --omit=dev --no-audit --no-fund --update-notifier=false --loglevel=error 2>&1'"
+    );
 
     expect(hostDoctor).toContain('VIHS_VAGRANT_REQUIRE_GITLAB_RUNNER');
     expect(hostDoctor).toContain('VAGRANT_DOTFILE_PATH');

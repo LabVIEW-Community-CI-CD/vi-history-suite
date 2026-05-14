@@ -49,6 +49,14 @@ function Write-Step([string]$Message) {
   Write-Host "[$ts acceptance] $Message"
 }
 
+function Set-QuietNpmEnvironment {
+  $env:NO_UPDATE_NOTIFIER = '1'
+  $env:NPM_CONFIG_UPDATE_NOTIFIER = 'false'
+  $env:NPM_CONFIG_AUDIT = 'false'
+  $env:NPM_CONFIG_FUND = 'false'
+  $env:NPM_CONFIG_LOGLEVEL = 'error'
+}
+
 function Resolve-VSCodeCli {
   foreach ($candidate in @(
     "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd",
@@ -560,6 +568,7 @@ Write-Step "Settings configured."
 # to a local drive so npm install works cleanly without touching the shared folder.
 $StageRoot = 'C:\vihs-stage'
 Write-Step "Staging workspace to $StageRoot for Windows-native npm install..."
+Set-QuietNpmEnvironment
 
 if (Test-Path -LiteralPath $StageRoot) {
   Remove-Item -LiteralPath $StageRoot -Recurse -Force
@@ -576,7 +585,7 @@ if (Test-Path -LiteralPath $outSrc) {
 
 Push-Location $StageRoot
 try {
-  npm install --omit=dev 2>&1
+  & cmd.exe /d /s /c 'npm.cmd install --omit=dev --no-audit --no-fund --update-notifier=false --loglevel=error 2>&1'
   if ($LASTEXITCODE -ne 0) {
     throw "npm install failed (exit $LASTEXITCODE)."
   }
