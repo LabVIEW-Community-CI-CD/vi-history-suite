@@ -143,6 +143,42 @@ describe('release publication state resolver', () => {
         ambientNodeOnPathRequired: false
       }
     });
+    expect(state.postPublicationLedgerNormalization).toMatchObject({
+      status: 'retained',
+      normalizedCloseoutPath: 'marketplacePostPublicationCloseout',
+      assertionPackageScript: 'npm run release:ledger:closeout:assert',
+      distinguishesPublicGitHubReleaseFromMarketplacePublication: true
+    });
+    expect(state.postPublicationLedgerNormalization.requiredLedgerFiles).toEqual(
+      expect.arrayContaining([
+        'docs/product/release-publication-state.md',
+        'docs/product/release-publication-state.json',
+        'docs/product/vscode-marketplace-publication-ledger.md',
+        'docs/product/vscode-marketplace-publication-ledger.json',
+        'docs/product/public-github-source-publication-ledger.md',
+        'docs/product/public-github-source-publication-ledger.json'
+      ])
+    );
+    expect(state.marketplacePostPublicationCloseout).toMatchObject({
+      marketplaceItemId: 'svelderrainruiz.vi-history-suite',
+      expectedVersion: '1.3.16',
+      observedMarketplaceVersion: '1.3.16',
+      publicationTimestamp: '2026-05-11T23:10:13.317Z',
+      verificationTimestamp: '2026-05-15T14:54:18.025Z',
+      packageSha256: '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170',
+      publicGitHubReleaseState: 'published',
+      marketplacePublicationState: 'published-and-verified',
+      proofReceiptPaths: {
+        publicGitHubExactTransaction:
+          '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json',
+        marketplacePreparation:
+          '.cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json',
+        marketplacePostPublicationVerification:
+          '.cache/vscode-marketplace-post-publication-verification/latest/vscode-marketplace-post-publication-verification.json',
+        windowsExactVsixInstallProof:
+          '.cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json'
+      }
+    });
     expect(state.exactReleaseCloseout).toMatchObject({
       status: 'published-and-verified',
       version: '1.3.16',
@@ -226,6 +262,11 @@ describe('release publication state resolver', () => {
     expect(stateDoc).toContain('## Public GitHub First-Run Local LabVIEW Guide Adoption');
     expect(stateDoc).toContain('## Public GitHub Troubleshooting And UX Adoption');
     expect(stateDoc).toContain('VS Code Marketplace version: `1.3.16`');
+    expect(stateDoc).toContain('## Post-Publication Ledger Normalization');
+    expect(stateDoc).toContain('npm run release:ledger:closeout:assert');
+    expect(stateDoc).toContain('Public GitHub release publication is recorded separately from VS Code');
+    expect(stateDoc).toContain('observed Marketplace');
+    expect(stateDoc).toContain('version `1.3.16`');
     expect(stateDoc).toContain(
       '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json'
     );

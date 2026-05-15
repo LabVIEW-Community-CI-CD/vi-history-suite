@@ -667,8 +667,34 @@ until that later public GitHub release gate is complete.
   `.cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json`
 - VS Code Marketplace version: `1.3.16`
 - Marketplace last updated: `2026-05-11T23:10:13.317Z`
+- Marketplace post-publication verification:
+  `.cache/vscode-marketplace-post-publication-verification/latest/vscode-marketplace-post-publication-verification.json`
+- Marketplace verification timestamp: `2026-05-15T14:54:18.025Z`
 - Next admitted action:
   `retain-v1.3.16-marketplace-closeout-on-protected-develop`
+
+## Post-Publication Ledger Normalization
+
+- Assertion command: `npm run release:ledger:closeout:assert`
+- Normalized closeout path:
+  `marketplacePostPublicationCloseout`
+- Required ledger/docs files:
+  `docs/product/release-publication-state.md`,
+  `docs/product/release-publication-state.json`,
+  `docs/product/vscode-marketplace-publication-ledger.md`,
+  `docs/product/vscode-marketplace-publication-ledger.json`,
+  `docs/product/public-github-source-publication-ledger.md`, and
+  `docs/product/public-github-source-publication-ledger.json`
+- Public GitHub release publication is recorded separately from VS Code
+  Marketplace publication. The public GitHub release state is `published`;
+  the Marketplace publication state is `published-and-verified`.
+- Required normalized fields: Marketplace item id, expected version, observed
+  Marketplace version, Marketplace publication/update timestamp, verification
+  timestamp, package SHA-256, and proof receipt paths.
+- Current normalized values: expected version `1.3.16`, observed Marketplace
+  version `1.3.16`, publication timestamp `2026-05-11T23:10:13.317Z`,
+  verification timestamp `2026-05-15T14:54:18.025Z`, package SHA-256
+  `56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170`.
 
 ## Public GitHub Installed-User Support Matrix Adoption
 

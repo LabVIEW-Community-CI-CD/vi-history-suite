@@ -72,6 +72,13 @@ The machine-readable companion surface for this ledger is:
   `.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json`
 - Marketplace prep receipt:
   `.cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json`
+- Marketplace post-publication verification receipt:
+  `.cache/vscode-marketplace-post-publication-verification/latest/vscode-marketplace-post-publication-verification.json`
+- Normalized closeout fields:
+  expected version `1.3.16`, observed Marketplace version `1.3.16`,
+  publication timestamp `2026-05-11T23:10:13.317Z`, verification timestamp
+  `2026-05-15T14:54:18.025Z`, and package SHA-256
+  `56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170`
 
 ## Community-Validation Preview Preparation
 
