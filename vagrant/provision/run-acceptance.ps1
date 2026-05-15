@@ -532,10 +532,91 @@ function Get-LabVIEWFirewallSnapshot {
   }
 }
 
+function Get-ViServerPortSnapshot {
+  $lines = @(netstat -ano 2>$null | Select-String ':3363' | ForEach-Object { [string]$_ })
+  $listeningLines = @($lines | Where-Object { $_ -match 'LISTENING' })
+
+  return [ordered]@{
+    port           = 3363
+    listening      = $listeningLines.Count -gt 0
+    lineCount      = $lines.Count
+    listeningCount = $listeningLines.Count
+    lines          = $lines
+  }
+}
+
+function Get-LabVIEWStartupDiagnostics {
+  param(
+    [string]$Phase,
+    [string]$TaskName = '',
+    [datetime]$WaitStartedAt = [datetime]::MinValue
+  )
+
+  $capturedAt = Get-Date
+  $waitElapsedSec = $null
+  if ($WaitStartedAt -ne [datetime]::MinValue) {
+    $waitElapsedSec = [math]::Round(($capturedAt - $WaitStartedAt).TotalSeconds, 1)
+  }
+
+  $processes = @(Get-LabVIEWProcessSnapshot)
+  $interactiveProcesses = @($processes | Where-Object { $_.sessionId -ne 0 })
+  $nonRespondingProcesses = @($processes | Where-Object { $_.responding -eq $false })
+  $portSnapshot = Get-ViServerPortSnapshot
+  $taskSnapshot = Get-LabVIEWPrelaunchTaskSnapshot -TaskName $TaskName
+
+  $lastObservedLabVIEWState = 'not-running'
+  if ($portSnapshot.listening -and $interactiveProcesses.Count -gt 0) {
+    $lastObservedLabVIEWState = 'interactive-running-vi-server-listening'
+  } elseif ($portSnapshot.listening) {
+    $lastObservedLabVIEWState = 'vi-server-listening-without-interactive-process'
+  } elseif ($interactiveProcesses.Count -gt 0 -and $nonRespondingProcesses.Count -gt 0) {
+    $lastObservedLabVIEWState = 'interactive-running-not-responding-vi-server-not-listening'
+  } elseif ($interactiveProcesses.Count -gt 0) {
+    $lastObservedLabVIEWState = 'interactive-running-vi-server-not-listening'
+  } elseif ($processes.Count -gt 0) {
+    $lastObservedLabVIEWState = 'noninteractive-running-vi-server-not-listening'
+  }
+
+  $failureCategory = $null
+  $nextAction = $null
+  if ($Phase -eq 'timeout') {
+    if ($processes.Count -eq 0) {
+      $failureCategory = 'labview-process-not-running'
+      $nextAction = "LabVIEW did not remain running before VI Server opened. Inspect the prelaunch scheduled task result, recent LabVIEW/TaskScheduler events, and timeout desktop screenshot; then rerun Vagrant acceptance after repairing the interactive launch path."
+    } elseif ($interactiveProcesses.Count -eq 0) {
+      $failureCategory = 'labview-not-in-interactive-session'
+      $nextAction = "LabVIEW is running outside the interactive vagrant desktop. Verify bootstrap autologon, Explorer session state, and the scheduled task principal before retrying Vagrant acceptance."
+    } elseif ($nonRespondingProcesses.Count -gt 0) {
+      $failureCategory = 'labview-interactive-not-responding'
+      $nextAction = "LabVIEW is present in the interactive desktop but is not responding and VI Server never listened. Inspect the timeout desktop screenshot, activation-dialog evidence, and recent Windows events for blocked startup prompts."
+    } else {
+      $failureCategory = 'vi-server-not-listening'
+      $nextAction = "LabVIEW is running in the interactive desktop but VI Server port 3363 did not listen. Check LabVIEW.ini server.tcp settings, Windows Firewall rule state, and LabVIEW startup events before retrying."
+    }
+  }
+
+  return [ordered]@{
+    phase                    = $Phase
+    capturedAt               = $capturedAt.ToString('o')
+    waitStartedAt            = if ($WaitStartedAt -ne [datetime]::MinValue) { $WaitStartedAt.ToString('o') } else { $null }
+    waitElapsedSec           = $waitElapsedSec
+    lastObservedLabVIEWState = $lastObservedLabVIEWState
+    labviewProcessCount      = $processes.Count
+    interactiveProcessCount  = $interactiveProcesses.Count
+    nonRespondingProcessCount = $nonRespondingProcesses.Count
+    viServerListening        = $portSnapshot.listening
+    viServerPortSnapshot     = $portSnapshot
+    prelaunchTask            = $taskSnapshot
+    failureCategory          = $failureCategory
+    nextAction               = $nextAction
+  }
+}
+
 function Write-LabVIEWStartupEvidence {
   param(
     [string]$Phase,
     [string]$TaskName = '',
+    [datetime]$WaitStartedAt = [datetime]::MinValue,
     [switch]$CaptureDesktopScreenshot
   )
 
@@ -543,11 +624,16 @@ function Write-LabVIEWStartupEvidence {
   if ($CaptureDesktopScreenshot) {
     $desktopScreenshot = Save-LabVIEWTimeoutDesktopScreenshot
   }
+  $startupDiagnostics = Get-LabVIEWStartupDiagnostics -Phase $Phase -TaskName $TaskName -WaitStartedAt $WaitStartedAt
 
   $evidence = [ordered]@{
     schema                  = 'vi-history-suite/vagrant-labview-startup@v1'
     capturedAt              = (Get-Date -Format 'o')
     phase                   = $Phase
+    failureCategory         = $startupDiagnostics.failureCategory
+    nextAction              = $startupDiagnostics.nextAction
+    startupDurationSec      = $startupDiagnostics.waitElapsedSec
+    lastObservedLabVIEWState = $startupDiagnostics.lastObservedLabVIEWState
     labviewExe              = $lvExe
     viServerPort            = 3363
     viServerTimeoutSec      = $ViServerTimeoutSec
@@ -557,8 +643,10 @@ function Write-LabVIEWStartupEvidence {
     interactiveWindows      = @(Get-InteractiveWindowSnapshot)
     labviewIni              = Get-LabVIEWIniSnapshot
     firewallRules           = @(Get-LabVIEWFirewallSnapshot)
-    viServerPortLines       = @(netstat -ano 2>$null | Select-String ':3363' | ForEach-Object { [string]$_ })
+    viServerPortSnapshot    = $startupDiagnostics.viServerPortSnapshot
+    viServerPortLines       = @($startupDiagnostics.viServerPortSnapshot.lines)
     recentEvents            = @(Get-RecentLabVIEWEventSnapshot)
+    startupDiagnostics      = $startupDiagnostics
     timeoutDesktopScreenshot = $desktopScreenshot
   }
 
@@ -570,6 +658,7 @@ function Wait-LabVIEWPort {
     [int]$TimeoutSec = 120,
     [string]$TaskName = ''
   )
+  $waitStartedAt = Get-Date
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
   $nextProgressLog = Get-Date
   while ((Get-Date) -lt $deadline) {
@@ -580,7 +669,7 @@ function Wait-LabVIEWPort {
     }
 
     if (Test-LabVIEWPortListening) {
-      Write-LabVIEWStartupEvidence -Phase 'vi-server-ready' -TaskName $TaskName
+      Write-LabVIEWStartupEvidence -Phase 'vi-server-ready' -TaskName $TaskName -WaitStartedAt $waitStartedAt
       return $true
     }
 
@@ -595,13 +684,13 @@ function Wait-LabVIEWPort {
         'task=none'
       }
       Write-Step "Waiting for VI Server port 3363; LabVIEW processes: $(if ($processSummary.Count -gt 0) { $processSummary -join '; ' } else { 'none' }); $taskSummary."
-      Write-LabVIEWStartupEvidence -Phase 'waiting-for-vi-server' -TaskName $TaskName
+      Write-LabVIEWStartupEvidence -Phase 'waiting-for-vi-server' -TaskName $TaskName -WaitStartedAt $waitStartedAt
       $nextProgressLog = (Get-Date).AddSeconds(30)
     }
 
     Start-Sleep -Seconds 5
   }
-  Write-LabVIEWStartupEvidence -Phase 'timeout' -TaskName $TaskName -CaptureDesktopScreenshot
+  Write-LabVIEWStartupEvidence -Phase 'timeout' -TaskName $TaskName -WaitStartedAt $waitStartedAt -CaptureDesktopScreenshot
   return $false
 }
 

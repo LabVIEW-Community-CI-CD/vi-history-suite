@@ -223,7 +223,11 @@ prelaunch wait so failures distinguish scheduled-task state, LabVIEW process
 observation, Explorer session observation, LabVIEW.ini VI Server settings,
 interactive window titles, recent Windows event log entries, firewall rule
 state, and VI Server listener state before the assertion script is allowed to
-run. On VI Server timeout, the provisioner also attempts to retain
+run. On VI Server timeout, the receipt also records a machine-readable
+`failureCategory`, `startupDurationSec`, `lastObservedLabVIEWState`,
+`viServerPortSnapshot`, and `nextAction` so the job trace can stay separated
+from storage/admission failures while the retained artifact points at the
+interactive-startup repair path. The provisioner also attempts to retain
 `vagrant/evidence/labview-timeout-desktop.png` from the interactive `vagrant`
 desktop so blocked startup prompts are visible from CI artifacts.
 `npm run vagrant:labview-startup:history` summarizes
