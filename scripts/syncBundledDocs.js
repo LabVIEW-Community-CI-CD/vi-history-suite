@@ -119,11 +119,15 @@ const bundledPageConfigs = {
         'Future videos:',
         '',
         '<a id="video-install-and-prepare"></a>',
-        '- install and prepare walkthrough: reserved',
+        '- install and prepare walkthrough: planned, no media published yet',
+        '<a id="video-validate-runtime"></a>',
+        '- runtime validation walkthrough: planned, no media published yet',
         '<a id="video-first-compare"></a>',
-        '- first compare walkthrough: reserved',
+        '- first compare walkthrough: planned, no media published yet',
+        '<a id="video-read-report-evidence"></a>',
+        '- report and evidence walkthrough: planned, no media published yet',
         '<a id="video-troubleshooting"></a>',
-        '- troubleshooting walkthrough: reserved'
+        '- troubleshooting walkthrough: planned follow-up, no media published yet'
       ].join('\n')
     }
   },
