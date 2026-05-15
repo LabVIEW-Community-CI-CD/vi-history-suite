@@ -33,6 +33,7 @@ documents:
 - [Public GitHub Source Authority Map](./public-github-source-authority-map.md)
 - [Public GitHub Source Publication Ledger](./public-github-source-publication-ledger.md)
 - [Public GitHub Source Publication Ledger JSON](./public-github-source-publication-ledger.json)
+- [Work Item 0001 Installed-User Onboarding Publication Route](./work-item-0001-installed-user-onboarding-publication-route-2026-05-15.md)
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [Release Procedure](../release-procedure.md)
 - [Documentation Package Workbench](../documentation-workbench.md)

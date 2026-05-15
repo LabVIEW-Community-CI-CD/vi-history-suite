@@ -108,6 +108,7 @@ describe('public repo package surface', () => {
     expect(readme).toContain('does not replace Windows Docker Desktop Windows-container proof');
     expect(readme).not.toContain('svelderrainruiz.vi-history-suite@prerelease');
     expect(readme).toContain('Report A Problem Or Request Support');
+    expect(readme).toContain('[Installed-user Onboarding Feedback Intake](https://github.com/svelderrainruiz/vi-history-suite/issues/98)');
     expect(readme).toContain('[Marketplace Community Validation Report]');
     expect(readme).toContain('[LabVIEW Version Support Request]');
     expect(readme).toContain('## Evaluate From Source');
