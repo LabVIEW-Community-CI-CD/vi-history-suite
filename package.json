@@ -193,6 +193,7 @@
     "public:github:exact:transaction:assess": "node scripts/runPublicGithubExactReleaseTransaction.js --mode assess",
     "public:github:exact:transaction:publish": "node scripts/runPublicGithubExactReleaseTransaction.js --mode publish",
     "public:github:exact:transaction:verify": "node scripts/runPublicGithubExactReleaseTransaction.js --mode verify",
+    "installed-user:first-time:activation-smoke": "node scripts/runFirstTimeInstalledUserActivationSmoke.js",
     "vscode:marketplace:install-proof": "node scripts/runWindowsExactVsixInstallProof.js",
     "vscode:marketplace:prepare": "node scripts/prepareVsCodeMarketplacePublication.js",
     "vscode:marketplace:community-preview:prepare": "node scripts/prepareMarketplaceCommunityValidationPreview.js",

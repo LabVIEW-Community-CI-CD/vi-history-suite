@@ -150,6 +150,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
       "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"
     );
     expect(acceptance).toContain(
+      "$LabVIEWActivationDialogEvidencePath = Join-Path $EvidenceRoot 'labview-activation-dialog.json'"
+    );
+    expect(acceptance).toContain(
       "$LabVIEWTimeoutScreenshotPath = Join-Path $EvidenceRoot 'labview-timeout-desktop.png'"
     );
     expect(acceptance).toContain(
@@ -166,6 +169,10 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('principalLogonType');
     expect(acceptance).toContain('lastTaskResultHex  = Format-UnsignedHex32');
     expect(acceptance).toContain("vihs-lv-timeout-screenshot");
+    expect(acceptance).toContain("vihs-lv-activation-dialog-rescue");
+    expect(acceptance).toContain("UIAutomationClient");
+    expect(acceptance).toContain("'Begin 7 Day Trial'");
+    expect(acceptance).toContain("Invoke-LabVIEWActivationDialogRescue -Reason 'during VI Server wait'");
     expect(acceptance).toContain('[System.Windows.Forms.Screen]::PrimaryScreen.Bounds');
     expect(acceptance).toContain('-WindowStyle Hidden -EncodedCommand $encodedScreenshotCommand');
     expect(acceptance).toContain('$desktopInterloperProcessNames');
