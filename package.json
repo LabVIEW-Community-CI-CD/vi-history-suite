@@ -196,6 +196,7 @@
     "installed-user:first-time:activation-smoke": "node scripts/runFirstTimeInstalledUserActivationSmoke.js",
     "vscode:marketplace:install-proof": "node scripts/runWindowsExactVsixInstallProof.js",
     "vscode:marketplace:prepare": "node scripts/prepareVsCodeMarketplacePublication.js",
+    "vscode:marketplace:verify": "node scripts/verifyVsCodeMarketplacePublication.js",
     "vscode:marketplace:community-preview:prepare": "node scripts/prepareMarketplaceCommunityValidationPreview.js",
     "software:factory:assess": "node scripts/runSoftwareFactoryOrchestrator.js --phase assess",
     "software:factory:rehearse": "node scripts/runSoftwareFactoryOrchestrator.js --phase rehearse",

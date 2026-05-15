@@ -10,6 +10,18 @@
   "currentPublishedVersion": "1.3.16",
   "currentPublishedDate": "2026-05-11",
   "currentVerificationSurface": "official-gallery-extensionquery-vsce-show-and-vscode-cli-install",
+  "postPublicationVerificationPackageScript": "npm run vscode:marketplace:verify",
+  "postPublicationVerificationReceiptPath": ".cache/vscode-marketplace-post-publication-verification/latest/vscode-marketplace-post-publication-verification.json",
+  "postPublicationVerificationEvidenceSchema": "vi-history-suite/vscode-marketplace-post-publication-verification@v1",
+  "postPublicationVerificationRequiredFields": [
+    "marketplace item id",
+    "expected version",
+    "observed version",
+    "observed update timestamp when available",
+    "query timestamp",
+    "clean VS Code profile install validation status",
+    "proof receipt paths"
+  ],
   "pendingPublicationVersion": null,
   "pendingPublicationInstallProofPackageScript": "npm run vscode:marketplace:install-proof",
   "pendingPublicationInstallProofReceiptPath": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json",

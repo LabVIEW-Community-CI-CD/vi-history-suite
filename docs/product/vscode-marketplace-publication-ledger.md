@@ -27,6 +27,14 @@ The machine-readable companion surface for this ledger is:
 - Current pre-release last updated: `2026-04-27T04:24:05.457Z`
 - Current verification surface: official gallery extension query, `vsce show`,
   and isolated VS Code CLI install readback
+- Post-publication verification command:
+  `npm run vscode:marketplace:verify`
+- Post-publication verification receipt:
+  `.cache/vscode-marketplace-post-publication-verification/latest/vscode-marketplace-post-publication-verification.json`
+- Post-publication verification required fields:
+  Marketplace item id, expected version, observed version, observed update
+  timestamp when available, query timestamp, clean VS Code profile install
+  validation status, and proof receipt paths
 - Current pending publication: none; exact `1.3.16` is published and verified
 - Pending publication install-proof command:
   `npm run vscode:marketplace:install-proof`
