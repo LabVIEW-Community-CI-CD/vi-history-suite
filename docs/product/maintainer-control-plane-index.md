@@ -29,6 +29,7 @@ documents:
 - [Hosted CI Governance](./hosted-ci-governance.md)
 - [Hosted CI Governance JSON](./hosted-ci-governance.json)
 - [Program Repo Jump](./program-repo-jump.md)
+- [Information Item Map](../information-item-map.md)
 - [Public GitHub Source Authority Map](./public-github-source-authority-map.md)
 - [Public GitHub Source Publication Ledger](./public-github-source-publication-ledger.md)
 - [Public GitHub Source Publication Ledger JSON](./public-github-source-publication-ledger.json)

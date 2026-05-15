@@ -83,10 +83,14 @@ describe('public devcontainer surface', () => {
     );
     expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
-    expect(readme).toContain('### Source Evaluation');
-    expect(readme).toContain('### Contribute');
-    expect(readme).toContain('https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/INSTALL.md');
-    expect(readme).toContain('https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/CONTRIBUTING.md');
+    expect(readme).toMatch(/### Source Evaluation|## Evaluate From Source/);
+    expect(readme).toMatch(/### Contribute|## Contribute/);
+    expect(readme).toMatch(
+      /https:\/\/github\.com\/svelderrainruiz\/vi-history-suite\/blob\/HEAD\/INSTALL\.md|\[INSTALL\.md\]\(\.\/INSTALL\.md\)/
+    );
+    expect(readme).toMatch(
+      /https:\/\/github\.com\/svelderrainruiz\/vi-history-suite\/blob\/HEAD\/CONTRIBUTING\.md|\[CONTRIBUTING\.md\]\(\.\/CONTRIBUTING\.md\)/
+    );
     expect(install).toContain('Use this lane only when you want to inspect the source repo');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');

@@ -63,7 +63,7 @@ type SustainmentRules = {
 describe('strict semver discipline', () => {
   it('keeps the fully published exact line distinct from the current authority line', () => {
     const pkg = readJson<{ version: string }>('package.json');
-    const readme = readText('README.md');
+    const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
     const sustainmentRules = readJson<SustainmentRules>('docs/product/post-release-sustainment-rules.json');
@@ -123,38 +123,44 @@ describe('strict semver discipline', () => {
     expect(compareSemver(versionLineContract.currentMainPackageLine, exactReleaseLine)).toBe(0);
     expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
     expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThanOrEqual(0);
-    expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.3.16`');
-    expect(readme).toContain('- current fully published exact package line: `1.3.16`');
-    expect(readme).toContain('- current authority package line on `main`: `1.3.16`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.3.16`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: none');
-    expect(readme).toContain('- active release-candidate branch: none; retained release-candidate branches:');
-    expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
-    expect(readme).toContain('- active hotfix branch: none');
-    expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
-    expect(readme).toContain('none');
-    expect(readme).toContain('npm run public:exact:pretag:proof');
-    expect(readme).toContain('public_exact_pretag_proof');
-    expect(readme).toContain('npm run public:github:exact:transaction:verify');
-    expect(readme).toContain('- retained Windows x64 private-release-prep slice: historical `release/1.3.1`');
-    expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
-    expect(readme).toContain('- public GitHub default branch: `main`');
-    expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
-    expect(readme).toContain('- integration branch: `develop`');
-    expect(readme).toContain('- protected exact-release line: `main`');
-    expect(readme).toContain('- release-candidate branch family: `release/*`');
-    expect(readme).toContain('- separate public GitHub exact release publication: published; public tag');
-    expect(readme).toContain('- current public GitHub source publication: public `main` now publishes');
-    expect(readme).toContain('`12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97');
-    expect(readme).toContain('installed-user troubleshooting guide');
-    expect(readme).toContain("PR #91's first-run local LabVIEW guide");
-    expect(readme).toContain("public PR #90's intake-surface");
-    expect(readme).toContain("public PR #89's installed-user support matrix adoption");
-    expect(readme).toContain('retained at');
-    expect(readme).toContain('`f679023ed760963779d9331a9395128ad01c7e54` after public PR #88');
-    expect(readme).toContain('PR #69, PR #68, and PR #60 remain retained');
-    expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.16`');
+    expect(controlPlane).toContain('- burned exact release line: `v1.0.2`');
+    expect(controlPlane).toContain('- current exact released line: `v1.3.16`');
+    expect(controlPlane).toContain('- current fully published exact package line: `1.3.16`');
+    expect(controlPlane).toContain('- current authority package line on `main`: `1.3.16`');
+    expect(controlPlane).toContain('- current develop package line on `develop`: `1.3.16`');
+    expect(controlPlane).toContain('- active exact release candidate line on `develop`: none');
+    expect(controlPlane).toContain(
+      '- active release-candidate branch: none; retained release-candidate branches:'
+    );
+    expect(controlPlane).toContain('- active exact hotfix candidate line on `main`: none');
+    expect(controlPlane).toContain('- active hotfix branch: none');
+    expect(controlPlane).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(controlPlane).toContain('none');
+    expect(controlPlane).toContain('npm run public:exact:pretag:proof');
+    expect(controlPlane).toContain('public_exact_pretag_proof');
+    expect(controlPlane).toContain('npm run public:github:exact:transaction:verify');
+    expect(controlPlane).toContain(
+      '- retained Windows x64 private-release-prep slice: historical `release/1.3.1`'
+    );
+    expect(controlPlane).toContain('private-release-windows-x64-v1.3.1.md');
+    expect(controlPlane).toContain('- public GitHub default branch: `main`');
+    expect(controlPlane).toContain('- public Codespaces evaluation branch: `develop`');
+    expect(controlPlane).toContain('- integration branch: `develop`');
+    expect(controlPlane).toContain('- protected exact-release line: `main`');
+    expect(controlPlane).toContain('- release-candidate branch family: `release/*`');
+    expect(controlPlane).toContain('- separate public GitHub exact release publication: published; public tag');
+    expect(controlPlane).toContain('- current public GitHub source publication: public `main` now publishes');
+    expect(controlPlane).toContain(
+      '`12798e46f14d6cac14eaf7381bbb62cc5ee012db` after public PRs #93-#97'
+    );
+    expect(controlPlane).toContain('installed-user troubleshooting guide');
+    expect(controlPlane).toContain("PR #91's first-run local LabVIEW guide");
+    expect(controlPlane).toContain("public PR #90's intake-surface");
+    expect(controlPlane).toContain("public PR #89's installed-user support matrix adoption");
+    expect(controlPlane).toContain('retained at');
+    expect(controlPlane).toContain('`f679023ed760963779d9331a9395128ad01c7e54` after public PR #88');
+    expect(controlPlane).toContain('PR #69, PR #68, and PR #60 remain retained');
+    expect(controlPlane).toContain('- VS Code Marketplace retained published version: `1.3.16`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.3.16`');
     expect(currentState).toContain('- current fully published exact package line: `1.3.16`');

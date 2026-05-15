@@ -222,7 +222,7 @@ describe('public validation pre-release 1.3.12', () => {
       }
     });
 
-    for (const surface of [packet, readme, publicReadme, commandReference]) {
+    for (const surface of [packet, publicReadme, commandReference]) {
       expect(surface).toContain('vihs validate-fixture');
       expect(surface).toContain('https://github.com/ni/labview-icon-editor');
       expect(surface).toContain('resource/plugins/lv_icon.vi');
@@ -234,7 +234,7 @@ describe('public validation pre-release 1.3.12', () => {
       expect(surface).toContain('Windows host LabVIEW');
       expect(surface).toContain('admitted');
     }
-    expect(readme).toContain('Marketplace stable `1.3.16` is the regular installed-user release');
+    expect(readme).toContain('The Marketplace listing is intentionally installed-user first');
     expect(publicReadme).toContain(
       'The Marketplace stable release is the current installed-user release line'
     );

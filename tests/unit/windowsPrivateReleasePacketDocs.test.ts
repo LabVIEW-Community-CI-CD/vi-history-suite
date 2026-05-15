@@ -393,7 +393,7 @@ describe('windows private release packet docs', () => {
     const packetJson = readJson<any>('docs/product/private-release-windows-x64-v1.3.1.json');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
-    const readme = readText('README.md');
+    const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
 
     expect(packetDoc).toContain('# Windows x64 Private-Release Packet `v1.3.1`');
     expect(packetDoc).toContain('Retain the first published Windows x64 private-release packet');
@@ -482,10 +482,10 @@ describe('windows private release packet docs', () => {
       })
     );
 
-    expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
-    expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.json');
-    expect(readme).toContain('private-v1.3.1-windows-x64');
-    expect(readme).toContain('.cache/private-release-publish/latest/private-release-publish.json');
+    expect(controlPlane).toContain('private-release-windows-x64-v1.3.1.md');
+    expect(controlPlane).toContain('private-release-windows-x64-v1.3.1.json');
+    expect(controlPlane).toContain('private-v1.3.1-windows-x64');
+    expect(controlPlane).toContain('.cache/private-release-publish/latest/private-release-publish.json');
     expect(currentState).toContain('[private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)');
     expect(currentState).toContain('[private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)');
     expect(currentState).toContain('private-v1.3.1-windows-x64');

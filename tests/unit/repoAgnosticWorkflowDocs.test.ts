@@ -28,7 +28,8 @@ describe('repo-agnostic checkbox workflow docs', () => {
     }
 
     expect(readme).toContain('Open a trusted Git repository that contains a `.vi`, `.ctl`, or `.vit`');
-    expect(readme).toContain('evaluate a public repo in Codespaces:');
+    expect(readme).toContain('review another public Git repository with the');
+    expect(readme).toContain('Fork-Codespace-Quickstart');
     expect(currentState).toContain('Repo-agnostic support with governed-evidence depth');
     expect(srs).toContain('checkbox-selected compare flow');
     expect(rtm).toContain('checkbox-selected compare flow');

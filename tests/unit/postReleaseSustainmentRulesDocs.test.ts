@@ -17,7 +17,7 @@ describe('post-release sustainment rules package', () => {
   it('retains the fully closed v1.3.16 line while keeping v1.3.8 as blocked historical evidence', () => {
     const rules = readJson<any>('docs/product/post-release-sustainment-rules.json');
     const rulesDoc = readText('docs/product/post-release-sustainment-rules.md');
-    const readme = readText('README.md');
+    const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
@@ -179,7 +179,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('published `v1.3.16` host-default Windows local');
     expect(rulesDoc).toContain('`LabVIEWCLI` contract with bounded expert Docker');
     expect(rulesDoc).toContain('Marketplace prep rule');
-    expect(readme).toContain('current exact released line: `v1.3.16`');
+    expect(controlPlane).toContain('current exact released line: `v1.3.16`');
     expect(currentState).toContain('current exact released line: `v1.3.16`');
     expect(releaseProcedure).toContain('The current exact released line is `v1.3.16`.');
     expect(releaseProcedure).toContain('The public GitHub exact transaction verification package script is');
