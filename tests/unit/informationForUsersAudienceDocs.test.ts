@@ -49,7 +49,9 @@ describe('information-for-users audience/navigation package', () => {
     expect(readme).toContain('## Overview');
     expect(readme).toContain('## Details');
     expect(readme).toContain('video-install-and-prepare');
+    expect(readme).toContain('video-validate-runtime');
     expect(readme).toContain('video-first-compare');
+    expect(readme).toContain('video-read-report-evidence');
     expect(readme).toContain('video-troubleshooting');
     expect(readme).toContain('Maintainer Control Plane Index');
     expect(readme).toContain('./docs/information-for-users/command-reference.md');

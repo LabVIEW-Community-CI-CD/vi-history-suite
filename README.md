@@ -36,25 +36,47 @@ merely because VS Code started.
 ### Video Walkthroughs
 
 These anchors are reserved for future videos. No video links or thumbnails are
-published yet.
+published until the real video asset, thumbnail, and public target are ready
+together.
 
 <a id="video-install-and-prepare"></a>
 
 #### Install And Prepare
 
-Reserved for the future first-run setup walkthrough.
+Planned first-time walkthrough: install the extension, run
+`VI History: Prepare Local Runtime Settings CLI`, and prepare the local `vihs`
+command.
+
+<a id="video-validate-runtime"></a>
+
+#### Validate Runtime
+
+Planned first-time walkthrough: run `vihs --validate`, read the selected
+provider, LabVIEW year, bitness, runtime engine, and blocked-reason fields, and
+fix the next action before comparing.
 
 <a id="video-first-compare"></a>
 
 #### First Compare
 
-Reserved for the future compare workflow walkthrough.
+Planned first-time walkthrough: open a trusted Git repository, choose a tracked
+VI, select exactly two revisions, review the compare preflight, and start
+Compare.
+
+<a id="video-read-report-evidence"></a>
+
+#### Read The Report And Evidence
+
+Planned first-time walkthrough: open the retained comparison report, review the
+comparison context and evidence paths, and know what to include when asking for
+support.
 
 <a id="video-troubleshooting"></a>
 
 #### Troubleshooting
 
-Reserved for the future runtime validation and support walkthrough.
+Reserved follow-up walkthrough for runtime validation failures and support
+requests after the first video set is recorded.
 
 ## Details
 
