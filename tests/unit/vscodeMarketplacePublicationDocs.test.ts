@@ -90,7 +90,15 @@ describe('vs code marketplace publication and installed-user docs', () => {
       marketplacePrepReceiptPath:
         '.cache/vscode-marketplace-publication-prep/v1.3.16-marketplace-verified/vscode-marketplace-publication-prep.json',
       publicGitHubExactTransactionReceiptPath:
-        '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json'
+        '.cache/public-github-exact-v1.3.16-verify-after-marketplace/public-github-exact-release-transaction.json',
+      postPublicationCloseout: expect.objectContaining({
+        marketplaceItemId: 'svelderrainruiz.vi-history-suite',
+        expectedVersion: '1.3.16',
+        observedMarketplaceVersion: '1.3.16',
+        publicationTimestamp: '2026-05-11T23:10:13.317Z',
+        verificationTimestamp: '2026-05-15T14:54:18.025Z',
+        packageSha256: '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170'
+      })
     });
     expect(ledger.communityValidationPreviewPreparation).toMatchObject({
       status: 'published-and-verified',
@@ -135,6 +143,10 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledgerDoc).toContain(
       '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170'
     );
+    expect(ledgerDoc).toContain('Marketplace post-publication verification receipt');
+    expect(ledgerDoc).toContain('observed Marketplace version `1.3.16`');
+    expect(ledgerDoc).toContain('verification timestamp');
+    expect(ledgerDoc).toContain('`2026-05-15T14:54:18.025Z`');
     expect(ledgerDoc).toContain('## Community-Validation Preview Preparation');
     expect(ledgerDoc).toContain('Target preview version: `1.3.13`');
     expect(ledgerDoc).toContain('Published preview version: `1.3.13`');
