@@ -166,8 +166,10 @@ Information-for-users review cases:
 - `TEST-UNIT-028`: validate the pure comparison-report planning module for
   same-name staged revision filenames plus primary `CreateComparisonReport`
   and fallback `LVCompare` command plans
-- `TEST-UNIT-029`: validate the canonical harness clone helper reuses an
-  existing clone and performs clone-on-demand when `.git` is absent
+- `TEST-UNIT-029`: validate the canonical harness clone helper records governed
+  cache receipts, preserves Git safe-directory handling, reuses clean matching
+  caches, performs clone-on-demand when `.git` is absent, and fails closed for
+  dirty, mismatched, or incomplete caches
 - `TEST-UNIT-030`: validate the core harness smoke runner writes retained JSON,
   Markdown, and HTML artifacts from shared history-model facts and fails closed
   when the target file is not tracked

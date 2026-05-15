@@ -3,8 +3,8 @@
 ## HARNESS-VHS-001: Canonical Real-History Repository
 
 - Source repository: `https://github.com/ni/labview-icon-editor`
-- Acquisition rule: clone on demand; do not vendor the repository into
-  `vi-history-suite`
+- Acquisition rule: use the governed cache strategy below; do not vendor the
+  repository into `vi-history-suite`
 - Purpose: provide real commit history for content-detected LabVIEW VIs
 
 ### Initial Target File
@@ -27,11 +27,30 @@
 ### Local Smoke Path
 
 - command: `npm run proof:run -- smoke --harness-id HARNESS-VHS-001`
-- clone policy: clone on demand into `.cache/harnesses/`
+- clone policy: validate or clone on demand into `.cache/harnesses/`
 - retained outputs:
   - `.cache/harness-reports/HARNESS-VHS-001/report.json`
   - `.cache/harness-reports/HARNESS-VHS-001/report.md`
   - `.cache/harness-reports/HARNESS-VHS-001/report.html`
+
+### Governed Harness Cache Strategy
+
+All governed proof lanes that call the canonical harness helper use the same
+cache boundary under `.cache/harnesses/ni-labview-icon-editor`. The helper
+first registers the clone as a Git `safe.directory`, then fails closed unless
+the cached clone has `origin` set to
+`https://github.com/ni/labview-icon-editor.git`, has a clean
+`git status --porcelain`, and tracks the selected harness target path. When the
+cache is missing, the helper performs a fresh filtered clone and applies the
+same checks before any proof can read history or run comparison tooling.
+
+Each successful cache admission writes
+`.cache/harnesses/ni-labview-icon-editor.vihs-harness-cache.json` beside the
+clone, not inside it, with the source repository URL, harness id, target path,
+HEAD commit, acquisition timestamp, whether the clone was reused or freshly
+cloned, and the safe-directory/clean/target-tracked decisions. The cache is
+therefore a prewarm path, not a proof identity bypass: dirty, mismatched, or
+incomplete caches block the lane before retained proof is admitted.
 
 ### Local Comparison-Report Smoke Path
 

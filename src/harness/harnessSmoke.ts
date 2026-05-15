@@ -38,6 +38,20 @@ export interface HarnessSmokeReport {
   generatedAt: string;
 }
 
+export interface HarnessCacheReceipt {
+  schema: 'vi-history-suite/canonical-harness-cache@v1';
+  harnessId: string;
+  sourceRepositoryUrl: string;
+  cloneDirectory: string;
+  targetRelativePath: string;
+  acquisitionMode: 'reused' | 'fresh-clone';
+  acquiredAt: string;
+  head: string;
+  clean: true;
+  targetTracked: true;
+  safeDirectoryConfigured: true;
+}
+
 export interface HarnessSmokeDeps {
   stat?: typeof fs.stat;
   mkdir?: typeof fs.mkdir;
@@ -56,13 +70,17 @@ export async function ensureHarnessClone(
   deps: HarnessSmokeDeps = {}
 ): Promise<string> {
   const cloneDirectory = path.join(cloneRoot, definition.cloneDirectoryName);
+  let existingGitDirectory = false;
   try {
     const stats = await (deps.stat ?? fs.stat)(path.join(cloneDirectory, '.git'));
-    if (stats.isDirectory()) {
-      return cloneDirectory;
-    }
+    existingGitDirectory = stats.isDirectory();
   } catch {
     // Clone on demand below.
+  }
+
+  if (existingGitDirectory) {
+    await validateAndRecordHarnessCache(definition, cloneDirectory, 'reused', deps);
+    return cloneDirectory;
   }
 
   await (deps.mkdir ?? fs.mkdir)(cloneRoot, { recursive: true });
@@ -70,7 +88,82 @@ export async function ensureHarnessClone(
     ['clone', '--filter=blob:none', definition.repositoryUrl, cloneDirectory],
     cloneRoot
   );
+  await validateAndRecordHarnessCache(definition, cloneDirectory, 'fresh-clone', deps);
   return cloneDirectory;
+}
+
+async function validateAndRecordHarnessCache(
+  definition: CanonicalHarnessDefinition,
+  cloneDirectory: string,
+  acquisitionMode: HarnessCacheReceipt['acquisitionMode'],
+  deps: HarnessSmokeDeps
+): Promise<HarnessCacheReceipt> {
+  const runGitCommand = deps.runGit ?? runGit;
+  const targetRelativePath = normalizeRelativeGitPath(definition.targetRelativePath);
+
+  await runGitCommand(
+    ['config', '--global', '--add', 'safe.directory', cloneDirectory],
+    cloneDirectory
+  );
+
+  const [remoteUrl, status, trackedTarget, head] = await Promise.all([
+    runGitCommand(['remote', 'get-url', 'origin'], cloneDirectory),
+    runGitCommand(['status', '--porcelain'], cloneDirectory),
+    runGitCommand(['ls-files', '--error-unmatch', targetRelativePath], cloneDirectory),
+    runGitCommand(['rev-parse', 'HEAD'], cloneDirectory)
+  ]);
+
+  const normalizedExpectedUrl = normalizeHarnessRepositoryUrl(definition.repositoryUrl);
+  const normalizedObservedUrl = normalizeHarnessRepositoryUrl(String(remoteUrl).trim());
+  if (normalizedObservedUrl !== normalizedExpectedUrl) {
+    throw new Error(
+      `Canonical harness cache remote mismatch for ${definition.id}: expected ${definition.repositoryUrl}, found ${String(remoteUrl).trim() || 'none'}.`
+    );
+  }
+
+  if (String(status).trim().length > 0) {
+    throw new Error(
+      `Canonical harness cache is dirty for ${definition.id}: ${String(status).trim()}`
+    );
+  }
+
+  if (String(trackedTarget).trim().length === 0) {
+    throw new Error(
+      `Canonical harness cache is incomplete for ${definition.id}: ${targetRelativePath} is not tracked.`
+    );
+  }
+
+  const receipt: HarnessCacheReceipt = {
+    schema: 'vi-history-suite/canonical-harness-cache@v1',
+    harnessId: definition.id,
+    sourceRepositoryUrl: definition.repositoryUrl,
+    cloneDirectory,
+    targetRelativePath,
+    acquisitionMode,
+    acquiredAt: (deps.now ?? defaultNow)(),
+    head: String(head).trim(),
+    clean: true,
+    targetTracked: true,
+    safeDirectoryConfigured: true
+  };
+
+  await (deps.writeFile ?? fs.writeFile)(
+    getHarnessCacheReceiptPath(cloneDirectory),
+    `${JSON.stringify(receipt, null, 2)}\n`
+  );
+
+  return receipt;
+}
+
+function getHarnessCacheReceiptPath(cloneDirectory: string): string {
+  return path.join(
+    path.dirname(cloneDirectory),
+    `${path.basename(cloneDirectory)}.vihs-harness-cache.json`
+  );
+}
+
+function normalizeHarnessRepositoryUrl(value: string): string {
+  return value.trim().replace(/\/+$/u, '').replace(/\.git$/u, '');
 }
 
 export async function runHarnessSmoke(
