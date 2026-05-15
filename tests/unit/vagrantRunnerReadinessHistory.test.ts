@@ -25,6 +25,14 @@ const history = require(path.join(repoRoot, 'scripts', 'summarizeVagrantRunnerRe
     statusCounts: Record<string, number>;
     categoryCounts: Record<string, number>;
     intervalStatsSec: { p50: number | null; p90: number | null };
+    timerDecisionSignals: {
+      activeStorageDriftIncidentCount: number;
+      activeStorageDriftReceiptCount: number;
+      activeStorageWorstDetectionWindowSec: number | null;
+      activeStorageWorstRecoveryWindowSec: number | null;
+      busyContextReceiptCount: number;
+      observedCadenceSec: { p50: number | null; p90: number | null; p95: number | null };
+    };
     incidents: Array<{
       categories: string[];
       detectionWindowSec: number | null;
@@ -146,6 +154,14 @@ describe('Vagrant runner readiness history summarizer', () => {
       recoveryWindowSec: 300,
       failureReceiptCount: 2
     });
+    expect(report.timerDecisionSignals).toMatchObject({
+      activeStorageDriftIncidentCount: 1,
+      activeStorageDriftReceiptCount: 2,
+      activeStorageWorstDetectionWindowSec: 300,
+      activeStorageWorstRecoveryWindowSec: 300,
+      busyContextReceiptCount: 1,
+      observedCadenceSec: { p50: 300, p90: 300, p95: 300 }
+    });
     expect(report.recommendation).toMatchObject({
       decision: 'keep-current-timer',
       recommendedTimerSec: 300,
@@ -185,7 +201,7 @@ describe('Vagrant runner readiness history summarizer', () => {
     });
     expect(
       fs.readFileSync(path.join(evidenceDir, 'vagrant-runner-readiness-history.md'), 'utf8')
-    ).toContain('# Vagrant Runner Readiness History');
+    ).toContain('Active storage drift incidents: 0');
   });
 
   it('parses CLI roots, current timer, and JSON mode', () => {

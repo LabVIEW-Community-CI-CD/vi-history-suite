@@ -334,19 +334,8 @@ function buildRecommendation(summary) {
     };
   }
 
-  const busyFailureCount =
-    (summary.categoryCounts['runner-busy'] ?? 0) +
-    (summary.categoryCounts['golden-vm-active'] ?? 0);
-  const activeDriftIncidents = summary.incidents.filter((incident) =>
-    incident.categories.includes('active-storage-drift')
-  );
-  const activeDetectionWindows = activeDriftIncidents
-    .map((incident) => incident.detectionWindowSec)
-    .filter((value) => typeof value === 'number');
-  const worstActiveDetectionSec = activeDetectionWindows.length > 0
-    ? Math.max(...activeDetectionWindows)
-    : null;
-  const shrinkWouldMostlyAddNoise = busyFailureCount > 0;
+  const signals = summary.timerDecisionSignals ?? buildTimerDecisionSignals(summary);
+  const shrinkWouldMostlyAddNoise = signals.busyContextReceiptCount > 0;
 
   return {
     decision: 'keep-current-timer',
@@ -354,14 +343,52 @@ function buildRecommendation(summary) {
     adaptiveCandidate: shrinkWouldMostlyAddNoise,
     basis: [
       `Keep the ${summary.currentTimerSec}s readiness timer.`,
-      activeDriftIncidents.length > 0
-        ? `Active storage drift was detected by retained receipts${worstActiveDetectionSec === null ? '' : ` with a worst observed detection window of ${worstActiveDetectionSec}s`}.`
+      signals.activeStorageDriftIncidentCount > 0
+        ? `Active storage drift was detected by retained receipts${signals.activeStorageWorstDetectionWindowSec === null ? '' : ` with a worst observed detection window of ${signals.activeStorageWorstDetectionWindowSec}s`}.`
         : 'No active storage drift incidents were present in the scanned receipts.',
       shrinkWouldMostlyAddNoise
-        ? `Shortening the timer would increase expected busy receipts (${busyFailureCount}) while Vagrant or the golden VM is intentionally active; classify busy/adaptive behavior separately before changing cadence.`
+        ? `Shortening the timer would increase expected busy receipts (${signals.busyContextReceiptCount}) while Vagrant or the golden VM is intentionally active; classify busy/adaptive behavior separately before changing cadence.`
         : 'The history does not show a clear need to shrink the timer.',
       'GitLab admission still runs immediately before Vagrant acceptance, so the timer remains an early warning surface rather than the only gate.'
     ].join(' ')
+  };
+}
+
+function buildTimerDecisionSignals(summary) {
+  const activeDriftIncidents = summary.incidents.filter((incident) =>
+    incident.categories.includes('active-storage-drift')
+  );
+  const activeDetectionWindows = activeDriftIncidents
+    .map((incident) => incident.detectionWindowSec)
+    .filter((value) => typeof value === 'number');
+  const activeRecoveryWindows = activeDriftIncidents
+    .map((incident) => incident.recoveryWindowSec)
+    .filter((value) => typeof value === 'number');
+  const busyContextReceiptCount =
+    (summary.categoryCounts['runner-busy'] ?? 0) +
+    (summary.categoryCounts['golden-vm-active'] ?? 0);
+
+  return {
+    currentTimerSec: summary.currentTimerSec,
+    recommendedTimerSec: summary.currentTimerSec,
+    activeStorageDriftIncidentCount: activeDriftIncidents.length,
+    activeStorageDriftReceiptCount: summary.categoryCounts['active-storage-drift'] ?? 0,
+    activeStorageWorstDetectionWindowSec: activeDetectionWindows.length > 0
+      ? Math.max(...activeDetectionWindows)
+      : null,
+    activeStorageWorstRecoveryWindowSec: activeRecoveryWindows.length > 0
+      ? Math.max(...activeRecoveryWindows)
+      : null,
+    busyContextReceiptCount,
+    runnerBusyReceiptCount: summary.categoryCounts['runner-busy'] ?? 0,
+    goldenVmActiveReceiptCount: summary.categoryCounts['golden-vm-active'] ?? 0,
+    observedCadenceSec: {
+      p50: summary.intervalStatsSec.p50,
+      p90: summary.intervalStatsSec.p90,
+      p95: summary.intervalStatsSec.p95
+    },
+    admissionGateRole: 'immediate-fail-closed-gate-before-vagrant-boot',
+    timerRole: 'continuous-early-warning-not-the-only-gate'
   };
 }
 
@@ -404,8 +431,10 @@ function summarizeVagrantRunnerReadinessHistory(options = {}, deps = {}) {
     intervalStatsSec: calculateStats(intervalsSec),
     incidents,
     parseFailures: collected.parseFailures,
+    timerDecisionSignals: null,
     recommendation: null
   };
+  summary.timerDecisionSignals = buildTimerDecisionSignals(summary);
   summary.recommendation = buildRecommendation(summary);
 
   if (options.evidenceDir) {
@@ -434,6 +463,10 @@ function buildMarkdown(summary) {
     `- Status counts: ${JSON.stringify(summary.statusCounts)}`,
     `- Category counts: ${JSON.stringify(summary.categoryCounts)}`,
     `- Interval seconds min/p50/p90/p95/max: ${summary.intervalStatsSec.min ?? 'n/a'} / ${summary.intervalStatsSec.p50 ?? 'n/a'} / ${summary.intervalStatsSec.p90 ?? 'n/a'} / ${summary.intervalStatsSec.p95 ?? 'n/a'} / ${summary.intervalStatsSec.max ?? 'n/a'}`,
+    `- Active storage drift incidents: ${summary.timerDecisionSignals.activeStorageDriftIncidentCount}`,
+    `- Active storage drift receipts: ${summary.timerDecisionSignals.activeStorageDriftReceiptCount}`,
+    `- Worst active-storage detection window: ${summary.timerDecisionSignals.activeStorageWorstDetectionWindowSec ?? 'n/a'}s`,
+    `- Busy-context receipts: ${summary.timerDecisionSignals.busyContextReceiptCount}`,
     `- Recommended timer: ${summary.recommendation.recommendedTimerSec}s`,
     `- Decision: ${summary.recommendation.decision}`,
     `- Adaptive follow-up candidate: ${summary.recommendation.adaptiveCandidate ? 'yes' : 'no'}`,
@@ -483,6 +516,7 @@ module.exports = {
   buildIncidents,
   buildMarkdown,
   buildRecommendation,
+  buildTimerDecisionSignals,
   classifyIssue,
   collectReceiptFiles,
   collectReceipts,

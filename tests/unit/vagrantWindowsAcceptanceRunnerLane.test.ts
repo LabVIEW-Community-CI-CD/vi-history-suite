@@ -37,6 +37,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const laneDoc = readText('docs/product/vagrant-windows-acceptance-runner-lane.md');
     const hostedGovernanceDoc = readText('docs/product/hosted-ci-governance.md');
     const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
+    const timerDecisionDoc = readText(
+      'docs/product/vagrant-runner-readiness-timer-decision-2026-05-15.md'
+    );
+    const timerDecisionJson = readJson<any>(
+      'docs/product/vagrant-runner-readiness-timer-decision-2026-05-15.json'
+    );
     const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
 
     expect(gitlabCi).toContain('vagrant_runner_admission:');
@@ -342,6 +348,10 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('vagrant-runner-readiness-evidence/');
     expect(laneDoc).toContain('/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness');
     expect(laneDoc).toContain('npm run vagrant:runner:readiness:history');
+    expect(laneDoc).toContain(
+      'docs/product/vagrant-runner-readiness-timer-decision-2026-05-15.{md,json}'
+    );
+    expect(laneDoc).toContain('p50/p90/p95 receipt intervals of `330/330/330` seconds');
     expect(laneDoc).toContain('status: busy');
     expect(laneDoc).toContain('npm run vagrant:acceptance:assert');
     expect(laneDoc).toContain('stale golden-VM');
@@ -365,6 +375,32 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostedGovernanceDoc).toContain('quarantines that directory under the governed machine');
     expect(hostedGovernanceDoc).toContain('near-future scheduled-task');
     expect(hostedGovernanceDoc).toContain('npm run vagrant:acceptance:assert');
+    expect(hostedGovernanceDoc).toContain(
+      'docs/product/vagrant-runner-readiness-timer-decision-2026-05-15.{md,json}'
+    );
+    expect(hostedGovernanceDoc).toMatch(/`5`\s+active-storage-drift receipts in `1` incident/);
+
+    expect(timerDecisionDoc).toContain('Keep the current `300` second timer.');
+    expect(timerDecisionDoc).toContain('Busy-context receipts: `39`');
+    expect(timerDecisionJson).toEqual(
+      expect.objectContaining({
+        schema: 'vi-history-suite/vagrant-runner-readiness-timer-decision@v1',
+        decision: 'keep-current-timer',
+        currentTimerSeconds: 300,
+        recommendedTimerSeconds: 300,
+        adaptiveCandidate: true,
+        evidenceSummary: expect.objectContaining({
+          receiptCount: 212,
+          intervalStatsSec: expect.objectContaining({ p50: 330, p90: 330, p95: 330 })
+        }),
+        timerDecisionSignals: expect.objectContaining({
+          activeStorageDriftIncidentCount: 1,
+          activeStorageDriftReceiptCount: 5,
+          activeStorageWorstDetectionWindowSec: 687,
+          busyContextReceiptCount: 39
+        })
+      })
+    );
 
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.vagrantWindowsVsixAcceptance).toEqual(
       expect.objectContaining({
@@ -407,6 +443,21 @@ describe('Vagrant Windows acceptance runner lane', () => {
           runnerReadinessBusyStatus: 'busy',
           runnerReadinessAdmissionBusyPolicy:
             'fail-closed-before-vagrant-windows-vsix-acceptance',
+          runnerReadinessHistoryPackageScript: 'npm run vagrant:runner:readiness:history',
+          runnerReadinessTimerDecision: expect.objectContaining({
+            packet: 'docs/product/vagrant-runner-readiness-timer-decision-2026-05-15.json',
+            decision: 'keep-current-timer',
+            currentTimerSeconds: 300,
+            recommendedTimerSeconds: 300,
+            observedCadenceP50Seconds: 330,
+            observedCadenceP90Seconds: 330,
+            observedCadenceP95Seconds: 330,
+            activeStorageDriftIncidentCount: 1,
+            activeStorageDriftReceiptCount: 5,
+            activeStorageWorstDetectionWindowSeconds: 687,
+            busyContextReceiptCount: 39,
+            adaptiveCandidate: true
+          }),
           repoOwnedPipelineFreshnessScript: 'scripts/checkGitLabVagrantPipelineFreshness.js',
           repoOwnedPipelineFreshnessPackageScript: 'npm run vagrant:acceptance:freshness',
           pipelineFreshnessSchema:

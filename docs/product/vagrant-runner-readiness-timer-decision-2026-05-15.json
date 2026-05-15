@@ -1,0 +1,64 @@
+{
+  "schema": "vi-history-suite/vagrant-runner-readiness-timer-decision@v1",
+  "recordedAt": "2026-05-15T05:48:19.771Z",
+  "localRecordedDate": "2026-05-14",
+  "sourceCommand": "npm run vagrant:runner:readiness:history -- --root /home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness --json",
+  "sourceHistorySchema": "vi-history-suite/vagrant-runner-readiness-history@v1",
+  "sourceReceiptRoot": "/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness",
+  "systemdTimerAsset": "scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer",
+  "systemdTimerDirective": "OnUnitActiveSec=5min",
+  "currentTimerSeconds": 300,
+  "decision": "keep-current-timer",
+  "recommendedTimerSeconds": 300,
+  "adaptiveCandidate": true,
+  "evidenceSummary": {
+    "receiptCount": 212,
+    "firstReceiptAt": "2026-05-14T07:57:37.912Z",
+    "lastReceiptAt": "2026-05-15T05:46:53.676Z",
+    "statusCounts": {
+      "passed": 161,
+      "failed": 44,
+      "busy": 7
+    },
+    "categoryCounts": {
+      "host-doctor-failed": 47,
+      "runner-busy": 23,
+      "golden-vm-active": 16,
+      "active-box-missing": 9,
+      "host-tooling-drift": 7,
+      "active-storage-drift": 5,
+      "stale-disposable-vm-state": 2
+    },
+    "intervalStatsSec": {
+      "count": 211,
+      "min": 12,
+      "p50": 330,
+      "p90": 330,
+      "p95": 330,
+      "max": 8727
+    }
+  },
+  "timerDecisionSignals": {
+    "activeStorageDriftIncidentCount": 1,
+    "activeStorageDriftReceiptCount": 5,
+    "activeStorageWorstDetectionWindowSec": 687,
+    "activeStorageWorstRecoveryWindowSec": 253,
+    "busyContextReceiptCount": 39,
+    "runnerBusyReceiptCount": 23,
+    "goldenVmActiveReceiptCount": 16,
+    "observedCadenceSec": {
+      "p50": 330,
+      "p90": 330,
+      "p95": 330
+    },
+    "admissionGateRole": "immediate-fail-closed-gate-before-vagrant-boot",
+    "timerRole": "continuous-early-warning-not-the-only-gate"
+  },
+  "rationale": [
+    "Retain the 300 second readiness timer because the observed p50, p90, and p95 receipt intervals are already approximately one five-minute timer period plus systemd accuracy/runtime overhead.",
+    "The retained history contains one active-storage-drift incident, and the admission job still checks readiness immediately before Vagrant acceptance starts.",
+    "Shortening the periodic timer would add more expected busy receipts while the disposable Vagrant VM or golden VM is intentionally active.",
+    "Adaptive busy-state handling remains a valid later improvement, but it should be specified separately from the cadence decision."
+  ],
+  "nextReviewPolicy": "Reassess the cadence after more real active-storage drift incidents or after a separate busy-aware adaptive timer design exists; do not shorten the timer from this evidence alone."
+}
