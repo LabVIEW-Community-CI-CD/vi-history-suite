@@ -217,13 +217,19 @@ async function fetchMarketplaceState(marketplaceItem) {
     versions[0]?.version ??
     null;
   const latestPreReleaseVersion = versions.find(isPreReleaseVersion)?.version ?? null;
+  const latestRegularVersionRecord =
+    versions.find((version) => !isPreReleaseVersion(version)) ?? versions[0] ?? null;
+  const latestPreReleaseVersionRecord = versions.find(isPreReleaseVersion) ?? null;
 
   return {
     statusCode: response.statusCode,
     marketplaceItem,
     currentPublishedVersion: latestRegularVersion,
+    currentPublishedVersionLastUpdated: latestRegularVersionRecord?.lastUpdated ?? null,
     latestMarketplaceVersion: versions[0]?.version ?? null,
+    latestMarketplaceVersionLastUpdated: versions[0]?.lastUpdated ?? null,
     latestPreReleaseVersion,
+    latestPreReleaseVersionLastUpdated: latestPreReleaseVersionRecord?.lastUpdated ?? null,
     found: Boolean(extension)
   };
 }

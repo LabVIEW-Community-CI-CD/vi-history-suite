@@ -52,6 +52,16 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledger.currentVerificationSurface).toBe(
       'official-gallery-extensionquery-vsce-show-and-vscode-cli-install'
     );
+    expect(ledger.postPublicationVerificationPackageScript).toBe(
+      'npm run vscode:marketplace:verify'
+    );
+    expect(ledger.postPublicationVerificationReceiptPath).toBe(
+      '.cache/vscode-marketplace-post-publication-verification/latest/vscode-marketplace-post-publication-verification.json'
+    );
+    expect(ledger.postPublicationVerificationRequiredFields).toContain('query timestamp');
+    expect(ledger.postPublicationVerificationRequiredFields).toContain(
+      'clean VS Code profile install validation status'
+    );
     expect(ledger.pendingPublicationVersion).toBeNull();
     expect(ledger.pendingPublicationInstallProofPackageScript).toBe(
       'npm run vscode:marketplace:install-proof'
@@ -115,6 +125,10 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(ledgerDoc).toContain('Current regular Marketplace version: `1.3.16`');
     expect(ledgerDoc).toContain('Current pre-release Marketplace version: `1.3.13`');
     expect(ledgerDoc).toContain('closed-exact-release-1.3.16-published-and-verified');
+    expect(ledgerDoc).toContain('npm run vscode:marketplace:verify');
+    expect(ledgerDoc).toContain(
+      '.cache/vscode-marketplace-post-publication-verification/latest/vscode-marketplace-post-publication-verification.json'
+    );
     expect(ledgerDoc).toContain('## Exact Release 1.3.16');
     expect(ledgerDoc).toContain('https://github.com/svelderrainruiz/vi-history-suite/pull/88');
     expect(ledgerDoc).toContain('320824958');

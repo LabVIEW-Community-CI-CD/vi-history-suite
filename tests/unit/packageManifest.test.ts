@@ -360,6 +360,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['vscode:marketplace:prepare']).toBe(
       'node scripts/prepareVsCodeMarketplacePublication.js'
     );
+    expect(manifest.scripts?.['vscode:marketplace:verify']).toBe(
+      'node scripts/verifyVsCodeMarketplacePublication.js'
+    );
     expect(manifest.scripts?.['vscode:marketplace:community-preview:prepare']).toBe(
       'node scripts/prepareMarketplaceCommunityValidationPreview.js'
     );
