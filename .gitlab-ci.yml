@@ -652,14 +652,7 @@ vagrant_windows_vsix_acceptance:
     - npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion
   after_script:
     - (cd vagrant && vagrant halt --force) || true
-    - |
-      latest="$(find vagrant/evidence -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | awk 'NR == 1 {print $2}' || true)"
-      if [ -n "${latest}" ] && [ -f "${latest}/manifest.json" ]; then
-        echo "=== Vagrant Acceptance Manifest ==="
-        cat "${latest}/manifest.json"
-      else
-        echo "No Vagrant acceptance manifest found."
-      fi
+    - node scripts/printLatestVagrantAcceptanceManifest.js --evidence-root vagrant/evidence || true
   artifacts:
     when: always
     expire_in: never

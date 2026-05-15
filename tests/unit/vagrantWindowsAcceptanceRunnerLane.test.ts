@@ -85,6 +85,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('vagrant provision --provision-with acceptance');
     expect(gitlabCi).toContain('vagrant halt --force');
     expect(gitlabCi).toContain('npm run vagrant:acceptance:assert -- --receipt-dir vagrant/evidence/assertion');
+    expect(gitlabCi).toContain(
+      'node scripts/printLatestVagrantAcceptanceManifest.js --evidence-root vagrant/evidence || true'
+    );
     expect(gitlabCi).toContain('- vagrant_windows_vsix_acceptance');
     expect(gitlabCi).toContain('- vagrant/evidence/');
 
