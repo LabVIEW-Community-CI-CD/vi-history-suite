@@ -207,6 +207,7 @@ Use the public GitHub issue templates when install, `vihs`, validation, or
 compare do not behave as expected:
 
 - [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
+- [Installed-user Onboarding Feedback Intake](https://github.com/svelderrainruiz/vi-history-suite/issues/98)
 - [Marketplace Community Validation Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=community-validation-windows-labview.yml)
 - [Windows Docker Desktop Validation](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=windows-docker-desktop-validation.yml)
 - [Validation Success](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=validation-success.yml)
