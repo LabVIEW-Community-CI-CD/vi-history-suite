@@ -18,10 +18,9 @@ Installed-user start pages:
 ## First-Time Setup
 
 1. Open or restart VS Code once after installation.
-2. Open an integrated terminal and run `vihs`.
-3. If `vihs` is not available yet, run
-   `VI History: Prepare Local Runtime Settings CLI` from the Command Palette,
-   then run `vihs` again.
+2. Run `VI History: Prepare Local Runtime Settings CLI` from the Command
+   Palette.
+3. Open an integrated terminal and run `vihs`.
 4. Choose the runtime you want to use, then confirm the LabVIEW year and
    bitness.
 5. Run `vihs --validate`.

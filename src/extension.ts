@@ -6,7 +6,7 @@ import { createBenchmarkStatusAction } from './benchmark/benchmarkStatusAction';
 import { buildComparisonReportArchivePlanFromSelection } from './dashboard/comparisonReportArchive';
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
-import { getBuiltInGitApi } from './git/gitApi';
+import { type GitApi, getBuiltInGitApi } from './git/gitApi';
 import { getFileHistoryCount } from './git/gitCli';
 import {
   EligibilityDebugSnapshot,
@@ -37,7 +37,6 @@ import {
 } from './ui/historyPanelTracker';
 import {
   admitLocalRuntimeSettingsCliToTerminalPath,
-  ensureLocalRuntimeSettingsCli,
   type MaterializedLocalRuntimeSettingsCli,
   resolveLocalRuntimeSettingsCliGovernanceContract,
   runLocalRuntimeSettingsCli
@@ -72,12 +71,22 @@ export interface ViHistorySuiteApi {
   clearHistoryPanelTracking(): void;
 }
 
+interface WorkspaceRuntime {
+  gitApi: GitApi | undefined;
+  eligibilityIndexer: ViEligibilityIndexer;
+  historyService: ViHistoryService;
+  openViHistory: ReturnType<typeof createOpenViHistoryCommand>;
+}
+
+const EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT: EligibilityDebugSnapshot = {
+  indexedRepositoryRoots: [],
+  eligiblePathCount: 0,
+  eligiblePathsSample: []
+};
+
 export async function activate(
   context: vscode.ExtensionContext
 ): Promise<ViHistorySuiteApi> {
-  const gitApi = await getBuiltInGitApi();
-  const eligibilityIndexer = new ViEligibilityIndexer(gitApi);
-  const historyService = new ViHistoryService(gitApi);
   const panelTracker = new HistoryPanelTracker();
   const comparisonReportAction = createComparisonReportAction(context);
   const ensureComparisonReportEvidenceAction =
@@ -128,33 +137,60 @@ export async function activate(
     }
   };
   let admittedLocalRuntimeSettingsCli: MaterializedLocalRuntimeSettingsCli | undefined;
-  if (context.globalStorageUri) {
-    admittedLocalRuntimeSettingsCli = await admitLocalRuntimeSettingsCliToTerminalPath(
-      context.globalStorageUri.fsPath,
-      context.extensionPath,
-      context.environmentVariableCollection
-    );
-  }
+  let workspaceRuntime: WorkspaceRuntime | undefined;
+  let workspaceRuntimePromise: Promise<WorkspaceRuntime> | undefined;
 
-  context.subscriptions.push(eligibilityIndexer);
+  const ensureWorkspaceRuntime = async (): Promise<WorkspaceRuntime> => {
+    if (workspaceRuntime) {
+      return workspaceRuntime;
+    }
+
+    if (!workspaceRuntimePromise) {
+      workspaceRuntimePromise = (async () => {
+        const gitApi = await getBuiltInGitApi();
+        const eligibilityIndexer = new ViEligibilityIndexer(gitApi);
+        const historyService = new ViHistoryService(gitApi);
+        const openViHistory = createOpenViHistoryCommand(
+          historyService,
+          eligibilityIndexer,
+          gitApi,
+          panelTracker,
+          comparisonReportAction,
+          multiReportDashboardAction,
+          openRetainedComparisonReportAction,
+          hasRetainedComparisonReport,
+          reviewDecisionRecordAction,
+          bundledDocumentationAction,
+          humanReviewSubmissionAction,
+          benchmarkStatusAction
+        );
+
+        context.subscriptions.push(eligibilityIndexer);
+        await eligibilityIndexer.start();
+
+        workspaceRuntime = {
+          gitApi,
+          eligibilityIndexer,
+          historyService,
+          openViHistory
+        };
+        return workspaceRuntime;
+      })().catch((error) => {
+        workspaceRuntimePromise = undefined;
+        throw error;
+      });
+    }
+
+    return workspaceRuntimePromise;
+  };
 
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'labviewViHistory.open',
-      createOpenViHistoryCommand(
-        historyService,
-        eligibilityIndexer,
-        gitApi,
-        panelTracker,
-        comparisonReportAction,
-        multiReportDashboardAction,
-        openRetainedComparisonReportAction,
-        hasRetainedComparisonReport,
-        reviewDecisionRecordAction,
-        bundledDocumentationAction,
-        humanReviewSubmissionAction,
-        benchmarkStatusAction
-      )
+      async (uri?: vscode.Uri) => {
+        const runtime = await ensureWorkspaceRuntime();
+        return runtime.openViHistory(uri);
+      }
     )
   );
 
@@ -189,10 +225,12 @@ export async function activate(
         };
       }
 
-      const materializedCli = await ensureLocalRuntimeSettingsCli(
+      const materializedCli = await admitLocalRuntimeSettingsCliToTerminalPath(
         context.globalStorageUri.fsPath,
-        context.extensionPath
+        context.extensionPath,
+        context.environmentVariableCollection
       );
+      admittedLocalRuntimeSettingsCli = materializedCli;
       const governanceContract = resolveLocalRuntimeSettingsCliGovernanceContract();
 
       void vscode.window.showInformationMessage(
@@ -330,14 +368,19 @@ export async function activate(
     })
   );
 
-  await eligibilityIndexer.start();
-
   return {
-    refreshEligibility: async () => eligibilityIndexer.refresh(),
-    isEligible: (uri: vscode.Uri) => eligibilityIndexer.isEligible(uri),
-    loadHistory: (uri: vscode.Uri) => historyService.load(uri),
+    refreshEligibility: async () => {
+      const runtime = await ensureWorkspaceRuntime();
+      await runtime.eligibilityIndexer.refresh();
+    },
+    isEligible: (uri: vscode.Uri) => workspaceRuntime?.eligibilityIndexer.isEligible(uri) ?? false,
+    loadHistory: async (uri: vscode.Uri) => {
+      const runtime = await ensureWorkspaceRuntime();
+      return runtime.historyService.load(uri);
+    },
     getLocalRuntimeSettingsTerminalEntrypoint: () => admittedLocalRuntimeSettingsCli,
-    getEligibilityDebugSnapshot: () => eligibilityIndexer.getDebugSnapshot(),
+    getEligibilityDebugSnapshot: () =>
+      workspaceRuntime?.eligibilityIndexer.getDebugSnapshot() ?? EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT,
     getLastOpenedPanel: () => panelTracker.getLastOpenedPanel(),
     getOpenHistoryPanelCount: () => panelTracker.getOpenCount(),
     dispatchLastPanelMessage: (message: HistoryPanelMessage) =>

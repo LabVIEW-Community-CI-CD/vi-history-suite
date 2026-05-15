@@ -10,17 +10,18 @@
 <p>Current runtime contract for this build:</p>
 <ul>
 <li>Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent</li>
+<li>run <code>VI History: Prepare Local Runtime Settings CLI</code> from the Command Palette before expecting <code>vihs</code> to resolve</li>
 <li>choose or change provider, LabVIEW year, and bitness with <code>vihs</code></li>
-<li>if <code>vihs</code> is not available yet, run <code>VI History: Prepare Local Runtime Settings CLI</code> from the Command Palette, then run <code>vihs</code> again</li>
 <li>if VS Code was already open when <code>vihs</code> or the generated settings CLI changed settings, reload or restart only if stale facts remain</li>
 <li>run <code>vihs --validate</code> before the first compare on a fresh machine</li>
+<li>opening documentation or selecting the extension does not start Git indexing, GitHub authorization, LabVIEW, or <code>LabVIEWCLI</code></li>
 <li>if Docker is selected, confirm <code>docker info</code> works in the same session that runs VS Code</li>
 </ul>
 <p>LabVIEW support matrix and short installed-user guides:</p>
 <ul>
 <li><a href="https://github.com/svelderrainruiz/vi-history-suite#installed-user-labview-support-matrix">README Installed-user LabVIEW support matrix</a></li>
-<li><a href="https://github.com/svelderrainruiz/vi-history-suite/blob/main/FIRST-RUN.md">First-run guide</a></li>
-<li><a href="https://github.com/svelderrainruiz/vi-history-suite/blob/main/TROUBLESHOOTING.md">Troubleshooting guide</a></li>
+<li><a href="https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/FIRST-RUN.md">First-run guide</a></li>
+<li><a href="https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/TROUBLESHOOTING.md">Troubleshooting guide</a></li>
 </ul>
 <h2>Release Procedure Summary</h2>
 <p>Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.</p>
@@ -28,8 +29,8 @@
 <ol>
 <li>install the extension from the Marketplace, with <code>code --install-extension</code>, or from the exact released VSIX</li>
 <li>open or restart VS Code once after installation</li>
+<li>run <code>VI History: Prepare Local Runtime Settings CLI</code> from the Command Palette</li>
 <li>open an integrated terminal and run <code>vihs</code></li>
-<li>if <code>vihs</code> is not available yet, run <code>VI History: Prepare Local Runtime Settings CLI</code> from the Command Palette, then run <code>vihs</code> again</li>
 <li>choose or confirm the provider, LabVIEW year, and bitness</li>
 <li>run <code>vihs --validate</code></li>
 <li>if VS Code was already open when <code>vihs</code> or the generated settings CLI changed settings, reload or restart the window only if stale facts remain</li>

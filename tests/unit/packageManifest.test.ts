@@ -49,10 +49,9 @@ function readManifest(): ExtensionManifest {
 }
 
 describe('extension manifest research alignment', () => {
-  it('uses the authoritative labviewViHistory command id and activation event', () => {
+  it('uses explicit command activation without startup or manifest-level Git activation', () => {
     const manifest = readManifest();
 
-    expect(manifest.activationEvents).toContain('onStartupFinished');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -63,12 +62,13 @@ describe('extension manifest research alignment', () => {
     ]);
     expect(manifest.icon).toBe('resources/marketplace/vi-history-suite-icon.png');
     expect(manifest.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
+    expect(manifest.activationEvents).not.toContain('onStartupFinished');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
     expect(manifest.activationEvents).toContain(
       'onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli'
     );
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
-    expect(manifest.extensionDependencies).toContain('vscode.git');
+    expect(manifest.extensionDependencies ?? []).not.toContain('vscode.git');
     expect(manifest.contributes?.commands).toContainEqual({
       command: 'labviewViHistory.open',
       title: 'VI History',

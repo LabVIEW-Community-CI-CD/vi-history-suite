@@ -46,15 +46,16 @@ describe('information-for-users audience/navigation package', () => {
     const delivery = readText('docs/information-for-users/delivery-profile.md');
     const styleGuide = readText('docs/information-for-users/style-guide.md');
 
-    expect(readme).toContain('top-level route');
-    expect(readme).toContain('retained item index');
-    expect(readme).toContain('durable evidence route');
-    expect(readme).toContain('## Topic Roles');
-    expect(readme).toContain('## Information For Users');
-    expect(readme).toContain('## Common Tasks');
-    expect(readme).toContain('## Troubleshooting');
+    expect(readme).toContain('## Overview');
+    expect(readme).toContain('## Details');
+    expect(readme).toContain('video-install-and-prepare');
+    expect(readme).toContain('video-first-compare');
+    expect(readme).toContain('video-troubleshooting');
+    expect(readme).toContain('Maintainer Control Plane Index');
     expect(readme).toContain('./docs/information-for-users/command-reference.md');
     expect(readme).toContain('./docs/information-for-users/faq.md');
+    expect(readme).not.toContain('## Topic Roles');
+    expect(readme).not.toContain('Authority release facts');
 
     expect(audience).toContain('# Audience And Task Model');
     expect(audience).toContain('## Audience Profiles');
@@ -62,14 +63,13 @@ describe('information-for-users audience/navigation package', () => {
     expect(audience).toContain('Installed user');
     expect(audience).toContain('Source evaluator');
     expect(audience).toContain('Publication reviewer');
-    expect(audience).toContain('exact released installed baseline `v1.2.2`');
+    expect(audience).toContain('exact released installed baseline `v1.3.16`');
 
     expect(navigation).toContain('# Navigation And Search');
     expect(navigation).toContain('## Route Hierarchy');
     expect(navigation).toContain('Top-level route');
-    expect(navigation).toContain('Retained item index');
-    expect(navigation).toContain('Durable evidence route');
-    expect(navigation).toContain('docs/product/public-release-candidate.md');
+    expect(navigation).toContain('Maintainer control plane');
+    expect(navigation).toContain('docs/product/maintainer-control-plane-index.md');
     expect(navigation).toContain('docs/user-guide.md');
     expect(navigation).toContain('docs/quick-reference.md');
     expect(navigation).toContain('rg -n');
@@ -78,11 +78,12 @@ describe('information-for-users audience/navigation package', () => {
     expect(delivery).toContain('## Surface Delivery Matrix');
     expect(delivery).toContain('## Delivery Assumptions');
     expect(delivery).toContain('## Update Triggers');
-    expect(delivery).toContain('exact released installed baseline `v1.2.2`');
+    expect(delivery).toContain('exact released installed baseline `v1.3.16`');
+    expect(delivery).toContain('prepare-CLI-first setup');
     expect(delivery).toContain('host-default Windows local');
     expect(delivery).toContain('`LabVIEWCLI` plus bounded expert Docker');
     expect(delivery).toContain('docs/quick-reference.md');
-    expect(delivery).toContain('public release candidate');
+    expect(delivery).toContain('maintainer control-plane index');
 
     expect(styleGuide).toContain('# Style Guide');
     expect(styleGuide).toContain('## Writing Rules');

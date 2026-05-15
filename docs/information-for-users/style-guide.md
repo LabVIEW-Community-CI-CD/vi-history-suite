@@ -9,8 +9,7 @@
 - [Glossary](./glossary.md)
 - [User Guide](../user-guide.md)
 - [Command Reference](./command-reference.md)
-- [Information Item Map](../information-item-map.md)
-- [Public Release Candidate](../product/public-release-candidate.md)
+- [Maintainer Control Plane Index](../product/maintainer-control-plane-index.md)
 
 ## Design Inputs
 
@@ -18,9 +17,9 @@
   drafting or reshaping a governed user-information surface.
 - Use the [Delivery Profile](./delivery-profile.md) before changing which
   surface owns a user task or fallback path.
-- Use the [Information Item Map](../information-item-map.md) to identify the
-  authority surface that must change when a command, release rule, or governed
-  workflow changes.
+- Use the [Maintainer Control Plane Index](../product/maintainer-control-plane-index.md)
+  to leave the installed-user package and identify the authority surface that
+  must change when a command, release rule, or governed workflow changes.
 - When a recurring question can be answered by an existing governed surface,
   link to it instead of copying the content into a new location.
 
@@ -77,9 +76,8 @@
 ## Navigation And Related Links
 
 - `README.md` is the top-level route.
-- `docs/information-item-map.md` is the retained item index.
-- `docs/product/public-release-candidate.md` is the durable evidence route for
-  public release and publication proof.
+- `docs/product/maintainer-control-plane-index.md` is the maintainer exit route
+  for the retained item index, release procedure, and public publication proof.
 - Use `Related Surfaces` in governance docs and `See also:` in dedicated
   support docs.
 - Keep paired local links bidirectional when the relationship is stable and

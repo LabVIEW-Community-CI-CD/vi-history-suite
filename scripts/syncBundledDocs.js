@@ -97,7 +97,7 @@ const bundledExtensionUserPageIds = [
 const bundledPageConfigs = {
   overview: {
     introReplacement:
-      '`vi-history-suite` is a Visual Studio Code extension for reviewing LabVIEW VI history in Git repositories.\n\nUse the installed guide inside the extension for install, checkbox-selected compare workflow, retained comparison review, and execution-policy tasks without needing the broader engineering control plane.',
+      '`vi-history-suite` is a Visual Studio Code extension for reviewing LabVIEW VI history in Git repositories.\n\nUse the installed guide inside the extension for first-time setup, checkbox-selected compare workflow, retained comparison review, and execution-policy tasks without needing the broader engineering control plane.',
     headings: ['Product Promise', 'Install Surfaces'],
     replacements: {
       'Install Surfaces': [
@@ -106,7 +106,24 @@ const bundledPageConfigs = {
         '- VS Code Marketplace listing under `svelderrainruiz.vi-history-suite`',
         '- exact released VSIX from the matching GitHub release when you need the retained exact build',
         '- local package output via `npm run package` when you are testing from source',
-        '- packaged bundled user docs opened through `VI History: Open Documentation` or the history-panel `Open docs` action'
+        '- packaged bundled user docs opened through `VI History: Open Documentation` or the history-panel `Open docs` action',
+        '',
+        'First-time flow:',
+        '',
+        '1. run `VI History: Prepare Local Runtime Settings CLI`',
+        '2. run `vihs`',
+        '3. choose provider, LabVIEW year, and bitness',
+        '4. run `vihs --validate`',
+        '5. open `VI History` on an eligible tracked VI and compare',
+        '',
+        'Future videos:',
+        '',
+        '<a id="video-install-and-prepare"></a>',
+        '- install and prepare walkthrough: reserved',
+        '<a id="video-first-compare"></a>',
+        '- first compare walkthrough: reserved',
+        '<a id="video-troubleshooting"></a>',
+        '- troubleshooting walkthrough: reserved'
       ].join('\n')
     }
   },
@@ -124,17 +141,18 @@ const bundledPageConfigs = {
         'Current runtime contract for this build:',
         '',
         '- Windows defaults to local `LabVIEWCLI` when the persisted provider is absent',
+        '- run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette before expecting `vihs` to resolve',
         '- choose or change provider, LabVIEW year, and bitness with `vihs`',
-        '- if `vihs` is not available yet, run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette, then run `vihs` again',
         '- if VS Code was already open when `vihs` or the generated settings CLI changed settings, reload or restart only if stale facts remain',
         '- run `vihs --validate` before the first compare on a fresh machine',
+        '- opening documentation or selecting the extension does not start Git indexing, GitHub authorization, LabVIEW, or `LabVIEWCLI`',
         '- if Docker is selected, confirm `docker info` works in the same session that runs VS Code',
         '',
         'LabVIEW support matrix and short installed-user guides:',
         '',
         '- [README Installed-user LabVIEW support matrix](https://github.com/svelderrainruiz/vi-history-suite#installed-user-labview-support-matrix)',
-        '- [First-run guide](https://github.com/svelderrainruiz/vi-history-suite/blob/main/FIRST-RUN.md)',
-        '- [Troubleshooting guide](https://github.com/svelderrainruiz/vi-history-suite/blob/main/TROUBLESHOOTING.md)'
+        '- [First-run guide](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/FIRST-RUN.md)',
+        '- [Troubleshooting guide](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/TROUBLESHOOTING.md)'
       ].join('\n'),
       'Release Procedure Summary': [
         'Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.',
@@ -143,8 +161,8 @@ const bundledPageConfigs = {
         '',
         '1. install the extension from the Marketplace, with `code --install-extension`, or from the exact released VSIX',
         '2. open or restart VS Code once after installation',
-        '3. open an integrated terminal and run `vihs`',
-        '4. if `vihs` is not available yet, run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette, then run `vihs` again',
+        '3. run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette',
+        '4. open an integrated terminal and run `vihs`',
         '5. choose or confirm the provider, LabVIEW year, and bitness',
         '6. run `vihs --validate`',
         '7. if VS Code was already open when `vihs` or the generated settings CLI changed settings, reload or restart the window only if stale facts remain',

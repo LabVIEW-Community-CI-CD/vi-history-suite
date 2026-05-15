@@ -12,6 +12,7 @@ function readText(relativePath: string): string {
 describe('governed proof documentation contract', () => {
   it('keeps the public proof and canonical engine contract aligned across normative docs', () => {
     const readme = readText('README.md');
+    const maintainerControlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const harnesses = readText('docs/product/harnesses.md');
     const exactPair = readText('docs/product/canonical-exact-pair-diagnosis.md');
@@ -60,8 +61,9 @@ describe('governed proof documentation contract', () => {
       'accepting a targeted `--engine` override'
     ];
 
-    expect(readme).toContain('npm run proof:run -- report-smoke');
-    expect(readme).toContain('npm run proof:run -- host-operation-matrix');
+    expect(readme).toContain('Maintainer Control Plane Index');
+    expect(maintainerControlPlane).toContain('npm run proof:run -- report-smoke');
+    expect(maintainerControlPlane).toContain('npm run proof:run -- host-operation-matrix');
     expect(harnesses).toContain('npm run proof:run -- report-smoke');
     expect(harnesses).toContain('host-operation-matrix');
     expect(exactPair).toContain('runGovernedProof report-smoke');

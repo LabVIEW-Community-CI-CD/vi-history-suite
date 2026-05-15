@@ -1,0 +1,270 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const {
+  commandHandlers,
+  registerCommandMock,
+  showInformationMessageMock,
+  showWarningMessageMock,
+  getBuiltInGitApiMock,
+  viEligibilityIndexerConstructedWith,
+  viEligibilityIndexerStartMock,
+  viEligibilityIndexerRefreshMock,
+  viEligibilityIndexerIsEligibleMock,
+  viEligibilityIndexerGetDebugSnapshotMock,
+  viHistoryServiceConstructedWith,
+  viHistoryServiceLoadMock,
+  createOpenViHistoryCommandMock,
+  openViHistoryHandlerMock,
+  bundledDocumentationActionMock,
+  admitLocalRuntimeSettingsCliToTerminalPathMock,
+  resolveLocalRuntimeSettingsCliGovernanceContractMock,
+  materializedCli
+} = vi.hoisted(() => {
+  const handlers = new Map<string, (...args: unknown[]) => unknown>();
+  const materialized = {
+    rootDirectoryPath: '/tmp/vihs-cli',
+    javascriptLauncherPath: '/tmp/vihs-cli/run-local-runtime-settings-cli.js',
+    windowsLauncherPath: '/tmp/vihs-cli/vihs-runtime-settings.cmd',
+    posixLauncherPath: '/tmp/vihs-cli/vihs-runtime-settings',
+    windowsTerminalEntrypointPath: '/tmp/vihs-cli/vihs.cmd',
+    posixTerminalEntrypointPath: '/tmp/vihs-cli/vihs',
+    currentPlatformLauncherPath: '/tmp/vihs-cli/vihs-runtime-settings',
+    currentPlatformTerminalEntrypointPath: '/tmp/vihs-cli/vihs',
+    terminalCommandName: 'vihs',
+    pathPrependValue: '/tmp/vihs-cli:',
+    modulePath: '/workspace/out/tooling/localRuntimeSettingsCli.js',
+    nextCommand: 'vihs',
+    exampleCommand: 'vihs'
+  };
+
+  return {
+    commandHandlers: handlers,
+    registerCommandMock: vi.fn((command: string, handler: (...args: unknown[]) => unknown) => {
+      handlers.set(command, handler);
+      return { dispose: vi.fn() };
+    }),
+    showInformationMessageMock: vi.fn(),
+    showWarningMessageMock: vi.fn(),
+    getBuiltInGitApiMock: vi.fn(),
+    viEligibilityIndexerConstructedWith: [] as unknown[],
+    viEligibilityIndexerStartMock: vi.fn(),
+    viEligibilityIndexerRefreshMock: vi.fn(),
+    viEligibilityIndexerIsEligibleMock: vi.fn(),
+    viEligibilityIndexerGetDebugSnapshotMock: vi.fn(),
+    viHistoryServiceConstructedWith: [] as unknown[],
+    viHistoryServiceLoadMock: vi.fn(),
+    createOpenViHistoryCommandMock: vi.fn(),
+    openViHistoryHandlerMock: vi.fn(),
+    bundledDocumentationActionMock: vi.fn(),
+    admitLocalRuntimeSettingsCliToTerminalPathMock: vi.fn(),
+    resolveLocalRuntimeSettingsCliGovernanceContractMock: vi.fn(),
+    materializedCli: materialized
+  };
+});
+
+vi.mock('vscode', () => ({
+  commands: {
+    registerCommand: registerCommandMock
+  },
+  window: {
+    showInformationMessage: showInformationMessageMock,
+    showWarningMessage: showWarningMessageMock
+  },
+  workspace: {
+    isTrusted: true,
+    getConfiguration: () => ({
+      get: () => undefined
+    })
+  }
+}));
+
+vi.mock('../../src/git/gitApi', () => ({
+  getBuiltInGitApi: getBuiltInGitApiMock
+}));
+
+vi.mock('../../src/indexing/viEligibilityIndexer', () => ({
+  ViEligibilityIndexer: class MockViEligibilityIndexer {
+    constructor(gitApi: unknown) {
+      viEligibilityIndexerConstructedWith.push(gitApi);
+    }
+
+    start = viEligibilityIndexerStartMock;
+    refresh = viEligibilityIndexerRefreshMock;
+    isEligible = viEligibilityIndexerIsEligibleMock;
+    getDebugSnapshot = viEligibilityIndexerGetDebugSnapshotMock;
+    dispose = vi.fn();
+  }
+}));
+
+vi.mock('../../src/services/viHistoryService', () => ({
+  getViHistoryServiceSettings: vi.fn(),
+  ViHistoryService: class MockViHistoryService {
+    constructor(gitApi: unknown) {
+      viHistoryServiceConstructedWith.push(gitApi);
+    }
+
+    load = viHistoryServiceLoadMock;
+  }
+}));
+
+vi.mock('../../src/commands/openViHistoryCommand', () => ({
+  createOpenViHistoryCommand: createOpenViHistoryCommandMock
+}));
+
+vi.mock('../../src/reporting/comparisonReportAction', () => ({
+  createComparisonReportAction: vi.fn(() => vi.fn()),
+  createEnsureComparisonReportEvidenceAction: vi.fn(() => vi.fn()),
+  createOpenRetainedComparisonReportAction: vi.fn(() => vi.fn()),
+  readComparisonRuntimeSettings: vi.fn()
+}));
+
+vi.mock('../../src/dashboard/multiReportDashboardAction', () => ({
+  createMultiReportDashboardAction: vi.fn(() => vi.fn())
+}));
+
+vi.mock('../../src/dashboard/comparisonReportArchive', () => ({
+  buildComparisonReportArchivePlanFromSelection: vi.fn(() => ({
+    sourceRecordFilePath: '/tmp/missing-report.json'
+  }))
+}));
+
+vi.mock('../../src/docs/bundledDocumentationAction', () => ({
+  createBundledDocumentationAction: vi.fn(() => bundledDocumentationActionMock)
+}));
+
+vi.mock('../../src/scenarios/reviewDecisionRecordAction', () => ({
+  createReviewDecisionRecordAction: vi.fn(() => vi.fn())
+}));
+
+vi.mock('../../src/review/humanReviewSubmissionAction', () => ({
+  resolveHumanReviewMachineCapability: vi.fn(() => ({ isCanonicalHostMachine: false })),
+  createHumanReviewSubmissionAction: vi.fn(() => vi.fn())
+}));
+
+vi.mock('../../src/benchmark/benchmarkStatusAction', () => ({
+  createBenchmarkStatusAction: vi.fn(() => vi.fn())
+}));
+
+vi.mock('../../src/git/gitCli', () => ({
+  getFileHistoryCount: vi.fn()
+}));
+
+vi.mock('../../src/tooling/localRuntimeSettingsCli', () => ({
+  admitLocalRuntimeSettingsCliToTerminalPath: admitLocalRuntimeSettingsCliToTerminalPathMock,
+  resolveLocalRuntimeSettingsCliGovernanceContract:
+    resolveLocalRuntimeSettingsCliGovernanceContractMock,
+  runLocalRuntimeSettingsCli: vi.fn()
+}));
+
+vi.mock('../../src/tooling/runtimeSettingsLiveSessionProbe', () => ({
+  buildRuntimeSettingsLiveSessionProbeSummary: vi.fn()
+}));
+
+vi.mock('../../src/tooling/runtimeSettingsLiveSessionProbePacket', () => ({
+  persistRuntimeSettingsLiveSessionProbePacket: vi.fn()
+}));
+
+vi.mock('../../src/tooling/runtimeSettingsLiveSessionSafeRestore', () => ({
+  deriveRuntimeSettingsLiveSessionMutationRequest: vi.fn(),
+  runWithRuntimeSettingsSafeRestore: vi.fn()
+}));
+
+import { activate } from '../../src/extension';
+
+function createContext() {
+  return {
+    subscriptions: [],
+    globalStorageUri: { fsPath: '/tmp/vihs-global-storage' },
+    storageUri: { fsPath: '/tmp/vihs-workspace-storage' },
+    extensionPath: '/workspace/vi-history-suite',
+    environmentVariableCollection: {
+      prepend: vi.fn()
+    }
+  };
+}
+
+describe('extension activation lazy side effects', () => {
+  beforeEach(() => {
+    commandHandlers.clear();
+    vi.clearAllMocks();
+    viEligibilityIndexerConstructedWith.length = 0;
+    viHistoryServiceConstructedWith.length = 0;
+    getBuiltInGitApiMock.mockResolvedValue({
+      repositories: [],
+      onDidOpenRepository: vi.fn(),
+      onDidCloseRepository: vi.fn()
+    });
+    viEligibilityIndexerStartMock.mockResolvedValue(undefined);
+    viEligibilityIndexerRefreshMock.mockResolvedValue(undefined);
+    viEligibilityIndexerIsEligibleMock.mockReturnValue(true);
+    viEligibilityIndexerGetDebugSnapshotMock.mockReturnValue({
+      indexedRepositoryRoots: ['/repo'],
+      eligiblePathCount: 1,
+      eligiblePathsSample: ['demo.vi']
+    });
+    openViHistoryHandlerMock.mockResolvedValue(undefined);
+    createOpenViHistoryCommandMock.mockReturnValue(openViHistoryHandlerMock);
+    bundledDocumentationActionMock.mockResolvedValue({ outcome: 'opened-documentation' });
+    admitLocalRuntimeSettingsCliToTerminalPathMock.mockResolvedValue(materializedCli);
+    resolveLocalRuntimeSettingsCliGovernanceContractMock.mockReturnValue({
+      defaultSettingsFilePath: '/home/test/.config/Code/User/settings.json',
+      supportedSettingsTargets: ['default-user-settings', 'explicit-settings-file'],
+      untrustedWorkspacePosture: 'prepare-command-admitted-compare-blocked'
+    });
+  });
+
+  it('does not resolve Git, index, or prepare vihs during activation, docs, or prepare', async () => {
+    const api = await activate(createContext() as never);
+
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(viEligibilityIndexerConstructedWith).toEqual([]);
+    expect(viEligibilityIndexerStartMock).not.toHaveBeenCalled();
+    expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBeUndefined();
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+    expect(api.getEligibilityDebugSnapshot()).toEqual({
+      indexedRepositoryRoots: [],
+      eligiblePathCount: 0,
+      eligiblePathsSample: []
+    });
+
+    await commandHandlers.get('labviewViHistory.openDocumentation')?.();
+
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(viEligibilityIndexerConstructedWith).toEqual([]);
+
+    await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
+
+    expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledWith(
+      '/tmp/vihs-global-storage',
+      '/workspace/vi-history-suite',
+      expect.objectContaining({ prepend: expect.any(Function) })
+    );
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(viEligibilityIndexerConstructedWith).toEqual([]);
+    expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(materializedCli);
+  });
+
+  it('resolves Git and starts eligibility indexing lazily for VI History open', async () => {
+    await activate(createContext() as never);
+
+    await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
+
+    expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);
+    expect(viEligibilityIndexerConstructedWith).toHaveLength(1);
+    expect(viHistoryServiceConstructedWith).toHaveLength(1);
+    expect(viEligibilityIndexerStartMock).toHaveBeenCalledTimes(1);
+    expect(createOpenViHistoryCommandMock).toHaveBeenCalledTimes(1);
+    expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
+  });
+
+  it('uses the same lazy runtime for explicit API refresh and history loading', async () => {
+    const api = await activate(createContext() as never);
+
+    await api.refreshEligibility();
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+
+    expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);
+    expect(viEligibilityIndexerRefreshMock).toHaveBeenCalledTimes(1);
+    expect(viHistoryServiceLoadMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
+  });
+});

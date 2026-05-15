@@ -1,10 +1,10 @@
 # Navigation And Search
 
-Applies to: exact released installed baseline `v1.2.2` plus the active
-`develop` authority direction
-Last reviewed: `2026-04-18`
-Primary audience: installed users, source evaluators, maintainers, and
-publication reviewers
+Applies to: exact released installed baseline `v1.3.16` plus the active
+`develop` installed-user direction
+Last reviewed: `2026-05-15`
+Primary audience: installed users, source evaluators, and documentation
+reviewers
 Topic type: navigation and reference policy
 Primary entry route: `README.md`
 
@@ -17,8 +17,7 @@ See also:
 - [FAQ](./faq.md)
 - [User Guide](../user-guide.md)
 - [Quick Reference](../quick-reference.md)
-- [Information Item Map](../information-item-map.md)
-- [Public Release Candidate](../product/public-release-candidate.md)
+- [Maintainer Control Plane Index](../product/maintainer-control-plane-index.md)
 
 Use `docs/user-guide.md` for the starter route and `docs/quick-reference.md`
 for the bounded external quick-answer route before dropping into the deeper
@@ -31,10 +30,9 @@ internal control docs.
 | Top-level route | `README.md` | first orientation and route choice | `Start Here`, route-focused headings, and stable section names |
 | Installed/public evaluation route | `INSTALL.md` | exact released install truth and public source-evaluation route | release/version wording and route-specific section titles |
 | Docs-authoring route | `docs/documentation-workbench.md` | documentation-package iteration and the repo-native docs workbench | workbench command sections and explicit scope boundary |
-| Authority control route | `docs/product/current-state.md`, `PROGRAM-0005`, `ISSUE-0412`, and `docs/release-procedure.md` | current branch doctrine, active program state, and release-control truth | stable file names plus control-plane headings |
+| Authority control route | `docs/product/maintainer-control-plane-index.md` | maintainer release-control truth | stable file name plus control-plane headings |
 | Short-form secondary route | `docs/information-for-users/command-reference.md` and `docs/information-for-users/faq.md` | quick command lookup, repeated route questions, and short support answers | `Applies to:`, `Last reviewed:`, `Primary entry route:`, and `See also:` |
-| Retained item index | `docs/information-item-map.md` | governed item lookup and evidence-route discovery | information-item table and owner/trigger/proving-evidence metadata |
-| Durable evidence route | `docs/product/public-release-candidate.md` plus the public source/wiki publication ledgers | exact release and public publication proof | retained commit ids, publication state, and explicit evidence paths |
+| Maintainer control plane | `docs/product/maintainer-control-plane-index.md` | governed item lookup, evidence-route discovery, release procedure, and publication proof | authority routes, release facts, and maintainer-only pointers |
 
 ## Metadata Policy
 
@@ -45,16 +43,14 @@ internal control docs.
   near the top.
 - Governance and planning docs keep `Related Surfaces` or similar scope-control
   sections instead of front metadata blocks.
-- Information-item governance metadata remains in
-  `docs/information-item-map.md` through owner, trigger, and proving-evidence
-  fields.
+- Information-item governance metadata remains reachable through
+  `docs/product/maintainer-control-plane-index.md`.
 
 ## Related-Topic And Index Policy
 
 - Use `README.md` as the top-level route for entry and orientation.
-- Use `docs/information-item-map.md` as the retained item index.
-- Use [Public Release Candidate](../product/public-release-candidate.md) as
-  the durable evidence route for exact release and public publication review.
+- Use `docs/product/maintainer-control-plane-index.md` when a maintainer needs
+  the retained item index, release procedure, or public publication evidence.
 - Use `See also:` in dedicated support docs and `Related Surfaces` in planning
   or governance docs.
 - Keep paired local links bidirectional when the relationship is stable and
