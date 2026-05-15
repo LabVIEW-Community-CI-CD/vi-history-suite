@@ -24,6 +24,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     const hostDoctor = readText('scripts/vagrant/doctor-vagrant-host.sh');
     const storageDoctor = readText('scripts/doctorVagrantStorage.js');
     const runnerReadiness = readText('scripts/runVagrantAcceptanceRunnerReadiness.js');
+    const pipelineFreshness = readText('scripts/checkGitLabVagrantPipelineFreshness.js');
     const runnerReadinessService = readText(
       'scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service'
     );
@@ -61,6 +62,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(gitlabCi).toContain('VIHS_VAGRANT_BOX_WORKDIR: /run/media/sergio/Data/vihs-vagrant/box-work');
     expect(gitlabCi).toContain('VIHS_VIRTUALBOX_MACHINE_FOLDER: "/run/media/sergio/Data/vihs-vagrant/VirtualBox VMs"');
     expect(gitlabCi).toContain('mkdir -p vagrant/shared vagrant/evidence');
+    expect(gitlabCi).toContain(
+      'npm run vagrant:acceptance:freshness -- --evidence-dir vagrant/evidence/pipeline-freshness --settle-ms 5000 --api-timeout-ms 10000'
+    );
+    expect(gitlabCi).toContain('vagrant/evidence/pipeline-freshness/skip-vagrant-acceptance');
+    expect(gitlabCi).toContain('Skipping stale Vagrant acceptance pipeline before VM boot.');
     expect(gitlabCi).toContain('node scripts/doctorVagrantStorage.js --active-root "${VIHS_VAGRANT_STORAGE_ROOT}"');
     expect(gitlabCi).toContain('--standby-root "${VIHS_VAGRANT_STANDBY_ROOT}"');
     expect(gitlabCi).toContain('--archive-root "${VIHS_EVIDENCE_ARCHIVE_ROOT}"');
@@ -212,6 +218,13 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(runnerReadiness).toContain('vagrant-runner-readiness-evidence');
     expect(runnerReadiness).toContain('Mount ${activeMountPoint} or restore the active mirror');
     expect(runnerReadiness).toContain('vagrant-acceptance-readiness');
+    expect(pipelineFreshness).toContain('vi-history-suite/vagrant-acceptance-pipeline-freshness@v1');
+    expect(pipelineFreshness).toContain('vagrant/evidence/pipeline-freshness');
+    expect(pipelineFreshness).toContain('skip-vagrant-acceptance');
+    expect(pipelineFreshness).toContain('head_pipeline');
+    expect(pipelineFreshness).toContain('api-timeout-ms');
+    expect(pipelineFreshness).toContain('Freshness API query failed, so run fail-open');
+    expect(pipelineFreshness).toContain('A newer non-canceled merge-request pipeline exists');
     expect(runnerReadinessService).toContain('vihs-vagrant-acceptance-readiness.service');
     expect(runnerReadinessService).toContain('/home/sergio/repos/gl/vi-history-suite');
     expect(runnerReadinessService).toContain('npm run vagrant:runner:readiness');
@@ -320,6 +333,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('immediately after bootstrap');
     expect(laneDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(laneDoc).toContain('needs: [vagrant_runner_admission]');
+    expect(laneDoc).toContain('npm run vagrant:acceptance:freshness');
+    expect(laneDoc).toContain('vagrant/evidence/pipeline-freshness');
+    expect(laneDoc).toContain('5000 ms settle window');
+    expect(laneDoc).toContain('10000 ms');
+    expect(laneDoc).toContain('older stale duplicate\nmerge-request pipeline');
     expect(laneDoc).toContain('vagrant_runner_admission');
     expect(laneDoc).toContain('vagrant-runner-readiness-evidence/');
     expect(laneDoc).toContain('/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness');
@@ -338,6 +356,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(hostedGovernanceDoc).toContain('vagrant_windows_vsix_acceptance');
     expect(hostedGovernanceDoc).toContain('resource_group: vihs-windows-vagrant');
     expect(hostedGovernanceDoc).toContain('process_mode: newest_ready_first');
+    expect(hostedGovernanceDoc).toContain('npm run vagrant:acceptance:freshness');
+    expect(hostedGovernanceDoc).toMatch(/skip stale duplicate\s+merge-request pipelines/);
     expect(hostedGovernanceDoc).toContain('scripts/doctorVagrantStorage.js');
     expect(hostedGovernanceDoc).toContain('vagrant-storage-doctor.json');
     expect(hostedGovernanceDoc).toContain('scripts/vagrant/doctor-vagrant-host.sh');
@@ -387,6 +407,13 @@ describe('Vagrant Windows acceptance runner lane', () => {
           runnerReadinessBusyStatus: 'busy',
           runnerReadinessAdmissionBusyPolicy:
             'fail-closed-before-vagrant-windows-vsix-acceptance',
+          repoOwnedPipelineFreshnessScript: 'scripts/checkGitLabVagrantPipelineFreshness.js',
+          repoOwnedPipelineFreshnessPackageScript: 'npm run vagrant:acceptance:freshness',
+          pipelineFreshnessSchema:
+            'vi-history-suite/vagrant-acceptance-pipeline-freshness@v1',
+          pipelineFreshnessEvidenceRoot: 'vagrant/evidence/pipeline-freshness',
+          staleMergeRequestPipelinePolicy:
+            'skip-stale-duplicate-merge-request-pipeline-before-vagrant-boot',
           repoOwnedDoctorScript: 'scripts/vagrant/doctor-vagrant-host.sh',
           repoOwnedRefreshScript: 'scripts/vagrant/refresh-golden-box.sh',
           repoOwnedPrepareHomeScript: 'scripts/vagrant/prepare-vagrant-home.sh',
@@ -463,6 +490,11 @@ describe('Vagrant Windows acceptance runner lane', () => {
         requiredNeeds: ['vagrant_runner_admission'],
         dagStart: true,
         evidenceRoot: 'vagrant/evidence/',
+        pipelineFreshnessScript: 'scripts/checkGitLabVagrantPipelineFreshness.js',
+        pipelineFreshnessPackageScript: 'npm run vagrant:acceptance:freshness',
+        pipelineFreshnessEvidenceRoot: 'vagrant/evidence/pipeline-freshness',
+        staleMergeRequestPipelinePolicy:
+          'skip-stale-duplicate-merge-request-pipeline-before-vagrant-boot',
         storageDoctorScript: 'scripts/doctorVagrantStorage.js',
         storageDoctorPackageScript: 'npm run vagrant:storage:doctor',
         assertionPackageScript: 'npm run vagrant:acceptance:assert',
@@ -493,6 +525,9 @@ describe('Vagrant Windows acceptance runner lane', () => {
     );
     expect(packageManifest.scripts?.['vagrant:runner:readiness:history']).toBe(
       'node scripts/summarizeVagrantRunnerReadinessHistory.js'
+    );
+    expect(packageManifest.scripts?.['vagrant:acceptance:freshness']).toBe(
+      'node scripts/checkGitLabVagrantPipelineFreshness.js'
     );
     expect(packageManifest.scripts?.['vagrant:labview-startup:history']).toBe(
       'node scripts/summarizeVagrantLabviewStartupHistory.js'

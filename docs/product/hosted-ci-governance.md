@@ -206,6 +206,12 @@ Runner operator hardening:
   `vihs-win11-labview2026-golden`, disposable CI VM `vihs-ci-win11`, and
   serialized GitLab `resource_group: vihs-windows-vagrant` with
   `process_mode: newest_ready_first`, and isolated `VAGRANT_DOTFILE_PATH=.vagrant-ci`;
+  the acceptance job starts with `npm run vagrant:acceptance:freshness` and
+  retains `vagrant/evidence/pipeline-freshness` under the skip stale duplicate
+  merge-request pipelines policy, stopping older stale duplicate MR jobs before
+  storage checks, packaging, or VM boot after a 5000 ms settle window and with
+  each GitLab freshness API query bounded at 10000 ms, while protected
+  branch/tag proofs and freshness-API-uncertain jobs still run fail-open;
   the host keeps `VAGRANT_HOME` on
   `/home/sergio/.vagrant.d` so Vagrant private keys stay on a chmod-capable
   ext4 filesystem, while `/run/media/sergio/Data/vihs-vagrant` remains the
@@ -362,7 +368,10 @@ Job ownership:
   `linux,x64,virtualbox,vagrant,private-release`, serializes with
   `resource_group: vihs-windows-vagrant` and GitLab resource-group
   `process_mode: newest_ready_first`, declares `needs: [vagrant_runner_admission]`
-  so it can still start early after the readiness gate, packages the VSIX,
+  so it can still start early after the readiness gate, runs
+  `npm run vagrant:acceptance:freshness` so stale duplicate merge-request
+  pipelines retain `vagrant/evidence/pipeline-freshness` after a 5000 ms settle
+  window plus 10000 ms API timeout and exit before VM boot, packages the VSIX,
   stages it under `vagrant/shared/`, runs
   the storage doctor again as defense in depth before creating Data-drive
   Vagrant directories, optionally refreshes the local box when

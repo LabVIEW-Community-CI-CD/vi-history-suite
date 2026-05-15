@@ -617,6 +617,8 @@ vagrant_windows_vsix_acceptance:
     - set -euo pipefail
     - rm -f ./*.vsix
     - mkdir -p vagrant/shared vagrant/evidence
+    - npm run vagrant:acceptance:freshness -- --evidence-dir vagrant/evidence/pipeline-freshness --settle-ms 5000 --api-timeout-ms 10000
+    - if [ -f vagrant/evidence/pipeline-freshness/skip-vagrant-acceptance ]; then echo "Skipping stale Vagrant acceptance pipeline before VM boot."; exit 0; fi
     - node scripts/doctorVagrantStorage.js --active-root "${VIHS_VAGRANT_STORAGE_ROOT}" --standby-root "${VIHS_VAGRANT_STANDBY_ROOT}" --archive-root "${VIHS_EVIDENCE_ARCHIVE_ROOT}" --evidence-dir vagrant/evidence --fail-on-active-drift
     - mkdir -p "${VAGRANT_HOME}" "${VIHS_VAGRANT_BOX_CACHE_HOME}" "$(dirname "${VIHS_VAGRANT_BOX_FILE}")" "${VIHS_VAGRANT_BOX_WORKDIR}" "${VIHS_VIRTUALBOX_MACHINE_FOLDER}"
     - bash scripts/vagrant/prepare-vagrant-home.sh
