@@ -177,19 +177,19 @@ describe('vs code marketplace publication and installed-user docs', () => {
 
     expect(pkg.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
 
-    expect(readme).toContain('Install The Extension');
+    expect(readme).toContain('## Overview');
+    expect(readme).toContain('### Install');
     expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
-    expect(readme).toContain('The packaged Marketplace listing is intentionally installed-user first');
+    expect(readme).toContain('The Marketplace listing is intentionally installed-user first');
     expect(readme).toContain('vihs --validate');
-    expect(readme).toContain('Proof Status And Community Validation');
-    expect(readme).toContain('Marketplace stable `1.3.16` is the regular installed-user release');
-    expect(readme).toContain('Traceability Matrix');
-    expect(readme).toContain('Report A Problem Or Request Support');
+    expect(readme).toContain('### Installed-User LabVIEW Support Matrix');
+    expect(readme).toContain('### FAQ And Command Reference');
+    expect(readme).toContain('### Report A Problem Or Request Support');
     expect(readme).toContain('Issue Chooser');
     expect(readme).toContain('Marketplace Community Validation Report');
     expect(readme).toContain('LabVIEW Version Support Request');
-    expect(readme).toContain('Evaluate From Source');
-    expect(readme).toContain('Contribute');
+    expect(readme).toContain('### Source Evaluation');
+    expect(readme).toContain('### Contribute');
     expect(readme).not.toContain('Install And Use');
     expect(readme).not.toContain('install-vihs-extension.ps1');
 

@@ -50,6 +50,7 @@ describe('execution-policy control plane', () => {
       contributes?: { configuration?: { properties?: Record<string, unknown> } };
     }>('package.json');
     const readme = readText('README.md');
+    const maintainerControlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const queue = readText('docs/product/development-queue.json');
     const policy = readText('docs/product/extension-execution-policy.md');
@@ -103,15 +104,16 @@ describe('execution-policy control plane', () => {
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.linuxContainerImage'
     );
-    expect(readme).toContain('PROGRAM-0005');
-    expect(readme).toContain('TRANCHE-012');
-    expect(readme).toContain('TRANCHE-016');
-    expect(readme).toContain('ISSUE-0412');
-    expect(readme).toContain('`docker/windows` and `docker/linux` variants are selectable');
-    expect(readme).toContain('governed Docker runtime implementation is currently `2026`');
+    expect(readme).toContain('Maintainer Control Plane Index');
+    expect(maintainerControlPlane).toContain('PROGRAM-0005');
+    expect(maintainerControlPlane).toContain('TRANCHE-012');
+    expect(maintainerControlPlane).toContain('TRANCHE-016');
+    expect(maintainerControlPlane).toContain('ISSUE-0412');
+    expect(readme).toContain('Linux/Docker `2026` `x64`');
+    expect(readme).toContain('Windows Docker Desktop Windows containers');
     expect(readme).toContain('local `LabVIEWCLI`');
     expect(readme).toContain('bounded expert Docker');
-    expect(readme).toContain('install or start Docker Desktop or Docker');
+    expect(readme).toContain('start Docker before validation and first compare');
     expect(currentState).toContain(
       '`TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow'
     );

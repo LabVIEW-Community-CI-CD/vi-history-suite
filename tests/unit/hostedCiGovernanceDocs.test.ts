@@ -19,7 +19,7 @@ describe('hosted ci governance docs', () => {
     const matrixDoc = readText('docs/product/hosted-ci-governance.md');
     const gitlabCi = readText('.gitlab-ci.yml');
     const docsAuthoringDockerfile = readText('docker/docs-authoring/Dockerfile');
-    const readme = readText('README.md');
+    const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
@@ -151,8 +151,8 @@ describe('hosted ci governance docs', () => {
       'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
     );
     expect(matrixDoc).toContain('no longer depends on drift-prone `lycheeverse/lychee:latest`');
-    expect(readme).toContain('- separate public GitHub exact release publication: published;');
-    expect(readme).toContain('releases/tag/v1.3.16');
+    expect(controlPlane).toContain('- separate public GitHub exact release publication: published;');
+    expect(controlPlane).toContain('releases/tag/v1.3.16');
     expect(currentState).toContain('current exact released line: `v1.3.16`');
     expect(currentState).toContain('current fully published exact package line: `1.3.16`');
     expect(currentState).toContain('current authority package line on `main`: `1.3.16`');

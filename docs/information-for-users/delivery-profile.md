@@ -1,10 +1,10 @@
 # Delivery Profile
 
-Applies to: exact released installed baseline `v1.2.2` plus the active
-`develop` authority direction
-Last reviewed: `2026-04-13`
-Primary audience: installed users, source evaluators, maintainers, and
-publication reviewers
+Applies to: exact released installed baseline `v1.3.16` plus the active
+`develop` installed-user direction
+Last reviewed: `2026-05-15`
+Primary audience: installed users, source evaluators, and documentation
+reviewers
 Topic type: concept and reference
 Primary entry route: `README.md`
 
@@ -16,8 +16,7 @@ See also:
 - [Quick Reference](../quick-reference.md)
 - [FAQ](./faq.md)
 - [Command Reference](./command-reference.md)
-- [Documentation Package Workbench](../documentation-workbench.md)
-- [Public Release Candidate](../product/public-release-candidate.md)
+- [Maintainer Control Plane Index](../product/maintainer-control-plane-index.md)
 
 Version applicability or update trigger: update this surface when route
 ownership, release packet evidence paths, repo support boundaries, or the
@@ -29,10 +28,10 @@ external starter pack change.
   which deeper surface applies.
 - Use `INSTALL.md` as the primary route for the exact released install path
   and public source-evaluation route.
-- Use the docs workbench as the primary persistent procedure surface for
-  documentation-package authoring and validation.
+- Use the maintainer control-plane index as the exit route for
+  documentation-package authoring, validation, and release control.
 - Use the command reference as the simultaneous-use quick reference for
-  commands, paths, and release-control names.
+  installed-user commands and source-evaluation commands.
 - Use the FAQ as a short-answer fallback for recurring questions, not as the
   only authority for a stable procedure.
 - Use the public release candidate and publication ledgers as the durable
@@ -50,8 +49,8 @@ external starter pack change.
 
 ## Delivery Assumptions
 
-- The exact released installed-user contract remains `v1.2.2` Docker-only and
-  x64-only until a later publication tranche changes that truth.
+- The exact released installed-user contract is `v1.3.16` with
+  prepare-CLI-first setup.
 - The active `develop` direction may describe host-default Windows local
   `LabVIEWCLI` plus bounded expert Docker, but that branch direction does not
   silently replace the exact released install route.

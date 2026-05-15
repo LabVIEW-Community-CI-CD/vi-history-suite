@@ -18,6 +18,9 @@ describe('information-for-users support docs', () => {
     const commandReference = readText('docs/information-for-users/command-reference.md');
     const readme = readText('README.md');
     const install = readText('INSTALL.md');
+    const firstRun = readText('FIRST-RUN.md');
+    const troubleshooting = readText('TROUBLESHOOTING.md');
+    const maintainerControlPlane = readText('docs/product/maintainer-control-plane-index.md');
 
     expect(informationItemMap).toContain(
       '| Information-for-users plan | `docs/information-for-users/plan.md` |'
@@ -36,7 +39,7 @@ describe('information-for-users support docs', () => {
     expect(plan).toContain('latest tagged release `v0.2.18`');
     expect(plan).toContain('repo-native docs workbench');
     expect(plan).toContain(
-      'exact released installed baseline explicit as `v1.2.2` Docker-only and x64-only'
+      'exact released installed baseline explicit as `v1.3.16` with prepare-CLI-first onboarding'
     );
     expect(plan).toContain(
       'host-default Windows local `LabVIEWCLI` plus one bounded expert Docker provider'
@@ -46,8 +49,8 @@ describe('information-for-users support docs', () => {
     expect(glossary).toContain('| provider request |');
     expect(glossary).toContain('| released compliance workbench |');
 
-    expect(faq).toContain('The current exact released line, `v1.2.2`, still uses the');
-    expect(faq).toContain('Docker-only and x64-only installed path.');
+    expect(faq).toContain('exact released installed baseline `v1.3.16`');
+    expect(faq).toContain('Prepare the local runtime-settings CLI');
     expect(faq).toContain('review Compare or runtime validation again after the update');
     expect(faq).toContain('reload or restart the window only if that already-running session still shows');
     expect(faq).toContain('supported Windows PowerShell sessions');
@@ -59,6 +62,7 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('Workspace settings are not a supported target');
     expect(faq).toContain('prepare command is admitted in untrusted workspaces');
     expect(faq).toContain('user-scope PATH');
+    expect(faq).toContain('opening documentation, and selecting the extension do not');
     expect(faq).toContain('runtimeValidationOutcome');
     expect(faq).toContain('Is Windows installed-user behavior proven?');
     expect(faq).toContain('Windows host LabVIEW 2026');
@@ -70,19 +74,27 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('npm run proof:runtime-settings-live-session');
     expect(faq).toContain('.cache/runtime-settings-live-session-proof/latest/');
 
-    expect(readme).toContain('Install The Extension');
+    expect(readme).toContain('## Overview');
+    expect(readme).toContain('## Details');
+    expect(readme).toContain('Video Walkthroughs');
     expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
+    expect(readme).toContain('VI History: Prepare Local Runtime Settings CLI');
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Compare A VI');
     expect(readme).toContain('Report A Problem Or Request Support');
     expect(readme).toContain('issues/new/choose');
     expect(readme).toContain('LabVIEW Version Support Request');
-    expect(readme).toContain('Evaluate From Source');
+    expect(readme).toContain('Source Evaluation');
     expect(readme).toContain('Contribute');
-    expect(readme).toContain('Authority And Release Control');
+    expect(readme).toContain('Maintainer Control Plane Index');
+    expect(readme).not.toContain('Authority And Release Control');
+    expect(readme).not.toContain('Authority release facts');
+    expect(readme).toContain('./docs/information-for-users/faq.md');
+    expect(readme).toContain('./docs/information-for-users/command-reference.md');
 
     expect(install).toContain('Install The Extension');
     expect(install).toContain('code --install-extension svelderrainruiz.vi-history-suite');
+    expect(install).toContain('VI History: Prepare Local Runtime Settings CLI');
     expect(install).toContain('Source Evaluation And Codespaces');
     expect(install).toContain('vihs --validate');
     expect(install).toContain('Use this lane only when you want to inspect the source repo');
@@ -98,6 +110,7 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('explicit `--settings-file` override');
     expect(commandReference).toContain('admitted in untrusted workspaces');
     expect(commandReference).toContain('persists governed user-scope PATH');
+    expect(commandReference).toContain('opening documentation, selecting the extension, and VS Code startup do not');
     expect(commandReference).toContain('vihs --provider <host|docker>');
     expect(commandReference).toContain('vihs --validate');
     expect(commandReference).toContain('host/windows/2026/x86');
@@ -126,5 +139,10 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('npm run assurance:user-info');
     expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
     expect(readme).toContain('vihs --validate');
+    expect(firstRun).toContain('VI History: Prepare Local Runtime Settings CLI');
+    expect(firstRun).toContain('Run `vihs`');
+    expect(troubleshooting).toContain('selecting the extension should not start indexing');
+    expect(maintainerControlPlane).toContain('Authority And Release Control');
+    expect(maintainerControlPlane).toContain('current exact released line: `v1.3.16`');
   });
 });

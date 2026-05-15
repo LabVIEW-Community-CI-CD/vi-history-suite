@@ -13,12 +13,12 @@ function readText(relativePath: string): string {
 
 describe('private release assurance contradiction guards', () => {
   it('keeps the assurance baseline split explicit as rolling `:main` versus latest tagged `v0.2.18`', () => {
-    const readme = readText('README.md');
+    const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
     const faq = readText('docs/information-for-users/faq.md');
 
-    expect(readme).toContain('assurance-workbench:main');
+    expect(controlPlane).toContain('assurance-workbench:main');
     expect(currentState).toContain('latest tagged release remains `v0.2.18`');
     expect(releaseProcedure).toContain('assurance-workbench:main');
     expect(faq).toContain('`v0.2.18`');
@@ -30,7 +30,7 @@ describe('private release assurance contradiction guards', () => {
     const releaseProcedure = readText('docs/release-procedure.md');
 
     expect(readme).toContain('Windows defaults to local `LabVIEWCLI`');
-    expect(readme).toContain('if Docker is selected, install or start Docker Desktop or Docker');
+    expect(readme).toContain('Docker remains a bounded expert Docker path');
     expect(currentState).toContain('current exact released line: `v1.3.16`');
     expect(currentState).toContain('active exact release candidate line on `develop`: none');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');

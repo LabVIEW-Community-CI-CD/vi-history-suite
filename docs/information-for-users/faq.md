@@ -3,20 +3,20 @@
 ## Document Control
 
 - Product or service: `vi-history-suite`
-- Applies to: exact released installed baseline `v1.2.2` plus the active
-  `develop` authority direction
-- Last reviewed: `2026-04-27`
-- Primary audience: installed users, source evaluators, and maintainers
+- Applies to: exact released installed baseline `v1.3.16` plus the active
+  `develop` installed-user direction
+- Last reviewed: `2026-05-15`
+- Primary audience: installed users and source evaluators
 - Topic type: troubleshooting and quick-reference support
 - Primary entry route: `README.md` and `INSTALL.md`
 
 See also:
 
-- [README.md](../../README.md)
-- [INSTALL.md](../../INSTALL.md)
+- [README.md](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/README.md)
+- [INSTALL.md](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/INSTALL.md)
+- [First Run](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/FIRST-RUN.md)
+- [Troubleshooting](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/TROUBLESHOOTING.md)
 - [Command Reference](./command-reference.md)
-- [Documentation Package Workbench](../documentation-workbench.md)
-- [Release Procedure](../release-procedure.md)
 
 ## Scope Boundary
 
@@ -46,14 +46,15 @@ See also:
 
 Use the route that matches your real task.
 
-- If you are using the exact released extension, start with `README.md` and
-  `INSTALL.md`. The current exact released line, `v1.2.2`, still uses the
-  Docker-only and x64-only installed path.
+- If you are using the exact released extension, start with `README.md`,
+  `INSTALL.md`, and `FIRST-RUN.md`. Prepare the local runtime-settings CLI
+  first, then run `vihs`, choose provider/year/bitness, and run
+  `vihs --validate`.
 - If you are evaluating the source repo on public GitHub or GitLab content,
   start with the public-evaluation routes in `README.md` and the generic
   `npm run public:repo:clone` command.
-- If you are editing the authority docs package, start with
-  `docs/documentation-workbench.md` and the docs-workbench gate.
+- If you are maintaining release-control docs, leave this installed-user FAQ
+  and start with `docs/product/maintainer-control-plane-index.md`.
 
 ### How do I install from PowerShell and choose settings during install?
 
@@ -111,17 +112,18 @@ stale provider or runtime facts.
 
 ### Where does the generated runtime-settings CLI live, and what can it write?
 
-The governed launchers live under the extension-global storage root.
+The governed launchers live under the extension-global storage root after the
+explicit prepare command runs.
 
-- The published install/bootstrap surface and extension activation both
-  materialize the launchers there.
-- Extension activation admits bare `vihs` in supported VS Code terminals.
-- On Windows, extension admission also persists governed user-scope PATH
-  admission so new standalone PowerShell windows can resolve `vihs` by name
-  without manual shell-profile editing or machine-wide install doctrine.
-- `VI History: Prepare Local Runtime Settings CLI` is the governed repair and
-  refresh surface when `vihs` is missing, stale, or a repaired VS Code or
-  Node.js runtime needs the entrypoint refreshed.
+- `VI History: Prepare Local Runtime Settings CLI` is the governed prepare,
+  repair, and refresh surface when `vihs` is missing, stale, or a repaired VS
+  Code or Node.js runtime needs the entrypoint refreshed.
+- Extension startup, opening documentation, and selecting the extension do not
+  materialize the launchers, activate Git, start eligibility indexing, or touch
+  LabVIEW.
+- On Windows, the prepare command admits governed user-scope PATH state so new
+  standalone PowerShell windows can resolve `vihs` by name without manual
+  shell-profile editing or machine-wide install doctrine.
 - The command reference and this FAQ are the governed installed-user help and
   recovery surfaces for that CLI.
 - The governed settings targets are the platform-default user
@@ -227,7 +229,7 @@ x64 for the canonical `lv_icon.vi` fixture. Docker Desktop Windows-container
 proof remains deferred until public issue #65 receives an admissible packet
 from a real Windows host with Docker Desktop OSType `windows`.
 
-For the `1.3.15` installed-user stable patch direction, use the public
+For the `1.3.16` installed-user direction, use the public
 validation templates when reporting Windows/LabVIEW or Docker Desktop results.
 Selectable means available for validation, not automatically maintainer-proven
 for every provider/year/bitness variant.
@@ -280,6 +282,6 @@ Use the governed repo search posture:
 
 ### Where do I start when I need to cut a release?
 
-Start with [Release Procedure](../release-procedure.md), then use the release
-candidate route in [Public Release Candidate](../product/public-release-candidate.md)
-when you need the retained release candidate evidence.
+Start with [Maintainer Control Plane Index](../product/maintainer-control-plane-index.md).
+That route points to release procedure and retained release-candidate evidence
+without making the installed-user FAQ carry maintainer-only details.

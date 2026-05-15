@@ -1,25 +1,26 @@
 # Information For Users Command Reference
 
-Applies to: exact released installed baseline plus the active `1.3.15`
-installed-user stable patch direction
-Last reviewed: `2026-05-09`
-Primary audience: maintainers, source evaluators, and advanced installed users
+Applies to: exact released installed baseline plus the active `1.3.16`
+installed-user direction
+Last reviewed: `2026-05-15`
+Primary audience: installed users, source evaluators, and advanced installed users
 Topic type: reference
 Primary entry route: `README.md` or `INSTALL.md`
 
 See also:
 
-- [Plan](./plan.md)
+- [README.md](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/README.md)
+- [INSTALL.md](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/INSTALL.md)
+- [First Run](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/FIRST-RUN.md)
+- [Troubleshooting](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/TROUBLESHOOTING.md)
 - [FAQ](./faq.md)
-- [Documentation Package Workbench](../documentation-workbench.md)
-- [Release Procedure](../release-procedure.md)
 
 ## Quick-Reference Boundary
 
 - This surface is a compact quick-reference guide and route locator.
 - It is not a full user guide, it is not a full command manual, and it is not an API reference.
-- Keep stable task walkthroughs in `README.md`, `INSTALL.md`,
-  `docs/documentation-workbench.md`, `PROGRAM-0005`, or `ISSUE-0412`.
+- Keep stable installed-user task walkthroughs in `README.md`, `INSTALL.md`,
+  `FIRST-RUN.md`, or the bundled installed docs.
 - Use the FAQ for short answers and reload guidance, then move stable doctrine
   back into the main governed surfaces.
 - This repo does not use `MAINTAINING.md`, `OPERATIONS.md`, or `SKILL.md` as
@@ -146,20 +147,19 @@ runtime-settings CLI on the active branch.
 
 `VI History: Prepare Local Runtime Settings CLI`
 
-- Purpose: repair or refresh the governed `vihs` terminal entrypoint plus the
-  compatibility launchers under the extension-global storage root.
-- Use when: `vihs` is missing, stale, or a repaired VS Code or Node.js runtime
-  needs the governed entrypoint refreshed.
+- Purpose: prepare, repair, or refresh the governed `vihs` terminal entrypoint
+  plus the compatibility launchers under the extension-global storage root.
+- Use when: first setting up the extension, when `vihs` is missing or stale, or
+  when a repaired VS Code or Node.js runtime needs the governed entrypoint
+  refreshed.
 - Notes:
   - the governed materialization root is the extension-global storage path
     reported by the command result
-  - the published install/bootstrap surface and extension activation both
-    materialize the same admitted `vihs` launchers; use this prepare command
-    only when that admitted terminal surface needs repair or refresh
-  - extension activation admits bare `vihs` in supported VS Code terminals and,
-    on Windows, persists governed user-scope PATH admission so new PowerShell
-    windows can resolve `vihs` by name without manual shell-profile editing or
-    machine-wide install doctrine
+  - opening documentation, selecting the extension, and VS Code startup do not
+    materialize the launchers
+  - on Windows, the prepare command persists governed user-scope PATH admission
+    so new PowerShell windows can resolve `vihs` by name without manual
+    shell-profile editing or machine-wide install doctrine
   - the command result reports the current-platform compatibility-launcher path
     plus one exact next command to run without reconstructing the hidden
     extension-global storage layout
@@ -210,17 +210,15 @@ runtime-settings CLI on the active branch.
   LabVIEW bitness into VS Code settings without interactive prompts.
 - Use when: scripting or making one exact provider/runtime change directly.
 - Notes:
-  - after extension admission, supported Windows PowerShell sessions and
-    admitted VS Code terminals resolve `vihs` by name; use
-    `VI History: Prepare Local Runtime Settings CLI` only when the admitted
-    terminal surface needs repair or refresh
+  - after the explicit prepare command, supported Windows PowerShell sessions
+    and admitted VS Code terminals resolve `vihs` by name
   - without `--settings-file`, the governed target is the platform-default
     user `settings.json`; workspace settings are not a supported target
   - Windows host LabVIEW 2026 x86 is admitted through the governed Windows
     Community/golden-VM installed-user fixture proof; x64 remains selectable
     when manually installed, and the Ubuntu/Docker evidence lane still does not
     prove Docker Desktop Windows-container behavior
-  - for the `1.3.15` installed-user stable patch direction, report local
+  - for the `1.3.16` installed-user direction, report local
     Windows/LabVIEW and Docker results through the public GitHub validation
     templates and include provider, LabVIEW year, bitness, `runtimeErrorCode`,
     and the proof packet

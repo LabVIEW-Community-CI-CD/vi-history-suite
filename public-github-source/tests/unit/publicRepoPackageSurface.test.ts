@@ -240,7 +240,7 @@ describe('public repo package surface', () => {
     expect(bundledUserWorkflow).not.toContain('<code>Diff prev</code>');
     expect(bundledInstallAndRelease).toContain('README Installed-user LabVIEW support matrix');
     expect(bundledInstallAndRelease).toContain('FIRST-RUN.md');
-    expect(bundledInstallAndRelease).toContain('blob/main/TROUBLESHOOTING.md');
+    expect(bundledInstallAndRelease).toContain('blob/HEAD/TROUBLESHOOTING.md');
     expect(bundledComparisonReview).toContain(
       'retained comparison evidence opens from the checkbox-selected pair'
     );

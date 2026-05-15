@@ -232,7 +232,6 @@ describe('public GitHub fixture docs promotion closeout', () => {
 
   it('retains the closeout in authority Markdown and traceability surfaces', () => {
     const textSurfaces = [
-      'README.md',
       'docs/product/current-state.md',
       'docs/product/public-validation-prerelease-v1.3.11.md',
       'docs/product/release-publication-state.md',

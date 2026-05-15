@@ -146,6 +146,7 @@ describe('wiki coverage invariant', () => {
 
   it('documents the zero-gap completion rule in the authority control plane', () => {
     const readme = readText('README.md');
+    const maintainerControlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const workbench = readText('docs/documentation-workbench.md');
     const authorityMap = readText('docs/product/wiki-authority-map.md');
@@ -154,7 +155,8 @@ describe('wiki coverage invariant', () => {
     const informationItemMap = readText('docs/information-item-map.md');
     const adr = readText('docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md');
 
-    expect(readme).toContain('docs/product/wiki-coverage-matrix.json');
+    expect(readme).toContain('Maintainer Control Plane Index');
+    expect(maintainerControlPlane).toContain('docs/product/wiki-coverage-matrix.json');
     expect(currentState).toContain('docs/product/wiki-coverage-matrix.json');
     expect(workbench).toContain('docs/product/wiki-coverage-matrix.json');
     expect(authorityMap).toContain('Hard Completion Contract');

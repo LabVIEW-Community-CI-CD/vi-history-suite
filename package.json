@@ -43,13 +43,9 @@
     "LICENSE"
   ],
   "activationEvents": [
-    "onStartupFinished",
     "onCommand:labviewViHistory.open",
     "onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli",
     "onCommand:labviewViHistory.openDocumentation"
-  ],
-  "extensionDependencies": [
-    "vscode.git"
   ],
   "contributes": {
     "commands": [

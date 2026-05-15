@@ -300,11 +300,21 @@ describe('release governance package', () => {
     expect(readText('docs/release-procedure.md')).toContain(
       'npm run software:factory:verify'
     );
-    expect(readText('README.md')).toContain('software factory assessment package script');
-    expect(readText('README.md')).toContain('software factory rehearsal package script');
-    expect(readText('README.md')).toContain('software factory repair package script');
-    expect(readText('README.md')).toContain('software factory publish package script');
-    expect(readText('README.md')).toContain('software factory verify package script');
+    expect(readText('docs/product/maintainer-control-plane-index.md')).toContain(
+      'software factory assessment package script'
+    );
+    expect(readText('docs/product/maintainer-control-plane-index.md')).toContain(
+      'software factory rehearsal package script'
+    );
+    expect(readText('docs/product/maintainer-control-plane-index.md')).toContain(
+      'software factory repair package script'
+    );
+    expect(readText('docs/product/maintainer-control-plane-index.md')).toContain(
+      'software factory publish package script'
+    );
+    expect(readText('docs/product/maintainer-control-plane-index.md')).toContain(
+      'software factory verify package script'
+    );
     expect(readText('docs/product/current-state.md')).toContain(
       'active software-factory governance branch on `develop`'
     );

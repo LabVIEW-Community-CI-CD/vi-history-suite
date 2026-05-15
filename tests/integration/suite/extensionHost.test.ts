@@ -102,7 +102,7 @@ export async function runIntegrationSuite(): Promise<void> {
 
   await api.refreshEligibility();
   await testEligibleVersusIneligibleFlow(api, metadata);
-  await testAdmittedLocalRuntimeSettingsTerminalEntrypoint(api);
+  await testPreparedLocalRuntimeSettingsTerminalEntrypoint(api);
   await testPrepareLocalRuntimeSettingsCli();
   await testProbeRuntimeSettingsLiveSession();
   await testPanelOpenFlow(api, metadata);
@@ -759,11 +759,17 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   }
 }
 
-async function testAdmittedLocalRuntimeSettingsTerminalEntrypoint(
+async function testPreparedLocalRuntimeSettingsTerminalEntrypoint(
   api: ViHistorySuiteApi
 ): Promise<void> {
+  assert.equal(
+    api.getLocalRuntimeSettingsTerminalEntrypoint(),
+    undefined,
+    'extension activation should not admit the bare vihs terminal entrypoint before the explicit prepare command'
+  );
+  await vscode.commands.executeCommand('labviewViHistory.prepareLocalRuntimeSettingsCli');
   const admitted = api.getLocalRuntimeSettingsTerminalEntrypoint();
-  assert.ok(admitted, 'extension activation should admit the bare vihs terminal entrypoint');
+  assert.ok(admitted, 'the explicit prepare command should admit the bare vihs terminal entrypoint');
   assert.equal(admitted.terminalCommandName, 'vihs');
   assert.ok(admitted.pathPrependValue);
   assert.ok(admitted.currentPlatformTerminalEntrypointPath);

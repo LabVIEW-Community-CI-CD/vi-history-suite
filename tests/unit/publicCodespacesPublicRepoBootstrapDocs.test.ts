@@ -22,9 +22,11 @@ describe('public Codespaces public-repo bootstrap docs', () => {
       'docs/architecture/adr/ADR-0034-public-codespaces-public-repo-bootstrap-and-default-branch-resolution.md'
     );
 
-    expect(readme).toContain('## Evaluate From Source');
-    expect(readme).toContain('## Contribute');
-    expect(readme).toContain('[INSTALL.md](./INSTALL.md)');
+    expect(readme).toContain('### Source Evaluation');
+    expect(readme).toContain('### Contribute');
+    expect(readme).toContain(
+      '[INSTALL.md](https://github.com/svelderrainruiz/vi-history-suite/blob/HEAD/INSTALL.md)'
+    );
     expect(readme).toContain('Fork-Codespace-Quickstart');
     expect(readme).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(readme).toContain('Refresh-Codespace-Repositories');

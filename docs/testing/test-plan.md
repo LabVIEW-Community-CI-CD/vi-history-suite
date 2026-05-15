@@ -2508,6 +2508,12 @@ Information-for-users review cases:
   tag/public GitHub/Marketplace/Windows Docker Desktop/main mutation, no
   release branch deletion, and the next source-branch-retained promotion MR
   opening action
+- `TEST-UNIT-451`: run
+  `tests/unit/extensionActivationLazySideEffects.test.ts` and confirm
+  activation, documentation, and the explicit prepare command do not resolve
+  the Git API, start VI eligibility indexing, or touch LabVIEW, while `VI
+  History` and explicit API refresh paths initialize the Git-backed runtime
+  lazily.
 - `TEST-DOC-153`: review release-publication state, current-state,
   public-release-candidate, post-release sustainment rules, hosted CI
   governance, release procedure, README, SRS, RTM, and this test plan and

@@ -5,8 +5,8 @@
 - Product or service: `vi-history-suite`
 - Owner: sole author
 - Purpose: retain a bounded document set for user-information planning that
-  stays truthful to the exact released installed path, the active `develop`
-  authority direction, and the public-evaluation routes
+  stays truthful to the exact released installed path, first-time setup, the
+  active `develop` installed-user direction, and the public-evaluation routes
 - Standards posture: selected process duties in `26514 §§5-6` and selected
   product duties in `26514 §§7-9`, adopted through the published
   `repo-standards-review` assurance-workbench lane with the latest tagged
@@ -20,7 +20,8 @@
 - [README.md](../../README.md)
 - [INSTALL.md](../../INSTALL.md)
 - [Current State](../product/current-state.md)
-- [Documentation Package Workbench](../documentation-workbench.md)
+- [First Run](../../FIRST-RUN.md)
+- [Troubleshooting](../../TROUBLESHOOTING.md)
 - [Audience And Task Model](./audience-and-task-model.md)
 - [Navigation And Search](./navigation-and-search.md)
 - [Delivery Profile](./delivery-profile.md)
@@ -31,8 +32,7 @@
 - [Glossary](./glossary.md)
 - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](../product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ISSUE-0412: Installed Local LabVIEWCLI Selection And Explicit Compare](../product/issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
-- [Release Procedure](../release-procedure.md)
-- [Public Release Candidate](../product/public-release-candidate.md)
+- [Maintainer Control Plane Index](../product/maintainer-control-plane-index.md)
 - [Test Plan](../testing/test-plan.md)
 
 ## Document Set
@@ -45,15 +45,15 @@ package. The external starter docs now include `docs/user-guide.md`,
 
 | Surface | Information type mix | Primary audiences | Notes |
 | --- | --- | --- | --- |
-| `README.md` | route index, concept, quick-start task | installed users, source evaluators, maintainers | top-level route and allowed mixed route surface |
+| `README.md` | route index, concept, quick-start task | installed users and source evaluators | top-level installed-user route |
 | `INSTALL.md` | task, reference | installed users and source evaluators | exact released install and public evaluation baseline |
 | `docs/documentation-workbench.md` | task, reference | maintainers and docs authors | stable docs-authoring route and local workbench contract |
 | `docs/information-for-users/audience-and-task-model.md` | concept, reference | maintainers, installed users, source evaluators, reviewers | retained audience and task rationale for this package |
 | `docs/information-for-users/navigation-and-search.md` | reference | maintainers, installed users, source evaluators, reviewers | navigation architecture, metadata minimum, and search posture |
 | `docs/information-for-users/delivery-profile.md` | concept, reference | maintainers, installed users, source evaluators, reviewers | route-to-task delivery decisions and fallback paths |
 | `docs/information-for-users/style-guide.md` | reference | maintainers and docs authors | retained planning and style-governance controls |
-| `docs/information-for-users/command-reference.md` | reference | maintainers, source evaluators, advanced installed users | compact quick-reference guide, not a full command manual |
-| `docs/information-for-users/faq.md` | troubleshooting, quick answers | installed users, source evaluators, maintainers | dedicated troubleshooting and quick-answer surface |
+| `docs/information-for-users/command-reference.md` | reference | source evaluators and advanced installed users | compact quick-reference guide, not a full command manual |
+| `docs/information-for-users/faq.md` | troubleshooting, quick answers | installed users and source evaluators | dedicated troubleshooting and quick-answer surface |
 | `docs/information-for-users/glossary.md` | glossary | all primary audiences | user-language definitions for repo-specific terms |
 | `docs/product/public-release-candidate.md` | proof, reference | reviewers, release operators, auditors | durable evidence route for public release and publication state |
 
@@ -84,7 +84,7 @@ package. The external starter docs now include `docs/user-guide.md`,
 | --- | --- |
 | Review cadence | review this package when entry routes, runtime-provider doctrine, docs-workbench commands, public publication routes, or the published `repo-standards-review` lane or latest tagged release changes |
 | Reuse strategy | keep compact support answers here, but move stable task or policy doctrine back into `README.md`, `INSTALL.md`, `PROGRAM-0005`, `ISSUE-0412`, `docs/documentation-workbench.md`, or release/public evidence surfaces |
-| Version posture | keep the exact released installed baseline explicit as `v1.2.2` Docker-only and x64-only until a later publication tranche changes that truth |
+| Version posture | keep the exact released installed baseline explicit as `v1.3.16` with prepare-CLI-first onboarding |
 | Branch posture | keep the active `develop` direction explicit as host-default Windows local `LabVIEWCLI` plus one bounded expert Docker provider |
 | Validation split | use the repo-native docs workbench for authoring and the published `repo-standards-review` assurance-workbench `:main` lane as the outer assurance baseline |
 
@@ -95,7 +95,7 @@ package. The external starter docs now include `docs/user-guide.md`,
 | Entry-route authority | `README.md` and `INSTALL.md` own the first-use and public-evaluation route truth |
 | Runtime-provider authority | `PROGRAM-0005`, `ISSUE-0412`, `package.json`, and `src/tooling/localRuntimeSettingsCli.ts` define the active branch runtime-provider contract |
 | Docs authoring authority | `docs/documentation-workbench.md` owns the repo-native docs-workbench commands and boundaries |
-| Release-control authority | `docs/release-procedure.md` and `docs/cm/cm-plan.md` define the governed release path |
+| Release-control authority | `docs/product/maintainer-control-plane-index.md`, `docs/release-procedure.md`, and `docs/cm/cm-plan.md` define the governed release path |
 | Durable evidence route | `docs/product/public-release-candidate.md` plus the public source/wiki publication ledgers are the retained public evidence path |
 | External assurance authority | published `repo-standards-review` assurance-workbench `:main` is the current outer standards lane for this tranche, while `v0.2.18` remains the latest tagged release |
 
@@ -108,7 +108,8 @@ The retained audience and task model lives in
 
 This package is currently optimized for:
 
-- installed users trying to understand the exact released route
+- installed users trying to understand the exact released route and first-time
+  prepare-CLI-first setup
 - source evaluators using the public evaluation route
 - maintainers switching between docs authoring, runtime-provider work, and release/publication control
 - reviewers reading durable public evidence without reconstructing it from chat memory
@@ -204,7 +205,7 @@ This section is the section-to-topic-role map for the current bounded package.
   resume from repo truth instead of reconstructing the package from chat memory
 
 - Findability acceptance: a user can find the correct route and summarize the task correctly without browsing unrelated internal control-plane docs first.
-- Consistency acceptance: exact released `v1.2.2` boundaries and active
+- Consistency acceptance: exact released `v1.3.16` boundaries and active
   `develop` boundaries are not collapsed into one ambiguous statement.
 - Minimal-completeness acceptance: a reader can complete the task correctly on the first try for the supported route that the doc claims to cover.
 - Release-facing quality evidence:

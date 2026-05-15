@@ -51,6 +51,7 @@ function readJson<T>(relativePath: string): T {
 describe('debt-retirement contract', () => {
   it('keeps the debt package visible in the authority control plane', () => {
     const readme = readText('README.md');
+    const maintainerControlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const informationItemMap = readText('docs/information-item-map.md');
     const workbench = readText('docs/documentation-workbench.md');
@@ -62,8 +63,9 @@ describe('debt-retirement contract', () => {
       'docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md'
     );
 
-    expect(readme).toContain('docs/product/debt-retirement-contract.md');
-    expect(readme).toContain('docs/product/debt-ledger.json');
+    expect(readme).toContain('Maintainer Control Plane Index');
+    expect(maintainerControlPlane).toContain('docs/product/debt-retirement-contract.md');
+    expect(maintainerControlPlane).toContain('docs/product/debt-ledger.json');
     expect(currentState).toContain('docs/product/debt-retirement-contract.md');
     expect(currentState).toContain('docs/product/debt-ledger.json');
     expect(informationItemMap).toContain('docs/product/debt-retirement-contract.md');

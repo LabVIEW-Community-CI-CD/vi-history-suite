@@ -1,8 +1,8 @@
 # Audience And Task Model
 
-Applies to: exact released installed baseline `v1.2.2` plus the active
-`develop` authority direction
-Last reviewed: `2026-04-13`
+Applies to: exact released installed baseline `v1.3.16` plus the active
+`develop` installed-user direction
+Last reviewed: `2026-05-15`
 Primary audience: installed users, source evaluators, maintainers, and
 publication reviewers
 Topic type: concept and reference
@@ -19,7 +19,7 @@ See also:
 - [FAQ](./faq.md)
 - [Command Reference](./command-reference.md)
 - [Glossary](./glossary.md)
-- [Information Item Map](../information-item-map.md)
+- [Maintainer Control Plane Index](../product/maintainer-control-plane-index.md)
 
 The governing control surfaces for this topic are
 `docs/information-for-users/plan.md` and

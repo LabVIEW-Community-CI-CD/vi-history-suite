@@ -50,7 +50,7 @@ describe('runner lane operator assets', () => {
     const privateReleasePacketDoc = readText('docs/product/private-release-windows-x64-v1.3.0.md');
     const privateReleasePacketJson = readJson<any>('docs/product/private-release-windows-x64-v1.3.0.json');
     const informationItemMap = readText('docs/information-item-map.md');
-    const readme = readText('README.md');
+    const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
     const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
@@ -379,8 +379,8 @@ describe('runner lane operator assets', () => {
       '| Governed runner host asset pack | `scripts/gitlab-runner/` |'
     );
     expect(informationItemMap).toContain('cross-lane runner-doctor/assert wrappers');
-    expect(readme).toContain('[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)');
-    expect(readme).toContain('[docs/information-item-map.md](./docs/information-item-map.md)');
+    expect(controlPlane).toContain('[Public Release Candidate](./public-release-candidate.md)');
+    expect(controlPlane).toContain('[Information Item Map](../information-item-map.md)');
     expect(currentState).toContain('repo-owned runner host asset pack, startup receipts, doctor surfaces, apply');
     expect(currentState).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(currentState).toContain('scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1');
@@ -433,7 +433,7 @@ describe('runner lane operator assets', () => {
     const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
     const privateReleasePacketDoc = readText('docs/product/private-release-windows-x64-v1.3.0.md');
     const privateReleasePacketJson = readJson<any>('docs/product/private-release-windows-x64-v1.3.0.json');
-    const readme = readText('README.md');
+    const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
@@ -502,7 +502,7 @@ describe('runner lane operator assets', () => {
       })
     );
 
-    expect(readme).toContain('[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)');
+    expect(controlPlane).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain(
       'the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
     );
