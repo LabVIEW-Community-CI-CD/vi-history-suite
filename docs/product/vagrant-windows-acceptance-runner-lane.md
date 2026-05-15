@@ -165,13 +165,16 @@ The systemd timer runs the same wrapper with `--allow-busy` so expected VM
 activity is retained as a `status: busy` receipt and does not mark the timer
 unit failed; active storage drift and unrelated host-doctor drift still fail.
 `npm run vagrant:runner:readiness:history` summarizes those timestamped
-receipts for timer tuning. The `2026-05-14` closeout history retained 119
-receipts across the repair window, with p50/p90 receipt intervals around
-323/330 seconds and active-root drift detected before Vagrant boot. Because the
-same history also contains expected busy receipts while `vihs-ci-win11` or the
-golden VM was intentionally active, the governed timer remains
-`OnUnitActiveSec=5min`; future cadence changes should be based on busy-vs-drift
-history rather than increasing noisy unhealthy receipts.
+receipts for timer tuning. The
+`docs/product/vagrant-runner-readiness-timer-decision-2026-05-15.{md,json}`
+follow-up retained `212` receipts across the repair and protected-branch proof
+window, with p50/p90/p95 receipt intervals of `330/330/330` seconds, `5`
+active-storage-drift receipts in `1` incident, and a worst observed active-root
+detection window of `687` seconds. Because the same history also contains `39`
+busy-context receipts while `vihs-ci-win11` or the golden VM was intentionally
+active, the governed timer remains `OnUnitActiveSec=5min`; future cadence
+changes should be based on busy-vs-drift history or a separate adaptive design
+rather than increasing noisy unhealthy receipts.
 
 CI then creates only workspace-local `vagrant/shared` and `vagrant/evidence`,
 then runs `scripts/doctorVagrantStorage.js` again so missing mounts and wrong

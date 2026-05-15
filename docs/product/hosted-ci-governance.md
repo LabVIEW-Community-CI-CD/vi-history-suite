@@ -233,10 +233,13 @@ Runner operator hardening:
   publish latest/timestamped receipts under
   `/home/sergio/.gitlab-runner/receipts/vagrant-acceptance-readiness`; the
   repo-owned history surface `npm run vagrant:runner:readiness:history`
-  summarizes those timestamped receipts for timer tuning, with the `2026-05-14`
-  closeout retaining the current `OnUnitActiveSec=5min` cadence because it
-  catches active-root drift before Vagrant boot while avoiding more noisy
-  busy-state receipts from intentional VM activity; GitLab admission remains
+  summarizes those timestamped receipts for timer tuning, with the
+  `2026-05-15` decision packet
+  `docs/product/vagrant-runner-readiness-timer-decision-2026-05-15.{md,json}`
+  retaining the current `OnUnitActiveSec=5min` cadence after `212` receipts
+  showed p50/p90/p95 intervals of `330/330/330` seconds, `5`
+  active-storage-drift receipts in `1` incident, and `39` busy-context
+  receipts from intentional VM activity; GitLab admission remains
   fail-closed, while the systemd timer passes `--allow-busy` so expected
   `vihs-ci-win11` or golden-VM activity is retained as `status: busy` without
   turning the timer unit red; the readiness wrapper keeps `Data1` as a manual
