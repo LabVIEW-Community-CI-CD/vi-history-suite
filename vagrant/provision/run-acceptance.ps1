@@ -33,8 +33,11 @@ $WorkspaceRoot = 'C:\vihs-workspace'
 $SharedRoot    = 'C:\vihs-shared'
 $EvidenceRoot  = 'C:\vihs-evidence'
 $LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'
+$LabVIEWActivationDialogEvidencePath = Join-Path $EvidenceRoot 'labview-activation-dialog.json'
 $LabVIEWTimeoutScreenshotPath = Join-Path $EvidenceRoot 'labview-timeout-desktop.png'
 $LabVIEWTimeoutScreenshotScriptPath = Join-Path $EvidenceRoot 'capture-labview-timeout-desktop.ps1'
+$script:LastActivationDialogRescueAttempt = [datetime]::MinValue
+$script:ActivationDialogRescueAttemptCount = 0
 $desktopInterloperProcessNames = @(
   'msedge',
   'msedgewebview2',
@@ -324,6 +327,122 @@ try {
   return $result
 }
 
+function Invoke-LabVIEWActivationDialogRescue {
+  param([string]$Reason = 'during VI Server wait')
+
+  $now = Get-Date
+  if ($script:ActivationDialogRescueAttemptCount -ge 3) {
+    return
+  }
+  if (($now - $script:LastActivationDialogRescueAttempt).TotalSeconds -lt 10) {
+    return
+  }
+
+  $script:LastActivationDialogRescueAttempt = $now
+  $script:ActivationDialogRescueAttemptCount += 1
+
+  $taskName = 'vihs-lv-activation-dialog-rescue'
+  $resultPath = $LabVIEWActivationDialogEvidencePath
+  $escapedResultPath = $resultPath.Replace("'", "''")
+  $rescueScript = @"
+`$ErrorActionPreference = 'Stop'
+`$result = [ordered]@{
+  schema = 'vi-history-suite/vagrant-labview-activation-dialog@v1'
+  capturedAt = (Get-Date -Format 'o')
+  clicked = `$false
+  clickedName = `$null
+  windowName = `$null
+  candidates = @()
+  error = `$null
+}
+try {
+  Add-Type -AssemblyName UIAutomationClient
+  Add-Type -AssemblyName UIAutomationTypes
+  `$root = [System.Windows.Automation.AutomationElement]::RootElement
+  `$buttonType = [System.Windows.Automation.ControlType]::Button
+  `$buttonCondition = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, `$buttonType)
+  `$deadline = (Get-Date).AddSeconds(12)
+  while ((Get-Date) -lt `$deadline -and -not `$result.clicked) {
+    `$windows = `$root.FindAll([System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
+    foreach (`$window in `$windows) {
+      `$windowName = [string]`$window.Current.Name
+      if (`$windowName -notmatch 'LabVIEW|National Instruments|NI|Activation') {
+        continue
+      }
+
+      `$buttons = `$window.FindAll([System.Windows.Automation.TreeScope]::Descendants, `$buttonCondition)
+      foreach (`$button in `$buttons) {
+        `$buttonName = [string]`$button.Current.Name
+        if ([string]::IsNullOrWhiteSpace(`$buttonName)) {
+          continue
+        }
+        `$result.candidates += [ordered]@{
+          windowName = `$windowName
+          buttonName = `$buttonName
+          enabled = `$button.Current.IsEnabled
+        }
+      }
+
+      `$target = `$null
+      foreach (`$preferredName in @('Begin 7 Day Trial', 'Begin 7-Day Trial', 'Activate')) {
+        foreach (`$button in `$buttons) {
+          `$buttonName = [string]`$button.Current.Name
+          if (`$button.Current.IsEnabled -and `$buttonName -eq `$preferredName) {
+            `$target = `$button
+            break
+          }
+        }
+        if (`$target) { break }
+      }
+
+      if (`$target) {
+        `$targetName = [string]`$target.Current.Name
+        `$invokePattern = `$target.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+        `$invokePattern.Invoke()
+        `$result.clicked = `$true
+        `$result.clickedName = `$targetName
+        `$result.windowName = `$windowName
+        break
+      }
+    }
+
+    if (-not `$result.clicked) {
+      Start-Sleep -Seconds 1
+    }
+  }
+} catch {
+  `$result.error = `$_.Exception.Message
+}
+`$result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath '$escapedResultPath' -Encoding utf8
+"@
+  $encodedRescueCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($rescueScript))
+
+  Write-Step "Checking LabVIEW activation dialog rescue ($Reason, attempt $script:ActivationDialogRescueAttemptCount)."
+  try {
+    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
+    $taskAction = New-ScheduledTaskAction `
+      -Execute 'powershell.exe' `
+      -Argument "-NoLogo -NoProfile -WindowStyle Hidden -EncodedCommand $encodedRescueCommand" `
+      -WorkingDirectory $EvidenceRoot
+    $taskTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(1)
+    $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'vagrant' -LogonType Interactive -RunLevel Highest
+    $taskSettings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 1)
+
+    Register-ScheduledTask -TaskName $taskName -Action $taskAction -Trigger $taskTrigger -Principal $taskPrincipal -Settings $taskSettings -Force | Out-Null
+    Start-ScheduledTask -TaskName $taskName
+  } catch {
+    [ordered]@{
+      schema = 'vi-history-suite/vagrant-labview-activation-dialog@v1'
+      capturedAt = (Get-Date -Format 'o')
+      clicked = $false
+      clickedName = $null
+      windowName = $null
+      candidates = @()
+      error = $_.Exception.Message
+    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $resultPath -Encoding utf8
+  }
+}
+
 function Get-LabVIEWPrelaunchTaskSnapshot {
   param([string]$TaskName)
 
@@ -455,6 +574,10 @@ function Wait-LabVIEWPort {
   $nextProgressLog = Get-Date
   while ((Get-Date) -lt $deadline) {
     Stop-DesktopInterloperProcesses -Reason 'during VI Server wait'
+
+    if ((Get-LabVIEWProcessSnapshot).Count -gt 0) {
+      Invoke-LabVIEWActivationDialogRescue -Reason 'during VI Server wait'
+    }
 
     if (Test-LabVIEWPortListening) {
       Write-LabVIEWStartupEvidence -Phase 'vi-server-ready' -TaskName $TaskName
