@@ -8,19 +8,54 @@ import {
   runHarnessSmoke
 } from '../../src/harness/harnessSmoke';
 
+function createGovernedRunGitMock(options: {
+  remoteUrl?: string;
+  status?: string;
+  trackedTarget?: string;
+  head?: string;
+} = {}) {
+  return vi.fn(async (args: string[], _cwd?: string) => {
+    const command = args.join(' ');
+    if (command === 'config --global --add safe.directory /tmp/harnesses/ni-labview-icon-editor') {
+      return '';
+    }
+    if (command === 'remote get-url origin') {
+      return options.remoteUrl ?? 'https://github.com/ni/labview-icon-editor.git\n';
+    }
+    if (command === 'status --porcelain') {
+      return options.status ?? '';
+    }
+    if (
+      command ===
+      'ls-files --error-unmatch Tooling/deployment/VIP_Pre-Install Custom Action.vi'
+    ) {
+      return options.trackedTarget ?? 'Tooling/deployment/VIP_Pre-Install Custom Action.vi\n';
+    }
+    if (command === 'rev-parse HEAD') {
+      return options.head ?? 'abcdef1234567890abcdef1234567890abcdef12\n';
+    }
+    throw new Error(`unexpected git command: ${command}`);
+  });
+}
+
 describe('ensureHarnessClone', () => {
-  it('reuses an existing clone when the .git directory already exists', async () => {
+  it('reuses an existing governed cache when identity, cleanliness, and target tracking match', async () => {
     const stat = vi.fn().mockResolvedValue({
       isDirectory: () => true
     });
     const mkdir = vi.fn();
-    const runGit = vi.fn();
+    const runGit = createGovernedRunGitMock();
+    const writes = new Map<string, string>();
 
     await expect(
       ensureHarnessClone(HARNESS_VHS_001, '/tmp/harnesses', {
         stat,
         mkdir,
-        runGit
+        runGit,
+        writeFile: vi.fn(async (filePath: string, contents: string) => {
+          writes.set(filePath, contents);
+        }) as never,
+        now: () => '2026-05-15T13:30:00.000Z'
       })
     ).resolves.toBe(path.join('/tmp/harnesses', 'ni-labview-icon-editor'));
 
@@ -28,19 +63,47 @@ describe('ensureHarnessClone', () => {
       path.join('/tmp/harnesses', 'ni-labview-icon-editor', '.git')
     );
     expect(mkdir).not.toHaveBeenCalled();
-    expect(runGit).not.toHaveBeenCalled();
+    expect(runGit).toHaveBeenCalledWith(
+      ['config', '--global', '--add', 'safe.directory', path.join('/tmp/harnesses', 'ni-labview-icon-editor')],
+      path.join('/tmp/harnesses', 'ni-labview-icon-editor')
+    );
+    expect(
+      JSON.parse(
+        writes.get(path.join('/tmp/harnesses', 'ni-labview-icon-editor.vihs-harness-cache.json')) ??
+          '{}'
+      )
+    ).toMatchObject({
+      schema: 'vi-history-suite/canonical-harness-cache@v1',
+      harnessId: 'HARNESS-VHS-001',
+      sourceRepositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+      acquisitionMode: 'reused',
+      acquiredAt: '2026-05-15T13:30:00.000Z',
+      head: 'abcdef1234567890abcdef1234567890abcdef12',
+      clean: true,
+      targetTracked: true,
+      safeDirectoryConfigured: true
+    });
   });
 
-  it('clones on demand when the canonical harness is not present locally', async () => {
+  it('clones on demand and records fresh canonical harness acquisition', async () => {
     const stat = vi.fn().mockRejectedValue(new Error('missing'));
     const mkdir = vi.fn().mockResolvedValue(undefined);
-    const runGit = vi.fn().mockResolvedValue('');
+    const governedGit = createGovernedRunGitMock();
+    const runGit = vi.fn(async (args: string[], cwd: string) => {
+      if (args[0] === 'clone') {
+        return '';
+      }
+      return governedGit(args, cwd);
+    });
+    const writeFile = vi.fn().mockResolvedValue(undefined);
 
     await expect(
       ensureHarnessClone(HARNESS_VHS_001, '/tmp/harnesses', {
         stat,
         mkdir,
-        runGit
+        runGit,
+        writeFile,
+        now: () => '2026-05-15T13:31:00.000Z'
       })
     ).resolves.toBe(path.join('/tmp/harnesses', 'ni-labview-icon-editor'));
 
@@ -54,6 +117,62 @@ describe('ensureHarnessClone', () => {
       ],
       '/tmp/harnesses'
     );
+    expect(writeFile).toHaveBeenCalledWith(
+      path.join('/tmp/harnesses', 'ni-labview-icon-editor.vihs-harness-cache.json'),
+      expect.stringContaining('"acquisitionMode": "fresh-clone"')
+    );
+  });
+
+  it('fails closed when a reused canonical harness cache is dirty', async () => {
+    await expect(
+      ensureHarnessClone(HARNESS_VHS_001, '/tmp/harnesses', {
+        stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+        runGit: createGovernedRunGitMock({ status: ' M resource/plugins/lv_icon.vi\n' })
+      })
+    ).rejects.toThrow('Canonical harness cache is dirty for HARNESS-VHS-001');
+  });
+
+  it('fails closed when a reused canonical harness cache points at a different remote', async () => {
+    await expect(
+      ensureHarnessClone(HARNESS_VHS_001, '/tmp/harnesses', {
+        stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+        runGit: createGovernedRunGitMock({
+          remoteUrl: 'https://github.com/example/not-labview-icon-editor.git\n'
+        })
+      })
+    ).rejects.toThrow('Canonical harness cache remote mismatch for HARNESS-VHS-001');
+  });
+
+  it('fails closed when a reused canonical harness cache is missing the target file', async () => {
+    const runGit = vi.fn(async (args: string[]) => {
+      const command = args.join(' ');
+      if (command === 'config --global --add safe.directory /tmp/harnesses/ni-labview-icon-editor') {
+        return '';
+      }
+      if (command === 'remote get-url origin') {
+        return 'https://github.com/ni/labview-icon-editor.git\n';
+      }
+      if (command === 'status --porcelain') {
+        return '';
+      }
+      if (
+        command ===
+        'ls-files --error-unmatch Tooling/deployment/VIP_Pre-Install Custom Action.vi'
+      ) {
+        return '';
+      }
+      if (command === 'rev-parse HEAD') {
+        return 'abcdef1234567890abcdef1234567890abcdef12\n';
+      }
+      throw new Error(`unexpected git command: ${command}`);
+    });
+
+    await expect(
+      ensureHarnessClone(HARNESS_VHS_001, '/tmp/harnesses', {
+        stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+        runGit
+      })
+    ).rejects.toThrow('Canonical harness cache is incomplete for HARNESS-VHS-001');
   });
 });
 
@@ -99,6 +218,7 @@ describe('runHarnessSmoke', () => {
       },
       {
         stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+        runGit: createGovernedRunGitMock(),
         mkdir,
         writeFile: vi.fn(async (filePath: string, contents: string) => {
           writes.set(filePath, contents);
@@ -162,6 +282,7 @@ describe('runHarnessSmoke', () => {
       },
       {
         stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+        runGit: createGovernedRunGitMock(),
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile: vi.fn().mockResolvedValue(undefined) as never,
         getRepoHead: vi.fn().mockResolvedValue('abcdef1234567890'),
@@ -199,6 +320,7 @@ describe('runHarnessSmoke', () => {
         },
         {
           stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+          runGit: createGovernedRunGitMock(),
           mkdir: vi.fn().mockResolvedValue(undefined),
           writeFile: vi.fn(async (filePath: string, contents: string) => {
             writes.set(filePath, contents);

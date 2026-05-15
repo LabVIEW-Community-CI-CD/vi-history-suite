@@ -66,6 +66,11 @@ describe('governed proof documentation contract', () => {
     expect(maintainerControlPlane).toContain('npm run proof:run -- host-operation-matrix');
     expect(harnesses).toContain('npm run proof:run -- report-smoke');
     expect(harnesses).toContain('host-operation-matrix');
+    expect(harnesses).toContain('Governed Harness Cache Strategy');
+    expect(harnesses).toContain('ni-labview-icon-editor.vihs-harness-cache.json');
+    expect(harnesses).toContain('safe.directory');
+    expect(testPlan).toContain('fails closed for');
+    expect(testPlan).toContain('dirty, mismatched, or incomplete caches');
     expect(exactPair).toContain('runGovernedProof report-smoke');
     expect(exactPair).toContain('bounded exact-pair diagnosis inputs');
     expect(exactPair).toContain('not installed-user extension settings');
