@@ -20,6 +20,7 @@ const INTERNAL_DOCS_TEST_FILES = [
   'tests/unit/executionPolicyDocs.test.ts',
   'tests/unit/governedProofDocs.test.ts',
   'tests/unit/firstTimeOverviewVideoPlan.test.ts',
+  'tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts',
   'tests/unit/informationForUsersAudienceDocs.test.ts',
   'tests/unit/informationForUsersQualityDocs.test.ts',
   'tests/unit/informationForUsersSupportDocs.test.ts',

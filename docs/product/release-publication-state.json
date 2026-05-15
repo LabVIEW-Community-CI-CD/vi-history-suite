@@ -691,6 +691,18 @@
       "windowsExactVsixInstallProof": ".cache/windows-exact-vsix-install-proof/latest/windows-exact-vsix-install-proof.json"
     }
   },
+  "postPublicationInstalledUserAcceptanceCampaign": {
+    "status": "planned-after-publication",
+    "gitlabWorkItem": "gitlab#10",
+    "packetPath": "docs/product/post-publication-installed-user-acceptance-campaign-2026-05-15.md",
+    "packetJsonPath": "docs/product/post-publication-installed-user-acceptance-campaign-2026-05-15.json",
+    "purpose": "Observe the published Marketplace extension as a first-time installed user after release publication is already retained.",
+    "marketplacePublicationProvesInstalledUserAcceptance": false,
+    "publicationMutationAdmitted": false,
+    "nextProductAction": "run-post-publication-installed-user-acceptance-campaign",
+    "nextSemVerDefaultDecision": "sustainment-only-until-campaign-finds-patch-worthy-defect-or-proof-gap",
+    "separateWindowsDockerDesktopGate": "docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md"
+  },
   "marketplaceCommunityValidationPreview": {
     "status": "published-and-verified",
     "publicationClaim": "public-validation-prerelease",

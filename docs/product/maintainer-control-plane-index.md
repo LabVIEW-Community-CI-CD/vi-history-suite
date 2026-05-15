@@ -34,6 +34,7 @@ documents:
 - [Public GitHub Source Publication Ledger](./public-github-source-publication-ledger.md)
 - [Public GitHub Source Publication Ledger JSON](./public-github-source-publication-ledger.json)
 - [Work Item 0001 Installed-User Onboarding Publication Route](./work-item-0001-installed-user-onboarding-publication-route-2026-05-15.md)
+- [Post-Publication Installed-User Acceptance Campaign](./post-publication-installed-user-acceptance-campaign-2026-05-15.md)
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [Release Procedure](../release-procedure.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
@@ -109,6 +110,12 @@ documents:
   and retained
 - next admitted release-control action:
   `retain-v1.3.16-marketplace-closeout-on-protected-develop`
+- next product-observation action:
+  `run-post-publication-installed-user-acceptance-campaign`
+- post-publication installed-user acceptance campaign:
+  [post-publication-installed-user-acceptance-campaign-2026-05-15.md](./post-publication-installed-user-acceptance-campaign-2026-05-15.md)
+- campaign boundary: published Marketplace state is not first-time
+  installed-user acceptance proof
 - current Marketplace stable version: `1.3.16`
 - retained Marketplace public validation target: `1.3.13`
 - active public validation publication trigger:

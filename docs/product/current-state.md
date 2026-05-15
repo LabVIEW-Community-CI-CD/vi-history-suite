@@ -308,6 +308,15 @@ Latest landed ship target:
   retained through MR !214 and protected main pipeline `2517258949`
 - current next admitted action:
   `retain-v1.3.16-marketplace-closeout-on-protected-develop`
+- current next product-observation action:
+  `run-post-publication-installed-user-acceptance-campaign`
+- post-publication installed-user acceptance campaign:
+  [post-publication-installed-user-acceptance-campaign-2026-05-15.md](./post-publication-installed-user-acceptance-campaign-2026-05-15.md)
+- post-publication installed-user acceptance campaign JSON:
+  [post-publication-installed-user-acceptance-campaign-2026-05-15.json](./post-publication-installed-user-acceptance-campaign-2026-05-15.json)
+- campaign boundary: Marketplace publication and exact-VSIX install proof are
+  retained release evidence, but first-time installed-user acceptance remains a
+  separate observation campaign.
 - current external Windows/LabVIEW community proof intake checklist:
   [windows-labview-community-proof-intake-checklist-2026-04-26.md](./windows-labview-community-proof-intake-checklist-2026-04-26.md)
 - current external Windows/LabVIEW community proof intake checklist JSON:
