@@ -247,6 +247,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['vagrant:runner:readiness:history']).toBe(
       'node scripts/summarizeVagrantRunnerReadinessHistory.js'
     );
+    expect(manifest.scripts?.['vagrant:acceptance:freshness']).toBe(
+      'node scripts/checkGitLabVagrantPipelineFreshness.js'
+    );
     expect(manifest.scripts?.['wiki:workbench:sync-bundled-docs']).toBe(
       'npm run compile && node out/cli/runWikiWorkbench.js sync-bundled-docs'
     );
@@ -445,7 +448,7 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicExactPretagProof.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/publicGithubExactReleaseTransaction.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/resolveLocalGitHubToken.test.ts tests/unit/softwareFactoryOrchestrator.test.ts tests/unit/runWindowsIntegrationHost.test.ts tests/unit/linuxHostLabviewProofDocs.test.ts tests/unit/vagrantAcceptanceEvidenceAssert.test.ts tests/unit/vagrantAcceptanceRunnerReadiness.test.ts tests/unit/vagrantWindowsAcceptanceRunnerLane.test.ts'
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicExactPretagProof.test.ts tests/unit/publicLinuxInstalledUserSmoke.test.ts tests/unit/publicWindowsInstalledUserContract.test.ts tests/unit/publicGithubExactReleaseTransaction.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/resolveLocalGitHubToken.test.ts tests/unit/softwareFactoryOrchestrator.test.ts tests/unit/runWindowsIntegrationHost.test.ts tests/unit/linuxHostLabviewProofDocs.test.ts tests/unit/vagrantAcceptanceEvidenceAssert.test.ts tests/unit/vagrantAcceptanceRunnerReadiness.test.ts tests/unit/vagrantPipelineFreshness.test.ts tests/unit/vagrantWindowsAcceptanceRunnerLane.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'

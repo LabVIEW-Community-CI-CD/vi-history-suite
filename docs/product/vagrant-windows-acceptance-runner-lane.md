@@ -130,6 +130,10 @@ Official GitLab references:
 - runner readiness package command: `npm run vagrant:runner:readiness`
 - runner readiness history package command:
   `npm run vagrant:runner:readiness:history`
+- acceptance pipeline freshness command:
+  `npm run vagrant:acceptance:freshness`
+- acceptance pipeline freshness evidence:
+  `vagrant/evidence/pipeline-freshness`
 - runner readiness systemd assets:
   `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.service` and
   `scripts/gitlab-runner/linux/vihs-vagrant-acceptance-readiness.timer`
@@ -235,6 +239,15 @@ access with `resource_group: vihs-windows-vagrant`, and declares
 after the readiness gate passes. The GitLab resource group is configured with
 `process_mode: newest_ready_first` so duplicate merge-request pipelines do not
 force the latest merge gate to wait behind an older ready Vagrant proof. It
+first runs `npm run vagrant:acceptance:freshness` and writes
+`vagrant/evidence/pipeline-freshness`; when an older stale duplicate
+merge-request pipeline discovers a newer non-canceled MR pipeline, it retains
+that freshness receipt and exits before storage checks, package work, or VM
+boot. CI gives the check a 5000 ms settle window so same-second duplicate
+pipelines can become visible before the decision is written, and bounds each
+GitLab API query at 10000 ms so API uncertainty cannot stall the runner before
+the VM proof. Protected branch, tag, and freshness-API-uncertain jobs run
+fail-open so the Vagrant proof is preserved when freshness cannot be proven. It then
 packages the VSIX, stages it under
 `vagrant/shared/`, optionally refreshes the local box, runs the host doctor,
 boots the disposable VM, runs bootstrap, reloads once for the `vagrant`
