@@ -22,6 +22,17 @@ const history = require(path.join(repoRoot, 'scripts', 'summarizeVagrantLabviewS
     timeout: boolean;
     durationSec: number | null;
   };
+  parseStartupReceipt: (
+    filePath: string,
+    text: string
+  ) => {
+    phase: string;
+    failureCategory: string;
+    nextAction: string;
+    startupDurationSec: number | null;
+    lastObservedLabVIEWState: string;
+    timedOut: boolean;
+  };
   summarizeVagrantLabviewStartupHistory: (
     options: { roots: string[]; evidenceDir?: string },
     deps: { now: () => Date; hostname: string }
@@ -187,5 +198,31 @@ describe('Vagrant LabVIEW startup history summarizer', () => {
 
     expect(parsed.roots).toEqual(['/tmp/evidence']);
     expect(parsed.json).toBe(true);
+  });
+
+  it('retains timeout next-action diagnostics from startup receipts', () => {
+    const receipt = history.parseStartupReceipt(
+      '/tmp/labview-startup.json',
+      JSON.stringify({
+        schema: 'vi-history-suite/vagrant-labview-startup@v1',
+        phase: 'timeout',
+        failureCategory: 'vi-server-not-listening',
+        nextAction:
+          'LabVIEW is running in the interactive desktop but VI Server port 3363 did not listen.',
+        startupDurationSec: 60.2,
+        lastObservedLabVIEWState: 'interactive-running-vi-server-not-listening',
+        viServerTimeoutSec: 60
+      })
+    );
+
+    expect(receipt).toMatchObject({
+      phase: 'timeout',
+      failureCategory: 'vi-server-not-listening',
+      nextAction:
+        'LabVIEW is running in the interactive desktop but VI Server port 3363 did not listen.',
+      startupDurationSec: 60.2,
+      lastObservedLabVIEWState: 'interactive-running-vi-server-not-listening',
+      timedOut: true
+    });
   });
 });

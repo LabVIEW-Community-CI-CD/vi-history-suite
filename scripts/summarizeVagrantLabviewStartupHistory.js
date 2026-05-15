@@ -138,6 +138,16 @@ function parseStartupReceipt(filePath, text) {
     path: filePath,
     schema: parsed.schema ?? '',
     phase: parsed.phase ?? '',
+    failureCategory: parsed.failureCategory ?? parsed.startupDiagnostics?.failureCategory ?? '',
+    nextAction: parsed.nextAction ?? parsed.startupDiagnostics?.nextAction ?? '',
+    startupDurationSec:
+      typeof parsed.startupDurationSec === 'number'
+        ? parsed.startupDurationSec
+        : typeof parsed.startupDiagnostics?.waitElapsedSec === 'number'
+          ? parsed.startupDiagnostics.waitElapsedSec
+          : null,
+    lastObservedLabVIEWState:
+      parsed.lastObservedLabVIEWState ?? parsed.startupDiagnostics?.lastObservedLabVIEWState ?? '',
     viServerTimeoutSec: typeof parsed.viServerTimeoutSec === 'number'
       ? parsed.viServerTimeoutSec
       : null,

@@ -168,6 +168,16 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('firewallRules           = @(Get-LabVIEWFirewallSnapshot)');
     expect(acceptance).toContain('interactiveWindows      = @(Get-InteractiveWindowSnapshot)');
     expect(acceptance).toContain('recentEvents            = @(Get-RecentLabVIEWEventSnapshot)');
+    expect(acceptance).toContain('Get-LabVIEWStartupDiagnostics');
+    expect(acceptance).toContain('failureCategory         = $startupDiagnostics.failureCategory');
+    expect(acceptance).toContain('nextAction              = $startupDiagnostics.nextAction');
+    expect(acceptance).toContain('startupDurationSec      = $startupDiagnostics.waitElapsedSec');
+    expect(acceptance).toContain('lastObservedLabVIEWState = $startupDiagnostics.lastObservedLabVIEWState');
+    expect(acceptance).toContain('viServerPortSnapshot    = $startupDiagnostics.viServerPortSnapshot');
+    expect(acceptance).toContain('interactive-running-vi-server-not-listening');
+    expect(acceptance).toContain(
+      'LabVIEW is running in the interactive desktop but VI Server port 3363 did not listen.'
+    );
     expect(acceptance).toContain('timeoutDesktopScreenshot = $desktopScreenshot');
     expect(acceptance).toContain('principalLogonType');
     expect(acceptance).toContain('lastTaskResultHex  = Format-UnsignedHex32');
@@ -341,6 +351,8 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(laneDoc).toContain('labview-startup.json');
     expect(laneDoc).toContain('labview-timeout-desktop.png');
     expect(laneDoc).toContain('interactive window titles');
+    expect(laneDoc).toContain('`failureCategory`, `startupDurationSec`, `lastObservedLabVIEWState`');
+    expect(laneDoc).toContain('`viServerPortSnapshot`, and `nextAction`');
     expect(laneDoc).toContain('recent Windows event');
     expect(laneDoc).toContain('suppresses Windows consumer backup and welcome');
     expect(laneDoc).toContain('closes first-run browser/OOBE interlopers');
