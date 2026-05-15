@@ -696,6 +696,25 @@ until that later public GitHub release gate is complete.
   verification timestamp `2026-05-15T14:54:18.025Z`, package SHA-256
   `56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170`.
 
+## Post-Publication Installed-User Acceptance Campaign
+
+- Campaign packet:
+  `docs/product/post-publication-installed-user-acceptance-campaign-2026-05-15.md`
+- Campaign packet JSON:
+  `docs/product/post-publication-installed-user-acceptance-campaign-2026-05-15.json`
+- GitLab work item: `#10`
+- Boundary: Marketplace publication is not treated as first-time installed-user
+  acceptance proof.
+- Publication mutation: not admitted by this campaign.
+- Next product action:
+  `run-post-publication-installed-user-acceptance-campaign`
+- Default SemVer decision: sustainment-only unless the campaign finds a
+  patch-worthy installed-user defect, public-facing documentation correction, or
+  proof gap.
+- Windows Docker Desktop Windows-container proof remains a separate launch-gate
+  decision under
+  `docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md`.
+
 ## Public GitHub Installed-User Support Matrix Adoption
 
 - Public GitHub PR:
