@@ -3,12 +3,20 @@
   "iterationId": "physical-host-labview-2026-proof-v1",
   "sliceId": "runtime-contract-host-provider-v1",
   "createdDate": "2026-05-16",
-  "status": "installed-awaiting-operator-activation",
+  "status": "physical-host-proof-admitted-with-headless-follow-up",
   "governedWorkItem": {
     "reference": "#24",
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24",
     "title": "Install and admit physical-host Linux LabVIEW 2026 Community x64 proof"
   },
+  "followUpWorkItems": [
+    {
+      "reference": "#25",
+      "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/25",
+      "title": "Fix Linux host validate-fixture headless timeout on Ubuntu 26.04",
+      "classification": "implementation-defect-candidate"
+    }
+  ],
   "authorityScope": {
     "governedAuthority": "gitlab",
     "publicAuthority": "github",
@@ -51,10 +59,20 @@
         ".specify/specs/runtime-contract-host-provider-v1/tasks.md"
       ],
       "fact": "The public import carries the sanitized requirement that Linux host proof remains distinct from Windows proof, and its Spec Kit task list already requires bug-oracle classification for observed defects."
+    },
+    {
+      "id": "OBS-004",
+      "authority": "gitlab",
+      "evidence": [
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/vihs-validation-proof.json",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/labviewcli-create-comparison.log",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/diff-report-lv_icon.vi.html"
+      ],
+      "fact": "After activation and host compatibility repairs, the physical Ubuntu 26.04 host validated as ready and generated a LabVIEW HTML comparison report from the cloned lv_icon.vi fixture pair through non-headless LabVIEWCLI CreateComparisonReport."
     }
   ],
-  "bugOracleClassification": "requirement-clarification-candidate",
-  "classificationRationale": "The bridge has not shown the same wrong runtime behavior in both authorities, and it has not isolated an implementation-only defect in one authority. The observed gap is whether the retained April 2026 Linux host proof remains the current admitted claim after the physical host moved to Ubuntu 26.04 and no LabVIEWCLI binary is discoverable. That is a requirement and proof-scope clarification until #24 either refreshes the proof or fails closed with compatibility evidence.",
+  "bugOracleClassification": "implementation-defect-candidate",
+  "classificationRationale": "The initial proof-scope clarification was resolved by installing, activating, and proving host-native LabVIEW 2026 Community x64 on the physical Ubuntu 26.04 host. The remaining wrong behavior is isolated to the GitLab Linux host validate-fixture headless wrapper: it cloned and staged the fixture correctly, then timed out in headless LabVIEW initialization. The same requirement was admitted through non-headless LabVIEWCLI CreateComparisonReport against the same cloned fixture pair, so the follow-up is implementation-scoped unless a later GitHub Spec Kit iteration reproduces the same wrong behavior.",
   "preflightAttempts": [
     {
       "attemptId": "physical-host-preflight-2026-05-16",
@@ -129,6 +147,99 @@
       "nextOperatorAction": "Sergio activates LabVIEW 2026 Community on this physical host before Codex runs LabVIEWCLI or `vihs --validate` proof commands."
     }
   ],
+  "activationAndCompatibilityOutcome": {
+    "date": "2026-05-16",
+    "activationPerformedByCodex": false,
+    "activationPerformedByOperator": true,
+    "labviewLaunchRepair": {
+      "missingLibrary": "libGLU.so.1",
+      "installedPackage": "libglu1-mesa 9.0.2-1.1build2",
+      "configBackupPath": "/home/sergio/natinst/.config/LabVIEW-2026/labview.conf.bak-20260516T140508Z"
+    },
+    "glibcCompatibilityRepair": {
+      "hostGlibc": "Ubuntu GLIBC 2.43-2ubuntu2",
+      "symptom": "/usr/local/lib64/liblvrt.so.26.0: cannot enable executable stack as shared object requires: Invalid argument",
+      "installedPackages": [
+        "patchelf 0.18.0-1.4build1",
+        "pax-utils 1.3.10-1"
+      ],
+      "patchedLibrary": "/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1",
+      "backupPath": "/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1.bak-20260516T142420Z",
+      "postRepairExecstack": "-"
+    }
+  },
+  "proofAttempts": [
+    {
+      "attemptId": "vihs-validate-after-activation-2026-05-16",
+      "date": "2026-05-16",
+      "command": "node out/tooling/localRuntimeSettingsCli.js --validate --settings-file /home/sergio/.config/Code/User/settings.json --proof-out .cache/physical-host-labview-2026-proof/20260516T111227Z",
+      "result": "passed",
+      "facts": {
+        "proofStatus": "ready",
+        "implementationStatus": "implemented",
+        "runtimeValidationOutcome": "ready",
+        "runtimeProvider": "host-native",
+        "runtimeEngine": "labview-cli",
+        "errorCode": "VIHS_OK",
+        "settingsProvider": "host",
+        "settingsLabviewVersion": "2026",
+        "settingsLabviewBitness": "x64"
+      },
+      "retainedLocalEvidence": [
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/vihs-validation-proof.json",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/vihs-validation-issue.md"
+      ]
+    },
+    {
+      "attemptId": "validate-fixture-headless-2026-05-16",
+      "date": "2026-05-16",
+      "command": "node out/tooling/localRuntimeSettingsCli.js validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .cache/physical-host-labview-2026-proof/20260516T111227Z/fixture-host-after-activation --runtime-timeout-ms 300000",
+      "result": "failed",
+      "bugOracleClassification": "implementation-defect-candidate",
+      "facts": {
+        "fixtureRepositoryCloned": true,
+        "oldFixtureViSha256": "2cac4ad195978f5424b08a8c63796c6a3d6193fb54bca4bfab3b645220c4ec98",
+        "newFixtureViSha256": "1419b180fe2d6aa68507f46775578c73822cad122b255b353e0922a81edf49d6",
+        "runtimeTimeoutMs": 300000,
+        "runtimeStderr": "comparison-command timed out after 300000ms",
+        "headlessDiagnosticReason": "linux-headless-recursive-load",
+        "generatedReportExists": false
+      },
+      "retainedLocalEvidence": [
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/fixture-host-after-activation/fixture-clones/ni-labview-icon-editor",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/fixture-host-after-activation/reports/HARNESS-VHS-002/workspace-storage/reports/d1f2a033ede6/748b058254b6/staging/left-ab94f6c4b375-lv_icon.vi",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/fixture-host-after-activation/reports/HARNESS-VHS-002/workspace-storage/reports/d1f2a033ede6/748b058254b6/staging/right-8741bb08026c-lv_icon.vi",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/fixture-host-after-activation/reports/HARNESS-VHS-002/workspace-storage/reports/d1f2a033ede6/748b058254b6/runtime-stderr.txt",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/fixture-host-after-activation/reports/HARNESS-VHS-002/workspace-storage/reports/d1f2a033ede6/748b058254b6/headless-diagnostics/LVStatus.txt"
+      ]
+    },
+    {
+      "attemptId": "manual-create-comparison-after-activation-2026-05-16",
+      "date": "2026-05-16",
+      "command": "LabVIEWCLI -LogToConsole TRUE -LogFilePath .cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/labviewcli-create-comparison.log -OperationName CreateComparisonReport -VI1 .cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/lv_icon-old.vi -VI2 .cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/lv_icon-new.vi -ReportType HTML -ReportPath .cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/diff-report-lv_icon.vi.html -LabVIEWPath /usr/local/natinst/LabVIEW-2026-64/labview",
+      "result": "passed",
+      "facts": {
+        "exitCode": 0,
+        "reportSizeBytes": 414111,
+        "reportSha256": "bb1586a22f6948b2be434fb3df974576b0fd90b0b1338aed9d96596606767813",
+        "assetCount": 361,
+        "assetBytes": 3514474,
+        "labviewCliLogSha256": "74299170f16fe2f7093d233f383a73e89ebfaaf7cc5ac24a8be73007f10b42a1",
+        "oldFixtureViSha256": "2cac4ad195978f5424b08a8c63796c6a3d6193fb54bca4bfab3b645220c4ec98",
+        "newFixtureViSha256": "1419b180fe2d6aa68507f46775578c73822cad122b255b353e0922a81edf49d6",
+        "closeLabviewExit": 0,
+        "labviewProcessesRemainingAfterClose": false
+      },
+      "retainedLocalEvidence": [
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/labviewcli-create-comparison.log",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/stdout.txt",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/stderr.txt",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/diff-report-lv_icon.vi.html",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/diff-report-lv_icon.vi_files/",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/labviewcli-close-after-manual-proof.log"
+      ]
+    }
+  ],
   "redactionBoundary": {
     "publicMutationRequired": false,
     "githubImportPath": "docs/requirements/imports/runtime-contract-host-provider-v1/",
@@ -136,12 +247,9 @@
     "reason": "The public import remains requirements-only. No implementation source, private evidence packet, host install transcript, or local control-plane tooling crosses to GitHub during this iteration."
   },
   "nextActions": [
-    "Sergio activates LabVIEW 2026 Community on this physical host.",
-    "After activation, run #24 as the physical-host proof item, not a Linux Vagrant substitute.",
-    "After activation, run `vihs --validate --proof-out ./.cache/physical-host-labview-2026-proof/latest` and retain the proof packet.",
-    "If #24 passes, retain the fresh physical-host proof packet and close this iteration as an evidence-refresh outcome.",
-    "If #24 fails because Ubuntu 26.04 cannot admit the NI noble package path, update the governed requirement wording and release/user surfaces to distinguish retained historical proof from current-host proof.",
-    "Open a GitHub Spec Kit refresh only if the imported requirement semantics change after the governed proof clarification."
+    "Close #24 as physical-host Linux LabVIEW 2026 Community x64 proof admitted.",
+    "Do #25 for Linux host `validate-fixture` headless execution on Ubuntu 26.04.",
+    "Keep the GitHub Spec Kit import unchanged unless the follow-up changes imported requirement semantics."
   ],
   "validationPlan": [
     "npm exec -- vitest run tests/unit/dualAuthorityBridgeDocs.test.ts",

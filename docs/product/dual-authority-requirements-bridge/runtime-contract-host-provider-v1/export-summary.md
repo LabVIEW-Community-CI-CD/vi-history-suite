@@ -58,8 +58,8 @@ files, proof packets, or GitLab release credentials cross this boundary.
 - Iteration: `physical-host-labview-2026-proof-v1`
 - Work item:
   <https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24>
-- Classification: `requirement-clarification-candidate`
-- Current status: `installed-awaiting-operator-activation`
+- Classification: `implementation-defect-candidate`
+- Current status: `physical-host-proof-admitted-with-headless-follow-up`
 - Retained packet:
   `docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json`
 
@@ -73,5 +73,20 @@ confirmed that `sudo` required interactive operator authentication. After
 operator authorization, Codex installed the NI LabVIEW 2026 Community x64
 package set from the NI `noble` repository. `LabVIEWCLI` is now discoverable at
 `/usr/local/bin/LabVIEWCLI`, LabVIEW is installed at
-`/usr/local/natinst/LabVIEW-2026-64/labview`, and the iteration is paused until
-Sergio completes LabVIEW activation.
+`/usr/local/natinst/LabVIEW-2026-64/labview`, and Sergio completed LabVIEW
+Community activation.
+
+Post-activation proof admitted the physical host after two compatibility
+repairs: install `libglu1-mesa` for GUI launch and clear the executable-stack
+flag on `/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1` for glibc `2.43`.
+`vihs --validate` passed with `runtimeValidationOutcome=ready` and
+`errorCode=VIHS_OK`.
+
+The packaged headless `validate-fixture` route cloned `ni/labview-icon-editor`
+and staged both `lv_icon.vi` revisions, but timed out after `300000 ms` with
+the retained `linux-headless-recursive-load` diagnostic. The admitted proof uses
+the prior Linux-host proof shape instead: non-headless `LabVIEWCLI
+CreateComparisonReport` against the same cloned fixture pair. That run exited
+`0`, generated a `414111` byte HTML report plus `361` image assets, and closed
+LabVIEW cleanly afterward. The headless timeout is retained as implementation
+follow-up #25; it does not change the public imported requirement semantics.

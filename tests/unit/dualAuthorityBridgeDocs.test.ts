@@ -123,8 +123,8 @@ describe('dual-authority requirements bridge docs', () => {
       expect.objectContaining({
         iterationId: 'physical-host-labview-2026-proof-v1',
         workItem: '#24',
-        status: 'installed-awaiting-operator-activation',
-        bugOracleClassification: 'requirement-clarification-candidate',
+        status: 'physical-host-proof-admitted-with-headless-follow-up',
+        bugOracleClassification: 'implementation-defect-candidate',
         publicMutationRequired: false,
         retainedPacket:
           'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json'
@@ -149,6 +149,7 @@ describe('dual-authority requirements bridge docs', () => {
       iterationId?: string;
       sliceId?: string;
       governedWorkItem?: { reference?: string; url?: string };
+      followUpWorkItems?: Array<{ reference?: string; url?: string; classification?: string }>;
       importedRequirementIds?: string[];
       bugOracleClassification?: string;
       status?: string;
@@ -170,6 +171,22 @@ describe('dual-authority requirements bridge docs', () => {
         };
         nextOperatorAction?: string;
       }>;
+      proofAttempts?: Array<{
+        attemptId?: string;
+        result?: string;
+        bugOracleClassification?: string;
+        facts?: {
+          runtimeValidationOutcome?: string;
+          errorCode?: string;
+          fixtureRepositoryCloned?: boolean;
+          headlessDiagnosticReason?: string;
+          reportSizeBytes?: number;
+          reportSha256?: string;
+          assetCount?: number;
+          closeLabviewExit?: number;
+          labviewProcessesRemainingAfterClose?: boolean;
+        };
+      }>;
       redactionBoundary?: { publicMutationRequired?: boolean; privateEvidenceRetainedInGitLabOnly?: boolean };
       nextActions?: string[];
     }>(
@@ -189,11 +206,18 @@ describe('dual-authority requirements bridge docs', () => {
       reference: '#24',
       url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24'
     });
-    expect(iteration.status).toBe('installed-awaiting-operator-activation');
+    expect(iteration.followUpWorkItems).toContainEqual(
+      expect.objectContaining({
+        reference: '#25',
+        url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/25',
+        classification: 'implementation-defect-candidate'
+      })
+    );
+    expect(iteration.status).toBe('physical-host-proof-admitted-with-headless-follow-up');
     expect(iteration.importedRequirementIds).toEqual(
       expect.arrayContaining(['VHS-SYS-REQ-006', 'VHS-SYS-REQ-007', 'VHS-REQ-588'])
     );
-    expect(iteration.bugOracleClassification).toBe('requirement-clarification-candidate');
+    expect(iteration.bugOracleClassification).toBe('implementation-defect-candidate');
     expect(iteration.preflightAttempts).toContainEqual(
       expect.objectContaining({
         attemptId: 'physical-host-preflight-2026-05-16',
@@ -221,15 +245,52 @@ describe('dual-authority requirements bridge docs', () => {
         nextOperatorAction: expect.stringContaining('Sergio activates LabVIEW 2026 Community')
       })
     );
+    expect(iteration.proofAttempts).toContainEqual(
+      expect.objectContaining({
+        attemptId: 'vihs-validate-after-activation-2026-05-16',
+        result: 'passed',
+        facts: expect.objectContaining({
+          runtimeValidationOutcome: 'ready',
+          errorCode: 'VIHS_OK'
+        })
+      })
+    );
+    expect(iteration.proofAttempts).toContainEqual(
+      expect.objectContaining({
+        attemptId: 'validate-fixture-headless-2026-05-16',
+        result: 'failed',
+        bugOracleClassification: 'implementation-defect-candidate',
+        facts: expect.objectContaining({
+          fixtureRepositoryCloned: true,
+          headlessDiagnosticReason: 'linux-headless-recursive-load'
+        })
+      })
+    );
+    expect(iteration.proofAttempts).toContainEqual(
+      expect.objectContaining({
+        attemptId: 'manual-create-comparison-after-activation-2026-05-16',
+        result: 'passed',
+        facts: expect.objectContaining({
+          reportSizeBytes: 414111,
+          reportSha256: 'bb1586a22f6948b2be434fb3df974576b0fd90b0b1338aed9d96596606767813',
+          assetCount: 361,
+          closeLabviewExit: 0,
+          labviewProcessesRemainingAfterClose: false
+        })
+      })
+    );
     expect(iteration.redactionBoundary).toMatchObject({
       publicMutationRequired: false,
       privateEvidenceRetainedInGitLabOnly: true
     });
-    expect(iteration.nextActions?.join(' ')).toContain('physical-host proof item');
+    expect(iteration.nextActions?.join(' ')).toContain('Close #24');
     expect(iterationDoc).toContain('interactive authentication is required');
     expect(iterationDoc).toContain('/usr/local/bin/LabVIEWCLI');
-    expect(iterationDoc).toContain('Sergio owns LabVIEW');
-    expect(iterationDoc).toContain('activation. Codex must not run activation');
+    expect(iterationDoc).toContain('Codex did not activate');
+    expect(iterationDoc).toContain('physical-host Linux');
+    expect(iterationDoc).toContain('validate-fixture');
+    expect(iterationDoc).toContain('linux-headless-recursive-load');
+    expect(iterationDoc).toContain('work item #25');
     expect(iterationDoc).toContain('not a Linux');
     expect(iterationDoc).toContain('Vagrant substitute');
     expect(iterationDoc).toContain('No public GitHub import mutation is required');
