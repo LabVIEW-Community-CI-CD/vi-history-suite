@@ -3,9 +3,9 @@
 ## Document Control
 
 - Product or service: `vi-history-suite`
-- Applies to: exact released installed baseline `v1.2.2` plus the active
+- Applies to: exact released installed baseline `v1.3.16` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-13`
+- Last reviewed: `2026-05-16`
 - Primary audience: installed users, source evaluators, and maintainers
 - Primary entry route: `README.md` and `INSTALL.md`
 

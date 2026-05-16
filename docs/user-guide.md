@@ -3,9 +3,9 @@
 ## Document Control
 
 - Product or service: `vi-history-suite`
-- Applies to: exact released installed baseline `v1.2.2` plus the active
+- Applies to: exact released installed baseline `v1.3.16` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-13`
+- Last reviewed: `2026-05-16`
 - Primary audience: installed users, source evaluators, and maintainers
 - Primary entry route: `README.md` and `INSTALL.md`
 
@@ -40,7 +40,7 @@ See also:
 | Task | Route | Evidence or output |
 | --- | --- | --- |
 | Start the repo workflow | `README.md`, then `INSTALL.md` if you need the released installed route | correct route selection before compare or docs work starts |
-| Check the current baseline | `README.md`, `INSTALL.md`, and `docs/product/current-state.md` | released `v1.2.2` boundary versus active `develop` direction is explicit |
+| Check the current baseline | `README.md`, `INSTALL.md`, and `docs/product/current-state.md` | released `v1.3.16` boundary versus active `develop` direction is explicit |
 | Find troubleshooting help | `docs/faq.md` and `docs/quick-reference.md` | short recovery path and stable commands or checks |
 
 ## Navigation

@@ -202,6 +202,7 @@ describe('documentation continuous integration runner', () => {
         'tests/unit/postReleaseControlPlaneDocs.test.ts',
         'tests/unit/debtLedgerDocs.test.ts',
         'tests/unit/executionPolicyDocs.test.ts',
+        'tests/unit/releaseRuntimeDriftGate.test.ts',
         'tests/unit/governedProofDocs.test.ts',
         'tests/unit/firstTimeOverviewVideoPlan.test.ts',
         'tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts',
