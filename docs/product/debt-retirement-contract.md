@@ -106,7 +106,9 @@ Current seed examples:
 - accepted bounded exception for the Linux pair-135 full-window benchmark
   ceiling under the current governed Linux contract
 - retired extension execution-mode and Docker-acquisition UX debt from the
-  earlier Docker-only installed baseline
+  earlier Docker-only installed baseline, retained as historical evidence after
+  the host-default local `LabVIEWCLI` plus bounded expert Docker direction
+  became current branch truth
 
 ## Operational Rule
 

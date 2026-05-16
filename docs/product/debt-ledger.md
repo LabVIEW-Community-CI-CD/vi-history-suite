@@ -23,7 +23,7 @@ The governing contract and taxonomy are:
 | `DEBT-0003` | accepted-exception | `benchmark` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | reopen only if the governed Windows benchmark image contract changes to provide a coherent same-bitness `labview-cli` bundle |
 | `DEBT-0004` | accepted-exception | `runtime` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | reopen only if the governed NI Linux runtime/benchmark-image contract changes or another in-scope Linux benchmark provider becomes the accepted authority surface |
 | `DEBT-0005` | retired | `control-plane` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `2f4ced0` |
-| `DEBT-0006` | retired | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | retired by the `PROGRAM-0005` Docker-only installed-contract normalization slices |
+| `DEBT-0006` | retired | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | retired as historical Docker-only baseline evidence; superseded by `TRANCHE-016` / `ISSUE-0412` / `ADR-0038` for current host-default installed runtime truth |
 
 ## Notes
 
@@ -47,17 +47,13 @@ The governing contract and taxonomy are:
   CLI/env/default synthesis could materialize an explicit effective
   proof-admission bundle after a narrower raw-CLI validation pass had already
   succeeded.
-- `DEBT-0006` is now retired: the installed extension no longer exposes
-  `executionMode` or installed host-runtime knobs, comparison generation now
-  stays on one Docker-only x64 contract, the current Docker daemon engine on
-  Windows now selects the governed Windows or Linux image truthfully, canonical
-  Docker-only request validation and Docker hard stops now fail closed without
-  host fallback, governed image acquisition now runs with visible progress and
-  retained acquisition state, the history panel and retained packet now surface
-  selected provider, current engine, selected image, acquisition outcome, and
-  next action as front-facing runtime truth, and the same normalization now
-  keeps bundled/public/internal execution-policy surfaces aligned instead of
-  leaving that control-plane debt implicit.
+- `DEBT-0006` is now retired as historical Docker-only baseline evidence: the
+  `TRANCHE-013` / `ISSUE-0410` closeout removed `executionMode`, hidden
+  host-runtime knobs, public image settings, and implicit acquisition-state
+  truth from the older installed compare workflow. It is not current
+  installed-user runtime direction. Current branch truth is the published
+  host-default local `LabVIEWCLI` provider plus bounded expert Docker path
+  governed by `TRANCHE-016` / `ISSUE-0412` / `ADR-0038`.
 
 ## Operational Rule
 

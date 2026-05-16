@@ -72,7 +72,21 @@ describe('execution-policy control plane', () => {
     const issueNext = readText(
       'docs/product/issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md'
     );
-    const debtLedger = readText('docs/product/debt-ledger.json');
+    const debtLedger = readJson<{
+      items: Array<{
+        id: string;
+        status: string;
+        title: string;
+        summary: string;
+        exitCriteria: string;
+        owner: {
+          trancheId: string;
+          issueId: string;
+          programId: string;
+        };
+        authoritativeSources: string[];
+      }>;
+    }>('docs/product/debt-ledger.json');
     const adr0006 = readText(
       'docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md'
     );
@@ -307,10 +321,30 @@ describe('execution-policy control plane', () => {
     expect(adr0038).toContain('The history-panel compare workflow shall enter explicit compare preflight');
     expect(adr0038).toContain('selected commit');
     expect(adr0038).toContain('ADR-0025` and `ADR-0026` remain retained as the exact released');
-    expect(debtLedger).toContain('"id": "DEBT-0006"');
-    expect(debtLedger).toContain('"programId": "PROGRAM-0005"');
-    expect(debtLedger).toContain('"status": "retired"');
-    expect(debtLedger).toContain('Docker-only');
-    expect(debtLedger).toContain('current Docker daemon engine on Windows');
+    const debt0006 = debtLedger.items.find((item) => item.id === 'DEBT-0006');
+    expect(debt0006).toMatchObject({
+      id: 'DEBT-0006',
+      status: 'retired',
+      owner: {
+        trancheId: 'TRANCHE-013',
+        issueId: 'ISSUE-0410',
+        programId: 'PROGRAM-0005'
+      }
+    });
+    expect(debt0006?.title).toContain('Historical Docker-only');
+    expect(debt0006?.summary).toContain('historical baseline evidence');
+    expect(debt0006?.summary).toContain('not the current installed-user runtime destination');
+    expect(debt0006?.summary).toContain('host-default local `LabVIEWCLI`');
+    expect(debt0006?.summary).toContain('TRANCHE-016');
+    expect(debt0006?.summary).toContain('ISSUE-0412');
+    expect(debt0006?.summary).toContain('ADR-0038');
+    expect(debt0006?.summary).not.toContain('current Docker daemon engine on Windows');
+    expect(debt0006?.exitCriteria).not.toContain('same Docker-only contract');
+    expect(debt0006?.authoritativeSources).toEqual(
+      expect.arrayContaining([
+        'docs/product/issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md',
+        'docs/architecture/adr/ADR-0038-host-default-local-labviewcli-bounded-expert-docker-and-explicit-compare-preflight.md'
+      ])
+    );
   });
 });
