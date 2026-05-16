@@ -23,9 +23,9 @@
   {
     "id": "TRANCHE-004",
     "title": "Add progress-surface uplift for indexing and report generation",
-    "status": "queued",
+    "status": "done",
     "source": "authoritative research",
-    "summary": "Promote bounded progress, cancellation, and trust-aware execution UX for long-running indexing and report tasks.",
+    "summary": "Closed as implemented/superseded by the later governed progress UX stack: indexing now retains notification percent, processed/total, ETA, cancellation, trust-loss fail-closed behavior, and a status-bar progress item; report/dashboard generation now retain bounded webview/notification progress and cancellation with partial-evidence retention under ISSUE-0403/TRANCHE-008.",
     "issues": [
       "ISSUE-0403"
     ]

@@ -49,6 +49,10 @@ This product layer is delivered through five issue-ready workstreams:
   - `ISSUE-0405`
 - `TRANCHE-004`
   - `ISSUE-0403`
+  - historical progress-surface tranche now closed by implemented
+    notification/status-bar/webview progress, bounded report/dashboard
+    progress, cancellation with partial-evidence retention, and trust-loss
+    fail-closed behavior
 - `TRANCHE-007`
   - `ISSUE-0404`
 - `TRANCHE-008`

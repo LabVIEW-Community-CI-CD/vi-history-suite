@@ -34,7 +34,7 @@ the authoritative research stack. For a machine-friendly entrypoint, start with
 | Review-scenario registry and separate human decision records for dashboard-driven VI review | aligned with extension-facing decision-record creation | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/scenarios/reviewDecisionRecordAction.ts`; `src/harness/harnessDecisionRecord.ts`; `src/cli/runHarnessDecisionRecord.ts`; `src/commands/openViHistoryCommand.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-307..312`; `VHS-REQ-341..343` | sustain the extension-facing decision-record flow and add additional scenario shapes beyond the canonical baseline |
 | Documentation-package workbench for requirements, ADR, release-readiness, and wiki-authority iteration | aligned in this tranche | `docker/docs-authoring/Dockerfile`; `scripts/run-docs-gate.js`; `docs/documentation-workbench.md`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..353` | sustain the published workbench image and use it as the preferred documentation-package iteration surface |
 | Consumed research-round retirement and future research prompt | aligned in this tranche | `README.md`; `docs/product/current-state.md`; `docs/research/authoritative/research-implementation-index.json`; `docs/research/authoritative/research-infrastructure.md`; `docs/research/authoritative/next-research-prompt.md`; `VHS-REQ-209..211` | sustain |
-| Status-bar progress item plus richer percent/items/ETA progress UX | partial | `src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress` only | add governed progress tranche |
+| Status-bar progress item plus richer percent/items/ETA progress UX | aligned | `src/indexing/viEligibilityIndexer.ts` now reports percent, processed/total, ETA, cancellation, trust-loss fail-closed behavior, and a status-bar progress item; `src/commands/openViHistoryCommand.ts`, `src/ui/historyPanel.ts`, `src/reporting/comparisonReportAction.ts`, and `src/dashboard/multiReportDashboardAction.ts` carry bounded report/dashboard/webview progress and cancellation evidence; `VHS-REQ-086..088`; `VHS-REQ-231..236`; `VHS-REQ-305..306`; `VHS-REQ-324` | sustain; extend the same governed semantics only when a new long-running refresh lane is introduced |
 | Manifest trust declaration through `capabilities.untrustedWorkspaces` | aligned in this tranche | `package.json`; `VHS-REQ-084`; `tests/unit/packageManifest.test.ts` | sustain |
 | Treat `TimelineProvider` as experimental only, not published product surface | aligned in docs | `docs/architecture/adr/ADR-0002-published-review-surface-webview.md`; `VHS-REQ-085` | sustain |
 | Desktop/remote-host boundary and workspace-scoped report storage policy | aligned with successful runtime proof | `docs/architecture/adr/ADR-0003-workspace-report-storage-and-desktop-boundary.md`; `src/reporting/comparisonReportRuntimeExecution.ts`; `src/harness/harnessReportSmoke.ts`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`; `VHS-REQ-092`; `VHS-REQ-097`; `VHS-REQ-157..163`; `VHS-REQ-217..220` | sustain |
@@ -42,6 +42,6 @@ the authoritative research stack. For a machine-friendly entrypoint, start with
 
 ## Recommended Order
 
-1. Progress-surface uplift
-2. Runtime-doctor guidance and provider troubleshooting
-3. Future research refresh
+1. Future research refresh
+2. Sustain progress/cancellation/runtime-doctor semantics when new long-running
+   refresh lanes are introduced

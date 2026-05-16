@@ -223,6 +223,87 @@ Mutation boundary:
 - no tag, public GitHub release, Marketplace, release branch deletion, or
   protected-branch mutation.
 
+### `#19` Resolve the lone partial research/progress-surface state
+
+Recorded: `2026-05-16T19:18:00Z`
+
+Status: implemented locally, pending push/merge.
+
+Decision: close `TRANCHE-004` / `progress-surface-uplift` as
+implemented-and-active, with its original partial state superseded by the later
+governed progress UX stack under `ISSUE-0403` / `TRANCHE-008` and subsequent
+requirements.
+
+Before grep evidence:
+
+- `docs/research/authoritative/research-implementation-index.json` carried
+  `progress-surface-uplift` as `partial` with next move `TRANCHE-004`.
+- `docs/research/authoritative/research-alignment.md` still said
+  `src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress`
+  only.
+- `docs/product/development-queue.json` kept `TRANCHE-004` queued while
+  `ISSUE-0403` / `TRANCHE-008` and later requirements already described
+  implemented progress/cancellation surfaces.
+- `docs/product/current-state.md` described indexing and report progress uplift
+  as partially implemented and active.
+
+After grep evidence:
+
+- `docs/research/authoritative/research-implementation-index.json` now records
+  `progress-surface-uplift` as `implemented-and-active` with indexing, report,
+  dashboard, webview, cancellation, and test evidence.
+- `docs/product/development-queue.json` now records `TRANCHE-004` as `done`
+  and closed by the later governed progress UX stack.
+- `docs/product/current-state.md` now treats the former progress-surface
+  partial as closed and keeps future work to sustainment for new long-running
+  lanes.
+
+Guardrails added:
+
+- `docs/research/authoritative/research-implementation-index.json` no longer
+  retains the lone stale progress-surface partial.
+- `docs/research/authoritative/research-alignment.md` now marks the
+  status-bar and richer progress UX row aligned, with notification/status-bar/
+  webview progress and cancellation evidence.
+- `docs/product/development-queue.json` marks `TRANCHE-004` done instead of
+  queued.
+- `docs/product/current-state.md` reports indexing/report progress uplift as
+  implemented and active with concrete evidence.
+- `docs/product/execution-programs/PROGRAM-0001-next-product-layer.md` explains
+  `TRANCHE-004` as a historical progress-surface tranche closed by later
+  progress UX work.
+- `tests/unit/requirementsDocs.test.ts` fails if the research/control-plane
+  surfaces reintroduce the stale progress-surface partial or omit implemented
+  progress evidence.
+- `tests/unit/alignmentControlPlaneDocs.test.ts` retains this closeout decision
+  and its before/after evidence.
+
+Proof retained during implementation:
+
+- `npm exec -- vitest run tests/unit/requirementsDocs.test.ts tests/unit/alignmentControlPlaneDocs.test.ts tests/unit/viEligibilityIndexer.test.ts tests/unit/openViHistoryCommand.test.ts tests/unit/historyPanel.test.ts tests/unit/comparisonReportAction.test.ts`:
+  passed.
+- `npm run docs:gate:core`: passed.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-19`:
+  completed.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-19`:
+  completed.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `npm run check`: passed.
+- `npm run package:audit`: passed.
+- `npm test`: passed with 179 test files, 964 passed, and 2 skipped.
+- `git diff --check`: passed.
+
+Mutation boundary:
+
+- docs/tests/traceability alignment only;
+- no runtime behavior mutation;
+- no release state mutation;
+- no tag, public GitHub release, Marketplace, release branch deletion, or
+  protected-branch mutation.
+
 ### `#20` Make release and runtime drift fail closed in docs gate
 
 Recorded: `2026-05-16T06:10:19Z`
