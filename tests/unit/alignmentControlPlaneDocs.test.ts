@@ -9,6 +9,16 @@ const artifactPath =
 
 interface AlignmentControlPlane {
   schema: string;
+  actionCloseouts?: Array<{
+    iid: number;
+    decision?: string;
+    proof?: Array<{
+      command: string;
+      gates?: Record<string, string>;
+      dodConfidence?: string;
+    }>;
+    guardrails?: Array<{ path: string; purpose: string }>;
+  }>;
   triageProcess?: {
     authority26514?: {
       preferredCommand?: string;
@@ -69,6 +79,46 @@ describe('alignment control-plane process docs', () => {
         expect.objectContaining({
           heading: 'Non-Authority Evidence Boundary',
           rule: expect.stringContaining('`.cache/`')
+        })
+      ])
+    );
+  });
+
+  it('records the release-gate DoD evidence decision for work item 23', () => {
+    const markdown = readText(`${artifactPath}.md`);
+    const controlPlane = readJson<AlignmentControlPlane>(`${artifactPath}.json`);
+    const closeout23 = controlPlane.actionCloseouts?.find((closeout) => closeout.iid === 23);
+
+    expect(markdown).toContain('### `#23` Decide release-gate DoD evidence or explicit DoD N/A rationale');
+    expect(markdown).toContain('Decision: add a repo-owned DoD evidence signal');
+    expect(markdown).toContain('`DoD Gate / dod`');
+    expect(markdown).toContain('`dod | PASS | Med | -`');
+
+    expect(closeout23).toMatchObject({
+      iid: 23,
+      decision: 'add-dod-evidence-signal'
+    });
+    expect(closeout23?.guardrails).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'docs/product/SHIP-0001-releasable-vi-history-suite.md'
+        }),
+        expect.objectContaining({
+          path: 'docs/product/release-readiness-matrix.json'
+        }),
+        expect.objectContaining({
+          path: 'tests/unit/shipControlDocs.test.ts'
+        })
+      ])
+    );
+    expect(closeout23?.proof).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          gates: expect.objectContaining({ dod: 'N/A' })
+        }),
+        expect.objectContaining({
+          gates: expect.objectContaining({ dod: 'PASS' }),
+          dodConfidence: 'Med'
         })
       ])
     );
