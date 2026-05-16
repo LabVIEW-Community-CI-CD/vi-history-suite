@@ -9,9 +9,38 @@ const artifactPath =
 
 interface AlignmentControlPlane {
   schema: string;
+  evidenceSnapshot?: {
+    releaseGate?: {
+      command?: string;
+      gates?: Record<string, string>;
+      dodConfidence?: string;
+    };
+  };
+  initialActionMergeReadback?: {
+    sourceWorkItem?: number;
+    items?: Array<{
+      iid: number;
+      state: string;
+      mergeRequestIid: number;
+      mergeCommitSha: string;
+      closedAt: string;
+    }>;
+  };
   actionCloseouts?: Array<{
     iid: number;
+    status?: string;
+    gitlabState?: string;
+    closedAt?: string;
     decision?: string;
+    mergeRequest?: {
+      iid: number;
+      sourceBranch: string;
+      targetBranch: string;
+      headCommitSha: string;
+      mergeCommitSha: string;
+      mergedAt: string;
+      url: string;
+    };
     proof?: Array<{
       command: string;
       gates?: Record<string, string>;
@@ -86,6 +115,137 @@ describe('alignment control-plane process docs', () => {
         })
       ])
     );
+  });
+
+  it('records merged and closed readback for the first alignment action batch', () => {
+    const markdown = readText(`${artifactPath}.md`);
+    const controlPlane = readJson<AlignmentControlPlane>(`${artifactPath}.json`);
+    const expected = new Map([
+      [
+        17,
+        {
+          mr: 241,
+          sourceBranch: 'codex/docs-alignment-17',
+          head: '0b70bf75e52364ba8bf221d353750dbfa5352b7e',
+          merge: '31add781bd04cc832d9fb55aa821a69305a91a37',
+          mergedAt: '2026-05-16T08:23:15.579Z',
+          closedAt: '2026-05-16T08:32:27.592Z'
+        }
+      ],
+      [
+        18,
+        {
+          mr: 247,
+          sourceBranch: 'codex/18-normalize-host-default-runtime-contract',
+          head: 'c50c5cd7952ec3987a5992eff199c07004c14c7e',
+          merge: '6323cd29b2256c259a6b99cdcb37b01ffd81b30d',
+          mergedAt: '2026-05-16T19:02:55.975Z',
+          closedAt: '2026-05-16T19:03:21.673Z'
+        }
+      ],
+      [
+        19,
+        {
+          mr: 248,
+          sourceBranch: 'codex/19-resolve-progress-surface-state',
+          head: '4a11f6f1f4638e376431b13f37fb06721ebb853c',
+          merge: '037d58ce902c6f93f0147f2ac0c57ea9e506cfea',
+          mergedAt: '2026-05-16T19:29:52.771Z',
+          closedAt: '2026-05-16T19:30:12.853Z'
+        }
+      ],
+      [
+        20,
+        {
+          mr: 239,
+          sourceBranch: 'codex/docs-alignment-20-21',
+          head: 'fbc3e5e578252af7a837f1503a75853259187ef3',
+          merge: '4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c',
+          mergedAt: '2026-05-16T06:57:39.679Z',
+          closedAt: '2026-05-16T07:15:21.670Z'
+        }
+      ],
+      [
+        21,
+        {
+          mr: 239,
+          sourceBranch: 'codex/docs-alignment-20-21',
+          head: 'fbc3e5e578252af7a837f1503a75853259187ef3',
+          merge: '4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c',
+          mergedAt: '2026-05-16T06:57:39.679Z',
+          closedAt: '2026-05-16T07:15:21.716Z'
+        }
+      ],
+      [
+        22,
+        {
+          mr: 249,
+          sourceBranch: 'codex/22-installed-user-observation-cadence',
+          head: 'ef0473fae66170c165cb9b990845cbe0251b530f',
+          merge: 'e4128c5570dc1263019f41ed2e6fff1a087ccaaa',
+          mergedAt: '2026-05-16T19:52:08.536Z',
+          closedAt: '2026-05-16T19:52:21.387Z'
+        }
+      ],
+      [
+        23,
+        {
+          mr: 240,
+          sourceBranch: 'codex/docs-alignment-23',
+          head: '92c52c124fe9472a4c5490a50f19d2002e2c1d71',
+          merge: '415408d48d682b9e064301860b8e2f3018c21a8c',
+          mergedAt: '2026-05-16T07:32:11.858Z',
+          closedAt: '2026-05-16T07:40:31.689Z'
+        }
+      ]
+    ]);
+
+    expect(markdown).toContain('## Initial Action Merge Readback');
+    expect(markdown).toContain('Recorded by `#26`');
+    expect(markdown).toContain('Status: merged into `develop` and closed.');
+    expect(markdown).not.toContain('Status: implemented locally, pending push/merge.');
+    expect(markdown).not.toContain('Status: committed locally, pending push/merge.');
+    expect(controlPlane.evidenceSnapshot?.releaseGate).toMatchObject({
+      command:
+        'VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-26',
+      gates: expect.objectContaining({ dod: 'PASS' }),
+      dodConfidence: 'Med'
+    });
+    expect(controlPlane.initialActionMergeReadback?.sourceWorkItem).toBe(26);
+    expect(controlPlane.initialActionMergeReadback?.items).toHaveLength(expected.size);
+
+    for (const [iid, facts] of expected) {
+      const closeout = controlPlane.actionCloseouts?.find((candidate) => candidate.iid === iid);
+      const readback = controlPlane.initialActionMergeReadback?.items?.find(
+        (candidate) => candidate.iid === iid
+      );
+
+      expect(markdown).toContain(`| \`#${iid}\` | closed | \`!${facts.mr}\``);
+      expect(markdown).toContain(`Merge request: \`!${facts.mr}\``);
+      expect(markdown).toContain(`Merge commit: \`${facts.merge}\``);
+      expect(markdown).toContain(`Closed at: \`${facts.closedAt}\``);
+      expect(readback).toMatchObject({
+        iid,
+        state: 'closed',
+        mergeRequestIid: facts.mr,
+        mergeCommitSha: facts.merge,
+        closedAt: facts.closedAt
+      });
+      expect(closeout).toMatchObject({
+        iid,
+        status: 'merged-and-closed',
+        gitlabState: 'closed',
+        closedAt: facts.closedAt,
+        mergeRequest: {
+          iid: facts.mr,
+          sourceBranch: facts.sourceBranch,
+          targetBranch: 'develop',
+          headCommitSha: facts.head,
+          mergeCommitSha: facts.merge,
+          mergedAt: facts.mergedAt
+        }
+      });
+    }
   });
 
   it('records the release-gate DoD evidence decision for work item 23', () => {

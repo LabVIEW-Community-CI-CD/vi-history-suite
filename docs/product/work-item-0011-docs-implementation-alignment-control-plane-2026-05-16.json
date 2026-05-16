@@ -17,8 +17,8 @@
       "status": "passed"
     },
     "releaseGate": {
-      "command": "npm run assurance:release-gate -- --evidence-dir /tmp/vihs-align-release-gate",
-      "scorecardPath": "/tmp/vihs-align-release-gate/release-gate-scorecard.txt",
+      "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-26",
+      "scorecardPath": "/tmp/vihs-assurance-release-26/release-gate-scorecard.txt",
       "status": "completed",
       "gates": {
         "coverage": "PASS",
@@ -26,8 +26,9 @@
         "req": "PASS",
         "arch": "PASS",
         "doc": "PASS",
-        "dod": "N/A"
-      }
+        "dod": "PASS"
+      },
+      "dodConfidence": "Med"
     },
     "authority26514": {
       "command": "npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-align-26514-authority",
@@ -205,12 +206,92 @@
       "priority": "P3"
     }
   ],
+  "initialActionMergeReadback": {
+    "sourceWorkItem": 26,
+    "recordedAt": "2026-05-16",
+    "items": [
+      {
+        "iid": 17,
+        "state": "closed",
+        "mergeRequestIid": 241,
+        "headCommitSha": "0b70bf75e52364ba8bf221d353750dbfa5352b7e",
+        "mergeCommitSha": "31add781bd04cc832d9fb55aa821a69305a91a37",
+        "mergedAt": "2026-05-16T08:23:15.579Z",
+        "closedAt": "2026-05-16T08:32:27.592Z"
+      },
+      {
+        "iid": 18,
+        "state": "closed",
+        "mergeRequestIid": 247,
+        "headCommitSha": "c50c5cd7952ec3987a5992eff199c07004c14c7e",
+        "mergeCommitSha": "6323cd29b2256c259a6b99cdcb37b01ffd81b30d",
+        "mergedAt": "2026-05-16T19:02:55.975Z",
+        "closedAt": "2026-05-16T19:03:21.673Z"
+      },
+      {
+        "iid": 19,
+        "state": "closed",
+        "mergeRequestIid": 248,
+        "headCommitSha": "4a11f6f1f4638e376431b13f37fb06721ebb853c",
+        "mergeCommitSha": "037d58ce902c6f93f0147f2ac0c57ea9e506cfea",
+        "mergedAt": "2026-05-16T19:29:52.771Z",
+        "closedAt": "2026-05-16T19:30:12.853Z"
+      },
+      {
+        "iid": 20,
+        "state": "closed",
+        "mergeRequestIid": 239,
+        "headCommitSha": "fbc3e5e578252af7a837f1503a75853259187ef3",
+        "mergeCommitSha": "4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c",
+        "mergedAt": "2026-05-16T06:57:39.679Z",
+        "closedAt": "2026-05-16T07:15:21.670Z"
+      },
+      {
+        "iid": 21,
+        "state": "closed",
+        "mergeRequestIid": 239,
+        "headCommitSha": "fbc3e5e578252af7a837f1503a75853259187ef3",
+        "mergeCommitSha": "4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c",
+        "mergedAt": "2026-05-16T06:57:39.679Z",
+        "closedAt": "2026-05-16T07:15:21.716Z"
+      },
+      {
+        "iid": 22,
+        "state": "closed",
+        "mergeRequestIid": 249,
+        "headCommitSha": "ef0473fae66170c165cb9b990845cbe0251b530f",
+        "mergeCommitSha": "e4128c5570dc1263019f41ed2e6fff1a087ccaaa",
+        "mergedAt": "2026-05-16T19:52:08.536Z",
+        "closedAt": "2026-05-16T19:52:21.387Z"
+      },
+      {
+        "iid": 23,
+        "state": "closed",
+        "mergeRequestIid": 240,
+        "headCommitSha": "92c52c124fe9472a4c5490a50f19d2002e2c1d71",
+        "mergeCommitSha": "415408d48d682b9e064301860b8e2f3018c21a8c",
+        "mergedAt": "2026-05-16T07:32:11.858Z",
+        "closedAt": "2026-05-16T07:40:31.689Z"
+      }
+    ]
+  },
   "actionCloseouts": [
     {
       "iid": 17,
       "title": "Align current release truth across retained v0.2.0 and live v1.3.16 surfaces",
       "recordedAt": "2026-05-16T08:05:00Z",
-      "status": "implemented-locally-pending-push-merge",
+      "status": "merged-and-closed",
+      "gitlabState": "closed",
+      "closedAt": "2026-05-16T08:32:27.592Z",
+      "mergeRequest": {
+        "iid": 241,
+        "sourceBranch": "codex/docs-alignment-17",
+        "targetBranch": "develop",
+        "headCommitSha": "0b70bf75e52364ba8bf221d353750dbfa5352b7e",
+        "mergeCommitSha": "31add781bd04cc832d9fb55aa821a69305a91a37",
+        "mergedAt": "2026-05-16T08:23:15.579Z",
+        "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/241"
+      },
       "decision": "separate-retained-ship-history-from-current-release-truth",
       "guardrails": [
         {
@@ -307,7 +388,18 @@
       "iid": 18,
       "title": "Normalize host-default LabVIEWCLI versus historical Docker-only contract",
       "recordedAt": "2026-05-16T18:48:07Z",
-      "status": "implemented-locally-pending-push-merge",
+      "status": "merged-and-closed",
+      "gitlabState": "closed",
+      "closedAt": "2026-05-16T19:03:21.673Z",
+      "mergeRequest": {
+        "iid": 247,
+        "sourceBranch": "codex/18-normalize-host-default-runtime-contract",
+        "targetBranch": "develop",
+        "headCommitSha": "c50c5cd7952ec3987a5992eff199c07004c14c7e",
+        "mergeCommitSha": "6323cd29b2256c259a6b99cdcb37b01ffd81b30d",
+        "mergedAt": "2026-05-16T19:02:55.975Z",
+        "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/247"
+      },
       "decision": "make-host-default-labviewcli-current-and-docker-only-historical",
       "grepEvidence": {
         "before": [
@@ -438,7 +530,18 @@
       "iid": 19,
       "title": "Resolve the lone partial research/progress-surface state",
       "recordedAt": "2026-05-16T19:18:00Z",
-      "status": "implemented-locally-pending-push-merge",
+      "status": "merged-and-closed",
+      "gitlabState": "closed",
+      "closedAt": "2026-05-16T19:30:12.853Z",
+      "mergeRequest": {
+        "iid": 248,
+        "sourceBranch": "codex/19-resolve-progress-surface-state",
+        "targetBranch": "develop",
+        "headCommitSha": "4a11f6f1f4638e376431b13f37fb06721ebb853c",
+        "mergeCommitSha": "037d58ce902c6f93f0147f2ac0c57ea9e506cfea",
+        "mergedAt": "2026-05-16T19:29:52.771Z",
+        "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/248"
+      },
       "decision": "close-progress-surface-partial-as-implemented-and-superseded",
       "grepEvidence": {
         "before": [
@@ -541,8 +644,18 @@
       "iid": 20,
       "title": "Make release and runtime drift fail closed in docs gate",
       "recordedAt": "2026-05-16T06:10:19Z",
-      "status": "committed-locally-pending-push-merge",
-      "localCommit": "c3e18e7",
+      "status": "merged-and-closed",
+      "gitlabState": "closed",
+      "closedAt": "2026-05-16T07:15:21.670Z",
+      "mergeRequest": {
+        "iid": 239,
+        "sourceBranch": "codex/docs-alignment-20-21",
+        "targetBranch": "develop",
+        "headCommitSha": "fbc3e5e578252af7a837f1503a75853259187ef3",
+        "mergeCommitSha": "4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c",
+        "mergedAt": "2026-05-16T06:57:39.679Z",
+        "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/239"
+      },
       "gitlabNoteUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/20#note_3353877349",
       "gitlabDirectCommandFollowUpNoteUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/20#note_3353877741",
       "guardrails": [
@@ -638,8 +751,18 @@
       "iid": 21,
       "title": "Harden 26514 authority scan scope for work-item triage",
       "recordedAt": "2026-05-16T06:17:42Z",
-      "status": "committed-locally-pending-push-merge",
-      "localCommit": "this commit",
+      "status": "merged-and-closed",
+      "gitlabState": "closed",
+      "closedAt": "2026-05-16T07:15:21.716Z",
+      "mergeRequest": {
+        "iid": 239,
+        "sourceBranch": "codex/docs-alignment-20-21",
+        "targetBranch": "develop",
+        "headCommitSha": "fbc3e5e578252af7a837f1503a75853259187ef3",
+        "mergeCommitSha": "4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c",
+        "mergedAt": "2026-05-16T06:57:39.679Z",
+        "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/239"
+      },
       "guardrails": [
         {
           "path": "docs/product/work-item-0011-docs-implementation-alignment-control-plane-2026-05-16.md",
@@ -727,7 +850,18 @@
       "iid": 22,
       "title": "Turn post-publication installed-user acceptance into a recurring observation cadence",
       "recordedAt": "2026-05-16T19:45:00Z",
-      "status": "implemented-locally-pending-push-merge",
+      "status": "merged-and-closed",
+      "gitlabState": "closed",
+      "closedAt": "2026-05-16T19:52:21.387Z",
+      "mergeRequest": {
+        "iid": 249,
+        "sourceBranch": "codex/22-installed-user-observation-cadence",
+        "targetBranch": "develop",
+        "headCommitSha": "ef0473fae66170c165cb9b990845cbe0251b530f",
+        "mergeCommitSha": "e4128c5570dc1263019f41ed2e6fff1a087ccaaa",
+        "mergedAt": "2026-05-16T19:52:08.536Z",
+        "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/249"
+      },
       "decision": "add-recurring-installed-user-observation-cadence",
       "cadenceModel": "event-driven-with-monthly-review-while-public-intake-open",
       "publicFeedbackIntake": {
@@ -877,7 +1011,18 @@
       "iid": 23,
       "title": "Decide release-gate DoD evidence or explicit DoD N/A rationale",
       "recordedAt": "2026-05-16T07:19:23Z",
-      "status": "implemented-locally-pending-push-merge",
+      "status": "merged-and-closed",
+      "gitlabState": "closed",
+      "closedAt": "2026-05-16T07:40:31.689Z",
+      "mergeRequest": {
+        "iid": 240,
+        "sourceBranch": "codex/docs-alignment-23",
+        "targetBranch": "develop",
+        "headCommitSha": "92c52c124fe9472a4c5490a50f19d2002e2c1d71",
+        "mergeCommitSha": "415408d48d682b9e064301860b8e2f3018c21a8c",
+        "mergedAt": "2026-05-16T07:32:11.858Z",
+        "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/240"
+      },
       "decision": "add-dod-evidence-signal",
       "rationale": "The repo already retains release criteria and completion evidence, so the standards release-gate scorecard should report DoD from repo-owned evidence instead of treating DoD as intentionally N/A.",
       "guardrails": [

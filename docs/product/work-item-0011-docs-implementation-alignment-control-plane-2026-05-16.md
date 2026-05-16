@@ -50,9 +50,10 @@ authority-doc package.
 ## Evidence Snapshot
 
 - `npm run docs:gate:core`: passed.
-- `npm run assurance:release-gate -- --evidence-dir /tmp/vihs-align-release-gate`:
-  completed; scorecard shows coverage, CM, requirements, architecture, and
-  docs gates passing with high confidence, with DoD retained as `N/A`.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-26`:
+  completed; scorecard shows coverage, CM, requirements, architecture,
+  documentation, and DoD gates passing, with DoD reported as `PASS` at medium
+  confidence.
 - `npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-align-26514-authority`:
   completed; staged authority-doc proof shows active reusable 26514 signals
   and no missing/unconfirmed signal set.
@@ -85,13 +86,37 @@ authority-doc package.
 | `#22` | Turn post-publication installed-user acceptance into a recurring observation cadence | https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/22 |
 | `#23` | Decide release-gate DoD evidence or explicit DoD N/A rationale | https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/23 |
 
+## Initial Action Merge Readback
+
+Recorded by `#26` on `2026-05-16` after the first action batch closed.
+
+| IID | State | MR | Merge Commit | Closed At |
+| --- | --- | --- | --- | --- |
+| `#17` | closed | `!241` | `31add781bd04cc832d9fb55aa821a69305a91a37` | `2026-05-16T08:32:27.592Z` |
+| `#18` | closed | `!247` | `6323cd29b2256c259a6b99cdcb37b01ffd81b30d` | `2026-05-16T19:03:21.673Z` |
+| `#19` | closed | `!248` | `037d58ce902c6f93f0147f2ac0c57ea9e506cfea` | `2026-05-16T19:30:12.853Z` |
+| `#20` | closed | `!239` | `4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c` | `2026-05-16T07:15:21.670Z` |
+| `#21` | closed | `!239` | `4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c` | `2026-05-16T07:15:21.716Z` |
+| `#22` | closed | `!249` | `e4128c5570dc1263019f41ed2e6fff1a087ccaaa` | `2026-05-16T19:52:21.387Z` |
+| `#23` | closed | `!240` | `415408d48d682b9e064301860b8e2f3018c21a8c` | `2026-05-16T07:40:31.689Z` |
+
 ## Action Closeouts
 
 ### `#17` Align current release truth across retained v0.2.0 and live v1.3.16 surfaces
 
 Recorded: `2026-05-16T08:05:00Z`
 
-Status: implemented locally, pending push/merge.
+Status: merged into `develop` and closed.
+
+Merge request: `!241`
+
+Head commit: `0b70bf75e52364ba8bf221d353750dbfa5352b7e`
+
+Merge commit: `31add781bd04cc832d9fb55aa821a69305a91a37`
+
+Merged at: `2026-05-16T08:23:15.579Z`
+
+Closed at: `2026-05-16T08:32:27.592Z`
 
 Decision: separate retained historical ship-control evidence from current
 installed-user release truth on every primary release reader surface.
@@ -144,7 +169,17 @@ Mutation boundary:
 
 Recorded: `2026-05-16T18:48:07Z`
 
-Status: implemented locally, pending push/merge.
+Status: merged into `develop` and closed.
+
+Merge request: `!247`
+
+Head commit: `c50c5cd7952ec3987a5992eff199c07004c14c7e`
+
+Merge commit: `6323cd29b2256c259a6b99cdcb37b01ffd81b30d`
+
+Merged at: `2026-05-16T19:02:55.975Z`
+
+Closed at: `2026-05-16T19:03:21.673Z`
 
 Decision: make host-default local `LabVIEWCLI` the current installed-user
 runtime truth and retain Docker-only wording only as historical baseline
@@ -227,7 +262,17 @@ Mutation boundary:
 
 Recorded: `2026-05-16T19:18:00Z`
 
-Status: implemented locally, pending push/merge.
+Status: merged into `develop` and closed.
+
+Merge request: `!248`
+
+Head commit: `4a11f6f1f4638e376431b13f37fb06721ebb853c`
+
+Merge commit: `037d58ce902c6f93f0147f2ac0c57ea9e506cfea`
+
+Merged at: `2026-05-16T19:29:52.771Z`
+
+Closed at: `2026-05-16T19:30:12.853Z`
 
 Decision: close `TRANCHE-004` / `progress-surface-uplift` as
 implemented-and-active, with its original partial state superseded by the later
@@ -308,9 +353,17 @@ Mutation boundary:
 
 Recorded: `2026-05-16T06:10:19Z`
 
-Status: committed locally, pending push/merge.
+Status: merged into `develop` and closed.
 
-Local commit: `c3e18e7` (`test: harden docs drift gate`).
+Merge request: `!239`
+
+Head commit: `fbc3e5e578252af7a837f1503a75853259187ef3`
+
+Merge commit: `4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c`
+
+Merged at: `2026-05-16T06:57:39.679Z`
+
+Closed at: `2026-05-16T07:15:21.670Z`
 
 GitLab implementation note:
 https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/20#note_3353877349
@@ -353,9 +406,17 @@ Proof retained during implementation:
 
 Recorded: `2026-05-16T06:17:42Z`
 
-Status: committed locally, pending push/merge.
+Status: merged into `develop` and closed.
 
-Local commit: this commit (`docs: harden 26514 triage scope`).
+Merge request: `!239`
+
+Head commit: `fbc3e5e578252af7a837f1503a75853259187ef3`
+
+Merge commit: `4436f4ec7bc98d06ccc5da5b60f9294c7c94c68c`
+
+Merged at: `2026-05-16T06:57:39.679Z`
+
+Closed at: `2026-05-16T07:15:21.716Z`
 
 Guardrails added:
 
@@ -392,7 +453,17 @@ Proof retained during implementation:
 
 Recorded: `2026-05-16T19:45:00Z`
 
-Status: implemented locally, pending push/merge.
+Status: merged into `develop` and closed.
+
+Merge request: `!249`
+
+Head commit: `ef0473fae66170c165cb9b990845cbe0251b530f`
+
+Merge commit: `e4128c5570dc1263019f41ed2e6fff1a087ccaaa`
+
+Merged at: `2026-05-16T19:52:08.536Z`
+
+Closed at: `2026-05-16T19:52:21.387Z`
 
 Decision: add a recurring installed-user observation cadence after the one-time
 post-publication campaign, with event triggers, a no-later-than review date,
@@ -482,7 +553,17 @@ Mutation boundary:
 
 Recorded: `2026-05-16T07:19:23Z`
 
-Status: implemented locally, pending push/merge.
+Status: merged into `develop` and closed.
+
+Merge request: `!240`
+
+Head commit: `92c52c124fe9472a4c5490a50f19d2002e2c1d71`
+
+Merge commit: `415408d48d682b9e064301860b8e2f3018c21a8c`
+
+Merged at: `2026-05-16T07:32:11.858Z`
+
+Closed at: `2026-05-16T07:40:31.689Z`
 
 Decision: add a repo-owned DoD evidence signal. DoD is not intentionally `N/A`.
 
