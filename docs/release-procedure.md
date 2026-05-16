@@ -16,6 +16,12 @@
   installed-user release line.
 - Current exact release truth:
 - The current exact released line is `v1.3.16`.
+- Post-`v1.3.16`, GitHub and GitLab are sibling product authorities rather
+  than an authority/facade pair. GitHub keeps the public
+  `svelderrainruiz.vi-history-suite` identity and starts post-split feature
+  work at `1.4.0`; GitLab releases the governed sibling
+  `svelderrainruiz.vi-history` as `VI History`, starting at `0.1.0`, through
+  GitLab Releases with VSIX, checksum, and evidence assets.
 - The burned exact released line is `v1.0.2`.
 - The current authority package line on `main` is `1.3.16`.
 - The current develop package line on `develop` is `1.3.16`.

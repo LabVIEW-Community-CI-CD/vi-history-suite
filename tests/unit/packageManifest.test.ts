@@ -4,6 +4,10 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 interface ExtensionManifest {
+  name?: string;
+  displayName?: string;
+  version?: string;
+  publisher?: string;
   icon?: string;
   main?: string;
   browser?: string;
@@ -49,6 +53,15 @@ function readManifest(): ExtensionManifest {
 }
 
 describe('extension manifest research alignment', () => {
+  it('declares the governed GitLab sibling product identity', () => {
+    const manifest = readManifest();
+
+    expect(manifest.name).toBe('vi-history');
+    expect(manifest.displayName).toBe('VI History');
+    expect(manifest.version).toBe('0.1.0');
+    expect(manifest.publisher).toBe('svelderrainruiz');
+  });
+
   it('uses explicit command activation without startup or manifest-level Git activation', () => {
     const manifest = readManifest();
 

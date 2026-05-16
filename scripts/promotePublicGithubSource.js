@@ -269,7 +269,28 @@ function readAuthorityPackageManifest() {
   return JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
 }
 
+function readDualAuthoritySplitManifest() {
+  const manifestPath = path.join(repoRoot, 'docs', 'product', 'dual-authority-split-manifest.json');
+  if (!fs.existsSync(manifestPath)) {
+    return null;
+  }
+  return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+}
+
+function resolvePublicPackageIdentity(authorityManifest = readAuthorityPackageManifest()) {
+  const splitManifest = readDualAuthoritySplitManifest();
+  const publicAuthority = splitManifest?.authorities?.github;
+
+  return {
+    name: publicAuthority?.packageName ?? authorityManifest.name,
+    displayName: publicAuthority?.displayName ?? authorityManifest.displayName,
+    version: publicAuthority?.firstPostSplitVersion ?? authorityManifest.version,
+    publisher: publicAuthority?.publisher ?? authorityManifest.publisher
+  };
+}
+
 function renderPublicPackageManifest(authorityManifest = readAuthorityPackageManifest()) {
+  const publicIdentity = resolvePublicPackageIdentity(authorityManifest);
   const publicScripts = {
     clean: authorityManifest.scripts.clean,
     compile: authorityManifest.scripts.compile,
@@ -292,11 +313,11 @@ function renderPublicPackageManifest(authorityManifest = readAuthorityPackageMan
   };
 
   return {
-    name: authorityManifest.name,
-    displayName: authorityManifest.displayName,
+    name: publicIdentity.name,
+    displayName: publicIdentity.displayName,
     description: authorityManifest.description,
-    version: authorityManifest.version,
-    publisher: authorityManifest.publisher,
+    version: publicIdentity.version,
+    publisher: publicIdentity.publisher,
     license: authorityManifest.license,
     private: authorityManifest.private,
     repository: authorityManifest.repository,
@@ -316,6 +337,20 @@ function renderPublicPackageManifest(authorityManifest = readAuthorityPackageMan
   };
 }
 
+function renderPublicPackageLock() {
+  const packageLock = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package-lock.json'), 'utf8'));
+  const publicIdentity = resolvePublicPackageIdentity();
+
+  packageLock.name = publicIdentity.name;
+  packageLock.version = publicIdentity.version;
+  if (packageLock.packages?.['']) {
+    packageLock.packages[''].name = publicIdentity.name;
+    packageLock.packages[''].version = publicIdentity.version;
+  }
+
+  return packageLock;
+}
+
 function writeRenderedPackageManifest(targetRoot) {
   const targetPath = path.join(targetRoot, 'package.json');
   ensureParentDirSync(targetPath);
@@ -325,6 +360,13 @@ function writeRenderedPackageManifest(targetRoot) {
     'utf8'
   );
   return 'package.json';
+}
+
+function writeRenderedPackageLock(targetRoot) {
+  const targetPath = path.join(targetRoot, 'package-lock.json');
+  ensureParentDirSync(targetPath);
+  fs.writeFileSync(targetPath, `${JSON.stringify(renderPublicPackageLock(), null, 2)}\n`, 'utf8');
+  return 'package-lock.json';
 }
 
 function createPublicGithubSourcePromotionPlan() {
@@ -360,6 +402,7 @@ function writePromotedTree(targetRoot) {
   }
 
   writeRenderedPackageManifest(targetRoot);
+  writeRenderedPackageLock(targetRoot);
 
   return listManagedFiles(targetRoot);
 }
@@ -671,6 +714,7 @@ module.exports = {
   getPublicGithubSourcePromotionUsage,
   parsePublicGithubSourcePromotionArgs,
   readGitStatusPorcelain,
+  renderPublicPackageLock,
   renderPublicPackageManifest,
   runPublicGithubSourcePromotion,
   writePromotedTree

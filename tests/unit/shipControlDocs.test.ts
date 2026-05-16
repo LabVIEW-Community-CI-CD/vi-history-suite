@@ -58,7 +58,17 @@ interface BlockerLedger {
 }
 
 interface PackageManifest {
+  name: string;
   version: string;
+}
+
+interface SplitManifest {
+  authorities?: {
+    gitlab?: {
+      packageName?: string;
+      firstPostSplitVersion?: string;
+    };
+  };
 }
 
 function readText(relativePath: string): string {
@@ -105,6 +115,7 @@ describe('ship-control direction system', () => {
   it('retains a machine-readable readiness matrix with unique criteria and consistent blocker wiring', () => {
     const matrix = readJson<ReadinessMatrix>('docs/product/release-readiness-matrix.json');
     const pkg = readJson<PackageManifest>('package.json');
+    const splitManifest = readJson<SplitManifest>('docs/product/dual-authority-split-manifest.json');
     const ids = matrix.criteria.map((criterion) => criterion.id);
 
     expect(matrix.shipId).toBe('SHIP-0001');
@@ -112,7 +123,8 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.3.16');
+    expect(pkg.name).toBe(splitManifest.authorities?.gitlab?.packageName);
+    expect(pkg.version).toBe(splitManifest.authorities?.gitlab?.firstPostSplitVersion);
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');

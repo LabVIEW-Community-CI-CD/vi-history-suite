@@ -30,12 +30,14 @@ describe('public validation pre-release 1.3.12', () => {
       'docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.md'
     );
     const packageManifest = readJson<any>('package.json');
+    const splitManifest = readJson<any>('docs/product/dual-authority-split-manifest.json');
     const readme = readText('README.md');
     const publicReadme = readText('public-github-source/README.md');
     const commandReference = readText('docs/information-for-users/command-reference.md');
     const changelog = readText('CHANGELOG.md');
 
-    expect(packageManifest.version).toBe('1.3.16');
+    expect(packageManifest.name).toBe(splitManifest.authorities.gitlab.packageName);
+    expect(packageManifest.version).toBe(splitManifest.authorities.gitlab.firstPostSplitVersion);
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
       status: 'published-and-verified',

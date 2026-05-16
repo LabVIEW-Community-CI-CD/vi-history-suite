@@ -1,0 +1,45 @@
+{
+  "schema": "vi-history/dual-authority-split@v1",
+  "createdDate": "2026-05-16",
+  "status": "active",
+  "splitBaseline": {
+    "tag": "v1.3.16",
+    "gitlabTagCommit": "9c8e0a8503a84cba5d0ea722dd1497a35f52326c",
+    "githubTagCommit": "f679023ed760963779d9331a9395128ad01c7e54",
+    "meaning": "shared ancestry baseline, not an ongoing source-promotion contract"
+  },
+  "authorities": {
+    "gitlab": {
+      "role": "governed sibling product authority",
+      "repository": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+      "packageName": "vi-history",
+      "publisher": "svelderrainruiz",
+      "extensionId": "svelderrainruiz.vi-history",
+      "displayName": "VI History",
+      "firstPostSplitVersion": "0.1.0",
+      "releaseChannel": "GitLab Releases with VSIX, checksum, and evidence assets"
+    },
+    "github": {
+      "role": "public sibling product authority",
+      "repository": "https://github.com/svelderrainruiz/vi-history-suite",
+      "packageName": "vi-history-suite",
+      "publisher": "svelderrainruiz",
+      "extensionId": "svelderrainruiz.vi-history-suite",
+      "displayName": "VI History Suite",
+      "firstPostSplitVersion": "1.4.0",
+      "releaseChannel": "GitHub Releases and VS Code Marketplace"
+    }
+  },
+  "bridge": {
+    "kind": "slice-based requirements-core export/import",
+    "gitlabRetainedRoot": "docs/product/dual-authority-requirements-bridge",
+    "githubImportRoot": "docs/requirements/imports",
+    "importedIds": "immutable baseline references",
+    "implementationSharing": "none by default"
+  },
+  "supersedesForFutureWork": [
+    "ADR-0027",
+    "ADR-0028",
+    "ADR-0032"
+  ]
+}

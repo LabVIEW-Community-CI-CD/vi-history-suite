@@ -1,0 +1,45 @@
+{
+  "schema": "vi-history/requirements-bridge-export@v1",
+  "sliceId": "runtime-contract-host-provider-v1",
+  "createdDate": "2026-05-16",
+  "sourceAuthority": "gitlab",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommit": "31add781bd04cc832d9fb55aa821a69305a91a37",
+  "targetAuthority": "github",
+  "targetFeature": "runtime-contract-host-provider",
+  "publicImportPath": "docs/requirements/imports/runtime-contract-host-provider-v1/",
+  "importedRequirementIds": [
+    "VHS-SYS-REQ-004",
+    "VHS-SYS-REQ-005",
+    "VHS-SYS-REQ-006",
+    "VHS-SYS-REQ-007",
+    "VHS-SYS-REQ-008",
+    "VHS-REQ-094",
+    "VHS-REQ-095",
+    "VHS-REQ-138",
+    "VHS-REQ-141",
+    "VHS-REQ-144",
+    "VHS-REQ-146",
+    "VHS-REQ-148",
+    "VHS-REQ-194",
+    "VHS-REQ-588",
+    "VHS-REQ-589",
+    "VHS-REQ-590"
+  ],
+  "redactionStatus": {
+    "status": "pass",
+    "checkedFor": [
+      "private filesystem paths",
+      "private credential paths",
+      "local standards-review tooling names",
+      "GitLab-only release credentials"
+    ],
+    "publicImportContainsPrivateTooling": false
+  },
+  "implementationSharing": "none-by-default",
+  "bugOracle": {
+    "bothAuthoritiesSameWrongBehavior": "requirement-defect-candidate",
+    "oneAuthorityWrongBehavior": "implementation-defect-candidate",
+    "ambiguousBehavior": "requirement-clarification-candidate"
+  }
+}

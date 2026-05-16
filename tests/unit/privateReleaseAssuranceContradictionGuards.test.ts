@@ -12,8 +12,10 @@ function readText(relativePath: string): string {
 }
 
 function readCurrentExactTag(): string {
-  const manifest = JSON.parse(readText('package.json')) as { version: string };
-  return `v${manifest.version}`;
+  const releaseState = JSON.parse(readText('docs/product/release-publication-state.json')) as {
+    currentAuthority?: { exactTag?: string };
+  };
+  return releaseState.currentAuthority?.exactTag ?? 'v1.3.16';
 }
 
 describe('private release assurance contradiction guards', () => {

@@ -786,6 +786,17 @@
         "Architecture.md",
         "Architecture-Decision-Records.md"
       ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
     }
   ]
 }
