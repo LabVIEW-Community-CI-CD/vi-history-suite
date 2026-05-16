@@ -52,7 +52,6 @@ export function buildComparisonReportExecutionPlan(
     const labviewExePath = record.runtimeSelection.labviewExe?.path?.trim();
     const effectiveRuntimePlatform = resolveEffectiveRuntimePlatform(record);
     const headlessRequested =
-      effectiveRuntimePlatform === 'linux' ||
       record.runtimeSelection.provider === 'windows-container' ||
       record.runtimeSelection.provider === 'linux-container' ||
       record.runtimeSelection.headlessRequested === true ||

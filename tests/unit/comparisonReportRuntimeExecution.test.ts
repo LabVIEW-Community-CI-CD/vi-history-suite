@@ -386,6 +386,70 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.exitObservedProcessNames).toEqual([]);
   });
 
+  it('does not attach stale Linux headless diagnostics to a non-headless host success', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const readdir = vi.fn().mockResolvedValue([
+      'LVStatus.txt',
+      'lvrt_26.1.1f1_headless_sergio_cur.txt'
+    ]);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: vi.fn().mockResolvedValue('Recursive load during LEIF load!') as never,
+        pathExists: vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-05-16T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.args).not.toContain('-Headless');
+    expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
+    expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths).toEqual([]);
+    expect(readdir).not.toHaveBeenCalled();
+  });
+
   it('classifies password-protected CreateComparisonReport failures from retained LabVIEW CLI diagnostics', () => {
     const result = classifyLabviewCliDiagnosticText(
       [

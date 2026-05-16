@@ -59,7 +59,7 @@ files, proof packets, or GitLab release credentials cross this boundary.
 - Work item:
   <https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24>
 - Classification: `implementation-defect-candidate`
-- Current status: `physical-host-proof-admitted-with-headless-follow-up`
+- Current status: `physical-host-proof-admitted-with-validate-fixture-success`
 - Retained packet:
   `docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json`
 
@@ -88,5 +88,11 @@ the retained `linux-headless-recursive-load` diagnostic. The admitted proof uses
 the prior Linux-host proof shape instead: non-headless `LabVIEWCLI
 CreateComparisonReport` against the same cloned fixture pair. That run exited
 `0`, generated a `414111` byte HTML report plus `361` image assets, and closed
-LabVIEW cleanly afterward. The headless timeout is retained as implementation
-follow-up #25; it does not change the public imported requirement semantics.
+LabVIEW cleanly afterward.
+
+#25 then resolved the wrapper defect without changing the public command
+contract: Linux host-native `validate-fixture` now runs non-headless by default,
+while Linux containers and explicit headless requests stay on the headless path.
+The final retained proof exited `0`, generated a `451669` byte HTML report plus
+`361` image assets, retained no runtime diagnostic reason, and closed LabVIEW
+cleanly afterward. The public imported requirement semantics remain unchanged.

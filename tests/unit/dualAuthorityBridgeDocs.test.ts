@@ -123,7 +123,7 @@ describe('dual-authority requirements bridge docs', () => {
       expect.objectContaining({
         iterationId: 'physical-host-labview-2026-proof-v1',
         workItem: '#24',
-        status: 'physical-host-proof-admitted-with-headless-follow-up',
+        status: 'physical-host-proof-admitted-with-validate-fixture-success',
         bugOracleClassification: 'implementation-defect-candidate',
         publicMutationRequired: false,
         retainedPacket:
@@ -149,7 +149,12 @@ describe('dual-authority requirements bridge docs', () => {
       iterationId?: string;
       sliceId?: string;
       governedWorkItem?: { reference?: string; url?: string };
-      followUpWorkItems?: Array<{ reference?: string; url?: string; classification?: string }>;
+      followUpWorkItems?: Array<{
+        reference?: string;
+        url?: string;
+        classification?: string;
+        status?: string;
+      }>;
       importedRequirementIds?: string[];
       bugOracleClassification?: string;
       status?: string;
@@ -180,6 +185,12 @@ describe('dual-authority requirements bridge docs', () => {
           errorCode?: string;
           fixtureRepositoryCloned?: boolean;
           headlessDiagnosticReason?: string;
+          executionPlanHeadless?: boolean;
+          publicCommandContractChanged?: boolean;
+          runtimeExecutionState?: string;
+          runtimeExitCode?: number;
+          runtimeDiagnosticReason?: string | null;
+          generatedReportExists?: boolean;
           reportSizeBytes?: number;
           reportSha256?: string;
           assetCount?: number;
@@ -210,10 +221,11 @@ describe('dual-authority requirements bridge docs', () => {
       expect.objectContaining({
         reference: '#25',
         url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/25',
-        classification: 'implementation-defect-candidate'
+        classification: 'implementation-defect-candidate',
+        status: 'resolved-by-linux-host-nonheadless-default'
       })
     );
-    expect(iteration.status).toBe('physical-host-proof-admitted-with-headless-follow-up');
+    expect(iteration.status).toBe('physical-host-proof-admitted-with-validate-fixture-success');
     expect(iteration.importedRequirementIds).toEqual(
       expect.arrayContaining(['VHS-SYS-REQ-006', 'VHS-SYS-REQ-007', 'VHS-REQ-588'])
     );
@@ -279,11 +291,32 @@ describe('dual-authority requirements bridge docs', () => {
         })
       })
     );
+    expect(iteration.proofAttempts).toContainEqual(
+      expect.objectContaining({
+        attemptId: 'validate-fixture-host-nonheadless-2026-05-16',
+        result: 'passed',
+        bugOracleClassification: 'implementation-defect-candidate',
+        facts: expect.objectContaining({
+          executionPlanHeadless: false,
+          publicCommandContractChanged: false,
+          runtimeExecutionState: 'succeeded',
+          runtimeExitCode: 0,
+          runtimeDiagnosticReason: null,
+          generatedReportExists: true,
+          reportSizeBytes: 451669,
+          reportSha256: '2f98e6bc367b826626108d05c0cddbe1f4beb4e81d8fd5c9166d87e30d863520',
+          assetCount: 361,
+          closeLabviewExit: 0,
+          labviewProcessesRemainingAfterClose: false
+        })
+      })
+    );
     expect(iteration.redactionBoundary).toMatchObject({
       publicMutationRequired: false,
       privateEvidenceRetainedInGitLabOnly: true
     });
     expect(iteration.nextActions?.join(' ')).toContain('Close #24');
+    expect(iteration.nextActions?.join(' ')).toContain('Close #25');
     expect(iterationDoc).toContain('interactive authentication is required');
     expect(iterationDoc).toContain('/usr/local/bin/LabVIEWCLI');
     expect(iterationDoc).toContain('Codex did not activate');
@@ -291,9 +324,12 @@ describe('dual-authority requirements bridge docs', () => {
     expect(iterationDoc).toContain('validate-fixture');
     expect(iterationDoc).toContain('linux-headless-recursive-load');
     expect(iterationDoc).toContain('work item #25');
+    expect(iterationDoc).toContain('validate-fixture-host-nonheadless-2026-05-16');
+    expect(iterationDoc).toContain('runtime diagnostic reason: `<none>`');
     expect(iterationDoc).toContain('not a Linux');
     expect(iterationDoc).toContain('Vagrant substitute');
     expect(iterationDoc).toContain('No public GitHub import mutation is required');
     expect(summary).toContain('physical-host-labview-2026-proof-v1');
+    expect(summary).toContain('451669');
   });
 });

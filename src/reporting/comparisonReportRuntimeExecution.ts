@@ -485,6 +485,7 @@ async function runHostNativeExecution(
       });
       const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
         stderr: commandResult.stderr,
+        commandArgs: effectiveExecutionContext.commandPlan.args,
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
         unlinkFile: deps.unlinkFile,
@@ -619,6 +620,7 @@ async function runHostNativeExecution(
       await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, processError.stderr, 'utf8');
       const diagnostics = await captureRuntimeDiagnostics(record, processError.stdout, {
         stderr: processError.stderr,
+        commandArgs: effectiveExecutionContext.commandPlan.args,
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
         unlinkFile: deps.unlinkFile,
@@ -1048,6 +1050,7 @@ async function captureRuntimeDiagnostics(
   stdout: string,
   deps: {
     stderr: string;
+    commandArgs?: string[];
     pathExists: (filePath: string) => Promise<boolean>;
     copyFile: typeof fs.copyFile;
     unlinkFile: typeof fs.unlink;
@@ -1072,16 +1075,21 @@ async function captureRuntimeDiagnostics(
     }
   };
 
-  const headlessDiagnostics = await captureLinuxHeadlessDiagnostics(record, {
-    pathExists: deps.pathExists,
-    copyFile: deps.copyFile,
-    readFile: deps.readFile,
-    readdir: deps.readdir ?? fs.readdir,
-    mkdir: deps.mkdir,
-    removePath: deps.removePath ?? fs.rm,
-    processPlatform: deps.processPlatform,
-    diagnosticPathMapping: deps.diagnosticPathMapping
-  });
+  const headlessDiagnostics = shouldCaptureLinuxHeadlessDiagnostics(record, deps.commandArgs)
+    ? await captureLinuxHeadlessDiagnostics(record, {
+        pathExists: deps.pathExists,
+        copyFile: deps.copyFile,
+        readFile: deps.readFile,
+        readdir: deps.readdir ?? fs.readdir,
+        mkdir: deps.mkdir,
+        removePath: deps.removePath ?? fs.rm,
+        processPlatform: deps.processPlatform,
+        diagnosticPathMapping: deps.diagnosticPathMapping
+      })
+    : {
+        notes: [],
+        artifactPaths: []
+      };
   const stderrClassification = classifyLabviewCliDiagnosticText(deps.stderr, deps.expectedLabviewPath);
 
   const diagnosticLogSourcePath = parseLabviewCliDiagnosticLogPath(stdout);
@@ -1128,6 +1136,19 @@ async function captureRuntimeDiagnostics(
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
   };
+}
+
+function shouldCaptureLinuxHeadlessDiagnostics(
+  record: ComparisonReportPacketRecord,
+  commandArgs: string[] | undefined
+): boolean {
+  return (
+    resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'linux' &&
+    record.runtimeSelection.engine === 'labview-cli' &&
+    (record.runtimeSelection.provider === 'linux-container' ||
+      record.runtimeSelection.headlessRequested === true ||
+      isHeadlessLabviewCliExecution(commandArgs))
+  );
 }
 
 function shouldAttemptLinuxHeadlessRecovery(
