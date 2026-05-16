@@ -210,7 +210,7 @@ Retained historical ship target:
 
 Current exact release truth:
 
-- preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
+- preview install surface: `preview-evidence/vi-history-<version>.vsix`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.16`
 - current fully published exact package line: `1.3.16`

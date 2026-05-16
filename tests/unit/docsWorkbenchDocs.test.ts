@@ -521,7 +521,7 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('test_extension:');
     expect(gitlabCi).toContain('package_extension_preview:');
-    expect(gitlabCi).toContain('preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix');
+    expect(gitlabCi).toContain('preview-evidence/${PACKAGE_NAME}-${PACKAGE_VERSION}.vsix');
     expect(gitlabCi).toContain('release_extension:');
     expect(gitlabCi).toContain('npm run test');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');

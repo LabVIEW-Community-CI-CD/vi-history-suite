@@ -682,24 +682,25 @@ describe('ship-control direction system', () => {
       'export VIHS_INTERNAL_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"'
     );
     expect(gitlabCi).toContain('PACKAGE_VERSION=$(node -p "require(\'./package.json\').version")');
-    expect(gitlabCi).toContain('preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix');
+    expect(gitlabCi).toContain('PACKAGE_NAME=$(node -p "require(\'./package.json\').name")');
+    expect(gitlabCi).toContain('preview-evidence/${PACKAGE_NAME}-${PACKAGE_VERSION}.vsix');
     expect(gitlabCi).toContain("path.join('preview-evidence', 'preview-manifest.json')");
     expect(gitlabCi).toContain('release_extension:');
     expect(gitlabCi).toContain('if [ "v${PACKAGE_VERSION}" != "${CI_COMMIT_TAG}" ]; then');
-    expect(gitlabCi).toContain('npm run package -- --out "release-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"');
+    expect(gitlabCi).toContain('npm run package -- --out "release-evidence/${PACKAGE_NAME}-${PACKAGE_VERSION}.vsix"');
     expect(gitlabCi).toContain("release-evidence', 'release-manifest.json'");
     expect(gitlabCi).toContain("release-evidence', `${vsixFileName}.sha256`");
     expect(gitlabCi).toContain("shipId: 'SHIP-0001'");
     expect(gitlabCi).toContain("- release-evidence/release-manifest.json");
 
-    expect(maintainerControlPlane).toContain('preview-evidence/vi-history-suite-<version>.vsix');
+    expect(maintainerControlPlane).toContain('preview-evidence/vi-history-<version>.vsix');
     expect(maintainerControlPlane).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(maintainerControlPlane).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
     expect(maintainerControlPlane).toContain('Linux Assurance Runner Lane');
     expect(maintainerControlPlane).toContain('governed tagged release artifact');
     expect(currentState).toContain('docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`');
     expect(currentState).toContain('assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`');
-    expect(currentState).toContain('preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`');
+    expect(currentState).toContain('preview install surface: `preview-evidence/vi-history-<version>.vsix`');
     expect(releaseProcedure).toContain('For pre-release install testing, use the `package_extension_preview` artifact');
     expect(releaseProcedure).toContain('The repo also publishes a separate docs-authoring workbench image');
     expect(releaseProcedure).toContain('The protected-branch release-gate CI lane uses the published external');

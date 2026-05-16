@@ -569,12 +569,12 @@ promotion still stays separate afterward.
 
 ## Retained Evidence
 
-- `preview-evidence/vi-history-suite-<version>.vsix`
+- `preview-evidence/vi-history-<version>.vsix`
 - `preview-evidence/preview-manifest.json`
 - `release-evidence/coverage/`
 - `release-evidence/coverage.xml`
-- `release-evidence/vi-history-suite-<version>.vsix`
-- `release-evidence/vi-history-suite-<version>.vsix.sha256`
+- `release-evidence/vi-history-<version>.vsix`
+- `release-evidence/vi-history-<version>.vsix.sha256`
 - `release-evidence/release-record.md`
 - `release-evidence/release-manifest.json`
 - `docs-workbench-evidence/docs-workbench-manifest.json`

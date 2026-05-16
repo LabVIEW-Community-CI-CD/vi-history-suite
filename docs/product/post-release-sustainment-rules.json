@@ -190,9 +190,9 @@
       }
     },
     "maintainedSurfaces": [
-      "preview-evidence/vi-history-suite-<version>.vsix",
+      "preview-evidence/vi-history-<version>.vsix",
       "preview-evidence/preview-manifest.json",
-      "release-evidence/vi-history-suite-<version>.vsix",
+      "release-evidence/vi-history-<version>.vsix",
       "release-evidence/release-manifest.json",
       "release-evidence/release-record.md",
       ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",

@@ -148,7 +148,12 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(bootstrap).toContain('-LocalPort 3363');
 
     expect(acceptance).toContain('[int]   $ViServerTimeoutSec = 60');
+    expect(acceptance).toContain("[string]$ExtensionId = ''");
     expect(acceptance).toContain('[int]   $GitTimeoutMs = 300000');
+    expect(acceptance).toContain('function Resolve-WorkspaceExtensionId');
+    expect(acceptance).toContain('$ResolvedExtensionId = Resolve-WorkspaceExtensionId -ExplicitExtensionId $ExtensionId');
+    expect(acceptance).toContain("$IsolatedVsCodeRoot = Join-Path $EvidenceRoot 'isolated-vscode'");
+    expect(acceptance).toContain("$RuntimeSettingsFilePath = Join-Path $IsolatedUserDataDir 'User\\settings.json'");
     expect(acceptance).toContain(
       "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"
     );
@@ -200,9 +205,17 @@ describe('Vagrant Windows acceptance runner lane', () => {
     );
     expect(acceptance).toContain('Wait-LabVIEWPort -TimeoutSec $ViServerTimeoutSec');
     expect(acceptance).toContain('$runtimeSettingsLauncher');
+    expect(acceptance).toContain('-ExtensionId $ResolvedExtensionId');
+    expect(acceptance).toContain('-VsixPath $VsixPath');
+    expect(acceptance).toContain('-UserDataDir $IsolatedUserDataDir');
+    expect(acceptance).toContain('-ExtensionsRoot $IsolatedExtensionsRoot');
+    expect(acceptance).toContain('globalStorage\\$ResolvedExtensionId\\local-runtime-settings-cli\\vihs.cmd');
     expect(acceptance).toContain('--labview-version $LabVIEWVersion');
     expect(acceptance).toContain('--labview-bitness $LabVIEWBitness');
+    expect(acceptance).toContain('--settings-file $RuntimeSettingsFilePath');
     expect(acceptance).toContain("'--allow-existing-windows-host-runtime'");
+    expect(acceptance).toContain('extensionId         = $ResolvedExtensionId');
+    expect(acceptance).toContain('settingsFilePath    = $RuntimeSettingsFilePath');
     expect(acceptance).toContain('$env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()');
     expect(acceptance).toContain("$env:NPM_CONFIG_UPDATE_NOTIFIER = 'false'");
     expect(acceptance).toContain("$env:NO_UPDATE_NOTIFIER = '1'");

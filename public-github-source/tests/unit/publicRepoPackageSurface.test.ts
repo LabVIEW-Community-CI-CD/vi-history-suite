@@ -14,8 +14,11 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public repo package surface', () => {
-  it('keeps the public facade contract aligned with the governed preview package line', () => {
+  it('keeps the GitHub sibling product contract aligned with the post-split package line', () => {
     const manifest = readJson<{
+      name?: string;
+      displayName?: string;
+      publisher?: string;
       scripts?: Record<string, string>;
       version?: string;
       files?: string[];
@@ -44,7 +47,10 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-source-package-preview.yml');
 
-    expect(manifest.version).toBe('1.3.16');
+    expect(manifest.name).toBe('vi-history-suite');
+    expect(manifest.displayName).toBe('VI History Suite');
+    expect(manifest.publisher).toBe('svelderrainruiz');
+    expect(manifest.version).toBe('1.4.0');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
