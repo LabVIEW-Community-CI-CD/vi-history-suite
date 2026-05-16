@@ -194,18 +194,23 @@ Current control-plane surfaces:
 
 ## Active Queue
 
-Latest landed ship target:
+Retained historical ship target:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
 - retained exact-version release: `v0.2.0`
-- preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - retained release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
 - retained release surface: GitLab release `v0.2.0`
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
+- release-truth boundary: `v0.2.0` is historical ship-control evidence, not
+  the current installed-user release line
+
+Current exact release truth:
+
+- preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.16`
 - current fully published exact package line: `1.3.16`

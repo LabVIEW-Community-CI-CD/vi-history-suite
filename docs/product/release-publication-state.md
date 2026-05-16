@@ -9,6 +9,9 @@ final installed-user distribution surface.
 ## Current State
 
 - Authority system: GitLab
+- Retained historical ship target: `SHIP-0001` / `v0.2.0`
+- Historical ship-target role: retained first immutable ship-control evidence,
+  not the current installed-user release line
 - Fully closed authority exact tag: `v1.3.16`
 - Fully closed authority `main`: `9c8e0a8503a84cba5d0ea722dd1497a35f52326c`
 - Current authority exact tag: `v1.3.16`

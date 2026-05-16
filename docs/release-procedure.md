@@ -8,9 +8,13 @@
 - Only release when [SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)
   and the [release readiness matrix](./product/release-readiness-matrix.json)
   do not retain open blockers against the targeted release criterion.
+- Historical ship-control baseline:
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
+- Do not use retained `v0.2.0` `SHIP-0001` evidence as the current
+  installed-user release line.
+- Current exact release truth:
 - The current exact released line is `v1.3.16`.
 - The burned exact released line is `v1.0.2`.
 - The current authority package line on `main` is `1.3.16`.

@@ -12,6 +12,10 @@ Closed and landed for the first immutable SemVer release:
 - retained release: `v0.2.0`
 - retained pipeline: `2428809456`
 - retained release job: `13779604462`
+- release-truth boundary: this file is retained historical ship-control
+  evidence for `v0.2.0`; current installed-user release truth is maintained by
+  `docs/product/release-publication-state.md` and currently points at
+  `v1.3.16`
 - current repo-active tranche: `TRANCHE-016`
 - current repo-active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - current repo-active execution program: [PROGRAM-0005 Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -33,6 +37,8 @@ Closed and landed for the first immutable SemVer release:
 
 - Target release: `v0.2.0`
 - Current package baseline: `0.2.0`
+- Current release role: retained historical ship target, not current
+  installed-user release truth
 - Primary release artifact: versioned VSIX package
 - Distribution baseline: shareable GitLab release artifact for exact-version
   installation

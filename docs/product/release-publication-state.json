@@ -1,6 +1,13 @@
 {
   "schema": "vi-history-suite/release-publication-state@v1",
   "recordedAt": "2026-05-12",
+  "historicalShipBaseline": {
+    "shipId": "SHIP-0001",
+    "releaseTarget": "v0.2.0",
+    "role": "retained-first-immutable-ship-control-evidence",
+    "currentInstalledUserRelease": false,
+    "currentReleaseTruthPath": "docs/product/release-publication-state.md"
+  },
   "authority": {
     "system": "gitlab",
     "integrationBranch": "develop",

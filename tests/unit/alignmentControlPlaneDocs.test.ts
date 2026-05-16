@@ -123,4 +123,33 @@ describe('alignment control-plane process docs', () => {
       ])
     );
   });
+
+  it('records the retained ship history versus current release truth decision for work item 17', () => {
+    const markdown = readText(`${artifactPath}.md`);
+    const controlPlane = readJson<AlignmentControlPlane>(`${artifactPath}.json`);
+    const closeout17 = controlPlane.actionCloseouts?.find((closeout) => closeout.iid === 17);
+
+    expect(markdown).toContain(
+      '### `#17` Align current release truth across retained v0.2.0 and live v1.3.16 surfaces'
+    );
+    expect(markdown).toContain('Decision: separate retained historical ship-control evidence');
+    expect(markdown).toContain('`currentInstalledUserRelease=false`');
+
+    expect(closeout17).toMatchObject({
+      iid: 17,
+      decision: 'separate-retained-ship-history-from-current-release-truth'
+    });
+    expect(closeout17?.guardrails).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'README.md' }),
+        expect.objectContaining({
+          path: 'docs/product/SHIP-0001-releasable-vi-history-suite.md'
+        }),
+        expect.objectContaining({ path: 'docs/product/current-state.md' }),
+        expect.objectContaining({ path: 'docs/product/release-publication-state.json' }),
+        expect.objectContaining({ path: 'tests/unit/shipControlDocs.test.ts' }),
+        expect.objectContaining({ path: 'tests/unit/releasePublicationState.test.ts' })
+      ])
+    );
+  });
 });

@@ -76,6 +76,11 @@ describe('ship-control direction system', () => {
     expect(shipDoc).toContain('# SHIP-0001: Releasable VI History Suite');
     expect(shipDoc).toContain('- Target release: `v0.2.0`');
     expect(shipDoc).toContain('- Current package baseline: `0.2.0`');
+    expect(shipDoc).toContain('release-truth boundary: this file is retained historical ship-control');
+    expect(shipDoc).toContain('current installed-user release truth is maintained by');
+    expect(shipDoc).toContain('`docs/product/release-publication-state.md` and currently points at');
+    expect(shipDoc).toContain('`v1.3.16`');
+    expect(shipDoc).toContain('Current release role: retained historical ship target');
     expect(shipDoc).toContain('- Target VSIX artifact: `vi-history-suite-0.2.0.vsix`');
     expect(shipDoc).toContain('- Target release manifest: `release-evidence/release-manifest.json`');
     expect(shipDoc).toContain('[release-readiness-matrix.json](./release-readiness-matrix.json)');
@@ -192,6 +197,7 @@ describe('ship-control direction system', () => {
       'docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md',
     );
     const releaseProcedure = readText('docs/release-procedure.md');
+    const releasePublicationStateDoc = readText('docs/product/release-publication-state.md');
     const changelog = readText('CHANGELOG.md');
     const cmPlan = readText('docs/cm/cm-plan.md');
     const workbenchDoc = readText('docs/documentation-workbench.md');
@@ -216,6 +222,9 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('## Overview');
     expect(readme).toContain('## Details');
     expect(readme).toContain('Maintainer Control Plane Index');
+    expect(readme).toContain('Current stable installed-user line: `1.3.16`');
+    expect(readme).toContain('Historical ship-control evidence');
+    expect(readme).toContain('for `v0.2.0` is maintainer-only release history');
     expect(readme).not.toContain('Authority release facts');
     expect(maintainerControlPlane).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
     expect(maintainerControlPlane).toContain('[Release Readiness Matrix](./release-readiness-matrix.json)');
@@ -235,8 +244,13 @@ describe('ship-control direction system', () => {
     expect(maintainerControlPlane).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(maintainerControlPlane).toContain('[Release Procedure](../release-procedure.md)');
     expect(maintainerControlPlane).toContain('npm run design:gate:assert-complete');
+    expect(maintainerControlPlane).toContain('### Retained Historical Ship Evidence');
+    expect(maintainerControlPlane).toContain('### Current Exact Release Truth');
     expect(maintainerControlPlane).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(maintainerControlPlane).toContain('- landed ship tranche: `TRANCHE-009`');
+    expect(maintainerControlPlane).toContain(
+      'historical ship-control line: `v0.2.0` is retained for the first immutable'
+    );
     expect(maintainerControlPlane).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`');
     expect(maintainerControlPlane).toContain('- burned exact release line: `v1.0.2`');
     expect(maintainerControlPlane).toContain('- current exact released line: `v1.3.16`');
@@ -299,9 +313,14 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)');
     expect(currentState).toContain('container-owned `node_modules` volume plus `package-lock.json` refresh');
     expect(currentState).toContain('npm run design:gate:assert-complete');
+    expect(currentState).toContain('Retained historical ship target:');
+    expect(currentState).toContain('Current exact release truth:');
     expect(currentState).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(currentState).toContain(
+      'release-truth boundary: `v0.2.0` is historical ship-control evidence'
+    );
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.3.16`');
     expect(currentState).toContain('- current fully published exact package line: `1.3.16`');
@@ -393,8 +412,13 @@ describe('ship-control direction system', () => {
 
     expect(releaseProcedure).toContain('[SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)');
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
+    expect(releaseProcedure).toContain('Historical ship-control baseline:');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
+    expect(releaseProcedure).toContain(
+      'Do not use retained `v0.2.0` `SHIP-0001` evidence as the current'
+    );
+    expect(releaseProcedure).toContain('Current exact release truth:');
     expect(releaseProcedure).toContain('current exact released line is `v1.3.16`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
     expect(releaseProcedure).toContain('current authority package line on `main` is `1.3.16`');
@@ -452,6 +476,23 @@ describe('ship-control direction system', () => {
     );
     expect(releaseProcedure).toContain('VS Code Marketplace item');
     expect(releaseProcedure).toContain('Marketplace: Manage');
+    expect(releasePublicationStateDoc).toContain(
+      'Retained historical ship target: `SHIP-0001` / `v0.2.0`'
+    );
+    expect(releasePublicationStateDoc).toContain(
+      'not the current installed-user release line'
+    );
+    expect(releasePublicationStateDoc).toContain('Current authority exact tag: `v1.3.16`');
+    for (const [surfaceName, surfaceText] of [
+      ['README.md', readme],
+      ['docs/product/maintainer-control-plane-index.md', maintainerControlPlane],
+      ['docs/product/current-state.md', currentState],
+      ['docs/release-procedure.md', releaseProcedure],
+      ['docs/product/release-publication-state.md', releasePublicationStateDoc]
+    ] as const) {
+      expect(surfaceText, surfaceName).not.toMatch(/current[^.\n]*`v0\.2\.0`/i);
+      expect(surfaceText, surfaceName).toMatch(/(?:v)?1\.3\.16/);
+    }
     expect(bundledInstallPage).toContain('<h2>Install Surfaces</h2>');
     expect(bundledInstallPage).toContain(
       'VS Code Marketplace listing under <code>svelderrainruiz.vi-history-suite</code>'
