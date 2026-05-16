@@ -43,17 +43,16 @@ external starter pack change.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Installed user | Start from the exact released route | concept, task, reference | `README.md` | `INSTALL.md` and FAQ | high | persistent | no | `README.md` -> `INSTALL.md` -> FAQ | local clone of `README.md` and `INSTALL.md` | update when the exact released runtime contract changes |
 | Source evaluator | Evaluate the source repo | concept, task, reference | `README.md` | `INSTALL.md` and command reference | medium | persistent | yes | `README.md` -> `INSTALL.md` -> command reference | local clone of those surfaces plus current state when needed | update when public-evaluation commands or route boundaries change |
-| Maintainer | Switch runtime provider on the active branch | task, reference | `PROGRAM-0005` and `ISSUE-0412` | command reference and FAQ | high | persistent | yes | current state -> program/issue docs -> command reference | local clone of the governing docs and runtime-settings CLI help | update when provider request, version/bitness contract, or reload guidance changes |
+| Maintainer | Switch runtime provider | task, reference | `PROGRAM-0005` and `ISSUE-0412` | command reference and FAQ | high | persistent | yes | current state -> program/issue docs -> command reference | local clone of the governing docs and runtime-settings CLI help | update when provider request, version/bitness contract, or reload guidance changes |
 | Maintainer | Author documentation-package changes | task, reference | docs workbench | command reference and style guide | high | persistent | yes | docs workbench -> command reference -> style guide | local clone plus repo-native docs workbench container | update when docs-authoring commands or validation split changes |
 | Publication reviewer | Inspect public release and publication evidence | proof, reference | public release candidate | public source/wiki publication ledgers | medium | persistent | no | public release candidate -> ledgers | retained publication ledgers and release evidence | update when exact release or public publication state changes |
 
 ## Delivery Assumptions
 
 - The exact released installed-user contract is `v1.3.16` with
-  prepare-CLI-first setup.
-- The active `develop` direction may describe host-default Windows local
-  `LabVIEWCLI` plus bounded expert Docker, but that branch direction does not
-  silently replace the exact released install route.
+  prepare-CLI-first setup and host-default Windows local `LabVIEWCLI` plus bounded expert Docker.
+- The active `develop` direction keeps the same installed-user runtime
+  doctrine unless a later release-control item explicitly changes it.
 - The docs package remains text-first Markdown; no additional media channels
   are currently claimed.
 - `MAINTAINING.md` and `OPERATIONS.md` are not first-class `vi-history-suite`
@@ -68,7 +67,7 @@ external starter pack change.
 ## Update Triggers
 
 - update this surface when route ownership changes
-- update this surface when the released install route or the active branch route
+- update this surface when the released install route or source-evaluation route
   split changes
 - update this surface when `docs/information-for-users/navigation-and-search.md`
   or `docs/quick-reference.md` changes enough to alter fallback or entry-route

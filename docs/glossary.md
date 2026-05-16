@@ -20,7 +20,7 @@ See also:
 
 | Term | Meaning | Where it matters |
 | --- | --- | --- |
-| active `develop` direction | The branch truth that may already be implemented locally but is not yet the exact released installed baseline. | source-backed evaluation and branch-specific work |
-| exact released line | The currently published installed-user truth. In this repo, the current exact released line is `v1.3.16`. | choosing the correct workflow before compare or validation |
-| provider request | The stored compare-provider intent, `host` or `docker`, used by the active branch runtime-provider work. | current runtime-provider selection and compare preflight |
+| active `develop` direction | The branch truth for source-backed evaluation and upcoming releases; it should not contradict the current installed-user runtime doctrine unless a later release-control item says so. | source-backed evaluation and branch-specific work |
+| exact released line | The currently published installed-user truth. In this repo, the current exact released line is `v1.3.16`. It uses host-default local `LabVIEWCLI` and Docker as a bounded expert provider. | choosing the correct workflow before compare or validation |
+| provider request | The stored compare-provider intent, `host` or `docker`, used by the current runtime-provider work. | current runtime-provider selection and compare preflight |
 | release gate | The outer standards-validation run retained through released `repo-standards-review` baselines. | release readiness, standards intake, and drift checks |

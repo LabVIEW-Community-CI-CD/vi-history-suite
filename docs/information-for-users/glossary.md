@@ -35,13 +35,13 @@ See also:
 | Term | Meaning | Where it matters |
 | --- | --- | --- |
 | Assurance workbench | The published `repo-standards-review` container used for outer release-gate checks. | published `assurance-workbench:main` lane |
-| compare preflight | The explicit branch workflow that shows the selected pair plus provider, version, and bitness while still allowing Compare to surface exact runtime failures. | active `develop` direction under `PROGRAM-0005` and `ISSUE-0412` |
+| compare preflight | The explicit workflow that shows the selected pair plus provider, version, and bitness while still allowing Compare to surface exact runtime failures. | current installed runtime contract under `PROGRAM-0005` and `ISSUE-0412` |
 | docs workbench | The repo-native Docker-backed authoring surface for documentation-package iteration. | `docs/documentation-workbench.md`, docs gates, and wiki preparation |
-| exact released line | The published installed-user baseline that is already live. The current exact released line is `v1.3.16`. | installed-user truth versus active branch direction |
+| exact released line | The published installed-user baseline that is already live. The current exact released line is `v1.3.16`. It uses host-default Windows local `LabVIEWCLI` and retains Docker as a bounded expert provider. | installed-user truth versus active branch direction |
 | prepare command | `VI History: Prepare Local Runtime Settings CLI`, the explicit command that creates or refreshes the local `vihs` launcher. | first-time setup and launcher repair |
-| expert Docker provider | The non-default compare provider that remains available on the active branch only through the generated settings CLI. | runtime-provider selection and fail-closed Docker admission |
-| host-default runtime | The active branch direction where Windows local `LabVIEWCLI` is the default compare provider when the persisted provider is absent. | `PROGRAM-0005`, `ISSUE-0412`, and compare preflight |
-| LabVIEWCLI | The local LabVIEW command-line backend used by the active branch for Windows host-default compare generation. | installed compare runtime resolution on the active branch |
+| expert Docker provider | The non-default compare provider that remains available only through the generated settings CLI. | runtime-provider selection and fail-closed Docker admission |
+| host-default runtime | The current installed-user doctrine where Windows local `LabVIEWCLI` is the default compare provider when the persisted provider is absent. | `PROGRAM-0005`, `ISSUE-0412`, and compare preflight |
+| LabVIEWCLI | The local LabVIEW command-line backend used for Windows host-default compare generation. | installed compare runtime resolution |
 | provider request | The persisted compare-provider intent, `host` or `docker`, written by the generated runtime-settings CLI. | runtime selection, compare preflight, and runtime-doctor guidance |
 | released compliance workbench | The latest tagged `repo-standards-review` assurance-workbench release used when exact released reproduction matters more than the rolling lane. | `v0.2.18` tagged-release reproduction and historical exact-baseline checks |
 | Release packet | A retained release-proof bundle or route that records the evidence for a cut or publication state. | release candidate and publication review |

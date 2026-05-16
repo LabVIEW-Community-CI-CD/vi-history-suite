@@ -14,7 +14,8 @@ closeout is still active implementation work.
 - historical public closeout: `TRANCHE-010` / `ISSUE-0407` / `PROGRAM-0002`
 - active implementation direction: `TRANCHE-016` / `ISSUE-0412` /
   `PROGRAM-0005`
-- exact released public baseline: `v1.2.2` Docker-only installed-user contract
+- closure-time public baseline: `v1.2.2` Docker-only installed-user contract,
+  retained as historical evidence after newer host-default releases
 - closure evidence: published public `develop` candidate `b1de8c5`, published
   public wiki head `fc6af3c`, and retained expert-agent rerun verdict
   `no findings` at `2026-04-14T10:30:20Z`
@@ -54,9 +55,10 @@ closeout is still active implementation work.
 
 - publication-alignment slices promoted truthful maintained public candidate
   surfaces for the host-default contract
-- exact public `main`, exact public wiki, exact bundled installed-user docs,
-  and Marketplace reader surfaces are still retained on the exact released
-  Docker-only baseline until a newer exact release is actually published
+- at closure time, exact public `main`, exact public wiki, exact bundled
+  installed-user docs, and Marketplace reader surfaces stayed on the exact
+  released Docker-only baseline until the newer host-default exact line could
+  be published
 - maintained public `develop` candidate and maintained public candidate wiki
   heads now publish `b1de8c5` / `fc6af3c` and are retained in
   `docs/product/public-release-candidate.{md,json}`
@@ -64,6 +66,9 @@ closeout is still active implementation work.
   heads with a clean `no findings` verdict
 - the host-default installed contract is now both truthfully published
   (candidate heads) and accepted (retained rerun), so this gate is closed
+- current installed-user reader surfaces must lead with the published
+  host-default local `LabVIEWCLI` contract and retain Docker-only language only
+  as historical baseline evidence
 
 ## Non-Criteria
 
@@ -75,4 +80,3 @@ closeout is still active implementation work.
 ## Next Move
 
 - `feature/runtime-provider-live-session-gate-decision`
-

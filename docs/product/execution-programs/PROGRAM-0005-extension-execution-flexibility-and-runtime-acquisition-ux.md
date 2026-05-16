@@ -6,10 +6,10 @@ Active post-release program.
 
 Current facts:
 
-- `TRANCHE-013` landed the current released Docker-only installed contract,
+- `TRANCHE-013` landed the historical Docker-only installed contract,
   engine-aware image-selection rule, and public/internal documentation split
   baseline
-- `TRANCHE-015` landed the current released first-run Docker onboarding and
+- `TRANCHE-015` landed the historical first-run Docker onboarding and
   missing-Docker fail-closed guidance
 - exact `v1.3.9` now publishes the host-default Windows local `LabVIEWCLI`
   workflow plus one bounded expert Docker provider, while `TRANCHE-013` and

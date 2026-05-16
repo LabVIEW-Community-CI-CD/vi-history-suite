@@ -304,6 +304,137 @@
       ]
     },
     {
+      "iid": 18,
+      "title": "Normalize host-default LabVIEWCLI versus historical Docker-only contract",
+      "recordedAt": "2026-05-16T18:48:07Z",
+      "status": "implemented-locally-pending-push-merge",
+      "decision": "make-host-default-labviewcli-current-and-docker-only-historical",
+      "grepEvidence": {
+        "before": [
+          "docs/requirements/srs.md and docs/requirements/rtm.csv described current released Docker-only or exact released Docker-only baselines in VHS-REQ-459, VHS-REQ-466, VHS-REQ-475, VHS-REQ-491, VHS-REQ-528, VHS-REQ-530, and VHS-REQ-549.",
+          "docs/testing/test-plan.md, docs/documentation-workbench.md, and docs/product/current-state.md named Docker-only bundled-doc truth checks and Docker-required hard stops as current installed-user checks.",
+          "docs/product/development-queue.json, docs/product/extension-execution-policy.md, and docs/product/runtime-provider-public-acceptance-gate.{md,json} mixed closure-time Docker-only evidence with current reader-surface language."
+        ],
+        "after": [
+          "Current user-facing surfaces contain no active Docker-only guidance; retained Docker-only matches are historical/control-plane baseline evidence or tests that forbid stale wording from leaking into current user docs.",
+          "Docs-CI and workbench wording guards host-default local LabVIEWCLI, explicit vihs --validate provider bundle validation, bounded expert Docker selection, and provider/progress visibility."
+        ]
+      },
+      "guardrails": [
+        {
+          "path": "docs/requirements/srs.md",
+          "purpose": "Keep the Docker-only line historical and the host-default LabVIEWCLI contract current in SRS rows."
+        },
+        {
+          "path": "docs/requirements/rtm.csv",
+          "purpose": "Keep RTM statements aligned with the host-default current contract and historical Docker-only baseline."
+        },
+        {
+          "path": "docs/testing/test-plan.md",
+          "purpose": "Retain documentation review criteria for host-default current truth and historical-only Docker wording."
+        },
+        {
+          "path": "docs/product/extension-execution-policy.md",
+          "purpose": "Separate current installed-user doctrine from retained historical Docker-only baseline decisions."
+        },
+        {
+          "path": "docs/product/current-state.md",
+          "purpose": "Report docs-CI and runtime-contract truth checks as host-default LabVIEWCLI oriented."
+        },
+        {
+          "path": "docs/product/runtime-provider-public-acceptance-gate.md",
+          "purpose": "Label Docker-only gate facts as closure-time evidence and host-default as current reader-surface truth."
+        },
+        {
+          "path": "docs/information-for-users/delivery-profile.md",
+          "purpose": "Lead user-information delivery assumptions with v1.3.16 host-default LabVIEWCLI plus bounded expert Docker."
+        },
+        {
+          "path": "tests/unit/executionPolicyDocs.test.ts",
+          "purpose": "Fail if execution-policy authority docs collapse current host-default truth back into stale Docker-only wording."
+        },
+        {
+          "path": "tests/unit/requirementsDocs.test.ts",
+          "purpose": "Fail if SRS, RTM, or test-plan runtime-contract wording drifts back to current Docker-only claims."
+        },
+        {
+          "path": "tests/unit/docsWorkbenchDocs.test.ts",
+          "purpose": "Fail if docs workbench truth checks stop guarding host-default LabVIEWCLI and expert Docker semantics."
+        }
+      ],
+      "proof": [
+        {
+          "command": "npm exec -- vitest run tests/unit/alignmentControlPlaneDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/requirementsDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/releaseRuntimeDriftGate.test.ts",
+          "status": "passed",
+          "summary": "9 test files; 32 passed"
+        },
+        {
+          "command": "npm run docs:gate:core",
+          "status": "passed",
+          "summary": "23 test files; 70 passed; 2 skipped; bundled documentation in sync"
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-18",
+          "status": "completed",
+          "scorecardPath": "/tmp/vihs-assurance-release-18/release-gate-scorecard.txt",
+          "gates": {
+            "coverage": "PASS",
+            "cm": "PASS",
+            "req": "PASS",
+            "arch": "PASS",
+            "doc": "PASS",
+            "dod": "PASS"
+          },
+          "dodConfidence": "Med"
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-18",
+          "status": "completed",
+          "documentationProofPath": "/tmp/vihs-assurance-26514-18/documentation-proof.txt",
+          "missingSignals": []
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        },
+        {
+          "command": "npm test",
+          "status": "passed",
+          "summary": "179 test files; 963 passed; 2 skipped"
+        },
+        {
+          "command": "npm run check",
+          "status": "passed"
+        },
+        {
+          "command": "npm run package:audit",
+          "status": "passed"
+        },
+        {
+          "command": "git diff --check",
+          "status": "passed"
+        },
+        {
+          "command": "jq empty docs/product/work-item-0011-docs-implementation-alignment-control-plane-2026-05-16.json docs/product/development-queue.json docs/product/runtime-provider-public-acceptance-gate.json",
+          "status": "passed"
+        }
+      ],
+      "mutationBoundary": [
+        "docs/tests/traceability alignment only",
+        "no runtime behavior mutation",
+        "no release state mutation",
+        "no tag, public GitHub release, Marketplace, release branch deletion, or protected-branch mutation"
+      ]
+    },
+    {
       "iid": 20,
       "title": "Make release and runtime drift fail closed in docs gate",
       "recordedAt": "2026-05-16T06:10:19Z",

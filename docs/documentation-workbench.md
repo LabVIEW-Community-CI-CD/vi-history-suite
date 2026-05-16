@@ -247,9 +247,9 @@ adds first-class evidence for future sessions:
 - retained internal-only local evidence under `.cache/docs-integration/internal/latest/`
 - retained CI evidence under `docs-integration-evidence/`
 - explicit installed-user truth checks for:
-  - Docker-only compare execution in the bundled installed-user guide
-  - engine-aware Windows/Linux image selection
-  - Docker-required hard stops without host fallback
+  - host-default local `LabVIEWCLI` in the bundled installed-user guide
+  - explicit provider bundle validation through `vihs --validate`
+  - bounded expert Docker selection instead of default Docker-only guidance
   - front-facing provider and progress visibility in the bundled installed-user guide
 - explicit package-path freshness:
   - `npm run package` reruns `npm run docs:bundle` before `vsce package`

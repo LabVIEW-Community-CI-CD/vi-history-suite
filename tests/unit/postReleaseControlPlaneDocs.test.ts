@@ -143,9 +143,9 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('docs:ci:public');
     expect(currentState).toContain('docs:ci:internal');
     expect(currentState).toContain('public GitHub admission matrix');
-    expect(currentState).toContain('Docker is now part of the default installed extension setup path');
-    expect(currentState).toContain('Docker-required hard stops without host fallback');
-    expect(currentState).toContain('provider and progress visibility in the bundled guide');
+    expect(currentState).toContain('host-default local `LabVIEWCLI`');
+    expect(currentState).toContain('bounded expert Docker selection');
+    expect(currentState).toContain('provider/progress visibility in the bundled guide');
     expect(currentState).toContain('.github/workflows/public-source-package-preview.yml');
     expect(currentState).toContain('.github/workflows/public-linux-installed-user-smoke.yml');
     expect(currentState).toContain('.github/workflows/public-windows-installed-user-contract.yml');

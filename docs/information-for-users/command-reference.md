@@ -117,7 +117,7 @@ See also:
 ## Runtime Provider CLI And Proof
 
 This section and the FAQ are the governed installed-user help surface for the
-runtime-settings CLI on the active branch.
+runtime-settings CLI.
 
 `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
 
@@ -206,7 +206,7 @@ runtime-settings CLI on the active branch.
 
 `vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]`
 
-- Purpose: persist the active branch provider request, LabVIEW version, and
+- Purpose: persist the current provider request, LabVIEW version, and
   LabVIEW bitness into VS Code settings without interactive prompts.
 - Use when: scripting or making one exact provider/runtime change directly.
 - Notes:

@@ -5,15 +5,15 @@
 Deliver a governed runtime/tool-discovery and progress experience aligned to the
 authoritative research:
 
-- exact released Docker-only bundled/user runtime truth
-- active branch provider request, version, and bitness truth
+- retained historical Docker-only bundled/user runtime truth
+- current provider request, version, and bitness truth
 - Windows registry and install-root discovery
 - macOS/Linux documented-root discovery and constraint retention
 - notification, status-bar, and webview progress surfaces
 
 ## Scope
 
-- exact released bundled/user baseline:
+- retained historical bundled/user baseline:
   - Docker-only compare execution
   - current Docker engine selection of governed Windows or Linux image family
   - visible image acquisition and blocked-provider guidance
