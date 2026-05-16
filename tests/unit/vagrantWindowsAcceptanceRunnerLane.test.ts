@@ -152,7 +152,7 @@ describe('Vagrant Windows acceptance runner lane', () => {
     expect(acceptance).toContain('[int]   $GitTimeoutMs = 300000');
     expect(acceptance).toContain('function Resolve-WorkspaceExtensionId');
     expect(acceptance).toContain('$ResolvedExtensionId = Resolve-WorkspaceExtensionId -ExplicitExtensionId $ExtensionId');
-    expect(acceptance).toContain("$IsolatedVsCodeRoot = Join-Path $EvidenceRoot 'isolated-vscode'");
+    expect(acceptance).toContain("$IsolatedVsCodeRoot = 'C:\\vihs-isolated-vscode'");
     expect(acceptance).toContain("$RuntimeSettingsFilePath = Join-Path $IsolatedUserDataDir 'User\\settings.json'");
     expect(acceptance).toContain(
       "$LabVIEWStartupEvidencePath = Join-Path $EvidenceRoot 'labview-startup.json'"

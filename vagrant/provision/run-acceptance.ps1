@@ -107,7 +107,7 @@ Write-Step "Using vsix: $VsixPath"
 $ResolvedExtensionId = Resolve-WorkspaceExtensionId -ExplicitExtensionId $ExtensionId
 Write-Step "Using extension id: $ResolvedExtensionId"
 
-$IsolatedVsCodeRoot = Join-Path $EvidenceRoot 'isolated-vscode'
+$IsolatedVsCodeRoot = 'C:\vihs-isolated-vscode'
 $IsolatedUserDataDir = Join-Path $IsolatedVsCodeRoot 'user-data'
 $IsolatedExtensionsRoot = Join-Path $IsolatedVsCodeRoot 'extensions'
 $RuntimeSettingsFilePath = Join-Path $IsolatedUserDataDir 'User\settings.json'
