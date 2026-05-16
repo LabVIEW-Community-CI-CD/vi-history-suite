@@ -1,0 +1,88 @@
+{
+  "schema": "vi-history/requirements-bridge-iteration@v1",
+  "iterationId": "physical-host-labview-2026-proof-v1",
+  "sliceId": "runtime-contract-host-provider-v1",
+  "createdDate": "2026-05-16",
+  "status": "open",
+  "governedWorkItem": {
+    "reference": "#24",
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24",
+    "title": "Install and admit physical-host Linux LabVIEW 2026 Community x64 proof"
+  },
+  "authorityScope": {
+    "governedAuthority": "gitlab",
+    "publicAuthority": "github",
+    "sourceBaselineTag": "v1.3.16",
+    "sourceCommit": "31add781bd04cc832d9fb55aa821a69305a91a37",
+    "targetFeature": "runtime-contract-host-provider"
+  },
+  "importedRequirementIds": [
+    "VHS-SYS-REQ-006",
+    "VHS-SYS-REQ-007",
+    "VHS-REQ-588",
+    "VHS-REQ-589",
+    "VHS-REQ-590"
+  ],
+  "trigger": "First governed use of the runtime-contract bridge after the public import landed. Work item #24 exposed that the current physical Linux host does not yet reproduce the retained Linux host LabVIEW 2026 proof state carried by VHS-REQ-588.",
+  "observations": [
+    {
+      "id": "OBS-001",
+      "authority": "gitlab",
+      "evidence": [
+        "docs/requirements/srs.md",
+        "docs/requirements/rtm.csv",
+        "docs/product/benchmark-packets/HARNESS-VHS-002-linux-host-labview-2026-create-comparison-proof-2026-04-26.md"
+      ],
+      "fact": "The governed requirements and retained benchmark packet describe Linux host LabVIEW 2026 Community x64 proof as an admitted evidence class distinct from Windows installed-user proof."
+    },
+    {
+      "id": "OBS-002",
+      "authority": "gitlab",
+      "evidence": [
+        "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24"
+      ],
+      "fact": "The current physical-host inspection records Ubuntu 26.04 with NI noble-package compatibility risk and no discoverable LabVIEWCLI or LabVIEW binary on PATH or under the searched system roots."
+    },
+    {
+      "id": "OBS-003",
+      "authority": "github",
+      "evidence": [
+        "docs/requirements/imports/runtime-contract-host-provider-v1/srs.md",
+        ".specify/specs/runtime-contract-host-provider-v1/tasks.md"
+      ],
+      "fact": "The public import carries the sanitized requirement that Linux host proof remains distinct from Windows proof, and its Spec Kit task list already requires bug-oracle classification for observed defects."
+    }
+  ],
+  "bugOracleClassification": "requirement-clarification-candidate",
+  "classificationRationale": "The bridge has not shown the same wrong runtime behavior in both authorities, and it has not isolated an implementation-only defect in one authority. The observed gap is whether the retained April 2026 Linux host proof remains the current admitted claim after the physical host moved to Ubuntu 26.04 and no LabVIEWCLI binary is discoverable. That is a requirement and proof-scope clarification until #24 either refreshes the proof or fails closed with compatibility evidence.",
+  "redactionBoundary": {
+    "publicMutationRequired": false,
+    "githubImportPath": "docs/requirements/imports/runtime-contract-host-provider-v1/",
+    "privateEvidenceRetainedInGitLabOnly": true,
+    "reason": "The public import remains requirements-only. No implementation source, private evidence packet, host install transcript, or local control-plane tooling crosses to GitHub during this iteration."
+  },
+  "nextActions": [
+    "Run #24 as the physical-host proof item, not a Linux Vagrant substitute.",
+    "If #24 passes, retain the fresh physical-host proof packet and close this iteration as an evidence-refresh outcome.",
+    "If #24 fails because Ubuntu 26.04 cannot admit the NI noble package path, update the governed requirement wording and release/user surfaces to distinguish retained historical proof from current-host proof.",
+    "Open a GitHub Spec Kit refresh only if the imported requirement semantics change after the governed proof clarification."
+  ],
+  "validationPlan": [
+    "npm exec -- vitest run tests/unit/dualAuthorityBridgeDocs.test.ts",
+    "npm run docs:gate:core",
+    "Run the private public-redaction check against the GitHub import and Spec Kit feature if any public packet changes are made."
+  ],
+  "mutationBoundary": {
+    "authorizes": [
+      "GitLab retained bridge packet updates",
+      "GitLab work item #24 clarification",
+      "physical-host proof execution under #24"
+    ],
+    "doesNotAuthorize": [
+      "public GitHub import mutation",
+      "GitHub release or Marketplace publication",
+      "source promotion between authorities",
+      "Linux Vagrant proof substitution for physical-host proof"
+    ]
+  }
+}
