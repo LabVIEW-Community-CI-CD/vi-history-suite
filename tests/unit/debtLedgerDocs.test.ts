@@ -154,4 +154,45 @@ describe('debt-retirement contract', () => {
       }
     }
   });
+
+  it('keeps DEBT-0006 historical instead of current Docker-only runtime truth', () => {
+    const ledger = readJson<DebtLedger>('docs/product/debt-ledger.json');
+    const ledgerMarkdown = readText('docs/product/debt-ledger.md');
+    const contract = readText('docs/product/debt-retirement-contract.md');
+    const item = ledger.items.find((candidate) => candidate.id === 'DEBT-0006');
+
+    expect(item).toMatchObject({
+      id: 'DEBT-0006',
+      status: 'retired',
+      owner: expect.objectContaining({
+        trancheId: 'TRANCHE-013',
+        issueId: 'ISSUE-0410',
+        programId: 'PROGRAM-0005'
+      })
+    });
+    expect(item?.title).toContain('Historical Docker-only');
+    expect(item?.summary).toContain('historical baseline evidence');
+    expect(item?.summary).toContain('not the current installed-user runtime destination');
+    expect(item?.summary).toContain('host-default local `LabVIEWCLI`');
+    expect(item?.summary).toContain('TRANCHE-016');
+    expect(item?.summary).toContain('ISSUE-0412');
+    expect(item?.summary).toContain('ADR-0038');
+    expect(item?.exitCriteria).toContain('historical Docker-only transparency closeout');
+    expect(item?.exitCriteria).toContain('host-default local `LabVIEWCLI`');
+    expect(item?.exitCriteria).toContain('reintroduces current-sounding Docker-only');
+    expect(item?.authoritativeSources).toEqual(
+      expect.arrayContaining([
+        'docs/product/issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md',
+        'docs/architecture/adr/ADR-0038-host-default-local-labviewcli-bounded-expert-docker-and-explicit-compare-preflight.md'
+      ])
+    );
+
+    expect(item?.summary).not.toContain('current Docker daemon engine on Windows');
+    expect(item?.exitCriteria).not.toContain('same Docker-only contract');
+    expect(ledgerMarkdown).toContain('superseded by `TRANCHE-016` / `ISSUE-0412` / `ADR-0038`');
+    expect(ledgerMarkdown).toContain('It is not current');
+    expect(ledgerMarkdown).toContain('installed-user runtime direction.');
+    expect(contract).toContain('retained as historical evidence after');
+    expect(contract).toContain('host-default local `LabVIEWCLI` plus bounded expert Docker');
+  });
 });
