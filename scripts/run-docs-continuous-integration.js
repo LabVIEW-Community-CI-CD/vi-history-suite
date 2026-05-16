@@ -8,6 +8,8 @@ const { spawnSync } = require('node:child_process');
 const { createDocsGateSteps, resolveNodeToolArgs, resolveNodeToolCommand } = require('./run-docs-gate.js');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
+const PRIVATE_GITLAB_WORK_ITEMS_EXCLUDE =
+  '^https://gitlab\\.com/svelderrainruiz/vi-history-suite/-/work_items/.*$';
 const PUBLIC_DOCS_TEST_FILES = [
   'tests/unit/bundledDocumentation.test.ts',
   'tests/unit/packageManifest.test.ts',
@@ -15,9 +17,11 @@ const PUBLIC_DOCS_TEST_FILES = [
   'tests/unit/publicForkOwnerProcedureDocs.test.ts'
 ];
 const INTERNAL_DOCS_TEST_FILES = [
+  'tests/unit/alignmentControlPlaneDocs.test.ts',
   'tests/unit/postReleaseControlPlaneDocs.test.ts',
   'tests/unit/debtLedgerDocs.test.ts',
   'tests/unit/executionPolicyDocs.test.ts',
+  'tests/unit/releaseRuntimeDriftGate.test.ts',
   'tests/unit/governedProofDocs.test.ts',
   'tests/unit/firstTimeOverviewVideoPlan.test.ts',
   'tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts',
@@ -198,7 +202,15 @@ function createDocsContinuousIntegrationSteps(options = {}) {
         id: 'links',
         title: 'Check README and docs links',
         command: 'lychee',
-        args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md'],
+        args: [
+          '--verbose',
+          '--no-progress',
+          '--include-fragments',
+          '--exclude',
+          PRIVATE_GITLAB_WORK_ITEMS_EXCLUDE,
+          'README.md',
+          'docs/**/*.md'
+        ],
         stdoutFileName: 'links.stdout.log',
         stderrFileName: 'links.stderr.log'
       });

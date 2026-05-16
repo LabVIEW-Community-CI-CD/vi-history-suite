@@ -156,9 +156,12 @@ docs_link_check:
     # GitHub intermittently serves 5xx for generated issue-template forms to
     # anonymous link checkers. Keep the user-facing template links in docs, but
     # avoid treating those GitHub form-generation outages as docs regressions.
+    # Private GitLab work items are retained as authority evidence links, but
+    # anonymous CI link checks cannot authenticate to that namespace.
     - >
       lychee --verbose --no-progress --include-fragments
       --exclude '^https://github\.com/svelderrainruiz/vi-history-suite/issues/new\?template=.*$'
+      --exclude '^https://gitlab\.com/svelderrainruiz/vi-history-suite/-/work_items/.*$'
       README.md docs/**/*.md
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

@@ -3,9 +3,9 @@
 ## Document Control
 
 - Product or service: `vi-history-suite`
-- Applies to: exact released installed baseline `v1.2.2` plus the active
+- Applies to: exact released installed baseline `v1.3.16` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-13`
+- Last reviewed: `2026-05-16`
 - Primary audience: installed users, source evaluators, and maintainers
 - Primary entry route: `README.md` and `INSTALL.md`
 
@@ -32,4 +32,3 @@ See also:
 | Search the local docs tree | `rg -n "<query>" README.md INSTALL.md docs` | fast repo-native search without a custom docs subsystem |
 | Run the main validation or check | `npm run test` | use when a slice changes code, docs guards, or integration behavior |
 | Open the release or change-control route | `docs/release-procedure.md` | use when the task is release-, publication-, or proof-facing |
-

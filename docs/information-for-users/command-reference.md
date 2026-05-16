@@ -1,7 +1,7 @@
 # Information For Users Command Reference
 
-Applies to: exact released installed baseline plus the active `1.3.16`
-installed-user direction
+Applies to: exact released installed baseline `v1.3.16` plus the active
+`develop` installed-user direction
 Last reviewed: `2026-05-15`
 Primary audience: installed users, source evaluators, and advanced installed users
 Topic type: reference
