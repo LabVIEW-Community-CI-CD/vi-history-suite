@@ -35,12 +35,15 @@ retained historical Linux host proof from current physical-host proof.
 
 ## Bug-Oracle Classification
 
-- Classification: `requirement-clarification-candidate`
-- Current status: `installed-awaiting-operator-activation`
+- Initial classification: `requirement-clarification-candidate`
+- Current classification: `implementation-defect-candidate`
+- Current status: `physical-host-proof-admitted-with-headless-follow-up`
 - Why not `requirement-defect-candidate`: the same wrong behavior has not been
   observed in both authorities.
-- Why not `implementation-defect-candidate`: no single-authority implementation
-  defect has been isolated; the gap is claim scope versus current host evidence.
+- Why `implementation-defect-candidate`: physical-host LabVIEW proof passed
+  through non-headless `LabVIEWCLI CreateComparisonReport`, while the GitLab
+  Linux host `validate-fixture` headless wrapper timed out after cloning and
+  staging the correct fixture pair.
 
 ## Preflight Outcome: 2026-05-16
 
@@ -91,25 +94,80 @@ Retained local evidence under `.cache/physical-host-labview-2026-proof/` records
   - `/usr/local/natinst/LabVIEW-2026-64/labview`
   - `/usr/local/bin/LVCompare`
 
-The bridge iteration now stops at the activation boundary. Sergio owns LabVIEW
-activation. Codex must not run activation or activation-dependent proof commands
-until activation is complete.
+The bridge iteration stopped at the activation boundary until Sergio completed
+LabVIEW Community activation on the physical host. Codex did not activate
+LabVIEW or provide NI account credentials.
+
+## Activation, Compatibility, and Proof Outcome: 2026-05-16
+
+After activation, Codex repaired and proved the host runtime in three steps.
+
+First, LabVIEW GUI launch required `libGLU.so.1`. Codex installed
+`libglu1-mesa 9.0.2-1.1build2`, relaunched LabVIEW, and observed the activation
+dialog. The local LabVIEW config was backed up before launch troubleshooting at
+`/home/sergio/natinst/.config/LabVIEW-2026/labview.conf.bak-20260516T140508Z`.
+
+Second, `LabVIEWCLI` initially failed to load
+`/usr/local/lib64/liblvrt.so.26.0` on this Ubuntu 26.04 host because glibc
+`2.43` rejected the library's executable-stack request. The compatibility
+repair was:
+
+- install `patchelf 0.18.0-1.4build1` and `pax-utils 1.3.10-1`
+- back up `/usr/local/lib64/LabVIEW-2026-64/liblvrt.so.26.1.1`
+- run `patchelf --clear-execstack` on that library
+- verify `patchelf --print-execstack` reports `-`
+
+Third, `vihs --validate --settings-file /home/sergio/.config/Code/User/settings.json
+--proof-out ./.cache/physical-host-labview-2026-proof/latest` passed:
+
+- proof status: `ready`
+- implementation status: `implemented`
+- runtime validation outcome: `ready`
+- runtime provider: `host-native`
+- runtime engine: `labview-cli`
+- error code: `VIHS_OK`
+
+Codex then tested the cloned `ni/labview-icon-editor` fixture. The packaged
+`validate-fixture` route cloned the repository and staged both `lv_icon.vi`
+revisions, but the headless `CreateComparisonReport` command timed out after
+`300000 ms`. Retained diagnostics report `linux-headless-recursive-load` with
+recursive LEIF loads while opening `GSW_MainPanel.vi`. This was not a missing
+clone or missing `lv_icon.vi` intermediate step; the cloned fixture and staged
+left/right VI files were present in the proof tree.
+
+The physical-host proof was admitted by rerunning the prior admitted Linux-host
+proof shape: non-headless `LabVIEWCLI CreateComparisonReport` against the same
+cloned and staged `lv_icon.vi` pair. That run passed:
+
+- command exit: `0`
+- report:
+  `.cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/diff-report-lv_icon.vi.html`
+- report size: `414111` bytes
+- report SHA-256:
+  `bb1586a22f6948b2be434fb3df974576b0fd90b0b1338aed9d96596606767813`
+- report asset count: `361`
+- report asset bytes: `3514474`
+- LabVIEWCLI log SHA-256:
+  `74299170f16fe2f7093d233f383a73e89ebfaaf7cc5ac24a8be73007f10b42a1`
+- old fixture VI SHA-256:
+  `2cac4ad195978f5424b08a8c63796c6a3d6193fb54bca4bfab3b645220c4ec98`
+- new fixture VI SHA-256:
+  `1419b180fe2d6aa68507f46775578c73822cad122b255b353e0922a81edf49d6`
+
+`CloseLabVIEW` completed after the manual proof, and no LabVIEW or LabVIEWCLI
+process remained. Work item #24 is therefore an admitted physical-host Linux
+LabVIEW 2026 Community x64 proof refresh, not a Linux Vagrant substitute. The
+separate headless
+`validate-fixture` timeout is tracked by work item #25 as an implementation
+follow-up for the fixture proof wrapper on this host, not a requirement
+semantics change.
 
 ## Next Actions
 
-1. Sergio activates LabVIEW 2026 Community on this physical host.
-2. After activation, run #24 as the physical-host proof item, not a Linux
-   Vagrant substitute.
-3. After activation, run `vihs --validate --proof-out
-   ./.cache/physical-host-labview-2026-proof/latest` and retain the proof
-   packet.
-4. If #24 passes, retain the fresh physical-host proof packet and close this
-   iteration as an evidence-refresh outcome.
-5. If #24 fails because Ubuntu 26.04 cannot admit the NI `noble` package path,
-   update governed requirement wording and release/user surfaces to distinguish
-   retained historical proof from current-host proof.
-6. Open a GitHub Spec Kit refresh only if the imported requirement semantics
-   change after the governed proof clarification.
+1. Close #24 as physical-host Linux LabVIEW 2026 Community x64 proof admitted.
+2. Do #25 for Linux host `validate-fixture` headless execution on Ubuntu 26.04.
+3. Keep the GitHub Spec Kit import unchanged unless the follow-up changes
+   imported requirement semantics.
 
 ## Public Boundary
 
