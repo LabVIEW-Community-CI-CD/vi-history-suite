@@ -89,6 +89,10 @@ Use one of these installed-user surfaces:
 - exact released VSIX from the matching GitHub release when you need the
   retained exact build
 
+Current stable installed-user line: `1.3.16`. Historical ship-control evidence
+for `v0.2.0` is maintainer-only release history, not the current installed-user
+release line.
+
 Installed-user start pages:
 
 - [Home](https://github.com/svelderrainruiz/vi-history-suite/wiki)

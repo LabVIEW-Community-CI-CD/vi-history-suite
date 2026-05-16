@@ -41,8 +41,16 @@ documents:
 
 ## Authority Release Facts
 
+### Retained Historical Ship Evidence
+
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
+- historical ship-control line: `v0.2.0` is retained for the first immutable
+  ship record and must not be presented as the current installed-user release
+  line
+
+### Current Exact Release Truth
+
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`, `v1.3.15`, `v1.3.16`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.16`

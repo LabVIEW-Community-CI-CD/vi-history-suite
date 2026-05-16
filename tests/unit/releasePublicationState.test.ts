@@ -54,6 +54,13 @@ describe('release publication state resolver', () => {
         '56bc9b222ec859f530ea523eed215b2efde4ce96fa9fcc4974f6589da3b81170'
     });
     expect(state.currentAuthority).toMatchObject(state.authority);
+    expect(state.historicalShipBaseline).toMatchObject({
+      shipId: 'SHIP-0001',
+      releaseTarget: 'v0.2.0',
+      role: 'retained-first-immutable-ship-control-evidence',
+      currentInstalledUserRelease: false,
+      currentReleaseTruthPath: 'docs/product/release-publication-state.md'
+    });
     expect(state.publicGitHub.release).toMatchObject({
       id: 320824958,
       tag: 'v1.3.16',
@@ -253,6 +260,8 @@ describe('release publication state resolver', () => {
     );
 
     expect(stateDoc).toContain('Fully closed authority exact tag: `v1.3.16`');
+    expect(stateDoc).toContain('Retained historical ship target: `SHIP-0001` / `v0.2.0`');
+    expect(stateDoc).toContain('not the current installed-user release line');
     expect(stateDoc).toContain('Current authority exact tag: `v1.3.16`');
     expect(stateDoc).toContain('Public GitHub `main`: `12798e46f14d6cac14eaf7381bbb62cc5ee012db`');
     expect(stateDoc).toContain('Public GitHub release id: `320824958`');

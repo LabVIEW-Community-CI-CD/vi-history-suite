@@ -87,6 +87,59 @@ authority-doc package.
 
 ## Action Closeouts
 
+### `#17` Align current release truth across retained v0.2.0 and live v1.3.16 surfaces
+
+Recorded: `2026-05-16T08:05:00Z`
+
+Status: implemented locally, pending push/merge.
+
+Decision: separate retained historical ship-control evidence from current
+installed-user release truth on every primary release reader surface.
+
+Guardrails added:
+
+- `README.md` now names the current stable installed-user line and states that
+  `v0.2.0` is maintainer-only historical ship-control evidence.
+- `docs/product/SHIP-0001-releasable-vi-history-suite.md` now carries an
+  explicit release-truth boundary to `release-publication-state`.
+- `docs/product/current-state.md`,
+  `docs/product/maintainer-control-plane-index.md`, and
+  `docs/release-procedure.md` now split historical ship target facts from
+  current exact release facts.
+- `docs/product/release-publication-state.md` and `.json` now retain a
+  machine-readable historical ship baseline with
+  `currentInstalledUserRelease=false`.
+- `tests/unit/shipControlDocs.test.ts` and
+  `tests/unit/releasePublicationState.test.ts` fail if `v0.2.0` is presented
+  as current installed-user truth or if the live `v1.3.16` line disappears
+  from current release surfaces.
+
+Proof retained during implementation:
+
+- `npm exec -- vitest run tests/unit/shipControlDocs.test.ts tests/unit/releasePublicationState.test.ts tests/unit/strictSemverDiscipline.test.ts tests/unit/alignmentControlPlaneDocs.test.ts`:
+  passed with 12 tests.
+- `npm run docs:gate:core`: passed with 23 test files, 68 passed, and 2
+  skipped; bundled documentation remained in sync.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-17`:
+  completed; release scorecard reported all gates `PASS`, including
+  `dod | PASS | Med | -`.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-17`:
+  completed; staged authority-doc proof reported no missing or unconfirmed
+  reusable 26514 signals.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `npm run test`: passed with 178 test files, 956 passed, and 2 skipped.
+
+Mutation boundary:
+
+- docs/tests/traceability alignment only;
+- no release state mutation;
+- no runtime behavior mutation;
+- no tag, public GitHub release, Marketplace, release branch deletion, or
+  protected-branch mutation.
+
 ### `#20` Make release and runtime drift fail closed in docs gate
 
 Recorded: `2026-05-16T06:10:19Z`

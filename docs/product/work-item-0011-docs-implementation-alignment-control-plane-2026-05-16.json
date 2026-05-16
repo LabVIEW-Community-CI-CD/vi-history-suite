@@ -207,6 +207,103 @@
   ],
   "actionCloseouts": [
     {
+      "iid": 17,
+      "title": "Align current release truth across retained v0.2.0 and live v1.3.16 surfaces",
+      "recordedAt": "2026-05-16T08:05:00Z",
+      "status": "implemented-locally-pending-push-merge",
+      "decision": "separate-retained-ship-history-from-current-release-truth",
+      "guardrails": [
+        {
+          "path": "README.md",
+          "purpose": "Name the current stable installed-user line and state that retained v0.2.0 ship-control evidence is not current installed-user truth."
+        },
+        {
+          "path": "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+          "purpose": "Retain the historical/current release-truth boundary on the ship-control document itself."
+        },
+        {
+          "path": "docs/product/current-state.md",
+          "purpose": "Separate retained historical ship target facts from current exact release truth."
+        },
+        {
+          "path": "docs/product/maintainer-control-plane-index.md",
+          "purpose": "Separate retained historical ship evidence from current exact release truth for maintainers."
+        },
+        {
+          "path": "docs/release-procedure.md",
+          "purpose": "Keep the first retained exact-version release separate from the current exact release line."
+        },
+        {
+          "path": "docs/product/release-publication-state.json",
+          "purpose": "Retain a machine-readable historical ship baseline with currentInstalledUserRelease=false."
+        },
+        {
+          "path": "tests/unit/shipControlDocs.test.ts",
+          "purpose": "Fail the docs gate if v0.2.0 is presented as current installed-user truth or v1.3.16 disappears from release surfaces."
+        },
+        {
+          "path": "tests/unit/releasePublicationState.test.ts",
+          "purpose": "Fail if release-publication state loses the historical ship baseline boundary."
+        }
+      ],
+      "proof": [
+        {
+          "command": "npm exec -- vitest run tests/unit/shipControlDocs.test.ts tests/unit/releasePublicationState.test.ts tests/unit/strictSemverDiscipline.test.ts tests/unit/alignmentControlPlaneDocs.test.ts",
+          "status": "passed",
+          "summary": "4 test files; 12 passed"
+        },
+        {
+          "command": "npm run docs:gate:core",
+          "status": "passed",
+          "summary": "23 test files; 68 passed; 2 skipped; bundled documentation in sync"
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-17",
+          "status": "completed",
+          "scorecardPath": "/tmp/vihs-assurance-release-17/release-gate-scorecard.txt",
+          "gates": {
+            "coverage": "PASS",
+            "cm": "PASS",
+            "req": "PASS",
+            "arch": "PASS",
+            "doc": "PASS",
+            "dod": "PASS"
+          },
+          "dodConfidence": "Med"
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-17",
+          "status": "completed",
+          "documentationProofPath": "/tmp/vihs-assurance-26514-17/documentation-proof.txt",
+          "laneManifestPath": "/tmp/vihs-assurance-26514-17/lane-manifest.json",
+          "missingSignals": []
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        },
+        {
+          "command": "npm run test",
+          "status": "passed",
+          "summary": "178 test files; 956 passed; 2 skipped"
+        }
+      ],
+      "mutationBoundary": [
+        "docs/tests/traceability alignment only",
+        "no release state mutation",
+        "no runtime behavior mutation",
+        "no tag, public GitHub release, Marketplace, release branch deletion, or protected-branch mutation"
+      ]
+    },
+    {
       "iid": 20,
       "title": "Make release and runtime drift fail closed in docs gate",
       "recordedAt": "2026-05-16T06:10:19Z",
