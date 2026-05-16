@@ -80,6 +80,29 @@ user can install at a specific semantic version and use to:
 - repo-native control-plane docs agree on what was blocked, what is done, and
   which tranche landed the release target
 
+## Release-Gate DoD Evidence
+
+DoD Gate / dod
+
+Decision: the release-gate DoD signal is repo-owned evidence, not an
+intentional `N/A`. The standards release-gate scorecard may report DoD as
+present when this retained ship target and the machine-readable
+`release-readiness-matrix.json` both keep the DoD gate explicit.
+
+The DoD gate is satisfied when:
+
+- every `SHIP-0001` readiness criterion in `release-readiness-matrix.json` is
+  `done`;
+- no readiness criterion keeps an open blocker;
+- the retained ship target records the landed release, pipeline, release job,
+  release manifest, and VSIX artifact identity;
+- release-control docs keep the mutation boundary explicit for later preview,
+  exact release, publication, and protected-branch work.
+
+Standards anchor: ISO/IEC/IEEE 29119-2 completion criteria,
+ISO/IEC/IEEE 15289 lifecycle information items, and ISO 10007 release/status
+accounting.
+
 ## Out Of Scope
 
 - ungoverned feature work not mapped to a ship criterion

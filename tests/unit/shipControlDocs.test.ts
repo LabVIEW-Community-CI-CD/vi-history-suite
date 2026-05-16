@@ -17,6 +17,15 @@ interface ReadinessCriterion {
   nextAction: string;
 }
 
+interface ReleaseDodGate {
+  id: string;
+  status: 'pass';
+  decision: string;
+  standardsAnchor: string[];
+  evidence: string[];
+  completionCriteria: string[];
+}
+
 interface ReadinessMatrix {
   shipId: string;
   lifecycleState?: string;
@@ -26,6 +35,7 @@ interface ReadinessMatrix {
   targetVsixArtifact: string;
   targetReleaseManifest: string;
   activeTrancheId: string;
+  dodGate?: ReleaseDodGate;
   criteria: ReadinessCriterion[];
 }
 
@@ -70,6 +80,10 @@ describe('ship-control direction system', () => {
     expect(shipDoc).toContain('- Target release manifest: `release-evidence/release-manifest.json`');
     expect(shipDoc).toContain('[release-readiness-matrix.json](./release-readiness-matrix.json)');
     expect(shipDoc).toContain('[blocker-ledger.json](./blocker-ledger.json)');
+    expect(shipDoc).toContain('## Release-Gate DoD Evidence');
+    expect(shipDoc).toContain('DoD Gate / dod');
+    expect(shipDoc).toContain('repo-owned evidence, not an');
+    expect(shipDoc).toContain('intentional `N/A`');
     expect(shipDoc).toContain('- `TRANCHE-009`');
   });
 
@@ -97,6 +111,24 @@ describe('ship-control direction system', () => {
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
+    expect(matrix.dodGate).toMatchObject({
+      id: 'DoD Gate / dod',
+      status: 'pass'
+    });
+    expect(matrix.dodGate?.decision).toContain('not an intentional N/A');
+    expect(matrix.dodGate?.evidence).toEqual(
+      expect.arrayContaining([
+        'docs/product/SHIP-0001-releasable-vi-history-suite.md',
+        'docs/product/release-readiness-matrix.json'
+      ])
+    );
+    expect(matrix.dodGate?.standardsAnchor).toEqual(
+      expect.arrayContaining([
+        'ISO/IEC/IEEE 29119-2 completion criteria',
+        'ISO/IEC/IEEE 15289 lifecycle information items',
+        'ISO 10007 release/status accounting'
+      ])
+    );
     expect(new Set(ids).size).toBe(ids.length);
     expect(matrix.criteria.map((criterion) => criterion.status)).toContain('done');
 

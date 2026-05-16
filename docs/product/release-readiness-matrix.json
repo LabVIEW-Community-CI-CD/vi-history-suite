@@ -7,6 +7,28 @@
   "targetVsixArtifact": "vi-history-suite-0.2.0.vsix",
   "targetReleaseManifest": "release-evidence/release-manifest.json",
   "activeTrancheId": "TRANCHE-009",
+  "dodGate": {
+    "id": "DoD Gate / dod",
+    "status": "pass",
+    "decision": "Repo-owned DoD evidence signal added for release-gate scoring; DoD is not an intentional N/A.",
+    "standardsAnchor": [
+      "ISO/IEC/IEEE 29119-2 completion criteria",
+      "ISO/IEC/IEEE 15289 lifecycle information items",
+      "ISO 10007 release/status accounting"
+    ],
+    "evidence": [
+      "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+      "docs/product/release-readiness-matrix.json",
+      "docs/product/current-state.md",
+      "docs/release-procedure.md"
+    ],
+    "completionCriteria": [
+      "All SHIP-0001 readiness criteria are done.",
+      "No readiness criterion retains an open blocker.",
+      "The landed release, pipeline, release job, release manifest, and VSIX artifact identity are retained.",
+      "Later preview, exact release, publication, and protected-branch mutation boundaries remain explicit."
+    ]
+  },
   "criteria": [
     {
       "id": "RR-001",

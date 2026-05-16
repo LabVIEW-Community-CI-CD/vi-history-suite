@@ -171,6 +171,41 @@ Proof retained during implementation:
 - `python3 /home/sergio/.codex/skills/repo-standards-review/scripts/external_user_information_check.py . --json`:
   passed with `ok=true`, no findings.
 
+### `#23` Decide release-gate DoD evidence or explicit DoD N/A rationale
+
+Recorded: `2026-05-16T07:19:23Z`
+
+Status: implemented locally, pending push/merge.
+
+Decision: add a repo-owned DoD evidence signal. DoD is not intentionally `N/A`.
+
+Guardrails added:
+
+- `docs/product/SHIP-0001-releasable-vi-history-suite.md` now has an explicit
+  `DoD Gate / dod` release-gate evidence section.
+- `docs/product/release-readiness-matrix.json` now carries a machine-readable
+  `dodGate` object with standards anchors, evidence, and completion criteria.
+- `tests/unit/shipControlDocs.test.ts` keeps the human and machine-readable DoD
+  evidence signal in the docs gate.
+
+Proof retained during implementation:
+
+- Baseline
+  `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-23-before`:
+  completed; release scorecard reported `dod | N/A | Low | DoD Gate / dod`.
+- Updated
+  `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-23-after`:
+  completed; release scorecard reported `dod | PASS | Med | -`.
+- `npm exec -- vitest run tests/unit/shipControlDocs.test.ts`: passed.
+
+Mutation boundary:
+
+- scorer-evidence/rationale alignment only;
+- no release state mutation;
+- no runtime behavior mutation;
+- no tag, public GitHub release, Marketplace, release branch deletion, or
+  protected-branch mutation.
+
 ## Existing Referenced Work
 
 - Closed campaign predecessor:
