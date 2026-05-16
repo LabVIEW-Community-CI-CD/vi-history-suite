@@ -74,6 +74,13 @@ describe('dual-authority requirements bridge docs', () => {
       importedRequirementIds?: string[];
       redactionStatus?: { status?: string; publicImportContainsPrivateTooling?: boolean };
       implementationSharing?: string;
+      governedIterations?: Array<{
+        iterationId?: string;
+        workItem?: string;
+        bugOracleClassification?: string;
+        publicMutationRequired?: boolean;
+        retainedPacket?: string;
+      }>;
       bugOracle?: Record<string, string>;
     }>('docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/manifest.json');
     const redactionCheck = readJson<{
@@ -111,6 +118,16 @@ describe('dual-authority requirements bridge docs', () => {
       publicImportContainsPrivateTooling: false
     });
     expect(exportManifest.implementationSharing).toBe('none-by-default');
+    expect(exportManifest.governedIterations).toContainEqual(
+      expect.objectContaining({
+        iterationId: 'physical-host-labview-2026-proof-v1',
+        workItem: '#24',
+        bugOracleClassification: 'requirement-clarification-candidate',
+        publicMutationRequired: false,
+        retainedPacket:
+          'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json'
+      })
+    );
     expect(exportManifest.bugOracle).toEqual({
       bothAuthoritiesSameWrongBehavior: 'requirement-defect-candidate',
       oneAuthorityWrongBehavior: 'implementation-defect-candidate',
@@ -122,5 +139,46 @@ describe('dual-authority requirements bridge docs', () => {
     expect(summary.replace(/\s+/g, ' ')).toContain(
       'No implementation source files, proof packets, or GitLab release credentials cross this boundary.'
     );
+  });
+
+  it('records the first governed bridge iteration against physical-host LabVIEW proof', () => {
+    const iteration = readJson<{
+      schema?: string;
+      iterationId?: string;
+      sliceId?: string;
+      governedWorkItem?: { reference?: string; url?: string };
+      importedRequirementIds?: string[];
+      bugOracleClassification?: string;
+      redactionBoundary?: { publicMutationRequired?: boolean; privateEvidenceRetainedInGitLabOnly?: boolean };
+      nextActions?: string[];
+    }>(
+      'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json'
+    );
+    const iterationDoc = readText(
+      'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.md'
+    );
+    const summary = readText(
+      'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/export-summary.md'
+    );
+
+    expect(iteration.schema).toBe('vi-history/requirements-bridge-iteration@v1');
+    expect(iteration.iterationId).toBe('physical-host-labview-2026-proof-v1');
+    expect(iteration.sliceId).toBe('runtime-contract-host-provider-v1');
+    expect(iteration.governedWorkItem).toMatchObject({
+      reference: '#24',
+      url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24'
+    });
+    expect(iteration.importedRequirementIds).toEqual(
+      expect.arrayContaining(['VHS-SYS-REQ-006', 'VHS-SYS-REQ-007', 'VHS-REQ-588'])
+    );
+    expect(iteration.bugOracleClassification).toBe('requirement-clarification-candidate');
+    expect(iteration.redactionBoundary).toMatchObject({
+      publicMutationRequired: false,
+      privateEvidenceRetainedInGitLabOnly: true
+    });
+    expect(iteration.nextActions?.join(' ')).toContain('physical-host proof item');
+    expect(iterationDoc).toContain('not a Linux Vagrant substitute');
+    expect(iterationDoc).toContain('No public GitHub import mutation is required');
+    expect(summary).toContain('physical-host-labview-2026-proof-v1');
   });
 });

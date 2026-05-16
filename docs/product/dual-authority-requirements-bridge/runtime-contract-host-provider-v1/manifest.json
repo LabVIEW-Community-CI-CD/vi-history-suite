@@ -37,6 +37,16 @@
     "publicImportContainsPrivateTooling": false
   },
   "implementationSharing": "none-by-default",
+  "governedIterations": [
+    {
+      "iterationId": "physical-host-labview-2026-proof-v1",
+      "workItem": "#24",
+      "status": "open",
+      "bugOracleClassification": "requirement-clarification-candidate",
+      "publicMutationRequired": false,
+      "retainedPacket": "docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json"
+    }
+  ],
   "bugOracle": {
     "bothAuthoritiesSameWrongBehavior": "requirement-defect-candidate",
     "oneAuthorityWrongBehavior": "implementation-defect-candidate",
