@@ -159,7 +159,15 @@ describe('documentation-package workbench', () => {
         id: 'links',
         title: 'Check README and docs links',
         command: 'lychee',
-        args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md']
+        args: [
+          '--verbose',
+          '--no-progress',
+          '--include-fragments',
+          '--exclude',
+          '^https://gitlab\\.com/svelderrainruiz/vi-history-suite/-/work_items/.*$',
+          'README.md',
+          'docs/**/*.md'
+        ]
       }
     ]);
 

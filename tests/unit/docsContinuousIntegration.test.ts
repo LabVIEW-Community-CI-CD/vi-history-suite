@@ -268,7 +268,15 @@ describe('documentation continuous integration runner', () => {
     });
     expect(publicSteps.find((step) => step.id === 'links')).toMatchObject({
       command: 'lychee',
-      args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md']
+      args: [
+        '--verbose',
+        '--no-progress',
+        '--include-fragments',
+        '--exclude',
+        '^https://gitlab\\.com/svelderrainruiz/vi-history-suite/-/work_items/.*$',
+        'README.md',
+        'docs/**/*.md'
+      ]
     });
     expect(
       docsContinuousIntegration.resolveDocsContinuousIntegrationSurfacePaths({
@@ -338,7 +346,10 @@ describe('documentation continuous integration runner', () => {
       ['npm run compile', 'compile'],
       ['npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts', 'public-docs-tests'],
       ['node scripts/syncBundledDocs.js --check --report ' + path.join(evidenceDir, 'bundled-docs-check.json'), 'bundle-check'],
-      ['lychee --verbose --no-progress --include-fragments README.md docs/**/*.md', 'links']
+      [
+        'lychee --verbose --no-progress --include-fragments --exclude ^https://gitlab\\.com/svelderrainruiz/vi-history-suite/-/work_items/.*$ README.md docs/**/*.md',
+        'links'
+      ]
     ]);
 
     const result = await docsContinuousIntegration.runDocsContinuousIntegration(

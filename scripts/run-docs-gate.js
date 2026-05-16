@@ -5,6 +5,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
+const PRIVATE_GITLAB_WORK_ITEMS_EXCLUDE =
+  '^https://gitlab\\.com/svelderrainruiz/vi-history-suite/-/work_items/.*$';
 
 function getDocsGateUsage() {
   return [
@@ -113,7 +115,15 @@ function createDocsGateSteps(options = {}) {
       id: 'links',
       title: 'Check README and docs links',
       command: 'lychee',
-      args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md']
+      args: [
+        '--verbose',
+        '--no-progress',
+        '--include-fragments',
+        '--exclude',
+        PRIVATE_GITLAB_WORK_ITEMS_EXCLUDE,
+        'README.md',
+        'docs/**/*.md'
+      ]
     });
   }
 

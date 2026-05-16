@@ -96,7 +96,8 @@ describe('hosted ci governance docs', () => {
         containerImage:
           'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00',
         stabilityPolicy: 'pinned-alpine-digest-no-floating-latest',
-        command: 'lychee --verbose --no-progress --include-fragments README.md docs/**/*.md'
+        command:
+          "lychee --verbose --no-progress --include-fragments --exclude '^https://gitlab\\.com/svelderrainruiz/vi-history-suite/-/work_items/.*$' README.md docs/**/*.md"
       })
     );
     expect(matrix.authorityGitLab.jobs.windows_private_release_acceptance).toEqual(
@@ -150,6 +151,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain(
       'lycheeverse/lychee:latest-alpine@sha256:1b2f74f0b6816dc3ee4e5f457d11f1b2ed6c1cf8ebcbaa18cbfe057d5e2ccb00'
     );
+    expect(matrixDoc).toContain('excludes private GitLab work-item evidence URLs');
     expect(matrixDoc).toContain('no longer depends on drift-prone `lycheeverse/lychee:latest`');
     expect(controlPlane).toContain('- separate public GitHub exact release publication: published;');
     expect(controlPlane).toContain('releases/tag/v1.3.16');
