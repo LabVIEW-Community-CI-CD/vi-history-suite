@@ -76,6 +76,7 @@ function createDocsGateSteps(options = {}) {
         'vitest',
         'run',
         'tests/unit/bundledDocumentation.test.ts',
+        'tests/unit/alignmentControlPlaneDocs.test.ts',
         'tests/unit/postReleaseControlPlaneDocs.test.ts',
         'tests/unit/publicSurfaceBoundaryDocs.test.ts',
         'tests/unit/publicForkOwnerProcedureDocs.test.ts',

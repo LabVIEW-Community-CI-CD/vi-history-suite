@@ -12,6 +12,41 @@ This establishes the recurring docs/implementation alignment program for
 frame and treats GitLab work items as a living assurance backlog rather than a
 one-time audit output.
 
+## Alignment Triage Template
+
+Every new alignment action item should keep the following sections:
+
+1. Lane.
+2. Parent.
+3. Problem.
+4. Repo Evidence.
+5. Standards Anchor.
+6. Acceptance Criteria.
+7. Proving Commands.
+8. Mutation Boundary.
+9. Closeout Artifact.
+
+For any user-information or `26514` finding, add these required sections:
+
+- `26514 Authority Evidence`: cite staged `assurance:26514:authority` evidence
+  from `npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514`.
+- `Non-Authority Evidence Boundary`: state whether any transient evidence,
+  generated workbench output, or `.cache/` packet was consulted, and keep that
+  evidence secondary to staged authority docs.
+
+Raw repo-wide 26514 scans are exploratory only. The preferred triage command is:
+
+```bash
+VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review \
+  npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514
+```
+
+Never cite `.cache/` as the sole user-information authority source. Transient
+roots such as `.cache/`, `docs-workbench-evidence/`,
+`wiki-workbench-evidence/`, and prior `assurance-*-evidence/` directories may
+explain how a finding was discovered, but they do not replace the staged
+authority-doc package.
+
 ## Evidence Snapshot
 
 - `npm run docs:gate:core`: passed.
@@ -56,7 +91,9 @@ one-time audit output.
 
 Recorded: `2026-05-16T06:10:19Z`
 
-Status: implemented locally, pending human review/commit.
+Status: committed locally, pending push/merge.
+
+Local commit: `c3e18e7` (`test: harden docs drift gate`).
 
 GitLab implementation note:
 https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/20#note_3353877349
@@ -93,6 +130,43 @@ Proof retained during implementation:
 - `npm run assurance:user-info -- --evidence-dir /tmp/vihs-assurance-user-info`:
   completed; `external-user-information.json` retained `ok=true`.
 - `python3 /home/sergio/.codex/skills/repo-standards-review/scripts/requirements_quality_check.py . --json`:
+  passed with `ok=true`, no findings.
+
+### `#21` Harden 26514 authority scan scope for work-item triage
+
+Recorded: `2026-05-16T06:17:42Z`
+
+Status: committed locally, pending push/merge.
+
+Local commit: this commit (`docs: harden 26514 triage scope`).
+
+Guardrails added:
+
+- The alignment triage template now requires staged
+  `assurance:26514:authority` evidence for user-information and `26514`
+  findings.
+- The triage process names the local cloned `repo-standards-review` root via
+  `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review` for
+  local proving.
+- `.cache/` and generated evidence roots are explicitly secondary evidence and
+  cannot be the sole user-information authority source.
+- `tests/unit/alignmentControlPlaneDocs.test.ts` keeps this template in the
+  docs gate and docs continuous-integration runner.
+
+Proof retained during implementation:
+
+- `npm exec -- vitest run tests/unit/alignmentControlPlaneDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts`:
+  passed.
+- `npm run docs:gate:core`: passed with 23 test files, 66 tests passed, and 2
+  skipped.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release`:
+  completed; release scorecard gates passed with DoD retained as `N/A`.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514`:
+  completed twice; lane manifest retained `scope=authority-docs`, excluded
+  `.cache/**`, and invoked the cloned `repo-standards-review` checkout.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json`:
   passed with `ok=true`, no findings.
 - `python3 /home/sergio/.codex/skills/repo-standards-review/scripts/external_user_information_check.py . --json`:
   passed with `ok=true`, no findings.

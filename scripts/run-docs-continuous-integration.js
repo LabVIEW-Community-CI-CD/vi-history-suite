@@ -15,6 +15,7 @@ const PUBLIC_DOCS_TEST_FILES = [
   'tests/unit/publicForkOwnerProcedureDocs.test.ts'
 ];
 const INTERNAL_DOCS_TEST_FILES = [
+  'tests/unit/alignmentControlPlaneDocs.test.ts',
   'tests/unit/postReleaseControlPlaneDocs.test.ts',
   'tests/unit/debtLedgerDocs.test.ts',
   'tests/unit/executionPolicyDocs.test.ts',

@@ -199,6 +199,7 @@ describe('documentation continuous integration runner', () => {
     expect(allSteps.find((step) => step.id === 'internal-docs-tests')).toMatchObject({
       command: 'npx',
       args: ['vitest', 'run', ...[
+        'tests/unit/alignmentControlPlaneDocs.test.ts',
         'tests/unit/postReleaseControlPlaneDocs.test.ts',
         'tests/unit/debtLedgerDocs.test.ts',
         'tests/unit/executionPolicyDocs.test.ts',

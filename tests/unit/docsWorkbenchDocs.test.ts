@@ -125,6 +125,7 @@ describe('documentation-package workbench', () => {
           'vitest',
           'run',
           'tests/unit/bundledDocumentation.test.ts',
+          'tests/unit/alignmentControlPlaneDocs.test.ts',
           'tests/unit/postReleaseControlPlaneDocs.test.ts',
           'tests/unit/publicSurfaceBoundaryDocs.test.ts',
           'tests/unit/publicForkOwnerProcedureDocs.test.ts',
@@ -203,7 +204,7 @@ describe('documentation-package workbench', () => {
           '/d',
           '/s',
           '/c',
-          'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/releaseRuntimeDriftGate.test.ts tests/unit/governedProofDocs.test.ts tests/unit/firstTimeOverviewVideoPlan.test.ts tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts tests/unit/informationForUsersAudienceDocs.test.ts tests/unit/informationForUsersQualityDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/installVihsExtensionScript.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
+          'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/alignmentControlPlaneDocs.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/releaseRuntimeDriftGate.test.ts tests/unit/governedProofDocs.test.ts tests/unit/firstTimeOverviewVideoPlan.test.ts tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts tests/unit/informationForUsersAudienceDocs.test.ts tests/unit/informationForUsersQualityDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/installVihsExtensionScript.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
         ]
       },
       {
@@ -235,7 +236,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/releaseRuntimeDriftGate.test.ts tests/unit/governedProofDocs.test.ts tests/unit/firstTimeOverviewVideoPlan.test.ts tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts tests/unit/informationForUsersAudienceDocs.test.ts tests/unit/informationForUsersQualityDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/installVihsExtensionScript.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts',
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/alignmentControlPlaneDocs.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/releaseRuntimeDriftGate.test.ts tests/unit/governedProofDocs.test.ts tests/unit/firstTimeOverviewVideoPlan.test.ts tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts tests/unit/informationForUsersAudienceDocs.test.ts tests/unit/informationForUsersQualityDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/installVihsExtensionScript.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts',
       'node scripts/syncBundledDocs.js --check'
     ]);
   });

@@ -46,6 +46,81 @@
       "findings": []
     }
   },
+  "triageProcess": {
+    "workItemTemplate": {
+      "requiredSections": [
+        {
+          "heading": "Lane",
+          "rule": "Name the standing alignment lane and link the lane work item."
+        },
+        {
+          "heading": "Parent",
+          "rule": "Link parent work item #11."
+        },
+        {
+          "heading": "Problem",
+          "rule": "State the drift, ambiguity, or recurrence risk being controlled."
+        },
+        {
+          "heading": "Repo Evidence",
+          "rule": "Cite committed repo paths or staged authority evidence; generated or transient evidence may be secondary only."
+        },
+        {
+          "heading": "Standards Anchor",
+          "rule": "Name the applicable standards lane, clause family, or assurance concern."
+        },
+        {
+          "heading": "Acceptance Criteria",
+          "rule": "List observable outcomes that would fail if drift returns."
+        },
+        {
+          "heading": "Proving Commands",
+          "rule": "Prefer repo-owned gates and wrappers over raw scanner calls."
+        },
+        {
+          "heading": "Mutation Boundary",
+          "rule": "State what must not change in the slice."
+        },
+        {
+          "heading": "Closeout Artifact",
+          "rule": "Name the retained local and GitLab closeout record."
+        },
+        {
+          "heading": "26514 Authority Evidence",
+          "rule": "Required for user-information findings: cite staged `assurance:26514:authority` evidence from the repo wrapper."
+        },
+        {
+          "heading": "Non-Authority Evidence Boundary",
+          "rule": "Required for user-information findings: state that `.cache/` and generated evidence roots are discovery aids only, never sole authority."
+        }
+      ]
+    },
+    "authority26514": {
+      "preferredCommand": "npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514",
+      "preferredLocalEnvironment": {
+        "VIHS_ASSURANCE_SKILL_ROOT": "/home/sergio/repos/gl/repo-standards-review"
+      },
+      "evidenceDir": "/tmp/vihs-assurance-26514",
+      "scope": "staged authority-docs",
+      "requiredForLabels": ["lane::user-information", "standards-review"],
+      "requiredWorkItemSections": [
+        "26514 Authority Evidence",
+        "Non-Authority Evidence Boundary"
+      ],
+      "rawRepoWideScanPolicy": "exploratory-only",
+      "disallowedSoleAuthoritySources": [
+        ".cache/",
+        "docs-workbench-evidence/",
+        "wiki-workbench-evidence/",
+        "assurance-release-gate-evidence/",
+        "assurance-26514-authority-evidence/",
+        "assurance-requirements-quality-evidence/",
+        "assurance-external-user-information-evidence/",
+        "assurance-audit-packet-evidence/"
+      ],
+      "rationale": "Work-item triage must use the repo wrapper that stages authority docs and excludes transient roots, so user-information findings are not grounded solely in generated or cached evidence."
+    }
+  },
   "standingLanes": [
     {
       "iid": 12,
@@ -135,7 +210,8 @@
       "iid": 20,
       "title": "Make release and runtime drift fail closed in docs gate",
       "recordedAt": "2026-05-16T06:10:19Z",
-      "status": "implemented-locally-pending-human-review",
+      "status": "committed-locally-pending-push-merge",
+      "localCommit": "c3e18e7",
       "gitlabNoteUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/20#note_3353877349",
       "gitlabDirectCommandFollowUpNoteUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/20#note_3353877741",
       "guardrails": [
@@ -225,6 +301,95 @@
         "no release state mutation",
         "no runtime behavior mutation",
         "no tag, public GitHub release, Marketplace, release branch deletion, or protected-branch mutation"
+      ]
+    },
+    {
+      "iid": 21,
+      "title": "Harden 26514 authority scan scope for work-item triage",
+      "recordedAt": "2026-05-16T06:17:42Z",
+      "status": "committed-locally-pending-push-merge",
+      "localCommit": "this commit",
+      "guardrails": [
+        {
+          "path": "docs/product/work-item-0011-docs-implementation-alignment-control-plane-2026-05-16.md",
+          "purpose": "Document the staged 26514 authority evidence path and forbid `.cache/` as sole user-information authority."
+        },
+        {
+          "path": "tests/unit/alignmentControlPlaneDocs.test.ts",
+          "purpose": "Fail the docs gate if the alignment triage template stops requiring staged 26514 authority evidence."
+        },
+        {
+          "path": "scripts/run-docs-gate.js",
+          "purpose": "Include the alignment control-plane template guard in the docs gate."
+        },
+        {
+          "path": "scripts/run-docs-continuous-integration.js",
+          "purpose": "Include the alignment control-plane template guard in documentation CI."
+        }
+      ],
+      "preferredLocalEnvironment": {
+        "VIHS_ASSURANCE_SKILL_ROOT": "/home/sergio/repos/gl/repo-standards-review"
+      },
+      "proof": [
+        {
+          "command": "npm exec -- vitest run tests/unit/alignmentControlPlaneDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts",
+          "status": "passed"
+        },
+        {
+          "command": "npm run docs:gate:core",
+          "status": "passed",
+          "summary": "23 test files; 66 passed; 2 skipped; bundled documentation in sync"
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release",
+          "status": "completed",
+          "scorecardPath": "/tmp/vihs-assurance-release/release-gate-scorecard.txt",
+          "gates": {
+            "coverage": "PASS",
+            "cm": "PASS",
+            "req": "PASS",
+            "arch": "PASS",
+            "doc": "PASS",
+            "dod": "N/A"
+          }
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514",
+          "status": "completed-twice",
+          "documentationProofPath": "/tmp/vihs-assurance-26514/documentation-proof.txt",
+          "laneManifestPath": "/tmp/vihs-assurance-26514/lane-manifest.json",
+          "scope": "authority-docs",
+          "excludedPathClasses": [
+            "docs/requirements/**",
+            "docs/testing/**",
+            ".cache/**",
+            ".vscode-test/**",
+            "coverage/**",
+            "out/**",
+            "out-tests/**",
+            "node_modules/**"
+          ],
+          "invokedSkillRoot": "/home/sergio/repos/gl/repo-standards-review",
+          "missingSignals": []
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        }
+      ],
+      "mutationBoundary": [
+        "process documentation and docs-gate hardening only",
+        "no publication mutation",
+        "no release state mutation",
+        "no runtime behavior mutation"
       ]
     }
   ],
