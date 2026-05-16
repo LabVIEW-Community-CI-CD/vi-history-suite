@@ -178,7 +178,10 @@ describe('public GitHub source promotion', () => {
   it('renders a narrower public package contract than authority', () => {
     const manifest = promotion.renderPublicPackageManifest();
 
-    expect(manifest.version).toBe('1.3.16');
+    expect(manifest.name).toBe('vi-history-suite');
+    expect(manifest.displayName).toBe('VI History Suite');
+    expect(manifest.publisher).toBe('svelderrainruiz');
+    expect(manifest.version).toBe('1.4.0');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',

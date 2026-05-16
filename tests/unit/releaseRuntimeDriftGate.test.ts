@@ -11,6 +11,7 @@ interface PackageConfigurationProperty {
 }
 
 interface PackageManifest {
+  name: string;
   version: string;
   contributes?: {
     configuration?: {
@@ -54,6 +55,18 @@ interface PostReleaseSustainmentRules {
   };
 }
 
+interface SplitManifest {
+  splitBaseline?: {
+    tag?: string;
+  };
+  authorities?: {
+    gitlab?: {
+      packageName?: string;
+      firstPostSplitVersion?: string;
+    };
+  };
+}
+
 interface DevelopmentQueueEntry {
   id: string;
   status: string;
@@ -87,6 +100,7 @@ describe('release and runtime drift gate', () => {
     const releaseState = readJson<ReleasePublicationState>(
       'docs/product/release-publication-state.json'
     );
+    const splitManifest = readJson<SplitManifest>('docs/product/dual-authority-split-manifest.json');
     const sustainmentRules = readJson<PostReleaseSustainmentRules>(
       'docs/product/post-release-sustainment-rules.json'
     );
@@ -97,7 +111,9 @@ describe('release and runtime drift gate', () => {
     expect(exactTag).toMatch(/^v\d+\.\d+\.\d+$/);
     expect(packageVersion).toBe(exactTag.slice(1));
     expect(releaseState.authority).toMatchObject({ exactTag, packageVersion });
-    expect(manifest.version).toBe(packageVersion);
+    expect(splitManifest.splitBaseline?.tag).toBe(exactTag);
+    expect(manifest.name).toBe(splitManifest.authorities?.gitlab?.packageName);
+    expect(manifest.version).toBe(splitManifest.authorities?.gitlab?.firstPostSplitVersion);
     expect(versionLine).toMatchObject({
       currentExactReleaseLine: exactTag,
       currentMainPackageLine: packageVersion,

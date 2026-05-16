@@ -18,6 +18,7 @@
 param(
   [string]$LabVIEWVersion = '2026',
   [string]$LabVIEWBitness = 'x86',
+  [string]$ExtensionId = '',
   [string]$HarnessId      = 'HARNESS-VHS-002',
   [string]$SelectedHash   = '8741bb08026c104100720c0ef48621e4ab7762fd',
   [string]$BaseHash       = 'c188cdec606aac3b17d8b17274baa19eef3e4017',
@@ -72,6 +73,26 @@ function Resolve-VSCodeCli {
   throw "VS Code CLI not found. Run bootstrap provisioner first."
 }
 
+function Resolve-WorkspaceExtensionId {
+  param([string]$ExplicitExtensionId)
+
+  if (-not [string]::IsNullOrWhiteSpace($ExplicitExtensionId)) {
+    return $ExplicitExtensionId
+  }
+
+  $manifestPath = Join-Path $WorkspaceRoot 'package.json'
+  if (-not (Test-Path -LiteralPath $manifestPath)) {
+    throw "Package manifest not found: $manifestPath"
+  }
+
+  $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+  if ([string]::IsNullOrWhiteSpace($manifest.publisher) -or [string]::IsNullOrWhiteSpace($manifest.name)) {
+    throw "Package manifest at $manifestPath must declare publisher and name before Vagrant acceptance can resolve the extension id."
+  }
+
+  return "$($manifest.publisher).$($manifest.name)"
+}
+
 # ---------------------------------------------------------------------------
 # 0. Locate artefacts
 # ---------------------------------------------------------------------------
@@ -83,6 +104,18 @@ if ($vsixFiles.Count -eq 0) {
 }
 $VsixPath = $vsixFiles[0].FullName
 Write-Step "Using vsix: $VsixPath"
+$ResolvedExtensionId = Resolve-WorkspaceExtensionId -ExplicitExtensionId $ExtensionId
+Write-Step "Using extension id: $ResolvedExtensionId"
+
+$IsolatedVsCodeRoot = 'C:\vihs-isolated-vscode'
+$IsolatedUserDataDir = Join-Path $IsolatedVsCodeRoot 'user-data'
+$IsolatedExtensionsRoot = Join-Path $IsolatedVsCodeRoot 'extensions'
+$RuntimeSettingsFilePath = Join-Path $IsolatedUserDataDir 'User\settings.json'
+if (Test-Path -LiteralPath $IsolatedVsCodeRoot) {
+  Remove-Item -LiteralPath $IsolatedVsCodeRoot -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path $IsolatedUserDataDir | Out-Null
+New-Item -ItemType Directory -Force -Path $IsolatedExtensionsRoot | Out-Null
 
 # ---------------------------------------------------------------------------
 # 0.5. Ensure LabVIEW is running in the interactive (Session 1) desktop so that
@@ -733,47 +766,43 @@ if ($portAlreadyOpen) {
 }
 
 # ---------------------------------------------------------------------------
-# 1. Install the vsix
+# 1. Install the vsix and materialize the isolated runtime settings launcher
 # ---------------------------------------------------------------------------
-Write-Step "Installing vsix via VS Code CLI..."
+Write-Step "Installing vsix and configuring isolated VI History runtime settings..."
 $codeCmd = Resolve-VSCodeCli
-& $codeCmd --install-extension $VsixPath --force
-if ($LASTEXITCODE -ne 0) {
-  throw "'code --install-extension' failed (exit $LASTEXITCODE)."
-}
-Write-Step "Extension installed."
-
-# ---------------------------------------------------------------------------
-# 2. Configure VS Code settings (non-interactive, defaults to host/2026/x86)
-# ---------------------------------------------------------------------------
-Write-Step "Configuring VI History Suite runtime settings..."
 $installScript = Join-Path $WorkspaceRoot 'scripts\install-vihs-extension.ps1'
 if (-not (Test-Path -LiteralPath $installScript)) {
   throw "Install script not found: $installScript. Is C:\vihs-workspace synced correctly?"
 }
 & powershell.exe -NoLogo -NoProfile -NonInteractive -File $installScript `
-    -SkipInstall `
     -NonInteractive `
-    -CodeCommand $codeCmd
+    -CodeCommand $codeCmd `
+    -ExtensionId $ResolvedExtensionId `
+    -VsixPath $VsixPath `
+    -UserDataDir $IsolatedUserDataDir `
+    -ExtensionsRoot $IsolatedExtensionsRoot `
+    -SettingsFilePath $RuntimeSettingsFilePath `
+    -SkipUserPathPersist
 if ($LASTEXITCODE -ne 0) {
-  throw "Settings configuration script failed (exit $LASTEXITCODE)."
+  throw "VSIX install and settings configuration script failed (exit $LASTEXITCODE)."
 }
 
-$runtimeSettingsLauncher = Join-Path $env:APPDATA 'Code\User\globalStorage\svelderrainruiz.vi-history-suite\local-runtime-settings-cli\vihs.cmd'
+$runtimeSettingsLauncher = Join-Path $IsolatedUserDataDir "User\globalStorage\$ResolvedExtensionId\local-runtime-settings-cli\vihs.cmd"
 if (-not (Test-Path -LiteralPath $runtimeSettingsLauncher)) {
   throw "Runtime settings launcher not found after install bootstrap: $runtimeSettingsLauncher"
 }
 & $runtimeSettingsLauncher `
     --provider host `
     --labview-version $LabVIEWVersion `
-    --labview-bitness $LabVIEWBitness
+    --labview-bitness $LabVIEWBitness `
+    --settings-file $RuntimeSettingsFilePath
 if ($LASTEXITCODE -ne 0) {
   throw "Runtime settings launcher failed to force host/$LabVIEWVersion/$LabVIEWBitness settings (exit $LASTEXITCODE)."
 }
 Write-Step "Settings configured."
 
 # ---------------------------------------------------------------------------
-# 3. Stage workspace to local drive and install npm deps
+# 2. Stage workspace to local drive and install npm deps
 # ---------------------------------------------------------------------------
 # The workspace is a VirtualBox shared folder (network path). node_modules from
 # the Linux host may have symlinks that Windows cannot handle. Stage the project
@@ -807,7 +836,7 @@ try {
 Write-Step "npm deps installed in $StageRoot."
 
 # ---------------------------------------------------------------------------
-# 4. Verify compiled proof CLI is present
+# 3. Verify compiled proof CLI is present
 # ---------------------------------------------------------------------------
 $ProofCli = Join-Path $StageRoot 'out\cli\runGovernedProof.js'
 if (-not (Test-Path -LiteralPath $ProofCli)) {
@@ -816,7 +845,7 @@ if (-not (Test-Path -LiteralPath $ProofCli)) {
 Write-Step "Proof CLI present: $ProofCli"
 
 # ---------------------------------------------------------------------------
-# 5. Prepare evidence directory
+# 4. Prepare evidence directory
 # ---------------------------------------------------------------------------
 $RunTimestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $RunEvidenceRoot = Join-Path $EvidenceRoot $RunTimestamp
@@ -824,7 +853,7 @@ New-Item -ItemType Directory -Force -Path $RunEvidenceRoot | Out-Null
 Write-Step "Evidence will be written to: $RunEvidenceRoot"
 
 # ---------------------------------------------------------------------------
-# 6. Run the governed report-smoke proof
+# 5. Run the governed report-smoke proof
 # ---------------------------------------------------------------------------
 Write-Step "Running governed report-smoke proof (this invokes LabVIEWCLI and may take several minutes)..."
 $env:VI_HISTORY_SUITE_GIT_TIMEOUT_MS = $GitTimeoutMs.ToString()
@@ -864,7 +893,7 @@ $transcriptLines | Set-Content -LiteralPath $transcriptPath -Encoding utf8
 Write-Step "Proof exit code: $exitCode"
 
 # ---------------------------------------------------------------------------
-# 7. Collect harness report from .cache\harness-reports\<harnessId>
+# 6. Collect harness report from .cache\harness-reports\<harnessId>
 # ---------------------------------------------------------------------------
 $HarnessReportSrc = Join-Path $StageRoot ".cache\harness-reports\$HarnessId"
 $HarnessReportDst = Join-Path $RunEvidenceRoot 'harness-report'
@@ -877,7 +906,7 @@ if (Test-Path -LiteralPath $HarnessReportSrc) {
 }
 
 # ---------------------------------------------------------------------------
-# 8. Write a run manifest
+# 7. Write a run manifest
 # ---------------------------------------------------------------------------
 $reportJsonPath = Join-Path $HarnessReportDst 'comparison-report-smoke.json'
 $reportStatus   = 'unknown'
@@ -895,10 +924,14 @@ if (Test-Path -LiteralPath $reportJsonPath) {
 $manifest = [ordered]@{
   schema              = 'vi-history-suite/vagrant-vsix-acceptance@v1'
   generatedAt         = (Get-Date -Format 'o')
+  extensionId         = $ResolvedExtensionId
   harnessId           = $HarnessId
   selectedHash        = $SelectedHash
   baseHash            = $BaseHash
   vsixPath            = $VsixPath
+  isolatedUserDataDir = $IsolatedUserDataDir
+  isolatedExtensionsRoot = $IsolatedExtensionsRoot
+  settingsFilePath    = $RuntimeSettingsFilePath
   labviewVersion      = $LabVIEWVersion
   labviewBitness      = $LabVIEWBitness
   proofExitCode       = $exitCode
@@ -913,7 +946,7 @@ Write-Step "Manifest written: $manifestPath"
 Write-Host ($manifest | ConvertTo-Json -Depth 4)
 
 # ---------------------------------------------------------------------------
-# 9. Fail if proof did not succeed
+# 8. Fail if proof did not succeed
 # ---------------------------------------------------------------------------
 if ($exitCode -ne 0) {
   Write-Step "FAIL: Proof CLI exited with code $exitCode. See transcript: $transcriptPath"

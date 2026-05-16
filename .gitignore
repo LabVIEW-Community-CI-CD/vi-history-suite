@@ -8,6 +8,7 @@ coverage/
 *.log
 .cache/
 tmp/
+assurance-*-evidence/
 
 
 # Vagrant acceptance artefacts

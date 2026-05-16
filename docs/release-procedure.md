@@ -16,6 +16,12 @@
   installed-user release line.
 - Current exact release truth:
 - The current exact released line is `v1.3.16`.
+- Post-`v1.3.16`, GitHub and GitLab are sibling product authorities rather
+  than an authority/facade pair. GitHub keeps the public
+  `svelderrainruiz.vi-history-suite` identity and starts post-split feature
+  work at `1.4.0`; GitLab releases the governed sibling
+  `svelderrainruiz.vi-history` as `VI History`, starting at `0.1.0`, through
+  GitLab Releases with VSIX, checksum, and evidence assets.
 - The burned exact released line is `v1.0.2`.
 - The current authority package line on `main` is `1.3.16`.
 - The current develop package line on `develop` is `1.3.16`.
@@ -563,12 +569,12 @@ promotion still stays separate afterward.
 
 ## Retained Evidence
 
-- `preview-evidence/vi-history-suite-<version>.vsix`
+- `preview-evidence/vi-history-<version>.vsix`
 - `preview-evidence/preview-manifest.json`
 - `release-evidence/coverage/`
 - `release-evidence/coverage.xml`
-- `release-evidence/vi-history-suite-<version>.vsix`
-- `release-evidence/vi-history-suite-<version>.vsix.sha256`
+- `release-evidence/vi-history-<version>.vsix`
+- `release-evidence/vi-history-<version>.vsix.sha256`
 - `release-evidence/release-record.md`
 - `release-evidence/release-manifest.json`
 - `docs-workbench-evidence/docs-workbench-manifest.json`

@@ -204,7 +204,7 @@ documents:
 - active control-plane direction:
   [PROGRAM-0005](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md),
   `TRANCHE-012`, `TRANCHE-016`, `ISSUE-0412`, `ISSUE-0414`, and `ISSUE-0415`
-- preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
+- preview install surface: `preview-evidence/vi-history-<version>.vsix`
 - governed tagged release artifact and release manifest live under
   `release-evidence/`
 - docs-workbench image:

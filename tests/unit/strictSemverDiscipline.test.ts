@@ -62,7 +62,14 @@ type SustainmentRules = {
 
 describe('strict semver discipline', () => {
   it('keeps the fully published exact line distinct from the current authority line', () => {
-    const pkg = readJson<{ version: string }>('package.json');
+    const pkg = readJson<{ name: string; version: string }>('package.json');
+    const splitManifest = readJson<{
+      splitBaseline?: { tag?: string };
+      authorities?: {
+        gitlab?: { packageName?: string; firstPostSplitVersion?: string };
+        github?: { packageName?: string; firstPostSplitVersion?: string };
+      };
+    }>('docs/product/dual-authority-split-manifest.json');
     const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
@@ -107,7 +114,11 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.releaseBranch).toBe('release/*');
     expect(versionLineContract.hotfixBranch).toBe('hotfix/*');
     expect(versionLineContract.exactReleaseLineBranch).toBe('main');
-    expect(pkg.version).toBe('1.3.16');
+    expect(splitManifest.splitBaseline?.tag).toBe('v1.3.16');
+    expect(pkg.name).toBe(splitManifest.authorities?.gitlab?.packageName);
+    expect(pkg.version).toBe(splitManifest.authorities?.gitlab?.firstPostSplitVersion);
+    expect(splitManifest.authorities?.github?.packageName).toBe('vi-history-suite');
+    expect(splitManifest.authorities?.github?.firstPostSplitVersion).toBe('1.4.0');
     expect(versionLineContract.currentMainPackageLine).toBe('1.3.16');
     expect(versionLineContract.currentAuthorityPackageLine).toBe('1.3.16');
     expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.16');
@@ -121,8 +132,7 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.publicDefaultBranch).toBe('main');
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
     expect(compareSemver(versionLineContract.currentMainPackageLine, exactReleaseLine)).toBe(0);
-    expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
-    expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThanOrEqual(0);
+    expect(compareSemver(activeCandidateReleaseLine, exactReleaseLine)).toBe(0);
     expect(controlPlane).toContain('- burned exact release line: `v1.0.2`');
     expect(controlPlane).toContain('- current exact released line: `v1.3.16`');
     expect(controlPlane).toContain('- current fully published exact package line: `1.3.16`');

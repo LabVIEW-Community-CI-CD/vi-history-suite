@@ -692,22 +692,24 @@ package_extension_preview:
     - git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - npm ci
     - PACKAGE_VERSION=$(node -p "require('./package.json').version")
+    - PACKAGE_NAME=$(node -p "require('./package.json').name")
     - mkdir -p preview-evidence
     - npm run compile
-    - VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki" VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json" npm run package -- --out "preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
+    - VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki" VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json" npm run package -- --out "preview-evidence/${PACKAGE_NAME}-${PACKAGE_VERSION}.vsix"
     - |
       node - <<'NODE'
       const fs = require('node:fs');
       const path = require('node:path');
       const pkg = require('./package.json');
+      const vsixFileName = `${pkg.name}-${pkg.version}.vsix`;
       const manifest = {
         shipId: 'SHIP-0001',
         ref: process.env.CI_COMMIT_REF_NAME || '',
         commitSha: process.env.CI_COMMIT_SHA || '',
         packageVersion: pkg.version,
         previewVsix: {
-          fileName: `vi-history-suite-${pkg.version}.vsix`,
-          path: `preview-evidence/vi-history-suite-${pkg.version}.vsix`
+          fileName: vsixFileName,
+          path: `preview-evidence/${vsixFileName}`
         }
       };
       fs.writeFileSync(
@@ -754,6 +756,7 @@ release_extension:
     - export VIHS_INTERNAL_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"
     - npm ci
     - PACKAGE_VERSION=$(node -p "require('./package.json').version")
+    - PACKAGE_NAME=$(node -p "require('./package.json').name")
     - |
       if [ "v${PACKAGE_VERSION}" != "${CI_COMMIT_TAG}" ]; then
         echo "Tag ${CI_COMMIT_TAG} does not match package version ${PACKAGE_VERSION}" >&2
@@ -764,7 +767,7 @@ release_extension:
     - mkdir -p release-evidence
     - cp -R coverage release-evidence/coverage
     - cp coverage/cobertura-coverage.xml release-evidence/coverage.xml
-    - VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki" VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json" npm run package -- --out "release-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
+    - VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki" VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json" npm run package -- --out "release-evidence/${PACKAGE_NAME}-${PACKAGE_VERSION}.vsix"
     - |
       node - <<'NODE'
       const crypto = require('node:crypto');
@@ -775,7 +778,7 @@ release_extension:
       const tag = process.env.CI_COMMIT_TAG || '';
       const commitSha = process.env.CI_COMMIT_SHA || '';
       const version = pkg.version;
-      const vsixFileName = `vi-history-suite-${version}.vsix`;
+      const vsixFileName = `${pkg.name}-${version}.vsix`;
       const vsixPath = path.join('release-evidence', vsixFileName);
       const manifestPath = path.join('release-evidence', 'release-manifest.json');
       const checksum = crypto

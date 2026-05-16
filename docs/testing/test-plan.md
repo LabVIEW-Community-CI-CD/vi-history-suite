@@ -734,7 +734,7 @@ Information-for-users review cases:
   ledger, and repo entrypoints aligned across the closed `TRANCHE-009`
   ship record and the active `TRANCHE-010` post-release lane
 - `TEST-UNIT-193`: prove the GitLab release lane fails closed on tag/package
-  mismatch, packages `release-evidence/vi-history-suite-<version>.vsix`, and
+  mismatch, packages `release-evidence/vi-history-<version>.vsix`, and
   retains the release manifest plus checksum evidence paths
 - `TEST-DOC-019`: review the ship target, readiness matrix, blocker ledger,
   current-state, README, and release procedure to prove the GitLab VSIX

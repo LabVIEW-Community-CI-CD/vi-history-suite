@@ -27,6 +27,7 @@ describe('public validation pre-release 1.3.11', () => {
     const releaseState = readJson<any>('docs/product/release-publication-state.json');
     const marketplaceLedger = readJson<any>('docs/product/vscode-marketplace-publication-ledger.json');
     const packageManifest = readJson<any>('package.json');
+    const splitManifest = readJson<any>('docs/product/dual-authority-split-manifest.json');
     const labels = readText('public-github-source/.github/labels.yml');
     const successTemplate = readText(
       'public-github-source/.github/ISSUE_TEMPLATE/validation-success.yml'
@@ -43,7 +44,9 @@ describe('public validation pre-release 1.3.11', () => {
     );
     const promotionPlan = promotion.createPublicGithubSourcePromotionPlan();
 
-    expect(packageManifest.version).toBe('1.3.16');
+    expect(packageManifest.name).toBe(splitManifest.authorities.gitlab.packageName);
+    expect(packageManifest.version).toBe(splitManifest.authorities.gitlab.firstPostSplitVersion);
+    expect(releaseState.currentAuthority.packageVersion).toBe('1.3.16');
     expect(packetJson).toMatchObject({
       schema: 'vi-history-suite/public-validation-prerelease@v1',
       status: 'published-and-verified',

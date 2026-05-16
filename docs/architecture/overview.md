@@ -238,3 +238,5 @@
   Active host-default local `LabVIEWCLI`, bounded expert Docker, and explicit compare preflight
 - [ADR-0039](./adr/ADR-0039-gitlab-authority-asset-first-public-github-release-publication.md):
   GitLab authority and asset-first public GitHub release publication
+- [ADR-0040](./adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md):
+  Dual-authority Spec Kit requirements bridge after the `v1.3.16` split

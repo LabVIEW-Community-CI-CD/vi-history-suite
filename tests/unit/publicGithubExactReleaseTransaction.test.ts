@@ -63,6 +63,10 @@ const alternateReleaseChecksumPath = path.join(
   'vi-history-suite-1.3.6.vsix.sha256'
 );
 
+function readJson<T>(relativePath: string): T {
+  return JSON.parse(fs.readFileSync(path.join(repoRoot, relativePath), 'utf8')) as T;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const transaction = require(path.join(
   repoRoot,
@@ -1156,10 +1160,13 @@ describe('public GitHub exact-release transaction controller', () => {
         phases: Array<{ id: string; summary: string }>;
       };
       const markdownReport = fs.readFileSync(markdownReportPath, 'utf8');
+      const splitManifest = readJson<{
+        authorities?: { gitlab?: { firstPostSplitVersion?: string } };
+      }>('docs/product/dual-authority-split-manifest.json');
 
       expect(jsonReport.authority).toMatchObject({
         packageVersion: '1.3.6',
-        branchPackageVersion: '1.3.16'
+        branchPackageVersion: splitManifest.authorities?.gitlab?.firstPostSplitVersion
       });
       expect(jsonReport.publicReleaseByIdLookup).toEqual({
         requestedDraftReleaseId: 312363117,
