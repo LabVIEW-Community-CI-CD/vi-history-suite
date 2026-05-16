@@ -3,7 +3,7 @@
   "iterationId": "physical-host-labview-2026-proof-v1",
   "sliceId": "runtime-contract-host-provider-v1",
   "createdDate": "2026-05-16",
-  "status": "open",
+  "status": "installed-awaiting-operator-activation",
   "governedWorkItem": {
     "reference": "#24",
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24",
@@ -55,6 +55,80 @@
   ],
   "bugOracleClassification": "requirement-clarification-candidate",
   "classificationRationale": "The bridge has not shown the same wrong runtime behavior in both authorities, and it has not isolated an implementation-only defect in one authority. The observed gap is whether the retained April 2026 Linux host proof remains the current admitted claim after the physical host moved to Ubuntu 26.04 and no LabVIEWCLI binary is discoverable. That is a requirement and proof-scope clarification until #24 either refreshes the proof or fails closed with compatibility evidence.",
+  "preflightAttempts": [
+    {
+      "attemptId": "physical-host-preflight-2026-05-16",
+      "date": "2026-05-16",
+      "mutationPerformed": false,
+      "commandsRun": [
+        "sudo -n true",
+        "hostname; uname -srmo; lsb_release -a",
+        "sha256sum /home/sergio/Downloads/ni-labview-2026-community-26.1.1_linux.zip /home/sergio/Downloads/ni-labview-2026-community_26.1.1.49170-0+f18-ubuntu2404_all.deb",
+        "dpkg-query -W -f='${binary:Package}\\t${Version}\\t${Architecture}\\t${Status}\\n' 'ni-labview*' 'labview*'",
+        "apt-cache policy ni-labview-2026-noble-community ni-labview-2026-community ni-labview-command-line-interface labview-2026-community-exe labview-2026-rte ni-labview-vicompare ni-labview-2026-core",
+        "which LabVIEWCLI; which labview; find /usr /usr/local -maxdepth 5 -iname LabVIEWCLI -o -iname LabVIEW -o -iname labview"
+      ],
+      "facts": {
+        "sudoNoninteractive": "unavailable",
+        "sudoError": "interactive authentication is required",
+        "hostname": "sergio-ThinkPad-P16-Gen-3",
+        "kernel": "Linux 7.0.0-14-generic x86_64 GNU/Linux",
+        "os": "Ubuntu 26.04 LTS",
+        "osCodename": "resolute",
+        "downloadZipSha256": "9ec0830881a490a11f60479eec203c9e5068fcbe05765adea38880a6216529d5",
+        "repositoryDebSha256": "b87323f0a1daf5bf8720761944b1d2f046b6da0cf211fdfc4bcb4a73df5f4564",
+        "installedRepositoryPackage": "ni-labview-2026-noble-community 26.1.1.49170-0+f18 all",
+        "availableLabviewCommunityCandidate": "26.1.1.49170-0+f18 from NI noble repository",
+        "availableLabviewCliCandidate": "26.1.0.49328-0+f176 from NI noble repository",
+        "labviewCliDiscoverable": false,
+        "labviewBinaryDiscoverableInSearchedRoots": false
+      },
+      "blocker": {
+        "kind": "operator-authentication-required",
+        "summary": "The current Codex session cannot run the authorized system-level apt install because sudo requires interactive authentication.",
+        "nextOperatorAction": "Open a local terminal on the physical host, authenticate sudo once, then rerun the retained install/proof command block from work item #24."
+      }
+    }
+  ],
+  "installAttempts": [
+    {
+      "attemptId": "physical-host-install-2026-05-16",
+      "date": "2026-05-16",
+      "mutationPerformed": true,
+      "operatorBoundary": "Sergio provided authorization and will perform LabVIEW activation.",
+      "commandsRun": [
+        "apt-get update",
+        "apt-get -s install ni-labview-2026-community ni-labview-command-line-interface ni-labview-vicompare",
+        "DEBIAN_FRONTEND=noninteractive apt-get install -y ni-labview-2026-community ni-labview-command-line-interface ni-labview-vicompare",
+        "dpkg-query -W -f='${binary:Package}\\t${Version}\\t${Architecture}\\t${Status}\\n' 'ni-labview*' 'labview*'",
+        "command -v LabVIEWCLI; command -v labview; command -v LabVIEW",
+        "find /usr /usr/local -maxdepth 6 -iname LabVIEWCLI -o -iname LabVIEW -o -iname labview -o -iname LVCompare"
+      ],
+      "facts": {
+        "aptUpdateExit": 0,
+        "aptInstallSimulationExit": 0,
+        "aptInstallExit": 0,
+        "downloadedArchiveSize": "861 MB",
+        "newPackagesInstalled": 40,
+        "labviewCommunityPackage": "ni-labview-2026-community 26.1.1.49170-0+f18 amd64",
+        "labviewCliPackage": "ni-labview-command-line-interface 26.1.0.49328-0+f176 amd64",
+        "viComparePackage": "ni-labview-vicompare 26.1.0.49387-0+f235 amd64",
+        "labviewCliPath": "/usr/local/bin/LabVIEWCLI",
+        "labviewExecutablePath": "/usr/local/natinst/LabVIEW-2026-64/labview",
+        "lvComparePath": "/usr/local/bin/LVCompare",
+        "activationAttemptedByCodex": false,
+        "activationRequiredBeforeHostProof": true,
+        "vihsValidateAttempted": false
+      },
+      "retainedLocalEvidence": [
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/apt-update.log",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/apt-install-simulate.log",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/apt-install.log",
+        ".cache/physical-host-labview-2026-proof/20260516T111227Z/install-discovery.txt"
+      ],
+      "nextOperatorAction": "Sergio activates LabVIEW 2026 Community on this physical host before Codex runs LabVIEWCLI or `vihs --validate` proof commands."
+    }
+  ],
   "redactionBoundary": {
     "publicMutationRequired": false,
     "githubImportPath": "docs/requirements/imports/runtime-contract-host-provider-v1/",
@@ -62,7 +136,9 @@
     "reason": "The public import remains requirements-only. No implementation source, private evidence packet, host install transcript, or local control-plane tooling crosses to GitHub during this iteration."
   },
   "nextActions": [
-    "Run #24 as the physical-host proof item, not a Linux Vagrant substitute.",
+    "Sergio activates LabVIEW 2026 Community on this physical host.",
+    "After activation, run #24 as the physical-host proof item, not a Linux Vagrant substitute.",
+    "After activation, run `vihs --validate --proof-out ./.cache/physical-host-labview-2026-proof/latest` and retain the proof packet.",
     "If #24 passes, retain the fresh physical-host proof packet and close this iteration as an evidence-refresh outcome.",
     "If #24 fails because Ubuntu 26.04 cannot admit the NI noble package path, update the governed requirement wording and release/user surfaces to distinguish retained historical proof from current-host proof.",
     "Open a GitHub Spec Kit refresh only if the imported requirement semantics change after the governed proof clarification."
