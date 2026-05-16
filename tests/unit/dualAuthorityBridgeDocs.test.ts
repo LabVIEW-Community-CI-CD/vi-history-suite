@@ -123,7 +123,7 @@ describe('dual-authority requirements bridge docs', () => {
       expect.objectContaining({
         iterationId: 'physical-host-labview-2026-proof-v1',
         workItem: '#24',
-        status: 'blocked-awaiting-operator-sudo-session',
+        status: 'installed-awaiting-operator-activation',
         bugOracleClassification: 'requirement-clarification-candidate',
         publicMutationRequired: false,
         retainedPacket:
@@ -158,6 +158,18 @@ describe('dual-authority requirements bridge docs', () => {
         facts?: { sudoNoninteractive?: string; labviewCliDiscoverable?: boolean };
         blocker?: { kind?: string };
       }>;
+      installAttempts?: Array<{
+        attemptId?: string;
+        mutationPerformed?: boolean;
+        facts?: {
+          aptInstallExit?: number;
+          labviewCliPath?: string;
+          activationAttemptedByCodex?: boolean;
+          activationRequiredBeforeHostProof?: boolean;
+          vihsValidateAttempted?: boolean;
+        };
+        nextOperatorAction?: string;
+      }>;
       redactionBoundary?: { publicMutationRequired?: boolean; privateEvidenceRetainedInGitLabOnly?: boolean };
       nextActions?: string[];
     }>(
@@ -177,7 +189,7 @@ describe('dual-authority requirements bridge docs', () => {
       reference: '#24',
       url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24'
     });
-    expect(iteration.status).toBe('blocked-awaiting-operator-sudo-session');
+    expect(iteration.status).toBe('installed-awaiting-operator-activation');
     expect(iteration.importedRequirementIds).toEqual(
       expect.arrayContaining(['VHS-SYS-REQ-006', 'VHS-SYS-REQ-007', 'VHS-REQ-588'])
     );
@@ -195,13 +207,31 @@ describe('dual-authority requirements bridge docs', () => {
         })
       })
     );
+    expect(iteration.installAttempts).toContainEqual(
+      expect.objectContaining({
+        attemptId: 'physical-host-install-2026-05-16',
+        mutationPerformed: true,
+        facts: expect.objectContaining({
+          aptInstallExit: 0,
+          labviewCliPath: '/usr/local/bin/LabVIEWCLI',
+          activationAttemptedByCodex: false,
+          activationRequiredBeforeHostProof: true,
+          vihsValidateAttempted: false
+        }),
+        nextOperatorAction: expect.stringContaining('Sergio activates LabVIEW 2026 Community')
+      })
+    );
     expect(iteration.redactionBoundary).toMatchObject({
       publicMutationRequired: false,
       privateEvidenceRetainedInGitLabOnly: true
     });
     expect(iteration.nextActions?.join(' ')).toContain('physical-host proof item');
     expect(iterationDoc).toContain('interactive authentication is required');
-    expect(iterationDoc).toContain('not a Linux Vagrant substitute');
+    expect(iterationDoc).toContain('/usr/local/bin/LabVIEWCLI');
+    expect(iterationDoc).toContain('Sergio owns LabVIEW');
+    expect(iterationDoc).toContain('activation. Codex must not run activation');
+    expect(iterationDoc).toContain('not a Linux');
+    expect(iterationDoc).toContain('Vagrant substitute');
     expect(iterationDoc).toContain('No public GitHub import mutation is required');
     expect(summary).toContain('physical-host-labview-2026-proof-v1');
   });
