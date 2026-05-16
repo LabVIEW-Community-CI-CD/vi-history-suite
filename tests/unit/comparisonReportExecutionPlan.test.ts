@@ -253,7 +253,7 @@ describe('comparisonReportExecutionPlan', () => {
     });
   });
 
-  it('adds -LabVIEWPath and -Headless for Linux LabVIEWCLI execution', () => {
+  it('uses non-headless LabVIEWCLI execution for Linux host-native runtime by default', () => {
     const record = createBaseRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -296,11 +296,35 @@ describe('comparisonReportExecutionPlan', () => {
           '-LabVIEWPath',
           '/usr/local/natinst/LabVIEW-2026-64/labview',
           '-c',
-          '-o',
-          '-Headless'
+          '-o'
         ]
       }
     });
+  });
+
+  it('keeps explicit Linux host-native headless requests governed', () => {
+    const record = createBaseRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const result = buildComparisonReportExecutionPlan(record);
+
+    expect(result.commandPlan?.args).toContain('-Headless');
   });
 
   it('builds an LVCompare execution plan when the selected engine is LVCompare', () => {

@@ -3,7 +3,7 @@
   "iterationId": "physical-host-labview-2026-proof-v1",
   "sliceId": "runtime-contract-host-provider-v1",
   "createdDate": "2026-05-16",
-  "status": "physical-host-proof-admitted-with-headless-follow-up",
+  "status": "physical-host-proof-admitted-with-validate-fixture-success",
   "governedWorkItem": {
     "reference": "#24",
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24",
@@ -14,7 +14,8 @@
       "reference": "#25",
       "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/25",
       "title": "Fix Linux host validate-fixture headless timeout on Ubuntu 26.04",
-      "classification": "implementation-defect-candidate"
+      "classification": "implementation-defect-candidate",
+      "status": "resolved-by-linux-host-nonheadless-default"
     }
   ],
   "authorityScope": {
@@ -69,10 +70,20 @@
         ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/diff-report-lv_icon.vi.html"
       ],
       "fact": "After activation and host compatibility repairs, the physical Ubuntu 26.04 host validated as ready and generated a LabVIEW HTML comparison report from the cloned lv_icon.vi fixture pair through non-headless LabVIEWCLI CreateComparisonReport."
+    },
+    {
+      "id": "OBS-005",
+      "authority": "gitlab",
+      "evidence": [
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/vihs-fixture-validation-proof.json",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/comparison-report-smoke.json",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/workspace-storage/reports/bd2f4ed1300a/105b423575fa/diff-report-lv_icon.vi.html"
+      ],
+      "fact": "After #25, the packaged Linux host validate-fixture route preserves the public command contract, executes host-native LabVIEWCLI without -Headless by default, generates the lv_icon.vi HTML report, and retains no headless recursive-load diagnostic on success."
     }
   ],
   "bugOracleClassification": "implementation-defect-candidate",
-  "classificationRationale": "The initial proof-scope clarification was resolved by installing, activating, and proving host-native LabVIEW 2026 Community x64 on the physical Ubuntu 26.04 host. The remaining wrong behavior is isolated to the GitLab Linux host validate-fixture headless wrapper: it cloned and staged the fixture correctly, then timed out in headless LabVIEW initialization. The same requirement was admitted through non-headless LabVIEWCLI CreateComparisonReport against the same cloned fixture pair, so the follow-up is implementation-scoped unless a later GitHub Spec Kit iteration reproduces the same wrong behavior.",
+  "classificationRationale": "The initial proof-scope clarification was resolved by installing, activating, and proving host-native LabVIEW 2026 Community x64 on the physical Ubuntu 26.04 host. The wrong behavior was isolated to the GitLab Linux host validate-fixture wrapper: it cloned and staged the fixture correctly, then forced -Headless and timed out in LabVIEW initialization. #25 resolved the implementation defect by keeping Linux containers and explicit headless requests headless while letting Linux host-native LabVIEWCLI run non-headless by default. The public command contract and imported requirement semantics did not change.",
   "preflightAttempts": [
     {
       "attemptId": "physical-host-preflight-2026-05-16",
@@ -238,6 +249,42 @@
         ".cache/physical-host-labview-2026-proof/20260516T111227Z/manual-create-comparison-after-activation/diff-report-lv_icon.vi_files/",
         ".cache/physical-host-labview-2026-proof/20260516T111227Z/labviewcli-close-after-manual-proof.log"
       ]
+    },
+    {
+      "attemptId": "validate-fixture-host-nonheadless-2026-05-16",
+      "date": "2026-05-16",
+      "command": "node out/tooling/localRuntimeSettingsCli.js validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final --runtime-timeout-ms 300000",
+      "result": "passed",
+      "bugOracleClassification": "implementation-defect-candidate",
+      "facts": {
+        "fixtureRepositoryCloned": true,
+        "executionPlanHeadless": false,
+        "publicCommandContractChanged": false,
+        "runtimeExecutionState": "succeeded",
+        "runtimeProvider": "host-native",
+        "runtimeEngine": "labview-cli",
+        "runtimeExitCode": 0,
+        "runtimeDurationMs": 50552,
+        "runtimeDiagnosticReason": null,
+        "generatedReportExists": true,
+        "reportSizeBytes": 451669,
+        "reportSha256": "2f98e6bc367b826626108d05c0cddbe1f4beb4e81d8fd5c9166d87e30d863520",
+        "assetCount": 361,
+        "assetBytes": 3514474,
+        "proofReportSha256": "af34369f016f0615ae8eb28c1422f5e1c100087a9fc464f5e38d694836a7e6f2",
+        "harnessReportSha256": "5305e677b0e2310b1b32b8da83a415ad6b507a00ee708cb868f36ae482d343e7",
+        "closeLabviewExit": 0,
+        "labviewProcessesRemainingAfterClose": false
+      },
+      "retainedLocalEvidence": [
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/vihs-fixture-validation-proof.json",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/vihs-fixture-validation-issue.md",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/comparison-report-smoke.json",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/comparison-report-smoke.md",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/workspace-storage/reports/bd2f4ed1300a/105b423575fa/report-metadata.json",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/workspace-storage/reports/bd2f4ed1300a/105b423575fa/diff-report-lv_icon.vi.html",
+        ".cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/workspace-storage/reports/bd2f4ed1300a/105b423575fa/diff-report-lv_icon.vi_files/"
+      ]
     }
   ],
   "redactionBoundary": {
@@ -248,7 +295,7 @@
   },
   "nextActions": [
     "Close #24 as physical-host Linux LabVIEW 2026 Community x64 proof admitted.",
-    "Do #25 for Linux host `validate-fixture` headless execution on Ubuntu 26.04.",
+    "Close #25 as Linux host `validate-fixture` success admitted through non-headless host-native execution.",
     "Keep the GitHub Spec Kit import unchanged unless the follow-up changes imported requirement semantics."
   ],
   "validationPlan": [
@@ -259,8 +306,10 @@
   "mutationBoundary": {
     "authorizes": [
       "GitLab retained bridge packet updates",
+      "GitLab Linux host validate-fixture implementation fix",
       "GitLab work item #24 clarification",
-      "physical-host proof execution under #24"
+      "physical-host proof execution under #24",
+      "follow-up fixture proof execution under #25"
     ],
     "doesNotAuthorize": [
       "public GitHub import mutation",

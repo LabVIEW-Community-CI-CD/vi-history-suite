@@ -37,13 +37,13 @@ retained historical Linux host proof from current physical-host proof.
 
 - Initial classification: `requirement-clarification-candidate`
 - Current classification: `implementation-defect-candidate`
-- Current status: `physical-host-proof-admitted-with-headless-follow-up`
+- Current status: `physical-host-proof-admitted-with-validate-fixture-success`
 - Why not `requirement-defect-candidate`: the same wrong behavior has not been
   observed in both authorities.
 - Why `implementation-defect-candidate`: physical-host LabVIEW proof passed
-  through non-headless `LabVIEWCLI CreateComparisonReport`, while the GitLab
-  Linux host `validate-fixture` headless wrapper timed out after cloning and
-  staging the correct fixture pair.
+  through non-headless `LabVIEWCLI CreateComparisonReport`; the wrong behavior
+  was isolated to the GitLab Linux host `validate-fixture` wrapper forcing
+  `-Headless` after cloning and staging the correct fixture pair.
 
 ## Preflight Outcome: 2026-05-16
 
@@ -157,15 +157,53 @@ cloned and staged `lv_icon.vi` pair. That run passed:
 `CloseLabVIEW` completed after the manual proof, and no LabVIEW or LabVIEWCLI
 process remained. Work item #24 is therefore an admitted physical-host Linux
 LabVIEW 2026 Community x64 proof refresh, not a Linux Vagrant substitute. The
-separate headless
-`validate-fixture` timeout is tracked by work item #25 as an implementation
-follow-up for the fixture proof wrapper on this host, not a requirement
-semantics change.
+separate headless `validate-fixture` timeout was tracked by work item #25 as an
+implementation follow-up for the fixture proof wrapper on this host, not a
+requirement semantics change.
+
+## Follow-Up Outcome: #25
+
+#25 resolved the wrapper defect by changing Linux host-native LabVIEWCLI
+execution to non-headless by default while keeping Linux containers and explicit
+headless requests on the governed headless path. The public `vihs
+validate-fixture --provider host --labview-version 2026 --labview-bitness x64`
+command contract did not change.
+
+The final retained proof command was:
+
+```bash
+node out/tooling/localRuntimeSettingsCli.js validate-fixture --provider host --labview-version 2026 --labview-bitness x64 --proof-out .cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final --runtime-timeout-ms 300000
+```
+
+That run passed:
+
+- attempt ID: `validate-fixture-host-nonheadless-2026-05-16`
+- runtime execution state: `succeeded`
+- runtime provider: `host-native`
+- runtime engine: `labview-cli`
+- command exit: `0`
+- execution plan included `-Headless`: `false`
+- runtime diagnostic reason: `<none>`
+- generated report exists: `true`
+- report:
+  `.cache/physical-host-labview-2026-proof/20260516T180901Z-issue-25-validate-fixture-host-nonheadless-final/reports/HARNESS-VHS-002/workspace-storage/reports/bd2f4ed1300a/105b423575fa/diff-report-lv_icon.vi.html`
+- report size: `451669` bytes
+- report SHA-256:
+  `2f98e6bc367b826626108d05c0cddbe1f4beb4e81d8fd5c9166d87e30d863520`
+- report asset count: `361`
+- report asset bytes: `3514474`
+- proof report SHA-256:
+  `af34369f016f0615ae8eb28c1422f5e1c100087a9fc464f5e38d694836a7e6f2`
+- harness report SHA-256:
+  `5305e677b0e2310b1b32b8da83a415ad6b507a00ee708cb868f36ae482d343e7`
+- `CloseLabVIEW` exit after proof: `0`
+- LabVIEW/LabVIEWCLI processes remaining after close: `false`
 
 ## Next Actions
 
 1. Close #24 as physical-host Linux LabVIEW 2026 Community x64 proof admitted.
-2. Do #25 for Linux host `validate-fixture` headless execution on Ubuntu 26.04.
+2. Close #25 as Linux host `validate-fixture` success admitted through
+   non-headless host-native execution.
 3. Keep the GitHub Spec Kit import unchanged unless the follow-up changes
    imported requirement semantics.
 
