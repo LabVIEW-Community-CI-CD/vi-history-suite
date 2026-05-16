@@ -77,6 +77,7 @@ describe('dual-authority requirements bridge docs', () => {
       governedIterations?: Array<{
         iterationId?: string;
         workItem?: string;
+        status?: string;
         bugOracleClassification?: string;
         publicMutationRequired?: boolean;
         retainedPacket?: string;
@@ -122,6 +123,7 @@ describe('dual-authority requirements bridge docs', () => {
       expect.objectContaining({
         iterationId: 'physical-host-labview-2026-proof-v1',
         workItem: '#24',
+        status: 'blocked-awaiting-operator-sudo-session',
         bugOracleClassification: 'requirement-clarification-candidate',
         publicMutationRequired: false,
         retainedPacket:
@@ -149,6 +151,13 @@ describe('dual-authority requirements bridge docs', () => {
       governedWorkItem?: { reference?: string; url?: string };
       importedRequirementIds?: string[];
       bugOracleClassification?: string;
+      status?: string;
+      preflightAttempts?: Array<{
+        attemptId?: string;
+        mutationPerformed?: boolean;
+        facts?: { sudoNoninteractive?: string; labviewCliDiscoverable?: boolean };
+        blocker?: { kind?: string };
+      }>;
       redactionBoundary?: { publicMutationRequired?: boolean; privateEvidenceRetainedInGitLabOnly?: boolean };
       nextActions?: string[];
     }>(
@@ -168,15 +177,30 @@ describe('dual-authority requirements bridge docs', () => {
       reference: '#24',
       url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24'
     });
+    expect(iteration.status).toBe('blocked-awaiting-operator-sudo-session');
     expect(iteration.importedRequirementIds).toEqual(
       expect.arrayContaining(['VHS-SYS-REQ-006', 'VHS-SYS-REQ-007', 'VHS-REQ-588'])
     );
     expect(iteration.bugOracleClassification).toBe('requirement-clarification-candidate');
+    expect(iteration.preflightAttempts).toContainEqual(
+      expect.objectContaining({
+        attemptId: 'physical-host-preflight-2026-05-16',
+        mutationPerformed: false,
+        facts: expect.objectContaining({
+          sudoNoninteractive: 'unavailable',
+          labviewCliDiscoverable: false
+        }),
+        blocker: expect.objectContaining({
+          kind: 'operator-authentication-required'
+        })
+      })
+    );
     expect(iteration.redactionBoundary).toMatchObject({
       publicMutationRequired: false,
       privateEvidenceRetainedInGitLabOnly: true
     });
     expect(iteration.nextActions?.join(' ')).toContain('physical-host proof item');
+    expect(iterationDoc).toContain('interactive authentication is required');
     expect(iterationDoc).toContain('not a Linux Vagrant substitute');
     expect(iterationDoc).toContain('No public GitHub import mutation is required');
     expect(summary).toContain('physical-host-labview-2026-proof-v1');

@@ -59,6 +59,7 @@ files, proof packets, or GitLab release credentials cross this boundary.
 - Work item:
   <https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/24>
 - Classification: `requirement-clarification-candidate`
+- Current status: `blocked-awaiting-operator-sudo-session`
 - Retained packet:
   `docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json`
 
@@ -66,3 +67,8 @@ The first live bridge loop uses #24 to clarify whether the retained Linux host
 LabVIEW 2026 proof remains the current physical-host claim on the Ubuntu 26.04
 maintainer machine. The public import remains unchanged unless the governed
 proof result changes the imported requirement semantics.
+
+The 2026-05-16 preflight did not perform a system mutation. It confirmed the NI
+LabVIEW 2026 `noble` repository candidates remain visible, no LabVIEWCLI binary
+is discoverable on the physical host, and Codex cannot run the install because
+`sudo` requires interactive operator authentication.

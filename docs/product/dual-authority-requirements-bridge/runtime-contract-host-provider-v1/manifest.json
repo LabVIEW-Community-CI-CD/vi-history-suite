@@ -41,7 +41,7 @@
     {
       "iterationId": "physical-host-labview-2026-proof-v1",
       "workItem": "#24",
-      "status": "open",
+      "status": "blocked-awaiting-operator-sudo-session",
       "bugOracleClassification": "requirement-clarification-candidate",
       "publicMutationRequired": false,
       "retainedPacket": "docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json"
