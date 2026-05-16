@@ -206,4 +206,52 @@ describe('alignment control-plane process docs', () => {
       ])
     );
   });
+
+  it('records the progress-surface research-state closeout for work item 19', () => {
+    const markdown = readText(`${artifactPath}.md`);
+    const controlPlane = readJson<AlignmentControlPlane>(`${artifactPath}.json`);
+    const closeout19 = controlPlane.actionCloseouts?.find((closeout) => closeout.iid === 19);
+
+    expect(markdown).toContain('### `#19` Resolve the lone partial research/progress-surface state');
+    expect(markdown).toContain('Decision: close `TRANCHE-004`');
+    expect(markdown).toContain('`progress-surface-uplift`');
+    expect(markdown).toContain('implemented-and-active');
+    expect(markdown).toContain('notification/status-bar/');
+    expect(markdown).toContain('webview progress');
+
+    expect(closeout19).toMatchObject({
+      iid: 19,
+      decision: 'close-progress-surface-partial-as-implemented-and-superseded'
+    });
+    expect(closeout19?.grepEvidence?.before).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('research-implementation-index.json carried progress-surface-uplift as partial'),
+        expect.stringContaining('development-queue.json kept TRANCHE-004 queued')
+      ])
+    );
+    expect(closeout19?.grepEvidence?.after).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('progress-surface-uplift as implemented-and-active'),
+        expect.stringContaining('TRANCHE-004 as done')
+      ])
+    );
+    expect(closeout19?.guardrails).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'docs/research/authoritative/research-implementation-index.json' }),
+        expect.objectContaining({ path: 'docs/research/authoritative/research-alignment.md' }),
+        expect.objectContaining({ path: 'docs/product/development-queue.json' }),
+        expect.objectContaining({ path: 'docs/product/current-state.md' }),
+        expect.objectContaining({ path: 'tests/unit/requirementsDocs.test.ts' }),
+        expect.objectContaining({ path: 'tests/unit/alignmentControlPlaneDocs.test.ts' })
+      ])
+    );
+    expect(closeout19?.proof).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          command: expect.stringContaining('tests/unit/requirementsDocs.test.ts'),
+          status: 'passed'
+        })
+      ])
+    );
+  });
 });

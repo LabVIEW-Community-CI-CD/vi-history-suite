@@ -126,15 +126,33 @@
     },
     {
       "surface": "progress-surface-uplift",
-      "status": "partial",
+      "status": "implemented-and-active",
       "evidence": [
         "src/indexing/viEligibilityIndexer.ts",
-        "docs/research/authoritative/research-alignment.md"
+        "src/commands/openViHistoryCommand.ts",
+        "src/ui/historyPanel.ts",
+        "src/reporting/comparisonReportAction.ts",
+        "src/dashboard/multiReportDashboardAction.ts",
+        "tests/unit/viEligibilityIndexer.test.ts",
+        "tests/unit/openViHistoryCommand.test.ts",
+        "tests/unit/historyPanel.test.ts",
+        "tests/unit/comparisonReportAction.test.ts"
       ],
       "requirements": [
-        "VHS-REQ-093"
+        "VHS-REQ-086",
+        "VHS-REQ-087",
+        "VHS-REQ-088",
+        "VHS-REQ-231",
+        "VHS-REQ-232",
+        "VHS-REQ-233",
+        "VHS-REQ-234",
+        "VHS-REQ-236",
+        "VHS-REQ-305",
+        "VHS-REQ-306",
+        "VHS-REQ-324"
       ],
-      "nextMove": "TRANCHE-004"
+      "nextMove": "sustain; extend only when a new long-running refresh lane is introduced",
+      "decision": "TRANCHE-004 is closed by implemented indexing notification/status-bar progress, webview report progress, bounded dashboard/report progress, cancellable partial-evidence retention, and trust-loss fail-closed behavior. ISSUE-0403/TRANCHE-008 carry the later runtime-doctor and dashboard-refresh UX closure."
     },
     {
       "surface": "windows-x64-isolated-container-provider",

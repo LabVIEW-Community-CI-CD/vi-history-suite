@@ -133,8 +133,11 @@ describe('requirements documentation coherence', () => {
     ) as {
       implementationState: Array<{
         surface: string;
+        status: string;
         evidence: string[];
         requirements: string[];
+        nextMove?: string;
+        decision?: string;
       }>;
     };
 
@@ -143,6 +146,9 @@ describe('requirements documentation coherence', () => {
     );
     const dashboardSurface = implementationIndex.implementationState.find(
       (entry) => entry.surface === 'multi-report-developer-dashboard-for-three-plus-commits'
+    );
+    const progressSurface = implementationIndex.implementationState.find(
+      (entry) => entry.surface === 'progress-surface-uplift'
     );
 
     expect(currentState).toContain('truncated auto/capped window');
@@ -224,6 +230,18 @@ describe('requirements documentation coherence', () => {
 
     expect(alignment).toContain('history-window packet');
     expect(alignment).toContain('latest-run discovery');
+    expect(alignment).toContain(
+      'Status-bar progress item plus richer percent/items/ETA progress UX | aligned'
+    );
+    expect(alignment).not.toContain(
+      'Status-bar progress item plus richer percent/items/ETA progress UX | partial'
+    );
+    expect(alignment).not.toContain(
+      'src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress` only'
+    );
+    expect(currentState).toContain('Indexing and report progress uplift | implemented and active');
+    expect(currentState).toContain('former `TRANCHE-004` partial as closed');
+    expect(currentState).not.toContain('Indexing and report progress uplift | partially implemented and active');
 
     expect(historySurface?.evidence).toContain('src/ui/historyPanel.ts');
     expect(historySurface?.requirements).toContain('VHS-REQ-387');
@@ -231,6 +249,40 @@ describe('requirements documentation coherence', () => {
     expect(dashboardSurface?.evidence).toContain('src/dashboard/dashboardLatestRun.ts');
     expect(dashboardSurface?.requirements).toContain('VHS-REQ-388');
     expect(dashboardSurface?.requirements).toContain('VHS-REQ-389');
+
+    expect(progressSurface).toMatchObject({
+      status: 'implemented-and-active',
+      nextMove: 'sustain; extend only when a new long-running refresh lane is introduced'
+    });
+    expect(progressSurface?.evidence).toEqual(
+      expect.arrayContaining([
+        'src/indexing/viEligibilityIndexer.ts',
+        'src/commands/openViHistoryCommand.ts',
+        'src/ui/historyPanel.ts',
+        'src/reporting/comparisonReportAction.ts',
+        'src/dashboard/multiReportDashboardAction.ts',
+        'tests/unit/viEligibilityIndexer.test.ts',
+        'tests/unit/openViHistoryCommand.test.ts',
+        'tests/unit/historyPanel.test.ts',
+        'tests/unit/comparisonReportAction.test.ts'
+      ])
+    );
+    expect(progressSurface?.requirements).toEqual(
+      expect.arrayContaining([
+        'VHS-REQ-086',
+        'VHS-REQ-087',
+        'VHS-REQ-088',
+        'VHS-REQ-231',
+        'VHS-REQ-232',
+        'VHS-REQ-233',
+        'VHS-REQ-234',
+        'VHS-REQ-236',
+        'VHS-REQ-305',
+        'VHS-REQ-306',
+        'VHS-REQ-324'
+      ])
+    );
+    expect(progressSurface?.decision).toContain('TRANCHE-004 is closed');
   });
 
   it('keeps the second runtime-provider CLI requirement cluster explicit', () => {
