@@ -9,6 +9,11 @@ function readText(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8').replace(/\r\n/g, '\n');
 }
 
+function readCurrentExactTag(): string {
+  const manifest = JSON.parse(readText('package.json')) as { version: string };
+  return `v${manifest.version}`;
+}
+
 describe('external user-information starter pack', () => {
   it('retains the required starter docs and consistent metadata', () => {
     const userGuide = readText('docs/user-guide.md');
@@ -17,7 +22,7 @@ describe('external user-information starter pack', () => {
     const quickReference = readText('docs/quick-reference.md');
 
     const appliesTo =
-      'Applies to: exact released installed baseline `v1.2.2` plus the active\n' +
+      `Applies to: exact released installed baseline \`${readCurrentExactTag()}\` plus the active\n` +
       '  `develop` authority direction';
 
     expect(userGuide).toContain('# User Guide');

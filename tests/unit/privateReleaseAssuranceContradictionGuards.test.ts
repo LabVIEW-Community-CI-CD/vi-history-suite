@@ -11,6 +11,11 @@ function readText(relativePath: string): string {
     .replace(/\r\n/g, '\n');
 }
 
+function readCurrentExactTag(): string {
+  const manifest = JSON.parse(readText('package.json')) as { version: string };
+  return `v${manifest.version}`;
+}
+
 describe('private release assurance contradiction guards', () => {
   it('keeps the assurance baseline split explicit as rolling `:main` versus latest tagged `v0.2.18`', () => {
     const controlPlane = readText('docs/product/maintainer-control-plane-index.md');
@@ -80,7 +85,7 @@ describe('private release assurance contradiction guards', () => {
     const quickReference = readText('docs/quick-reference.md');
 
     const appliesTo =
-      'Applies to: exact released installed baseline `v1.2.2` plus the active\n' +
+      `Applies to: exact released installed baseline \`${readCurrentExactTag()}\` plus the active\n` +
       '  `develop` authority direction';
 
     expect(userGuide).toContain(appliesTo);
