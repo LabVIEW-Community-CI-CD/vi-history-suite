@@ -724,6 +724,156 @@
       ]
     },
     {
+      "iid": 22,
+      "title": "Turn post-publication installed-user acceptance into a recurring observation cadence",
+      "recordedAt": "2026-05-16T19:45:00Z",
+      "status": "implemented-locally-pending-push-merge",
+      "decision": "add-recurring-installed-user-observation-cadence",
+      "cadenceModel": "event-driven-with-monthly-review-while-public-intake-open",
+      "publicFeedbackIntake": {
+        "url": "https://github.com/svelderrainruiz/vi-history-suite/issues/98",
+        "state": "open",
+        "commentCount": 0
+      },
+      "nextCycleNoLaterThan": "2026-06-14",
+      "grepEvidence": {
+        "before": [
+          "#10 closed the immediate v1.3.16 post-publication installed-user acceptance campaign",
+          "release-publication-state retained the one-time campaign packet but had no recurring observation schedule",
+          "public intake issue #98 was open with zero comments",
+          "Windows Docker Desktop Windows-container proof remained under separate ISSUE-0415"
+        ],
+        "after": [
+          "post-publication-installed-user-observation-cadence defines event-driven-with-monthly-review-while-public-intake-open",
+          "cycle outputs separate observed facts, deferred facts, blocked facts, documentation candidates, video-plan candidates, and SemVer recommendation",
+          "repeated installed-user confusion routes to user docs or first-time video plan work items",
+          "Windows Docker Desktop Windows-container proof remains bounded to ISSUE-0415"
+        ]
+      },
+      "guardrails": [
+        {
+          "path": "docs/product/post-publication-installed-user-observation-cadence-2026-05-16.md",
+          "purpose": "Retain the human-readable recurring installed-user observation cadence packet."
+        },
+        {
+          "path": "docs/product/post-publication-installed-user-observation-cadence-2026-05-16.json",
+          "purpose": "Retain the machine-readable cadence packet, triggers, fact buckets, routing rules, and publication boundary."
+        },
+        {
+          "path": "docs/product/release-publication-state.json",
+          "purpose": "Link the recurring cadence to release-publication state without treating publication as acceptance proof."
+        },
+        {
+          "path": "docs/product/post-release-sustainment-rules.json",
+          "purpose": "Make recurring installed-user observation part of the sustainment control plane."
+        },
+        {
+          "path": "docs/product/current-state.md",
+          "purpose": "Expose the cadence, public intake issue, and no-later-than review date to current-state readers."
+        },
+        {
+          "path": "docs/product/maintainer-control-plane-index.md",
+          "purpose": "Expose the cadence to maintainers alongside release-publication and sustainment controls."
+        },
+        {
+          "path": "docs/information-item-map.md",
+          "purpose": "Map the cadence packet as a governed user-information item."
+        },
+        {
+          "path": "docs/requirements/srs.md",
+          "purpose": "Add VHS-REQ-595 for recurring installed-user observation cadence requirements."
+        },
+        {
+          "path": "docs/requirements/rtm.csv",
+          "purpose": "Trace VHS-REQ-595 to TEST-UNIT-452 and TEST-DOC-154."
+        },
+        {
+          "path": "docs/testing/test-plan.md",
+          "purpose": "Add test coverage expectations for fact buckets, routing, SemVer recommendation, and ISSUE-0415 boundary."
+        },
+        {
+          "path": "tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts",
+          "purpose": "Fail if the cadence, public intake link, no-later-than date, fact buckets, routing rules, or ISSUE-0415 boundary disappear."
+        },
+        {
+          "path": "tests/unit/postReleaseSustainmentRulesDocs.test.ts",
+          "purpose": "Fail if sustainment rules lose the recurring observation cadence."
+        },
+        {
+          "path": "tests/unit/alignmentControlPlaneDocs.test.ts",
+          "purpose": "Retain this closeout decision and before/after evidence in the docs gate."
+        }
+      ],
+      "proof": [
+        {
+          "command": "npm exec -- vitest run tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts tests/unit/firstTimeOverviewVideoPlan.test.ts tests/unit/postReleaseSustainmentRulesDocs.test.ts tests/unit/requirementsDocs.test.ts",
+          "status": "passed",
+          "summary": "4 test files; 12 passed"
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        },
+        {
+          "command": "python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json",
+          "status": "passed",
+          "ok": true,
+          "findings": []
+        },
+        {
+          "command": "npm run docs:gate:core",
+          "status": "passed",
+          "summary": "23 test files; 73 passed; 2 skipped; bundled documentation in sync"
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-22",
+          "status": "completed",
+          "scorecardPath": "/tmp/vihs-assurance-release-22/release-gate-scorecard.txt",
+          "gates": {
+            "coverage": "PASS",
+            "cm": "PASS",
+            "req": "PASS",
+            "arch": "PASS",
+            "doc": "PASS",
+            "dod": "PASS"
+          },
+          "dodConfidence": "Med"
+        },
+        {
+          "command": "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-22",
+          "status": "completed",
+          "documentationProofPath": "/tmp/vihs-assurance-26514-22/documentation-proof.txt",
+          "missingSignals": []
+        },
+        {
+          "command": "npm run check",
+          "status": "passed"
+        },
+        {
+          "command": "npm run package:audit",
+          "status": "passed"
+        },
+        {
+          "command": "npm test",
+          "status": "passed",
+          "summary": "179 test files; 966 passed; 2 skipped"
+        },
+        {
+          "command": "git diff --check",
+          "status": "passed"
+        }
+      ],
+      "mutationBoundary": [
+        "docs/tests/traceability alignment only",
+        "no Marketplace or public GitHub mutation",
+        "no publication mutation or publication proof reinterpretation",
+        "no runtime behavior mutation",
+        "no tag, public GitHub release, Marketplace, release branch deletion, or protected-branch mutation"
+      ]
+    },
+    {
       "iid": 23,
       "title": "Decide release-gate DoD evidence or explicit DoD N/A rationale",
       "recordedAt": "2026-05-16T07:19:23Z",

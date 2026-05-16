@@ -26,6 +26,42 @@ describe('post-release sustainment rules package', () => {
     expect(rules.programId).toBe('PROGRAM-0004');
     expect(rules.status).toBe('active');
     expect(rules.releaseCadence.model).toBe('event-driven');
+    expect(rules.postPublicationInstalledUserObservationCadence).toEqual(
+      expect.objectContaining({
+        status: 'active-recurring-cadence',
+        sourceWorkItem: 'gitlab#22',
+        predecessorCampaignWorkItem: 'gitlab#10',
+        packetPath:
+          'docs/product/post-publication-installed-user-observation-cadence-2026-05-16.md',
+        packetJsonPath:
+          'docs/product/post-publication-installed-user-observation-cadence-2026-05-16.json',
+        publicFeedbackIntake: 'https://github.com/svelderrainruiz/vi-history-suite/issues/98',
+        cadenceModel: 'event-driven-with-monthly-review-while-public-intake-open',
+        nextCycleNoLaterThan: '2026-06-14',
+        publicationMutationAdmitted: false,
+        marketplacePublicationProvesInstalledUserAcceptance: false,
+        windowsDockerDesktopGate:
+          'docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md'
+      })
+    );
+    expect(rules.postPublicationInstalledUserObservationCadence.nextCycleRunsWhen).toEqual(
+      expect.arrayContaining([
+        'new exact VS Code Marketplace publication closes',
+        'public feedback intake receives a new installed-user report or confusion signal',
+        'before opening any SemVer candidate that changes installed-user onboarding, validation, compare, docs, or proof claims'
+      ])
+    );
+    expect(rules.postPublicationInstalledUserObservationCadence.requiredCycleOutputs).toEqual(
+      expect.arrayContaining([
+        'observedFacts',
+        'deferredFacts',
+        'blockedFacts',
+        'documentationCandidates',
+        'videoPlanCandidates',
+        'semverRecommendation',
+        'windowsDockerDesktopGateReference'
+      ])
+    );
     expect(rules.releaseCadence.versionLineContract).toEqual(
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.16',
@@ -178,6 +214,11 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('exact GitHub and VS Code Marketplace acts are fully closed for `v1.3.16`');
     expect(rulesDoc).toContain('published `v1.3.16` host-default Windows local');
     expect(rulesDoc).toContain('`LabVIEWCLI` contract with bounded expert Docker');
+    expect(rulesDoc).toContain('Post-publication installed-user observation is now recurring');
+    expect(rulesDoc).toContain('event-driven-with-monthly-review-while-public-intake-open');
+    expect(rulesDoc).toContain('next cycle no later than: `2026-06-14`');
+    expect(rulesDoc).toContain('Marketplace publication and exact VSIX install proof remain release evidence');
+    expect(rulesDoc).toContain('Windows Docker Desktop Windows-container proof remains under `ISSUE-0415`');
     expect(rulesDoc).toContain('Marketplace prep rule');
     expect(controlPlane).toContain('current exact released line: `v1.3.16`');
     expect(currentState).toContain('current exact released line: `v1.3.16`');

@@ -254,4 +254,68 @@ describe('alignment control-plane process docs', () => {
       ])
     );
   });
+
+  it('records the installed-user observation cadence closeout for work item 22', () => {
+    const markdown = readText(`${artifactPath}.md`);
+    const controlPlane = readJson<AlignmentControlPlane>(`${artifactPath}.json`);
+    const closeout22 = controlPlane.actionCloseouts?.find((closeout) => closeout.iid === 22);
+
+    expect(markdown).toContain(
+      '### `#22` Turn post-publication installed-user acceptance into a recurring observation cadence'
+    );
+    expect(markdown).toContain('Decision: add a recurring installed-user observation cadence');
+    expect(markdown).toContain('event-driven-with-monthly-review-while-public-intake-open');
+    expect(markdown).toContain('`2026-06-14`');
+    expect(markdown).toContain('issue `#98`');
+    expect(markdown).toContain('`ISSUE-0415`');
+
+    expect(closeout22).toMatchObject({
+      iid: 22,
+      decision: 'add-recurring-installed-user-observation-cadence'
+    });
+    expect(closeout22?.grepEvidence?.before).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('one-time campaign packet but had no recurring observation schedule'),
+        expect.stringContaining('public intake issue #98 was open with zero comments')
+      ])
+    );
+    expect(closeout22?.grepEvidence?.after).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('event-driven-with-monthly-review-while-public-intake-open'),
+        expect.stringContaining('cycle outputs separate observed facts')
+      ])
+    );
+    expect(closeout22?.guardrails).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'docs/product/post-publication-installed-user-observation-cadence-2026-05-16.md'
+        }),
+        expect.objectContaining({
+          path: 'docs/product/post-publication-installed-user-observation-cadence-2026-05-16.json'
+        }),
+        expect.objectContaining({ path: 'docs/product/release-publication-state.json' }),
+        expect.objectContaining({ path: 'docs/product/post-release-sustainment-rules.json' }),
+        expect.objectContaining({ path: 'docs/requirements/srs.md' }),
+        expect.objectContaining({ path: 'docs/requirements/rtm.csv' }),
+        expect.objectContaining({ path: 'docs/testing/test-plan.md' }),
+        expect.objectContaining({
+          path: 'tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts'
+        }),
+        expect.objectContaining({ path: 'tests/unit/postReleaseSustainmentRulesDocs.test.ts' })
+      ])
+    );
+    expect(closeout22?.proof).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          command: expect.stringContaining('tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts'),
+          status: 'passed'
+        }),
+        expect.objectContaining({
+          command: expect.stringContaining('requirements_quality_check.py'),
+          status: 'passed',
+          ok: true
+        })
+      ])
+    );
+  });
 });

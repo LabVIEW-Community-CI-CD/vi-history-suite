@@ -50,6 +50,9 @@ runtime-provider public-acceptance gate.
 12. installed-user-first entry-surface redesign for Marketplace readers
 13. exact-closeout back-merge follow-through so exact `main` publication is
     not treated as fully closed before `develop` is realigned and green again
+14. recurring post-publication installed-user observation so first-time
+    installed-user acceptance keeps feeding docs, video-plan, public intake,
+    and SemVer decisions without treating publication proof as user acceptance
 
 ## Queue Mapping
 
@@ -119,6 +122,10 @@ Every slice must preserve:
 - one governed installed-user entry surface so Marketplace readers land on
   local-use guidance first and source-evaluation/fork procedures stay
   explicitly secondary
+- one governed post-publication installed-user observation cadence so future
+  cycles retain observed, deferred, and blocked facts separately from
+  publication proof and route repeated confusion into docs or first-time video
+  work before SemVer decisions
 - one governed apply-plus-recovery-plus-assert contract for admitted
   runner/operator hosts so live host drift and mid-session proof-host cleanup
   can be proven from the repo instead of trusted from machine memory or

@@ -319,6 +319,16 @@ Current exact release truth:
   [post-publication-installed-user-acceptance-campaign-2026-05-15.md](./post-publication-installed-user-acceptance-campaign-2026-05-15.md)
 - post-publication installed-user acceptance campaign JSON:
   [post-publication-installed-user-acceptance-campaign-2026-05-15.json](./post-publication-installed-user-acceptance-campaign-2026-05-15.json)
+- post-publication installed-user observation cadence:
+  [post-publication-installed-user-observation-cadence-2026-05-16.md](./post-publication-installed-user-observation-cadence-2026-05-16.md)
+- post-publication installed-user observation cadence JSON:
+  [post-publication-installed-user-observation-cadence-2026-05-16.json](./post-publication-installed-user-observation-cadence-2026-05-16.json)
+- installed-user observation cadence model:
+  `event-driven-with-monthly-review-while-public-intake-open`
+- next installed-user observation cycle: run on the next intake signal,
+  installed-user proof change, candidate-opening decision that affects
+  installed-user onboarding, or no later than `2026-06-14` while public intake
+  issue `#98` remains open
 - campaign boundary: Marketplace publication and exact-VSIX install proof are
   retained release evidence, but first-time installed-user acceptance remains a
   separate observation campaign.

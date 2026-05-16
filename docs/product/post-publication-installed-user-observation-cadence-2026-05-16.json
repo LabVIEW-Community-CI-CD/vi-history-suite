@@ -1,0 +1,78 @@
+{
+  "schema": "vi-history-suite/post-publication-installed-user-observation-cadence@v1",
+  "status": "active-recurring-cadence",
+  "date": "2026-05-16",
+  "sourceWorkItem": "gitlab#22",
+  "parentWorkItem": "gitlab#11",
+  "laneWorkItem": "gitlab#15",
+  "predecessorCampaignWorkItem": "gitlab#10",
+  "currentExactVersion": "1.3.16",
+  "marketplaceItemId": "svelderrainruiz.vi-history-suite",
+  "cadenceModel": "event-driven-with-monthly-review-while-public-intake-open",
+  "publicFeedbackIntake": {
+    "url": "https://github.com/svelderrainruiz/vi-history-suite/issues/98",
+    "observedAt": "2026-05-16",
+    "state": "open",
+    "commentCount": 0,
+    "labels": [
+      "installed-user-ux",
+      "user-docs",
+      "public-facade"
+    ]
+  },
+  "nextCycleRunsWhen": [
+    "a new exact VS Code Marketplace publication closes",
+    "public feedback intake receives a new installed-user report or confusion signal",
+    "a support request repeats the same installed-user confusion already seen in a prior cycle",
+    "a planned first-time video slot receives real observation evidence",
+    "before opening any SemVer candidate that changes installed-user onboarding, validation, compare, docs, or proof claims",
+    "no later than 2026-06-14 while the public feedback intake remains open"
+  ],
+  "cycleOutputs": [
+    "observedFacts",
+    "deferredFacts",
+    "blockedFacts",
+    "documentationCandidates",
+    "videoPlanCandidates",
+    "semverRecommendation",
+    "windowsDockerDesktopGateReference"
+  ],
+  "factBuckets": {
+    "observed": "Use for retained evidence from the Marketplace listing, exact VSIX install proof, public feedback, clean install observations, validation receipts, compare receipts, or user review notes.",
+    "deferred": "Use for planned observations that have not run yet and do not block the current exact release truth.",
+    "blocked": "Use for observations that cannot proceed until a missing host, missing proof lane, or separate admitted gate is available."
+  },
+  "routingRules": {
+    "documentation": "Repeated confusion, first-run dead ends, unclear validation output, or support copy gaps become user-doc or bundled-doc work items before a SemVer decision.",
+    "videoPlan": "Repeated confusion that is easier to demonstrate than describe becomes a first-time overview video-plan observation; no placeholder URLs, fake thumbnails, or dead media embeds are admitted.",
+    "semver": "Default to sustainment-only; open a patch only for an installed-user defect, public-facing documentation correction, or proof gap that requires a published package or public source update.",
+    "publicFeedback": "Public intake observations link back to GitHub issue #98 or its successor without treating the public issue itself as release proof."
+  },
+  "windowsDockerDesktopBoundary": {
+    "state": "separate-gate",
+    "issue": "ISSUE-0415",
+    "path": "docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md",
+    "rule": "Windows Docker Desktop Windows-container proof stays under ISSUE-0415 unless separately admitted."
+  },
+  "publicationBoundary": {
+    "publicGitHubReleaseMutationAdmitted": false,
+    "marketplaceMutationAdmitted": false,
+    "releaseBranchDeletionAdmitted": false,
+    "marketplacePublicationProvesInstalledUserAcceptance": false
+  },
+  "authoritySurfaces": {
+    "predecessorCampaignPacket": "docs/product/post-publication-installed-user-acceptance-campaign-2026-05-15.md",
+    "predecessorCampaignPacketJson": "docs/product/post-publication-installed-user-acceptance-campaign-2026-05-15.json",
+    "videoPlan": "docs/product/first-time-overview-video-plan-2026-05-15.md",
+    "sustainmentRules": "docs/product/post-release-sustainment-rules.md",
+    "releasePublicationState": "docs/product/release-publication-state.md"
+  },
+  "provingCommands": [
+    "npm run docs:gate:core",
+    "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-22",
+    "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-22",
+    "python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json",
+    "python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json",
+    "npm exec -- vitest run tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts tests/unit/firstTimeOverviewVideoPlan.test.ts tests/unit/postReleaseSustainmentRulesDocs.test.ts"
+  ]
+}
