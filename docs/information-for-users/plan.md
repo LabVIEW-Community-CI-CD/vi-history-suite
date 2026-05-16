@@ -93,7 +93,7 @@ package. The external starter docs now include `docs/user-guide.md`,
 | Input type | Current retained source or rule |
 | --- | --- |
 | Entry-route authority | `README.md` and `INSTALL.md` own the first-use and public-evaluation route truth |
-| Runtime-provider authority | `PROGRAM-0005`, `ISSUE-0412`, `package.json`, and `src/tooling/localRuntimeSettingsCli.ts` define the active branch runtime-provider contract |
+| Runtime-provider authority | `PROGRAM-0005`, `ISSUE-0412`, `package.json`, and `src/tooling/localRuntimeSettingsCli.ts` define the current runtime-provider contract |
 | Docs authoring authority | `docs/documentation-workbench.md` owns the repo-native docs-workbench commands and boundaries |
 | Release-control authority | `docs/product/maintainer-control-plane-index.md`, `docs/release-procedure.md`, and `docs/cm/cm-plan.md` define the governed release path |
 | Durable evidence route | `docs/product/public-release-candidate.md` plus the public source/wiki publication ledgers are the retained public evidence path |
@@ -229,7 +229,7 @@ This section is the section-to-topic-role map for the current bounded package.
 Update this package when any of the following change:
 
 - the exact released installed-user runtime contract
-- the active branch runtime-provider direction
+- the current runtime-provider direction
 - the docs-workbench command surface
 - public source-evaluation or release/publication evidence routes, including the durable release candidate route
 - reload or restart guidance after CLI-driven settings mutation

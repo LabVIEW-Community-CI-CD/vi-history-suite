@@ -76,7 +76,7 @@ Use the governed Windows PowerShell bootstrap command:
 - After install, use `vihs` to adjust settings later and `vihs --validate` to
   confirm what the current settings target actually persisted.
 
-### How do I switch between host and Docker on the active branch?
+### How do I switch between host and Docker?
 
 In supported Windows PowerShell sessions and admitted VS Code terminals, type
 `vihs`.
@@ -104,9 +104,9 @@ In supported Windows PowerShell sessions and admitted VS Code terminals, type
 
 `vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
 
-The active branch treats host as the default provider and Docker as the
-bounded expert path. If VS Code is already running when the CLI updates the
-settings file, review Compare or runtime validation again after the update and
+The current installed-user contract treats host as the default provider and
+Docker as the bounded expert path. If VS Code is already running when the CLI
+updates the settings file, review Compare or runtime validation again after the update and
 reload or restart the window only if that already-running session still shows
 stale provider or runtime facts.
 

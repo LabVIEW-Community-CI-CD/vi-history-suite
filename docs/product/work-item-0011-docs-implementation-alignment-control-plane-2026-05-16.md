@@ -140,6 +140,89 @@ Mutation boundary:
 - no tag, public GitHub release, Marketplace, release branch deletion, or
   protected-branch mutation.
 
+### `#18` Normalize host-default LabVIEWCLI versus historical Docker-only contract
+
+Recorded: `2026-05-16T18:48:07Z`
+
+Status: implemented locally, pending push/merge.
+
+Decision: make host-default local `LabVIEWCLI` the current installed-user
+runtime truth and retain Docker-only wording only as historical baseline
+evidence or as the explicit expert Docker provider path.
+
+Before grep evidence:
+
+- `docs/requirements/srs.md` and `docs/requirements/rtm.csv` still described
+  `current released Docker-only` and `exact released Docker-only` baselines in
+  `VHS-REQ-459`, `VHS-REQ-466`, `VHS-REQ-475`, `VHS-REQ-491`,
+  `VHS-REQ-528`, `VHS-REQ-530`, and `VHS-REQ-549`.
+- `docs/testing/test-plan.md`, `docs/documentation-workbench.md`, and
+  `docs/product/current-state.md` still named Docker-only bundled-doc truth
+  checks and Docker-required hard stops as current installed-user checks.
+- `docs/product/development-queue.json`,
+  `docs/product/extension-execution-policy.md`, and
+  `docs/product/runtime-provider-public-acceptance-gate.{md,json}` mixed
+  closure-time Docker-only evidence with current reader-surface language.
+
+After grep evidence:
+
+- current user-facing surfaces contain no active Docker-only guidance; the only
+  retained Docker-only matches are historical/control-plane baseline evidence
+  or tests that forbid stale wording from leaking back into current user docs.
+- docs-CI and workbench wording now guards host-default local `LabVIEWCLI`,
+  explicit `vihs --validate` provider bundle validation, bounded expert Docker
+  selection, and provider/progress visibility.
+
+Guardrails added:
+
+- `docs/requirements/srs.md`, `docs/requirements/rtm.csv`, and
+  `docs/testing/test-plan.md` now describe the Docker-only line as retained
+  historical evidence and the host-default `LabVIEWCLI` contract as current
+  installed-user truth.
+- `docs/product/extension-execution-policy.md`,
+  `docs/product/current-state.md`, `docs/product/development-queue.json`, and
+  `docs/product/runtime-provider-public-acceptance-gate.{md,json}` now separate
+  closure-time Docker-only evidence from current runtime doctrine.
+- `docs/information-for-users/*`, `docs/glossary.md`, and the bundled-doc
+  workbench text now lead with host-default `LabVIEWCLI` and bounded expert
+  Docker instead of an active/released Docker-only split.
+- `tests/unit/executionPolicyDocs.test.ts`,
+  `tests/unit/requirementsDocs.test.ts`, `tests/unit/docsWorkbenchDocs.test.ts`,
+  `tests/unit/docsContinuousIntegration.test.ts`, and
+  `tests/unit/postReleaseControlPlaneDocs.test.ts` now fail if the current
+  contract drifts back to stale Docker-only wording.
+
+Proof retained during implementation:
+
+- `npm exec -- vitest run tests/unit/alignmentControlPlaneDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/requirementsDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/releaseRuntimeDriftGate.test.ts`:
+  passed with 9 test files and 32 tests.
+- `npm run docs:gate:core`: passed with 23 test files, 70 passed, and 2
+  skipped; bundled documentation remained in sync.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-18`:
+  completed; release scorecard reported coverage, CM, requirements,
+  architecture, documentation, and DoD gates as `PASS`.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-18`:
+  completed; documentation proof reported no missing or unconfirmed reusable
+  26514 signal set.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `npm test`: passed with 179 test files, 963 passed, and 2 skipped.
+- `npm run check`: passed.
+- `npm run package:audit`: passed.
+- `git diff --check`: passed.
+- `jq empty docs/product/work-item-0011-docs-implementation-alignment-control-plane-2026-05-16.json docs/product/development-queue.json docs/product/runtime-provider-public-acceptance-gate.json`:
+  passed.
+
+Mutation boundary:
+
+- docs/tests/traceability alignment only;
+- no runtime behavior mutation;
+- no release state mutation;
+- no tag, public GitHub release, Marketplace, release branch deletion, or
+  protected-branch mutation.
+
 ### `#20` Make release and runtime drift fail closed in docs gate
 
 Recorded: `2026-05-16T06:10:19Z`

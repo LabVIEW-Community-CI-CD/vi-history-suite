@@ -12,9 +12,10 @@
     "issueId": "ISSUE-0412",
     "programId": "PROGRAM-0005"
   },
-  "releasedPublicBaseline": {
+  "closureTimePublicBaseline": {
     "version": "v1.2.2",
-    "contract": "docker-only-installed-user"
+    "contract": "docker-only-installed-user",
+    "currentStatus": "historical-baseline-after-host-default-exact-release"
   },
   "closedAt": "2026-04-14T10:45:07Z",
   "closureEvidence": {
@@ -43,10 +44,11 @@
   "remainingGateCriteria": [],
   "closureCriteriaSatisfied": [
     "publication-alignment slices promoted truthful maintained public candidate surfaces for the host-default contract",
-    "exact public main, exact public wiki, exact bundled installed-user docs, and Marketplace reader surfaces remain on the exact released Docker-only baseline until a newer exact release is published",
+    "at closure time, exact public main, exact public wiki, exact bundled installed-user docs, and Marketplace reader surfaces remained on the exact released Docker-only baseline until the newer host-default exact line could be published",
     "maintained public develop candidate and maintained public candidate wiki heads now publish b1de8c5 and fc6af3c and are retained in docs/product/public-release-candidate.md and docs/product/public-release-candidate.json",
     "the governed public acceptance rerun is retained on those published candidate heads with a no-findings verdict",
-    "the host-default installed contract is now truthfully published and accepted on the governed public surface"
+    "the host-default installed contract is now truthfully published and accepted on the governed public surface",
+    "current installed-user reader surfaces must lead with the published host-default local LabVIEWCLI contract and retain Docker-only language only as historical baseline evidence"
   ],
   "nonCriteria": [
     "reopening PROGRAM-0002 or ISSUE-0407 as active feature work",

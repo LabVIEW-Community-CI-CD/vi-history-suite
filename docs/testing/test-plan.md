@@ -1362,12 +1362,13 @@ Information-for-users review cases:
   non-canonical env-derived explicit Windows bundles, and keep default
   Windows benchmark runtime settings undefined when no explicit override is
   requested
-- `TEST-UNIT-299`: verify the authority package keeps the exact released
-  Docker-only image-settings baseline explicit while the active branch
-  manifest/settings surface exposes `viHistorySuite.labviewVersion` and
-  `viHistorySuite.labviewBitness`, omits `executionMode` and public image
-  settings, treats Docker as a generated-CLI-selected expert provider, and
-  keeps older execution-mode-only runtime doctor summaries readable as legacy
+- `TEST-UNIT-299`: verify the authority package keeps the retained historical
+  Docker-only image-settings baseline explicit while the current
+  manifest/settings surface exposes `viHistorySuite.runtimeProvider`,
+  `viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness`, omits
+  `executionMode` and public image settings, treats Docker as a
+  generated-CLI-selected expert provider, and keeps older
+  execution-mode-only runtime doctor summaries readable as legacy
   provider-request evidence
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
@@ -1375,11 +1376,11 @@ Information-for-users review cases:
   raw CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
   ADR-0025, ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt
-  ledger and confirm the current released Docker-only installed contract
-  remains explicit while `ADR-0038` and the active control plane now promote
-  the host-default local-`LabVIEWCLI` plus expert-Docker replacement
-  direction without mis-stating the released Docker-first behavior as the
-  active installed-user contract
+  ledger and confirm the historical Docker-only installed contract remains
+  explicit while `ADR-0038` and the active control plane present the
+  host-default local-`LabVIEWCLI` plus expert-Docker contract as current
+  installed-user truth without mis-stating the historical Docker-first
+  behavior as active guidance
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
   the no-bypass rule, the historical Docker-only execution-request-validation
   baseline, and the active host-default local-`LabVIEWCLI` plus expert-Docker
@@ -1394,9 +1395,9 @@ Information-for-users review cases:
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
   ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt
   ledger and confirm the authority package now keeps canonical Docker-only
-  request validation explicit as historical implemented truth for the released
-  line while `ADR-0038` governs the active host-default local-`LabVIEWCLI`
-  plus expert-Docker transition without claiming it is already shipped
+  request validation explicit as historical implemented truth while
+  `ADR-0038` governs the current host-default local-`LabVIEWCLI` plus
+  expert-Docker contract
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable
@@ -1607,11 +1608,11 @@ Information-for-users review cases:
 - `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
   and confirm the documentation continuous-integration contract now retains
   docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and
-  explicit installed-user execution-policy truth checks for Docker-only
-  compare execution, engine-aware Windows/Linux image selection,
-  Docker-required hard stops without host fallback, and front-facing
-  provider/progress guidance, while the governed package path refreshes
-  bundled installed-user docs before VSIX creation
+  explicit installed-user execution-policy truth checks for host-default local
+  `LabVIEWCLI`, explicit `vihs --validate` provider bundle validation,
+  bounded expert Docker selection, front-facing provider/progress guidance,
+  and historical-only Docker baseline wording, while the governed package path
+  refreshes bundled installed-user docs before VSIX creation
 - `TEST-DOC-078`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
   and the test plan and confirm the repo now retains a LabVIEW 2026-only
   Windows host operation matrix that runs the x64 tranche first and gates the
@@ -1897,9 +1898,9 @@ Information-for-users review cases:
 - `TEST-DOC-109`: review README, current-state, `PROGRAM-0005`, `ISSUE-0412`,
   the branch handoff packet, the runtime-provider public-acceptance gate
   packet, the release procedure, the SRS, RTM, and the test plan and confirm
-  bundled/public installed-user surfaces remain on the exact released
-  Docker-only baseline until the host-default provider contract clears the
-  explicit governed public-acceptance gate
+  bundled/public installed-user surfaces lead with the admitted host-default
+  provider contract after the governed public-acceptance gate and retain
+  Docker-only wording only as historical baseline evidence
 - `TEST-DOC-110`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
   command reference, the FAQ, the SRS, the RTM, and the test plan and confirm
   the active governed claim is Linux/Docker validated preview, while Windows x64
@@ -2402,9 +2403,9 @@ Information-for-users review cases:
   published public candidate heads returns no findings
 - `TEST-DOC-104`: review README, current-state, ship control, development
   queue, extension-execution-policy, PROGRAM-0005, ISSUE-0410, and ISSUE-0412
-  and confirm the control plane now keeps the current released Docker-only
-  installed contract explicit while promoting `TRANCHE-016` /
-  `ISSUE-0412` as the active direction
+  and confirm the control plane now keeps the retained historical Docker-only
+  installed contract explicit while treating `TRANCHE-016` / `ISSUE-0412` as
+  the current installed-user direction
 - `TEST-DOC-105`: review SRS, RTM, and the test plan and confirm the active
   develop-line installed-user replacement contract is explicit and truthfully
   traced around required LabVIEW version + bitness settings, host-default

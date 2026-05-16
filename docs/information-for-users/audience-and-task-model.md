@@ -56,7 +56,7 @@ The governing control surfaces for this topic are
 | Surface | Included because | Current exclusion or boundary note |
 | --- | --- | --- |
 | `README.md` | installed users and source evaluators need a fast route split before opening deeper docs | it is a route index, not the only copy of release or runtime doctrine |
-| `INSTALL.md` | installed users need the exact released install route and source evaluators need the public evaluation route | active branch runtime-provider doctrine stays in authority docs, not in the public release contract |
+| `INSTALL.md` | installed users need the exact released install route and source evaluators need the public evaluation route | host-default local `LabVIEWCLI` plus bounded expert Docker is current installed-user doctrine; deeper proof and publication details stay in authority docs |
 | `docs/documentation-workbench.md` | maintainers need repeatable docs-authoring instructions under local and containerized paths | it is for documentation-package work only, not all runtime proof |
 | `docs/information-for-users/command-reference.md` | maintainers and source evaluators need simultaneous-use command lookup while acting in the terminal | it stays compact rather than becoming a full command manual |
 | `docs/information-for-users/faq.md` | installed users and source evaluators need short answers and recovery hints without re-reading all route docs | stable doctrine must still move back into the governing route doc when it settles |
@@ -67,8 +67,8 @@ The governing control surfaces for this topic are
 | Task | Why it is performed | Frequency | Preconditions | Operational mode | Fault tolerance | Consequence if missed | Priority surfaces |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Start from the exact released route | confirm the installed baseline and first-use path without mixing in unreleased branch doctrine | high | exact released package line known | browser or local Markdown review | low | users may follow an unreleased path and get the wrong runtime expectation | `README.md`, `INSTALL.md`, FAQ |
-| Evaluate the source repo | inspect the active branch and public evaluation route locally | medium | local clone and package dependencies available | terminal plus docs review | medium | source evaluators may use stale commands or miss the public route split | `README.md`, `INSTALL.md`, command reference |
-| Switch runtime provider on the active branch | select between host-default Windows local `LabVIEWCLI` and bounded expert Docker | medium | active branch checked out and generated CLI available | terminal, then VS Code reload if needed | low | provider settings can drift from what Compare is actually reading | `PROGRAM-0005`, `ISSUE-0412`, command reference, FAQ |
+| Evaluate the source repo | inspect the source checkout and public evaluation route locally | medium | local clone and package dependencies available | terminal plus docs review | medium | source evaluators may use stale commands or miss the public route split | `README.md`, `INSTALL.md`, command reference |
+| Switch runtime provider | select between host-default Windows local `LabVIEWCLI` and bounded expert Docker | medium | exact installed line or source checkout with generated CLI available | terminal, then VS Code reload if needed | low | provider settings can drift from what Compare is actually reading | `PROGRAM-0005`, `ISSUE-0412`, command reference, FAQ |
 | Author or review documentation-package changes | validate docs-package changes with the repo-native workbench and gates | medium | local Docker-backed docs workbench available | terminal and docs editing | low | the package can drift from the enforced docs gate or published workbench | docs workbench, command reference, style guide |
 | Inspect public release and publication evidence | verify the retained state of the exact release, public source, public wiki, and Marketplace surfaces | low | retained evidence available | GitLab and Markdown review | low | publication claims can drift from retained public evidence | public release candidate, release procedure, information item map |
 
@@ -81,14 +81,15 @@ participation.
 | --- | --- | --- | --- | --- |
 | Start from the exact released route | Primary | Secondary | Secondary | Review |
 | Evaluate the source repo |  | Primary | Secondary |  |
-| Switch runtime provider on the active branch |  | Secondary | Primary |  |
+| Switch runtime provider |  | Secondary | Primary |  |
 | Author or review documentation-package changes |  |  | Primary | Review |
 | Inspect public release and publication evidence |  | Secondary | Secondary | Primary |
 
 ## Delivery Priorities
 
-- Installed users need a clear split between the exact released line and the
-  active branch direction.
+- Installed users need the exact released line to lead with host-default local
+  `LabVIEWCLI`, while historical Docker-only wording remains clearly bounded
+  as retained evidence.
 - Source evaluators need route and command guidance that stays truthful to the
   local repo rather than older parked plans.
 - Maintainers need simultaneous-use quick reference while switching between

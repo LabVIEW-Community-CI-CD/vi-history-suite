@@ -18,6 +18,10 @@ interface AlignmentControlPlane {
       dodConfidence?: string;
     }>;
     guardrails?: Array<{ path: string; purpose: string }>;
+    grepEvidence?: {
+      before?: string[];
+      after?: string[];
+    };
   }>;
   triageProcess?: {
     authority26514?: {
@@ -149,6 +153,56 @@ describe('alignment control-plane process docs', () => {
         expect.objectContaining({ path: 'docs/product/release-publication-state.json' }),
         expect.objectContaining({ path: 'tests/unit/shipControlDocs.test.ts' }),
         expect.objectContaining({ path: 'tests/unit/releasePublicationState.test.ts' })
+      ])
+    );
+  });
+
+  it('records the runtime-contract Docker-only versus host-default closeout for work item 18', () => {
+    const markdown = readText(`${artifactPath}.md`);
+    const controlPlane = readJson<AlignmentControlPlane>(`${artifactPath}.json`);
+    const closeout18 = controlPlane.actionCloseouts?.find((closeout) => closeout.iid === 18);
+
+    expect(markdown).toContain(
+      '### `#18` Normalize host-default LabVIEWCLI versus historical Docker-only contract'
+    );
+    expect(markdown).toContain('Decision: make host-default local `LabVIEWCLI`');
+    expect(markdown).toContain('Before grep evidence');
+    expect(markdown).toContain('After grep evidence');
+    expect(markdown).toContain('host-default local `LabVIEWCLI`');
+    expect(markdown).toContain('Docker-only wording only as historical baseline');
+
+    expect(closeout18).toMatchObject({
+      iid: 18,
+      decision: 'make-host-default-labviewcli-current-and-docker-only-historical'
+    });
+    expect(closeout18?.grepEvidence?.before).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('current released Docker-only'),
+        expect.stringContaining('Docker-required hard stops')
+      ])
+    );
+    expect(closeout18?.grepEvidence?.after).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('host-default local LabVIEWCLI'),
+        expect.stringContaining('bounded expert Docker')
+      ])
+    );
+    expect(closeout18?.guardrails).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'docs/requirements/srs.md' }),
+        expect.objectContaining({ path: 'docs/requirements/rtm.csv' }),
+        expect.objectContaining({ path: 'docs/testing/test-plan.md' }),
+        expect.objectContaining({ path: 'docs/product/extension-execution-policy.md' }),
+        expect.objectContaining({ path: 'tests/unit/executionPolicyDocs.test.ts' }),
+        expect.objectContaining({ path: 'tests/unit/requirementsDocs.test.ts' })
+      ])
+    );
+    expect(closeout18?.proof).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          command: expect.stringContaining('tests/unit/executionPolicyDocs.test.ts'),
+          status: 'passed'
+        })
       ])
     );
   });

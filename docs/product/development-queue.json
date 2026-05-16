@@ -115,7 +115,7 @@
     "title": "Extension execution flexibility and runtime acquisition UX",
     "status": "done",
     "source": "author direction",
-    "summary": "Historical landed tranche for the Docker-only installed-extension contract: the extension depends on Docker for comparison generation, stops exposing host-native execution-mode and host-path knobs to extension users, selects the governed Windows or Linux image from the current Docker daemon engine, and fails closed instead of probing host LabVIEW. This tranche remains retained as current released baseline truth but is superseded as the active direction by `TRANCHE-016`.",
+    "summary": "Historical landed tranche for the Docker-only installed-extension contract: the extension depends on Docker for comparison generation, stops exposing host-native execution-mode and host-path knobs to extension users, selects the governed Windows or Linux image from the current Docker daemon engine, and fails closed instead of probing host LabVIEW. This tranche remains retained as historical baseline truth; current installed-user truth is governed by `TRANCHE-016`.",
     "issues": [
       "ISSUE-0410"
     ]
@@ -135,7 +135,7 @@
     "title": "Installed-user first-run Docker onboarding and fail-closed guidance",
     "status": "done",
     "source": "author direction",
-    "summary": "Historical landed `v1.2.2` slice under `ISSUE-0410` that accounts explicitly for first-time installed users whose machine does not yet have Docker installed or running, and hardens installed-user onboarding, runtime-doctor next actions, and front-surface guidance around that fail-closed boundary. This tranche remains retained as current released baseline truth but is superseded as the active direction by `TRANCHE-016`.",
+    "summary": "Historical landed `v1.2.2` slice under `ISSUE-0410` that accounts explicitly for first-time installed users whose machine does not yet have Docker installed or running, and hardens installed-user onboarding, runtime-doctor next actions, and front-surface guidance around that fail-closed boundary. This tranche remains retained as historical baseline truth; current installed-user truth is governed by `TRANCHE-016`.",
     "issues": [
       "ISSUE-0410"
     ]

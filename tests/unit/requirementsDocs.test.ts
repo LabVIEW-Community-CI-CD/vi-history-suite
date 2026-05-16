@@ -205,7 +205,7 @@ describe('requirements documentation coherence', () => {
       'surface the selected execution mode, chosen provider, rejected-provider reasons, acquisition outcome, and next action'
     );
     expect(rtm).toContain(
-      'surface the current released Docker-only installed-user execution-policy truths'
+      'surface the current host-default local-LabVIEWCLI installed-user execution-policy truths'
     );
     expect(rtm).not.toContain(
       'surface the critical Docker-first Windows installed-user execution-policy truths'
@@ -215,9 +215,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('`labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public');
     expect(testPlan).toContain('without a resolved governing image');
     expect(testPlan).toContain('bounded expert isolated container execution path');
-    expect(testPlan).toContain('truth checks for Docker-only');
-    expect(testPlan).toContain('compare execution, engine-aware Windows/Linux image selection');
-    expect(testPlan).toContain('Docker-required hard stops without host fallback');
+    expect(testPlan).toContain('truth checks for host-default local');
+    expect(testPlan).toContain('explicit `vihs --validate` provider bundle validation');
+    expect(testPlan).toContain('bounded expert Docker selection');
     expect(testPlan).not.toContain('critical Docker-first Windows');
     expect(adr0005).toContain('bounded expert isolation path');
     expect(adr0005).not.toContain('preferred future isolation path');
@@ -257,7 +257,9 @@ describe('requirements documentation coherence', () => {
       'prove `CreateComparisonReport` admission on the supported LabVIEW 2026 x64 release host bundle'
     );
     expect(srs).toContain('Windows x86 host-bundle rerun remains non-blocking characterization only');
-    expect(srs).toContain('remain on the exact released Docker-only baseline until the host-default provider contract is source-backed');
+    expect(srs).toContain(
+      'lead with the source-backed, locally proven, and admitted host-default provider contract'
+    );
     expect(srs).toContain('VHS-REQ-551');
     expect(srs).toContain(
       'shall remain deferred on the current Ubuntu-only setup'

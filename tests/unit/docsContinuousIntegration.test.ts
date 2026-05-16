@@ -375,7 +375,7 @@ describe('documentation continuous integration runner', () => {
     expect(executedStepIds).toEqual(['compile', 'public-docs-tests', 'bundle-check', 'links']);
   });
 
-  it('retains the released bundled-doc execution truths in the docs-ci report', () => {
+  it('retains the host-default bundled-doc execution truths in the docs-ci report', () => {
     const report = docsContinuousIntegration.buildDocsContinuousIntegrationReport({
       recordedAt: '2026-04-13T22:30:00.000Z',
       status: 'passed',

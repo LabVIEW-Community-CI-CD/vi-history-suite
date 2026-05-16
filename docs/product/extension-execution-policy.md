@@ -37,7 +37,7 @@ Current develop-line implementation truth is:
 ## Exact Released Historical Baseline
 
 The exact released installed extension at `v1.2.2` remains a separate
-historical baseline:
+historical Docker-only baseline:
 
 - comparison generation is Docker-only in the released installed extension
 - the released package depends on Docker CLI plus a reachable Docker daemon
@@ -47,16 +47,16 @@ historical baseline:
   remain truthful for that released line
 
 This document keeps that baseline explicit so future sessions do not confuse
-the historical release contract with the current develop-line replacement
-direction.
+the historical Docker-only release contract with the current host-default
+installed-user contract.
 
 ## Active Control-Plane Direction
 
-The active installed-user direction is no longer “keep Docker-only installed
+The active installed-user contract is no longer “keep Docker-only installed
 compare execution.”
 
-Under `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`, the installed-user
-contract is:
+Under `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`, the current
+installed-user contract is:
 
 - host as the default provider through Windows local `LabVIEWCLI`
 - Docker only as a bounded expert provider persisted through the generated
@@ -79,9 +79,8 @@ contract is:
 - Docker `x86` is unsupported and fails closed with corrective guidance toward
   host or `x64`
 
-The manifest/settings slice and generated provider-selection CLI slice have
-landed. Exact single-runtime ambiguity handling plus explicit compare
-preflight remain active follow-on slices.
+The manifest/settings slice, generated provider-selection CLI slice, exact
+runtime selection, and explicit compare preflight are landed product truth.
 
 ## Canonical Installed Execution Request
 
@@ -151,26 +150,22 @@ This execution policy now lives on three different audience surfaces:
 - public GitHub extension-user surfaces, including the public facade repo and
   the new public GitHub wiki when those pages are materialized
 
-The authority/internal control plane is where the active develop-line
-host-default local Windows `LabVIEWCLI` plus bounded expert Docker contract is
-described before publication.
+The authority/internal control plane is where the current host-default local
+Windows `LabVIEWCLI` plus bounded expert Docker contract is retained with its
+historical Docker-only baseline and proof boundaries.
 
-Until that replacement contract is truthfully published and rerun through
-`PROGRAM-0002`, the public extension-user surfaces shall continue to describe
-the exact released `v1.2.2` installed-user baseline:
+The bundled and public extension-user surfaces now describe the current
+published installed-user contract:
 
-- Docker-only compare execution
-- Docker CLI plus a reachable Docker daemon as installed-user prerequisites
-- current-engine-derived Windows/Linux governed image selection
-- Docker-required fail-closed runtime guidance
-- the exact released compare workflow and bundled/public user guidance
+- host-default local `LabVIEWCLI` on Windows
+- Docker only as a bounded expert provider selected through `vihs`
+- LabVIEW version and bitness as explicit installed-user runtime facts
+- `vihs --validate` as the bounded readiness check before trusting Compare
+- no silent provider fallback between host and Docker
 
-The active develop-line replacement direction does not become bundled or public
-user truth early just because the branch implementation is already landed.
-
-After a future publication handoff, the bundled and public extension-user
-surfaces shall be realigned to the then-current published installed-user
-contract rather than to unreleased branch behavior.
+The historical Docker-only baseline remains retained in authority/control-plane
+contexts only; it does not re-enter bundled or public user guidance as current
+truth.
 
 They shall not publish:
 
@@ -268,16 +263,16 @@ The current broader product work is split intentionally:
 - benchmark proof stays in `PROGRAM-0003`
 - sustainment remains active under `PROGRAM-0004` / `ISSUE-0409` /
   `TRANCHE-012`
-- the active installed-user replacement direction now remains under
+- the current host-default installed-user contract remains under
   `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`
-- the current released Docker-only installed baseline remains retained
-  historically under `ISSUE-0410` / `TRANCHE-013` / `TRANCHE-015`
+- the Docker-only installed baseline remains retained as historical evidence
+  under `ISSUE-0410` / `TRANCHE-013` / `TRANCHE-015`
 
 Canonical validation of the active installed execution request is governed by
 `ADR-0038`.
 
-`ADR-0025` and `ADR-0026` remain retained only as the exact released
-Docker-only baseline decisions.
+`ADR-0025` and `ADR-0026` remain retained only as historical Docker-only
+baseline decisions.
 
 `DEBT-0006` is now retired in `docs/product/debt-ledger.json`.
 

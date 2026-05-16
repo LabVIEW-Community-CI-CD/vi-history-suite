@@ -173,11 +173,12 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('execution-policy bypass is not allowed');
     expect(policy).toContain('bounded expert provider');
     expect(policy).toContain('current Docker engine');
-    expect(policy).toContain('the public extension-user surfaces shall continue to describe');
-    expect(policy).toContain('the exact released `v1.2.2` installed-user baseline');
-    expect(policy).toContain('The active develop-line replacement direction does not become bundled or public');
-    expect(epic).toContain('exact released Docker-only bundled/user runtime truth');
-    expect(epic).toContain('active branch provider request, version, and bitness truth');
+    expect(policy).toContain('The bundled and public extension-user surfaces now describe');
+    expect(policy).toContain('host-default local `LabVIEWCLI` on Windows');
+    expect(policy).toContain('The historical Docker-only baseline remains retained');
+    expect(policy).not.toContain('The active develop-line replacement direction does not become bundled or public');
+    expect(epic).toContain('retained historical Docker-only bundled/user runtime truth');
+    expect(epic).toContain('current provider request, version, and bitness truth');
     expect(epic).toContain('generated settings CLI with provider, LabVIEW version, and bitness');
     expect(epic).toContain('host-default Windows local `LabVIEWCLI`');
     expect(epic).toContain('bounded internal/runtime-proof compatibility inputs');
@@ -186,7 +187,8 @@ describe('execution-policy control plane', () => {
     expect(srs).toContain('VHS-REQ-470');
     expect(srs).toContain('VHS-REQ-482');
     expect(srs).toContain('VHS-REQ-475');
-    expect(srs).toContain('Docker-only');
+    expect(srs).toContain('retained historical Docker-only');
+    expect(srs).toContain('current host-default local-`LabVIEWCLI` plus expert-Docker');
     expect(srs).toContain('VHS-REQ-528');
     expect(srs).toContain('VHS-REQ-530');
     expect(srs).toContain('VHS-REQ-531');
@@ -197,7 +199,8 @@ describe('execution-policy control plane', () => {
     expect(srs).toContain('explicit `Compare` action');
     expect(rtm).toContain('VHS-REQ-470');
     expect(rtm).toContain('current Docker daemon engine');
-    expect(rtm).toContain('Docker-only');
+    expect(rtm).toContain('retained historical Docker-only');
+    expect(rtm).toContain('current host-default local-LabVIEWCLI');
     expect(rtm).toContain('ADR-0026-canonical-extension-execution-request-validation.md');
     expect(rtm).toContain('VHS-REQ-528');
     expect(rtm).toContain('VHS-REQ-530');
@@ -215,7 +218,7 @@ describe('execution-policy control plane', () => {
     expect(testPlan).toContain('TEST-INTEG-009');
     expect(testPlan).toContain('`npm run test:integration:windows`');
     expect(testPlan).toContain('no-`--settings-file` target under a disposable');
-    expect(testPlan).toContain('Docker-only');
+    expect(testPlan).toContain('historical Docker-only installed contract');
     expect(testPlan).toContain('TEST-UNIT-339');
     expect(testPlan).toContain('TEST-DOC-102');
     expect(testPlan).toContain('TEST-DOC-104');
@@ -287,7 +290,7 @@ describe('execution-policy control plane', () => {
     expect(adr0006).toContain('superseded by ADR-0025');
     expect(policy).toContain('Canonical validation of the active installed execution request is governed by');
     expect(policy).toContain('`ADR-0038`');
-    expect(policy).toContain('`ADR-0025` and `ADR-0026` remain retained only as the exact released');
+    expect(policy).toContain('`ADR-0025` and `ADR-0026` remain retained only as historical Docker-only');
     expect(adr0025).toContain('## Status');
     expect(adr0025).toContain('Superseded');
     expect(adr0025).toContain('superseded by `ADR-0038`');
