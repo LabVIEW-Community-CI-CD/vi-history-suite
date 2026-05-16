@@ -2517,6 +2517,16 @@ Information-for-users review cases:
   the Git API, start VI eligibility indexing, or touch LabVIEW, while `VI
   History` and explicit API refresh paths initialize the Git-backed runtime
   lazily.
+- `TEST-UNIT-452`: run
+  `tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts` and
+  `tests/unit/postReleaseSustainmentRulesDocs.test.ts` and confirm the
+  post-publication installed-user observation cadence retains source work item
+  `#22`, predecessor campaign `#10`, public intake issue `#98`, the
+  `event-driven-with-monthly-review-while-public-intake-open` cadence model,
+  next-cycle trigger rules, no-later-than date `2026-06-14`, observed/deferred/
+  blocked fact buckets, documentation/video-plan/SemVer routing, no public
+  GitHub or Marketplace mutation admission, and the separate `ISSUE-0415`
+  Windows Docker Desktop proof boundary.
 - `TEST-DOC-153`: review release-publication state, current-state,
   public-release-candidate, post-release sustainment rules, hosted CI
   governance, release procedure, README, SRS, RTM, and this test plan and
@@ -2525,6 +2535,14 @@ Information-for-users review cases:
   the `main` merge, exact tag, public GitHub exact release, Marketplace
   mutation, Windows Docker Desktop proof admission, and release branch deletion
   remain unperformed
+- `TEST-DOC-154`: review the observation cadence packet, release-publication
+  state, post-release sustainment rules, current-state, maintainer
+  control-plane index, information-item map, SRS, RTM, and this test plan and
+  confirm future installed-user observation cycles retain observed, deferred,
+  and blocked facts separately from publication proof, feed repeated confusion
+  into docs or first-time video-plan work, default SemVer to sustainment-only,
+  and keep Windows Docker Desktop Windows-container proof under `ISSUE-0415`
+  unless separately admitted.
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -388,6 +388,96 @@ Proof retained during implementation:
 - `python3 /home/sergio/.codex/skills/repo-standards-review/scripts/external_user_information_check.py . --json`:
   passed with `ok=true`, no findings.
 
+### `#22` Turn post-publication installed-user acceptance into a recurring observation cadence
+
+Recorded: `2026-05-16T19:45:00Z`
+
+Status: implemented locally, pending push/merge.
+
+Decision: add a recurring installed-user observation cadence after the one-time
+post-publication campaign, with event triggers, a no-later-than review date,
+separate fact buckets, and routing into user docs, video planning, and SemVer
+decisions.
+
+Before evidence:
+
+- `#10` closed the immediate `v1.3.16` post-publication installed-user
+  acceptance campaign.
+- `docs/product/release-publication-state.{md,json}` retained the one-time
+  campaign packet but had no recurring observation schedule.
+- public intake issue
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/98` was open
+  with zero comments, so the repo needed an explicit next observation trigger
+  instead of waiting indefinitely for feedback.
+- Windows Docker Desktop Windows-container proof remained outside the installed
+  user campaign and under the separate `ISSUE-0415` lane.
+
+After evidence:
+
+- `docs/product/post-publication-installed-user-observation-cadence-2026-05-16.{md,json}`
+  defines `event-driven-with-monthly-review-while-public-intake-open`, public
+  intake issue `#98`, and the no-later-than review date `2026-06-14`.
+- recurring cycle outputs now separate observed facts, deferred facts, blocked
+  facts, documentation candidates, video-plan candidates, and the SemVer
+  recommendation.
+- repeated installed-user confusion routes to user docs or first-time video
+  plan work items instead of silently staying in publication proof.
+- Windows Docker Desktop Windows-container proof remains explicitly bounded to
+  `ISSUE-0415`.
+
+Guardrails added:
+
+- `docs/product/post-publication-installed-user-observation-cadence-2026-05-16.md`
+  and `.json` retain the human and machine-readable cadence packet.
+- `docs/product/release-publication-state.{md,json}` now link the recurring
+  cadence to the closed one-time campaign without treating publication as
+  acceptance proof.
+- `docs/product/post-release-sustainment-rules.{md,json}` now make recurring
+  installed-user observation part of the sustainment control plane.
+- `docs/product/current-state.md`,
+  `docs/product/maintainer-control-plane-index.md`, and
+  `docs/information-item-map.md` expose the cadence to current-state and
+  user-information readers.
+- `docs/requirements/srs.md`, `docs/requirements/rtm.csv`, and
+  `docs/testing/test-plan.md` add `VHS-REQ-595`, `TEST-UNIT-452`, and
+  `TEST-DOC-154` traceability for the cadence.
+- `tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts` and
+  `tests/unit/postReleaseSustainmentRulesDocs.test.ts` fail if the cadence,
+  fact buckets, routing rules, no-later-than date, public intake link, or
+  `ISSUE-0415` boundary disappear.
+- `tests/unit/alignmentControlPlaneDocs.test.ts` retains this closeout decision
+  and its before/after evidence.
+
+Proof retained during implementation:
+
+- `npm exec -- vitest run tests/unit/postPublicationInstalledUserAcceptanceCampaign.test.ts tests/unit/firstTimeOverviewVideoPlan.test.ts tests/unit/postReleaseSustainmentRulesDocs.test.ts tests/unit/requirementsDocs.test.ts`:
+  passed.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json`:
+  passed with `ok=true`, no findings.
+- `npm run docs:gate:core`: passed with 23 test files, 73 passed, and 2
+  skipped; bundled documentation remained in sync.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-22`:
+  completed; release scorecard reported coverage, CM, requirements,
+  architecture, documentation, and DoD gates as `PASS`.
+- `VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-22`:
+  completed; documentation proof reported no missing or unconfirmed reusable
+  26514 signal set.
+- `npm run check`: passed.
+- `npm run package:audit`: passed.
+- `npm test`: passed with 179 test files, 966 passed, and 2 skipped.
+- `git diff --check`: passed.
+
+Mutation boundary:
+
+- docs/tests/traceability alignment only;
+- no Marketplace or public GitHub mutation;
+- no publication mutation or publication proof reinterpretation;
+- no runtime behavior mutation;
+- no tag, public GitHub release, Marketplace, release branch deletion, or
+  protected-branch mutation.
+
 ### `#23` Decide release-gate DoD evidence or explicit DoD N/A rationale
 
 Recorded: `2026-05-16T07:19:23Z`

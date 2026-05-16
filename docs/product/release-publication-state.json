@@ -710,6 +710,31 @@
     "nextSemVerDefaultDecision": "sustainment-only-until-campaign-finds-patch-worthy-defect-or-proof-gap",
     "separateWindowsDockerDesktopGate": "docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md"
   },
+  "postPublicationInstalledUserObservationCadence": {
+    "status": "active-recurring-cadence",
+    "gitlabWorkItem": "gitlab#22",
+    "packetPath": "docs/product/post-publication-installed-user-observation-cadence-2026-05-16.md",
+    "packetJsonPath": "docs/product/post-publication-installed-user-observation-cadence-2026-05-16.json",
+    "predecessorCampaignWorkItem": "gitlab#10",
+    "cadenceModel": "event-driven-with-monthly-review-while-public-intake-open",
+    "publicFeedbackIntake": "https://github.com/svelderrainruiz/vi-history-suite/issues/98",
+    "publicFeedbackIntakeState": "open",
+    "publicFeedbackIntakeCommentCount": 0,
+    "nextCycleNoLaterThan": "2026-06-14",
+    "marketplacePublicationProvesInstalledUserAcceptance": false,
+    "publicationMutationAdmitted": false,
+    "nextProductAction": "run-installed-user-observation-cycle",
+    "requiredCycleOutputs": [
+      "observedFacts",
+      "deferredFacts",
+      "blockedFacts",
+      "documentationCandidates",
+      "videoPlanCandidates",
+      "semverRecommendation",
+      "windowsDockerDesktopGateReference"
+    ],
+    "separateWindowsDockerDesktopGate": "docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md"
+  },
   "marketplaceCommunityValidationPreview": {
     "status": "published-and-verified",
     "publicationClaim": "public-validation-prerelease",

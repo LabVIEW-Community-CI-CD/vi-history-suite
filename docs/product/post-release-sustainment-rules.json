@@ -17,6 +17,40 @@
     "issueId": "ISSUE-0412",
     "programId": "PROGRAM-0005"
   },
+  "postPublicationInstalledUserObservationCadence": {
+    "status": "active-recurring-cadence",
+    "sourceWorkItem": "gitlab#22",
+    "predecessorCampaignWorkItem": "gitlab#10",
+    "packetPath": "docs/product/post-publication-installed-user-observation-cadence-2026-05-16.md",
+    "packetJsonPath": "docs/product/post-publication-installed-user-observation-cadence-2026-05-16.json",
+    "publicFeedbackIntake": "https://github.com/svelderrainruiz/vi-history-suite/issues/98",
+    "cadenceModel": "event-driven-with-monthly-review-while-public-intake-open",
+    "nextCycleNoLaterThan": "2026-06-14",
+    "nextCycleRunsWhen": [
+      "new exact VS Code Marketplace publication closes",
+      "public feedback intake receives a new installed-user report or confusion signal",
+      "support request repeats the same installed-user confusion already seen in a prior cycle",
+      "planned first-time video slot receives real observation evidence",
+      "before opening any SemVer candidate that changes installed-user onboarding, validation, compare, docs, or proof claims"
+    ],
+    "factBuckets": [
+      "observed",
+      "deferred",
+      "blocked"
+    ],
+    "requiredCycleOutputs": [
+      "observedFacts",
+      "deferredFacts",
+      "blockedFacts",
+      "documentationCandidates",
+      "videoPlanCandidates",
+      "semverRecommendation",
+      "windowsDockerDesktopGateReference"
+    ],
+    "publicationMutationAdmitted": false,
+    "marketplacePublicationProvesInstalledUserAcceptance": false,
+    "windowsDockerDesktopGate": "docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md"
+  },
   "releaseCadence": {
     "model": "event-driven",
     "versionLineContract": {

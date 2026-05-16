@@ -718,6 +718,32 @@ until that later public GitHub release gate is complete.
   decision under
   `docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md`.
 
+## Post-Publication Installed-User Observation Cadence
+
+- Cadence packet:
+  `docs/product/post-publication-installed-user-observation-cadence-2026-05-16.md`
+- Cadence packet JSON:
+  `docs/product/post-publication-installed-user-observation-cadence-2026-05-16.json`
+- GitLab work item: `#22`
+- Cadence model:
+  `event-driven-with-monthly-review-while-public-intake-open`
+- Public feedback intake:
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/98`
+- Current public-intake readback: open, zero comments on 2026-05-16.
+- Next cycle no later than: `2026-06-14` while the public feedback intake
+  remains open.
+- Required cycle outputs: observed facts, deferred facts, blocked facts,
+  documentation candidates, video-plan candidates, SemVer recommendation, and
+  Windows Docker Desktop gate reference.
+- Boundary: Marketplace publication and exact VSIX install proof remain
+  release evidence, not first-time installed-user acceptance proof.
+- Publication mutation: not admitted by this cadence.
+- Next product action:
+  `run-installed-user-observation-cycle`
+- Windows Docker Desktop Windows-container proof remains a separate launch-gate
+  decision under
+  `docs/product/issues/ISSUE-0415-windows-docker-desktop-launch-gate.md`.
+
 ## Public GitHub Installed-User Support Matrix Adoption
 
 - Public GitHub PR:

@@ -29,6 +29,29 @@ historical or active.
 `LabVIEWCLI` contract with bounded expert Docker, while `TRANCHE-013` and
 `TRANCHE-015` remain the historical Docker-only installed-user baseline.
 
+Post-publication installed-user observation is now recurring rather than a
+single campaign packet:
+
+- cadence packet:
+  [post-publication-installed-user-observation-cadence-2026-05-16.md](./post-publication-installed-user-observation-cadence-2026-05-16.md)
+- cadence packet JSON:
+  [post-publication-installed-user-observation-cadence-2026-05-16.json](./post-publication-installed-user-observation-cadence-2026-05-16.json)
+- source work item: `#22`
+- predecessor campaign: `#10`
+- public feedback intake:
+  `https://github.com/svelderrainruiz/vi-history-suite/issues/98`
+- cadence model:
+  `event-driven-with-monthly-review-while-public-intake-open`
+- next cycle no later than: `2026-06-14` while the public feedback intake
+  remains open
+- required cycle outputs: observed facts, deferred facts, blocked facts,
+  documentation candidates, video-plan candidates, SemVer recommendation, and
+  Windows Docker Desktop gate reference
+- Marketplace publication and exact VSIX install proof remain release evidence,
+  not first-time installed-user acceptance proof
+- Windows Docker Desktop Windows-container proof remains under `ISSUE-0415`
+  unless separately admitted
+
 The current release branch model is explicit too:
 
 - `develop` is the integration branch

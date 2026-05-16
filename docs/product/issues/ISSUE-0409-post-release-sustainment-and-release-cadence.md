@@ -97,6 +97,11 @@ Activation is now satisfied:
   `develop` pipeline is green
 - the first-contact installed-user documentation surface is useful to
   Marketplace users who only want to install and use the extension locally
+- post-publication installed-user observation is recurring after the one-time
+  campaign: public intake, repeated confusion, first-time video-plan
+  observations, exact Marketplace publication closeout, and SemVer candidate
+  decisions can trigger a new cycle, with a no-later-than review while public
+  intake remains open
 - future work does not fall back into unowned tail iteration
 
 ## Required Evidence
@@ -133,6 +138,10 @@ Activation is now satisfied:
   depends on ad hoc manual review instead of a retained expert-agent review
   skill and no-findings verdict against the exact published public candidate
   surfaces
+- keep extending the sustainment package when installed-user acceptance needs
+  another observation cycle, while keeping observed, deferred, and blocked
+  facts separate from publication proof and keeping Windows Docker Desktop
+  proof under `ISSUE-0415`
 - stop short of absorbing the active `PROGRAM-0005`, the historical
   `PROGRAM-0002` closeout, or the explicit runtime-provider public-acceptance
   gate into generic sustainment language

@@ -122,6 +122,14 @@ documents:
   `run-post-publication-installed-user-acceptance-campaign`
 - post-publication installed-user acceptance campaign:
   [post-publication-installed-user-acceptance-campaign-2026-05-15.md](./post-publication-installed-user-acceptance-campaign-2026-05-15.md)
+- post-publication installed-user observation cadence:
+  [post-publication-installed-user-observation-cadence-2026-05-16.md](./post-publication-installed-user-observation-cadence-2026-05-16.md)
+- installed-user observation cadence model:
+  `event-driven-with-monthly-review-while-public-intake-open`
+- next installed-user observation cycle: run on the next public intake signal,
+  installed-user proof change, candidate-opening decision that affects
+  onboarding, or no later than `2026-06-14` while public intake issue `#98`
+  remains open
 - campaign boundary: published Marketplace state is not first-time
   installed-user acceptance proof
 - current Marketplace stable version: `1.3.16`
