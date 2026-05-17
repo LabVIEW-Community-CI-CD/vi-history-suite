@@ -51,8 +51,9 @@
       "T011"
     ],
     "currentIau": "IAU-runtime-contract-explicit-compare-v1",
-    "currentIauState": "preflight-required",
+    "currentIauState": "implementation-admitted",
     "currentIauPreflightRecord": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
+    "currentIauPreflightStatus": "pass",
     "currentIauScope": [
       "T012",
       "T013",

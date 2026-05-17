@@ -12,7 +12,8 @@ The current admitted implementation unit is
 `IAU-runtime-contract-explicit-compare-v1`, limited to tasks `T012` through
 `T015`: selected/base commit retention tests, explicit-action tests,
 clean-room compare-action state flow, and pre-execution fact rendering.
-Implementation is blocked until its preflight records `status: pass`.
+Its preflight records `status: pass`, so implementation may start for `T012`
+through `T015` only.
 
 ## Bridge State
 
@@ -22,9 +23,9 @@ Implementation is blocked until its preflight records `status: pass`.
 | `exported` | complete |
 | `public-imported` | complete |
 | `spec-locked` | complete |
-| `preflight-required` | explicit-compare IAU pending |
+| `preflight-required` | complete |
 | `implementation-admitted` | complete |
-| `implemented` | foundation IAU complete; explicit-compare IAU blocked pending preflight |
+| `implemented` | foundation IAU complete; explicit-compare IAU admitted |
 | `oracle-reviewed` | pending |
 
 ## Admission Basis
@@ -47,7 +48,7 @@ Implementation is blocked until its preflight records `status: pass`.
 ## Current IAU
 
 - IAU: `IAU-runtime-contract-explicit-compare-v1`
-- Preflight: `pending`; implementation remains blocked.
+- Preflight: `pass`; implementation may start for this IAU only.
 - `T012`: commit-pair selection retains selected/base commit facts.
 - `T013`: compare does not start before explicit user action.
 - `T014`: clean-room compare-action state flow.
