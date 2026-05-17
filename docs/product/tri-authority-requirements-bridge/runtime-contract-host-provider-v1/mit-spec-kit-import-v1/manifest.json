@@ -40,6 +40,19 @@
     "publicImportContainsPrivateTooling": false,
     "publicImportContainsImplementationSource": false
   },
+  "sliceState": "implementation-admitted",
+  "implementationAdmission": {
+    "record": "implementation-admission-v1.json",
+    "admittedScope": [
+      "T007",
+      "T008",
+      "T009",
+      "T010",
+      "T011"
+    ],
+    "blockedUntilFoundationMerge": "T012-T030",
+    "releasedExtensionSignal": "requirements-maturity-not-source-reuse"
+  },
   "implementationSharing": "none",
   "licenseBoundary": "MIT target receives requirements and Spec Kit artifacts only",
   "marketplacePublication": "disabled-until-later-adr",
