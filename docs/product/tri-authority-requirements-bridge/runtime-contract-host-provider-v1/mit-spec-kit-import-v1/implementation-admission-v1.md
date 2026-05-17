@@ -16,11 +16,12 @@ The runtime-facts IAU is `IAU-runtime-contract-runtime-facts-v1`, covering
 tasks `T016` through `T021`, and it is implemented in the MIT authority.
 
 The current admitted implementation unit is
-`IAU-runtime-contract-provider-policy-v1`, limited to tasks `T022` through
-`T025`: host-native default provider selection tests, explicit Docker
-expert-provider selection tests, no-implicit-Docker tests, and provider policy
-selection/failure guidance. Its preflight records `status: pass`, so
-implementation may start for `T022` through `T025` only.
+`IAU-runtime-contract-proof-intake-v1`, limited to tasks `T026` through
+`T030`: Linux host proof classification tests, evidence-class rejection tests,
+`vihs validate-fixture` proof JSON and issue-body tests, proof packet writer
+and issue-body generation, and Windows Docker Desktop proof intake validation.
+Its preflight records `status: pass`, so implementation may start for `T026`
+through `T030` only.
 
 ## Bridge State
 
@@ -32,7 +33,7 @@ implementation may start for `T022` through `T025` only.
 | `spec-locked` | complete |
 | `preflight-required` | complete |
 | `implementation-admitted` | complete |
-| `implemented` | foundation, explicit-compare, and runtime-facts IAUs complete; provider-policy IAU admitted |
+| `implemented` | foundation, explicit-compare, runtime-facts, and provider-policy IAUs complete; proof-intake IAU admitted |
 | `oracle-reviewed` | pending |
 
 ## Admission Basis
@@ -54,11 +55,13 @@ implementation may start for `T022` through `T025` only.
 
 ## Current IAU
 
-- IAU: `IAU-runtime-contract-provider-policy-v1`
+- IAU: `IAU-runtime-contract-proof-intake-v1`
 - Preflight: `pass`; implementation may start for this IAU only.
-- `T022`: host-native default provider selection tests.
-- `T023`: explicit Docker expert-provider selection tests.
-- `T024`: Docker is never selected implicitly tests.
-- `T025`: provider policy selection and failure guidance.
+- `T026`: Linux host LabVIEW proof classification tests.
+- `T027`: evidence-class substitution rejection tests.
+- `T028`: `vihs validate-fixture` proof JSON and issue-body generation tests.
+- `T029`: proof packet writer and issue-body generation.
+- `T030`: Windows Docker Desktop proof intake validation.
 
-Tasks `T026` through `T030` remain blocked until the provider-policy IAU merges.
+LabVIEWCLI command execution, Docker command execution or container
+orchestration, Marketplace publication, and source copying remain blocked.
