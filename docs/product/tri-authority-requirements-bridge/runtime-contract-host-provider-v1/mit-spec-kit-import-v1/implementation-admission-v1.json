@@ -24,7 +24,9 @@
     "cleanRoomBoundary": "pass",
     "explicitCompareIauPreflight": "pass",
     "explicitCompareIauCloseout": "implemented",
-    "runtimeFactsIauPreflight": "pass"
+    "runtimeFactsIauPreflight": "pass",
+    "runtimeFactsIauCloseout": "implemented",
+    "providerPolicyIauPreflight": "pass"
   },
   "sliceStateModel": [
     "candidate",
@@ -62,7 +64,7 @@
     },
     {
       "iauId": "IAU-runtime-contract-runtime-facts-v1",
-      "state": "implementation-admitted",
+      "state": "implemented",
       "record": "implementation-admissions/IAU-runtime-contract-runtime-facts-v1.json",
       "preflightRecord": "implementation-admissions/IAU-runtime-contract-runtime-facts-v1-preflight-v1.json",
       "admittedTasks": [
@@ -73,9 +75,21 @@
         "T020",
         "T021"
       ]
+    },
+    {
+      "iauId": "IAU-runtime-contract-provider-policy-v1",
+      "state": "implementation-admitted",
+      "record": "implementation-admissions/IAU-runtime-contract-provider-policy-v1.json",
+      "preflightRecord": "implementation-admissions/IAU-runtime-contract-provider-policy-v1-preflight-v1.json",
+      "admittedTasks": [
+        "T022",
+        "T023",
+        "T024",
+        "T025"
+      ]
     }
   ],
-  "currentImplementationAdmissionUnit": "IAU-runtime-contract-runtime-facts-v1",
+  "currentImplementationAdmissionUnit": "IAU-runtime-contract-provider-policy-v1",
   "implementationScopeCompleted": [
     "T007",
     "T008",
@@ -85,9 +99,7 @@
     "T012",
     "T013",
     "T014",
-    "T015"
-  ],
-  "implementationScopeAdmitted": [
+    "T015",
     "T016",
     "T017",
     "T018",
@@ -95,11 +107,13 @@
     "T020",
     "T021"
   ],
-  "implementationScopeBlockedUntilRuntimeFactsMerge": [
+  "implementationScopeAdmitted": [
     "T022",
     "T023",
     "T024",
-    "T025",
+    "T025"
+  ],
+  "implementationScopeBlockedUntilProviderPolicyMerge": [
     "T026",
     "T027",
     "T028",
