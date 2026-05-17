@@ -1,7 +1,7 @@
 # IAU-installed-user-observation-model-v1
 
-`IAU-installed-user-observation-model-v1` is admitted for the MIT authority.
-Its scope is limited to `T009` through `T013`.
+`IAU-installed-user-observation-model-v1` is implemented for the MIT authority.
+Its scope was limited to `T009` through `T013`.
 
 ## Admitted Tasks
 
@@ -23,5 +23,11 @@ Its scope is limited to `T009` through `T013`.
 ## Preflight
 
 `IAU-installed-user-observation-model-v1-preflight-v1` records `status: pass`.
-Implementation may start only for this IAU after the MIT public admission
-packet and handoff issue are created.
+
+## Closeout
+
+`IAU-installed-user-observation-model-v1-closeout-v1` records `status: pass`.
+MIT PR #29 merged the implementation to `develop` at
+`d357776e232b67b79060c315882fb8a2cf5cbcfd`, and Issue #27 is closed.
+
+No further implementation may start from this IAU.

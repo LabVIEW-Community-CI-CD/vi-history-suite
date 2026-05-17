@@ -2,7 +2,8 @@
   "schema": "vi-history/mit-spec-kit-implementation-admission@v1",
   "sliceId": "installed-user-observation-public-surface-v1",
   "createdDate": "2026-05-17",
-  "state": "implementation-admitted",
+  "state": "implemented",
+  "implemented": true,
   "sourceAuthority": "gitlabGoverned",
   "targetAuthority": "githubMitSpecKit",
   "targetRepository": "https://github.com/svelderrainruiz/vi-history",
@@ -23,7 +24,8 @@
     "artifactConsistency": "pass",
     "analyzeCriticalFindings": "none-recorded",
     "cleanRoomBoundary": "pass",
-    "observationModelIauPreflight": "pass"
+    "observationModelIauPreflight": "pass",
+    "observationModelIauCloseout": "pass"
   },
   "sliceStateModel": [
     "candidate",
@@ -38,9 +40,10 @@
   "implementationAdmissionUnits": [
     {
       "iauId": "IAU-installed-user-observation-model-v1",
-      "state": "implementation-admitted",
+      "state": "implemented",
       "record": "implementation-admissions/IAU-installed-user-observation-model-v1.json",
       "preflightRecord": "implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.json",
+      "closeoutRecord": "implementation-admissions/IAU-installed-user-observation-model-v1-closeout-v1.json",
       "admittedTasks": [
         "T009",
         "T010",
@@ -50,15 +53,15 @@
       ]
     }
   ],
-  "currentImplementationAdmissionUnit": "IAU-installed-user-observation-model-v1",
-  "implementationScopeCompleted": [],
-  "implementationScopeAdmitted": [
+  "currentImplementationAdmissionUnit": null,
+  "implementationScopeCompleted": [
     "T009",
     "T010",
     "T011",
     "T012",
     "T013"
   ],
+  "implementationScopeAdmitted": [],
   "implementationScopeBlocked": [
     "T014",
     "T015",

@@ -2,8 +2,9 @@
   "schema": "vi-history/tri-authority-bridge-readiness@v1",
   "readinessId": "installed-user-observation-public-surface-v1-bridge-readiness-v1",
   "recordedAt": "2026-05-17T14:00:43Z",
-  "status": "implementation-admitted",
+  "status": "implemented",
   "implementationAdmitted": true,
+  "implemented": true,
   "workItem": {
     "iid": 34,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/34",
@@ -18,6 +19,11 @@
     "iid": 36,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/36",
     "title": "Admit installed-user observation model IAU"
+  },
+  "observationModelImplementationCloseoutWorkItem": {
+    "iid": 37,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/37",
+    "title": "Record MIT installed-user observation model closeout"
   },
   "candidateId": "IAU-candidate-installed-user-observation-public-surface-v1",
   "futureSliceId": "installed-user-observation-public-surface-v1",
@@ -64,8 +70,10 @@
     "packet": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admission-v1.json",
     "iauId": "IAU-installed-user-observation-model-v1",
     "preflightRecord": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.json",
-    "state": "implementation-admitted",
+    "state": "implemented",
     "preflightStatus": "pass",
+    "closeoutRecord": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1-closeout-v1.json",
+    "closeoutStatus": "pass",
     "implementationAdmitted": true,
     "admittedTasks": [
       "T009",
@@ -79,6 +87,31 @@
       "T015",
       "T016"
     ]
+  },
+  "mitImplementationCloseout": {
+    "githubIssue": {
+      "number": 27,
+      "url": "https://github.com/svelderrainruiz/vi-history/issues/27",
+      "state": "closed"
+    },
+    "githubPullRequest": {
+      "number": 29,
+      "url": "https://github.com/svelderrainruiz/vi-history/pull/29",
+      "state": "merged",
+      "mergedAt": "2026-05-17T15:57:57Z",
+      "baseBranch": "develop",
+      "headBranch": "copilot/installed-user-observation-model-iau",
+      "mergeCommit": "d357776e232b67b79060c315882fb8a2cf5cbcfd"
+    },
+    "postMergeValidation": {
+      "workflow": "spec-gates",
+      "run": "https://github.com/svelderrainruiz/vi-history/actions/runs/25995657329",
+      "branch": "develop",
+      "headSha": "d357776e232b67b79060c315882fb8a2cf5cbcfd",
+      "conclusion": "success"
+    },
+    "result": "implemented",
+    "oracleReviewed": false
   },
   "targetPaths": {
     "publicImportPath": "docs/requirements/imports/installed-user-observation-public-surface-v1/",
@@ -141,11 +174,12 @@
     "cleanRoomSafety": "pass",
     "publicImportCreated": "pass",
     "specKitArtifactsCreated": "pass",
-    "implementationPreflight": "pass-for-IAU-installed-user-observation-model-v1"
+    "implementationPreflight": "pass-for-IAU-installed-user-observation-model-v1",
+    "implementationCloseout": "pass-for-IAU-installed-user-observation-model-v1"
   },
   "blockedScope": [
-    "MIT implementation outside IAU-installed-user-observation-model-v1",
-    "Copilot implementation handoff before the MIT public admission packet is committed",
+    "MIT implementation outside a newly admitted successor IAU",
+    "Copilot implementation handoff before a new MIT public admission packet is committed",
     "T014-T016 reporting-surface implementation",
     "LabVIEWCLI execution",
     "Docker execution or orchestration",
@@ -153,12 +187,11 @@
     "Marketplace publication"
   ],
   "nextGate": {
-    "state": "public-mit-observation-model-handoff",
+    "state": "oracle-review-or-next-iau-discovery",
     "allowedNextWork": [
-      "create public MIT admission records for IAU-installed-user-observation-model-v1",
-      "create public MIT handoff issue for T009-T013 only",
-      "run public redaction validation if public artifacts change",
-      "run bridge artifact validation if public artifacts change"
+      "run cross-authority oracle review for the implemented observation model",
+      "discover a separate successor IAU if more MIT implementation is useful",
+      "keep T014-T016 blocked until a reporting-surface IAU preflight passes"
     ],
     "notAllowedNextWork": [
       "implementation outside T009-T013",
