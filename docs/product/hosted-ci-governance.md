@@ -70,20 +70,26 @@ retained closed baseline.
   normal GitFlow and release branch deletion remains blocked
   unless explicitly admitted separately
 
-## Current Linux/Docker Preview Claim
+## Current Windows Proof Boundary
 
-- active governed develop/package claim: Linux/Docker validated preview
+- active governed installed-user host claim: Windows host LabVIEW 2026 x64
+  admitted through the retained release-claim ledger
 - verified on this machine: Ubuntu self-hosted GitLab runner, Linux Docker
   engine, Linux assurance runner, docs workbench, source build, tests, and
-  preview VSIX packaging
-- deferred proof: native Windows installed extension behavior, native Windows
-  LabVIEW host execution, Docker Desktop Windows-container execution, and
-  `windows_private_release_acceptance`
+  preview VSIX packaging, plus native Windows LabVIEW 2026 x64 host proof and
+  exact VSIX installed-user proof
+- blocked proof: Docker Desktop Windows-container execution remains
+  not-admitted until a receipt proves `runtimeProvider=windows-container`,
+  `runtimeEngine=labview-cli`, `runtimeExecutionState=succeeded`, and
+  `generatedReportExists=true`
+- host-only gate: `npm run acceptance:windows:installed-user-host`
+- retained-claim assertion: `npm run proof:windows-installed-user-claim:assert`
+- stricter aggregate proof: `windows_private_release_acceptance` still requires
+  both host-native and Windows-container lanes to pass
 - public GitHub production mutation: not admitted by this claim
 - VS Code Marketplace mutation: not admitted by this claim
-- Windows installed-user claim rule: do not claim Windows installed-user proof
-  until a real Windows/LabVIEW host runner exists and the deferred Windows lane
-  produces retained evidence
+- Windows Docker claim rule: do not claim Windows Docker Desktop proof until a
+  Windows-container receipt succeeds; host proof is not a substitute
 
 ## Branch Model
 
@@ -315,6 +321,12 @@ Job ownership:
   `npm run vagrant:runner:readiness`, retains
   `vagrant-runner-readiness-evidence/`, and fails before Vagrant acceptance
   when active storage or host readiness drifts
+- `windows_installed_user_host_acceptance`: deferred native Windows host-only
+  proof lane; it runs only when
+  `VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED=true`, invokes
+  `npm run acceptance:windows:installed-user-host`, retains
+  `windows-installed-user-host-evidence/`, and admits only
+  `installed-user-host-labview-2026-x64` facts with `dockerProofIncluded=false`
 - `public_exact_pretag_proof`: blocking pre-tag public-facade proof lane on
   merge requests, `develop`, `main`, `release/*`, and `hotfix/*`; it runs
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
@@ -352,8 +364,8 @@ Job ownership:
     lane that retains the canonical Windows x64 private-release acceptance
     evidence for `resource/plugins/lv_icon.vi` on both host-native and
     Windows-container providers when `VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true`;
-    it is required before any Windows installed-user proof claim, but it is not
-    required for the active Linux/Docker validated preview claim. When the
+    it is required before any aggregate Windows host+container proof claim, but
+    it is not required for the host-only installed-user claim. When the
     host-native proof exits at the shared Windows cleanup seam, it retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
     `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
@@ -403,8 +415,8 @@ Job ownership:
   large Windows box, box-unpack temp files, and disposable VM clone do not land
   on the root filesystem; this
   is Vagrant VSIX
-  acceptance evidence, not a substitute for the deferred native Windows x64
-  private-release and Windows-container proof lane
+  acceptance evidence, not a substitute for the native Windows host-only
+  release-claim ledger or Windows-container proof lane
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
   exact tags; it now depends on the blocking Linux assurance lanes
@@ -413,7 +425,8 @@ Job ownership:
   `assurance_external_user_information`, plus `test_extension` and
   `linux_docker_provider_lane`, and now waits for
   `vagrant_windows_vsix_acceptance`; the deferred
-  `windows_private_release_acceptance` need remains optional unless explicitly
+  `windows_installed_user_host_acceptance` and
+  `windows_private_release_acceptance` needs remain optional unless explicitly
   enabled, and there is still no generic `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
@@ -422,9 +435,10 @@ Job ownership:
 - `release_extension`: exact-version release lane on exact tags only, now
   blocked on the same blocking Linux assurance lanes, `test_extension`, and
   `linux_docker_provider_lane`, plus `vagrant_windows_vsix_acceptance`; any
-  exact package produced without the deferred Windows private-release lane
-  remains a Linux/Docker plus Vagrant-VSIX validated artifact and cannot be used
-  as native Windows installed-user proof
+  exact package produced without the optional host-only Windows lane may still
+  use the tracked release-claim ledger for existing admitted host proof, but it
+  cannot claim new Windows Docker Desktop proof without the stricter aggregate
+  Windows-container lane
 
 Design-gate boundary:
 

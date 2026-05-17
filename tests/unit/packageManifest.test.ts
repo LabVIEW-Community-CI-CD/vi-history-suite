@@ -340,6 +340,12 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['public:contract:windows-installed-user']).toBe(
       'node scripts/runPublicWindowsInstalledUserContract.js'
     );
+    expect(manifest.scripts?.['acceptance:windows:installed-user-host']).toBe(
+      'scripts\\invoke-node-from-npm-execpath.cmd .\\node_modules\\typescript\\bin\\tsc -p . && scripts\\invoke-node-from-npm-execpath.cmd scripts/runWindowsPrivateReleaseAcceptance.js --scope host-only --evidence-dir windows-installed-user-host-evidence'
+    );
+    expect(manifest.scripts?.['proof:windows-installed-user-claim:assert']).toBe(
+      'node scripts/assertWindowsInstalledUserReleaseClaim.js'
+    );
     expect(manifest.scripts?.['public:repo:clone']).toBe(
       'node scripts/preparePublicRepoClone.js'
     );

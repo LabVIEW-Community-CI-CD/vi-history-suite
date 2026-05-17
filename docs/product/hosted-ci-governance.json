@@ -604,7 +604,30 @@
           "failurePolicy": "fail-closed-after-repo-recovery-script-and-single-retry"
         },
         "activationVariable": "VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true",
-        "claimBoundary": "required-before-any-windows-installed-user-proof-claim; not required for Linux/Docker validated preview"
+        "claimBoundary": "required-before-any-aggregate-windows-host-and-container-proof-claim; not required for host-only installed-user proof"
+      },
+      "windows_installed_user_host_acceptance": {
+        "classification": "deferred-windows-labview-host-only-proof-check",
+        "stage": "test",
+        "admittedRefs": [
+          "VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED=true"
+        ],
+        "packageScript": "npm run acceptance:windows:installed-user-host",
+        "command": "npm run acceptance:windows:installed-user-host",
+        "evidenceRoot": "windows-installed-user-host-evidence/",
+        "evidenceSchema": "vi-history-suite/windows-installed-user-host-acceptance@v1",
+        "claimScope": "installed-user-host-labview-2026-x64",
+        "validatedFacts": [
+          "scope=host-only",
+          "dockerProofIncluded=false",
+          "runtimeExecutionState=succeeded",
+          "runtimeProvider=host-native",
+          "runtimeEngine=labview-cli",
+          "generatedReportExists=true"
+        ],
+        "activationVariable": "VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED=true",
+        "claimBoundary": "admits Windows installed-user host proof only; does not admit Windows Docker Desktop proof",
+        "failurePolicy": "fail-closed-before-any-new Windows installed-user host proof claim when host-native LabVIEW 2026 x64 proof cannot be retained"
       },
       "vagrant_runner_admission": {
         "classification": "required-vagrant-runner-readiness-admission",
@@ -707,7 +730,8 @@
           "vagrant_windows_vsix_acceptance"
         ],
         "optionalNeeds": [
-          "windows_private_release_acceptance"
+          "windows_private_release_acceptance",
+          "windows_installed_user_host_acceptance"
         ],
         "admittedRefs": [
           "merge_request_event",
@@ -743,7 +767,8 @@
           "vagrant_windows_vsix_acceptance"
         ],
         "optionalNeeds": [
-          "windows_private_release_acceptance"
+          "windows_private_release_acceptance",
+          "windows_installed_user_host_acceptance"
         ],
         "admittedRefs": [
           "vX.Y.Z-tags"
@@ -773,7 +798,9 @@
           "runtimeBlockedReason=<none>"
         ],
         "windowsLabviewProofIncluded": false,
-        "windowsInstalledUserProofDeferred": true,
+        "windowsInstalledUserHostProofState": "admitted-separate-release-claim-ledger",
+        "windowsInstalledUserProofDeferred": false,
+        "windowsDockerDesktopProofState": "blocked-not-admitted",
         "failurePolicy": "fail-closed-before-preview-or-exact-package-artifacts-when-the-governed-linux-docker-provider-cannot-be-validated"
       },
       "ubuntu_docker_runner_admission": {
@@ -893,13 +920,13 @@
       "docs-workbench-gate",
       "test-extension-linux-ci",
       "vagrant-windows-vsix-acceptance",
-      "preview-vsix-packaging"
+      "preview-vsix-packaging",
+      "native-windows-labview-2026-x64-host-proof",
+      "windows-exact-vsix-installed-user-proof"
     ],
     "deferredProof": [
-      "native Windows installed extension behavior",
-      "native Windows LabVIEW host execution",
       "Windows Docker Desktop Windows-container execution",
-      "windows_private_release_acceptance"
+      "windows_private_release_acceptance aggregate host+container proof"
     ],
     "companionProof": [
       "vagrant-windows-vsix-acceptance proves Windows 11 + LabVIEW 2026 Vagrant VSIX acceptance only"

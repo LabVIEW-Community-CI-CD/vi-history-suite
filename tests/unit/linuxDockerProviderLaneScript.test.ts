@@ -250,9 +250,12 @@ describe('linux docker provider lane script', () => {
     expect(report.windowsLabviewProof).toEqual(
       expect.objectContaining({
         included: false,
-        state: 'community-deferred',
+        state: 'admitted-separate-windows-host-proof',
         requiredForThisLane: false,
-        requiredBeforeWindowsInstalledUserClaim: true
+        requiredBeforeWindowsInstalledUserClaim: false,
+        requiredBeforeWindowsDockerDesktopClaim: true,
+        releaseClaimLedger:
+          'docs/product/windows-installed-user-release-claim-ledger-2026-05-14.json'
       })
     );
   });

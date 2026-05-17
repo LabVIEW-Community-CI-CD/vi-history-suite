@@ -478,4 +478,75 @@ describe('alignment control-plane process docs', () => {
       ])
     );
   });
+
+  it('records portfolio operating cycle 2 as the next governed alignment loop', () => {
+    const markdown = readText(`${artifactPath}.md`);
+    const cycleMarkdown = readText('docs/product/portfolio-operating-cycle-2-2026-05-17.md');
+    const cycle = readJson<any>('docs/product/portfolio-operating-cycle-2-2026-05-17.json');
+    const currentState = readText('docs/product/current-state.md');
+    const informationItemMap = readText('docs/information-item-map.md');
+
+    expect(markdown).toContain('## Portfolio Operating Cycle 2');
+    expect(markdown).toContain('Recorded by `#31`');
+    expect(markdown).toContain('supersede stale MR `!220`');
+    expect(markdown).toContain('MIT `vi-history` remains idle');
+
+    expect(cycleMarkdown).toContain('Portfolio Operating Cycle 2 - 2026-05-17');
+    expect(cycleMarkdown).toContain('GitLab work item:');
+    expect(cycleMarkdown).toContain('https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/31');
+    expect(cycleMarkdown).toContain('host proof is not a substitute for Windows Docker Desktop proof');
+    expect(cycleMarkdown).toContain('There is no active MIT implementation IAU after this cycle');
+    expect(cycleMarkdown).toContain('failed closed');
+    expect(cycleMarkdown).toContain('new Windows proof');
+    expect(cycleMarkdown).toContain('claim.');
+
+    expect(cycle).toMatchObject({
+      schema: 'vi-history-suite/portfolio-operating-cycle@v1',
+      cycleId: 'portfolio-operating-cycle-2-2026-05-17',
+      workItem: { iid: 31 },
+      parentControlPlane: { iid: 11 },
+      sourceTriage: {
+        staleMergeRequest: {
+          iid: 220,
+          decision: 'supersede-with-fresh-develop-branch'
+        },
+        refreshBranch: {
+          name: 'codex/portfolio-operating-cycle-2',
+          baseBranch: 'develop'
+        }
+      },
+      proofBoundaries: {
+        windowsInstalledUserHost: 'admitted-host-only',
+        windowsDockerDesktopWindowsContainer: 'blocked-not-admitted'
+      },
+      localAssertionCheck: {
+        status: 'failed-closed-on-this-linux-worktree',
+        claimEffect: 'no new Windows proof claim is created by this cycle'
+      },
+      implementationAdmission: {
+        activeMitImplementationIau: null,
+        blockedUntilPreflightPass: true
+      }
+    });
+    expect(cycle.standingLanes).toEqual(expect.arrayContaining([12, 13, 14, 15, 16]));
+    expect(cycle.operatingLoop).toEqual(
+      expect.arrayContaining([
+        'govern-in-gitlab',
+        'admit-through-bridge',
+        'implement-only-admitted-iau-in-mit',
+        'compare-independent-authorities-as-oracle'
+      ])
+    );
+    expect(cycle.mutationBoundary.notAuthorized).toEqual(
+      expect.arrayContaining([
+        'MIT implementation',
+        'Marketplace publication',
+        'Windows Docker Desktop proof claim'
+      ])
+    );
+
+    expect(currentState).toContain('portfolio-operating-cycle-2-2026-05-17.md');
+    expect(currentState).toContain('govern in GitLab, admit through the bridge');
+    expect(informationItemMap).toContain('Portfolio operating cycle 2');
+  });
 });

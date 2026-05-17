@@ -60,7 +60,7 @@ ubuntu_docker_runner_admission:
       const read = (fileName) => fs.readFileSync(path.join(evidenceDir, fileName), 'utf8').trim();
       const dockerInfo = read('docker-info.txt').split(/\s+/u);
       const payload = {
-        schema: 'vi-history-suite/ubuntu-docker-runner-admission@v2',
+        schema: 'vi-history-suite/ubuntu-docker-runner-admission@v3',
         claimScope: 'linux-docker-validated-preview',
         generatedAt: new Date().toISOString(),
         runnerDescription: process.env.CI_RUNNER_DESCRIPTION || '',
@@ -73,9 +73,13 @@ ubuntu_docker_runner_admission:
         nodeVersion: read('node-version.txt'),
         npmVersion: read('npm-version.txt'),
         windowsLabviewProofIncluded: false,
-        windowsInstalledUserProofDeferred: true,
+        windowsInstalledUserHostProofState: 'admitted-separate-release-claim-ledger',
+        windowsInstalledUserProofDeferred: false,
+        windowsDockerDesktopProofState: 'blocked-not-admitted',
         windowsLabviewProofRequiredForPreview: false,
-        windowsLabviewProofRequiredForWindowsClaim: true
+        windowsLabviewProofRequiredForWindowsClaim: false,
+        windowsDockerDesktopProofRequiredForWindowsDockerClaim: true,
+        releaseClaimLedger: 'docs/product/windows-installed-user-release-claim-ledger-2026-05-14.json'
       };
       fs.writeFileSync(path.join(evidenceDir, 'ubuntu-docker-runner-admission.json'), `${JSON.stringify(payload, null, 2)}\n`);
       fs.writeFileSync(
@@ -90,9 +94,13 @@ ubuntu_docker_runner_admission:
           `- npm: ${payload.npmVersion}`,
           '- Claim scope: Linux/Docker validated preview',
           '- Windows/LabVIEW proof included: false',
-          '- Windows installed-user proof deferred: true',
+          '- Windows installed-user host proof state: admitted-separate-release-claim-ledger',
+          '- Windows installed-user proof deferred: false',
+          '- Windows Docker Desktop proof state: blocked-not-admitted',
           '- Windows/LabVIEW proof required for this preview: false',
-          '- Windows/LabVIEW proof required before Windows installed-user claim: true'
+          '- Windows/LabVIEW proof required before Windows installed-user claim: false',
+          '- Windows Docker Desktop proof required before Windows Docker claim: true',
+          `- Release claim ledger: ${payload.releaseClaimLedger}`
         ].join('\n') + '\n'
       );
       NODE
@@ -590,6 +598,34 @@ windows_private_release_acceptance:
     - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$VIHS_WINDOWS_LABVIEW_PROOF_ENABLED == "true" && $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
+windows_installed_user_host_acceptance:
+  stage: test
+  tags:
+    - windows
+    - x64
+    - labview-host
+    - private-release
+  script:
+    - $ErrorActionPreference = 'Stop'
+    - npm ci
+    - $npmCommand = (Get-Command npm -ErrorAction Stop).Source
+    - $nodeDirectory = Split-Path -Parent $npmCommand
+    - if (-not (Test-Path (Join-Path $nodeDirectory 'node.exe'))) { throw "Unable to locate node.exe adjacent to npm at $npmCommand" }
+    - $env:PATH = "$nodeDirectory;$env:PATH"
+    - npm run acceptance:windows:installed-user-host
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - windows-installed-user-host-evidence/
+  rules:
+    - if: '$VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED == "true" && $CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH == "develop"'
+    - if: '$VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED == "true" && $CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$VIHS_WINDOWS_LABVIEW_HOST_PROOF_ENABLED == "true" && $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
 vagrant_windows_vsix_acceptance:
   stage: test
   tags:
@@ -680,11 +716,12 @@ package_extension_preview:
     - test_extension
     - linux_docker_provider_lane
     - vagrant_windows_vsix_acceptance
-    # - windows_private_release_acceptance remains the retained Windows proof
-    #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
-    #   Preview packaging is therefore Linux/Docker validated and does not claim
-    #   Windows installed-user proof.
+    # - windows_installed_user_host_acceptance is the optional host-only
+    #   installed-user proof lane. windows_private_release_acceptance remains
+    #   the stricter aggregate host+container lane.
     - job: windows_private_release_acceptance
+      optional: true
+    - job: windows_installed_user_host_acceptance
       optional: true
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
@@ -743,11 +780,12 @@ release_extension:
     - test_extension
     - linux_docker_provider_lane
     - vagrant_windows_vsix_acceptance
-    # - windows_private_release_acceptance remains the retained Windows proof
-    #   lane, but it is deferred unless VIHS_WINDOWS_LABVIEW_PROOF_ENABLED=true.
-    #   Exact packaging from this lane is Linux/Docker validated and does not
-    #   claim Windows installed-user proof.
+    # - windows_installed_user_host_acceptance is the optional host-only
+    #   installed-user proof lane. windows_private_release_acceptance remains
+    #   the stricter aggregate host+container lane.
     - job: windows_private_release_acceptance
+      optional: true
+    - job: windows_installed_user_host_acceptance
       optional: true
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki

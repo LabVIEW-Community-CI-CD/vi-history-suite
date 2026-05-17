@@ -6,9 +6,13 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 
 const DEFAULT_REPO_ROOT = path.resolve(__dirname, '..');
-const DEFAULT_EVIDENCE_ROOT = path.join(
+const DEFAULT_PRIVATE_RELEASE_EVIDENCE_ROOT = path.join(
   DEFAULT_REPO_ROOT,
   'windows-private-release-evidence'
+);
+const DEFAULT_HOST_ONLY_EVIDENCE_ROOT = path.join(
+  DEFAULT_REPO_ROOT,
+  'windows-installed-user-host-evidence'
 );
 const DEFAULT_SETTINGS_ROOT = path.join(
   DEFAULT_REPO_ROOT,
@@ -34,22 +38,25 @@ const DEFAULT_CONTAINER_SETTINGS_FILE = path.join(
 
 function getUsage() {
   return [
-    'Usage: node scripts/runWindowsPrivateReleaseAcceptance.js [--evidence-dir <path>] [--host-settings-file <path>] [--container-settings-file <path>] [--harness-id <id>] [--selected-hash <sha>] [--base-hash <sha>] [--runtime-timeout-ms <ms>] [--help]',
+    'Usage: node scripts/runWindowsPrivateReleaseAcceptance.js [--scope <full|host-only>] [--evidence-dir <path>] [--host-settings-file <path>] [--container-settings-file <path>] [--harness-id <id>] [--selected-hash <sha>] [--base-hash <sha>] [--runtime-timeout-ms <ms>] [--help]',
     '',
     'Runs the governed Windows x64 private-release acceptance lane for the',
-    'canonical lv_icon.vi compare scenario on both host-native and Windows-container',
-    'providers, retaining machine-readable evidence under windows-private-release-evidence/.'
+    'canonical lv_icon.vi compare scenario. The default full scope runs both',
+    'host-native and Windows-container providers. The host-only scope runs only',
+    'the installed-user host-native provider and does not admit Docker proof.'
   ].join('\n');
 }
 
 function parseArgs(argv) {
-  let evidenceRoot = DEFAULT_EVIDENCE_ROOT;
+  let evidenceRoot;
+  let evidenceRootProvided = false;
   let hostSettingsFile = DEFAULT_HOST_SETTINGS_FILE;
   let containerSettingsFile = DEFAULT_CONTAINER_SETTINGS_FILE;
   let harnessId = DEFAULT_HARNESS_ID;
   let selectedHash = DEFAULT_SELECTED_HASH;
   let baseHash = DEFAULT_BASE_HASH;
   let runtimeTimeoutMs = DEFAULT_RUNTIME_TIMEOUT_MS;
+  let scope = 'full';
   let helpRequested = false;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -65,6 +72,14 @@ function parseArgs(argv) {
 
     if (current === '--evidence-dir') {
       evidenceRoot = path.resolve(requireValue('--evidence-dir'));
+      evidenceRootProvided = true;
+      continue;
+    }
+    if (current === '--scope') {
+      scope = requireValue('--scope');
+      if (!['full', 'host-only'].includes(scope)) {
+        throw new Error(`Unsupported value for --scope: ${scope}.\n\n${getUsage()}`);
+      }
       continue;
     }
     if (current === '--host-settings-file') {
@@ -104,8 +119,16 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${current}\n\n${getUsage()}`);
   }
 
+  if (!evidenceRootProvided) {
+    evidenceRoot =
+      scope === 'host-only'
+        ? DEFAULT_HOST_ONLY_EVIDENCE_ROOT
+        : DEFAULT_PRIVATE_RELEASE_EVIDENCE_ROOT;
+  }
+
   return {
     helpRequested,
+    scope,
     repoRoot: DEFAULT_REPO_ROOT,
     evidenceRoot,
     hostSettingsFile,
@@ -153,99 +176,105 @@ function buildWindowsPrivateReleaseAcceptancePlan(options) {
     String(options.runtimeTimeoutMs)
   ];
 
+  const lanes = [
+    {
+      laneId: 'windows-host-native',
+      outputRoot: path.join(options.evidenceRoot, 'host'),
+      settingsFilePath: options.hostSettingsFile,
+      providerRequest: 'host',
+      proofExecutionMode: 'host-only',
+      transcripts: {
+        settingsWrite: 'settings-write.txt',
+        proofRun: 'proof-run.txt',
+        proofRunPreRecovery: 'proof-run-pre-recovery.txt',
+        proofRuntimeRecovery: 'proof-runtime-recovery.txt'
+      },
+      steps: [
+        {
+          kind: 'settings-write',
+          transcriptFileName: 'settings-write.txt',
+          command: nodeExecutable,
+          args: [
+            compiledSettingsCli,
+            '--provider',
+            'host',
+            '--labview-version',
+            '2026',
+            '--labview-bitness',
+            options.bitness,
+            '--settings-file',
+            options.hostSettingsFile
+          ]
+        },
+        {
+          kind: 'proof-run',
+          transcriptFileName: 'proof-run.txt',
+          command: nodeExecutable,
+          args: buildProofArgs('host-only')
+        }
+      ]
+    }
+  ];
+
+  if (options.scope !== 'host-only') {
+    lanes.push({
+      laneId: 'windows-container',
+      outputRoot: path.join(options.evidenceRoot, 'container'),
+      settingsFilePath: options.containerSettingsFile,
+      providerRequest: 'docker',
+      proofExecutionMode: 'docker-only',
+      transcripts: {
+        settingsWrite: 'settings-write.txt',
+        settingsValidate: 'settings-validate.txt',
+        proofRun: 'proof-run.txt'
+      },
+      steps: [
+        {
+          kind: 'settings-write',
+          transcriptFileName: 'settings-write.txt',
+          command: nodeExecutable,
+          args: [
+            compiledSettingsCli,
+            '--provider',
+            'docker',
+            '--labview-version',
+            '2026',
+            '--labview-bitness',
+            options.bitness,
+            '--settings-file',
+            options.containerSettingsFile
+          ]
+        },
+        {
+          kind: 'settings-validate',
+          transcriptFileName: 'settings-validate.txt',
+          command: nodeExecutable,
+          args: [
+            compiledSettingsCli,
+            '--validate',
+            '--settings-file',
+            options.containerSettingsFile
+          ]
+        },
+        {
+          kind: 'proof-run',
+          transcriptFileName: 'proof-run.txt',
+          command: nodeExecutable,
+          args: buildProofArgs('docker-only')
+        }
+      ]
+    });
+  }
+
   return {
     ...options,
+    scope: options.scope ?? 'full',
     nodeExecutable,
     compiledProofCli,
     compiledSettingsCli,
     harnessReportRoot,
     manifestPath: path.join(options.evidenceRoot, 'manifest.json'),
-    lanes: [
-      {
-        laneId: 'windows-host-native',
-        outputRoot: path.join(options.evidenceRoot, 'host'),
-        settingsFilePath: options.hostSettingsFile,
-        providerRequest: 'host',
-        proofExecutionMode: 'host-only',
-        transcripts: {
-          settingsWrite: 'settings-write.txt',
-          proofRun: 'proof-run.txt',
-          proofRunPreRecovery: 'proof-run-pre-recovery.txt',
-          proofRuntimeRecovery: 'proof-runtime-recovery.txt'
-        },
-        steps: [
-          {
-            kind: 'settings-write',
-            transcriptFileName: 'settings-write.txt',
-            command: nodeExecutable,
-            args: [
-              compiledSettingsCli,
-              '--provider',
-              'host',
-              '--labview-version',
-              '2026',
-              '--labview-bitness',
-              options.bitness,
-              '--settings-file',
-              options.hostSettingsFile
-            ]
-          },
-          {
-            kind: 'proof-run',
-            transcriptFileName: 'proof-run.txt',
-            command: nodeExecutable,
-            args: buildProofArgs('host-only')
-          }
-        ]
-      },
-      {
-        laneId: 'windows-container',
-        outputRoot: path.join(options.evidenceRoot, 'container'),
-        settingsFilePath: options.containerSettingsFile,
-        providerRequest: 'docker',
-        proofExecutionMode: 'docker-only',
-        transcripts: {
-          settingsWrite: 'settings-write.txt',
-          settingsValidate: 'settings-validate.txt',
-          proofRun: 'proof-run.txt'
-        },
-        steps: [
-          {
-            kind: 'settings-write',
-            transcriptFileName: 'settings-write.txt',
-            command: nodeExecutable,
-            args: [
-              compiledSettingsCli,
-              '--provider',
-              'docker',
-              '--labview-version',
-              '2026',
-              '--labview-bitness',
-              options.bitness,
-              '--settings-file',
-              options.containerSettingsFile
-            ]
-          },
-          {
-            kind: 'settings-validate',
-            transcriptFileName: 'settings-validate.txt',
-            command: nodeExecutable,
-            args: [
-              compiledSettingsCli,
-              '--validate',
-              '--settings-file',
-              options.containerSettingsFile
-            ]
-          },
-          {
-            kind: 'proof-run',
-            transcriptFileName: 'proof-run.txt',
-            command: nodeExecutable,
-            args: buildProofArgs('docker-only')
-          }
-        ]
-      }
-    ]
+    lanes
   };
 }
 
@@ -536,11 +565,23 @@ async function copyDirectory(sourceRoot, destinationRoot) {
 }
 
 function buildManifest(plan, laneResults) {
+  const scope = plan.scope ?? 'full';
+  const isHostOnly = scope === 'host-only';
+
   return {
-    schema: 'vi-history-suite/windows-private-release-acceptance@v1',
+    schema: isHostOnly
+      ? 'vi-history-suite/windows-installed-user-host-acceptance@v1'
+      : 'vi-history-suite/windows-private-release-acceptance@v1',
     generatedAt: new Date().toISOString(),
-    jobName: 'windows_private_release_acceptance',
+    jobName: isHostOnly
+      ? 'windows_installed_user_host_acceptance'
+      : 'windows_private_release_acceptance',
     governedScript: 'scripts/runWindowsPrivateReleaseAcceptance.js',
+    scope,
+    claimScope: isHostOnly
+      ? 'installed-user-host-labview-2026-x64'
+      : 'windows-private-release-host-and-container-x64',
+    dockerProofIncluded: !isHostOnly,
     harnessId: plan.harnessId,
     selectedHash: plan.selectedHash,
     baseHash: plan.baseHash,

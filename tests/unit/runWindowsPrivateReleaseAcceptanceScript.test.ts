@@ -15,6 +15,7 @@ const acceptanceScript = require(path.resolve(
 )) as {
   parseArgs: (argv: string[]) => {
     helpRequested: boolean;
+    scope: string;
     repoRoot: string;
     evidenceRoot: string;
     hostSettingsFile: string;
@@ -26,6 +27,7 @@ const acceptanceScript = require(path.resolve(
     bitness: string;
   };
   buildWindowsPrivateReleaseAcceptancePlan: (options: {
+    scope?: string;
     repoRoot: string;
     evidenceRoot: string;
     hostSettingsFile: string;
@@ -37,6 +39,7 @@ const acceptanceScript = require(path.resolve(
     bitness: string;
   }) => {
     manifestPath: string;
+    scope: string;
     lanes: Array<{
       laneId: string;
       providerRequest: string;
@@ -58,6 +61,7 @@ const acceptanceScript = require(path.resolve(
       selectedHash: string;
       baseHash: string;
       runtimeTimeoutMs: number;
+      scope?: string;
     },
     laneResults: Array<{
       laneId: string;
@@ -72,6 +76,9 @@ const acceptanceScript = require(path.resolve(
     schema: string;
     jobName: string;
     governedScript: string;
+    scope: string;
+    claimScope: string;
+    dockerProofIncluded: boolean;
     evidenceRoot: string;
     lanes: Array<{
       laneId: string;
@@ -177,6 +184,7 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
     expect(parsed.baseHash).toBe('c188cdec606aac3b17d8b17274baa19eef3e4017');
     expect(parsed.runtimeTimeoutMs).toBe(300000);
     expect(parsed.bitness).toBe('x64');
+    expect(parsed.scope).toBe('full');
 
     expect(plan.manifestPath).toContain('windows-private-release-evidence');
     expect(plan.lanes).toHaveLength(2);
@@ -250,6 +258,29 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
     );
   });
 
+  it('builds a host-only installed-user acceptance plan without the Docker lane', () => {
+    const parsed = acceptanceScript.parseArgs(['--scope', 'host-only']);
+    const plan = acceptanceScript.buildWindowsPrivateReleaseAcceptancePlan(parsed);
+
+    expect(parsed.scope).toBe('host-only');
+    expect(parsed.evidenceRoot).toContain('windows-installed-user-host-evidence');
+    expect(plan.scope).toBe('host-only');
+    expect(plan.manifestPath).toContain('windows-installed-user-host-evidence');
+    expect(plan.lanes).toHaveLength(1);
+    expect(plan.lanes[0]).toEqual(
+      expect.objectContaining({
+        laneId: 'windows-host-native',
+        providerRequest: 'host',
+        proofExecutionMode: 'host-only'
+      })
+    );
+    expect(plan.lanes[0].steps.map((step) => step.kind)).toEqual([
+      'settings-write',
+      'proof-run'
+    ]);
+    expect(plan.lanes[0].steps.some((step) => step.args.includes('docker-only'))).toBe(false);
+  });
+
   it('emits a machine-readable manifest for the GitLab Windows runner lane', () => {
     const manifest = acceptanceScript.buildManifest(
       {
@@ -284,6 +315,9 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
     expect(manifest.schema).toBe('vi-history-suite/windows-private-release-acceptance@v1');
     expect(manifest.jobName).toBe('windows_private_release_acceptance');
     expect(manifest.governedScript).toBe('scripts/runWindowsPrivateReleaseAcceptance.js');
+    expect(manifest.scope).toBe('full');
+    expect(manifest.claimScope).toBe('windows-private-release-host-and-container-x64');
+    expect(manifest.dockerProofIncluded).toBe(true);
     expect(manifest.evidenceRoot).toBe('windows-private-release-evidence');
     expect(manifest.lanes).toEqual(
       expect.arrayContaining([
@@ -307,6 +341,48 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
         })
       ])
     );
+  });
+
+  it('emits a machine-readable host-only installed-user acceptance manifest', () => {
+    const manifest = acceptanceScript.buildManifest(
+      {
+        scope: 'host-only',
+        evidenceRoot: 'D:\\repo\\windows-installed-user-host-evidence',
+        harnessId: 'HARNESS-VHS-002',
+        selectedHash: '8741bb08026c104100720c0ef48621e4ab7762fd',
+        baseHash: 'c188cdec606aac3b17d8b17274baa19eef3e4017',
+        runtimeTimeoutMs: 300000
+      },
+      [
+        {
+          laneId: 'windows-host-native',
+          providerRequest: 'host',
+          proofExecutionMode: 'host-only',
+          report: {
+            runtimeProvider: 'host-native',
+            generatedReportExists: true
+          }
+        }
+      ]
+    );
+
+    expect(manifest.schema).toBe('vi-history-suite/windows-installed-user-host-acceptance@v1');
+    expect(manifest.jobName).toBe('windows_installed_user_host_acceptance');
+    expect(manifest.scope).toBe('host-only');
+    expect(manifest.claimScope).toBe('installed-user-host-labview-2026-x64');
+    expect(manifest.dockerProofIncluded).toBe(false);
+    expect(manifest.evidenceRoot).toBe('windows-installed-user-host-evidence');
+    expect(manifest.lanes).toEqual([
+      expect.objectContaining({
+        laneId: 'windows-host-native',
+        providerRequest: 'host',
+        proofExecutionMode: 'host-only',
+        report: expect.objectContaining({
+          runtimeProvider: 'host-native',
+          generatedReportExists: true
+        })
+      })
+    ]);
   });
 
   it('quotes command segments deterministically for transcript headers', () => {
