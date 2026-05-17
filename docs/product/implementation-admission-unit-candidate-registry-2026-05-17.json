@@ -13,6 +13,11 @@
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/35",
     "title": "Closeout installed-user observation MIT spec lock"
   },
+  "observationModelAdmissionWorkItem": {
+    "iid": 36,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/36",
+    "title": "Admit installed-user observation model IAU"
+  },
   "governingArtifacts": [
     "docs/architecture/adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md",
     "docs/architecture/adr/ADR-0041-mit-spec-kit-implementation-authority.md",
@@ -79,7 +84,7 @@
     {
       "candidateId": "IAU-candidate-installed-user-observation-public-surface-v1",
       "rank": 1,
-      "state": "spec-locked",
+      "state": "implementation-admitted",
       "lane": "evidence-surface",
       "admissionPriorityScore": 88,
       "scoreBreakdown": {
@@ -108,8 +113,8 @@
         "markdown": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.md",
         "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.json",
         "workItem": 34,
-        "status": "spec-locked",
-        "implementationAdmitted": false
+        "status": "implementation-admitted",
+        "implementationAdmitted": true
       },
       "specLockCloseout": {
         "workItem": 35,
@@ -121,14 +126,35 @@
         "state": "spec-locked",
         "implementationAdmitted": false
       },
-      "recommendedNextAction": "Evaluate whether a future observation-model IAU should be admitted. Do not implement until a named IAU preflight passes.",
+      "implementationAdmissionRecord": {
+        "workItem": 36,
+        "markdown": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admission-v1.md",
+        "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admission-v1.json",
+        "iauId": "IAU-installed-user-observation-model-v1",
+        "preflightRecord": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.json",
+        "status": "implementation-admitted",
+        "implementationAdmitted": true,
+        "admittedTasks": [
+          "T009",
+          "T010",
+          "T011",
+          "T012",
+          "T013"
+        ],
+        "blockedTasks": [
+          "T014",
+          "T015",
+          "T016"
+        ]
+      },
+      "recommendedNextAction": "Create a public MIT admission/handoff packet for IAU-installed-user-observation-model-v1, then implement only T009-T013 after the public packet is merged.",
       "blockedScope": [
         "Windows Docker Desktop proof admission",
         "Marketplace mutation",
         "LabVIEWCLI command execution",
         "Docker orchestration"
       ],
-      "implementationAdmitted": false
+      "implementationAdmitted": true
     },
     {
       "candidateId": "IAU-candidate-public-proof-status-oracle-v1",
@@ -299,19 +325,20 @@
     }
   ],
   "selectedNextCandidate": "IAU-candidate-installed-user-observation-public-surface-v1",
-  "selectedNextAction": "future-observation-iau-evaluation",
+  "selectedNextAction": "public-mit-observation-model-handoff",
   "mutationBoundary": {
     "authorized": [
       "governance docs",
       "candidate scoring",
       "bridge-readiness planning",
       "spec-lock closeout",
+      "IAU admission preflight",
       "traceability analysis"
     ],
     "notAuthorized": [
-      "MIT implementation",
-      "Copilot implementation handoff",
-      "new public MIT implementation issue without a passing IAU preflight",
+      "MIT implementation outside IAU-installed-user-observation-model-v1",
+      "Copilot implementation handoff before the public MIT admission packet is committed",
+      "T014-T016 reporting-surface implementation",
       "LabVIEWCLI execution",
       "Docker orchestration",
       "Windows Docker Desktop proof claim",

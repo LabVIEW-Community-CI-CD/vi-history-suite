@@ -2,8 +2,8 @@
   "schema": "vi-history/tri-authority-bridge-readiness@v1",
   "readinessId": "installed-user-observation-public-surface-v1-bridge-readiness-v1",
   "recordedAt": "2026-05-17T14:00:43Z",
-  "status": "spec-locked",
-  "implementationAdmitted": false,
+  "status": "implementation-admitted",
+  "implementationAdmitted": true,
   "workItem": {
     "iid": 34,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/34",
@@ -13,6 +13,11 @@
     "iid": 35,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/35",
     "title": "Closeout installed-user observation MIT spec lock"
+  },
+  "observationModelAdmissionWorkItem": {
+    "iid": 36,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/36",
+    "title": "Admit installed-user observation model IAU"
   },
   "candidateId": "IAU-candidate-installed-user-observation-public-surface-v1",
   "futureSliceId": "installed-user-observation-public-surface-v1",
@@ -54,6 +59,26 @@
     },
     "result": "spec-locked",
     "implementationAdmitted": false
+  },
+  "implementationAdmission": {
+    "packet": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admission-v1.json",
+    "iauId": "IAU-installed-user-observation-model-v1",
+    "preflightRecord": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.json",
+    "state": "implementation-admitted",
+    "preflightStatus": "pass",
+    "implementationAdmitted": true,
+    "admittedTasks": [
+      "T009",
+      "T010",
+      "T011",
+      "T012",
+      "T013"
+    ],
+    "blockedTasks": [
+      "T014",
+      "T015",
+      "T016"
+    ]
   },
   "targetPaths": {
     "publicImportPath": "docs/requirements/imports/installed-user-observation-public-surface-v1/",
@@ -116,27 +141,28 @@
     "cleanRoomSafety": "pass",
     "publicImportCreated": "pass",
     "specKitArtifactsCreated": "pass",
-    "implementationPreflight": "not-created"
+    "implementationPreflight": "pass-for-IAU-installed-user-observation-model-v1"
   },
   "blockedScope": [
-    "MIT implementation",
-    "Copilot implementation handoff",
-    "new public MIT implementation issue before a named IAU preflight",
+    "MIT implementation outside IAU-installed-user-observation-model-v1",
+    "Copilot implementation handoff before the MIT public admission packet is committed",
+    "T014-T016 reporting-surface implementation",
     "LabVIEWCLI execution",
     "Docker execution or orchestration",
     "Windows Docker Desktop proof claims",
     "Marketplace publication"
   ],
   "nextGate": {
-    "state": "future-iau-evaluation",
+    "state": "public-mit-observation-model-handoff",
     "allowedNextWork": [
-      "evaluate whether a narrow observation-model IAU is useful",
-      "create a named IAU preflight if implementation is proposed later",
+      "create public MIT admission records for IAU-installed-user-observation-model-v1",
+      "create public MIT handoff issue for T009-T013 only",
       "run public redaction validation if public artifacts change",
       "run bridge artifact validation if public artifacts change"
     ],
     "notAllowedNextWork": [
-      "implementation before a named IAU preflight passes",
+      "implementation outside T009-T013",
+      "report rendering",
       "command execution",
       "Docker orchestration",
       "Marketplace behavior"
