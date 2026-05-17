@@ -54,5 +54,7 @@
   ],
   "implementationSharing": "none",
   "marketplacePublication": "disabled-until-later-adr",
-  "oracleReviewState": "pending"
+  "oracleReviewState": "complete",
+  "oracleReviewRecord": "../oracle-review-v1.json",
+  "bugOracleClassification": "no-defect-candidate"
 }

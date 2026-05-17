@@ -15,6 +15,9 @@ feedback remains input rather than release proof.
 The preflight recorded `status: pass`. GitHub PR #29 merged the public MIT
 implementation to `develop`, and GitHub Issue #27 is closed.
 
+Work item #38 completes the oracle review with classification
+`no-defect-candidate`.
+
 ## Bridge State
 
 | State | Status |
@@ -26,7 +29,7 @@ implementation to `develop`, and GitHub Issue #27 is closed.
 | `preflight-required` | complete |
 | `implementation-admitted` | complete for `IAU-installed-user-observation-model-v1` |
 | `implemented` | complete for `IAU-installed-user-observation-model-v1` |
-| `oracle-reviewed` | pending |
+| `oracle-reviewed` | complete for `IAU-installed-user-observation-model-v1` |
 
 ## Admission Basis
 
@@ -48,6 +51,8 @@ implementation to `develop`, and GitHub Issue #27 is closed.
 - Preflight: `pass`.
 - Closeout: `pass`; MIT PR #29 merged to `develop` at
   `d357776e232b67b79060c315882fb8a2cf5cbcfd`.
+- Oracle review: `pass`; [oracle-review-v1.md](./oracle-review-v1.md)
+  records `no-defect-candidate`.
 - `T009`: define an observation-cycle data contract.
 - `T010`: define an observation-fact classification contract.
 - `T011`: define routing-decision and SemVer recommendation contracts.
@@ -69,3 +74,7 @@ implementation to `develop`, and GitHub Issue #27 is closed.
 No new public MIT branch starts from this IAU. The next public MIT
 implementation requires a separate named IAU, public preflight, and bounded
 handoff issue.
+
+The selected next governed candidate is
+`IAU-candidate-public-proof-status-oracle-v1` for bridge-readiness analysis,
+not implementation.

@@ -14,6 +14,9 @@ Observation-model admission work item:
 Observation-model implementation closeout work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/37`
 
+Observation-model oracle review work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/38`
+
 Machine-readable packet:
 [bridge-readiness-v1.json](./bridge-readiness-v1.json)
 
@@ -28,7 +31,7 @@ implementation, then records the public import/spec result after the MIT merge.
 ## Decision
 
 The candidate was **bridge-ready**, reached **spec-locked**, admitted one IAU,
-and now has one **implemented** unit:
+has one **implemented** unit, and is now **oracle-reviewed**:
 `IAU-installed-user-observation-model-v1`.
 
 MIT PR #26 created the public MIT import packet and Spec Kit feature for
@@ -44,6 +47,9 @@ execution, orchestration, Marketplace, or source-copying behavior.
 
 Work item #37 records that MIT PR #29 implemented only `T009` through `T013`
 and merged to `develop`.
+
+Work item #38 records the cross-authority oracle review. The bridge classified
+the implemented observation model as `no-defect-candidate`.
 
 ## Governed Source
 
@@ -101,6 +107,17 @@ and merged to `develop`.
 | Target branch | `develop` |
 | Post-merge validation | `https://github.com/svelderrainruiz/vi-history/actions/runs/25995657329` |
 | Result | `implemented` |
+
+## Oracle Review
+
+| Field | Value |
+| --- | --- |
+| Work item | `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/38` |
+| Oracle review | [oracle-review-v1.md](./oracle-review-v1.md) |
+| Result | `oracle-reviewed` |
+| Bug oracle classification | `no-defect-candidate` |
+| Selected next candidate | `IAU-candidate-public-proof-status-oracle-v1` |
+| Selected next action | `bridge-readiness-analysis` |
 
 ## Public Signal
 
@@ -181,9 +198,10 @@ Future implementation can start only after:
 
 ## Next Gate
 
-Run cross-authority oracle review for the implemented observation model, or
-discover a separate successor IAU. No new MIT implementation starts from this
-packet.
+Run bridge-readiness analysis for
+`IAU-candidate-public-proof-status-oracle-v1`. No new MIT implementation
+starts from this packet, and no proof-status work becomes executable until a
+separate named IAU passes preflight.
 
 ## Validation
 

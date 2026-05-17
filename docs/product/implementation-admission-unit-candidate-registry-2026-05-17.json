@@ -2,6 +2,7 @@
   "schema": "vi-history/iau-candidate-registry@v1",
   "registryId": "implementation-admission-unit-candidate-registry-2026-05-17",
   "recordedAt": "2026-05-17T13:28:45Z",
+  "updatedAt": "2026-05-17T19:46:38Z",
   "status": "active",
   "workItem": {
     "iid": 33,
@@ -22,6 +23,11 @@
     "iid": 37,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/37",
     "title": "Record MIT installed-user observation model closeout"
+  },
+  "observationModelOracleReviewWorkItem": {
+    "iid": 38,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/38",
+    "title": "Oracle review MIT installed-user observation model"
   },
   "governingArtifacts": [
     "docs/architecture/adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md",
@@ -89,7 +95,7 @@
     {
       "candidateId": "IAU-candidate-installed-user-observation-public-surface-v1",
       "rank": 1,
-      "state": "implemented",
+      "state": "oracle-reviewed",
       "lane": "evidence-surface",
       "admissionPriorityScore": 88,
       "scoreBreakdown": {
@@ -118,8 +124,14 @@
         "markdown": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.md",
         "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.json",
         "workItem": 34,
-        "status": "implemented",
-        "implementationAdmitted": true
+        "status": "oracle-reviewed",
+        "implementationAdmitted": true,
+        "oracleReview": {
+          "workItem": 38,
+          "markdown": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/oracle-review-v1.md",
+          "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/oracle-review-v1.json",
+          "bugOracleClassification": "no-defect-candidate"
+        }
       },
       "specLockCloseout": {
         "workItem": 35,
@@ -137,7 +149,7 @@
         "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admission-v1.json",
         "iauId": "IAU-installed-user-observation-model-v1",
         "preflightRecord": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.json",
-        "status": "implemented",
+        "status": "oracle-reviewed",
         "closeoutRecord": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1-closeout-v1.json",
         "implementationCloseout": {
           "workItem": 37,
@@ -147,7 +159,14 @@
           "mergeCommit": "d357776e232b67b79060c315882fb8a2cf5cbcfd",
           "specGatesRun": "https://github.com/svelderrainruiz/vi-history/actions/runs/25995657329",
           "state": "implemented",
-          "oracleReviewed": false
+          "oracleReviewed": true
+        },
+        "oracleReview": {
+          "workItem": 38,
+          "markdown": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/oracle-review-v1.md",
+          "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/oracle-review-v1.json",
+          "state": "oracle-reviewed",
+          "bugOracleClassification": "no-defect-candidate"
         },
         "implementationAdmitted": true,
         "admittedTasks": [
@@ -163,7 +182,7 @@
           "T016"
         ]
       },
-      "recommendedNextAction": "Run oracle review for IAU-installed-user-observation-model-v1 or discover a separate successor IAU; do not start new implementation from this candidate.",
+      "recommendedNextAction": "Closed after oracle review with no-defect-candidate. Do not start new implementation from this candidate; evaluate IAU-candidate-public-proof-status-oracle-v1 next.",
       "blockedScope": [
         "Windows Docker Desktop proof admission",
         "Marketplace mutation",
@@ -172,7 +191,7 @@
       ],
       "implementationAdmitted": false,
       "implemented": true,
-      "oracleReviewed": false
+      "oracleReviewed": true
     },
     {
       "candidateId": "IAU-candidate-public-proof-status-oracle-v1",
@@ -204,7 +223,7 @@
       "publicSignals": [
         "https://github.com/svelderrainruiz/vi-history-suite/issues/65"
       ],
-      "recommendedNextAction": "Evaluate whether the MIT authority needs a public proof-status/oracle reporting surface separate from the already implemented runtime-contract validator.",
+      "recommendedNextAction": "Selected for bridge-readiness analysis next. Evaluate whether the MIT authority needs a public proof-status/oracle reporting surface separate from the already implemented runtime-contract validator.",
       "blockedScope": [
         "new Windows Docker Desktop proof claims",
         "runtime execution",
@@ -342,8 +361,8 @@
       "implementationAdmitted": false
     }
   ],
-  "selectedNextCandidate": "oracle-review-for-IAU-installed-user-observation-model-v1",
-  "selectedNextAction": "oracle-review-or-successor-iau-discovery",
+  "selectedNextCandidate": "IAU-candidate-public-proof-status-oracle-v1",
+  "selectedNextAction": "bridge-readiness-analysis",
   "mutationBoundary": {
     "authorized": [
       "governance docs",

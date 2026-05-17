@@ -29,5 +29,9 @@ Marketplace publication, or source copying from another product line.
 
 ## Next State
 
-The next governed step is oracle review or admission of a separate successor
-IAU. No new MIT implementation starts from this closeout.
+The oracle review is complete. [oracle-review-v1.md](../oracle-review-v1.md)
+records `no-defect-candidate`.
+
+The next governed step is bridge-readiness analysis for a separate candidate,
+`IAU-candidate-public-proof-status-oracle-v1`. No new MIT implementation starts
+from this closeout.

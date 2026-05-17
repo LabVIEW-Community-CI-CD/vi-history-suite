@@ -2,8 +2,9 @@
   "schema": "vi-history/mit-spec-kit-implementation-admission@v1",
   "sliceId": "installed-user-observation-public-surface-v1",
   "createdDate": "2026-05-17",
-  "state": "implemented",
+  "state": "oracle-reviewed",
   "implemented": true,
+  "oracleReviewed": true,
   "sourceAuthority": "gitlabGoverned",
   "targetAuthority": "githubMitSpecKit",
   "targetRepository": "https://github.com/svelderrainruiz/vi-history",
@@ -25,7 +26,8 @@
     "analyzeCriticalFindings": "none-recorded",
     "cleanRoomBoundary": "pass",
     "observationModelIauPreflight": "pass",
-    "observationModelIauCloseout": "pass"
+    "observationModelIauCloseout": "pass",
+    "observationModelOracleReview": "pass"
   },
   "sliceStateModel": [
     "candidate",
@@ -40,10 +42,11 @@
   "implementationAdmissionUnits": [
     {
       "iauId": "IAU-installed-user-observation-model-v1",
-      "state": "implemented",
+      "state": "oracle-reviewed",
       "record": "implementation-admissions/IAU-installed-user-observation-model-v1.json",
       "preflightRecord": "implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.json",
       "closeoutRecord": "implementation-admissions/IAU-installed-user-observation-model-v1-closeout-v1.json",
+      "oracleReviewRecord": "oracle-review-v1.json",
       "admittedTasks": [
         "T009",
         "T010",
@@ -67,6 +70,15 @@
     "T015",
     "T016"
   ],
+  "oracleReview": {
+    "workItem": 38,
+    "record": "oracle-review-v1.json",
+    "status": "oracle-reviewed",
+    "bugOracleClassification": "no-defect-candidate",
+    "selectedNextCandidate": "IAU-candidate-public-proof-status-oracle-v1",
+    "selectedNextAction": "bridge-readiness-analysis",
+    "implementationAdmitted": false
+  },
   "governedRequirementMaturity": {
     "releasedExtensionSignal": "supports requirement maturity",
     "sourceReusePermission": "not-granted"
