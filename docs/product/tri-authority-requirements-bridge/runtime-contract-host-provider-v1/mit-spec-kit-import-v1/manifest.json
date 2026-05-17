@@ -48,19 +48,25 @@
       "T008",
       "T009",
       "T010",
-      "T011"
-    ],
-    "currentIau": "IAU-runtime-contract-explicit-compare-v1",
-    "currentIauState": "implementation-admitted",
-    "currentIauPreflightRecord": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
-    "currentIauPreflightStatus": "pass",
-    "currentIauScope": [
+      "T011",
       "T012",
       "T013",
       "T014",
       "T015"
     ],
-    "blockedUntilCurrentIauMerge": "T016-T030",
+    "currentIau": "IAU-runtime-contract-runtime-facts-v1",
+    "currentIauState": "implementation-admitted",
+    "currentIauPreflightRecord": "implementation-admissions/IAU-runtime-contract-runtime-facts-v1-preflight-v1.json",
+    "currentIauPreflightStatus": "pass",
+    "currentIauScope": [
+      "T016",
+      "T017",
+      "T018",
+      "T019",
+      "T020",
+      "T021"
+    ],
+    "blockedUntilCurrentIauMerge": "T022-T030",
     "releasedExtensionSignal": "requirements-maturity-not-source-reuse"
   },
   "implementationSharing": "none",

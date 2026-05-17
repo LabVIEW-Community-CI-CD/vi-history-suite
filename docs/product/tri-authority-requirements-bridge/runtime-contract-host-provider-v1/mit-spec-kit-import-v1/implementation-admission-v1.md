@@ -8,12 +8,17 @@ clean-room implementation increment in `https://github.com/svelderrainruiz/vi-hi
 The completed foundation IAU is `IAU-runtime-contract-foundation-v1`, covering
 tasks `T007` through `T011`.
 
+The explicit-compare IAU is `IAU-runtime-contract-explicit-compare-v1`,
+covering tasks `T012` through `T015`, and it is implemented in the MIT
+authority.
+
 The current admitted implementation unit is
-`IAU-runtime-contract-explicit-compare-v1`, limited to tasks `T012` through
-`T015`: selected/base commit retention tests, explicit-action tests,
-clean-room compare-action state flow, and pre-execution fact rendering.
-Its preflight records `status: pass`, so implementation may start for `T012`
-through `T015` only.
+`IAU-runtime-contract-runtime-facts-v1`, limited to tasks `T016` through
+`T021`: host-native runtime selection tests, unsupported runtime rejection
+tests, missing proof override path tests, runtime discovery/readiness
+classification, LabVIEWCLI command-plan creation, and retained runtime fact
+rendering. Its preflight records `status: pass`, so implementation may start
+for `T016` through `T021` only.
 
 ## Bridge State
 
@@ -25,7 +30,7 @@ through `T015` only.
 | `spec-locked` | complete |
 | `preflight-required` | complete |
 | `implementation-admitted` | complete |
-| `implemented` | foundation IAU complete; explicit-compare IAU admitted |
+| `implemented` | foundation and explicit-compare IAUs complete; runtime-facts IAU admitted |
 | `oracle-reviewed` | pending |
 
 ## Admission Basis
@@ -47,13 +52,13 @@ through `T015` only.
 
 ## Current IAU
 
-- IAU: `IAU-runtime-contract-explicit-compare-v1`
+- IAU: `IAU-runtime-contract-runtime-facts-v1`
 - Preflight: `pass`; implementation may start for this IAU only.
-- `T012`: commit-pair selection retains selected/base commit facts.
-- `T013`: compare does not start before explicit user action.
-- `T014`: clean-room compare-action state flow.
-- `T015`: selected commit, base commit, provider, version, and bitness render
-  before execution.
+- `T016`: supported host-native LabVIEWCLI runtime selection tests.
+- `T017`: unsupported LabVIEW 2024-or-older rejection tests.
+- `T018`: missing explicit proof override paths fail closed tests.
+- `T019`: runtime discovery and readiness classification.
+- `T020`: LabVIEWCLI command-plan creation.
+- `T021`: report/proof rendering of retained runtime facts.
 
-Tasks `T016` through `T030` remain blocked until the explicit-compare IAU
-merges.
+Tasks `T022` through `T030` remain blocked until the runtime-facts IAU merges.
