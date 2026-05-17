@@ -83,7 +83,7 @@ describe('release governance package', () => {
       'npm run design:gate'
     );
     expect(rules.operatorSurfaceSustainment.branchModel.laneResponsibilities['release/*']).toContain(
-      'public-facade proof before merge to main'
+      'public sibling product proof before merge to main'
     );
     expect(rules.operatorSurfaceSustainment.branchModel.laneResponsibilities.main).toContain(
       'exact SemVer tags only after merged main is green'
@@ -198,7 +198,9 @@ describe('release governance package', () => {
     expect(rtm).toContain('Retain one governed hosted automation matrix');
     expect(rtm).toContain('Admit authority GitLab preview-package validation');
     expect(rtm).toContain('Fail closed on branch-model contradictions');
-    expect(rtm).toContain('Bind the governed public-source promotion/check surface');
+    expect(rtm).toContain(
+      'Bind the retained historical public-source publication/adoption check surface'
+    );
     expect(rtm).toContain('VHS-REQ-515');
     expect(rtm).toContain('VHS-REQ-516');
     expect(rtm).toContain('VHS-REQ-517');
@@ -382,7 +384,7 @@ describe('release governance package', () => {
     expect(program).toContain('explicit SemVer-decision rationale');
     expect(program).toContain('public GitHub workflow responsibility and churn-control governance');
     expect(program).toContain('hosted GitLab/GitHub protection semantics');
-    expect(program).toContain('public-source promotion target-root hygiene');
+    expect(program).toContain('historical public-source publication/adoption target-root hygiene');
     expect(program).toContain('review-ready candidate publication boundary');
     expect(program).toContain('one governed expert-agent review gate');
     expect(program).toContain('VS Code Marketplace publication governance');

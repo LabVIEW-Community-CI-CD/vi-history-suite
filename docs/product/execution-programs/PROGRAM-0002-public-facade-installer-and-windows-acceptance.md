@@ -2,16 +2,20 @@
 
 ## Status
 
-Closed on the Docker-only public-product acceptance gate. The current exact
-public line is `v1.1.0`, and `v1.0.2` is retained as burned.
+Closed as historical Docker-only public-product acceptance evidence for the
+pre-split facade model. This record remains valid through the shared `v1.3.16`
+baseline; ADR-0040 governs post-split sibling-authority work. The exact public
+line for this closeout was `v1.1.0`, and `v1.0.2` is retained as burned.
 
 Closeout facts:
 
 - retained release `v0.2.0` and the retained canonical Windows host pass at
   `2026-04-06T20:48:13.412Z` remain historical evidence for the earlier public
   bundle only
-- the installed extension compare workflow is now Docker-only and x64-only
-- the public GitHub facade repo is the extension-user front face
+- the installed extension compare workflow was Docker-only and x64-only for
+  this historical public-product closeout
+- the public GitHub repo was the extension-user front face under the historical
+  facade model; after `v1.3.16`, it is the public sibling product authority
 - the public GitHub wiki now exists at
   `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
 - Gate D has now passed on the Docker-only installed bundle for the governed
@@ -19,25 +23,28 @@ Closeout facts:
 
 ## Purpose
 
-Define the governed post-release program for turning `vi-history-suite` into a
-publicly usable Docker-only product across the published public GitHub source
-repo, the public GitHub user wiki, the bundled installed-user docs, and the
-private GitLab authority/control plane.
+Retain the governed historical post-release program that turned
+`vi-history-suite` into a publicly usable Docker-only product across the
+published public GitHub source repo, the public GitHub user wiki, the bundled
+installed-user docs, and the private GitLab authority/control plane.
 
 The historical file id remains the same for trace continuity, but the active
-product boundary is now the public source product facade rather than the older
-release-kit/setup scaffolding shape.
+post-`v1.3.16` product boundary is now the dual-authority sibling model in
+ADR-0040. This file remains the retained public-source facade and Gate D
+closeout record, not the future source-promotion model.
 
 ## Current Gate Truth
 
-This program is now closed again.
+This program is closed and historical for post-`v1.3.16` work. Current
+post-split authority truth is retained in ADR-0040 and
+`docs/product/dual-authority-split-manifest.json`.
 
 Current truth:
 
 - the old canonical Windows host pass remains valid historical evidence for the
   earlier public bundle only
-- the public GitHub facade repo is the curated public source product surface,
-  with the exact published head retained in
+- the public GitHub repo was the curated public source product surface for this
+  closeout, with the exact published head retained in
   `docs/product/public-github-source-publication-ledger.md` and
   `docs/product/public-github-source-publication-ledger.json`
 - the public GitHub wiki is the public extension-user reader surface, with the
@@ -103,13 +110,14 @@ This program starts only after all of these are true:
 - `vi-history-suite` has an immutable released VSIX at the governed target
   version
 - the release evidence proves the exact VSIX identity
-- the published public GitHub facade repo is aligned to consume that immutable
-  release line
+- the historical public GitHub facade repo was aligned to consume that
+  immutable release line
 - the current Windows 11 host machine is available for installed-user proof
 
 That trigger was satisfied for the earlier closeout. The reopened Docker-only
-closeout is now governed by the public-source facade plus Docker-only product
-contract.
+closeout was governed by the public-source facade plus Docker-only product
+contract; future work is governed by the sibling-authority bridge unless a
+later issue explicitly admits a porting/adoption action.
 
 ## North Star
 
@@ -180,14 +188,15 @@ LabVIEW.
 
 ## Chosen Design
 
-### Lane 1: Immutable Release Ingestion
+### Lane 1: Historical Immutable Release Ingestion
 
 Use the immutable released VSIX from private GitLab as the only public payload
-source.
+source for this historical closeout.
 
-### Lane 2: Public Source Product Publication
+### Lane 2: Historical Public Source Product Publication
 
-Use the public GitHub repo as the public source product surface for:
+Use the public GitHub repo as the public source product surface for the
+historical facade closeout:
 
 - exact VSIX consumption and package preview
 - public README, install, support, and contribution guidance
@@ -205,10 +214,10 @@ surfaces for:
 - current state
 - compare/report expectations
 
-### Lane 4: Public Docker Smoke
+### Lane 4: Historical Public Docker Smoke
 
-Use the public-facade Linux smoke lane as the first-class public Docker proof
-surface for the GitHub front face.
+Use the public sibling Linux smoke lane as the retained public Docker proof
+surface for the GitHub product line.
 
 Current first slice:
 
@@ -235,7 +244,8 @@ Gate D is now defined against the real public product:
 
 ## Workstreams
 
-1. authority-to-public-source promotion tooling and publication ledgering
+1. retained authority-to-public-source publication/adoption tooling and
+   ledgering for the historical facade line
 2. public source repo product shaping
 3. public GitHub wiki and bundled-doc alignment
 4. public admission-matrix validation
@@ -348,7 +358,7 @@ The public product now retains:
 - public README, `INSTALL.md`, `SUPPORT.md`, and `CONTRIBUTING.md`
 - bundled installed-user docs aligned to the checkbox-selected compare flow and
   Docker-only runtime story
-- authority-side public-source promotion tooling through
+- retained historical public-source publication/adoption tooling through
   `npm run public:source:promote`
 - separate publication ledgers for the public source repo and public GitHub wiki
 - explicit control-plane truth that benchmark proof ownership sits with
@@ -369,14 +379,18 @@ This program was previously approved through `TRANCHE-010` for the earlier
 public bundle. It is now reclosed for the Docker-only public contract with
 current exact release `v1.0.3`.
 
-The approved trust boundary remains:
+The approved historical trust boundary was:
 
-- private GitLab remains source truth
-- the public GitHub facade repo remains the extension-user front face
+- private GitLab was source truth for this closeout; after `v1.3.16`, GitLab
+  is the governed sibling product authority
+- the public GitHub repo was the extension-user front face; after `v1.3.16`,
+  it is the public sibling product authority
 - the public GitHub wiki remains the public extension-user reader surface
 - the private GitHub experiment mirror remains distinct from both GitLab
-  authority and the public facade repo
-- Docker is part of the default public product path for comparison generation
+  authority and the public sibling product
+- Docker was part of the default public product path for comparison generation
+  in this closed line; current installed extension defaults are governed by
+  the host-default local `LabVIEWCLI` contract
 - the current Windows 11 host machine remains the human acceptance surface, but
   the acceptance contract is now the public Docker-only product rather than a
   host-LabVIEW or release-kit path

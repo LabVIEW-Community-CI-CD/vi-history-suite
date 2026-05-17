@@ -105,16 +105,18 @@
   Windows/LabVIEW settings may remain selectable with stable runtime error-code
   and proof-packet disclosure, with `vihs validate-fixture` retaining the
   canonical public fixture proof packet for `1.3.13`.
-- The canonical public Docker fixture battery for the `1.3.11` validation lane
-  is retained in GitLab authority before public-facade promotion:
+- The canonical public Docker fixture battery for the historical `1.3.11`
+  validation lane is retained in GitLab authority as a pre-split
+  public-source publication/adoption record:
   `https://github.com/ni/labview-icon-editor` `resource/plugins/lv_icon.vi`
   from `ab94f6c4b375062492036c63a6dab7ea8824748a` to
   `8741bb08026c104100720c0ef48621e4ab7762fd`; positive Docker compare
   succeeded, no-change compare succeeded, and missing-file control blocked
   before Docker at `left-blob-read-failed`. The first uncached compare may
   pull `nationalinstruments/labview:2026q1-linux`, about `1.4 GB`. Public
-  GitHub facade docs were promoted after the GitLab authority MR for this
-  closeout went green through public PR #60, leaving public `main` at
+  GitHub docs were published under the historical facade closeout after the
+  GitLab authority MR for this closeout went green through public PR #60,
+  leaving public `main` at
   `ce6dbd0b1b5783f7015b9d0589f3803636564789`; Marketplace mutation was not
   part of that docs-promotion act.
 - The retained Windows x64 private-release-prep slice is the historical
@@ -413,8 +415,8 @@ promotion still stays separate afterward.
    VSIX filename, and retained evidence paths.
 11. Ensure the packaged extension still contains the bundled user-doc surface
    under `resources/bundled-docs/`.
-12. When the public Docker product contract changes materially, rerun the
-    public-facade Linux smoke lane through:
+12. When the public Docker product contract changes materially in the GitHub
+    sibling product, rerun the public sibling Linux smoke lane through:
     - these Linux checks remain exact/public-release, source-evaluation, or
       Linux/Docker preview surfaces; they are not Windows installed-user proof
     - local `npm run public:smoke:linux`
@@ -423,8 +425,11 @@ promotion still stays separate afterward.
       real cold-pull Gate D rerun
     - GitHub `workflow_dispatch` on `.github/workflows/public-linux-installed-user-smoke.yml`
       and `.github/workflows/public-windows-installed-user-contract.yml`
-13. When the public source facade changes materially, promote the curated
-    public GitHub source repo from authority and record the published commit:
+13. When post-split GitHub sibling product source changes are needed, open an
+    explicit requirements-import, adoption, or porting issue and record the
+    public commit it admits. Historical public-source publication/adoption
+    tooling remains available only for retained pre-split records unless a
+    later issue admits a specific handoff:
     - for the `1.3.11` public validation lane, follow
       `docs/product/public-validation-prerelease-v1.3.11.md`; public GitHub
       source, issue-intake, and pre-release asset publication are admitted
@@ -434,7 +439,7 @@ promotion still stays separate afterward.
       checkout is not the repo you intend to validate or write
     - `npm run public:source:check`
     - `npm run public:source:promote`
-    - clean the target repo first if the governed check/promotion surface
+    - clean the target repo first if the governed check/publication surface
       reports dirty-target failure; do not treat dirty side-worktree drift as
       publishable truth
     - apply public GitHub labels separately from `.github/labels.yml`; pushing
@@ -597,7 +602,7 @@ promotion still stays separate afterward.
 - The release gate now expects split public-user and internal-authority docs
   CI surfaces in addition to the retained umbrella docs CI lane.
 - The public Docker product surface is additionally characterized by the
-  public-facade Linux smoke lane for Linux-engine cold-pull behavior.
+  public sibling Linux smoke lane for Linux-engine cold-pull behavior.
 - The GitLab release lane is configured to build the governed versioned VSIX
   artifact and release manifest.
 - The first governed `v0.2.0` release evidence set is now retained through

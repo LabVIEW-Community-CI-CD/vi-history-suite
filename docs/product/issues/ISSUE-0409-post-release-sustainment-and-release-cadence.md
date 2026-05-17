@@ -84,8 +84,9 @@ Activation is now satisfied:
   bounded triggers, and churn-control instead of raw-YAML-only truth
 - hosted GitLab and GitHub protection semantics are retained explicitly in one
   governed matrix instead of being inferred from live settings
-- local public-source promotion/check binds the intended checkout explicitly
-  and fails closed on dirty target repos before reporting drift
+- local historical public-source publication/adoption checks bind the intended
+  checkout explicitly and fail closed on dirty target repos before reporting
+  drift
 - candidate lines retain an explicit fail-closed `review-ready` state before
   the next expert-agent review gate opens
 - public candidate publication preserves unrelated dirt and pauses only on

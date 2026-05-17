@@ -2,13 +2,19 @@
 
 ## Goal
 
-Turn the public `vi-history-suite` GitHub facade repo into the governed public
-source product surface for the released Docker-only extension, with the public
-GitHub wiki as the user-reader surface and a final public-product Gate D
-acceptance rerun on the canonical fixture workspace.
+Retain the historical work that turned the public `vi-history-suite` GitHub
+facade repo into the governed public source product surface for the released
+Docker-only extension, with the public GitHub wiki as the user-reader surface
+and a final public-product Gate D acceptance rerun on the canonical fixture
+workspace.
 
 Private requirements, benchmark-control truth, and design-control documents
 remain private in GitLab.
+
+Post-`v1.3.16` work is governed by ADR-0040's sibling-authority model: GitHub
+is the public sibling product authority, GitLab is the governed sibling product
+authority, and the repos relate through requirement-slice export/import rather
+than automatic source promotion.
 
 ## Status
 

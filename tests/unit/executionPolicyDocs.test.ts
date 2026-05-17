@@ -164,7 +164,7 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('WSL is not part of the retained Windows x64 private-release contract');
     expect(currentState).toContain('native Windows host execution');
     expect(currentState).toContain('Docker Desktop Windows-container execution');
-    expect(currentState).toContain('public GitHub facade repo is the public source product surface');
+    expect(currentState).toContain('public GitHub repo is the public sibling product authority');
     expect(currentState).toContain('public GitHub user wiki now exists');
     expect(queue).toContain('"id": "TRANCHE-016"');
     expect(queue).toContain('"ISSUE-0412"');

@@ -1042,13 +1042,22 @@ Historical public closeout and runtime-provider public-acceptance gate record:
   - [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
   - [runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)
 - trust boundary:
-  - private GitLab immutable release remains product truth
-  - private GitLab source repo remains the authority repo and release-control surface
+  - GitLab is the governed sibling product authority after the shared
+    `v1.3.16` split baseline; retained immutable GitLab releases remain
+    product truth for their historical lines
+  - the GitLab source repo remains the governed sibling authority and
+    release-control surface, not an upstream source-promotion surface for
+    post-split GitHub feature work
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`; the exact published head is retained in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
+  - public GitHub repo is the public sibling product authority at `https://github.com/svelderrainruiz/vi-history-suite`; exact historical publication and adoption heads are retained in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface; the exact published head is retained in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
-  - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
+  - public GitHub source publication/adoption records are tracked separately
+    from both wiki surfaces in
+    `docs/product/public-github-source-publication-ledger.md` and
+    `docs/product/public-github-source-publication-ledger.json`; these records
+    preserve historical through-`v1.3.16` publication/adoption facts and do
+    not create an ongoing source-promotion contract
   - VS Code Marketplace publication is tracked separately in
     `docs/product/vscode-marketplace-publication-ledger.md` and
     `docs/product/vscode-marketplace-publication-ledger.json`; GitHub release,
@@ -1069,12 +1078,21 @@ Historical public closeout and runtime-provider public-acceptance gate record:
   - public GitHub wiki publication is tracked separately from the internal GitLab maintainer wiki in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source repo is not the private GitHub experiment mirror
   - the authority VSIX install surface is compile-and-audit guarded, admits only explicitly governed shipped runtime dependencies, and fails closed on ungoverned `node_modules` payloads
-  - the public GitHub source repo and public GitHub wiki publish extension-user and public-product material only; they do not publish private requirements, benchmark-control detail, or design-gate docs
-  - public source promotion is now a governed one-way act through `npm run public:source:promote`
+  - the public GitHub source repo and public GitHub wiki publish extension-user
+    and public-product material only; they do not publish private
+    requirements, benchmark-control detail, or design-gate docs
+  - `npm run public:source:promote` is retained as a historical
+    public-source publication/adoption compatibility tool; post-split feature
+    flow uses requirements slice export/import rather than automatic source
+    promotion
   - the local public-source operator surface now binds the intended checkout
     through `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails
-    closed on dirty target repos before source-drift comparison or write
-  - the GitHub workflow is the active public product smoke surface, while source publication remains a separate governed promotion act
+    closed on dirty target repos before retained publication/adoption checks
+    compare or write
+  - the GitHub workflow is the active public sibling product smoke surface,
+    while source publication/adoption is separate from GitLab governed sibling
+    releases and is not a source-promotion bridge unless a later issue
+    explicitly admits a porting action
   - `docs:ci:public` and `docs:ci:internal` now split public-user and internal-authority docs surfaces without removing the retained umbrella `docs:ci` lane
   - NSIS has been removed from the active public toolchain
   - Docker is now retained as an expert/provider path and historical

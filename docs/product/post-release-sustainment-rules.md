@@ -140,8 +140,8 @@ Current version-line contract:
   returns `200`, readback by id returns `200`, the exact assets match the
   retained authority manifest under
   `.cache/gitlab-release-artifacts/v1.3.16/expanded/release-evidence/`, the
-  public-source promotion receipt is `passed`, and the retained verify gate is
-  `pass`
+  historical public-source publication/adoption receipt is `passed`, and the
+  retained verify gate is `pass`
 - current publication incident history:
   authority exact `v1.3.8` exists on GitLab, public GitHub release
   `312768592` is already published and immutable with zero assets, and VS Code
@@ -493,7 +493,7 @@ Required branch-model and CI posture:
 - `hotfix/*` lanes are cut from `main`, fix one exact release line, merge to
   `main`, merge back into `develop`, and are deleted only after both merges
   complete
-- local public-source promotion/check binds the intended checkout through
+- local historical public-source publication/adoption checks bind the intended checkout through
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
   when the target repo is dirty
 - the required checks are:
@@ -598,7 +598,7 @@ Lane-specific CI and gate responsibilities:
 - `develop`: required checks plus `npm run design:gate` and
   `npm run design:gate:assert-complete` for governance or architecture work
 - `release/*`: full required checks, design gates, release-readiness
-  normalization, and public-facade proof before merge to `main`
+  normalization, and public sibling product proof before merge to `main`
 - `hotfix/*`: focused regression checks, affected docs/design gates, and the
   exact released-line package audit before merge to `main`
 - `main`: protected exact-release branch; exact SemVer tags are cut only after

@@ -241,7 +241,7 @@ describe('strict semver discipline', () => {
       'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published'
     );
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
-      'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof'
+      'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the public sibling product proof surface and GitLab public_exact_pretag_proof retains the same proof'
     );
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
       'future sessions shall assess or verify the current exact public GitHub transaction through the repo-owned controller before any further public GitHub release or VS Code Marketplace act'

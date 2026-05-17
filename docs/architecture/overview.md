@@ -213,9 +213,9 @@
 - [ADR-0026](./adr/ADR-0026-canonical-extension-execution-request-validation.md):
   Historical exact released Docker-only execution-request validation baseline
 - [ADR-0027](./adr/ADR-0027-public-github-facade-and-user-wiki-vs-internal-gitlab-control-plane.md):
-  Public GitHub facade and user-wiki boundary versus the internal GitLab control plane
+  Historical public GitHub facade and user-wiki boundary through `v1.3.16`
 - [ADR-0028](./adr/ADR-0028-governed-authority-to-public-source-promotion-system.md):
-  Governed authority-to-public source promotion system
+  Historical governed authority-to-public source promotion system through `v1.3.16`
 - [ADR-0029](./adr/ADR-0029-develop-integration-main-release-and-required-checks.md):
   `develop` as integration, `main` as release, and required-check discipline
 - [ADR-0030](./adr/ADR-0030-semver-decision-framework-and-gitflow-branch-ci-topology.md):
@@ -223,7 +223,7 @@
 - [ADR-0031](./adr/ADR-0031-finding-driven-adr-and-requirement-evolution.md):
   Finding-driven ADR and requirement evolution
 - [ADR-0032](./adr/ADR-0032-public-facade-github-workflow-responsibility-matrix.md):
-  Public facade GitHub workflow responsibility matrix
+  Historical public facade GitHub workflow responsibility matrix through `v1.3.16`
 - [ADR-0033](./adr/ADR-0033-hosted-automation-governance-matrix-and-protection-semantics.md):
   Hosted automation governance matrix and protection semantics
 - [ADR-0034](./adr/ADR-0034-public-codespaces-public-repo-bootstrap-and-default-branch-resolution.md):

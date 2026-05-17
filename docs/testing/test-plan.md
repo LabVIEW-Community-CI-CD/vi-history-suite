@@ -2353,8 +2353,9 @@ Information-for-users review cases:
   confirm the branch model no longer contradicts itself across retained
   surfaces
 - `TEST-DOC-093`: review ADR-0028, sustainment, current-state, README, and
-  release procedure and confirm the public-source promotion/check surface now
-  binds the intended local checkout through `--target-root` or
+  release procedure and confirm the retained historical public-source
+  publication/adoption check surface now binds the intended local checkout
+  through `--target-root` or
   `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and refuses dirty target repos instead
   of treating stale side-worktree drift as governed publication truth
 - `TEST-DOC-094`: review sustainment, hosted governance, release procedure,

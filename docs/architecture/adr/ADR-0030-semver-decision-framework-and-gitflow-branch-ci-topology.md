@@ -66,7 +66,7 @@ Adopt this lane-specific gate posture:
   - required checks
   - design gates
   - release-readiness normalization
-  - public-facade proof before merge to `main`
+  - public sibling product proof before merge to `main`
 - `hotfix/*`
   - focused regression checks
   - affected docs/design gates

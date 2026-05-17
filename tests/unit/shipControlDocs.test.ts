@@ -419,7 +419,7 @@ describe('ship-control direction system', () => {
 
     expect(programDoc).toContain('[SHIP-0001: Releasable VI History Suite](../SHIP-0001-releasable-vi-history-suite.md)');
     expect(programDoc).toContain('ship-control surfaces');
-    expect(programDoc2).toContain('Closed on the Docker-only public-product acceptance gate.');
+    expect(programDoc2).toContain('Closed as historical Docker-only public-product acceptance evidence');
     expect(programDoc2).toContain('retained release `v0.2.0`');
 
     expect(releaseProcedure).toContain('[SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)');

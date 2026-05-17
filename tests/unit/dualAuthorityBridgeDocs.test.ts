@@ -35,6 +35,9 @@ describe('dual-authority requirements bridge docs', () => {
     );
     const overview = readText('docs/architecture/overview.md');
     const informationItemMap = readText('docs/information-item-map.md');
+    const currentState = readText('docs/product/current-state.md');
+    const releaseProcedure = readText('docs/release-procedure.md');
+    const sustainmentRules = readText('docs/product/post-release-sustainment-rules.md');
 
     expect(splitManifest.splitBaseline?.tag).toBe('v1.3.16');
     expect(splitManifest.authorities?.gitlab).toMatchObject({
@@ -59,8 +62,26 @@ describe('dual-authority requirements bridge docs', () => {
     expect(adr).toContain('not source promotion');
     expect(adr).toContain('Implementation/code changes do not flow automatically between the repos.');
     expect(overview).toContain('ADR-0040');
+    expect(overview).toContain(
+      'Historical public GitHub facade and user-wiki boundary through `v1.3.16`'
+    );
     expect(informationItemMap).toContain('Dual-authority split manifest');
     expect(informationItemMap).toContain('Dual-authority runtime-contract export packet');
+    expect(currentState).toContain('public GitHub repo is the public sibling product authority');
+    expect(currentState).toContain('requirements slice export/import rather than automatic source');
+    expect(currentState).not.toContain(
+      'public GitHub facade repo is the public source product surface'
+    );
+    expect(currentState).not.toContain(
+      'public source promotion is now a governed one-way act'
+    );
+    expect(releaseProcedure).toContain('public sibling Linux smoke lane');
+    expect(releaseProcedure).toContain(
+      'explicit requirements-import, adoption, or porting issue'
+    );
+    expect(releaseProcedure).not.toContain('When the public source facade changes materially');
+    expect(sustainmentRules).toContain('public sibling product proof before merge to `main`');
+    expect(sustainmentRules).not.toContain('public-facade proof before merge to `main`');
   });
 
   it('retains a governed runtime-contract export packet for the public import', () => {
