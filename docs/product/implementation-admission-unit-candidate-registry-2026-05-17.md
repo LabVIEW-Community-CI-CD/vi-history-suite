@@ -2,6 +2,8 @@
 
 Recorded: `2026-05-17T13:28:45Z`
 
+Updated: `2026-05-17T19:46:38Z`
+
 GitLab work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/33`
 
@@ -13,6 +15,9 @@ Observation-model admission work item:
 
 Observation-model implementation closeout work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/37`
+
+Observation-model oracle review work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/38`
 
 Machine-readable packet:
 [implementation-admission-unit-candidate-registry-2026-05-17.json](./implementation-admission-unit-candidate-registry-2026-05-17.json)
@@ -71,29 +76,23 @@ code; it only chooses the next bridge-readiness target.
 
 | Rank | Candidate | State | Score | Direction |
 | ---: | --- | --- | ---: | --- |
-| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `implemented` | 88 | `IAU-installed-user-observation-model-v1` implemented T009-T013 only; run oracle review or discover a separate successor IAU. |
-| 2 | `IAU-candidate-public-proof-status-oracle-v1` | `candidate` | 79 | Evaluate after observation surface or combine if the public packet stays small. |
+| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `oracle-reviewed` | 88 | `IAU-installed-user-observation-model-v1` completed T009-T013 and oracle review found `no-defect-candidate`; no new implementation starts from this candidate. |
+| 2 | `IAU-candidate-public-proof-status-oracle-v1` | `candidate` | 79 | Selected for bridge-readiness analysis next; keep execution, orchestration, and new Windows Docker Desktop proof claims blocked. |
 | 3 | `IAU-candidate-command-activation-surface-v1` | `observed` | 71 | Consider only after deciding whether MIT should expose an extension package surface next. |
 | 4 | `IAU-candidate-labviewcli-execution-boundary-v1` | `observed` | 62 | Requires a new execution-safety bridge packet before command execution can be opened. |
 | 5 | `IAU-candidate-windows-docker-desktop-proof-oracle-v1` | `blocked` | 47 | Blocked on real Windows Docker Desktop Windows-container proof under public issue #65. |
 | 6 | `IAU-candidate-mit-marketplace-posture-v1` | `blocked` | 35 | Marketplace remains disabled until a later ADR admits publication. |
 
-## Recommended Next Candidate
+## Closed Candidate
 
-The selected candidate `IAU-candidate-installed-user-observation-public-surface-v1`
-has advanced to `implemented` for one named IAU:
+`IAU-candidate-installed-user-observation-public-surface-v1` is closed for the
+first admitted unit:
 `IAU-installed-user-observation-model-v1`.
 
-Rationale:
-
-- It is backed by `VHS-REQ-595`.
-- It aligns with public issue
-  `https://github.com/svelderrainruiz/vi-history-suite/issues/98`.
-- It has low clean-room risk because the first output can be public data
-  contracts and reporting surfaces, not inherited implementation logic.
-- It strengthens the MIT repo as a public verification engine before opening
-  LabVIEWCLI execution or Marketplace behavior.
-- It keeps Windows Docker Desktop proof separate under issue #65.
+The bridge found `no-defect-candidate` in
+[oracle-review-v1.md](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/oracle-review-v1.md).
+The governed requirement, public Spec Kit feature, and MIT implementation agree
+for `T009` through `T013`.
 
 Bridge-readiness was recorded in:
 
@@ -153,6 +152,30 @@ Implementation closeout:
   `https://github.com/svelderrainruiz/vi-history/actions/runs/25995657329`
   passed on `develop`.
 
+Oracle review:
+
+- GitLab work item #38
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/38`
+  records the oracle review.
+- [oracle-review-v1.md](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/oracle-review-v1.md)
+  classifies the implemented behavior as `no-defect-candidate`.
+
+## Recommended Next Candidate
+
+The selected next candidate is
+`IAU-candidate-public-proof-status-oracle-v1`.
+
+Rationale:
+
+- It is the highest-scored remaining non-blocked candidate.
+- It is backed by `VHS-REQ-588`, `VHS-REQ-589`, and `VHS-REQ-590`.
+- It can improve public proof-status and oracle comparison value without
+  admitting runtime execution, container orchestration, or Marketplace work.
+- It keeps new Windows Docker Desktop proof claims blocked until real Windows
+  Docker Desktop Windows-container evidence exists.
+- It gives the bridge another governed loop before exposing larger product
+  surfaces in the MIT authority.
+
 ## Current Non-Admitted Boundaries
 
 - No MIT implementation outside a newly admitted successor IAU starts from this
@@ -168,10 +191,11 @@ Implementation closeout:
 
 ## Next Governed Action
 
-The selected next action is
-`oracle-review-or-successor-iau-discovery`. The implemented observation model
-should either enter cross-authority oracle review or inform a separately
-admitted successor IAU. It does not reopen implementation by itself.
+The selected next action is `bridge-readiness-analysis` for
+`IAU-candidate-public-proof-status-oracle-v1`. This action does not admit
+implementation. It should evaluate public-safe wording, traceability, blocked
+scope, redaction risk, and whether the existing runtime-contract proof-intake
+surface is sufficient or needs a separate public proof-status/oracle IAU.
 
 ## Governance Loop
 
