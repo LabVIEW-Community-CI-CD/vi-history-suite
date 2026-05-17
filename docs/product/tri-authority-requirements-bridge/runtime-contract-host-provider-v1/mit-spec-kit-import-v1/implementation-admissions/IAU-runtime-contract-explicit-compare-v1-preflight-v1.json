@@ -1,0 +1,25 @@
+{
+  "schema": "vi-history/implementation-admission-unit-preflight@v1",
+  "iauId": "IAU-runtime-contract-explicit-compare-v1",
+  "createdDate": "2026-05-17",
+  "status": "pending",
+  "implementationStartAllowed": false,
+  "parentSliceId": "runtime-contract-host-provider-v1",
+  "specFeature": ".specify/specs/runtime-contract-host-provider-v1",
+  "requiredChecks": [
+    "constitution present and current",
+    "public requirements import present",
+    "spec covers T012-T015",
+    "plan remains aligned with constitution",
+    "tasks name T012-T015 exactly",
+    "clarification state resolved or explicitly recorded",
+    "requirements checklist state resolved or explicitly recorded",
+    "analyze-critical findings absent or explicitly recorded",
+    "bridge artifact validation passes",
+    "public redaction scan passes"
+  ],
+  "resultSummary": "Preflight is required before T012-T015 implementation may start. This record makes the gate explicit; it does not yet authorize code.",
+  "blockedReason": "preflight-not-yet-run",
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}

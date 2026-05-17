@@ -28,6 +28,7 @@
     "exported",
     "public-imported",
     "spec-locked",
+    "preflight-required",
     "implementation-admitted",
     "implemented",
     "oracle-reviewed"
@@ -46,8 +47,9 @@
     },
     {
       "iauId": "IAU-runtime-contract-explicit-compare-v1",
-      "state": "implementation-admitted",
+      "state": "preflight-required",
       "record": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1.json",
+      "preflightRecord": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
       "admittedTasks": [
         "T012",
         "T013",
