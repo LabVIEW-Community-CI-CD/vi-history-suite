@@ -101,6 +101,7 @@ describe('dual-authority requirements bridge docs', () => {
         status?: string;
         bugOracleClassification?: string;
         publicMutationRequired?: boolean;
+        publicPullRequests?: string[];
         retainedPacket?: string;
       }>;
       bugOracle?: Record<string, string>;
@@ -149,6 +150,21 @@ describe('dual-authority requirements bridge docs', () => {
         publicMutationRequired: false,
         retainedPacket:
           'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/physical-host-labview-2026-proof-v1.json'
+      })
+    );
+    expect(exportManifest.governedIterations).toContainEqual(
+      expect.objectContaining({
+        iterationId: 'github-develop-runtime-contract-audit-v1',
+        workItem: '#29',
+        status: 'github-develop-audit-merged-with-verification-traceability-fix',
+        bugOracleClassification: 'implementation-defect-candidate',
+        publicMutationRequired: true,
+        publicPullRequests: [
+          'https://github.com/svelderrainruiz/vi-history-suite/pull/105',
+          'https://github.com/svelderrainruiz/vi-history-suite/pull/106'
+        ],
+        retainedPacket:
+          'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/github-develop-runtime-contract-audit-v1.json'
       })
     );
     expect(exportManifest.bugOracle).toEqual({
@@ -352,5 +368,182 @@ describe('dual-authority requirements bridge docs', () => {
     expect(iterationDoc).toContain('No public GitHub import mutation is required');
     expect(summary).toContain('physical-host-labview-2026-proof-v1');
     expect(summary).toContain('451669');
+  });
+
+  it('records the GitHub develop runtime-contract audit bridge iteration', () => {
+    const iteration = readJson<{
+      schema?: string;
+      iterationId?: string;
+      sliceId?: string;
+      status?: string;
+      governedWorkItem?: { reference?: string; url?: string };
+      authorityScope?: {
+        publicIntegrationBranch?: string;
+        publicDefaultBranch?: string;
+        sourceBaselineTag?: string;
+        sourceCommit?: string;
+      };
+      sourceBranchFlow?: {
+        forkGuard?: {
+          nameWithOwner?: string;
+          isFork?: boolean;
+          defaultBranch?: string;
+          visibility?: string;
+          viewerPermission?: string;
+        };
+        syncPullRequest?: string;
+        syncBase?: string;
+        syncMergedAt?: string;
+        syncMergeCommit?: string;
+        syncChecks?: string[];
+      };
+      publicAudit?: {
+        umbrellaIssue?: string;
+        childIssues?: string[];
+        inputIssues?: string[];
+        auditPullRequest?: string;
+        auditBase?: string;
+        auditCommit?: string;
+        auditMergedAt?: string;
+        auditMergeCommit?: string;
+        changedPublicArtifacts?: string[];
+        closedChildIssuesAfterDevelopMerge?: boolean;
+      };
+      importedRequirementIds?: string[];
+      finding?: {
+        classification?: string;
+        requirementSemanticsChanged?: boolean;
+        publicMutationRequired?: boolean;
+        fixedBy?: string[];
+      };
+      redactionBoundary?: {
+        publicImportContainsPrivateTooling?: boolean;
+        changedPublicArtifactsContainPrivateSignals?: boolean;
+        checkedFor?: string[];
+      };
+      validation?: { localGithub?: string[]; githubActions?: string[] };
+      bugOracleClassification?: string;
+      classificationRationale?: string;
+      nextActions?: string[];
+    }>(
+      'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/github-develop-runtime-contract-audit-v1.json'
+    );
+    const iterationDoc = readText(
+      'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/iterations/github-develop-runtime-contract-audit-v1.md'
+    );
+    const summary = readText(
+      'docs/product/dual-authority-requirements-bridge/runtime-contract-host-provider-v1/export-summary.md'
+    );
+
+    expect(iteration.schema).toBe('vi-history/requirements-bridge-iteration@v1');
+    expect(iteration.iterationId).toBe('github-develop-runtime-contract-audit-v1');
+    expect(iteration.sliceId).toBe('runtime-contract-host-provider-v1');
+    expect(iteration.status).toBe(
+      'github-develop-audit-merged-with-verification-traceability-fix'
+    );
+    expect(iteration.governedWorkItem).toMatchObject({
+      reference: '#29',
+      url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/29'
+    });
+    expect(iteration.authorityScope).toMatchObject({
+      publicIntegrationBranch: 'develop',
+      publicDefaultBranch: 'main',
+      sourceBaselineTag: 'v1.3.16',
+      sourceCommit: '31add781bd04cc832d9fb55aa821a69305a91a37'
+    });
+    expect(iteration.sourceBranchFlow?.forkGuard).toMatchObject({
+      nameWithOwner: 'svelderrainruiz/vi-history-suite',
+      isFork: false,
+      defaultBranch: 'main',
+      visibility: 'PUBLIC',
+      viewerPermission: 'ADMIN'
+    });
+    expect(iteration.sourceBranchFlow).toMatchObject({
+      syncPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/105',
+      syncBase: 'develop',
+      syncMergedAt: '2026-05-17T05:56:25Z',
+      syncMergeCommit: '99babd2f43309a8188c87fade2d5f8256d3dca40'
+    });
+    expect(iteration.sourceBranchFlow?.syncChecks).toEqual(
+      expect.arrayContaining([
+        'public-source-package-preview: pass',
+        'public-linux-installed-user-smoke: pass',
+        'public-windows-installed-user-contract: pass'
+      ])
+    );
+    expect(iteration.publicAudit).toMatchObject({
+      umbrellaIssue: 'https://github.com/svelderrainruiz/vi-history-suite/issues/101',
+      auditPullRequest: 'https://github.com/svelderrainruiz/vi-history-suite/pull/106',
+      auditBase: 'develop',
+      auditCommit: '1fc4811',
+      auditMergedAt: '2026-05-17T06:01:33Z',
+      auditMergeCommit: 'ab6c600dba01219b31808d150e8927b7e15b738e',
+      closedChildIssuesAfterDevelopMerge: true
+    });
+    expect(iteration.publicAudit?.childIssues).toEqual([
+      'https://github.com/svelderrainruiz/vi-history-suite/issues/102',
+      'https://github.com/svelderrainruiz/vi-history-suite/issues/103',
+      'https://github.com/svelderrainruiz/vi-history-suite/issues/104'
+    ]);
+    expect(iteration.publicAudit?.inputIssues).toEqual(
+      expect.arrayContaining([
+        'https://github.com/svelderrainruiz/vi-history-suite/issues/82',
+        'https://github.com/svelderrainruiz/vi-history-suite/issues/65',
+        'https://github.com/svelderrainruiz/vi-history-suite/issues/98'
+      ])
+    );
+    expect(iteration.publicAudit?.changedPublicArtifacts).toEqual(
+      expect.arrayContaining([
+        '.specify/specs/runtime-contract-host-provider-v1/tasks.md',
+        'package.json',
+        'tests/unit/publicFixtureValidation.test.ts',
+        'tests/unit/windowsDockerDesktopProofIntake.test.ts'
+      ])
+    );
+    expect(iteration.importedRequirementIds).toHaveLength(16);
+    expect(iteration.finding).toMatchObject({
+      classification: 'implementation-defect-candidate',
+      requirementSemanticsChanged: false,
+      publicMutationRequired: true
+    });
+    expect(iteration.finding?.fixedBy?.join(' ')).toContain(
+      'tests/unit/publicFixtureValidation.test.ts'
+    );
+    expect(iteration.finding?.fixedBy?.join(' ')).toContain(
+      'tests/unit/windowsDockerDesktopProofIntake.test.ts'
+    );
+    expect(iteration.redactionBoundary).toMatchObject({
+      publicImportContainsPrivateTooling: false,
+      changedPublicArtifactsContainPrivateSignals: false
+    });
+    expect(iteration.redactionBoundary?.checkedFor).toEqual(
+      expect.arrayContaining([
+        'repo-standards-review',
+        '/home/sergio/repos/gl',
+        'GitLab-only tooling'
+      ])
+    );
+    expect(iteration.validation?.localGithub).toEqual(
+      expect.arrayContaining(['npm run check', 'npm test', 'npm run package:audit'])
+    );
+    expect(iteration.validation?.githubActions).toEqual(
+      expect.arrayContaining([
+        'public-source-package-preview: pass',
+        'public-linux-installed-user-smoke: pass',
+        'public-windows-installed-user-contract: pass'
+      ])
+    );
+    expect(iteration.bugOracleClassification).toBe('implementation-defect-candidate');
+    expect(iteration.classificationRationale).toContain('verification surface');
+    expect(iteration.nextActions?.join(' ')).toContain('Close GitHub umbrella issue #101');
+
+    expect(iterationDoc).toContain('GitHub `develop`');
+    expect(iterationDoc).toContain('PR #105');
+    expect(iterationDoc).toContain('PR #106');
+    expect(iterationDoc).toContain('tests/unit/publicFixtureValidation.test.ts');
+    expect(iterationDoc).toContain('implementation-defect-candidate');
+    expect(iterationDoc.replace(/\s+/g, ' ')).toContain('No private bridge evidence crossed');
+    expect(summary).toContain('github-develop-runtime-contract-audit-v1');
+    expect(summary).toContain('ab6c600dba01219b31808d150e8927b7e15b738e');
   });
 });

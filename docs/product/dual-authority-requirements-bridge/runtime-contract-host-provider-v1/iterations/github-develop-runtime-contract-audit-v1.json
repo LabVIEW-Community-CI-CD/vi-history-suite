@@ -1,0 +1,132 @@
+{
+  "schema": "vi-history/requirements-bridge-iteration@v1",
+  "iterationId": "github-develop-runtime-contract-audit-v1",
+  "sliceId": "runtime-contract-host-provider-v1",
+  "createdDate": "2026-05-17",
+  "status": "github-develop-audit-merged-with-verification-traceability-fix",
+  "governedWorkItem": {
+    "reference": "#29",
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/29",
+    "title": "Govern first GitHub-develop runtime-contract bridge iteration"
+  },
+  "authorityScope": {
+    "governedAuthority": "gitlab",
+    "publicAuthority": "github",
+    "sourceBaselineTag": "v1.3.16",
+    "sourceCommit": "31add781bd04cc832d9fb55aa821a69305a91a37",
+    "targetFeature": "runtime-contract-host-provider",
+    "publicIntegrationBranch": "develop",
+    "publicDefaultBranch": "main"
+  },
+  "sourceBranchFlow": {
+    "githubRepository": "https://github.com/svelderrainruiz/vi-history-suite",
+    "forkGuard": {
+      "nameWithOwner": "svelderrainruiz/vi-history-suite",
+      "isFork": false,
+      "parent": null,
+      "defaultBranch": "main",
+      "visibility": "PUBLIC",
+      "viewerPermission": "ADMIN"
+    },
+    "syncPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/105",
+    "syncBase": "develop",
+    "syncHead": "codex/sync-develop-with-main-47ffce0",
+    "syncMergedAt": "2026-05-17T05:56:25Z",
+    "syncMergeCommit": "99babd2f43309a8188c87fade2d5f8256d3dca40",
+    "syncChecks": [
+      "public-source-package-preview: pass",
+      "public-linux-installed-user-smoke: pass",
+      "public-windows-installed-user-contract: pass"
+    ]
+  },
+  "publicAudit": {
+    "umbrellaIssue": "https://github.com/svelderrainruiz/vi-history-suite/issues/101",
+    "childIssues": [
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/102",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/103",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/104"
+    ],
+    "inputIssues": [
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/82",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/65",
+      "https://github.com/svelderrainruiz/vi-history-suite/issues/98"
+    ],
+    "auditPullRequest": "https://github.com/svelderrainruiz/vi-history-suite/pull/106",
+    "auditBase": "develop",
+    "auditHead": "codex/runtime-contract-host-provider-v1-audit",
+    "auditCommit": "1fc4811",
+    "auditMergedAt": "2026-05-17T06:01:33Z",
+    "auditMergeCommit": "ab6c600dba01219b31808d150e8927b7e15b738e",
+    "changedPublicArtifacts": [
+      ".specify/specs/runtime-contract-host-provider-v1/tasks.md",
+      "package.json",
+      "tests/unit/publicFixtureValidation.test.ts",
+      "tests/unit/publicRepoPackageSurface.test.ts",
+      "tests/unit/windowsDockerDesktopProofIntake.test.ts"
+    ],
+    "closedChildIssuesAfterDevelopMerge": true
+  },
+  "importedRequirementIds": [
+    "VHS-SYS-REQ-004",
+    "VHS-SYS-REQ-005",
+    "VHS-SYS-REQ-006",
+    "VHS-SYS-REQ-007",
+    "VHS-SYS-REQ-008",
+    "VHS-REQ-094",
+    "VHS-REQ-095",
+    "VHS-REQ-138",
+    "VHS-REQ-141",
+    "VHS-REQ-144",
+    "VHS-REQ-146",
+    "VHS-REQ-148",
+    "VHS-REQ-194",
+    "VHS-REQ-588",
+    "VHS-REQ-589",
+    "VHS-REQ-590"
+  ],
+  "finding": {
+    "summary": "GitHub runtime behavior and public documentation matched the imported runtime contract, but two verification artifacts named by the imported test plan were missing from the public sibling branch.",
+    "classification": "implementation-defect-candidate",
+    "requirementSemanticsChanged": false,
+    "publicMutationRequired": true,
+    "fixedBy": [
+      "added tests/unit/publicFixtureValidation.test.ts",
+      "added tests/unit/windowsDockerDesktopProofIntake.test.ts",
+      "included both tests in the public npm test contract",
+      "marked the Spec Kit runtime-contract task ledger complete with the bug-oracle result"
+    ]
+  },
+  "redactionBoundary": {
+    "publicImportContainsPrivateTooling": false,
+    "changedPublicArtifactsContainPrivateSignals": false,
+    "checkedFor": [
+      "repo-standards-review",
+      "/home/sergio/repos/gl",
+      "/home/sergio/",
+      "project-access-token",
+      "private evidence paths",
+      "GitLab-only tooling"
+    ]
+  },
+  "validation": {
+    "localGithub": [
+      "npm exec -- vitest run tests/unit/publicFixtureValidation.test.ts tests/unit/windowsDockerDesktopProofIntake.test.ts tests/unit/localRuntimeSettingsCli.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/publicRepoPackageSurface.test.ts",
+      "npm run check",
+      "npm test",
+      "npm run package:audit",
+      "git diff --check"
+    ],
+    "githubActions": [
+      "public-source-package-preview: pass",
+      "public-linux-installed-user-smoke: pass",
+      "public-windows-installed-user-contract: pass"
+    ]
+  },
+  "bugOracleClassification": "implementation-defect-candidate",
+  "classificationRationale": "The GitHub sibling product consumed the imported runtime-contract slice on its develop branch and did not expose a runtime behavior or public documentation contradiction. The only defect was local to the GitHub verification surface: the imported test plan referenced proof-intake and public-fixture validation artifacts that were not yet present in the public branch. Because the wrong behavior was observed in one authority only and did not require requirement text changes, the bridge classifies it as an implementation-defect candidate.",
+  "nextActions": [
+    "Close GitHub child issues #102, #103, and #104 after the develop-targeted PR merge because GitHub auto-close did not apply outside the default branch.",
+    "Close GitHub umbrella issue #101 after the GitLab retained closeout merges.",
+    "Use GitHub develop as the public sibling target for subsequent bridge work unless a later governed plan changes the branch flow."
+  ]
+}
