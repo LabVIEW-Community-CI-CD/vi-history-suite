@@ -44,7 +44,8 @@ runtime-provider public-acceptance gate.
 6. ADR evolution from governed findings
 7. public GitHub workflow responsibility and churn-control governance
 8. hosted GitLab/GitHub protection semantics and workflow-lane classification
-9. public-source promotion target-root hygiene for local governed publication
+9. historical public-source publication/adoption target-root hygiene for
+   retained governed publication records
 10. review-ready candidate publication boundary and dirty-public-surface handling
 11. VS Code Marketplace publication governance and retained publication evidence
 12. installed-user-first entry-surface redesign for Marketplace readers

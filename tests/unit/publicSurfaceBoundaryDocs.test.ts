@@ -19,7 +19,8 @@ describe('public facade boundary docs', () => {
       'docs/product/public-github-source-publication-ledger.json'
     );
 
-    expect(currentState).toContain('public GitHub source publication is tracked separately');
+    expect(currentState).toContain('public GitHub source publication/adoption records are tracked separately');
+    expect(currentState).toContain('not create an ongoing source-promotion contract');
     expect(currentState).toContain('npm run public:source:promote');
     expect(releaseProcedure).toContain('public-github-source-authority-map.md');
     expect(releaseProcedure).toContain('public:source:promote');

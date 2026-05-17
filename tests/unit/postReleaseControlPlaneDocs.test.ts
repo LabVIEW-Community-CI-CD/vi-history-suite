@@ -22,7 +22,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('post-release control-plane coherence', () => {
-  it('keeps the active post-release queue and public-facade program surfaces aligned', () => {
+  it('keeps the active post-release queue and historical public closeout surfaces aligned', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const currentState = readText('docs/product/current-state.md');
     const gateDoc = readText('docs/product/runtime-provider-public-acceptance-gate.md');
@@ -70,7 +70,8 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('`TRANCHE-012`');
     expect(currentState).toContain('`TRANCHE-016`');
     expect(currentState).toContain('ISSUE-0415 Windows Docker Desktop Launch Gate');
-    expect(currentState).toContain('public GitHub facade repo is the public source product surface');
+    expect(currentState).toContain('public GitHub repo is the public sibling product authority');
+    expect(currentState).toContain('requirements slice export/import rather than automatic source');
     expect(currentState).toContain('public GitHub user wiki now exists at');
     expect(currentState).toContain('closed public-product closeout');
     expect(currentState).toContain('retained preflight preparation already proves');
@@ -93,9 +94,11 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('runtime-provider-public-acceptance-gate.md');
     expect(currentState).toContain('runtime-provider-public-acceptance-gate.json');
 
-    expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
-    expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');
-    expect(program).toContain('the public GitHub facade repo is the extension-user front face');
+    expect(program).toContain('Closed as historical Docker-only public-product acceptance evidence');
+    expect(program).toContain(
+      'the installed extension compare workflow was Docker-only and x64-only'
+    );
+    expect(program).toContain('it is the public sibling product authority');
     expect(program).toContain('the public GitHub wiki now exists at');
     expect(program).toContain('Gate D is closed by the retained cold-pull public-product rerun');
     expect(program).toContain('retained preflight preparation already proves');
@@ -130,7 +133,7 @@ describe('post-release control-plane coherence', () => {
     expect(sustainmentProgram).toContain('installed local-`LabVIEWCLI`');
   });
 
-  it('keeps the public-facade split, docs-CI split, and Gate D cold-pull truth explicit', () => {
+  it('keeps the public sibling split, docs-CI split, and Gate D cold-pull truth explicit', () => {
     const currentState = readText('docs/product/current-state.md');
     const program = readText(
       'docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md'
@@ -140,6 +143,7 @@ describe('post-release control-plane coherence', () => {
     );
 
     expect(currentState).toContain('public GitHub wiki publication is tracked separately');
+    expect(currentState).toContain('public GitHub repo is the public sibling product authority');
     expect(currentState).toContain('docs:ci:public');
     expect(currentState).toContain('docs:ci:internal');
     expect(currentState).toContain('public GitHub admission matrix');
