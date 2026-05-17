@@ -21,7 +21,8 @@
     "redactionScan": "pass",
     "artifactConsistency": "pass",
     "analyzeCriticalFindings": "none-recorded",
-    "cleanRoomBoundary": "pass"
+    "cleanRoomBoundary": "pass",
+    "explicitCompareIauPreflight": "pass"
   },
   "sliceStateModel": [
     "candidate",
@@ -47,7 +48,7 @@
     },
     {
       "iauId": "IAU-runtime-contract-explicit-compare-v1",
-      "state": "preflight-required",
+      "state": "implementation-admitted",
       "record": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1.json",
       "preflightRecord": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
       "admittedTasks": [

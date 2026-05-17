@@ -22,8 +22,7 @@ runtime-provider implementation beyond the explicit compare-action behavior.
 
 ## Preflight
 
-Implementation remains blocked until
-`IAU-runtime-contract-explicit-compare-v1-preflight-v1` records `status: pass`.
-The current status is `pending`.
+`IAU-runtime-contract-explicit-compare-v1-preflight-v1` records `status:
+pass`. Implementation may start for `T012` through `T015` only.
 
 Tasks `T016` through `T030` remain blocked until this IAU merges.

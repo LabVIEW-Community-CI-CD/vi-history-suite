@@ -2,25 +2,27 @@
 
 ## State
 
-`IAU-runtime-contract-explicit-compare-v1` is blocked from implementation until
-this preflight records `status: pass`.
+`IAU-runtime-contract-explicit-compare-v1` passed preflight.
 
-Current status: `pending`.
+Current status: `pass`.
+
+Implementation may start for `T012` through `T015` only.
 
 ## Required Checks
 
-- constitution present and current
-- public requirements import present
-- spec covers `T012` through `T015`
-- plan remains aligned with constitution
-- tasks name `T012` through `T015` exactly
-- clarification state resolved or explicitly recorded
-- requirements checklist state resolved or explicitly recorded
-- analyze-critical findings absent or explicitly recorded
-- bridge artifact validation passes
-- public redaction scan passes
+- constitution present and current: pass
+- public requirements import present: pass
+- spec covers `T012` through `T015`: pass
+- plan remains aligned with constitution: pass
+- tasks name `T012` through `T015` exactly: pass
+- clarification state resolved or explicitly recorded: pass
+- requirements checklist state resolved or explicitly recorded: pass
+- analyze-critical findings absent or explicitly recorded: pass
+- bridge artifact validation passes: pass
+- public redaction scan passes: pass
 
 ## Decision
 
-This record tightens the process only. It does not change authority policy and
-does not authorize implementation.
+This record authorizes implementation for `T012` through `T015` only. It does
+not change authority policy, admit `T016` through `T030`, or admit Marketplace
+publication.

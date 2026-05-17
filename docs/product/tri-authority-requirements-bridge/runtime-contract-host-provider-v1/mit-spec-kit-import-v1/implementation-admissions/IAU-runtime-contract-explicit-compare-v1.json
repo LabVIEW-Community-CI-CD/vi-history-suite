@@ -40,9 +40,9 @@
     "IAU preflight status pass"
   ],
   "preImplementationPreflight": {
-    "status": "pending",
+    "status": "pass",
     "record": "IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
-    "implementationStartAllowed": false
+    "implementationStartAllowed": true
   },
   "exitGate": [
     "T012-T015 complete",

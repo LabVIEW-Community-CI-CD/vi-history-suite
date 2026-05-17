@@ -34,7 +34,7 @@ later ADR admits a release channel.
 The bridge records the foundation IAU as implemented for the MIT authority.
 The current user-story IAU is
 `IAU-runtime-contract-explicit-compare-v1`, limited to `T012` through `T015`,
-and remains blocked until its explicit preflight records `status: pass`.
+and its explicit preflight records `status: pass`.
 Later user-story implementation tasks remain blocked until the explicit-compare
 IAU merges.
 
