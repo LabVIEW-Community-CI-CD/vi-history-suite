@@ -100,6 +100,32 @@ Recorded by `#26` on `2026-05-16` after the first action batch closed.
 | `#22` | closed | `!249` | `e4128c5570dc1263019f41ed2e6fff1a087ccaaa` | `2026-05-16T19:52:21.387Z` |
 | `#23` | closed | `!240` | `415408d48d682b9e064301860b8e2f3018c21a8c` | `2026-05-16T07:40:31.689Z` |
 
+## Portfolio Operating Cycle 2
+
+Recorded by `#31` on `2026-05-17`.
+
+Cycle packet:
+[portfolio-operating-cycle-2-2026-05-17.md](./portfolio-operating-cycle-2-2026-05-17.md)
+and
+[portfolio-operating-cycle-2-2026-05-17.json](./portfolio-operating-cycle-2-2026-05-17.json).
+
+Decision: supersede stale MR `!220` with a fresh branch from current
+`develop`, preserve the Windows installed-user release-claim ledger as
+governed evidence, and record the three-authority operating loop before any new
+MIT implementation starts.
+
+Guardrails retained:
+
+- GitLab remains the governed requirements, evidence, release, and bridge
+  admission authority.
+- GitHub Suite remains the public Marketplace-continuity authority.
+- GitHub MIT `vi-history` remains idle until a new named IAU has a preflight
+  `pass`.
+- Windows installed-user host proof and exact VSIX proof are separated from
+  Windows Docker Desktop Windows-container proof.
+- Windows Docker Desktop proof remains blocked and cannot be substituted with
+  host proof.
+
 ## Action Closeouts
 
 ### `#17` Align current release truth across retained v0.2.0 and live v1.3.16 surfaces

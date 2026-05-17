@@ -80,14 +80,16 @@ Read these in order:
 62. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
 63. [Windows Installed-User Release-Claim Ledger 2026-05-14](./windows-installed-user-release-claim-ledger-2026-05-14.md)
 64. [Windows Installed-User Release-Claim Ledger 2026-05-14 JSON](./windows-installed-user-release-claim-ledger-2026-05-14.json)
-65. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
-66. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
-67. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-68. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-69. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-70. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-71. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-72. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+65. [Portfolio Operating Cycle 2 2026-05-17](./portfolio-operating-cycle-2-2026-05-17.md)
+66. [Portfolio Operating Cycle 2 2026-05-17 JSON](./portfolio-operating-cycle-2-2026-05-17.json)
+67. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+68. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+69. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+70. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+71. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+72. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+73. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+74. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
 
 ## Authority Stack
 
@@ -157,15 +159,17 @@ Current control-plane surfaces:
 51. [Public Validation Pre-Release v1.3.13 JSON](./public-validation-prerelease-v1.3.13.json)
 52. [Windows Installed-User Release-Claim Ledger 2026-05-14](./windows-installed-user-release-claim-ledger-2026-05-14.md)
 53. [Windows Installed-User Release-Claim Ledger 2026-05-14 JSON](./windows-installed-user-release-claim-ledger-2026-05-14.json)
-54. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
-55. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
-56. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
-57. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
-58. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
-59. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
-60. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
-61. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
-62. [Fast VS Code Loop](../dev-fast-loop.md)
+54. [Portfolio Operating Cycle 2 2026-05-17](./portfolio-operating-cycle-2-2026-05-17.md)
+55. [Portfolio Operating Cycle 2 2026-05-17 JSON](./portfolio-operating-cycle-2-2026-05-17.json)
+56. [Windows Docker Desktop Proof Intake v1.3.13](./windows-docker-desktop-proof-intake-v1.3.13.md)
+57. [Windows Docker Desktop Proof Intake v1.3.13 JSON](./windows-docker-desktop-proof-intake-v1.3.13.json)
+58. [Public Validation Pre-Release v1.3.11](./public-validation-prerelease-v1.3.11.md)
+59. [Public Validation Pre-Release v1.3.11 JSON](./public-validation-prerelease-v1.3.11.json)
+60. [Marketplace Community-Validation Intake v1.3.10](./marketplace-community-validation-intake-v1.3.10.md)
+61. [Marketplace Community-Validation Intake v1.3.10 JSON](./marketplace-community-validation-intake-v1.3.10.json)
+62. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10](./public-github-community-validation-intake-promotion-plan-v1.3.10.md)
+63. [Public GitHub Community-Validation Intake Promotion Plan v1.3.10 JSON](./public-github-community-validation-intake-promotion-plan-v1.3.10.json)
+64. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -1061,6 +1065,10 @@ Historical public closeout and runtime-provider public-acceptance gate record:
     `develop` as integration and `main` as release/default, reserves
     `svelderrainruiz.vi-history`, and has Marketplace publication disabled
     until a later ADR admits it
+  - Portfolio Operating Cycle 2 retains the current three-authority operating
+    loop: govern in GitLab, admit through the bridge, implement only a named
+    preflight-passing IAU in MIT, compare independent behavior as the bug
+    oracle, and release only when evidence, docs, and user-facing claims agree
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface; the exact published head is retained in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source publication/adoption records are tracked separately
     from both wiki surfaces in

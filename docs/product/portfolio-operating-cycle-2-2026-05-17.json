@@ -1,0 +1,109 @@
+{
+  "schema": "vi-history-suite/portfolio-operating-cycle@v1",
+  "cycleId": "portfolio-operating-cycle-2-2026-05-17",
+  "recordedAt": "2026-05-17T13:04:45Z",
+  "status": "refresh-branch-open",
+  "workItem": {
+    "iid": 31,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/31",
+    "title": "Portfolio operating cycle 2: Windows claim ledger and authority reset"
+  },
+  "parentControlPlane": {
+    "iid": 11,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/11"
+  },
+  "standingLanes": [12, 13, 14, 15, 16],
+  "sourceTriage": {
+    "staleMergeRequest": {
+      "iid": 220,
+      "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/merge_requests/220",
+      "sourceBranch": "feature/windows-installed-user-release-claim-ledger",
+      "headSha": "07fff5450a7dfc067f51c5a74baf41e0b9b64521",
+      "pipelineStatus": "failed",
+      "decision": "supersede-with-fresh-develop-branch",
+      "reason": "current develop did not contain the ledger or assertion surface, but the MR branch was stale and diverged from the current governed branch"
+    },
+    "refreshBranch": {
+      "name": "codex/portfolio-operating-cycle-2",
+      "baseBranch": "develop",
+      "baseSha": "3966a74d858f1b003826754dbea8f1335bd7b4b8",
+      "portedCommitShas": [
+        "edec039",
+        "836f9f2"
+      ]
+    }
+  },
+  "authorities": {
+    "gitlabGoverned": {
+      "repository": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+      "role": "governed requirements, evidence, release, and bridge-admission authority",
+      "cycleState": "owns work item 31, standing lanes 11-16, refreshed Windows installed-user release-claim ledger, and private evidence boundaries"
+    },
+    "githubSuiteContinuity": {
+      "repository": "https://github.com/svelderrainruiz/vi-history-suite",
+      "role": "public Marketplace-continuity authority",
+      "cycleState": "open issues 65, 82, and 98 remain public proof/readiness queues; no source promotion or Marketplace mutation is admitted"
+    },
+    "githubMitSpecKit": {
+      "repository": "https://github.com/svelderrainruiz/vi-history",
+      "role": "MIT clean-room Spec Kit implementation authority",
+      "cycleState": "idle-no-open-iau",
+      "baselineSha": "bba32566c5909ef89ddf8ee2fac0422b9db45d49",
+      "openIssues": 0,
+      "openPullRequests": 0,
+      "marketplacePublication": "disabled-until-later-adr"
+    }
+  },
+  "proofBoundaries": {
+    "windowsInstalledUserHost": "admitted-host-only",
+    "exactVsixInstalledUser": "admitted",
+    "windowsDockerDesktopWindowsContainer": "blocked-not-admitted",
+    "substitutionRule": "host proof is not a substitute for Windows Docker Desktop Windows-container proof"
+  },
+  "localAssertionCheck": {
+    "command": "npm run proof:windows-installed-user-claim:assert",
+    "status": "failed-closed-on-this-linux-worktree",
+    "reason": "retained Windows host proof, Windows Docker blocker proof, and canonical fixture proof roots are not present locally",
+    "claimEffect": "no new Windows proof claim is created by this cycle"
+  },
+  "operatingLoop": [
+    "govern-in-gitlab",
+    "admit-through-bridge",
+    "implement-only-admitted-iau-in-mit",
+    "compare-independent-authorities-as-oracle",
+    "release-only-when-evidence-docs-and-claims-agree"
+  ],
+  "implementationAdmission": {
+    "activeMitImplementationIau": null,
+    "nextImplementationRule": "a governed GitLab finding must pass spec-kit-authority-bridge redaction, artifact, traceability, and IAU preflight checks before MIT implementation starts",
+    "blockedUntilPreflightPass": true
+  },
+  "mutationBoundary": {
+    "authorized": [
+      "governance docs",
+      "assertion tooling",
+      "proof-surface docs",
+      "unit tests",
+      "ci proof-surface alignment"
+    ],
+    "notAuthorized": [
+      "MIT implementation",
+      "source promotion",
+      "release publication",
+      "Marketplace publication",
+      "protected branch mutation",
+      "Windows Docker Desktop proof claim"
+    ]
+  },
+  "requiredGates": [
+    "npm run check",
+    "npm test",
+    "npm run docs:gate:core",
+    "npm run docs:ci:core",
+    "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:release-gate -- --evidence-dir /tmp/vihs-assurance-release-cycle-2",
+    "VIHS_ASSURANCE_SKILL_ROOT=/home/sergio/repos/gl/repo-standards-review npm run assurance:26514:authority -- --evidence-dir /tmp/vihs-assurance-26514-cycle-2",
+    "python3 /home/sergio/repos/gl/repo-standards-review/scripts/requirements_quality_check.py . --json",
+    "python3 /home/sergio/repos/gl/repo-standards-review/scripts/external_user_information_check.py . --json",
+    "git diff --check"
+  ]
+}
