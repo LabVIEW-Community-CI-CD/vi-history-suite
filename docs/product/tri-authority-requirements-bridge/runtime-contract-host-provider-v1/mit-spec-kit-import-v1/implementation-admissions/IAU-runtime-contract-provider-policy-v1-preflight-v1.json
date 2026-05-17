@@ -1,0 +1,95 @@
+{
+  "schema": "vi-history/implementation-admission-unit-preflight@v1",
+  "iauId": "IAU-runtime-contract-provider-policy-v1",
+  "createdDate": "2026-05-17",
+  "completedDate": "2026-05-17",
+  "status": "pass",
+  "implementationStartAllowed": true,
+  "parentSliceId": "runtime-contract-host-provider-v1",
+  "specFeature": ".specify/specs/runtime-contract-host-provider-v1",
+  "requiredChecks": [
+    "constitution present and current",
+    "public requirements import present",
+    "spec covers T022-T025",
+    "plan remains aligned with constitution",
+    "tasks name T022-T025 exactly",
+    "previous IAU merged and implemented",
+    "clarification state resolved or explicitly recorded",
+    "requirements checklist state resolved or explicitly recorded",
+    "analyze-critical findings absent or explicitly recorded",
+    "bridge artifact validation passes",
+    "public redaction scan passes",
+    "T026-T030 remain blocked"
+  ],
+  "checkResults": [
+    {
+      "check": "constitution present and current",
+      "status": "pass",
+      "evidence": "Spec Kit constitution exists and requires imported requirements, locked Spec Kit artifacts, clean-room implementation, and public-safe evidence before code."
+    },
+    {
+      "check": "public requirements import present",
+      "status": "pass",
+      "evidence": "Import packet includes manifest, SyRS, SRS, RTM, and test-plan files for runtime-contract-host-provider-v1."
+    },
+    {
+      "check": "spec covers T022-T025",
+      "status": "pass",
+      "evidence": "Feature spec covers host-native default provider selection, bounded explicit Docker expert-provider selection, no silent Docker fallback, and unsupported provider failure guidance."
+    },
+    {
+      "check": "plan remains aligned with constitution",
+      "status": "pass",
+      "evidence": "Plan constitution gate records clean-room authority, Spec Kit before implementation, immutable imported IDs, public evidence, and disabled Marketplace publication as passing."
+    },
+    {
+      "check": "tasks name T022-T025 exactly",
+      "status": "pass",
+      "evidence": "Tasks file names T022, T023, T024, and T025 as the provider-policy IAU scope."
+    },
+    {
+      "check": "previous IAU merged and implemented",
+      "status": "pass",
+      "evidence": "IAU-runtime-contract-runtime-facts-v1 merged through PR #15 and completed T016-T021."
+    },
+    {
+      "check": "clarification state resolved or explicitly recorded",
+      "status": "pass",
+      "evidence": "No unresolved clarification markers are present in the feature artifacts."
+    },
+    {
+      "check": "requirements checklist state resolved or explicitly recorded",
+      "status": "pass",
+      "evidence": "No generated requirements checklist is present for this already locked imported feature; this preflight records the explicit assessment."
+    },
+    {
+      "check": "analyze-critical findings absent or explicitly recorded",
+      "status": "pass",
+      "evidence": "No critical or blocker analysis findings are recorded in the admission ledger or feature artifacts."
+    },
+    {
+      "check": "bridge artifact validation passes",
+      "status": "pass",
+      "evidence": "Bridge artifact validation passed for the public import and Spec Kit feature."
+    },
+    {
+      "check": "public redaction scan passes",
+      "status": "pass",
+      "evidence": "Public redaction scan passed for import, admission, Spec Kit, guidance, package, source, test, and script surfaces."
+    },
+    {
+      "check": "T026-T030 remain blocked",
+      "status": "pass",
+      "evidence": "This IAU admits provider policy only. Proof intake, proof packet writer, Windows Docker Desktop proof validation, command execution, and Marketplace publication remain blocked."
+    }
+  ],
+  "resultSummary": "Preflight passed. T022-T025 implementation may start for IAU-runtime-contract-provider-policy-v1 only.",
+  "implementationStartScope": [
+    "T022",
+    "T023",
+    "T024",
+    "T025"
+  ],
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}

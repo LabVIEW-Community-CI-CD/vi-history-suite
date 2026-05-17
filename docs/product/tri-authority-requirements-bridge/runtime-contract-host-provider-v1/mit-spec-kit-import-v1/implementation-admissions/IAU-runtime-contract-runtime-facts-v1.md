@@ -2,8 +2,8 @@
 
 ## State
 
-`IAU-runtime-contract-runtime-facts-v1` is admitted for the MIT authority. Its
-preflight records `status: pass`.
+`IAU-runtime-contract-runtime-facts-v1` is implemented for the MIT authority.
+Its preflight records `status: pass`.
 
 ## Scope
 
@@ -16,15 +16,18 @@ preflight records `status: pass`.
 
 ## Boundary
 
-This IAU uses the public import packet and Spec Kit feature only. It admits
+This IAU used the public import packet and Spec Kit feature only. It admitted
 runtime discovery, readiness classification, command planning, and retained
-runtime fact rendering. It does not admit command execution, Docker provider
-behavior, proof intake validation, Marketplace publication, or source copying
-from another product line.
+runtime fact rendering. It did not admit command execution, provider-policy
+implementation, proof intake validation, Marketplace publication, or source
+copying from another product line.
 
 ## Preflight
 
 `IAU-runtime-contract-runtime-facts-v1-preflight-v1` records `status: pass`.
-Implementation may start for `T016` through `T021` only.
+Implementation completed through PR #15 and merge commit
+`ee0e3a057f9ae778be46036fff7b6639e861b53c`.
 
-Tasks `T022` through `T030` remain blocked until this IAU merges.
+Tasks `T022` through `T025` are now handled by
+`IAU-runtime-contract-provider-policy-v1`. Tasks `T026` through `T030` remain
+blocked until separately admitted.
