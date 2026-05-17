@@ -53,7 +53,17 @@
     "publicImportRoot": "docs/requirements/imports",
     "specKitRoot": ".specify/specs",
     "importedIds": "immutable baseline references",
-    "implementationSharing": "none"
+    "implementationSharing": "none",
+    "sliceStates": [
+      "candidate",
+      "exported",
+      "public-imported",
+      "spec-locked",
+      "implementation-admitted",
+      "implemented",
+      "oracle-reviewed"
+    ],
+    "implementationStartRule": "MIT implementation begins only after the bridge records implementation-admitted for the slice"
   },
   "bugOracle": {
     "sameWrongBehaviorAcrossIndependentImplementations": "requirement-defect-candidate",

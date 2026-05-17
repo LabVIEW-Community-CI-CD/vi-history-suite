@@ -29,6 +29,17 @@ paths, release credentials, or GitLab-only tooling instructions.
 Marketplace publication for `svelderrainruiz.vi-history` is disabled until a
 later ADR admits a release channel.
 
+## Implementation Admission
+
+The bridge now records this slice as `implementation-admitted` for the MIT
+authority. The admission is narrow: only foundation tasks `T007` through `T011`
+may start. User-story implementation tasks remain blocked until the foundation
+contract pull request merges.
+
+The released GitLab extension is treated as a requirement-maturity signal. It
+does not grant permission to copy source, private evidence, private scripts, or
+release-control material into the MIT authority.
+
 ## Imported Requirement IDs
 
 - `VHS-SYS-REQ-004`
