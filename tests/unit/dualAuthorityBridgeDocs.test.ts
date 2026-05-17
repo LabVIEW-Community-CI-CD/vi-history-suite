@@ -84,6 +84,105 @@ describe('dual-authority requirements bridge docs', () => {
     expect(sustainmentRules).not.toContain('public-facade proof before merge to `main`');
   });
 
+  it('declares the MIT Spec Kit implementation authority', () => {
+    const triManifest = readJson<{
+      schema?: string;
+      status?: string;
+      governingAdr?: string;
+      splitBaseline?: { tag?: string };
+      authorities?: {
+        gitlabGoverned?: {
+          repository?: string;
+          packageName?: string;
+          extensionId?: string;
+          displayName?: string;
+          releaseChannel?: string;
+        };
+        githubMarketplaceContinuity?: {
+          repository?: string;
+          packageName?: string;
+          extensionId?: string;
+          displayName?: string;
+          releaseChannel?: string;
+        };
+        githubMitSpecKit?: {
+          repository?: string;
+          packageName?: string;
+          extensionId?: string;
+          displayName?: string;
+          firstBootstrapVersion?: string;
+          licenseBoundary?: string;
+          marketplacePublication?: string;
+          branchFlow?: { integration?: string; release?: string };
+        };
+      };
+      bridge?: {
+        kind?: string;
+        governedRetainedRoot?: string;
+        publicImportRoot?: string;
+        specKitRoot?: string;
+        implementationSharing?: string;
+      };
+      bugOracle?: Record<string, string>;
+    }>('docs/product/tri-authority-manifest.json');
+    const adr = readText('docs/architecture/adr/ADR-0041-mit-spec-kit-implementation-authority.md');
+    const overview = readText('docs/architecture/overview.md');
+    const informationItemMap = readText('docs/information-item-map.md');
+    const currentState = readText('docs/product/current-state.md');
+
+    expect(triManifest.schema).toBe('vi-history/tri-authority-manifest@v1');
+    expect(triManifest.status).toBe('active');
+    expect(triManifest.governingAdr).toBe('ADR-0041');
+    expect(triManifest.splitBaseline?.tag).toBe('v1.3.16');
+    expect(triManifest.authorities?.gitlabGoverned).toMatchObject({
+      repository: 'https://gitlab.com/svelderrainruiz/vi-history-suite',
+      packageName: 'vi-history',
+      extensionId: 'svelderrainruiz.vi-history',
+      displayName: 'VI History',
+      releaseChannel: 'GitLab Releases with VSIX, checksum, and evidence assets'
+    });
+    expect(triManifest.authorities?.githubMarketplaceContinuity).toMatchObject({
+      repository: 'https://github.com/svelderrainruiz/vi-history-suite',
+      packageName: 'vi-history-suite',
+      extensionId: 'svelderrainruiz.vi-history-suite',
+      displayName: 'VI History Suite',
+      releaseChannel: 'GitHub Releases and VS Code Marketplace'
+    });
+    expect(triManifest.authorities?.githubMitSpecKit).toMatchObject({
+      repository: 'https://github.com/svelderrainruiz/vi-history',
+      packageName: 'vi-history',
+      extensionId: 'svelderrainruiz.vi-history',
+      displayName: 'VI History',
+      firstBootstrapVersion: '0.1.0',
+      licenseBoundary: 'MIT clean-room implementation line',
+      marketplacePublication: 'disabled-until-later-adr',
+      branchFlow: {
+        integration: 'develop',
+        release: 'main'
+      }
+    });
+    expect(triManifest.bridge).toMatchObject({
+      kind: 'slice-based requirements-core export/import plus Spec Kit artifacts',
+      governedRetainedRoot: 'docs/product/tri-authority-requirements-bridge',
+      publicImportRoot: 'docs/requirements/imports',
+      specKitRoot: '.specify/specs',
+      implementationSharing: 'none'
+    });
+    expect(triManifest.bugOracle).toEqual({
+      sameWrongBehaviorAcrossIndependentImplementations: 'requirement-defect-candidate',
+      oneAuthorityWrongBehavior: 'implementation-defect-candidate',
+      ambiguousBehavior: 'requirement-clarification-candidate'
+    });
+    expect(adr).toContain('not a fork and is not a replacement');
+    expect(adr).toContain('Marketplace publication for the MIT authority is disabled initially');
+    expect(adr).toContain('Implementation source, private evidence, PolyForm-licensed source files');
+    expect(overview).toContain('ADR-0041');
+    expect(informationItemMap).toContain('Tri-authority manifest');
+    expect(informationItemMap).toContain('Tri-authority runtime-contract MIT export packet');
+    expect(currentState).toContain('clean-room Spec Kit implementation authority admitted by ADR-0041');
+    expect(currentState).toContain('Marketplace publication disabled');
+  });
+
   it('retains a governed runtime-contract export packet for the public import', () => {
     const exportManifest = readJson<{
       schema?: string;
@@ -545,5 +644,92 @@ describe('dual-authority requirements bridge docs', () => {
     expect(iterationDoc.replace(/\s+/g, ' ')).toContain('No private bridge evidence crossed');
     expect(summary).toContain('github-develop-runtime-contract-audit-v1');
     expect(summary).toContain('ab6c600dba01219b31808d150e8927b7e15b738e');
+  });
+
+  it('retains a governed runtime-contract export packet for the MIT Spec Kit authority', () => {
+    const exportManifest = readJson<{
+      schema?: string;
+      sliceId?: string;
+      sourceBaselineTag?: string;
+      sourceCommit?: string;
+      targetAuthority?: string;
+      targetRepository?: string;
+      targetFeature?: string;
+      publicImportPath?: string;
+      specKitPath?: string;
+      importedRequirementIds?: string[];
+      redactionStatus?: {
+        status?: string;
+        publicImportContainsPrivateTooling?: boolean;
+        publicImportContainsImplementationSource?: boolean;
+        checkedFor?: string[];
+      };
+      implementationSharing?: string;
+      licenseBoundary?: string;
+      marketplacePublication?: string;
+      governedWorkItem?: { reference?: string; url?: string };
+      targetIssues?: string[];
+      bugOracle?: Record<string, string>;
+    }>(
+      'docs/product/tri-authority-requirements-bridge/runtime-contract-host-provider-v1/mit-spec-kit-import-v1/manifest.json'
+    );
+    const summary = readText(
+      'docs/product/tri-authority-requirements-bridge/runtime-contract-host-provider-v1/mit-spec-kit-import-v1/export-summary.md'
+    );
+
+    expect(exportManifest.schema).toBe('vi-history/tri-authority-requirements-bridge-export@v1');
+    expect(exportManifest.sliceId).toBe('runtime-contract-host-provider-v1');
+    expect(exportManifest.sourceBaselineTag).toBe('v1.3.16');
+    expect(exportManifest.sourceCommit).toBe('31add781bd04cc832d9fb55aa821a69305a91a37');
+    expect(exportManifest.targetAuthority).toBe('githubMitSpecKit');
+    expect(exportManifest.targetRepository).toBe('https://github.com/svelderrainruiz/vi-history');
+    expect(exportManifest.targetFeature).toBe('runtime-contract-host-provider-v1');
+    expect(exportManifest.publicImportPath).toBe(
+      'docs/requirements/imports/runtime-contract-host-provider-v1/'
+    );
+    expect(exportManifest.specKitPath).toBe('.specify/specs/runtime-contract-host-provider-v1/');
+    expect(exportManifest.importedRequirementIds).toHaveLength(16);
+    expect(exportManifest.importedRequirementIds).toEqual(
+      expect.arrayContaining([
+        'VHS-SYS-REQ-004',
+        'VHS-SYS-REQ-008',
+        'VHS-REQ-094',
+        'VHS-REQ-588',
+        'VHS-REQ-589',
+        'VHS-REQ-590'
+      ])
+    );
+    expect(exportManifest.redactionStatus).toMatchObject({
+      status: 'pass',
+      publicImportContainsPrivateTooling: false,
+      publicImportContainsImplementationSource: false
+    });
+    expect(exportManifest.redactionStatus?.checkedFor).toEqual(
+      expect.arrayContaining(['PolyForm source-file copying'])
+    );
+    expect(exportManifest.implementationSharing).toBe('none');
+    expect(exportManifest.licenseBoundary).toBe(
+      'MIT target receives requirements and Spec Kit artifacts only'
+    );
+    expect(exportManifest.marketplacePublication).toBe('disabled-until-later-adr');
+    expect(exportManifest.governedWorkItem).toMatchObject({
+      reference: '#30',
+      url: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/30'
+    });
+    expect(exportManifest.targetIssues).toEqual([
+      'Bootstrap MIT Spec Kit authority',
+      'Import runtime-contract-host-provider-v1',
+      'Lock Spec Kit spec/plan/tasks for runtime contract',
+      'Implement runtime contract after spec lock',
+      'Decide future Marketplace publication posture'
+    ]);
+    expect(exportManifest.bugOracle).toEqual({
+      sameWrongBehaviorAcrossIndependentImplementations: 'requirement-defect-candidate',
+      oneAuthorityWrongBehavior: 'implementation-defect-candidate',
+      ambiguousBehavior: 'requirement-clarification-candidate'
+    });
+    expect(summary).toContain('MIT Spec Kit implementation authority');
+    expect(summary).toContain('does not receive PolyForm source files');
+    expect(summary).toContain('Marketplace publication for `svelderrainruiz.vi-history` is disabled');
   });
 });

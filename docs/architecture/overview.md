@@ -240,3 +240,5 @@
   GitLab authority and asset-first public GitHub release publication
 - [ADR-0040](./adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md):
   Dual-authority Spec Kit requirements bridge after the `v1.3.16` split
+- [ADR-0041](./adr/ADR-0041-mit-spec-kit-implementation-authority.md):
+  MIT Spec Kit implementation authority for clean-room public development
