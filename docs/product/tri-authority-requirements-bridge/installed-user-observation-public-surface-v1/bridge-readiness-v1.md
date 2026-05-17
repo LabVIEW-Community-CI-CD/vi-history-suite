@@ -5,24 +5,29 @@ Recorded: `2026-05-17T14:00:43Z`
 GitLab work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/34`
 
+Spec-lock closeout work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/35`
+
 Machine-readable packet:
 [bridge-readiness-v1.json](./bridge-readiness-v1.json)
 
 ## Purpose
 
-This packet evaluates `IAU-candidate-installed-user-observation-public-surface-v1`
-for the MIT Spec Kit authority. It decides whether the governed installed-user
-observation cadence can become a sanitized public requirements import without
-starting implementation.
+This packet evaluates and closes out
+`IAU-candidate-installed-user-observation-public-surface-v1` for the MIT Spec
+Kit authority. It decides whether the governed installed-user observation
+cadence can become a sanitized public requirements import without starting
+implementation, then records the public import/spec result after the MIT merge.
 
 ## Decision
 
-The candidate is **bridge-ready**, but **not implementation-admitted**.
+The candidate was **bridge-ready** and is now **spec-locked**, but remains
+**not implementation-admitted**.
 
-The next authorized move is to create a public MIT import packet and Spec Kit
-feature for `installed-user-observation-public-surface-v1`. The feature should
-model observation fact buckets, routing, blocked scope, and public reporting
-semantics. It must not start code, Copilot implementation, LabVIEWCLI command
+MIT PR #26 created the public MIT import packet and Spec Kit feature for
+`installed-user-observation-public-surface-v1`. The merged feature models
+observation fact buckets, routing, blocked scope, and public reporting
+semantics. It did not start code, Copilot implementation, LabVIEWCLI command
 execution, Docker orchestration, Marketplace behavior, or Windows Docker
 Desktop proof promotion.
 
@@ -39,6 +44,21 @@ Desktop proof promotion.
 | Target repository | `https://github.com/svelderrainruiz/vi-history` |
 | Target branch flow | `develop` integration, `main` release |
 | Target baseline observed | `bba32566c5909ef89ddf8ee2fac0422b9db45d49` |
+| Target spec-lock commit | `e0fe22daf80c8300b2543300d9af4547c04e1220` |
+
+## MIT Spec-Lock Closeout
+
+| Field | Value |
+| --- | --- |
+| MIT issue | `https://github.com/svelderrainruiz/vi-history/issues/25` |
+| MIT PR | `https://github.com/svelderrainruiz/vi-history/pull/26` |
+| PR title | `docs: import installed-user observation spec` |
+| Merge time | `2026-05-17T14:35:30Z` |
+| Merge commit | `e0fe22daf80c8300b2543300d9af4547c04e1220` |
+| Target branch | `develop` |
+| Post-merge validation | `https://github.com/svelderrainruiz/vi-history/actions/runs/25993723704` |
+| Result | `spec-locked` |
+| Implementation admitted | `false` |
 
 ## Public Signal
 
@@ -94,13 +114,14 @@ The Spec Kit feature should answer:
 
 ## Admission Boundary
 
-This packet promotes the candidate from `candidate` to `bridge-ready` only.
+This packet first promoted the candidate from `candidate` to `bridge-ready`.
+The closeout now records the public MIT import/spec result as `spec-locked`.
 
 It does not admit:
 
 - MIT implementation
 - Copilot handoff
-- public MIT issue creation before import/spec planning
+- new public MIT implementation issue creation before a named IAU preflight
 - LabVIEWCLI execution
 - Docker execution or orchestration
 - Windows Docker Desktop proof claims
@@ -116,10 +137,10 @@ Implementation can start only after:
 
 ## Next Gate
 
-Open a public MIT import/spec branch from `develop` only after this GitLab
-readiness packet merges. The branch should create requirements and Spec Kit
-artifacts only. It should not create implementation tasks beyond a blocked
-future IAU candidate unless the Spec Kit plan makes the boundary explicit.
+Evaluate whether a narrow observation-model IAU is useful enough to admit.
+Implementation still cannot start until a named IAU has a preflight record with
+`status: "pass"`. Until then, the only authorized work is governance,
+traceability, public artifact validation, and future IAU evaluation.
 
 ## Validation
 

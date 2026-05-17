@@ -2,12 +2,17 @@
   "schema": "vi-history/tri-authority-bridge-readiness@v1",
   "readinessId": "installed-user-observation-public-surface-v1-bridge-readiness-v1",
   "recordedAt": "2026-05-17T14:00:43Z",
-  "status": "bridge-ready",
+  "status": "spec-locked",
   "implementationAdmitted": false,
   "workItem": {
     "iid": 34,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/34",
     "title": "Bridge-readiness: installed-user observation public surface IAU candidate"
+  },
+  "specLockCloseoutWorkItem": {
+    "iid": 35,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/35",
+    "title": "Closeout installed-user observation MIT spec lock"
   },
   "candidateId": "IAU-candidate-installed-user-observation-public-surface-v1",
   "futureSliceId": "installed-user-observation-public-surface-v1",
@@ -22,6 +27,33 @@
     "commit": "bba32566c5909ef89ddf8ee2fac0422b9db45d49",
     "openIssues": 0,
     "openPullRequests": 0
+  },
+  "mitSpecLockCloseout": {
+    "githubIssue": {
+      "number": 25,
+      "url": "https://github.com/svelderrainruiz/vi-history/issues/25",
+      "state": "closed",
+      "closedAt": "2026-05-17T14:35:31Z"
+    },
+    "githubPullRequest": {
+      "number": 26,
+      "url": "https://github.com/svelderrainruiz/vi-history/pull/26",
+      "title": "docs: import installed-user observation spec",
+      "state": "merged",
+      "mergedAt": "2026-05-17T14:35:30Z",
+      "baseBranch": "develop",
+      "headBranch": "codex/installed-user-observation-import",
+      "mergeCommit": "e0fe22daf80c8300b2543300d9af4547c04e1220"
+    },
+    "postMergeValidation": {
+      "workflow": "spec-gates",
+      "run": "https://github.com/svelderrainruiz/vi-history/actions/runs/25993723704",
+      "branch": "develop",
+      "headSha": "e0fe22daf80c8300b2543300d9af4547c04e1220",
+      "conclusion": "success"
+    },
+    "result": "spec-locked",
+    "implementationAdmitted": false
   },
   "targetPaths": {
     "publicImportPath": "docs/requirements/imports/installed-user-observation-public-surface-v1/",
@@ -82,29 +114,29 @@
     "blockedScopeExplicit": "pass",
     "environmentDependency": "pass-for-import-and-spec",
     "cleanRoomSafety": "pass",
-    "publicImportCreated": "not-yet",
-    "specKitArtifactsCreated": "not-yet",
-    "implementationPreflight": "not-yet"
+    "publicImportCreated": "pass",
+    "specKitArtifactsCreated": "pass",
+    "implementationPreflight": "not-created"
   },
   "blockedScope": [
     "MIT implementation",
     "Copilot implementation handoff",
-    "public MIT issue creation before import/spec planning",
+    "new public MIT implementation issue before a named IAU preflight",
     "LabVIEWCLI execution",
     "Docker execution or orchestration",
     "Windows Docker Desktop proof claims",
     "Marketplace publication"
   ],
   "nextGate": {
-    "state": "public-import-and-spec-planning",
+    "state": "future-iau-evaluation",
     "allowedNextWork": [
-      "create sanitized MIT import packet",
-      "create Spec Kit feature specification, plan, and tasks",
-      "run public redaction validation",
-      "run bridge artifact validation"
+      "evaluate whether a narrow observation-model IAU is useful",
+      "create a named IAU preflight if implementation is proposed later",
+      "run public redaction validation if public artifacts change",
+      "run bridge artifact validation if public artifacts change"
     ],
     "notAllowedNextWork": [
-      "implementation",
+      "implementation before a named IAU preflight passes",
       "command execution",
       "Docker orchestration",
       "Marketplace behavior"

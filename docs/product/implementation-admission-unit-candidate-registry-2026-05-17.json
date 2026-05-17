@@ -8,6 +8,11 @@
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/33",
     "title": "Establish governed IAU candidate registry"
   },
+  "specLockCloseoutWorkItem": {
+    "iid": 35,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/35",
+    "title": "Closeout installed-user observation MIT spec lock"
+  },
   "governingArtifacts": [
     "docs/architecture/adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md",
     "docs/architecture/adr/ADR-0041-mit-spec-kit-implementation-authority.md",
@@ -74,7 +79,7 @@
     {
       "candidateId": "IAU-candidate-installed-user-observation-public-surface-v1",
       "rank": 1,
-      "state": "bridge-ready",
+      "state": "spec-locked",
       "lane": "evidence-surface",
       "admissionPriorityScore": 88,
       "scoreBreakdown": {
@@ -103,10 +108,20 @@
         "markdown": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.md",
         "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.json",
         "workItem": 34,
-        "status": "bridge-ready",
+        "status": "spec-locked",
         "implementationAdmitted": false
       },
-      "recommendedNextAction": "Create a public MIT import/spec branch for observation fact buckets, routing, and blocked scope. Do not implement until a later IAU preflight passes.",
+      "specLockCloseout": {
+        "workItem": 35,
+        "githubIssue": "https://github.com/svelderrainruiz/vi-history/issues/25",
+        "githubPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/26",
+        "targetBranch": "develop",
+        "mergeCommit": "e0fe22daf80c8300b2543300d9af4547c04e1220",
+        "specGatesRun": "https://github.com/svelderrainruiz/vi-history/actions/runs/25993723704",
+        "state": "spec-locked",
+        "implementationAdmitted": false
+      },
+      "recommendedNextAction": "Evaluate whether a future observation-model IAU should be admitted. Do not implement until a named IAU preflight passes.",
       "blockedScope": [
         "Windows Docker Desktop proof admission",
         "Marketplace mutation",
@@ -284,18 +299,19 @@
     }
   ],
   "selectedNextCandidate": "IAU-candidate-installed-user-observation-public-surface-v1",
-  "selectedNextAction": "public-import-and-spec-planning",
+  "selectedNextAction": "future-observation-iau-evaluation",
   "mutationBoundary": {
     "authorized": [
       "governance docs",
       "candidate scoring",
       "bridge-readiness planning",
+      "spec-lock closeout",
       "traceability analysis"
     ],
     "notAuthorized": [
       "MIT implementation",
       "Copilot implementation handoff",
-      "public MIT issue creation",
+      "new public MIT implementation issue without a passing IAU preflight",
       "LabVIEWCLI execution",
       "Docker orchestration",
       "Windows Docker Desktop proof claim",

@@ -5,6 +5,9 @@ Recorded: `2026-05-17T13:28:45Z`
 GitLab work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/33`
 
+Spec-lock closeout work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/35`
+
 Machine-readable packet:
 [implementation-admission-unit-candidate-registry-2026-05-17.json](./implementation-admission-unit-candidate-registry-2026-05-17.json)
 
@@ -62,7 +65,7 @@ code; it only chooses the next bridge-readiness target.
 
 | Rank | Candidate | State | Score | Direction |
 | ---: | --- | --- | ---: | --- |
-| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `bridge-ready` | 88 | Create a public MIT import/spec branch after the readiness packet merges; do not implement. |
+| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `spec-locked` | 88 | MIT PR #26 merged the public import/spec only; evaluate a future named IAU preflight before implementation. |
 | 2 | `IAU-candidate-public-proof-status-oracle-v1` | `candidate` | 79 | Evaluate after observation surface or combine if the public packet stays small. |
 | 3 | `IAU-candidate-command-activation-surface-v1` | `observed` | 71 | Consider only after deciding whether MIT should expose an extension package surface next. |
 | 4 | `IAU-candidate-labviewcli-execution-boundary-v1` | `observed` | 62 | Requires a new execution-safety bridge packet before command execution can be opened. |
@@ -71,7 +74,8 @@ code; it only chooses the next bridge-readiness target.
 
 ## Recommended Next Candidate
 
-Start with `IAU-candidate-installed-user-observation-public-surface-v1`.
+The selected candidate `IAU-candidate-installed-user-observation-public-surface-v1`
+has advanced to `spec-locked`.
 
 Rationale:
 
@@ -89,7 +93,21 @@ Bridge-readiness was recorded in:
 - [bridge-readiness-v1.md](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.md)
 - [bridge-readiness-v1.json](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.json)
 
-Bridge-readiness work for this candidate should answer:
+Spec-lock closeout:
+
+- MIT issue #25 `https://github.com/svelderrainruiz/vi-history/issues/25`
+  was closed after the import/spec merge.
+- MIT PR #26 `https://github.com/svelderrainruiz/vi-history/pull/26`
+  merged into `develop` on `2026-05-17`.
+- MIT merge commit
+  `e0fe22daf80c8300b2543300d9af4547c04e1220` is the public
+  `spec-locked` baseline.
+- MIT `spec-gates` run
+  `https://github.com/svelderrainruiz/vi-history/actions/runs/25993723704`
+  passed on `develop`.
+- No implementation was admitted by this transition.
+
+The completed public import/spec answers:
 
 - Which governed requirement IDs are exported?
 - What public-safe fact buckets are allowed?
@@ -102,7 +120,8 @@ Bridge-readiness work for this candidate should answer:
 
 - No MIT implementation starts from this registry.
 - No Copilot handoff starts from this registry.
-- No public GitHub issue is created in MIT until a candidate is bridge-ready.
+- No new public MIT implementation issue or Copilot handoff starts until a
+  named IAU preflight has `status: "pass"`.
 - No LabVIEWCLI command execution is admitted.
 - No Docker command execution or container orchestration is admitted.
 - No Windows Docker Desktop Windows-container proof claim is admitted without
