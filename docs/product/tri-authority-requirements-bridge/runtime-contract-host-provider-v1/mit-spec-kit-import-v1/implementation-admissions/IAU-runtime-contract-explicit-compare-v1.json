@@ -1,0 +1,52 @@
+{
+  "schema": "vi-history/implementation-admission-unit@v1",
+  "iauId": "IAU-runtime-contract-explicit-compare-v1",
+  "createdDate": "2026-05-17",
+  "state": "implementation-admitted",
+  "parentSliceId": "runtime-contract-host-provider-v1",
+  "specFeature": ".specify/specs/runtime-contract-host-provider-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "admittedTasks": [
+    "T012",
+    "T013",
+    "T014",
+    "T015"
+  ],
+  "blockedTasks": [
+    "T016",
+    "T017",
+    "T018",
+    "T019",
+    "T020",
+    "T021",
+    "T022",
+    "T023",
+    "T024",
+    "T025",
+    "T026",
+    "T027",
+    "T028",
+    "T029",
+    "T030"
+  ],
+  "entryGate": [
+    "IAU-runtime-contract-foundation-v1 merged",
+    "public import packet present",
+    "Spec Kit artifacts locked",
+    "bridge artifact validation passed",
+    "public redaction scan passed"
+  ],
+  "exitGate": [
+    "T012-T015 complete",
+    "public redaction scan passes",
+    "bridge artifact validation passes",
+    "MIT repo npm test passes",
+    "MIT repo npm run check passes",
+    "Issue 4 names completed IAU and next admissible IAU"
+  ],
+  "implementationSharing": "none",
+  "requirementMaturityBasis": "governed released extension supports requirement maturity, not source reuse",
+  "marketplacePublication": "disabled-until-later-adr"
+}

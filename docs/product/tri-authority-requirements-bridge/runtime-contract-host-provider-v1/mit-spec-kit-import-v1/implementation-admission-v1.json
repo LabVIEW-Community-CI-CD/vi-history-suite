@@ -32,18 +32,45 @@
     "implemented",
     "oracle-reviewed"
   ],
-  "implementationScopeAdmitted": [
+  "implementationAdmissionUnits": [
+    {
+      "iauId": "IAU-runtime-contract-foundation-v1",
+      "state": "implemented",
+      "admittedTasks": [
+        "T007",
+        "T008",
+        "T009",
+        "T010",
+        "T011"
+      ]
+    },
+    {
+      "iauId": "IAU-runtime-contract-explicit-compare-v1",
+      "state": "implementation-admitted",
+      "record": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1.json",
+      "admittedTasks": [
+        "T012",
+        "T013",
+        "T014",
+        "T015"
+      ]
+    }
+  ],
+  "currentImplementationAdmissionUnit": "IAU-runtime-contract-explicit-compare-v1",
+  "implementationScopeCompleted": [
     "T007",
     "T008",
     "T009",
     "T010",
     "T011"
   ],
-  "implementationScopeBlockedUntilFoundationMerge": [
+  "implementationScopeAdmitted": [
     "T012",
     "T013",
     "T014",
-    "T015",
+    "T015"
+  ],
+  "implementationScopeBlockedUntilExplicitCompareMerge": [
     "T016",
     "T017",
     "T018",
