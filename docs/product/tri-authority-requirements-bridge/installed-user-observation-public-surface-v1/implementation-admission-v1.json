@@ -1,0 +1,73 @@
+{
+  "schema": "vi-history/mit-spec-kit-implementation-admission@v1",
+  "sliceId": "installed-user-observation-public-surface-v1",
+  "createdDate": "2026-05-17",
+  "state": "implementation-admitted",
+  "sourceAuthority": "gitlabGoverned",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommit": "0d08e1abd27a00e60194691035db48966f914dee",
+  "publicImportPath": "docs/requirements/imports/installed-user-observation-public-surface-v1/",
+  "specKitPath": ".specify/specs/installed-user-observation-public-surface-v1/",
+  "admissionChecks": {
+    "specKitCliVersion": "0.8.12.dev0",
+    "publicImportPacketPresent": "pass",
+    "specKitArtifactsPresent": "pass",
+    "specKitPrerequisites": "pass",
+    "redactionScan": "pass",
+    "artifactConsistency": "pass",
+    "analyzeCriticalFindings": "none-recorded",
+    "cleanRoomBoundary": "pass",
+    "observationModelIauPreflight": "pass"
+  },
+  "sliceStateModel": [
+    "candidate",
+    "exported",
+    "public-imported",
+    "spec-locked",
+    "preflight-required",
+    "implementation-admitted",
+    "implemented",
+    "oracle-reviewed"
+  ],
+  "implementationAdmissionUnits": [
+    {
+      "iauId": "IAU-installed-user-observation-model-v1",
+      "state": "implementation-admitted",
+      "record": "implementation-admissions/IAU-installed-user-observation-model-v1.json",
+      "preflightRecord": "implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.json",
+      "admittedTasks": [
+        "T009",
+        "T010",
+        "T011",
+        "T012",
+        "T013"
+      ]
+    }
+  ],
+  "currentImplementationAdmissionUnit": "IAU-installed-user-observation-model-v1",
+  "implementationScopeCompleted": [],
+  "implementationScopeAdmitted": [
+    "T009",
+    "T010",
+    "T011",
+    "T012",
+    "T013"
+  ],
+  "implementationScopeBlocked": [
+    "T014",
+    "T015",
+    "T016"
+  ],
+  "governedRequirementMaturity": {
+    "releasedExtensionSignal": "supports requirement maturity",
+    "sourceReusePermission": "not-granted"
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}

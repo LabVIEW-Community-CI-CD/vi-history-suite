@@ -8,6 +8,9 @@ GitLab work item:
 Spec-lock closeout work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/35`
 
+Observation-model admission work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/36`
+
 Machine-readable packet:
 [implementation-admission-unit-candidate-registry-2026-05-17.json](./implementation-admission-unit-candidate-registry-2026-05-17.json)
 
@@ -65,7 +68,7 @@ code; it only chooses the next bridge-readiness target.
 
 | Rank | Candidate | State | Score | Direction |
 | ---: | --- | --- | ---: | --- |
-| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `spec-locked` | 88 | MIT PR #26 merged the public import/spec only; evaluate a future named IAU preflight before implementation. |
+| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `implementation-admitted` | 88 | `IAU-installed-user-observation-model-v1` is admitted for T009-T013 only; prepare public MIT handoff before implementation. |
 | 2 | `IAU-candidate-public-proof-status-oracle-v1` | `candidate` | 79 | Evaluate after observation surface or combine if the public packet stays small. |
 | 3 | `IAU-candidate-command-activation-surface-v1` | `observed` | 71 | Consider only after deciding whether MIT should expose an extension package surface next. |
 | 4 | `IAU-candidate-labviewcli-execution-boundary-v1` | `observed` | 62 | Requires a new execution-safety bridge packet before command execution can be opened. |
@@ -75,7 +78,8 @@ code; it only chooses the next bridge-readiness target.
 ## Recommended Next Candidate
 
 The selected candidate `IAU-candidate-installed-user-observation-public-surface-v1`
-has advanced to `spec-locked`.
+has advanced to `implementation-admitted` for one named IAU:
+`IAU-installed-user-observation-model-v1`.
 
 Rationale:
 
@@ -105,23 +109,41 @@ Spec-lock closeout:
 - MIT `spec-gates` run
   `https://github.com/svelderrainruiz/vi-history/actions/runs/25993723704`
   passed on `develop`.
-- No implementation was admitted by this transition.
+- No implementation was admitted by the spec-lock transition itself.
+  Implementation admission came later through work item #36 for the named
+  observation-model IAU only.
 
-The completed public import/spec answers:
+Implementation admission was recorded in:
+
+- [implementation-admission-v1.md](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admission-v1.md)
+- [implementation-admission-v1.json](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admission-v1.json)
+- [IAU-installed-user-observation-model-v1.md](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1.md)
+- [IAU-installed-user-observation-model-v1-preflight-v1.md](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.md)
+
+The admitted IAU answers:
 
 - Which governed requirement IDs are exported?
 - What public-safe fact buckets are allowed?
 - What public issue or report fields are retained?
 - What remains explicitly blocked?
 - What Spec Kit feature owns the public behavior?
-- What exact IAU, if any, becomes admissible after preflight?
+- What exact IAU becomes admissible after preflight?
+
+Admitted task scope:
+
+- `T009`: observation-cycle data contract.
+- `T010`: observation-fact classification contract.
+- `T011`: routing-decision and SemVer recommendation contracts.
+- `T012`: tests for `observed`, `deferred`, and `blocked` fact buckets.
+- `T013`: tests proving public feedback is input, not release proof.
 
 ## Current Non-Admitted Boundaries
 
-- No MIT implementation starts from this registry.
-- No Copilot handoff starts from this registry.
-- No new public MIT implementation issue or Copilot handoff starts until a
-  named IAU preflight has `status: "pass"`.
+- No MIT implementation outside `IAU-installed-user-observation-model-v1`
+  starts from this registry.
+- No Copilot handoff starts until the MIT public admission packet and handoff
+  issue mirror this governed packet.
+- No reporting-surface work starts; `T014` through `T016` remain blocked.
 - No LabVIEWCLI command execution is admitted.
 - No Docker command execution or container orchestration is admitted.
 - No Windows Docker Desktop Windows-container proof claim is admitted without
