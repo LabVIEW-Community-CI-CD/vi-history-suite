@@ -3,6 +3,7 @@
   "registryId": "implementation-admission-unit-candidate-registry-2026-05-17",
   "recordedAt": "2026-05-17T13:28:45Z",
   "updatedAt": "2026-05-17T19:46:38Z",
+  "lastReviewedAt": "2026-05-17T20:18:55Z",
   "status": "active",
   "workItem": {
     "iid": 33,
@@ -28,6 +29,11 @@
     "iid": 38,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/38",
     "title": "Oracle review MIT installed-user observation model"
+  },
+  "publicProofStatusOracleReadinessWorkItem": {
+    "iid": 39,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/39",
+    "title": "Bridge-readiness: public proof-status oracle IAU candidate"
   },
   "governingArtifacts": [
     "docs/architecture/adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md",
@@ -196,7 +202,7 @@
     {
       "candidateId": "IAU-candidate-public-proof-status-oracle-v1",
       "rank": 2,
-      "state": "candidate",
+      "state": "oracle-reviewed",
       "lane": "oracle",
       "admissionPriorityScore": 79,
       "scoreBreakdown": {
@@ -223,13 +229,33 @@
       "publicSignals": [
         "https://github.com/svelderrainruiz/vi-history-suite/issues/65"
       ],
-      "recommendedNextAction": "Selected for bridge-readiness analysis next. Evaluate whether the MIT authority needs a public proof-status/oracle reporting surface separate from the already implemented runtime-contract validator.",
+      "readinessRecord": {
+        "markdown": "docs/product/tri-authority-requirements-bridge/public-proof-status-oracle-v1/bridge-readiness-v1.md",
+        "json": "docs/product/tri-authority-requirements-bridge/public-proof-status-oracle-v1/bridge-readiness-v1.json",
+        "workItem": 39,
+        "status": "bridge-readiness-complete-existing-import"
+      },
+      "oracleReviewRecord": {
+        "markdown": "docs/product/tri-authority-requirements-bridge/runtime-contract-host-provider-v1/mit-spec-kit-import-v1/oracle-review-v1.md",
+        "json": "docs/product/tri-authority-requirements-bridge/runtime-contract-host-provider-v1/mit-spec-kit-import-v1/oracle-review-v1.json",
+        "workItem": 39,
+        "bugOracleClassification": "no-defect-candidate"
+      },
+      "resolvedByExistingSlice": {
+        "sliceId": "runtime-contract-host-provider-v1",
+        "iauId": "IAU-runtime-contract-proof-intake-v1",
+        "publicPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/19",
+        "publicCloseoutPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/20"
+      },
+      "recommendedNextAction": "Closed through existing runtime-contract proof-intake import and oracle review. Do not create a duplicate public import or new implementation IAU.",
       "blockedScope": [
         "new Windows Docker Desktop proof claims",
         "runtime execution",
         "container orchestration"
       ],
-      "implementationAdmitted": false
+      "implementationAdmitted": false,
+      "implemented": true,
+      "oracleReviewed": true
     },
     {
       "candidateId": "IAU-candidate-command-activation-surface-v1",
@@ -361,8 +387,8 @@
       "implementationAdmitted": false
     }
   ],
-  "selectedNextCandidate": "IAU-candidate-public-proof-status-oracle-v1",
-  "selectedNextAction": "bridge-readiness-analysis",
+  "selectedNextCandidate": "IAU-candidate-command-activation-surface-v1",
+  "selectedNextAction": "bridge-readiness-decision",
   "mutationBoundary": {
     "authorized": [
       "governance docs",

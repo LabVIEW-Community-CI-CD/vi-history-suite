@@ -2,7 +2,9 @@
   "schema": "vi-history/mit-spec-kit-implementation-admission@v1",
   "sliceId": "runtime-contract-host-provider-v1",
   "createdDate": "2026-05-17",
-  "state": "implementation-admitted",
+  "state": "oracle-reviewed",
+  "implemented": true,
+  "oracleReviewed": true,
   "sourceAuthority": "gitlabGoverned",
   "targetAuthority": "githubMitSpecKit",
   "targetRepository": "https://github.com/svelderrainruiz/vi-history",
@@ -28,7 +30,9 @@
     "runtimeFactsIauCloseout": "implemented",
     "providerPolicyIauPreflight": "pass",
     "providerPolicyIauCloseout": "implemented",
-    "proofIntakeIauPreflight": "pass"
+    "proofIntakeIauPreflight": "pass",
+    "proofIntakeIauCloseout": "implemented",
+    "proofStatusOracleReview": "pass"
   },
   "sliceStateModel": [
     "candidate",
@@ -92,9 +96,10 @@
     },
     {
       "iauId": "IAU-runtime-contract-proof-intake-v1",
-      "state": "implementation-admitted",
+      "state": "oracle-reviewed",
       "record": "implementation-admissions/IAU-runtime-contract-proof-intake-v1.json",
       "preflightRecord": "implementation-admissions/IAU-runtime-contract-proof-intake-v1-preflight-v1.json",
+      "oracleReviewRecord": "oracle-review-v1.json",
       "admittedTasks": [
         "T026",
         "T027",
@@ -104,7 +109,7 @@
       ]
     }
   ],
-  "currentImplementationAdmissionUnit": "IAU-runtime-contract-proof-intake-v1",
+  "currentImplementationAdmissionUnit": null,
   "implementationScopeCompleted": [
     "T007",
     "T008",
@@ -124,16 +129,25 @@
     "T022",
     "T023",
     "T024",
-    "T025"
-  ],
-  "implementationScopeAdmitted": [
+    "T025",
     "T026",
     "T027",
     "T028",
     "T029",
     "T030"
   ],
+  "implementationScopeAdmitted": [],
   "implementationScopeBlockedUntilProofIntakeMerge": [],
+  "oracleReview": {
+    "workItem": 39,
+    "record": "oracle-review-v1.json",
+    "status": "oracle-reviewed",
+    "bugOracleClassification": "no-defect-candidate",
+    "resolvedCandidate": "IAU-candidate-public-proof-status-oracle-v1",
+    "selectedNextCandidate": "IAU-candidate-command-activation-surface-v1",
+    "selectedNextAction": "bridge-readiness-decision",
+    "implementationAdmitted": false
+  },
   "governedRequirementMaturity": {
     "releasedExtensionSignal": "supports requirement maturity",
     "sourceReusePermission": "not-granted"
