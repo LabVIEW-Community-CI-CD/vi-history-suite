@@ -31,10 +31,12 @@ later ADR admits a release channel.
 
 ## Implementation Admission
 
-The bridge now records this slice as `implementation-admitted` for the MIT
-authority. The admission is narrow: only foundation tasks `T007` through `T011`
-may start. User-story implementation tasks remain blocked until the foundation
-contract pull request merges.
+The bridge records the foundation IAU as implemented for the MIT authority.
+The current user-story IAU is
+`IAU-runtime-contract-explicit-compare-v1`, limited to `T012` through `T015`,
+and remains blocked until its explicit preflight records `status: pass`.
+Later user-story implementation tasks remain blocked until the explicit-compare
+IAU merges.
 
 The released GitLab extension is treated as a requirement-maturity signal. It
 does not grant permission to copy source, private evidence, private scripts, or

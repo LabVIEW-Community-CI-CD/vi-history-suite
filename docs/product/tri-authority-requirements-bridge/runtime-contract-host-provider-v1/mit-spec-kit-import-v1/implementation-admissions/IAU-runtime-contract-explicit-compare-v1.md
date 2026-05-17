@@ -20,4 +20,10 @@ The unit consumes the existing public import packet and Spec Kit feature only.
 It does not permit source copying, private evidence import, Marketplace work, or
 runtime-provider implementation beyond the explicit compare-action behavior.
 
+## Preflight
+
+Implementation remains blocked until
+`IAU-runtime-contract-explicit-compare-v1-preflight-v1` records `status: pass`.
+The current status is `pending`.
+
 Tasks `T016` through `T030` remain blocked until this IAU merges.

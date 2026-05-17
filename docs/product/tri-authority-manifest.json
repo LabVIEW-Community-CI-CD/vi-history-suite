@@ -59,11 +59,12 @@
       "exported",
       "public-imported",
       "spec-locked",
+      "preflight-required",
       "implementation-admitted",
       "implemented",
       "oracle-reviewed"
     ],
-    "implementationStartRule": "MIT implementation begins only after the bridge records implementation-admitted for the slice"
+    "implementationStartRule": "MIT implementation begins only after a named Implementation Admission Unit has an explicit preflight record with status pass"
   },
   "bugOracle": {
     "sameWrongBehaviorAcrossIndependentImplementations": "requirement-defect-candidate",

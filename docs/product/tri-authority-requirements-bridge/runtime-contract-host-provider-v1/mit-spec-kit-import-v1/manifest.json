@@ -43,14 +43,23 @@
   "sliceState": "implementation-admitted",
   "implementationAdmission": {
     "record": "implementation-admission-v1.json",
-    "admittedScope": [
+    "completedScope": [
       "T007",
       "T008",
       "T009",
       "T010",
       "T011"
     ],
-    "blockedUntilFoundationMerge": "T012-T030",
+    "currentIau": "IAU-runtime-contract-explicit-compare-v1",
+    "currentIauState": "preflight-required",
+    "currentIauPreflightRecord": "implementation-admissions/IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
+    "currentIauScope": [
+      "T012",
+      "T013",
+      "T014",
+      "T015"
+    ],
+    "blockedUntilCurrentIauMerge": "T016-T030",
     "releasedExtensionSignal": "requirements-maturity-not-source-reuse"
   },
   "implementationSharing": "none",

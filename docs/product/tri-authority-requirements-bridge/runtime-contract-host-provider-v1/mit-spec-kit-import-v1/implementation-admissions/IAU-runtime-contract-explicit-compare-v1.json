@@ -36,8 +36,14 @@
     "public import packet present",
     "Spec Kit artifacts locked",
     "bridge artifact validation passed",
-    "public redaction scan passed"
+    "public redaction scan passed",
+    "IAU preflight status pass"
   ],
+  "preImplementationPreflight": {
+    "status": "pending",
+    "record": "IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
+    "implementationStartAllowed": false
+  },
   "exitGate": [
     "T012-T015 complete",
     "public redaction scan passes",
