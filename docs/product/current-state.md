@@ -1051,6 +1051,12 @@ Historical public closeout and runtime-provider public-acceptance gate record:
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
   - public GitHub repo is the public sibling product authority at `https://github.com/svelderrainruiz/vi-history-suite`; exact historical publication and adoption heads are retained in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
+  - public MIT GitHub repo `https://github.com/svelderrainruiz/vi-history`
+    is the clean-room Spec Kit implementation authority admitted by ADR-0041;
+    it consumes sanitized requirements and Spec Kit artifacts only, uses
+    `develop` as integration and `main` as release/default, reserves
+    `svelderrainruiz.vi-history`, and has Marketplace publication disabled
+    until a later ADR admits it
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface; the exact published head is retained in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source publication/adoption records are tracked separately
     from both wiki surfaces in

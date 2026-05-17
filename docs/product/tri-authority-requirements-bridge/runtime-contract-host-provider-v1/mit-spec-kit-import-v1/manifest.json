@@ -1,0 +1,62 @@
+{
+  "schema": "vi-history/tri-authority-requirements-bridge-export@v1",
+  "sliceId": "runtime-contract-host-provider-v1",
+  "createdDate": "2026-05-17",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommit": "31add781bd04cc832d9fb55aa821a69305a91a37",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetFeature": "runtime-contract-host-provider-v1",
+  "publicImportPath": "docs/requirements/imports/runtime-contract-host-provider-v1/",
+  "specKitPath": ".specify/specs/runtime-contract-host-provider-v1/",
+  "importedRequirementIds": [
+    "VHS-SYS-REQ-004",
+    "VHS-SYS-REQ-005",
+    "VHS-SYS-REQ-006",
+    "VHS-SYS-REQ-007",
+    "VHS-SYS-REQ-008",
+    "VHS-REQ-094",
+    "VHS-REQ-095",
+    "VHS-REQ-138",
+    "VHS-REQ-141",
+    "VHS-REQ-144",
+    "VHS-REQ-146",
+    "VHS-REQ-148",
+    "VHS-REQ-194",
+    "VHS-REQ-588",
+    "VHS-REQ-589",
+    "VHS-REQ-590"
+  ],
+  "redactionStatus": {
+    "status": "pass",
+    "checkedFor": [
+      "private filesystem paths",
+      "private credential paths",
+      "local standards-review tooling names",
+      "private release credential markers",
+      "PolyForm source-file copying"
+    ],
+    "publicImportContainsPrivateTooling": false,
+    "publicImportContainsImplementationSource": false
+  },
+  "implementationSharing": "none",
+  "licenseBoundary": "MIT target receives requirements and Spec Kit artifacts only",
+  "marketplacePublication": "disabled-until-later-adr",
+  "governedWorkItem": {
+    "reference": "#30",
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/30"
+  },
+  "targetIssues": [
+    "Bootstrap MIT Spec Kit authority",
+    "Import runtime-contract-host-provider-v1",
+    "Lock Spec Kit spec/plan/tasks for runtime contract",
+    "Implement runtime contract after spec lock",
+    "Decide future Marketplace publication posture"
+  ],
+  "bugOracle": {
+    "sameWrongBehaviorAcrossIndependentImplementations": "requirement-defect-candidate",
+    "oneAuthorityWrongBehavior": "implementation-defect-candidate",
+    "ambiguousBehavior": "requirement-clarification-candidate"
+  }
+}

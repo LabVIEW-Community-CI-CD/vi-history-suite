@@ -1,0 +1,63 @@
+{
+  "schema": "vi-history/tri-authority-manifest@v1",
+  "createdDate": "2026-05-17",
+  "status": "active",
+  "governingAdr": "ADR-0041",
+  "splitBaseline": {
+    "tag": "v1.3.16",
+    "meaning": "shared ancestry baseline for the pre-split product line, not an ongoing source-promotion contract"
+  },
+  "authorities": {
+    "gitlabGoverned": {
+      "role": "governed authority",
+      "repository": "https://gitlab.com/svelderrainruiz/vi-history-suite",
+      "packageName": "vi-history",
+      "publisher": "svelderrainruiz",
+      "extensionId": "svelderrainruiz.vi-history",
+      "displayName": "VI History",
+      "firstPostSplitVersion": "0.1.0",
+      "licenseBoundary": "PolyForm governed source line",
+      "releaseChannel": "GitLab Releases with VSIX, checksum, and evidence assets"
+    },
+    "githubMarketplaceContinuity": {
+      "role": "public Marketplace-continuity authority",
+      "repository": "https://github.com/svelderrainruiz/vi-history-suite",
+      "packageName": "vi-history-suite",
+      "publisher": "svelderrainruiz",
+      "extensionId": "svelderrainruiz.vi-history-suite",
+      "displayName": "VI History Suite",
+      "firstPostSplitVersion": "1.4.0",
+      "licenseBoundary": "PolyForm public product-continuity source line",
+      "releaseChannel": "GitHub Releases and VS Code Marketplace"
+    },
+    "githubMitSpecKit": {
+      "role": "public MIT Spec Kit implementation authority",
+      "repository": "https://github.com/svelderrainruiz/vi-history",
+      "packageName": "vi-history",
+      "publisher": "svelderrainruiz",
+      "extensionId": "svelderrainruiz.vi-history",
+      "displayName": "VI History",
+      "firstBootstrapVersion": "0.1.0",
+      "licenseBoundary": "MIT clean-room implementation line",
+      "releaseChannel": "GitHub source and CI only until a later ADR admits releases",
+      "marketplacePublication": "disabled-until-later-adr",
+      "branchFlow": {
+        "integration": "develop",
+        "release": "main"
+      }
+    }
+  },
+  "bridge": {
+    "kind": "slice-based requirements-core export/import plus Spec Kit artifacts",
+    "governedRetainedRoot": "docs/product/tri-authority-requirements-bridge",
+    "publicImportRoot": "docs/requirements/imports",
+    "specKitRoot": ".specify/specs",
+    "importedIds": "immutable baseline references",
+    "implementationSharing": "none"
+  },
+  "bugOracle": {
+    "sameWrongBehaviorAcrossIndependentImplementations": "requirement-defect-candidate",
+    "oneAuthorityWrongBehavior": "implementation-defect-candidate",
+    "ambiguousBehavior": "requirement-clarification-candidate"
+  }
+}
