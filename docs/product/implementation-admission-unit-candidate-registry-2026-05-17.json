@@ -74,7 +74,7 @@
     {
       "candidateId": "IAU-candidate-installed-user-observation-public-surface-v1",
       "rank": 1,
-      "state": "candidate",
+      "state": "bridge-ready",
       "lane": "evidence-surface",
       "admissionPriorityScore": 88,
       "scoreBreakdown": {
@@ -99,7 +99,14 @@
       "publicSignals": [
         "https://github.com/svelderrainruiz/vi-history-suite/issues/98"
       ],
-      "recommendedNextAction": "Run bridge-readiness analysis and define a public-safe imported requirements packet for observation fact buckets, routing, and blocked scope.",
+      "readinessRecord": {
+        "markdown": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.md",
+        "json": "docs/product/tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.json",
+        "workItem": 34,
+        "status": "bridge-ready",
+        "implementationAdmitted": false
+      },
+      "recommendedNextAction": "Create a public MIT import/spec branch for observation fact buckets, routing, and blocked scope. Do not implement until a later IAU preflight passes.",
       "blockedScope": [
         "Windows Docker Desktop proof admission",
         "Marketplace mutation",
@@ -277,7 +284,7 @@
     }
   ],
   "selectedNextCandidate": "IAU-candidate-installed-user-observation-public-surface-v1",
-  "selectedNextAction": "bridge-readiness-analysis",
+  "selectedNextAction": "public-import-and-spec-planning",
   "mutationBoundary": {
     "authorized": [
       "governance docs",
