@@ -2,7 +2,8 @@
   "schema": "vi-history/implementation-admission-unit@v1",
   "iauId": "IAU-installed-user-observation-model-v1",
   "createdDate": "2026-05-17",
-  "state": "implementation-admitted",
+  "completedDate": "2026-05-17",
+  "state": "implemented",
   "parentSliceId": "installed-user-observation-public-surface-v1",
   "specFeature": ".specify/specs/installed-user-observation-public-surface-v1",
   "sourceAuthority": "gitlabGoverned",
@@ -33,6 +34,24 @@
     "status": "pass",
     "record": "IAU-installed-user-observation-model-v1-preflight-v1.json",
     "implementationStartAllowed": true
+  },
+  "implementationCloseout": {
+    "status": "pass",
+    "record": "IAU-installed-user-observation-model-v1-closeout-v1.json",
+    "publicPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/29",
+    "mergeCommit": "d357776e232b67b79060c315882fb8a2cf5cbcfd",
+    "completedTasks": [
+      "T009",
+      "T010",
+      "T011",
+      "T012",
+      "T013"
+    ],
+    "blockedTasksRemainBlocked": [
+      "T014",
+      "T015",
+      "T016"
+    ]
   },
   "exitGate": [
     "T009-T013 complete",

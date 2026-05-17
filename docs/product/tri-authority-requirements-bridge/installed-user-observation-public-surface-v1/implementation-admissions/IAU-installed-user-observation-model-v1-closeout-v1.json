@@ -1,0 +1,58 @@
+{
+  "schema": "vi-history/implementation-admission-unit-closeout@v1",
+  "iauId": "IAU-installed-user-observation-model-v1",
+  "createdDate": "2026-05-17",
+  "completedDate": "2026-05-17",
+  "status": "implemented",
+  "workItem": {
+    "iid": 37,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/37",
+    "title": "Record MIT installed-user observation model closeout"
+  },
+  "parentSliceId": "installed-user-observation-public-surface-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranch": "develop",
+  "publicIssue": {
+    "number": 27,
+    "url": "https://github.com/svelderrainruiz/vi-history/issues/27",
+    "state": "closed"
+  },
+  "publicPullRequest": {
+    "number": 29,
+    "url": "https://github.com/svelderrainruiz/vi-history/pull/29",
+    "state": "merged",
+    "mergedAt": "2026-05-17T15:57:57Z",
+    "mergeCommit": "d357776e232b67b79060c315882fb8a2cf5cbcfd"
+  },
+  "postMergeValidation": {
+    "workflow": "spec-gates",
+    "run": "https://github.com/svelderrainruiz/vi-history/actions/runs/25995657329",
+    "branch": "develop",
+    "headSha": "d357776e232b67b79060c315882fb8a2cf5cbcfd",
+    "conclusion": "success"
+  },
+  "completedTasks": [
+    "T009",
+    "T010",
+    "T011",
+    "T012",
+    "T013"
+  ],
+  "blockedTasksRemainBlocked": [
+    "T014",
+    "T015",
+    "T016"
+  ],
+  "blockedScope": [
+    "LabVIEWCLI execution",
+    "Docker execution or orchestration",
+    "Windows Docker Desktop proof claims",
+    "Marketplace publication",
+    "source copying from another product line"
+  ],
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr",
+  "oracleReviewState": "pending"
+}

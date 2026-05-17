@@ -11,6 +11,9 @@ Spec-lock closeout work item:
 Observation-model admission work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/36`
 
+Observation-model implementation closeout work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/37`
+
 Machine-readable packet:
 [bridge-readiness-v1.json](./bridge-readiness-v1.json)
 
@@ -24,8 +27,9 @@ implementation, then records the public import/spec result after the MIT merge.
 
 ## Decision
 
-The candidate was **bridge-ready**, reached **spec-locked**, and now has one
-**implementation-admitted** unit: `IAU-installed-user-observation-model-v1`.
+The candidate was **bridge-ready**, reached **spec-locked**, admitted one IAU,
+and now has one **implemented** unit:
+`IAU-installed-user-observation-model-v1`.
 
 MIT PR #26 created the public MIT import packet and Spec Kit feature for
 `installed-user-observation-public-surface-v1`. The merged feature models
@@ -37,6 +41,9 @@ Desktop proof promotion.
 Work item #36 admits only the observation model tasks `T009` through `T013`.
 It does not admit reporting-surface tasks `T014` through `T016` or any proof,
 execution, orchestration, Marketplace, or source-copying behavior.
+
+Work item #37 records that MIT PR #29 implemented only `T009` through `T013`
+and merged to `develop`.
 
 ## Governed Source
 
@@ -52,6 +59,7 @@ execution, orchestration, Marketplace, or source-copying behavior.
 | Target branch flow | `develop` integration, `main` release |
 | Target baseline observed | `bba32566c5909ef89ddf8ee2fac0422b9db45d49` |
 | Target spec-lock commit | `e0fe22daf80c8300b2543300d9af4547c04e1220` |
+| Target implementation commit | `d357776e232b67b79060c315882fb8a2cf5cbcfd` |
 
 ## MIT Spec-Lock Closeout
 
@@ -73,12 +81,26 @@ execution, orchestration, Marketplace, or source-copying behavior.
 | --- | --- |
 | Admission packet | [implementation-admission-v1.md](./implementation-admission-v1.md) |
 | Admission packet JSON | [implementation-admission-v1.json](./implementation-admission-v1.json) |
-| Current IAU | `IAU-installed-user-observation-model-v1` |
+| Implemented IAU | `IAU-installed-user-observation-model-v1` |
 | IAU record | [IAU-installed-user-observation-model-v1.md](./implementation-admissions/IAU-installed-user-observation-model-v1.md) |
 | IAU preflight | [IAU-installed-user-observation-model-v1-preflight-v1.md](./implementation-admissions/IAU-installed-user-observation-model-v1-preflight-v1.md) |
+| IAU closeout | [IAU-installed-user-observation-model-v1-closeout-v1.md](./implementation-admissions/IAU-installed-user-observation-model-v1-closeout-v1.md) |
 | Preflight status | `pass` |
-| Admitted tasks | `T009` through `T013` |
+| Closeout status | `pass` |
+| Completed tasks | `T009` through `T013` |
 | Blocked tasks | `T014` through `T016` |
+
+## MIT Implementation Closeout
+
+| Field | Value |
+| --- | --- |
+| MIT issue | `https://github.com/svelderrainruiz/vi-history/issues/27` |
+| MIT PR | `https://github.com/svelderrainruiz/vi-history/pull/29` |
+| Merge time | `2026-05-17T15:57:57Z` |
+| Merge commit | `d357776e232b67b79060c315882fb8a2cf5cbcfd` |
+| Target branch | `develop` |
+| Post-merge validation | `https://github.com/svelderrainruiz/vi-history/actions/runs/25995657329` |
+| Result | `implemented` |
 
 ## Public Signal
 
@@ -137,33 +159,31 @@ The Spec Kit feature should answer:
 This packet first promoted the candidate from `candidate` to `bridge-ready`.
 The closeout then recorded the public MIT import/spec result as `spec-locked`.
 The admission packet now records `IAU-installed-user-observation-model-v1` as
-implementation-admitted.
+implemented.
 
 It does not admit:
 
-- MIT implementation outside `T009` through `T013`
-- Copilot handoff before the MIT public admission packet is committed
+- MIT implementation outside a newly admitted successor IAU
+- Copilot handoff before a new MIT public admission packet is committed
 - reporting-surface work for `T014` through `T016`
 - LabVIEWCLI execution
 - Docker execution or orchestration
 - Windows Docker Desktop proof claims
 - Marketplace publication
 
-Implementation can start only for `IAU-installed-user-observation-model-v1`
-after:
+Future implementation can start only after:
 
 1. the public import packet exists,
 2. Spec Kit `spec.md`, `plan.md`, and `tasks.md` are committed,
 3. clarification/checklist/analyze gates do not contain critical blockers,
 4. public redaction and bridge artifact validation pass, and
-5. the MIT public admission packet mirrors the passing governed IAU preflight.
+5. the MIT public admission packet mirrors a passing governed IAU preflight.
 
 ## Next Gate
 
-Create a public MIT admission/handoff branch from `develop` for
-`IAU-installed-user-observation-model-v1`. The branch may add public admission
-records, a handoff issue, and validation coverage only. Implementation starts
-after that public packet is merged and must stay within `T009` through `T013`.
+Run cross-authority oracle review for the implemented observation model, or
+discover a separate successor IAU. No new MIT implementation starts from this
+packet.
 
 ## Validation
 
