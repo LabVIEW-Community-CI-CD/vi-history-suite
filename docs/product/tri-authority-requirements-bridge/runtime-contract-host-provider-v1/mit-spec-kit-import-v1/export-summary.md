@@ -31,12 +31,12 @@ later ADR admits a release channel.
 
 ## Implementation Admission
 
-The bridge records the foundation IAU as implemented for the MIT authority.
-The current user-story IAU is
-`IAU-runtime-contract-explicit-compare-v1`, limited to `T012` through `T015`,
-and its explicit preflight records `status: pass`.
-Later user-story implementation tasks remain blocked until the explicit-compare
-IAU merges.
+The bridge records the foundation and explicit-compare IAUs as implemented for
+the MIT authority. The current user-story IAU is
+`IAU-runtime-contract-runtime-facts-v1`, limited to `T016` through `T021`, and
+its explicit preflight records `status: pass`.
+Later Docker and proof-intake implementation tasks remain blocked until the
+runtime-facts IAU merges.
 
 The released GitLab extension is treated as a requirement-maturity signal. It
 does not grant permission to copy source, private evidence, private scripts, or

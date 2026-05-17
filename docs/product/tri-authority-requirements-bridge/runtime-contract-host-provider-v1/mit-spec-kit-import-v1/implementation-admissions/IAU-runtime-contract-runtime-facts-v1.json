@@ -1,27 +1,22 @@
 {
   "schema": "vi-history/implementation-admission-unit@v1",
-  "iauId": "IAU-runtime-contract-explicit-compare-v1",
+  "iauId": "IAU-runtime-contract-runtime-facts-v1",
   "createdDate": "2026-05-17",
-  "state": "implemented",
-  "implementedDate": "2026-05-17",
+  "state": "implementation-admitted",
   "parentSliceId": "runtime-contract-host-provider-v1",
   "specFeature": ".specify/specs/runtime-contract-host-provider-v1",
   "sourceAuthority": "gitlabGoverned",
   "targetAuthority": "githubMitSpecKit",
   "targetRepository": "https://github.com/svelderrainruiz/vi-history",
   "admittedTasks": [
-    "T012",
-    "T013",
-    "T014",
-    "T015"
-  ],
-  "blockedTasks": [
     "T016",
     "T017",
     "T018",
     "T019",
     "T020",
-    "T021",
+    "T021"
+  ],
+  "blockedTasks": [
     "T022",
     "T023",
     "T024",
@@ -33,7 +28,7 @@
     "T030"
   ],
   "entryGate": [
-    "IAU-runtime-contract-foundation-v1 merged",
+    "IAU-runtime-contract-explicit-compare-v1 merged",
     "public import packet present",
     "Spec Kit artifacts locked",
     "bridge artifact validation passed",
@@ -42,16 +37,11 @@
   ],
   "preImplementationPreflight": {
     "status": "pass",
-    "record": "IAU-runtime-contract-explicit-compare-v1-preflight-v1.json",
+    "record": "IAU-runtime-contract-runtime-facts-v1-preflight-v1.json",
     "implementationStartAllowed": true
   },
-  "implementationCloseout": {
-    "pullRequest": "https://github.com/svelderrainruiz/vi-history/pull/13",
-    "mergeCommit": "a77ffd7129e8fee335a08107e05d9955ead7c7af",
-    "status": "implemented"
-  },
   "exitGate": [
-    "T012-T015 complete",
+    "T016-T021 complete",
     "public redaction scan passes",
     "bridge artifact validation passes",
     "MIT repo npm test passes",
