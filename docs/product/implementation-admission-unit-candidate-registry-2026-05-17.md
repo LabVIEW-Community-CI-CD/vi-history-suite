@@ -62,7 +62,7 @@ code; it only chooses the next bridge-readiness target.
 
 | Rank | Candidate | State | Score | Direction |
 | ---: | --- | --- | ---: | --- |
-| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `candidate` | 88 | Mature into a bridge-ready public evidence/intake surface before any implementation. |
+| 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `bridge-ready` | 88 | Create a public MIT import/spec branch after the readiness packet merges; do not implement. |
 | 2 | `IAU-candidate-public-proof-status-oracle-v1` | `candidate` | 79 | Evaluate after observation surface or combine if the public packet stays small. |
 | 3 | `IAU-candidate-command-activation-surface-v1` | `observed` | 71 | Consider only after deciding whether MIT should expose an extension package surface next. |
 | 4 | `IAU-candidate-labviewcli-execution-boundary-v1` | `observed` | 62 | Requires a new execution-safety bridge packet before command execution can be opened. |
@@ -83,6 +83,11 @@ Rationale:
 - It strengthens the MIT repo as a public verification engine before opening
   LabVIEWCLI execution or Marketplace behavior.
 - It keeps Windows Docker Desktop proof separate under issue #65.
+
+Bridge-readiness was recorded in:
+
+- [bridge-readiness-v1.md](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.md)
+- [bridge-readiness-v1.json](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.json)
 
 Bridge-readiness work for this candidate should answer:
 
