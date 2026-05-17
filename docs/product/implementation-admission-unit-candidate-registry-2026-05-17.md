@@ -4,6 +4,8 @@ Recorded: `2026-05-17T13:28:45Z`
 
 Updated: `2026-05-17T19:46:38Z`
 
+Last reviewed: `2026-05-17T20:18:55Z`
+
 GitLab work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/33`
 
@@ -18,6 +20,9 @@ Observation-model implementation closeout work item:
 
 Observation-model oracle review work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/38`
+
+Public proof-status oracle readiness work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/39`
 
 Machine-readable packet:
 [implementation-admission-unit-candidate-registry-2026-05-17.json](./implementation-admission-unit-candidate-registry-2026-05-17.json)
@@ -77,8 +82,8 @@ code; it only chooses the next bridge-readiness target.
 | Rank | Candidate | State | Score | Direction |
 | ---: | --- | --- | ---: | --- |
 | 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `oracle-reviewed` | 88 | `IAU-installed-user-observation-model-v1` completed T009-T013 and oracle review found `no-defect-candidate`; no new implementation starts from this candidate. |
-| 2 | `IAU-candidate-public-proof-status-oracle-v1` | `candidate` | 79 | Selected for bridge-readiness analysis next; keep execution, orchestration, and new Windows Docker Desktop proof claims blocked. |
-| 3 | `IAU-candidate-command-activation-surface-v1` | `observed` | 71 | Consider only after deciding whether MIT should expose an extension package surface next. |
+| 2 | `IAU-candidate-public-proof-status-oracle-v1` | `oracle-reviewed` | 79 | Closed through the existing `runtime-contract-host-provider-v1` import and proof-intake IAU; no duplicate import or new implementation IAU. |
+| 3 | `IAU-candidate-command-activation-surface-v1` | `observed` | 71 | Selected next for bridge-readiness decision: decide whether MIT should expose an extension package surface next. |
 | 4 | `IAU-candidate-labviewcli-execution-boundary-v1` | `observed` | 62 | Requires a new execution-safety bridge packet before command execution can be opened. |
 | 5 | `IAU-candidate-windows-docker-desktop-proof-oracle-v1` | `blocked` | 47 | Blocked on real Windows Docker Desktop Windows-container proof under public issue #65. |
 | 6 | `IAU-candidate-mit-marketplace-posture-v1` | `blocked` | 35 | Marketplace remains disabled until a later ADR admits publication. |
@@ -163,18 +168,30 @@ Oracle review:
 ## Recommended Next Candidate
 
 The selected next candidate is
-`IAU-candidate-public-proof-status-oracle-v1`.
+`IAU-candidate-command-activation-surface-v1`.
 
 Rationale:
 
 - It is the highest-scored remaining non-blocked candidate.
-- It is backed by `VHS-REQ-588`, `VHS-REQ-589`, and `VHS-REQ-590`.
-- It can improve public proof-status and oracle comparison value without
-  admitting runtime execution, container orchestration, or Marketplace work.
-- It keeps new Windows Docker Desktop proof claims blocked until real Windows
-  Docker Desktop Windows-container evidence exists.
-- It gives the bridge another governed loop before exposing larger product
-  surfaces in the MIT authority.
+- The public proof-status candidate is now closed through existing
+  runtime-contract proof-intake coverage and oracle review.
+- It is backed by `VHS-REQ-594`.
+- It can decide whether the MIT authority should expose command activation and
+  package-surface metadata without admitting Marketplace publication,
+  execution behavior, or source promotion.
+
+## Public Proof-Status Oracle Closeout
+
+Work item #39 reviewed `IAU-candidate-public-proof-status-oracle-v1` and
+decided not to create a duplicate public import. The existing
+`runtime-contract-host-provider-v1` import already covers `VHS-REQ-588`,
+`VHS-REQ-589`, and `VHS-REQ-590`, and MIT PR #19 implemented
+`IAU-runtime-contract-proof-intake-v1`.
+
+Records:
+
+- [public-proof-status-oracle-v1/bridge-readiness-v1.md](./tri-authority-requirements-bridge/public-proof-status-oracle-v1/bridge-readiness-v1.md)
+- [runtime-contract oracle-review-v1.md](./tri-authority-requirements-bridge/runtime-contract-host-provider-v1/mit-spec-kit-import-v1/oracle-review-v1.md)
 
 ## Current Non-Admitted Boundaries
 
@@ -191,11 +208,11 @@ Rationale:
 
 ## Next Governed Action
 
-The selected next action is `bridge-readiness-analysis` for
-`IAU-candidate-public-proof-status-oracle-v1`. This action does not admit
-implementation. It should evaluate public-safe wording, traceability, blocked
-scope, redaction risk, and whether the existing runtime-contract proof-intake
-surface is sufficient or needs a separate public proof-status/oracle IAU.
+The selected next action is `bridge-readiness-decision` for
+`IAU-candidate-command-activation-surface-v1`. This action does not admit
+implementation. It should decide whether MIT needs an extension package command
+activation surface next, and if so what public import/spec scope can be
+prepared without opening Marketplace publication or execution behavior.
 
 ## Governance Loop
 

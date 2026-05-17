@@ -2,7 +2,7 @@
   "schema": "vi-history/implementation-admission-unit@v1",
   "iauId": "IAU-runtime-contract-proof-intake-v1",
   "createdDate": "2026-05-17",
-  "state": "implementation-admitted",
+  "state": "oracle-reviewed",
   "parentSliceId": "runtime-contract-host-provider-v1",
   "specFeature": ".specify/specs/runtime-contract-host-provider-v1",
   "sourceAuthority": "gitlabGoverned",
@@ -28,6 +28,19 @@
     "status": "pass",
     "record": "IAU-runtime-contract-proof-intake-v1-preflight-v1.json",
     "implementationStartAllowed": true
+  },
+  "implementationCloseout": {
+    "status": "implemented",
+    "publicIssue": "https://github.com/svelderrainruiz/vi-history/issues/4",
+    "implementationPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/19",
+    "implementationMergeCommit": "2241ec626633e552116b741e284abefdb422dc7a",
+    "closeoutPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/20",
+    "closeoutMergeCommit": "c9c24ce364f61198a8ed81a8fc2c3063be70337b"
+  },
+  "oracleReview": {
+    "status": "oracle-reviewed",
+    "record": "../oracle-review-v1.json",
+    "bugOracleClassification": "no-defect-candidate"
   },
   "exitGate": [
     "T026-T030 complete",

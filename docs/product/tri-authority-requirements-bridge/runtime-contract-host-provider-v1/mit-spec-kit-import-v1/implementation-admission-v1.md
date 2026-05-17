@@ -15,13 +15,15 @@ authority.
 The runtime-facts IAU is `IAU-runtime-contract-runtime-facts-v1`, covering
 tasks `T016` through `T021`, and it is implemented in the MIT authority.
 
-The current admitted implementation unit is
-`IAU-runtime-contract-proof-intake-v1`, limited to tasks `T026` through
-`T030`: Linux host proof classification tests, evidence-class rejection tests,
-`vihs validate-fixture` proof JSON and issue-body tests, proof packet writer
-and issue-body generation, and Windows Docker Desktop proof intake validation.
-Its preflight records `status: pass`, so implementation may start for `T026`
-through `T030` only.
+The proof-intake IAU is `IAU-runtime-contract-proof-intake-v1`, covering tasks
+`T026` through `T030`: Linux host proof classification tests, evidence-class
+rejection tests, `vihs validate-fixture` proof JSON and issue-body tests, proof
+packet writer and issue-body generation, and Windows Docker Desktop proof
+intake validation. It is implemented in the MIT authority.
+
+Work item #39 completes the proof-status oracle review with classification
+`no-defect-candidate`. No duplicate public import or new implementation IAU is
+needed for `IAU-candidate-public-proof-status-oracle-v1`.
 
 ## Bridge State
 
@@ -33,8 +35,8 @@ through `T030` only.
 | `spec-locked` | complete |
 | `preflight-required` | complete |
 | `implementation-admitted` | complete |
-| `implemented` | foundation, explicit-compare, runtime-facts, and provider-policy IAUs complete; proof-intake IAU admitted |
-| `oracle-reviewed` | pending |
+| `implemented` | foundation, explicit-compare, runtime-facts, provider-policy, and proof-intake IAUs complete |
+| `oracle-reviewed` | complete for proof-status/proof-intake scope |
 
 ## Admission Basis
 
@@ -53,10 +55,16 @@ through `T030` only.
 - `T010`: provider policy contract.
 - `T011`: traceability tests from implementation contracts to imported RTM IDs.
 
-## Current IAU
+## Completed Proof-Intake IAU
 
 - IAU: `IAU-runtime-contract-proof-intake-v1`
-- Preflight: `pass`; implementation may start for this IAU only.
+- Preflight: `pass`.
+- Closeout: `implemented`; MIT PR #19 merged to `develop` at
+  `2241ec626633e552116b741e284abefdb422dc7a`.
+- Public closeout: MIT PR #20 merged to `develop` at
+  `c9c24ce364f61198a8ed81a8fc2c3063be70337b`.
+- Oracle review: [oracle-review-v1.md](./oracle-review-v1.md) records
+  `no-defect-candidate`.
 - `T026`: Linux host LabVIEW proof classification tests.
 - `T027`: evidence-class substitution rejection tests.
 - `T028`: `vihs validate-fixture` proof JSON and issue-body generation tests.
@@ -65,3 +73,9 @@ through `T030` only.
 
 LabVIEWCLI command execution, Docker command execution or container
 orchestration, Marketplace publication, and source copying remain blocked.
+
+## Successor Rule
+
+No current runtime-contract IAU is admitted. The selected next governed
+candidate is `IAU-candidate-command-activation-surface-v1` for a
+bridge-readiness decision, not implementation.

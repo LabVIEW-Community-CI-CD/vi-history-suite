@@ -1,0 +1,102 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "public-proof-status-oracle-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-17T20:18:55Z",
+  "status": "bridge-readiness-complete-existing-import",
+  "decision": "do-not-create-new-import-or-implementation-iau",
+  "workItem": {
+    "iid": 39,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/39",
+    "title": "Bridge-readiness: public proof-status oracle IAU candidate"
+  },
+  "candidateId": "IAU-candidate-public-proof-status-oracle-v1",
+  "sourceRequirementIds": [
+    "VHS-REQ-588",
+    "VHS-REQ-589",
+    "VHS-REQ-590"
+  ],
+  "sourceAuthority": "gitlabGoverned",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "resolvedByExistingSlice": {
+    "sliceId": "runtime-contract-host-provider-v1",
+    "publicImportPath": "docs/requirements/imports/runtime-contract-host-provider-v1/",
+    "specKitPath": ".specify/specs/runtime-contract-host-provider-v1/",
+    "iauId": "IAU-runtime-contract-proof-intake-v1",
+    "completedTasks": [
+      "T026",
+      "T027",
+      "T028",
+      "T029",
+      "T030"
+    ],
+    "publicPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/19",
+    "publicCloseoutPullRequest": "https://github.com/svelderrainruiz/vi-history/pull/20",
+    "implementationMergeCommit": "2241ec626633e552116b741e284abefdb422dc7a",
+    "closeoutMergeCommit": "c9c24ce364f61198a8ed81a8fc2c3063be70337b"
+  },
+  "sourceArtifacts": [
+    "docs/product/public-validation-prerelease-v1.3.13.md",
+    "docs/product/windows-docker-desktop-proof-intake-v1.3.13.md",
+    "docs/product/windows-docker-desktop-proof-intake-v1.3.13.json",
+    "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-host-2026-v1.3.12-2026-04-26.json",
+    "docs/product/benchmark-packets/HARNESS-VHS-002-public-fixture-validate-fixture-linux-docker-2026-v1.3.12-2026-04-27.json",
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md"
+  ],
+  "publicSignals": [
+    "https://github.com/svelderrainruiz/vi-history-suite/issues/65"
+  ],
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "publicSafeWording": "pass-through-existing-runtime-contract-import",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "environmentDependency": "pass-for-oracle-review-only",
+    "cleanRoomSafety": "pass",
+    "newPublicImportRequired": false,
+    "newImplementationIauRequired": false,
+    "oracleReviewRequired": "pass-through-runtime-contract-oracle-review"
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "VHS-REQ-588, VHS-REQ-589, and VHS-REQ-590",
+      "public validate-fixture command shape",
+      "public proof-status matrix categories",
+      "Windows Docker Desktop issue #65 intake boundary",
+      "Linux host and Linux Docker proof as distinct admitted evidence classes",
+      "Windows Docker Desktop Windows-container admissibility fields",
+      "public-safe blocked scope for execution, orchestration, Marketplace mutation, and proof promotion"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions",
+      "claims that Linux Docker, WSL, or Windows host evidence closes Windows Docker Desktop proof",
+      "new MIT implementation before a future named IAU preflight"
+    ]
+  },
+  "oracleReview": {
+    "record": "docs/product/tri-authority-requirements-bridge/runtime-contract-host-provider-v1/mit-spec-kit-import-v1/oracle-review-v1.json",
+    "status": "oracle-reviewed",
+    "bugOracleClassification": "no-defect-candidate"
+  },
+  "blockedScope": [
+    "new MIT implementation from this candidate",
+    "new public import packet for duplicated VHS-REQ-588/589/590 scope",
+    "LabVIEWCLI command execution",
+    "Docker command execution or container orchestration",
+    "new Windows Docker Desktop proof admission without real Windows Docker Desktop evidence",
+    "Marketplace publication"
+  ],
+  "nextGate": {
+    "state": "next-candidate-discovery",
+    "selectedNextCandidate": "IAU-candidate-command-activation-surface-v1",
+    "selectedNextAction": "bridge-readiness-decision",
+    "implementationAdmitted": false
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
