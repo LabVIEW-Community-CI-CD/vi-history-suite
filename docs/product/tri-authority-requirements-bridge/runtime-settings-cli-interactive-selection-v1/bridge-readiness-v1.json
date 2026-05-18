@@ -1,0 +1,172 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-interactive-selection-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-18T13:14:32Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-interactive-selection-import-before-implementation",
+  "workItem": {
+    "iid": 47,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/47",
+    "title": "Bridge-readiness: MIT runtime settings CLI interactive selection IAU candidate"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-interactive-selection-contract-v1",
+  "futureSliceId": "runtime-settings-cli-interactive-selection-v1",
+  "targetFeature": "runtime-settings-cli-interactive-selection-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "edb8bfaa53237a8f3b63052573d6bfe728376424",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "3a1bd72ece543d79998561b4873d74714e2f7dce"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-545",
+    "VHS-REQ-546"
+  ],
+  "supportingTestIds": [
+    "TEST-UNIT-353",
+    "TEST-UNIT-354"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/information-for-users/command-reference.md",
+    "docs/information-for-users/faq.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "src/reporting/comparisonRuntimeLocator.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts",
+    "tests/integration/suite/extensionHost.test.ts"
+  ],
+  "targetGap": {
+    "mitRuntimeSettingsPrepareCommandImplemented": true,
+    "mitRuntimeSettingsWriteContractImplemented": true,
+    "mitValidationReadbackImplemented": true,
+    "mitValidationProofArtifactImplemented": true,
+    "mitInteractiveSelectionImportPresent": false,
+    "mitInteractiveSelectionSpecPresent": false,
+    "mitInteractiveSelectionAdmissionPresent": false,
+    "mitInteractiveSelectionImplementationPresent": false,
+    "summary": "The MIT authority can prepare, persist, validate, and retain validation proof facts, but it has no public import, Spec Kit feature, admission record, or clean-room contract for bare vihs no-argument interactive selection."
+  },
+  "splitDecision": {
+    "firstCandidate": "IAU-runtime-settings-cli-interactive-selection-contract-v1",
+    "reason": "Interactive selection is the next discoverability unit after validation proof artifacts, but it should be admitted as a pure selection-state contract before terminal process wiring, compare execution, runtime execution, live-session proof, packaging, or Marketplace behavior.",
+    "doNotAdmitTogether": [
+      "terminal process wiring or raw stdin prompt loops",
+      "proof-out file writing beyond the existing pure proof artifact contract",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "live already-running VS Code session uptake proof",
+      "packaging",
+      "Marketplace publication"
+    ]
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement IDs VHS-REQ-545 and VHS-REQ-546",
+      "supporting public test expectations TEST-UNIT-353 and TEST-UNIT-354",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command term vihs",
+      "governed default selection host/windows/2026/x86",
+      "public selection fields for provider, platform, LabVIEW version, and LabVIEW bitness",
+      "supported host choices for LabVIEW 2025, LabVIEW 2026, and newer local supported host versions when the selected installation and bitness are present",
+      "Docker selection constrained to 2026 / x64",
+      "Linux host selection constrained to supported Linux host proof semantics with x64 only for the first public MIT contract",
+      "exact copyable next-command guidance for non-interactive surfaces",
+      "validation reuse after confirmation through the already public vihs --validate readback contract",
+      "stable fail-closed reasons for unsupported years, host/platform mismatch, missing selected bitness, unsupported Docker bitness, unsupported Docker year, and not-yet-implemented paths",
+      "Marketplace-disabled posture"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "private proof packets or private issue templates",
+      "proof-out file writing beyond the existing pure proof artifact contract",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "live already-running VS Code session uptake proof",
+      "VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "candidateImplementationWork": [
+    "add tests proving bare vihs seeds missing settings to host/windows/2026/x86 and reports the current provider/platform/version/bitness bundle",
+    "add tests proving Enter-through confirmation preserves the current governed selection and requests validation through the existing validation readback contract",
+    "add tests proving guided host selection accepts supported LabVIEW 2025, LabVIEW 2026, and newer local host choices while failing closed for unsupported years or missing selected bitness",
+    "add tests proving Docker selection remains bounded to 2026 / x64",
+    "implement the minimum public MIT interactive-selection contract as pure selection state and output facts, without process stdin loops or runtime execution"
+  ],
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-interactive-selection-contract-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-interactive-selection-v1",
+    "candidateTasks": [
+      "add tests for default settings seeding and current bundle reporting",
+      "add tests for Enter-through confirmation and validation readback reuse",
+      "add tests for guided host selection and fail-closed unsupported host paths",
+      "add tests for bounded Docker 2026 / x64 selection",
+      "implement the pure interactive selection contract"
+    ],
+    "blockedTasks": [
+      "terminal process wiring or raw stdin prompt loops",
+      "proof-out file writing beyond the existing pure proof artifact contract",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "live already-running VS Code session uptake proof",
+      "VSIX packaging",
+      "Marketplace publication",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "validationReuseBoundary": "pass",
+    "implementationSharingBlocked": "pass",
+    "marketplacePublicationDisabled": "pass"
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-interactive-selection-v1",
+      "create the public Spec Kit feature spec, plan, and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing interactive selection before public preflight",
+      "adding terminal process prompt loops before a separate IAU",
+      "adding proof-out file writing beyond the existing pure proof artifact contract",
+      "adding compare execution",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding VSIX packaging or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
