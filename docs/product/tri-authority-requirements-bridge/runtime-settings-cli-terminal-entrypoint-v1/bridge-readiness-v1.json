@@ -1,0 +1,208 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-terminal-entrypoint-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-18T13:56:30Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-terminal-entrypoint-import-before-implementation",
+  "workItem": {
+    "iid": 48,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/48",
+    "title": "Bridge-readiness: MIT runtime settings CLI terminal entrypoint IAU candidate"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-terminal-entrypoint-materialization-v1",
+  "laterIauIds": [
+    "IAU-runtime-settings-cli-terminal-prompt-loop-v1"
+  ],
+  "futureSliceId": "runtime-settings-cli-terminal-entrypoint-v1",
+  "targetFeature": "runtime-settings-cli-terminal-entrypoint-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "3716d35a7ba57031464a81902f37862128f53681",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "baa6048b0d918c829e4b64372d71130d8fb38de7"
+  },
+  "targetRepositoryFacts": {
+    "nameWithOwner": "svelderrainruiz/vi-history",
+    "isFork": false,
+    "defaultBranch": "develop",
+    "visibility": "PUBLIC",
+    "viewerPermission": "ADMIN"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-537",
+    "VHS-REQ-544",
+    "VHS-REQ-545",
+    "VHS-REQ-546"
+  ],
+  "supportingTestIds": [
+    "TEST-UNIT-345",
+    "TEST-UNIT-352",
+    "TEST-UNIT-353",
+    "TEST-UNIT-354",
+    "TEST-INTEG-009",
+    "TEST-INTEG-010",
+    "TEST-INTEG-011"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/information-for-users/command-reference.md",
+    "docs/information-for-users/faq.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "src/extension.ts",
+    "src/reporting/comparisonRuntimeLocator.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts",
+    "tests/integration/suite/extensionHost.test.ts"
+  ],
+  "targetGap": {
+    "mitCommandActivationImplemented": true,
+    "mitCommandHandlerShellImplemented": true,
+    "mitRuntimeSettingsPrepareCommandImplemented": true,
+    "mitRuntimeSettingsWriteContractImplemented": true,
+    "mitValidationReadbackImplemented": true,
+    "mitValidationProofArtifactImplemented": true,
+    "mitInteractiveSelectionStateImplemented": true,
+    "mitTerminalEntrypointImportPresent": false,
+    "mitTerminalEntrypointSpecPresent": false,
+    "mitTerminalEntrypointAdmissionPresent": false,
+    "mitTerminalEntrypointMaterializationImplemented": false,
+    "summary": "The MIT authority has pure command, settings, validation, proof, and interactive-selection contracts, but it has no public import, Spec Kit feature, admission record, or clean-room contract for the materialized bare vihs terminal entrypoint and its runtime recovery facts."
+  },
+  "splitDecision": {
+    "firstCandidate": "IAU-runtime-settings-cli-terminal-entrypoint-materialization-v1",
+    "laterCandidate": "IAU-runtime-settings-cli-terminal-prompt-loop-v1",
+    "reason": "Terminal entrypoint materialization should establish the public command-surface and recovery facts before the MIT authority binds those facts to process-level stdin/TTY prompt behavior.",
+    "doNotAdmitTogether": [
+      "raw terminal prompt loops and stdin/TTY handling",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "proof-out file writing beyond already admitted proof artifact contracts",
+      "live already-running VS Code session uptake proof",
+      "Windows PowerShell Marketplace install/bootstrap behavior",
+      "packaging",
+      "Marketplace publication"
+    ]
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement IDs VHS-REQ-537, VHS-REQ-544, VHS-REQ-545, and VHS-REQ-546",
+      "supporting public test expectations for terminal entrypoint materialization, runtime recovery, no-argument discoverability, and validation handoff",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command term vihs",
+      "user-scope terminal entrypoint admission facts for supported installed-user shells",
+      "rules that no hidden path reconstruction, manual shell-profile editing, admin elevation, machine-wide install doctrine, or prebuilt external CLI payload is required",
+      "runtime lookup order facts, including standard VS Code runtime on Windows before global Node fallback or explicit override",
+      "stale or missing launcher recovery guidance through the governed repair or refresh path",
+      "no-argument discoverability fields that may print the current provider/platform/LabVIEW version/LabVIEW bitness bundle and exact copyable next commands",
+      "validation handoff semantics for a later prompt-loop IAU, reusing the existing public vihs --validate contract",
+      "Marketplace-disabled posture"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "GitLab implementation source or private proof packets",
+      "raw prompt-loop stdin handling before a later IAU",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "live already-running VS Code session uptake proof",
+      "Windows PowerShell Marketplace install/bootstrap behavior",
+      "VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "candidateImplementationWork": [
+    "add tests proving a materialized vihs terminal entrypoint is represented without requiring hidden-path reconstruction, profile editing, admin elevation, machine-wide install doctrine, or a prebuilt external CLI payload",
+    "add tests proving supported terminal-session admission records stay user-scoped and expose the intended entrypoint state",
+    "add tests proving runtime lookup and recovery facts prefer the standard VS Code runtime on Windows before global Node fallback or explicit override",
+    "add tests proving stale or missing launchers fail closed with one stable actionable recovery instruction",
+    "implement the minimum public MIT materialized-entrypoint contract as pure command-surface facts and command plans, without invoking a runtime process"
+  ],
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-terminal-entrypoint-materialization-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-terminal-entrypoint-v1",
+    "candidateTasks": [
+      "add tests for materialized vihs terminal entrypoint facts",
+      "add tests for user-scope terminal-session admission state",
+      "add tests for runtime lookup order and override facts",
+      "add tests for stale or missing launcher fail-closed recovery guidance",
+      "implement a pure materialized-entrypoint command-surface contract"
+    ],
+    "blockedTasks": [
+      "raw terminal prompt loops and stdin/TTY handling",
+      "no-argument confirmation flow beyond already implemented pure selection-state facts",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "proof-out file writing beyond already admitted proof artifact contracts",
+      "live already-running VS Code session uptake proof",
+      "Windows PowerShell Marketplace install/bootstrap behavior",
+      "VSIX packaging",
+      "Marketplace publication",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "laterIauShape": {
+    "iauId": "IAU-runtime-settings-cli-terminal-prompt-loop-v1",
+    "status": "deferred-until-materialized-entrypoint-closes",
+    "parentSliceId": "runtime-settings-cli-terminal-entrypoint-v1",
+    "candidateTasks": [
+      "bind the pure interactive-selection contract to process-level no-argument vihs prompt behavior",
+      "add Enter-through confirmation and guided selection prompt-loop tests",
+      "add validation handoff tests after prompt-loop confirmation"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "implementationUnitSplit": "pass",
+    "runtimeExecutionBlocked": "pass",
+    "implementationSharingBlocked": "pass",
+    "marketplacePublicationDisabled": "pass"
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-terminal-entrypoint-v1",
+      "create the public Spec Kit feature spec, plan, and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing terminal entrypoint materialization before public preflight",
+      "adding raw prompt-loop stdin handling in the first IAU",
+      "adding compare execution",
+      "adding LabVIEWCLI execution",
+      "adding Docker orchestration",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding VSIX packaging or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
