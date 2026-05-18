@@ -4,7 +4,7 @@ Recorded: `2026-05-17T13:28:45Z`
 
 Updated: `2026-05-17T19:46:38Z`
 
-Last reviewed: `2026-05-17T20:18:55Z`
+Last reviewed: `2026-05-18T04:06:53Z`
 
 GitLab work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/33`
@@ -23,6 +23,9 @@ Observation-model oracle review work item:
 
 Public proof-status oracle readiness work item:
 `https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/39`
+
+Command-activation readiness work item:
+`https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/40`
 
 Machine-readable packet:
 [implementation-admission-unit-candidate-registry-2026-05-17.json](./implementation-admission-unit-candidate-registry-2026-05-17.json)
@@ -83,7 +86,7 @@ code; it only chooses the next bridge-readiness target.
 | ---: | --- | --- | ---: | --- |
 | 1 | `IAU-candidate-installed-user-observation-public-surface-v1` | `oracle-reviewed` | 88 | `IAU-installed-user-observation-model-v1` completed T009-T013 and oracle review found `no-defect-candidate`; no new implementation starts from this candidate. |
 | 2 | `IAU-candidate-public-proof-status-oracle-v1` | `oracle-reviewed` | 79 | Closed through the existing `runtime-contract-host-provider-v1` import and proof-intake IAU; no duplicate import or new implementation IAU. |
-| 3 | `IAU-candidate-command-activation-surface-v1` | `observed` | 71 | Selected next for bridge-readiness decision: decide whether MIT should expose an extension package surface next. |
+| 3 | `IAU-candidate-command-activation-surface-v1` | `bridge-ready` | 71 | Create public MIT import and Spec Kit feature; implementation remains blocked until a named IAU preflight passes. |
 | 4 | `IAU-candidate-labviewcli-execution-boundary-v1` | `observed` | 62 | Requires a new execution-safety bridge packet before command execution can be opened. |
 | 5 | `IAU-candidate-windows-docker-desktop-proof-oracle-v1` | `blocked` | 47 | Blocked on real Windows Docker Desktop Windows-container proof under public issue #65. |
 | 6 | `IAU-candidate-mit-marketplace-posture-v1` | `blocked` | 35 | Marketplace remains disabled until a later ADR admits publication. |
@@ -167,8 +170,8 @@ Oracle review:
 
 ## Recommended Next Candidate
 
-The selected next candidate is
-`IAU-candidate-command-activation-surface-v1`.
+The selected next candidate remains
+`IAU-candidate-command-activation-surface-v1`, now in `bridge-ready` state.
 
 Rationale:
 
@@ -179,6 +182,8 @@ Rationale:
 - It can decide whether the MIT authority should expose command activation and
   package-surface metadata without admitting Marketplace publication,
   execution behavior, or source promotion.
+- Work item #40 decided that the public MIT import and Spec Kit feature should
+  be created next.
 
 ## Public Proof-Status Oracle Closeout
 
@@ -208,11 +213,11 @@ Records:
 
 ## Next Governed Action
 
-The selected next action is `bridge-readiness-decision` for
-`IAU-candidate-command-activation-surface-v1`. This action does not admit
-implementation. It should decide whether MIT needs an extension package command
-activation surface next, and if so what public import/spec scope can be
-prepared without opening Marketplace publication or execution behavior.
+The selected next action is `public-import-and-spec-lock` for
+`command-activation-surface-v1`. This action does not admit implementation. It
+should create the public MIT import packet and Spec Kit feature, then validate
+redaction and artifact consistency before a later named IAU preflight decides
+whether manifest-contract implementation can start.
 
 ## Governance Loop
 

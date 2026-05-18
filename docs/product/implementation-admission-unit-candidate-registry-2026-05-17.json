@@ -3,7 +3,7 @@
   "registryId": "implementation-admission-unit-candidate-registry-2026-05-17",
   "recordedAt": "2026-05-17T13:28:45Z",
   "updatedAt": "2026-05-17T19:46:38Z",
-  "lastReviewedAt": "2026-05-17T20:18:55Z",
+  "lastReviewedAt": "2026-05-18T04:06:53Z",
   "status": "active",
   "workItem": {
     "iid": 33,
@@ -34,6 +34,11 @@
     "iid": 39,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/39",
     "title": "Bridge-readiness: public proof-status oracle IAU candidate"
+  },
+  "commandActivationReadinessWorkItem": {
+    "iid": 40,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/40",
+    "title": "Bridge-readiness: MIT command activation surface candidate"
   },
   "governingArtifacts": [
     "docs/architecture/adr/ADR-0040-dual-authority-spec-kit-requirements-bridge.md",
@@ -260,7 +265,7 @@
     {
       "candidateId": "IAU-candidate-command-activation-surface-v1",
       "rank": 3,
-      "state": "observed",
+      "state": "bridge-ready",
       "lane": "product-surface",
       "admissionPriorityScore": 71,
       "scoreBreakdown": {
@@ -280,7 +285,13 @@
         "docs/requirements/rtm.csv"
       ],
       "publicSignals": [],
-      "recommendedNextAction": "Decide whether the MIT authority should expose extension manifest and command activation surfaces before it has a larger user-facing implementation.",
+      "readinessRecord": {
+        "markdown": "docs/product/tri-authority-requirements-bridge/command-activation-surface-v1/bridge-readiness-v1.md",
+        "json": "docs/product/tri-authority-requirements-bridge/command-activation-surface-v1/bridge-readiness-v1.json",
+        "workItem": 40,
+        "status": "bridge-ready"
+      },
+      "recommendedNextAction": "Create public MIT import and Spec Kit feature for command-activation-surface-v1; do not admit implementation until a named IAU preflight passes.",
       "blockedScope": [
         "Marketplace publication",
         "execution behavior",
@@ -388,7 +399,7 @@
     }
   ],
   "selectedNextCandidate": "IAU-candidate-command-activation-surface-v1",
-  "selectedNextAction": "bridge-readiness-decision",
+  "selectedNextAction": "public-import-and-spec-lock",
   "mutationBoundary": {
     "authorized": [
       "governance docs",
