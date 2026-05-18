@@ -1,0 +1,169 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-bootstrap-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-18T11:15:08Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-bootstrap-import-before-implementation",
+  "workItem": {
+    "iid": 43,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/43",
+    "title": "Bridge-readiness: MIT runtime settings CLI bootstrap IAU candidate"
+  },
+  "publicIssue": {
+    "number": 43,
+    "url": "https://github.com/svelderrainruiz/vi-history/issues/43",
+    "title": "Admit runtime settings CLI bootstrap IAU"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-prepare-command-shell-v1",
+  "futureSliceId": "runtime-settings-cli-bootstrap-v1",
+  "targetFeature": "runtime-settings-cli-bootstrap-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "ff950d6b7401fe31c5a12aea28bcad9099b254f1",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "ff7049e72416ae36158971ddb6724cc80e939490"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-537",
+    "VHS-REQ-544",
+    "VHS-REQ-594"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/product/runtime-settings-cli-usability-draft.md",
+    "docs/product/issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "src/extension.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts",
+    "tests/integration/suite/extensionHost.test.ts",
+    "package.json"
+  ],
+  "targetGap": {
+    "mitPrepareCommandActivationPresent": true,
+    "mitPrepareCommandHandlerPresent": false,
+    "mitRuntimeSettingsBootstrapImportPresent": false,
+    "mitRuntimeSettingsBootstrapSpecPresent": false,
+    "mitRuntimeSettingsBootstrapAdmissionPresent": false,
+    "mitRuntimeSettingsBootstrapImplementationPresent": false,
+    "summary": "The MIT authority has explicit Prepare Local Runtime Settings CLI activation metadata but no public requirements import, Spec Kit feature, admission record, prepare-command handler shell, or public bootstrap/recovery contract."
+  },
+  "splitDecision": {
+    "doNotAdmitTogether": [
+      "provider/version/bitness settings mutation",
+      "vihs --validate or runtime validation output",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "packaging",
+      "Marketplace publication"
+    ],
+    "reason": "The prepare-command bootstrap shell is a smaller, reviewable unit than settings mutation or runtime validation. It can establish the terminal-surface contract without writing settings or executing runtime commands.",
+    "firstCandidate": "IAU-runtime-settings-cli-prepare-command-shell-v1"
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement IDs VHS-REQ-537, VHS-REQ-544, and VHS-REQ-594",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command ID labviewViHistory.prepareLocalRuntimeSettingsCli",
+      "activation event ID onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli",
+      "display title Prepare Local Runtime Settings CLI",
+      "bare vihs terminal-surface concept",
+      "prepare command returns or reports launcher materialization and recovery facts",
+      "runtime dependency and stale-launcher recovery are explicit",
+      "settings writes, validation, compare execution, runtime execution, packaging, and Marketplace publication remain blocked until separately admitted"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "GitLab implementation source or private proof packets",
+      "provider/version/bitness settings mutation behavior",
+      "JSONC settings rewrite implementation details",
+      "vihs --validate runtime validation behavior",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or container orchestration",
+      "VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "environmentDependency": "pass-for-import-and-admission-planning",
+    "cleanRoomSafety": "pass",
+    "publicImportRequired": true,
+    "specKitFeatureRequired": true,
+    "implementationPreflightRequiredBeforeCode": true
+  },
+  "recommendedPublicImport": {
+    "publicImportPath": "docs/requirements/imports/runtime-settings-cli-bootstrap-v1/",
+    "specKitPath": ".specify/specs/runtime-settings-cli-bootstrap-v1/",
+    "targetBranch": "develop",
+    "publicIssue": 43,
+    "implementationAdmittedByImport": false
+  },
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-prepare-command-shell-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-bootstrap-v1",
+    "candidateTasks": [
+      "add tests proving the Prepare Local Runtime Settings CLI command is registered as a separate handler",
+      "add tests proving a public prepare-command shell reports launcher materialization and recovery facts without mutating settings",
+      "implement the minimum prepare-command shell without settings writes, validation, compare execution, LabVIEWCLI execution, Docker execution, packaging, or Marketplace behavior"
+    ],
+    "blockedTasks": [
+      "provider/version/bitness settings mutation",
+      "JSONC settings rewrite",
+      "vihs --validate runtime validation",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "VSIX packaging",
+      "Marketplace publication",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-bootstrap-v1",
+      "create the public Spec Kit feature spec, plan, and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing the prepare-command handler before public preflight",
+      "writing runtime settings",
+      "adding vihs --validate",
+      "adding compare execution",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding VSIX packaging or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
