@@ -1,0 +1,170 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-validation-readback-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-18T12:17:58Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-validation-readback-import-before-implementation",
+  "workItem": {
+    "iid": 45,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/45",
+    "title": "Bridge-readiness: MIT runtime settings CLI validation readback IAU candidate"
+  },
+  "publicIssue": {
+    "number": 51,
+    "url": "https://github.com/svelderrainruiz/vi-history/issues/51",
+    "title": "Admit runtime settings CLI validation readback IAU"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-validation-readback-contract-v1",
+  "futureSliceId": "runtime-settings-cli-validation-readback-v1",
+  "targetFeature": "runtime-settings-cli-validation-readback-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "72c9a700da501eba23e16e3d35b385ec8d8d6808",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "d27483cbbfea0b5aa322c575c6a26f51ea1b2f56"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-543",
+    "VHS-REQ-546"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/information-for-users/command-reference.md",
+    "docs/information-for-users/faq.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "src/reporting/comparisonRuntimeLocator.ts",
+    "src/commands/openViHistoryCommand.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts",
+    "tests/integration/suite/extensionHost.test.ts"
+  ],
+  "targetGap": {
+    "mitRuntimeSettingsPrepareCommandImplemented": true,
+    "mitRuntimeSettingsWriteContractImplemented": true,
+    "mitValidationReadbackImportPresent": false,
+    "mitValidationReadbackSpecPresent": false,
+    "mitValidationReadbackAdmissionPresent": false,
+    "mitValidationReadbackImplementationPresent": false,
+    "summary": "The MIT authority can prepare the runtime-settings terminal surface and update governed provider/version/bitness settings, but it has no public import, Spec Kit feature, admission record, or clean-room validation readback contract for vihs --validate."
+  },
+  "splitDecision": {
+    "doNotAdmitTogether": [
+      "no-argument interactive vihs selection and confirmation",
+      "proof-out file generation",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "live already-running VS Code session uptake proof",
+      "packaging",
+      "Marketplace publication"
+    ],
+    "reason": "Validation readback is the next useful step after settings-write, but interactive input, proof artifact generation, runtime execution, and release behavior carry separate proof and environment risks and should remain separate IAUs.",
+    "firstCandidate": "IAU-runtime-settings-cli-validation-readback-contract-v1"
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement IDs VHS-REQ-543 and VHS-REQ-546",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command term vihs --validate",
+      "persisted provider, LabVIEW version, and LabVIEW bitness facts",
+      "effective settings target is explicit",
+      "runtime validation outcome facts such as outcome, provider, engine, blocked reason, error code, proof status, and implementation status",
+      "validation readback does not reopen path-picking, image-family selection, or panel-side provider picking",
+      "interactive selection, proof-out file writing, compare execution, runtime execution, live-session proof, packaging, and Marketplace publication remain blocked until separately admitted"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "GitLab implementation source or private proof packets",
+      "no-argument interactive selection behavior",
+      "proof-out file generation",
+      "active already-running VS Code session uptake proof",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or container orchestration",
+      "VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "environmentDependency": "pass-for-import-and-admission-planning",
+    "cleanRoomSafety": "pass",
+    "publicImportRequired": true,
+    "specKitFeatureRequired": true,
+    "implementationPreflightRequiredBeforeCode": true
+  },
+  "recommendedPublicImport": {
+    "publicImportPath": "docs/requirements/imports/runtime-settings-cli-validation-readback-v1/",
+    "specKitPath": ".specify/specs/runtime-settings-cli-validation-readback-v1/",
+    "targetBranch": "develop",
+    "publicIssue": 51,
+    "implementationAdmittedByImport": false
+  },
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-validation-readback-contract-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-validation-readback-v1",
+    "candidateTasks": [
+      "add tests for readback of persisted provider, LabVIEW version, and LabVIEW bitness facts",
+      "add tests for explicit effective settings target reporting",
+      "add tests for runtime outcome facts without LabVIEWCLI, Docker, compare, or proof-out file execution",
+      "add tests for fail-closed validation output when persisted settings are missing or unsupported",
+      "implement a pure public MIT validation readback/result contract"
+    ],
+    "blockedTasks": [
+      "no-argument interactive vihs selection and confirmation",
+      "proof-out file generation",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "live already-running VS Code session uptake proof",
+      "VSIX packaging",
+      "Marketplace publication",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-validation-readback-v1",
+      "create the public Spec Kit feature spec, plan, and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing validation readback before public preflight",
+      "adding no-argument interactive vihs behavior",
+      "adding proof-out file generation",
+      "adding compare execution",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding VSIX packaging or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
