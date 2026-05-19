@@ -17,6 +17,24 @@ If approved, the next MR should create a bridge-readiness packet for candidate
 IAU `IAU-runtime-settings-cli-validation-command-contract-v1`. This proposal
 does not admit public import, public admission, or implementation by itself.
 
+## Approval Decision
+
+Approved: `2026-05-19T04:27:37-07:00`
+
+Approval outcome:
+
+- `runtime-settings-cli-validation-command-contract-v1` is the next governed
+  bridge-readiness target.
+- Candidate IAU name:
+  `IAU-runtime-settings-cli-validation-command-contract-v1`.
+- The first bridge-readiness packet should include proof-out file emission only
+  through the already admitted proof-out file-emission contract when a target is
+  supplied.
+- `validate-plan-only` remains deferred unless bridge review proves it is
+  needed for the first IAU.
+- The approval does not admit public import, public admission, MIT
+  implementation, runtime execution, publication, or source copying.
+
 ## Recommended Direction
 
 The next lane should define the command-level public contract for

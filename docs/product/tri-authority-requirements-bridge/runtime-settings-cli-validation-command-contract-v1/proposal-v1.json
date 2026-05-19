@@ -2,8 +2,10 @@
   "schema": "vi-history/tri-authority-lane-proposal@v1",
   "proposalId": "runtime-settings-cli-validation-command-contract-v1-proposal-v1",
   "recordedAt": "2026-05-19T04:16:00-07:00",
-  "status": "submitted-for-approval",
+  "status": "approved",
+  "approvedAt": "2026-05-19T04:27:37-07:00",
   "decisionRequested": "approve-runtime-settings-cli-validation-command-contract-as-next-bridge-readiness-target",
+  "decision": "approved-create-bridge-readiness-packet-next",
   "workItem": {
     "iid": 54,
     "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/54",
@@ -121,6 +123,15 @@
     "proofOutRecommendation": "include-file-emission-only-through-already-admitted-contract",
     "planOnlyRecommendation": "defer-unless-needed",
     "implementationAdmittedByThisProposal": false
+  },
+  "approvedOutcome": {
+    "approvedLane": "runtime-settings-cli-validation-command-contract-v1",
+    "candidateIauId": "IAU-runtime-settings-cli-validation-command-contract-v1",
+    "nextGate": "create-bridge-readiness-packet",
+    "proofOutFileEmission": "include-only-through-already-admitted-contract",
+    "validatePlanOnly": "deferred-unless-bridge-review-proves-needed",
+    "publicImportAdmittedByThisProposal": false,
+    "publicImplementationAdmittedByThisProposal": false
   },
   "implementationSharing": "none",
   "marketplacePublication": "disabled-until-later-adr"
