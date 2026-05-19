@@ -39,6 +39,7 @@ documents:
 - [Runtime Settings CLI Terminal I/O Adapter Bridge Readiness](./tri-authority-requirements-bridge/runtime-settings-cli-terminal-io-adapter-v1/bridge-readiness-v1.md)
 - [Runtime Settings CLI Validation Proof-Out Adapter Bridge Readiness](./tri-authority-requirements-bridge/runtime-settings-cli-validation-proof-out-v1/bridge-readiness-v1.md)
 - [Runtime Settings CLI Validation Proof-Out File Emission Bridge Readiness](./tri-authority-requirements-bridge/runtime-settings-cli-validation-proof-out-file-emission-v1/bridge-readiness-v1.md)
+- [Runtime Settings CLI Validation Runtime Outcome Bridge Readiness](./tri-authority-requirements-bridge/runtime-settings-cli-validation-runtime-outcome-v1/bridge-readiness-v1.md)
 - [Work Item 0001 Installed-User Onboarding Publication Route](./work-item-0001-installed-user-onboarding-publication-route-2026-05-15.md)
 - [Post-Publication Installed-User Acceptance Campaign](./post-publication-installed-user-acceptance-campaign-2026-05-15.md)
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
