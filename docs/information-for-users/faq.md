@@ -92,14 +92,15 @@ In supported Windows PowerShell sessions and admitted VS Code terminals, type
 - LabVIEW `2024` and older cannot create the VI Comparison Report that VI
   History Suite uses. Use LabVIEW `2025` or newer even for older VIs; those
   newer LabVIEW versions can open prior-version VIs without migrating them.
-- Docker is the bounded expert path: `2026` / `x64` is supported for
-  `docker/windows` on Windows Docker Desktop Windows-container hosts and for
-  `docker/linux` on Linux Docker Desktop/Docker Engine hosts; Docker years
-  before `2026` are unsupported; `host/linux` `2026` / `x64` is admitted when
-  LabVIEW Community 2026 is installed on Linux.
-- Docker images are 64-bit only. If the selected Windows host bitness is not
-  installed, VI History Suite may mention the detected other bitness, but it
-  does not auto-switch because bitness-specific dependencies can differ.
+- Docker is the bounded expert path: the Docker provider uses the latest
+  supported NI LabVIEW Docker image family for the governed Docker platform.
+  The current Linux Docker default maps to the LabVIEW 2026 image family, and
+  NI LabVIEW Docker images are 64-bit only by image/platform. There is no
+  separate Docker bitness choice; host LabVIEW bitness remains a host-provider
+  concern.
+- If the selected Windows host bitness is not installed, VI History Suite may
+  mention the detected other bitness, but it does not auto-switch because
+  bitness-specific host dependencies can differ.
 - For non-interactive scripting, use the exact command shape:
 
 `vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`

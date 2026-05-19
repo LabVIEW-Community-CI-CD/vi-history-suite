@@ -116,7 +116,8 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('host/windows/2026/x86');
     expect(commandReference).toContain('Enter` keep the current value');
     expect(commandReference).toContain('Docker is the bounded expert path');
-    expect(commandReference).toContain('selectable Docker years or bitnesses may');
+    expect(commandReference).toContain('supported NI LabVIEW Docker image family');
+    expect(commandReference).toContain('not a user-facing choice');
     expect(commandReference).toContain('before trusting Compare');
     expect(commandReference).toContain('or other runtime-provider surfaces');
     expect(commandReference).toContain('runtimeBlockedReason');
@@ -125,7 +126,7 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('.cache/runtime-settings-live-session-proof/latest/');
     expect(commandReference).toContain('current public validation route');
     expect(commandReference).toContain('Windows host LabVIEW 2026 x86 is admitted');
-    expect(commandReference).toContain('Docker images are 64-bit only');
+    expect(commandReference).toContain('64-bit only by image/platform');
     expect(commandReference).toContain('Docker Desktop Windows-container behavior');
     expect(commandReference).toContain('public issue #65');
     expect(commandReference).toContain('runtimeProvider=windows-container');

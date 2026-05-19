@@ -36,6 +36,7 @@ documents:
 - [Implementation Admission Unit Candidate Registry](./implementation-admission-unit-candidate-registry-2026-05-17.md)
 - [Implementation Admission Unit Candidate Registry JSON](./implementation-admission-unit-candidate-registry-2026-05-17.json)
 - [Installed-User Observation Public Surface Bridge Readiness](./tri-authority-requirements-bridge/installed-user-observation-public-surface-v1/bridge-readiness-v1.md)
+- [Runtime Settings CLI Terminal I/O Adapter Bridge Readiness](./tri-authority-requirements-bridge/runtime-settings-cli-terminal-io-adapter-v1/bridge-readiness-v1.md)
 - [Work Item 0001 Installed-User Onboarding Publication Route](./work-item-0001-installed-user-onboarding-publication-route-2026-05-15.md)
 - [Post-Publication Installed-User Acceptance Campaign](./post-publication-installed-user-acceptance-campaign-2026-05-15.md)
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)

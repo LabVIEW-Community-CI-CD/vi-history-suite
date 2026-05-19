@@ -302,7 +302,8 @@ describe('requirements documentation coherence', () => {
     );
     expect(srs).toContain('bare `vihs` terminal entrypoint shall make terminal discoverability explicit');
     expect(srs).toContain('seeding missing settings to `host/windows/2026/x86`');
-    expect(srs).toContain('Enter-through confirmation or guided selection');
+    expect(srs).toContain('Enter-through confirmation, guided selection');
+    expect(srs).toContain('Docker provider selection through the latest supported NI LabVIEW Docker image family');
     expect(srs).toContain('installed-user `vihs` surface shall expose one governed validation action');
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');
     expect(srs).toContain(

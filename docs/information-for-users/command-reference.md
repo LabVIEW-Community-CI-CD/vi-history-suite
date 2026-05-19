@@ -189,10 +189,11 @@ runtime-settings CLI.
   - LabVIEW `2024` and older cannot create the VI Comparison Report that VI
     History Suite uses; select LabVIEW `2025` or newer even when the VI being
     reviewed was saved by an older LabVIEW version
-  - Docker is the bounded expert path: `2026` / `x64` is the governed Docker
-    implementation today because Docker images are 64-bit only, while other
-    selectable Docker years or bitnesses may report stable
-    not-yet-implemented runtime codes for public validation
+  - Docker is the bounded expert path: the Docker provider uses the latest
+    supported NI LabVIEW Docker image family for the governed Docker platform;
+    the current Linux Docker default maps to the LabVIEW 2026 image family, NI
+    LabVIEW Docker images are 64-bit only by image/platform, and Docker bitness
+    is not a user-facing choice
   - `host/linux` is selectable; `2026` / `x64` is admitted when LabVIEW
     Community 2026 is installed on Linux, while unsupported or missing local
     host bundles still report stable fail-closed runtime codes
