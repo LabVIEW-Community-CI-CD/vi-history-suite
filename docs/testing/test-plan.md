@@ -1799,8 +1799,9 @@ Information-for-users review cases:
   admits Docker only as a bounded expert provider persisted and rechecked
   through the admitted `vihs` terminal settings surface
 - `TEST-UNIT-347`: verify Docker preflight derives the governed image family
-  from the current engine and fails closed on unsupported Docker `x86` with
-  host/`x64` corrective guidance
+  from the current engine and fails closed when Docker bitness is treated as
+  user-selectable, with corrective guidance back to host selection or the
+  governed Docker provider
 - `TEST-UNIT-348`: verify compare preflight retains an explicit CLI update hint
   when provider/runtime settings need attention while the explicit Compare path
   remains available after two revisions are selected
@@ -1830,9 +1831,11 @@ Information-for-users review cases:
   `host/windows/2026/x86`, reads back the current provider/platform/version/bitness
   bundle, prints exact copyable next commands, and, on interactive TTY
   surfaces, admits Enter-through confirmation or guided selection of supported
-  host provider/platform/version/bitness values, keeps Docker on `2026` `x64`,
-  and fails closed with explicit unsupported, host-mismatched, missing selected
-  bitness, or not-yet-implemented path guidance
+  host provider/platform/version/bitness values, resolves Docker provider
+  selection through the latest supported NI LabVIEW Docker image family without
+  exposing a Docker bitness choice, and fails closed with explicit unsupported,
+  host-mismatched, missing selected host bitness, Docker image-family, attempted
+  Docker bitness-choice, or not-yet-implemented path guidance
 - `TEST-UNIT-354`: verify the `vihs` surface exposes `vihs --validate` as one
   governed validation action that reports persisted provider/version/bitness
   truth plus runtime-validation outcome, and that the no-argument interactive

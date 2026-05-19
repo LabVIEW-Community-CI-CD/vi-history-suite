@@ -1,0 +1,207 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-terminal-io-adapter-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-19T08:44:50Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-terminal-io-adapter-import-before-implementation",
+  "workItem": {
+    "iid": 50,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/50",
+    "title": "Bridge-readiness: MIT runtime settings CLI terminal I/O adapter IAU candidate"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-terminal-io-adapter-v1",
+  "futureSliceId": "runtime-settings-cli-terminal-io-adapter-v1",
+  "targetFeature": "runtime-settings-cli-terminal-io-adapter-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "bb795ace470bcb17d9436fd34c59344077c37777",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "07383b619777bd0134175971d110701fd5aee841"
+  },
+  "targetRepositoryFacts": {
+    "nameWithOwner": "svelderrainruiz/vi-history",
+    "isFork": false,
+    "defaultBranch": "develop",
+    "visibility": "PUBLIC",
+    "viewerPermission": "ADMIN"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-545",
+    "VHS-REQ-546"
+  ],
+  "prerequisiteRequirementIds": [
+    "VHS-REQ-537",
+    "VHS-REQ-544"
+  ],
+  "supportingTestIds": [
+    "TEST-UNIT-353",
+    "TEST-UNIT-354"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/information-for-users/command-reference.md",
+    "docs/information-for-users/faq.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts",
+    "tests/integration/suite/extensionHost.test.ts"
+  ],
+  "dockerImageFacts": {
+    "source": "https://hub.docker.com/r/nationalinstruments/labview/tags",
+    "observedAt": "2026-05-19",
+    "repository": "nationalinstruments/labview",
+    "latestLinuxTag": "latest-linux",
+    "latestLinuxVersionedTag": "2026q1patch2-linux",
+    "latestLinuxPlatform": "linux/amd64",
+    "latestWindowsTag": "latest-windows",
+    "latestWindowsVersionedTag": "2026q1patch2-windows",
+    "latestWindowsPlatform": "windows/amd64",
+    "publicWording": "Docker provider selection uses the latest supported NI LabVIEW Docker image family; the current Linux default maps to LabVIEW 2026 and Docker exposes no user-facing bitness choice."
+  },
+  "targetGap": {
+    "mitTerminalEntrypointMaterializationImplemented": true,
+    "mitInteractiveSelectionStateImplemented": true,
+    "mitTerminalPromptLoopImplemented": true,
+    "mitTerminalIoAdapterImportPresent": false,
+    "mitTerminalIoAdapterSpecPresent": false,
+    "mitTerminalIoAdapterAdmissionPresent": false,
+    "mitTerminalIoAdapterImplementationPresent": false,
+    "summary": "The MIT authority has pure command, selection, entrypoint, and prompt-loop contracts, but it has no public import, Spec Kit feature, admission record, or clean-room terminal session adapter for no-argument vihs terminal I/O behavior."
+  },
+  "splitDecision": {
+    "firstCandidate": "IAU-runtime-settings-cli-terminal-io-adapter-v1",
+    "reason": "Terminal session adaptation is the next discoverability unit after prompt-loop closeout, but it should be admitted as a testable adapter around the existing prompt-loop contract before compare execution, runtime execution, proof expansion, packaging, or Marketplace behavior.",
+    "doNotAdmitTogether": [
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "proof-out expansion",
+      "live-session proof",
+      "package/bin publication",
+      "launcher/profile mutation",
+      "Marketplace work",
+      "source copying"
+    ]
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement IDs VHS-REQ-545 and VHS-REQ-546",
+      "prerequisite references to the already admitted and implemented runtime-settings-cli-terminal-entrypoint-v1 materialized-entrypoint work",
+      "prerequisite references to the already admitted and implemented runtime-settings-cli-terminal-prompt-loop-v1 pure prompt-loop work",
+      "supporting public test expectations TEST-UNIT-353 and TEST-UNIT-354",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command term vihs",
+      "governed default selection host/windows/2026/x86",
+      "terminal session adapter facts for no-argument vihs",
+      "interactive Enter confirmation through supplied prompt-line facts",
+      "guided host selection for supported LabVIEW 2025, LabVIEW 2026, and newer local host choices when the selected installation and bitness are present",
+      "Docker provider selection through the latest supported NI LabVIEW Docker image family, with the current Linux default mapping to LabVIEW 2026",
+      "NI LabVIEW Docker images are 64-bit-only by image/platform and expose no user-facing Docker bitness choice",
+      "non-interactive copyable guidance instead of a hanging prompt",
+      "EOF/cancel and unsupported-input fail-closed behavior",
+      "validation handoff after confirmation through the already public vihs --validate readback contract",
+      "Marketplace-disabled posture"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "private proof packets or private issue templates",
+      "raw OS-specific stdin/TTY process-driver implementation details",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "proof-out file writing beyond already admitted proof artifact contracts",
+      "live already-running VS Code session uptake proof",
+      "package/bin publication",
+      "launcher/profile mutation",
+      "VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "candidateImplementationWork": [
+    "add tests proving Enter confirmation is adapted from terminal input into the existing prompt-loop validation handoff",
+    "add tests proving guided host selection feeds the already admitted host selection contract",
+    "add tests proving Docker provider selection uses the latest supported NI LabVIEW Docker image family without a Docker bitness prompt",
+    "add tests proving non-TTY sessions return copyable guidance instead of prompting",
+    "add tests proving unsupported input, EOF, and cancel fail closed without side effects",
+    "implement the minimum public MIT terminal I/O adapter as pure session/input facts around the existing prompt-loop contract"
+  ],
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-terminal-io-adapter-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-terminal-io-adapter-v1",
+    "candidateTasks": [
+      "add tests for terminal Enter confirmation adaptation",
+      "add tests for guided host selection adaptation",
+      "add tests for Docker latest-image provider selection without a bitness prompt",
+      "add tests for non-TTY copyable guidance",
+      "add tests for unsupported input EOF cancel and blocked side effects",
+      "implement the pure terminal I/O adapter contract"
+    ],
+    "blockedTasks": [
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "proof-out expansion",
+      "live-session proof",
+      "package/bin publication",
+      "launcher/profile mutation",
+      "Marketplace work",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "prerequisiteTerminalEntrypointClosed": "pass",
+    "prerequisitePromptLoopClosed": "pass",
+    "dockerImageWordingClarified": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "validationReuseBoundary": "pass",
+    "runtimeExecutionBlocked": "pass",
+    "implementationSharingBlocked": "pass",
+    "marketplacePublicationDisabled": "pass"
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-terminal-io-adapter-v1",
+      "create the public Spec Kit feature spec plan and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing terminal I/O adapter behavior before public preflight",
+      "adding compare execution",
+      "adding LabVIEWCLI execution",
+      "adding Docker orchestration",
+      "adding proof-out expansion",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding package/bin publication or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
