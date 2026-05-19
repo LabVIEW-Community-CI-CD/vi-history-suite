@@ -1,0 +1,194 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-terminal-prompt-loop-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-19T05:44:07Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-terminal-prompt-loop-import-before-implementation",
+  "workItem": {
+    "iid": 49,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/49",
+    "title": "Bridge-readiness: MIT runtime settings CLI terminal prompt-loop IAU candidate"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-terminal-prompt-loop-v1",
+  "futureSliceId": "runtime-settings-cli-terminal-prompt-loop-v1",
+  "targetFeature": "runtime-settings-cli-terminal-prompt-loop-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "913f840a9dd23319d91d5fcf5862be9615d5b8d0",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "a61ed88a259e0cc9286c54e11b206145bc82d697"
+  },
+  "targetRepositoryFacts": {
+    "nameWithOwner": "svelderrainruiz/vi-history",
+    "isFork": false,
+    "defaultBranch": "develop",
+    "visibility": "PUBLIC",
+    "viewerPermission": "ADMIN"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-545",
+    "VHS-REQ-546"
+  ],
+  "prerequisiteRequirementIds": [
+    "VHS-REQ-537",
+    "VHS-REQ-544"
+  ],
+  "supportingTestIds": [
+    "TEST-UNIT-353",
+    "TEST-UNIT-354"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/information-for-users/command-reference.md",
+    "docs/information-for-users/faq.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "src/reporting/comparisonRuntimeLocator.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts",
+    "tests/integration/suite/extensionHost.test.ts"
+  ],
+  "targetGap": {
+    "mitRuntimeSettingsPrepareCommandImplemented": true,
+    "mitRuntimeSettingsWriteContractImplemented": true,
+    "mitValidationReadbackImplemented": true,
+    "mitValidationProofArtifactImplemented": true,
+    "mitInteractiveSelectionStateImplemented": true,
+    "mitTerminalEntrypointMaterializationImplemented": true,
+    "mitPromptLoopImportPresent": false,
+    "mitPromptLoopSpecPresent": false,
+    "mitPromptLoopAdmissionPresent": false,
+    "mitPromptLoopImplementationPresent": false,
+    "summary": "The MIT authority has pure command, settings, validation, proof, interactive-selection, and materialized-entrypoint contracts, but it has no public import, Spec Kit feature, admission record, or clean-room prompt-loop contract for no-argument vihs prompt transcript/state behavior."
+  },
+  "splitDecision": {
+    "firstCandidate": "IAU-runtime-settings-cli-terminal-prompt-loop-v1",
+    "reason": "Prompt-loop behavior is the next discoverability unit after materialized-entrypoint closeout, but it should be admitted as a pure prompt transcript/state contract before OS terminal I/O drivers, compare execution, runtime execution, live-session proof, packaging, or Marketplace behavior.",
+    "doNotAdmitTogether": [
+      "OS-specific raw stdin/TTY process drivers or spawned terminal I/O handling",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "proof-out file writing beyond already admitted proof artifact contracts",
+      "live already-running VS Code session uptake proof",
+      "Windows PowerShell Marketplace install/bootstrap behavior",
+      "packaging",
+      "Marketplace publication"
+    ]
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement IDs VHS-REQ-545 and VHS-REQ-546",
+      "prerequisite references to the already admitted and implemented runtime-settings-cli-terminal-entrypoint-v1 materialized-entrypoint work",
+      "supporting public test expectations TEST-UNIT-353 and TEST-UNIT-354",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command term vihs",
+      "governed default selection host/windows/2026/x86",
+      "public selection fields for provider, platform, LabVIEW version, and LabVIEW bitness",
+      "deterministic prompt transcript/state behavior for no-argument vihs",
+      "Enter-through confirmation that preserves the current governed selection",
+      "guided host selection for supported LabVIEW 2025, LabVIEW 2026, and newer local host choices when the selected installation and bitness are present",
+      "Docker selection constrained to 2026 / x64",
+      "validation handoff after confirmation through the already public vihs --validate readback contract",
+      "stable fail-closed reasons for unsupported years, host/platform mismatch, missing selected bitness, unsupported Docker bitness, unsupported Docker year, unsupported Linux host paths, and not-yet-implemented paths",
+      "exact copyable non-interactive next-command guidance",
+      "Marketplace-disabled posture"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "private proof packets or private issue templates",
+      "OS-specific raw stdin/TTY process-driver implementation details",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "proof-out file writing beyond already admitted proof artifact contracts",
+      "live already-running VS Code session uptake proof",
+      "Windows PowerShell Marketplace install/bootstrap behavior",
+      "VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "candidateImplementationWork": [
+    "add tests proving no-argument vihs produces a deterministic prompt transcript from the already materialized entrypoint facts",
+    "add tests proving Enter-through confirmation preserves the current governed provider/platform/version/bitness bundle and requests validation handoff",
+    "add tests proving guided host selection accepts supported local host choices and fails closed for unsupported years, host/platform mismatches, or missing selected bitness",
+    "add tests proving Docker selection remains bounded to 2026 / x64",
+    "implement the minimum public MIT terminal prompt-loop contract as pure prompt state and output facts, without OS terminal I/O drivers or runtime execution"
+  ],
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-terminal-prompt-loop-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-terminal-prompt-loop-v1",
+    "candidateTasks": [
+      "add tests for deterministic no-argument vihs prompt transcript/state behavior",
+      "add tests for Enter-through confirmation and validation handoff",
+      "add tests for guided host selection and fail-closed unsupported host paths",
+      "add tests for bounded Docker 2026 / x64 selection",
+      "implement the pure terminal prompt-loop contract"
+    ],
+    "blockedTasks": [
+      "OS-specific raw stdin/TTY process drivers or spawned terminal I/O handling",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "proof-out file writing beyond already admitted proof artifact contracts",
+      "live already-running VS Code session uptake proof",
+      "Windows PowerShell Marketplace install/bootstrap behavior",
+      "VSIX packaging",
+      "Marketplace publication",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "prerequisiteMaterializedEntrypointClosed": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "validationReuseBoundary": "pass",
+    "runtimeExecutionBlocked": "pass",
+    "implementationSharingBlocked": "pass",
+    "marketplacePublicationDisabled": "pass"
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-terminal-prompt-loop-v1",
+      "create the public Spec Kit feature spec, plan, and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing terminal prompt-loop behavior before public preflight",
+      "adding OS-specific raw stdin/TTY process drivers in the prompt-loop IAU",
+      "adding compare execution",
+      "adding LabVIEWCLI execution",
+      "adding Docker orchestration",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding VSIX packaging or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
