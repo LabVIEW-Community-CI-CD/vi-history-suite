@@ -1,0 +1,213 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-validation-plan-only-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-19T12:58:59Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-validation-plan-only-import-before-implementation",
+  "workItem": {
+    "iid": 56,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/56",
+    "title": "Bridge-readiness: MIT runtime settings CLI validation plan-only IAU candidate"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-validation-plan-only-v1",
+  "futureSliceId": "runtime-settings-cli-validation-plan-only-v1",
+  "targetFeature": "runtime-settings-cli-validation-plan-only-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "93177a013b5294c0e05745f5af67b866e9b15568",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "be3afc802922e94e70502a546867ee60251bed81"
+  },
+  "targetRepositoryFacts": {
+    "nameWithOwner": "svelderrainruiz/vi-history",
+    "isFork": false,
+    "defaultBranch": "develop",
+    "visibility": "PUBLIC"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-546"
+  ],
+  "prerequisiteRequirementIds": [
+    "VHS-REQ-537",
+    "VHS-REQ-543",
+    "VHS-REQ-544",
+    "VHS-REQ-545"
+  ],
+  "supportingTestIds": [
+    "TEST-UNIT-392"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-command-contract-v1/proposal-v1.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-command-contract-v1/bridge-readiness-v1.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-readback-v1/bridge-readiness-v1.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-proof-v1/bridge-readiness-v1.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-proof-out-v1/bridge-readiness-v1.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-proof-out-file-emission-v1/bridge-readiness-v1.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-runtime-outcome-v1/bridge-readiness-v1.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts"
+  ],
+  "targetGap": {
+    "mitValidationCommandContractImplemented": true,
+    "mitValidationPlanOnlyImportPresent": false,
+    "mitValidationPlanOnlySpecPresent": false,
+    "mitValidationPlanOnlyAdmissionPresent": false,
+    "mitValidationPlanOnlyImplementationPresent": false,
+    "summary": "The MIT authority has a pure validation command-result contract, proof artifact contract, proof-out adapter, and file-emission contract. It intentionally still blocks validate-plan-only, so callers cannot request non-writing proof-out plan facts through the command contract without a separate admission."
+  },
+  "splitDecision": {
+    "firstCandidate": "IAU-runtime-settings-cli-validation-plan-only-v1",
+    "reason": "Plan-only proof-out facts are the smallest remaining pure command-result behavior after the validation command contract. They are smaller and safer than runtime locator invocation, OS inspection, runtime validation execution, compare execution, LabVIEWCLI, Docker orchestration, terminal process wiring, package/bin publication, release, Marketplace, or source-copying work.",
+    "proofOutFileEmissionBoundary": "plan-only composes proof artifact and proof-out adapter facts but must not call the already admitted file-emission writer",
+    "doNotAdmitTogether": [
+      "runtime locator invocation",
+      "OS inspection",
+      "private path discovery",
+      "runtime validation execution",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker command execution or orchestration",
+      "raw terminal process wiring",
+      "live terminal proof",
+      "package/bin publication",
+      "launcher/profile mutation",
+      "VSIX packaging",
+      "Marketplace work",
+      "release automation",
+      "source copying"
+    ]
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement ID VHS-REQ-546",
+      "prerequisite references to the already implemented settings write, validation readback, validation runtime outcome, validation proof-artifact, proof-out adapter, proof-out file-emission, and validation command-contract slices",
+      "supporting public test expectation TEST-UNIT-392",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command term vihs --validate",
+      "option term --proof-out <dir> as an already admitted proof-out target shape",
+      "request mode validate-plan-only",
+      "pure contract name createRuntimeSettingsValidationCommandResult",
+      "proof-out target facts, artifact file facts, proof JSON facts, issue Markdown facts, non-interactive guidance, blocked reason, blocked side effects, and requirement IDs",
+      "decision that plan-only is a non-writing mode over existing adapter facts",
+      "corrected Docker wording that Docker provider selection means the latest supported NI LabVIEW image family, 64-bit-only by image/platform, with no user-facing Docker bitness choice",
+      "Marketplace-disabled posture"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "private proof packets or private issue templates",
+      "raw OS-specific terminal-driver implementation details",
+      "OS inspection, runtime locator invocation, private path discovery, or environment probing behavior",
+      "runtime validation execution",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "file writes for the plan-only mode",
+      "live already-running VS Code session uptake proof or live terminal proof",
+      "package/bin publication, launcher/profile mutation, VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "candidateImplementationWork": [
+    "add tests proving validate-plan-only is accepted only as a bounded request mode over vihs --validate",
+    "add tests proving plan-only requires ready validation facts and a supported proof-out target",
+    "add tests proving plan-only composes through the existing proof artifact and proof-out adapter contracts without calling the file-emission writer",
+    "add tests proving plan-only returns exactly the planned vihs-validation-proof.json and vihs-validation-issue.md artifact facts",
+    "add tests proving no file writes occur and file-system adapters are not called",
+    "add tests proving missing validation facts, unsupported proof-out targets, and malformed inputs fail closed without hidden success",
+    "add tests proving deterministic non-interactive guidance and blocked side effects",
+    "implement the minimum plan-only branch in the existing validation command result contract"
+  ],
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-validation-plan-only-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-validation-plan-only-v1",
+    "candidateTasks": [
+      "add tests for accepted validate-plan-only request mode",
+      "add tests for ready validation facts and supported proof-out target prerequisites",
+      "add tests for proof artifact and proof-out adapter composition without file emission",
+      "add tests for planned artifact filenames and payload facts",
+      "add tests proving no file-system writes or writer calls occur",
+      "add tests for missing facts and unsupported target fail-closed behavior",
+      "add tests for deterministic guidance and blocked side effects",
+      "implement the minimum plan-only command-result branch"
+    ],
+    "blockedTasks": [
+      "runtime locator invocation",
+      "OS inspection or private path discovery",
+      "runtime validation execution",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "raw terminal process wiring",
+      "live terminal proof",
+      "package/bin publication",
+      "launcher/profile mutation",
+      "VSIX packaging",
+      "Marketplace work",
+      "release automation",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "prerequisiteValidationCommandContractClosed": "pass",
+    "proofOutThroughExistingAdapterOnly": "pass",
+    "fileEmissionBlockedForPlanOnly": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "runtimeExecutionBlocked": "pass",
+    "runtimeLocatorBlocked": "pass",
+    "implementationSharingBlocked": "pass",
+    "marketplacePublicationDisabled": "pass"
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-validation-plan-only-v1",
+      "create the public Spec Kit feature spec plan and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing plan-only before public preflight",
+      "calling the proof-out file-emission writer for plan-only",
+      "adding runtime locator invocation",
+      "adding OS inspection or private path discovery",
+      "adding runtime validation execution",
+      "adding compare execution",
+      "adding LabVIEWCLI execution",
+      "adding Docker orchestration",
+      "adding raw terminal process wiring",
+      "adding live terminal proof",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding package/bin publication, launcher/profile mutation, VSIX packaging, release automation, or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
