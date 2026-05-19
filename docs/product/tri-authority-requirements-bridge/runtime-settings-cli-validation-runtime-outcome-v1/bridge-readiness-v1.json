@@ -1,0 +1,196 @@
+{
+  "schema": "vi-history/tri-authority-bridge-readiness@v1",
+  "readinessId": "runtime-settings-cli-validation-runtime-outcome-v1-bridge-readiness-v1",
+  "recordedAt": "2026-05-19T10:42:46Z",
+  "status": "bridge-ready-for-public-import-and-admission-planning",
+  "decision": "create-public-runtime-settings-cli-validation-runtime-outcome-import-before-implementation",
+  "workItem": {
+    "iid": 53,
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/work_items/53",
+    "title": "Bridge-readiness: MIT runtime settings CLI validation runtime outcome IAU candidate"
+  },
+  "candidateIauId": "IAU-runtime-settings-cli-validation-runtime-outcome-v1",
+  "futureSliceId": "runtime-settings-cli-validation-runtime-outcome-v1",
+  "targetFeature": "runtime-settings-cli-validation-runtime-outcome-v1",
+  "sourceAuthority": "gitlabGoverned",
+  "sourceBaselineTag": "v1.3.16",
+  "sourceCommitEvaluated": "567157f4a77536c4efa07ba72eea3314083ccde2",
+  "targetAuthority": "githubMitSpecKit",
+  "targetRepository": "https://github.com/svelderrainruiz/vi-history",
+  "targetBranchFlow": {
+    "integration": "develop",
+    "release": "main"
+  },
+  "targetBaseline": {
+    "branch": "develop",
+    "commit": "d8543004d5682ef793961433fba14b7ee10c8d06"
+  },
+  "targetRepositoryFacts": {
+    "nameWithOwner": "svelderrainruiz/vi-history",
+    "isFork": false,
+    "defaultBranch": "develop",
+    "visibility": "PUBLIC",
+    "viewerPermission": "ADMIN"
+  },
+  "specKitCli": {
+    "version": "0.8.12.dev0",
+    "features": {
+      "controlled_multi_install_integrations": true,
+      "integration_use_command": true,
+      "multi_install_safe_registry_metadata": true,
+      "integration_upgrade_command": true,
+      "self_check_command": true,
+      "workflow_catalog": true,
+      "bundled_templates": true
+    }
+  },
+  "importedRequirementIds": [
+    "VHS-REQ-546"
+  ],
+  "prerequisiteRequirementIds": [
+    "VHS-REQ-537",
+    "VHS-REQ-543",
+    "VHS-REQ-544",
+    "VHS-REQ-545"
+  ],
+  "supportingTestIds": [
+    "TEST-UNIT-392"
+  ],
+  "sourceArtifacts": [
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-readback-v1/bridge-readiness-v1.md",
+    "docs/product/tri-authority-requirements-bridge/runtime-settings-cli-validation-proof-out-file-emission-v1/bridge-readiness-v1.md",
+    "src/tooling/localRuntimeSettingsCli.ts",
+    "tests/unit/localRuntimeSettingsCli.test.ts"
+  ],
+  "targetGap": {
+    "mitTerminalEntrypointImplemented": true,
+    "mitTerminalPromptLoopImplemented": true,
+    "mitTerminalIoAdapterImplemented": true,
+    "mitValidationReadbackImplemented": true,
+    "mitValidationProofArtifactImplemented": true,
+    "mitValidationProofOutAdapterImplemented": true,
+    "mitValidationProofOutFileEmissionImplemented": true,
+    "mitValidationRuntimeOutcomeImportPresent": false,
+    "mitValidationRuntimeOutcomeSpecPresent": false,
+    "mitValidationRuntimeOutcomeAdmissionPresent": false,
+    "mitValidationRuntimeOutcomeImplementationPresent": false,
+    "summary": "The MIT authority can consume supplied runtimeOutcome facts through its validation proof chain, but it has no public import, Spec Kit feature, admission record, or clean-room implementation that derives those runtime outcome facts from supplied public-safe runtime selection facts."
+  },
+  "splitDecision": {
+    "firstCandidate": "IAU-runtime-settings-cli-validation-runtime-outcome-v1",
+    "reason": "Runtime outcome fact shaping from supplied public-safe selection facts is smaller than runtime validation execution and can be tested without starting LabVIEWCLI, Docker, compare execution, live terminal proof, packaging, Marketplace, release, or launcher/profile mutation.",
+    "doNotAdmitTogether": [
+      "runtime validation execution",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker command execution or orchestration",
+      "live terminal proof",
+      "package/bin publication",
+      "launcher/profile mutation",
+      "Marketplace work",
+      "release automation",
+      "source copying"
+    ]
+  },
+  "publicSafeExport": {
+    "allowed": [
+      "requirement ID VHS-REQ-546",
+      "prerequisite references to the already implemented settings write, validation readback, validation proof-artifact, validation proof-out adapter, and validation proof-out file-emission slices",
+      "supporting public test expectation TEST-UNIT-392",
+      "package identity vi-history / VI History / svelderrainruiz / MIT / 0.1.0",
+      "command term vihs --validate",
+      "pure contract name createRuntimeSettingsValidationRuntimeOutcome",
+      "runtime outcome fields runtimeValidationOutcome, runtimeProvider, runtimeEngine, runtimeBlockedReason, runtimeErrorCode, runtimeProofStatus, and runtimeImplementationStatus",
+      "deterministic ready, blocked, not-implemented, and unknown blocked-reason mappings",
+      "Marketplace-disabled posture"
+    ],
+    "blocked": [
+      "private evidence roots or local filesystem paths",
+      "private control-plane instructions",
+      "credentials, token names, or release credentials",
+      "source-copying instructions from another VI History authority",
+      "private proof packets or private issue templates",
+      "raw OS-specific terminal-driver implementation details",
+      "OS inspection, runtime locator invocation, or environment probing behavior",
+      "runtime validation execution",
+      "compare execution",
+      "LabVIEWCLI command invocation",
+      "Docker command invocation or orchestration",
+      "live already-running VS Code session uptake proof or live terminal proof",
+      "package/bin publication, launcher/profile mutation, VSIX packaging, Marketplace publication, or release automation"
+    ]
+  },
+  "candidateImplementationWork": [
+    "add tests proving ready runtime selection facts map to VIHS_OK, ready, ready, and implemented",
+    "add tests proving invalid or missing provider facts fail closed",
+    "add tests proving Docker not-implemented and platform/provider unsupported facts map to runtimeImplementationStatus not-implemented",
+    "add tests proving LabVIEW not-found facts and unknown blocked reasons produce stable public error/status facts",
+    "add tests proving the generated runtimeOutcome composes into the existing readback, proof artifact, proof-out adapter, and file-emission contracts",
+    "add tests proving OS probing, locators, runtime execution, compare, LabVIEWCLI, Docker, live proof, package/bin publication, launcher/profile mutation, Marketplace, release, and source-copying side effects remain blocked",
+    "implement the minimum pure runtime outcome facts adapter"
+  ],
+  "candidateIauShape": {
+    "iauId": "IAU-runtime-settings-cli-validation-runtime-outcome-v1",
+    "status": "not-admitted",
+    "parentSliceId": "runtime-settings-cli-validation-runtime-outcome-v1",
+    "candidateTasks": [
+      "add tests for ready outcome mapping",
+      "add tests for invalid provider and missing selection failures",
+      "add tests for Docker not-implemented mapping",
+      "add tests for LabVIEW not-found and unknown blocked-reason mapping",
+      "add tests for composition into readback, proof, proof-out, and file emission",
+      "add tests for blocked execution and publication side effects",
+      "implement the pure validation runtime outcome facts adapter"
+    ],
+    "blockedTasks": [
+      "runtime validation execution",
+      "compare execution",
+      "LabVIEWCLI execution",
+      "Docker execution or orchestration",
+      "live terminal proof",
+      "package/bin publication",
+      "launcher/profile mutation",
+      "Marketplace work",
+      "release automation",
+      "source copying from GitLab or GitHub Suite"
+    ]
+  },
+  "bridgeReadinessChecks": {
+    "stableRequirementIds": "pass",
+    "prerequisiteSettingsWriteClosed": "pass",
+    "prerequisiteValidationReadbackClosed": "pass",
+    "prerequisiteValidationProofArtifactClosed": "pass",
+    "prerequisiteValidationProofOutAdapterClosed": "pass",
+    "prerequisiteValidationProofOutFileEmissionClosed": "pass",
+    "publicSafeWording": "pass",
+    "traceability": "pass",
+    "blockedScopeExplicit": "pass",
+    "runtimeExecutionBlocked": "pass",
+    "implementationSharingBlocked": "pass",
+    "marketplacePublicationDisabled": "pass"
+  },
+  "nextGate": {
+    "state": "public-import-spec-and-admission-planning",
+    "allowedNextWork": [
+      "create the public MIT import packet for runtime-settings-cli-validation-runtime-outcome-v1",
+      "create the public Spec Kit feature spec plan and tasks",
+      "add public admission records with implementationStartAllowed false until preflight passes",
+      "run public redaction and artifact validation"
+    ],
+    "notAllowedNextWork": [
+      "implementing runtime outcome facts before public preflight",
+      "adding runtime validation execution",
+      "adding compare execution",
+      "adding LabVIEWCLI execution",
+      "adding Docker orchestration",
+      "adding live terminal proof",
+      "copying runtime settings implementation source from another VI History authority",
+      "adding package/bin publication, launcher/profile mutation, release automation, or Marketplace publishing"
+    ]
+  },
+  "implementationSharing": "none",
+  "marketplacePublication": "disabled-until-later-adr"
+}
