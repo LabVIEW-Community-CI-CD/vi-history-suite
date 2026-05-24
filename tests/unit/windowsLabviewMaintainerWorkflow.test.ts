@@ -56,8 +56,14 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('npm.cmd test');
     expect(workflow).toContain('npm.cmd run package');
     expect(workflow).toContain('npm.cmd run test:integration:windows');
-    expect(workflow).toContain('actions/upload-artifact@v4');
+    expect(workflow).toContain('actions/upload-artifact@v7');
     expect(workflow).toContain('vi-history-suite-*.vsix');
     expect(workflow).toContain('runner-evidence/**');
+  });
+
+  it('does not depend on npm cache tooling on the self-hosted runner', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).not.toContain('cache: npm');
   });
 });
