@@ -1,8 +1,8 @@
 {
   "name": "vi-history-suite",
-  "displayName": "VI History",
+  "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
