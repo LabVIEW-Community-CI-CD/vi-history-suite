@@ -528,6 +528,8 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonRuntimeDoctor.ts`
   - `src/reporting/comparisonReportAction.ts`
 - Verification References:
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `manual:runtime-discovery-missing-tool-check`
 - Change Guidance:

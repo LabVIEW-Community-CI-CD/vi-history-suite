@@ -80,6 +80,7 @@ export interface ComparisonRuntimeSelection {
   containerRuntimePlatform?: Extract<RuntimePlatform, 'win32' | 'linux'>;
   executionMode?: RuntimeExecutionMode;
   requestedProvider?: 'host' | 'docker';
+  requestedLabviewVersion?: string;
   headlessRequested?: boolean;
   bitness: RuntimeBitness;
   provider: ComparisonRuntimeProvider;
@@ -376,6 +377,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       blockedReason: 'installed-provider-invalid',
@@ -429,6 +431,7 @@ export async function locateComparisonRuntime(
         platform,
         executionMode,
         requestedProvider: settings.requestedProvider,
+        requestedLabviewVersion,
         bitness,
         provider: 'unavailable',
         blockedReason,
@@ -458,6 +461,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       blockedReason,
@@ -485,6 +489,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       blockedReason: 'labview-2026q1-unsupported-on-macos',
@@ -516,6 +521,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       blockedReason: `configured-${configuredFailure.kind}-path-missing`,
@@ -626,6 +632,7 @@ export async function locateComparisonRuntime(
           hostPlatform: platform,
           executionMode,
           requestedProvider: settings.requestedProvider,
+          requestedLabviewVersion,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -661,6 +668,7 @@ export async function locateComparisonRuntime(
         hostPlatform: platform,
         executionMode,
         requestedProvider: settings.requestedProvider,
+        requestedLabviewVersion,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -711,6 +719,7 @@ export async function locateComparisonRuntime(
         platform,
         executionMode,
         requestedProvider: settings.requestedProvider,
+        requestedLabviewVersion,
         bitness,
         provider: 'unavailable',
         blockedReason: 'docker-provider-labview-version-not-implemented',
@@ -741,6 +750,7 @@ export async function locateComparisonRuntime(
         platform,
         executionMode,
         requestedProvider: settings.requestedProvider,
+        requestedLabviewVersion,
         bitness,
         provider: 'unavailable',
         blockedReason: dockerProviderNotSupportedBlockedReason,
@@ -773,6 +783,7 @@ export async function locateComparisonRuntime(
         platform,
         executionMode,
         requestedProvider: settings.requestedProvider,
+        requestedLabviewVersion,
         bitness,
         provider: 'unavailable',
         blockedReason: dockerProviderRequiresWindowsX64BlockedReason,
@@ -805,6 +816,7 @@ export async function locateComparisonRuntime(
         hostPlatform: platform,
         executionMode,
         requestedProvider: settings.requestedProvider,
+        requestedLabviewVersion,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -843,6 +855,7 @@ export async function locateComparisonRuntime(
       hostPlatform: platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       configuredWindowsContainerImage: windowsContainerImage,
       configuredLinuxContainerImage: linuxContainerImage,
@@ -897,6 +910,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       blockedReason: exactWindowsHostRuntime.blockedReason,
@@ -946,6 +960,7 @@ export async function locateComparisonRuntime(
           hostPlatform: platform,
           executionMode,
           requestedProvider: settings.requestedProvider,
+          requestedLabviewVersion,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -994,6 +1009,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       blockedReason: 'labview-exe-not-found',
@@ -1051,6 +1067,7 @@ export async function locateComparisonRuntime(
           hostPlatform: platform,
           executionMode,
           requestedProvider: settings.requestedProvider,
+          requestedLabviewVersion,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -1114,6 +1131,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       blockedReason: 'windows-host-runtime-surface-contaminated',
@@ -1167,6 +1185,7 @@ export async function locateComparisonRuntime(
         hostPlatform: platform,
         executionMode,
         requestedProvider: settings.requestedProvider,
+        requestedLabviewVersion,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -1219,6 +1238,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'host-native',
       providerDecisions: buildProviderDecisions({
@@ -1262,6 +1282,7 @@ export async function locateComparisonRuntime(
       platform,
       executionMode,
       requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
       bitness,
       provider: 'unavailable',
       providerDecisions: buildProviderDecisions({
@@ -1309,6 +1330,7 @@ export async function locateComparisonRuntime(
     platform,
     executionMode,
     requestedProvider: settings.requestedProvider,
+    requestedLabviewVersion,
     bitness,
     provider: 'unavailable',
     blockedReason: 'comparison-tool-not-found',
@@ -1692,6 +1714,7 @@ function buildSelectedContainerRuntimeSelection(options: {
   hostPlatform: RuntimePlatform;
   executionMode: RuntimeExecutionMode;
   requestedProvider?: 'host' | 'docker';
+  requestedLabviewVersion?: string;
   bitness: RuntimeBitness;
   configuredWindowsContainerImage: string;
   configuredLinuxContainerImage: string;
@@ -1741,6 +1764,7 @@ function buildSelectedContainerRuntimeSelection(options: {
     containerRuntimePlatform: runtimePlatform,
     executionMode: options.executionMode,
     requestedProvider: options.requestedProvider,
+    requestedLabviewVersion: options.requestedLabviewVersion,
     bitness: options.bitness,
     provider,
     providerDecisions: options.providerDecisions,
@@ -1764,6 +1788,7 @@ function buildUnavailableContainerSelection(options: {
   hostPlatform: RuntimePlatform;
   executionMode: RuntimeExecutionMode;
   requestedProvider?: 'host' | 'docker';
+  requestedLabviewVersion?: string;
   bitness: RuntimeBitness;
   configuredWindowsContainerImage: string;
   configuredLinuxContainerImage: string;
@@ -1781,6 +1806,7 @@ function buildUnavailableContainerSelection(options: {
       : undefined,
     executionMode: options.executionMode,
     requestedProvider: options.requestedProvider,
+    requestedLabviewVersion: options.requestedLabviewVersion,
     bitness: options.bitness,
     provider: 'unavailable',
     blockedReason: options.blockedReason,
