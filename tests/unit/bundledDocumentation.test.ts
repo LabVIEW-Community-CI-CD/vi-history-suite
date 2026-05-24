@@ -124,6 +124,10 @@ describe('bundled documentation', () => {
     expect(installLoaded?.pageBodyHtml).toContain(
       'run <code>VI History: Prepare Local Runtime Settings CLI</code> from the Command Palette'
     );
+    expect(installLoaded?.pageBodyHtml).toContain(
+      'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12'
+    );
+    expect(installLoaded?.pageBodyHtml).toContain('install surface, extension version');
     expect(installLoaded?.pageBodyHtml).not.toContain('install-vihs-extension.ps1');
     expect(comparisonLoaded?.pageBodyHtml).toContain(
       'use the checkbox column to select exactly two retained revisions'

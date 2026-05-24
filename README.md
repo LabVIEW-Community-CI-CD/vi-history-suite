@@ -31,6 +31,14 @@ vihs
 vihs --validate
 ```
 
+For first-time installed-user feedback, use the onboarding tracker:
+
+https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
+
+Include the install surface, extension version, VS Code version, first command
+or action attempted, and any Marketplace/source/support link that felt stale or
+unclear.
+
 ## Use
 
 1. Open a trusted Git repository that contains a tracked `.vi`, `.ctl`, or
@@ -57,6 +65,10 @@ After `postStartCommand` completes (runs `npm run compile`), select the
 `Run VI History Suite` launch configuration from the Run and Debug view and
 press `F5`. A successful first launch opens an Extension Development Host
 window after the compile/preLaunch step completes.
+
+Source-evaluation feedback should identify whether the path was Codespaces,
+Dev Containers in VS Code, or a local clone, and should include the first
+command that failed or the first instruction that was unclear.
 
 Optional fixture helpers:
 

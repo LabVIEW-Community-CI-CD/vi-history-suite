@@ -279,6 +279,31 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const sourceEvaluationRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-596');
+    const marketplaceRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-600');
+
+    expect(srs).toContain('First-time source-evaluation feedback asks for the path used');
+    expect(srs).toContain('First-time Marketplace feedback captures stale');
+    expect(sourceEvaluationRow?.ImplementationRefs).toContain('FIRST-RUN.md');
+    expect(sourceEvaluationRow?.ImplementationRefs).toContain('docs/development.md');
+    expect(sourceEvaluationRow?.ImplementationRefs).toContain(
+      '.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml'
+    );
+    expect(sourceEvaluationRow?.VerificationRefs).toContain(
+      'tests/unit/publicDevcontainerSurface.test.ts'
+    );
+    expect(marketplaceRow?.ImplementationRefs).toContain('FIRST-RUN.md');
+    expect(marketplaceRow?.ImplementationRefs).toContain(
+      '.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml'
+    );
+    expect(marketplaceRow?.VerificationRefs).toContain(
+      'tests/unit/publicDocSourceLinks.test.ts'
+    );
+  });
+
   it('keeps the requirement-targeted issue template aligned with the agent contract', () => {
     const template = readRepoText('.github', 'ISSUE_TEMPLATE', 'requirement_target.yml');
     const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');

@@ -26,6 +26,11 @@ Inside the devcontainer or Codespace:
 6. Open a trusted Git repository with a tracked LabVIEW file and open
    `VI History`.
 
+If this first-run path fails or a step is unclear, record the environment,
+command, and first blocked step in the onboarding tracker:
+
+https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
+
 ## Maintainer Windows/LabVIEW Check
 
 When the trusted self-hosted runner is available, manually dispatch the

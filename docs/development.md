@@ -13,6 +13,13 @@ After `postStartCommand` completes (runs `npm run compile`), select the
 press `F5`. A successful first launch opens an Extension Development Host
 window after the compile/preLaunch step completes.
 
+For first-time source-evaluation feedback, use:
+
+https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
+
+Include whether you used Codespaces, Dev Containers in VS Code, or a local clone
+and the first command or launch step that did not behave as expected.
+
 Useful commands:
 
 ```bash

@@ -15,6 +15,8 @@ function readJson<T>(relativePath: string): T {
 
 const EXPECTED_LAUNCH_CONFIG_NAME = 'Run VI History Suite';
 const EXPECTED_PRELAUNCH_TASK = 'npm: compile';
+const ONBOARDING_FEEDBACK_URL =
+  'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12';
 
 describe('public devcontainer surface', () => {
   it('retains a Docker-capable devcontainer and VS Code launch surface for the public GitHub repo', () => {
@@ -41,6 +43,7 @@ describe('public devcontainer surface', () => {
     const extensions = readJson<{ recommendations?: string[] }>('.vscode/extensions.json');
     const readme = readText('README.md');
     const install = readText('INSTALL.md');
+    const firstRun = readText('FIRST-RUN.md');
 
     expect(devcontainer.name).toBe('vi-history-suite');
     expect(devcontainer.image).toBe('mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm');
@@ -96,6 +99,8 @@ describe('public devcontainer surface', () => {
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(install).toContain('npm run public:repo:clone');
     expect(install).toContain('Vagrant is a local human tester');
+    expect(firstRun).toContain('Use a devcontainer or Codespace');
+    expect(firstRun).toContain('Extension Development Host');
   });
 
   it('documents the expected devcontainer first-run path with the named launch configuration', () => {
@@ -104,6 +109,7 @@ describe('public devcontainer surface', () => {
     }>('.vscode/launch.json');
     const readme = readText('README.md');
     const install = readText('INSTALL.md');
+    const firstRun = readText('FIRST-RUN.md');
     const development = readText('docs/development.md');
     const testPlan = readText('docs/testing/test-plan.md');
 
@@ -117,6 +123,7 @@ describe('public devcontainer surface', () => {
     for (const [docName, docContent] of [
       ['README.md', readme],
       ['INSTALL.md', install],
+      ['FIRST-RUN.md', firstRun],
       ['docs/development.md', development],
       ['docs/testing/test-plan.md', testPlan]
     ] as const) {
@@ -126,6 +133,35 @@ describe('public devcontainer surface', () => {
         'Extension Development Host'
       );
     }
+  });
+
+  it('documents structured source-evaluation onboarding feedback', () => {
+    const feedbackTemplate = readText(
+      '.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml'
+    );
+    const readme = readText('README.md');
+    const install = readText('INSTALL.md');
+    const firstRun = readText('FIRST-RUN.md');
+    const development = readText('docs/development.md');
+    const testPlan = readText('docs/testing/test-plan.md');
+
+    for (const [docName, docContent] of [
+      ['README.md', readme],
+      ['INSTALL.md', install],
+      ['FIRST-RUN.md', firstRun],
+      ['docs/development.md', development],
+      ['docs/testing/test-plan.md', testPlan]
+    ] as const) {
+      expect(docContent, `${docName} points to onboarding tracker`).toContain(
+        ONBOARDING_FEEDBACK_URL
+      );
+    }
+
+    expect(feedbackTemplate).toContain('Codespaces source evaluation');
+    expect(feedbackTemplate).toContain('Dev Containers in VS Code');
+    expect(feedbackTemplate).toContain('Local clone source evaluation');
+    expect(feedbackTemplate).toContain('id: first_action');
+    expect(feedbackTemplate).toContain('id: friction');
   });
 
   it('documents postStartCommand expectations consistently across docs', () => {

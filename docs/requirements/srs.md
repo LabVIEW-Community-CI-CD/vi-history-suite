@@ -589,13 +589,22 @@ Missing numeric IDs are intentional.
   - A devcontainer configuration exists.
   - The public devcontainer surface is tested.
   - The test plan describes the devcontainer human check.
+  - First-time source-evaluation feedback asks for the path used, first failed
+    command or launch step, and Extension Development Host result.
 - Agent Work Scope:
-  - Change devcontainer config, docs, and public surface tests together.
+  - Change devcontainer config, source-evaluation docs, onboarding feedback
+    template, and public surface tests together.
 - Implementation References:
   - `.devcontainer/devcontainer.json`
+  - `README.md`
+  - `INSTALL.md`
+  - `FIRST-RUN.md`
+  - `docs/development.md`
   - `docs/testing/test-plan.md`
+  - `.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml`
 - Verification References:
   - `tests/unit/publicDevcontainerSurface.test.ts`
+  - `tests/unit/publicDocSourceLinks.test.ts`
   - `manual:devcontainer-extension-host`
 - Change Guidance:
   - Keep the devcontainer path focused on source evaluation, not release
@@ -687,18 +696,24 @@ Missing numeric IDs are intentional.
   - License remains `0BSD` and package publication remains disabled.
   - Public docs (README, INSTALL, SUPPORT, SECURITY) do not present the old
     personal repo as the active source or issue tracker.
+  - First-time Marketplace feedback captures stale Marketplace/source/support
+    links without changing Marketplace identity.
 - Agent Work Scope:
-  - Change package metadata, README links, and package tests together.
+  - Change package metadata, public docs, onboarding feedback template, and
+    package/public-link tests together.
 - Implementation References:
   - `package.json`
   - `README.md`
   - `INSTALL.md`
+  - `FIRST-RUN.md`
   - `SUPPORT.md`
   - `SECURITY.md`
   - `docs/maintainer-operations.md`
+  - `.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/publicDocSourceLinks.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
   - `external:vscode-marketplace-svelderrainruiz.vi-history-suite`
 - Change Guidance:
   - Do not change Marketplace identity as part of normal source migration work.
