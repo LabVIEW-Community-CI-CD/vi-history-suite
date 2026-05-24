@@ -23,6 +23,9 @@ contribution is provided under the repository license, BSD0 / `0BSD`.
 Keep changes focused, include tests when behavior changes, and update the
 README or install notes when user-facing behavior changes.
 
+Use GitHub Issues for bugs and feature requests. Do not open public issues for
+security vulnerabilities; use [SECURITY.md](./SECURITY.md) instead.
+
 ## Optional Test Repositories
 
 To clone the standard public fixture:
