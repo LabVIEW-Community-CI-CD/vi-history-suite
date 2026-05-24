@@ -67,6 +67,8 @@ Expected host prerequisites:
 - LabVIEWCLI
 - Git
 - GitHub Actions runner application
+- a PowerShell execution policy for the runner user that allows GitHub's
+  temporary `.ps1` scripts, such as `CurrentUser RemoteSigned`
 
 The runner workflow must be `workflow_dispatch` only, use read-only repository
 permissions, and hard-fail unless the ref is `main` or an exact `v*` tag.

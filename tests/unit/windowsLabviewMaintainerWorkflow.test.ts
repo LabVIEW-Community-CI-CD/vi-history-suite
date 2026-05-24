@@ -4,10 +4,12 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 function readWorkflow(): string {
-  return fs.readFileSync(
+  const workflow = fs.readFileSync(
     path.resolve(__dirname, '..', '..', '.github', 'workflows', 'windows-labview-maintainer.yml'),
     'utf8'
   );
+
+  return workflow.replace(/\r\n/g, '\n');
 }
 
 describe('Windows LabVIEW maintainer workflow', () => {
