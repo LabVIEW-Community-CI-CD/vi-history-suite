@@ -12,6 +12,7 @@ function readRepoText(...segments: string[]): string {
 }
 
 const orgRepoUrl = 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite';
+const orgRepoGitUrl = `${orgRepoUrl}.git`;
 const orgIssueUrl = `${orgRepoUrl}/issues`;
 const marketplaceIdentity = 'svelderrainruiz.vi-history-suite';
 
@@ -56,6 +57,8 @@ describe('public docs source and support link confidence', () => {
 
     expect(maintainerOps).toContain(marketplaceIdentity);
     expect(maintainerOps).toContain(orgRepoUrl);
+    expect(maintainerOps).toContain(orgRepoGitUrl);
+    expect(maintainerOps).toContain(orgIssueUrl);
     expect(maintainerOps).toContain('Marketplace extension identity remains');
   });
 
@@ -71,7 +74,7 @@ describe('public docs source and support link confidence', () => {
     // The regex looks for personal repo URLs that are NOT followed by .git
     // (since the historical git clone URL with .git suffix may appear in migration context)
     expect(publicDocs).not.toMatch(
-      /https:\/\/github\.com\/svelderrainruiz\/vi-history-suite(?!\.git)/
+      /github\.com\/svelderrainruiz\/vi-history-suite(?!\.git\b)/i
     );
 
     // Should not refer to old personal repo issues

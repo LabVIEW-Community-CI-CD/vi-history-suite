@@ -113,10 +113,11 @@ Manual verification steps:
    node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
    ```
 
-2. Confirm the returned `repository` and `bugs` URLs point to:
+2. Confirm the returned URLs use the organization repository as their base:
 
    ```
-   https://github.com/LabVIEW-Community-CI-CD/vi-history-suite
+   repository.url = https://github.com/LabVIEW-Community-CI-CD/vi-history-suite.git
+   bugs.url = https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues
    ```
 
 3. Visit the Marketplace listing page and confirm the source repository link
