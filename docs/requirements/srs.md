@@ -573,6 +573,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportPacket.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonReportPacket.test.ts`
 - Change Guidance:
   - Treat external tool execution as evidence-producing, not inherently
     trustworthy.
