@@ -157,9 +157,9 @@
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package"
   },
   "devDependencies": {
-    "@types/node": "^24.6.0",
+    "@types/node": "^24.12.4",
     "@types/vscode": "^1.90.0",
-    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/coverage-v8": "^4.1.7",
     "@vscode/test-electron": "^2.5.2",
     "marked": "^17.0.5",
     "rimraf": "^6.0.1",
