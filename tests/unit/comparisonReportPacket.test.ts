@@ -216,7 +216,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       record.runtimeExecutionState = 'not-available';
       record.reportStatus = 'blocked-runtime';
       record.runtimeSelection.provider = 'unavailable';
-      record.runtimeSelection.blockedReason = 'labview-exe-not-found';
+      record.runtimeSelection.blockedReason = 'runtime-selection-unavailable';
 
       const html = renderComparisonReportPacketHtml(record);
 
