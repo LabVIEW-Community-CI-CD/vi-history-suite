@@ -24,13 +24,15 @@ to the LabVIEW Community CI/CD GitHub organization.
 Use a devcontainer or Codespace when you want to inspect or test the source:
 
 ```bash
-npm ci
 npm run check
 npm test
 npm run package
 ```
 
-Launch the extension development host with `F5`.
+After `postStartCommand` completes (runs `npm run compile`), select the
+`Run VI History Suite` launch configuration from the Run and Debug view and
+press `F5`. A successful first launch opens an Extension Development Host
+window after the compile/preLaunch step completes.
 
 Useful source-evaluation helpers:
 
