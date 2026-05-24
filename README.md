@@ -70,3 +70,6 @@ a Windows/LabVIEW box. It is not a release gate. See [docs/vagrant.md](./docs/va
 
 This repository is licensed under BSD0 / `0BSD`. Pull requests are welcome under
 the same license. See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+For help, use [SUPPORT.md](./SUPPORT.md). For vulnerability reporting, use
+[SECURITY.md](./SECURITY.md).

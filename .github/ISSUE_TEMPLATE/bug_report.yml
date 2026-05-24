@@ -1,0 +1,56 @@
+name: Bug Report
+description: Report a problem with VI History Suite.
+title: "Bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Please include enough context for a maintainer to reproduce or route it.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps To Reproduce
+      description: List the smallest steps that show the problem.
+      placeholder: |
+        1. Open ...
+        2. Run ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include VS Code, OS, LabVIEW, provider, and extension version when relevant.
+      placeholder: |
+        - OS:
+        - VS Code:
+        - VI History Suite:
+        - LabVIEW:
+        - Runtime provider:
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs Or Screenshots
+      description: Paste concise logs or attach screenshots when useful.
+      render: text
+    validations:
+      required: false

@@ -1,0 +1,38 @@
+name: Feature Request
+description: Suggest an improvement for VI History Suite.
+title: "Feature: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Please describe the workflow or user need first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Or Goal
+      description: What are you trying to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Change
+      description: What should VI History Suite do differently?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any workaround or smaller change that might satisfy the need?
+    validations:
+      required: false
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Link examples, screenshots, repositories, or LabVIEW/VS Code details when useful.
+    validations:
+      required: false
