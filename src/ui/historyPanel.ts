@@ -20,6 +20,94 @@ export interface HistoryPanelComparePreflightState {
   warningMessage?: string;
 }
 
+/**
+ * Represents a candidate revision for explicit compare pair selection.
+ */
+export interface CompareRevisionCandidate {
+  hash: string;
+  commitIndex: number;
+}
+
+/**
+ * Represents a resolved selected/base compare pair.
+ */
+export interface ResolvedComparePair {
+  selectedHash: string;
+  baseHash: string;
+}
+
+/**
+ * Describes the compare selection state based on the number of selected revisions.
+ */
+export type CompareSelectionState =
+  | { count: 0; status: 'no-selection' }
+  | { count: 1; status: 'need-one-more'; selectedHash: string }
+  | { count: 2; status: 'pair-ready'; pair: ResolvedComparePair }
+  | { count: number; status: 'too-many' };
+
+/**
+ * Resolves an array of selected revision candidates into a compare pair.
+ * Returns the pair when exactly two valid, distinct candidates are provided;
+ * the candidate with the lower commitIndex becomes `selectedHash` (newer commit),
+ * and the candidate with the higher commitIndex becomes `baseHash` (older commit).
+ * Returns undefined when fewer or more than two valid candidates are provided.
+ */
+export function resolveSelectedComparePair(
+  candidates: readonly CompareRevisionCandidate[]
+): ResolvedComparePair | undefined {
+  const validCandidates = candidates.filter(
+    (candidate) => candidate.hash.length > 0 && Number.isFinite(candidate.commitIndex)
+  );
+
+  if (validCandidates.length !== 2) {
+    return undefined;
+  }
+
+  const [first, second] = validCandidates;
+  if (first.hash === second.hash) {
+    return undefined;
+  }
+
+  const sorted = [...validCandidates].sort(
+    (left, right) => left.commitIndex - right.commitIndex
+  );
+
+  return {
+    selectedHash: sorted[0].hash,
+    baseHash: sorted[1].hash
+  };
+}
+
+/**
+ * Derives the compare selection state from selected revision candidates.
+ * This function mirrors the webview JavaScript selection logic for testability.
+ */
+export function deriveCompareSelectionState(
+  candidates: readonly CompareRevisionCandidate[]
+): CompareSelectionState {
+  const validCandidates = candidates.filter(
+    (candidate) => candidate.hash.length > 0 && Number.isFinite(candidate.commitIndex)
+  );
+
+  if (validCandidates.length === 0) {
+    return { count: 0, status: 'no-selection' };
+  }
+
+  if (validCandidates.length === 1) {
+    return { count: 1, status: 'need-one-more', selectedHash: validCandidates[0].hash };
+  }
+
+  if (validCandidates.length === 2) {
+    const pair = resolveSelectedComparePair(validCandidates);
+    if (pair) {
+      return { count: 2, status: 'pair-ready', pair };
+    }
+    return { count: 2, status: 'too-many' };
+  }
+
+  return { count: validCandidates.length, status: 'too-many' };
+}
+
 export function renderHistoryPanelHtml(
   model: ViHistoryViewModel,
   lastActionSummary?: HistoryPanelActionSummary,
