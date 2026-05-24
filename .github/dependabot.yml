@@ -10,10 +10,24 @@ updates:
       timezone: Etc/UTC
     open-pull-requests-limit: 5
     groups:
-      npm-development:
+      npm-development-minor-patch:
         dependency-type: development
-      npm-runtime:
+        update-types:
+          - minor
+          - patch
+      npm-runtime-minor-patch:
         dependency-type: production
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@types/vscode"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
 
   - package-ecosystem: github-actions
     directory: /

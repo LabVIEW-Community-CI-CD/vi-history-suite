@@ -20,6 +20,24 @@ describe('security maintenance workflows', () => {
     expect(dependabot).toContain('directory: /');
   });
 
+  it('groups routine npm updates while leaving major updates independently reviewable', () => {
+    const dependabot = readRepoFile('.github', 'dependabot.yml');
+
+    expect(dependabot).toMatch(
+      /npm-development-minor-patch:[\s\S]*dependency-type:\s+development[\s\S]*update-types:[\s\S]*-\s+minor[\s\S]*-\s+patch/
+    );
+    expect(dependabot).toMatch(
+      /npm-runtime-minor-patch:[\s\S]*dependency-type:\s+production[\s\S]*update-types:[\s\S]*-\s+minor[\s\S]*-\s+patch/
+    );
+    expect(dependabot).not.toMatch(/^\s+-\s+major\s*$/m);
+    expect(dependabot).toMatch(
+      /dependency-name:\s+"@types\/node"[\s\S]*version-update:semver-major/
+    );
+    expect(dependabot).toMatch(
+      /dependency-name:\s+"@types\/vscode"[\s\S]*version-update:semver-major[\s\S]*version-update:semver-minor/
+    );
+  });
+
   it('runs CodeQL on main, pull requests, schedule, and manual dispatch', () => {
     const codeql = readRepoFile('.github', 'workflows', 'codeql.yml');
 

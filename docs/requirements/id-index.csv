@@ -600,6 +600,7 @@ VHS-REQ-598,Software,Active,srs.md#vhs-req-598-trusted-windowslabview-maintainer
 VHS-REQ-599,Software,Active,srs.md#vhs-req-599-optional-vagrant-helper,,,docs/requirements/srs.md
 VHS-REQ-600,Software,Active,srs.md#vhs-req-600-marketplace-identity-and-public-source-metadata,,,docs/requirements/srs.md
 VHS-REQ-601,Software,Active,srs.md#vhs-req-601-requirements-as-agent-work-contracts,,,docs/requirements/srs.md
+VHS-REQ-602,Software,Active,srs.md#vhs-req-602-dependency-maintenance-automation,,,docs/requirements/srs.md
 VHS-SYS-REQ-001,System,Active,syrs.md#vhs-sys-req-001-vs-code-labview-vi-history-system,,,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-002,System,Superseded,,VHS-SYS-REQ-014,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-003,System,Active,syrs.md#vhs-sys-req-003-system-and-software-requirement-split,,,pre-simplification docs/requirements/syrs.md
