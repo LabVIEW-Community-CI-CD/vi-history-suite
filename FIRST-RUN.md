@@ -1,31 +1,15 @@
 # First Run
 
-Use this guide after installing VI History Suite from the VS Code Marketplace,
-with `code --install-extension svelderrainruiz.vi-history-suite`, or from an
-exact released VSIX.
-
-## Prepare Runtime Settings
-
-1. Run `VI History: Prepare Local Runtime Settings CLI` from the Command
+1. Install the extension.
+2. Open or restart VS Code.
+3. Run `VI History: Prepare Local Runtime Settings CLI` from the Command
    Palette.
-2. Open an integrated terminal.
-3. Run `vihs`.
-4. Choose provider, LabVIEW year, and bitness for this machine.
-5. Run `vihs --validate`.
+4. Open an integrated terminal and run `vihs`.
+5. Choose `host` or `docker`, then choose the LabVIEW year and bitness.
+6. Run `vihs --validate`.
+7. Open a trusted Git repository with a tracked LabVIEW file.
+8. Open `VI History`, select two revisions, review the preflight, and choose
+   `Compare`.
 
-The prepare command is the expected way to create or refresh the local `vihs`
-launcher. VS Code startup alone does not prepare the command.
-
-## First Compare
-
-1. Open a trusted Git repository that contains a `.vi`, `.ctl`, or `.vit` file.
-2. Open `VI History` from the Explorer context menu or editor title action.
-3. Select exactly two retained revisions.
-4. Review the compare preflight.
-5. Choose `Compare`.
-
-## More Help
-
-- [Troubleshooting](./TROUBLESHOOTING.md)
-- [FAQ](./docs/information-for-users/faq.md)
-- [Command Reference](./docs/information-for-users/command-reference.md)
+If validation reports a blocked runtime, fix that runtime first. The extension
+does not silently switch provider, year, or bitness during compare.

@@ -203,7 +203,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       title="${escapeHtml(record.reportTitle)}"
     ></iframe>`
     : `<div class="note" data-testid="comparison-report-generated-report-missing">
-      <strong>Generated report:</strong> No LabVIEW-generated HTML report is currently retained at the governed output path.
+      <strong>Generated report:</strong> No LabVIEW-generated HTML report is currently retained at the selected output path.
     </div>`;
 
   return `<!DOCTYPE html>
@@ -521,21 +521,21 @@ function renderRuntimeNote(record: ComparisonReportPacketRecord): string {
       record.runtimeExecution.blockedReason === 'container-image-acquisition-failed' ||
       record.runtimeExecution.blockedReason === 'windows-container-image-acquisition-failed'
     ) {
-      return 'No LabVIEW-generated comparison report has been executed because the governed container image could not be acquired before runtime launch.';
+      return 'No LabVIEW-generated comparison report has been executed because the container image could not be acquired before runtime launch.';
     }
 
-    return 'No LabVIEW-generated comparison report has been executed because the governed runtime selection is currently unavailable for this workspace and platform.';
+    return 'No LabVIEW-generated comparison report has been executed because the runtime selection is currently unavailable for this workspace and platform.';
   }
 
   if (record.runtimeExecutionState === 'succeeded') {
-    return 'LabVIEW-generated comparison report execution succeeded and the governed HTML output is retained at the report path shown below.';
+    return 'LabVIEW-generated comparison report execution succeeded and the HTML output is retained at the report path shown below.';
   }
 
   if (record.runtimeExecutionState === 'failed') {
-    return 'LabVIEW-generated comparison report execution was attempted, but the governed output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.';
+    return 'LabVIEW-generated comparison report execution was attempted, but the output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.';
   }
 
-  return 'No LabVIEW-generated comparison report has been executed yet. This retained packet captures the governed preflight, runtime selection, and artifact plan for the selected revision pair.';
+  return 'No LabVIEW-generated comparison report has been executed yet. This retained packet captures the preflight, runtime selection, and artifact plan for the selected revision pair.';
 }
 
 function renderComparisonContextSection(record: ComparisonReportPacketRecord): string {

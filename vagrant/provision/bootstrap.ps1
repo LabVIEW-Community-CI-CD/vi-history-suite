@@ -170,7 +170,7 @@ if (-not (Test-Path -LiteralPath $lvExe)) {
 }
 Write-Step "LabVIEW 2026 present: $lvExe"
 
-# CI launches LabVIEW through an interactive scheduled task because WinRM
+# Local automation launches LabVIEW through an interactive scheduled task because WinRM
 # sessions run outside the desktop. Ensure disposable clones create that
 # desktop session after the post-bootstrap reload.
 Write-Step "Configuring vagrant autologon for interactive LabVIEW launch..."
@@ -183,7 +183,7 @@ Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultPassword' -Value 'Vagr
 Set-ItemProperty -LiteralPath $winlogonPath -Name 'DefaultDomainName' -Value $computerName -Type String
 Write-Step "Autologon configured for $computerName\vagrant."
 
-Write-Step "Suppressing Windows consumer backup and welcome prompts for CI desktop..."
+Write-Step "Suppressing Windows consumer backup and welcome prompts for local Vagrant desktop..."
 $cloudContentPolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent'
 Set-RegistryDwordValue -Path $cloudContentPolicyPath -Name 'DisableWindowsConsumerFeatures' -Value 1
 Set-RegistryDwordValue -Path $cloudContentPolicyPath -Name 'DisableCloudOptimizedContent' -Value 1
@@ -267,7 +267,7 @@ Write-Step "WinRM configured for Vagrant communicator."
 
 # Enable LabVIEW VI Server TCP so LabVIEWCLI can connect and pre-authorize the
 # listener. Without an explicit rule, Windows Defender can block behind an
-# interactive prompt that CI cannot answer.
+# interactive prompt that local automation cannot answer.
 $lvIniPath = 'C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.ini'
 if (Test-Path -LiteralPath $lvIniPath) {
   $iniContent = Get-Content -LiteralPath $lvIniPath -Raw -ErrorAction SilentlyContinue

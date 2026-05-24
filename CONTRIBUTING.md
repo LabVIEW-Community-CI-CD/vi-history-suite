@@ -1,58 +1,38 @@
 # Contributing
 
-This repository is source-available and intentionally restrictive. It is not an
-open-source project.
+Thanks for helping VI History Suite get simpler and more useful.
 
-## Public Development Loop
+## Development Loop
 
-The public source facade is intended to be usable in a Docker-capable
-devcontainer or Codespace:
+Use the devcontainer or Codespace path when possible:
 
 ```bash
 npm ci
-npm run compile
-npm run test:design-contract
-npm run public:host:bootstrap-linux
+npm run check
+npm test
+npm run package
 ```
 
-Then use `F5` in VS Code to launch the extension host.
+Then press `F5` in VS Code to launch the extension development host.
 
-If you want a governed public sample repository to test against, run:
+## Pull Requests
+
+Pull requests are welcome. By opening a pull request, you agree that your
+contribution is provided under the repository license, BSD0 / `0BSD`.
+
+Keep changes focused, include tests when behavior changes, and update the
+README or install notes when user-facing behavior changes.
+
+## Optional Test Repositories
+
+To clone the standard public fixture:
 
 ```bash
 npm run public:fixture:icon-editor
 ```
 
-If you want to test against another public GitHub or GitLab repo from the same
-Codespaces/devcontainer session, use:
+To clone another public repository for review:
 
 ```bash
-npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
+npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
 ```
-
-Add `--branch <branch-name>` when you want a specific branch. If you omit it,
-the command resolves the repo's remote default branch automatically.
-
-## Before You Contribute
-
-Do not open pull requests containing code, documentation, or other copyrighted
-material for inclusion unless the licensor has explicitly invited the
-contribution and entered into a separate private written agreement with you.
-
-By default:
-
-- issue reports and discussion are fine
-- proposed patches are not accepted
-- opening a pull request does not, by itself, grant the licensor any rights
-  beyond what is already provided by law and the repository license
-
-## Scope
-
-This public repo is for the public product surface:
-
-- extension source
-- public docs
-- public workflows
-- public devcontainer/Codespaces path
-
-Internal GitLab control-plane material is intentionally maintained elsewhere.

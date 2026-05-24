@@ -2,7 +2,6 @@ import * as fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
-import { createBenchmarkStatusAction } from './benchmark/benchmarkStatusAction';
 import { buildComparisonReportArchivePlanFromSelection } from './dashboard/comparisonReportArchive';
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
@@ -38,7 +37,7 @@ import {
 import {
   admitLocalRuntimeSettingsCliToTerminalPath,
   type MaterializedLocalRuntimeSettingsCli,
-  resolveLocalRuntimeSettingsCliGovernanceContract,
+  resolveLocalRuntimeSettingsCliContract,
   runLocalRuntimeSettingsCli
 } from './tooling/localRuntimeSettingsCli';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
@@ -96,9 +95,6 @@ export async function activate(
   const humanReviewMachineCapability = resolveHumanReviewMachineCapability();
   const humanReviewSubmissionAction = humanReviewMachineCapability.isCanonicalHostMachine
     ? createHumanReviewSubmissionAction(context)
-    : undefined;
-  const benchmarkStatusAction = humanReviewMachineCapability.isCanonicalHostMachine
-    ? createBenchmarkStatusAction(context)
     : undefined;
   const bundledDocumentationAction = createBundledDocumentationAction(context, panelTracker);
   const multiReportDashboardAction = createMultiReportDashboardAction(
@@ -161,8 +157,7 @@ export async function activate(
           hasRetainedComparisonReport,
           reviewDecisionRecordAction,
           bundledDocumentationAction,
-          humanReviewSubmissionAction,
-          benchmarkStatusAction
+          humanReviewSubmissionAction
         );
 
         context.subscriptions.push(eligibilityIndexer);
@@ -231,7 +226,7 @@ export async function activate(
         context.environmentVariableCollection
       );
       admittedLocalRuntimeSettingsCli = materializedCli;
-      const governanceContract = resolveLocalRuntimeSettingsCliGovernanceContract();
+      const runtimeSettingsCliContract = resolveLocalRuntimeSettingsCliContract();
 
       void vscode.window.showInformationMessage(
         [
@@ -240,7 +235,7 @@ export async function activate(
           `Current terminal entrypoint path: ${materializedCli.currentPlatformTerminalEntrypointPath}.`,
           `Compatibility launcher path: ${materializedCli.currentPlatformLauncherPath}.`,
           `Run next: ${materializedCli.nextCommand}.`,
-          `Governed settings targets: default user settings.json at ${governanceContract.defaultSettingsFilePath} or an explicit --settings-file path.`,
+          `Settings targets: default user settings.json at ${runtimeSettingsCliContract.defaultSettingsFilePath} or an explicit --settings-file path.`,
           'This prepare command is admitted in untrusted workspaces because it only materializes the launcher; installed compare remains disabled there.'
         ].join(' ')
       );
@@ -248,7 +243,7 @@ export async function activate(
       return {
         outcome: 'prepared-local-runtime-settings-cli' as const,
         ...materializedCli,
-        ...governanceContract
+        ...runtimeSettingsCliContract
       };
     })
   );

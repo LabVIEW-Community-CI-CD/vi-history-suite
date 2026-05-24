@@ -681,7 +681,7 @@ export async function locateComparisonRuntime(
           blockedReason: 'auto-docker-installed-provider-unavailable'
         }),
         notes: [
-          `Docker Desktop was detected on Windows, so governed auto execution requires the current Docker engine provider, but ${describeUnavailableContainerProvider(containerFacts, {
+          `Docker Desktop was detected on Windows, so auto execution requires the current Docker engine provider, but ${describeUnavailableContainerProvider(containerFacts, {
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage
           })}`
@@ -729,7 +729,7 @@ export async function locateComparisonRuntime(
           blockedReason: 'docker-provider-labview-version-not-implemented'
         }),
         notes: [
-          `Docker provider validation accepted the request for evidence capture, but LabVIEW ${requestedLabviewVersion} Docker execution is not implemented in this pre-release lane. Current governed Docker image contracts remain LabVIEW 2026 x64.`
+          `Docker provider validation accepted the request for evidence capture, but LabVIEW ${requestedLabviewVersion} Docker execution is not implemented yet. Current Docker image support remains LabVIEW 2026 x64.`
         ],
         registryQueryPlans,
         candidates
@@ -760,8 +760,8 @@ export async function locateComparisonRuntime(
         }),
         notes: [
           settings.requestedProvider === 'docker'
-            ? 'The Docker provider is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
-            : 'Docker-only comparison-report execution is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
+            ? 'The Docker provider is currently supported for Windows hosts and Linux hosts using the current Docker daemon engine.'
+            : 'Docker-only comparison-report execution is currently supported for Windows hosts and Linux hosts using the current Docker daemon engine.'
         ],
         registryQueryPlans,
         candidates
@@ -792,8 +792,8 @@ export async function locateComparisonRuntime(
         }),
         notes: [
           settings.requestedProvider === 'docker'
-            ? 'The Docker provider currently requires the governed 64-bit container provider.'
-            : 'Docker-only execution currently requires the governed 64-bit container provider.'
+            ? 'The Docker provider currently requires the supported 64-bit container provider.'
+            : 'Docker-only execution currently requires the supported 64-bit container provider.'
         ],
         registryQueryPlans,
         candidates
@@ -1207,7 +1207,7 @@ export async function locateComparisonRuntime(
     }
 
     notes.push(
-      `The governed Docker provider was not available because ${describeUnavailableContainerProvider(containerFacts, {
+      `The Docker provider was not available because ${describeUnavailableContainerProvider(containerFacts, {
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage
       })}`
@@ -1393,7 +1393,7 @@ async function observeWindowsHostRuntimeSurfaceFacts(
     });
   } catch (error) {
     notes.push(
-      `Windows governed VI Server listener observation failed during canonical execution-request validation: ${String(error)}.`
+      `Windows VI Server listener observation failed during execution-request validation: ${String(error)}.`
     );
   }
 
@@ -1408,14 +1408,14 @@ async function observeWindowsHostRuntimeSurfaceFacts(
 
   if (listenerObservations.length > 0) {
     notes.push(
-      `Validated Windows host runtime surface observed an existing TCP listener on the governed VI Server port before provider selection: ${describeWindowsTcpListeners(listenerObservations)}.`
+      `Validated Windows host runtime surface observed an existing TCP listener on the configured VI Server port before provider selection: ${describeWindowsTcpListeners(listenerObservations)}.`
     );
   }
 
   if (!hostRuntimeConflictDetected) {
     notes.push(
       Number.isInteger(tcpSettings.labviewTcpPort)
-        ? `Validated Windows host runtime surface before provider selection; no existing LabVIEW-related processes or governed listener were detected on VI Server port ${String(tcpSettings.labviewTcpPort)}.`
+        ? `Validated Windows host runtime surface before provider selection; no existing LabVIEW-related processes or configured listener were detected on VI Server port ${String(tcpSettings.labviewTcpPort)}.`
         : 'Validated Windows host runtime surface before provider selection; no existing LabVIEW-related processes were detected.'
     );
   }
@@ -1501,8 +1501,8 @@ function buildLegacyWindowsContainerProviderFacts(
     windowsContainerHostMode: imageAvailable ? 'windows' : undefined,
     imageAvailable,
     notes: imageAvailable
-      ? [`Governed Windows container image ${image} was available through the legacy image-inspect probe.`]
-      : [`Legacy Windows container image probe did not find governed image ${image} on the current host.`]
+      ? [`Windows container image ${image} was available through the legacy image-inspect probe.`]
+      : [`Legacy Windows container image probe did not find image ${image} on the current host.`]
   };
 }
 
@@ -1607,24 +1607,24 @@ function describeUnavailableContainerProvider(
     });
 
   if (facts.dockerCliAvailable === false) {
-    return `Docker CLI was not available on the current host, so governed ${providerLabel} image ${selectedImage} could not be used.`;
+    return `Docker CLI was not available on the current host, so ${providerLabel} image ${selectedImage} could not be used.`;
   }
 
   if (facts.dockerDaemonReachable === false) {
-    return `Docker CLI was present, but the Docker daemon was not reachable, so governed ${providerLabel} image ${selectedImage} could not be used.`;
+    return `Docker CLI was present, but the Docker daemon was not reachable, so ${providerLabel} image ${selectedImage} could not be used.`;
   }
 
   if (facts.windowsContainerCapabilityAvailable === false) {
     return facts.windowsContainerHostMode === 'unknown'
-      ? 'Docker daemon was reachable, but the active container engine could not be confirmed as either governed Windows-container mode or governed Linux-container mode.'
-      : `Docker daemon was reachable in ${facts.windowsContainerHostMode ?? 'unknown'}-container mode, but the governed provider could not be derived.`;
+      ? 'Docker daemon was reachable, but the active container engine could not be confirmed as either Windows-container mode or Linux-container mode.'
+      : `Docker daemon was reachable in ${facts.windowsContainerHostMode ?? 'unknown'}-container mode, but the selected provider could not be derived.`;
   }
 
   if (facts.imageAvailable === false) {
-    return `governed ${providerLabel} image ${selectedImage} was not present locally on the current host.`;
+    return `${providerLabel} image ${selectedImage} was not present locally on the current host.`;
   }
 
-  return `governed ${providerLabel} image ${selectedImage} was not available to the current host.`;
+  return `${providerLabel} image ${selectedImage} was not available to the current host.`;
 }
 
 function describeSelectedContainerProvider(options: {
@@ -1653,13 +1653,13 @@ function describeSelectedContainerProvider(options: {
     options.dockerDaemonReachable === true &&
     options.containerCapabilityAvailable === true &&
     options.imageAvailable === true
-      ? `Docker daemon was reachable in ${options.containerHostMode ?? 'unknown'}-container mode with governed ${providerLabel} image ${options.containerImage} present locally`
+      ? `Docker daemon was reachable in ${options.containerHostMode ?? 'unknown'}-container mode with ${providerLabel} image ${options.containerImage} present locally`
       : options.dockerCliAvailable === true &&
           options.dockerDaemonReachable === true &&
           options.containerCapabilityAvailable === true &&
           options.imageAvailable === false
-        ? `Docker daemon was reachable in ${options.containerHostMode ?? 'unknown'}-container mode, and governed ${providerLabel} image ${options.containerImage} will be acquired before launch`
-      : `Governed ${providerLabel} image ${options.containerImage} was selected`;
+        ? `Docker daemon was reachable in ${options.containerHostMode ?? 'unknown'}-container mode, and ${providerLabel} image ${options.containerImage} will be acquired before launch`
+      : `${providerLabel} image ${options.containerImage} was selected`;
 
   if (options.requestedProvider === 'docker') {
     return `${capabilitySummary} because the Docker provider was requested.`;
@@ -1670,7 +1670,7 @@ function describeSelectedContainerProvider(options: {
   }
 
   if (options.selectionReason === 'docker-installed') {
-    return `${capabilitySummary}, so isolated execution was selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.`;
+    return `${capabilitySummary}, so isolated execution was selected because Docker Desktop is installed and auto execution uses the current Docker engine provider.`;
   }
 
   if (options.selectionReason === 'host-runtime-conflict') {
@@ -1901,7 +1901,7 @@ function buildProviderDecisions(
           : options.executionMode === 'docker-only'
           ? 'Host-native execution was not selected because docker-only execution was requested.'
           : windowsAutoDockerInstalled
-            ? 'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
+            ? 'Host-native execution was not selected because Docker Desktop is installed and auto execution uses the current Docker engine provider.'
             : options.hostRuntimeConflictDetected
             ? 'Host-native execution was not selected because the validated Windows host runtime surface was contaminated by existing LabVIEW-related activity.'
             : deriveHostNativeRejectedDetail(options)
@@ -1937,7 +1937,7 @@ function buildProviderDecisions(
               outcome: 'rejected',
               reason: 'docker-provider-labview-version-not-implemented',
               detail:
-                'Docker provider execution was accepted for validation reporting, but the requested LabVIEW year does not have a governed Docker implementation in this pre-release lane.'
+                'Docker provider execution was accepted for validation reporting, but the requested LabVIEW year does not have a Docker implementation yet.'
             }
           : options.blockedReason === 'docker-only-requires-windows-x64-provider' ||
         options.blockedReason === 'docker-provider-requires-windows-x64'
@@ -1950,8 +1950,8 @@ function buildProviderDecisions(
                   : 'docker-only-windows-x64-provider-required',
               detail:
                 options.requestedProvider === 'docker'
-                  ? 'The Docker provider currently requires the governed 64-bit container provider.'
-                  : 'Docker-only execution currently requires the governed 64-bit container provider.'
+                  ? 'The Docker provider currently requires the supported 64-bit container provider.'
+                  : 'Docker-only execution currently requires the supported 64-bit container provider.'
             }
           : {
               provider: selectedContainerProvider,
@@ -2208,10 +2208,10 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
     return 'Host-native execution was not selected because docker-only execution was requested.';
   }
   if (options.blockedReason === 'auto-docker-installed-provider-unavailable') {
-    return 'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.';
+    return 'Host-native execution was not selected because Docker Desktop is installed and auto execution uses the current Docker engine provider.';
   }
   if (options.blockedReason === 'windows-host-runtime-surface-contaminated') {
-    return 'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.';
+    return 'Validated Windows host runtime facts showed existing LabVIEW-related process or configured VI Server port activity, so host-native execution was not selected.';
   }
   if (options.blockedReason === 'labview-2026q1-unsupported-on-macos') {
     return 'LabVIEW 2026 Q1 comparison-report execution is unsupported on macOS.';
@@ -2633,7 +2633,7 @@ export async function queryWindowsContainerProviderFacts(
 
     if (!facts.windowsContainerCapabilityAvailable) {
       facts.notes.push(
-        'Docker daemon is reachable, but the active container mode could not be confirmed as either governed Windows-container mode or governed Linux-container mode.'
+        'Docker daemon is reachable, but the active container mode could not be confirmed as either Windows-container mode or Linux-container mode.'
       );
       return facts;
     }
@@ -2642,12 +2642,12 @@ export async function queryWindowsContainerProviderFacts(
       await runWindowsDockerCommand(hostPlatform, ['image', 'inspect', facts.image], runner);
       facts.imageAvailable = true;
       facts.notes.push(
-        `Docker daemon is reachable in ${facts.windowsContainerHostMode === 'windows' ? 'Windows' : facts.windowsContainerHostMode === 'linux' ? 'Linux' : facts.windowsContainerHostMode}-container mode and governed image ${facts.image} is present locally.`
+        `Docker daemon is reachable in ${facts.windowsContainerHostMode === 'windows' ? 'Windows' : facts.windowsContainerHostMode === 'linux' ? 'Linux' : facts.windowsContainerHostMode}-container mode and image ${facts.image} is present locally.`
       );
     } catch {
       facts.imageAvailable = false;
       facts.notes.push(
-        `Docker daemon is reachable in ${facts.windowsContainerHostMode === 'windows' ? 'Windows' : facts.windowsContainerHostMode === 'linux' ? 'Linux' : facts.windowsContainerHostMode}-container mode, but governed image ${facts.image} is not present locally.`
+        `Docker daemon is reachable in ${facts.windowsContainerHostMode === 'windows' ? 'Windows' : facts.windowsContainerHostMode === 'linux' ? 'Linux' : facts.windowsContainerHostMode}-container mode, but image ${facts.image} is not present locally.`
       );
     }
 
@@ -2655,14 +2655,14 @@ export async function queryWindowsContainerProviderFacts(
   } catch (error) {
     if (isMissingWindowsDockerCommand(error)) {
       facts.notes.push(
-        'Docker CLI is not available on the current host for governed Docker container execution.'
+        'Docker CLI is not available on the current host for Docker container execution.'
       );
       return facts;
     }
 
     facts.dockerCliAvailable = true;
     facts.notes.push(
-      'Docker CLI is present, but the Docker daemon was not reachable for governed Docker container validation.'
+      'Docker CLI is present, but the Docker daemon was not reachable for Docker container validation.'
     );
     return facts;
   }
@@ -2713,7 +2713,7 @@ export async function acquireWindowsContainerImage(
           progressBudget += increment;
         }
         await options.reportProgress?.({
-          message: `Pulling governed container image: ${line}`,
+          message: `Pulling container image: ${line}`,
           increment
         });
       }
@@ -2741,7 +2741,7 @@ export async function acquireWindowsContainerImage(
 
       if (exitCode === 0) {
         await options.reportProgress?.({
-          message: `Governed container image ready: ${image}`,
+          message: `Container image ready: ${image}`,
           increment: 5
         });
         resolve({
@@ -2750,7 +2750,7 @@ export async function acquireWindowsContainerImage(
           notes:
             notes.length > 0
               ? notes
-              : [`Governed container image ${image} was acquired for Docker execution.`]
+              : [`Container image ${image} was acquired for Docker execution.`]
         });
         return;
       }

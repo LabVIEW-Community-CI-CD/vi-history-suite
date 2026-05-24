@@ -1482,7 +1482,7 @@ function renderPreparationSummary(
   if (summary.mode === 'seeded-retained-before-build') {
     const seededCount = summary.seededImportedPairCount ?? 0;
     const baseSummary =
-      `${seededCount} adjacent pair(s) were seeded from governed retained evidence before this dashboard was concentrated.`;
+      `${seededCount} adjacent pair(s) were seeded from retained evidence before this dashboard was concentrated.`;
     if (summary.pairsNeedingEvidenceCount <= 0) {
       return `${baseSummary} No additional local pair refresh was needed from Open dashboard.`;
     }

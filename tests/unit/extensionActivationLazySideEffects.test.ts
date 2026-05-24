@@ -17,7 +17,7 @@ const {
   openViHistoryHandlerMock,
   bundledDocumentationActionMock,
   admitLocalRuntimeSettingsCliToTerminalPathMock,
-  resolveLocalRuntimeSettingsCliGovernanceContractMock,
+  resolveLocalRuntimeSettingsCliContractMock,
   materializedCli
 } = vi.hoisted(() => {
   const handlers = new Map<string, (...args: unknown[]) => unknown>();
@@ -57,7 +57,7 @@ const {
     openViHistoryHandlerMock: vi.fn(),
     bundledDocumentationActionMock: vi.fn(),
     admitLocalRuntimeSettingsCliToTerminalPathMock: vi.fn(),
-    resolveLocalRuntimeSettingsCliGovernanceContractMock: vi.fn(),
+    resolveLocalRuntimeSettingsCliContractMock: vi.fn(),
     materializedCli: materialized
   };
 });
@@ -141,18 +141,13 @@ vi.mock('../../src/review/humanReviewSubmissionAction', () => ({
   createHumanReviewSubmissionAction: vi.fn(() => vi.fn())
 }));
 
-vi.mock('../../src/benchmark/benchmarkStatusAction', () => ({
-  createBenchmarkStatusAction: vi.fn(() => vi.fn())
-}));
-
 vi.mock('../../src/git/gitCli', () => ({
   getFileHistoryCount: vi.fn()
 }));
 
 vi.mock('../../src/tooling/localRuntimeSettingsCli', () => ({
   admitLocalRuntimeSettingsCliToTerminalPath: admitLocalRuntimeSettingsCliToTerminalPathMock,
-  resolveLocalRuntimeSettingsCliGovernanceContract:
-    resolveLocalRuntimeSettingsCliGovernanceContractMock,
+  resolveLocalRuntimeSettingsCliContract: resolveLocalRuntimeSettingsCliContractMock,
   runLocalRuntimeSettingsCli: vi.fn()
 }));
 
@@ -206,7 +201,7 @@ describe('extension activation lazy side effects', () => {
     createOpenViHistoryCommandMock.mockReturnValue(openViHistoryHandlerMock);
     bundledDocumentationActionMock.mockResolvedValue({ outcome: 'opened-documentation' });
     admitLocalRuntimeSettingsCliToTerminalPathMock.mockResolvedValue(materializedCli);
-    resolveLocalRuntimeSettingsCliGovernanceContractMock.mockReturnValue({
+    resolveLocalRuntimeSettingsCliContractMock.mockReturnValue({
       defaultSettingsFilePath: '/home/test/.config/Code/User/settings.json',
       supportedSettingsTargets: ['default-user-settings', 'explicit-settings-file'],
       untrustedWorkspacePosture: 'prepare-command-admitted-compare-blocked'

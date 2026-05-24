@@ -6,7 +6,7 @@ const { VSCE_PACKAGE_SPEC, buildPinnedVsceInvocation } = require('./runPinnedVsc
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const manifestPath = path.join(repoRoot, 'package.json');
-const GOVERNED_RUNTIME_DEPENDENCIES = ['jsonc-parser'];
+const ALLOWED_RUNTIME_DEPENDENCIES = ['jsonc-parser'];
 const FORBIDDEN_PACKAGED_PATH_SEGMENTS = [
   '/node_modules/',
   '/.cache/',
@@ -31,13 +31,13 @@ function parseVsceListOutput(stdout) {
     .filter((line) => !line.startsWith('WARNING'));
 }
 
-function isGovernedRuntimeDependency(name) {
-  return GOVERNED_RUNTIME_DEPENDENCIES.includes(name);
+function isAllowedRuntimeDependency(name) {
+  return ALLOWED_RUNTIME_DEPENDENCIES.includes(name);
 }
 
-function isGovernedRuntimeDependencyPath(packagedPath) {
+function isAllowedRuntimeDependencyPath(packagedPath) {
   const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
-  return GOVERNED_RUNTIME_DEPENDENCIES.some(
+  return ALLOWED_RUNTIME_DEPENDENCIES.some(
     (name) => normalized === `/node_modules/${name}` || normalized.startsWith(`/node_modules/${name}/`)
   );
 }
@@ -45,17 +45,17 @@ function isGovernedRuntimeDependencyPath(packagedPath) {
 function findRuntimeSurfaceViolations({ manifest, packagedPaths }) {
   const violations = [];
   const runtimeDependencies = Object.keys(manifest.dependencies ?? {});
-  const ungovernedRuntimeDependencies = runtimeDependencies.filter(
-    (name) => !isGovernedRuntimeDependency(name)
+  const disallowedRuntimeDependencies = runtimeDependencies.filter(
+    (name) => !isAllowedRuntimeDependency(name)
   );
-  if (ungovernedRuntimeDependencies.length > 0) {
+  if (disallowedRuntimeDependencies.length > 0) {
     violations.push(
-      `Ungoverned runtime dependencies are not allowed in package.json: ${ungovernedRuntimeDependencies.join(', ')}`
+      `Unexpected runtime dependencies are not allowed in package.json: ${disallowedRuntimeDependencies.join(', ')}`
     );
   }
 
-  const missingGovernedDependencyPayloads = runtimeDependencies
-    .filter((name) => isGovernedRuntimeDependency(name))
+  const missingAllowedDependencyPayloads = runtimeDependencies
+    .filter((name) => isAllowedRuntimeDependency(name))
     .filter(
       (name) =>
         !packagedPaths.some((packagedPath) => {
@@ -64,15 +64,15 @@ function findRuntimeSurfaceViolations({ manifest, packagedPaths }) {
         })
     );
 
-  if (missingGovernedDependencyPayloads.length > 0) {
+  if (missingAllowedDependencyPayloads.length > 0) {
     violations.push(
-      `Packaged VSIX surface is missing governed runtime dependency payloads: ${missingGovernedDependencyPayloads.join(', ')}`
+      `Packaged VSIX surface is missing allowed runtime dependency payloads: ${missingAllowedDependencyPayloads.join(', ')}`
     );
   }
 
   const forbiddenPaths = packagedPaths.filter((packagedPath) => {
     const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
-    if (isGovernedRuntimeDependencyPath(packagedPath)) {
+    if (isAllowedRuntimeDependencyPath(packagedPath)) {
       return false;
     }
     return (
@@ -165,7 +165,7 @@ if (require.main === module) {
 }
 
 module.exports = {
-  GOVERNED_RUNTIME_DEPENDENCIES,
+  ALLOWED_RUNTIME_DEPENDENCIES,
   FORBIDDEN_PACKAGE_NAMES,
   FORBIDDEN_PACKAGED_PATH_SEGMENTS,
   FORBIDDEN_PACKAGED_PATH_SUFFIXES,

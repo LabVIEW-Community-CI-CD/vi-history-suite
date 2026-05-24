@@ -18,7 +18,7 @@
 <li>Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates</li>
 <li><code>viHistorySuite.labviewVersion</code> and <code>viHistorySuite.labviewBitness</code> stay explicit across both provider classes</li>
 <li><code>vihs --validate</code> exposes whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked</li>
-<li>if Docker is selected, the extension derives the governed Windows or Linux image family from the current engine and fails closed on unsupported <code>x86</code></li>
+<li>if Docker is selected, the extension derives the Windows or Linux image family from the current engine and fails closed on unsupported <code>x86</code></li>
 <li>if the chosen provider bundle is blocked, compare stops with next-step guidance instead of silently switching provider classes</li>
 <li>compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs</li>
 </ul>
@@ -27,7 +27,7 @@
 <p>Current scope:</p>
 <ul>
 <li>the checkbox-selected compare workflow is repo-agnostic</li>
-<li>canonical benchmark and maintainer-only host-review evidence are still governed separately</li>
+<li>benchmark and maintainer-only host-review evidence are optional local confidence paths</li>
 <li>you do not need to be on <code>ni/labview-icon-editor</code> or <code>ni/actor-framework</code> to use the core two-commit compare flow</li>
 </ul>
 <h2>Primary Review Flow</h2>
@@ -90,7 +90,7 @@ Runtime diagnostics remain retained, but they stay on packet/runtime evidence su
 </ul>
 <h2>Bundled Documentation</h2>
 <p>The extension packages a version-matched installed-user guide so you can read workflow guidance without leaving VS Code.</p>
-<p>The packaged guide is intentionally concise: it keeps the extension-user workflow, execution-policy, and compare rules that a developer needs while omitting private GitLab plus standards/control-plane material.</p>
+<p>The packaged guide is intentionally concise: it keeps the extension-user workflow, execution-policy, and compare rules that a developer needs while omitting historical release-control material.</p>
 <p>Open it from:</p>
 <ul>
 <li>the Command Palette via <code>VI History: Open Documentation</code></li>

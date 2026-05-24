@@ -6,35 +6,37 @@ Run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette,
 then open a new integrated terminal and run:
 
 ```bash
-vihs
 vihs --validate
 ```
 
-If VS Code or Node.js was repaired after the extension was installed, rerun the
-same prepare command to refresh the launcher.
-
-## Runtime Validation Fails
+## Compare Is Blocked
 
 Run:
 
 ```bash
-vihs --validate --proof-out ./vihs-proof
+vihs --validate
 ```
 
-Use the `runtimeErrorCode`, provider, LabVIEW year, bitness, and generated
-proof packet when filing an issue.
+Check the selected provider, LabVIEW year, bitness, runtime engine, and any
+`VIHS_E_*` error code. Fix the reported runtime state before retrying compare.
 
-## Compare Does Not Start
+## Docker Was Selected
 
-Confirm that the workspace is trusted, the selected file is a tracked `.vi`,
-`.ctl`, or `.vit`, and `vihs --validate` reports the intended runtime facts.
-`VI History` starts Git repository inspection lazily when you open the command;
-opening docs or selecting the extension should not start indexing, GitHub
-authorization, LabVIEW, or `LabVIEWCLI`.
+Confirm Docker is running in the same environment that launched VS Code:
 
-## More Help
+```bash
+docker version
+docker info --format "{{.OSType}}"
+```
 
-- [First Run](./FIRST-RUN.md)
-- [FAQ](./docs/information-for-users/faq.md)
-- [Command Reference](./docs/information-for-users/command-reference.md)
-- [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
+The first Docker compare can pull a large LabVIEW runtime image.
+
+## Source Evaluation
+
+Inside a devcontainer or Codespace, reset the basic loop with:
+
+```bash
+npm ci
+npm run check
+npm test
+```

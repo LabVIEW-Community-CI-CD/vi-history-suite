@@ -10,7 +10,7 @@ const CONFIG = {
   defaultRepoUrl: DEFAULT_REPO_URL,
   defaultBranch: DEFAULT_BRANCH,
   defaultTargetRoot: DEFAULT_TARGET_ROOT,
-  description: 'Clone or refresh the governed ni/labview-icon-editor helper path for devcontainer/Codespaces evaluation.',
+  description: 'Clone or refresh the ni/labview-icon-editor helper path for devcontainer/Codespaces evaluation.',
   label: 'public-fixture',
   usagePath: 'scripts/preparePublicTestFixture.js'
 };

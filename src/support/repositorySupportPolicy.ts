@@ -1,6 +1,6 @@
 export type RepositorySupportTier =
-  | 'governed-upstream'
-  | 'governed-fork'
+  | 'known-upstream'
+  | 'known-fork'
   | 'generic-repository'
   | 'unsupported';
 
@@ -20,14 +20,14 @@ export interface RepositorySupportPolicy {
   allowHumanReviewSubmission: boolean;
 }
 
-interface GovernedRepositoryFamilyDefinition {
+interface KnownRepositoryFamilyDefinition {
   id: RepositorySupportFamilyId;
   repositoryName: string;
   canonicalOwner: string;
   displayName: string;
 }
 
-const GOVERNED_REPOSITORY_FAMILIES: GovernedRepositoryFamilyDefinition[] = [
+const KNOWN_REPOSITORY_FAMILIES: KnownRepositoryFamilyDefinition[] = [
   {
     id: 'labview-icon-editor',
     repositoryName: 'labview-icon-editor',
@@ -54,7 +54,7 @@ interface LocalRepositoryCoordinates {
 }
 
 const GENERIC_SUPPORT_GUIDANCE =
-  'VI History is available for this repository. Canonical benchmark, scenario, and maintainer host-review evidence remain separately governed and may be narrower than the current repo.';
+  'VI History is available for this repository. Retained benchmark, scenario, and maintainer host-review evidence may be narrower than the current repo.';
 
 export function normalizeGitHubRepositoryUrl(
   repositoryUrl: string | undefined
@@ -69,7 +69,7 @@ export function classifyRepositorySupportPolicy(
   const coordinates = parseGitHubRepositoryCoordinates(repositoryUrl);
   const localCoordinates = parseLocalRepositoryCoordinates(repositoryUrl, repositoryName);
   const family =
-    GOVERNED_REPOSITORY_FAMILIES.find(
+    KNOWN_REPOSITORY_FAMILIES.find(
       (candidate) =>
         candidate.repositoryName === coordinates?.repositoryName ||
         candidate.repositoryName === localCoordinates?.repositoryName
@@ -77,7 +77,7 @@ export function classifyRepositorySupportPolicy(
 
   if (!coordinates) {
     if (family && localCoordinates) {
-      return buildGovernedLocalFixturePolicy(repositoryUrl, localCoordinates, family);
+      return buildKnownLocalFixturePolicy(repositoryUrl, localCoordinates, family);
     }
     if (localCoordinates) {
       return buildGenericRepositoryPolicy(repositoryUrl, localCoordinates.normalizedRepositoryUrl);
@@ -102,14 +102,14 @@ export function classifyRepositorySupportPolicy(
     return {
       repositoryUrl,
       normalizedRepositoryUrl: coordinates.normalizedUrl,
-      tier: 'governed-upstream',
+      tier: 'known-upstream',
       familyId: family.id,
       familyDisplayName: family.displayName,
-      supportLabel: `Governed upstream: ${family.displayName}`,
+      supportLabel: `Known upstream: ${family.displayName}`,
       supportGuidance:
         family.id === 'labview-icon-editor'
-          ? 'This upstream repo is part of the canonical governed evidence family. VI History remains available here and the canonical benchmark, scenario, and maintainer-host-review evidence are deepest on this repo.'
-          : 'This upstream repo is part of the canonical governed evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence remain separately governed.',
+          ? 'This upstream repo is part of the known evidence family. VI History remains available here and retained benchmark, scenario, and maintainer-host-review evidence are deepest on this repo.'
+          : 'This upstream repo is part of the known evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence may be narrower.',
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
       allowBenchmarkStatus: true,
@@ -120,12 +120,12 @@ export function classifyRepositorySupportPolicy(
   return {
     repositoryUrl,
     normalizedRepositoryUrl: coordinates.normalizedUrl,
-    tier: 'governed-fork',
+    tier: 'known-fork',
     familyId: family.id,
     familyDisplayName: family.displayName,
-    supportLabel: `Governed-family fork: ${family.displayName}`,
+    supportLabel: `Known-family fork: ${family.displayName}`,
     supportGuidance:
-      'This same-name GitHub fork stays close to the canonical governed evidence family. VI History remains available here, while canonical benchmark and human-gate evidence still remain separately governed.',
+      'This same-name GitHub fork stays close to the known evidence family. VI History remains available here, while retained benchmark and human-review evidence may be narrower.',
     allowCoreReviewActions: true,
     allowDecisionRecordActions: true,
     allowBenchmarkStatus: true,
@@ -133,22 +133,22 @@ export function classifyRepositorySupportPolicy(
   };
 }
 
-function buildGovernedLocalFixturePolicy(
+function buildKnownLocalFixturePolicy(
   repositoryUrl: string | undefined,
   coordinates: LocalRepositoryCoordinates,
-  family: GovernedRepositoryFamilyDefinition
+  family: KnownRepositoryFamilyDefinition
 ): RepositorySupportPolicy {
   return {
     repositoryUrl,
     normalizedRepositoryUrl: coordinates.normalizedRepositoryUrl,
-    tier: 'governed-upstream',
+    tier: 'known-upstream',
     familyId: family.id,
     familyDisplayName: family.displayName,
-    supportLabel: `Governed local fixture: ${family.displayName}`,
+    supportLabel: `Known local fixture: ${family.displayName}`,
     supportGuidance:
       family.id === 'labview-icon-editor'
-        ? 'This retained local fixture clone stays aligned with the canonical governed evidence family. VI History remains available here and the deepest benchmark and human-gate evidence still sits on this governed surface.'
-        : 'This retained local fixture clone stays aligned with the canonical governed evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence remain separately governed.',
+        ? 'This retained local fixture clone stays aligned with the known evidence family. VI History remains available here and retained benchmark and human-review evidence are deepest on this fixture.'
+        : 'This retained local fixture clone stays aligned with the known evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence may be narrower.',
     allowCoreReviewActions: true,
     allowDecisionRecordActions: true,
     allowBenchmarkStatus: true,

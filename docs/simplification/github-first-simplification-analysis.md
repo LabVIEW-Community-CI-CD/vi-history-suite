@@ -103,3 +103,31 @@ state.
 - `rg` checks showing active docs/scripts no longer claim GitLab authority,
   private release gates, PolyForm licensing, or old personal GitHub repo URLs
   except where retained in historical changelog text.
+
+## Implementation Pass 1
+
+Completed on 2026-05-24:
+
+- Changed the root license and package metadata to BSD0 / `0BSD`.
+- Preserved the Marketplace extension identity while moving repository,
+  homepage, and issue links to the GitHub organization repository.
+- Replaced the GitHub workflow set with one lightweight CI workflow.
+- Removed GitLab CI, the public-source facade snapshot, Docker proof images,
+  heavy release-control documents, retired proof scripts, and retired tests.
+- Kept the extension source, devcontainer, public fixture clone helper,
+  package audit, integration host helpers, and optional Vagrant files.
+- Rewrote active user/developer docs around GitHub-first public development,
+  devcontainer/Codespaces validation, and optional Vagrant.
+- Removed the old harness-backed `vihs validate-fixture` command because it
+  depended on the retired proof harness; retained `vihs --validate` for local
+  runtime settings validation.
+
+Verification on this workstation:
+
+- `npm ci`: passed.
+- `npm run check`: passed.
+- `npm test`: passed, 122 tests and 1 skipped test.
+- `npm run package`: passed; generated VSIX was removed from the working tree.
+- `vagrant validate`: not run because `vagrant` is not installed on this host.
+- `rg` cleanup check: only intentional historical references remain in this
+  analysis document and negative package-manifest assertions.

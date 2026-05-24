@@ -357,7 +357,7 @@ async function ensureComparisonReportEvidence(
     containerImage
   ) {
     await request.reportProgress?.({
-      message: `Acquiring governed container image ${containerImage}.`,
+      message: `Acquiring container image ${containerImage}.`,
       increment: 10
     });
 
@@ -377,7 +377,7 @@ async function ensureComparisonReportEvidence(
   }
 
   await request.reportProgress?.({
-    message: 'Persisting governed comparison-report packet.',
+    message: 'Persisting comparison-report packet.',
     increment: 20
   });
   let packet = await (deps.persistComparisonReport ?? persistComparisonReportPacket)({
@@ -470,7 +470,7 @@ function applyWindowsContainerAcquisitionResult(
       windowsContainerAcquisitionState: 'acquired',
       notes: [
         ...runtimeSelection.notes,
-        `Governed container image ${acquisition.image} was acquired before container launch.`,
+        `Container image ${acquisition.image} was acquired before container launch.`,
         ...acquisition.notes
       ]
     };
@@ -487,7 +487,7 @@ function applyWindowsContainerAcquisitionResult(
     windowsContainerAcquisitionState: 'failed',
     notes: [
       ...runtimeSelection.notes,
-      `Governed container image ${acquisition.image} could not be acquired before container launch.`,
+      `Container image ${acquisition.image} could not be acquired before container launch.`,
       ...acquisition.notes
     ]
   };

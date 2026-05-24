@@ -326,7 +326,7 @@ async function isDashboardEvidenceCandidateMatch(
     return candidateNormalizedRepositoryUrl === currentNormalizedRepositoryUrl;
   }
 
-  return normalizeGovernedRetainedRepositoryName(candidate.record.dashboard.repositoryName) === currentFamilyId;
+  return normalizeRetainedRepositoryName(candidate.record.dashboard.repositoryName) === currentFamilyId;
 }
 
 function isCommitWindowCompatible(
@@ -390,7 +390,7 @@ async function findDashboardLatestRunFiles(
     return findHostWorkspaceDashboardLatestRunFiles(root, readdir, pathExists);
   }
 
-  return findGovernedProofDashboardLatestRunFiles(root, readdir, pathExists);
+  return findRetainedDashboardLatestRunFiles(root, readdir, pathExists);
 }
 
 function buildDefaultSearchRoots(): string[] {
@@ -431,7 +431,7 @@ function classifyDashboardEvidencePriority(manifestPath: string): number {
   }
 }
 
-function normalizeGovernedRetainedRepositoryName(repositoryName: string): string {
+function normalizeRetainedRepositoryName(repositoryName: string): string {
   return repositoryName.trim().toLowerCase().replace(/^ni-/, '');
 }
 
@@ -700,7 +700,7 @@ async function findHostWorkspaceDashboardLatestRunFiles(
   return manifests;
 }
 
-async function findGovernedProofDashboardLatestRunFiles(
+async function findRetainedDashboardLatestRunFiles(
   root: string,
   readdir: typeof fs.readdir,
   pathExists: (targetPath: string) => Promise<boolean>
@@ -728,7 +728,7 @@ async function findGovernedProofDashboardLatestRunFiles(
         continue;
       }
 
-      if (shouldSkipGovernedProofSearchDirectory(entry.name)) {
+      if (shouldSkipRetainedDashboardSearchDirectory(entry.name)) {
         continue;
       }
 
@@ -750,7 +750,7 @@ async function safeReadDirectoryEntries(
   }
 }
 
-function shouldSkipGovernedProofSearchDirectory(directoryName: string): boolean {
+function shouldSkipRetainedDashboardSearchDirectory(directoryName: string): boolean {
   const normalized = directoryName.trim().toLowerCase();
   return (
     normalized === 'dashboards' ||

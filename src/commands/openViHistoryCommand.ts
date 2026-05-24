@@ -23,9 +23,6 @@ import {
 } from '../docs/bundledDocumentationAction';
 import type { ComparisonReportRuntimeExecution } from '../reporting/comparisonReportPacket';
 import {
-  BenchmarkStatusActionResult
-} from '../benchmark/benchmarkStatusAction';
-import {
   ReviewDecisionRecordActionResult,
 } from '../scenarios/reviewDecisionRecordAction';
 import {
@@ -92,9 +89,6 @@ export function createOpenViHistoryCommand(
     draftConfidence?: string;
     draftNote?: string;
   }) => Promise<HumanReviewSubmissionActionResult>,
-  openBenchmarkStatusAction?: (request: {
-    authorityRepoRoot: string;
-  }) => Promise<BenchmarkStatusActionResult>,
   comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>,
   runtimePlatform?: RuntimePlatform,
   runtimeLocator?: (
@@ -140,8 +134,6 @@ export function createOpenViHistoryCommand(
       repositorySupport?.allowCoreReviewActions ?? true;
     const decisionRecordActionsAllowed =
       repositorySupport?.allowDecisionRecordActions ?? true;
-    const benchmarkStatusAllowed =
-      repositorySupport?.allowBenchmarkStatus ?? true;
     const humanReviewSubmissionAllowed =
       repositorySupport?.allowHumanReviewSubmission ?? true;
     const surfaceCapabilities = {
@@ -159,8 +151,7 @@ export function createOpenViHistoryCommand(
         decisionRecordActionsAllowed &&
         reviewDecisionRecordAction !== undefined,
       documentationAvailable: openDocumentationAction !== undefined,
-      benchmarkStatusAvailable:
-        benchmarkStatusAllowed && openBenchmarkStatusAction !== undefined,
+      benchmarkStatusAvailable: false,
       humanReviewSubmissionAvailable:
         humanReviewSubmissionAllowed &&
         humanReviewSubmissionAction !== undefined
@@ -564,34 +555,6 @@ export function createOpenViHistoryCommand(
           documentationActionSummary.documentationFallbackUsed = true;
         }
         panelTracker?.recordAction(documentationActionSummary);
-        return;
-      }
-
-      if (command === 'openBenchmarkStatus') {
-        if (!openBenchmarkStatusAction) {
-          void vscode.window.showInformationMessage(
-            'Benchmark status is only available on the canonical Windows 11 host machine.'
-          );
-          panelTracker?.recordAction({
-            command,
-            outcome: 'unsupported-command'
-          });
-          return;
-        }
-
-        const result = await openBenchmarkStatusAction({
-          authorityRepoRoot: model.repositoryRoot
-        });
-        panelTracker?.recordAction({
-          command,
-          outcome: 'opened-benchmark-status',
-          title: result.title,
-          benchmarkWindowsLatestRunPath: result.windowsLatestRunPath,
-          benchmarkHostLaunchReceiptPath: result.hostLaunchReceiptPath,
-          benchmarkHostLatestSummaryPath: result.hostLatestSummaryPath,
-          benchmarkHostLogPath: result.hostLogPath,
-          benchmarkHostState: result.hostState
-        });
         return;
       }
 
@@ -1177,7 +1140,7 @@ function buildComparisonRuntimePanelUpdate(
     summary: segments.join(' '),
     nextAction:
       deriveComparisonRuntimeNextAction(result.runtimeDoctorSummaryLines) ??
-      'Next action: open the retained comparison packet for the full governed runtime summary.',
+      'Next action: open the retained comparison packet for the full runtime summary.',
     details
   };
 }
@@ -1360,16 +1323,16 @@ function deriveComparisonRuntimeProgressStatus(
   message: string
 ): 'running' | 'acquiring' | undefined {
   if (
-    message.startsWith('Acquiring governed container image ') ||
-    message.startsWith('Pulling governed container image:') ||
-    message.startsWith('Governed container image ready:')
+    message.startsWith('Acquiring container image ') ||
+    message.startsWith('Pulling container image:') ||
+    message.startsWith('Container image ready:')
   ) {
     return 'acquiring';
   }
 
   if (
     message === 'Selecting comparison-report runtime.' ||
-    message === 'Persisting governed comparison-report packet.' ||
+    message === 'Persisting comparison-report packet.' ||
     message === 'Executing LabVIEW comparison-report runtime.' ||
     message === 'Archiving comparison-report evidence.'
   ) {
@@ -1786,7 +1749,7 @@ function buildHistoryLoadFailureMessage(
   error: unknown
 ): string {
   if (isInstalledProgramFilesLvIconPath(targetFsPath)) {
-    return 'The selected installed copy of lv_icon.vi is not the governed review surface. Open resource/plugins/lv_icon.vi from a Git-backed ni/labview-icon-editor clone instead; the Program Files copy has no commit history for VI Comparison Report generation.';
+    return 'The selected installed copy of lv_icon.vi is not the review surface. Open resource/plugins/lv_icon.vi from a Git-backed ni/labview-icon-editor clone instead; the Program Files copy has no commit history for VI Comparison Report generation.';
   }
 
   if (isGitRepositoryResolutionFailure(error)) {

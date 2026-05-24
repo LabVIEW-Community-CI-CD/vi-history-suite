@@ -182,7 +182,7 @@ describe('viHistoryService', () => {
     expect(withoutGit.toGitUri(fileUri as never, 'abc')).toBeUndefined();
   });
 
-  it('reads the governed history-service settings from workspace configuration', () => {
+  it('reads the history-service settings from workspace configuration', () => {
     expect(getViHistoryServiceSettings()).toEqual({
       strictRsrcHeader: true,
       historyWindowMode: 'auto',

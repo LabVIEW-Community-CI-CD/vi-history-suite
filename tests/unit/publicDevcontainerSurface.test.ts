@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public devcontainer surface', () => {
-  it('retains a Docker-capable devcontainer and VS Code launch surface for the public GitHub facade', () => {
+  it('retains a Docker-capable devcontainer and VS Code launch surface for the public GitHub repo', () => {
     const devcontainer = readJson<{
       name?: string;
       image?: string;
@@ -75,7 +75,7 @@ describe('public devcontainer surface', () => {
     expect(tasks.tasks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: 'npm', script: 'compile' }),
-        expect.objectContaining({ type: 'npm', script: 'test:design-contract' })
+            expect.objectContaining({ type: 'npm', script: 'test' })
       ])
     );
     expect(extensions.recommendations).toEqual(
@@ -83,18 +83,15 @@ describe('public devcontainer surface', () => {
     );
     expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
-    expect(readme).toMatch(/### Source Evaluation|## Evaluate From Source/);
+    expect(readme).toMatch(/## Source Evaluation/);
     expect(readme).toMatch(/### Contribute|## Contribute/);
     expect(readme).toMatch(
-      /https:\/\/github\.com\/svelderrainruiz\/vi-history-suite\/blob\/HEAD\/INSTALL\.md|\[INSTALL\.md\]\(\.\/INSTALL\.md\)/
+      /https:\/\/github\.com\/LabVIEW-Community-CI-CD\/vi-history-suite/
     );
-    expect(readme).toMatch(
-      /https:\/\/github\.com\/svelderrainruiz\/vi-history-suite\/blob\/HEAD\/CONTRIBUTING\.md|\[CONTRIBUTING\.md\]\(\.\/CONTRIBUTING\.md\)/
-    );
-    expect(install).toContain('Use this lane only when you want to inspect the source repo');
+    expect(install).toContain('Use a devcontainer or Codespace');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(install).toContain('npm run public:repo:clone');
-    expect(install).toContain('If you prefer a non-interactive public-repo clone command, use:');
+    expect(install).toContain('Vagrant is a local human tester');
   });
 });

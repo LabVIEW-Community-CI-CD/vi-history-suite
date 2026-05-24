@@ -1,13 +1,12 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Prepares a cold LabVIEW runtime state before Vagrant acceptance.
+  Prepares a cold LabVIEW runtime state before local Vagrant testing.
 
 .DESCRIPTION
   Stops stale LabVIEW, LabVIEWCLI, and LVCompare processes from inside the
   guest, closes first-run desktop interlopers that can steal the interactive
-  session, then waits for VI Server TCP port 3363 to stop listening. This keeps
-  the acceptance provisioner on the governed cold-launch path.
+  session, then waits for VI Server TCP port 3363 to stop listening.
 #>
 param(
   [int]$ViServerPort = 3363,

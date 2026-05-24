@@ -377,7 +377,7 @@ function buildTestDecisionRecordInputs(
     outcome: 'needs-more-review',
     confidence: 'medium',
     decisionRationale:
-      'Extension-host automation uses a stable bounded rationale so the governed decision-record flow remains non-interactive during test execution.'
+      'Extension-host automation uses a stable bounded rationale so the decision-record flow remains non-interactive during test execution.'
   };
 }
 

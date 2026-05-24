@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 const {
-  GOVERNED_RUNTIME_DEPENDENCIES,
+  ALLOWED_RUNTIME_DEPENDENCIES,
   findRuntimeSurfaceViolations,
   parseVsceListOutput
 } = require('../../scripts/auditPackagedRuntimeSurface.js') as {
-  GOVERNED_RUNTIME_DEPENDENCIES: string[];
+  ALLOWED_RUNTIME_DEPENDENCIES: string[];
   findRuntimeSurfaceViolations: (input: {
     manifest: { dependencies?: Record<string, string> };
     packagedPaths: string[];
@@ -38,13 +38,13 @@ describe('packaged runtime surface audit', () => {
         ]
       })
     ).toEqual([
-      'Ungoverned runtime dependencies are not allowed in package.json: glob',
+      'Unexpected runtime dependencies are not allowed in package.json: glob',
       'Packaged VSIX surface includes forbidden runtime paths: extension/node_modules/glob/package.json, .vscode-test/vscode-linux-x64/resources/app/node_modules.asar',
       'Packaged VSIX surface includes forbidden package payloads: extension/node_modules/glob/package.json'
     ]);
   });
 
-  it('fails closed when a governed runtime dependency is declared but not packaged', () => {
+  it('fails closed when an allowed runtime dependency is declared but not packaged', () => {
     expect(
       findRuntimeSurfaceViolations({
         manifest: {
@@ -59,12 +59,12 @@ describe('packaged runtime surface audit', () => {
         ]
       })
     ).toEqual([
-      'Packaged VSIX surface is missing governed runtime dependency payloads: jsonc-parser'
+      'Packaged VSIX surface is missing allowed runtime dependency payloads: jsonc-parser'
     ]);
   });
 
-  it('passes for the current governed runtime package surface', () => {
-    expect(GOVERNED_RUNTIME_DEPENDENCIES).toEqual(['jsonc-parser']);
+  it('passes for the current runtime package surface', () => {
+    expect(ALLOWED_RUNTIME_DEPENDENCIES).toEqual(['jsonc-parser']);
     expect(
       findRuntimeSurfaceViolations({
         manifest: {

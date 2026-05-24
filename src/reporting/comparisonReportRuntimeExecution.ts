@@ -531,7 +531,7 @@ async function runHostNativeExecution(
             reason: 'command-timed-out',
             notes: [
               `Comparison-report runtime timed out after ${String(
-                commandResult.timeoutMs ?? deps.commandTimeoutMs ?? 'the governed'
+                commandResult.timeoutMs ?? deps.commandTimeoutMs ?? 'the configured'
               )}ms.`
             ]
           }
@@ -981,7 +981,7 @@ async function preflightWindowsHostRuntimeSurface(
       : [],
     listenerObservations.length
       ? [
-          `Windows host preflight observed an existing TCP listener on the governed VI Server port before launch: ${describeObservedWindowsTcpListeners(
+          `Windows host preflight observed an existing TCP listener on the configured VI Server port before launch: ${describeObservedWindowsTcpListeners(
             listenerObservations
           )}.`
         ]
@@ -2948,7 +2948,7 @@ function classifyRuntimeFailure(options: {
     if (options.engine === 'lvcompare') {
       return {
         reason: 'lvcompare-exited-zero-without-report',
-        notes: ['LVCompare exited 0 without generating the governed report file.']
+        notes: ['LVCompare exited 0 without generating the report file.']
       };
     }
 

@@ -49,7 +49,7 @@ export async function persistRuntimeSettingsLiveSessionProbePacket(
   const packetRunId = toPacketRunId(now());
   const packetRoot = path.join(
     globalStoragePath,
-    'governed-proof',
+    'runtime-validation',
     'runtime-provider-live-session-probe'
   );
   const runDirectory = path.join(packetRoot, packetRunId);

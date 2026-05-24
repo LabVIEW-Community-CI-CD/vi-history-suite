@@ -178,9 +178,9 @@ function deriveRuntimeDoctorNextAction(options: {
       blockedReason === 'windows-host-runtime-surface-contaminated'
     ) {
       if (providerRequest === 'host') {
-        return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.';
+        return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the selected VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.';
       }
-      return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
+      return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the selected VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
     }
 
     if (
@@ -352,10 +352,10 @@ function deriveContainerRecoveryAction(
     selection.containerAcquisitionState ?? selection.windowsContainerAcquisitionState;
   const containerImageLabel =
     containerHostMode === 'linux'
-      ? 'the governed Linux container image'
+      ? 'the Linux container image'
       : containerHostMode === 'windows'
-        ? 'the governed Windows container image'
-        : 'the governed container image';
+        ? 'the Windows container image'
+        : 'the container image';
   const containerImageSuffix = selection.containerImage ? ` ${selection.containerImage}` : '';
   const dockerProductLabel = selection.platform === 'win32' ? 'Docker Desktop' : 'Docker';
 
@@ -387,5 +387,5 @@ function deriveContainerRecoveryAction(
     return `pull ${containerImageLabel}${containerImageSuffix}`;
   }
 
-  return 'install, enable, or switch Docker to a supported governed container engine';
+  return 'install, enable, or switch Docker to a supported container engine';
 }

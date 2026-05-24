@@ -192,7 +192,7 @@ export function createMultiReportDashboardAction(
     };
     if (shouldAttemptRetainedSeed) {
       await reportProgress({
-        message: 'Checking governed retained dashboard evidence.'
+        message: 'Checking retained dashboard evidence.'
       });
       seededEvidence = await seedRetainedDashboardEvidenceAction(
         storageUri.fsPath,
@@ -218,7 +218,7 @@ export function createMultiReportDashboardAction(
       }
       await reportProgress({
         message:
-          `Seeded ${seededEvidence.importedPairCount} dashboard pair(s) from governed retained evidence` +
+          `Seeded ${seededEvidence.importedPairCount} dashboard pair(s) from retained evidence` +
           `${seededOutcomeParts.length > 0 ? ` (${seededOutcomeParts.join(', ')})` : ''}.`
       });
     }
@@ -254,12 +254,12 @@ export function createMultiReportDashboardAction(
       if (pairsNeedingEvidence.length === 0) {
         await reportProgress({
           message:
-            'Concentrating governed retained dashboard evidence only; no local pair refresh is needed.'
+            'Concentrating retained dashboard evidence only; no local pair refresh is needed.'
         });
       } else {
         await reportProgress({
           message:
-            `Concentrating governed retained dashboard evidence only; ${pairsNeedingEvidence.length} pair(s) remain missing in the retained set and will stay explicit in the dashboard.`
+            `Concentrating retained dashboard evidence only; ${pairsNeedingEvidence.length} pair(s) remain missing in the retained set and will stay explicit in the dashboard.`
         });
       }
     } else if (pairsNeedingEvidence.length === 0) {
@@ -979,7 +979,7 @@ interface DashboardArtifactMessage {
 }
 
 const DASHBOARD_ARTIFACT_CONTRACT_WARNING =
-  'VI Review Dashboard ignored an artifact path that did not match the governed retained artifact contract.';
+  'VI Review Dashboard ignored an artifact path that did not match the retained artifact contract.';
 
 function normalizeDashboardArtifactMessage(message: unknown): DashboardArtifactMessage | undefined {
   if (!message || typeof message !== 'object') {

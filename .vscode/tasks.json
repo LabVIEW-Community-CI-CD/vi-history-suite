@@ -18,7 +18,7 @@
     },
     {
       "type": "npm",
-      "script": "test:design-contract",
+      "script": "test",
       "group": "test"
     },
     {
