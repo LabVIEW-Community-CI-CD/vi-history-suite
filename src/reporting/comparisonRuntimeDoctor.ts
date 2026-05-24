@@ -29,6 +29,9 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     `Selected provider=${selection.provider}; engine=${selection.engine ?? 'none'}; platform=${selection.platform}; bitness=${selection.bitness}.`
   );
   lines.push(`Provider request=${providerRequest}.`);
+  lines.push(
+    `Requested runtime: provider=${providerRequest}; LabVIEW=${selection.requestedLabviewVersion ?? 'unset'}; bitness=${selection.bitness}.`
+  );
 
   if (selection.providerDecisions?.length) {
     lines.push(
@@ -169,6 +172,72 @@ function deriveRuntimeDoctorNextAction(options: {
     if (blockedReason === 'labview-bitness-required') {
       return buildRuntimeSettingsReloadAction(
         'set viHistorySuite.labviewBitness',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-version-unsupported-for-comparison-report') {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewVersion to 2025, 2026, or newer',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'docker-provider-labview-version-not-implemented') {
+      return buildRuntimeSettingsReloadAction(
+        'use Docker with viHistorySuite.labviewVersion=2026, or switch viHistorySuite.runtimeProvider to host',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'configured-labview-exe-path-missing') {
+      return buildRuntimeSettingsReloadAction(
+        'correct or remove viHistorySuite.labviewExePath',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'configured-labview-cli-path-missing') {
+      return buildRuntimeSettingsReloadAction(
+        'correct or remove viHistorySuite.labviewCliPath',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-exe-not-found') {
+      return buildRuntimeSettingsReloadAction(
+        'install the selected LabVIEW version and bitness, or set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness to an installed runtime',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-cli-not-found-for-bitness') {
+      return buildRuntimeSettingsReloadAction(
+        'install the matching LabVIEWCLI for viHistorySuite.labviewBitness, or adjust viHistorySuite.labviewBitness to an installed CLI surface',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-exe-ambiguous') {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewExePath to the exact LabVIEW executable for the selected version and bitness',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-cli-ambiguous-for-bitness') {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewCliPath to the exact LabVIEWCLI executable for viHistorySuite.labviewBitness',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (
+      blockedReason === 'canonical-labview-cli-not-found' ||
+      blockedReason === 'comparison-tool-not-found'
+    ) {
+      return buildRuntimeSettingsReloadAction(
+        'install the matching LabVIEWCLI for the selected LabVIEW runtime',
         'rerun comparison report generation'
       );
     }
