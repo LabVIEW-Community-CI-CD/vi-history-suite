@@ -14,6 +14,7 @@ function readRepoText(...segments: string[]): string {
 const orgRepoUrl = 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite';
 const orgRepoGitUrl = `${orgRepoUrl}.git`;
 const orgIssueUrl = `${orgRepoUrl}/issues`;
+const onboardingIssueUrl = `${orgIssueUrl}/12`;
 const marketplaceIdentity = 'svelderrainruiz.vi-history-suite';
 
 describe('public docs source and support link confidence', () => {
@@ -38,6 +39,7 @@ describe('public docs source and support link confidence', () => {
     const support = readRepoText('SUPPORT.md');
 
     expect(support).toContain(orgIssueUrl);
+    expect(support).toContain(onboardingIssueUrl);
     expect(support).not.toMatch(
       /github\.com\/svelderrainruiz\/vi-history-suite(?!\.git\b)/i
     );
@@ -62,10 +64,38 @@ describe('public docs source and support link confidence', () => {
     expect(maintainerOps).toContain('Marketplace extension identity remains');
   });
 
+  it('keeps first-time onboarding feedback structured around Marketplace and source evaluation', () => {
+    const feedbackTemplate = readRepoText(
+      '.github',
+      'ISSUE_TEMPLATE',
+      'first_time_onboarding_feedback.yml'
+    );
+    const firstRun = readRepoText('FIRST-RUN.md');
+    const publicDocs = [
+      readRepoText('README.md'),
+      readRepoText('INSTALL.md'),
+      firstRun,
+      readRepoText('SUPPORT.md')
+    ].join('\n');
+
+    expect(publicDocs).toContain(onboardingIssueUrl);
+    expect(publicDocs).toContain('Marketplace');
+    expect(publicDocs).toContain('source-evaluation');
+    expect(feedbackTemplate).toContain('name: First-Time Onboarding Feedback');
+    expect(feedbackTemplate).toContain('Marketplace install');
+    expect(feedbackTemplate).toContain('Codespaces source evaluation');
+    expect(feedbackTemplate).toContain('Dev Containers in VS Code');
+    expect(feedbackTemplate).toContain('id: extension_version');
+    expect(feedbackTemplate).toContain('id: vscode_version');
+    expect(feedbackTemplate).toContain('id: relevant_output');
+    expect(feedbackTemplate).toContain('Do not include secrets');
+  });
+
   it('does not present old personal repo as active source or issue tracker in public docs', () => {
     const publicDocs = [
       readRepoText('README.md'),
       readRepoText('INSTALL.md'),
+      readRepoText('FIRST-RUN.md'),
       readRepoText('SUPPORT.md'),
       readRepoText('SECURITY.md')
     ].join('\n');

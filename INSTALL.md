@@ -11,6 +11,11 @@ code --install-extension svelderrainruiz.vi-history-suite
 The Marketplace identity stays stable even though the source repository moved
 to the LabVIEW Community CI/CD GitHub organization.
 
+If the Marketplace listing, install command, or source/support links disagree,
+record the mismatch in the first-time onboarding tracker:
+
+https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
+
 ## First Run
 
 1. Open or restart VS Code after installing the extension.
@@ -44,6 +49,10 @@ npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
 
 The generic clone helper intentionally accepts only public HTTPS GitHub or
 GitLab repository URLs.
+
+For source-evaluation feedback, include whether you used Codespaces, Dev
+Containers in VS Code, or a local clone; the first command that failed; and
+whether the `Run VI History Suite` launch opened an Extension Development Host.
 
 ## Optional Vagrant
 

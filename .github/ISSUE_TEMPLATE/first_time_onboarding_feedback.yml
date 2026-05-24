@@ -1,0 +1,74 @@
+name: First-Time Onboarding Feedback
+description: Report Marketplace, first-run, or source-evaluation friction.
+title: "First-time onboarding feedback: "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for first-time installed-user or source-evaluation feedback. Maintainers triage these reports through issue #12.
+  - type: dropdown
+    id: path
+    attributes:
+      label: Path Used
+      description: Which first-time path were you using?
+      options:
+        - Marketplace install
+        - Exact VSIX install
+        - Codespaces source evaluation
+        - Dev Containers in VS Code
+        - Local clone source evaluation
+    validations:
+      required: true
+  - type: input
+    id: extension_version
+    attributes:
+      label: Extension Version
+      description: Use the VS Code Extensions view when installed, or `package.json` when testing from source.
+      placeholder: 1.4.0
+    validations:
+      required: false
+  - type: input
+    id: vscode_version
+    attributes:
+      label: VS Code Version
+      placeholder: 1.90.0
+    validations:
+      required: false
+  - type: textarea
+    id: first_action
+    attributes:
+      label: First Command Or Action
+      description: What was the first command, menu action, or doc step you tried?
+      placeholder: |
+        Example: ran `VI History: Prepare Local Runtime Settings CLI`, then `vihs --validate`.
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: What Was Unclear Or Blocked?
+      description: Name the first unclear instruction, stale link, unexpected prompt, failed command, or blocked step.
+      placeholder: |
+        Expected:
+        Actual:
+    validations:
+      required: true
+  - type: textarea
+    id: relevant_output
+    attributes:
+      label: Relevant Output
+      description: Include `vihs --validate` output, terminal output, or link mismatch details when relevant. Do not include secrets.
+      render: text
+      placeholder: Paste concise output here.
+    validations:
+      required: false
+  - type: textarea
+    id: suggested_next_step
+    attributes:
+      label: Suggested Next Step
+      description: What would have helped you continue?
+      placeholder: A clearer link, command, screenshot, warning, or troubleshooting note.
+    validations:
+      required: false
