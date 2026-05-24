@@ -97,3 +97,30 @@ Maintainer evidence should be small and repeatable:
 
 Do not claim Vagrant evidence unless the Vagrant issue is run on a
 Vagrant-capable host and recorded separately.
+
+## External Marketplace Verification
+
+The Marketplace extension identity `svelderrainruiz.vi-history-suite` is tested
+statically through `tests/unit/packageManifest.test.ts` and
+`tests/unit/publicDocSourceLinks.test.ts`, but the live Marketplace listing
+itself requires manual verification after publication.
+
+Manual verification steps:
+
+1. Run the `vsce show` command:
+
+   ```powershell
+   node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
+   ```
+
+2. Confirm the returned `repository` and `bugs` URLs point to:
+
+   ```
+   https://github.com/LabVIEW-Community-CI-CD/vi-history-suite
+   ```
+
+3. Visit the Marketplace listing page and confirm the source repository link
+   leads to the organization repository, not the old personal repository.
+
+This external evidence reference is documented in RTM as
+`external:vscode-marketplace-svelderrainruiz.vi-history-suite` for VHS-REQ-600.
