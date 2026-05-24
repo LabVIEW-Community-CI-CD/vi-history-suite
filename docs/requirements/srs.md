@@ -732,3 +732,35 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
     index.
+
+### VHS-REQ-602: Dependency Maintenance Automation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-012
+- Area: CI And Developer Environment
+- Statement: Dependency maintenance automation shall keep routine dependency
+  updates reviewable while preserving package-audit diagnostics for failed VSIX
+  runtime-surface checks.
+- Acceptance Criteria:
+  - Dependabot groups npm development minor and patch updates separately from
+    npm runtime minor and patch updates.
+  - Major dependency updates are not grouped with routine minor and patch
+    updates.
+  - Node and VS Code type-package updates stay aligned with the supported CI
+    runtime and VS Code engine policy.
+  - Package audit failures report bounded stdout and stderr from the pinned VSCE
+    listing command.
+- Agent Work Scope:
+  - Change Dependabot config, package audit diagnostics, and security
+    maintenance tests together.
+- Implementation References:
+  - `.github/dependabot.yml`
+  - `package.json`
+  - `scripts/auditPackagedRuntimeSurface.js`
+- Verification References:
+  - `tests/unit/securityMaintenanceWorkflows.test.ts`
+  - `tests/unit/packageRuntimeSurfaceAudit.test.ts`
+  - `manual:dependabot-pr-checks`
+- Change Guidance:
+  - Keep major dependency updates independently reviewable unless a future
+    requirement intentionally changes the dependency-maintenance policy.

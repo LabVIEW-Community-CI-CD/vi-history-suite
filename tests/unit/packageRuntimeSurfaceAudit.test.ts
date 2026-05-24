@@ -2,10 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 const {
   ALLOWED_RUNTIME_DEPENDENCIES,
+  buildVsceFailureMessage,
   findRuntimeSurfaceViolations,
   parseVsceListOutput
 } = require('../../scripts/auditPackagedRuntimeSurface.js') as {
   ALLOWED_RUNTIME_DEPENDENCIES: string[];
+  buildVsceFailureMessage: (result: {
+    status?: number | null;
+    stdout?: string;
+    stderr?: string;
+  }) => string;
   findRuntimeSurfaceViolations: (input: {
     manifest: { dependencies?: Record<string, string> };
     packagedPaths: string[];
@@ -20,6 +26,21 @@ describe('packaged runtime surface audit', () => {
         'package.json\r\nout/extension.js\r\n\r\nresources/bundled-docs/manifest.json\r\n'
       )
     ).toEqual(['package.json', 'out/extension.js', 'resources/bundled-docs/manifest.json']);
+  });
+
+  it('reports bounded stdout and stderr when the pinned vsce list command fails', () => {
+    const message = buildVsceFailureMessage({
+      status: 1,
+      stdout: `${'packaged-path\n'.repeat(500)}final stdout line`,
+      stderr: 'npm warn deprecated glob@11.1.0\nfatal packaging failure'
+    });
+
+    expect(message).toContain('vsce ls failed with exit code 1.');
+    expect(message).toContain('stdout:');
+    expect(message).toContain('packaged-path');
+    expect(message).toContain('[truncated');
+    expect(message).toContain('stderr:');
+    expect(message).toContain('fatal packaging failure');
   });
 
   it('fails when runtime dependencies are declared or forbidden packaged paths leak in', () => {

@@ -31,6 +31,30 @@ function parseVsceListOutput(stdout) {
     .filter((line) => !line.startsWith('WARNING'));
 }
 
+function summarizeCommandOutput(value, maxLength = 4000) {
+  const text = String(value ?? '').trim();
+  if (!text) {
+    return '<empty>';
+  }
+
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  const omittedLength = text.length - maxLength;
+  return `${text.slice(0, maxLength)}\n[truncated ${omittedLength} characters]`;
+}
+
+function buildVsceFailureMessage(result) {
+  const status =
+    typeof result.status === 'number' ? String(result.status) : 'unknown';
+  return [
+    `vsce ls failed with exit code ${status}.`,
+    `stdout:\n${summarizeCommandOutput(result.stdout)}`,
+    `stderr:\n${summarizeCommandOutput(result.stderr)}`
+  ].join('\n');
+}
+
 function isAllowedRuntimeDependency(name) {
   return ALLOWED_RUNTIME_DEPENDENCIES.includes(name);
 }
@@ -126,11 +150,7 @@ function auditPackagedRuntimeSurface(deps = {}) {
   }
 
   if (typeof result.status === 'number' && result.status !== 0) {
-    throw new Error(
-      result.stderr?.trim()
-        ? `vsce ls failed: ${result.stderr.trim()}`
-        : `vsce ls failed with exit code ${result.status}`
-    );
+    throw new Error(buildVsceFailureMessage(result));
   }
 
   const packagedPaths = parseVsceListOutput(result.stdout ?? '');
@@ -171,6 +191,8 @@ module.exports = {
   FORBIDDEN_PACKAGED_PATH_SUFFIXES,
   VSCE_PACKAGE_SPEC,
   auditPackagedRuntimeSurface,
+  buildVsceFailureMessage,
   findRuntimeSurfaceViolations,
-  parseVsceListOutput
+  parseVsceListOutput,
+  summarizeCommandOutput
 };

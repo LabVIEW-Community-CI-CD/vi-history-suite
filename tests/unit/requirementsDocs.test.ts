@@ -254,6 +254,31 @@ describe('requirements documentation coherence', () => {
     expect(titles).toContain('Devcontainer Source Evaluation');
   });
 
+  it('keeps dependency maintenance automation targetable', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-602');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-602');
+
+    expect(srs).toContain('### VHS-REQ-602: Dependency Maintenance Automation');
+    expect(srs).toContain('Major dependency updates are not grouped');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-012');
+    expect(requirementRow?.ImplementationRefs).toContain('.github/dependabot.yml');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'scripts/auditPackagedRuntimeSurface.js'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/securityMaintenanceWorkflows.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/packageRuntimeSurfaceAudit.test.ts'
+    );
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-602-dependency-maintenance-automation'
+    );
+  });
+
   it('keeps the requirement-targeted issue template aligned with the agent contract', () => {
     const template = readRepoText('.github', 'ISSUE_TEMPLATE', 'requirement_target.yml');
     const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');
