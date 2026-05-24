@@ -1,0 +1,616 @@
+ID,Kind,Status,CurrentAnchor,ReplacementID,RetirementReason,LegacySource
+VHS-REQ-001,Software,Active,srs.md#vhs-req-001-vi-content-signature-detection,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-002,Software,Superseded,,VHS-REQ-001,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-003,Software,Active,srs.md#vhs-req-003-optional-strict-rsrc-header,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-004,Software,Active,srs.md#vhs-req-004-explorer-and-editor-menu-contributions,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-005,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-006,Software,Active,srs.md#vhs-req-006-tracked-history-eligibility,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-007,Software,Active,srs.md#vhs-req-007-nul-safe-tracked-file-enumeration,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-008,Software,Active,srs.md#vhs-req-008-bounded-commit-queries,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-009,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-010,Software,Active,srs.md#vhs-req-010-minimal-local-probe-reads,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-011,Software,Active,srs.md#vhs-req-011-non-file-uri-probe-fallback,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-012,Software,Active,srs.md#vhs-req-012-workspace-trust-gate,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-013,Software,Active,srs.md#vhs-req-013-dynamic-eligibility-context,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-014,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-015,Software,Active,srs.md#vhs-req-015-bounded-indexing-concurrency,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-016,Software,Active,srs.md#vhs-req-016-history-webview-panel,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-017,Software,Active,srs.md#vhs-req-017-factual-history-panel-content,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-018,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-019,Software,Superseded,,VHS-REQ-082,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-020,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-021,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-022,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-023,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-024,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-025,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-026,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-027,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-028,Software,Superseded,,VHS-REQ-016,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-029,Software,Superseded,,VHS-REQ-016,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-030,Software,Superseded,,VHS-REQ-016,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-031,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-032,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-033,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-034,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-035,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-036,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-037,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-038,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-039,Software,Active,srs.md#vhs-req-039-copy-review-packet,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-040,Software,Active,srs.md#vhs-req-040-factual-review-packet-text,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-041,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-042,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-043,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-044,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-045,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-046,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-047,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-048,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-049,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-050,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-051,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-052,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-053,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-054,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-055,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-056,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-057,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-058,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-059,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-060,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-061,Software,Active,srs.md#vhs-req-061-most-specific-git-repository-resolution,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-062,Software,Superseded,,VHS-REQ-006,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-063,Software,Superseded,,VHS-REQ-001,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-064,Software,Superseded,,VHS-REQ-006,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-065,Software,Superseded,,VHS-REQ-001,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-066,Software,Superseded,,VHS-REQ-001,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-067,Software,Superseded,,VHS-REQ-001,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-068,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-069,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-070,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-071,Software,Superseded,,VHS-REQ-082,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-072,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-073,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-074,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-075,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-076,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-077,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-078,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-079,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-080,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-081,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-082,Software,Active,srs.md#vhs-req-082-primary-command-identifier,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-083,Software,Active,srs.md#vhs-req-083-command-only-activation,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-084,Software,Active,srs.md#vhs-req-084-limited-untrusted-workspace-capability,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-085,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-086,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-087,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-088,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-089,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-090,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-091,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-092,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-093,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-094,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-095,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-096,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-097,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-098,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-099,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-100,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-101,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-102,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-103,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-104,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-105,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-106,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-107,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-108,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-109,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-110,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-111,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-112,Software,Superseded,,VHS-REQ-006,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-113,Software,Superseded,,VHS-REQ-006,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-114,Software,Superseded,,VHS-REQ-006,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-115,Software,Superseded,,VHS-REQ-001,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-116,Software,Superseded,,VHS-REQ-001,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-117,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-118,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-119,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-120,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-121,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-122,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-123,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-124,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-125,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-126,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-127,Software,Active,srs.md#vhs-req-127-revision-blob-specifiers,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-128,Software,Active,srs.md#vhs-req-128-revision-blob-vi-verification,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-129,Software,Superseded,,VHS-REQ-127,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-130,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-131,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-132,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-133,Software,Active,srs.md#vhs-req-133-explicit-compare-pair-workflow,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-134,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-135,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-136,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-137,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-138,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-139,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-140,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-141,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-142,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-143,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-144,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-145,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-146,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-147,Software,Active,srs.md#vhs-req-147-staged-comparison-inputs,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-148,Software,Active,srs.md#vhs-req-148-retained-runtime-execution-evidence,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-149,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-150,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-151,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-152,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-153,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-154,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-155,Software,Active,srs.md#vhs-req-155-comparison-runtime-discovery-diagnostics,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-156,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-157,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-158,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-159,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-160,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-161,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-162,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-163,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-164,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-165,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-166,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-167,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-168,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-169,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-170,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-171,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-172,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-173,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-174,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-175,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-176,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-177,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-178,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-179,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-180,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-181,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-182,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-183,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-184,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-185,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-186,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-187,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-188,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-189,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-190,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-191,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-192,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-193,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-194,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-195,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-196,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-197,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-198,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-199,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-200,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-201,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-202,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-203,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-204,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-205,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-206,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-207,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-208,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-209,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-210,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-211,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-212,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-213,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-214,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-215,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-216,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-217,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-218,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-219,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-220,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-221,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-222,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-223,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-224,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-225,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-226,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-227,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-228,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-229,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-230,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-231,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-232,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-233,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-234,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-235,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-236,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-237,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-238,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-239,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-240,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-241,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-242,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-243,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-244,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-245,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-246,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-247,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-248,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-249,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-250,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-251,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-252,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-253,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-254,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-255,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-256,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-257,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-258,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-259,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-260,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-261,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-262,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-263,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-264,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-265,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-266,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-267,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-268,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-269,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-270,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-271,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-272,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-273,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-274,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-275,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-276,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-277,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-278,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-279,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-280,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-281,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-282,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-283,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-284,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-285,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-286,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-287,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-288,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-289,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-290,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-291,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-292,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-293,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-294,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-295,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-296,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-297,Software,Superseded,,VHS-REQ-016,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-298,Software,Superseded,,VHS-REQ-016,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-299,Software,Superseded,,VHS-REQ-016,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-300,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-301,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-302,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-303,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-304,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-305,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-306,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-307,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-308,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-309,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-310,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-311,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-312,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-313,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-314,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-315,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-316,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-317,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-318,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-319,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-320,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-321,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-322,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-323,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-324,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-325,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-326,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-327,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-328,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-329,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-330,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-331,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-332,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-333,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-334,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-335,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-336,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-337,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-338,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-339,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-340,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-341,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-342,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-343,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-344,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-345,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-346,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-347,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-348,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-349,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-350,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-351,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-352,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-353,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-354,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-355,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-356,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-357,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-358,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-359,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-360,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-361,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-362,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-363,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-364,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-365,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-366,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-367,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-368,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-369,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-370,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-371,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-372,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-373,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-374,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-375,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-376,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-377,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-378,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-379,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-380,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-381,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-382,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-383,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-384,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-385,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-386,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-387,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-388,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-389,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-390,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-391,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-392,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-393,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-394,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-395,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-396,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-397,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-398,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-399,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-400,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-401,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-402,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-403,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-404,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-405,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-406,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-407,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-408,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-409,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-410,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-411,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-412,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-413,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-414,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-415,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-416,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-417,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-418,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-419,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-420,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-421,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-422,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-423,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-424,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-425,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-426,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-427,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-428,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-429,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-430,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-431,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-432,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-433,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-434,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-435,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-436,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-437,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-438,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-439,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-440,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-441,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-442,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-443,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-444,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-445,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-446,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-447,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-448,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-449,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-450,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-451,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-452,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-453,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-454,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-455,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-456,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-457,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-458,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-459,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-460,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-461,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-462,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-463,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-464,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-465,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-466,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-467,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-468,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-469,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-470,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-471,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-472,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-473,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-474,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-475,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-476,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-477,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-478,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-479,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-480,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-481,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-482,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-483,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-484,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-485,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-486,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-487,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-488,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-489,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-490,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-491,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-492,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-493,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-494,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-495,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-496,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-497,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-498,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-499,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-500,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-501,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-502,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-503,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-504,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-505,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-506,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-507,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-508,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-509,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-510,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-511,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-512,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-513,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-514,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-515,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-516,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-517,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-518,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-519,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-520,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-521,Software,Superseded,,VHS-REQ-127,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-522,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-523,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-524,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-525,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-526,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-527,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-528,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-529,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-530,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-531,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-532,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-533,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-534,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-535,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-536,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-537,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-538,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-539,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-540,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-541,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-542,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-543,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-544,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-545,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-546,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-547,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-548,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-549,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-550,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-551,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-552,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-553,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-554,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-555,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-556,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-557,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-558,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-559,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-560,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-561,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-562,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-563,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-564,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-565,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-566,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-567,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-568,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-569,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-570,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-571,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-572,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-573,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-574,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-575,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-576,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-577,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-578,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-579,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-580,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-581,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-582,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-583,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-584,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-585,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-586,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-587,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-588,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-589,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-590,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-591,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-592,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-593,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-594,Software,Superseded,,VHS-REQ-082,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
+VHS-REQ-595,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-596,Software,Active,srs.md#vhs-req-596-devcontainer-source-evaluation,,,docs/requirements/srs.md
+VHS-REQ-597,Software,Active,srs.md#vhs-req-597-lightweight-hosted-ci,,,docs/requirements/srs.md
+VHS-REQ-598,Software,Active,srs.md#vhs-req-598-trusted-windowslabview-maintainer-workflow,,,docs/requirements/srs.md
+VHS-REQ-599,Software,Active,srs.md#vhs-req-599-optional-vagrant-helper,,,docs/requirements/srs.md
+VHS-REQ-600,Software,Active,srs.md#vhs-req-600-marketplace-identity-and-public-source-metadata,,,docs/requirements/srs.md
+VHS-REQ-601,Software,Active,srs.md#vhs-req-601-requirements-as-agent-work-contracts,,,docs/requirements/srs.md
+VHS-SYS-REQ-001,System,Active,syrs.md#vhs-sys-req-001-vs-code-labview-vi-history-system,,,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-002,System,Superseded,,VHS-SYS-REQ-014,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-003,System,Active,syrs.md#vhs-sys-req-003-system-and-software-requirement-split,,,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-004,System,Active,syrs.md#vhs-sys-req-004-host-labview-comparison-path,,,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-005,System,Active,syrs.md#vhs-sys-req-005-optional-expert-docker-path,,,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-006,System,Superseded,,VHS-SYS-REQ-004,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-007,System,Active,syrs.md#vhs-sys-req-007-fail-closed-runtime-evidence,,,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-008,System,Active,syrs.md#vhs-sys-req-008-explicit-compare-action,,,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-009,System,Superseded,,VHS-SYS-REQ-011,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-010,System,Superseded,,VHS-SYS-REQ-014,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
+VHS-SYS-REQ-011,System,Active,syrs.md#vhs-sys-req-011-github-first-source-authority,,,docs/requirements/syrs.md
+VHS-SYS-REQ-012,System,Active,syrs.md#vhs-sys-req-012-lightweight-public-verification,,,docs/requirements/syrs.md
+VHS-SYS-REQ-013,System,Active,syrs.md#vhs-sys-req-013-optional-human-validation-surfaces,,,docs/requirements/syrs.md
+VHS-SYS-REQ-014,System,Active,syrs.md#vhs-sys-req-014-agent-targetable-requirements,,,docs/requirements/syrs.md
