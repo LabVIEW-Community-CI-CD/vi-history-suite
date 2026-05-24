@@ -30,6 +30,11 @@ Canonical prompt pattern:
 Target VHS-REQ-###. Change behavior to ____. Update implementation, tests, SRS, and RTM.
 ```
 
+On GitHub, use the `Requirement Target` issue template for agent or Copilot
+work. The template captures the target requirement ID, files to inspect,
+acceptance criteria, required tests, validation commands, and out-of-scope
+boundaries before implementation starts.
+
 ## ID Policy
 
 - Active software requirements use `VHS-REQ-*`.

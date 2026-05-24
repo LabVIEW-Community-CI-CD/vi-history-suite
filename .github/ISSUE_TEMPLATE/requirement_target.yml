@@ -1,0 +1,88 @@
+name: Requirement Target
+description: Define requirement-scoped work for Copilot or agent-assisted implementation.
+title: "Target VHS-REQ-###: "
+labels:
+  - copilot-target
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when a maintainer wants implementation work to start from a committed requirement ID. Agents should inspect the SRS block and RTM row before editing.
+  - type: input
+    id: requirement_id
+    attributes:
+      label: Target Requirement ID
+      description: Name one active requirement ID from docs/requirements/srs.md.
+      placeholder: VHS-REQ-###
+    validations:
+      required: true
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Problem Statement
+      description: What behavior, evidence, or maintenance gap should change?
+      placeholder: Explain the current problem and why this requirement is the right target.
+    validations:
+      required: true
+  - type: textarea
+    id: files_to_inspect
+    attributes:
+      label: Files To Inspect
+      description: Include the requirement block, RTM row, implementation references, and verification references the agent should inspect first.
+      placeholder: |
+        - docs/requirements/srs.md
+        - docs/requirements/rtm.csv
+        - src/...
+        - tests/...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: List the observable outcomes that make this issue complete.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: required_tests
+    attributes:
+      label: Required Tests
+      description: Name the tests to add or update for changed acceptance criteria.
+      placeholder: |
+        - Add or update tests/unit/...
+        - Update requirements/RTM tests if requirement references change.
+    validations:
+      required: true
+  - type: textarea
+    id: validation_commands
+    attributes:
+      label: Validation Commands
+      description: Commands a maintainer or agent must run before the PR is ready.
+      render: shell
+      placeholder: |
+        npx vitest run tests/unit/...
+        npm.cmd run check
+        npm.cmd test
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out-Of-Scope Boundaries
+      description: Name nearby work that should not be changed in this issue.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: requirement_updates
+    attributes:
+      label: Requirement And RTM Updates
+      description: State whether implementation changes require SRS, RTM, or ID index updates.
+      placeholder: Update implementation, tests, SRS, and RTM when behavior or evidence paths change.
+    validations:
+      required: true

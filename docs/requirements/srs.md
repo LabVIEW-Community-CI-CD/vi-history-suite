@@ -714,15 +714,18 @@ Missing numeric IDs are intentional.
   - Active SRS requirements use the required structured block fields.
   - Active SRS IDs and RTM IDs match exactly.
   - Active and historical IDs remain discoverable through `id-index.csv`.
+  - GitHub issue templates support requirement-targeted agent work.
   - CI fails when active requirement references drift from existing repo paths.
 - Agent Work Scope:
-  - Change requirements docs and the coherence test together.
+  - Change requirements docs, GitHub issue templates, and the coherence test
+    together.
 - Implementation References:
   - `docs/requirements/README.md`
   - `docs/requirements/syrs.md`
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
+  - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:requirements-quality-check-system-scope`

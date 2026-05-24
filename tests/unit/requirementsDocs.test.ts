@@ -253,4 +253,30 @@ describe('requirements documentation coherence', () => {
     expect(titles).toContain('Optional Vagrant Helper');
     expect(titles).toContain('Devcontainer Source Evaluation');
   });
+
+  it('keeps the requirement-targeted issue template aligned with the agent contract', () => {
+    const template = readRepoText('.github', 'ISSUE_TEMPLATE', 'requirement_target.yml');
+    const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-601');
+
+    expect(template).toContain('name: Requirement Target');
+    expect(template).toContain('copilot-target');
+    expect(template).toContain('id: requirement_id');
+    expect(template).toContain('label: Target Requirement ID');
+    expect(template).toContain('id: problem_statement');
+    expect(template).toContain('id: files_to_inspect');
+    expect(template).toContain('id: acceptance_criteria');
+    expect(template).toContain('id: required_tests');
+    expect(template).toContain('id: validation_commands');
+    expect(template).toContain('id: out_of_scope');
+    expect(template).toContain('Update implementation, tests, SRS, and RTM');
+    expect(requirementsReadme).toContain('Requirement Target');
+    expect(requirementsReadme).toContain('validation commands');
+    expect(srs).toContain('GitHub issue templates support requirement-targeted agent work.');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      '.github/ISSUE_TEMPLATE/requirement_target.yml'
+    );
+  });
 });
