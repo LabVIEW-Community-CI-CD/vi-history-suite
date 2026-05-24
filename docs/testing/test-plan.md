@@ -17,11 +17,13 @@ This hosted CI job remains the required public merge gate.
 
 Inside the devcontainer or Codespace:
 
-1. Wait for `postCreateCommand` to finish.
+1. Wait for `postCreateCommand` and `postStartCommand` to finish.
 2. Run `npm run check`.
 3. Run `npm test`.
-4. Press `F5` and confirm the extension host starts.
-5. Open a trusted Git repository with a tracked LabVIEW file and open
+4. Select the `Run VI History Suite` launch configuration and press `F5`.
+5. Confirm an Extension Development Host window opens after compile/preLaunch
+   completes.
+6. Open a trusted Git repository with a tracked LabVIEW file and open
    `VI History`.
 
 ## Maintainer Windows/LabVIEW Check

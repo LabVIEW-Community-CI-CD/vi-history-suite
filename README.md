@@ -48,13 +48,15 @@ Docker remains available for users who intentionally select and validate it.
 The normal source-evaluation path is a devcontainer or Codespace:
 
 ```bash
-npm ci
 npm run check
 npm test
 npm run package
 ```
 
-Use `F5` in VS Code to launch the extension development host.
+After `postStartCommand` completes (runs `npm run compile`), select the
+`Run VI History Suite` launch configuration from the Run and Debug view and
+press `F5`. A successful first launch opens an Extension Development Host
+window after the compile/preLaunch step completes.
 
 Optional fixture helpers:
 

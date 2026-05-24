@@ -13,6 +13,9 @@ function readJson<T>(relativePath: string): T {
   return JSON.parse(readText(relativePath)) as T;
 }
 
+const EXPECTED_LAUNCH_CONFIG_NAME = 'Run VI History Suite';
+const EXPECTED_PRELAUNCH_TASK = 'npm: compile';
+
 describe('public devcontainer surface', () => {
   it('retains a Docker-capable devcontainer and VS Code launch surface for the public GitHub repo', () => {
     const devcontainer = readJson<{
@@ -61,9 +64,9 @@ describe('public devcontainer surface', () => {
     expect(launch.configurations).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Run VI History Suite',
+          name: EXPECTED_LAUNCH_CONFIG_NAME,
           type: 'extensionHost',
-          preLaunchTask: 'npm: compile'
+          preLaunchTask: EXPECTED_PRELAUNCH_TASK
         }),
         expect.objectContaining({
           name: 'Run VI History Suite Integration Tests',
@@ -93,5 +96,54 @@ describe('public devcontainer surface', () => {
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(install).toContain('npm run public:repo:clone');
     expect(install).toContain('Vagrant is a local human tester');
+  });
+
+  it('documents the expected devcontainer first-run path with the named launch configuration', () => {
+    const launch = readJson<{
+      configurations?: Array<{ name?: string; type?: string; preLaunchTask?: string }>;
+    }>('.vscode/launch.json');
+    const readme = readText('README.md');
+    const install = readText('INSTALL.md');
+    const development = readText('docs/development.md');
+    const testPlan = readText('docs/testing/test-plan.md');
+
+    const launchConfig = launch.configurations?.find(
+      (config) => config.name === EXPECTED_LAUNCH_CONFIG_NAME
+    );
+    expect(launchConfig, `launch configuration '${EXPECTED_LAUNCH_CONFIG_NAME}' exists`).toBeDefined();
+    expect(launchConfig?.type).toBe('extensionHost');
+    expect(launchConfig?.preLaunchTask).toBe(EXPECTED_PRELAUNCH_TASK);
+
+    for (const [docName, docContent] of [
+      ['README.md', readme],
+      ['INSTALL.md', install],
+      ['docs/development.md', development],
+      ['docs/testing/test-plan.md', testPlan]
+    ] as const) {
+      expect(docContent, `${docName} mentions launch config`).toContain(EXPECTED_LAUNCH_CONFIG_NAME);
+      expect(docContent, `${docName} mentions F5`).toContain('F5');
+      expect(docContent, `${docName} mentions Extension Development Host`).toContain(
+        'Extension Development Host'
+      );
+    }
+  });
+
+  it('documents postStartCommand expectations consistently across docs', () => {
+    const devcontainer = readJson<{
+      postStartCommand?: string;
+    }>('.devcontainer/devcontainer.json');
+    const readme = readText('README.md');
+    const install = readText('INSTALL.md');
+    const development = readText('docs/development.md');
+
+    expect(devcontainer.postStartCommand).toBe('npm run compile');
+
+    for (const [docName, docContent] of [
+      ['README.md', readme],
+      ['INSTALL.md', install],
+      ['docs/development.md', development]
+    ] as const) {
+      expect(docContent, `${docName} mentions postStartCommand`).toContain('postStartCommand');
+    }
   });
 });
