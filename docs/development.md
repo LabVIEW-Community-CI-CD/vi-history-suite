@@ -18,3 +18,6 @@ npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
 ```
 
 Press `F5` in VS Code to launch the extension development host.
+
+Maintainer release, runner, and validation operations are documented in
+[docs/maintainer-operations.md](./maintainer-operations.md).
