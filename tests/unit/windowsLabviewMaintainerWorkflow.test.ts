@@ -28,6 +28,14 @@ describe('Windows LabVIEW maintainer workflow', () => {
     );
   });
 
+  it('uses Windows PowerShell for host compatibility', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true');
+    expect(workflow).toContain('shell: powershell');
+    expect(workflow).not.toContain('shell: pwsh');
+  });
+
   it('fails closed to trusted refs and avoids Marketplace publishing secrets', () => {
     const workflow = readWorkflow();
 

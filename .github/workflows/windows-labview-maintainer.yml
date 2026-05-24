@@ -6,6 +6,13 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+defaults:
+  run:
+    shell: powershell
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -18,7 +25,7 @@ jobs:
 
     steps:
       - name: Guard Trusted Ref
-        shell: pwsh
+        shell: powershell
         run: |
           $isMain = $env:GITHUB_REF -eq 'refs/heads/main'
           $isExactVersionTag = $env:GITHUB_REF -match '^refs/tags/v\d+\.\d+\.\d+$'
@@ -36,7 +43,7 @@ jobs:
           cache: npm
 
       - name: Capture Environment Summary
-        shell: pwsh
+        shell: powershell
         run: |
           if ($env:VSCE_PAT -or $env:AZURE_DEVOPS_EXT_PAT -or $env:OVSX_PAT) {
             throw "Marketplace publishing tokens must not be present on this maintainer validation runner."
