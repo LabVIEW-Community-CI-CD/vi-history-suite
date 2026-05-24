@@ -70,6 +70,7 @@ Expected host prerequisites:
 
 The runner workflow must be `workflow_dispatch` only, use read-only repository
 permissions, and hard-fail unless the ref is `main` or an exact `v*` tag.
+The workflow file is `.github/workflows/windows-labview-maintainer.yml`.
 
 Start the runner only when needed:
 

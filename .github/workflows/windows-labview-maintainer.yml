@@ -1,0 +1,104 @@
+name: Windows LabVIEW Maintainer Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-labview-maintainer:
+    name: Windows LabVIEW Maintainer Validation
+    runs-on: [self-hosted, Windows, X64, vihs-windows-labview-maintainer]
+    timeout-minutes: 90
+
+    steps:
+      - name: Guard Trusted Ref
+        shell: pwsh
+        run: |
+          $isMain = $env:GITHUB_REF -eq 'refs/heads/main'
+          $isExactVersionTag = $env:GITHUB_REF -match '^refs/tags/v\d+\.\d+\.\d+$'
+          if (-not ($isMain -or $isExactVersionTag)) {
+            throw "This maintainer runner only accepts main or exact v* release tags. Ref was: $env:GITHUB_REF"
+          }
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Capture Environment Summary
+        shell: pwsh
+        run: |
+          if ($env:VSCE_PAT -or $env:AZURE_DEVOPS_EXT_PAT -or $env:OVSX_PAT) {
+            throw "Marketplace publishing tokens must not be present on this maintainer validation runner."
+          }
+
+          New-Item -ItemType Directory -Force -Path runner-evidence | Out-Null
+          $summaryPath = Join-Path 'runner-evidence' 'windows-labview-maintainer-summary.txt'
+          $candidatePaths = @(
+            'C:\Program Files\Microsoft VS Code\bin\code.cmd',
+            "$env:LOCALAPPDATA\Programs\Microsoft VS Code\bin\code.cmd",
+            'C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe',
+            'C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.exe',
+            'C:\Program Files\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.exe',
+            'C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.exe'
+          )
+
+          $lines = @(
+            "Workflow: $env:GITHUB_WORKFLOW",
+            "Run: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID",
+            "Repository: $env:GITHUB_REPOSITORY",
+            "Ref: $env:GITHUB_REF",
+            "SHA: $env:GITHUB_SHA",
+            "Runner: $env:RUNNER_NAME",
+            "Runner OS: $env:RUNNER_OS",
+            "Node: $(node --version)",
+            "npm: $(npm.cmd --version)",
+            "Git: $(git --version)"
+          )
+
+          foreach ($candidatePath in $candidatePaths) {
+            $state = if (Test-Path -LiteralPath $candidatePath) { 'present' } else { 'missing' }
+            $lines += "$state`t$candidatePath"
+          }
+
+          $labviewCli = Get-Command LabVIEWCLI -ErrorAction SilentlyContinue
+          $lines += if ($labviewCli) { "LabVIEWCLI command: $($labviewCli.Source)" } else { 'LabVIEWCLI command: missing from PATH' }
+
+          $lines | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+          Get-Content -LiteralPath $summaryPath
+
+      - name: Install
+        run: npm.cmd ci
+
+      - name: Typecheck
+        run: npm.cmd run check
+
+      - name: Test
+        run: npm.cmd test
+
+      - name: Package
+        run: npm.cmd run package
+
+      - name: Windows Integration Host
+        run: npm.cmd run test:integration:windows
+
+      - name: Upload Maintainer Evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-labview-maintainer-${{ github.run_id }}
+          path: |
+            vi-history-suite-*.vsix
+            runner-evidence/**
+          if-no-files-found: warn
+          retention-days: 14
