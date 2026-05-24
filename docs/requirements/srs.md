@@ -685,13 +685,20 @@ Missing numeric IDs are intentional.
   - `name` remains `vi-history-suite`.
   - Repository, homepage, and bugs URLs point to the organization repository.
   - License remains `0BSD` and package publication remains disabled.
+  - Public docs (README, INSTALL, SUPPORT, SECURITY) do not present the old
+    personal repo as the active source or issue tracker.
 - Agent Work Scope:
   - Change package metadata, README links, and package tests together.
 - Implementation References:
   - `package.json`
   - `README.md`
+  - `INSTALL.md`
+  - `SUPPORT.md`
+  - `SECURITY.md`
+  - `docs/maintainer-operations.md`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/publicDocSourceLinks.test.ts`
   - `external:vscode-marketplace-svelderrainruiz.vi-history-suite`
 - Change Guidance:
   - Do not change Marketplace identity as part of normal source migration work.
