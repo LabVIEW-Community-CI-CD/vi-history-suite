@@ -9,6 +9,7 @@ interface ExtensionManifest {
   version?: string;
   publisher?: string;
   license?: string;
+  private?: boolean;
   icon?: string;
   main?: string;
   browser?: string;
@@ -65,9 +66,11 @@ describe('extension manifest public metadata', () => {
     const manifest = readManifest();
 
     expect(manifest.name).toBe('vi-history-suite');
-    expect(manifest.displayName).toBe('VI History');
+    expect(manifest.displayName).toBe('VI History Suite');
+    expect(manifest.version).toBe('1.4.0');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
+    expect(manifest.private).toBe(true);
     expect(manifest.repository).toEqual({
       type: 'git',
       url: 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite.git'

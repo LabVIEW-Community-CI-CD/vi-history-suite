@@ -1,14 +1,33 @@
 # Changelog
 
-This changelog is the governed version-line summary for `vi-history-suite`.
+This changelog records user-facing release history for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
 `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`,
 `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`,
-`v1.3.15`, and `v1.3.16`.
+`v1.3.15`, `v1.3.16`, and `v1.4.0`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.4.0] - 2026-05-24
+
+### Changed
+
+- Moved the active public source home to
+  `github.com/LabVIEW-Community-CI-CD/vi-history-suite` while preserving the
+  Marketplace extension ID `svelderrainruiz.vi-history-suite`.
+- Relicensed the active repository to BSD0 / `0BSD` and updated package
+  metadata to point Marketplace users at the GitHub organization repository.
+- Simplified source evaluation around the devcontainer/Codespaces path,
+  lightweight GitHub CI, and the core package checks.
+- Added GitHub issue templates plus support and security reporting docs,
+  including private vulnerability reporting through GitHub.
+- Retained Vagrant only as an optional local helper for humans; this release
+  does not claim fresh Vagrant validation.
+- Removed active GitLab authority, private-release, governed proof, and public
+  source-promotion machinery from the simplified source tree while retaining
+  historical release context in tags and this changelog.
 
 ## [1.3.16] - 2026-05-11
 
