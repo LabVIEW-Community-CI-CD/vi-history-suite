@@ -18,10 +18,66 @@ type IndexedRepositoryWorkItem = {
   head: string;
 };
 
+/**
+ * Refresh state types for large-repository indexing operating model (VHS-REQ-603).
+ * - cold-scan: No prior eligibility data exists; all files evaluated from scratch.
+ * - warm-restart: Prior eligibility data exists with same HEAD(s); cache reuse possible.
+ * - branch-switch: HEAD changed since last refresh; affected files re-evaluated.
+ * - cancelled: User cancelled the refresh; previous snapshot preserved.
+ * - trust-disabled: Workspace is not trusted; eligibility cleared.
+ * - failed: Refresh failed with no repositories successfully indexed; previous snapshot
+ *   preserved when one exists.
+ */
+export type IndexRefreshState =
+  | 'cold-scan'
+  | 'warm-restart'
+  | 'branch-switch'
+  | 'cancelled'
+  | 'trust-disabled'
+  | 'failed';
+
+/**
+ * Work accounting for indexing refresh results (VHS-REQ-603).
+ * These counts describe observable work rather than wall-clock timing.
+ */
+export interface IndexRefreshWorkCounts {
+  /** Total tracked files discovered across all repositories. */
+  tracked: number;
+  /** Files whose eligibility was reused from cache (same HEAD + path). */
+  reused: number;
+  /** Files freshly evaluated (cache miss or HEAD change). */
+  evaluated: number;
+  /** Files determined eligible for VI history. */
+  eligible: number;
+  /** Files skipped due to cancellation or trust loss mid-refresh. */
+  skipped: number;
+  /** Files that failed eligibility evaluation with an error. */
+  failed: number;
+}
+
+/**
+ * Complete refresh result for diagnostics and state accounting (VHS-REQ-603).
+ */
+export interface IndexRefreshResult {
+  /** The determined refresh state. */
+  state: IndexRefreshState;
+  /** Work counts for this refresh. */
+  counts: IndexRefreshWorkCounts;
+  /**
+   * Repository roots represented by this result. Applied refreshes report roots
+   * indexed in the refresh; preserved snapshots report the preserved roots.
+   */
+  indexedRepositoryRoots: string[];
+  /** Whether the previous eligibility snapshot was preserved (cancellation/failure). */
+  snapshotPreserved: boolean;
+}
+
 export interface EligibilityDebugSnapshot {
   indexedRepositoryRoots: string[];
   eligiblePathCount: number;
   eligiblePathsSample: string[];
+  /** Last refresh result for diagnostics (VHS-REQ-603). */
+  lastRefreshResult: IndexRefreshResult | undefined;
 }
 
 export class ViEligibilityIndexer implements vscode.Disposable {
@@ -34,6 +90,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   private refreshPending = false;
   private eligiblePaths: EligibilityMap = {};
   private lastIndexedRepositoryRoots: string[] = [];
+  /** Last recorded HEAD values per repository root for branch-switch detection (VHS-REQ-603). */
+  private lastIndexedHeads = new Map<string, string>();
+  /** Last refresh result for diagnostics (VHS-REQ-603). */
+  private lastRefreshResult: IndexRefreshResult | undefined;
 
   constructor(private readonly gitApi: GitApi | undefined) {
     this.statusBarItem = vscode.window.createStatusBarItem(
@@ -70,8 +130,14 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     return {
       indexedRepositoryRoots: [...this.lastIndexedRepositoryRoots],
       eligiblePathCount: eligiblePaths.length,
-      eligiblePathsSample: eligiblePaths.slice(0, 12)
+      eligiblePathsSample: eligiblePaths.slice(0, 12),
+      lastRefreshResult: this.lastRefreshResult
     };
+  }
+
+  /** Returns the last refresh result for diagnostics (VHS-REQ-603). */
+  getLastRefreshResult(): IndexRefreshResult | undefined {
+    return this.lastRefreshResult;
   }
 
   scheduleRefresh(): void {
@@ -188,10 +254,28 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   }
 
   private async runRefresh(): Promise<void> {
+    // Work counts for VHS-REQ-603 state accounting
+    const workCounts: IndexRefreshWorkCounts = {
+      tracked: 0,
+      reused: 0,
+      evaluated: 0,
+      eligible: 0,
+      skipped: 0,
+      failed: 0
+    };
+
+    // Check workspace trust first
     if (!vscode.workspace.isTrusted) {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
+      this.lastIndexedHeads.clear();
       this.hideStatusBarProgress();
+      this.lastRefreshResult = {
+        state: 'trust-disabled',
+        counts: workCounts,
+        indexedRepositoryRoots: [],
+        snapshotPreserved: false
+      };
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
     }
@@ -204,7 +288,12 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     const repositoryWorkItems: IndexedRepositoryWorkItem[] = [];
     let totalTrackedFiles = 0;
     const nextEligiblePaths: EligibilityMap = {};
+    const nextIndexedHeads = new Map<string, string>();
     let refreshOutcome: 'applied' | 'cancelled' | 'workspace-untrusted' = 'applied';
+
+    // Track whether any HEAD changed to determine cold-scan vs warm-restart vs branch-switch
+    let hadPriorIndexedRoots = this.lastIndexedRepositoryRoots.length > 0;
+    let anyHeadChanged = false;
 
     for (const repository of repositories) {
       if (!vscode.workspace.isTrusted) {
@@ -221,9 +310,28 @@ export class ViEligibilityIndexer implements vscode.Disposable {
           head
         });
         totalTrackedFiles += trackedFiles.length;
+        nextIndexedHeads.set(repository.rootUri.fsPath, head);
+
+        // Detect HEAD change for branch-switch detection
+        const previousHead = this.lastIndexedHeads.get(repository.rootUri.fsPath);
+        if (previousHead !== undefined && previousHead !== head) {
+          anyHeadChanged = true;
+        }
       } catch {
         // Fail closed per repository and continue indexing other repositories.
       }
+    }
+
+    workCounts.tracked = totalTrackedFiles;
+
+    // Determine initial state type based on prior index state
+    let determinedState: IndexRefreshState;
+    if (!hadPriorIndexedRoots) {
+      determinedState = 'cold-scan';
+    } else if (anyHeadChanged) {
+      determinedState = 'branch-switch';
+    } else {
+      determinedState = 'warm-restart';
     }
 
     let processedTrackedFiles = 0;
@@ -262,14 +370,17 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
           await forEachConcurrent(workItem.trackedFiles, concurrency, async (relativePath) => {
             if (refreshOutcome !== 'applied') {
+              workCounts.skipped += 1;
               return;
             }
             if (cancellationToken.isCancellationRequested) {
               refreshOutcome = 'cancelled';
+              workCounts.skipped += 1;
               return;
             }
             if (!vscode.workspace.isTrusted) {
               refreshOutcome = 'workspace-untrusted';
+              workCounts.skipped += 1;
               return;
             }
 
@@ -277,7 +388,12 @@ export class ViEligibilityIndexer implements vscode.Disposable {
             const fileUri = vscode.Uri.joinPath(workItem.repository.rootUri, relativePath);
 
             let isEligible = this.eligibilityCache.get(cacheKey);
-            if (isEligible === undefined) {
+            if (isEligible !== undefined) {
+              // Cache hit - reused
+              workCounts.reused += 1;
+            } else {
+              // Cache miss - evaluate
+              workCounts.evaluated += 1;
               try {
                 const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
                   repoRoot: workItem.repository.rootUri.fsPath,
@@ -287,10 +403,12 @@ export class ViEligibilityIndexer implements vscode.Disposable {
                 this.eligibilityCache.set(cacheKey, isEligible);
               } catch {
                 isEligible = false;
+                workCounts.failed += 1;
               }
             }
 
             if (isEligible) {
+              workCounts.eligible += 1;
               for (const key of contextKeysForUri(fileUri)) {
                 nextEligiblePaths[key] = true;
               }
@@ -328,21 +446,59 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       | 'workspace-untrusted';
 
     if (finalRefreshOutcome === 'cancelled') {
+      // Preserve previous snapshot on cancellation (VHS-REQ-603)
       this.hideStatusBarProgress();
+      finalizeSkippedCount(workCounts);
+      this.lastRefreshResult = {
+        state: 'cancelled',
+        counts: workCounts,
+        indexedRepositoryRoots: [...this.lastIndexedRepositoryRoots],
+        snapshotPreserved: true
+      };
       return;
     }
 
     if (finalRefreshOutcome === 'workspace-untrusted') {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
+      this.lastIndexedHeads.clear();
       this.hideStatusBarProgress();
+      finalizeSkippedCount(workCounts);
+      this.lastRefreshResult = {
+        state: 'trust-disabled',
+        counts: workCounts,
+        indexedRepositoryRoots: [],
+        snapshotPreserved: false
+      };
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
     }
 
+    // Check if refresh failed (no repositories successfully indexed despite having workspace folders)
+    if (repositoryWorkItems.length === 0 && repositories.length > 0) {
+      // Preserve previous snapshot on failed refresh (VHS-REQ-603)
+      this.hideStatusBarProgress();
+      const hasExistingSnapshot = this.lastIndexedRepositoryRoots.length > 0;
+      this.lastRefreshResult = {
+        state: 'failed',
+        counts: workCounts,
+        indexedRepositoryRoots: [],
+        snapshotPreserved: hasExistingSnapshot
+      };
+      return;
+    }
+
+    // Successfully applied refresh
     this.lastIndexedRepositoryRoots = nextIndexedRepositoryRoots;
+    this.lastIndexedHeads = nextIndexedHeads;
     this.eligiblePaths = nextEligiblePaths;
     this.hideStatusBarProgress();
+    this.lastRefreshResult = {
+      state: determinedState,
+      counts: workCounts,
+      indexedRepositoryRoots: nextIndexedRepositoryRoots,
+      snapshotPreserved: false
+    };
     await vscode.commands.executeCommand(
       'setContext',
       'labviewViHistory.eligiblePaths',
@@ -484,6 +640,13 @@ export async function forEachConcurrent<T>(
   });
 
   await Promise.all(workers);
+}
+
+function finalizeSkippedCount(workCounts: IndexRefreshWorkCounts): void {
+  workCounts.skipped = Math.max(
+    workCounts.skipped,
+    workCounts.tracked - workCounts.reused - workCounts.evaluated
+  );
 }
 
 export async function resolveIndexedRepositories(
