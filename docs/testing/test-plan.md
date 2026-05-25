@@ -13,6 +13,17 @@ npm run package
 
 This hosted CI job remains the required public merge gate.
 
+## Diagnostic Test VSIX Check
+
+When a reporter needs to retest a fix before Marketplace publication, manually
+dispatch the `Package Test VSIX` workflow from `main` or an exact `v*` tag. It
+runs the lightweight package checks and uploads `vi-history-suite-*.vsix` as a
+short-lived Actions artifact.
+
+Set `publish_prerelease` only when a public `test-vsix-latest` prerelease asset
+is needed for reporter download. This is diagnostic reporter support only, not
+Marketplace publication and not a required release gate.
+
 ## Devcontainer Human Check
 
 Inside the devcontainer or Codespace:

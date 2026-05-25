@@ -25,6 +25,10 @@ Source, support, and release links point to
 Do not attach VSIX files to GitHub Releases unless a future release plan makes
 GitHub a second install channel. The Marketplace is the install channel.
 
+The narrow exception is the mutable `test-vsix-latest` diagnostic prerelease
+used for reporter retesting. It is not a normal release, is not marked latest,
+and must not be described as Marketplace publication.
+
 ## Token Handling
 
 Marketplace publishing tokens are local, short-lived maintainer secrets.
@@ -44,8 +48,37 @@ GitHub secret scanning and push protection are enabled for this repository.
 | --- | --- | --- |
 | Hosted GitHub CI | Required public merge gate on Ubuntu | Required before merge |
 | Codespaces/devcontainer | Primary source-evaluation path | Human/source confidence |
+| Diagnostic test VSIX workflow | Reporter retest package from a trusted ref | Diagnostic evidence only |
 | Maintainer Windows/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
 | Vagrant | Optional isolated local helper | Not a release gate |
+
+## Diagnostic Test VSIX
+
+Use the `Package Test VSIX` workflow when a reporter needs to retest a fix that
+is merged to `main` but not yet available from the Marketplace.
+
+The workflow is manual-only and trusted-ref-only. It runs the same lightweight
+package checks as hosted CI, uploads the generated `vi-history-suite-*.vsix` as
+a 14-day Actions artifact, and can optionally update the public
+`test-vsix-latest` prerelease asset for easier reporter download.
+
+Dispatch defaults:
+
+- Ref: `main` or an exact `v*` tag.
+- `publish_prerelease`: `false` unless a public download link is needed.
+- `issue_number`: the issue being retested, such as `61`.
+
+Reporter install command:
+
+```powershell
+code --install-extension .\vi-history-suite-*.vsix --force
+```
+
+After installation, ask the reporter to reload VS Code, reproduce the issue,
+and capture indexing diagnostics separately from comparison runtime validation
+output. If the Marketplace extension with the same identity is already
+installed, `--force` is required; uninstalling the Marketplace build first is
+also acceptable.
 
 ## Windows/LabVIEW Runner
 

@@ -301,6 +301,38 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps diagnostic test VSIX distribution traceable for VHS-REQ-608', () => {
+    const syrs = readRepoText('docs', 'requirements', 'syrs.md');
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-608');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-608');
+
+    expect(syrs).toContain('diagnostic test VSIX distribution');
+    expect(syrs).toContain('.github/workflows/package-test-vsix.yml');
+    expect(srs).toContain('### VHS-REQ-608: Diagnostic Test VSIX Distribution');
+    expect(srs).toContain('trusted ref for reporter retesting');
+    expect(srs).toContain('short-lived Actions artifact');
+    expect(srs).toContain('test-vsix-latest');
+    expect(srs).toContain('does not use Marketplace publishing tokens');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-013');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      '.github/workflows/package-test-vsix.yml'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain('docs/maintainer-operations.md');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/packageTestVsixWorkflow.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('manual:diagnostic-test-vsix-dispatch');
+    expect(requirementRow?.Notes).toContain('trusted-ref-only');
+    expect(requirementRow?.Notes).toContain('test-vsix-latest');
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-608-diagnostic-test-vsix-distribution'
+    );
+  });
+
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
