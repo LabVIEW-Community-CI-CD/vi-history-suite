@@ -262,6 +262,12 @@ describe('comparisonReportRuntimeExecution', () => {
     record.preflight.right.blobSpecifier = 'abcdef1234567890:Source/Examples/foo.vi';
     record.preflight.normalizedRelativePath = 'Source/Examples/foo.vi';
     record.artifactPlan.normalizedRelativePath = 'Source/Examples/foo.vi';
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash
+    });
 
     const result = await executeComparisonReport(
       {
