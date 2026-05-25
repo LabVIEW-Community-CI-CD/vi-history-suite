@@ -317,6 +317,7 @@ export function renderHistoryPanelHtml(
       <div data-testid="history-primary-instruction"><strong>Quick start:</strong> Select exactly two retained revisions, then choose <code>Compare</code>.</div>
       <details data-testid="history-compare-preflight-details" id="compare-preflight-details">
         <summary>Selected pair and runtime settings</summary>
+        <div data-testid="history-compare-preflight-ordering"><em>The newer of the two selected revisions becomes <code>selected</code> and the older becomes <code>base</code>.</em></div>
         <div data-testid="history-compare-preflight-selected"><strong>Selected commit:</strong> <span id="compare-preflight-selected-value">Not selected yet.</span></div>
         <div data-testid="history-compare-preflight-base"><strong>Base commit:</strong> <span id="compare-preflight-base-value">Not selected yet.</span></div>
         <div data-testid="history-compare-preflight-provider"><strong>Provider:</strong> <span id="compare-preflight-provider-value">${escapeHtml(effectiveComparePreflightState.provider)}</span></div>

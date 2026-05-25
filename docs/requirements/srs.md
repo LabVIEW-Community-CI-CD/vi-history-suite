@@ -453,8 +453,12 @@ Missing numeric IDs are intentional.
 - Statement: The history panel shall let users select two retained revisions and
   initiate comparison through an explicit selected/base pair action.
 - Acceptance Criteria:
-  - Two distinct retained revisions resolve to one selected/base pair.
-  - Compare controls remain explicit user actions.
+  - Exactly two distinct retained revisions resolve to one selected/base pair.
+  - Selected/base ordering is explained consistently in panel preflight text.
+  - The newer of the two selected revisions becomes selected and the older
+    becomes base.
+  - Compare controls remain explicit user actions with no auto-compare or
+    auto-generate behavior when the second checkbox is selected.
   - Runtime preflight state is visible without silently blocking all compare
     attempts.
 - Agent Work Scope:
@@ -465,6 +469,7 @@ Missing numeric IDs are intentional.
   - `src/commands/openViHistoryCommand.ts`
   - `src/reporting/comparisonReportPreflight.ts`
 - Verification References:
+  - `tests/unit/explicitComparePairWorkflow.test.ts`
   - `tests/unit/comparisonReportPreflight.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:

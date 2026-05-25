@@ -103,6 +103,38 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
 
       expect(html).toContain('Select exactly two retained revisions');
     });
+
+    it('does not auto-trigger compare when selection state changes via updateComparePreflightSelectionState', () => {
+      const model = createTestViewModel([
+        { hash: 'abc123', previousHash: 'def456' },
+        { hash: 'def456' }
+      ]);
+      const html = renderHistoryPanelHtml(model);
+
+      const fnStart = html.indexOf('function updateComparePreflightSelectionState()');
+      expect(fnStart).toBeGreaterThan(-1);
+
+      // Extract the function body by tracking brace depth (handles multiline content correctly)
+      const fragment = html.slice(fnStart);
+      let depth = 0;
+      let fnEnd = -1;
+      for (let i = fragment.indexOf('{'); i < fragment.length; i++) {
+        if (fragment[i] === '{') depth++;
+        else if (fragment[i] === '}') {
+          depth--;
+          if (depth === 0) {
+            fnEnd = i + 1;
+            break;
+          }
+        }
+      }
+      const fnBody = fragment.slice(0, fnEnd);
+
+      expect(fnBody).not.toContain('vscode.postMessage');
+      expect(fnBody).not.toContain('generateComparisonReportFromSelection');
+      expect(fnBody).toContain('updateCompareButtonState(true)');
+      expect(fnBody).toContain('updateCompareButtonState(false)');
+    });
   });
 
   describe('runtime preflight status remains visible even when compare generation is blocked', () => {
@@ -184,6 +216,18 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
       expect(html).toContain('data-testid="history-compare-preflight-base"');
       expect(html).toContain('Selected commit:');
       expect(html).toContain('Base commit:');
+    });
+
+    it('renders selected/base ordering explanation in preflight details', () => {
+      const model = createTestViewModel([
+        { hash: 'abc123', previousHash: 'def456' },
+        { hash: 'def456' }
+      ]);
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('data-testid="history-compare-preflight-ordering"');
+      expect(html).toContain('The newer of the two selected revisions becomes <code>selected</code>');
+      expect(html).toContain('the older becomes <code>base</code>');
     });
   });
 

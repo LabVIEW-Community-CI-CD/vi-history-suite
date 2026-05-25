@@ -280,5 +280,25 @@ describe('explicitComparePairWorkflow', () => {
       expect(state.pair.selectedHash).toBe('selected123');
       expect(state.pair.baseHash).toBe('base456');
     });
+
+    it('assigns selectedHash to the newer commit (lower commitIndex) regardless of selection order', () => {
+      const stateNewerFirst = deriveCompareSelectionState([
+        { hash: 'newerCommit', commitIndex: 0 },
+        { hash: 'olderCommit', commitIndex: 3 }
+      ]);
+      const stateOlderFirst = deriveCompareSelectionState([
+        { hash: 'olderCommit', commitIndex: 3 },
+        { hash: 'newerCommit', commitIndex: 0 }
+      ]);
+
+      if (stateNewerFirst.status !== 'pair-ready' || stateOlderFirst.status !== 'pair-ready') {
+        throw new Error('Expected both states to be pair-ready');
+      }
+
+      expect(stateNewerFirst.pair.selectedHash).toBe('newerCommit');
+      expect(stateNewerFirst.pair.baseHash).toBe('olderCommit');
+      expect(stateOlderFirst.pair.selectedHash).toBe('newerCommit');
+      expect(stateOlderFirst.pair.baseHash).toBe('olderCommit');
+    });
   });
 });
