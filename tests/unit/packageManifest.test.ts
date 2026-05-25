@@ -128,7 +128,7 @@ describe('extension manifest public metadata', () => {
     expect(manifest.capabilities?.untrustedWorkspaces).toEqual({
       supported: 'limited',
       description:
-        'VI History disables background indexing and installed comparison execution in untrusted workspaces.',
+        'VI History disables background indexing and comparison execution in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.',
       restrictedConfigurations: [
         'viHistorySuite.runtimeProvider',
         'viHistorySuite.labviewVersion',

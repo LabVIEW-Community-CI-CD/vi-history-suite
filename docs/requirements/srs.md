@@ -209,6 +209,8 @@ Missing numeric IDs are intentional.
   - Untrusted workspaces clear the eligibility context.
   - Invoking VI History in an untrusted workspace stops with a warning.
   - External comparison execution does not proceed from an untrusted workspace.
+  - Warning messages explain why indexing and comparison are disabled and what
+    low-risk paths remain available.
 - Agent Work Scope:
   - Change command, indexer, and manifest trust behavior together.
 - Implementation References:
@@ -218,6 +220,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/viEligibilityIndexer.test.ts`
   - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Trust checks are safety boundaries, not convenience prompts.
