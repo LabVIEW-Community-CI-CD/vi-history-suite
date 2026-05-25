@@ -11,6 +11,7 @@ const {
   createEligibilityCacheStorageMock,
   workspaceFolderListeners,
   workspaceTrustListeners,
+  configurationChangeListeners,
   getRepoRootMock,
   listTrackedFilesMock,
   getRepoHeadMock,
@@ -47,6 +48,7 @@ const {
   }),
   workspaceFolderListeners: [] as Array<() => unknown>,
   workspaceTrustListeners: [] as Array<() => unknown>,
+  configurationChangeListeners: [] as Array<(event: { affectsConfiguration: (section: string) => boolean }) => unknown>,
   getRepoRootMock: vi.fn<(fsPath: string) => Promise<string>>(),
   listTrackedFilesMock: vi.fn<(cwd: string) => Promise<string[]>>(),
   getRepoHeadMock: vi.fn<(cwd: string) => Promise<string>>(),
@@ -91,6 +93,14 @@ vi.mock('vscode', () => ({
     },
     onDidGrantWorkspaceTrust: (listener: () => unknown) => {
       workspaceTrustListeners.push(listener);
+      return {
+        dispose() {
+          // no-op
+        }
+      };
+    },
+    onDidChangeConfiguration: (listener: (event: { affectsConfiguration: (section: string) => boolean }) => unknown) => {
+      configurationChangeListeners.push(listener);
       return {
         dispose() {
           // no-op
@@ -171,6 +181,7 @@ describe('viEligibilityIndexer helpers', () => {
     eligibilityCacheStorageState.value = undefined;
     workspaceFolderListeners.length = 0;
     workspaceTrustListeners.length = 0;
+    configurationChangeListeners.length = 0;
     workspaceState.isTrusted = true;
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
@@ -288,6 +299,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     eligibilityCacheStorageState.value = undefined;
     workspaceFolderListeners.length = 0;
     workspaceTrustListeners.length = 0;
+    configurationChangeListeners.length = 0;
     workspaceState.isTrusted = true;
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
@@ -1248,6 +1260,7 @@ describe('viEligibilityIndexer eligibility edge cases (VHS-REQ-006, VHS-REQ-061)
     progressReportMock.mockReset();
     workspaceFolderListeners.length = 0;
     workspaceTrustListeners.length = 0;
+    configurationChangeListeners.length = 0;
     workspaceState.isTrusted = true;
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
@@ -1474,6 +1487,7 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
     progressReportMock.mockReset();
     workspaceFolderListeners.length = 0;
     workspaceTrustListeners.length = 0;
+    configurationChangeListeners.length = 0;
     workspaceState.isTrusted = true;
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
@@ -1817,5 +1831,438 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
       skipped: 0,
       failed: 0
     });
+  });
+});
+
+describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
+  beforeEach(() => {
+    configurationValues.set('strictRsrcHeader', false);
+    configurationValues.set('maxIndexedConcurrency', 6);
+    getRepoRootMock.mockReset();
+    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
+    listTrackedFilesMock.mockReset();
+    getRepoHeadMock.mockReset();
+    evaluateViEligibilityMock.mockReset();
+    commandExecuteMock.mockReset();
+    progressReportMock.mockReset();
+    workspaceFolderListeners.length = 0;
+    workspaceTrustListeners.length = 0;
+    configurationChangeListeners.length = 0;
+    workspaceState.isTrusted = true;
+    workspaceState.workspaceFolders = [];
+    withProgressMock.mockReset();
+    createStatusBarItemMock.mockClear();
+    withProgressMock.mockImplementation(async (_options, task) =>
+      task(
+        {
+          report: progressReportMock
+        },
+        {
+          isCancellationRequested: false,
+          onCancellationRequested: vi.fn(() => ({ dispose() {} }))
+        }
+      )
+    );
+  });
+
+  it('schedules refresh when strictRsrcHeader setting changes', async () => {
+    vi.useFakeTimers();
+    try {
+      workspaceState.workspaceFolders = [
+        { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+      ];
+      const indexer = new ViEligibilityIndexer({
+        repositories: [
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never);
+
+      listTrackedFilesMock.mockResolvedValue(['file.vi']);
+      getRepoHeadMock.mockResolvedValue('head-1');
+      evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+      await indexer.start();
+      expect(configurationChangeListeners).toHaveLength(1);
+
+      // Simulate strictRsrcHeader setting change
+      configurationChangeListeners[0]({
+        affectsConfiguration: (section: string) => section === 'viHistorySuite.strictRsrcHeader'
+      });
+
+      // Advance timers to trigger scheduled refresh
+      await vi.advanceTimersByTimeAsync(300);
+
+      // Second refresh should have been triggered
+      expect(withProgressMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not schedule refresh when unrelated settings change', async () => {
+    vi.useFakeTimers();
+    try {
+      workspaceState.workspaceFolders = [
+        { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+      ];
+      const indexer = new ViEligibilityIndexer({
+        repositories: [
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never);
+
+      listTrackedFilesMock.mockResolvedValue(['file.vi']);
+      getRepoHeadMock.mockResolvedValue('head-1');
+      evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+      await indexer.start();
+
+      // Simulate unrelated setting change
+      configurationChangeListeners[0]({
+        affectsConfiguration: (section: string) => section === 'editor.fontSize'
+      });
+
+      // Advance timers
+      await vi.advanceTimersByTimeAsync(300);
+
+      // Only the initial refresh should have occurred
+      expect(withProgressMock).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('drops removed files from eligibility snapshot', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValueOnce(['existing.vi', 'to-be-removed.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    // First refresh: both files are tracked and eligible
+    await indexer.refresh();
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/existing.vi',
+      path: '/workspace/repo/existing.vi'
+    } as never)).toBe(true);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/to-be-removed.vi',
+      path: '/workspace/repo/to-be-removed.vi'
+    } as never)).toBe(true);
+
+    // Second refresh: to-be-removed.vi is no longer tracked
+    listTrackedFilesMock.mockResolvedValueOnce(['existing.vi']);
+
+    await indexer.refresh();
+
+    // existing.vi should still be eligible
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/existing.vi',
+      path: '/workspace/repo/existing.vi'
+    } as never)).toBe(true);
+    // to-be-removed.vi should no longer be eligible (dropped from snapshot)
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/to-be-removed.vi',
+      path: '/workspace/repo/to-be-removed.vi'
+    } as never)).toBe(false);
+  });
+
+  it('re-evaluates changed files when HEAD changes', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['file.vi']);
+    getRepoHeadMock
+      .mockResolvedValueOnce('head-1')
+      .mockResolvedValueOnce('head-2');
+    evaluateViEligibilityMock
+      .mockResolvedValueOnce({ eligible: true })  // First refresh: eligible
+      .mockResolvedValueOnce({ eligible: false }); // Second refresh: not eligible after HEAD change
+
+    // First refresh
+    await indexer.refresh();
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/file.vi',
+      path: '/workspace/repo/file.vi'
+    } as never)).toBe(true);
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+
+    // Second refresh with different HEAD
+    await indexer.refresh();
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/file.vi',
+      path: '/workspace/repo/file.vi'
+    } as never)).toBe(false);
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(2);
+
+    // Verify branch-switch state
+    expect(indexer.getLastRefreshResult()?.state).toBe('branch-switch');
+  });
+
+  it('re-evaluates files with invalidated cache entries when strictRsrcHeader changes', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    configurationValues.set('strictRsrcHeader', false);
+    listTrackedFilesMock.mockResolvedValue(['file.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    // First refresh with strictRsrcHeader=false
+    await indexer.refresh();
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+
+    // Second refresh with same settings - should reuse cache
+    await indexer.refresh();
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(0);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(1);
+
+    // Change strictRsrcHeader setting
+    configurationValues.set('strictRsrcHeader', true);
+
+    // Third refresh - cache key changed, must re-evaluate
+    await indexer.refresh();
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(2);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+  });
+
+  it('schedules refresh when workspace folders change', async () => {
+    vi.useFakeTimers();
+    try {
+      workspaceState.workspaceFolders = [
+        { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+      ];
+      const indexer = new ViEligibilityIndexer({
+        repositories: [
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never);
+
+      listTrackedFilesMock.mockResolvedValue(['file.vi']);
+      getRepoHeadMock.mockResolvedValue('head-1');
+      evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+      await indexer.start();
+      expect(workspaceFolderListeners).toHaveLength(1);
+
+      // Simulate workspace folder change
+      workspaceFolderListeners[0]();
+
+      // Advance timers to trigger scheduled refresh
+      await vi.advanceTimersByTimeAsync(300);
+
+      // Refresh should have been triggered again
+      expect(withProgressMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('schedules refresh when Git repository state changes', async () => {
+    vi.useFakeTimers();
+    try {
+      workspaceState.workspaceFolders = [
+        { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+      ];
+      const onDidChangeCallback = vi.fn();
+      const repository = {
+        rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' },
+        state: {
+          onDidChange: vi.fn((callback: () => void) => {
+            onDidChangeCallback.mockImplementation(callback);
+            return { dispose() {} };
+          })
+        }
+      };
+      const indexer = new ViEligibilityIndexer({
+        repositories: [repository],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never);
+
+      listTrackedFilesMock.mockResolvedValue(['file.vi']);
+      getRepoHeadMock.mockResolvedValue('head-1');
+      evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+      await indexer.start();
+      expect(repository.state.onDidChange).toHaveBeenCalled();
+
+      // Simulate Git repository state change (e.g., commit, branch switch)
+      onDidChangeCallback();
+
+      // Advance timers to trigger scheduled refresh
+      await vi.advanceTimersByTimeAsync(300);
+
+      // Refresh should have been triggered again
+      expect(withProgressMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('coalesces rapid refresh requests with 300ms debounce', async () => {
+    vi.useFakeTimers();
+    try {
+      workspaceState.workspaceFolders = [
+        { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+      ];
+      const indexer = new ViEligibilityIndexer({
+        repositories: [
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never);
+
+      listTrackedFilesMock.mockResolvedValue(['file.vi']);
+      getRepoHeadMock.mockResolvedValue('head-1');
+      evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+      await indexer.start();
+
+      // Schedule multiple rapid refresh requests
+      indexer.scheduleRefresh();
+      await vi.advanceTimersByTimeAsync(100);
+      indexer.scheduleRefresh();
+      await vi.advanceTimersByTimeAsync(100);
+      indexer.scheduleRefresh();
+      await vi.advanceTimersByTimeAsync(100);
+      indexer.scheduleRefresh();
+
+      // Only the last scheduled refresh should fire after 300ms
+      await vi.advanceTimersByTimeAsync(300);
+
+      // Only 2 refreshes should have occurred: initial start + one coalesced refresh
+      expect(withProgressMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('preserves last valid snapshot and reports cancellation as refresh reason', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['original.vi']);
+    getRepoHeadMock.mockResolvedValueOnce('head-1');
+    evaluateViEligibilityMock.mockResolvedValueOnce({ eligible: true });
+
+    // First refresh establishes valid snapshot
+    await indexer.refresh();
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/original.vi',
+      path: '/workspace/repo/original.vi'
+    } as never)).toBe(true);
+
+    // Set up cancellation during second refresh
+    const cancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested: vi.fn(() => ({ dispose() {} }))
+    };
+    withProgressMock.mockImplementationOnce(async (_options, task) => {
+      cancellationToken.isCancellationRequested = true;
+      return task({ report: progressReportMock }, cancellationToken);
+    });
+    listTrackedFilesMock.mockResolvedValue(['new-file.vi']);
+    getRepoHeadMock.mockResolvedValueOnce('head-2');
+
+    await indexer.refresh();
+
+    // Previous snapshot preserved
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/original.vi',
+      path: '/workspace/repo/original.vi'
+    } as never)).toBe(true);
+
+    // Cancellation reported as refresh reason
+    const result = indexer.getLastRefreshResult();
+    expect(result?.state).toBe('cancelled');
+    expect(result?.snapshotPreserved).toBe(true);
+    expect(result?.indexedRepositoryRoots).toEqual(['/workspace/repo']);
+  });
+
+  it('reuses unchanged files with valid cache entries during warm restart', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['file-a.vi', 'file-b.vi', 'file-c.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    // First refresh: all files evaluated
+    await indexer.refresh();
+    expect(indexer.getLastRefreshResult()?.state).toBe('cold-scan');
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(3);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(3);
+
+    // Second refresh with same HEAD: all files reused from cache
+    await indexer.refresh();
+    expect(indexer.getLastRefreshResult()?.state).toBe('warm-restart');
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(0);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(3);
+    // No additional evaluations
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(3);
   });
 });

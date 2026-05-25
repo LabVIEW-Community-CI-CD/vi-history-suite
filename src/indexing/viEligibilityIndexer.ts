@@ -178,6 +178,15 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       })
     );
 
+    // Watch for relevant indexing setting changes (VHS-REQ-605)
+    this.disposables.push(
+      vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration('viHistorySuite.strictRsrcHeader')) {
+          this.scheduleRefresh();
+        }
+      })
+    );
+
     if (!this.gitApi) {
       return;
     }
