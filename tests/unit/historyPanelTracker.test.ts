@@ -182,6 +182,23 @@ describe('HistoryPanelTracker', () => {
     });
   });
 
+  it('retains a copyReviewPacket action summary with copiedTextLength (VHS-REQ-039)', () => {
+    const tracker = new HistoryPanelTracker();
+
+    tracker.recordAction({
+      command: 'copyReviewPacket',
+      outcome: 'copied-review-packet',
+      copiedTextLength: 512
+    });
+
+    expect(tracker.getActionCount()).toBe(1);
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'copyReviewPacket',
+      outcome: 'copied-review-packet',
+      copiedTextLength: 512
+    });
+  });
+
   it('clears retained panel, action, and dispatcher state', async () => {
     const tracker = new HistoryPanelTracker();
     const dispatchMessage = vi.fn().mockResolvedValue(undefined);
