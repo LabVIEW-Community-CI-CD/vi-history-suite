@@ -527,8 +527,14 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   }
 
   private restorePersistedEligibilityCache(): void {
-    const persistedCache = this.cacheStore?.get<unknown>(ELIGIBILITY_CACHE_STORAGE_KEY);
-    const parsedEntries = parsePersistedEligibilityCache(persistedCache);
+    let parsedEntries: Record<string, boolean>;
+    try {
+      const persistedCache = this.cacheStore?.get<unknown>(ELIGIBILITY_CACHE_STORAGE_KEY);
+      parsedEntries = parsePersistedEligibilityCache(persistedCache);
+    } catch {
+      parsedEntries = {};
+    }
+
     this.eligibilityCache.clear();
     for (const [cacheKey, isEligible] of Object.entries(parsedEntries)) {
       this.eligibilityCache.set(cacheKey, isEligible);
@@ -549,7 +555,11 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       schemaVersion: ELIGIBILITY_CACHE_SCHEMA_VERSION,
       entries
     };
-    await this.cacheStore.update(ELIGIBILITY_CACHE_STORAGE_KEY, persistedCache);
+    try {
+      await this.cacheStore.update(ELIGIBILITY_CACHE_STORAGE_KEY, persistedCache);
+    } catch {
+      // Storage persistence is advisory; the in-memory eligibility result remains valid.
+    }
   }
 
   private showStatusBarProgress(update: IndexingProgressUpdate): void {

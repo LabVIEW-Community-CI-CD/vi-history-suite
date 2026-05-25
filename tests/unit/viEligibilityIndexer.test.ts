@@ -427,6 +427,62 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
   });
 
+  it('treats storage read errors as cache misses', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    const cacheStore = {
+      get: vi.fn(() => {
+        throw new Error('storage unavailable');
+      }),
+      update: vi.fn(async () => {
+        // no-op
+      })
+    };
+
+    const indexer = createSingleRepoIndexer(cacheStore);
+
+    await indexer.refresh();
+
+    expect(cacheStore.get).toHaveBeenCalledTimes(1);
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+  });
+
+  it('keeps refresh results when storage writes fail', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    const cacheStore = {
+      get: vi.fn(() => undefined),
+      update: vi.fn(async () => {
+        throw new Error('quota exceeded');
+      })
+    };
+    const indexer = createSingleRepoIndexer(cacheStore);
+
+    await expect(indexer.refresh()).resolves.toBeUndefined();
+
+    expect(cacheStore.update).toHaveBeenCalledTimes(1);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/tracked.vi',
+      path: '/workspace/repo/tracked.vi'
+    } as never)).toBe(true);
+    expect(indexer.getLastRefreshResult()).toMatchObject({
+      state: 'cold-scan',
+      counts: {
+        tracked: 1,
+        reused: 0,
+        evaluated: 1,
+        eligible: 1,
+        skipped: 0,
+        failed: 0
+      },
+      snapshotPreserved: false
+    });
+  });
+
   it('fails closed for stale storage entries whose path facts do not match', async () => {
     listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
     getRepoHeadMock.mockResolvedValue('head-1');
