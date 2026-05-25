@@ -125,3 +125,49 @@ Manual verification steps:
 
 This external evidence reference is documented in RTM as
 `external:vscode-marketplace-svelderrainruiz.vi-history-suite` for VHS-REQ-600.
+
+## Post-Publish Reconciliation Checklist
+
+After any Marketplace publish, use this checklist to verify that the live
+listing reflects the expected source, support, and identity metadata. This
+checklist is verification-only and does not require Marketplace credentials.
+
+### Checklist
+
+- [ ] **Extension Identity**: Confirm the Marketplace listing shows
+      `svelderrainruiz.vi-history-suite` as the extension identifier.
+- [ ] **Published Version**: Confirm the Marketplace version matches the
+      released tag (e.g., `1.4.0` for `v1.4.0`).
+- [ ] **Source URL**: Confirm the Marketplace "Repository" link points to
+      `https://github.com/LabVIEW-Community-CI-CD/vi-history-suite`.
+- [ ] **Support URL**: Confirm the Marketplace "Issues" or "Support" link
+      points to
+      `https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues`.
+- [ ] **Repository URL**: Confirm the `vsce show` output shows the organization
+      repository URL, not the old personal repository.
+- [ ] **Installed Bundled Docs**: After installing the published version in
+      VS Code, confirm the bundled `README.md` and `CHANGELOG.md` display the
+      organization repository links, not the old personal repository.
+
+### Verification Commands
+
+Run these commands to gather evidence without Marketplace credentials:
+
+```powershell
+# Show live Marketplace metadata (no credentials required)
+node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
+
+# Confirm local package.json matches expectations
+npm run check
+npx vitest run tests/unit/packageManifest.test.ts tests/unit/publicDocSourceLinks.test.ts
+```
+
+### Reporting Stale Links
+
+If the Marketplace listing shows stale source or support links after a publish:
+
+1. File an issue using the First-Time Onboarding Feedback template at
+   `https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12`.
+2. Include the `vsce show` JSON output and a screenshot of the Marketplace page.
+3. Do not attempt to fix the listing without coordinating with the maintainer
+   who owns the Marketplace publisher credentials.
