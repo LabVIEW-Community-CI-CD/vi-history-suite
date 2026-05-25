@@ -129,7 +129,8 @@ describe('requirements documentation coherence', () => {
       ['docs', 'requirements', 'syrs.md'],
       ['docs', 'requirements', 'srs.md'],
       ['docs', 'requirements', 'rtm.csv'],
-      ['docs', 'requirements', 'id-index.csv']
+      ['docs', 'requirements', 'id-index.csv'],
+      ['docs', 'requirements', 'copilot-web-issue-generation-prompt.md']
     ]) {
       expect(fs.existsSync(path.join(repoRoot, ...relativePath))).toBe(true);
     }
@@ -349,6 +350,55 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('GitHub issue templates support requirement-targeted agent work.');
     expect(requirementRow?.ImplementationRefs).toContain(
       '.github/ISSUE_TEMPLATE/requirement_target.yml'
+    );
+  });
+
+  it('keeps the Copilot Web issue generation guidance requirements-first and RTM-first', () => {
+    const guidance = readRepoText(
+      'docs',
+      'requirements',
+      'copilot-web-issue-generation-prompt.md'
+    );
+    const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-601');
+
+    expect(guidance).toContain('Copilot Web Issue Generation');
+    expect(guidance).toContain('Requirements are the source of truth');
+    expect(guidance).toContain('VHS-REQ-*');
+    expect(guidance).toContain('RTM evidence');
+    expect(guidance).toContain('docs/requirements/srs.md');
+    expect(guidance).toContain('docs/requirements/rtm.csv');
+
+    expect(guidance).toContain('Fail-Closed Preflight');
+    expect(guidance).toContain('copilot-target');
+    expect(guidance).toContain('requirement_target.yml');
+    expect(guidance).toContain('unresolved template placeholders');
+    expect(guidance).toContain('acceptance criteria are not observable and testable');
+
+    expect(guidance).toContain('repo-standards-review');
+    expect(guidance).toContain('requirements_quality_check.py');
+    expect(guidance).toContain('--requirements-spec-scope system');
+
+    for (const guardrailPattern of [
+      'Marketplace release',
+      'version bump',
+      'VSIX publication',
+      'Credential',
+      'token',
+      'runner',
+      'admin-setting'
+    ]) {
+      expect(guidance).toContain(guardrailPattern);
+    }
+
+    expect(requirementsReadme).toContain('copilot-web-issue-generation-prompt.md');
+    expect(requirementsReadme).toContain('Copilot Web Issue Wave Creation');
+    expect(requirementsReadme).toContain('committed');
+    expect(requirementsReadme).toContain('instead of relying on');
+
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'docs/requirements/copilot-web-issue-generation-prompt.md'
     );
   });
 });

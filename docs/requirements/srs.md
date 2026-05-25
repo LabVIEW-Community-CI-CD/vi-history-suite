@@ -787,6 +787,8 @@ Missing numeric IDs are intentional.
   - Active SRS IDs and RTM IDs match exactly.
   - Active and historical IDs remain discoverable through `id-index.csv`.
   - GitHub issue templates support requirement-targeted agent work.
+  - Committed guidance describes how to create Copilot Web issue waves from SRS
+    and RTM evidence with fail-closed rules and no reliance on chat history.
   - CI fails when active requirement references drift from existing repo paths.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
@@ -798,6 +800,7 @@ Missing numeric IDs are intentional.
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
+  - `docs/requirements/copilot-web-issue-generation-prompt.md`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:requirements-quality-check-system-scope`

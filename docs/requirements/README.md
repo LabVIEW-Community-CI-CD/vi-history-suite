@@ -12,6 +12,7 @@ intent instead of chat memory.
 | [srs.md](./srs.md) | Active software requirements that agents can target. |
 | [rtm.csv](./rtm.csv) | Machine-readable links from requirements to implementation and verification evidence. |
 | [id-index.csv](./id-index.csv) | Registry of active, superseded, and retired historical IDs. |
+| [copilot-web-issue-generation-prompt.md](./copilot-web-issue-generation-prompt.md) | Reusable guidance for creating Copilot Web issue waves. |
 
 ## Agent Workflow Contract
 
@@ -34,6 +35,21 @@ On GitHub, use the `Requirement Target` issue template for agent or Copilot
 work. The template captures the target requirement ID, files to inspect,
 acceptance criteria, required tests, validation commands, and out-of-scope
 boundaries before implementation starts.
+
+## Copilot Web Issue Wave Creation
+
+To create a batch of requirement-scoped Copilot Web issues, use the committed
+[copilot-web-issue-generation-prompt.md](./copilot-web-issue-generation-prompt.md)
+guidance instead of relying on chat history. The prompt is requirements-first,
+RTM-first, and includes fail-closed rules for missing files, labels, templates,
+duplicates, unresolved placeholders, and untestable acceptance criteria.
+
+When the local `repo-standards-review` skill is available, run the system-scope
+requirements quality check before finalizing issue candidates:
+
+```powershell
+python C:\Users\sveld\.codex\skills\repo-standards-review\scripts\requirements_quality_check.py <repo-root> --requirements-spec-scope system --json
+```
 
 ## ID Policy
 
