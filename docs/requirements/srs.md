@@ -585,6 +585,11 @@ Missing numeric IDs are intentional.
   - Successful executions record produced report evidence.
   - Failed executions retain factual failure evidence.
   - Missing report output fails closed even when the process exits successfully.
+  - Failed and blocked comparisons render a compact evidence summary that
+    humans and agents can read without digging through raw artifacts first.
+  - The compact summary includes outcome, failure/blocked reason, exit code,
+    duration, report existence, artifact paths, and doctor summary lines.
+  - HTML rendering escapes all user-controlled or path-derived values.
 - Agent Work Scope:
   - Change execution result shape, packet rendering, and runtime tests together.
 - Implementation References:

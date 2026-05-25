@@ -754,4 +754,147 @@ describe('comparisonReportRuntimeExecution', () => {
       'Comparison-report runtime retained a LabVIEW CLI Error 66 / Call By Reference failure before a cancellation-shaped transport exit was observed.'
     );
   });
+
+  describe('failed execution evidence retention (VHS-REQ-148)', () => {
+    it('retains all evidence fields when execution fails with nonzero exit code', async () => {
+      const record = createReadyRecord();
+      const writeFile = vi.fn().mockResolvedValue(undefined);
+
+      const result = await executeComparisonReport(
+        {
+          record,
+          repositoryRoot: '/workspace/repo'
+        },
+        {
+          readRevisionBlob: vi
+            .fn()
+            .mockResolvedValueOnce(Buffer.from('left'))
+            .mockResolvedValueOnce(Buffer.from('right')),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: writeFile as never,
+          pathExists: vi.fn().mockResolvedValue(false),
+          runCommand: vi.fn().mockResolvedValue({
+            exitCode: 42,
+            stdout: 'LabVIEWCLI operation failed with error.\n',
+            stderr: 'Unexpected runtime error.\n'
+          }),
+          nowIso: vi
+            .fn()
+            .mockReturnValueOnce('2026-05-25T10:00:00.000Z')
+            .mockReturnValueOnce('2026-05-25T10:00:05.000Z'),
+          nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(6000),
+          writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          processPlatform: 'win32'
+        }
+      );
+
+      expect(result.record.runtimeExecution.state).toBe('failed');
+      expect(result.record.runtimeExecution.exitCode).toBe(42);
+      expect(result.record.runtimeExecution.durationMs).toBe(5000);
+      expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+      expect(result.record.runtimeExecution.reportExists).toBe(false);
+      expect(result.record.runtimeExecution.stdoutFilePath).toBeDefined();
+      expect(result.record.runtimeExecution.stderrFilePath).toBeDefined();
+      expect(result.record.runtimeExecution.attempted).toBe(true);
+    });
+
+    it('retains blocked reason when execution is blocked before attempt', async () => {
+      const record = createReadyRecord();
+      record.runtimeSelection.provider = 'unavailable';
+      record.runtimeSelection.blockedReason = 'labview-exe-not-found';
+      record.reportStatus = 'blocked-runtime';
+
+      const result = await executeComparisonReport(
+        {
+          record,
+          repositoryRoot: '/workspace/repo'
+        },
+        {
+          readRevisionBlob: vi.fn(),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: vi.fn().mockResolvedValue(undefined) as never,
+          pathExists: vi.fn().mockResolvedValue(false),
+          runCommand: vi.fn(),
+          nowIso: vi.fn().mockReturnValue('2026-05-25T10:00:00.000Z'),
+          nowMs: vi.fn().mockReturnValue(1000),
+          writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          processPlatform: 'win32'
+        }
+      );
+
+      expect(result.record.runtimeExecution.state).toBe('not-available');
+      expect(result.record.runtimeExecution.attempted).toBe(false);
+      expect(result.record.runtimeExecution.blockedReason).toBeDefined();
+      expect(result.record.runtimeExecution.reportExists).toBe(false);
+    });
+
+    it('fails closed when report is missing even with exit code 0', async () => {
+      const record = createReadyRecord();
+
+      const result = await executeComparisonReport(
+        {
+          record,
+          repositoryRoot: '/workspace/repo'
+        },
+        {
+          readRevisionBlob: vi
+            .fn()
+            .mockResolvedValueOnce(Buffer.from('left'))
+            .mockResolvedValueOnce(Buffer.from('right')),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: vi.fn().mockResolvedValue(undefined) as never,
+          pathExists: vi.fn().mockResolvedValue(false),
+          runCommand: vi.fn().mockResolvedValue({
+            exitCode: 0,
+            stdout: 'CreateComparisonReport operation succeeded.\n',
+            stderr: ''
+          }),
+          nowIso: vi.fn().mockReturnValue('2026-05-25T10:00:00.000Z'),
+          nowMs: vi.fn().mockReturnValue(1000),
+          writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          processPlatform: 'win32'
+        }
+      );
+
+      // Key requirement: fails closed even with successful exit
+      expect(result.record.runtimeExecution.state).toBe('failed');
+      expect(result.record.runtimeExecution.exitCode).toBe(0);
+      expect(result.record.runtimeExecution.reportExists).toBe(false);
+      expect(result.record.runtimeExecution.failureReason).toBe('report-file-not-generated');
+    });
+
+    it('retains doctor summary lines with execution evidence', async () => {
+      const record = createReadyRecord();
+      const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+
+      const result = await executeComparisonReport(
+        {
+          record,
+          repositoryRoot: '/workspace/repo'
+        },
+        {
+          readRevisionBlob: vi
+            .fn()
+            .mockResolvedValueOnce(Buffer.from('left'))
+            .mockResolvedValueOnce(Buffer.from('right')),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: vi.fn().mockResolvedValue(undefined) as never,
+          pathExists: vi.fn().mockResolvedValue(false),
+          runCommand: vi.fn().mockResolvedValue({
+            exitCode: 1,
+            stdout: 'CreateComparisonReport operation failed.\n',
+            stderr: ''
+          }),
+          nowIso: vi.fn().mockReturnValue('2026-05-25T10:00:00.000Z'),
+          nowMs: vi.fn().mockReturnValue(1000),
+          writePacketRecord,
+          processPlatform: 'win32'
+        }
+      );
+
+      expect(result.record.runtimeExecution.doctorSummaryLines).toBeDefined();
+      expect(result.record.runtimeExecution.doctorSummaryLines?.length).toBeGreaterThan(0);
+      expect(writePacketRecord).toHaveBeenCalled();
+    });
+  });
 });
