@@ -52,15 +52,18 @@ Stop before creating issues if:
 ## Local Compliance Aid
 
 - Use the local `repo-standards-review` skill as an advisory compliance aid.
-- The skill is local and authoritative for this workflow when available at:
-  `C:\Users\sveld\.codex\skills\repo-standards-review\SKILL.md`
+- The skill is local and authoritative for this workflow when available at a
+  configured local path such as
+  `%USERPROFILE%\.codex\skills\repo-standards-review\SKILL.md`.
 - Read that `SKILL.md` before selecting candidates.
 - Do not fetch a replacement from the internet.
-- If the skill path is unavailable, do not create issues. Produce draft issue
-  candidates and clearly report that the local compliance aid was unavailable.
-- Run this advisory requirements check before finalizing the issue set:
+- If the skill path is unavailable, continue with clearly documented manual
+  checks against the repository requirements artifacts and report that the
+  local compliance aid was unavailable.
+- Run this advisory requirements check before finalizing the issue set when
+  the local script is available:
   ```powershell
-  python C:\Users\sveld\.codex\skills\repo-standards-review\scripts\requirements_quality_check.py <repo-root> --requirements-spec-scope system --json
+  python "%USERPROFILE%\.codex\skills\repo-standards-review\scripts\requirements_quality_check.py" <repo-root> --requirements-spec-scope system --json
   ```
 - If the requirements quality check fails, classify findings before issue
   creation:
