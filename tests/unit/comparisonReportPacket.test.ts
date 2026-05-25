@@ -100,6 +100,16 @@ function createBaseRecord(
   };
 }
 
+function extractCompactEvidenceSummary(html: string): string {
+  const compactSummaryMatch = html.match(
+    /<div class="status" data-testid="comparison-report-compact-evidence-summary">[\s\S]*?<\/div>/
+  );
+  if (!compactSummaryMatch) {
+    throw new Error('Expected compact evidence summary block to exist.');
+  }
+  return compactSummaryMatch[0];
+}
+
 describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   describe('retained metadata completeness', () => {
     it('renders exit code in the execution summary when present', () => {
@@ -791,6 +801,182 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       // Verify runtime notes are preserved
       expect(html).toContain('data-testid="comparison-report-runtime-selection-notes"');
       expect(html).toContain('Docker CLI is not available');
+    });
+  });
+
+  describe('compact evidence summary rendering (VHS-REQ-148)', () => {
+    it('renders compact evidence summary for failed executions', () => {
+      const record = createBaseRecord({
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        exitCode: 1,
+        durationMs: 5432,
+        failureReason: 'command-exited-nonzero',
+        stdoutFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stdout.txt',
+        stderrFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stderr.txt'
+      });
+      record.runtimeExecutionState = 'failed';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      expect(html).toContain('data-testid="comparison-report-compact-evidence-summary"');
+      expect(html).toContain('<strong>Compact evidence summary</strong>');
+      expect(html).toContain('<strong>Outcome:</strong> failed');
+      expect(html).toContain('<strong>Failure reason:</strong> command-exited-nonzero');
+      expect(html).toContain('<strong>Exit code:</strong> 1');
+      expect(html).toContain('<strong>Duration:</strong> 5432ms');
+      expect(html).toContain('<strong>Report produced:</strong> no');
+      expect(html).toContain('<strong>Stdout artifact:</strong>');
+      expect(html).toContain('<strong>Stderr artifact:</strong>');
+    });
+
+    it('renders compact evidence summary for blocked executions', () => {
+      const record = createBaseRecord({
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'labview-exe-not-found',
+        stdoutFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stdout.txt',
+        stderrFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stderr.txt'
+      });
+      record.runtimeExecutionState = 'not-available';
+      record.reportStatus = 'blocked-runtime';
+      record.runtimeSelection.provider = 'unavailable';
+      record.runtimeSelection.blockedReason = 'labview-exe-not-found';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      expect(html).toContain('data-testid="comparison-report-compact-evidence-summary"');
+      expect(html).toContain('<strong>Outcome:</strong> blocked');
+      expect(html).toContain('<strong>Blocked reason:</strong> labview-exe-not-found');
+      expect(html).toContain('<strong>Report produced:</strong> no');
+    });
+
+    it('does not render compact evidence summary for succeeded executions', () => {
+      const record = createBaseRecord({
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true,
+        exitCode: 0
+      });
+      record.runtimeExecutionState = 'succeeded';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      expect(html).not.toContain('data-testid="comparison-report-compact-evidence-summary"');
+    });
+
+    it('does not render compact evidence summary for not-run executions', () => {
+      const record = createBaseRecord({
+        state: 'not-run',
+        attempted: false,
+        reportExists: false
+      });
+      record.runtimeExecutionState = 'not-run';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      expect(html).not.toContain('data-testid="comparison-report-compact-evidence-summary"');
+    });
+
+    it('includes diagnostic reason in compact summary when present', () => {
+      const record = createBaseRecord({
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        exitCode: 124,
+        failureReason: 'command-timed-out',
+        diagnosticReason: 'labview-cli-timeout-no-labview-through-exit'
+      });
+      record.runtimeExecutionState = 'failed';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      expect(html).toContain('data-testid="comparison-report-compact-evidence-summary"');
+      expect(html).toContain('<strong>Diagnostic reason:</strong> labview-cli-timeout-no-labview-through-exit');
+    });
+
+    it('includes first 3 doctor summary lines in compact summary with truncation indicator', () => {
+      const record = createBaseRecord({
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        exitCode: 1,
+        failureReason: 'command-exited-nonzero',
+        doctorSummaryLines: [
+          'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.',
+          'Provider request=host.',
+          'Requested runtime: provider=host; LabVIEW=2026; bitness=x86.',
+          'Execution failed reason: command-exited-nonzero.',
+          'Next action: review retained diagnostics.'
+        ]
+      });
+      record.runtimeExecutionState = 'failed';
+
+      const html = renderComparisonReportPacketHtml(record);
+      const compactSummary = extractCompactEvidenceSummary(html);
+
+      expect(compactSummary).toContain('<strong>Doctor summary:</strong>');
+      expect(compactSummary).toContain('Selected provider=host-native');
+      expect(compactSummary).toContain('Provider request=host');
+      expect(compactSummary).toContain('Requested runtime: provider=host');
+      // Fourth and fifth lines should not be in compact summary
+      expect(compactSummary).not.toContain('Execution failed reason: command-exited-nonzero.');
+      expect(compactSummary).not.toContain('Next action: review retained diagnostics.');
+      expect(compactSummary).toContain('(see full doctor summary below)');
+    });
+
+    it('escapes special characters in compact summary failure reason', () => {
+      const record = createBaseRecord({
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        exitCode: 1,
+        failureReason: 'error: <script>alert("xss")</script>'
+      });
+      record.runtimeExecutionState = 'failed';
+
+      const html = renderComparisonReportPacketHtml(record);
+      const compactSummary = extractCompactEvidenceSummary(html);
+
+      expect(compactSummary).toContain('&lt;script&gt;');
+      expect(compactSummary).not.toContain('<script>alert');
+    });
+
+    it('escapes special characters in compact summary artifact paths', () => {
+      const record = createBaseRecord({
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        exitCode: 1,
+        stdoutFilePath: '/workspace/NI & Co/stdout.txt'
+      });
+      record.runtimeExecutionState = 'failed';
+
+      const html = renderComparisonReportPacketHtml(record);
+      const compactSummary = extractCompactEvidenceSummary(html);
+
+      expect(compactSummary).toContain('NI &amp; Co');
+    });
+
+    it('retains report-file-not-generated failure with exit code 0 in compact summary', () => {
+      const record = createBaseRecord({
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        exitCode: 0,
+        failureReason: 'report-file-not-generated'
+      });
+      record.runtimeExecutionState = 'failed';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      expect(html).toContain('data-testid="comparison-report-compact-evidence-summary"');
+      expect(html).toContain('<strong>Failure reason:</strong> report-file-not-generated');
+      expect(html).toContain('<strong>Exit code:</strong> 0');
+      expect(html).toContain('<strong>Report produced:</strong> no');
+      expect(html).not.toContain('comparison report execution succeeded');
     });
   });
 });
