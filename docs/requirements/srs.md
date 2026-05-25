@@ -1012,3 +1012,37 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep field intake narrowly focused on routing evidence; do not add release
     governance, admin setup, or secret collection.
+
+### VHS-REQ-608: Diagnostic Test VSIX Distribution
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: Maintainers shall be able to package a diagnostic test VSIX from a
+  trusted ref for reporter retesting without publishing to the VS Code
+  Marketplace.
+- Acceptance Criteria:
+  - The diagnostic VSIX workflow triggers only through `workflow_dispatch`.
+  - The workflow fails closed unless the ref is `main` or an exact `v*` tag.
+  - The workflow runs install, typecheck, unit tests, and package commands
+    before exposing a VSIX.
+  - The workflow always uploads the VSIX as a short-lived Actions artifact.
+  - Maintainers may optionally update a `test-vsix-latest` prerelease asset for
+    reporter retesting.
+  - The workflow does not use Marketplace publishing tokens or run Marketplace
+    publication commands.
+- Agent Work Scope:
+  - Change workflow YAML, maintainer operations docs, test-plan docs, and
+    static workflow/requirements tests together.
+- Implementation References:
+  - `.github/workflows/package-test-vsix.yml`
+  - `docs/maintainer-operations.md`
+  - `docs/testing/test-plan.md`
+- Verification References:
+  - `tests/unit/packageTestVsixWorkflow.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:diagnostic-test-vsix-dispatch`
+- Change Guidance:
+  - Keep this as diagnostic reporter support only; do not convert GitHub
+    Releases into the normal install channel or add Marketplace credentials to
+    GitHub Actions.

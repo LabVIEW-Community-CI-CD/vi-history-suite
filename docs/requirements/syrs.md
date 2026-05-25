@@ -147,17 +147,22 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Status: Active
 - Area: Verification
 - Statement: The system shall support optional human validation through
-  Codespaces/devcontainers, trusted Windows/LabVIEW maintainer runs, and Vagrant
-  without making those surfaces mandatory release gates.
+  Codespaces/devcontainers, trusted Windows/LabVIEW maintainer runs,
+  diagnostic test VSIX distribution, and Vagrant without making those surfaces
+  mandatory release gates.
 - Acceptance Criteria:
   - Devcontainer guidance exists for source evaluation.
   - The Windows/LabVIEW workflow is manual-only and trusted-ref-only.
+  - Diagnostic test VSIX distribution is maintainer-dispatched and
+    trusted-ref-only.
   - Vagrant is documented as optional local validation.
 - Verification References:
   - `.devcontainer/devcontainer.json`
   - `.github/workflows/windows-labview-maintainer.yml`
+  - `.github/workflows/package-test-vsix.yml`
   - `docs/maintainer-operations.md`
   - `docs/vagrant.md`
+  - `tests/unit/packageTestVsixWorkflow.test.ts`
   - `tests/unit/windowsLabviewMaintainerWorkflow.test.ts`
 
 ### VHS-SYS-REQ-014: Agent-Targetable Requirements

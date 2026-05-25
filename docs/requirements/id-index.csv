@@ -606,6 +606,7 @@ VHS-REQ-604,Software,Active,srs.md#vhs-req-604-persistent-git-object-eligibility
 VHS-REQ-605,Software,Active,srs.md#vhs-req-605-incremental-refresh-and-invalidation-lifecycle,,,docs/requirements/srs.md
 VHS-REQ-606,Software,Active,srs.md#vhs-req-606-indexing-diagnostics-and-evidence,,,docs/requirements/srs.md
 VHS-REQ-607,Software,Active,srs.md#vhs-req-607-field-intake-separation-for-indexing-reports,,,docs/requirements/srs.md
+VHS-REQ-608,Software,Active,srs.md#vhs-req-608-diagnostic-test-vsix-distribution,,,docs/requirements/srs.md
 VHS-SYS-REQ-001,System,Active,syrs.md#vhs-sys-req-001-vs-code-labview-vi-history-system,,,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-002,System,Superseded,,VHS-SYS-REQ-014,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-003,System,Active,syrs.md#vhs-sys-req-003-system-and-software-requirement-split,,,pre-simplification docs/requirements/syrs.md
