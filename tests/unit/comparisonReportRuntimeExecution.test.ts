@@ -244,6 +244,165 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('retains deterministic staged filenames that embed revision identity even when the VI moved', async () => {
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const record = createReadyRecord();
+    record.preflight.left.resolvedRelativePath = 'Examples/foo.vi';
+    record.preflight.left.blobSpecifier = '1111111122222222:Examples/foo.vi';
+    record.preflight.right.resolvedRelativePath = 'Source/Examples/foo.vi';
+    record.preflight.right.blobSpecifier = 'abcdef1234567890:Source/Examples/foo.vi';
+    record.preflight.normalizedRelativePath = 'Source/Examples/foo.vi';
+    record.artifactPlan.normalizedRelativePath = 'Source/Examples/foo.vi';
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left-blob-content'))
+          .mockResolvedValueOnce(Buffer.from('right-blob-content')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: writeFile as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'command stdout',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    const leftStagedPath = record.stagedRevisionPlan.leftFilePath;
+    const rightStagedPath = record.stagedRevisionPlan.rightFilePath;
+    expect(leftStagedPath).toContain('left-111111112222');
+    expect(rightStagedPath).toContain('right-abcdef123456');
+    expect(writeFile).toHaveBeenCalledWith(leftStagedPath, Buffer.from('left-blob-content'));
+    expect(writeFile).toHaveBeenCalledWith(rightStagedPath, Buffer.from('right-blob-content'));
+    expect(result.record.stagedRevisionPlan.leftFilename).toBe('left-111111112222-foo.vi');
+    expect(result.record.stagedRevisionPlan.rightFilename).toBe('right-abcdef123456-foo.vi');
+  });
+
+  it('fails closed with a retained reason when left blob staging fails', async () => {
+    const record = createReadyRecord();
+    const readRevisionBlob = vi.fn().mockRejectedValueOnce(new Error('blob-not-found'));
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: '',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe('left-stage-blob-write-failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+  });
+
+  it('fails closed with a retained reason when right blob staging fails', async () => {
+    const record = createReadyRecord();
+    const readRevisionBlob = vi
+      .fn()
+      .mockResolvedValueOnce(Buffer.from('left-blob-content'))
+      .mockRejectedValueOnce(new Error('blob-not-found'));
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: '',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe('right-stage-blob-write-failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+  });
+
+  it('rejects stale generated reports with retained evidence explaining the staged filename mismatch', async () => {
+    const record = createReadyRecord();
+    const pathExists = vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath);
+    const readFile = vi.fn().mockResolvedValue(
+      '<html>Report for old-left.vi and old-right.vi</html>'
+    );
+    const removePath = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: removePath as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists,
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: 'CreateComparisonReport operation failed.',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      `Generated comparison report did not reference the current staged revisions (${record.stagedRevisionPlan.leftFilename}, ${record.stagedRevisionPlan.rightFilename}) and was discarded as stale output.`
+    );
+    expect(removePath).toHaveBeenCalled();
+  });
+
   it('skips the clean-host Windows preflight when installed-user host compare admits an existing LabVIEW session', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.allowExistingWindowsHostRuntime = true;
