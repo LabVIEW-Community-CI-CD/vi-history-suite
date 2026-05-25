@@ -562,7 +562,9 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - Selected and base blobs are staged before execution.
   - Staged filenames remain deterministic for the pair.
+  - File-move scenarios keep selected/base blob identity clear in retained evidence.
   - Staging failures fail closed with a retained reason.
+  - Timed-out or failed executions reject stale generated reports with retained evidence that explains why.
 - Agent Work Scope:
   - Change runtime execution staging and tests together.
 - Implementation References:
