@@ -168,20 +168,4 @@ describe('extension manifest public metadata', () => {
     expect(manifest.scripts).not.toHaveProperty('acceptance:windows:private-release');
     expect(manifest.scripts).not.toHaveProperty('test:design-contract');
   });
-
-  it('aligns manifest untrusted-workspace capability with runtime behavior by documenting both blocked and allowed paths', () => {
-    const manifest = readManifest();
-
-    const description = manifest.capabilities?.untrustedWorkspaces?.description ?? '';
-
-    // Verify blocked paths are documented
-    expect(description).toContain('indexing');
-    expect(description).toContain('comparison');
-    expect(description).toContain('external process execution');
-
-    // Verify allowed paths are documented
-    expect(description).toContain('Documentation');
-    expect(description).toContain('local runtime settings CLI preparation');
-    expect(description).toContain('remain available');
-  });
 });

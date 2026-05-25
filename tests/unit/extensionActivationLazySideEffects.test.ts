@@ -294,7 +294,7 @@ describe('extension activation lazy side effects', () => {
     expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
-  it('blocks VI History open with user-actionable warning in untrusted workspaces', async () => {
+  it('resolves lazy runtime for VI History open in untrusted workspaces (trust check happens in handler)', async () => {
     // Note: In the actual implementation, VI History open resolves the workspace runtime
     // (Git API, indexer) and then the handler checks trust. Since createOpenViHistoryCommand
     // is mocked here, we verify that the runtime resolution happens but the mock handler

@@ -45,6 +45,20 @@ interface ComparisonRuntimePanelDetail {
   value: string;
 }
 
+const UNTRUSTED_WORKSPACE_TRUST_RATIONALE =
+  'to prevent external process execution';
+const UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX =
+  'Documentation and local runtime settings CLI preparation remain available.';
+
+/**
+ * Formats a user-actionable warning message for features blocked in untrusted workspaces.
+ * @param featurePrefix - The feature-specific prefix (e.g., "VI History indexing and comparison are disabled")
+ * @returns The complete warning message with trust rationale and allowed paths
+ */
+function formatUntrustedWorkspaceWarning(featurePrefix: string): string {
+  return `${featurePrefix} in untrusted workspaces ${UNTRUSTED_WORKSPACE_TRUST_RATIONALE}. ${UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX}`;
+}
+
 export function createOpenViHistoryCommand(
   historyService: ViHistoryService,
   eligibilityIndexer: ViEligibilityIndexer,
@@ -107,7 +121,7 @@ export function createOpenViHistoryCommand(
 
     if (!vscode.workspace.isTrusted) {
       void vscode.window.showWarningMessage(
-        'VI History indexing and comparison are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+        formatUntrustedWorkspaceWarning('VI History indexing and comparison are disabled')
       );
       return;
     }
@@ -412,7 +426,7 @@ export function createOpenViHistoryCommand(
           void vscode.window.showInformationMessage(cancelledMessage);
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
-            'VI History comparison reports are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+            formatUntrustedWorkspaceWarning('VI History comparison reports are disabled')
           );
         } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
@@ -585,7 +599,7 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
-            'VI Review Dashboard is disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+            formatUntrustedWorkspaceWarning('VI Review Dashboard is disabled')
           );
         } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
@@ -658,7 +672,7 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
-            'VI review decision records are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+            formatUntrustedWorkspaceWarning('VI review decision records are disabled')
           );
         } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
@@ -765,9 +779,9 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'workspace-untrusted') {
           humanReviewSubmissionStatusMessage =
-            'Blocked: host-machine review submission is disabled in untrusted workspaces to prevent external process execution.';
+            `Blocked: host-machine review submission is disabled in untrusted workspaces ${UNTRUSTED_WORKSPACE_TRUST_RATIONALE}.`;
           void vscode.window.showWarningMessage(
-            'Host-machine review submission is disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+            formatUntrustedWorkspaceWarning('Host-machine review submission is disabled')
           );
         } else if (result.outcome === 'missing-storage-uri') {
           humanReviewSubmissionStatusMessage =
