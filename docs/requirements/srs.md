@@ -564,7 +564,7 @@ Missing numeric IDs are intentional.
   - Staged filenames remain deterministic for the pair.
   - File-move scenarios keep selected/base blob identity clear in retained evidence.
   - Staging failures fail closed with a retained reason.
-  - Stale generated reports are rejected with retained evidence that explains why.
+  - Timed-out or failed executions reject stale generated reports with retained evidence that explains why.
 - Agent Work Scope:
   - Change runtime execution staging and tests together.
 - Implementation References:
