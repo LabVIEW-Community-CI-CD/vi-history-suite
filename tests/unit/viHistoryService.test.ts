@@ -315,6 +315,14 @@ describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', (
 });
 
 describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () => {
+  const expectedOptions = {
+    repoRoot: '/workspace/test-repo',
+    strictRsrcHeader: true,
+    historyLimit: AUTO_HISTORY_ENTRY_CEILING,
+    configuredMaxHistoryEntries: 25,
+    historyWindowMode: 'auto'
+  } as const;
+
   beforeEach(() => {
     workspaceGetMock.mockReset();
     getRepoRootMock.mockReset();
@@ -344,6 +352,11 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
 
     const result = await service.load({ fsPath: '/workspace/test-repo/unknown-file.txt' } as never);
 
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/unknown-file.txt',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
     expect(result.eligible).toBe(false);
     expect(result.signature).toBe('unknown');
     expect(result.commits.length).toBe(0);
@@ -366,6 +379,11 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
 
     const result = await service.load({ fsPath: '/workspace/test-repo/new-file.vi' } as never);
 
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/new-file.vi',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
     expect(result.eligible).toBe(false);
     expect(result.signature).toBe('LVIN');
     expect(result.commits.length).toBe(0);
@@ -390,6 +408,11 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
 
     const result = await service.load({ fsPath: '/workspace/test-repo/single-commit.vi' } as never);
 
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/single-commit.vi',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
     expect(result.eligible).toBe(false);
     expect(result.signature).toBe('LVIN');
     expect(result.commits.length).toBe(1);
@@ -415,6 +438,11 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
 
     const result = await service.load({ fsPath: '/workspace/test-repo/not-a-vi.txt' } as never);
 
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/not-a-vi.txt',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
     expect(result.eligible).toBe(false);
     expect(result.signature).toBe('unknown');
     expect(result.commits.length).toBe(2);
@@ -440,6 +468,11 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
 
     const result = await service.load({ fsPath: '/workspace/test-repo/valid.vi' } as never);
 
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/valid.vi',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
     expect(result.eligible).toBe(true);
     expect(result.signature).toBe('LVIN');
     expect(result.commits.length).toBe(2);
