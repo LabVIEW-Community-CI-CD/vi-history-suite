@@ -100,6 +100,16 @@ function createBaseRecord(
   };
 }
 
+function extractCompactEvidenceSummary(html: string): string {
+  const compactSummaryMatch = html.match(
+    /<div class="status" data-testid="comparison-report-compact-evidence-summary">[\s\S]*?<\/div>/
+  );
+  if (!compactSummaryMatch) {
+    throw new Error('Expected compact evidence summary block to exist.');
+  }
+  return compactSummaryMatch[0];
+}
+
 describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   describe('retained metadata completeness', () => {
     it('renders exit code in the execution summary when present', () => {
@@ -905,13 +915,16 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       record.runtimeExecutionState = 'failed';
 
       const html = renderComparisonReportPacketHtml(record);
+      const compactSummary = extractCompactEvidenceSummary(html);
 
-      expect(html).toContain('<strong>Doctor summary:</strong>');
-      expect(html).toContain('Selected provider=host-native');
-      expect(html).toContain('Provider request=host');
-      expect(html).toContain('Requested runtime: provider=host');
+      expect(compactSummary).toContain('<strong>Doctor summary:</strong>');
+      expect(compactSummary).toContain('Selected provider=host-native');
+      expect(compactSummary).toContain('Provider request=host');
+      expect(compactSummary).toContain('Requested runtime: provider=host');
       // Fourth and fifth lines should not be in compact summary
-      expect(html).toContain('(see full doctor summary below)');
+      expect(compactSummary).not.toContain('Execution failed reason: command-exited-nonzero.');
+      expect(compactSummary).not.toContain('Next action: review retained diagnostics.');
+      expect(compactSummary).toContain('(see full doctor summary below)');
     });
 
     it('escapes special characters in compact summary failure reason', () => {
@@ -925,9 +938,10 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       record.runtimeExecutionState = 'failed';
 
       const html = renderComparisonReportPacketHtml(record);
+      const compactSummary = extractCompactEvidenceSummary(html);
 
-      expect(html).toContain('&lt;script&gt;');
-      expect(html).not.toContain('<script>alert');
+      expect(compactSummary).toContain('&lt;script&gt;');
+      expect(compactSummary).not.toContain('<script>alert');
     });
 
     it('escapes special characters in compact summary artifact paths', () => {
@@ -941,8 +955,9 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       record.runtimeExecutionState = 'failed';
 
       const html = renderComparisonReportPacketHtml(record);
+      const compactSummary = extractCompactEvidenceSummary(html);
 
-      expect(html).toContain('NI &amp; Co');
+      expect(compactSummary).toContain('NI &amp; Co');
     });
 
     it('retains report-file-not-generated failure with exit code 0 in compact summary', () => {
