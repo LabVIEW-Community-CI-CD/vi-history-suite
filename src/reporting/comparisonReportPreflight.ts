@@ -15,13 +15,15 @@ export interface ComparisonReportPreflightBlobResult {
   blobSpecifier: string;
   signature?: ViSignature;
   isVi: boolean;
-  blockedReason?: 'blob-read-failed' | 'blob-not-vi';
+  blockedReason?: 'revision-id-missing' | 'blob-read-failed' | 'blob-not-vi';
 }
 
 export interface ComparisonReportPreflightResult {
   normalizedRelativePath: string;
   ready: boolean;
   blockedReason?:
+    | 'left-revision-id-missing'
+    | 'right-revision-id-missing'
     | 'left-blob-read-failed'
     | 'right-blob-read-failed'
     | 'left-blob-not-vi'
@@ -59,28 +61,42 @@ export async function preflightComparisonReportRevisions(
     normalizeRelativeGitPath(options.relativePath),
     'relativePath'
   );
-  const resolvedRelativePaths = await (
-    deps.resolveRevisionRelativePaths ?? resolveRevisionRelativePaths
-  )(options.repoRoot, normalizedRelativePath, [options.leftRevisionId, options.rightRevisionId]);
-  const leftRelativePath =
-    resolvedRelativePaths.get(options.leftRevisionId) ?? normalizedRelativePath;
-  const rightRelativePath =
-    resolvedRelativePaths.get(options.rightRevisionId) ?? normalizedRelativePath;
+  const leftRevisionId = options.leftRevisionId.trim();
+  const rightRevisionId = options.rightRevisionId.trim();
+  const requestedRevisionIds = [leftRevisionId, rightRevisionId].filter((value) => value.length > 0);
+  const resolvedRelativePaths =
+    requestedRevisionIds.length > 0
+      ? await (deps.resolveRevisionRelativePaths ?? resolveRevisionRelativePaths)(
+          options.repoRoot,
+          normalizedRelativePath,
+          requestedRevisionIds
+        )
+      : new Map<string, string>();
 
-  const left = await inspectRevisionBlob(
-    options.repoRoot,
-    options.leftRevisionId,
-    leftRelativePath,
-    options.strictRsrcHeader ?? false,
-    deps.readRevisionBlob ?? readRevisionBlob
-  );
-  const right = await inspectRevisionBlob(
-    options.repoRoot,
-    options.rightRevisionId,
-    rightRelativePath,
-    options.strictRsrcHeader ?? false,
-    deps.readRevisionBlob ?? readRevisionBlob
-  );
+  const left = leftRevisionId
+    ? await inspectRevisionBlob(
+        options.repoRoot,
+        leftRevisionId,
+        normalizeResolvedRelativePath(
+          resolvedRelativePaths.get(leftRevisionId),
+          normalizedRelativePath
+        ),
+        options.strictRsrcHeader ?? false,
+        deps.readRevisionBlob ?? readRevisionBlob
+      )
+    : createMissingRevisionBlobResult();
+  const right = rightRevisionId
+    ? await inspectRevisionBlob(
+        options.repoRoot,
+        rightRevisionId,
+        normalizeResolvedRelativePath(
+          resolvedRelativePaths.get(rightRevisionId),
+          normalizedRelativePath
+        ),
+        options.strictRsrcHeader ?? false,
+        deps.readRevisionBlob ?? readRevisionBlob
+      )
+    : createMissingRevisionBlobResult();
 
   return {
     normalizedRelativePath,
@@ -129,6 +145,22 @@ async function inspectRevisionBlob(
       blockedReason: 'blob-read-failed'
     };
   }
+}
+
+function createMissingRevisionBlobResult(): ComparisonReportPreflightBlobResult {
+  return {
+    revisionId: '',
+    blobSpecifier: '[missing revision id]',
+    isVi: false,
+    blockedReason: 'revision-id-missing'
+  };
+}
+
+function normalizeResolvedRelativePath(
+  relativePath: string | undefined,
+  fallbackRelativePath: string
+): string {
+  return requireNonEmpty(normalizeRelativeGitPath(relativePath ?? fallbackRelativePath), 'relativePath');
 }
 
 export async function resolveRevisionRelativePaths(
@@ -241,10 +273,18 @@ function deriveBlockedReason(
   right: ComparisonReportPreflightBlobResult
 ): ComparisonReportPreflightResult['blockedReason'] {
   if (!left.isVi) {
+    if (left.blockedReason === 'revision-id-missing') {
+      return 'left-revision-id-missing';
+    }
+
     return left.blockedReason === 'blob-read-failed' ? 'left-blob-read-failed' : 'left-blob-not-vi';
   }
 
   if (!right.isVi) {
+    if (right.blockedReason === 'revision-id-missing') {
+      return 'right-revision-id-missing';
+    }
+
     return right.blockedReason === 'blob-read-failed'
       ? 'right-blob-read-failed'
       : 'right-blob-not-vi';
