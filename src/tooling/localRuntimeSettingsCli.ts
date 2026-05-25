@@ -13,6 +13,7 @@ import {
   type RuntimePlatform,
   type ComparisonRuntimeSettings
 } from '../reporting/comparisonRuntimeLocator';
+import { readBuildInfo, type BuildInfo, type BuildInfoDeps } from './buildInfo';
 const execFileAsync = promisify(execFileCallback);
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
@@ -47,6 +48,9 @@ export interface LocalRuntimeSettingsCliRunResult {
   runtimeImplementationStatus?: RuntimeImplementationStatus;
   proofReportPath?: string;
   proofIssueBodyPath?: string;
+  extensionVersion?: string;
+  extensionCommit?: string;
+  extensionBuildRef?: string;
 }
 
 export interface MaterializedLocalRuntimeSettingsCli {
@@ -98,6 +102,7 @@ interface LocalRuntimeSettingsCliDeps {
   promptLine?: (prompt: string) => Promise<string>;
   isInteractiveTerminal?: boolean;
   persistWindowsUserPathPrepend?: (pathEntry: string) => Promise<void>;
+  buildInfoDeps?: BuildInfoDeps;
 }
 
 interface ResolvedLocalRuntimeSettingsCliTarget {
@@ -790,10 +795,15 @@ async function validateLocalRuntimeSettingsCli(
     runtimeSelection.blockedReason
   );
 
+  const buildInfo = await readBuildInfo(deps.buildInfoDeps);
+
   writeLine(
     deps.stdout ?? process.stdout,
     `Validated ${resolvedTarget.settingsTarget} target ${settingsFilePath}`
   );
+  writeLine(deps.stdout ?? process.stdout, `extensionVersion=${buildInfo.extensionVersion}`);
+  writeLine(deps.stdout ?? process.stdout, `extensionCommit=${buildInfo.extensionCommit}`);
+  writeLine(deps.stdout ?? process.stdout, `extensionBuildRef=${buildInfo.extensionBuildRef}`);
   writeLine(
     deps.stdout ?? process.stdout,
     `settingsTarget=${resolvedTarget.settingsTarget}`
@@ -870,6 +880,9 @@ async function validateLocalRuntimeSettingsCli(
     runtimeErrorCode,
     runtimeProofStatus,
     runtimeImplementationStatus,
+    extensionVersion: buildInfo.extensionVersion,
+    extensionCommit: buildInfo.extensionCommit,
+    extensionBuildRef: buildInfo.extensionBuildRef,
     ...proofPaths
   };
 }
