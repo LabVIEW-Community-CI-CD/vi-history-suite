@@ -789,6 +789,14 @@ Missing numeric IDs are intentional.
   - GitHub issue templates support requirement-targeted agent work.
   - A committed requirement-wave guide defines requirement-first, RTM-first
     Copilot Web issue generation with fail-closed issue-quality gates.
+  - The requirement-wave guide defines a requirement-gap lane for bounded field
+    evidence that reveals missing or incomplete active requirements.
+  - Requirement-gap waves name source evidence, current requirement gaps,
+    proposed new IDs, RTM impacts, and fail-closed checks before implementation
+    work starts.
+  - Requirement-wave validation separates repo-local commands required for
+    remote agents from maintainer-local advisory checks that depend on local
+    skills or read-only evidence checkouts.
   - CI fails when active requirement references drift from existing repo paths.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
@@ -839,3 +847,168 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep major dependency updates independently reviewable unless a future
     requirement intentionally changes the dependency-maintenance policy.
+
+### VHS-REQ-603: Large-Repository Indexing Operating Model
+
+- Status: Active
+- Parent: VHS-SYS-REQ-001
+- Area: Git History Eligibility
+- Statement: Repository eligibility indexing shall define large-repository
+  refresh states and observable work accounting without wall-clock performance
+  promises.
+- Acceptance Criteria:
+  - The indexing model distinguishes cold scan, warm restart, branch switch,
+    cancellation, trust-disabled, and failed-refresh states.
+  - Indexing evidence reports tracked, reused, evaluated, eligible, skipped, and
+    failed file counts where those counts are available.
+  - Warm restart and branch-switch behavior is specified in terms of cache reuse
+    and re-evaluated file counts rather than elapsed time.
+  - Cancellation and failed refreshes preserve a last valid eligibility snapshot
+    when one exists.
+  - LabVIEWCLI or comparison-runtime validation failures are treated as separate
+    runtime setup evidence, not as indexing-cache causes.
+- Agent Work Scope:
+  - Change eligibility indexing behavior, diagnostics, tests, and requirements
+    together.
+- Implementation References:
+  - `src/indexing/viEligibilityIndexer.ts`
+- Verification References:
+  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:large-repo-indexing-evidence-review`
+- Change Guidance:
+  - Keep performance requirements algorithmic and evidence-based; do not add
+    wall-clock service-level promises without a new validated benchmark
+    requirement.
+
+### VHS-REQ-604: Persistent Git-Object Eligibility Cache
+
+- Status: Active
+- Parent: VHS-SYS-REQ-001
+- Area: Git History Eligibility
+- Statement: Eligibility indexing shall persist eligible and ineligible file
+  decisions in VS Code extension storage so warm sessions can reuse valid Git
+  object evidence without committing repository-local cache files.
+- Acceptance Criteria:
+  - Persistent eligibility cache data is stored through VS Code extension
+    storage, not through files written into the workspace or repository.
+  - Cache entries are reusable only when repository identity, normalized path,
+    Git object/history facts, strict header setting, and cache schema version
+    match the current evaluation context.
+  - Stale, missing, incompatible, or corrupt cache data fails closed by
+    re-evaluating affected files.
+  - Cache data records eligibility facts needed for reuse without storing file
+    contents, secrets, private runtime paths, or comparison-runtime output.
+  - Cache writes do not change Git working-tree status.
+- Agent Work Scope:
+  - Change indexer cache shape, extension storage wiring, invalidation tests, and
+    requirements together.
+- Implementation References:
+  - `src/indexing/viEligibilityIndexer.ts`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Prefer conservative re-evaluation over using cache data whose provenance or
+    schema is uncertain.
+
+### VHS-REQ-605: Incremental Refresh And Invalidation Lifecycle
+
+- Status: Active
+- Parent: VHS-SYS-REQ-001
+- Area: Git History Eligibility
+- Statement: Eligibility indexing shall refresh incrementally when repository,
+  workspace, or indexing settings change while preserving a conservative
+  eligibility snapshot during cancellation or refresh coalescing.
+- Acceptance Criteria:
+  - Branch or HEAD changes, workspace-folder changes, Git repository state
+    changes, and relevant indexing setting changes trigger eligibility refresh
+    or invalidation.
+  - Unchanged files with valid cache entries are reused instead of re-evaluated.
+  - Removed files are dropped from the eligibility snapshot.
+  - Changed files, missing cache entries, and invalidated cache entries are
+    re-evaluated before becoming eligible.
+  - Rapid refresh requests are coalesced so newer work supersedes obsolete work
+    without exposing partial obsolete results.
+  - Cancellation preserves the last valid eligibility snapshot when one exists
+    and reports that cancellation as a refresh reason.
+- Agent Work Scope:
+  - Change refresh triggers, invalidation accounting, cancellation behavior, and
+    tests together.
+- Implementation References:
+  - `src/indexing/viEligibilityIndexer.ts`
+- Verification References:
+  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep invalidation facts explicit enough for users and agents to understand
+    why a file was reused, re-evaluated, dropped, or skipped.
+
+### VHS-REQ-606: Indexing Diagnostics And Evidence
+
+- Status: Active
+- Parent: VHS-SYS-REQ-001
+- Area: Menu Gating
+- Statement: The extension shall expose user-visible indexing diagnostics that
+  explain eligibility refresh state, work accounting, and the boundary between
+  indexing behavior and comparison-runtime validation.
+- Acceptance Criteria:
+  - User-visible status distinguishes cold scan, cache reuse, incremental
+    refresh, cancellation, trust-disabled, and failed-refresh states.
+  - Diagnostics include tracked, reused, evaluated, eligible, skipped, and
+    failed counts where available.
+  - Diagnostics identify the refresh reason when a branch switch, HEAD change,
+    workspace-folder change, Git repository state change, relevant setting
+    change, cancellation, or trust-disabled state drives the result.
+  - Diagnostics state that LabVIEWCLI or comparison-runtime validation failures
+    are comparison/runtime setup evidence, not indexing-cache causes.
+  - Runtime discovery diagnostics required by `VHS-REQ-155` remain separate
+    from indexing diagnostics.
+- Agent Work Scope:
+  - Change indexing status surfaces, runtime-evidence wording, command behavior,
+    and tests together.
+- Implementation References:
+  - `src/indexing/viEligibilityIndexer.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+- Verification References:
+  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep diagnostics factual and avoid implying runtime setup failures caused
+    indexing refresh behavior.
+
+### VHS-REQ-607: Field Intake Separation For Indexing Reports
+
+- Status: Active
+- Parent: VHS-SYS-REQ-014
+- Area: Requirements
+- Statement: Public issue intake shall collect indexing evidence separately from
+  runtime validation output so maintainers can route large-repository indexing
+  reports without confusing them with comparison-runtime setup failures.
+- Acceptance Criteria:
+  - Bug and onboarding feedback templates collect affected surface, repository
+    scale, restart behavior, branch-switch behavior, and indexing diagnostics
+    separately from runtime validation output.
+  - Runtime validation output fields request `vihs --validate` or comparison
+    runtime output without implying those facts are indexing-cache causes.
+  - Intake copy includes no-secrets guidance for logs, diagnostics, paths, and
+    runtime output.
+  - Indexing reports can be submitted without requiring LabVIEWCLI validation
+    output.
+  - Runtime-only reports can be submitted without requiring indexing cache
+    evidence.
+- Agent Work Scope:
+  - Change public issue templates, intake wording, and requirements coherence
+    tests together.
+- Implementation References:
+  - `.github/ISSUE_TEMPLATE/bug_report.yml`
+  - `.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml`
+- Verification References:
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep field intake narrowly focused on routing evidence; do not add release
+    governance, admin setup, or secret collection.

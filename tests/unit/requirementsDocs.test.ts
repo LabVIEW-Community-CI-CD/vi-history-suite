@@ -353,24 +353,108 @@ describe('requirements documentation coherence', () => {
     expect(requirementsReadme).toContain('validation commands');
     expect(requirementsReadme).toContain('Copilot Web issue-generation guidance');
     expect(issueWaveGuidance).toContain('Requirements-First, RTM-First Flow');
+    expect(issueWaveGuidance).toContain('Requirement-Gap Wave Flow');
+    expect(issueWaveGuidance).toContain('Local Evidence And Validation');
     expect(issueWaveGuidance).toContain('Fail Closed If Missing');
     expect(issueWaveGuidance).toContain('repo-standards-review');
     expect(issueWaveGuidance).toContain('C:\\Users\\sveld\\.codex\\skills\\repo-standards-review\\SKILL.md');
+    expect(issueWaveGuidance).toContain('preflight_local_dependencies.py --json');
     expect(issueWaveGuidance).toContain('--requirements-spec-scope system --json');
+    expect(issueWaveGuidance).toContain('target `VHS-REQ-601`');
+    expect(issueWaveGuidance).toContain('current requirement');
+    expect(issueWaveGuidance).toContain('gaps');
+    expect(issueWaveGuidance).toContain('proposed new IDs');
+    expect(issueWaveGuidance).toContain('maintainer-local checks');
+    expect(issueWaveGuidance).toContain('Do not make a Copilot Web issue fail solely');
     expect(issueWaveGuidance).toContain('Missing required label on the template (`copilot-target`).');
     expect(issueWaveGuidance).toContain('Missing required issue-template fields');
     expect(issueWaveGuidance).toContain('Duplicate requirement-targeted issues');
+    expect(issueWaveGuidance).toContain('Requirement-gap waves that do not name source evidence');
     expect(issueWaveGuidance).toContain('Unresolved placeholders');
     expect(issueWaveGuidance).toContain('Untestable acceptance criteria');
     expect(issueWaveGuidance).toContain('No release/version/publish tasks');
     expect(issueWaveGuidance).toContain('No credentials, tokens, secrets, or admin-setting changes');
     expect(srs).toContain('GitHub issue templates support requirement-targeted agent work.');
     expect(srs).toContain('A committed requirement-wave guide defines requirement-first, RTM-first');
+    expect(srs).toContain('requirement-gap lane for bounded field');
+    expect(srs).toContain('repo-local commands required for');
     expect(requirementRow?.ImplementationRefs).toContain(
       '.github/ISSUE_TEMPLATE/requirement_target.yml'
     );
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/copilot-web-issue-generation-prompt.md'
     );
+  });
+
+  it('keeps large-repository indexing requirement wave traceable', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const rowsById = new Map(rtmRows.map((row) => [row.ReqID, row]));
+    const indexById = new Map(idIndexRows.map((row) => [row.ID, row]));
+
+    for (const id of ['VHS-REQ-603', 'VHS-REQ-604', 'VHS-REQ-605', 'VHS-REQ-606', 'VHS-REQ-607']) {
+      expect(rowsById.get(id)?.Status, `${id} RTM status`).toBe('Active');
+      expect(indexById.get(id)?.Status, `${id} index status`).toBe('Active');
+      expect(indexById.get(id)?.CurrentAnchor, `${id} anchor`).toMatch(/^srs\.md#/);
+    }
+
+    expect(srs).toContain('### VHS-REQ-603: Large-Repository Indexing Operating Model');
+    expect(srs).toContain('without wall-clock performance');
+    expect(srs).toContain('tracked, reused, evaluated, eligible, skipped, and');
+    expect(srs).toContain('LabVIEWCLI or comparison-runtime validation failures are treated as separate');
+
+    expect(srs).toContain('### VHS-REQ-604: Persistent Git-Object Eligibility Cache');
+    expect(srs).toContain('VS Code extension storage');
+    expect(srs).toContain('not through files written into the workspace or repository');
+    expect(srs).toContain('repository identity, normalized path');
+    expect(srs).toContain('Stale, missing, incompatible, or corrupt cache data fails closed');
+
+    expect(srs).toContain('### VHS-REQ-605: Incremental Refresh And Invalidation Lifecycle');
+    expect(srs).toContain('Branch or HEAD changes');
+    expect(srs).toContain('Unchanged files with valid cache entries are reused');
+    expect(srs).toContain('Cancellation preserves the last valid eligibility snapshot');
+
+    expect(srs).toContain('### VHS-REQ-606: Indexing Diagnostics And Evidence');
+    expect(srs).toContain('User-visible status distinguishes cold scan');
+    expect(srs).toContain('Diagnostics identify the refresh reason');
+    expect(srs).toContain('VHS-REQ-155');
+
+    expect(srs).toContain('### VHS-REQ-607: Field Intake Separation For Indexing Reports');
+    expect(srs).toContain('collect indexing evidence separately from');
+    expect(srs).toContain('runtime validation output so maintainers can route');
+    expect(srs).toContain('Indexing reports can be submitted without requiring LabVIEWCLI');
+
+    expect(rowsById.get('VHS-REQ-603')?.VerificationRefs).toContain(
+      'manual:large-repo-indexing-evidence-review'
+    );
+    expect(rowsById.get('VHS-REQ-604')?.ImplementationRefs).toContain('src/extension.ts');
+    expect(rowsById.get('VHS-REQ-607')?.ImplementationRefs).toContain(
+      '.github/ISSUE_TEMPLATE/bug_report.yml'
+    );
+  });
+
+  it('keeps indexing intake separated from runtime validation output', () => {
+    const bugTemplate = readRepoText('.github', 'ISSUE_TEMPLATE', 'bug_report.yml');
+    const onboardingTemplate = readRepoText(
+      '.github',
+      'ISSUE_TEMPLATE',
+      'first_time_onboarding_feedback.yml'
+    );
+
+    for (const template of [bugTemplate, onboardingTemplate]) {
+      expect(template).toContain('id: affected_surface');
+      expect(template).toContain('VI history indexing or cache');
+      expect(template).toContain('Compare/runtime validation');
+      expect(template).toContain('id: indexing_evidence');
+      expect(template).toContain('repository scale');
+      expect(template).toContain('restart behavior');
+      expect(template).toContain('branch-switch behavior');
+      expect(template).toContain('any indexing diagnostics');
+      expect(template).toContain('id: runtime_validation_output');
+      expect(template).toContain('separately from indexing evidence');
+      expect(template).toContain('Do not include secrets');
+      expect(template).toContain('Leave blank for indexing-only');
+    }
   });
 });

@@ -38,14 +38,17 @@ boundaries before implementation starts.
 
 For creating new requirement-scoped Copilot Web issue waves, use the committed
 [Copilot Web issue-generation guidance](./copilot-web-issue-generation-prompt.md)
-instead of relying on chat history.
+instead of relying on chat history. When bounded field evidence reveals a
+missing active requirement, use the requirement-gap lane in that guidance and
+target `VHS-REQ-601` until the new requirement IDs exist in `srs.md`,
+`rtm.csv`, and `id-index.csv`.
 
 ## ID Policy
 
 - Active software requirements use `VHS-REQ-*`.
 - Active system requirements use `VHS-SYS-REQ-*`.
 - Historical gaps are intentional.
-- New software requirements start at `VHS-REQ-596`.
+- New software requirements start at `VHS-REQ-608`.
 - New system requirements start at `VHS-SYS-REQ-011`.
 - Retired IDs remain in `id-index.csv` so an agent can distinguish an
   intentional retirement from a missing document.
