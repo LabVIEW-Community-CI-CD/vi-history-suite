@@ -340,6 +340,22 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('abc&lt;&gt;123&quot;def');
     });
 
+    it('serializes compare preflight data safely for inline script embedding', () => {
+      const model = createTestViewModel();
+      const html = renderHistoryPanelHtml(model, undefined, {
+        status: 'ready',
+        provider: 'host',
+        labviewVersion: '2025',
+        labviewBitness: 'x64',
+        nextAction: '</script><script>alert("xss")</script>',
+        cliHint: 'Use settings CLI'
+      });
+
+      expect(html).toContain('const comparePreflight = ');
+      expect(html).toContain('\\u003C/script>\\u003Cscript>alert(\\"xss\\")\\u003C/script>');
+      expect(html.match(/<\/script>/g) ?? []).toHaveLength(1);
+    });
+
     it('escapes single quotes in values', () => {
       const model = createTestViewModel({
         repositoryName: "repo'name"

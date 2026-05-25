@@ -391,8 +391,8 @@ export function renderHistoryPanelHtml(
     <script>
       const vscode = acquireVsCodeApi();
       let panelState = vscode.getState() ?? {};
-      const compareSelectionEnabled = ${JSON.stringify(comparisonSelectionEnabled)};
-      const comparePreflight = ${JSON.stringify(effectiveComparePreflightState)};
+      const compareSelectionEnabled = ${serializeForInlineScript(comparisonSelectionEnabled)};
+      const comparePreflight = ${serializeForInlineScript(effectiveComparePreflightState)};
       function readHostReviewDraft() {
         const draft = panelState.hostReviewDraft;
         if (!draft || typeof draft !== 'object') {
@@ -495,7 +495,7 @@ export function renderHistoryPanelHtml(
 
         if (checked.length === 0) {
           updateComparePreflightPair('Not selected yet.', 'Not selected yet.');
-          updateComparePreflightSummary(${JSON.stringify(initialComparePreflightSummary)});
+          updateComparePreflightSummary(${serializeForInlineScript(initialComparePreflightSummary)});
           updateComparePreflightNextAction(comparePreflight.nextAction);
           updateCompareButtonState(false);
           return;
@@ -849,6 +849,10 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function serializeForInlineScript(value: unknown): string {
+  return JSON.stringify(value).replaceAll('<', '\\u003C');
 }
 
 function renderCompareRuntimeDetails(

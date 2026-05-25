@@ -403,8 +403,9 @@ Missing numeric IDs are intentional.
     differences from Git-only history.
   - User-controlled or path-derived panel values are escaped in rendered HTML
     text and attribute contexts. Inline script contexts (e.g., JSON-serialized
-    data in `<script>` blocks) use `JSON.stringify` which handles script-tag
-    injection by escaping forward slashes in `</script>` sequences.
+    data in `<script>` blocks) must neutralize script-tag boundaries in
+    serialized payloads before embedding (for example replacing `<` with
+    `\u003C`) so `</script>` data cannot terminate the script block.
 - Agent Work Scope:
   - Change `historyPanel` rendering, unit tests, and extension-host assertions
     together.
