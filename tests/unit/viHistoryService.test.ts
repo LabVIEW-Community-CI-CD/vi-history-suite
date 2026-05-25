@@ -191,3 +191,116 @@ describe('viHistoryService', () => {
     });
   });
 });
+
+describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', () => {
+  beforeEach(() => {
+    workspaceGetMock.mockReset();
+    getRepoRootMock.mockReset();
+    loadViHistoryViewModelFromFsPathMock.mockReset();
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') return true;
+      if (key === 'historyWindowMode') return 'auto';
+      if (key === 'maxHistoryEntries') return 25;
+      return fallback;
+    });
+  });
+
+  it('returns undefined when no Git API repository matches a path', () => {
+    expect(
+      selectMostSpecificGitRepositoryRoot('/workspace/unrelated/file.vi', [
+        { rootUri: { fsPath: '/workspace/repo-a' } },
+        { rootUri: { fsPath: '/workspace/repo-b' } }
+      ] as never)
+    ).toBeUndefined();
+  });
+
+  it('selects the most specific root when multiple nested repositories match', () => {
+    expect(
+      selectMostSpecificGitRepositoryRoot('/workspace/outer/inner/deep/file.vi', [
+        { rootUri: { fsPath: '/workspace/outer' } },
+        { rootUri: { fsPath: '/workspace/outer/inner' } },
+        { rootUri: { fsPath: '/workspace/outer/inner/deep' } }
+      ] as never)
+    ).toBe('/workspace/outer/inner/deep');
+  });
+
+  it('handles multi-root workspace with independent repositories', () => {
+    const repositories = [
+      { rootUri: { fsPath: '/workspace/project-a' } },
+      { rootUri: { fsPath: '/workspace/project-b' } },
+      { rootUri: { fsPath: '/home/user/external' } }
+    ] as never;
+
+    expect(
+      selectMostSpecificGitRepositoryRoot('/workspace/project-a/src/file.vi', repositories)
+    ).toBe('/workspace/project-a');
+    expect(
+      selectMostSpecificGitRepositoryRoot('/workspace/project-b/lib/util.vi', repositories)
+    ).toBe('/workspace/project-b');
+    expect(
+      selectMostSpecificGitRepositoryRoot('/home/user/external/nested/tool.vi', repositories)
+    ).toBe('/home/user/external');
+  });
+
+  it('falls back to CLI repository discovery when Git API cannot match a file path', async () => {
+    getRepoRootMock.mockResolvedValue('/workspace/discovered-root');
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'discovered-root',
+      repositoryRoot: '/workspace/discovered-root',
+      relativePath: 'orphan/file.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: []
+    });
+
+    const service = new ViHistoryService({
+      repositories: [],
+      toGitUri: vi.fn()
+    } as never);
+
+    await service.load({ fsPath: '/workspace/discovered-root/orphan/file.vi' } as never);
+
+    expect(getRepoRootMock).toHaveBeenCalledWith('/workspace/discovered-root/orphan');
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/discovered-root/orphan/file.vi',
+      expect.objectContaining({
+        repoRoot: '/workspace/discovered-root'
+      })
+    );
+  });
+
+  it('propagates CLI fallback failure when file is outside any Git repository', async () => {
+    getRepoRootMock.mockRejectedValue(new Error('fatal: not a git repository'));
+
+    const service = new ViHistoryService({
+      repositories: [],
+      toGitUri: vi.fn()
+    } as never);
+
+    await expect(
+      service.load({ fsPath: '/not-a-repo/orphan.vi' } as never)
+    ).rejects.toThrow('fatal: not a git repository');
+  });
+
+  it('does not call CLI fallback when Git API match is available', async () => {
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'matched-repo',
+      repositoryRoot: '/workspace/matched-repo',
+      relativePath: 'src/file.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: []
+    });
+
+    const service = new ViHistoryService({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/matched-repo' } }
+      ],
+      toGitUri: vi.fn()
+    } as never);
+
+    await service.load({ fsPath: '/workspace/matched-repo/src/file.vi' } as never);
+
+    expect(getRepoRootMock).not.toHaveBeenCalled();
+  });
+});

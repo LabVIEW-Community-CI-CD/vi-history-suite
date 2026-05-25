@@ -214,3 +214,109 @@ describe('gitCli parsing', () => {
     }
   );
 });
+
+describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
+  it('follows renamed file history and returns commit hashes from before the rename', async () => {
+    const repoRoot = await createTempGitRepo();
+    const originalPath = path.join(repoRoot, 'original.vi');
+    const renamedPath = path.join(repoRoot, 'renamed.vi');
+
+    await fs.writeFile(originalPath, 'first version');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add original.vi'], repoRoot);
+    await fs.writeFile(originalPath, 'second version');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Modify original.vi'], repoRoot);
+    await runGit(['mv', originalPath, renamedPath], repoRoot);
+    await runGit(['commit', '-m', 'Rename to renamed.vi'], repoRoot);
+
+    const commitHashes = await getFileCommitHashes(repoRoot, 'renamed.vi', 3);
+    const historyEntries = await getFileHistoryEntries(repoRoot, 'renamed.vi', 3);
+
+    expect(commitHashes).toHaveLength(3);
+    expect(historyEntries).toHaveLength(3);
+    expect(historyEntries[0]?.subject).toBe('Rename to renamed.vi');
+    expect(historyEntries[1]?.subject).toBe('Modify original.vi');
+    expect(historyEntries[2]?.subject).toBe('Add original.vi');
+  });
+
+  it('returns empty commit hashes for untracked files in a repository with history', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'tracked.vi');
+    const untrackedPath = path.join(repoRoot, 'untracked.vi');
+
+    await fs.writeFile(trackedPath, 'tracked content');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add tracked file'], repoRoot);
+    await fs.writeFile(untrackedPath, 'untracked content');
+
+    const commitHashes = await getFileCommitHashes(repoRoot, 'untracked.vi', 2);
+    const historyCount = await getFileHistoryCount(repoRoot, 'untracked.vi');
+
+    expect(commitHashes).toEqual([]);
+    expect(historyCount).toBe(0);
+  });
+
+  it('rejects queries for files outside the repository boundary', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'tracked.vi');
+
+    await fs.writeFile(trackedPath, 'content');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add file'], repoRoot);
+
+    await expect(
+      getFileCommitHashes(repoRoot, '../outside/nonexistent.vi', 2)
+    ).rejects.toThrow(/outside repository/);
+  });
+
+  it('handles paths with special characters safely when NUL-delimited', async () => {
+    const repoRoot = await createTempGitRepo();
+    const specialPath = path.join(repoRoot, 'folder with spaces', 'file [special] (chars).vi');
+
+    await fs.mkdir(path.dirname(specialPath), { recursive: true });
+    await fs.writeFile(specialPath, 'first');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add special char file'], repoRoot);
+    await fs.writeFile(specialPath, 'second');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Modify special char file'], repoRoot);
+
+    const trackedFiles = await listTrackedFiles(repoRoot);
+    const commitHashes = await getFileCommitHashes(
+      repoRoot,
+      'folder with spaces/file [special] (chars).vi',
+      2
+    );
+
+    expect(trackedFiles).toContain('folder with spaces/file [special] (chars).vi');
+    expect(commitHashes).toHaveLength(2);
+  });
+
+  it('parses NUL-separated paths with empty segments and trailing NUL bytes correctly', () => {
+    expect(parseLsFilesZ('')).toEqual([]);
+    expect(parseLsFilesZ('\0')).toEqual([]);
+    expect(parseLsFilesZ('\0\0\0')).toEqual([]);
+    expect(parseLsFilesZ('a.vi\0\0b.vi\0')).toEqual(['a.vi', 'b.vi']);
+    expect(parseLsFilesZ('single.vi')).toEqual(['single.vi']);
+  });
+
+  it('parses NUL-separated buffer output with UTF-8 paths', () => {
+    const bufferOutput = Buffer.from('folder/日本語.vi\0path/ñ-file.vi\0', 'utf8');
+    expect(parseLsFilesZ(bufferOutput)).toEqual(['folder/日本語.vi', 'path/ñ-file.vi']);
+  });
+
+  it('parses commit hashes with CRLF line endings', () => {
+    expect(parseCommitHashes('abc123\r\ndef456\r\n')).toEqual(['abc123', 'def456']);
+    expect(parseCommitHashes('abc123\r\n\r\ndef456')).toEqual(['abc123', 'def456']);
+  });
+
+  it('normalizes mixed path separators including multiple consecutive separators', () => {
+    expect(normalizeRelativeGitPath('folder\\\\nested\\\\file.vi')).toBe(
+      'folder//nested//file.vi'
+    );
+    expect(normalizeRelativeGitPath('folder/nested\\mixed/file.vi')).toBe(
+      'folder/nested/mixed/file.vi'
+    );
+  });
+});
