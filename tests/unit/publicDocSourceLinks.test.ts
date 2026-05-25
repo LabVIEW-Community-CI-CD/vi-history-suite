@@ -64,6 +64,37 @@ describe('public docs source and support link confidence', () => {
     expect(maintainerOps).toContain('Marketplace extension identity remains');
   });
 
+  it('provides a post-publish reconciliation checklist for Marketplace verification', () => {
+    const maintainerOps = readRepoText('docs', 'maintainer-operations.md');
+
+    // Checklist section exists
+    expect(maintainerOps).toContain('## Post-Publish Reconciliation Checklist');
+    expect(maintainerOps).toContain('verification-only');
+    expect(maintainerOps).toContain('does not require Marketplace credentials');
+
+    // Checklist items cover all required verification points
+    expect(maintainerOps).toContain('**Extension Identity**');
+    expect(maintainerOps).toContain('**Published Version**');
+    expect(maintainerOps).toContain('**Source URL**');
+    expect(maintainerOps).toContain('**Support URL**');
+    expect(maintainerOps).toContain('**Repository URL**');
+    expect(maintainerOps).toContain('**Installed Bundled Docs**');
+
+    // Checklist preserves Marketplace identity while pointing to org repo
+    expect(maintainerOps).toContain(marketplaceIdentity);
+    expect(maintainerOps).toContain(orgRepoUrl);
+    expect(maintainerOps).toContain(orgIssueUrl);
+
+    // Verification commands are provided
+    expect(maintainerOps).toContain('### Verification Commands');
+    expect(maintainerOps).toContain('vsce show');
+    expect(maintainerOps).toContain('no credentials required');
+
+    // Stale link reporting is documented
+    expect(maintainerOps).toContain('### Reporting Stale Links');
+    expect(maintainerOps).toContain(onboardingIssueUrl);
+  });
+
   it('keeps first-time onboarding feedback structured around Marketplace and source evaluation', () => {
     const feedbackTemplate = readRepoText(
       '.github',
