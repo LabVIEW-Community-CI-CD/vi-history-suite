@@ -647,7 +647,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(indexer.isEligible({ fsPath: '/workspace/repo-b/good.vi', path: '/workspace/repo-b/good.vi' } as never)).toBe(true);
     expect(indexer.isEligible({ fsPath: '/workspace/repo-b/bad.vi', path: '/workspace/repo-b/bad.vi' } as never)).toBe(false);
     expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual([
-      '/workspace/repo-a',
+      '/workspace/repo-b'
+    ]);
+    expect(indexer.getLastRefreshResult()?.indexedRepositoryRoots).toEqual([
       '/workspace/repo-b'
     ]);
   });
@@ -705,8 +707,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       | undefined;
     expect(statusBar).toBeDefined();
     expect(statusBar?.show).toHaveBeenCalled();
-    expect(statusBar?.text).toContain('100% (3/3) ETA 00:00');
-    expect(statusBar?.tooltip).toContain('repo-b: 100% (3/3)');
+    expect(statusBar?.text).toContain('VI History: 0/3 eligible');
+    expect(statusBar?.tooltip).toContain('Indexing status: Cold scan');
+    expect(statusBar?.tooltip).toContain('Work counts: tracked=3, reused=0, evaluated=3, eligible=0, skipped=0, failed=0.');
     expect(statusBar?.hide).toHaveBeenCalled();
   });
 
@@ -1748,7 +1751,7 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
         skipped: 0,
         failed: 0
       },
-      indexedRepositoryRoots: [],
+      indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: true
     });
     expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual(['/workspace/repo']);
@@ -2323,7 +2326,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
     expect(result?.state).toBe('cold-scan');
   });
 
-  it('reports refreshReason as branch-switch when HEAD changes', async () => {
+  it('reports refreshReason as head-change when HEAD changes', async () => {
     workspaceState.workspaceFolders = [
       { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
     ];
@@ -2346,8 +2349,44 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
     await indexer.refresh();
 
     const result = indexer.getLastRefreshResult();
-    expect(result?.refreshReason).toBe('branch-switch');
+    expect(result?.refreshReason).toBe('head-change');
     expect(result?.state).toBe('branch-switch');
+  });
+
+  it('surfaces the indexing diagnostic summary in the final status bar tooltip', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['file.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    await indexer.refresh();
+
+    const statusBar = createStatusBarItemMock.mock.results[0]?.value as
+      | {
+          text: string;
+          tooltip: string;
+          show: ReturnType<typeof vi.fn>;
+        }
+      | undefined;
+
+    expect(statusBar?.text).toContain('VI History: 1/1 eligible');
+    expect(statusBar?.tooltip).toContain('Indexing status: Cold scan');
+    expect(statusBar?.tooltip).toContain('Refresh reason: Initial extension activation.');
+    expect(statusBar?.tooltip).toContain('Indexed repositories: 1 (repo).');
+    expect(statusBar?.tooltip).toContain(
+      'LabVIEWCLI or comparison-runtime validation failures are comparison/runtime setup evidence, not indexing-cache causes.'
+    );
   });
 
   it('reports refreshReason as user-cancellation when refresh is cancelled', async () => {
@@ -2427,6 +2466,8 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
     const result = indexer.getLastRefreshResult();
     expect(result?.refreshReason).toBe('repository-enumeration-failed');
     expect(result?.state).toBe('failed');
+    expect(result?.indexedRepositoryRoots).toEqual(['/workspace/repo']);
+    expect(result?.snapshotPreserved).toBe(true);
   });
 
   it('includes refreshReason in diagnostic summary', async () => {

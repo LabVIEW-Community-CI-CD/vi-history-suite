@@ -463,7 +463,6 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
 
     const reasons = [
       { reason: 'initial-activation', expected: 'Initial extension activation' },
-      { reason: 'branch-switch', expected: 'Branch switch detected' },
       { reason: 'head-change', expected: 'HEAD change detected' },
       { reason: 'workspace-folder-change', expected: 'Workspace folder change' },
       { reason: 'git-state-change', expected: 'Git repository state change' },

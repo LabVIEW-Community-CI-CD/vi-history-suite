@@ -51,7 +51,6 @@ export type IndexRefreshState =
  */
 export type IndexRefreshReason =
   | 'initial-activation'
-  | 'branch-switch'
   | 'head-change'
   | 'workspace-folder-change'
   | 'git-state-change'
@@ -326,6 +325,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         snapshotPreserved: false,
         refreshReason: 'trust-disabled'
       };
+      this.showStatusBarDiagnostic(this.lastRefreshResult);
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
     }
@@ -335,7 +335,6 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       this.gitApi?.repositories ?? [],
       vscode.workspace.workspaceFolders ?? []
     );
-    const nextIndexedRepositoryRoots = repositories.map((repository) => repository.rootUri.fsPath);
     const repositoryWorkItems: IndexedRepositoryWorkItem[] = [];
     let totalTrackedFiles = 0;
     const nextEligiblePaths: EligibilityMap = {};
@@ -374,6 +373,9 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     }
 
     workCounts.tracked = totalTrackedFiles;
+    const nextIndexedRepositoryRoots = repositoryWorkItems.map(
+      (workItem) => workItem.repository.rootUri.fsPath
+    );
 
     // Determine initial state type based on prior index state
     let determinedState: IndexRefreshState;
@@ -512,6 +514,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         snapshotPreserved: true,
         refreshReason: 'user-cancellation'
       };
+      this.showStatusBarDiagnostic(this.lastRefreshResult);
       return;
     }
 
@@ -528,6 +531,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         snapshotPreserved: false,
         refreshReason: 'trust-disabled'
       };
+      this.showStatusBarDiagnostic(this.lastRefreshResult);
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
     }
@@ -536,14 +540,16 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     if (repositoryWorkItems.length === 0 && repositories.length > 0) {
       // Preserve previous snapshot on failed refresh (VHS-REQ-603)
       this.hideStatusBarProgress();
+      const preservedRepositoryRoots = [...this.lastIndexedRepositoryRoots];
       const hasExistingSnapshot = this.lastIndexedRepositoryRoots.length > 0;
       this.lastRefreshResult = {
         state: 'failed',
         counts: workCounts,
-        indexedRepositoryRoots: [],
+        indexedRepositoryRoots: preservedRepositoryRoots,
         snapshotPreserved: hasExistingSnapshot,
         refreshReason: 'repository-enumeration-failed'
       };
+      this.showStatusBarDiagnostic(this.lastRefreshResult);
       return;
     }
 
@@ -553,10 +559,9 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     this.eligiblePaths = nextEligiblePaths;
     this.hideStatusBarProgress();
     // Determine the effective refresh reason based on state (VHS-REQ-606)
-    const effectiveRefreshReason: IndexRefreshReason =
-      determinedState === 'branch-switch' ? 'branch-switch' :
-      anyHeadChanged ? 'head-change' :
-      currentRefreshReason;
+    const effectiveRefreshReason: IndexRefreshReason = anyHeadChanged
+      ? 'head-change'
+      : currentRefreshReason;
     this.lastRefreshResult = {
       state: determinedState,
       counts: workCounts,
@@ -564,6 +569,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       snapshotPreserved: false,
       refreshReason: effectiveRefreshReason
     };
+    this.showStatusBarDiagnostic(this.lastRefreshResult);
     await vscode.commands.executeCommand(
       'setContext',
       'labviewViHistory.eligiblePaths',
@@ -621,6 +627,12 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
   private hideStatusBarProgress(): void {
     this.statusBarItem.hide();
+  }
+
+  private showStatusBarDiagnostic(result: IndexRefreshResult): void {
+    this.statusBarItem.text = formatIndexRefreshStatusBarText(result);
+    this.statusBarItem.tooltip = buildIndexingDiagnosticSummary(result).join('\n');
+    this.statusBarItem.show();
   }
 }
 
@@ -780,6 +792,25 @@ function finalizeSkippedCount(workCounts: IndexRefreshWorkCounts): void {
   );
 }
 
+function formatIndexRefreshStatusBarText(result: IndexRefreshResult): string {
+  switch (result.state) {
+    case 'cold-scan':
+      return `$(database) VI History: ${result.counts.eligible}/${result.counts.tracked} eligible`;
+    case 'warm-restart':
+      return `$(check) VI History: ${result.counts.reused} reused`;
+    case 'branch-switch':
+      return '$(git-branch) VI History: HEAD refreshed';
+    case 'cancelled':
+      return '$(circle-slash) VI History indexing cancelled';
+    case 'trust-disabled':
+      return '$(lock) VI History indexing disabled';
+    case 'failed':
+      return '$(warning) VI History indexing failed';
+    default:
+      return '$(info) VI History indexing status';
+  }
+}
+
 export async function resolveIndexedRepositories(
   gitRepositories: readonly Pick<GitRepository, 'rootUri'>[],
   workspaceFolders: readonly Pick<vscode.WorkspaceFolder, 'uri'>[]
@@ -914,8 +945,6 @@ function formatIndexRefreshReason(reason: IndexRefreshReason): string {
   switch (reason) {
     case 'initial-activation':
       return 'Initial extension activation';
-    case 'branch-switch':
-      return 'Branch switch detected';
     case 'head-change':
       return 'HEAD change detected';
     case 'workspace-folder-change':
