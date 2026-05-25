@@ -213,7 +213,7 @@ function deriveRuntimeDoctorNextAction(options: {
 
     if (blockedReason === 'labview-cli-not-found-for-bitness') {
       return buildRuntimeSettingsReloadAction(
-        'install the matching LabVIEWCLI for viHistorySuite.labviewBitness, or adjust viHistorySuite.labviewBitness to an installed CLI surface',
+        'install LabVIEWCLI, or set viHistorySuite.labviewCliPath to an existing LabVIEWCLI executable',
         'rerun comparison report generation'
       );
     }
@@ -227,7 +227,7 @@ function deriveRuntimeDoctorNextAction(options: {
 
     if (blockedReason === 'labview-cli-ambiguous-for-bitness') {
       return buildRuntimeSettingsReloadAction(
-        'set viHistorySuite.labviewCliPath to the exact LabVIEWCLI executable for viHistorySuite.labviewBitness',
+        'set viHistorySuite.labviewCliPath to the exact LabVIEWCLI executable',
         'rerun comparison report generation'
       );
     }
@@ -237,7 +237,7 @@ function deriveRuntimeDoctorNextAction(options: {
       blockedReason === 'comparison-tool-not-found'
     ) {
       return buildRuntimeSettingsReloadAction(
-        'install the matching LabVIEWCLI for the selected LabVIEW runtime',
+        'install LabVIEWCLI, or set viHistorySuite.labviewCliPath to an existing LabVIEWCLI executable',
         'rerun comparison report generation'
       );
     }
