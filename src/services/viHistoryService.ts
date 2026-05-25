@@ -39,13 +39,27 @@ export function selectMostSpecificGitRepositoryRoot(
   uriFsPath: string,
   repositories: GitApi['repositories']
 ): string | undefined {
+  const comparableUriFsPath = normalizeComparableFsPath(uriFsPath);
   return repositories
     .filter((repository) => {
-      const repoRoot = repository.rootUri.fsPath;
-      return uriFsPath === repoRoot || uriFsPath.startsWith(repoRoot + path.sep);
+      const comparableRepoRoot = normalizeComparableFsPath(repository.rootUri.fsPath);
+      return (
+        comparableUriFsPath === comparableRepoRoot ||
+        comparableUriFsPath.startsWith(`${comparableRepoRoot}/`)
+      );
     })
-    .sort((left, right) => right.rootUri.fsPath.length - left.rootUri.fsPath.length)[0]
+    .sort(
+      (left, right) =>
+        normalizeComparableFsPath(right.rootUri.fsPath).length -
+        normalizeComparableFsPath(left.rootUri.fsPath).length
+    )[0]
     ?.rootUri.fsPath;
+}
+
+function normalizeComparableFsPath(fsPath: string): string {
+  const slashNormalized = fsPath.replaceAll('\\', '/').replace(/\/+$/u, '');
+  const comparablePath = slashNormalized.length > 0 ? slashNormalized : '/';
+  return process.platform === 'win32' ? comparablePath.toLowerCase() : comparablePath;
 }
 
 export class ViHistoryService {
