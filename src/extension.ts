@@ -80,7 +80,8 @@ interface WorkspaceRuntime {
 const EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT: EligibilityDebugSnapshot = {
   indexedRepositoryRoots: [],
   eligiblePathCount: 0,
-  eligiblePathsSample: []
+  eligiblePathsSample: [],
+  lastRefreshResult: undefined
 };
 
 export async function activate(
