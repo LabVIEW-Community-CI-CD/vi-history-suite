@@ -307,7 +307,10 @@ describe('comparisonReportPreflight', () => {
       isVi: false,
       blockedReason: 'blob-not-vi'
     });
-    expect(readRevisionBlob).toHaveBeenCalledTimes(2);
+    expect(readRevisionBlob.mock.calls).toEqual([
+      ['/workspace/repo', 'base123', 'Examples/Folder With Spaces/Original Example.vi'],
+      ['/workspace/repo', 'selected456', 'Source/Folder With Spaces/Current Example.vi']
+    ]);
   });
 
   it('reports preflight blocked when right blob cannot be read', async () => {
@@ -350,7 +353,10 @@ describe('comparisonReportPreflight', () => {
       isVi: false,
       blockedReason: 'blob-read-failed'
     });
-    expect(readRevisionBlob).toHaveBeenCalledTimes(2);
+    expect(readRevisionBlob.mock.calls).toEqual([
+      ['/workspace/repo', 'base123', 'Examples/Folder With Spaces/Original Example.vi'],
+      ['/workspace/repo', 'selected456', 'Source/Folder With Spaces/Current Example.vi']
+    ]);
   });
 
   it('retains dual-side blocked details when both blobs fail VI verification', async () => {
@@ -399,7 +405,10 @@ describe('comparisonReportPreflight', () => {
       isVi: false,
       blockedReason: 'blob-read-failed'
     });
-    expect(readRevisionBlob).toHaveBeenCalledTimes(2);
+    expect(readRevisionBlob.mock.calls).toEqual([
+      ['/workspace/repo', 'base123', 'Examples/Folder With Spaces/Original Example.vi'],
+      ['/workspace/repo', 'selected456', 'Source/Folder With Spaces/Current Example.vi']
+    ]);
   });
 
   it('does not use the working-tree file when one requested revision no longer has the VI blob', async () => {
