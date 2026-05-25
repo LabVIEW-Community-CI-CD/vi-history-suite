@@ -182,3 +182,28 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
   - `tests/unit/requirementsDocs.test.ts`
+
+### VHS-SYS-REQ-015: Large Repository Branch-Switch Responsiveness
+
+- Status: Active
+- Area: Git History Eligibility
+- Statement: The system shall keep branch-switch indexing responsive for large
+  LabVIEW repositories by reusing file-level Git object eligibility evidence
+  for unchanged tracked files and re-evaluating only changed, unproven, or
+  invalidated files.
+- Acceptance Criteria:
+  - Branch-switch eligibility reuse is based on repository identity, normalized
+    path, tracked Git blob object ID, strict header setting, cache schema
+    version, and reachable history proof evidence.
+  - The selected branch or `HEAD` controls reachability checks and refresh
+    state, but it is not the cache identity for unchanged clean file blobs.
+  - Dirty, staged, unmerged, cache-missing, malformed, or history-unproven files
+    fail closed by re-evaluating eligibility.
+  - User-visible diagnostics report tracked, reused, evaluated, removed,
+    skipped, failed, and eligible counts rather than wall-clock timing promises.
+- Verification References:
+  - `src/indexing/viEligibilityIndexer.ts`
+  - `src/git/gitCli.ts`
+  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/gitCli.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`

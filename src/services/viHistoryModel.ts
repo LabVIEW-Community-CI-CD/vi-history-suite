@@ -84,7 +84,6 @@ export async function evaluateViEligibilityForFsPath(
   options: ViHistoryModelOptions = {}
 ): Promise<ViEligibilitySnapshot> {
   const repositoryRoot = options.repoRoot ?? (await getRepoRoot(path.dirname(fsPath)));
-  const repositoryUrl = await getRepoRemoteUrl(repositoryRoot);
   const relativePath = normalizeRelativeGitPath(path.relative(repositoryRoot, fsPath));
   const signature =
     (await detectViSignatureFromFsPath(fsPath, {

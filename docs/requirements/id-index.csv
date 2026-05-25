@@ -621,3 +621,4 @@ VHS-SYS-REQ-011,System,Active,syrs.md#vhs-sys-req-011-github-first-source-author
 VHS-SYS-REQ-012,System,Active,syrs.md#vhs-sys-req-012-lightweight-public-verification,,,docs/requirements/syrs.md
 VHS-SYS-REQ-013,System,Active,syrs.md#vhs-sys-req-013-optional-human-validation-surfaces,,,docs/requirements/syrs.md
 VHS-SYS-REQ-014,System,Active,syrs.md#vhs-sys-req-014-agent-targetable-requirements,,,docs/requirements/syrs.md
+VHS-SYS-REQ-015,System,Active,syrs.md#vhs-sys-req-015-large-repository-branch-switch-responsiveness,,,docs/requirements/syrs.md

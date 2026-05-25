@@ -419,6 +419,7 @@ describe('requirements documentation coherence', () => {
   });
 
   it('keeps large-repository indexing requirement wave traceable', () => {
+    const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
@@ -430,25 +431,38 @@ describe('requirements documentation coherence', () => {
       expect(indexById.get(id)?.Status, `${id} index status`).toBe('Active');
       expect(indexById.get(id)?.CurrentAnchor, `${id} anchor`).toMatch(/^srs\.md#/);
     }
+    expect(indexById.get('VHS-SYS-REQ-015')?.Status).toBe('Active');
+    expect(indexById.get('VHS-SYS-REQ-015')?.CurrentAnchor).toBe(
+      'syrs.md#vhs-sys-req-015-large-repository-branch-switch-responsiveness'
+    );
+
+    expect(syrs).toContain('### VHS-SYS-REQ-015: Large Repository Branch-Switch Responsiveness');
+    expect(syrs).toContain('file-level Git object eligibility evidence');
+    expect(syrs).toContain('not the cache identity for unchanged clean file blobs');
 
     expect(srs).toContain('### VHS-REQ-603: Large-Repository Indexing Operating Model');
     expect(srs).toContain('without wall-clock performance');
-    expect(srs).toContain('tracked, reused, evaluated, eligible, skipped, and');
+    expect(srs).toContain('tracked, reused, evaluated, removed, skipped');
+    expect(srs).toContain('unchanged clean');
     expect(srs).toContain('LabVIEWCLI or comparison-runtime validation failures are treated as separate');
 
     expect(srs).toContain('### VHS-REQ-604: Persistent Git-Object Eligibility Cache');
     expect(srs).toContain('VS Code extension storage');
     expect(srs).toContain('not through files written into the workspace or repository');
-    expect(srs).toContain('repository identity, normalized path');
+    expect(srs).toContain('tracked Git blob object ID');
+    expect(srs).toContain('recorded history proof');
     expect(srs).toContain('Stale, missing, incompatible, or corrupt cache data fails closed');
 
     expect(srs).toContain('### VHS-REQ-605: Incremental Refresh And Invalidation Lifecycle');
     expect(srs).toContain('Branch or HEAD changes');
-    expect(srs).toContain('Unchanged files with valid cache entries are reused');
+    expect(srs).toContain('Clean tracked files with matching repository identity');
+    expect(srs).toContain('dirty, staged, unmerged');
+    expect(srs).toContain('counted as');
     expect(srs).toContain('Cancellation preserves the last valid eligibility snapshot');
 
     expect(srs).toContain('### VHS-REQ-606: Indexing Diagnostics And Evidence');
     expect(srs).toContain('User-visible status distinguishes cold scan');
+    expect(srs).toContain('removed, skipped, failed');
     expect(srs).toContain('Diagnostics identify the refresh reason');
     expect(srs).toContain('VHS-REQ-155');
 
@@ -460,7 +474,11 @@ describe('requirements documentation coherence', () => {
     expect(rowsById.get('VHS-REQ-603')?.VerificationRefs).toContain(
       'manual:large-repo-indexing-evidence-review'
     );
+    for (const id of ['VHS-REQ-603', 'VHS-REQ-604', 'VHS-REQ-605', 'VHS-REQ-606']) {
+      expect(rowsById.get(id)?.ParentID, `${id} parent`).toBe('VHS-SYS-REQ-015');
+    }
     expect(rowsById.get('VHS-REQ-604')?.ImplementationRefs).toContain('src/extension.ts');
+    expect(rowsById.get('VHS-REQ-604')?.ImplementationRefs).toContain('src/git/gitCli.ts');
     expect(rowsById.get('VHS-REQ-607')?.ImplementationRefs).toContain(
       '.github/ISSUE_TEMPLATE/bug_report.yml'
     );

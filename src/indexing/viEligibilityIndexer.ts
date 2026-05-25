@@ -1,11 +1,15 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
+import type { ViSignature } from '../domain/viMagicCore';
 import { GitApi, GitRepository } from '../git/gitApi';
 import {
+  type GitTrackedFileEntry,
   getRepoHead,
   getRepoRoot,
-  listTrackedFiles,
+  listChangedTrackedPaths,
+  listReachableCommitHashes,
+  listTrackedFileEntries,
   normalizeRelativeGitPath
 } from '../git/gitCli';
 import { evaluateViEligibilityForFsPath } from '../services/viHistoryModel';
@@ -16,22 +20,30 @@ type EligibilityCacheStore = Pick<vscode.Memento, 'get' | 'update'>;
 type IndexedRepositoryWorkItem = {
   repository: IndexedRepository;
   trackedFiles: string[];
+  cleanObjectIdsByPath: Map<string, string>;
+  reachableCommitHashes: Set<string>;
   head: string;
 };
 
-const ELIGIBILITY_CACHE_SCHEMA_VERSION = 1;
+const ELIGIBILITY_CACHE_SCHEMA_VERSION = 2;
 const ELIGIBILITY_CACHE_STORAGE_KEY = 'viHistorySuite.eligibilityCache';
+
+type EligibilityCacheEntry = {
+  eligible: boolean;
+  signature: ViSignature | 'unknown';
+  commitHashes: string[];
+};
 
 type PersistedEligibilityCache = {
   schemaVersion: number;
-  entries: Record<string, boolean>;
+  entries: Record<string, EligibilityCacheEntry>;
 };
 
 /**
  * Refresh state types for large-repository indexing operating model (VHS-REQ-603).
  * - cold-scan: No prior eligibility data exists; all files evaluated from scratch.
- * - warm-restart: Prior eligibility data exists with same HEAD(s); cache reuse possible.
- * - branch-switch: HEAD changed since last refresh; affected files re-evaluated.
+ * - warm-restart: Prior eligibility data exists; file-level cache reuse possible.
+ * - branch-switch: HEAD changed since last refresh; changed or unproven files re-evaluated.
  * - cancelled: User cancelled the refresh; previous snapshot preserved.
  * - trust-disabled: Workspace is not trusted; eligibility cleared.
  * - failed: Refresh failed with no repositories successfully indexed; previous snapshot
@@ -67,12 +79,14 @@ export type IndexRefreshReason =
 export interface IndexRefreshWorkCounts {
   /** Total tracked files discovered across all repositories. */
   tracked: number;
-  /** Files whose eligibility was reused from cache (same HEAD + path). */
+  /** Files whose eligibility was reused from valid file-level cache evidence. */
   reused: number;
-  /** Files freshly evaluated (cache miss or HEAD change). */
+  /** Files freshly evaluated (cache miss, changed blob, or invalidated proof). */
   evaluated: number;
   /** Files determined eligible for VI history. */
   eligible: number;
+  /** Previously indexed tracked files no longer present in the active tracked set. */
+  removed: number;
   /** Files skipped due to cancellation or trust loss mid-refresh. */
   skipped: number;
   /** Files that failed eligibility evaluation with an error. */
@@ -109,7 +123,7 @@ export interface EligibilityDebugSnapshot {
 export class ViEligibilityIndexer implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly repositoryStateDisposables = new Map<string, vscode.Disposable>();
-  private readonly eligibilityCache = new Map<string, boolean>();
+  private readonly eligibilityCache = new Map<string, EligibilityCacheEntry>();
   private readonly statusBarItem: vscode.StatusBarItem;
   private refreshHandle: NodeJS.Timeout | undefined;
   private refreshRunning = false;
@@ -118,6 +132,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   private lastIndexedRepositoryRoots: string[] = [];
   /** Last recorded HEAD values per repository root for branch-switch detection (VHS-REQ-603). */
   private lastIndexedHeads = new Map<string, string>();
+  /** Last tracked path set per repository root for branch-switch diagnostics (VHS-REQ-603). */
+  private lastIndexedTrackedPathsByRepository = new Map<string, Set<string>>();
   /** Last refresh result for diagnostics (VHS-REQ-603). */
   private lastRefreshResult: IndexRefreshResult | undefined;
   /** Pending refresh reason for the next refresh (VHS-REQ-606). */
@@ -308,6 +324,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       reused: 0,
       evaluated: 0,
       eligible: 0,
+      removed: 0,
       skipped: 0,
       failed: 0
     };
@@ -317,6 +334,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
       this.lastIndexedHeads.clear();
+      this.lastIndexedTrackedPathsByRepository.clear();
       this.hideStatusBarProgress();
       this.lastRefreshResult = {
         state: 'trust-disabled',
@@ -339,6 +357,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     let totalTrackedFiles = 0;
     const nextEligiblePaths: EligibilityMap = {};
     const nextIndexedHeads = new Map<string, string>();
+    const nextIndexedTrackedPathsByRepository = new Map<string, Set<string>>();
     let refreshOutcome: 'applied' | 'cancelled' | 'workspace-untrusted' = 'applied';
 
     // Track whether any HEAD changed to determine cold-scan vs warm-restart vs branch-switch
@@ -352,15 +371,41 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       }
 
       try {
-        const trackedFiles = await listTrackedFiles(repository.rootUri.fsPath);
-        const head = await getRepoHead(repository.rootUri.fsPath);
+        const [
+          trackedFileEntries,
+          changedTrackedPaths,
+          reachableCommitHashes,
+          head
+        ] = await Promise.all([
+          listTrackedFileEntries(repository.rootUri.fsPath),
+          listChangedTrackedPaths(repository.rootUri.fsPath),
+          listReachableCommitHashes(repository.rootUri.fsPath),
+          getRepoHead(repository.rootUri.fsPath)
+        ]);
+        const changedTrackedPathSet = new Set(
+          changedTrackedPaths.map((relativePath) => normalizeRelativeGitPath(relativePath))
+        );
+        const trackedFiles = buildTrackedFilesFromEntries(trackedFileEntries);
+        const trackedPathSet = new Set(
+          trackedFiles.map((relativePath) => normalizeRelativeGitPath(relativePath))
+        );
+        const previousTrackedPaths = this.lastIndexedTrackedPathsByRepository.get(
+          repository.rootUri.fsPath
+        );
+        workCounts.removed += countRemovedPaths(previousTrackedPaths, trackedPathSet);
         repositoryWorkItems.push({
           repository,
           trackedFiles,
+          cleanObjectIdsByPath: buildCleanObjectIdsByPath(
+            trackedFileEntries,
+            changedTrackedPathSet
+          ),
+          reachableCommitHashes: new Set(reachableCommitHashes),
           head
         });
         totalTrackedFiles += trackedFiles.length;
         nextIndexedHeads.set(repository.rootUri.fsPath, head);
+        nextIndexedTrackedPathsByRepository.set(repository.rootUri.fsPath, trackedPathSet);
 
         // Detect HEAD change for branch-switch detection
         const previousHead = this.lastIndexedHeads.get(repository.rootUri.fsPath);
@@ -437,20 +482,28 @@ export class ViEligibilityIndexer implements vscode.Disposable {
               return;
             }
 
-            const cacheKey = buildCacheKey(
-              workItem.repository,
-              workItem.head,
-              relativePath,
-              strictRsrcHeader
-            );
+            const normalizedRelativePath = normalizeRelativeGitPath(relativePath);
+            const cleanObjectId = workItem.cleanObjectIdsByPath.get(normalizedRelativePath);
+            const cacheKey =
+              cleanObjectId === undefined
+                ? undefined
+                : buildCacheKey(
+                    workItem.repository,
+                    cleanObjectId,
+                    normalizedRelativePath,
+                    strictRsrcHeader
+                  );
             const fileUri = vscode.Uri.joinPath(workItem.repository.rootUri, relativePath);
 
-            let isEligible = this.eligibilityCache.get(cacheKey);
-            if (isEligible !== undefined) {
-              // Cache hit - reused
+            const cachedEntry = cacheKey === undefined ? undefined : this.eligibilityCache.get(cacheKey);
+            let isEligible: boolean | undefined;
+            if (
+              cachedEntry !== undefined &&
+              canReuseEligibilityCacheEntry(cachedEntry, workItem.reachableCommitHashes)
+            ) {
+              isEligible = cachedEntry.eligible;
               workCounts.reused += 1;
             } else {
-              // Cache miss - evaluate
               workCounts.evaluated += 1;
               try {
                 const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
@@ -458,7 +511,9 @@ export class ViEligibilityIndexer implements vscode.Disposable {
                   strictRsrcHeader
                 });
                 isEligible = eligibility.eligible;
-                this.eligibilityCache.set(cacheKey, isEligible);
+                if (cacheKey !== undefined) {
+                  this.eligibilityCache.set(cacheKey, toEligibilityCacheEntry(eligibility));
+                }
               } catch {
                 isEligible = false;
                 workCounts.failed += 1;
@@ -522,6 +577,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
       this.lastIndexedHeads.clear();
+      this.lastIndexedTrackedPathsByRepository.clear();
       this.hideStatusBarProgress();
       finalizeSkippedCount(workCounts);
       this.lastRefreshResult = {
@@ -556,6 +612,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     // Successfully applied refresh
     this.lastIndexedRepositoryRoots = nextIndexedRepositoryRoots;
     this.lastIndexedHeads = nextIndexedHeads;
+    this.lastIndexedTrackedPathsByRepository = nextIndexedTrackedPathsByRepository;
     this.eligiblePaths = nextEligiblePaths;
     this.hideStatusBarProgress();
     // Determine the effective refresh reason based on state (VHS-REQ-606)
@@ -579,7 +636,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   }
 
   private restorePersistedEligibilityCache(): void {
-    let parsedEntries: Record<string, boolean>;
+    let parsedEntries: Record<string, EligibilityCacheEntry>;
     try {
       const persistedCache = this.cacheStore?.get<unknown>(ELIGIBILITY_CACHE_STORAGE_KEY);
       parsedEntries = parsePersistedEligibilityCache(persistedCache);
@@ -588,8 +645,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     }
 
     this.eligibilityCache.clear();
-    for (const [cacheKey, isEligible] of Object.entries(parsedEntries)) {
-      this.eligibilityCache.set(cacheKey, isEligible);
+    for (const [cacheKey, entry] of Object.entries(parsedEntries)) {
+      this.eligibilityCache.set(cacheKey, entry);
     }
   }
 
@@ -598,9 +655,9 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       return;
     }
 
-    const entries: Record<string, boolean> = {};
-    for (const [cacheKey, isEligible] of this.eligibilityCache.entries()) {
-      entries[cacheKey] = isEligible;
+    const entries: Record<string, EligibilityCacheEntry> = {};
+    for (const [cacheKey, entry] of this.eligibilityCache.entries()) {
+      entries[cacheKey] = entry;
     }
 
     const persistedCache: PersistedEligibilityCache = {
@@ -692,7 +749,7 @@ function formatEta(milliseconds: number): string {
 
 export function buildCacheKey(
   repository: IndexedRepository,
-  head: string,
+  blobObjectId: string,
   relativePath: string,
   strictRsrcHeader: boolean
 ): string {
@@ -700,12 +757,12 @@ export function buildCacheKey(
     `v${ELIGIBILITY_CACHE_SCHEMA_VERSION}`,
     repository.rootUri.fsPath,
     normalizeRelativeGitPath(relativePath),
-    head,
+    blobObjectId,
     strictRsrcHeader ? 'strict' : 'non-strict'
   ].join('::');
 }
 
-function parsePersistedEligibilityCache(value: unknown): Record<string, boolean> {
+function parsePersistedEligibilityCache(value: unknown): Record<string, EligibilityCacheEntry> {
   if (!value || typeof value !== 'object') {
     return {};
   }
@@ -718,13 +775,128 @@ function parsePersistedEligibilityCache(value: unknown): Record<string, boolean>
     return {};
   }
 
-  const parsedEntries: Record<string, boolean> = {};
+  const parsedEntries: Record<string, EligibilityCacheEntry> = {};
   for (const [cacheKey, entryValue] of Object.entries(candidate.entries)) {
-    if (typeof entryValue === 'boolean') {
+    if (isEligibilityCacheEntry(entryValue)) {
       parsedEntries[cacheKey] = entryValue;
     }
   }
   return parsedEntries;
+}
+
+function isEligibilityCacheEntry(value: unknown): value is EligibilityCacheEntry {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<EligibilityCacheEntry>;
+  if (typeof candidate.eligible !== 'boolean') {
+    return false;
+  }
+  if (!isCacheableSignature(candidate.signature)) {
+    return false;
+  }
+  if (
+    !Array.isArray(candidate.commitHashes) ||
+    !candidate.commitHashes.every((commitHash) => typeof commitHash === 'string')
+  ) {
+    return false;
+  }
+  if (candidate.signature === 'unknown' && candidate.eligible) {
+    return false;
+  }
+  if (
+    candidate.eligible &&
+    (candidate.signature === 'unknown' || candidate.commitHashes.length < 2)
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function isCacheableSignature(value: unknown): value is ViSignature | 'unknown' {
+  return value === 'LVIN' || value === 'LVCC' || value === 'unknown';
+}
+
+function buildTrackedFilesFromEntries(entries: GitTrackedFileEntry[]): string[] {
+  const trackedFiles: string[] = [];
+  const seenPaths = new Set<string>();
+  for (const entry of entries) {
+    const normalizedPath = normalizeRelativeGitPath(entry.relativePath);
+    if (seenPaths.has(normalizedPath)) {
+      continue;
+    }
+
+    seenPaths.add(normalizedPath);
+    trackedFiles.push(normalizedPath);
+  }
+
+  return trackedFiles;
+}
+
+function buildCleanObjectIdsByPath(
+  entries: GitTrackedFileEntry[],
+  changedTrackedPaths: Set<string>
+): Map<string, string> {
+  const cleanObjectIdsByPath = new Map<string, string>();
+  for (const entry of entries) {
+    if (entry.stage !== 0) {
+      continue;
+    }
+
+    const normalizedPath = normalizeRelativeGitPath(entry.relativePath);
+    if (changedTrackedPaths.has(normalizedPath)) {
+      continue;
+    }
+
+    cleanObjectIdsByPath.set(normalizedPath, entry.objectId);
+  }
+
+  return cleanObjectIdsByPath;
+}
+
+function countRemovedPaths(
+  previousTrackedPaths: Set<string> | undefined,
+  currentTrackedPaths: Set<string>
+): number {
+  if (!previousTrackedPaths) {
+    return 0;
+  }
+
+  let removed = 0;
+  for (const previousPath of previousTrackedPaths) {
+    if (!currentTrackedPaths.has(previousPath)) {
+      removed += 1;
+    }
+  }
+
+  return removed;
+}
+
+function toEligibilityCacheEntry(
+  eligibility: Awaited<ReturnType<typeof evaluateViEligibilityForFsPath>>
+): EligibilityCacheEntry {
+  return {
+    eligible: eligibility.eligible,
+    signature: eligibility.signature,
+    commitHashes: [...eligibility.commitHashes]
+  };
+}
+
+function canReuseEligibilityCacheEntry(
+  entry: EligibilityCacheEntry,
+  reachableCommitHashes: Set<string>
+): boolean {
+  if (entry.signature === 'unknown') {
+    return entry.eligible === false;
+  }
+
+  if (!entry.eligible || entry.commitHashes.length < 2) {
+    return false;
+  }
+
+  return entry.commitHashes.every((commitHash) => reachableCommitHashes.has(commitHash));
 }
 
 export function contextKeysForUri(uri: vscode.Uri): string[] {
@@ -891,7 +1063,7 @@ export function buildIndexingDiagnosticSummary(
   // Work counts
   const { counts } = result;
   lines.push(
-    `Work counts: tracked=${counts.tracked}, reused=${counts.reused}, evaluated=${counts.evaluated}, eligible=${counts.eligible}, skipped=${counts.skipped}, failed=${counts.failed}.`
+    `Work counts: tracked=${counts.tracked}, reused=${counts.reused}, evaluated=${counts.evaluated}, eligible=${counts.eligible}, removed=${counts.removed}, skipped=${counts.skipped}, failed=${counts.failed}.`
   );
 
   // Repository roots
@@ -924,9 +1096,9 @@ function formatIndexRefreshState(state: IndexRefreshState): string {
     case 'cold-scan':
       return 'Cold scan (no prior eligibility data; all files evaluated from scratch)';
     case 'warm-restart':
-      return 'Warm restart (prior eligibility data exists with same HEAD; cache reuse possible)';
+      return 'Warm restart (prior eligibility data exists; file-level cache reuse possible)';
     case 'branch-switch':
-      return 'Branch switch (HEAD changed since last refresh; affected files re-evaluated)';
+      return 'Branch switch (HEAD changed since last refresh; changed or unproven files re-evaluated)';
     case 'cancelled':
       return 'Cancelled (user cancelled refresh; previous snapshot preserved)';
     case 'trust-disabled':

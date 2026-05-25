@@ -9,6 +9,13 @@ export interface GitHistoryEntry {
   subject: string;
 }
 
+export interface GitTrackedFileEntry {
+  mode: string;
+  objectId: string;
+  stage: number;
+  relativePath: string;
+}
+
 export interface RunGitOptions {
   timeoutMs?: number;
 }
@@ -134,6 +141,32 @@ export function parseLsFilesZ(output: string | Buffer): string[] {
   return text.split('\0').filter((entry) => entry.length > 0);
 }
 
+export function parseLsFilesStageZ(output: string | Buffer): GitTrackedFileEntry[] {
+  return parseLsFilesZ(output)
+    .map((entry) => {
+      const tabIndex = entry.indexOf('\t');
+      if (tabIndex < 0) {
+        return undefined;
+      }
+
+      const metadata = entry.slice(0, tabIndex).trim();
+      const relativePath = normalizeRelativeGitPath(entry.slice(tabIndex + 1));
+      const [mode, objectId, stageText] = metadata.split(/\s+/);
+      const stage = Number(stageText);
+      if (!mode || !objectId || !Number.isInteger(stage) || relativePath.length === 0) {
+        return undefined;
+      }
+
+      return {
+        mode,
+        objectId,
+        stage,
+        relativePath
+      };
+    })
+    .filter((entry): entry is GitTrackedFileEntry => entry !== undefined);
+}
+
 export function parseCommitHashes(output: string): string[] {
   return output
     .split(/\r?\n/)
@@ -183,6 +216,35 @@ export async function getRepoRemoteUrl(
 export async function listTrackedFiles(cwd: string): Promise<string[]> {
   const stdout = await runGit(['ls-files', '-z'], cwd, 'buffer');
   return parseLsFilesZ(stdout);
+}
+
+export async function listTrackedFileEntries(cwd: string): Promise<GitTrackedFileEntry[]> {
+  const stdout = await runGit(['ls-files', '-s', '-z'], cwd, 'buffer');
+  return parseLsFilesStageZ(stdout);
+}
+
+export async function listChangedTrackedPaths(cwd: string): Promise<string[]> {
+  const [unstagedOutput, stagedOutput, unmergedOutput] = await Promise.all([
+    runGit(['diff', '--name-only', '-z'], cwd, 'buffer'),
+    runGit(['diff', '--cached', '--name-only', '-z'], cwd, 'buffer'),
+    runGit(['ls-files', '-u', '-z'], cwd, 'buffer')
+  ]);
+
+  const paths = new Set<string>();
+  for (const relativePath of [
+    ...parseLsFilesZ(unstagedOutput),
+    ...parseLsFilesZ(stagedOutput),
+    ...parseLsFilesStageZ(unmergedOutput).map((entry) => entry.relativePath)
+  ]) {
+    paths.add(normalizeRelativeGitPath(relativePath));
+  }
+
+  return [...paths].sort((left, right) => left.localeCompare(right));
+}
+
+export async function listReachableCommitHashes(cwd: string): Promise<string[]> {
+  const stdout = await runGit(['rev-list', 'HEAD'], cwd, 'utf8');
+  return parseCommitHashes(String(stdout));
 }
 
 export async function getFileCommitHashes(

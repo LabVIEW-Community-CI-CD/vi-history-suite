@@ -14,6 +14,9 @@ const {
   configurationChangeListeners,
   getRepoRootMock,
   listTrackedFilesMock,
+  listTrackedFileEntriesMock,
+  listChangedTrackedPathsMock,
+  listReachableCommitHashesMock,
   getRepoHeadMock,
   evaluateViEligibilityMock
 } = vi.hoisted(() => ({
@@ -51,8 +54,18 @@ const {
   configurationChangeListeners: [] as Array<(event: { affectsConfiguration: (section: string) => boolean }) => unknown>,
   getRepoRootMock: vi.fn<(fsPath: string) => Promise<string>>(),
   listTrackedFilesMock: vi.fn<(cwd: string) => Promise<string[]>>(),
+  listTrackedFileEntriesMock: vi.fn<
+    (cwd: string) => Promise<Array<{ mode: string; objectId: string; stage: number; relativePath: string }>>
+  >(),
+  listChangedTrackedPathsMock: vi.fn<(cwd: string) => Promise<string[]>>(),
+  listReachableCommitHashesMock: vi.fn<(cwd: string) => Promise<string[]>>(),
   getRepoHeadMock: vi.fn<(cwd: string) => Promise<string>>(),
-  evaluateViEligibilityMock: vi.fn<(fsPath: string, options: unknown) => Promise<{ eligible: boolean }>>()
+  evaluateViEligibilityMock: vi.fn<
+    (
+      fsPath: string,
+      options: unknown
+    ) => Promise<{ eligible: boolean; signature?: 'LVIN' | 'LVCC' | 'unknown'; commitHashes?: string[] }>
+  >()
 }));
 
 vi.mock('vscode', () => ({
@@ -142,6 +155,9 @@ vi.mock('../../src/git/gitCli', async () => {
     ...actual,
     getRepoRoot: getRepoRootMock,
     listTrackedFiles: listTrackedFilesMock,
+    listTrackedFileEntries: listTrackedFileEntriesMock,
+    listChangedTrackedPaths: listChangedTrackedPathsMock,
+    listReachableCommitHashes: listReachableCommitHashesMock,
     getRepoHead: getRepoHeadMock
   };
 });
@@ -152,7 +168,17 @@ vi.mock('../../src/services/viHistoryModel', async () => {
   );
   return {
     ...actual,
-    evaluateViEligibilityForFsPath: evaluateViEligibilityMock
+    evaluateViEligibilityForFsPath: async (fsPath: string, options: unknown) => {
+      const result = await evaluateViEligibilityMock(fsPath, options);
+      const eligible = result?.eligible ?? false;
+      return {
+        repositoryRoot: (options as { repoRoot?: string } | undefined)?.repoRoot ?? '/workspace/repo',
+        relativePath: fsPath.split('/').pop() ?? fsPath,
+        signature: result?.signature ?? (eligible ? 'LVIN' : 'unknown'),
+        commitHashes: result?.commitHashes ?? (eligible ? ['commit-a', 'commit-b'] : []),
+        eligible
+      };
+    }
   };
 });
 
@@ -167,14 +193,54 @@ import {
   ViEligibilityIndexer
 } from '../../src/indexing/viEligibilityIndexer';
 
+function mockTrackedFileEntry(relativePath: string, objectId = `blob:${relativePath}`, stage = 0) {
+  return {
+    mode: '100644',
+    objectId,
+    stage,
+    relativePath
+  };
+}
+
+function useTrackedFilesAsTrackedEntries(): void {
+  listTrackedFileEntriesMock.mockImplementation(async (cwd: string) =>
+    (await listTrackedFilesMock(cwd)).map((relativePath) =>
+      mockTrackedFileEntry(relativePath)
+    )
+  );
+}
+
+function resetGitIndexerMocks(): void {
+  getRepoRootMock.mockReset();
+  getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
+  listTrackedFilesMock.mockReset();
+  listTrackedFileEntriesMock.mockReset();
+  useTrackedFilesAsTrackedEntries();
+  listChangedTrackedPathsMock.mockReset();
+  listChangedTrackedPathsMock.mockResolvedValue([]);
+  listReachableCommitHashesMock.mockReset();
+  listReachableCommitHashesMock.mockResolvedValue([
+    'commit-a',
+    'commit-b',
+    'head-1',
+    'head-2',
+    'head-initial',
+    'head-stable',
+    'head-main',
+    'head-feature',
+    'head-feature-branch',
+    'head-new',
+    'head-old',
+    'head-good'
+  ]);
+  getRepoHeadMock.mockReset();
+}
+
 describe('viEligibilityIndexer helpers', () => {
   beforeEach(() => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
-    getRepoRootMock.mockReset();
-    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
-    listTrackedFilesMock.mockReset();
-    getRepoHeadMock.mockReset();
+    resetGitIndexerMocks();
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
@@ -210,7 +276,7 @@ describe('viEligibilityIndexer helpers', () => {
         'nested\\file.vi',
         true
       )
-    ).toBe('v1::/workspace/repo::nested/file.vi::head123::strict');
+    ).toBe('v2::/workspace/repo::nested/file.vi::head123::strict');
     expect(
       contextKeysForUri({
         fsPath: 'C:\\Repo\\nested\\file.vi',
@@ -289,10 +355,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
   beforeEach(() => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
-    getRepoRootMock.mockReset();
-    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
-    listTrackedFilesMock.mockReset();
-    getRepoHeadMock.mockReset();
+    resetGitIndexerMocks();
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
@@ -348,7 +411,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       eligiblePathsSample: [],
       lastRefreshResult: {
         state: 'trust-disabled',
-        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, skipped: 0, failed: 0 },
+        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
         refreshReason: 'trust-disabled'
@@ -360,7 +423,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(withProgressMock).not.toHaveBeenCalled();
   });
 
-  it('reuses cached eligibility for the same HEAD and invalidates when HEAD changes', async () => {
+  it('reuses cached eligibility for the same tracked blob across HEAD changes', async () => {
     configurationValues.set('strictRsrcHeader', true);
     workspaceState.workspaceFolders = [
       { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
@@ -387,7 +450,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     await indexer.refresh();
     await indexer.refresh();
 
-    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(2);
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
     expect(evaluateViEligibilityMock).toHaveBeenNthCalledWith(
       1,
       '/workspace/repo/tracked.vi',
@@ -405,14 +468,18 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
     getRepoHeadMock.mockResolvedValue('head-1');
     eligibilityCacheStorageState.value = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       entries: {
         [buildCacheKey(
           { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
-          'head-1',
+          'blob:tracked.vi',
           'tracked.vi',
           true
-        )]: true
+        )]: {
+          eligible: true,
+          signature: 'LVIN',
+          commitHashes: ['commit-a', 'commit-b']
+        }
       }
     };
     const cacheStore = createEligibilityCacheStorageMock();
@@ -489,6 +556,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
         reused: 0,
         evaluated: 1,
         eligible: 1,
+        removed: 0,
         skipped: 0,
         failed: 0
       },
@@ -501,14 +569,18 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     getRepoHeadMock.mockResolvedValue('head-1');
     evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
     eligibilityCacheStorageState.value = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       entries: {
         [buildCacheKey(
           { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
-          'head-1',
+          'blob:other.vi',
           'other.vi',
           false
-        )]: true
+        )]: {
+          eligible: true,
+          signature: 'LVIN',
+          commitHashes: ['commit-a', 'commit-b']
+        }
       }
     };
     const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
@@ -524,9 +596,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     getRepoHeadMock.mockResolvedValue('head-1');
     evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
     eligibilityCacheStorageState.value = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       entries: {
-        corrupted: 'not-a-boolean'
+        corrupted: 'not-a-cache-entry'
       }
     };
     const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
@@ -542,11 +614,11 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     getRepoHeadMock.mockResolvedValue('head-1');
     evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
     eligibilityCacheStorageState.value = {
-      schemaVersion: 999,
+      schemaVersion: 1,
       entries: {
         [buildCacheKey(
           { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
-          'head-1',
+          'blob:tracked.vi',
           'tracked.vi',
           false
         )]: true
@@ -566,14 +638,18 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     getRepoHeadMock.mockResolvedValue('head-1');
     evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
     eligibilityCacheStorageState.value = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       entries: {
         [buildCacheKey(
           { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
-          'head-1',
+          'blob:tracked.vi',
           'tracked.vi',
           false
-        )]: true
+        )]: {
+          eligible: true,
+          signature: 'LVIN',
+          commitHashes: ['commit-a', 'commit-b']
+        }
       }
     };
     const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
@@ -584,19 +660,23 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
   });
 
-  it('fails closed when persisted Git facts do not match the current HEAD', async () => {
+  it('fails closed when persisted Git object facts do not match the current blob', async () => {
     listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
     getRepoHeadMock.mockResolvedValue('head-new');
     evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
     eligibilityCacheStorageState.value = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       entries: {
         [buildCacheKey(
           { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
-          'head-old',
+          'blob:old',
           'tracked.vi',
           false
-        )]: true
+        )]: {
+          eligible: true,
+          signature: 'LVIN',
+          commitHashes: ['commit-a', 'commit-b']
+        }
       }
     };
     const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
@@ -709,7 +789,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(statusBar?.show).toHaveBeenCalled();
     expect(statusBar?.text).toContain('VI History: 0/3 eligible');
     expect(statusBar?.tooltip).toContain('Indexing status: Cold scan');
-    expect(statusBar?.tooltip).toContain('Work counts: tracked=3, reused=0, evaluated=3, eligible=0, skipped=0, failed=0.');
+    expect(statusBar?.tooltip).toContain('Work counts: tracked=3, reused=0, evaluated=3, eligible=0, removed=0, skipped=0, failed=0.');
     expect(statusBar?.hide).toHaveBeenCalled();
   });
 
@@ -1255,10 +1335,7 @@ describe('viEligibilityIndexer eligibility edge cases (VHS-REQ-006, VHS-REQ-061)
   beforeEach(() => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
-    getRepoRootMock.mockReset();
-    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
-    listTrackedFilesMock.mockReset();
-    getRepoHeadMock.mockReset();
+    resetGitIndexerMocks();
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
@@ -1482,10 +1559,7 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
   beforeEach(() => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
-    getRepoRootMock.mockReset();
-    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
-    listTrackedFilesMock.mockReset();
-    getRepoHeadMock.mockReset();
+    resetGitIndexerMocks();
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
@@ -1609,8 +1683,8 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
     const result = indexer.getLastRefreshResult();
     expect(result?.state).toBe('branch-switch');
     expect(result?.counts.tracked).toBe(1);
-    expect(result?.counts.reused).toBe(0);
-    expect(result?.counts.evaluated).toBe(1);
+    expect(result?.counts.reused).toBe(1);
+    expect(result?.counts.evaluated).toBe(0);
     expect(result?.snapshotPreserved).toBe(false);
   });
 
@@ -1842,10 +1916,7 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
   beforeEach(() => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
-    getRepoRootMock.mockReset();
-    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
-    listTrackedFilesMock.mockReset();
-    getRepoHeadMock.mockReset();
+    resetGitIndexerMocks();
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
@@ -1985,6 +2056,7 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
       fsPath: '/workspace/repo/to-be-removed.vi',
       path: '/workspace/repo/to-be-removed.vi'
     } as never)).toBe(false);
+    expect(indexer.getLastRefreshResult()?.counts.removed).toBe(1);
   });
 
   it('re-evaluates changed files when HEAD changes', async () => {
@@ -2001,6 +2073,9 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
     } as never);
 
     listTrackedFilesMock.mockResolvedValue(['file.vi']);
+    listTrackedFileEntriesMock
+      .mockResolvedValueOnce([mockTrackedFileEntry('file.vi', 'blob:file-v1')])
+      .mockResolvedValueOnce([mockTrackedFileEntry('file.vi', 'blob:file-v2')]);
     getRepoHeadMock
       .mockResolvedValueOnce('head-1')
       .mockResolvedValueOnce('head-2');
@@ -2026,6 +2101,196 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
 
     // Verify branch-switch state
     expect(indexer.getLastRefreshResult()?.state).toBe('branch-switch');
+  });
+
+  it('reuses unchanged blobs and re-evaluates only changed blobs on branch switch', async () => {
+    configurationValues.set('maxIndexedConcurrency', 1);
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['unchanged.vi', 'changed.vi']);
+    listTrackedFileEntriesMock
+      .mockResolvedValueOnce([
+        mockTrackedFileEntry('unchanged.vi', 'blob:unchanged'),
+        mockTrackedFileEntry('changed.vi', 'blob:changed-main')
+      ])
+      .mockResolvedValueOnce([
+        mockTrackedFileEntry('unchanged.vi', 'blob:unchanged'),
+        mockTrackedFileEntry('changed.vi', 'blob:changed-feature')
+      ]);
+    getRepoHeadMock
+      .mockResolvedValueOnce('head-main')
+      .mockResolvedValueOnce('head-feature');
+    evaluateViEligibilityMock
+      .mockResolvedValueOnce({ eligible: true, signature: 'LVIN', commitHashes: ['commit-a', 'commit-b'] })
+      .mockResolvedValueOnce({ eligible: true, signature: 'LVIN', commitHashes: ['commit-a', 'commit-b'] })
+      .mockResolvedValueOnce({ eligible: false, signature: 'LVIN', commitHashes: ['commit-a'] });
+
+    await indexer.refresh();
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(3);
+    expect(evaluateViEligibilityMock.mock.calls.map((call) => call[0])).toEqual([
+      '/workspace/repo/unchanged.vi',
+      '/workspace/repo/changed.vi',
+      '/workspace/repo/changed.vi'
+    ]);
+    expect(indexer.getLastRefreshResult()).toMatchObject({
+      state: 'branch-switch',
+      counts: {
+        tracked: 2,
+        reused: 1,
+        evaluated: 1,
+        eligible: 1,
+        removed: 0,
+        skipped: 0,
+        failed: 0
+      }
+    });
+  });
+
+  it('re-evaluates cached eligible entries when history proof commits are unreachable', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    listTrackedFilesMock.mockResolvedValue(['file.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    listReachableCommitHashesMock.mockResolvedValue(['commit-a', 'commit-b']);
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 2,
+      entries: {
+        [buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'blob:file.vi',
+          'file.vi',
+          false
+        )]: {
+          eligible: true,
+          signature: 'LVIN',
+          commitHashes: ['unreachable-a', 'unreachable-b']
+        }
+      }
+    };
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true, signature: 'LVIN', commitHashes: ['commit-a', 'commit-b'] });
+    const indexer = new ViEligibilityIndexer(
+      {
+        repositories: [
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never,
+      createEligibilityCacheStorageMock() as never
+    );
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+  });
+
+  it('reuses cached unknown-signature entries as ineligible for the same blob', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    listTrackedFilesMock.mockResolvedValue(['unknown.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 2,
+      entries: {
+        [buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'blob:unknown.vi',
+          'unknown.vi',
+          false
+        )]: {
+          eligible: false,
+          signature: 'unknown',
+          commitHashes: []
+        }
+      }
+    };
+    evaluateViEligibilityMock.mockRejectedValue(new Error('should not evaluate'));
+    const indexer = new ViEligibilityIndexer(
+      {
+        repositories: [
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never,
+      createEligibilityCacheStorageMock() as never
+    );
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
+    expect(indexer.getLastRefreshResult()).toMatchObject({
+      counts: {
+        tracked: 1,
+        reused: 1,
+        evaluated: 0,
+        eligible: 0
+      }
+    });
+  });
+
+  it('does not reuse cached entries for staged, dirty, or unmerged tracked paths', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const paths = ['dirty.vi', 'staged.vi', 'unmerged.vi'];
+    listTrackedFilesMock.mockResolvedValue(paths);
+    listChangedTrackedPathsMock.mockResolvedValue(paths);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 2,
+      entries: Object.fromEntries(
+        paths.map((relativePath) => [
+          buildCacheKey(
+            { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+            `blob:${relativePath}`,
+            relativePath,
+            false
+          ),
+          {
+            eligible: true,
+            signature: 'LVIN',
+            commitHashes: ['commit-a', 'commit-b']
+          }
+        ])
+      )
+    };
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true, signature: 'LVIN', commitHashes: ['commit-a', 'commit-b'] });
+    const indexer = new ViEligibilityIndexer(
+      {
+        repositories: [
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never,
+      createEligibilityCacheStorageMock() as never
+    );
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(3);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(3);
   });
 
   it('re-evaluates files with invalidated cache entries when strictRsrcHeader changes', async () => {
@@ -2275,10 +2540,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
   beforeEach(() => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
-    getRepoRootMock.mockReset();
-    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
-    listTrackedFilesMock.mockReset();
-    getRepoHeadMock.mockReset();
+    resetGitIndexerMocks();
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
@@ -2475,7 +2737,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
 
     const result = {
       state: 'cold-scan' as const,
-      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, skipped: 0, failed: 0 },
+      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
       refreshReason: 'initial-activation' as const
@@ -2485,7 +2747,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
 
     expect(summary).toContain('Indexing status: Cold scan (no prior eligibility data; all files evaluated from scratch).');
     expect(summary).toContain('Refresh reason: Initial extension activation.');
-    expect(summary).toContain('Work counts: tracked=10, reused=0, evaluated=10, eligible=5, skipped=0, failed=0.');
+    expect(summary).toContain('Work counts: tracked=10, reused=0, evaluated=10, eligible=5, removed=0, skipped=0, failed=0.');
     expect(summary).toContain('Indexed repositories: 1 (repo).');
     expect(summary).toContain('Note: LabVIEWCLI or comparison-runtime validation failures are comparison/runtime setup evidence, not indexing-cache causes. Runtime discovery diagnostics (VHS-REQ-155) are separate from indexing diagnostics.');
   });
@@ -2495,7 +2757,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
 
     const result = {
       state: 'warm-restart' as const,
-      counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, skipped: 0, failed: 0 },
+      counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
       refreshReason: 'scheduled-refresh' as const
@@ -2524,7 +2786,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
 
     const result = {
       state: 'cancelled' as const,
-      counts: { tracked: 5, reused: 0, evaluated: 2, eligible: 1, skipped: 3, failed: 0 },
+      counts: { tracked: 5, reused: 0, evaluated: 2, eligible: 1, removed: 0, skipped: 3, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: true,
       refreshReason: 'user-cancellation' as const
@@ -2550,7 +2812,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
 
     const result = {
       state: 'trust-disabled' as const,
-      counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, skipped: 0, failed: 0 },
+      counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: [],
       snapshotPreserved: false,
       refreshReason: 'trust-disabled' as const
@@ -2566,7 +2828,7 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
 
     const result = {
       state: 'cold-scan' as const,
-      counts: { tracked: 20, reused: 0, evaluated: 20, eligible: 10, skipped: 0, failed: 0 },
+      counts: { tracked: 20, reused: 0, evaluated: 20, eligible: 10, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo1', '/workspace/repo2', '/workspace/repo3', '/workspace/repo4', '/workspace/repo5'],
       snapshotPreserved: false,
       refreshReason: 'initial-activation' as const
