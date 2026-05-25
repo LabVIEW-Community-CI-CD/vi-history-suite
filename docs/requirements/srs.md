@@ -851,18 +851,19 @@ Missing numeric IDs are intentional.
 ### VHS-REQ-603: Large-Repository Indexing Operating Model
 
 - Status: Active
-- Parent: VHS-SYS-REQ-001
+- Parent: VHS-SYS-REQ-015
 - Area: Git History Eligibility
 - Statement: Repository eligibility indexing shall define large-repository
-  refresh states and observable work accounting without wall-clock performance
-  promises.
+  refresh states, file-level branch-switch reuse behavior, and observable work
+  accounting without wall-clock performance promises.
 - Acceptance Criteria:
   - The indexing model distinguishes cold scan, warm restart, branch switch,
     cancellation, trust-disabled, and failed-refresh states.
-  - Indexing evidence reports tracked, reused, evaluated, eligible, skipped, and
-    failed file counts where those counts are available.
+  - Indexing evidence reports tracked, reused, evaluated, removed, skipped,
+    failed, and eligible file counts where those counts are available.
   - Warm restart and branch-switch behavior is specified in terms of cache reuse
-    and re-evaluated file counts rather than elapsed time.
+    and re-evaluated file counts rather than elapsed time, with unchanged clean
+    tracked blobs eligible for reuse across `HEAD` changes.
   - Cancellation and failed refreshes preserve a last valid eligibility snapshot
     when one exists.
   - LabVIEWCLI or comparison-runtime validation failures are treated as separate
@@ -884,7 +885,7 @@ Missing numeric IDs are intentional.
 ### VHS-REQ-604: Persistent Git-Object Eligibility Cache
 
 - Status: Active
-- Parent: VHS-SYS-REQ-001
+- Parent: VHS-SYS-REQ-015
 - Area: Git History Eligibility
 - Statement: Eligibility indexing shall persist eligible and ineligible file
   decisions in VS Code extension storage so warm sessions can reuse valid Git
@@ -893,8 +894,11 @@ Missing numeric IDs are intentional.
   - Persistent eligibility cache data is stored through VS Code extension
     storage, not through files written into the workspace or repository.
   - Cache entries are reusable only when repository identity, normalized path,
-    Git object/history facts, strict header setting, and cache schema version
+    tracked Git blob object ID, strict header setting, and cache schema version
     match the current evaluation context.
+  - Cached eligible entries are reused only when their recorded history proof
+    commits remain reachable from the current `HEAD`; cached unknown-signature
+    entries may reuse ineligible for the same clean blob.
   - Stale, missing, incompatible, or corrupt cache data fails closed by
     re-evaluating affected files.
   - Cache data records eligibility facts needed for reuse without storing file
@@ -917,7 +921,7 @@ Missing numeric IDs are intentional.
 ### VHS-REQ-605: Incremental Refresh And Invalidation Lifecycle
 
 - Status: Active
-- Parent: VHS-SYS-REQ-001
+- Parent: VHS-SYS-REQ-015
 - Area: Git History Eligibility
 - Statement: Eligibility indexing shall refresh incrementally when repository,
   workspace, or indexing settings change while preserving a conservative
@@ -926,10 +930,14 @@ Missing numeric IDs are intentional.
   - Branch or HEAD changes, workspace-folder changes, Git repository state
     changes, and relevant indexing setting changes trigger eligibility refresh
     or invalidation.
-  - Unchanged files with valid cache entries are reused instead of re-evaluated.
-  - Removed files are dropped from the eligibility snapshot.
-  - Changed files, missing cache entries, and invalidated cache entries are
-    re-evaluated before becoming eligible.
+  - Clean tracked files with matching repository identity, normalized path, Git
+    blob object ID, strict header setting, cache schema version, and reachable
+    history proof are reused instead of re-evaluated.
+  - Removed files are dropped from the eligibility snapshot and counted as
+    removed in diagnostics.
+  - Changed, dirty, staged, unmerged, cache-missing, malformed, or
+    history-unproven files are re-evaluated before becoming eligible and are not
+    persisted as clean blob evidence unless clean tracked facts are available.
   - Rapid refresh requests are coalesced so newer work supersedes obsolete work
     without exposing partial obsolete results.
   - Cancellation preserves the last valid eligibility snapshot when one exists
@@ -949,7 +957,7 @@ Missing numeric IDs are intentional.
 ### VHS-REQ-606: Indexing Diagnostics And Evidence
 
 - Status: Active
-- Parent: VHS-SYS-REQ-001
+- Parent: VHS-SYS-REQ-015
 - Area: Menu Gating
 - Statement: The extension shall expose user-visible indexing diagnostics that
   explain eligibility refresh state, work accounting, and the boundary between
@@ -957,8 +965,8 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - User-visible status distinguishes cold scan, cache reuse, incremental
     refresh, cancellation, trust-disabled, and failed-refresh states.
-  - Diagnostics include tracked, reused, evaluated, eligible, skipped, and
-    failed counts where available.
+  - Diagnostics include tracked, reused, evaluated, removed, skipped, failed,
+    and eligible counts where available.
   - Diagnostics identify the refresh reason when a branch switch, HEAD change,
     workspace-folder change, Git repository state change, relevant setting
     change, cancellation, or trust-disabled state drives the result.

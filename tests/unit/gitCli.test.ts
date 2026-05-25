@@ -5,16 +5,21 @@ import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  findReachableCommitHashes,
   getFileCommitHashes,
   getFileHistoryCount,
   getFileHistoryEntries,
   getRepoHead,
   getRepoRoot,
   getWindowsGitExecutableCandidates,
+  listChangedTrackedPaths,
+  listReachableCommitHashes,
+  listTrackedFileEntries,
   listTrackedFiles,
   normalizeRelativeGitPath,
   parseCommitHashes,
   parseHistoryEntries,
+  parseLsFilesStageZ,
   parseLsFilesZ,
   runGit,
   resolveGitExecutable,
@@ -50,6 +55,29 @@ describe('gitCli parsing', () => {
     expect(parseLsFilesZ('alpha.vi\0folder/with spaces.vi\0')).toEqual([
       'alpha.vi',
       'folder/with spaces.vi'
+    ]);
+  });
+
+  it('parses staged ls-files entries with object IDs and stages', () => {
+    expect(
+      parseLsFilesStageZ(
+        '100644 abcdef1234567890abcdef1234567890abcdef12 0\talpha.vi\0' +
+          '100755 0123456789abcdef0123456789abcdef01234567 2\tfolder\\beta.vi\0' +
+          'malformed-without-tab\0'
+      )
+    ).toEqual([
+      {
+        mode: '100644',
+        objectId: 'abcdef1234567890abcdef1234567890abcdef12',
+        stage: 0,
+        relativePath: 'alpha.vi'
+      },
+      {
+        mode: '100755',
+        objectId: '0123456789abcdef0123456789abcdef01234567',
+        stage: 2,
+        relativePath: 'folder/beta.vi'
+      }
     ]);
   });
 
@@ -150,6 +178,102 @@ describe('gitCli parsing', () => {
     expect(head).toMatch(/^[0-9a-f]{40}$/);
     expect(normalizeAssertPath(resolvedRoot)).toBe(normalizeAssertPath(repoRoot));
     expect(trackedFiles).toEqual(['folder with spaces/other.vi', 'nested/sample.vi']);
+  });
+
+  it('returns tracked file entries with blob object IDs from a real temporary Git repo', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'nested', 'sample.vi');
+
+    await fs.mkdir(path.dirname(trackedPath), { recursive: true });
+    await fs.writeFile(trackedPath, 'first');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add tracked file'], repoRoot);
+
+    const trackedEntries = await listTrackedFileEntries(repoRoot);
+
+    expect(trackedEntries).toEqual([
+      expect.objectContaining({
+        mode: '100644',
+        stage: 0,
+        relativePath: 'nested/sample.vi'
+      })
+    ]);
+    expect(trackedEntries[0]?.objectId).toMatch(/^[0-9a-f]{40}$/);
+  });
+
+  it('lists dirty, staged, and unmerged tracked paths once', async () => {
+    const repoRoot = await createTempGitRepo();
+    const dirtyPath = path.join(repoRoot, 'dirty.vi');
+    const stagedPath = path.join(repoRoot, 'staged.vi');
+    const conflictedPath = path.join(repoRoot, 'conflict.vi');
+
+    await fs.writeFile(dirtyPath, 'clean dirty');
+    await fs.writeFile(stagedPath, 'clean staged');
+    await fs.writeFile(conflictedPath, 'base\n');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add base files'], repoRoot);
+    const baseBranch = String(await runGit(['branch', '--show-current'], repoRoot)).trim();
+
+    await runGit(['checkout', '-b', 'feature'], repoRoot);
+    await fs.writeFile(conflictedPath, 'feature\n');
+    await runGit(['add', 'conflict.vi'], repoRoot);
+    await runGit(['commit', '-m', 'Feature conflict change'], repoRoot);
+
+    await runGit(['checkout', baseBranch], repoRoot);
+    await fs.writeFile(conflictedPath, 'master\n');
+    await runGit(['add', 'conflict.vi'], repoRoot);
+    await runGit(['commit', '-m', 'Master conflict change'], repoRoot);
+
+    await expect(runGit(['merge', 'feature'], repoRoot)).rejects.toThrow();
+    await fs.writeFile(dirtyPath, 'dirty worktree');
+    await fs.writeFile(stagedPath, 'staged worktree');
+    await runGit(['add', 'staged.vi'], repoRoot);
+
+    await expect(listChangedTrackedPaths(repoRoot)).resolves.toEqual([
+      'conflict.vi',
+      'dirty.vi',
+      'staged.vi'
+    ]);
+  });
+
+  it('lists commits reachable from HEAD in reverse chronological order', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'sample.vi');
+
+    await fs.writeFile(trackedPath, 'first');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'First commit'], repoRoot);
+    await fs.writeFile(trackedPath, 'second');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Second commit'], repoRoot);
+
+    const head = await getRepoHead(repoRoot);
+    const reachableCommits = await listReachableCommitHashes(repoRoot);
+
+    expect(reachableCommits).toHaveLength(2);
+    expect(reachableCommits[0]).toBe(head);
+    expect(reachableCommits[1]).toMatch(/^[0-9a-f]{40}$/);
+  });
+
+  it('finds only requested commits reachable from HEAD', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'sample.vi');
+
+    await fs.writeFile(trackedPath, 'first');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'First commit'], repoRoot);
+    await fs.writeFile(trackedPath, 'second');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Second commit'], repoRoot);
+
+    const [head, firstCommit] = await listReachableCommitHashes(repoRoot);
+    const reachableProofs = await findReachableCommitHashes(repoRoot, [
+      head,
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    ]);
+
+    expect(firstCommit).toMatch(/^[0-9a-f]{40}$/);
+    expect(reachableProofs).toEqual(new Set([head]));
   });
 
   it('returns bounded commit hashes and structured history entries from a real temporary Git repo', async () => {

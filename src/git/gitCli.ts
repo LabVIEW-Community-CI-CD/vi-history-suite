@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -7,6 +7,13 @@ export interface GitHistoryEntry {
   authorDate: string;
   authorName: string;
   subject: string;
+}
+
+export interface GitTrackedFileEntry {
+  mode: string;
+  objectId: string;
+  stage: number;
+  relativePath: string;
 }
 
 export interface RunGitOptions {
@@ -45,6 +52,113 @@ export async function runGit(
       }
     );
   });
+}
+
+export async function runGitLines(
+  args: string[],
+  cwd: string,
+  options: RunGitOptions = {}
+): Promise<string[]> {
+  const lines: string[] = [];
+  await streamGitLines(args, cwd, (line) => {
+    lines.push(line);
+  }, options);
+  return lines;
+}
+
+async function streamGitLines(
+  args: string[],
+  cwd: string,
+  onLine: (line: string) => boolean | void,
+  options: RunGitOptions = {}
+): Promise<void> {
+  const timeoutMs = options.timeoutMs ?? resolveGitTimeoutMs();
+  return new Promise((resolve, reject) => {
+    let bufferedStdout = '';
+    let bufferedStderr = '';
+    let timedOut = false;
+    let stopRequested = false;
+    const child = spawn(resolveGitExecutable(), args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    const timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+    }, timeoutMs);
+
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk: string) => {
+      bufferedStdout += chunk;
+      const parsedLines = bufferedStdout.split(/\r?\n/);
+      bufferedStdout = parsedLines.pop() ?? '';
+      for (const line of parsedLines) {
+        if (handleGitLine(line, onLine)) {
+          stopRequested = true;
+          child.kill('SIGTERM');
+          break;
+        }
+      }
+    });
+
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (chunk: string) => {
+      bufferedStderr += chunk;
+    });
+
+    child.on('error', (error) => {
+      clearTimeout(timeoutHandle);
+      reject(error);
+    });
+
+    child.on('close', (code, signal) => {
+      clearTimeout(timeoutHandle);
+      if (stopRequested) {
+        resolve();
+        return;
+      }
+      if (timedOut || signal === 'SIGTERM') {
+        reject(
+          new Error(
+            `Git command timed out after ${timeoutMs} ms: git ${args.join(' ')}. ` +
+              `Set ${GIT_TIMEOUT_ENVIRONMENT_KEY} to a larger value for slow networks.`
+          )
+        );
+        return;
+      }
+
+      if (code !== 0) {
+        const stderr = bufferedStderr.trim();
+        reject(
+          new Error(
+            stderr.length > 0
+              ? stderr
+              : `Git command failed with exit code ${code}: git ${args.join(' ')}`
+          )
+        );
+        return;
+      }
+
+      if (handleGitLine(bufferedStdout, onLine)) {
+        resolve();
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function handleGitLine(
+  line: string,
+  onLine: (line: string) => boolean | void
+): boolean {
+  const trimmedLine = line.trim();
+  if (trimmedLine.length === 0) {
+    return false;
+  }
+
+  return onLine(trimmedLine) === true;
 }
 
 export function resolveGitTimeoutMs(environment: NodeJS.ProcessEnv = process.env): number {
@@ -134,6 +248,32 @@ export function parseLsFilesZ(output: string | Buffer): string[] {
   return text.split('\0').filter((entry) => entry.length > 0);
 }
 
+export function parseLsFilesStageZ(output: string | Buffer): GitTrackedFileEntry[] {
+  return parseLsFilesZ(output)
+    .map((entry) => {
+      const tabIndex = entry.indexOf('\t');
+      if (tabIndex < 0) {
+        return undefined;
+      }
+
+      const metadata = entry.slice(0, tabIndex).trim();
+      const relativePath = normalizeRelativeGitPath(entry.slice(tabIndex + 1));
+      const [mode, objectId, stageText] = metadata.split(/\s+/);
+      const stage = Number(stageText);
+      if (!mode || !objectId || !Number.isInteger(stage) || relativePath.length === 0) {
+        return undefined;
+      }
+
+      return {
+        mode,
+        objectId,
+        stage,
+        relativePath
+      };
+    })
+    .filter((entry): entry is GitTrackedFileEntry => entry !== undefined);
+}
+
 export function parseCommitHashes(output: string): string[] {
   return output
     .split(/\r?\n/)
@@ -183,6 +323,60 @@ export async function getRepoRemoteUrl(
 export async function listTrackedFiles(cwd: string): Promise<string[]> {
   const stdout = await runGit(['ls-files', '-z'], cwd, 'buffer');
   return parseLsFilesZ(stdout);
+}
+
+export async function listTrackedFileEntries(cwd: string): Promise<GitTrackedFileEntry[]> {
+  const stdout = await runGit(['ls-files', '-s', '-z'], cwd, 'buffer');
+  return parseLsFilesStageZ(stdout);
+}
+
+export async function listChangedTrackedPaths(cwd: string): Promise<string[]> {
+  const [unstagedOutput, stagedOutput, unmergedOutput] = await Promise.all([
+    runGit(['diff', '--name-only', '-z'], cwd, 'buffer'),
+    runGit(['diff', '--cached', '--name-only', '-z'], cwd, 'buffer'),
+    runGit(['ls-files', '-u', '-z'], cwd, 'buffer')
+  ]);
+
+  const paths = new Set<string>();
+  for (const relativePath of [
+    ...parseLsFilesZ(unstagedOutput),
+    ...parseLsFilesZ(stagedOutput),
+    ...parseLsFilesStageZ(unmergedOutput).map((entry) => entry.relativePath)
+  ]) {
+    paths.add(normalizeRelativeGitPath(relativePath));
+  }
+
+  return [...paths].sort((left, right) => left.localeCompare(right));
+}
+
+export async function listReachableCommitHashes(cwd: string): Promise<string[]> {
+  return runGitLines(['rev-list', 'HEAD'], cwd);
+}
+
+export async function findReachableCommitHashes(
+  cwd: string,
+  commitHashes: readonly string[]
+): Promise<Set<string>> {
+  const pendingCommitHashes = new Set(
+    commitHashes
+      .map((commitHash) => commitHash.trim().toLowerCase())
+      .filter((commitHash) => commitHash.length > 0)
+  );
+  const reachableCommitHashes = new Set<string>();
+  if (pendingCommitHashes.size === 0) {
+    return reachableCommitHashes;
+  }
+
+  await streamGitLines(['rev-list', 'HEAD'], cwd, (line) => {
+    const commitHash = line.toLowerCase();
+    if (pendingCommitHashes.delete(commitHash)) {
+      reachableCommitHashes.add(commitHash);
+    }
+
+    return pendingCommitHashes.size === 0;
+  });
+
+  return reachableCommitHashes;
 }
 
 export async function getFileCommitHashes(

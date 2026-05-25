@@ -354,7 +354,7 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
     // Verify indexing diagnostics do not include runtime selection/execution facts
     const indexingResult = {
       state: 'cold-scan' as const,
-      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, skipped: 0, failed: 0 },
+      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
       refreshReason: 'initial-activation' as const
@@ -378,7 +378,7 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
 
     const result = {
       state: 'cold-scan' as const,
-      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, skipped: 0, failed: 0 },
+      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
       refreshReason: 'initial-activation' as const
@@ -397,7 +397,7 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
 
     const result = {
       state: 'warm-restart' as const,
-      counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, skipped: 0, failed: 0 },
+      counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
       refreshReason: 'scheduled-refresh' as const
@@ -425,7 +425,7 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
     for (const { state, expected } of states) {
       const result = {
         state,
-        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, skipped: 0, failed: 0 },
+        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
         refreshReason: 'initial-activation' as const
@@ -442,7 +442,7 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
 
     const result = {
       state: 'cold-scan' as const,
-      counts: { tracked: 100, reused: 20, evaluated: 80, eligible: 50, skipped: 5, failed: 3 },
+      counts: { tracked: 100, reused: 20, evaluated: 80, eligible: 50, removed: 2, skipped: 5, failed: 3 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
       refreshReason: 'initial-activation' as const
@@ -454,6 +454,7 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
     expect(countsLine).toContain('reused=20');
     expect(countsLine).toContain('evaluated=80');
     expect(countsLine).toContain('eligible=50');
+    expect(countsLine).toContain('removed=2');
     expect(countsLine).toContain('skipped=5');
     expect(countsLine).toContain('failed=3');
   });
@@ -476,7 +477,7 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
     for (const { reason, expected } of reasons) {
       const result = {
         state: 'cold-scan' as const,
-        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, skipped: 0, failed: 0 },
+        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
         refreshReason: reason
