@@ -364,7 +364,13 @@ Missing numeric IDs are intentional.
   selected file.
 - Acceptance Criteria:
   - No selected resource produces an informational message.
-  - Ineligible files produce an informational message.
+  - Ineligible files produce a factual informational message stating the reason
+    (unrecognized file format, no Git history, or insufficient commits) and a
+    next action.
+  - Untrusted workspaces produce a factual warning message with available
+    alternatives.
+  - Files outside Git repositories produce a factual error message with next
+    steps.
   - Eligible files open a webview panel with review content.
 - Agent Work Scope:
   - Change command orchestration, history service loading, and integration tests
@@ -378,6 +384,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viHistoryService.test.ts`
 - Change Guidance:
   - Keep user-facing stops explicit instead of silent.
+  - Blocked or empty states must include factual reasons and next actions.
 
 ### VHS-REQ-017: Factual History Panel Content
 
