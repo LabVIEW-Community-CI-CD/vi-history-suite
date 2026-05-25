@@ -4,7 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   preflightComparisonReportRevisions,
@@ -35,10 +35,14 @@ async function git(cwd: string, args: string[]): Promise<string> {
 }
 
 async function writeViLikeFile(filePath: string, signature: 'LVIN' | 'LVCC'): Promise<void> {
+  await fs.writeFile(filePath, createViLikeBuffer(signature));
+}
+
+function createViLikeBuffer(signature: 'LVIN' | 'LVCC'): Buffer {
   const bytes = Buffer.alloc(12, 0);
   Buffer.from('RSRC\r\n', 'ascii').copy(bytes, 0);
   Buffer.from(signature, 'ascii').copy(bytes, 8);
-  await fs.writeFile(filePath, bytes);
+  return bytes;
 }
 
 afterEach(async () => {
@@ -52,8 +56,9 @@ afterEach(async () => {
 describe('comparisonReportPreflight', () => {
   it('resolves revision-specific relative paths across a followed rename before blob preflight', async () => {
     const repoRoot = await createTempRepoRoot();
-    const originalRelativePath = 'Examples/Logging with Helper-VIs.vi';
-    const renamedRelativePath = 'Source/Examples/Logging with Helper-VIs.vi';
+    const originalRelativePath = 'Examples/Folder Name/Logging with Helper-VIs.vi';
+    const renamedRelativePath = 'Source/Examples/Folder Name/Logging with Helper-VIs.vi';
+    const requestedRelativePath = 'Source\\Examples\\Folder Name\\Logging with Helper-VIs.vi';
     const originalAbsolutePath = path.join(repoRoot, originalRelativePath);
     const renamedAbsolutePath = path.join(repoRoot, renamedRelativePath);
 
@@ -85,7 +90,7 @@ describe('comparisonReportPreflight', () => {
     await expect(
       preflightComparisonReportRevisions({
         repoRoot,
-        relativePath: renamedRelativePath,
+        relativePath: requestedRelativePath,
         leftRevisionId,
         rightRevisionId,
         strictRsrcHeader: true
@@ -109,6 +114,127 @@ describe('comparisonReportPreflight', () => {
         isVi: true
       }
     });
+  });
+
+  it.each([
+    {
+      name: 'base revision identifier is missing',
+      leftRevisionId: '   ',
+      rightRevisionId: 'selected123',
+      expectedBlockedReason: 'left-revision-id-missing',
+      expectedInspectedRevisionId: 'selected123'
+    },
+    {
+      name: 'selected revision identifier is missing',
+      leftRevisionId: 'base456',
+      rightRevisionId: '   ',
+      expectedBlockedReason: 'right-revision-id-missing',
+      expectedInspectedRevisionId: 'base456'
+    }
+  ])('$name', async ({ leftRevisionId, rightRevisionId, expectedBlockedReason, expectedInspectedRevisionId }) => {
+    const resolveRevisionRelativePaths = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
+      .mockResolvedValue(
+        new Map([[expectedInspectedRevisionId, 'Source\\Folder With Spaces\\Example.vi']])
+      );
+    const readRevisionBlob = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').readRevisionBlob>()
+      .mockResolvedValue(createViLikeBuffer('LVIN'));
+
+    const result = await preflightComparisonReportRevisions(
+      {
+        repoRoot: '/workspace/repo',
+        relativePath: 'Source\\Folder With Spaces\\Example.vi',
+        leftRevisionId,
+        rightRevisionId,
+        strictRsrcHeader: true
+      },
+      { resolveRevisionRelativePaths, readRevisionBlob }
+    );
+
+    expect(result.ready).toBe(false);
+    expect(result.blockedReason).toBe(expectedBlockedReason);
+    expect(resolveRevisionRelativePaths).toHaveBeenCalledWith(
+      '/workspace/repo',
+      'Source/Folder With Spaces/Example.vi',
+      [expectedInspectedRevisionId]
+    );
+    expect(readRevisionBlob).toHaveBeenCalledTimes(1);
+    expect(readRevisionBlob).toHaveBeenCalledWith(
+      '/workspace/repo',
+      expectedInspectedRevisionId,
+      'Source/Folder With Spaces/Example.vi'
+    );
+
+    const missingSide =
+      expectedBlockedReason === 'left-revision-id-missing' ? result.left : result.right;
+    const inspectedSide =
+      expectedBlockedReason === 'left-revision-id-missing' ? result.right : result.left;
+
+    expect(missingSide).toEqual({
+      revisionId: '',
+      resolvedRelativePath: undefined,
+      blobSpecifier: '[missing revision id]',
+      signature: undefined,
+      isVi: false,
+      blockedReason: 'revision-id-missing'
+    });
+    expect(inspectedSide).toMatchObject({
+      revisionId: expectedInspectedRevisionId,
+      resolvedRelativePath: 'Source/Folder With Spaces/Example.vi',
+      blobSpecifier: `${expectedInspectedRevisionId}:Source/Folder With Spaces/Example.vi`,
+      signature: 'LVIN',
+      isVi: true
+    });
+  });
+
+  it('normalizes resolved repo-relative paths with spaces and Windows separators for both blob reads', async () => {
+    const resolveRevisionRelativePaths = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
+      .mockResolvedValue(
+        new Map([
+          ['base123', 'Examples\\Folder With Spaces\\Original Example.vi'],
+          ['selected456', 'Source\\Folder With Spaces\\Current Example.vi']
+        ])
+      );
+    const readRevisionBlob = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').readRevisionBlob>()
+      .mockResolvedValue(createViLikeBuffer('LVIN'));
+
+    const result = await preflightComparisonReportRevisions(
+      {
+        repoRoot: '/workspace/repo',
+        relativePath: 'Source\\Folder With Spaces\\Current Example.vi',
+        leftRevisionId: 'base123',
+        rightRevisionId: 'selected456',
+        strictRsrcHeader: true
+      },
+      { resolveRevisionRelativePaths, readRevisionBlob }
+    );
+
+    expect(result).toMatchObject({
+      normalizedRelativePath: 'Source/Folder With Spaces/Current Example.vi',
+      ready: true,
+      blockedReason: undefined,
+      left: {
+        revisionId: 'base123',
+        resolvedRelativePath: 'Examples/Folder With Spaces/Original Example.vi',
+        blobSpecifier: 'base123:Examples/Folder With Spaces/Original Example.vi',
+        signature: 'LVIN',
+        isVi: true
+      },
+      right: {
+        revisionId: 'selected456',
+        resolvedRelativePath: 'Source/Folder With Spaces/Current Example.vi',
+        blobSpecifier: 'selected456:Source/Folder With Spaces/Current Example.vi',
+        signature: 'LVIN',
+        isVi: true
+      }
+    });
+    expect(readRevisionBlob.mock.calls).toEqual([
+      ['/workspace/repo', 'base123', 'Examples/Folder With Spaces/Original Example.vi'],
+      ['/workspace/repo', 'selected456', 'Source/Folder With Spaces/Current Example.vi']
+    ]);
   });
 
   it('reports preflight blocked when left blob is not a VI', async () => {
@@ -143,6 +269,48 @@ describe('comparisonReportPreflight', () => {
     expect(result.blockedReason).toBe('left-blob-not-vi');
     expect(result.left.isVi).toBe(false);
     expect(result.right.isVi).toBe(true);
+  });
+
+  it('does not use the working-tree file when one requested revision no longer has the VI blob', async () => {
+    const repoRoot = await createTempRepoRoot();
+    const relativePath = 'Source/Folder Name/Current Example.vi';
+    const absolutePath = path.join(repoRoot, relativePath);
+
+    await git(repoRoot, ['init']);
+    await git(repoRoot, ['config', 'user.name', 'VI History Suite']);
+    await git(repoRoot, ['config', 'user.email', 'vi-history-suite@example.com']);
+
+    await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeViLikeFile(absolutePath, 'LVIN');
+    await git(repoRoot, ['add', relativePath]);
+    await git(repoRoot, ['commit', '-m', 'Add VI']);
+    const leftRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    await git(repoRoot, ['rm', relativePath]);
+    await git(repoRoot, ['commit', '-m', 'Remove VI']);
+    const rightRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeViLikeFile(absolutePath, 'LVIN');
+
+    const result = await preflightComparisonReportRevisions({
+      repoRoot,
+      relativePath,
+      leftRevisionId,
+      rightRevisionId,
+      strictRsrcHeader: true
+    });
+
+    expect(result.ready).toBe(false);
+    expect(result.blockedReason).toBe('right-blob-read-failed');
+    expect(result.left.isVi).toBe(true);
+    expect(result.right).toMatchObject({
+      revisionId: rightRevisionId,
+      resolvedRelativePath: relativePath,
+      blobSpecifier: `${rightRevisionId}:${relativePath}`,
+      isVi: false,
+      blockedReason: 'blob-read-failed'
+    });
   });
 });
 

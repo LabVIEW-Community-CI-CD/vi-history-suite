@@ -513,6 +513,8 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - Selected and base revision blobs use normalized relative Git paths.
   - Missing revision identifiers fail closed.
+  - Paths with spaces or Windows-style separators normalize to repo-relative Git
+    paths before blob reads.
   - Preflight does not read the working-tree file in place of revision blobs.
 - Agent Work Scope:
   - Change preflight planning and tests together.
