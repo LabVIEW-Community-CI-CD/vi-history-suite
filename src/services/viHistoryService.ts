@@ -40,7 +40,10 @@ export function selectMostSpecificGitRepositoryRoot(
   repositories: GitApi['repositories']
 ): string | undefined {
   return repositories
-    .filter((repository) => uriFsPath.startsWith(repository.rootUri.fsPath))
+    .filter((repository) => {
+      const repoRoot = repository.rootUri.fsPath;
+      return uriFsPath === repoRoot || uriFsPath.startsWith(repoRoot + path.sep);
+    })
     .sort((left, right) => right.rootUri.fsPath.length - left.rootUri.fsPath.length)[0]
     ?.rootUri.fsPath;
 }

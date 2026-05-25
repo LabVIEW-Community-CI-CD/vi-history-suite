@@ -227,7 +227,7 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     await fs.writeFile(originalPath, 'second version');
     await runGit(['add', '.'], repoRoot);
     await runGit(['commit', '-m', 'Modify original.vi'], repoRoot);
-    await runGit(['mv', originalPath, renamedPath], repoRoot);
+    await runGit(['mv', 'original.vi', 'renamed.vi'], repoRoot);
     await runGit(['commit', '-m', 'Rename to renamed.vi'], repoRoot);
 
     const commitHashes = await getFileCommitHashes(repoRoot, 'renamed.vi', 3);
@@ -311,12 +311,15 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     expect(parseCommitHashes('abc123\r\n\r\ndef456')).toEqual(['abc123', 'def456']);
   });
 
-  it('normalizes mixed path separators including multiple consecutive separators', () => {
+  it('normalizes mixed path separators and collapses multiple consecutive separators', () => {
     expect(normalizeRelativeGitPath('folder\\\\nested\\\\file.vi')).toBe(
-      'folder//nested//file.vi'
+      'folder/nested/file.vi'
     );
     expect(normalizeRelativeGitPath('folder/nested\\mixed/file.vi')).toBe(
       'folder/nested/mixed/file.vi'
+    );
+    expect(normalizeRelativeGitPath('folder///nested//file.vi')).toBe(
+      'folder/nested/file.vi'
     );
   });
 });

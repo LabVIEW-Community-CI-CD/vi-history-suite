@@ -224,6 +224,15 @@ describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', (
     ).toBe('/workspace/outer/inner/deep');
   });
 
+  it('does not match repositories with prefix collisions', () => {
+    expect(
+      selectMostSpecificGitRepositoryRoot('/workspace/repo-a2/file.vi', [
+        { rootUri: { fsPath: '/workspace/repo-a' } },
+        { rootUri: { fsPath: '/workspace/repo-b' } }
+      ] as never)
+    ).toBeUndefined();
+  });
+
   it('handles multi-root workspace with independent repositories', () => {
     const repositories = [
       { rootUri: { fsPath: '/workspace/project-a' } },
