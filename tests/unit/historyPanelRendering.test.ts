@@ -607,4 +607,27 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('LVIN');
     });
   });
+
+  describe('copy review packet action button (VHS-REQ-039)', () => {
+    it('renders copy review packet button with data-command="copyReviewPacket"', () => {
+      const model = createTestViewModel();
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('data-command="copyReviewPacket"');
+    });
+
+    it('renders copy review packet button with data-testid="history-action-copy-review-packet"', () => {
+      const model = createTestViewModel();
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('data-testid="history-action-copy-review-packet"');
+    });
+
+    it('renders copy review packet button with expected label text', () => {
+      const model = createTestViewModel();
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('>Copy review packet</button>');
+    });
+  });
 });

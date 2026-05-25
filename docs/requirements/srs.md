@@ -437,6 +437,8 @@ Missing numeric IDs are intentional.
   - `src/commands/openViHistoryCommand.ts`
   - `src/ui/historyPanelTracker.ts`
 - Verification References:
+  - `tests/unit/historyPanelRendering.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/historyPanelTracker.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:

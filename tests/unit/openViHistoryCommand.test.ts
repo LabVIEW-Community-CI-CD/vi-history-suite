@@ -1,17 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ViHistoryViewModel } from '../../src/services/viHistoryModel';
+import { HistoryPanelTracker } from '../../src/ui/historyPanelTracker';
 
 const {
   showInformationMessageMock,
   showWarningMessageMock,
   showErrorMessageMock,
-  workspaceState
+  workspaceState,
+  clipboardWriteTextMock,
+  createWebviewPanelMock
 } = vi.hoisted(() => ({
   showInformationMessageMock: vi.fn(),
   showWarningMessageMock: vi.fn(),
   showErrorMessageMock: vi.fn(),
-  workspaceState: { isTrusted: true }
+  workspaceState: { isTrusted: true },
+  clipboardWriteTextMock: vi.fn(),
+  createWebviewPanelMock: vi.fn()
 }));
 
 vi.mock('vscode', () => ({
@@ -20,15 +25,21 @@ vi.mock('vscode', () => ({
     showWarningMessage: showWarningMessageMock,
     showErrorMessage: showErrorMessageMock,
     activeTextEditor: undefined,
-    createWebviewPanel: vi.fn()
+    createWebviewPanel: createWebviewPanelMock
   },
   workspace: {
     get isTrusted() {
       return workspaceState.isTrusted;
-    }
+    },
+    getConfiguration: vi.fn().mockReturnValue({ get: vi.fn().mockReturnValue(undefined) })
   },
   ViewColumn: {
     Active: 1
+  },
+  env: {
+    clipboard: {
+      writeText: clipboardWriteTextMock
+    }
   }
 }));
 
@@ -154,5 +165,174 @@ describe('openViHistoryCommand ineligibility messaging (VHS-REQ-016)', () => {
     expect(showInformationMessageMock).toHaveBeenCalledWith(
       'The selected file has only one Git commit. Commit additional changes to build reviewable history.'
     );
+  });
+});
+
+function createEligibleModel(overrides: Partial<ViHistoryViewModel> = {}): ViHistoryViewModel {
+  return {
+    repositoryName: 'test-repo',
+    repositoryRoot: '/workspace/test-repo',
+    repositoryUrl: 'https://github.com/org/test-repo',
+    relativePath: 'src/Sample.vi',
+    signature: 'LVIN',
+    eligible: true,
+    commits: [
+      {
+        hash: 'abc1234567890abcdef1234567890abcdef12345',
+        authorName: 'Test Author',
+        authorDate: '2025-01-20',
+        subject: 'Update sample',
+        previousHash: 'def1234567890abcdef1234567890abcdef12345'
+      },
+      {
+        hash: 'def1234567890abcdef1234567890abcdef12345',
+        authorName: 'Test Author',
+        authorDate: '2025-01-15',
+        subject: 'Add sample'
+      }
+    ],
+    ...overrides
+  };
+}
+
+function createMockPanel() {
+  return {
+    title: 'VI History: Sample.vi',
+    webview: {
+      html: '',
+      onDidReceiveMessage: vi.fn(),
+      postMessage: vi.fn().mockResolvedValue(true)
+    },
+    onDidDispose: vi.fn(),
+    dispose: vi.fn()
+  };
+}
+
+describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    workspaceState.isTrusted = true;
+    clipboardWriteTextMock.mockResolvedValue(undefined);
+    createWebviewPanelMock.mockReturnValue(createMockPanel());
+  });
+
+  it('writes review packet plain text to the clipboard', async () => {
+    const model = createEligibleModel();
+    const historyService = {
+      load: vi.fn().mockResolvedValue(model)
+    };
+    const panelTracker = new HistoryPanelTracker();
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker
+    );
+
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
+    await panelTracker.dispatchLastPanelMessage({ command: 'copyReviewPacket' });
+
+    expect(clipboardWriteTextMock).toHaveBeenCalledOnce();
+    const [writtenText] = clipboardWriteTextMock.mock.calls[0] as [string];
+    expect(writtenText).toContain('VI History Review Packet');
+    expect(writtenText).toContain('Repository: test-repo');
+    expect(writtenText).toContain('Path: src/Sample.vi');
+    expect(writtenText).toContain('Signature: LVIN');
+  });
+
+  it('records copied-review-packet action in panel tracker after a successful copy', async () => {
+    const model = createEligibleModel();
+    const historyService = {
+      load: vi.fn().mockResolvedValue(model)
+    };
+    const panelTracker = new HistoryPanelTracker();
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker
+    );
+
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
+    await panelTracker.dispatchLastPanelMessage({ command: 'copyReviewPacket' });
+
+    const actionSummary = panelTracker.getLastActionSummary();
+    expect(actionSummary?.command).toBe('copyReviewPacket');
+    expect(actionSummary?.outcome).toBe('copied-review-packet');
+    expect(typeof actionSummary?.copiedTextLength).toBe('number');
+    expect(actionSummary?.copiedTextLength).toBeGreaterThan(0);
+  });
+
+  it('records copiedTextLength matching the actual clipboard text length', async () => {
+    const model = createEligibleModel();
+    const historyService = {
+      load: vi.fn().mockResolvedValue(model)
+    };
+    const panelTracker = new HistoryPanelTracker();
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker
+    );
+
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
+    await panelTracker.dispatchLastPanelMessage({ command: 'copyReviewPacket' });
+
+    const [writtenText] = clipboardWriteTextMock.mock.calls[0] as [string];
+    const actionSummary = panelTracker.getLastActionSummary();
+    expect(actionSummary?.copiedTextLength).toBe(writtenText.length);
+  });
+
+  it('does not record a copied-review-packet outcome when clipboard write throws', async () => {
+    clipboardWriteTextMock.mockRejectedValue(new Error('clipboard unavailable'));
+    const model = createEligibleModel();
+    const historyService = {
+      load: vi.fn().mockResolvedValue(model)
+    };
+    const panelTracker = new HistoryPanelTracker();
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker
+    );
+
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
+    await expect(
+      panelTracker.dispatchLastPanelMessage({ command: 'copyReviewPacket' })
+    ).rejects.toThrow('clipboard unavailable');
+
+    expect(panelTracker.getLastActionSummary()?.outcome).not.toBe('copied-review-packet');
+  });
+
+  it('does not call clipboard when panelTracker has no recorded panel', async () => {
+    const panelTracker = new HistoryPanelTracker();
+
+    await panelTracker.dispatchLastPanelMessage({ command: 'copyReviewPacket' });
+
+    expect(clipboardWriteTextMock).not.toHaveBeenCalled();
+  });
+
+  it('does not crash when no panelTracker is provided', async () => {
+    const model = createEligibleModel();
+    const historyService = {
+      load: vi.fn().mockResolvedValue(model)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined
+      // no panelTracker
+    );
+
+    await expect(
+      command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never)
+    ).resolves.toBeUndefined();
   });
 });
