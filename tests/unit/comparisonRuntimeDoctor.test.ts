@@ -72,11 +72,11 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(summary.at(-1)).toContain('viHistorySuite.labviewBitness');
   });
 
-  it('gives an actionable next step for missing matching LabVIEWCLI', () => {
-    const summary = blockedSummary('labview-cli-not-found-for-bitness');
+  it('gives an actionable next step for missing LabVIEWCLI', () => {
+    const summary = blockedSummary('canonical-labview-cli-not-found');
 
-    expect(summary.at(-1)).toContain('install the matching LabVIEWCLI');
-    expect(summary.at(-1)).toContain('viHistorySuite.labviewBitness');
+    expect(summary.at(-1)).toContain('install LabVIEWCLI');
+    expect(summary.at(-1)).toContain('viHistorySuite.labviewCliPath');
   });
 
   it('keeps unsupported LabVIEW version guidance version-specific', () => {
@@ -164,10 +164,10 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
       labviewExe: undefined,
       labviewCli: {
         kind: 'labview-cli',
-        path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
         source: 'scan',
         exists: true,
-        bitness: 'x64'
+        bitness: 'x86'
       }
     });
 

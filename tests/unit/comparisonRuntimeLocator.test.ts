@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  buildDocumentedRuntimeCandidates,
   locateComparisonRuntime,
   WindowsContainerProviderFacts
 } from '../../src/reporting/comparisonRuntimeLocator';
@@ -9,7 +10,7 @@ const WINDOWS_LABVIEW_2026_X64 =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const WINDOWS_LABVIEW_2026_X86 =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const WINDOWS_LABVIEW_CLI_X64 =
+const WINDOWS_NONCANONICAL_LABVIEW_CLI_X64 =
   'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_LABVIEW_CLI_X86 =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
@@ -37,7 +38,34 @@ function windowsContainerFacts(
   };
 }
 
+function quietWindowsHostSurfaceDeps() {
+  return {
+    readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+    observeWindowsProcesses: vi.fn().mockResolvedValue(undefined) as never,
+    observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+  };
+}
+
 describe('comparisonRuntimeLocator diagnostics', () => {
+  it('documents only the canonical shared Windows LabVIEWCLI scan path', () => {
+    const labviewCliCandidates = buildDocumentedRuntimeCandidates('win32').filter(
+      (candidate) => candidate.kind === 'labview-cli'
+    );
+
+    expect(labviewCliCandidates).toEqual([
+      expect.objectContaining({
+        path: WINDOWS_LABVIEW_CLI_X86,
+        source: 'scan',
+        bitness: 'x86'
+      })
+    ]);
+    expect(labviewCliCandidates).not.toContainEqual(
+      expect.objectContaining({
+        path: WINDOWS_NONCANONICAL_LABVIEW_CLI_X64
+      })
+    );
+  });
+
   it('retains invalid provider facts and rejects both runtime providers', async () => {
     const selection = await locateComparisonRuntime('win32', {
       invalidRequestedProvider: 'cloud',
@@ -174,7 +202,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     expect(selection.notes.join('\n')).toContain('will not auto-switch');
   });
 
-  it('reports a matching LabVIEWCLI bitness miss after resolving LabVIEW', async () => {
+  it('selects the shared Windows LabVIEWCLI for requested x64 LabVIEW', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -185,19 +213,82 @@ describe('comparisonRuntimeLocator diagnostics', () => {
       },
       {
         pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'host-native',
+      engine: 'labview-cli',
+      requestedLabviewVersion: '2026',
+      bitness: 'x64',
+      labviewExe: {
+        path: WINDOWS_LABVIEW_2026_X64,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        path: WINDOWS_LABVIEW_CLI_X86
+      }
+    });
+    expect(selection.blockedReason).toBeUndefined();
+  });
+
+  it('selects the shared Windows LabVIEWCLI for requested x86 LabVIEW', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x86'
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X86, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'host-native',
+      engine: 'labview-cli',
+      requestedLabviewVersion: '2026',
+      bitness: 'x86',
+      labviewExe: {
+        path: WINDOWS_LABVIEW_2026_X86,
+        bitness: 'x86'
+      },
+      labviewCli: {
+        path: WINDOWS_LABVIEW_CLI_X86
+      }
+    });
+    expect(selection.blockedReason).toBeUndefined();
+  });
+
+  it('reports missing shared Windows LabVIEWCLI after resolving LabVIEW', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64]),
         queryWindowsRegistry: vi.fn().mockResolvedValue('')
       }
     );
 
     expect(selection).toMatchObject({
       provider: 'unavailable',
-      blockedReason: 'labview-cli-not-found-for-bitness',
+      blockedReason: 'canonical-labview-cli-not-found',
       requestedLabviewVersion: '2026',
       bitness: 'x64'
     });
-    expect(selection.labviewExe?.path).toBeUndefined();
-    expect(selection.notes.join('\n')).toContain('No matching LabVIEWCLI x64');
-    expect(selection.notes.join('\n')).toContain('Detected installed LabVIEWCLI x86');
+    expect(selection.notes.join('\n')).toContain('No LabVIEWCLI surface was located');
+    expect(selection.notes.join('\n')).toContain(WINDOWS_LABVIEW_CLI_X86);
   });
 
   it('retains Docker unavailable facts when Docker provider is requested', async () => {
@@ -306,9 +397,9 @@ describe('comparisonRuntimeLocator diagnostics', () => {
         bitness: 'x64'
       },
       {
-        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X64]),
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
         queryWindowsRegistry: vi.fn().mockResolvedValue(''),
-        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never
+        ...quietWindowsHostSurfaceDeps()
       }
     );
 
@@ -325,6 +416,35 @@ describe('comparisonRuntimeLocator diagnostics', () => {
         reason: 'provider-request-host-selected-host-native'
       })
     );
+  });
+
+  it('honors an existing configured LabVIEWCLI path for requested x64 LabVIEW', async () => {
+    const configuredLabviewCliPath = 'C:\\custom\\LabVIEWCLI.exe';
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        labviewCliPath: configuredLabviewCliPath
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, configuredLabviewCliPath]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'host-native',
+      engine: 'labview-cli',
+      labviewCli: {
+        path: configuredLabviewCliPath,
+        source: 'configured'
+      }
+    });
+    expect(selection.blockedReason).toBeUndefined();
   });
 });
 

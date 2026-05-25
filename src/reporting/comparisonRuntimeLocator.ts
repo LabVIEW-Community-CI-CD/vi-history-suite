@@ -164,6 +164,8 @@ interface BuildProviderDecisionsOptions {
 
 const WINDOWS_PROGRAM_FILES = 'C:\\Program Files';
 const WINDOWS_PROGRAM_FILES_X86 = 'C:\\Program Files (x86)';
+const WINDOWS_SHARED_LABVIEW_CLI =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
 const WINDOWS_LABVIEW_FOLDERS = [
   'LabVIEW 2026 Q1',
@@ -175,8 +177,7 @@ const DEFAULT_WINDOWS_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-wind
 const DEFAULT_LINUX_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-linux';
 const WINDOWS_CONTAINER_LABVIEW_EXE =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const WINDOWS_CONTAINER_LABVIEW_CLI =
-  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const WINDOWS_CONTAINER_LABVIEW_CLI = WINDOWS_SHARED_LABVIEW_CLI;
 const WINDOWS_CONTAINER_LVCOMPARE =
   'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 const LINUX_CONTAINER_LABVIEW_EXE = '/usr/local/natinst/LabVIEW-2026-64/labview';
@@ -254,14 +255,7 @@ export function buildDocumentedRuntimeCandidates(
       ]),
       {
         kind: 'labview-cli',
-        path: `${WINDOWS_PROGRAM_FILES}\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe`,
-        source: 'scan',
-        exists: false,
-        bitness: 'x64'
-      },
-      {
-        kind: 'labview-cli',
-        path: `${WINDOWS_PROGRAM_FILES_X86}\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe`,
+        path: WINDOWS_SHARED_LABVIEW_CLI,
         source: 'scan',
         exists: false,
         bitness: 'x86'
@@ -1323,7 +1317,7 @@ export async function locateComparisonRuntime(
   }
 
   notes.push(
-    'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit proof-admission overrides are required.'
+    'Install LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit proof-admission overrides are required.'
   );
 
   return {
@@ -2222,10 +2216,10 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
     return 'Host-native execution was not selected because multiple supported LabVIEW executables matched the requested version and bitness.';
   }
   if (options.blockedReason === 'labview-cli-not-found-for-bitness') {
-    return 'A supported LabVIEW executable matched the requested version and bitness, but no matching LabVIEWCLI surface was located for that bitness.';
+    return 'A supported LabVIEW executable matched the requested version and bitness, but LabVIEWCLI was not located.';
   }
   if (options.blockedReason === 'labview-cli-ambiguous-for-bitness') {
-    return 'A supported LabVIEW executable matched the requested version and bitness, but multiple matching LabVIEWCLI surfaces were located for that bitness.';
+    return 'A supported LabVIEW executable matched the requested version and bitness, but multiple LabVIEWCLI surfaces were located.';
   }
   if (options.requestedProvider === 'docker') {
     return 'Host-native execution was not selected because the Docker provider was requested.';
@@ -2411,34 +2405,14 @@ function resolveExactWindowsHostRuntime(
     };
   }
 
-  const matchingLabviewCliCandidates = candidates.filter(
-    (candidate) =>
-      candidate.kind === 'labview-cli' && candidate.exists && candidate.bitness === bitness
-  );
-
-  if (matchingLabviewCliCandidates.length > 1) {
-    return {
-      blockedReason: 'labview-cli-ambiguous-for-bitness',
-      notes: [
-        `Installed compare found multiple LabVIEWCLI surfaces for requested ${bitness} execution, so local runtime preflight could not resolve one exact CLI path.`
-      ]
-    };
-  }
-
-  const labviewCli = matchingLabviewCliCandidates[0];
+  const labviewCli = selectWindowsSharedLabviewCliCandidate(candidates);
 
   if (!labviewCli) {
     return {
-      blockedReason: 'labview-cli-not-found-for-bitness',
+      blockedReason: 'canonical-labview-cli-not-found',
       notes: [
-        `No matching LabVIEWCLI ${bitness} (${describeBitness(bitness)}) surface was located for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
-        ...describeDetectedWindowsHostAlternativeBitness({
-          candidates,
-          requestedVersion,
-          requestedBitness: bitness,
-          kind: 'labview-cli'
-        }),
-        'Install the matching LabVIEWCLI surface for the requested bitness, or adjust viHistorySuite.runtimeProvider, viHistorySuite.labviewVersion, or viHistorySuite.labviewBitness before retrying compare.'
+        `No LabVIEWCLI surface was located at ${WINDOWS_SHARED_LABVIEW_CLI} for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
+        'Install LabVIEWCLI, or set viHistorySuite.labviewCliPath to an existing LabVIEWCLI executable before retrying compare.'
       ]
     };
   }
@@ -2448,6 +2422,25 @@ function resolveExactWindowsHostRuntime(
     labviewCli,
     notes: undefined
   };
+}
+
+function selectWindowsSharedLabviewCliCandidate(
+  candidates: RuntimeToolCandidate[]
+): RuntimeToolCandidate | undefined {
+  const existingLabviewCliCandidates = candidates.filter(
+    (candidate) => candidate.kind === 'labview-cli' && candidate.exists
+  );
+  const configuredCandidate = existingLabviewCliCandidates.find(
+    (candidate) => candidate.source === 'configured'
+  );
+  if (configuredCandidate) {
+    return configuredCandidate;
+  }
+
+  const canonicalPath = normalizeCandidatePath(WINDOWS_SHARED_LABVIEW_CLI);
+  return existingLabviewCliCandidates.find(
+    (candidate) => normalizeCandidatePath(candidate.path) === canonicalPath
+  );
 }
 
 function describeDetectedWindowsHostAlternativeBitness(options: {
@@ -2508,7 +2501,7 @@ function extractLabviewMajorVersion(filePath: string): string | undefined {
 }
 
 function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {
-  const normalized = filePath.replaceAll('/', '\\').toLowerCase();
+  const normalized = normalizeCandidatePath(filePath);
   if (normalized.includes('\\program files (x86)\\')) {
     return 'x86';
   }
@@ -2520,6 +2513,10 @@ function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {
     return 'x64';
   }
   return undefined;
+}
+
+function normalizeCandidatePath(filePath: string): string {
+  return filePath.replaceAll('/', '\\').toLowerCase();
 }
 
 function dedupeCandidates(candidates: RuntimeToolCandidate[]): RuntimeToolCandidate[] {
