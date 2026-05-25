@@ -155,7 +155,7 @@ describe('extension manifest public metadata', () => {
     expect(manifest.devDependencies).not.toHaveProperty('@vscode/vsce');
     expect(manifest.scripts).toMatchObject({
       clean: 'rimraf out out-tests coverage',
-      compile: 'tsc -p .',
+      compile: 'tsc -p . && node scripts/generateBuildInfo.js',
       check: 'tsc -p . --noEmit',
       test: 'vitest run --coverage',
       package: 'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package',

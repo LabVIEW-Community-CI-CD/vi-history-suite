@@ -137,7 +137,7 @@
   },
   "scripts": {
     "clean": "rimraf out out-tests coverage",
-    "compile": "tsc -p .",
+    "compile": "tsc -p . && node scripts/generateBuildInfo.js",
     "check": "tsc -p . --noEmit",
     "dev:watch": "tsc -p . --watch --preserveWatchOutput",
     "dev:workspace": "npm run compile && node out/cli/runDevHost.js --prepare-workspace-only",
