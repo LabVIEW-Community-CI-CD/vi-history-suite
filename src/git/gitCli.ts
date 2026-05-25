@@ -122,7 +122,11 @@ function describeGitSubprocessError(error: Error, args: string[], timeoutMs: num
 }
 
 export function normalizeRelativeGitPath(input: string): string {
-  return input.replaceAll('\\', '/').split(path.sep).join('/');
+  return input
+    .replaceAll('\\', '/')
+    .split(path.sep)
+    .join('/')
+    .replace(/\/+/g, '/');
 }
 
 export function parseLsFilesZ(output: string | Buffer): string[] {

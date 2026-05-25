@@ -955,3 +955,229 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(processed).toEqual([1]);
   });
 });
+
+describe('viEligibilityIndexer eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', () => {
+  beforeEach(() => {
+    configurationValues.set('strictRsrcHeader', false);
+    configurationValues.set('maxIndexedConcurrency', 6);
+    getRepoRootMock.mockReset();
+    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
+    listTrackedFilesMock.mockReset();
+    getRepoHeadMock.mockReset();
+    evaluateViEligibilityMock.mockReset();
+    commandExecuteMock.mockReset();
+    progressReportMock.mockReset();
+    workspaceFolderListeners.length = 0;
+    workspaceTrustListeners.length = 0;
+    workspaceState.isTrusted = true;
+    workspaceState.workspaceFolders = [];
+    withProgressMock.mockReset();
+    createStatusBarItemMock.mockClear();
+    withProgressMock.mockImplementation(async (_options, task) =>
+      task(
+        {
+          report: progressReportMock
+        },
+        {
+          isCancellationRequested: false,
+          onCancellationRequested: vi.fn(() => ({ dispose() {} }))
+        }
+      )
+    );
+  });
+
+  it('indexes files from multiple independent repositories in a multi-root workspace', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never,
+      { uri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } },
+        { rootUri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockImplementation(async (cwd: string) => {
+      if (cwd === '/workspace/repo-a') return ['module-a/file.vi'];
+      if (cwd === '/workspace/repo-b') return ['module-b/tool.vi'];
+      return [];
+    });
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    await indexer.refresh();
+
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo-a/module-a/file.vi',
+      path: '/workspace/repo-a/module-a/file.vi'
+    } as never)).toBe(true);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo-b/module-b/tool.vi',
+      path: '/workspace/repo-b/module-b/tool.vi'
+    } as never)).toBe(true);
+    expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual([
+      '/workspace/repo-a',
+      '/workspace/repo-b'
+    ]);
+  });
+
+  it('resolves nested repositories and indexes files in the most-specific repository', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/outer', path: '/workspace/outer' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/outer', path: '/workspace/outer' } },
+        { rootUri: { fsPath: '/workspace/outer/nested', path: '/workspace/outer/nested' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockImplementation(async (cwd: string) => {
+      if (cwd === '/workspace/outer') return ['outer-file.vi'];
+      if (cwd === '/workspace/outer/nested') return ['nested-file.vi'];
+      return [];
+    });
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    await indexer.refresh();
+
+    expect(indexer.isEligible({
+      fsPath: '/workspace/outer/outer-file.vi',
+      path: '/workspace/outer/outer-file.vi'
+    } as never)).toBe(true);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/outer/nested/nested-file.vi',
+      path: '/workspace/outer/nested/nested-file.vi'
+    } as never)).toBe(true);
+    expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual([
+      '/workspace/outer',
+      '/workspace/outer/nested'
+    ]);
+  });
+
+  it('marks untracked files as ineligible even when tracked files exist in the repository', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    await indexer.refresh();
+
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/tracked.vi',
+      path: '/workspace/repo/tracked.vi'
+    } as never)).toBe(true);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/untracked.vi',
+      path: '/workspace/repo/untracked.vi'
+    } as never)).toBe(false);
+  });
+
+  it('marks files with fewer than two commits as ineligible', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['one-commit.vi', 'two-commits.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockImplementation(async (fsPath: string) => {
+      if (fsPath.endsWith('one-commit.vi')) {
+        return { eligible: false };
+      }
+      return { eligible: true };
+    });
+
+    await indexer.refresh();
+
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/one-commit.vi',
+      path: '/workspace/repo/one-commit.vi'
+    } as never)).toBe(false);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/two-commits.vi',
+      path: '/workspace/repo/two-commits.vi'
+    } as never)).toBe(true);
+  });
+
+  it('keeps eligibility conservative when Git API repository list is empty', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/folder', path: '/workspace/folder' } } as never
+    ];
+    getRepoRootMock.mockRejectedValue(new Error('not a git repository'));
+
+    const indexer = new ViEligibilityIndexer({
+      repositories: [],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    await indexer.refresh();
+
+    expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual([]);
+    expect(indexer.getDebugSnapshot().eligiblePathCount).toBe(0);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/folder/orphan.vi',
+      path: '/workspace/folder/orphan.vi'
+    } as never)).toBe(false);
+  });
+
+  it('handles paths with unusual characters during eligibility indexing', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue([
+      'folder with spaces/file.vi',
+      'path/[brackets]/file.vi'
+    ]);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    await indexer.refresh();
+
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/folder with spaces/file.vi',
+      path: '/workspace/repo/folder with spaces/file.vi'
+    } as never)).toBe(true);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/path/[brackets]/file.vi',
+      path: '/workspace/repo/path/[brackets]/file.vi'
+    } as never)).toBe(true);
+  });
+});
