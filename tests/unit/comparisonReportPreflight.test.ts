@@ -359,7 +359,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('retains dual-side blocked details when both blobs fail VI verification', async () => {
+  it('retains dual-side blocked details when left blob is not a VI and right blob cannot be read', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
