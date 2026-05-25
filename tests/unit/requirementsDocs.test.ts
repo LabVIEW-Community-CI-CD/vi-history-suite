@@ -279,6 +279,28 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps trusted maintainer evidence contract traceable for VHS-REQ-598', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-598');
+
+    expect(srs).toContain('### VHS-REQ-598: Trusted Windows/LabVIEW Maintainer Workflow');
+    expect(srs).toContain(
+      'The environment evidence summary includes ref, SHA, runner context, Node/npm'
+    );
+    expect(srs).toContain('The trusted-ref decision is visible in workflow output or artifact text.');
+    expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/windows-labview-maintainer.yml');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/maintainer-operations.md');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/windowsLabviewMaintainerWorkflow.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    expect(requirementRow?.Notes).toContain('trusted-ref decision');
+    expect(requirementRow?.Notes).toContain(
+      'runner-evidence/windows-labview-maintainer-summary.txt'
+    );
+  });
+
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));

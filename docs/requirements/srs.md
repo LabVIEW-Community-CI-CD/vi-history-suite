@@ -699,7 +699,10 @@ Missing numeric IDs are intentional.
   - The workflow triggers only through `workflow_dispatch`.
   - The workflow grants read-only repository contents permission.
   - The workflow fails closed unless the ref is `main` or an exact `v*` tag.
-  - The workflow uploads a VSIX and environment evidence summary.
+  - The environment evidence summary includes ref, SHA, runner context, Node/npm
+    versions, VSIX evidence path, and whether LabVIEWCLI was detected.
+  - The trusted-ref decision is visible in workflow output or artifact text.
+  - The workflow uploads a VSIX and environment evidence summary artifact.
 - Agent Work Scope:
   - Change workflow YAML, maintainer operations docs, and static workflow tests
     together.
