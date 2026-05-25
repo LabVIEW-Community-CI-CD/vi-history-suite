@@ -449,18 +449,26 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: History Panel
-- Statement: Copied review packet text shall include repository, path,
-  signature, retained revision count, and compare-pair facts.
+- Statement: Copied review packet text shall include repository, root, origin
+  or unavailable state, path, signature, retained revision count, history
+  window facts, newest and oldest retained commit facts, and compare-pair
+  facts.
 - Acceptance Criteria:
-  - Packet text includes repository and target path.
-  - Packet text includes signature and retained revision facts.
-  - Packet text avoids claims that require external binary comparison evidence.
+  - Packet text includes repository, root, origin or unavailable state, target
+    path, signature, retained revision count, history window summary, newest
+    retained commit fact, oldest retained commit fact, and compare-pair facts.
+  - Packet text remains plain text, avoids HTML-only markup in copied output,
+    and uses factual fallback text when optional fields or retained history are
+    missing.
+  - Packet text avoids claims that require external binary comparison evidence
+    or unsupported semantic VI difference conclusions from Git-only facts.
 - Agent Work Scope:
   - Change review packet text and any assertions about copied packet content
     together.
 - Implementation References:
   - `src/ui/historyPanel.ts`
 - Verification References:
+  - `tests/unit/historyReviewPacket.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Keep binary semantic claims out of Git-only packet text.
