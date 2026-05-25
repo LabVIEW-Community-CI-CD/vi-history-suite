@@ -137,7 +137,7 @@ export function createOpenViHistoryCommand(
     }
     if (!loadedModel.eligible) {
       void vscode.window.showInformationMessage(
-        'The selected file is not currently eligible for VI History.'
+        buildIneligibilityMessage(loadedModel)
       );
       return;
     }
@@ -1795,4 +1795,33 @@ function isGitRepositoryResolutionFailure(error: unknown): boolean {
     message.includes('rev-parse') ||
     message.includes('--show-toplevel')
   );
+}
+
+/**
+ * Builds a factual message explaining why a file is not eligible for VI History
+ * and provides a next action the user can take.
+ */
+function buildIneligibilityMessage(
+  model: ViHistoryViewModel
+): string {
+  const hasUnknownSignature = model.signature === 'unknown';
+  const commitCount = model.commits.length;
+
+  if (hasUnknownSignature && commitCount === 0) {
+    return 'The selected file is not a recognized LabVIEW VI format and has no Git commit history. Open a tracked LabVIEW VI (.vi, .vim, .vit, .ctl, .ctt, .lvclass, .lvlib) with at least two commits.';
+  }
+
+  if (hasUnknownSignature) {
+    return 'The selected file is not a recognized LabVIEW VI format. Open a LabVIEW VI (.vi, .vim, .vit, .ctl, .ctt, .lvclass, .lvlib) to view its history.';
+  }
+
+  if (commitCount === 0) {
+    return 'The selected file has no Git commit history. Commit the file at least twice to build reviewable history.';
+  }
+
+  if (commitCount === 1) {
+    return 'The selected file has only one Git commit. Commit additional changes to build reviewable history.';
+  }
+
+  return 'The selected file is not currently eligible for VI History. Open a tracked LabVIEW VI with at least two commits.';
 }

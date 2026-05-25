@@ -313,3 +313,168 @@ describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', (
     expect(getRepoRootMock).not.toHaveBeenCalled();
   });
 });
+
+describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () => {
+  const expectedOptions = {
+    repoRoot: '/workspace/test-repo',
+    strictRsrcHeader: true,
+    historyLimit: AUTO_HISTORY_ENTRY_CEILING,
+    configuredMaxHistoryEntries: 25,
+    historyWindowMode: 'auto'
+  } as const;
+
+  beforeEach(() => {
+    workspaceGetMock.mockReset();
+    getRepoRootMock.mockReset();
+    loadViHistoryViewModelFromFsPathMock.mockReset();
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') return true;
+      if (key === 'historyWindowMode') return 'auto';
+      if (key === 'maxHistoryEntries') return 25;
+      return fallback;
+    });
+  });
+
+  it('returns ineligible when file has unknown signature and no commits', async () => {
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'test-repo',
+      repositoryRoot: '/workspace/test-repo',
+      relativePath: 'unknown-file.txt',
+      signature: 'unknown',
+      eligible: false,
+      commits: []
+    });
+
+    const service = new ViHistoryService({
+      repositories: [{ rootUri: { fsPath: '/workspace/test-repo' } }],
+      toGitUri: vi.fn()
+    } as never);
+
+    const result = await service.load({ fsPath: '/workspace/test-repo/unknown-file.txt' } as never);
+
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/unknown-file.txt',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
+    expect(result.eligible).toBe(false);
+    expect(result.signature).toBe('unknown');
+    expect(result.commits.length).toBe(0);
+  });
+
+  it('returns ineligible when file has valid signature but no commits (untracked)', async () => {
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'test-repo',
+      repositoryRoot: '/workspace/test-repo',
+      relativePath: 'new-file.vi',
+      signature: 'LVIN',
+      eligible: false,
+      commits: []
+    });
+
+    const service = new ViHistoryService({
+      repositories: [{ rootUri: { fsPath: '/workspace/test-repo' } }],
+      toGitUri: vi.fn()
+    } as never);
+
+    const result = await service.load({ fsPath: '/workspace/test-repo/new-file.vi' } as never);
+
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/new-file.vi',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
+    expect(result.eligible).toBe(false);
+    expect(result.signature).toBe('LVIN');
+    expect(result.commits.length).toBe(0);
+  });
+
+  it('returns ineligible when file has valid signature but only one commit', async () => {
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'test-repo',
+      repositoryRoot: '/workspace/test-repo',
+      relativePath: 'single-commit.vi',
+      signature: 'LVIN',
+      eligible: false,
+      commits: [
+        { hash: 'abc123', authorDate: '2024-01-01', authorName: 'Dev', subject: 'Initial commit' }
+      ]
+    });
+
+    const service = new ViHistoryService({
+      repositories: [{ rootUri: { fsPath: '/workspace/test-repo' } }],
+      toGitUri: vi.fn()
+    } as never);
+
+    const result = await service.load({ fsPath: '/workspace/test-repo/single-commit.vi' } as never);
+
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/single-commit.vi',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
+    expect(result.eligible).toBe(false);
+    expect(result.signature).toBe('LVIN');
+    expect(result.commits.length).toBe(1);
+  });
+
+  it('returns ineligible when file has unknown signature even with commits', async () => {
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'test-repo',
+      repositoryRoot: '/workspace/test-repo',
+      relativePath: 'not-a-vi.txt',
+      signature: 'unknown',
+      eligible: false,
+      commits: [
+        { hash: 'abc123', authorDate: '2024-01-01', authorName: 'Dev', subject: 'First commit' },
+        { hash: 'def456', authorDate: '2024-01-02', authorName: 'Dev', subject: 'Second commit' }
+      ]
+    });
+
+    const service = new ViHistoryService({
+      repositories: [{ rootUri: { fsPath: '/workspace/test-repo' } }],
+      toGitUri: vi.fn()
+    } as never);
+
+    const result = await service.load({ fsPath: '/workspace/test-repo/not-a-vi.txt' } as never);
+
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/not-a-vi.txt',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
+    expect(result.eligible).toBe(false);
+    expect(result.signature).toBe('unknown');
+    expect(result.commits.length).toBe(2);
+  });
+
+  it('returns eligible when file has valid signature and at least two commits', async () => {
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'test-repo',
+      repositoryRoot: '/workspace/test-repo',
+      relativePath: 'valid.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: [
+        { hash: 'abc123', authorDate: '2024-01-01', authorName: 'Dev', subject: 'First commit' },
+        { hash: 'def456', authorDate: '2024-01-02', authorName: 'Dev', subject: 'Second commit' }
+      ]
+    });
+
+    const service = new ViHistoryService({
+      repositories: [{ rootUri: { fsPath: '/workspace/test-repo' } }],
+      toGitUri: vi.fn()
+    } as never);
+
+    const result = await service.load({ fsPath: '/workspace/test-repo/valid.vi' } as never);
+
+    expect(loadViHistoryViewModelFromFsPathMock).toHaveBeenCalledWith(
+      '/workspace/test-repo/valid.vi',
+      expectedOptions
+    );
+    expect(getRepoRootMock).not.toHaveBeenCalled();
+    expect(result.eligible).toBe(true);
+    expect(result.signature).toBe('LVIN');
+    expect(result.commits.length).toBe(2);
+  });
+});
