@@ -12,10 +12,19 @@ import { evaluateViEligibilityForFsPath } from '../services/viHistoryModel';
 
 type EligibilityMap = Record<string, true>;
 type IndexedRepository = Pick<GitRepository, 'rootUri'>;
+type EligibilityCacheStore = Pick<vscode.Memento, 'get' | 'update'>;
 type IndexedRepositoryWorkItem = {
   repository: IndexedRepository;
   trackedFiles: string[];
   head: string;
+};
+
+const ELIGIBILITY_CACHE_SCHEMA_VERSION = 1;
+const ELIGIBILITY_CACHE_STORAGE_KEY = 'viHistorySuite.eligibilityCache';
+
+type PersistedEligibilityCache = {
+  schemaVersion: number;
+  entries: Record<string, boolean>;
 };
 
 /**
@@ -95,12 +104,16 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   /** Last refresh result for diagnostics (VHS-REQ-603). */
   private lastRefreshResult: IndexRefreshResult | undefined;
 
-  constructor(private readonly gitApi: GitApi | undefined) {
+  constructor(
+    private readonly gitApi: GitApi | undefined,
+    private readonly cacheStore?: EligibilityCacheStore
+  ) {
     this.statusBarItem = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Left,
       95
     );
     this.statusBarItem.hide();
+    this.restorePersistedEligibilityCache();
     this.disposables.push(this.statusBarItem);
   }
 
@@ -280,6 +293,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       return;
     }
 
+    const strictRsrcHeader = getStrictHeaderSetting();
     const repositories = await resolveIndexedRepositories(
       this.gitApi?.repositories ?? [],
       vscode.workspace.workspaceFolders ?? []
@@ -384,7 +398,12 @@ export class ViEligibilityIndexer implements vscode.Disposable {
               return;
             }
 
-            const cacheKey = buildCacheKey(workItem.repository, workItem.head, relativePath);
+            const cacheKey = buildCacheKey(
+              workItem.repository,
+              workItem.head,
+              relativePath,
+              strictRsrcHeader
+            );
             const fileUri = vscode.Uri.joinPath(workItem.repository.rootUri, relativePath);
 
             let isEligible = this.eligibilityCache.get(cacheKey);
@@ -397,7 +416,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
               try {
                 const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
                   repoRoot: workItem.repository.rootUri.fsPath,
-                  strictRsrcHeader: getStrictHeaderSetting()
+                  strictRsrcHeader
                 });
                 isEligible = eligibility.eligible;
                 this.eligibilityCache.set(cacheKey, isEligible);
@@ -504,6 +523,33 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       'labviewViHistory.eligiblePaths',
       nextEligiblePaths
     );
+    await this.persistEligibilityCache();
+  }
+
+  private restorePersistedEligibilityCache(): void {
+    const persistedCache = this.cacheStore?.get<unknown>(ELIGIBILITY_CACHE_STORAGE_KEY);
+    const parsedEntries = parsePersistedEligibilityCache(persistedCache);
+    this.eligibilityCache.clear();
+    for (const [cacheKey, isEligible] of Object.entries(parsedEntries)) {
+      this.eligibilityCache.set(cacheKey, isEligible);
+    }
+  }
+
+  private async persistEligibilityCache(): Promise<void> {
+    if (!this.cacheStore) {
+      return;
+    }
+
+    const entries: Record<string, boolean> = {};
+    for (const [cacheKey, isEligible] of this.eligibilityCache.entries()) {
+      entries[cacheKey] = isEligible;
+    }
+
+    const persistedCache: PersistedEligibilityCache = {
+      schemaVersion: ELIGIBILITY_CACHE_SCHEMA_VERSION,
+      entries
+    };
+    await this.cacheStore.update(ELIGIBILITY_CACHE_STORAGE_KEY, persistedCache);
   }
 
   private showStatusBarProgress(update: IndexingProgressUpdate): void {
@@ -579,9 +625,38 @@ function formatEta(milliseconds: number): string {
 export function buildCacheKey(
   repository: IndexedRepository,
   head: string,
-  relativePath: string
+  relativePath: string,
+  strictRsrcHeader: boolean
 ): string {
-  return [repository.rootUri.fsPath, normalizeRelativeGitPath(relativePath), head].join('::');
+  return [
+    `v${ELIGIBILITY_CACHE_SCHEMA_VERSION}`,
+    repository.rootUri.fsPath,
+    normalizeRelativeGitPath(relativePath),
+    head,
+    strictRsrcHeader ? 'strict' : 'non-strict'
+  ].join('::');
+}
+
+function parsePersistedEligibilityCache(value: unknown): Record<string, boolean> {
+  if (!value || typeof value !== 'object') {
+    return {};
+  }
+
+  const candidate = value as Partial<PersistedEligibilityCache>;
+  if (candidate.schemaVersion !== ELIGIBILITY_CACHE_SCHEMA_VERSION) {
+    return {};
+  }
+  if (!candidate.entries || typeof candidate.entries !== 'object') {
+    return {};
+  }
+
+  const parsedEntries: Record<string, boolean> = {};
+  for (const [cacheKey, entryValue] of Object.entries(candidate.entries)) {
+    if (typeof entryValue === 'boolean') {
+      parsedEntries[cacheKey] = entryValue;
+    }
+  }
+  return parsedEntries;
 }
 
 export function contextKeysForUri(uri: vscode.Uri): string[] {
