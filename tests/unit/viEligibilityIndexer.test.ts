@@ -7,6 +7,8 @@ const {
   withProgressMock,
   createStatusBarItemMock,
   progressReportMock,
+  eligibilityCacheStorageState,
+  createEligibilityCacheStorageMock,
   workspaceFolderListeners,
   workspaceTrustListeners,
   getRepoRootMock,
@@ -32,6 +34,17 @@ const {
     dispose: vi.fn()
   })),
   progressReportMock: vi.fn(),
+  eligibilityCacheStorageState: { value: undefined as unknown },
+  createEligibilityCacheStorageMock: () => ({
+    get: vi.fn((_key: string, fallbackValue?: unknown) =>
+      eligibilityCacheStorageState.value === undefined
+        ? fallbackValue
+        : eligibilityCacheStorageState.value
+    ),
+    update: vi.fn(async (_key: string, value: unknown) => {
+      eligibilityCacheStorageState.value = value;
+    })
+  }),
   workspaceFolderListeners: [] as Array<() => unknown>,
   workspaceTrustListeners: [] as Array<() => unknown>,
   getRepoRootMock: vi.fn<(fsPath: string) => Promise<string>>(),
@@ -155,6 +168,7 @@ describe('viEligibilityIndexer helpers', () => {
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
+    eligibilityCacheStorageState.value = undefined;
     workspaceFolderListeners.length = 0;
     workspaceTrustListeners.length = 0;
     workspaceState.isTrusted = true;
@@ -182,9 +196,10 @@ describe('viEligibilityIndexer helpers', () => {
       buildCacheKey(
         { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
         'head123',
-        'nested\\file.vi'
+        'nested\\file.vi',
+        true
       )
-    ).toBe('/workspace/repo::nested/file.vi::head123');
+    ).toBe('v1::/workspace/repo::nested/file.vi::head123::strict');
     expect(
       contextKeysForUri({
         fsPath: 'C:\\Repo\\nested\\file.vi',
@@ -270,6 +285,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     evaluateViEligibilityMock.mockReset();
     commandExecuteMock.mockReset();
     progressReportMock.mockReset();
+    eligibilityCacheStorageState.value = undefined;
     workspaceFolderListeners.length = 0;
     workspaceTrustListeners.length = 0;
     workspaceState.isTrusted = true;
@@ -288,6 +304,25 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       )
     );
   });
+
+  function createSingleRepoIndexer(cacheStore?: { get: (key: string) => unknown; update: (key: string, value: unknown) => Promise<void> }) {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    return new ViEligibilityIndexer(
+      {
+        repositories: [
+          {
+            rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' }
+          }
+        ],
+        onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never,
+      cacheStore as never
+    );
+  }
 
   it('clears eligible paths and indexed roots when the workspace is untrusted', async () => {
     workspaceState.isTrusted = false;
@@ -350,6 +385,213 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     );
     expect(indexer.isEligible({ fsPath: '/workspace/repo/tracked.vi', path: '/workspace/repo/tracked.vi' } as never)).toBe(true);
     expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual(['/workspace/repo']);
+  });
+
+  it('reuses persisted cache hits from VS Code storage and persists refreshed facts', async () => {
+    configurationValues.set('strictRsrcHeader', true);
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 1,
+      entries: {
+        [buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'head-1',
+          'tracked.vi',
+          true
+        )]: true
+      }
+    };
+    const cacheStore = createEligibilityCacheStorageMock();
+    const indexer = createSingleRepoIndexer(cacheStore);
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(1);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(0);
+    expect(cacheStore.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats missing storage cache as a miss and evaluates eligibility', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    const cacheStore = createEligibilityCacheStorageMock();
+    const indexer = createSingleRepoIndexer(cacheStore);
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+  });
+
+  it('treats storage read errors as cache misses', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    const cacheStore = {
+      get: vi.fn(() => {
+        throw new Error('storage unavailable');
+      }),
+      update: vi.fn(async () => {
+        // no-op
+      })
+    };
+
+    const indexer = createSingleRepoIndexer(cacheStore);
+
+    await indexer.refresh();
+
+    expect(cacheStore.get).toHaveBeenCalledTimes(1);
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+  });
+
+  it('keeps refresh results when storage writes fail', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    const cacheStore = {
+      get: vi.fn(() => undefined),
+      update: vi.fn(async () => {
+        throw new Error('quota exceeded');
+      })
+    };
+    const indexer = createSingleRepoIndexer(cacheStore);
+
+    await expect(indexer.refresh()).resolves.toBeUndefined();
+
+    expect(cacheStore.update).toHaveBeenCalledTimes(1);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/tracked.vi',
+      path: '/workspace/repo/tracked.vi'
+    } as never)).toBe(true);
+    expect(indexer.getLastRefreshResult()).toMatchObject({
+      state: 'cold-scan',
+      counts: {
+        tracked: 1,
+        reused: 0,
+        evaluated: 1,
+        eligible: 1,
+        skipped: 0,
+        failed: 0
+      },
+      snapshotPreserved: false
+    });
+  });
+
+  it('fails closed for stale storage entries whose path facts do not match', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 1,
+      entries: {
+        [buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'head-1',
+          'other.vi',
+          false
+        )]: true
+      }
+    };
+    const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+  });
+
+  it('fails closed for corrupt persisted cache entries', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 1,
+      entries: {
+        corrupted: 'not-a-boolean'
+      }
+    };
+    const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+  });
+
+  it('fails closed for schema-mismatched persisted cache data', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 999,
+      entries: {
+        [buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'head-1',
+          'tracked.vi',
+          false
+        )]: true
+      }
+    };
+    const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+  });
+
+  it('fails closed when strict-header setting does not match persisted cache facts', async () => {
+    configurationValues.set('strictRsrcHeader', true);
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 1,
+      entries: {
+        [buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'head-1',
+          'tracked.vi',
+          false
+        )]: true
+      }
+    };
+    const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+  });
+
+  it('fails closed when persisted Git facts do not match the current HEAD', async () => {
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-new');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+    eligibilityCacheStorageState.value = {
+      schemaVersion: 1,
+      entries: {
+        [buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'head-old',
+          'tracked.vi',
+          false
+        )]: true
+      }
+    };
+    const indexer = createSingleRepoIndexer(createEligibilityCacheStorageMock());
+
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
   });
 
   it('fails closed on repository and file errors while still indexing successful files', async () => {

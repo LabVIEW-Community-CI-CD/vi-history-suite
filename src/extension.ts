@@ -145,7 +145,7 @@ export async function activate(
     if (!workspaceRuntimePromise) {
       workspaceRuntimePromise = (async () => {
         const gitApi = await getBuiltInGitApi();
-        const eligibilityIndexer = new ViEligibilityIndexer(gitApi);
+        const eligibilityIndexer = new ViEligibilityIndexer(gitApi, context.workspaceState);
         const historyService = new ViHistoryService(gitApi);
         const openViHistory = createOpenViHistoryCommand(
           historyService,

@@ -7,6 +7,7 @@ const {
   showWarningMessageMock,
   getBuiltInGitApiMock,
   viEligibilityIndexerConstructedWith,
+  viEligibilityIndexerStorageConstructedWith,
   viEligibilityIndexerStartMock,
   viEligibilityIndexerRefreshMock,
   viEligibilityIndexerIsEligibleMock,
@@ -50,6 +51,7 @@ const {
     showWarningMessageMock: vi.fn(),
     getBuiltInGitApiMock: vi.fn(),
     viEligibilityIndexerConstructedWith: [] as unknown[],
+    viEligibilityIndexerStorageConstructedWith: [] as unknown[],
     viEligibilityIndexerStartMock: vi.fn(),
     viEligibilityIndexerRefreshMock: vi.fn(),
     viEligibilityIndexerIsEligibleMock: vi.fn(),
@@ -90,8 +92,9 @@ vi.mock('../../src/git/gitApi', () => ({
 
 vi.mock('../../src/indexing/viEligibilityIndexer', () => ({
   ViEligibilityIndexer: class MockViEligibilityIndexer {
-    constructor(gitApi: unknown) {
+    constructor(gitApi: unknown, workspaceState: unknown) {
       viEligibilityIndexerConstructedWith.push(gitApi);
+      viEligibilityIndexerStorageConstructedWith.push(workspaceState);
     }
 
     start = viEligibilityIndexerStartMock;
@@ -176,6 +179,10 @@ function createContext() {
   return {
     subscriptions: [],
     globalStorageUri: { fsPath: '/tmp/vihs-global-storage' },
+    workspaceState: {
+      get: vi.fn(),
+      update: vi.fn()
+    },
     storageUri: { fsPath: '/tmp/vihs-workspace-storage' },
     extensionPath: '/workspace/vi-history-suite',
     environmentVariableCollection: {
@@ -189,6 +196,7 @@ describe('extension activation lazy side effects', () => {
     commandHandlers.clear();
     vi.clearAllMocks();
     viEligibilityIndexerConstructedWith.length = 0;
+    viEligibilityIndexerStorageConstructedWith.length = 0;
     viHistoryServiceConstructedWith.length = 0;
     workspaceState.isTrusted = true;
     getBuiltInGitApiMock.mockResolvedValue({
@@ -220,6 +228,7 @@ describe('extension activation lazy side effects', () => {
 
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(viEligibilityIndexerConstructedWith).toEqual([]);
+    expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);
     expect(viEligibilityIndexerStartMock).not.toHaveBeenCalled();
     expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBeUndefined();
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
@@ -233,6 +242,7 @@ describe('extension activation lazy side effects', () => {
 
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(viEligibilityIndexerConstructedWith).toEqual([]);
+    expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);
 
     await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
 
@@ -243,16 +253,19 @@ describe('extension activation lazy side effects', () => {
     );
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(viEligibilityIndexerConstructedWith).toEqual([]);
+    expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);
     expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(materializedCli);
   });
 
   it('resolves Git and starts eligibility indexing lazily for VI History open', async () => {
-    await activate(createContext() as never);
+    const context = createContext();
+    await activate(context as never);
 
     await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
 
     expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);
     expect(viEligibilityIndexerConstructedWith).toHaveLength(1);
+    expect(viEligibilityIndexerStorageConstructedWith).toEqual([context.workspaceState]);
     expect(viHistoryServiceConstructedWith).toHaveLength(1);
     expect(viEligibilityIndexerStartMock).toHaveBeenCalledTimes(1);
     expect(createOpenViHistoryCommandMock).toHaveBeenCalledTimes(1);
