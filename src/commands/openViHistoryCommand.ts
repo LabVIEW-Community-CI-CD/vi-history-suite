@@ -107,7 +107,7 @@ export function createOpenViHistoryCommand(
 
     if (!vscode.workspace.isTrusted) {
       void vscode.window.showWarningMessage(
-        'VI History is disabled in untrusted workspaces.'
+        'VI History indexing and comparison are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
       );
       return;
     }
@@ -412,7 +412,7 @@ export function createOpenViHistoryCommand(
           void vscode.window.showInformationMessage(cancelledMessage);
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
-            'VI History comparison reports are disabled in untrusted workspaces.'
+            'VI History comparison reports are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
           );
         } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
@@ -585,7 +585,7 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
-            'VI Review Dashboard is disabled in untrusted workspaces.'
+            'VI Review Dashboard is disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
           );
         } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
@@ -658,7 +658,7 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
-            'VI review decision records are disabled in untrusted workspaces.'
+            'VI review decision records are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
           );
         } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
@@ -765,9 +765,9 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'workspace-untrusted') {
           humanReviewSubmissionStatusMessage =
-            'Blocked: host-machine review submission is disabled in untrusted workspaces.';
+            'Blocked: host-machine review submission is disabled in untrusted workspaces to prevent external process execution.';
           void vscode.window.showWarningMessage(
-            'Host-machine review submission is disabled in untrusted workspaces.'
+            'Host-machine review submission is disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
           );
         } else if (result.outcome === 'missing-storage-uri') {
           humanReviewSubmissionStatusMessage =
