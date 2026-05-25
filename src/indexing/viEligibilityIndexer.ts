@@ -46,6 +46,22 @@ export type IndexRefreshState =
   | 'failed';
 
 /**
+ * Refresh reason types for indexing diagnostics (VHS-REQ-606).
+ * Identifies what triggered the refresh.
+ */
+export type IndexRefreshReason =
+  | 'initial-activation'
+  | 'branch-switch'
+  | 'head-change'
+  | 'workspace-folder-change'
+  | 'git-state-change'
+  | 'setting-change'
+  | 'user-cancellation'
+  | 'trust-disabled'
+  | 'repository-enumeration-failed'
+  | 'scheduled-refresh';
+
+/**
  * Work accounting for indexing refresh results (VHS-REQ-603).
  * These counts describe observable work rather than wall-clock timing.
  */
@@ -65,7 +81,7 @@ export interface IndexRefreshWorkCounts {
 }
 
 /**
- * Complete refresh result for diagnostics and state accounting (VHS-REQ-603).
+ * Complete refresh result for diagnostics and state accounting (VHS-REQ-603, VHS-REQ-606).
  */
 export interface IndexRefreshResult {
   /** The determined refresh state. */
@@ -79,6 +95,8 @@ export interface IndexRefreshResult {
   indexedRepositoryRoots: string[];
   /** Whether the previous eligibility snapshot was preserved (cancellation/failure). */
   snapshotPreserved: boolean;
+  /** The reason that triggered this refresh (VHS-REQ-606). */
+  refreshReason: IndexRefreshReason;
 }
 
 export interface EligibilityDebugSnapshot {
@@ -103,6 +121,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   private lastIndexedHeads = new Map<string, string>();
   /** Last refresh result for diagnostics (VHS-REQ-603). */
   private lastRefreshResult: IndexRefreshResult | undefined;
+  /** Pending refresh reason for the next refresh (VHS-REQ-606). */
+  private pendingRefreshReason: IndexRefreshReason = 'initial-activation';
 
   constructor(
     private readonly gitApi: GitApi | undefined,
@@ -153,7 +173,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     return this.lastRefreshResult;
   }
 
-  scheduleRefresh(): void {
+  scheduleRefresh(reason?: IndexRefreshReason): void {
+    if (reason) {
+      this.pendingRefreshReason = reason;
+    }
     if (this.refreshHandle) {
       clearTimeout(this.refreshHandle);
     }
@@ -167,14 +190,14 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     this.disposables.push(
       vscode.workspace.onDidChangeWorkspaceFolders(() => {
         this.syncRepositoryStateListeners();
-        this.scheduleRefresh();
+        this.scheduleRefresh('workspace-folder-change');
       })
     );
 
     this.disposables.push(
       vscode.workspace.onDidGrantWorkspaceTrust(() => {
         this.syncRepositoryStateListeners();
-        this.scheduleRefresh();
+        this.scheduleRefresh('scheduled-refresh');
       })
     );
 
@@ -182,7 +205,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     this.disposables.push(
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration('viHistorySuite.strictRsrcHeader')) {
-          this.scheduleRefresh();
+          this.scheduleRefresh('setting-change');
         }
       })
     );
@@ -197,14 +220,14 @@ export class ViEligibilityIndexer implements vscode.Disposable {
           return;
         }
         this.registerRepositoryStateListener(repository);
-        this.scheduleRefresh();
+        this.scheduleRefresh('git-state-change');
       }),
       this.gitApi.onDidCloseRepository((repository) => {
         const existingDisposable = this.repositoryStateDisposables.get(repository.rootUri.fsPath);
         existingDisposable?.dispose();
         if (existingDisposable) {
           this.repositoryStateDisposables.delete(repository.rootUri.fsPath);
-          this.scheduleRefresh();
+          this.scheduleRefresh('git-state-change');
         }
       })
     );
@@ -222,7 +245,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
     this.repositoryStateDisposables.set(
       repository.rootUri.fsPath,
-      repository.state.onDidChange(() => this.scheduleRefresh())
+      repository.state.onDidChange(() => this.scheduleRefresh('git-state-change'))
     );
   }
 
@@ -276,6 +299,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   }
 
   private async runRefresh(): Promise<void> {
+    // Capture the refresh reason at the start (VHS-REQ-606)
+    const currentRefreshReason = this.pendingRefreshReason;
+    this.pendingRefreshReason = 'scheduled-refresh';
+
     // Work counts for VHS-REQ-603 state accounting
     const workCounts: IndexRefreshWorkCounts = {
       tracked: 0,
@@ -296,7 +323,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         state: 'trust-disabled',
         counts: workCounts,
         indexedRepositoryRoots: [],
-        snapshotPreserved: false
+        snapshotPreserved: false,
+        refreshReason: 'trust-disabled'
       };
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
@@ -481,7 +509,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         state: 'cancelled',
         counts: workCounts,
         indexedRepositoryRoots: [...this.lastIndexedRepositoryRoots],
-        snapshotPreserved: true
+        snapshotPreserved: true,
+        refreshReason: 'user-cancellation'
       };
       return;
     }
@@ -496,7 +525,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         state: 'trust-disabled',
         counts: workCounts,
         indexedRepositoryRoots: [],
-        snapshotPreserved: false
+        snapshotPreserved: false,
+        refreshReason: 'trust-disabled'
       };
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
@@ -511,7 +541,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         state: 'failed',
         counts: workCounts,
         indexedRepositoryRoots: [],
-        snapshotPreserved: hasExistingSnapshot
+        snapshotPreserved: hasExistingSnapshot,
+        refreshReason: 'repository-enumeration-failed'
       };
       return;
     }
@@ -521,11 +552,17 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     this.lastIndexedHeads = nextIndexedHeads;
     this.eligiblePaths = nextEligiblePaths;
     this.hideStatusBarProgress();
+    // Determine the effective refresh reason based on state (VHS-REQ-606)
+    const effectiveRefreshReason: IndexRefreshReason =
+      determinedState === 'branch-switch' ? 'branch-switch' :
+      anyHeadChanged ? 'head-change' :
+      currentRefreshReason;
     this.lastRefreshResult = {
       state: determinedState,
       counts: workCounts,
       indexedRepositoryRoots: nextIndexedRepositoryRoots,
-      snapshotPreserved: false
+      snapshotPreserved: false,
+      refreshReason: effectiveRefreshReason
     };
     await vscode.commands.executeCommand(
       'setContext',
@@ -796,4 +833,106 @@ export function isRepositoryRelevantToWorkspace(
 function normalizeScopePath(value: string): string {
   const normalized = path.resolve(value);
   return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+/**
+ * Builds a user-visible indexing diagnostic summary from an IndexRefreshResult (VHS-REQ-606).
+ * The summary explains refresh state, work accounting, refresh reason, and the boundary
+ * between indexing behavior and comparison-runtime validation.
+ */
+export function buildIndexingDiagnosticSummary(
+  result: IndexRefreshResult | undefined
+): string[] {
+  if (!result) {
+    return ['Indexing status: No refresh has been performed.'];
+  }
+
+  const lines: string[] = [];
+
+  // State description
+  const stateLabel = formatIndexRefreshState(result.state);
+  lines.push(`Indexing status: ${stateLabel}.`);
+
+  // Refresh reason
+  const reasonLabel = formatIndexRefreshReason(result.refreshReason);
+  lines.push(`Refresh reason: ${reasonLabel}.`);
+
+  // Work counts
+  const { counts } = result;
+  lines.push(
+    `Work counts: tracked=${counts.tracked}, reused=${counts.reused}, evaluated=${counts.evaluated}, eligible=${counts.eligible}, skipped=${counts.skipped}, failed=${counts.failed}.`
+  );
+
+  // Repository roots
+  if (result.indexedRepositoryRoots.length > 0) {
+    lines.push(
+      `Indexed repositories: ${result.indexedRepositoryRoots.length} (${result.indexedRepositoryRoots.slice(0, 3).map((root) => path.basename(root)).join(', ')}${result.indexedRepositoryRoots.length > 3 ? ', ...' : ''}).`
+    );
+  } else {
+    lines.push('Indexed repositories: none.');
+  }
+
+  // Snapshot preservation
+  if (result.snapshotPreserved) {
+    lines.push('Previous eligibility snapshot preserved.');
+  }
+
+  // Runtime-separation boundary statement (VHS-REQ-606)
+  lines.push(
+    'Note: LabVIEWCLI or comparison-runtime validation failures are comparison/runtime setup evidence, not indexing-cache causes. Runtime discovery diagnostics (VHS-REQ-155) are separate from indexing diagnostics.'
+  );
+
+  return lines;
+}
+
+/**
+ * Formats the IndexRefreshState as a user-visible label.
+ */
+function formatIndexRefreshState(state: IndexRefreshState): string {
+  switch (state) {
+    case 'cold-scan':
+      return 'Cold scan (no prior eligibility data; all files evaluated from scratch)';
+    case 'warm-restart':
+      return 'Warm restart (prior eligibility data exists with same HEAD; cache reuse possible)';
+    case 'branch-switch':
+      return 'Branch switch (HEAD changed since last refresh; affected files re-evaluated)';
+    case 'cancelled':
+      return 'Cancelled (user cancelled refresh; previous snapshot preserved)';
+    case 'trust-disabled':
+      return 'Trust disabled (workspace is not trusted; eligibility cleared)';
+    case 'failed':
+      return 'Failed (refresh failed with no repositories successfully indexed; previous snapshot preserved when exists)';
+    default:
+      return state;
+  }
+}
+
+/**
+ * Formats the IndexRefreshReason as a user-visible label.
+ */
+function formatIndexRefreshReason(reason: IndexRefreshReason): string {
+  switch (reason) {
+    case 'initial-activation':
+      return 'Initial extension activation';
+    case 'branch-switch':
+      return 'Branch switch detected';
+    case 'head-change':
+      return 'HEAD change detected';
+    case 'workspace-folder-change':
+      return 'Workspace folder change';
+    case 'git-state-change':
+      return 'Git repository state change';
+    case 'setting-change':
+      return 'Relevant setting change (strictRsrcHeader)';
+    case 'user-cancellation':
+      return 'User cancellation';
+    case 'trust-disabled':
+      return 'Workspace trust disabled';
+    case 'repository-enumeration-failed':
+      return 'Repository enumeration failed';
+    case 'scheduled-refresh':
+      return 'Scheduled refresh';
+    default:
+      return reason;
+  }
 }

@@ -336,3 +336,156 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    workspaceState.isTrusted = true;
+  });
+
+  it('exposes buildIndexingDiagnosticSummary as separate from runtime doctor diagnostics', async () => {
+    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+    const { buildComparisonRuntimeDoctorSummaryFromFacts } = await import('../../src/reporting/comparisonRuntimeDoctor');
+
+    // Verify both functions exist and are separate
+    expect(typeof buildIndexingDiagnosticSummary).toBe('function');
+    expect(typeof buildComparisonRuntimeDoctorSummaryFromFacts).toBe('function');
+
+    // Verify indexing diagnostics do not include runtime selection/execution facts
+    const indexingResult = {
+      state: 'cold-scan' as const,
+      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, skipped: 0, failed: 0 },
+      indexedRepositoryRoots: ['/workspace/repo'],
+      snapshotPreserved: false,
+      refreshReason: 'initial-activation' as const
+    };
+    const indexingSummary = buildIndexingDiagnosticSummary(indexingResult);
+
+    // Indexing summary should not include runtime-specific terms
+    const indexingText = indexingSummary.join(' ');
+    expect(indexingText).not.toContain('provider=');
+    expect(indexingText).not.toContain('engine=');
+    expect(indexingText).not.toContain('Next action:');
+
+    // Indexing summary should include indexing-specific terms
+    expect(indexingText).toContain('Indexing status');
+    expect(indexingText).toContain('Refresh reason');
+    expect(indexingText).toContain('Work counts');
+  });
+
+  it('indexing diagnostic summary explicitly states runtime failures are not indexing causes', async () => {
+    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+
+    const result = {
+      state: 'cold-scan' as const,
+      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, skipped: 0, failed: 0 },
+      indexedRepositoryRoots: ['/workspace/repo'],
+      snapshotPreserved: false,
+      refreshReason: 'initial-activation' as const
+    };
+    const summary = buildIndexingDiagnosticSummary(result);
+    const fullText = summary.join(' ');
+
+    // Key boundary statement required by VHS-REQ-606
+    expect(fullText).toContain('LabVIEWCLI or comparison-runtime validation failures');
+    expect(fullText).toContain('comparison/runtime setup evidence');
+    expect(fullText).toContain('not indexing-cache causes');
+  });
+
+  it('indexing diagnostics keep VHS-REQ-155 runtime discovery diagnostics separate', async () => {
+    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+
+    const result = {
+      state: 'warm-restart' as const,
+      counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, skipped: 0, failed: 0 },
+      indexedRepositoryRoots: ['/workspace/repo'],
+      snapshotPreserved: false,
+      refreshReason: 'scheduled-refresh' as const
+    };
+    const summary = buildIndexingDiagnosticSummary(result);
+    const fullText = summary.join(' ');
+
+    // Verify explicit mention of separation
+    expect(fullText).toContain('VHS-REQ-155');
+    expect(fullText).toContain('separate from indexing diagnostics');
+  });
+
+  it('user-visible status distinguishes all required states', async () => {
+    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+
+    const states = [
+      { state: 'cold-scan', expected: 'Cold scan' },
+      { state: 'warm-restart', expected: 'Warm restart' },
+      { state: 'branch-switch', expected: 'Branch switch' },
+      { state: 'cancelled', expected: 'Cancelled' },
+      { state: 'trust-disabled', expected: 'Trust disabled' },
+      { state: 'failed', expected: 'Failed' }
+    ] as const;
+
+    for (const { state, expected } of states) {
+      const result = {
+        state,
+        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, skipped: 0, failed: 0 },
+        indexedRepositoryRoots: [],
+        snapshotPreserved: false,
+        refreshReason: 'initial-activation' as const
+      };
+      const summary = buildIndexingDiagnosticSummary(result);
+      const statusLine = summary.find(line => line.startsWith('Indexing status:'));
+
+      expect(statusLine, `State ${state} should be visible`).toContain(expected);
+    }
+  });
+
+  it('user-visible diagnostics include all work count fields', async () => {
+    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+
+    const result = {
+      state: 'cold-scan' as const,
+      counts: { tracked: 100, reused: 20, evaluated: 80, eligible: 50, skipped: 5, failed: 3 },
+      indexedRepositoryRoots: ['/workspace/repo'],
+      snapshotPreserved: false,
+      refreshReason: 'initial-activation' as const
+    };
+    const summary = buildIndexingDiagnosticSummary(result);
+    const countsLine = summary.find(line => line.startsWith('Work counts:'));
+
+    expect(countsLine).toContain('tracked=100');
+    expect(countsLine).toContain('reused=20');
+    expect(countsLine).toContain('evaluated=80');
+    expect(countsLine).toContain('eligible=50');
+    expect(countsLine).toContain('skipped=5');
+    expect(countsLine).toContain('failed=3');
+  });
+
+  it('user-visible diagnostics identify all refresh reasons', async () => {
+    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+
+    const reasons = [
+      { reason: 'initial-activation', expected: 'Initial extension activation' },
+      { reason: 'branch-switch', expected: 'Branch switch detected' },
+      { reason: 'head-change', expected: 'HEAD change detected' },
+      { reason: 'workspace-folder-change', expected: 'Workspace folder change' },
+      { reason: 'git-state-change', expected: 'Git repository state change' },
+      { reason: 'setting-change', expected: 'Relevant setting change' },
+      { reason: 'user-cancellation', expected: 'User cancellation' },
+      { reason: 'trust-disabled', expected: 'Workspace trust disabled' },
+      { reason: 'repository-enumeration-failed', expected: 'Repository enumeration failed' },
+      { reason: 'scheduled-refresh', expected: 'Scheduled refresh' }
+    ] as const;
+
+    for (const { reason, expected } of reasons) {
+      const result = {
+        state: 'cold-scan' as const,
+        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, skipped: 0, failed: 0 },
+        indexedRepositoryRoots: [],
+        snapshotPreserved: false,
+        refreshReason: reason
+      };
+      const summary = buildIndexingDiagnosticSummary(result);
+      const reasonLine = summary.find(line => line.startsWith('Refresh reason:'));
+
+      expect(reasonLine, `Reason ${reason} should be visible`).toContain(expected);
+    }
+  });
+});
