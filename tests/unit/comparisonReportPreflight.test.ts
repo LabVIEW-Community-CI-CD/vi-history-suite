@@ -280,5 +280,65 @@ describe('explicitComparePairWorkflow', () => {
       expect(state.pair.selectedHash).toBe('selected123');
       expect(state.pair.baseHash).toBe('base456');
     });
+
+    it('assigns selectedHash to the newer commit (lower commitIndex) regardless of selection order', () => {
+      const stateNewerFirst = deriveCompareSelectionState([
+        { hash: 'newerCommit', commitIndex: 0 },
+        { hash: 'olderCommit', commitIndex: 3 }
+      ]);
+      const stateOlderFirst = deriveCompareSelectionState([
+        { hash: 'olderCommit', commitIndex: 3 },
+        { hash: 'newerCommit', commitIndex: 0 }
+      ]);
+
+      if (stateNewerFirst.status !== 'pair-ready' || stateOlderFirst.status !== 'pair-ready') {
+        throw new Error('Expected both states to be pair-ready');
+      }
+
+      expect(stateNewerFirst.pair.selectedHash).toBe('newerCommit');
+      expect(stateNewerFirst.pair.baseHash).toBe('olderCommit');
+      expect(stateOlderFirst.pair.selectedHash).toBe('newerCommit');
+      expect(stateOlderFirst.pair.baseHash).toBe('olderCommit');
+    });
+  });
+
+  describe('selected/base ordering semantics for preflight wording', () => {
+    it('resolveSelectedComparePair uses lower commitIndex for selectedHash (newer revision)', () => {
+      const candidates: CompareRevisionCandidate[] = [
+        { hash: 'commitA', commitIndex: 2 },
+        { hash: 'commitB', commitIndex: 0 }
+      ];
+      const pair = resolveSelectedComparePair(candidates);
+
+      expect(pair).toBeDefined();
+      expect(pair?.selectedHash).toBe('commitB');
+      expect(pair?.baseHash).toBe('commitA');
+    });
+
+    it('resolveSelectedComparePair uses higher commitIndex for baseHash (older revision)', () => {
+      const candidates: CompareRevisionCandidate[] = [
+        { hash: 'newestChange', commitIndex: 0 },
+        { hash: 'oldestChange', commitIndex: 10 }
+      ];
+      const pair = resolveSelectedComparePair(candidates);
+
+      expect(pair).toBeDefined();
+      expect(pair?.selectedHash).toBe('newestChange');
+      expect(pair?.baseHash).toBe('oldestChange');
+    });
+
+    it('exactly two retained revisions is the only pair-ready state', () => {
+      expect(deriveCompareSelectionState([]).status).toBe('no-selection');
+      expect(deriveCompareSelectionState([{ hash: 'a', commitIndex: 0 }]).status).toBe('need-one-more');
+      expect(deriveCompareSelectionState([
+        { hash: 'a', commitIndex: 0 },
+        { hash: 'b', commitIndex: 1 }
+      ]).status).toBe('pair-ready');
+      expect(deriveCompareSelectionState([
+        { hash: 'a', commitIndex: 0 },
+        { hash: 'b', commitIndex: 1 },
+        { hash: 'c', commitIndex: 2 }
+      ]).status).toBe('too-many');
+    });
   });
 });

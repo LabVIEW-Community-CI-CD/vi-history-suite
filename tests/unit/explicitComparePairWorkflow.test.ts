@@ -103,6 +103,20 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
 
       expect(html).toContain('Select exactly two retained revisions');
     });
+
+    it('does not auto-trigger compare when selection state changes via updateComparePreflightSelectionState', () => {
+      const model = createTestViewModel([
+        { hash: 'abc123', previousHash: 'def456' },
+        { hash: 'def456' }
+      ]);
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('function updateComparePreflightSelectionState()');
+      expect(html).not.toContain('updateComparePreflightSelectionState().then(');
+      expect(html).not.toMatch(/updateComparePreflightSelectionState\(\).*generateComparisonReport/);
+      expect(html).toContain('updateCompareButtonState(true)');
+      expect(html).toContain('updateCompareButtonState(false)');
+    });
   });
 
   describe('runtime preflight status remains visible even when compare generation is blocked', () => {
@@ -184,6 +198,18 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
       expect(html).toContain('data-testid="history-compare-preflight-base"');
       expect(html).toContain('Selected commit:');
       expect(html).toContain('Base commit:');
+    });
+
+    it('renders selected/base ordering explanation in preflight details', () => {
+      const model = createTestViewModel([
+        { hash: 'abc123', previousHash: 'def456' },
+        { hash: 'def456' }
+      ]);
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('data-testid="history-compare-preflight-ordering"');
+      expect(html).toContain('The newer of the two selected revisions becomes <code>selected</code>');
+      expect(html).toContain('the older becomes <code>base</code>');
     });
   });
 
