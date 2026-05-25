@@ -271,6 +271,146 @@ describe('comparisonReportPreflight', () => {
     expect(result.right.isVi).toBe(true);
   });
 
+  it('reports preflight blocked when right blob is not a VI', async () => {
+    const resolveRevisionRelativePaths = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
+      .mockResolvedValue(
+        new Map([
+          ['base123', 'Examples/Folder With Spaces/Original Example.vi'],
+          ['selected456', 'Source/Folder With Spaces/Current Example.vi']
+        ])
+      );
+    const readRevisionBlob = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').readRevisionBlob>()
+      .mockImplementation(async (_repoRoot, revisionId) =>
+        revisionId === 'base123' ? createViLikeBuffer('LVIN') : Buffer.from('not a VI file', 'utf8')
+      );
+
+    const result = await preflightComparisonReportRevisions(
+      {
+        repoRoot: '/workspace/repo',
+        relativePath: 'Source\\Folder With Spaces\\Current Example.vi',
+        leftRevisionId: 'base123',
+        rightRevisionId: 'selected456',
+        strictRsrcHeader: true
+      },
+      { resolveRevisionRelativePaths, readRevisionBlob }
+    );
+
+    expect(result.ready).toBe(false);
+    expect(result.blockedReason).toBe('right-blob-not-vi');
+    expect(result.left.isVi).toBe(true);
+    expect(result.right).toMatchObject({
+      revisionId: 'selected456',
+      resolvedRelativePath: 'Source/Folder With Spaces/Current Example.vi',
+      blobSpecifier: 'selected456:Source/Folder With Spaces/Current Example.vi',
+      isVi: false,
+      blockedReason: 'blob-not-vi'
+    });
+    expect(readRevisionBlob.mock.calls).toEqual([
+      ['/workspace/repo', 'base123', 'Examples/Folder With Spaces/Original Example.vi'],
+      ['/workspace/repo', 'selected456', 'Source/Folder With Spaces/Current Example.vi']
+    ]);
+  });
+
+  it('reports preflight blocked when right blob cannot be read', async () => {
+    const resolveRevisionRelativePaths = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
+      .mockResolvedValue(
+        new Map([
+          ['base123', 'Examples/Folder With Spaces/Original Example.vi'],
+          ['selected456', 'Source/Folder With Spaces/Current Example.vi']
+        ])
+      );
+    const readRevisionBlob = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').readRevisionBlob>()
+      .mockImplementation(async (_repoRoot, revisionId) => {
+        if (revisionId === 'base123') {
+          return createViLikeBuffer('LVIN');
+        }
+
+        throw new Error('unable to read blob');
+      });
+
+    const result = await preflightComparisonReportRevisions(
+      {
+        repoRoot: '/workspace/repo',
+        relativePath: 'Source\\Folder With Spaces\\Current Example.vi',
+        leftRevisionId: 'base123',
+        rightRevisionId: 'selected456',
+        strictRsrcHeader: true
+      },
+      { resolveRevisionRelativePaths, readRevisionBlob }
+    );
+
+    expect(result.ready).toBe(false);
+    expect(result.blockedReason).toBe('right-blob-read-failed');
+    expect(result.left.isVi).toBe(true);
+    expect(result.right).toMatchObject({
+      revisionId: 'selected456',
+      resolvedRelativePath: 'Source/Folder With Spaces/Current Example.vi',
+      blobSpecifier: 'selected456:Source/Folder With Spaces/Current Example.vi',
+      isVi: false,
+      blockedReason: 'blob-read-failed'
+    });
+    expect(readRevisionBlob.mock.calls).toEqual([
+      ['/workspace/repo', 'base123', 'Examples/Folder With Spaces/Original Example.vi'],
+      ['/workspace/repo', 'selected456', 'Source/Folder With Spaces/Current Example.vi']
+    ]);
+  });
+
+  it('retains dual-side blocked details when left blob is not a VI and right blob cannot be read', async () => {
+    const resolveRevisionRelativePaths = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
+      .mockResolvedValue(
+        new Map([
+          ['base123', 'Examples/Folder With Spaces/Original Example.vi'],
+          ['selected456', 'Source/Folder With Spaces/Current Example.vi']
+        ])
+      );
+    const readRevisionBlob = vi
+      .fn<typeof import('../../src/reporting/comparisonReportPreflight').readRevisionBlob>()
+      .mockImplementation(async (_repoRoot, revisionId) => {
+        if (revisionId === 'base123') {
+          return Buffer.from('not a VI file', 'utf8');
+        }
+
+        throw new Error('unable to read blob');
+      });
+
+    const result = await preflightComparisonReportRevisions(
+      {
+        repoRoot: '/workspace/repo',
+        relativePath: 'Source\\Folder With Spaces\\Current Example.vi',
+        leftRevisionId: 'base123',
+        rightRevisionId: 'selected456',
+        strictRsrcHeader: true
+      },
+      { resolveRevisionRelativePaths, readRevisionBlob }
+    );
+
+    expect(result.ready).toBe(false);
+    expect(result.blockedReason).toBe('left-blob-not-vi');
+    expect(result.left).toMatchObject({
+      revisionId: 'base123',
+      resolvedRelativePath: 'Examples/Folder With Spaces/Original Example.vi',
+      blobSpecifier: 'base123:Examples/Folder With Spaces/Original Example.vi',
+      isVi: false,
+      blockedReason: 'blob-not-vi'
+    });
+    expect(result.right).toMatchObject({
+      revisionId: 'selected456',
+      resolvedRelativePath: 'Source/Folder With Spaces/Current Example.vi',
+      blobSpecifier: 'selected456:Source/Folder With Spaces/Current Example.vi',
+      isVi: false,
+      blockedReason: 'blob-read-failed'
+    });
+    expect(readRevisionBlob.mock.calls).toEqual([
+      ['/workspace/repo', 'base123', 'Examples/Folder With Spaces/Original Example.vi'],
+      ['/workspace/repo', 'selected456', 'Source/Folder With Spaces/Current Example.vi']
+    ]);
+  });
+
   it('does not use the working-tree file when one requested revision no longer has the VI blob', async () => {
     const repoRoot = await createTempRepoRoot();
     const relativePath = 'Source/Folder Name/Current Example.vi';
