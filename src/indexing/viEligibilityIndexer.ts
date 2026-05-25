@@ -5,10 +5,10 @@ import type { ViSignature } from '../domain/viMagicCore';
 import { GitApi, GitRepository } from '../git/gitApi';
 import {
   type GitTrackedFileEntry,
+  findReachableCommitHashes,
   getRepoHead,
   getRepoRoot,
   listChangedTrackedPaths,
-  listReachableCommitHashes,
   listTrackedFileEntries,
   normalizeRelativeGitPath
 } from '../git/gitCli';
@@ -21,7 +21,7 @@ type IndexedRepositoryWorkItem = {
   repository: IndexedRepository;
   trackedFiles: string[];
   cleanObjectIdsByPath: Map<string, string>;
-  reachableCommitHashes: Set<string>;
+  getReachableProofHashes: () => Promise<Set<string>>;
   head: string;
 };
 
@@ -374,12 +374,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         const [
           trackedFileEntries,
           changedTrackedPaths,
-          reachableCommitHashes,
           head
         ] = await Promise.all([
           listTrackedFileEntries(repository.rootUri.fsPath),
           listChangedTrackedPaths(repository.rootUri.fsPath),
-          listReachableCommitHashes(repository.rootUri.fsPath),
           getRepoHead(repository.rootUri.fsPath)
         ]);
         const changedTrackedPathSet = new Set(
@@ -393,14 +391,24 @@ export class ViEligibilityIndexer implements vscode.Disposable {
           repository.rootUri.fsPath
         );
         workCounts.removed += countRemovedPaths(previousTrackedPaths, trackedPathSet);
+        const cleanObjectIdsByPath = buildCleanObjectIdsByPath(
+          trackedFileEntries,
+          changedTrackedPathSet
+        );
         repositoryWorkItems.push({
           repository,
           trackedFiles,
-          cleanObjectIdsByPath: buildCleanObjectIdsByPath(
-            trackedFileEntries,
-            changedTrackedPathSet
+          cleanObjectIdsByPath,
+          getReachableProofHashes: createReachableProofHashLoader(
+            repository.rootUri.fsPath,
+            collectCachedEligibleProofHashes(
+              repository,
+              trackedFiles,
+              cleanObjectIdsByPath,
+              strictRsrcHeader,
+              this.eligibilityCache
+            )
           ),
-          reachableCommitHashes: new Set(reachableCommitHashes),
           head
         });
         totalTrackedFiles += trackedFiles.length;
@@ -499,7 +507,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
             let isEligible: boolean | undefined;
             if (
               cachedEntry !== undefined &&
-              canReuseEligibilityCacheEntry(cachedEntry, workItem.reachableCommitHashes)
+              await canReuseEligibilityCacheEntry(
+                cachedEntry,
+                workItem.getReachableProofHashes
+              )
             ) {
               isEligible = cachedEntry.eligible;
               workCounts.reused += 1;
@@ -755,7 +766,7 @@ export function buildCacheKey(
 ): string {
   return [
     `v${ELIGIBILITY_CACHE_SCHEMA_VERSION}`,
-    repository.rootUri.fsPath,
+    normalizeCacheRepositoryRoot(repository.rootUri.fsPath),
     normalizeRelativeGitPath(relativePath),
     blobObjectId,
     strictRsrcHeader ? 'strict' : 'non-strict'
@@ -817,6 +828,52 @@ function isEligibilityCacheEntry(value: unknown): value is EligibilityCacheEntry
 
 function isCacheableSignature(value: unknown): value is ViSignature | 'unknown' {
   return value === 'LVIN' || value === 'LVCC' || value === 'unknown';
+}
+
+function normalizeCacheRepositoryRoot(repositoryRoot: string): string {
+  const normalizedRoot = path.resolve(repositoryRoot);
+  return process.platform === 'win32' ? normalizedRoot.toLowerCase() : normalizedRoot;
+}
+
+function createReachableProofHashLoader(
+  repositoryRoot: string,
+  proofHashes: readonly string[]
+): () => Promise<Set<string>> {
+  let reachableProofHashesPromise: Promise<Set<string>> | undefined;
+  return async () => {
+    reachableProofHashesPromise ??= findReachableCommitHashes(repositoryRoot, proofHashes);
+    return reachableProofHashesPromise;
+  };
+}
+
+function collectCachedEligibleProofHashes(
+  repository: IndexedRepository,
+  trackedFiles: string[],
+  cleanObjectIdsByPath: Map<string, string>,
+  strictRsrcHeader: boolean,
+  eligibilityCache: Map<string, EligibilityCacheEntry>
+): string[] {
+  const proofHashes = new Set<string>();
+  for (const relativePath of trackedFiles) {
+    const normalizedRelativePath = normalizeRelativeGitPath(relativePath);
+    const cleanObjectId = cleanObjectIdsByPath.get(normalizedRelativePath);
+    if (cleanObjectId === undefined) {
+      continue;
+    }
+
+    const cachedEntry = eligibilityCache.get(
+      buildCacheKey(repository, cleanObjectId, normalizedRelativePath, strictRsrcHeader)
+    );
+    if (!cachedEntry?.eligible) {
+      continue;
+    }
+
+    for (const commitHash of cachedEntry.commitHashes) {
+      proofHashes.add(commitHash);
+    }
+  }
+
+  return [...proofHashes];
 }
 
 function buildTrackedFilesFromEntries(entries: GitTrackedFileEntry[]): string[] {
@@ -884,10 +941,10 @@ function toEligibilityCacheEntry(
   };
 }
 
-function canReuseEligibilityCacheEntry(
+async function canReuseEligibilityCacheEntry(
   entry: EligibilityCacheEntry,
-  reachableCommitHashes: Set<string>
-): boolean {
+  getReachableProofHashes: () => Promise<Set<string>>
+): Promise<boolean> {
   if (entry.signature === 'unknown') {
     return entry.eligible === false;
   }
@@ -896,7 +953,14 @@ function canReuseEligibilityCacheEntry(
     return false;
   }
 
-  return entry.commitHashes.every((commitHash) => reachableCommitHashes.has(commitHash));
+  try {
+    const reachableProofHashes = await getReachableProofHashes();
+    return entry.commitHashes.every((commitHash) =>
+      reachableProofHashes.has(commitHash.toLowerCase())
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function contextKeysForUri(uri: vscode.Uri): string[] {

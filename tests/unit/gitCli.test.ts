@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  findReachableCommitHashes,
   getFileCommitHashes,
   getFileHistoryCount,
   getFileHistoryEntries,
@@ -252,6 +253,27 @@ describe('gitCli parsing', () => {
     expect(reachableCommits).toHaveLength(2);
     expect(reachableCommits[0]).toBe(head);
     expect(reachableCommits[1]).toMatch(/^[0-9a-f]{40}$/);
+  });
+
+  it('finds only requested commits reachable from HEAD', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'sample.vi');
+
+    await fs.writeFile(trackedPath, 'first');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'First commit'], repoRoot);
+    await fs.writeFile(trackedPath, 'second');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Second commit'], repoRoot);
+
+    const [head, firstCommit] = await listReachableCommitHashes(repoRoot);
+    const reachableProofs = await findReachableCommitHashes(repoRoot, [
+      head,
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    ]);
+
+    expect(firstCommit).toMatch(/^[0-9a-f]{40}$/);
+    expect(reachableProofs).toEqual(new Set([head]));
   });
 
   it('returns bounded commit hashes and structured history entries from a real temporary Git repo', async () => {

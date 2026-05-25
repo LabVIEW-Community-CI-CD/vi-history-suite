@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -17,6 +19,7 @@ const {
   listTrackedFileEntriesMock,
   listChangedTrackedPathsMock,
   listReachableCommitHashesMock,
+  findReachableCommitHashesMock,
   getRepoHeadMock,
   evaluateViEligibilityMock
 } = vi.hoisted(() => ({
@@ -59,6 +62,9 @@ const {
   >(),
   listChangedTrackedPathsMock: vi.fn<(cwd: string) => Promise<string[]>>(),
   listReachableCommitHashesMock: vi.fn<(cwd: string) => Promise<string[]>>(),
+  findReachableCommitHashesMock: vi.fn<
+    (cwd: string, commitHashes: readonly string[]) => Promise<Set<string>>
+  >(),
   getRepoHeadMock: vi.fn<(cwd: string) => Promise<string>>(),
   evaluateViEligibilityMock: vi.fn<
     (
@@ -158,6 +164,7 @@ vi.mock('../../src/git/gitCli', async () => {
     listTrackedFileEntries: listTrackedFileEntriesMock,
     listChangedTrackedPaths: listChangedTrackedPathsMock,
     listReachableCommitHashes: listReachableCommitHashesMock,
+    findReachableCommitHashes: findReachableCommitHashesMock,
     getRepoHead: getRepoHeadMock
   };
 });
@@ -233,6 +240,10 @@ function resetGitIndexerMocks(): void {
     'head-old',
     'head-good'
   ]);
+  findReachableCommitHashesMock.mockReset();
+  findReachableCommitHashesMock.mockImplementation(async (_cwd, commitHashes) =>
+    new Set(commitHashes.map((commitHash) => commitHash.toLowerCase()))
+  );
   getRepoHeadMock.mockReset();
 }
 
@@ -269,6 +280,10 @@ describe('viEligibilityIndexer helpers', () => {
     configurationValues.set('strictRsrcHeader', true);
     configurationValues.set('maxIndexedConcurrency', 0);
 
+    const normalizedRepositoryRoot =
+      process.platform === 'win32'
+        ? path.resolve('/workspace/repo').toLowerCase()
+        : path.resolve('/workspace/repo');
     expect(
       buildCacheKey(
         { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
@@ -276,7 +291,40 @@ describe('viEligibilityIndexer helpers', () => {
         'nested\\file.vi',
         true
       )
-    ).toBe('v2::/workspace/repo::nested/file.vi::head123::strict');
+    ).toBe(`v2::${normalizedRepositoryRoot}::nested/file.vi::head123::strict`);
+    if (process.platform === 'win32') {
+      expect(
+        buildCacheKey(
+          { rootUri: { fsPath: 'C:\\Workspace\\Repo', path: 'C:\\Workspace\\Repo' } },
+          'head123',
+          'nested/file.vi',
+          true
+        )
+      ).toBe(
+        buildCacheKey(
+          { rootUri: { fsPath: 'c:\\workspace\\repo\\.', path: 'c:\\workspace\\repo\\.' } },
+          'head123',
+          'nested/file.vi',
+          true
+        )
+      );
+    } else {
+      expect(
+        buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo/..//repo', path: '/workspace/repo/..//repo' } },
+          'head123',
+          'nested/file.vi',
+          true
+        )
+      ).toBe(
+        buildCacheKey(
+          { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+          'head123',
+          'nested/file.vi',
+          true
+        )
+      );
+    }
     expect(
       contextKeysForUri({
         fsPath: 'C:\\Repo\\nested\\file.vi',
@@ -488,6 +536,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     await indexer.refresh();
 
     expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
+    expect(findReachableCommitHashesMock).toHaveBeenCalledTimes(1);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(1);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(0);
     expect(cacheStore.update).toHaveBeenCalledTimes(1);
@@ -2164,7 +2213,7 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
     ];
     listTrackedFilesMock.mockResolvedValue(['file.vi']);
     getRepoHeadMock.mockResolvedValue('head-1');
-    listReachableCommitHashesMock.mockResolvedValue(['commit-a', 'commit-b']);
+    findReachableCommitHashesMock.mockResolvedValue(new Set(['commit-a', 'commit-b']));
     eligibilityCacheStorageState.value = {
       schemaVersion: 2,
       entries: {
@@ -2196,6 +2245,7 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
     await indexer.refresh();
 
     expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
+    expect(findReachableCommitHashesMock).toHaveBeenCalledTimes(1);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
   });
@@ -2237,6 +2287,7 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
     await indexer.refresh();
 
     expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
+    expect(findReachableCommitHashesMock).not.toHaveBeenCalled();
     expect(indexer.getLastRefreshResult()).toMatchObject({
       counts: {
         tracked: 1,

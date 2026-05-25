@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -52,6 +52,113 @@ export async function runGit(
       }
     );
   });
+}
+
+export async function runGitLines(
+  args: string[],
+  cwd: string,
+  options: RunGitOptions = {}
+): Promise<string[]> {
+  const lines: string[] = [];
+  await streamGitLines(args, cwd, (line) => {
+    lines.push(line);
+  }, options);
+  return lines;
+}
+
+async function streamGitLines(
+  args: string[],
+  cwd: string,
+  onLine: (line: string) => boolean | void,
+  options: RunGitOptions = {}
+): Promise<void> {
+  const timeoutMs = options.timeoutMs ?? resolveGitTimeoutMs();
+  return new Promise((resolve, reject) => {
+    let bufferedStdout = '';
+    let bufferedStderr = '';
+    let timedOut = false;
+    let stopRequested = false;
+    const child = spawn(resolveGitExecutable(), args, {
+      cwd,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    const timeoutHandle = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+    }, timeoutMs);
+
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk: string) => {
+      bufferedStdout += chunk;
+      const parsedLines = bufferedStdout.split(/\r?\n/);
+      bufferedStdout = parsedLines.pop() ?? '';
+      for (const line of parsedLines) {
+        if (handleGitLine(line, onLine)) {
+          stopRequested = true;
+          child.kill('SIGTERM');
+          break;
+        }
+      }
+    });
+
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (chunk: string) => {
+      bufferedStderr += chunk;
+    });
+
+    child.on('error', (error) => {
+      clearTimeout(timeoutHandle);
+      reject(error);
+    });
+
+    child.on('close', (code, signal) => {
+      clearTimeout(timeoutHandle);
+      if (stopRequested) {
+        resolve();
+        return;
+      }
+      if (timedOut || signal === 'SIGTERM') {
+        reject(
+          new Error(
+            `Git command timed out after ${timeoutMs} ms: git ${args.join(' ')}. ` +
+              `Set ${GIT_TIMEOUT_ENVIRONMENT_KEY} to a larger value for slow networks.`
+          )
+        );
+        return;
+      }
+
+      if (code !== 0) {
+        const stderr = bufferedStderr.trim();
+        reject(
+          new Error(
+            stderr.length > 0
+              ? stderr
+              : `Git command failed with exit code ${code}: git ${args.join(' ')}`
+          )
+        );
+        return;
+      }
+
+      if (handleGitLine(bufferedStdout, onLine)) {
+        resolve();
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function handleGitLine(
+  line: string,
+  onLine: (line: string) => boolean | void
+): boolean {
+  const trimmedLine = line.trim();
+  if (trimmedLine.length === 0) {
+    return false;
+  }
+
+  return onLine(trimmedLine) === true;
 }
 
 export function resolveGitTimeoutMs(environment: NodeJS.ProcessEnv = process.env): number {
@@ -243,8 +350,33 @@ export async function listChangedTrackedPaths(cwd: string): Promise<string[]> {
 }
 
 export async function listReachableCommitHashes(cwd: string): Promise<string[]> {
-  const stdout = await runGit(['rev-list', 'HEAD'], cwd, 'utf8');
-  return parseCommitHashes(String(stdout));
+  return runGitLines(['rev-list', 'HEAD'], cwd);
+}
+
+export async function findReachableCommitHashes(
+  cwd: string,
+  commitHashes: readonly string[]
+): Promise<Set<string>> {
+  const pendingCommitHashes = new Set(
+    commitHashes
+      .map((commitHash) => commitHash.trim().toLowerCase())
+      .filter((commitHash) => commitHash.length > 0)
+  );
+  const reachableCommitHashes = new Set<string>();
+  if (pendingCommitHashes.size === 0) {
+    return reachableCommitHashes;
+  }
+
+  await streamGitLines(['rev-list', 'HEAD'], cwd, (line) => {
+    const commitHash = line.toLowerCase();
+    if (pendingCommitHashes.delete(commitHash)) {
+      reachableCommitHashes.add(commitHash);
+    }
+
+    return pendingCommitHashes.size === 0;
+  });
+
+  return reachableCommitHashes;
 }
 
 export async function getFileCommitHashes(
