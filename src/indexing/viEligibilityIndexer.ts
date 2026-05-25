@@ -63,7 +63,10 @@ export interface IndexRefreshResult {
   state: IndexRefreshState;
   /** Work counts for this refresh. */
   counts: IndexRefreshWorkCounts;
-  /** Repository roots that were indexed in this refresh. */
+  /**
+   * Repository roots represented by this result. Applied refreshes report roots
+   * indexed in the refresh; preserved snapshots report the preserved roots.
+   */
   indexedRepositoryRoots: string[];
   /** Whether the previous eligibility snapshot was preserved (cancellation/failure). */
   snapshotPreserved: boolean;
@@ -445,10 +448,11 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     if (finalRefreshOutcome === 'cancelled') {
       // Preserve previous snapshot on cancellation (VHS-REQ-603)
       this.hideStatusBarProgress();
+      finalizeSkippedCount(workCounts);
       this.lastRefreshResult = {
         state: 'cancelled',
         counts: workCounts,
-        indexedRepositoryRoots: nextIndexedRepositoryRoots,
+        indexedRepositoryRoots: [...this.lastIndexedRepositoryRoots],
         snapshotPreserved: true
       };
       return;
@@ -459,6 +463,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       this.lastIndexedRepositoryRoots = [];
       this.lastIndexedHeads.clear();
       this.hideStatusBarProgress();
+      finalizeSkippedCount(workCounts);
       this.lastRefreshResult = {
         state: 'trust-disabled',
         counts: workCounts,
@@ -477,7 +482,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       this.lastRefreshResult = {
         state: 'failed',
         counts: workCounts,
-        indexedRepositoryRoots: nextIndexedRepositoryRoots,
+        indexedRepositoryRoots: [],
         snapshotPreserved: hasExistingSnapshot
       };
       return;
@@ -635,6 +640,13 @@ export async function forEachConcurrent<T>(
   });
 
   await Promise.all(workers);
+}
+
+function finalizeSkippedCount(workCounts: IndexRefreshWorkCounts): void {
+  workCounts.skipped = Math.max(
+    workCounts.skipped,
+    workCounts.tracked - workCounts.reused - workCounts.evaluated
+  );
 }
 
 export async function resolveIndexedRepositories(

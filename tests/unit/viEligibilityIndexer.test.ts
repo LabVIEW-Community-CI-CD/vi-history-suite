@@ -523,6 +523,19 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
         '/workspace/repo/tracked.vi': true
       })
     ]);
+    expect(indexer.getLastRefreshResult()).toMatchObject({
+      state: 'cancelled',
+      counts: {
+        tracked: 2,
+        reused: 0,
+        evaluated: 1,
+        eligible: 0,
+        skipped: 1,
+        failed: 0
+      },
+      indexedRepositoryRoots: ['/workspace/repo'],
+      snapshotPreserved: true
+    });
   });
 
   it('fails closed and clears eligibility when workspace trust is lost during refresh', async () => {
@@ -617,6 +630,18 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       eligiblePathsSample: []
     });
     expect(indexer.getDebugSnapshot().lastRefreshResult?.state).toBe('trust-disabled');
+    expect(indexer.getLastRefreshResult()).toMatchObject({
+      counts: {
+        tracked: 2,
+        reused: 0,
+        evaluated: 0,
+        eligible: 0,
+        skipped: 2,
+        failed: 0
+      },
+      indexedRepositoryRoots: [],
+      snapshotPreserved: false
+    });
     expect(commandExecuteMock.mock.calls.at(-1)).toEqual([
       'setContext',
       'labviewViHistory.eligiblePaths',
@@ -1368,6 +1393,15 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
     const result = indexer.getLastRefreshResult();
     expect(result?.state).toBe('cancelled');
     expect(result?.snapshotPreserved).toBe(true);
+    expect(result?.counts).toMatchObject({
+      tracked: 1,
+      reused: 0,
+      evaluated: 0,
+      eligible: 0,
+      skipped: 1,
+      failed: 0
+    });
+    expect(result?.indexedRepositoryRoots).toEqual(['/workspace/repo']);
     // Previous eligibility preserved
     expect(indexer.isEligible({
       fsPath: '/workspace/repo/initial.vi',
@@ -1417,6 +1451,54 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
     expect(result?.counts.eligible).toBe(2);
     expect(result?.counts.failed).toBe(1);
     expect(result?.counts.skipped).toBe(0);
+  });
+
+  it('reports failed state without indexed roots when repository enumeration fails', async () => {
+    configurationValues.set('maxIndexedConcurrency', 1);
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValueOnce(['initial.vi']);
+    getRepoHeadMock.mockResolvedValueOnce('head-1');
+    evaluateViEligibilityMock.mockResolvedValueOnce({ eligible: true });
+    await indexer.refresh();
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/initial.vi',
+      path: '/workspace/repo/initial.vi'
+    } as never)).toBe(true);
+
+    listTrackedFilesMock.mockRejectedValueOnce(new Error('cannot enumerate'));
+
+    await indexer.refresh();
+
+    const result = indexer.getLastRefreshResult();
+    expect(result).toMatchObject({
+      state: 'failed',
+      counts: {
+        tracked: 0,
+        reused: 0,
+        evaluated: 0,
+        eligible: 0,
+        skipped: 0,
+        failed: 0
+      },
+      indexedRepositoryRoots: [],
+      snapshotPreserved: true
+    });
+    expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual(['/workspace/repo']);
+    expect(indexer.isEligible({
+      fsPath: '/workspace/repo/initial.vi',
+      path: '/workspace/repo/initial.vi'
+    } as never)).toBe(true);
   });
 
   it('tracks skipped files when cancellation interrupts mid-refresh', async () => {
