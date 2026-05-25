@@ -7,7 +7,6 @@ function createTestCommit(overrides: Partial<ViHistoryCommit> = {}): ViHistoryCo
   return {
     hash: 'abc1234567890def1234567890abcdef12345678',
     authorName: 'Test Author',
-    authorEmail: 'test@example.com',
     authorDate: '2025-01-15',
     subject: 'Test commit subject',
     ...overrides
@@ -29,6 +28,9 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
     })
   ];
 
+  const commits = overrides.commits ?? defaultCommits;
+  const commitCount = commits.length;
+
   return {
     repositoryName: 'vi-history-suite',
     repositoryRoot: '/home/user/projects/vi-history-suite',
@@ -36,13 +38,13 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
     relativePath: 'Examples/Sample.vi',
     signature: 'LVIN',
     eligible: true,
-    commits: defaultCommits,
-    historyWindow: {
+    commits,
+    historyWindow: overrides.historyWindow ?? {
       mode: 'auto',
       configuredMaxEntries: 100,
       effectiveEntryCeiling: 1000,
-      loadedCommitCount: 2,
-      totalCommitCount: 2,
+      loadedCommitCount: commitCount,
+      totalCommitCount: commitCount,
       truncated: false,
       decision: 'auto-full-history'
     },
@@ -151,7 +153,7 @@ describe('historyPanelRendering', () => {
       const html = renderHistoryPanelHtml(model);
 
       expect(html).toContain('data-testid="history-status-commit-count"');
-      expect(html).toContain('>3</span>');
+      expect(html).toMatch(/data-testid="history-status-commit-count"[^>]*>3<\/span>/);
     });
 
     it('renders newest commit in review facts section', () => {
@@ -580,7 +582,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain(longPath);
     });
 
-    it('handles special characters in VI signature field', () => {
+    it('handles standard VI signature values', () => {
       const model = createTestViewModel({
         signature: 'LVIN'
       });

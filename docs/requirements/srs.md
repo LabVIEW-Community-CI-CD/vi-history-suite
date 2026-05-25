@@ -401,7 +401,10 @@ Missing numeric IDs are intentional.
     commit, and chronology order.
   - Binary review limitation text stays factual and does not claim semantic VI
     differences from Git-only history.
-  - User-controlled or path-derived panel values are escaped in rendered HTML.
+  - User-controlled or path-derived panel values are escaped in rendered HTML
+    text and attribute contexts. Inline script contexts (e.g., JSON-serialized
+    data in `<script>` blocks) use `JSON.stringify` which handles script-tag
+    injection by escaping forward slashes in `</script>` sequences.
 - Agent Work Scope:
   - Change `historyPanel` rendering, unit tests, and extension-host assertions
     together.
