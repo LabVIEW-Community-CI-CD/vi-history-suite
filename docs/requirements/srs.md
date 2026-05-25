@@ -787,12 +787,15 @@ Missing numeric IDs are intentional.
   - Active SRS IDs and RTM IDs match exactly.
   - Active and historical IDs remain discoverable through `id-index.csv`.
   - GitHub issue templates support requirement-targeted agent work.
+  - A committed requirement-wave guide defines requirement-first, RTM-first
+    Copilot Web issue generation with fail-closed issue-quality gates.
   - CI fails when active requirement references drift from existing repo paths.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
 - Implementation References:
   - `docs/requirements/README.md`
+  - `docs/requirements/copilot-web-issue-generation-prompt.md`
   - `docs/requirements/syrs.md`
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`

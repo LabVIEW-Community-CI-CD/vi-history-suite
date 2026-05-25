@@ -329,6 +329,11 @@ describe('requirements documentation coherence', () => {
   it('keeps the requirement-targeted issue template aligned with the agent contract', () => {
     const template = readRepoText('.github', 'ISSUE_TEMPLATE', 'requirement_target.yml');
     const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');
+    const issueWaveGuidance = readRepoText(
+      'docs',
+      'requirements',
+      'copilot-web-issue-generation-prompt.md'
+    );
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-601');
@@ -346,9 +351,26 @@ describe('requirements documentation coherence', () => {
     expect(template).toContain('Update implementation, tests, SRS, and RTM');
     expect(requirementsReadme).toContain('Requirement Target');
     expect(requirementsReadme).toContain('validation commands');
+    expect(requirementsReadme).toContain('Copilot Web issue-generation guidance');
+    expect(issueWaveGuidance).toContain('Requirements-First, RTM-First Flow');
+    expect(issueWaveGuidance).toContain('Fail Closed If Missing');
+    expect(issueWaveGuidance).toContain('repo-standards-review');
+    expect(issueWaveGuidance).toContain('C:\\Users\\sveld\\.codex\\skills\\repo-standards-review\\SKILL.md');
+    expect(issueWaveGuidance).toContain('--requirements-spec-scope system --json');
+    expect(issueWaveGuidance).toContain('Missing required label on the template (`copilot-target`).');
+    expect(issueWaveGuidance).toContain('Missing required issue-template fields');
+    expect(issueWaveGuidance).toContain('Duplicate requirement-targeted issues');
+    expect(issueWaveGuidance).toContain('Unresolved placeholders');
+    expect(issueWaveGuidance).toContain('Untestable acceptance criteria');
+    expect(issueWaveGuidance).toContain('No release/version/publish tasks');
+    expect(issueWaveGuidance).toContain('No credentials, tokens, secrets, or admin-setting changes');
     expect(srs).toContain('GitHub issue templates support requirement-targeted agent work.');
+    expect(srs).toContain('A committed requirement-wave guide defines requirement-first, RTM-first');
     expect(requirementRow?.ImplementationRefs).toContain(
       '.github/ISSUE_TEMPLATE/requirement_target.yml'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'docs/requirements/copilot-web-issue-generation-prompt.md'
     );
   });
 });

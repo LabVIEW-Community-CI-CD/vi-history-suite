@@ -12,6 +12,7 @@ intent instead of chat memory.
 | [srs.md](./srs.md) | Active software requirements that agents can target. |
 | [rtm.csv](./rtm.csv) | Machine-readable links from requirements to implementation and verification evidence. |
 | [id-index.csv](./id-index.csv) | Registry of active, superseded, and retired historical IDs. |
+| [copilot-web-issue-generation-prompt.md](./copilot-web-issue-generation-prompt.md) | Reusable requirement-wave guidance for generating future Copilot Web issues from SRS + RTM evidence. |
 
 ## Agent Workflow Contract
 
@@ -34,6 +35,10 @@ On GitHub, use the `Requirement Target` issue template for agent or Copilot
 work. The template captures the target requirement ID, files to inspect,
 acceptance criteria, required tests, validation commands, and out-of-scope
 boundaries before implementation starts.
+
+For creating new requirement-scoped Copilot Web issue waves, use the committed
+[Copilot Web issue-generation guidance](./copilot-web-issue-generation-prompt.md)
+instead of relying on chat history.
 
 ## ID Policy
 
