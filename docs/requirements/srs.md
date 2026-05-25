@@ -394,15 +394,22 @@ Missing numeric IDs are intentional.
 - Statement: The history panel shall show repository, relative path, VI
   signature, and commit facts for the selected file.
 - Acceptance Criteria:
-  - Rendered content includes repository and path facts.
-  - Rendered content includes the detected VI signature.
-  - Rendered content includes retained commit facts.
+  - Rendered content includes repository name, repository root, and origin URL
+    or unavailable state.
+  - Rendered content includes the relative path and detected VI signature.
+  - Rendered content includes retained commit count, newest commit, oldest
+    commit, and chronology order.
+  - Binary review limitation text stays factual and does not claim semantic VI
+    differences from Git-only history.
+  - User-controlled or path-derived panel values are escaped in rendered HTML.
 - Agent Work Scope:
-  - Change `historyPanel` rendering and extension-host assertions together.
+  - Change `historyPanel` rendering, unit tests, and extension-host assertions
+    together.
 - Implementation References:
   - `src/ui/historyPanel.ts`
   - `src/services/viHistoryModel.ts`
 - Verification References:
+  - `tests/unit/historyPanelRendering.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Do not replace factual Git content with inferred summaries.
