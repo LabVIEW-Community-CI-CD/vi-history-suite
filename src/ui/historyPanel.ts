@@ -764,27 +764,30 @@ function deriveInitialCompareRuntimeStatus(
 export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string {
   const newestCommit = model.commits[0];
   const oldestCommit = model.commits[model.commits.length - 1];
-  const comparePairs = model.commits
-    .map((commit) =>
-      commit.previousHash
-        ? `- ${commit.hash.slice(0, 8)} vs ${commit.previousHash.slice(0, 8)} :: ${commit.subject}`
-        : `- ${commit.hash.slice(0, 8)} :: oldest retained revision :: ${commit.subject}`
-    )
-    .join('\n');
+  const comparePairs =
+    model.commits.length > 0
+      ? model.commits
+          .map((commit) =>
+            commit.previousHash
+              ? `- ${renderPlainTextValue(commit.hash.slice(0, 8))} vs ${renderPlainTextValue(commit.previousHash.slice(0, 8))} :: ${renderPlainTextValue(commit.subject)}`
+              : `- ${renderPlainTextValue(commit.hash.slice(0, 8))} :: oldest retained revision :: ${renderPlainTextValue(commit.subject)}`
+          )
+          .join('\n')
+      : '- No retained commits were loaded, so no compare pairs are available.';
 
   return [
     'VI History Review Packet',
-    `Repository: ${model.repositoryName}`,
-    `Root: ${model.repositoryRoot}`,
-    `Origin: ${model.repositoryUrl ?? 'Unavailable'}`,
-    `Path: ${model.relativePath}`,
-    `Repo support: ${model.repositorySupport?.supportLabel ?? 'Not classified in this build'}`,
-    `Signature: ${model.signature}`,
+    `Repository: ${renderPlainTextValue(model.repositoryName)}`,
+    `Root: ${renderPlainTextValue(model.repositoryRoot)}`,
+    `Origin: ${renderPlainTextValue(model.repositoryUrl ?? 'Unavailable')}`,
+    `Path: ${renderPlainTextValue(model.relativePath)}`,
+    `Repo support: ${renderPlainTextValue(model.repositorySupport?.supportLabel ?? 'Not classified in this build')}`,
+    `Signature: ${renderPlainTextValue(model.signature)}`,
     `Eligibility: ${model.eligible ? 'Eligible' : 'Not eligible'}`,
     `Retained revisions: ${model.commits.length}`,
     `History window: ${renderHistoryWindowSummary(model)}`,
-    `Newest retained commit: ${renderCommitSummary(newestCommit)}`,
-    `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
+    `Newest retained commit: ${renderTextCommitSummary(newestCommit)}`,
+    `Oldest retained commit: ${renderTextCommitSummary(oldestCommit)}`,
     'Confidence and scope:',
     '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
     '- Included here: chronology, path provenance, retained hashes, explicit selected/base compare preflight, and retained compare pairs.',
@@ -851,6 +854,16 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
+function renderPlainTextValue(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replace(/\r\n?|\n/g, ' ')
+    .replace(/\t/g, ' ')
+    .trim();
+}
+
 function serializeForInlineScript(value: unknown): string {
   return JSON.stringify(value).replaceAll('<', '\\u003C');
 }
@@ -876,6 +889,14 @@ function renderCommitSummary(commit: ViHistoryCommit | undefined): string {
   }
 
   return `${escapeHtml(commit.hash.slice(0, 8))} · ${escapeHtml(commit.authorDate)} · ${escapeHtml(commit.authorName)}`;
+}
+
+function renderTextCommitSummary(commit: ViHistoryCommit | undefined): string {
+  if (!commit) {
+    return 'No retained commits';
+  }
+
+  return `${renderPlainTextValue(commit.hash.slice(0, 8))} · ${renderPlainTextValue(commit.authorDate)} · ${renderPlainTextValue(commit.authorName)}`;
 }
 
 function renderHistoryWindowSummary(model: ViHistoryViewModel): string {

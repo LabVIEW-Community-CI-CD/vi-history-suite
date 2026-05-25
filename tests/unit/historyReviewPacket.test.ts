@@ -1,0 +1,126 @@
+import { describe, expect, it } from 'vitest';
+
+import { ViHistoryCommit, ViHistoryViewModel } from '../../src/services/viHistoryModel';
+import { renderHistoryReviewPacketText } from '../../src/ui/historyPanel';
+
+function createTestCommit(overrides: Partial<ViHistoryCommit> = {}): ViHistoryCommit {
+  return {
+    hash: 'abc1234567890def1234567890abcdef12345678',
+    authorName: 'Test Author',
+    authorDate: '2025-01-15',
+    subject: 'Test commit subject',
+    ...overrides
+  };
+}
+
+function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHistoryViewModel {
+  const defaultCommits = [
+    createTestCommit({
+      hash: 'newest1234567890abcdef1234567890abcdef12',
+      previousHash: 'older12345678901234567890123456789012345',
+      authorDate: '2025-01-20',
+      subject: 'Newest commit'
+    }),
+    createTestCommit({
+      hash: 'older12345678901234567890123456789012345',
+      authorDate: '2025-01-15',
+      subject: 'Oldest retained revision'
+    })
+  ];
+  const commits = overrides.commits ?? defaultCommits;
+  const commitCount = commits.length;
+
+  return {
+    repositoryName: 'vi-history-suite',
+    repositoryRoot: '/home/user/projects/vi-history-suite',
+    repositoryUrl: 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite',
+    relativePath: 'Examples/Sample.vi',
+    signature: 'LVIN',
+    eligible: true,
+    commits,
+    historyWindow: overrides.historyWindow ?? {
+      mode: 'auto',
+      configuredMaxEntries: 100,
+      effectiveEntryCeiling: 1000,
+      loadedCommitCount: commitCount,
+      totalCommitCount: commitCount,
+      truncated: false,
+      decision: 'auto-full-history'
+    },
+    ...overrides
+  };
+}
+
+describe('historyReviewPacket', () => {
+  it('renders direct factual fields and compare-pair facts for retained history (VHS-REQ-040)', () => {
+    const text = renderHistoryReviewPacketText(createTestViewModel());
+
+    expect(text).toContain('VI History Review Packet');
+    expect(text).toContain('Repository: vi-history-suite');
+    expect(text).toContain('Root: /home/user/projects/vi-history-suite');
+    expect(text).toContain(
+      'Origin: https://github.com/LabVIEW-Community-CI-CD/vi-history-suite'
+    );
+    expect(text).toContain('Path: Examples/Sample.vi');
+    expect(text).toContain('Signature: LVIN');
+    expect(text).toContain('Retained revisions: 2');
+    expect(text).toContain('History window: full history loaded automatically (2/2 commits)');
+    expect(text).toContain('Newest retained commit: newest12 · 2025-01-20 · Test Author');
+    expect(text).toContain('Oldest retained commit: older123 · 2025-01-15 · Test Author');
+    expect(text).toContain('- newest12 vs older123 :: Newest commit');
+    expect(text).toContain('- older123 :: oldest retained revision :: Oldest retained revision');
+    expect(text).toContain(
+      '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.'
+    );
+    expect(text).not.toContain('semantic VI differences detected');
+    expect(text).not.toContain('LabVIEW comparison succeeded');
+  });
+
+  it('uses factual fallback text for unavailable origin and empty retained history', () => {
+    const text = renderHistoryReviewPacketText(
+      createTestViewModel({
+        repositoryUrl: undefined,
+        commits: [],
+        historyWindow: undefined
+      })
+    );
+
+    expect(text).toContain('Origin: Unavailable');
+    expect(text).toContain('Retained revisions: 0');
+    expect(text).toContain('History window: 0 retained commit(s) loaded.');
+    expect(text).toContain('Newest retained commit: No retained commits');
+    expect(text).toContain('Oldest retained commit: No retained commits');
+    expect(text).toContain(
+      'Retained compare pairs:\n- No retained commits were loaded, so no compare pairs are available.'
+    );
+  });
+
+  it('keeps copied packet content plain-text-safe for multiline and markup-like facts', () => {
+    const text = renderHistoryReviewPacketText(
+      createTestViewModel({
+        repositoryName: 'repo <strong>',
+        relativePath: 'Examples/\nInjected.vi',
+        commits: [
+          createTestCommit({
+            hash: 'feedface1234567890abcdef1234567890abcd',
+            authorName: 'Reviewer <script>alert(1)</script>\nName',
+            subject: 'Compare <br /> packet\nsubject'
+          })
+        ]
+      })
+    );
+
+    expect(text).toContain('Repository: repo &lt;strong&gt;');
+    expect(text).toContain('Path: Examples/ Injected.vi');
+    expect(text).toContain(
+      'Newest retained commit: feedface · 2025-01-15 · Reviewer &lt;script&gt;alert(1)&lt;/script&gt; Name'
+    );
+    expect(text).toContain(
+      '- feedface :: oldest retained revision :: Compare &lt;br /&gt; packet subject'
+    );
+    expect(text).not.toContain('<strong>');
+    expect(text).not.toContain('<script>');
+    expect(text).not.toContain('<br />');
+    expect(text).not.toContain('\r');
+  });
+});
