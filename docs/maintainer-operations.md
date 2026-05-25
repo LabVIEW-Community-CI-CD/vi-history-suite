@@ -87,13 +87,27 @@ Stop it after validation by closing the runner terminal or pressing `Ctrl+C`.
 
 Maintainer evidence should be small and repeatable:
 
+- trusted-ref decision line (`allowed`/`blocked`) with evaluated ref facts
 - workflow run URL
-- commit or tag
+- commit ref and SHA
+- runner name and runner labels
 - Node/npm versions
 - VS Code path
-- LabVIEW/LabVIEWCLI paths
-- command outcomes
-- packaged VSIX artifact from that run
+- LabVIEW/LabVIEWCLI paths and LabVIEWCLI detection result
+- VSIX evidence path recorded in `runner-evidence/windows-labview-maintainer-summary.txt`
+- packaged VSIX artifact from that run (`vi-history-suite-*.vsix`)
+
+What this evidence proves:
+
+- a trusted maintainer workflow run executed on the maintainer runner label
+- the run captured factual host/tooling context and trusted-ref gating outcome
+- the run produced (or explicitly failed to produce) the expected VSIX evidence path
+
+What this evidence does **not** prove:
+
+- Marketplace publication occurred
+- self-hosted validation is a public PR gate
+- untrusted refs were ever allowed to execute maintainer validation
 
 Do not claim Vagrant evidence unless the Vagrant issue is run on a
 Vagrant-capable host and recorded separately.
