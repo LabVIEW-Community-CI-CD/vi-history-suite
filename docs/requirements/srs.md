@@ -520,6 +520,13 @@ Missing numeric IDs are intentional.
   - Runtime selection records the requested provider, version, and bitness.
   - Missing local tools produce corrective notes instead of silent fallback.
   - Runtime doctor summaries are available to user-facing comparison flows.
+  - Blocked runtime outcomes retain requested provider, requested LabVIEW version,
+    requested bitness, selected provider or unavailable, blocked reason, checked
+    facts, provider decisions, and actionable next step.
+  - Compare preflight and retained report packet surfaces preserve the runtime
+    doctor facts instead of replacing them with generic runtime-blocked text.
+  - Explicit user-selected runtime facts do not silently fall back to another
+    provider, version, or bitness.
 - Agent Work Scope:
   - Change runtime locator, runtime doctor, and comparison action behavior
     together when changing discovery or diagnostic rules.
@@ -527,9 +534,11 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonRuntimeLocator.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportPacket.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/comparisonReportPacket.test.ts`
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `manual:runtime-discovery-missing-tool-check`
 - Change Guidance:

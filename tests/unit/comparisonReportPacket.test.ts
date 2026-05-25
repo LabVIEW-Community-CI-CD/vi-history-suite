@@ -605,4 +605,192 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       expect(html).toContain('<strong>Process observation artifact:</strong>');
     });
   });
+
+  describe('runtime doctor facts preserved end-to-end (VHS-REQ-155)', () => {
+    it('retains blocked host runtime facts through packet rendering with provider decisions', () => {
+      const record = createBaseRecord(
+        {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          blockedReason: 'labview-exe-not-found',
+          doctorSummaryLines: [
+            'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
+            'Provider request=host.',
+            'Requested runtime: provider=host; LabVIEW=2026; bitness=x64.',
+            'Provider decision: rejected host-native because LabVIEW executable not found.',
+            'Runtime blocked reason: labview-exe-not-found.',
+            'Next action: install the selected LabVIEW version and bitness, or set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness to an installed runtime. Then rerun comparison report generation.'
+          ]
+        },
+        {
+          reportStatus: 'blocked-runtime',
+          runtimeSelection: {
+            platform: 'win32',
+            executionMode: 'host-only',
+            requestedProvider: 'host',
+            requestedLabviewVersion: '2026',
+            bitness: 'x64',
+            provider: 'unavailable',
+            blockedReason: 'labview-exe-not-found',
+            providerDecisions: [
+              {
+                provider: 'host-native',
+                outcome: 'rejected',
+                reason: 'labview-exe-not-found',
+                detail: 'LabVIEW executable not found.'
+              }
+            ],
+            notes: ['No matching LabVIEW x64 installation detected.'],
+            registryQueryPlans: [],
+            candidates: []
+          }
+        }
+      );
+      record.runtimeExecutionState = 'not-available';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      // Verify requested facts are preserved
+      expect(html).toContain('data-testid="comparison-report-runtime-doctor"');
+      expect(html).toContain('Selected provider=unavailable');
+      expect(html).toContain('Provider request=host');
+      expect(html).toContain('Requested runtime: provider=host; LabVIEW=2026; bitness=x64');
+      // Verify provider decision is preserved
+      expect(html).toContain('Provider decision: rejected host-native');
+      // Verify blocked reason is preserved
+      expect(html).toContain('Runtime blocked reason: labview-exe-not-found');
+      // Verify actionable next step is preserved
+      expect(html).toContain('Next action:');
+      expect(html).toContain('install the selected LabVIEW version');
+    });
+
+    it('retains blocked Docker/container image runtime facts through packet rendering', () => {
+      const record = createBaseRecord(
+        {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          blockedReason: 'container-image-acquisition-failed',
+          acquisitionState: 'failed',
+          doctorSummaryLines: [
+            'Selected provider=windows-container; engine=none; platform=win32; bitness=x64.',
+            'Provider request=docker.',
+            'Requested runtime: provider=docker; LabVIEW=2026; bitness=x64.',
+            'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | ContainerCapability=yes | ContainerImagePresent=no | ContainerAcquisitionState=failed.',
+            'Provider decision: rejected windows-container because container image acquisition failed.',
+            'Runtime blocked reason: container-image-acquisition-failed.',
+            'Next action: repair Docker connectivity or image registry access, then pull the Windows container image nationalinstruments/labview:2026q1-windows and rerun comparison report generation.'
+          ]
+        },
+        {
+          reportStatus: 'blocked-runtime',
+          runtimeSelection: {
+            platform: 'win32',
+            executionMode: 'docker-only',
+            requestedProvider: 'docker',
+            requestedLabviewVersion: '2026',
+            bitness: 'x64',
+            provider: 'windows-container',
+            containerImage: 'nationalinstruments/labview:2026q1-windows',
+            dockerCliAvailable: true,
+            dockerDaemonReachable: true,
+            containerCapabilityAvailable: true,
+            containerHostMode: 'windows',
+            containerImageAvailable: false,
+            containerAcquisitionState: 'failed',
+            blockedReason: 'container-image-acquisition-failed',
+            providerDecisions: [
+              {
+                provider: 'windows-container',
+                outcome: 'rejected',
+                reason: 'container-image-acquisition-failed',
+                detail: 'Container image acquisition failed.'
+              }
+            ],
+            notes: ['Container image pull failed during acquisition.'],
+            registryQueryPlans: [],
+            candidates: []
+          }
+        }
+      );
+      record.runtimeExecutionState = 'not-available';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      // Verify requested facts are preserved
+      expect(html).toContain('data-testid="comparison-report-runtime-doctor"');
+      expect(html).toContain('Provider request=docker');
+      expect(html).toContain('Requested runtime: provider=docker; LabVIEW=2026; bitness=x64');
+      // Verify checked container facts are preserved
+      expect(html).toContain('ContainerImage=nationalinstruments/labview:2026q1-windows');
+      expect(html).toContain('DockerCliAvailable=yes');
+      expect(html).toContain('DockerDaemonReachable=yes');
+      expect(html).toContain('ContainerImagePresent=no');
+      expect(html).toContain('ContainerAcquisitionState=failed');
+      // Verify provider decision is preserved
+      expect(html).toContain('Provider decision: rejected windows-container');
+      // Verify blocked reason is preserved
+      expect(html).toContain('Runtime blocked reason: container-image-acquisition-failed');
+      // Verify actionable next step is preserved
+      expect(html).toContain('Next action:');
+      expect(html).toContain('repair Docker connectivity');
+    });
+
+    it('preserves runtime selection surface facts separately from doctor summary', () => {
+      const record = createBaseRecord(
+        {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          blockedReason: 'docker-provider-unavailable',
+          doctorSummaryLines: [
+            'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
+            'Provider request=docker.',
+            'Requested runtime: provider=docker; LabVIEW=2026; bitness=x64.',
+            'Runtime blocked reason: docker-provider-unavailable.',
+            'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
+          ]
+        },
+        {
+          reportStatus: 'blocked-runtime',
+          runtimeSelection: {
+            platform: 'win32',
+            executionMode: 'docker-only',
+            requestedProvider: 'docker',
+            requestedLabviewVersion: '2026',
+            bitness: 'x64',
+            provider: 'unavailable',
+            dockerCliAvailable: false,
+            dockerDaemonReachable: false,
+            containerCapabilityAvailable: false,
+            blockedReason: 'docker-provider-unavailable',
+            providerDecisions: [
+              {
+                provider: 'windows-container',
+                outcome: 'rejected',
+                reason: 'docker-provider-unavailable',
+                detail: 'Docker CLI is not available.'
+              }
+            ],
+            notes: ['Docker CLI is not available.'],
+            registryQueryPlans: [],
+            candidates: []
+          }
+        }
+      );
+      record.runtimeExecutionState = 'not-available';
+
+      const html = renderComparisonReportPacketHtml(record);
+
+      // Verify runtime selection surface shows Docker facts
+      expect(html).toContain('data-testid="comparison-report-runtime-selection"');
+      expect(html).toContain('<strong>Docker CLI available:</strong> no');
+      expect(html).toContain('<strong>Docker daemon reachable:</strong> no');
+      expect(html).toContain('<strong>Container capability:</strong> no');
+      // Verify runtime notes are preserved
+      expect(html).toContain('data-testid="comparison-report-runtime-selection-notes"');
+      expect(html).toContain('Docker CLI is not available');
+    });
+  });
 });

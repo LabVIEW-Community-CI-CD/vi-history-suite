@@ -327,3 +327,148 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 });
+
+describe('comparisonRuntimeLocator fact retention (VHS-REQ-155)', () => {
+  it('retains all requested facts when blocking host runtime for missing LabVIEW', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    // Verify requested facts are retained
+    expect(selection.requestedProvider).toBe('host');
+    expect(selection.requestedLabviewVersion).toBe('2026');
+    expect(selection.bitness).toBe('x64');
+    expect(selection.provider).toBe('unavailable');
+    expect(selection.blockedReason).toBe('labview-exe-not-found');
+
+    // Verify provider decisions are retained
+    expect(selection.providerDecisions).toBeDefined();
+    expect(selection.providerDecisions?.length).toBeGreaterThan(0);
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'host-native',
+        outcome: 'rejected'
+      })
+    );
+
+    // Verify notes are retained
+    expect(selection.notes).toBeDefined();
+    expect(selection.notes.length).toBeGreaterThan(0);
+  });
+
+  it('retains all requested facts when blocking Docker runtime for missing CLI', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            dockerCliAvailable: false,
+            dockerDaemonReachable: false,
+            windowsContainerCapabilityAvailable: false,
+            imageAvailable: false,
+            notes: ['Docker CLI is not available.']
+          })
+        )
+      }
+    );
+
+    // Verify requested facts are retained
+    expect(selection.requestedProvider).toBe('docker');
+    expect(selection.requestedLabviewVersion).toBe('2026');
+    expect(selection.bitness).toBe('x64');
+    expect(selection.provider).toBe('unavailable');
+    expect(selection.blockedReason).toBe('docker-provider-unavailable');
+
+    // Verify Docker facts are retained
+    expect(selection.dockerCliAvailable).toBe(false);
+    expect(selection.dockerDaemonReachable).toBe(false);
+
+    // Verify provider decisions are retained
+    expect(selection.providerDecisions).toBeDefined();
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'docker-provider-unavailable'
+      })
+    );
+  });
+
+  it('retains container image facts when image acquisition fails', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            dockerCliAvailable: true,
+            dockerDaemonReachable: true,
+            windowsContainerCapabilityAvailable: true,
+            windowsContainerHostMode: 'windows',
+            imageAvailable: false
+          })
+        )
+      }
+    );
+
+    // Verify requested facts are retained
+    expect(selection.requestedProvider).toBe('docker');
+    expect(selection.requestedLabviewVersion).toBe('2026');
+    expect(selection.bitness).toBe('x64');
+
+    // Verify Docker facts are retained even when image is not available
+    expect(selection.dockerCliAvailable).toBe(true);
+    expect(selection.dockerDaemonReachable).toBe(true);
+    expect(selection.containerCapabilityAvailable).toBe(true);
+    expect(selection.containerHostMode).toBe('windows');
+    expect(selection.containerImageAvailable).toBe(false);
+    expect(selection.containerImage).toBeDefined();
+  });
+
+  it('retains checked candidate facts when tools are scanned', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        labviewCliPath: 'C:\\custom\\LabVIEWCLI.exe'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    // Verify candidates array contains checked tools
+    expect(selection.candidates).toBeDefined();
+    expect(selection.candidates).toContainEqual(
+      expect.objectContaining({
+        kind: 'labview-cli',
+        path: 'C:\\custom\\LabVIEWCLI.exe',
+        source: 'configured',
+        exists: false
+      })
+    );
+  });
+});

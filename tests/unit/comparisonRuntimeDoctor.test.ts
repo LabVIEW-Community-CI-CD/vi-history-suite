@@ -141,4 +141,81 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
       'Settings freshness: review Compare or runtime validation again after the generated settings CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.'
     );
   });
+
+  it('includes provider decisions in summary lines (VHS-REQ-155)', () => {
+    const summary = blockedSummary('labview-exe-not-found', {
+      providerDecisions: [
+        {
+          provider: 'host-native',
+          outcome: 'rejected',
+          reason: 'labview-exe-not-found',
+          detail: 'LabVIEW 2026 x64 executable was not found at the expected path.'
+        }
+      ]
+    });
+
+    const joinedSummary = summary.join('\n');
+    expect(joinedSummary).toContain('Provider decision: rejected host-native');
+    expect(joinedSummary).toContain('LabVIEW 2026 x64 executable was not found');
+  });
+
+  it('includes checked tool facts in summary for blocked host selection (VHS-REQ-155)', () => {
+    const summary = blockedSummary('labview-exe-not-found', {
+      labviewExe: undefined,
+      labviewCli: {
+        kind: 'labview-cli',
+        path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      }
+    });
+
+    const joinedSummary = summary.join('\n');
+    expect(joinedSummary).toContain('Selected runtime tools:');
+    expect(joinedSummary).toContain('LabVIEWCLI=');
+  });
+
+  it('includes checked container facts in summary for blocked Docker selection (VHS-REQ-155)', () => {
+    const summary = blockedSummary('docker-provider-unavailable', {
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      containerImage: 'nationalinstruments/labview:2026q1-windows',
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      containerCapabilityAvailable: false,
+      containerHostMode: undefined,
+      containerImageAvailable: undefined,
+      providerDecisions: [
+        {
+          provider: 'windows-container',
+          outcome: 'rejected',
+          reason: 'docker-provider-unavailable',
+          detail: 'Docker CLI is not available.'
+        }
+      ]
+    });
+
+    const joinedSummary = summary.join('\n');
+    expect(joinedSummary).toContain('Selected runtime tools:');
+    expect(joinedSummary).toContain('ContainerImage=nationalinstruments/labview:2026q1-windows');
+    expect(joinedSummary).toContain('DockerCliAvailable=no');
+    expect(joinedSummary).toContain('DockerDaemonReachable=no');
+    expect(joinedSummary).toContain('Provider decision: rejected windows-container');
+  });
+
+  it('includes selection notes in summary for blocked selections (VHS-REQ-155)', () => {
+    const summary = blockedSummary('labview-exe-not-found', {
+      notes: [
+        'No matching LabVIEW x64 installation detected.',
+        'Detected installed LabVIEW 2026 x86, but will not auto-switch bitness.'
+      ]
+    });
+
+    const joinedSummary = summary.join('\n');
+    expect(joinedSummary).toContain('Selection notes:');
+    expect(joinedSummary).toContain('No matching LabVIEW x64 installation detected');
+    expect(joinedSummary).toContain('will not auto-switch bitness');
+  });
 });
