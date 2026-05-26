@@ -1,0 +1,55 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+function readWorkflow(): string {
+  return fs
+    .readFileSync(path.resolve(__dirname, '..', '..', '.github', 'workflows', 'ci.yml'), 'utf8')
+    .replace(/\r\n/g, '\n');
+}
+
+describe('CI branch governance workflow', () => {
+  it('runs hosted CI on governed branch families', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('- main');
+    expect(workflow).toContain('- develop');
+    expect(workflow).toContain("- 'feature/**'");
+    expect(workflow).toContain("- 'release/**'");
+    expect(workflow).toContain("- 'hotfix/**'");
+    expect(workflow).toMatch(/pull_request:\n\s+branches:\n\s+- main\n\s+- develop/);
+  });
+
+  it('keeps branch governance inside the required build-test-package job', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Build, Test, Package');
+    expect(workflow).toContain('name: Branch Governance');
+    expect(workflow).toContain("if: ${{ github.event_name == 'pull_request' }}");
+    expect(workflow).toContain('Branch governance decision:');
+  });
+
+  it('allows only release and hotfix branches to target main', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('main)');
+    expect(workflow).toContain('^release/v[0-9]+\\.[0-9]+\\.[0-9]+$');
+    expect(workflow).toContain('^hotfix/v[0-9]+\\.[0-9]+\\.[0-9]+$');
+    expect(workflow).toContain('Pull requests to main must come from release/v* or hotfix/v*');
+  });
+
+  it('allows feature, dependabot, release, hotfix, and main back-sync branches to target develop', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('develop)');
+    expect(workflow).toContain('^feature/.+');
+    expect(workflow).toContain('^dependabot/.+');
+    expect(workflow).toContain('^release/v[0-9]+\\.[0-9]+\\.[0-9]+$');
+    expect(workflow).toContain('^hotfix/v[0-9]+\\.[0-9]+\\.[0-9]+$');
+    expect(workflow).toContain('"$head" == "main"');
+    expect(workflow).toContain(
+      'pull requests to develop must come from feature/*, dependabot/*, release/v*, hotfix/v*, or main'
+    );
+  });
+});

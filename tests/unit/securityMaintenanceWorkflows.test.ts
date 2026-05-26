@@ -16,6 +16,10 @@ describe('security maintenance workflows', () => {
     expect(dependabot).toContain('version: 2');
     expect(dependabot).toContain('package-ecosystem: npm');
     expect(dependabot).toContain('package-ecosystem: github-actions');
+    expect(dependabot).toMatch(/package-ecosystem:\s+npm[\s\S]*target-branch:\s+develop/);
+    expect(dependabot).toMatch(
+      /package-ecosystem:\s+github-actions[\s\S]*target-branch:\s+develop/
+    );
     expect(dependabot).toMatch(/interval:\s+weekly/);
     expect(dependabot).toContain('directory: /');
   });
@@ -42,8 +46,8 @@ describe('security maintenance workflows', () => {
     const codeql = readRepoFile('.github', 'workflows', 'codeql.yml');
 
     expect(codeql).toContain('name: CodeQL');
-    expect(codeql).toMatch(/push:\n\s+branches:\n\s+- main/);
-    expect(codeql).toMatch(/pull_request:\n\s+branches:\n\s+- main/);
+    expect(codeql).toMatch(/push:\n\s+branches:\n\s+- main\n\s+- develop/);
+    expect(codeql).toMatch(/pull_request:\n\s+branches:\n\s+- main\n\s+- develop/);
     expect(codeql).toContain('schedule:');
     expect(codeql).toContain('workflow_dispatch:');
   });

@@ -38,21 +38,25 @@ jobs:
             exit 1
           fi
           is_main=false
+          is_release_branch=false
           is_exact_version_tag=false
           if [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
             is_main=true
           fi
+          if [[ "$GITHUB_REF" =~ ^refs/heads/release/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            is_release_branch=true
+          fi
           if [[ "$GITHUB_REF" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             is_exact_version_tag=true
           fi
-          if [[ "$is_main" == "true" || "$is_exact_version_tag" == "true" ]]; then
+          if [[ "$is_main" == "true" || "$is_release_branch" == "true" || "$is_exact_version_tag" == "true" ]]; then
             decision=allowed
           else
             decision=blocked
           fi
-          echo "Trusted ref decision: $decision (main=$is_main, exactVersionTag=$is_exact_version_tag, ref=$GITHUB_REF)" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "Trusted ref decision: $decision (main=$is_main, releaseBranch=$is_release_branch, exactVersionTag=$is_exact_version_tag, ref=$GITHUB_REF)" | tee -a "$GITHUB_STEP_SUMMARY"
           if [[ "$decision" != "allowed" ]]; then
-            echo "Diagnostic test VSIX packaging only accepts main or exact v* release tags." >&2
+            echo "Diagnostic test VSIX packaging only accepts main, release/v* branches, or exact v* release tags." >&2
             exit 1
           fi
 
