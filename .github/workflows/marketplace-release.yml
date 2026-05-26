@@ -1,0 +1,147 @@
+name: Marketplace Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  marketplace-release:
+    name: Marketplace Release
+    runs-on: ubuntu-24.04
+    environment:
+      name: marketplace-release
+
+    env:
+      EXTENSION_ID: svelderrainruiz.vi-history-suite
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Guard Exact Version Tag
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ ! "$GITHUB_REF" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Marketplace releases must run from an exact vX.Y.Z tag. Ref was: $GITHUB_REF" >&2
+            exit 1
+          fi
+          tag_version="${GITHUB_REF_NAME#v}"
+          echo "tag_version=$tag_version" >> "$GITHUB_OUTPUT"
+          echo "Exact release tag accepted: $GITHUB_REF_NAME" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Verify Package Version
+        run: |
+          set -euo pipefail
+          package_version="$(node -p "require('./package.json').version")"
+          tag_version="${{ steps.version.outputs.tag_version }}"
+          if [[ "$package_version" != "$tag_version" ]]; then
+            echo "package.json version $package_version does not match tag $tag_version." >&2
+            exit 1
+          fi
+          echo "Package version matches tag: $package_version" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify Tag Is On Main
+        run: |
+          set -euo pipefail
+          git fetch origin main --prune
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Release tag $GITHUB_REF_NAME must point to a commit reachable from origin/main." >&2
+            exit 1
+          fi
+          echo "Release tag is reachable from origin/main." | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Release Baseline / baseline
+        run: |
+          {
+            echo "## Release Baseline"
+            echo "- SemVer tag: $GITHUB_REF_NAME"
+            echo "- Baseline SHA: $GITHUB_SHA"
+            echo "- Release record: protected marketplace-release environment"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run check
+
+      - name: Test
+        run: npm test
+
+      - name: Package
+        run: npm run package
+
+      - name: Locate VSIX
+        id: locate-vsix
+        run: |
+          set -euo pipefail
+          vsix_path="$(find . -maxdepth 1 -type f -name 'vi-history-suite-*.vsix' -printf '%T@ %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)"
+          if [[ -z "$vsix_path" ]]; then
+            echo "No vi-history-suite-*.vsix file was produced." >&2
+            exit 1
+          fi
+          echo "vsix_path=$vsix_path" >> "$GITHUB_OUTPUT"
+          echo "VSIX: $vsix_path" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish To Marketplace
+        run: |
+          set -euo pipefail
+          if [[ -z "${VSCE_PAT:-}" ]]; then
+            echo "VSCE_PAT is required from the protected marketplace-release environment." >&2
+            exit 1
+          fi
+          node scripts/runPinnedVsce.js publish --packagePath "${{ steps.locate-vsix.outputs.vsix_path }}"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Verify Marketplace Listing
+        run: |
+          set -euo pipefail
+          mkdir -p release-evidence
+          node scripts/runPinnedVsce.js show "$EXTENSION_ID" --json > release-evidence/marketplace-show.json
+          TAG_VERSION="${{ steps.version.outputs.tag_version }}" node - <<'NODE'
+          const fs = require('node:fs');
+          const evidence = JSON.parse(fs.readFileSync('release-evidence/marketplace-show.json', 'utf8'));
+          const tagVersion = process.env.TAG_VERSION;
+          const versions = Array.isArray(evidence.versions) ? evidence.versions : [];
+          if (!versions.some((version) => version.version === tagVersion)) {
+            throw new Error(`Marketplace listing does not contain version ${tagVersion}.`);
+          }
+          NODE
+          {
+            echo "## Marketplace Release Evidence"
+            echo "- Extension: $EXTENSION_ID"
+            echo "- Version: ${{ steps.version.outputs.tag_version }}"
+            echo "- Ref: $GITHUB_REF"
+            echo "- SHA: $GITHUB_SHA"
+            echo "- Coverage: coverage/** retained with release artifact"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Release Evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: marketplace-release-${{ github.run_id }}
+          path: |
+            release-evidence/**
+            coverage/**
+            vi-history-suite-*.vsix
+          if-no-files-found: error
+          retention-days: 90

@@ -6,9 +6,23 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
 `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`,
 `v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`,
-`v1.3.15`, `v1.3.16`, and `v1.4.0`.
+`v1.3.15`, `v1.3.16`, `v1.4.0`, and `v1.4.1`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.4.1] - 2026-05-26
+
+### Changed
+
+- Reintroduced a governed `develop` integration branch model with
+  `release/vX.Y.Z` and `hotfix/vX.Y.Z` promotion paths to `main`.
+- Added CI branch-governance checks so `main` remains the Marketplace release
+  baseline while `develop` carries integration work.
+- Added a protected, tag-only Marketplace release workflow that publishes from
+  exact `vX.Y.Z` tags after version, ancestry, test, package, and live listing
+  verification.
+- Updated maintainer operations, architecture, test-plan, and requirements
+  traceability for the governed release model.
 
 ## [1.4.0] - 2026-05-24
 

@@ -676,16 +676,21 @@ Missing numeric IDs are intentional.
   - The workflow runs `npm run check`.
   - The workflow runs `npm test`.
   - The workflow runs `npm run package`.
+  - The workflow runs on `main`, `develop`, `feature/**`, `release/**`, and
+    `hotfix/**` branch pushes.
+  - Pull request branch governance is enforced inside the required
+    `Build, Test, Package` job.
 - Agent Work Scope:
   - Change workflow commands and test plan together.
 - Implementation References:
   - `.github/workflows/ci.yml`
   - `docs/testing/test-plan.md`
 - Verification References:
+  - `tests/unit/branchGovernanceWorkflow.test.ts`
   - `manual:github-actions-build-test-package`
 - Change Guidance:
-  - Keep this as the only required public merge check unless a future
-    requirement changes the release model.
+  - Keep branch governance inside the required hosted CI job so the public
+    merge gate stays simple and visible.
 
 ### VHS-REQ-598: Trusted Windows/LabVIEW Maintainer Workflow
 
@@ -698,7 +703,8 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - The workflow triggers only through `workflow_dispatch`.
   - The workflow grants read-only repository contents permission.
-  - The workflow fails closed unless the ref is `main` or an exact `v*` tag.
+  - The workflow fails closed unless the ref is `main`, `release/vX.Y.Z`, or an
+    exact `vX.Y.Z` tag.
   - The environment evidence summary includes ref, SHA, runner context, Node/npm
     versions, VSIX evidence path, and whether LabVIEWCLI was detected.
   - The trusted-ref decision is visible in workflow output or artifact text.
@@ -1031,7 +1037,8 @@ Missing numeric IDs are intentional.
   Marketplace.
 - Acceptance Criteria:
   - The diagnostic VSIX workflow triggers only through `workflow_dispatch`.
-  - The workflow fails closed unless the ref is `main` or an exact `v*` tag.
+  - The workflow fails closed unless the ref is `main`, `release/vX.Y.Z`, or an
+    exact `vX.Y.Z` tag.
   - The workflow runs install, typecheck, unit tests, and package commands
     before exposing a VSIX.
   - The workflow always uploads the VSIX as a short-lived Actions artifact.
@@ -1054,3 +1061,45 @@ Missing numeric IDs are intentional.
   - Keep this as diagnostic reporter support only; do not convert GitHub
     Releases into the normal install channel or add Marketplace credentials to
     GitHub Actions.
+
+### VHS-REQ-609: Governed Branch Promotion And Marketplace Release Automation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: Hosted automation shall enforce governed branch promotion and
+  publish Marketplace releases only from exact release tags on `main`.
+- Acceptance Criteria:
+  - Hosted CI admits pull requests to `main` only from `release/vX.Y.Z` or
+    `hotfix/vX.Y.Z` branches.
+  - Hosted CI admits pull requests to `develop` from `feature/*`,
+    `dependabot/*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, or `main` back-sync
+    branches.
+  - The Marketplace release workflow uses the protected
+    `marketplace-release` environment.
+  - The Marketplace release workflow fails closed unless the ref is an exact
+    `vX.Y.Z` tag, the package version matches the tag, and the tag commit is
+    reachable from `origin/main`.
+  - The Marketplace release workflow runs install, typecheck, unit tests, and
+    package commands before publication.
+  - Marketplace publication uses the pinned VSCE wrapper and verifies the live
+    Marketplace listing after publication.
+  - Release evidence is retained as a workflow artifact.
+- Agent Work Scope:
+  - Change branch-governance workflow logic, Marketplace release workflow YAML,
+    maintainer operations docs, requirements, and static tests together.
+- Implementation References:
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/marketplace-release.yml`
+  - `.github/dependabot.yml`
+  - `docs/maintainer-operations.md`
+  - `docs/testing/test-plan.md`
+- Verification References:
+  - `tests/unit/branchGovernanceWorkflow.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:marketplace-release-environment-setup`
+  - `manual:marketplace-release-tag-dispatch`
+- Change Guidance:
+  - Do not publish from branch refs; tag the merged `main` commit and publish
+    from that exact tag only.

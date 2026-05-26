@@ -36,8 +36,10 @@ describe('Package Test VSIX workflow', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('refs/heads/main');
+    expect(workflow).toContain('^refs/heads/release/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('^refs/tags/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('Trusted ref decision:');
+    expect(workflow).toContain('releaseBranch=$is_release_branch');
     expect(workflow).toContain('Marketplace publishing tokens must not be present');
     expect(workflow).not.toContain('secrets.VSCE_PAT');
     expect(workflow).not.toContain('secrets.AZURE_DEVOPS_EXT_PAT');

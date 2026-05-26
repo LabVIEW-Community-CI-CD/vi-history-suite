@@ -1,44 +1,108 @@
 # Maintainer Operations
 
-This repository uses a lightweight GitHub-first operating model. Hosted CI is
-the public merge gate. Maintainer-only validation is used for local
-Windows/LabVIEW confidence and release evidence, but it is not a public pull
-request gate.
+This repository uses a governed GitHub-first branch model. The model is
+lightweight GitFlow-style branch governance: `main` is the
+Marketplace and release baseline. `develop` is the integration branch for
+completed work. Hosted CI is the public merge gate; maintainer-only validation
+is retained release evidence, not a public pull request gate.
+
+For configuration-management evidence, feature branches branch from and back
+into `develop`; release branches branch from `develop` and promote to `main`;
+hotfix branches branch from `main` and back-sync to `develop`.
+In GitFlow terms, GitFlow feature branches flow from and back into `develop`,
+GitFlow release branches come from `develop`, and each released `main`
+baseline is back-synced into `develop` for status accounting.
+Feature branches from `develop` target `develop`. Feature branches merge back
+into `develop`. Release branches from `develop` merge into `main` and merge
+into `develop` after publication. Delete release branch after both merges complete.
+Hotfix branches from `main` merge into `main` and merge into `develop`.
+
+## Branch Model
+
+| Branch | Role | Promotion Rule |
+| --- | --- | --- |
+| `main` | Released Marketplace baseline | Accepts `release/vX.Y.Z` or `hotfix/vX.Y.Z` pull requests only |
+| `develop` | Integration branch | Accepts `feature/*`, `dependabot/*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, and `main` back-sync pull requests |
+| `feature/*` | Normal development | Branch from and merge back to `develop` |
+| `dependabot/*` | Dependency maintenance | Target and merge to `develop` |
+| `release/vX.Y.Z` | Frozen release candidate | Branch from `develop`, stabilize, then merge to `main` |
+| `hotfix/vX.Y.Z` | Urgent production fix | Branch from `main`, merge to `main`, then back-sync to `develop` |
+
+Bootstrap sequence:
+
+1. Merge the governance update to the current stable `main`.
+2. Create `develop` from that updated `main`.
+3. Protect `main` and `develop` with the required `Build, Test, Package` check.
+4. Add the protected `marketplace-release` environment with required approval
+   and the `VSCE_PAT` secret.
 
 ## Release Flow
 
-1. Prepare the release on `main` through a pull request.
-2. Confirm hosted CI passes.
-3. Tag the exact release on the merged `main` commit.
-4. Create the GitHub Release from the existing tag.
-5. Package and publish to the VS Code Marketplace manually.
-6. Verify the Marketplace version and links with:
+1. Start release work from `develop` by creating `release/vX.Y.Z`.
+2. Update `package.json`, `package-lock.json`, `CHANGELOG.md`, requirements,
+   and release evidence references for version `X.Y.Z`.
+3. Confirm hosted CI passes on the release branch.
+4. Optionally dispatch the Windows/LabVIEW maintainer workflow on
+   `release/vX.Y.Z` for installed-user confidence evidence.
+5. Open a pull request from `release/vX.Y.Z` to `main`.
+6. Merge only after CI, review, and release evidence are complete.
+7. Tag the merged `main` commit as `vX.Y.Z`.
+8. Let the `Marketplace Release` workflow publish from that exact tag.
+9. Verify the Marketplace version and links with:
 
    ```powershell
    node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
    ```
 
+10. Back-sync `main` to `develop` after release publication.
+
+Hotfixes use the same release evidence and tag-only Marketplace publication
+path, but branch from `main` as `hotfix/vX.Y.Z` and back-sync to `develop`
+after publication.
+
 The Marketplace extension identity remains `svelderrainruiz.vi-history-suite`.
 Source, support, and release links point to
-`https://github.com/LabVIEW-Community-CI-CD/vi-history-suite`.
+`https://github.com/LabVIEW-Community-CI-CD/vi-history-suite` and
+`https://github.com/LabVIEW-Community-CI-CD/vi-history-suite.git`.
+Support issues use
+`https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues`.
 
-Do not attach VSIX files to GitHub Releases unless a future release plan makes
-GitHub a second install channel. The Marketplace is the install channel.
+Do not attach normal release VSIX files to GitHub Releases unless a future
+release plan makes GitHub a second install channel. The Marketplace is the
+install channel.
 
 The narrow exception is the mutable `test-vsix-latest` diagnostic prerelease
 used for reporter retesting. It is not a normal release, is not marked latest,
 and must not be described as Marketplace publication.
 
+## Marketplace Release Workflow
+
+The `.github/workflows/marketplace-release.yml` workflow is the only hosted
+Marketplace publishing path.
+
+It must:
+
+- run from an exact `vX.Y.Z` tag or manual dispatch using an exact tag ref
+- fail closed unless `package.json` version equals the tag without `v`
+- fail closed unless the tagged commit is reachable from `origin/main`
+- run `npm ci`, `npm run check`, `npm test`, and `npm run package`
+- publish the located VSIX with `node scripts/runPinnedVsce.js publish --packagePath`
+- verify the live Marketplace listing with `vsce show`
+- upload `release-evidence/marketplace-show.json` and the VSIX as retained
+  release evidence
+
+The workflow uses the protected GitHub environment `marketplace-release`.
+Configure that environment with required approval and `VSCE_PAT`.
+
 ## Token Handling
 
-Marketplace publishing tokens are local, short-lived maintainer secrets.
+Marketplace publishing tokens are controlled maintainer secrets.
 
 - Do not commit tokens.
 - Do not store tokens in this repository.
-- Do not add Marketplace tokens to GitHub Actions secrets for the first
-  operations pass.
-- Delete temporary token files immediately after use.
-- Revoke or rotate temporary Marketplace tokens after publication.
+- Store `VSCE_PAT` only in the protected `marketplace-release` environment.
+- Require approval before the environment is released to the workflow.
+- Rotate or revoke temporary Marketplace tokens after publication when used.
 
 GitHub secret scanning and push protection are enabled for this repository.
 
@@ -46,7 +110,9 @@ GitHub secret scanning and push protection are enabled for this repository.
 
 | Surface | Role | Release Claim |
 | --- | --- | --- |
-| Hosted GitHub CI | Required public merge gate on Ubuntu | Required before merge |
+| Hosted GitHub CI | Required public merge gate on Ubuntu | Required before `develop` and `main` merges |
+| Branch governance in CI | Source-target branch policy | Required before `main` and `develop` pull requests merge |
+| Marketplace Release workflow | Tag-only Marketplace publication | Required for Marketplace publication |
 | Codespaces/devcontainer | Primary source-evaluation path | Human/source confidence |
 | Diagnostic test VSIX workflow | Reporter retest package from a trusted ref | Diagnostic evidence only |
 | Maintainer Windows/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
@@ -55,16 +121,18 @@ GitHub secret scanning and push protection are enabled for this repository.
 ## Diagnostic Test VSIX
 
 Use the `Package Test VSIX` workflow when a reporter needs to retest a fix that
-is merged to `main` but not yet available from the Marketplace.
+is merged to `main` or stabilized on `release/vX.Y.Z` but is not yet available
+from the Marketplace.
 
-The workflow is manual-only and trusted-ref-only. It runs the same lightweight
+The workflow is manual-only and trusted-ref-only. It accepts `main`,
+`release/vX.Y.Z`, or an exact `vX.Y.Z` tag. It runs the same lightweight
 package checks as hosted CI, uploads the generated `vi-history-suite-*.vsix` as
 a 14-day Actions artifact, and can optionally update the public
 `test-vsix-latest` prerelease asset for easier reporter download.
 
 Dispatch defaults:
 
-- Ref: `main` or an exact `v*` tag.
+- Ref: `main`, `release/vX.Y.Z`, or an exact `vX.Y.Z` tag.
 - `publish_prerelease`: `false` unless a public download link is needed.
 - `issue_number`: the issue being retested, such as `61`.
 
@@ -104,8 +172,9 @@ Expected host prerequisites:
   temporary `.ps1` scripts, such as `CurrentUser RemoteSigned`
 
 The runner workflow must be `workflow_dispatch` only, use read-only repository
-permissions, and hard-fail unless the ref is `main` or an exact `v*` tag.
-The workflow file is `.github/workflows/windows-labview-maintainer.yml`.
+permissions, and hard-fail unless the ref is `main`, `release/vX.Y.Z`, or an
+exact `vX.Y.Z` tag. The workflow file is
+`.github/workflows/windows-labview-maintainer.yml`.
 
 Start the runner only when needed:
 
@@ -123,22 +192,28 @@ Maintainer evidence should be small and repeatable:
 - trusted-ref decision line (`allowed`/`blocked`) with evaluated ref facts
 - workflow run URL
 - commit ref and SHA
+- release baseline tag and SHA
 - runner name and runner labels
 - Node/npm versions
 - VS Code path
 - LabVIEW/LabVIEWCLI paths and LabVIEWCLI detection result
 - VSIX evidence path recorded in `runner-evidence/windows-labview-maintainer-summary.txt`
 - packaged VSIX artifact from that run (`vi-history-suite-*.vsix`)
+- Marketplace release workflow URL and tag ref for publication evidence
+- `release-evidence/marketplace-show.json` from post-publish verification
+- retained `coverage/**` output from the Marketplace release test run
 
 What this evidence proves:
 
 - a trusted maintainer workflow run executed on the maintainer runner label
 - the run captured factual host/tooling context and trusted-ref gating outcome
-- the run produced (or explicitly failed to produce) the expected VSIX evidence path
+- the run produced or explicitly failed to produce the expected VSIX evidence
+- a protected environment approved tag-only Marketplace publication
+- the live Marketplace listing contained the released version after publication
 
 What this evidence does **not** prove:
 
-- Marketplace publication occurred
+- diagnostic VSIX publication is Marketplace publication
 - self-hosted validation is a public PR gate
 - untrusted refs were ever allowed to execute maintainer validation
 
@@ -150,7 +225,7 @@ Vagrant-capable host and recorded separately.
 The Marketplace extension identity `svelderrainruiz.vi-history-suite` is tested
 statically through `tests/unit/packageManifest.test.ts` and
 `tests/unit/publicDocSourceLinks.test.ts`, but the live Marketplace listing
-itself requires manual verification after publication.
+itself requires verification after publication.
 
 Manual verification steps:
 
@@ -162,7 +237,7 @@ Manual verification steps:
 
 2. Confirm the returned URLs use the organization repository as their base:
 
-   ```
+   ```text
    repository.url = https://github.com/LabVIEW-Community-CI-CD/vi-history-suite.git
    bugs.url = https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues
    ```
@@ -184,7 +259,7 @@ checklist is verification-only and does not require Marketplace credentials.
 - [ ] **Extension Identity**: Confirm the Marketplace listing shows
       `svelderrainruiz.vi-history-suite` as the extension identifier.
 - [ ] **Published Version**: Confirm the Marketplace version matches the
-      released tag (e.g., `1.4.0` for `v1.4.0`).
+      released tag (e.g., `1.4.1` for `v1.4.1`).
 - [ ] **Source URL**: Confirm the Marketplace "Repository" link points to
       `https://github.com/LabVIEW-Community-CI-CD/vi-history-suite`.
 - [ ] **Support URL**: Confirm the Marketplace "Issues" or "Support" link

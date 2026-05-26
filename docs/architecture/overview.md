@@ -16,6 +16,7 @@ history in Git repositories.
 | Report subsystem | Runtime preflight, LabVIEW comparison execution, retained report packets |
 | Bundled docs | Version-matched installed-user guidance opened from the extension |
 | Devcontainer | Primary source-evaluation and contributor test environment |
+| GitHub Actions | Branch governance, hosted CI, diagnostic VSIX, and Marketplace release automation |
 | Optional Vagrant | Human-run local Windows/LabVIEW helper, not a release gate |
 
 ## Public Source Model
@@ -23,9 +24,11 @@ history in Git repositories.
 The active public repository is
 `https://github.com/LabVIEW-Community-CI-CD/vi-history-suite`.
 
-The repository uses `main` as trunk. Feature branches are short lived and merge
-back to `main` after lightweight CI and human review. GitLab is historical
-read-only context after migration.
+The repository uses a governed branch model. `main` is the Marketplace and
+release baseline. `develop` is the integration branch. Feature branches merge
+to `develop`; `release/vX.Y.Z` and `hotfix/vX.Y.Z` branches are the normal
+promotion paths to `main`. GitLab is historical read-only context after
+migration.
 
 ## Verification Model
 

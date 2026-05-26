@@ -2,6 +2,12 @@
 
 Date: 2026-05-24
 
+> Historical note: this analysis documents the May 2026 simplification that
+> made `main` the trunk branch. The active repository has since reintroduced a
+> governed `develop` integration branch plus `release/vX.Y.Z` and
+> `hotfix/vX.Y.Z` promotion branches. Treat the branch-model decisions below as
+> superseded historical context, not current operating policy.
+
 ## Target State
 
 VI History Suite moves from the current GitLab-authority/public-facade model to

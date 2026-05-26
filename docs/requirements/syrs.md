@@ -121,7 +121,9 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Acceptance Criteria:
   - Package metadata points source, homepage, and issues to the organization
     repository.
-  - Active docs describe `main` as trunk.
+  - Active docs describe `main` as the release baseline and `develop` as the
+    integration branch.
+  - Release and hotfix branches are the normal promotion paths to `main`.
   - Historical source hosts are not described as active authority.
 - Verification References:
   - `package.json`
@@ -137,6 +139,8 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Acceptance Criteria:
   - Hosted CI runs `npm ci`, `npm run check`, `npm test`, and `npm run package`.
   - The test plan names the same command set.
+  - Branch governance is enforced in the required hosted CI job for pull
+    requests targeting `main` and `develop`.
   - Heavier local validation is not required as a public pull request gate.
 - Verification References:
   - `.github/workflows/ci.yml`
@@ -152,9 +156,10 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   mandatory release gates.
 - Acceptance Criteria:
   - Devcontainer guidance exists for source evaluation.
-  - The Windows/LabVIEW workflow is manual-only and trusted-ref-only.
+  - The Windows/LabVIEW workflow is manual-only and trusted-ref-only for
+    `main`, release branches, and exact release tags.
   - Diagnostic test VSIX distribution is maintainer-dispatched and
-    trusted-ref-only.
+    trusted-ref-only for `main`, release branches, and exact release tags.
   - Vagrant is documented as optional local validation.
 - Verification References:
   - `.devcontainer/devcontainer.json`
@@ -207,3 +212,26 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - `tests/unit/viEligibilityIndexer.test.ts`
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
+
+### VHS-SYS-REQ-016: Governed Release Branch Promotion
+
+- Status: Active
+- Area: Source Operations
+- Statement: The system shall separate integration, release promotion, and
+  Marketplace publication through governed `develop`, `release/vX.Y.Z`,
+  `hotfix/vX.Y.Z`, `main`, and exact tag controls.
+- Acceptance Criteria:
+  - `develop` is documented as the integration branch for completed work.
+  - `main` is documented as the Marketplace and release baseline.
+  - Pull requests to `main` are limited to `release/vX.Y.Z` and
+    `hotfix/vX.Y.Z` branches by hosted CI.
+  - Pull requests to `develop` admit `feature/*`, release, hotfix, and `main`
+    back-sync branches plus Dependabot maintenance branches by hosted CI.
+  - Marketplace publication is tag-only from exact `vX.Y.Z` tags on commits
+    reachable from `origin/main`.
+- Verification References:
+  - `.github/workflows/ci.yml`
+  - `.github/workflows/marketplace-release.yml`
+  - `docs/maintainer-operations.md`
+  - `tests/unit/branchGovernanceWorkflow.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`

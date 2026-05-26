@@ -30,13 +30,14 @@ jobs:
           New-Item -ItemType Directory -Force -Path runner-evidence | Out-Null
           $summaryPath = Join-Path 'runner-evidence' 'windows-labview-maintainer-summary.txt'
           $isMain = $env:GITHUB_REF -eq 'refs/heads/main'
+          $isReleaseBranch = $env:GITHUB_REF -match '^refs/heads/release/v\d+\.\d+\.\d+$'
           $isExactVersionTag = $env:GITHUB_REF -match '^refs/tags/v\d+\.\d+\.\d+$'
-          $isTrustedRef = $isMain -or $isExactVersionTag
+          $isTrustedRef = $isMain -or $isReleaseBranch -or $isExactVersionTag
           $decision = if ($isTrustedRef) { 'allowed' } else { 'blocked' }
-          $guardLine = "Trusted ref decision: $decision (main=$isMain, exactVersionTag=$isExactVersionTag, ref=$env:GITHUB_REF)"
+          $guardLine = "Trusted ref decision: $decision (main=$isMain, releaseBranch=$isReleaseBranch, exactVersionTag=$isExactVersionTag, ref=$env:GITHUB_REF)"
           $guardLine | Tee-Object -LiteralPath $summaryPath
           if (-not $isTrustedRef) {
-            throw "This maintainer runner only accepts main or exact v* release tags. Ref was: $env:GITHUB_REF"
+            throw "This maintainer runner only accepts main, release/v* branches, or exact v* release tags. Ref was: $env:GITHUB_REF"
           }
 
       - name: Checkout
@@ -65,8 +66,9 @@ jobs:
           )
 
           $isMain = $env:GITHUB_REF -eq 'refs/heads/main'
+          $isReleaseBranch = $env:GITHUB_REF -match '^refs/heads/release/v\d+\.\d+\.\d+$'
           $isExactVersionTag = $env:GITHUB_REF -match '^refs/tags/v\d+\.\d+\.\d+$'
-          $isTrustedRef = $isMain -or $isExactVersionTag
+          $isTrustedRef = $isMain -or $isReleaseBranch -or $isExactVersionTag
           $labviewCli = Get-Command LabVIEWCLI -ErrorAction SilentlyContinue
 
           $lines = @(
@@ -82,7 +84,7 @@ jobs:
             "npm: $(npm.cmd --version)",
             "Git: $(git --version)",
             "Evidence summary path: runner-evidence/windows-labview-maintainer-summary.txt",
-            "Trusted ref decision: $isTrustedRef (main=$isMain, exactVersionTag=$isExactVersionTag)",
+            "Trusted ref decision: $isTrustedRef (main=$isMain, releaseBranch=$isReleaseBranch, exactVersionTag=$isExactVersionTag)",
             "VSIX evidence path: pending package step"
           )
 

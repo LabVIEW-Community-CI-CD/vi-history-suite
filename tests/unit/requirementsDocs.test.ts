@@ -285,6 +285,7 @@ describe('requirements documentation coherence', () => {
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-598');
 
     expect(srs).toContain('### VHS-REQ-598: Trusted Windows/LabVIEW Maintainer Workflow');
+    expect(srs).toContain('release/vX.Y.Z');
     expect(srs).toContain(
       'The environment evidence summary includes ref, SHA, runner context, Node/npm'
     );
@@ -313,6 +314,7 @@ describe('requirements documentation coherence', () => {
     expect(syrs).toContain('.github/workflows/package-test-vsix.yml');
     expect(srs).toContain('### VHS-REQ-608: Diagnostic Test VSIX Distribution');
     expect(srs).toContain('trusted ref for reporter retesting');
+    expect(srs).toContain('release/vX.Y.Z');
     expect(srs).toContain('short-lived Actions artifact');
     expect(srs).toContain('test-vsix-latest');
     expect(srs).toContain('does not use Marketplace publishing tokens');
@@ -330,6 +332,54 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.Notes).toContain('test-vsix-latest');
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-608-diagnostic-test-vsix-distribution'
+    );
+  });
+
+  it('keeps governed branch promotion and Marketplace release automation traceable', () => {
+    const syrs = readRepoText('docs', 'requirements', 'syrs.md');
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-609');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-609');
+    const systemIndexRow = idIndexRows.find((row) => row.ID === 'VHS-SYS-REQ-016');
+
+    expect(syrs).toContain('### VHS-SYS-REQ-016: Governed Release Branch Promotion');
+    expect(syrs).toContain('develop');
+    expect(syrs).toContain('release/vX.Y.Z');
+    expect(syrs).toContain('hotfix/vX.Y.Z');
+    expect(syrs).toContain('Marketplace publication is tag-only');
+
+    expect(srs).toContain(
+      '### VHS-REQ-609: Governed Branch Promotion And Marketplace Release Automation'
+    );
+    expect(srs).toContain('marketplace-release');
+    expect(srs).toContain('dependabot/*');
+    expect(srs).toContain('reachable from `origin/main`');
+    expect(srs).toContain('pinned VSCE wrapper');
+
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-016');
+    expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      '.github/workflows/marketplace-release.yml'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain('.github/dependabot.yml');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/maintainer-operations.md');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/branchGovernanceWorkflow.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/marketplaceReleaseWorkflow.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'manual:marketplace-release-environment-setup'
+    );
+    expect(requirementRow?.Notes).toContain('exact-tag-only');
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-609-governed-branch-promotion-and-marketplace-release-automation'
+    );
+    expect(systemIndexRow?.CurrentAnchor).toBe(
+      'syrs.md#vhs-sys-req-016-governed-release-branch-promotion'
     );
   });
 

@@ -48,8 +48,8 @@ target `VHS-REQ-601` until the new requirement IDs exist in `srs.md`,
 - Active software requirements use `VHS-REQ-*`.
 - Active system requirements use `VHS-SYS-REQ-*`.
 - Historical gaps are intentional.
-- New software requirements start at `VHS-REQ-608`.
-- New system requirements start at `VHS-SYS-REQ-011`.
+- New software requirements start at `VHS-REQ-610`.
+- New system requirements start at `VHS-SYS-REQ-017`.
 - Retired IDs remain in `id-index.csv` so an agent can distinguish an
   intentional retirement from a missing document.
 
