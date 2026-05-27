@@ -804,9 +804,19 @@ Missing numeric IDs are intentional.
     remote agents from maintainer-local advisory checks that depend on local
     skills or read-only evidence checkouts.
   - CI fails when active requirement references drift from existing repo paths.
+  - A committed traceability inventory defines classifications for mapped,
+    supporting, dev-only, release-ci, asset-doc, and gap surfaces.
+  - A repeatable local audit command reports unmapped implementation candidates,
+    unmapped test candidates, and missing RTM references.
+  - The current baseline is captured without immediately failing CI for
+    historical unmapped files (gap entries are informational).
+  - The guard is designed so a later PR can fail closed on newly added
+    unclassified implementation files.
+  - Documentation tells agents how to respond when touched code is unmapped.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
+  - Change traceability inventory and audit script together with RTM updates.
 - Implementation References:
   - `docs/requirements/README.md`
   - `docs/requirements/copilot-web-issue-generation-prompt.md`
@@ -814,13 +824,17 @@ Missing numeric IDs are intentional.
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
+  - `docs/requirements/traceability-inventory.csv`
+  - `scripts/auditTraceabilitySteward.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
     index.
+  - For new implementation files, add inventory entries before committing.
 
 ### VHS-REQ-602: Dependency Maintenance Automation
 

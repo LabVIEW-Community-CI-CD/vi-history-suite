@@ -1,0 +1,136 @@
+Path,Classification,RtmCoverage,Notes
+scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
+src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
+src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
+src/dashboard/comparisonReportArchive.ts,gap,No,Dashboard archive support; pending RTM classification.
+src/dashboard/dashboardEtaAccuracy.ts,gap,No,Dashboard ETA accuracy; pending RTM classification.
+src/dashboard/dashboardLatestRun.ts,gap,No,Dashboard latest run support; pending RTM classification.
+src/dashboard/multiReportDashboard.ts,gap,No,Multi-report dashboard; pending RTM classification.
+src/dashboard/multiReportDashboardAction.ts,gap,No,Multi-report dashboard action; pending RTM classification.
+src/dashboard/niComparisonReportParser.ts,gap,No,NI comparison report parser; pending RTM classification.
+src/dashboard/retainedDashboardEvidence.ts,gap,No,Retained dashboard evidence; pending RTM classification.
+src/docs/bundledDocumentation.ts,gap,No,Bundled documentation support; pending RTM classification.
+src/docs/bundledDocumentationAction.ts,gap,No,Bundled documentation action; pending RTM classification.
+src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
+src/domain/viMagic.ts,mapped,Yes,VI magic wrapper; mapped through RTM.
+src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM.
+src/extension.ts,mapped,Yes,Extension entry point; mapped through RTM.
+src/git/gitApi.ts,gap,No,Git API wrapper; pending RTM classification.
+src/git/gitCli.ts,mapped,Yes,Git CLI wrapper; mapped through RTM.
+src/indexing/viEligibilityIndexer.ts,mapped,Yes,VI eligibility indexer; mapped through RTM.
+src/reporting/comparisonReportAction.ts,mapped,Yes,Comparison report action; mapped through RTM.
+src/reporting/comparisonReportExecutionPlan.ts,gap,No,Comparison execution plan; pending RTM classification.
+src/reporting/comparisonReportPacket.ts,mapped,Yes,Comparison report packet; mapped through RTM.
+src/reporting/comparisonReportPlan.ts,gap,No,Comparison report plan; pending RTM classification.
+src/reporting/comparisonReportPreflight.ts,mapped,Yes,Comparison report preflight; mapped through RTM.
+src/reporting/comparisonReportRuntimeExecution.ts,mapped,Yes,Comparison runtime execution; mapped through RTM.
+src/reporting/comparisonRuntimeDoctor.ts,mapped,Yes,Comparison runtime doctor; mapped through RTM.
+src/reporting/comparisonRuntimeLocator.ts,mapped,Yes,Comparison runtime locator; mapped through RTM.
+src/review/humanReviewSubmission.ts,gap,No,Human review submission; pending RTM classification.
+src/review/humanReviewSubmissionAction.ts,gap,No,Human review submission action; pending RTM classification.
+src/scenarios/decisionRecord.ts,gap,No,Decision record support; pending RTM classification.
+src/scenarios/reviewDecisionRecordAction.ts,gap,No,Review decision record action; pending RTM classification.
+src/scenarios/reviewScenarioRegistry.ts,gap,No,Review scenario registry; pending RTM classification.
+src/services/viHistoryModel.ts,mapped,Yes,VI history model; mapped through RTM.
+src/services/viHistoryService.ts,mapped,Yes,VI history service; mapped through RTM.
+src/support/repositorySupportPolicy.ts,gap,No,Repository support policy; pending RTM classification.
+src/tooling/buildInfo.ts,dev-only,No,Build info generation for development.
+src/tooling/devHostLoop.ts,dev-only,No,Development host loop; development tooling.
+src/tooling/integrationHostRuntime.ts,dev-only,No,Integration host runtime; testing infrastructure.
+src/tooling/integrationHostStage.ts,dev-only,No,Integration host stage; testing infrastructure.
+src/tooling/localRuntimeSettingsCli.ts,gap,No,Local runtime settings CLI; pending RTM classification.
+src/tooling/runtimeSettingsLiveSessionProbe.ts,gap,No,Runtime settings probe; pending RTM classification.
+src/tooling/runtimeSettingsLiveSessionProbePacket.ts,gap,No,Runtime settings probe packet; pending RTM classification.
+src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,gap,No,Runtime settings safe restore; pending RTM classification.
+src/ui/historyPanel.ts,mapped,Yes,History panel UI; mapped through RTM.
+src/ui/historyPanelTracker.ts,mapped,Yes,History panel tracker; mapped through RTM.
+scripts/auditPackagedRuntimeSurface.js,mapped,Yes,Package audit script; mapped through RTM.
+scripts/bootstrapLinuxVsCodeHost.js,dev-only,No,Linux VS Code host bootstrap; CI/dev infrastructure.
+scripts/generateBuildInfo.js,dev-only,No,Build info generator; development tooling.
+scripts/preparePublicRepoClone.js,dev-only,No,Public repo clone preparation; CI infrastructure.
+scripts/preparePublicTestFixture.js,dev-only,No,Public test fixture preparation; testing infrastructure.
+scripts/publicRepoCloneCore.js,dev-only,No,Public repo clone core; CI infrastructure.
+scripts/runLinuxIntegrationHost.js,dev-only,No,Linux integration host runner; CI infrastructure.
+scripts/runPinnedVsce.js,supporting,No,Pinned VSCE runner; packaging support.
+scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
+tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
+tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
+tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
+tests/unit/bundledDocumentation.test.ts,gap,No,Bundled documentation tests; pending RTM classification.
+tests/unit/bundledDocumentationAction.test.ts,gap,No,Bundled documentation action tests; pending RTM classification.
+tests/unit/comparisonReportPacket.test.ts,mapped,Yes,Comparison report packet tests; mapped through RTM.
+tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report preflight tests; mapped through RTM.
+tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM.
+tests/unit/comparisonRuntimeDoctor.test.ts,mapped,Yes,Comparison runtime doctor tests; mapped through RTM.
+tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locator tests; mapped through RTM.
+tests/unit/dashboardEtaAccuracy.test.ts,gap,No,Dashboard ETA accuracy tests; pending RTM classification.
+tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
+tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM.
+tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.
+tests/unit/gitApi.test.ts,gap,No,Git API tests; pending RTM classification.
+tests/unit/gitCli.test.ts,mapped,Yes,Git CLI tests; mapped through RTM.
+tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering tests; mapped through RTM.
+tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
+tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
+tests/unit/integrationHostRuntime.test.ts,dev-only,No,Integration host runtime tests; testing infrastructure.
+tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
+tests/unit/niComparisonReportParser.test.ts,gap,No,NI comparison report parser tests; pending RTM classification.
+tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
+tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM.
+tests/unit/packageRuntimeSurfaceAudit.test.ts,mapped,Yes,Package runtime surface audit tests; mapped through RTM.
+tests/unit/packageTestVsixWorkflow.test.ts,mapped,Yes,Package test VSIX workflow tests; mapped through RTM.
+tests/unit/preparePublicRepoCloneScript.test.ts,dev-only,No,Public repo clone script tests; CI infrastructure.
+tests/unit/preparePublicTestFixtureScript.test.ts,dev-only,No,Public test fixture script tests; testing infrastructure.
+tests/unit/publicDevcontainerSurface.test.ts,mapped,Yes,Public devcontainer surface tests; mapped through RTM.
+tests/unit/publicDocSourceLinks.test.ts,mapped,Yes,Public doc source links tests; mapped through RTM.
+tests/unit/requirementsDocs.test.ts,mapped,Yes,Requirements documentation tests; mapped through RTM.
+tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
+tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
+tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
+tests/unit/runtimeSettingsLiveSessionProbe.test.ts,gap,No,Runtime settings probe tests; pending RTM classification.
+tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,gap,No,Runtime settings probe packet tests; pending RTM classification.
+tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,gap,No,Runtime settings safe restore tests; pending RTM classification.
+tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
+tests/unit/viEligibilityIndexer.test.ts,mapped,Yes,VI eligibility indexer tests; mapped through RTM.
+tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
+tests/unit/viHistoryService.test.ts,mapped,Yes,VI history service tests; mapped through RTM.
+tests/unit/viMagic.test.ts,mapped,Yes,VI magic tests; mapped through RTM.
+tests/unit/viMagicWrapper.test.ts,mapped,Yes,VI magic wrapper tests; mapped through RTM.
+tests/unit/windowsLabviewMaintainerWorkflow.test.ts,mapped,Yes,Windows LabVIEW maintainer workflow tests; mapped through RTM.
+tests/integration/suite/extensionHost.test.ts,mapped,Yes,Extension host integration tests; mapped through RTM.
+tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testing infrastructure.
+.github/workflows/ci.yml,release-ci,Yes,CI workflow; mapped through RTM.
+.github/workflows/codeql.yml,release-ci,No,CodeQL analysis workflow; security infrastructure.
+.github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow; mapped through RTM.
+.github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
+.github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
+.github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
+.github/ISSUE_TEMPLATE/bug_report.yml,asset-doc,Yes,Bug report template; mapped through RTM.
+.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml,asset-doc,Yes,First-time onboarding feedback template; mapped through RTM.
+.github/ISSUE_TEMPLATE/requirement_target.yml,asset-doc,Yes,Requirement target template; mapped through RTM.
+vitest.config.ts,dev-only,No,Vitest configuration; testing infrastructure.
+tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
+tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.
+package.json,mapped,Yes,Package manifest; mapped through RTM.
+package-lock.json,supporting,No,Package lock file; dependency support.
+README.md,asset-doc,Yes,Repository README; mapped through RTM.
+INSTALL.md,asset-doc,Yes,Installation documentation; mapped through RTM.
+FIRST-RUN.md,asset-doc,Yes,First-run documentation; mapped through RTM.
+CHANGELOG.md,asset-doc,No,Changelog; release documentation.
+CONTRIBUTING.md,asset-doc,No,Contributing guidelines; community documentation.
+LICENSE,asset-doc,No,License file; legal documentation.
+SECURITY.md,asset-doc,Yes,Security policy; mapped through RTM.
+SUPPORT.md,asset-doc,Yes,Support documentation; mapped through RTM.
+TROUBLESHOOTING.md,asset-doc,No,Troubleshooting documentation; user support.
+docs/requirements/README.md,mapped,Yes,Requirements README; mapped through RTM.
+docs/requirements/srs.md,mapped,Yes,Software requirements specification; mapped through RTM.
+docs/requirements/syrs.md,mapped,Yes,System requirements specification; mapped through RTM.
+docs/requirements/rtm.csv,mapped,Yes,Requirements traceability matrix; mapped through RTM.
+docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
+docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
+docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
+docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation; mapped through RTM.
+docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.
+docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
+vagrant/Vagrantfile,supporting,Yes,Vagrant configuration; mapped through RTM.
+.devcontainer/devcontainer.json,supporting,Yes,Devcontainer configuration; mapped through RTM.
