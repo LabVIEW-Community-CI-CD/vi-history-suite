@@ -9,8 +9,8 @@ src/dashboard/multiReportDashboard.ts,gap,No,Multi-report dashboard; pending RTM
 src/dashboard/multiReportDashboardAction.ts,gap,No,Multi-report dashboard action; pending RTM classification.
 src/dashboard/niComparisonReportParser.ts,gap,No,NI comparison report parser; pending RTM classification.
 src/dashboard/retainedDashboardEvidence.ts,gap,No,Retained dashboard evidence; pending RTM classification.
-src/docs/bundledDocumentation.ts,gap,No,Bundled documentation support; pending RTM classification.
-src/docs/bundledDocumentationAction.ts,gap,No,Bundled documentation action; pending RTM classification.
+src/docs/bundledDocumentation.ts,gap,No,Active bundled documentation behavior; requirement coverage gap pending requirement mapping.
+src/docs/bundledDocumentationAction.ts,gap,No,Active bundled documentation command/action behavior; requirement coverage gap pending requirement mapping.
 src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
 src/domain/viMagic.ts,mapped,Yes,VI magic wrapper; mapped through RTM.
 src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM.
@@ -56,8 +56,8 @@ scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
-tests/unit/bundledDocumentation.test.ts,gap,No,Bundled documentation tests; pending RTM classification.
-tests/unit/bundledDocumentationAction.test.ts,gap,No,Bundled documentation action tests; pending RTM classification.
+tests/unit/bundledDocumentation.test.ts,supporting,No,Unit verification coverage for bundled documentation manifest/page assets and rendering behavior.
+tests/unit/bundledDocumentationAction.test.ts,supporting,No,Unit verification coverage for bundled documentation command/action routing behavior.
 tests/unit/comparisonReportPacket.test.ts,mapped,Yes,Comparison report packet tests; mapped through RTM.
 tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report preflight tests; mapped through RTM.
 tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM.
@@ -106,6 +106,8 @@ tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testi
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
 .github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
 .github/ISSUE_TEMPLATE/bug_report.yml,asset-doc,Yes,Bug report template; mapped through RTM.
+.github/ISSUE_TEMPLATE/config.yml,asset-doc,No,Issue template chooser/contact-link support surface.
+.github/ISSUE_TEMPLATE/feature_request.yml,asset-doc,No,Feature request issue-intake support surface.
 .github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml,asset-doc,Yes,First-time onboarding feedback template; mapped through RTM.
 .github/ISSUE_TEMPLATE/requirement_target.yml,asset-doc,Yes,Requirement target template; mapped through RTM.
 vitest.config.ts,dev-only,No,Vitest configuration; testing infrastructure.
@@ -132,5 +134,10 @@ docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation; mapped through RTM.
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
+resources/bundled-docs/manifest.json,asset-doc,No,Bundled documentation manifest asset delivered with the extension package.
+resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,asset-doc,No,Bundled comparison/documentation page asset.
+resources/bundled-docs/pages/install-and-release.html,asset-doc,No,Bundled install/release documentation page asset.
+resources/bundled-docs/pages/overview.html,asset-doc,No,Bundled overview documentation page asset.
+resources/bundled-docs/pages/user-workflow.html,asset-doc,No,Bundled user-workflow documentation page asset.
 vagrant/Vagrantfile,supporting,Yes,Vagrant configuration; mapped through RTM.
 .devcontainer/devcontainer.json,supporting,Yes,Devcontainer configuration; mapped through RTM.
