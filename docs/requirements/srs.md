@@ -736,11 +736,15 @@ Missing numeric IDs are intentional.
   - Vagrant documentation states the optional role.
   - `npm run vagrant:validate` remains available.
   - Hosted CI does not require Vagrant.
+  - Vagrant provisioning scripts prepare the guest environment without CI
+    dependency.
 - Agent Work Scope:
   - Change Vagrant docs, package scripts, and optional helper files together.
 - Implementation References:
   - `docs/vagrant.md`
   - `vagrant/Vagrantfile`
+  - `vagrant/provision/bootstrap.ps1`
+  - `vagrant/provision/prepare-cold-labview.ps1`
   - `package.json`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
@@ -847,7 +851,8 @@ Missing numeric IDs are intentional.
 - Area: CI And Developer Environment
 - Statement: Dependency maintenance automation shall keep routine dependency
   updates reviewable while preserving package-audit diagnostics for failed VSIX
-  runtime-surface checks.
+  runtime-surface checks. CodeQL security analysis shall run on main, develop,
+  pull requests, schedule, and manual dispatch.
 - Acceptance Criteria:
   - Dependabot groups npm development minor and patch updates separately from
     npm runtime minor and patch updates.
@@ -857,11 +862,16 @@ Missing numeric IDs are intentional.
     runtime and VS Code engine policy.
   - Package audit failures report bounded stdout and stderr from the pinned VSCE
     listing command.
+  - CodeQL analysis runs on push to main and develop, pull requests targeting
+    those branches, weekly schedule, and manual dispatch.
+  - CodeQL grants only actions read, contents read, and security-events write
+    permissions.
 - Agent Work Scope:
-  - Change Dependabot config, package audit diagnostics, and security
-    maintenance tests together.
+  - Change Dependabot config, package audit diagnostics, CodeQL workflow, and
+    security maintenance tests together.
 - Implementation References:
   - `.github/dependabot.yml`
+  - `.github/workflows/codeql.yml`
   - `package.json`
   - `scripts/auditPackagedRuntimeSurface.js`
 - Verification References:

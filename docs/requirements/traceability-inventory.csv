@@ -100,7 +100,7 @@ tests/unit/windowsLabviewMaintainerWorkflow.test.ts,mapped,Yes,Windows LabVIEW m
 tests/integration/suite/extensionHost.test.ts,mapped,Yes,Extension host integration tests; mapped through RTM.
 tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testing infrastructure.
 .github/workflows/ci.yml,release-ci,Yes,CI workflow; mapped through RTM.
-.github/workflows/codeql.yml,release-ci,No,CodeQL analysis workflow; security infrastructure.
+.github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
 .github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow; mapped through RTM.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
@@ -140,4 +140,9 @@ resources/bundled-docs/pages/install-and-release.html,asset-doc,No,Bundled insta
 resources/bundled-docs/pages/overview.html,asset-doc,No,Bundled overview documentation page asset.
 resources/bundled-docs/pages/user-workflow.html,asset-doc,No,Bundled user-workflow documentation page asset.
 vagrant/Vagrantfile,supporting,Yes,Vagrant configuration; mapped through RTM.
+vagrant/provision/bootstrap.ps1,supporting,Yes,Vagrant bootstrap provisioner; mapped to VHS-REQ-599.
+vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW preparation; mapped to VHS-REQ-599.
 .devcontainer/devcontainer.json,supporting,Yes,Devcontainer configuration; mapped through RTM.
+.vscode/extensions.json,dev-only,No,VS Code recommended extensions; workspace configuration.
+.vscode/launch.json,dev-only,No,VS Code debug launch configurations; workspace configuration.
+.vscode/tasks.json,dev-only,No,VS Code task definitions; workspace configuration.
