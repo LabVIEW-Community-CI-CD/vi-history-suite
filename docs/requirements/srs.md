@@ -852,7 +852,7 @@ Missing numeric IDs are intentional.
 - Statement: Dependency maintenance automation shall keep routine dependency
   updates reviewable while preserving package-audit diagnostics for failed VSIX
   runtime-surface checks. CodeQL security analysis shall run on main, develop,
-  pull requests, schedule, and manual dispatch.
+  pull requests, weekly schedule, and manual dispatch.
 - Acceptance Criteria:
   - Dependabot groups npm development minor and patch updates separately from
     npm runtime minor and patch updates.
