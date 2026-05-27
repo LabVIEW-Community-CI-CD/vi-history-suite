@@ -193,8 +193,10 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/services/viHistoryService.ts`
   - `src/git/gitCli.ts`
+  - `src/git/gitApi.ts`
 - Verification References:
   - `tests/unit/viHistoryService.test.ts`
+  - `tests/unit/gitApi.test.ts`
 - Change Guidance:
   - Keep Git API and CLI fallback behavior aligned.
 
@@ -599,6 +601,7 @@ Missing numeric IDs are intentional.
   - Change runtime execution staging and tests together.
 - Implementation References:
   - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportPlan.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
 - Change Guidance:
@@ -625,6 +628,7 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportPacket.ts`
+  - `src/reporting/comparisonReportExecutionPlan.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonReportPacket.test.ts`
