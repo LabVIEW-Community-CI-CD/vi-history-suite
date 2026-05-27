@@ -49,7 +49,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('^hotfix/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('"$head" == "main"');
     expect(workflow).toContain(
-      'pull requests to develop must come from feature/*, dependabot/*, release/v*, hotfix/v*, or main'
+      'pull requests to develop must come from feature/*, copilot/*, dependabot/*, release/v*, hotfix/v*, or main'
     );
   });
 });
