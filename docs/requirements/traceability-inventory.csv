@@ -9,8 +9,8 @@ src/dashboard/multiReportDashboard.ts,gap,No,Multi-report dashboard; pending RTM
 src/dashboard/multiReportDashboardAction.ts,gap,No,Multi-report dashboard action; pending RTM classification.
 src/dashboard/niComparisonReportParser.ts,gap,No,NI comparison report parser; pending RTM classification.
 src/dashboard/retainedDashboardEvidence.ts,gap,No,Retained dashboard evidence; pending RTM classification.
-src/docs/bundledDocumentation.ts,gap,No,Active bundled documentation behavior; requirement coverage gap pending requirement mapping.
-src/docs/bundledDocumentationAction.ts,gap,No,Active bundled documentation command/action behavior; requirement coverage gap pending requirement mapping.
+src/docs/bundledDocumentation.ts,gap,No,Active bundled documentation manifest/page loading and rendering behavior; requirement coverage gap pending requirement mapping.
+src/docs/bundledDocumentationAction.ts,gap,No,Active bundled documentation command/action routing behavior; requirement coverage gap pending requirement mapping.
 src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
 src/domain/viMagic.ts,mapped,Yes,VI magic wrapper; mapped through RTM.
 src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM.
@@ -135,7 +135,7 @@ docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation;
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
 resources/bundled-docs/manifest.json,asset-doc,No,Bundled documentation manifest asset delivered with the extension package.
-resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,asset-doc,No,Bundled comparison/documentation page asset.
+resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,asset-doc,No,Bundled comparison/dashboard documentation page asset.
 resources/bundled-docs/pages/install-and-release.html,asset-doc,No,Bundled install/release documentation page asset.
 resources/bundled-docs/pages/overview.html,asset-doc,No,Bundled overview documentation page asset.
 resources/bundled-docs/pages/user-workflow.html,asset-doc,No,Bundled user-workflow documentation page asset.
