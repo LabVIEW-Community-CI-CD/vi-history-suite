@@ -52,8 +52,9 @@ function parseCsv(text) {
     if (character === '"') {
       const nextCharacter = text[index + 1];
       if (inQuotes && nextCharacter === '"') {
+        // Escaped quote (doubled quote) - add one quote and skip the next
         currentCell += '"';
-        index += 1;
+        index += 1; // Skip the second quote; loop increment handles advancing past it
         continue;
       }
 
@@ -69,6 +70,7 @@ function parseCsv(text) {
 
     if (!inQuotes && (character === '\n' || character === '\r')) {
       if (character === '\r' && text[index + 1] === '\n') {
+        // CRLF line ending - skip the \n; loop increment handles advancing past it
         index += 1;
       }
 
@@ -132,6 +134,7 @@ function extractRtmPaths(rtmRows) {
 
 function globToRegex(globPattern) {
   let regex = globPattern
+    .replace(/\\/g, '\\\\')
     .replace(/\./g, '\\.')
     .replace(/\*\*/g, '___DOUBLESTAR___')
     .replace(/\*/g, '[^/]*')
