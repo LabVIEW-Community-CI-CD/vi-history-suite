@@ -52,9 +52,10 @@ function parseCsv(text) {
     if (character === '"') {
       const nextCharacter = text[index + 1];
       if (inQuotes && nextCharacter === '"') {
-        // Escaped quote (doubled quote) - add one quote and skip the next
+        // Escaped quote (doubled quote) - add one quote and advance index to skip
+        // the second quote character; the loop's own increment then moves past it.
         currentCell += '"';
-        index += 1; // Skip the second quote; loop increment handles advancing past it
+        index += 1;
         continue;
       }
 
@@ -70,7 +71,8 @@ function parseCsv(text) {
 
     if (!inQuotes && (character === '\n' || character === '\r')) {
       if (character === '\r' && text[index + 1] === '\n') {
-        // CRLF line ending - skip the \n; loop increment handles advancing past it
+        // CRLF line ending - advance index to skip the \n character;
+        // the loop's own increment then moves past it.
         index += 1;
       }
 
