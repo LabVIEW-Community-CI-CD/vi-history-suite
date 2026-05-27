@@ -557,4 +557,30 @@ describe('requirements documentation coherence', () => {
       expect(template).toContain('Leave blank for indexing-only');
     }
   });
+
+  it('keeps traceability steward inventory traceable for VHS-REQ-601', () => {
+    const readme = readRepoText('docs', 'requirements', 'README.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-601');
+
+    expect(readme).toContain('traceability-inventory.csv');
+    expect(readme).toContain('traceability:audit');
+    expect(readme).toContain('Classification Categories');
+    expect(readme).toContain('mapped');
+    expect(readme).toContain('supporting');
+    expect(readme).toContain('dev-only');
+    expect(readme).toContain('release-ci');
+    expect(readme).toContain('asset-doc');
+    expect(readme).toContain('gap');
+    expect(readme).toContain('Agent Response');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'docs/requirements/traceability-inventory.csv'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'scripts/auditTraceabilitySteward.js'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/traceabilityAuditScript.test.ts'
+    );
+  });
 });
