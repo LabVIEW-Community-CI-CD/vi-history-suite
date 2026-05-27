@@ -561,6 +561,8 @@ describe('requirements documentation coherence', () => {
   it('keeps traceability steward inventory traceable for VHS-REQ-601', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const inventoryByPath = new Map(inventoryRows.map((row) => [row.Path, row]));
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-601');
 
     expect(readme).toContain('traceability-inventory.csv');
@@ -582,5 +584,47 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/traceabilityAuditScript.test.ts'
     );
+
+    const bundledDocumentationGapPaths = [
+      'src/docs/bundledDocumentation.ts',
+      'src/docs/bundledDocumentationAction.ts'
+    ];
+    for (const filePath of bundledDocumentationGapPaths) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('gap');
+      expect(row?.Notes).toContain('requirement coverage gap');
+    }
+
+    const bundledDocumentationAssetPaths = [
+      'resources/bundled-docs/manifest.json',
+      'resources/bundled-docs/pages/overview.html',
+      'resources/bundled-docs/pages/user-workflow.html',
+      'resources/bundled-docs/pages/install-and-release.html',
+      'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
+    ];
+    for (const filePath of bundledDocumentationAssetPaths) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('asset-doc');
+      expect(row?.RtmCoverage).toBe('No');
+    }
+
+    const bundledDocumentationTests = [
+      'tests/unit/bundledDocumentation.test.ts',
+      'tests/unit/bundledDocumentationAction.test.ts'
+    ];
+    for (const filePath of bundledDocumentationTests) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('supporting');
+      expect(row?.Notes).toContain('Unit verification coverage');
+    }
+
+    for (const filePath of [
+      '.github/ISSUE_TEMPLATE/config.yml',
+      '.github/ISSUE_TEMPLATE/feature_request.yml'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('asset-doc');
+      expect(row?.RtmCoverage).toBe('No');
+    }
   });
 });
