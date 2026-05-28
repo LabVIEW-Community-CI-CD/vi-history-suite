@@ -70,6 +70,9 @@ jobs:
       - name: Typecheck
         run: npm run check
 
+      - name: Traceability Audit
+        run: npm run traceability:audit
+
       - name: Test
         run: npm test
 

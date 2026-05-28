@@ -7,6 +7,7 @@ Run these on pull requests and pushes to governed public branches:
 ```bash
 npm ci
 npm run check
+npm run traceability:audit
 npm test
 npm run package
 ```
@@ -15,6 +16,9 @@ This hosted CI job remains the required public merge gate for `develop` and
 `main`. The same required job also enforces branch governance: normal feature
 work and Dependabot maintenance target `develop`, while only
 `release/vX.Y.Z` and `hotfix/vX.Y.Z` branches target `main`.
+The traceability audit is part of the required hosted gate so newly added
+implementation, test, workflow, and documentation surfaces remain classified
+before merge.
 
 ## Diagnostic Test VSIX Check
 

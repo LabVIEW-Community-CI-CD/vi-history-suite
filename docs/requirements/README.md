@@ -80,6 +80,37 @@ When an agent touches code that is not in the RTM or is classified as `gap`:
 The audit guard reports gaps as informational findings. A future PR can enable
 fail-closed enforcement for newly added unclassified implementation files.
 
+## Traceability Closeout Runbook
+
+Use this closeout path for umbrella issues that classify requirement,
+implementation, verification, or inventory gaps.
+
+1. Confirm every child issue is closed or explicitly deferred to an open
+   follow-up issue.
+2. Run the repo-local gates:
+
+```shell
+npm run traceability:audit
+npm run check
+npm test
+npm run package
+```
+
+3. When maintainer-local standards tooling is available, run the advisory
+   standards evidence checks:
+
+```shell
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\preflight_local_dependencies.py --json
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\requirements_quality_check.py <repo-root> --requirements-spec-scope system --json
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\repo_evidence_scan.py <repo-root> --format json --profile quick-triage --include-snippets
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance.py <repo-root> --profile quick-triage
+```
+
+4. Close the umbrella only when blocking traceability findings are resolved or
+   deferred to open child issues with owners and validation commands.
+5. Treat standards maturity warnings outside the umbrella scope as next-wave
+   recommendations, not silent blockers for the current umbrella closeout.
+
 ## ID Policy
 
 - Active software requirements use `VHS-REQ-*`.

@@ -674,10 +674,11 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-012
 - Area: CI And Developer Environment
 - Statement: Hosted CI shall run the lightweight public check set: install,
-  typecheck, unit tests, and package sanity.
+  typecheck, traceability audit, unit tests, and package sanity.
 - Acceptance Criteria:
   - The workflow runs `npm ci`.
   - The workflow runs `npm run check`.
+  - The workflow runs `npm run traceability:audit`.
   - The workflow runs `npm test`.
   - The workflow runs `npm run package`.
   - The workflow runs on `main`, `develop`, `feature/**`, `release/**`, and
