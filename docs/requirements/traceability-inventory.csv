@@ -135,6 +135,7 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/ISSUE_TEMPLATE/feature_request.yml,asset-doc,No,Feature request issue-intake support surface.
 .github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml,asset-doc,Yes,First-time onboarding feedback template; mapped through RTM.
 .github/ISSUE_TEMPLATE/requirement_target.yml,asset-doc,Yes,Requirement target template; mapped through RTM.
+.github/pull_request_template.md,mapped,Yes,Lightweight requirement-targeted PR evidence contract template; mapped to VHS-REQ-615.
 vitest.config.ts,mapped,Yes,Vitest coverage reporter and evidence-backed threshold configuration; mapped to VHS-REQ-597 and VHS-REQ-613.
 tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
 tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.

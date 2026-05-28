@@ -213,20 +213,35 @@ function checkIssueTemplate(cwd) {
 
 function checkPrEvidenceDocs(cwd) {
   const testPlan = readRepoFile(cwd, 'docs/testing/test-plan.md');
-  const required = [
+  const prTemplate = readRepoFile(cwd, '.github/pull_request_template.md');
+  const requiredInTestPlan = [
     '## PR Evidence Contract',
-    'Refs #',
-    'target issue',
-    'local gates',
+    'linked issue',
+    'target requirement',
+    'validation commands',
+    'traceability/RTM impact',
+    'out-of-scope',
+    'closeout readiness',
     '`npm run dod:gate`',
-    'standards provenance',
-    'environment blockers'
+    'standards provenance'
   ];
-  const missing = required.filter((needle) => !testPlan.includes(needle));
+  const requiredInTemplate = [
+    '## Requirement-Targeted PR Evidence (lightweight)',
+    'Linked issue (required)',
+    'Target requirement (required)',
+    'Validation commands (required)',
+    'Traceability / RTM impact (required)',
+    'Out-of-scope (required)',
+    'Closeout readiness (required)'
+  ];
+  const missingInTestPlan = requiredInTestPlan.filter((needle) => !testPlan.includes(needle));
+  const missingInTemplate = requiredInTemplate.filter((needle) => !prTemplate.includes(needle));
   return {
     name: 'PR evidence documentation',
-    passed: missing.length === 0,
-    details: missing.length === 0 ? 'documented' : `Missing: ${missing.join(', ')}`
+    passed: missingInTestPlan.length === 0 && missingInTemplate.length === 0,
+    details: missingInTestPlan.length === 0 && missingInTemplate.length === 0
+      ? 'test plan and PR template documented'
+      : `Missing in test-plan: ${missingInTestPlan.join(', ') || 'none'}; missing in PR template: ${missingInTemplate.join(', ') || 'none'}`
   };
 }
 
@@ -236,9 +251,11 @@ function checkTraceabilityMapping(cwd) {
   const row = rtm.find((entry) => entry.ReqID === 'VHS-REQ-615');
   const scriptRow = inventory.find((entry) => entry.Path === 'scripts/checkDefinitionOfDone.js');
   const testRow = inventory.find((entry) => entry.Path === 'tests/unit/definitionOfDoneGate.test.ts');
+  const prTemplateRow = inventory.find((entry) => entry.Path === '.github/pull_request_template.md');
   const requiredImplementation = [
     'package.json',
     'scripts/checkDefinitionOfDone.js',
+    '.github/pull_request_template.md',
     'docs/requirements/README.md',
     'docs/testing/test-plan.md',
     'docs/requirements/traceability-inventory.csv'
@@ -255,13 +272,16 @@ function checkTraceabilityMapping(cwd) {
     scriptRow?.Notes.includes('VHS-REQ-615') &&
     testRow?.Classification === 'mapped' &&
     testRow?.RtmCoverage === 'Yes' &&
-    testRow?.Notes.includes('VHS-REQ-615');
+    testRow?.Notes.includes('VHS-REQ-615') &&
+    prTemplateRow?.Classification === 'mapped' &&
+    prTemplateRow?.RtmCoverage === 'Yes' &&
+    prTemplateRow?.Notes.includes('VHS-REQ-615');
   const passed = Boolean(row) && missingImplementation.length === 0 && missingVerification.length === 0 && inventoryOk;
   return {
     name: 'DoD checker traceability mapping',
     passed,
     details: passed
-      ? 'VHS-REQ-615 maps checker implementation and tests'
+      ? 'VHS-REQ-615 maps checker implementation, PR template, and tests'
       : `Missing implementation refs: ${missingImplementation.join(', ') || 'none'}; missing verification refs: ${missingVerification.join(', ') || 'none'}; inventory ok=${inventoryOk}`
   };
 }
@@ -335,6 +355,7 @@ module.exports = {
   REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS,
   assertOrdered,
   checkIssueTemplate,
+  checkPrEvidenceDocs,
   checkStaleDodDeferrals,
   parseCsvLine,
   parseCsvRows,
