@@ -290,6 +290,10 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('| VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts');
     expect(testPlan).toContain('| VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts');
     expect(testPlan).toContain('| VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts');
+    expect(testPlan).toContain('| VHS-REQ-133 | TEST-133 | src/ui/historyPanel.ts');
+    expect(testPlan).toContain('| VHS-REQ-147 | TEST-147 | src/reporting/comparisonReportRuntimeExecution.ts');
+    expect(testPlan).toContain('| VHS-REQ-148 | TEST-148 | src/reporting/comparisonReportRuntimeExecution.ts');
+    expect(testPlan).toContain('| VHS-REQ-155 | TEST-155 | src/reporting/comparisonRuntimeLocator.ts');
     expect(testPlan).toContain('| VHS-REQ-604 | TEST-604 | src/indexing/viEligibilityIndexer.ts');
     expect(testPlan).toContain('| VHS-REQ-606 | TEST-606 | src/indexing/viEligibilityIndexer.ts');
     expect(testPlan).toContain('| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts');
@@ -436,6 +440,41 @@ describe('requirements documentation coherence', () => {
     expect(modelTestRow?.Notes).toContain('VHS-REQ-006');
     expect(modelTestRow?.Notes).toContain('VHS-REQ-008');
     expect(modelTestRow?.Notes).toContain('VHS-REQ-017');
+  });
+
+  it('keeps comparison orchestration coverage mapped to active comparison requirements', () => {
+    const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const actionTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/comparisonReportAction.test.ts'
+    );
+
+    for (const id of ['VHS-REQ-133', 'VHS-REQ-148', 'VHS-REQ-155']) {
+      const row = rtmRows.find((entry) => entry.ReqID === id);
+      expect(row?.ImplementationRefs, `${id} implementation`).toContain(
+        'src/reporting/comparisonReportAction.ts'
+      );
+      expect(row?.VerificationRefs, `${id} verification`).toContain(
+        'tests/unit/comparisonReportAction.test.ts'
+      );
+    }
+
+    const stagedInputRow = rtmRows.find((entry) => entry.ReqID === 'VHS-REQ-147');
+    expect(stagedInputRow?.VerificationRefs).toContain(
+      'tests/unit/comparisonReportRuntimeExecution.test.ts'
+    );
+    expect(testPlan).toContain('TEST-133');
+    expect(testPlan).toContain('TEST-147');
+    expect(testPlan).toContain('TEST-148');
+    expect(testPlan).toContain('TEST-155');
+    expect(testPlan).toContain('stale output rejection');
+    expect(testPlan).toContain('user-facing blocked-runtime summaries');
+    expect(actionTestRow?.Classification).toBe('mapped');
+    expect(actionTestRow?.RtmCoverage).toBe('Yes');
+    expect(actionTestRow?.Notes).toContain('VHS-REQ-133');
+    expect(actionTestRow?.Notes).toContain('VHS-REQ-148');
+    expect(actionTestRow?.Notes).toContain('VHS-REQ-155');
   });
 
   it('keeps dependency maintenance automation targetable', () => {
