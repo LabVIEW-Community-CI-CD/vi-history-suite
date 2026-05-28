@@ -215,6 +215,136 @@ function parseJsonOrUndefined(text) {
   }
 }
 
+function normalizeGateStatus(value) {
+  const normalized = String(value || '').trim().toUpperCase();
+  if (normalized === 'PASS' || normalized === 'FAIL' || normalized === 'N/A') {
+    return normalized;
+  }
+  if (/^N\s*\/?\s*A$/u.test(normalized)) {
+    return 'N/A';
+  }
+  return undefined;
+}
+
+function parseGateScorecard(scorecard) {
+  const statuses = {};
+  for (const line of String(scorecard || '').split(/\r?\n/u)) {
+    if (!line.includes('|')) {
+      continue;
+    }
+    const cells = line.split('|').slice(1, -1).map((cell) => cell.trim());
+    if (cells.length < 2 || cells[0].toLowerCase() === 'gate' || /^-+$/u.test(cells[0])) {
+      continue;
+    }
+    const status = normalizeGateStatus(cells[1]);
+    if (status) {
+      statuses[cells[0].toLowerCase()] = status;
+    }
+  }
+  return statuses;
+}
+
+function normalizeEvidencePath(evidencePath) {
+  return String(evidencePath || '').replace(/\\/g, '/');
+}
+
+function isWorkflowEvidencePath(evidencePath) {
+  return /^\.github\/workflows\/[^/]+\.ya?ml$/iu.test(normalizeEvidencePath(evidencePath));
+}
+
+function isGeneratedAssuranceEvidencePath(evidencePath) {
+  return /^assurance-[^/]*-evidence\//iu.test(normalizeEvidencePath(evidencePath));
+}
+
+function isGeneratedBuildEvidencePath(evidencePath) {
+  return /^(?:out|dist|build|coverage)\//iu.test(normalizeEvidencePath(evidencePath));
+}
+
+function isTestFixtureEvidencePath(evidencePath) {
+  const normalized = normalizeEvidencePath(evidencePath);
+  return /^tests\//iu.test(normalized) || /\.test\.[cm]?[jt]sx?$/iu.test(normalized);
+}
+
+function classifyDodEvidenceSource(evidenceRecord) {
+  const evidencePath = normalizeEvidencePath(evidenceRecord?.path);
+  if (isWorkflowEvidencePath(evidencePath)) {
+    return 'workflow';
+  }
+  if (isGeneratedAssuranceEvidencePath(evidencePath)) {
+    return 'generated-assurance-evidence';
+  }
+  if (isGeneratedBuildEvidencePath(evidencePath)) {
+    return 'generated-build-output';
+  }
+  if (isTestFixtureEvidencePath(evidencePath)) {
+    return 'test-fixture';
+  }
+  return evidencePath ? 'untrusted-source' : 'missing-source';
+}
+
+function dodEvidenceRecords(evidenceScan) {
+  return Array.isArray(evidenceScan?.evidence)
+    ? evidenceScan.evidence.filter((item) => String(item?.rule_source || '').startsWith('GATE:dod:'))
+    : [];
+}
+
+function summarizeDodGateEvidence(evidenceScan, scorecard) {
+  const scorecardStatus = parseGateScorecard(scorecard).dod || 'FAIL';
+  const sources = dodEvidenceRecords(evidenceScan).map((item) => ({
+    path: normalizeEvidencePath(item.path),
+    ruleSource: item.rule_source,
+    matchedText: item.matched_text,
+    lineStart: item.line_start,
+    classification: classifyDodEvidenceSource(item)
+  }));
+  const trustedSources = sources.filter((item) => item.classification === 'workflow');
+  const disqualifiedSources = sources.filter((item) => item.classification !== 'workflow');
+
+  if (scorecardStatus === 'PASS' && trustedSources.length > 0) {
+    return {
+      status: 'PASS',
+      scorecardStatus,
+      source: 'workflow',
+      trustedSources,
+      disqualifiedSources,
+      reason: 'Scanner-visible DoD evidence is present in a workflow file.'
+    };
+  }
+
+  if (scorecardStatus === 'PASS') {
+    return {
+      status: 'N/A',
+      scorecardStatus,
+      source: disqualifiedSources.length > 0 ? 'disqualified-only' : 'none',
+      trustedSources,
+      disqualifiedSources,
+      reason: 'Raw DoD PASS ignored because no workflow file supplies scanner-visible DoD evidence.'
+    };
+  }
+
+  if (scorecardStatus === 'FAIL') {
+    return {
+      status: 'FAIL',
+      scorecardStatus,
+      source: trustedSources.length > 0 ? 'workflow' : (disqualifiedSources.length > 0 ? 'disqualified-only' : 'none'),
+      trustedSources,
+      disqualifiedSources,
+      reason: 'DoD scorecard row is FAIL or missing.'
+    };
+  }
+
+  return {
+    status: 'N/A',
+    scorecardStatus,
+    source: disqualifiedSources.length > 0 ? 'disqualified-only' : 'none',
+    trustedSources,
+    disqualifiedSources,
+    reason: trustedSources.length > 0
+      ? 'Workflow DoD evidence is visible, but the scorecard has not promoted DoD to PASS.'
+      : 'No workflow file supplies scanner-visible DoD evidence.'
+  };
+}
+
 function parseLsRemote(stdout) {
   return String(stdout || '')
     .split(/\r?\n/u)
@@ -359,6 +489,8 @@ function summarizeStandardsResults(results, runner) {
   const requirementsQuality = parseJsonOrUndefined(byName.get('requirements-quality')?.stdout || '');
   const evidenceScan = parseJsonOrUndefined(byName.get('evidence-scan')?.stdout || '');
   const scorecard = byName.get('assurance-scorecard')?.stdout || '';
+  const gateStatuses = parseGateScorecard(scorecard);
+  const dodGateEvidence = summarizeDodGateEvidence(evidenceScan, scorecard);
   const failed = results.filter((result) => result.status !== 0);
 
   return {
@@ -372,9 +504,10 @@ function summarizeStandardsResults(results, runner) {
     fileCount: evidenceScan?.inventory?.file_count,
     testSignal: evidenceScan?.areas?.TEST?.signal,
     reqSignal: evidenceScan?.areas?.REQ?.signal,
-    coverageGate: /coverage\s*\|\s*PASS/i.test(scorecard) ? 'PASS' : undefined,
-    docGate: /doc\s*\|\s*FAIL/i.test(scorecard) ? 'FAIL' : undefined,
-    dodGate: /dod\s*\|\s*N\/A/i.test(scorecard) ? 'N/A' : undefined
+    coverageGate: gateStatuses.coverage,
+    docGate: gateStatuses.doc,
+    dodGate: dodGateEvidence.status,
+    dodGateEvidence
   };
 }
 
@@ -758,6 +891,18 @@ function renderGateTable(gates, traceabilitySummary) {
   return rows.join('\n');
 }
 
+function formatDodGateSummary(dodGateEvidence) {
+  if (!dodGateEvidence) {
+    return 'FAIL';
+  }
+
+  const trusted = dodGateEvidence.trustedSources.map((item) => item.path).join(', ') || 'none';
+  const disqualified = dodGateEvidence.disqualifiedSources
+    .map((item) => `${item.classification}:${item.path}`)
+    .join(', ') || 'none';
+  return `${dodGateEvidence.status} (raw=${dodGateEvidence.scorecardStatus}; source=${dodGateEvidence.source}; workflow=${trusted}; disqualified=${disqualified})`;
+}
+
 function renderStandardsSummary(standards) {
   if (!standards.success) {
     return [
@@ -771,7 +916,7 @@ function renderStandardsSummary(standards) {
     `- Standards runner: ${summary.runner}`,
     `- Requirements quality: ${summary.requirementsQuality?.ok === true ? 'PASS' : 'see raw evidence'}`,
     `- Evidence scan: ${summary.fileCount ?? 'unknown'} files; REQ=${summary.reqSignal ?? 'unknown'}; TEST=${summary.testSignal ?? 'unknown'}`,
-    `- Gate scorecard: coverage=${summary.coverageGate ?? 'see scorecard'}; doc=${summary.docGate ?? 'not flagged'}; dod=${summary.dodGate ?? 'not flagged'}`,
+    `- Gate scorecard: coverage=${summary.coverageGate ?? 'FAIL'}; doc=${summary.docGate ?? 'FAIL'}; dod=${formatDodGateSummary(summary.dodGateEvidence)}`,
     '- Deferred recommendations: Definition-of-Done gate evidence remains a next-wave advisory finding.'
   ];
   if (standards.runner === 'docker') {
@@ -875,9 +1020,29 @@ function generateCloseoutEvidence(argv, deps = {}) {
   );
   const standards = runStandardsEvidence(options, { ...deps, cwd });
   const provenance = verifyStandardsToolchainProvenance(options, { ...deps, cwd });
+  const evidenceHygiene = {
+    dodGate: standards.summary?.dodGateEvidence,
+    policy: {
+      passSource: 'Only scanner-visible DoD evidence in .github/workflows/*.yml or .yaml can promote DoD to PASS.',
+      disqualifiedSources: [
+        'assurance-*-evidence generated evidence',
+        'out/dist/build/coverage generated output',
+        'tests/ unit or integration fixture text',
+        'documentation-only references'
+      ]
+    }
+  };
   const records = [
     ...(gates || []).map((gate) => ({ ...gate, file: `gate-${gate.name.replace(/[:/\\]/g, '-')}.txt` })),
     ...standards.results,
+    {
+      name: 'standards-evidence-hygiene',
+      file: 'standards-evidence-hygiene.json',
+      stdout: JSON.stringify(evidenceHygiene, null, 2),
+      stderr: '',
+      error: '',
+      status: 0
+    },
     {
       name: 'standards-toolchain-provenance',
       file: 'standards-toolchain-provenance.json',
@@ -939,6 +1104,7 @@ module.exports = {
   findTagCommit,
   generateCloseoutEvidence,
   hostStandardsCommands,
+  parseGateScorecard,
   main,
   parseArgs,
   parseLsRemote,
@@ -949,5 +1115,6 @@ module.exports = {
   runHostStandards,
   runStandardsEvidence,
   summarizeStandardsResults,
+  summarizeDodGateEvidence,
   verifyStandardsToolchainProvenance
 };

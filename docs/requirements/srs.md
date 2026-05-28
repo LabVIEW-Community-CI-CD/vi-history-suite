@@ -842,6 +842,10 @@ Missing numeric IDs are intentional.
   - Closeout evidence verifies `repo-standards-review` toolchain provenance by
     checking the GitLab source, private GitHub mirror, expected release tag,
     local non-authoritative skill cache, and published Docker registry image.
+  - Closeout evidence reports Definition-of-Done status as explicit `PASS`,
+    `N/A`, or `FAIL`, and a DoD `PASS` requires scanner-visible workflow
+    evidence instead of generated evidence directories, generated build output,
+    docs-only references, or unit-test fixture strings.
   - Closeout summaries separate blocking closure findings from deferred
     standards maturity recommendations such as Definition-of-Done gate
     evidence.

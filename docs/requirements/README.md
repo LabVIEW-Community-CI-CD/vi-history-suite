@@ -131,6 +131,12 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\repo_evidence
 python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance.py <repo-root> --profile quick-triage
 ```
 
+   Closeout parsing reports the Definition-of-Done gate as explicit `PASS`,
+   `N/A`, or `FAIL`. A DoD `PASS` requires scanner-visible evidence from a
+   workflow file under `.github/workflows/`; generated `assurance-*-evidence`
+   outputs, generated build output, docs-only references, and unit-test fixture
+   strings are recorded as disqualified sources and cannot promote DoD.
+
 5. Close the umbrella only when blocking traceability findings are resolved or
    deferred to open child issues with owners and validation commands.
 6. Treat standards maturity warnings outside the umbrella scope, such as
