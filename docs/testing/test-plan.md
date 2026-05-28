@@ -69,7 +69,7 @@ and to justify future coverage threshold ratchets.
 | VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts; src/extension.ts | tests/unit/localRuntimeSettingsCli.test.ts; tests/unit/packageManifest.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/integration/suite/extensionHost.test.ts | Installed runtime settings CLI command exposure, argument parsing, launcher materialization, idempotent settings refresh, malformed-config errors, validation proof output, terminal output, and missing global-storage handling are verified without changing runtime selection behavior. |
 | VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js; vitest.config.ts | tests/unit/coverageMapScript.test.ts; tests/unit/requirementsDocs.test.ts | Coverage map links retained coverage evidence to RTM/inventory risk and protects evidence-backed threshold ratchets. |
 | VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts | tests/unit/vscodeTestHarness.test.ts; tests/unit/requirementsDocs.test.ts | Shared VS Code fakes support coverage-led command, webview, storage, filesystem, clipboard, progress, output, and runtime CLI tests. |
-| VHS-REQ-615 | TEST-615 | docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md | tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI, local gates, standards provenance, closeout evidence, and traceability drift prevention without adding gate automation here. |
+| VHS-REQ-615 | TEST-615 | package.json; scripts/checkDefinitionOfDone.js; scripts/generateCloseoutEvidence.js; docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md | tests/unit/definitionOfDoneGate.test.ts; tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI order, local gates, standards provenance, closeout evidence, and traceability drift prevention while leaving hosted DoD workflow automation to the follow-on CI issue. |
 
 ## Diagnostic Test VSIX Check
 
@@ -129,21 +129,29 @@ npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates
 ```
 
 The closeout command runs `npm run traceability:audit`, `npm run docs:links`,
-`npm run check`, `npm test`, and `npm run package` when `--run-gates` is set.
-It always runs standards evidence and standards toolchain provenance. It tries
-host Python first in `auto` mode and falls back to the published GitLab registry
-workbench image when host preflight is unavailable. Docker mode inspects the
-selected image, pulls the published default when missing, and reports the
-selected image plus pull/auth status in closeout evidence; local images are used
-only through an explicit `--standards-image` override. Provenance evidence
-verifies GitLab source authority, the private GitHub mirror, `v0.2.19`, the
-local non-authoritative skill cache, and registry image access. The DoD parser
-reports explicit `PASS`, `N/A`, or `FAIL` and only lets scanner-visible workflow
-evidence under `.github/workflows/` promote DoD to `PASS`; generated
-`assurance-*-evidence` outputs and unit-test fixtures are disqualified sources.
-A summary is not closable until local gates, mandatory standards evidence, and
-provenance are clean. Definition-of-Done gate findings remain deferred next-wave
-recommendations unless the target issue explicitly owns them.
+`npm run dod:gate`, `npm run check`, `npm test`, and `npm run package` when
+`--run-gates` is set. It always runs standards evidence and standards toolchain
+provenance. It tries host Python first in `auto` mode and falls back to the
+published GitLab registry workbench image when host preflight is unavailable.
+Docker mode inspects the selected image, pulls the published default when
+missing, and reports the selected image plus pull/auth status in closeout
+evidence; local images are used only through an explicit `--standards-image`
+override. Provenance evidence verifies GitLab source authority, the private
+GitHub mirror, `v0.2.19`, the local non-authoritative skill cache, and registry
+image access. The DoD parser reports explicit `PASS`, `N/A`, or `FAIL` and only
+lets scanner-visible workflow evidence under `.github/workflows/` promote DoD
+to `PASS`; generated `assurance-*-evidence` outputs and unit-test fixtures are
+disqualified sources. A summary is not closable until local gates, mandatory
+standards evidence, standards provenance, and Definition-of-Done evidence are
+clean or tied to a blocking follow-up issue.
+
+## PR Evidence Contract
+
+Requirement-scoped pull requests must name the target issue with `Refs #...`
+unless the PR actually completes the closeout contract. The PR body should list
+scope, local gates including `npm run dod:gate`, targeted tests, hosted CI
+results, standards provenance or closeout status, and any environment blockers
+that prevented optional or authenticated evidence from running.
 
 ## Optional Vagrant Check
 

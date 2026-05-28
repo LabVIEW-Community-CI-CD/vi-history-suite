@@ -158,6 +158,7 @@
     "traceability:audit": "node scripts/auditTraceabilitySteward.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
+    "dod:gate": "node scripts/checkDefinitionOfDone.js",
     "closeout:evidence": "node scripts/generateCloseoutEvidence.js"
   },
   "devDependencies": {

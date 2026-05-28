@@ -846,9 +846,9 @@ Missing numeric IDs are intentional.
     `N/A`, or `FAIL`, and a DoD `PASS` requires scanner-visible workflow
     evidence instead of generated evidence directories, generated build output,
     docs-only references, or unit-test fixture strings.
-  - Closeout summaries separate blocking closure findings from deferred
-    standards maturity recommendations such as Definition-of-Done gate
-    evidence.
+  - Closeout summaries treat Definition-of-Done evidence as active closeout
+    evidence and separate any unresolved findings into blocking follow-up
+    issues.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
@@ -1386,22 +1386,28 @@ Missing numeric IDs are intentional.
     content.
   - Traceability drift prevention updates SRS, RTM, ID index, test plan,
     inventory, and requirements tests together when requirement scope changes.
-  - Actual `dod:gate` automation is a separate implementation change and is not
-    introduced by this requirement-authoring change alone.
+  - The repo-native `npm run dod:gate` command verifies the DoD contract from
+    committed repository evidence.
+  - Hosted CI `DoD Gate / dod` automation is a separate implementation change
+    from the repo-local `dod:gate` command.
 - Agent Work Scope:
   - Change requirements docs, RTM, ID index, test plan, and requirements
     coherence tests together.
 - Implementation References:
+  - `package.json`
+  - `scripts/checkDefinitionOfDone.js`
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
   - `docs/requirements/README.md`
   - `docs/testing/test-plan.md`
+  - `docs/requirements/traceability-inventory.csv`
 - Verification References:
+  - `tests/unit/definitionOfDoneGate.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
   - `manual:definition-of-done-release-readiness-review`
 - Change Guidance:
-  - Keep this requirement as the operating contract for Done. Add automation in
-    the follow-on gate requirement rather than silently broadening this docs-only
-    authoring change.
+  - Keep this requirement as the operating contract for Done. Add hosted CI
+    workflow enforcement in the follow-on CI issue rather than silently changing
+    the public required check shape.

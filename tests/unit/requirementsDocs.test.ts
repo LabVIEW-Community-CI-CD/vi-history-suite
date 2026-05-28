@@ -328,7 +328,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('missing global-storage handling');
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
-    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | docs/requirements/srs.md');
+    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | package.json; scripts/checkDefinitionOfDone.js');
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
     expect(workflowTest).toContain('keeps the docs link-check lychee gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
@@ -445,22 +445,36 @@ describe('requirements documentation coherence', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const packageJson = JSON.parse(readRepoText('package.json')) as {
+      scripts: Record<string, string>;
+    };
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-615');
     const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-615');
+    const checkerRow = inventoryRows.find((row) => row.Path === 'scripts/checkDefinitionOfDone.js');
+    const checkerTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/definitionOfDoneGate.test.ts'
+    );
 
     expect(srs).toContain('### VHS-REQ-615: Definition-of-Done Operating Requirement');
     expect(srs).toContain('issue quality, PR evidence, hosted CI, local validation');
     expect(srs).toContain('standards provenance, closeout evidence, and traceability drift prevention');
-    expect(srs).toContain('Actual `dod:gate` automation is a separate implementation change');
-    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | docs/requirements/srs.md');
-    expect(testPlan).toContain('without adding gate automation here');
+    expect(srs).toContain('The repo-native `npm run dod:gate` command verifies the DoD contract');
+    expect(srs).toContain('Hosted CI `DoD Gate / dod` automation is a separate implementation change');
+    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | package.json; scripts/checkDefinitionOfDone.js');
+    expect(testPlan).toContain('leaving hosted DoD workflow automation to the follow-on CI issue');
     expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
+    expect(packageJson.scripts['dod:gate']).toBe('node scripts/checkDefinitionOfDone.js');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-012');
+    expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/checkDefinitionOfDone.js');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/srs.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/id-index.csv');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/traceability-inventory.csv');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/definitionOfDoneGate.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/traceabilityAuditScript.test.ts');
     expect(requirementRow?.VerificationRefs).toContain(
@@ -469,6 +483,12 @@ describe('requirements documentation coherence', () => {
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-615-definition-of-done-operating-requirement'
     );
+    expect(checkerRow?.Classification).toBe('mapped');
+    expect(checkerRow?.RtmCoverage).toBe('Yes');
+    expect(checkerRow?.Notes).toContain('VHS-REQ-615');
+    expect(checkerTestRow?.Classification).toBe('mapped');
+    expect(checkerTestRow?.RtmCoverage).toBe('Yes');
+    expect(checkerTestRow?.Notes).toContain('VHS-REQ-615');
   });
 
   it('keeps command and history flow coverage mapped to existing requirements', () => {
@@ -1108,16 +1128,16 @@ describe('requirements documentation coherence', () => {
       'registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main'
     );
     expect(readme).toContain('docker login registry.gitlab.com');
-    expect(readme).toContain('Definition-of-Done gate evidence');
+    expect(readme).toContain('Definition-of-Done gate as explicit');
     expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
-    expect(readme).toContain('blocking traceability findings are resolved or');
-    expect(readme).toContain('standards maturity warnings outside the umbrella scope');
+    expect(readme).toContain('blocking traceability and Definition-of-Done');
+    expect(readme).toContain('Treat non-PASS DoD evidence as active closeout evidence');
     expect(srs).toContain('closeout evidence command generates GitHub-ready umbrella issue summaries');
     expect(srs).toContain('host Python and Docker assurance-workbench');
     expect(srs).toContain('published GitLab registry');
     expect(srs).toContain('toolchain provenance');
     expect(srs).toContain('private GitHub mirror');
-    expect(srs).toContain('Definition-of-Done gate');
+    expect(srs).toContain('Definition-of-Done evidence as active closeout');
     expect(requirementRow?.Notes).toContain('standards toolchain provenance checks');
     expect(requirementRow?.Notes).toContain('published Docker workbench runner');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
