@@ -423,6 +423,12 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/niComparisonReportParser.test.ts'
     );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/comparisonReportArchive.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/dashboardLatestRun.test.ts'
+    );
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-610-dashboard-aggregate-review'
     );
