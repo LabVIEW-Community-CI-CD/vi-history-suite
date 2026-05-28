@@ -11,13 +11,13 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json-summary', 'cobertura'],
       reportsDirectory: 'coverage',
-      include: ['src/**/*.ts'],
+      include: ['src/**/*.ts', 'scripts/mapCoverageToTraceability.js'],
       exclude: ['src/extension.ts', 'src/benchmark/hostLinuxBenchmarkRunner.ts'],
       thresholds: {
-        statements: 39,
-        branches: 32,
-        functions: 45,
-        lines: 39
+        statements: 40,
+        branches: 33,
+        functions: 47,
+        lines: 40
       }
     }
   }
