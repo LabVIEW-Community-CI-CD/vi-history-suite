@@ -673,6 +673,16 @@ describe('requirements documentation coherence', () => {
     }
 
     // VHS-REQ-601: Review/scenario/support-policy files classified as supporting
+    function expectSupportingClassification(
+      row: Record<string, string> | undefined,
+      filePath: string,
+      reqId: string
+    ): void {
+      expect(row?.Classification, `${filePath} classification`).toBe('supporting');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
+      expect(row?.Notes, `${filePath} notes`).toContain(reqId);
+    }
+
     const reviewScenarioSupportingPaths = [
       'src/review/humanReviewSubmission.ts',
       'src/review/humanReviewSubmissionAction.ts',
@@ -683,9 +693,7 @@ describe('requirements documentation coherence', () => {
     ];
     for (const filePath of reviewScenarioSupportingPaths) {
       const row = inventoryByPath.get(filePath);
-      expect(row?.Classification, `${filePath} classification`).toBe('supporting');
-      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
-      expect(row?.Notes, `${filePath} notes`).toContain('VHS-REQ-610');
+      expectSupportingClassification(row, filePath, 'VHS-REQ-610');
     }
 
     // Git API wrapper and tests classified as supporting
@@ -695,9 +703,7 @@ describe('requirements documentation coherence', () => {
     ];
     for (const filePath of gitApiSupportingPaths) {
       const row = inventoryByPath.get(filePath);
-      expect(row?.Classification, `${filePath} classification`).toBe('supporting');
-      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
-      expect(row?.Notes, `${filePath} notes`).toContain('VHS-REQ-061');
+      expectSupportingClassification(row, filePath, 'VHS-REQ-061');
     }
   });
 });
