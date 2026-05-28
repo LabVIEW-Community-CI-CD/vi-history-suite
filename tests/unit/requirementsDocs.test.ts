@@ -328,6 +328,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('missing global-storage handling');
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
+    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | docs/requirements/srs.md');
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
     expect(workflowTest).toContain('keeps the docs link-check lychee gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
@@ -438,6 +439,36 @@ describe('requirements documentation coherence', () => {
     expect(harnessTestRow?.Classification).toBe('mapped');
     expect(harnessTestRow?.RtmCoverage).toBe('Yes');
     expect(harnessTestRow?.Notes).toContain('VHS-REQ-614');
+  });
+
+  it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615', () => {
+    const readme = readRepoText('docs', 'requirements', 'README.md');
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-615');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-615');
+
+    expect(srs).toContain('### VHS-REQ-615: Definition-of-Done Operating Requirement');
+    expect(srs).toContain('issue quality, PR evidence, hosted CI, local validation');
+    expect(srs).toContain('standards provenance, closeout evidence, and traceability drift prevention');
+    expect(srs).toContain('Actual `dod:gate` automation is a separate implementation change');
+    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | docs/requirements/srs.md');
+    expect(testPlan).toContain('without adding gate automation here');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-012');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/srs.md');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/id-index.csv');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/traceabilityAuditScript.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'manual:definition-of-done-release-readiness-review'
+    );
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-615-definition-of-done-operating-requirement'
+    );
   });
 
   it('keeps command and history flow coverage mapped to existing requirements', () => {
@@ -1061,8 +1092,9 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('asset-doc');
     expect(readme).toContain('gap');
     expect(readme).toContain('Agent Response');
-    expect(readme).toContain('New software requirements start at `VHS-REQ-615`.');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
     expect(readme).toContain('New system requirements start at `VHS-SYS-REQ-018`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-615`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-614`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-613`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');

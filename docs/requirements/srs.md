@@ -1359,3 +1359,49 @@ Missing numeric IDs are intentional.
   - Keep this requirement focused on reusable test architecture. Do not change
     extension command exposure, runtime selection behavior, persisted data
     formats, package version, or Marketplace release flow under this requirement.
+
+### VHS-REQ-615: Definition-of-Done Operating Requirement
+
+- Status: Active
+- Parent: VHS-SYS-REQ-012
+- Area: CI And Developer Environment
+- Statement: The repository shall define Done as an end-to-end release-readiness
+  contract that joins issue quality, PR evidence, hosted CI, local validation,
+  standards provenance, closeout evidence, and traceability drift prevention
+  before work is treated as complete.
+- Acceptance Criteria:
+  - Target issues name the requirement ID, source evidence, files to inspect,
+    acceptance criteria, validation commands, and explicit out-of-scope
+    boundaries.
+  - PR evidence references the target issue without premature closure language
+    unless the PR actually satisfies the issue closeout contract.
+  - PR evidence reports required hosted CI checks, local gates, targeted tests,
+    standards provenance status, and any environment blockers.
+  - Local validation includes traceability audit, documentation link check,
+    typecheck, full unit tests, package sanity, and targeted tests for the
+    changed requirement or implementation surface.
+  - Standards closeout evidence reports host or Docker runner results,
+    standards toolchain provenance, Definition-of-Done status, and disqualified
+    evidence sources when a gate would otherwise pass from generated or fixture
+    content.
+  - Traceability drift prevention updates SRS, RTM, ID index, test plan,
+    inventory, and requirements tests together when requirement scope changes.
+  - Actual `dod:gate` automation is a separate implementation change and is not
+    introduced by this requirement-authoring change alone.
+- Agent Work Scope:
+  - Change requirements docs, RTM, ID index, test plan, and requirements
+    coherence tests together.
+- Implementation References:
+  - `docs/requirements/srs.md`
+  - `docs/requirements/rtm.csv`
+  - `docs/requirements/id-index.csv`
+  - `docs/requirements/README.md`
+  - `docs/testing/test-plan.md`
+- Verification References:
+  - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
+  - `manual:definition-of-done-release-readiness-review`
+- Change Guidance:
+  - Keep this requirement as the operating contract for Done. Add automation in
+    the follow-on gate requirement rather than silently broadening this docs-only
+    authoring change.
