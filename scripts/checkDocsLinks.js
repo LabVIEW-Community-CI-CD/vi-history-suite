@@ -10,8 +10,7 @@ const SKIPPED_DIRECTORIES = new Set([
   'coverage',
   'node_modules',
   'out',
-  'out-tests',
-  'test-vsix-latest'
+  'out-tests'
 ]);
 
 function toPosixPath(value) {

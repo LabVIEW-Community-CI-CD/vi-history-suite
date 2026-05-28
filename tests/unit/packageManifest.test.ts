@@ -152,7 +152,7 @@ describe('extension manifest public metadata', () => {
     expect(manifest.dependencies ?? {}).toEqual({
       'jsonc-parser': expect.any(String)
     });
-    expect(manifest.devDependencies).not.toHaveProperty('@vscode/vsce');
+    expect(manifest.devDependencies).toHaveProperty('@vscode/vsce', '3.7.1');
     expect(manifest.scripts).toMatchObject({
       clean: 'rimraf out out-tests coverage',
       compile: 'tsc -p . && node scripts/generateBuildInfo.js',

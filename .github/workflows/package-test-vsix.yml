@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       publish_prerelease:
-        description: Create or update the test-vsix-latest diagnostic prerelease.
+        description: Create a unique immutable diagnostic prerelease for public reporter download.
         required: false
         default: false
         type: boolean
@@ -17,7 +17,6 @@ permissions:
   contents: write
 
 env:
-  TEST_VSIX_RELEASE_TAG: test-vsix-latest
   TEST_VSIX_RELEASE_TITLE: Diagnostic Test VSIX
 
 concurrency:
@@ -111,6 +110,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Compute Diagnostic Prerelease Tag
+        id: diagnostic-release
+        if: ${{ inputs.publish_prerelease }}
+        run: |
+          set -euo pipefail
+          diagnostic_release_tag="diagnostic-test-vsix-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "tag=$diagnostic_release_tag" >> "$GITHUB_OUTPUT"
+          echo "Diagnostic prerelease tag: $diagnostic_release_tag" | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Prepare Prerelease Notes
         if: ${{ inputs.publish_prerelease }}
         run: |
@@ -125,6 +133,7 @@ jobs:
           - $issue_line
           - Source ref: $GITHUB_REF
           - Source SHA: $GITHUB_SHA
+          - Diagnostic release tag: $DIAGNOSTIC_RELEASE_TAG
           - Workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
 
           This is not a Marketplace publication. Install with:
@@ -135,32 +144,31 @@ jobs:
           EOF
         env:
           ISSUE_NUMBER: ${{ inputs.issue_number }}
+          DIAGNOSTIC_RELEASE_TAG: ${{ steps.diagnostic-release.outputs.tag }}
 
-      - name: Move Diagnostic Prerelease Tag
+      - name: Create Diagnostic Prerelease Tag
         if: ${{ inputs.publish_prerelease }}
         run: |
           set -euo pipefail
-          git tag --force "$TEST_VSIX_RELEASE_TAG" "$GITHUB_SHA"
-          git push --force origin "refs/tags/$TEST_VSIX_RELEASE_TAG"
-
-      - name: Create Or Update Diagnostic Prerelease
-        if: ${{ inputs.publish_prerelease }}
-        run: |
-          set -euo pipefail
-          if gh release view "$TEST_VSIX_RELEASE_TAG" >/dev/null 2>&1; then
-            gh release edit "$TEST_VSIX_RELEASE_TAG" \
-              --title "$TEST_VSIX_RELEASE_TITLE" \
-              --notes-file diagnostic-test-vsix-notes.md \
-              --prerelease \
-              --latest=false
-          else
-            gh release create "$TEST_VSIX_RELEASE_TAG" \
-              --verify-tag \
-              --title "$TEST_VSIX_RELEASE_TITLE" \
-              --notes-file diagnostic-test-vsix-notes.md \
-              --prerelease \
-              --latest=false
+          diagnostic_release_tag="${{ steps.diagnostic-release.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$diagnostic_release_tag" >/dev/null 2>&1; then
+            echo "Diagnostic prerelease tag already exists: $diagnostic_release_tag" >&2
+            exit 1
           fi
-          gh release upload "$TEST_VSIX_RELEASE_TAG" "${{ steps.locate-vsix.outputs.vsix_path }}#VI History Suite diagnostic VSIX" --clobber
+          git tag "$diagnostic_release_tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$diagnostic_release_tag"
+
+      - name: Create Immutable Diagnostic Prerelease
+        if: ${{ inputs.publish_prerelease }}
+        run: |
+          set -euo pipefail
+          diagnostic_release_tag="${{ steps.diagnostic-release.outputs.tag }}"
+          gh release create "$diagnostic_release_tag" \
+            "${{ steps.locate-vsix.outputs.vsix_path }}#VI History Suite diagnostic VSIX" \
+            --verify-tag \
+            --title "$TEST_VSIX_RELEASE_TITLE" \
+            --notes-file diagnostic-test-vsix-notes.md \
+            --prerelease \
+            --latest=false
         env:
           GH_TOKEN: ${{ github.token }}

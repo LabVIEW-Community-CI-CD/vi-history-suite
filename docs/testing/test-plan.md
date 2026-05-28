@@ -77,9 +77,11 @@ dispatch the `Package Test VSIX` workflow from `main`, `release/vX.Y.Z`, or an
 exact `vX.Y.Z` tag. It runs the lightweight package checks and uploads
 `vi-history-suite-*.vsix` as a short-lived Actions artifact.
 
-Set `publish_prerelease` only when a public `test-vsix-latest` prerelease asset
-is needed for reporter download. This is diagnostic reporter support only, not
-Marketplace publication and not a required release gate.
+Set `publish_prerelease` only when a public immutable prerelease asset is needed
+for reporter download. The workflow creates a unique
+`diagnostic-test-vsix-<run-id>-<run-attempt>` prerelease and does not edit,
+clobber, or reuse an existing GitHub Release. This is diagnostic reporter
+support only, not Marketplace publication and not a required release gate.
 
 ## Devcontainer Human Check
 

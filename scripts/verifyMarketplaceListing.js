@@ -81,9 +81,7 @@ function listingContainsVersion(payload, expectedVersion) {
 }
 
 function runVsceShow(extensionId, deps = {}) {
-  const invocation = buildPinnedVsceInvocation(['show', extensionId, '--json'], {
-    platform: deps.platform
-  });
+  const invocation = buildPinnedVsceInvocation(['show', extensionId, '--json'], deps);
   const spawnSyncImpl = deps.spawnSync || spawnSync;
   const result = spawnSyncImpl(invocation.command, invocation.args, {
     cwd: deps.cwd || process.cwd(),

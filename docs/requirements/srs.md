@@ -1094,8 +1094,8 @@ Missing numeric IDs are intentional.
   - The workflow runs install, typecheck, unit tests, and package commands
     before exposing a VSIX.
   - The workflow always uploads the VSIX as a short-lived Actions artifact.
-  - Maintainers may optionally update a `test-vsix-latest` prerelease asset for
-    reporter retesting.
+  - Maintainers may optionally create a unique immutable diagnostic prerelease
+    asset for reporter retesting.
   - The workflow does not use Marketplace publishing tokens or run Marketplace
     publication commands.
 - Agent Work Scope:
