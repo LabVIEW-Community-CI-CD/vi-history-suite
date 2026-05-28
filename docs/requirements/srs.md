@@ -680,6 +680,10 @@ Missing numeric IDs are intentional.
   - The workflow runs `npm run check`.
   - The workflow runs `npm run traceability:audit`.
   - The workflow runs `npm test`.
+  - The workflow retains `coverage/cobertura-coverage.xml` and
+    `coverage/coverage-summary.json` as PR coverage evidence.
+  - The workflow enforces the baseline global coverage thresholds declared in
+    `vitest.config.ts`.
   - The workflow runs `npm run package`.
   - The workflow runs on `main`, `develop`, `feature/**`, `release/**`, and
     `hotfix/**` branch pushes.
@@ -690,8 +694,10 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `.github/workflows/ci.yml`
   - `docs/testing/test-plan.md`
+  - `vitest.config.ts`
 - Verification References:
   - `tests/unit/branchGovernanceWorkflow.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
   - `manual:github-actions-build-test-package`
 - Change Guidance:
   - Keep branch governance inside the required hosted CI job so the public

@@ -255,25 +255,56 @@ describe('requirements documentation coherence', () => {
   });
 
   it('keeps lightweight hosted CI traceability audit gating documented', () => {
+    const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
     const workflowTest = readRepoText('tests', 'unit', 'branchGovernanceWorkflow.test.ts');
+    const vitestConfig = readRepoText('vitest.config.ts');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-597');
+    const vitestInventoryRow = inventoryRows.find((row) => row.Path === 'vitest.config.ts');
 
+    expect(syrs).toContain('`npm run traceability:audit`');
+    expect(syrs).toContain('machine-readable coverage evidence');
+    expect(syrs).toContain('coverage artifact and baseline threshold policy');
     expect(srs).toContain('### VHS-REQ-597: Lightweight Hosted CI');
     expect(srs).toContain('typecheck, traceability audit, unit tests, and package sanity');
     expect(srs).toContain('The workflow runs `npm run traceability:audit`.');
+    expect(srs).toContain('coverage/cobertura-coverage.xml');
+    expect(srs).toContain('coverage/coverage-summary.json');
+    expect(srs).toContain('baseline global coverage thresholds declared in');
     expect(testPlan).toContain('npm run traceability:audit');
     expect(testPlan).toContain(
       'implementation, test, workflow, and documentation surfaces remain classified'
     );
+    expect(testPlan).toContain('PR Coverage Gate / coverage');
+    expect(testPlan).toContain('coverage/cobertura-coverage.xml');
+    expect(testPlan).toContain('coverage/coverage-summary.json');
+    expect(testPlan).toContain('39% statements');
+    expect(testPlan).toContain('32% branches');
+    expect(testPlan).toContain('45% functions');
+    expect(testPlan).toContain('39% lines');
+    expect(testPlan).toContain('| VHS-REQ-604 | TEST-604 | src/indexing/viEligibilityIndexer.ts');
+    expect(testPlan).toContain('| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts');
+    expect(testPlan).toContain('| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts');
+    expect(testPlan).toContain('| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts');
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
+    expect(workflowTest).toContain('retains machine-readable coverage evidence');
+    expect(vitestConfig).toContain('statements: 39');
+    expect(vitestConfig).toContain('branches: 32');
+    expect(vitestConfig).toContain('functions: 45');
+    expect(vitestConfig).toContain('lines: 39');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
+    expect(requirementRow?.ImplementationRefs).toContain('vitest.config.ts');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/branchGovernanceWorkflow.test.ts'
     );
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    expect(vitestInventoryRow?.Classification).toBe('mapped');
+    expect(vitestInventoryRow?.RtmCoverage).toBe('Yes');
+    expect(vitestInventoryRow?.Notes).toContain('VHS-REQ-597');
   });
 
   it('keeps dependency maintenance automation targetable', () => {

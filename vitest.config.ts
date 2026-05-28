@@ -12,7 +12,13 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'cobertura'],
       reportsDirectory: 'coverage',
       include: ['src/**/*.ts'],
-      exclude: ['src/extension.ts', 'src/benchmark/hostLinuxBenchmarkRunner.ts']
+      exclude: ['src/extension.ts', 'src/benchmark/hostLinuxBenchmarkRunner.ts'],
+      thresholds: {
+        statements: 39,
+        branches: 32,
+        functions: 45,
+        lines: 39
+      }
     }
   }
 });

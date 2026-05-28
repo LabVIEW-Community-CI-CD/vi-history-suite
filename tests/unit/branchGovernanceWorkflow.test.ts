@@ -43,6 +43,23 @@ describe('CI branch governance workflow', () => {
     );
   });
 
+  it('retains machine-readable coverage evidence in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: PR Coverage Gate / coverage');
+    expect(workflow).toContain('uses: actions/upload-artifact@v7');
+    expect(workflow).toContain('coverage/cobertura-coverage.xml');
+    expect(workflow).toContain('coverage/coverage-summary.json');
+    expect(workflow).toContain('if-no-files-found: error');
+    expect(workflow).toContain('retention-days: 30');
+    expect(workflow.indexOf('run: npm test')).toBeLessThan(
+      workflow.indexOf('name: PR Coverage Gate / coverage')
+    );
+    expect(workflow.indexOf('name: PR Coverage Gate / coverage')).toBeLessThan(
+      workflow.indexOf('run: npm run package')
+    );
+  });
+
   it('allows only release and hotfix branches to target main', () => {
     const workflow = readWorkflow();
 
