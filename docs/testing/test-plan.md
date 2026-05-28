@@ -11,6 +11,7 @@ npm run traceability:audit
 npm run docs:links
 npm test
 npm run package
+npm run dod:gate
 ```
 
 This hosted CI job remains the required public merge gate for `develop` and
@@ -54,7 +55,7 @@ and to justify future coverage threshold ratchets.
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
 | --- | --- | --- | --- | --- |
-| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts and enforces evidence-backed baseline thresholds at 60% statements, 50% branches, 65% functions, and 60% lines. |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 60% statements, 50% branches, 65% functions, and 60% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
 | VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts | tests/unit/openViHistoryCommand.test.ts | User-facing command stops cover missing URI, trust gate, ineligible file guidance, history-load failures, documentation routing, and explicit cancellation stages. |
 | VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/viHistoryModel.test.ts; tests/unit/historyPanelRendering.test.ts | History model facts cover repository/path/signature/history-window decisions and previous-hash links before rendering. |
 | VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts; src/ui/historyPanelTracker.ts | tests/unit/openViHistoryCommand.test.ts; tests/unit/historyPanelTracker.test.ts | Review packet and hash copy routes are verified through clipboard and panel action summaries. |
@@ -69,7 +70,7 @@ and to justify future coverage threshold ratchets.
 | VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts; src/extension.ts | tests/unit/localRuntimeSettingsCli.test.ts; tests/unit/packageManifest.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/integration/suite/extensionHost.test.ts | Installed runtime settings CLI command exposure, argument parsing, launcher materialization, idempotent settings refresh, malformed-config errors, validation proof output, terminal output, and missing global-storage handling are verified without changing runtime selection behavior. |
 | VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js; vitest.config.ts | tests/unit/coverageMapScript.test.ts; tests/unit/requirementsDocs.test.ts | Coverage map links retained coverage evidence to RTM/inventory risk and protects evidence-backed threshold ratchets. |
 | VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts | tests/unit/vscodeTestHarness.test.ts; tests/unit/requirementsDocs.test.ts | Shared VS Code fakes support coverage-led command, webview, storage, filesystem, clipboard, progress, output, and runtime CLI tests. |
-| VHS-REQ-615 | TEST-615 | package.json; scripts/checkDefinitionOfDone.js; scripts/generateCloseoutEvidence.js; docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md | tests/unit/definitionOfDoneGate.test.ts; tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI order, local gates, standards provenance, closeout evidence, and traceability drift prevention while leaving hosted DoD workflow automation to the follow-on CI issue. |
+| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; scripts/checkDefinitionOfDone.js; scripts/generateCloseoutEvidence.js; .github/pull_request_template.md; docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md; docs/requirements/traceability-inventory.csv | tests/unit/definitionOfDoneGate.test.ts; tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI order, local gates, standards provenance, closeout evidence, traceability drift prevention, and hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`. |
 
 ## Diagnostic Test VSIX Check
 
@@ -139,8 +140,8 @@ evidence; local images are used only through an explicit `--standards-image`
 override. Provenance evidence verifies GitLab source authority, the private
 GitHub mirror, `v0.2.19`, the local non-authoritative skill cache, and registry
 image access. The DoD parser reports explicit `PASS`, `N/A`, or `FAIL` and only
-lets scanner-visible workflow evidence under `.github/workflows/` promote DoD
-to `PASS`; generated `assurance-*-evidence` outputs and unit-test fixtures are
+lets scanner-visible evidence in `.github/workflows/ci.yml` promote DoD to
+`PASS`; generated `assurance-*-evidence` outputs and unit-test fixtures are
 disqualified sources. A summary is not closable until local gates, mandatory
 standards evidence, standards provenance, and Definition-of-Done evidence are
 clean or tied to a blocking follow-up issue.

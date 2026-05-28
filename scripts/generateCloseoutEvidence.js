@@ -249,8 +249,8 @@ function normalizeEvidencePath(evidencePath) {
   return String(evidencePath || '').replace(/\\/g, '/');
 }
 
-function isWorkflowEvidencePath(evidencePath) {
-  return /^\.github\/workflows\/[^/]+\.ya?ml$/iu.test(normalizeEvidencePath(evidencePath));
+function isCiWorkflowEvidencePath(evidencePath) {
+  return /^\.github\/workflows\/ci\.yml$/iu.test(normalizeEvidencePath(evidencePath));
 }
 
 function isGeneratedAssuranceEvidencePath(evidencePath) {
@@ -268,7 +268,7 @@ function isTestFixtureEvidencePath(evidencePath) {
 
 function classifyDodEvidenceSource(evidenceRecord) {
   const evidencePath = normalizeEvidencePath(evidenceRecord?.path);
-  if (isWorkflowEvidencePath(evidencePath)) {
+  if (isCiWorkflowEvidencePath(evidencePath)) {
     return 'workflow';
   }
   if (isGeneratedAssuranceEvidencePath(evidencePath)) {
@@ -308,7 +308,7 @@ function summarizeDodGateEvidence(evidenceScan, scorecard) {
       source: 'workflow',
       trustedSources,
       disqualifiedSources,
-      reason: 'Scanner-visible DoD evidence is present in a workflow file.'
+      reason: 'Scanner-visible DoD evidence is present in .github/workflows/ci.yml.'
     };
   }
 
@@ -319,7 +319,7 @@ function summarizeDodGateEvidence(evidenceScan, scorecard) {
       source: disqualifiedSources.length > 0 ? 'disqualified-only' : 'none',
       trustedSources,
       disqualifiedSources,
-      reason: 'Raw DoD PASS ignored because no workflow file supplies scanner-visible DoD evidence.'
+      reason: 'Raw DoD PASS ignored because .github/workflows/ci.yml does not supply scanner-visible DoD evidence.'
     };
   }
 
@@ -342,7 +342,7 @@ function summarizeDodGateEvidence(evidenceScan, scorecard) {
     disqualifiedSources,
     reason: trustedSources.length > 0
       ? 'Workflow DoD evidence is visible, but the scorecard has not promoted DoD to PASS.'
-      : 'No workflow file supplies scanner-visible DoD evidence.'
+      : 'No scanner-visible DoD evidence was found in .github/workflows/ci.yml.'
   };
 }
 
@@ -1024,7 +1024,7 @@ function generateCloseoutEvidence(argv, deps = {}) {
   const evidenceHygiene = {
     dodGate: standards.summary?.dodGateEvidence,
     policy: {
-      passSource: 'Only scanner-visible DoD evidence in .github/workflows/*.yml or .yaml can promote DoD to PASS.',
+      passSource: 'Only scanner-visible DoD evidence in .github/workflows/ci.yml can promote DoD to PASS.',
       disqualifiedSources: [
         'assurance-*-evidence generated evidence',
         'out/dist/build/coverage generated output',

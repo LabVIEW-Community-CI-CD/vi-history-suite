@@ -295,7 +295,7 @@ describe('closeout evidence script', () => {
     });
   });
 
-  it('allows DoD to pass only when scanner-visible evidence is a workflow', () => {
+  it('allows DoD to pass only when scanner-visible evidence is .github/workflows/ci.yml', () => {
     const dod = summarizeDodGateEvidence(
       {
         evidence: [
@@ -318,6 +318,33 @@ describe('closeout evidence script', () => {
       expect.objectContaining({
         classification: 'workflow',
         path: '.github/workflows/ci.yml'
+      })
+    ]);
+  });
+
+  it('does not let non-ci workflow files satisfy the DoD gate', () => {
+    const dod = summarizeDodGateEvidence(
+      {
+        evidence: [
+          {
+            path: '.github/workflows/release.yml',
+            rule_source: 'GATE:dod:context',
+            matched_text: 'name: DoD Gate / dod'
+          }
+        ]
+      },
+      scorecardDodPass
+    );
+
+    expect(dod).toMatchObject({
+      status: 'N/A',
+      scorecardStatus: 'PASS',
+      source: 'disqualified-only'
+    });
+    expect(dod.disqualifiedSources).toEqual([
+      expect.objectContaining({
+        path: '.github/workflows/release.yml',
+        classification: 'untrusted-source'
       })
     ]);
   });

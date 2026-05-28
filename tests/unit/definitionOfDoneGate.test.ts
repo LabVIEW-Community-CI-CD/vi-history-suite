@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 const repoRoot = path.resolve(__dirname, '..', '..');
 
 const {
+  REQUIRED_CI_STEPS,
   REQUIRED_CLOSEOUT_GATES,
   REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS,
   REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS,
@@ -18,6 +19,7 @@ const {
   renderResult,
   runDefinitionOfDoneGate
 } = require('../../scripts/checkDefinitionOfDone.js') as {
+  REQUIRED_CI_STEPS: string[];
   REQUIRED_CLOSEOUT_GATES: string[];
   REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS: string[];
   REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS: string[];
@@ -120,7 +122,20 @@ describe('Definition-of-Done gate', () => {
     expect(renderResult(result)).toContain('[dod-gate] Gate passed.');
   });
 
-  it('keeps the required closeout gate order explicit', () => {
+  it('keeps the required hosted and closeout gate order explicit', () => {
+    expect(REQUIRED_CI_STEPS).toEqual([
+      'Branch Governance',
+      'Checkout',
+      'Setup Node',
+      'Install',
+      'Typecheck',
+      'Traceability Audit',
+      'Docs Link Check / lychee',
+      'Test',
+      'PR Coverage Gate / coverage',
+      'Package',
+      'DoD Gate / dod'
+    ]);
     expect(REQUIRED_CLOSEOUT_GATES).toEqual([
       'traceability:audit',
       'docs:links',

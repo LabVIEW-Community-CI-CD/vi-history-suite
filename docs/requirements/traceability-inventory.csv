@@ -2,7 +2,7 @@ Path,Classification,RtmCoverage,Notes
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
-scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner published Docker workbench support standards toolchain provenance verification and DoD evidence-source hygiene; mapped to VHS-REQ-601.
+scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner published Docker workbench support standards toolchain provenance verification and DoD evidence-source hygiene; mapped to VHS-REQ-601 and VHS-REQ-615.
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
@@ -124,7 +124,7 @@ tests/integration/suite/extensionHost.test.ts,mapped,Yes,Extension host integrat
 tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testing infrastructure.
 tests/integration/runTests.ts,dev-only,No,Integration test runner; testing infrastructure.
 tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace preparation; testing infrastructure.
-.github/workflows/ci.yml,release-ci,Yes,CI workflow; mapped through RTM.
+.github/workflows/ci.yml,release-ci,Yes,CI workflow with hosted DoD Gate / dod; mapped through RTM including VHS-REQ-597 and VHS-REQ-615.
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
 .github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow; mapped through RTM.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.

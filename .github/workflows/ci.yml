@@ -91,3 +91,6 @@ jobs:
 
       - name: Package
         run: npm run package
+
+      - name: DoD Gate / dod
+        run: npm run dod:gate
