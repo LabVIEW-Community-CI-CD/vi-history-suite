@@ -95,6 +95,8 @@ tests/unit/requirementsDocs.test.ts,mapped,Yes,Requirements documentation tests;
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
+tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
+tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
 tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings probe tests; contributor validation tooling.
 tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,dev-only,No,Runtime settings probe packet tests; contributor tooling.
 tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,dev-only,No,Runtime settings safe restore tests; contributor tooling.
