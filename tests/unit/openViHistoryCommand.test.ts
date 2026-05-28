@@ -337,6 +337,24 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
   });
 });
 
+function defaultIndexingCacheDiagnostics() {
+  return {
+    storage: {
+      restoreOutcome: 'not-configured' as const,
+      restoredEntryCount: 0,
+      persistOutcome: 'not-configured' as const,
+      persistedEntryCount: 0
+    },
+    reuse: {
+      cacheableTrackedFileCount: 0,
+      uncacheableTrackedFileCount: 0,
+      hitCount: 0,
+      missCount: 0,
+      proofRejectedCount: 0
+    }
+  };
+}
+
 describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -357,7 +375,8 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
       counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const
+      refreshReason: 'initial-activation' as const,
+      cache: defaultIndexingCacheDiagnostics()
     };
     const indexingSummary = buildIndexingDiagnosticSummary(indexingResult);
 
@@ -381,7 +400,8 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
       counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const
+      refreshReason: 'initial-activation' as const,
+      cache: defaultIndexingCacheDiagnostics()
     };
     const summary = buildIndexingDiagnosticSummary(result);
     const fullText = summary.join(' ');
@@ -400,7 +420,8 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
       counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
-      refreshReason: 'scheduled-refresh' as const
+      refreshReason: 'scheduled-refresh' as const,
+      cache: defaultIndexingCacheDiagnostics()
     };
     const summary = buildIndexingDiagnosticSummary(result);
     const fullText = summary.join(' ');
@@ -428,7 +449,8 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
         counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
-        refreshReason: 'initial-activation' as const
+        refreshReason: 'initial-activation' as const,
+        cache: defaultIndexingCacheDiagnostics()
       };
       const summary = buildIndexingDiagnosticSummary(result);
       const statusLine = summary.find(line => line.startsWith('Indexing status:'));
@@ -445,7 +467,8 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
       counts: { tracked: 100, reused: 20, evaluated: 80, eligible: 50, removed: 2, skipped: 5, failed: 3 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const
+      refreshReason: 'initial-activation' as const,
+      cache: defaultIndexingCacheDiagnostics()
     };
     const summary = buildIndexingDiagnosticSummary(result);
     const countsLine = summary.find(line => line.startsWith('Work counts:'));
@@ -457,6 +480,37 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
     expect(countsLine).toContain('removed=2');
     expect(countsLine).toContain('skipped=5');
     expect(countsLine).toContain('failed=3');
+  });
+
+  it('user-visible diagnostics include cache storage and reuse evidence', async () => {
+    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+
+    const result = {
+      state: 'warm-restart' as const,
+      counts: { tracked: 12, reused: 9, evaluated: 3, eligible: 8, removed: 0, skipped: 0, failed: 0 },
+      indexedRepositoryRoots: ['/workspace/repo'],
+      snapshotPreserved: false,
+      refreshReason: 'scheduled-refresh' as const,
+      cache: {
+        storage: {
+          restoreOutcome: 'restored' as const,
+          restoredEntryCount: 14,
+          persistOutcome: 'written' as const,
+          persistedEntryCount: 15
+        },
+        reuse: {
+          cacheableTrackedFileCount: 10,
+          uncacheableTrackedFileCount: 2,
+          hitCount: 9,
+          missCount: 1,
+          proofRejectedCount: 2
+        }
+      }
+    };
+    const summary = buildIndexingDiagnosticSummary(result);
+
+    expect(summary).toContain('Cache storage: restored=14 (restored), persisted=15 (written).');
+    expect(summary).toContain('Cache reuse: cacheable=10, uncacheable=2, hits=9, misses=1, proofRejected=2.');
   });
 
   it('user-visible diagnostics identify all refresh reasons', async () => {
@@ -480,7 +534,8 @@ describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
         counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
-        refreshReason: reason
+        refreshReason: reason,
+        cache: defaultIndexingCacheDiagnostics()
       };
       const summary = buildIndexingDiagnosticSummary(result);
       const reasonLine = summary.find(line => line.startsWith('Refresh reason:'));
