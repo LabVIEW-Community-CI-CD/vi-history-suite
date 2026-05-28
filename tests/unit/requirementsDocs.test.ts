@@ -432,6 +432,8 @@ describe('requirements documentation coherence', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const packageManifestTest = readRepoText('tests', 'unit', 'packageManifest.test.ts');
+    const extensionHostTest = readRepoText('tests', 'integration', 'suite', 'extensionHost.test.ts');
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-611');
     const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-611');
 
@@ -452,7 +454,13 @@ describe('requirements documentation coherence', () => {
       'tests/unit/bundledDocumentationAction.test.ts'
     );
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
     expect(requirementRow?.VerificationRefs).toContain('tests/integration/suite/extensionHost.test.ts');
+    expect(packageManifestTest).toContain('onCommand:labviewViHistory.openDocumentation');
+    expect(extensionHostTest).toContain("command: 'openDocumentation'");
+    expect(extensionHostTest).toContain('getLastOpenedDocumentationPanel');
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-611-installed-bundled-documentation-surface'
     );
