@@ -461,6 +461,9 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('### VHS-REQ-615: Definition-of-Done Operating Requirement');
     expect(srs).toContain('issue quality, PR evidence, hosted CI, local validation');
     expect(srs).toContain('standards provenance, closeout evidence, and traceability drift prevention');
+    expect(srs).toContain('requirement/RTM update expectations');
+    expect(srs).toContain('optional bounded');
+    expect(srs).toContain('Copilot prompt');
     expect(srs).toContain('The repo-native `npm run dod:gate` command verifies the DoD contract');
     expect(srs).toContain('Hosted CI `DoD Gate / dod` automation is a separate implementation change');
     expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | package.json; scripts/checkDefinitionOfDone.js');
@@ -901,12 +904,20 @@ describe('requirements documentation coherence', () => {
     expect(template).toContain('id: required_tests');
     expect(template).toContain('id: validation_commands');
     expect(template).toContain('id: out_of_scope');
+    expect(template).toContain('id: requirement_updates');
+    expect(template).toContain('id: copilot_prompt');
+    expect(template).toContain('Issues must be decision-complete before implementation starts');
     expect(template).toContain('Update implementation, tests, SRS, and RTM');
     expect(requirementsReadme).toContain('Requirement Target');
     expect(requirementsReadme).toContain('validation commands');
+    expect(requirementsReadme).toContain('issue itself is decision-complete');
+    expect(requirementsReadme).toContain('optional bounded');
+    expect(requirementsReadme).toContain('`copilot_prompt` field');
     expect(requirementsReadme).toContain('Copilot Web issue-generation guidance');
     expect(issueWaveGuidance).toContain('Requirements-First, RTM-First Flow');
     expect(issueWaveGuidance).toContain('Requirement-Gap Wave Flow');
+    expect(issueWaveGuidance).toContain('Decision-Complete Issue Payload');
+    expect(issueWaveGuidance).toContain('optional `copilot_prompt`');
     expect(issueWaveGuidance).toContain('Local Evidence And Validation');
     expect(issueWaveGuidance).toContain('Fail Closed If Missing');
     expect(issueWaveGuidance).toContain('repo-standards-review');
@@ -929,6 +940,8 @@ describe('requirements documentation coherence', () => {
     expect(issueWaveGuidance).toContain('No credentials, tokens, secrets, or admin-setting changes');
     expect(srs).toContain('GitHub issue templates support requirement-targeted agent work.');
     expect(srs).toContain('A committed requirement-wave guide defines requirement-first, RTM-first');
+    expect(srs).toContain('decision-complete');
+    expect(srs).toContain('requirement-target issue payload');
     expect(srs).toContain('requirement-gap lane for bounded field');
     expect(srs).toContain('repo-local commands required for');
     expect(requirementRow?.ImplementationRefs).toContain(

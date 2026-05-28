@@ -35,7 +35,10 @@ Target VHS-REQ-###. Change behavior to ____. Update implementation, tests, SRS, 
 On GitHub, use the `Requirement Target` issue template for agent or Copilot
 work. The template captures the target requirement ID, files to inspect,
 acceptance criteria, required tests, validation commands, and out-of-scope
-boundaries before implementation starts.
+boundaries before implementation starts. It also requires a
+requirement/RTM-update decision and provides an optional bounded
+`copilot_prompt` field so the issue itself is decision-complete before
+implementation starts.
 
 For creating new requirement-scoped Copilot Web issue waves, use the committed
 [Copilot Web issue-generation guidance](./copilot-web-issue-generation-prompt.md)
