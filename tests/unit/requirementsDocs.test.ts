@@ -297,6 +297,10 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('| VHS-REQ-604 | TEST-604 | src/indexing/viEligibilityIndexer.ts');
     expect(testPlan).toContain('| VHS-REQ-606 | TEST-606 | src/indexing/viEligibilityIndexer.ts');
     expect(testPlan).toContain('| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts');
+    expect(testPlan).toContain('src/dashboard/multiReportDashboard.ts; src/dashboard/multiReportDashboardAction.ts');
+    expect(testPlan).toContain('tests/unit/multiReportDashboard.test.ts; tests/unit/multiReportDashboardAction.test.ts');
+    expect(testPlan).toContain('tests/unit/retainedDashboardEvidence.test.ts');
+    expect(testPlan).toContain('review submission boundaries, decision records, scenario contracts');
     expect(testPlan).toContain('| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts');
     expect(testPlan).toContain('| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts');
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
@@ -667,6 +671,24 @@ describe('requirements documentation coherence', () => {
     );
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/dashboardLatestRun.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/multiReportDashboard.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/multiReportDashboardAction.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/retainedDashboardEvidence.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/humanReviewSubmission.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/reviewDecisionRecord.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/reviewScenarioSupportPolicy.test.ts'
     );
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-610-dashboard-aggregate-review'
@@ -1136,6 +1158,20 @@ describe('requirements documentation coherence', () => {
     for (const filePath of reviewScenarioSupportingPaths) {
       const row = inventoryByPath.get(filePath);
       expectSupportingClassification(row, filePath, 'VHS-REQ-610');
+    }
+
+    for (const filePath of [
+      'tests/unit/multiReportDashboard.test.ts',
+      'tests/unit/multiReportDashboardAction.test.ts',
+      'tests/unit/retainedDashboardEvidence.test.ts',
+      'tests/unit/humanReviewSubmission.test.ts',
+      'tests/unit/reviewDecisionRecord.test.ts',
+      'tests/unit/reviewScenarioSupportPolicy.test.ts'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification, `${filePath} classification`).toBe('mapped');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('Yes');
+      expect(row?.Notes, `${filePath} notes`).toContain('VHS-REQ-610');
     }
 
     // Git API wrapper and tests are directly mapped through RTM

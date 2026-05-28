@@ -80,9 +80,12 @@ tests/unit/gitCli.test.ts,mapped,Yes,Git CLI tests; mapped through RTM.
 tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering tests; mapped through RTM.
 tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
+tests/unit/humanReviewSubmission.test.ts,mapped,Yes,Human review submission boundary tests; mapped to VHS-REQ-610.
 tests/unit/integrationHostRuntime.test.ts,dev-only,No,Integration host runtime tests; testing infrastructure.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
 tests/unit/marketplaceListingVerification.test.ts,mapped,Yes,Marketplace listing verification retry tests; mapped to VHS-REQ-609.
+tests/unit/multiReportDashboard.test.ts,mapped,Yes,Multi-report dashboard rendering and concentration tests; mapped to VHS-REQ-610.
+tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
 tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM.
@@ -93,6 +96,9 @@ tests/unit/preparePublicTestFixtureScript.test.ts,dev-only,No,Public test fixtur
 tests/unit/publicDevcontainerSurface.test.ts,mapped,Yes,Public devcontainer surface tests; mapped through RTM.
 tests/unit/publicDocSourceLinks.test.ts,mapped,Yes,Public doc source links tests; mapped through RTM.
 tests/unit/requirementsDocs.test.ts,mapped,Yes,Requirements documentation tests; mapped through RTM.
+tests/unit/retainedDashboardEvidence.test.ts,mapped,Yes,Retained dashboard evidence seeding tests; mapped to VHS-REQ-610.
+tests/unit/reviewDecisionRecord.test.ts,mapped,Yes,Review decision record persistence and action tests; mapped to VHS-REQ-610.
+tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
