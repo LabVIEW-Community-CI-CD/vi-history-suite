@@ -193,8 +193,10 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/services/viHistoryService.ts`
   - `src/git/gitCli.ts`
+  - `src/git/gitApi.ts`
 - Verification References:
   - `tests/unit/viHistoryService.test.ts`
+  - `tests/unit/gitApi.test.ts`
 - Change Guidance:
   - Keep Git API and CLI fallback behavior aligned.
 
@@ -599,6 +601,7 @@ Missing numeric IDs are intentional.
   - Change runtime execution staging and tests together.
 - Implementation References:
   - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportPlan.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
 - Change Guidance:
@@ -625,6 +628,7 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportPacket.ts`
+  - `src/reporting/comparisonReportExecutionPlan.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonReportPacket.test.ts`
@@ -670,10 +674,11 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-012
 - Area: CI And Developer Environment
 - Statement: Hosted CI shall run the lightweight public check set: install,
-  typecheck, unit tests, and package sanity.
+  typecheck, traceability audit, unit tests, and package sanity.
 - Acceptance Criteria:
   - The workflow runs `npm ci`.
   - The workflow runs `npm run check`.
+  - The workflow runs `npm run traceability:audit`.
   - The workflow runs `npm test`.
   - The workflow runs `npm run package`.
   - The workflow runs on `main`, `develop`, `feature/**`, `release/**`, and
@@ -732,11 +737,15 @@ Missing numeric IDs are intentional.
   - Vagrant documentation states the optional role.
   - `npm run vagrant:validate` remains available.
   - Hosted CI does not require Vagrant.
+  - Vagrant provisioning scripts prepare the guest environment without CI
+    dependency.
 - Agent Work Scope:
   - Change Vagrant docs, package scripts, and optional helper files together.
 - Implementation References:
   - `docs/vagrant.md`
   - `vagrant/Vagrantfile`
+  - `vagrant/provision/bootstrap.ps1`
+  - `vagrant/provision/prepare-cold-labview.ps1`
   - `package.json`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
@@ -804,9 +813,19 @@ Missing numeric IDs are intentional.
     remote agents from maintainer-local advisory checks that depend on local
     skills or read-only evidence checkouts.
   - CI fails when active requirement references drift from existing repo paths.
+  - A committed traceability inventory defines classifications for mapped,
+    supporting, dev-only, release-ci, asset-doc, and gap surfaces.
+  - A repeatable local audit command reports unmapped implementation candidates,
+    unmapped test candidates, and missing RTM references.
+  - The current baseline is captured without immediately failing CI for
+    historical unmapped files (gap entries are informational).
+  - The guard is designed so a later PR can fail closed on newly added
+    unclassified implementation files.
+  - Documentation tells agents how to respond when touched code is unmapped.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
+  - Change traceability inventory and audit script together with RTM updates.
 - Implementation References:
   - `docs/requirements/README.md`
   - `docs/requirements/copilot-web-issue-generation-prompt.md`
@@ -814,13 +833,17 @@ Missing numeric IDs are intentional.
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
+  - `docs/requirements/traceability-inventory.csv`
+  - `scripts/auditTraceabilitySteward.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
     index.
+  - For new implementation files, add inventory entries before committing.
 
 ### VHS-REQ-602: Dependency Maintenance Automation
 
@@ -829,7 +852,8 @@ Missing numeric IDs are intentional.
 - Area: CI And Developer Environment
 - Statement: Dependency maintenance automation shall keep routine dependency
   updates reviewable while preserving package-audit diagnostics for failed VSIX
-  runtime-surface checks.
+  runtime-surface checks. CodeQL security analysis shall run on main, develop,
+  pull requests, weekly schedule, and manual dispatch.
 - Acceptance Criteria:
   - Dependabot groups npm development minor and patch updates separately from
     npm runtime minor and patch updates.
@@ -839,11 +863,16 @@ Missing numeric IDs are intentional.
     runtime and VS Code engine policy.
   - Package audit failures report bounded stdout and stderr from the pinned VSCE
     listing command.
+  - CodeQL analysis runs on push to main and develop, pull requests targeting
+    those branches, weekly schedule, and manual dispatch.
+  - CodeQL grants only actions read, contents read, and security-events write
+    permissions.
 - Agent Work Scope:
-  - Change Dependabot config, package audit diagnostics, and security
-    maintenance tests together.
+  - Change Dependabot config, package audit diagnostics, CodeQL workflow, and
+    security maintenance tests together.
 - Implementation References:
   - `.github/dependabot.yml`
+  - `.github/workflows/codeql.yml`
   - `package.json`
   - `scripts/auditPackagedRuntimeSurface.js`
 - Verification References:
@@ -1103,3 +1132,122 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Do not publish from branch refs; tag the merged `main` commit and publish
     from that exact tag only.
+
+### VHS-REQ-610: Dashboard Aggregate Review
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall provide a dashboard aggregate review that
+  concentrates retained comparison report evidence across multiple commit pairs
+  into a single HTML surface.
+- Acceptance Criteria:
+  - The dashboard shows all commit pairs in the loaded history window.
+  - Each pair entry shows archive status, evidence state, and artifact links.
+  - Report metadata including overview images, detail sections, and included
+    attributes is extracted from NI comparison reports and displayed.
+  - ETA estimation provides user feedback during dashboard preparation.
+  - Dashboard artifacts are persisted to extension storage for reproducibility.
+  - Evidence seeding imports retained evidence from external sources when
+    available.
+  - Dashboard generation requires at least three commits to form comparison
+    pairs.
+- Agent Work Scope:
+  - Change dashboard build, action, evidence handling, and tests together.
+- Implementation References:
+  - `src/dashboard/multiReportDashboard.ts`
+  - `src/dashboard/multiReportDashboardAction.ts`
+  - `src/dashboard/niComparisonReportParser.ts`
+  - `src/dashboard/comparisonReportArchive.ts`
+  - `src/dashboard/dashboardEtaAccuracy.ts`
+  - `src/dashboard/dashboardLatestRun.ts`
+  - `src/dashboard/retainedDashboardEvidence.ts`
+- Verification References:
+  - `tests/unit/dashboardEtaAccuracy.test.ts`
+  - `tests/unit/niComparisonReportParser.test.ts`
+  - `tests/unit/comparisonReportArchive.test.ts`
+  - `tests/unit/dashboardLatestRun.test.ts`
+- Change Guidance:
+  - Keep dashboard behavior concentrated on evidence aggregation and review, not
+    comparison execution.
+
+### VHS-REQ-611: Installed Bundled Documentation Surface
+
+- Status: Active
+- Parent: VHS-SYS-REQ-001
+- Area: Bundled Docs
+- Statement: The extension shall provide installed bundled documentation through
+  the `labviewViHistory.openDocumentation` command by loading packaged manifest
+  and page assets that ship with the extension.
+- Acceptance Criteria:
+  - The extension manifest contributes `labviewViHistory.openDocumentation` and
+    activates on that command.
+  - The command registration routes requests to the bundled documentation action
+    and surfaces user-facing outcomes for missing bundles or unknown pages.
+  - Bundled documentation manifest and page loading resolves packaged
+    `resources/bundled-docs` assets and renders an in-product documentation
+    panel.
+  - Packaged bundled documentation includes the manifest and shipped HTML pages
+    for overview, user workflow, install/release, and comparison/dashboard
+    review guidance.
+- Agent Work Scope:
+  - Change bundled documentation command routing, packaged docs assets,
+    requirements mapping, and verification references together.
+- Implementation References:
+  - `src/docs/bundledDocumentation.ts`
+  - `src/docs/bundledDocumentationAction.ts`
+  - `resources/bundled-docs/manifest.json`
+  - `resources/bundled-docs/pages/overview.html`
+  - `resources/bundled-docs/pages/user-workflow.html`
+  - `resources/bundled-docs/pages/install-and-release.html`
+  - `resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html`
+  - `package.json`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/bundledDocumentation.test.ts`
+  - `tests/unit/bundledDocumentationAction.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/integration/suite/extensionHost.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep this requirement scoped to installed bundled documentation behavior and
+    packaged assets, not external website or wiki governance.
+
+### VHS-REQ-612: Installed Runtime Settings CLI Preparation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall expose installed runtime settings CLI
+  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` so the
+  local `vihs` launcher is materialized or refreshed and preparation failures
+  are reported with actionable outcomes.
+- Acceptance Criteria:
+  - The extension manifest contributes
+    `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on that
+    command.
+  - Command registration routes preparation through
+    `admitLocalRuntimeSettingsCliToTerminalPath`, returns
+    `prepared-local-runtime-settings-cli` with launcher/settings-target
+    contract fields, and surfaces an actionable success message.
+  - When extension global storage is unavailable, the command reports
+    `missing-global-storage-uri` and a user-facing warning that preparation
+    could not proceed.
+  - Preparation remains admitted in untrusted workspaces as a low-risk local
+    materialization path while compare execution remains blocked there.
+- Agent Work Scope:
+  - Change command exposure evidence, requirement mapping, and verification
+    references together without changing runtime provider selection behavior.
+- Implementation References:
+  - `package.json`
+  - `src/extension.ts`
+  - `src/tooling/localRuntimeSettingsCli.ts`
+- Verification References:
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/integration/suite/extensionHost.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep this requirement focused on installed CLI preparation and failure
+    reporting; do not change runtime selection semantics.

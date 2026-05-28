@@ -254,6 +254,28 @@ describe('requirements documentation coherence', () => {
     expect(titles).toContain('Devcontainer Source Evaluation');
   });
 
+  it('keeps lightweight hosted CI traceability audit gating documented', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const workflowTest = readRepoText('tests', 'unit', 'branchGovernanceWorkflow.test.ts');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-597');
+
+    expect(srs).toContain('### VHS-REQ-597: Lightweight Hosted CI');
+    expect(srs).toContain('typecheck, traceability audit, unit tests, and package sanity');
+    expect(srs).toContain('The workflow runs `npm run traceability:audit`.');
+    expect(testPlan).toContain('npm run traceability:audit');
+    expect(testPlan).toContain(
+      'implementation, test, workflow, and documentation surfaces remain classified'
+    );
+    expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
+    expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/branchGovernanceWorkflow.test.ts'
+    );
+  });
+
   it('keeps dependency maintenance automation targetable', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
@@ -380,6 +402,131 @@ describe('requirements documentation coherence', () => {
     );
     expect(systemIndexRow?.CurrentAnchor).toBe(
       'syrs.md#vhs-sys-req-016-governed-release-branch-promotion'
+    );
+  });
+
+  it('keeps dashboard aggregate review traceable for VHS-REQ-610', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-610');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-610');
+
+    expect(srs).toContain('### VHS-REQ-610: Dashboard Aggregate Review');
+    expect(srs).toContain('dashboard aggregate review');
+    expect(srs).toContain('multiple commit pairs');
+    expect(srs).toContain('ETA estimation');
+    expect(srs).toContain('Evidence seeding imports retained evidence');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-008');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/multiReportDashboard.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/multiReportDashboardAction.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/niComparisonReportParser.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/comparisonReportArchive.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/dashboardEtaAccuracy.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/dashboardLatestRun.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/retainedDashboardEvidence.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/dashboardEtaAccuracy.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/niComparisonReportParser.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/comparisonReportArchive.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/dashboardLatestRun.test.ts'
+    );
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-610-dashboard-aggregate-review'
+    );
+  });
+
+  it('keeps installed bundled documentation traceable for VHS-REQ-611', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const packageManifestTest = readRepoText('tests', 'unit', 'packageManifest.test.ts');
+    const extensionHostTest = readRepoText('tests', 'integration', 'suite', 'extensionHost.test.ts');
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-611');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-611');
+
+    expect(srs).toContain('### VHS-REQ-611: Installed Bundled Documentation Surface');
+    expect(srs).toContain('labviewViHistory.openDocumentation');
+    expect(srs).toContain('resources/bundled-docs');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-001');
+    expect(requirementRow?.ImplementationRefs).toContain('src/docs/bundledDocumentation.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('src/docs/bundledDocumentationAction.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('resources/bundled-docs/manifest.json');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('src/extension.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/bundledDocumentation.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/bundledDocumentationAction.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/integration/suite/extensionHost.test.ts');
+    expect(packageManifestTest).toContain('onCommand:labviewViHistory.openDocumentation');
+    expect(extensionHostTest).toContain("command: 'openDocumentation'");
+    expect(extensionHostTest).toContain('getLastOpenedDocumentationPanel');
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-611-installed-bundled-documentation-surface'
+    );
+  });
+
+  it('keeps installed runtime settings CLI preparation traceable for VHS-REQ-612', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const packageManifestTest = readRepoText('tests', 'unit', 'packageManifest.test.ts');
+    const extensionActivationTest = readRepoText(
+      'tests',
+      'unit',
+      'extensionActivationLazySideEffects.test.ts'
+    );
+    const extensionHostTest = readRepoText('tests', 'integration', 'suite', 'extensionHost.test.ts');
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-612');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-612');
+
+    expect(srs).toContain('### VHS-REQ-612: Installed Runtime Settings CLI Preparation');
+    expect(srs).toContain('labviewViHistory.prepareLocalRuntimeSettingsCli');
+    expect(srs).toContain('missing-global-storage-uri');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-004');
+    expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('src/extension.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('src/tooling/localRuntimeSettingsCli.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/integration/suite/extensionHost.test.ts');
+    expect(packageManifestTest).toContain('onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli');
+    expect(extensionActivationTest).toContain(
+      "commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')"
+    );
+    expect(extensionHostTest).toContain('prepared-local-runtime-settings-cli');
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-612-installed-runtime-settings-cli-preparation'
     );
   });
 
@@ -555,6 +702,165 @@ describe('requirements documentation coherence', () => {
       expect(template).toContain('separately from indexing evidence');
       expect(template).toContain('Do not include secrets');
       expect(template).toContain('Leave blank for indexing-only');
+    }
+  });
+
+  it('keeps traceability steward inventory traceable for VHS-REQ-601', () => {
+    const readme = readRepoText('docs', 'requirements', 'README.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const inventoryByPath = new Map(inventoryRows.map((row) => [row.Path, row]));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-601');
+
+    expect(readme).toContain('traceability-inventory.csv');
+    expect(readme).toContain('traceability:audit');
+    expect(readme).toContain('Classification Categories');
+    expect(readme).toContain('mapped');
+    expect(readme).toContain('supporting');
+    expect(readme).toContain('dev-only');
+    expect(readme).toContain('release-ci');
+    expect(readme).toContain('asset-doc');
+    expect(readme).toContain('gap');
+    expect(readme).toContain('Agent Response');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-613`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
+    expect(readme).toContain('Traceability Closeout Runbook');
+    expect(readme).toContain('repo-local gates');
+    expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
+    expect(readme).toContain('blocking traceability findings are resolved or');
+    expect(readme).toContain('standards maturity warnings outside the umbrella scope');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'docs/requirements/traceability-inventory.csv'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'scripts/auditTraceabilitySteward.js'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/traceabilityAuditScript.test.ts'
+    );
+
+    const bundledDocumentationImplementationPaths = [
+      'src/docs/bundledDocumentation.ts',
+      'src/docs/bundledDocumentationAction.ts'
+    ];
+    for (const filePath of bundledDocumentationImplementationPaths) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('mapped');
+      expect(row?.RtmCoverage).toBe('Yes');
+      expect(row?.Notes).toContain('VHS-REQ-611');
+    }
+
+    const bundledDocumentationAssetPaths = [
+      'resources/bundled-docs/manifest.json',
+      'resources/bundled-docs/pages/overview.html',
+      'resources/bundled-docs/pages/user-workflow.html',
+      'resources/bundled-docs/pages/install-and-release.html',
+      'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
+    ];
+    for (const filePath of bundledDocumentationAssetPaths) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('mapped');
+      expect(row?.RtmCoverage).toBe('Yes');
+      expect(row?.Notes).toContain('VHS-REQ-611');
+    }
+
+    const bundledDocumentationTests = [
+      'tests/unit/bundledDocumentation.test.ts',
+      'tests/unit/bundledDocumentationAction.test.ts'
+    ];
+    for (const filePath of bundledDocumentationTests) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('mapped');
+      expect(row?.RtmCoverage).toBe('Yes');
+      expect(row?.Notes).toContain('VHS-REQ-611');
+    }
+
+    const localRuntimeSettingsCliRow = inventoryByPath.get('src/tooling/localRuntimeSettingsCli.ts');
+    expect(localRuntimeSettingsCliRow?.Classification).toBe('mapped');
+    expect(localRuntimeSettingsCliRow?.RtmCoverage).toBe('Yes');
+    expect(localRuntimeSettingsCliRow?.Notes).toContain('VHS-REQ-612');
+
+    for (const filePath of [
+      'src/tooling/runtimeSettingsLiveSessionProbe.ts',
+      'src/tooling/runtimeSettingsLiveSessionProbePacket.ts',
+      'src/tooling/runtimeSettingsLiveSessionSafeRestore.ts'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('dev-only');
+      expect(row?.RtmCoverage).toBe('No');
+      expect(row?.Notes).toContain('not contributed in package.json');
+    }
+
+    for (const filePath of [
+      '.github/ISSUE_TEMPLATE/config.yml',
+      '.github/ISSUE_TEMPLATE/feature_request.yml'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('asset-doc');
+      expect(row?.RtmCoverage).toBe('No');
+    }
+
+    // VHS-REQ-601: Review/scenario/support-policy files classified as supporting
+    function expectSupportingClassification(
+      row: Record<string, string> | undefined,
+      filePath: string,
+      reqId: string
+    ): void {
+      expect(row?.Classification, `${filePath} classification`).toBe('supporting');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
+      expect(row?.Notes, `${filePath} notes`).toContain(reqId);
+    }
+
+    function expectMappedClassification(
+      row: Record<string, string> | undefined,
+      filePath: string
+    ): void {
+      expect(row?.Classification, `${filePath} classification`).toBe('mapped');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('Yes');
+      expect(row?.Notes, `${filePath} notes`).toContain('mapped through RTM');
+    }
+
+    const reviewScenarioSupportingPaths = [
+      'src/review/humanReviewSubmission.ts',
+      'src/review/humanReviewSubmissionAction.ts',
+      'src/scenarios/decisionRecord.ts',
+      'src/scenarios/reviewDecisionRecordAction.ts',
+      'src/scenarios/reviewScenarioRegistry.ts',
+      'src/support/repositorySupportPolicy.ts'
+    ];
+    for (const filePath of reviewScenarioSupportingPaths) {
+      const row = inventoryByPath.get(filePath);
+      expectSupportingClassification(row, filePath, 'VHS-REQ-610');
+    }
+
+    // Git API wrapper and tests are directly mapped through RTM
+    const gitApiMappedPaths = [
+      'src/git/gitApi.ts',
+      'tests/unit/gitApi.test.ts'
+    ];
+    for (const filePath of gitApiMappedPaths) {
+      const row = inventoryByPath.get(filePath);
+      expectMappedClassification(row, filePath);
+    }
+
+    // Comparison report plans are directly mapped through RTM.
+    for (const filePath of [
+      'src/reporting/comparisonReportPlan.ts',
+      'src/reporting/comparisonReportExecutionPlan.ts'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expectMappedClassification(row, filePath);
+    }
+
+    // Broader tracked-file documentation candidates are intentionally inventoried as asset docs.
+    for (const filePath of [
+      'docs/architecture/overview.md',
+      'docs/simplification/github-cutover-runbook.md',
+      'docs/simplification/github-first-simplification-analysis.md'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification, `${filePath} classification`).toBe('asset-doc');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
     }
   });
 });

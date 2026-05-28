@@ -30,6 +30,19 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('Branch governance decision:');
   });
 
+  it('keeps the traceability audit in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Traceability Audit');
+    expect(workflow).toContain('run: npm run traceability:audit');
+    expect(workflow.indexOf('run: npm run check')).toBeLessThan(
+      workflow.indexOf('run: npm run traceability:audit')
+    );
+    expect(workflow.indexOf('run: npm run traceability:audit')).toBeLessThan(
+      workflow.indexOf('run: npm test')
+    );
+  });
+
   it('allows only release and hotfix branches to target main', () => {
     const workflow = readWorkflow();
 
@@ -49,7 +62,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('^hotfix/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('"$head" == "main"');
     expect(workflow).toContain(
-      'pull requests to develop must come from feature/*, dependabot/*, release/v*, hotfix/v*, or main'
+      'pull requests to develop must come from feature/*, copilot/*, dependabot/*, release/v*, hotfix/v*, or main'
     );
   });
 });

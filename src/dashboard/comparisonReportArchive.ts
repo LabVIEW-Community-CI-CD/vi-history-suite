@@ -101,7 +101,7 @@ export function buildComparisonReportArchivePlanFromSelection(options: {
   const pairId = createDeterministicId(
     `${options.reportType}\n${options.baseHash}\n${options.selectedHash}`
   );
-  const archiveDirectory = path.join(
+  const archiveDirectory = joinPreservingExplicitPathStyle(
     options.storageRoot,
     REPORT_HISTORY_DIRECTORY,
     options.repoId ?? artifactPlan.repoId,
@@ -118,33 +118,42 @@ export function buildComparisonReportArchivePlanFromSelection(options: {
     pairId,
     reportType: options.reportType,
     archiveDirectory,
-    packetFilePath: path.join(archiveDirectory, options.packetFilename ?? artifactPlan.packetFilename),
-    reportFilePath: path.join(archiveDirectory, reportFilename),
-    metadataFilePath: path.join(
+    packetFilePath: joinPreservingExplicitPathStyle(
+      archiveDirectory,
+      options.packetFilename ?? artifactPlan.packetFilename
+    ),
+    reportFilePath: joinPreservingExplicitPathStyle(archiveDirectory, reportFilename),
+    metadataFilePath: joinPreservingExplicitPathStyle(
       archiveDirectory,
       options.metadataFilename ?? path.basename(artifactPlan.metadataFilePath)
     ),
-    sourceRecordFilePath: path.join(archiveDirectory, SOURCE_RECORD_FILENAME),
-    runtimeStdoutFilePath: path.join(
+    sourceRecordFilePath: joinPreservingExplicitPathStyle(
+      archiveDirectory,
+      SOURCE_RECORD_FILENAME
+    ),
+    runtimeStdoutFilePath: joinPreservingExplicitPathStyle(
       archiveDirectory,
       options.runtimeStdoutFilename ?? path.basename(artifactPlan.runtimeStdoutFilePath)
     ),
-    runtimeStderrFilePath: path.join(
+    runtimeStderrFilePath: joinPreservingExplicitPathStyle(
       archiveDirectory,
       options.runtimeStderrFilename ?? path.basename(artifactPlan.runtimeStderrFilePath)
     ),
-    runtimeDiagnosticLogFilePath: path.join(
+    runtimeDiagnosticLogFilePath: joinPreservingExplicitPathStyle(
       archiveDirectory,
       options.runtimeDiagnosticLogFilename ??
         path.basename(artifactPlan.runtimeDiagnosticLogFilePath)
     ),
-    runtimeProcessObservationFilePath: path.join(
+    runtimeProcessObservationFilePath: joinPreservingExplicitPathStyle(
       archiveDirectory,
       options.runtimeProcessObservationFilename ??
         path.basename(artifactPlan.runtimeProcessObservationFilePath)
     ),
     reportAssetsDirectoryName,
-    reportAssetsDirectoryPath: path.join(archiveDirectory, reportAssetsDirectoryName)
+    reportAssetsDirectoryPath: joinPreservingExplicitPathStyle(
+      archiveDirectory,
+      reportAssetsDirectoryName
+    )
   };
 }
 
@@ -258,6 +267,14 @@ function buildReportAssetsDirectoryName(reportFilename: string): string {
 
 function createDeterministicId(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (rootPath.startsWith('/')) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  return path.join(rootPath, ...segments);
 }
 
 async function copyIfExists(

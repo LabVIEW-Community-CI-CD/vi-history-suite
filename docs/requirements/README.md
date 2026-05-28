@@ -12,6 +12,7 @@ intent instead of chat memory.
 | [srs.md](./srs.md) | Active software requirements that agents can target. |
 | [rtm.csv](./rtm.csv) | Machine-readable links from requirements to implementation and verification evidence. |
 | [id-index.csv](./id-index.csv) | Registry of active, superseded, and retired historical IDs. |
+| [traceability-inventory.csv](./traceability-inventory.csv) | File-level traceability classification inventory for RTM coverage audit. |
 | [copilot-web-issue-generation-prompt.md](./copilot-web-issue-generation-prompt.md) | Reusable requirement-wave guidance for generating future Copilot Web issues from SRS + RTM evidence. |
 
 ## Agent Workflow Contract
@@ -43,12 +44,79 @@ missing active requirement, use the requirement-gap lane in that guidance and
 target `VHS-REQ-601` until the new requirement IDs exist in `srs.md`,
 `rtm.csv`, and `id-index.csv`.
 
+## Traceability Steward Inventory
+
+The `traceability-inventory.csv` file classifies every implementation and test
+file for RTM coverage auditing. Run the local audit command to check coverage:
+
+```shell
+npm run traceability:audit
+```
+
+### Classification Categories
+
+| Classification | Meaning |
+| --- | --- |
+| `mapped` | File is referenced in RTM `ImplementationRefs` or `VerificationRefs`. |
+| `supporting` | Infrastructure file necessary but not directly traced to requirements. |
+| `dev-only` | Development tooling, not shipped or traced to product requirements. |
+| `release-ci` | CI/CD workflows and release infrastructure. |
+| `asset-doc` | Documentation and assets. |
+| `gap` | Implementation or test file pending RTM classification. |
+
+### Agent Response for Unmapped Code
+
+When an agent touches code that is not in the RTM or is classified as `gap`:
+
+1. Check if the touched file is in `traceability-inventory.csv`.
+2. If missing, add the file with classification `gap` and a brief note.
+3. If existing but `gap`, consider whether the change warrants creating or
+   updating a requirement.
+4. Do not fail the task solely due to gap classification; gaps are informational
+   for incremental traceability improvement.
+5. For new implementation files, add a corresponding entry to the inventory
+   before committing.
+
+The audit guard reports gaps as informational findings. A future PR can enable
+fail-closed enforcement for newly added unclassified implementation files.
+
+## Traceability Closeout Runbook
+
+Use this closeout path for umbrella issues that classify requirement,
+implementation, verification, or inventory gaps.
+
+1. Confirm every child issue is closed or explicitly deferred to an open
+   follow-up issue.
+2. Run the repo-local gates:
+
+```shell
+npm run traceability:audit
+npm run check
+npm test
+npm run package
+```
+
+3. When maintainer-local standards tooling is available, run the advisory
+   standards evidence checks:
+
+```shell
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\preflight_local_dependencies.py --json
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\requirements_quality_check.py <repo-root> --requirements-spec-scope system --json
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\repo_evidence_scan.py <repo-root> --format json --profile quick-triage --include-snippets
+python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance.py <repo-root> --profile quick-triage
+```
+
+4. Close the umbrella only when blocking traceability findings are resolved or
+   deferred to open child issues with owners and validation commands.
+5. Treat standards maturity warnings outside the umbrella scope as next-wave
+   recommendations, not silent blockers for the current umbrella closeout.
+
 ## ID Policy
 
 - Active software requirements use `VHS-REQ-*`.
 - Active system requirements use `VHS-SYS-REQ-*`.
 - Historical gaps are intentional.
-- New software requirements start at `VHS-REQ-610`.
+- New software requirements start at `VHS-REQ-613`.
 - New system requirements start at `VHS-SYS-REQ-017`.
 - Retired IDs remain in `id-index.csv` so an agent can distinguish an
   intentional retirement from a missing document.

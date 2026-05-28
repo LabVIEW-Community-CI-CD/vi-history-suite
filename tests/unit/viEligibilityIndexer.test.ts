@@ -192,6 +192,7 @@ vi.mock('../../src/services/viHistoryModel', async () => {
 import {
   buildCacheKey,
   contextKeysForUri,
+  type EligibilityCacheDiagnostics,
   forEachConcurrent,
   getConfiguredConcurrency,
   isRepositoryRelevantToWorkspace,
@@ -206,6 +207,31 @@ function mockTrackedFileEntry(relativePath: string, objectId = `blob:${relativeP
     objectId,
     stage,
     relativePath
+  };
+}
+
+function cacheDiagnostics(
+  overrides: {
+    storage?: Partial<EligibilityCacheDiagnostics['storage']>;
+    reuse?: Partial<EligibilityCacheDiagnostics['reuse']>;
+  } = {}
+): EligibilityCacheDiagnostics {
+  return {
+    storage: {
+      restoreOutcome: 'not-configured',
+      restoredEntryCount: 0,
+      persistOutcome: 'not-configured',
+      persistedEntryCount: 0,
+      ...overrides.storage
+    },
+    reuse: {
+      cacheableTrackedFileCount: 0,
+      uncacheableTrackedFileCount: 0,
+      hitCount: 0,
+      missCount: 0,
+      proofRejectedCount: 0,
+      ...overrides.reuse
+    }
   };
 }
 
@@ -462,7 +488,8 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
         counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
-        refreshReason: 'trust-disabled'
+        refreshReason: 'trust-disabled',
+        cache: cacheDiagnostics()
       }
     });
     expect(commandExecuteMock.mock.calls).toEqual([
@@ -537,9 +564,124 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
     expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
     expect(findReachableCommitHashesMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.state).toBe('warm-restart');
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(1);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(0);
+    expect(indexer.getLastRefreshResult()?.cache).toEqual(
+      cacheDiagnostics({
+        storage: {
+          restoreOutcome: 'restored',
+          restoredEntryCount: 1,
+          persistOutcome: 'written',
+          persistedEntryCount: 1
+        },
+        reuse: {
+          cacheableTrackedFileCount: 1,
+          hitCount: 1
+        }
+      })
+    );
     expect(cacheStore.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports restored large-repository cache reuse as warm restart after VS Code restarts', async () => {
+    configurationValues.set('maxIndexedConcurrency', 64);
+    const largeRepoPaths = Array.from(
+      { length: 6000 },
+      (_value, index) => `bulk-${index.toString().padStart(4, '0')}.vi`
+    );
+    listTrackedFilesMock.mockResolvedValue(largeRepoPaths);
+    getRepoHeadMock
+      .mockResolvedValueOnce('head-main')
+      .mockResolvedValueOnce('head-main')
+      .mockResolvedValueOnce('head-feature');
+    evaluateViEligibilityMock.mockResolvedValue({
+      eligible: true,
+      signature: 'LVIN',
+      commitHashes: ['commit-a', 'commit-b']
+    });
+    const cacheStore = createEligibilityCacheStorageMock();
+    const firstSessionIndexer = createSingleRepoIndexer(cacheStore);
+
+    await firstSessionIndexer.refresh();
+
+    expect(firstSessionIndexer.getLastRefreshResult()).toMatchObject({
+      state: 'cold-scan',
+      counts: {
+        tracked: 6000,
+        reused: 0,
+        evaluated: 6000,
+        eligible: 6000
+      },
+      cache: {
+        storage: {
+          restoreOutcome: 'empty',
+          persistOutcome: 'written',
+          persistedEntryCount: 6000
+        },
+        reuse: {
+          cacheableTrackedFileCount: 6000,
+          hitCount: 0,
+          missCount: 6000,
+          proofRejectedCount: 0
+        }
+      }
+    });
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(6000);
+    firstSessionIndexer.dispose();
+    evaluateViEligibilityMock.mockClear();
+    findReachableCommitHashesMock.mockClear();
+
+    const restartedIndexer = createSingleRepoIndexer(cacheStore);
+    await restartedIndexer.refresh();
+
+    expect(restartedIndexer.getLastRefreshResult()).toMatchObject({
+      state: 'warm-restart',
+      counts: {
+        tracked: 6000,
+        reused: 6000,
+        evaluated: 0,
+        eligible: 6000
+      },
+      cache: {
+        storage: {
+          restoreOutcome: 'restored',
+          restoredEntryCount: 6000,
+          persistOutcome: 'written',
+          persistedEntryCount: 6000
+        },
+        reuse: {
+          cacheableTrackedFileCount: 6000,
+          uncacheableTrackedFileCount: 0,
+          hitCount: 6000,
+          missCount: 0,
+          proofRejectedCount: 0
+        }
+      }
+    });
+    expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
+    expect(findReachableCommitHashesMock).toHaveBeenCalledTimes(1);
+
+    await restartedIndexer.refresh();
+
+    expect(restartedIndexer.getLastRefreshResult()).toMatchObject({
+      state: 'branch-switch',
+      counts: {
+        tracked: 6000,
+        reused: 6000,
+        evaluated: 0,
+        eligible: 6000
+      },
+      cache: {
+        reuse: {
+          cacheableTrackedFileCount: 6000,
+          hitCount: 6000,
+          missCount: 0,
+          proofRejectedCount: 0
+        }
+      }
+    });
+    expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
   });
 
   it('treats missing storage cache as a miss and evaluates eligibility', async () => {
@@ -554,6 +696,19 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+    expect(indexer.getLastRefreshResult()?.cache).toEqual(
+      cacheDiagnostics({
+        storage: {
+          restoreOutcome: 'empty',
+          persistOutcome: 'written',
+          persistedEntryCount: 1
+        },
+        reuse: {
+          cacheableTrackedFileCount: 1,
+          missCount: 1
+        }
+      })
+    );
   });
 
   it('treats storage read errors as cache misses', async () => {
@@ -577,6 +732,19 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+    expect(indexer.getLastRefreshResult()?.cache).toEqual(
+      cacheDiagnostics({
+        storage: {
+          restoreOutcome: 'read-error',
+          persistOutcome: 'written',
+          persistedEntryCount: 1
+        },
+        reuse: {
+          cacheableTrackedFileCount: 1,
+          missCount: 1
+        }
+      })
+    );
   });
 
   it('keeps refresh results when storage writes fail', async () => {
@@ -611,6 +779,19 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       },
       snapshotPreserved: false
     });
+    expect(indexer.getLastRefreshResult()?.cache).toEqual(
+      cacheDiagnostics({
+        storage: {
+          restoreOutcome: 'empty',
+          persistOutcome: 'write-error',
+          persistedEntryCount: 1
+        },
+        reuse: {
+          cacheableTrackedFileCount: 1,
+          missCount: 1
+        }
+      })
+    );
   });
 
   it('fails closed for stale storage entries whose path facts do not match', async () => {
@@ -638,6 +819,8 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
     expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(indexer.getLastRefreshResult()?.cache.storage.restoreOutcome).toBe('restored');
+    expect(indexer.getLastRefreshResult()?.cache.reuse.missCount).toBe(1);
   });
 
   it('fails closed for corrupt persisted cache entries', async () => {
@@ -656,6 +839,8 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
     expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(1);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
+    expect(indexer.getLastRefreshResult()?.cache.storage.restoreOutcome).toBe('invalid');
+    expect(indexer.getLastRefreshResult()?.cache.reuse.missCount).toBe(1);
   });
 
   it('fails closed for schema-mismatched persisted cache data', async () => {
@@ -1735,6 +1920,13 @@ describe('VHS-REQ-603 Large-Repository Indexing State Accounting', () => {
     expect(result?.counts.reused).toBe(1);
     expect(result?.counts.evaluated).toBe(0);
     expect(result?.snapshotPreserved).toBe(false);
+    expect(result?.cache.reuse).toMatchObject({
+      cacheableTrackedFileCount: 1,
+      uncacheableTrackedFileCount: 0,
+      hitCount: 1,
+      missCount: 0,
+      proofRejectedCount: 0
+    });
   });
 
   it('reports cancelled state and preserves previous snapshot when cancellation requested', async () => {
@@ -2205,6 +2397,13 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
         failed: 0
       }
     });
+    expect(indexer.getLastRefreshResult()?.cache.reuse).toMatchObject({
+      cacheableTrackedFileCount: 2,
+      uncacheableTrackedFileCount: 0,
+      hitCount: 1,
+      missCount: 1,
+      proofRejectedCount: 0
+    });
   });
 
   it('re-evaluates cached eligible entries when history proof commits are unreachable', async () => {
@@ -2248,6 +2447,12 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
     expect(findReachableCommitHashesMock).toHaveBeenCalledTimes(1);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(1);
+    expect(indexer.getLastRefreshResult()?.cache.reuse).toMatchObject({
+      cacheableTrackedFileCount: 1,
+      hitCount: 0,
+      missCount: 0,
+      proofRejectedCount: 1
+    });
   });
 
   it('reuses cached unknown-signature entries as ineligible for the same blob', async () => {
@@ -2342,6 +2547,13 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
     expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(3);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(0);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(3);
+    expect(indexer.getLastRefreshResult()?.cache.reuse).toMatchObject({
+      cacheableTrackedFileCount: 0,
+      uncacheableTrackedFileCount: 3,
+      hitCount: 0,
+      missCount: 0,
+      proofRejectedCount: 0
+    });
   });
 
   it('re-evaluates files with invalidated cache entries when strictRsrcHeader changes', async () => {
@@ -2582,6 +2794,13 @@ describe('VHS-REQ-605 Incremental Refresh And Invalidation Lifecycle', () => {
     expect(indexer.getLastRefreshResult()?.state).toBe('warm-restart');
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(0);
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(3);
+    expect(indexer.getLastRefreshResult()?.cache.reuse).toMatchObject({
+      cacheableTrackedFileCount: 3,
+      uncacheableTrackedFileCount: 0,
+      hitCount: 3,
+      missCount: 0,
+      proofRejectedCount: 0
+    });
     // No additional evaluations
     expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(3);
   });
@@ -2696,6 +2915,12 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
     expect(statusBar?.text).toContain('VI History: 1/1 eligible');
     expect(statusBar?.tooltip).toContain('Indexing status: Cold scan');
     expect(statusBar?.tooltip).toContain('Refresh reason: Initial extension activation.');
+    expect(statusBar?.tooltip).toContain(
+      'Cache storage: restored=0 (not-configured), persisted=0 (not-configured).'
+    );
+    expect(statusBar?.tooltip).toContain(
+      'Cache reuse: cacheable=1, uncacheable=0, hits=0, misses=1, proofRejected=0.'
+    );
     expect(statusBar?.tooltip).toContain('Indexed repositories: 1 (repo).');
     expect(statusBar?.tooltip).toContain(
       'LabVIEWCLI or comparison-runtime validation failures are comparison/runtime setup evidence, not indexing-cache causes.'
@@ -2791,7 +3016,20 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
       counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const
+      refreshReason: 'initial-activation' as const,
+      cache: cacheDiagnostics({
+        storage: {
+          restoreOutcome: 'restored',
+          restoredEntryCount: 12,
+          persistOutcome: 'written',
+          persistedEntryCount: 15
+        },
+        reuse: {
+          cacheableTrackedFileCount: 10,
+          hitCount: 0,
+          missCount: 10
+        }
+      })
     };
 
     const summary = buildIndexingDiagnosticSummary(result);
@@ -2799,6 +3037,8 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
     expect(summary).toContain('Indexing status: Cold scan (no prior eligibility data; all files evaluated from scratch).');
     expect(summary).toContain('Refresh reason: Initial extension activation.');
     expect(summary).toContain('Work counts: tracked=10, reused=0, evaluated=10, eligible=5, removed=0, skipped=0, failed=0.');
+    expect(summary).toContain('Cache storage: restored=12 (restored), persisted=15 (written).');
+    expect(summary).toContain('Cache reuse: cacheable=10, uncacheable=0, hits=0, misses=10, proofRejected=0.');
     expect(summary).toContain('Indexed repositories: 1 (repo).');
     expect(summary).toContain('Note: LabVIEWCLI or comparison-runtime validation failures are comparison/runtime setup evidence, not indexing-cache causes. Runtime discovery diagnostics (VHS-REQ-155) are separate from indexing diagnostics.');
   });
@@ -2811,7 +3051,13 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
       counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: false,
-      refreshReason: 'scheduled-refresh' as const
+      refreshReason: 'scheduled-refresh' as const,
+      cache: cacheDiagnostics({
+        reuse: {
+          cacheableTrackedFileCount: 5,
+          hitCount: 5
+        }
+      })
     };
 
     const summary = buildIndexingDiagnosticSummary(result);
@@ -2840,7 +3086,8 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
       counts: { tracked: 5, reused: 0, evaluated: 2, eligible: 1, removed: 0, skipped: 3, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo'],
       snapshotPreserved: true,
-      refreshReason: 'user-cancellation' as const
+      refreshReason: 'user-cancellation' as const,
+      cache: cacheDiagnostics()
     };
 
     const summary = buildIndexingDiagnosticSummary(result);
@@ -2866,7 +3113,8 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
       counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: [],
       snapshotPreserved: false,
-      refreshReason: 'trust-disabled' as const
+      refreshReason: 'trust-disabled' as const,
+      cache: cacheDiagnostics()
     };
 
     const summary = buildIndexingDiagnosticSummary(result);
@@ -2882,7 +3130,8 @@ describe('VHS-REQ-606 Indexing Diagnostics And Evidence', () => {
       counts: { tracked: 20, reused: 0, evaluated: 20, eligible: 10, removed: 0, skipped: 0, failed: 0 },
       indexedRepositoryRoots: ['/workspace/repo1', '/workspace/repo2', '/workspace/repo3', '/workspace/repo4', '/workspace/repo5'],
       snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const
+      refreshReason: 'initial-activation' as const,
+      cache: cacheDiagnostics()
     };
 
     const summary = buildIndexingDiagnosticSummary(result);

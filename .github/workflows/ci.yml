@@ -6,6 +6,7 @@ on:
       - main
       - develop
       - 'feature/**'
+      - 'copilot/**'
       - 'release/**'
       - 'hotfix/**'
   pull_request:
@@ -42,7 +43,7 @@ jobs:
               fi
               ;;
             develop)
-              if [[ "$head" =~ ^feature/.+ || "$head" =~ ^dependabot/.+ || "$head" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" =~ ^hotfix/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" == "main" ]]; then
+              if [[ "$head" =~ ^feature/.+ || "$head" =~ ^copilot/.+ || "$head" =~ ^dependabot/.+ || "$head" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" =~ ^hotfix/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" == "main" ]]; then
                 decision=allowed
               fi
               ;;
@@ -50,7 +51,7 @@ jobs:
 
           echo "Branch governance decision: $decision (base=$base, head=$head)" | tee -a "$GITHUB_STEP_SUMMARY"
           if [[ "$decision" != "allowed" ]]; then
-            echo "Pull requests to main must come from release/v* or hotfix/v*; pull requests to develop must come from feature/*, dependabot/*, release/v*, hotfix/v*, or main." >&2
+            echo "Pull requests to main must come from release/v* or hotfix/v*; pull requests to develop must come from feature/*, copilot/*, dependabot/*, release/v*, hotfix/v*, or main." >&2
             exit 1
           fi
 
@@ -68,6 +69,9 @@ jobs:
 
       - name: Typecheck
         run: npm run check
+
+      - name: Traceability Audit
+        run: npm run traceability:audit
 
       - name: Test
         run: npm test

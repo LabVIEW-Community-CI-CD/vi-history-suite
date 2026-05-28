@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -154,7 +154,8 @@
     "test:integration:linux": "node scripts/runLinuxIntegrationHost.js",
     "test:integration:windows": "node scripts/runWindowsIntegrationHost.js",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
-    "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package"
+    "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",
+    "traceability:audit": "node scripts/auditTraceabilitySteward.js"
   },
   "devDependencies": {
     "@types/node": "^24.12.4",

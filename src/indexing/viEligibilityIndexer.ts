@@ -39,6 +39,11 @@ type PersistedEligibilityCache = {
   entries: Record<string, EligibilityCacheEntry>;
 };
 
+type ParsedPersistedEligibilityCache = {
+  entries: Record<string, EligibilityCacheEntry>;
+  restoreOutcome: Exclude<EligibilityCacheRestoreOutcome, 'not-configured'>;
+};
+
 /**
  * Refresh state types for large-repository indexing operating model (VHS-REQ-603).
  * - cold-scan: No prior eligibility data exists; all files evaluated from scratch.
@@ -93,6 +98,44 @@ export interface IndexRefreshWorkCounts {
   failed: number;
 }
 
+export type EligibilityCacheRestoreOutcome =
+  | 'not-configured'
+  | 'empty'
+  | 'restored'
+  | 'invalid'
+  | 'read-error';
+
+export type EligibilityCachePersistOutcome =
+  | 'not-configured'
+  | 'written'
+  | 'write-error';
+
+export interface EligibilityCacheDiagnostics {
+  storage: {
+    restoreOutcome: EligibilityCacheRestoreOutcome;
+    restoredEntryCount: number;
+    persistOutcome: EligibilityCachePersistOutcome;
+    persistedEntryCount: number;
+  };
+  reuse: {
+    cacheableTrackedFileCount: number;
+    uncacheableTrackedFileCount: number;
+    hitCount: number;
+    missCount: number;
+    proofRejectedCount: number;
+  };
+}
+
+type EligibilityCacheRestoreDiagnostics = Pick<
+  EligibilityCacheDiagnostics['storage'],
+  'restoreOutcome' | 'restoredEntryCount'
+>;
+
+type EligibilityCachePersistDiagnostics = Pick<
+  EligibilityCacheDiagnostics['storage'],
+  'persistOutcome' | 'persistedEntryCount'
+>;
+
 /**
  * Complete refresh result for diagnostics and state accounting (VHS-REQ-603, VHS-REQ-606).
  */
@@ -110,6 +153,8 @@ export interface IndexRefreshResult {
   snapshotPreserved: boolean;
   /** The reason that triggered this refresh (VHS-REQ-606). */
   refreshReason: IndexRefreshReason;
+  /** Cache lifecycle and reuse diagnostics for field evidence (VHS-REQ-604, VHS-REQ-606). */
+  cache: EligibilityCacheDiagnostics;
 }
 
 export interface EligibilityDebugSnapshot {
@@ -136,6 +181,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   private lastIndexedTrackedPathsByRepository = new Map<string, Set<string>>();
   /** Last refresh result for diagnostics (VHS-REQ-603). */
   private lastRefreshResult: IndexRefreshResult | undefined;
+  private lastCacheRestoreDiagnostics: EligibilityCacheRestoreDiagnostics = {
+    restoreOutcome: 'not-configured',
+    restoredEntryCount: 0
+  };
   /** Pending refresh reason for the next refresh (VHS-REQ-606). */
   private pendingRefreshReason: IndexRefreshReason = 'initial-activation';
 
@@ -148,7 +197,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       95
     );
     this.statusBarItem.hide();
-    this.restorePersistedEligibilityCache();
+    this.lastCacheRestoreDiagnostics = this.restorePersistedEligibilityCache();
     this.disposables.push(this.statusBarItem);
   }
 
@@ -328,6 +377,9 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       skipped: 0,
       failed: 0
     };
+    const cacheDiagnostics = createEligibilityCacheDiagnostics(
+      this.lastCacheRestoreDiagnostics
+    );
 
     // Check workspace trust first
     if (!vscode.workspace.isTrusted) {
@@ -341,7 +393,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         counts: workCounts,
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
-        refreshReason: 'trust-disabled'
+        refreshReason: 'trust-disabled',
+        cache: cacheDiagnostics
       };
       this.showStatusBarDiagnostic(this.lastRefreshResult);
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
@@ -360,8 +413,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     const nextIndexedTrackedPathsByRepository = new Map<string, Set<string>>();
     let refreshOutcome: 'applied' | 'cancelled' | 'workspace-untrusted' = 'applied';
 
-    // Track whether any HEAD changed to determine cold-scan vs warm-restart vs branch-switch
-    let hadPriorIndexedRoots = this.lastIndexedRepositoryRoots.length > 0;
+    // Track whether prior eligibility evidence exists to determine cold-scan vs warm-restart vs branch-switch.
+    const hadPriorEligibilityData =
+      this.lastIndexedRepositoryRoots.length > 0 ||
+      this.lastCacheRestoreDiagnostics.restoredEntryCount > 0;
     let anyHeadChanged = false;
 
     for (const repository of repositories) {
@@ -395,6 +450,9 @@ export class ViEligibilityIndexer implements vscode.Disposable {
           trackedFileEntries,
           changedTrackedPathSet
         );
+        cacheDiagnostics.reuse.cacheableTrackedFileCount += cleanObjectIdsByPath.size;
+        cacheDiagnostics.reuse.uncacheableTrackedFileCount +=
+          trackedFiles.length - cleanObjectIdsByPath.size;
         repositoryWorkItems.push({
           repository,
           trackedFiles,
@@ -432,7 +490,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
     // Determine initial state type based on prior index state
     let determinedState: IndexRefreshState;
-    if (!hadPriorIndexedRoots) {
+    if (!hadPriorEligibilityData) {
       determinedState = 'cold-scan';
     } else if (anyHeadChanged) {
       determinedState = 'branch-switch';
@@ -505,16 +563,24 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
             const cachedEntry = cacheKey === undefined ? undefined : this.eligibilityCache.get(cacheKey);
             let isEligible: boolean | undefined;
-            if (
-              cachedEntry !== undefined &&
-              await canReuseEligibilityCacheEntry(
-                cachedEntry,
-                workItem.getReachableProofHashes
-              )
-            ) {
-              isEligible = cachedEntry.eligible;
-              workCounts.reused += 1;
-            } else {
+            if (cachedEntry !== undefined) {
+              if (
+                await canReuseEligibilityCacheEntry(
+                  cachedEntry,
+                  workItem.getReachableProofHashes
+                )
+              ) {
+                isEligible = cachedEntry.eligible;
+                workCounts.reused += 1;
+                cacheDiagnostics.reuse.hitCount += 1;
+              } else {
+                cacheDiagnostics.reuse.proofRejectedCount += 1;
+              }
+            } else if (cacheKey !== undefined) {
+              cacheDiagnostics.reuse.missCount += 1;
+            }
+
+            if (isEligible === undefined) {
               workCounts.evaluated += 1;
               try {
                 const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
@@ -578,7 +644,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         counts: workCounts,
         indexedRepositoryRoots: [...this.lastIndexedRepositoryRoots],
         snapshotPreserved: true,
-        refreshReason: 'user-cancellation'
+        refreshReason: 'user-cancellation',
+        cache: cacheDiagnostics
       };
       this.showStatusBarDiagnostic(this.lastRefreshResult);
       return;
@@ -596,7 +663,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         counts: workCounts,
         indexedRepositoryRoots: [],
         snapshotPreserved: false,
-        refreshReason: 'trust-disabled'
+        refreshReason: 'trust-disabled',
+        cache: cacheDiagnostics
       };
       this.showStatusBarDiagnostic(this.lastRefreshResult);
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
@@ -614,7 +682,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         counts: workCounts,
         indexedRepositoryRoots: preservedRepositoryRoots,
         snapshotPreserved: hasExistingSnapshot,
-        refreshReason: 'repository-enumeration-failed'
+        refreshReason: 'repository-enumeration-failed',
+        cache: cacheDiagnostics
       };
       this.showStatusBarDiagnostic(this.lastRefreshResult);
       return;
@@ -630,12 +699,16 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     const effectiveRefreshReason: IndexRefreshReason = anyHeadChanged
       ? 'head-change'
       : currentRefreshReason;
+    const persistDiagnostics = await this.persistEligibilityCache();
+    cacheDiagnostics.storage.persistOutcome = persistDiagnostics.persistOutcome;
+    cacheDiagnostics.storage.persistedEntryCount = persistDiagnostics.persistedEntryCount;
     this.lastRefreshResult = {
       state: determinedState,
       counts: workCounts,
       indexedRepositoryRoots: nextIndexedRepositoryRoots,
       snapshotPreserved: false,
-      refreshReason: effectiveRefreshReason
+      refreshReason: effectiveRefreshReason,
+      cache: cacheDiagnostics
     };
     this.showStatusBarDiagnostic(this.lastRefreshResult);
     await vscode.commands.executeCommand(
@@ -643,27 +716,45 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       'labviewViHistory.eligiblePaths',
       nextEligiblePaths
     );
-    await this.persistEligibilityCache();
   }
 
-  private restorePersistedEligibilityCache(): void {
-    let parsedEntries: Record<string, EligibilityCacheEntry>;
+  private restorePersistedEligibilityCache(): EligibilityCacheRestoreDiagnostics {
+    if (!this.cacheStore) {
+      this.eligibilityCache.clear();
+      return {
+        restoreOutcome: 'not-configured',
+        restoredEntryCount: 0
+      };
+    }
+
+    let parsedCache: ParsedPersistedEligibilityCache;
     try {
-      const persistedCache = this.cacheStore?.get<unknown>(ELIGIBILITY_CACHE_STORAGE_KEY);
-      parsedEntries = parsePersistedEligibilityCache(persistedCache);
+      const persistedCache = this.cacheStore.get<unknown>(ELIGIBILITY_CACHE_STORAGE_KEY);
+      parsedCache = parsePersistedEligibilityCache(persistedCache);
     } catch {
-      parsedEntries = {};
+      parsedCache = {
+        entries: {},
+        restoreOutcome: 'read-error'
+      };
     }
 
     this.eligibilityCache.clear();
-    for (const [cacheKey, entry] of Object.entries(parsedEntries)) {
+    for (const [cacheKey, entry] of Object.entries(parsedCache.entries)) {
       this.eligibilityCache.set(cacheKey, entry);
     }
+
+    return {
+      restoreOutcome: parsedCache.restoreOutcome,
+      restoredEntryCount: this.eligibilityCache.size
+    };
   }
 
-  private async persistEligibilityCache(): Promise<void> {
+  private async persistEligibilityCache(): Promise<EligibilityCachePersistDiagnostics> {
     if (!this.cacheStore) {
-      return;
+      return {
+        persistOutcome: 'not-configured',
+        persistedEntryCount: 0
+      };
     }
 
     const entries: Record<string, EligibilityCacheEntry> = {};
@@ -677,8 +768,16 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     };
     try {
       await this.cacheStore.update(ELIGIBILITY_CACHE_STORAGE_KEY, persistedCache);
+      return {
+        persistOutcome: 'written',
+        persistedEntryCount: Object.keys(entries).length
+      };
     } catch {
       // Storage persistence is advisory; the in-memory eligibility result remains valid.
+      return {
+        persistOutcome: 'write-error',
+        persistedEntryCount: Object.keys(entries).length
+      };
     }
   }
 
@@ -773,17 +872,52 @@ export function buildCacheKey(
   ].join('::');
 }
 
-function parsePersistedEligibilityCache(value: unknown): Record<string, EligibilityCacheEntry> {
-  if (!value || typeof value !== 'object') {
-    return {};
+function createEligibilityCacheDiagnostics(
+  restoreDiagnostics: EligibilityCacheRestoreDiagnostics
+): EligibilityCacheDiagnostics {
+  return {
+    storage: {
+      restoreOutcome: restoreDiagnostics.restoreOutcome,
+      restoredEntryCount: restoreDiagnostics.restoredEntryCount,
+      persistOutcome: 'not-configured',
+      persistedEntryCount: 0
+    },
+    reuse: {
+      cacheableTrackedFileCount: 0,
+      uncacheableTrackedFileCount: 0,
+      hitCount: 0,
+      missCount: 0,
+      proofRejectedCount: 0
+    }
+  };
+}
+
+function parsePersistedEligibilityCache(value: unknown): ParsedPersistedEligibilityCache {
+  if (value === undefined || value === null) {
+    return {
+      entries: {},
+      restoreOutcome: 'empty'
+    };
+  }
+  if (typeof value !== 'object') {
+    return {
+      entries: {},
+      restoreOutcome: 'invalid'
+    };
   }
 
   const candidate = value as Partial<PersistedEligibilityCache>;
   if (candidate.schemaVersion !== ELIGIBILITY_CACHE_SCHEMA_VERSION) {
-    return {};
+    return {
+      entries: {},
+      restoreOutcome: 'invalid'
+    };
   }
   if (!candidate.entries || typeof candidate.entries !== 'object') {
-    return {};
+    return {
+      entries: {},
+      restoreOutcome: 'invalid'
+    };
   }
 
   const parsedEntries: Record<string, EligibilityCacheEntry> = {};
@@ -792,7 +926,14 @@ function parsePersistedEligibilityCache(value: unknown): Record<string, Eligibil
       parsedEntries[cacheKey] = entryValue;
     }
   }
-  return parsedEntries;
+
+  const storedEntryCount = Object.keys(candidate.entries).length;
+  const parsedEntryCount = Object.keys(parsedEntries).length;
+  return {
+    entries: parsedEntries,
+    restoreOutcome:
+      parsedEntryCount > 0 ? 'restored' : storedEntryCount > 0 ? 'invalid' : 'empty'
+  };
 }
 
 function isEligibilityCacheEntry(value: unknown): value is EligibilityCacheEntry {
@@ -1128,6 +1269,14 @@ export function buildIndexingDiagnosticSummary(
   const { counts } = result;
   lines.push(
     `Work counts: tracked=${counts.tracked}, reused=${counts.reused}, evaluated=${counts.evaluated}, eligible=${counts.eligible}, removed=${counts.removed}, skipped=${counts.skipped}, failed=${counts.failed}.`
+  );
+
+  const { storage, reuse } = result.cache;
+  lines.push(
+    `Cache storage: restored=${storage.restoredEntryCount} (${storage.restoreOutcome}), persisted=${storage.persistedEntryCount} (${storage.persistOutcome}).`
+  );
+  lines.push(
+    `Cache reuse: cacheable=${reuse.cacheableTrackedFileCount}, uncacheable=${reuse.uncacheableTrackedFileCount}, hits=${reuse.hitCount}, misses=${reuse.missCount}, proofRejected=${reuse.proofRejectedCount}.`
   );
 
   // Repository roots
