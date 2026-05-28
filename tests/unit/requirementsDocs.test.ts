@@ -303,6 +303,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('review submission boundaries, decision records, scenario contracts');
     expect(testPlan).toContain('| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts');
     expect(testPlan).toContain('| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts');
+    expect(testPlan).toContain('tests/unit/localRuntimeSettingsCli.test.ts');
+    expect(testPlan).toContain('argument parsing, launcher materialization');
+    expect(testPlan).toContain('missing global-storage handling');
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
@@ -754,6 +757,7 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.ImplementationRefs).toContain('package.json');
     expect(requirementRow?.ImplementationRefs).toContain('src/extension.ts');
     expect(requirementRow?.ImplementationRefs).toContain('src/tooling/localRuntimeSettingsCli.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/localRuntimeSettingsCli.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/extensionActivationLazySideEffects.test.ts'
@@ -1106,6 +1110,12 @@ describe('requirements documentation coherence', () => {
     expect(localRuntimeSettingsCliRow?.Classification).toBe('mapped');
     expect(localRuntimeSettingsCliRow?.RtmCoverage).toBe('Yes');
     expect(localRuntimeSettingsCliRow?.Notes).toContain('VHS-REQ-612');
+    const localRuntimeSettingsCliTestRow = inventoryByPath.get(
+      'tests/unit/localRuntimeSettingsCli.test.ts'
+    );
+    expect(localRuntimeSettingsCliTestRow?.Classification).toBe('mapped');
+    expect(localRuntimeSettingsCliTestRow?.RtmCoverage).toBe('Yes');
+    expect(localRuntimeSettingsCliTestRow?.Notes).toContain('VHS-REQ-612');
 
     for (const filePath of [
       'src/tooling/runtimeSettingsLiveSessionProbe.ts',

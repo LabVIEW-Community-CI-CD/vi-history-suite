@@ -337,7 +337,11 @@ export async function ensureLocalRuntimeSettingsCli(
   deps: LocalRuntimeSettingsCliDeps = {}
 ): Promise<MaterializedLocalRuntimeSettingsCli> {
   const fsApi = deps.fs ?? fs;
-  const plan = buildLocalRuntimeSettingsCliMaterialization(globalStoragePath, extensionPath);
+  const plan = buildLocalRuntimeSettingsCliMaterialization(
+    globalStoragePath,
+    extensionPath,
+    deps.platform ?? process.platform
+  );
 
   await fsApi.access(plan.modulePath);
   await fsApi.mkdir(plan.rootDirectoryPath, { recursive: true });

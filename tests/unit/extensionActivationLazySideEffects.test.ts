@@ -175,7 +175,7 @@ vi.mock('../../src/tooling/runtimeSettingsLiveSessionSafeRestore', () => ({
 
 import { activate } from '../../src/extension';
 
-function createContext() {
+function createContext(overrides: Record<string, unknown> = {}) {
   return {
     subscriptions: [],
     globalStorageUri: { fsPath: '/tmp/vihs-global-storage' },
@@ -187,7 +187,8 @@ function createContext() {
     extensionPath: '/workspace/vi-history-suite',
     environmentVariableCollection: {
       prepend: vi.fn()
-    }
+    },
+    ...overrides
   };
 }
 
@@ -305,6 +306,18 @@ describe('extension activation lazy side effects', () => {
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(viEligibilityIndexerConstructedWith).toEqual([]);
     expect(showWarningMessageMock).not.toHaveBeenCalled();
+  });
+
+  it('reports missing global storage before materializing the local runtime settings CLI', async () => {
+    await activate(createContext({ globalStorageUri: undefined }) as never);
+
+    const result = await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
+
+    expect(result).toEqual({ outcome: 'missing-global-storage-uri' });
+    expect(admitLocalRuntimeSettingsCliToTerminalPathMock).not.toHaveBeenCalled();
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI History could not prepare the local runtime settings CLI because extension-global storage is unavailable.'
+    );
   });
 
   it('resolves lazy runtime for VI History open in untrusted workspaces (trust check happens in handler)', async () => {

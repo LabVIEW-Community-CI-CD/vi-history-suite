@@ -82,6 +82,7 @@ tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; m
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
 tests/unit/humanReviewSubmission.test.ts,mapped,Yes,Human review submission boundary tests; mapped to VHS-REQ-610.
 tests/unit/integrationHostRuntime.test.ts,dev-only,No,Integration host runtime tests; testing infrastructure.
+tests/unit/localRuntimeSettingsCli.test.ts,mapped,Yes,Installed runtime settings CLI direct tests; mapped to VHS-REQ-612.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
 tests/unit/marketplaceListingVerification.test.ts,mapped,Yes,Marketplace listing verification retry tests; mapped to VHS-REQ-609.
 tests/unit/multiReportDashboard.test.ts,mapped,Yes,Multi-report dashboard rendering and concentration tests; mapped to VHS-REQ-610.
