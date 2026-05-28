@@ -116,6 +116,7 @@ skill cache, and registry image access.
 ```shell
 npm run traceability:audit
 npm run docs:links
+npm run dod:gate
 npm run check
 npm test
 npm run package
@@ -137,11 +138,12 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance
    outputs, generated build output, docs-only references, and unit-test fixture
    strings are recorded as disqualified sources and cannot promote DoD.
 
-5. Close the umbrella only when blocking traceability findings are resolved or
-   deferred to open child issues with owners and validation commands.
-6. Treat standards maturity warnings outside the umbrella scope, such as
-   Definition-of-Done gate evidence, as next-wave recommendations, not silent
-   blockers for the current umbrella closeout.
+5. Close the umbrella only when blocking traceability and Definition-of-Done
+   findings are resolved or deferred to open child issues with owners and
+   validation commands.
+6. Treat non-PASS DoD evidence as active closeout evidence. If the hosted DoD
+   workflow step is not present yet, the local `dod:gate` result records that
+   boundary until the dedicated CI issue adds it.
 
 ## ID Policy
 

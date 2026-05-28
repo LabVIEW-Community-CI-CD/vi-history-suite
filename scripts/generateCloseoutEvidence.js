@@ -129,6 +129,7 @@ function runGateCommands(options, deps = {}) {
   const gates = [
     ['traceability:audit', npm, ['run', 'traceability:audit']],
     ['docs:links', npm, ['run', 'docs:links']],
+    ['dod:gate', npm, ['run', 'dod:gate']],
     ['check', npm, ['run', 'check']],
     ['test', npm, ['test']],
     ['package', npm, ['run', 'package']]
@@ -917,7 +918,7 @@ function renderStandardsSummary(standards) {
     `- Requirements quality: ${summary.requirementsQuality?.ok === true ? 'PASS' : 'see raw evidence'}`,
     `- Evidence scan: ${summary.fileCount ?? 'unknown'} files; REQ=${summary.reqSignal ?? 'unknown'}; TEST=${summary.testSignal ?? 'unknown'}`,
     `- Gate scorecard: coverage=${summary.coverageGate ?? 'FAIL'}; doc=${summary.docGate ?? 'FAIL'}; dod=${formatDodGateSummary(summary.dodGateEvidence)}`,
-    '- Deferred recommendations: Definition-of-Done gate evidence remains a next-wave advisory finding.'
+    '- Definition-of-Done evidence: local `dod:gate` and standards scorecard status are retained in closeout evidence.'
   ];
   if (standards.runner === 'docker') {
     lines.splice(1, 0, `- Docker image: ${standards.image}; image access=${standards.imageAccess}`);
@@ -996,9 +997,9 @@ function renderCloseoutMarkdown(context) {
       ? '- Closable: yes. Mandatory standards evidence, standards toolchain provenance, and local gates passed.'
       : '- Closable: no. Not closable yet until mandatory standards evidence, standards toolchain provenance, and local gates are all clean.',
     '',
-    '## Next Wave',
+    '## Follow-Up',
     '',
-    '- Defer explicit Definition-of-Done gate evidence to the next standards maturity issue.'
+    '- Resolve any non-PASS Definition-of-Done evidence before umbrella closeout, or record the blocking follow-up issue.'
   ].filter((line) => line !== undefined).join('\n');
 }
 
