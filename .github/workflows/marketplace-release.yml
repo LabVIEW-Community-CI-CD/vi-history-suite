@@ -117,14 +117,46 @@ jobs:
           set -euo pipefail
           mkdir -p release-evidence
           TAG_VERSION="${{ steps.version.outputs.tag_version }}"
-          node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION" --out release-evidence/marketplace-show.json --attempts 6 --delay-ms 30000
+          node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION" --out release-evidence/marketplace-show.json --report-out release-evidence/marketplace-listing-verification.json --attempts 6 --delay-ms 30000
+          node <<'NODE'
+          const fs = require('node:fs');
+          const payload = {
+            releaseTag: process.env.GITHUB_REF_NAME,
+            releaseSha: process.env.GITHUB_SHA,
+            requiredValidation: [
+              'Hosted CI required check includes traceability audit (npm run traceability:audit)',
+              'Hosted CI required check includes docs link check (npm run docs:links)',
+              'Marketplace workflow validation includes npm run check, npm test, npm run package'
+            ],
+            retainedArtifacts: [
+              'release-evidence/marketplace-show.json',
+              'release-evidence/marketplace-listing-verification.json',
+              'release-evidence/release-evidence-contract.json',
+              'coverage/**',
+              'vi-history-suite-*.vsix'
+            ],
+            releaseCloseoutExpectation: 'Run npm run closeout:evidence for release umbrella closeout evidence, including npm run dod:gate.'
+          };
+          fs.writeFileSync('release-evidence/release-evidence-contract.json', JSON.stringify(payload, null, 2));
+          NODE
           {
             echo "## Marketplace Release Evidence"
             echo "- Extension: $EXTENSION_ID"
             echo "- Version: ${{ steps.version.outputs.tag_version }}"
             echo "- Ref: $GITHUB_REF"
             echo "- SHA: $GITHUB_SHA"
-            echo "- Coverage: coverage/** retained with release artifact"
+            echo "- Required validation named in evidence:"
+            echo "  - Hosted CI traceability audit (npm run traceability:audit)"
+            echo "  - Hosted CI docs link check (npm run docs:links)"
+            echo "  - Release workflow typecheck, tests, package (npm run check; npm test; npm run package)"
+            echo "- Marketplace listing evidence:"
+            echo "  - release-evidence/marketplace-show.json"
+            echo "  - release-evidence/marketplace-listing-verification.json (bounded retry details)"
+            echo "- Retained artifacts:"
+            echo "  - release-evidence/release-evidence-contract.json"
+            echo "  - coverage/**"
+            echo "  - vi-history-suite-*.vsix"
+            echo "- Closeout expectation: npm run closeout:evidence, including npm run dod:gate"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Release Evidence

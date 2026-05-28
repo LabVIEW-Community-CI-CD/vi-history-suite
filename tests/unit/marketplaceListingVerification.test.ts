@@ -5,10 +5,34 @@ import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 const {
+  buildVerificationReport,
   listingContainsVersion,
+  parseArgs,
   verifyMarketplaceListing
 } = require('../../scripts/verifyMarketplaceListing.js') as {
+  buildVerificationReport: (
+    options: {
+      extensionId: string;
+      expectedVersion: string;
+      attempts: number;
+      delayMs: number;
+    },
+    result: { success: boolean; message: string; attempts: Array<{ outcome: string }>; boundedWindowMs?: number }
+  ) => {
+    boundedWindowMs: number;
+    configuredAttempts: number;
+    configuredDelayMs: number;
+    attempts: Array<{ outcome: string }>;
+  };
   listingContainsVersion: (payload: { versions?: Array<{ version: string }> }, version: string) => boolean;
+  parseArgs: (argv: string[]) => {
+    extensionId: string;
+    expectedVersion: string;
+    out?: string;
+    reportOut?: string;
+    attempts: number;
+    delayMs: number;
+  };
   verifyMarketplaceListing: (
     options: {
       extensionId: string;
@@ -37,6 +61,25 @@ describe('Marketplace listing verification', () => {
   it('detects the expected version in a Marketplace payload', () => {
     expect(listingContainsVersion({ versions: [{ version: '1.4.2' }] }, '1.4.2')).toBe(true);
     expect(listingContainsVersion({ versions: [{ version: '1.4.1' }] }, '1.4.2')).toBe(false);
+  });
+
+  it('parses optional retained report output path', () => {
+    const options = parseArgs([
+      'svelderrainruiz.vi-history-suite',
+      '1.4.2',
+      '--out',
+      'release-evidence/marketplace-show.json',
+      '--report-out',
+      'release-evidence/marketplace-listing-verification.json',
+      '--attempts',
+      '6',
+      '--delay-ms',
+      '30000'
+    ]);
+
+    expect(options.reportOut).toBe('release-evidence/marketplace-listing-verification.json');
+    expect(options.attempts).toBe(6);
+    expect(options.delayMs).toBe(30000);
   });
 
   it('passes immediately and writes the retained evidence file', () => {
@@ -128,5 +171,26 @@ describe('Marketplace listing verification', () => {
     expect(result.attempts).toHaveLength(2);
     expect(result.message).toContain('after 2 attempts');
     expect(result.message).toContain('Marketplace propagation lag');
+  });
+
+  it('builds a bounded verification report payload for retained evidence', () => {
+    const report = buildVerificationReport(
+      {
+        extensionId: 'svelderrainruiz.vi-history-suite',
+        expectedVersion: '1.4.2',
+        attempts: 6,
+        delayMs: 30000
+      },
+      {
+        success: false,
+        message: 'not found',
+        attempts: [{ outcome: 'version-absent' }]
+      }
+    );
+
+    expect(report.configuredAttempts).toBe(6);
+    expect(report.configuredDelayMs).toBe(30000);
+    expect(report.boundedWindowMs).toBe(150000);
+    expect(report.attempts[0].outcome).toBe('version-absent');
   });
 });

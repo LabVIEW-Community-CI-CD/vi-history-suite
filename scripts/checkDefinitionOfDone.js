@@ -248,16 +248,22 @@ function checkTraceabilityMapping(cwd) {
   const inventory = parseCsvRows(readRepoFile(cwd, 'docs/requirements/traceability-inventory.csv'));
   const row = rtm.find((entry) => entry.ReqID === 'VHS-REQ-615');
   const ciWorkflowRow = inventory.find((entry) => entry.Path === '.github/workflows/ci.yml');
+  const marketplaceWorkflowRow = inventory.find((entry) => entry.Path === '.github/workflows/marketplace-release.yml');
   const scriptRow = inventory.find((entry) => entry.Path === 'scripts/checkDefinitionOfDone.js');
   const closeoutRow = inventory.find((entry) => entry.Path === 'scripts/generateCloseoutEvidence.js');
+  const marketplaceListingRow = inventory.find((entry) => entry.Path === 'scripts/verifyMarketplaceListing.js');
+  const maintainerOpsRow = inventory.find((entry) => entry.Path === 'docs/maintainer-operations.md');
   const testRow = inventory.find((entry) => entry.Path === 'tests/unit/definitionOfDoneGate.test.ts');
   const prTemplateRow = inventory.find((entry) => entry.Path === '.github/pull_request_template.md');
   const requiredImplementation = [
     '.github/workflows/ci.yml',
+    '.github/workflows/marketplace-release.yml',
     'package.json',
     'scripts/checkDefinitionOfDone.js',
     'scripts/generateCloseoutEvidence.js',
+    'scripts/verifyMarketplaceListing.js',
     '.github/pull_request_template.md',
+    'docs/maintainer-operations.md',
     'docs/requirements/README.md',
     'docs/testing/test-plan.md',
     'docs/requirements/traceability-inventory.csv'
@@ -278,6 +284,15 @@ function checkTraceabilityMapping(cwd) {
     ciWorkflowRow?.Classification === 'release-ci' &&
     ciWorkflowRow?.RtmCoverage === 'Yes' &&
     ciWorkflowRow?.Notes.includes('VHS-REQ-615') &&
+    marketplaceWorkflowRow?.Classification === 'release-ci' &&
+    marketplaceWorkflowRow?.RtmCoverage === 'Yes' &&
+    marketplaceWorkflowRow?.Notes.includes('VHS-REQ-615') &&
+    marketplaceListingRow?.Classification === 'mapped' &&
+    marketplaceListingRow?.RtmCoverage === 'Yes' &&
+    marketplaceListingRow?.Notes.includes('VHS-REQ-615') &&
+    maintainerOpsRow?.Classification === 'asset-doc' &&
+    maintainerOpsRow?.RtmCoverage === 'Yes' &&
+    maintainerOpsRow?.Notes.includes('VHS-REQ-615') &&
     testRow?.Classification === 'mapped' &&
     testRow?.RtmCoverage === 'Yes' &&
     testRow?.Notes.includes('VHS-REQ-615') &&
@@ -289,7 +304,7 @@ function checkTraceabilityMapping(cwd) {
     name: 'DoD checker traceability mapping',
     passed,
     details: passed
-      ? 'VHS-REQ-615 maps CI workflow, checker implementation, closeout evidence, PR template, and tests'
+      ? 'VHS-REQ-615 maps CI workflow, release evidence, checker implementation, closeout evidence, PR template, and tests'
       : `Missing implementation refs: ${missingImplementation.join(', ') || 'none'}; missing verification refs: ${missingVerification.join(', ') || 'none'}; inventory ok=${inventoryOk}`
   };
 }

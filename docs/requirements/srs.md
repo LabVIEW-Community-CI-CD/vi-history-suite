@@ -1154,7 +1154,10 @@ Missing numeric IDs are intentional.
   - Marketplace publication uses the pinned VSCE wrapper and verifies the live
     Marketplace listing after publication.
   - Marketplace listing verification retries bounded propagation lag and retains
-    the final `vsce show` evidence.
+    the final `vsce show` evidence plus bounded retry-attempt evidence.
+  - Retained release evidence names required validation and retained artifacts
+    for release closeout, including traceability audit, docs link check, tests,
+    package validation, Marketplace listing evidence, and closeout expectation.
   - Release evidence is retained as a workflow artifact.
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
@@ -1403,15 +1406,21 @@ Missing numeric IDs are intentional.
   - Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`, and this
     `.github/workflows/ci.yml` evidence is the only scanner-visible standards
     source that can promote DoD to `PASS`.
+  - Release-readiness evidence remains decision-complete by naming traceability
+    audit, docs link check, tests, package validation, Marketplace listing
+    evidence, and closeout expectation for release closeout review.
 - Agent Work Scope:
   - Change requirements docs, RTM, ID index, test plan, and requirements
     coherence tests together.
 - Implementation References:
+  - `.github/workflows/marketplace-release.yml`
   - `.github/workflows/ci.yml`
   - `package.json`
   - `scripts/checkDefinitionOfDone.js`
   - `scripts/generateCloseoutEvidence.js`
+  - `scripts/verifyMarketplaceListing.js`
   - `.github/pull_request_template.md`
+  - `docs/maintainer-operations.md`
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`

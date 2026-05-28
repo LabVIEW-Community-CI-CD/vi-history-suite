@@ -137,16 +137,18 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance
 
    Closeout parsing reports the Definition-of-Done gate as explicit `PASS`,
    `N/A`, or `FAIL`. A DoD `PASS` requires scanner-visible evidence from a
-   workflow file under `.github/workflows/`; generated `assurance-*-evidence`
-   outputs, generated build output, docs-only references, and unit-test fixture
-   strings are recorded as disqualified sources and cannot promote DoD.
+   hosted `DoD Gate / dod` step in `.github/workflows/ci.yml`; generated
+   `assurance-*-evidence` outputs, generated build output, docs-only
+   references, and unit-test fixture strings are recorded as disqualified
+   sources and cannot promote DoD.
 
 5. Close the umbrella only when blocking traceability and Definition-of-Done
    findings are resolved or deferred to open child issues with owners and
    validation commands.
-6. Treat non-PASS DoD evidence as active closeout evidence. If the hosted DoD
-   workflow step is not present yet, the local `dod:gate` result records that
-   boundary until the dedicated CI issue adds it.
+6. Treat non-PASS DoD evidence as active closeout evidence. The hosted
+   `DoD Gate / dod` step and the local `dod:gate` result must both stay clean
+   or be tied to a blocking follow-up issue with an owner and validation
+   commands.
 
 ## ID Policy
 

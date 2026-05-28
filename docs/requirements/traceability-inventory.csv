@@ -56,7 +56,7 @@ scripts/preparePublicTestFixture.js,dev-only,No,Public test fixture preparation;
 scripts/publicRepoCloneCore.js,dev-only,No,Public repo clone core; CI infrastructure.
 scripts/runLinuxIntegrationHost.js,dev-only,No,Linux integration host runner; CI infrastructure.
 scripts/runPinnedVsce.js,supporting,No,Pinned VSCE runner; packaging support.
-scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification retry helper; mapped to VHS-REQ-609.
+scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification retry helper with retained bounded attempt evidence report; mapped to VHS-REQ-609 and VHS-REQ-615.
 scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
@@ -126,7 +126,7 @@ tests/integration/runTests.ts,dev-only,No,Integration test runner; testing infra
 tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace preparation; testing infrastructure.
 .github/workflows/ci.yml,release-ci,Yes,CI workflow with hosted DoD Gate / dod; mapped through RTM including VHS-REQ-597 and VHS-REQ-615.
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
-.github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow; mapped through RTM.
+.github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow with retained evidence naming validation surfaces and artifacts; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
 .github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
@@ -157,12 +157,12 @@ docs/requirements/rtm.csv,mapped,Yes,Requirements traceability matrix; mapped th
 docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
-docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation; mapped through RTM.
+docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
 docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md,asset-doc,No,Architecture decision record reference documentation for GitHub-first release and traceability governance; not directly mapped in RTM.
 docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runbook documentation; simplification process reference.
 docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.
-docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.
+docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation including release evidence retention expectations; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
 docs/requirements/traceability-inventory.csv,mapped,Yes,Traceability inventory; mapped through RTM.
 resources/bundled-docs/manifest.json,mapped,Yes,Bundled documentation manifest asset delivered with the extension package; mapped to VHS-REQ-611.
