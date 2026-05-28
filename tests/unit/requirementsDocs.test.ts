@@ -705,6 +705,71 @@ describe('requirements documentation coherence', () => {
     }
   });
 
+  it('keeps architecture evidence package traceable for standards review', () => {
+    const overview = readRepoText('docs', 'architecture', 'overview.md');
+    const adr = readRepoText(
+      'docs',
+      'architecture',
+      'adr',
+      'ADR-0001-github-first-release-and-traceability-governance.md'
+    );
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const inventoryByPath = new Map(inventoryRows.map((row) => [row.Path, row]));
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const rtmText = rtmRows
+      .map((row) => `${row.ImplementationRefs};${row.VerificationRefs}`)
+      .join(';');
+
+    for (const section of [
+      '## Stakeholders And Concerns',
+      '## Context View',
+      '## Container View',
+      '## Component View',
+      '## Deployment View',
+      '## View Correspondences',
+      '## Retained Decision Rationale'
+    ]) {
+      expect(overview).toContain(section);
+    }
+
+    for (const stakeholder of [
+      'Extension user',
+      'Maintainer / release steward',
+      'Traceability steward',
+      'Support / debugging user',
+      'Contributor'
+    ]) {
+      expect(overview).toContain(stakeholder);
+    }
+
+    expect(overview).toContain('ADR-0001: GitHub-First Release And Traceability Governance');
+    expect(overview).toContain('VHS-SYS-REQ-001');
+    expect(overview).toContain('VHS-REQ-609');
+    expect(overview).toContain('VHS-REQ-612');
+
+    for (const field of [
+      '- Status: Active',
+      '## Context',
+      '## Decision',
+      '## Rationale',
+      '## Consequences'
+    ]) {
+      expect(adr).toContain(field);
+    }
+
+    for (const filePath of [
+      'docs/architecture/overview.md',
+      'docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification, `${filePath} classification`).toBe('asset-doc');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
+      expect(rtmText, `${filePath} should remain outside software RTM refs`).not.toContain(
+        filePath
+      );
+    }
+  });
+
   it('keeps traceability steward inventory traceable for VHS-REQ-601', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
