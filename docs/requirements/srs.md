@@ -689,6 +689,8 @@ Missing numeric IDs are intentional.
     `vitest.config.ts`: 60% statements, 50% branches, 65% functions, and
     60% lines after the coverage-led assurance wave.
   - The workflow runs `npm run package`.
+  - The workflow runs `npm run dod:gate` through the `DoD Gate / dod` step
+    after `npm run package`.
   - The workflow runs on `main`, `develop`, `feature/**`, `release/**`, and
     `hotfix/**` branch pushes.
   - Pull request branch governance is enforced inside the required
@@ -1398,14 +1400,17 @@ Missing numeric IDs are intentional.
     inventory, and requirements tests together when requirement scope changes.
   - The repo-native `npm run dod:gate` command verifies the DoD contract from
     committed repository evidence.
-  - Hosted CI `DoD Gate / dod` automation is a separate implementation change
-    from the repo-local `dod:gate` command.
+  - Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`, and this
+    `.github/workflows/ci.yml` evidence is the only scanner-visible standards
+    source that can promote DoD to `PASS`.
 - Agent Work Scope:
   - Change requirements docs, RTM, ID index, test plan, and requirements
     coherence tests together.
 - Implementation References:
+  - `.github/workflows/ci.yml`
   - `package.json`
   - `scripts/checkDefinitionOfDone.js`
+  - `scripts/generateCloseoutEvidence.js`
   - `.github/pull_request_template.md`
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
@@ -1419,6 +1424,5 @@ Missing numeric IDs are intentional.
   - `tests/unit/traceabilityAuditScript.test.ts`
   - `manual:definition-of-done-release-readiness-review`
 - Change Guidance:
-  - Keep this requirement as the operating contract for Done. Add hosted CI
-    workflow enforcement in the follow-on CI issue rather than silently changing
-    the public required check shape.
+  - Keep this requirement as the operating contract for Done and keep hosted
+    `DoD Gate / dod` enforcement inside the required public CI workflow.

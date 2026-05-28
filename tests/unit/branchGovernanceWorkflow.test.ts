@@ -73,6 +73,16 @@ describe('CI branch governance workflow', () => {
     );
   });
 
+  it('keeps the hosted DoD gate in the required CI workflow', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: DoD Gate / dod');
+    expect(workflow).toContain('run: npm run dod:gate');
+    expect(workflow.indexOf('run: npm run package')).toBeLessThan(
+      workflow.indexOf('name: DoD Gate / dod')
+    );
+  });
+
   it('allows only release and hotfix branches to target main', () => {
     const workflow = readWorkflow();
 

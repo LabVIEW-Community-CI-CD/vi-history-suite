@@ -13,7 +13,8 @@ const REQUIRED_CI_STEPS = [
   'Docs Link Check / lychee',
   'Test',
   'PR Coverage Gate / coverage',
-  'Package'
+  'Package',
+  'DoD Gate / dod'
 ];
 
 const REQUIRED_CLOSEOUT_GATES = [
@@ -145,21 +146,18 @@ function checkCiStepOrder(cwd) {
     return { name: 'CI required step order', ...requiredOrder };
   }
 
-  const dodStep = lineIndexOf(workflow, '- name: DoD Gate / dod');
-  if (dodStep >= 0 && !workflow.includes('run: npm run dod:gate')) {
+  if (!/- name: DoD Gate \/ dod\s*\r?\n\s*run: npm run dod:gate/iu.test(workflow)) {
     return {
       name: 'CI required step order',
       passed: false,
-      details: 'DoD Gate / dod is present but does not run npm run dod:gate.'
+      details: 'DoD Gate / dod must run exactly npm run dod:gate in .github/workflows/ci.yml.'
     };
   }
 
   return {
     name: 'CI required step order',
     passed: true,
-    details: dodStep >= 0
-      ? `${requiredOrder.details}; hosted DoD step present`
-      : `${requiredOrder.details}; hosted DoD step pending follow-on CI issue`
+    details: `${requiredOrder.details}; hosted DoD step present`
   };
 }
 
@@ -249,12 +247,16 @@ function checkTraceabilityMapping(cwd) {
   const rtm = parseCsvRows(readRepoFile(cwd, 'docs/requirements/rtm.csv'));
   const inventory = parseCsvRows(readRepoFile(cwd, 'docs/requirements/traceability-inventory.csv'));
   const row = rtm.find((entry) => entry.ReqID === 'VHS-REQ-615');
+  const ciWorkflowRow = inventory.find((entry) => entry.Path === '.github/workflows/ci.yml');
   const scriptRow = inventory.find((entry) => entry.Path === 'scripts/checkDefinitionOfDone.js');
+  const closeoutRow = inventory.find((entry) => entry.Path === 'scripts/generateCloseoutEvidence.js');
   const testRow = inventory.find((entry) => entry.Path === 'tests/unit/definitionOfDoneGate.test.ts');
   const prTemplateRow = inventory.find((entry) => entry.Path === '.github/pull_request_template.md');
   const requiredImplementation = [
+    '.github/workflows/ci.yml',
     'package.json',
     'scripts/checkDefinitionOfDone.js',
+    'scripts/generateCloseoutEvidence.js',
     '.github/pull_request_template.md',
     'docs/requirements/README.md',
     'docs/testing/test-plan.md',
@@ -270,6 +272,12 @@ function checkTraceabilityMapping(cwd) {
   const inventoryOk = scriptRow?.Classification === 'mapped' &&
     scriptRow?.RtmCoverage === 'Yes' &&
     scriptRow?.Notes.includes('VHS-REQ-615') &&
+    closeoutRow?.Classification === 'mapped' &&
+    closeoutRow?.RtmCoverage === 'Yes' &&
+    closeoutRow?.Notes.includes('VHS-REQ-615') &&
+    ciWorkflowRow?.Classification === 'release-ci' &&
+    ciWorkflowRow?.RtmCoverage === 'Yes' &&
+    ciWorkflowRow?.Notes.includes('VHS-REQ-615') &&
     testRow?.Classification === 'mapped' &&
     testRow?.RtmCoverage === 'Yes' &&
     testRow?.Notes.includes('VHS-REQ-615') &&
@@ -281,7 +289,7 @@ function checkTraceabilityMapping(cwd) {
     name: 'DoD checker traceability mapping',
     passed,
     details: passed
-      ? 'VHS-REQ-615 maps checker implementation, PR template, and tests'
+      ? 'VHS-REQ-615 maps CI workflow, checker implementation, closeout evidence, PR template, and tests'
       : `Missing implementation refs: ${missingImplementation.join(', ') || 'none'}; missing verification refs: ${missingVerification.join(', ') || 'none'}; inventory ok=${inventoryOk}`
   };
 }

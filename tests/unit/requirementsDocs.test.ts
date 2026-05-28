@@ -274,6 +274,9 @@ describe('requirements documentation coherence', () => {
     const docsLinksTestInventoryRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/docsLinkCheckScript.test.ts'
     );
+    const ciWorkflowInventoryRow = inventoryRows.find(
+      (row) => row.Path === '.github/workflows/ci.yml'
+    );
 
     expect(syrs).toContain('`npm run traceability:audit`');
     expect(syrs).toContain('`npm run docs:links`');
@@ -285,6 +288,7 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('The workflow runs `npm run traceability:audit`.');
     expect(srs).toContain('The workflow runs `npm run docs:links`');
     expect(srs).toContain('Docs Link Check /');
+    expect(srs).toContain('The workflow runs `npm run dod:gate` through the `DoD Gate /');
     expect(srs).toContain('coverage/cobertura-coverage.xml');
     expect(srs).toContain('coverage/coverage-summary.json');
     expect(srs).toContain('baseline global coverage thresholds declared in');
@@ -292,6 +296,7 @@ describe('requirements documentation coherence', () => {
     expect(syrs).toContain('post-wave hosted floors are 60% statements');
     expect(testPlan).toContain('npm run traceability:audit');
     expect(testPlan).toContain('npm run docs:links');
+    expect(testPlan).toContain('npm run dod:gate');
     expect(testPlan).toContain(
       'implementation, test, workflow, and documentation surfaces remain classified'
     );
@@ -328,10 +333,13 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('missing global-storage handling');
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
-    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | package.json; scripts/checkDefinitionOfDone.js');
+    expect(testPlan).toContain(
+      '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; scripts/checkDefinitionOfDone.js'
+    );
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
     expect(workflowTest).toContain('keeps the docs link-check lychee gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
+    expect(workflowTest).toContain('keeps the hosted DoD gate in the required CI workflow');
     expect(packageJson.scripts['docs:links']).toBe('node scripts/checkDocsLinks.js');
     expect(vitestConfig).toContain('statements: 60');
     expect(vitestConfig).toContain('branches: 50');
@@ -342,6 +350,7 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/checkDocsLinks.js');
     expect(requirementRow?.ImplementationRefs).toContain('vitest.config.ts');
+    expect(requirementRow?.Notes).toContain('DoD Gate / dod');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/branchGovernanceWorkflow.test.ts'
     );
@@ -357,6 +366,10 @@ describe('requirements documentation coherence', () => {
     expect(docsLinksTestInventoryRow?.Classification).toBe('mapped');
     expect(docsLinksTestInventoryRow?.RtmCoverage).toBe('Yes');
     expect(docsLinksTestInventoryRow?.Notes).toContain('VHS-REQ-597');
+    expect(ciWorkflowInventoryRow?.Classification).toBe('release-ci');
+    expect(ciWorkflowInventoryRow?.RtmCoverage).toBe('Yes');
+    expect(ciWorkflowInventoryRow?.Notes).toContain('VHS-REQ-597');
+    expect(ciWorkflowInventoryRow?.Notes).toContain('VHS-REQ-615');
   });
 
   it('keeps coverage intelligence traceable for VHS-REQ-613', () => {
@@ -453,7 +466,9 @@ describe('requirements documentation coherence', () => {
     const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-615');
     const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-615');
+    const ciWorkflowRow = inventoryRows.find((row) => row.Path === '.github/workflows/ci.yml');
     const checkerRow = inventoryRows.find((row) => row.Path === 'scripts/checkDefinitionOfDone.js');
+    const closeoutRow = inventoryRows.find((row) => row.Path === 'scripts/generateCloseoutEvidence.js');
     const checkerTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/definitionOfDoneGate.test.ts'
     );
@@ -468,20 +483,28 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('optional bounded');
     expect(srs).toContain('Copilot prompt');
     expect(srs).toContain('The repo-native `npm run dod:gate` command verifies the DoD contract');
-    expect(srs).toContain('Hosted CI `DoD Gate / dod` automation is a separate implementation change');
-    expect(testPlan).toContain('| VHS-REQ-615 | TEST-615 | package.json; scripts/checkDefinitionOfDone.js');
+    expect(srs).toContain('Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`');
+    expect(srs).toContain('`scripts/generateCloseoutEvidence.js`');
+    expect(srs).toContain('`.github/workflows/ci.yml`');
+    expect(testPlan).toContain(
+      '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; scripts/checkDefinitionOfDone.js'
+    );
+    expect(testPlan).toContain('.github/pull_request_template.md; docs/requirements/srs.md');
+    expect(testPlan).toContain('docs/requirements/traceability-inventory.csv');
     expect(testPlan).toContain('lightweight evidence surface');
     expect(testPlan).toContain('target requirement');
     expect(testPlan).toContain('validation commands');
     expect(testPlan).toContain('traceability/RTM impact');
     expect(testPlan).toContain('out-of-scope statement');
     expect(testPlan).toContain('closeout readiness');
-    expect(testPlan).toContain('leaving hosted DoD workflow automation to the follow-on CI issue');
+    expect(testPlan).toContain('hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`');
     expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
     expect(packageJson.scripts['dod:gate']).toBe('node scripts/checkDefinitionOfDone.js');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-012');
     expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/checkDefinitionOfDone.js');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/pull_request_template.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/srs.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/id-index.csv');
@@ -499,6 +522,12 @@ describe('requirements documentation coherence', () => {
     expect(checkerRow?.Classification).toBe('mapped');
     expect(checkerRow?.RtmCoverage).toBe('Yes');
     expect(checkerRow?.Notes).toContain('VHS-REQ-615');
+    expect(ciWorkflowRow?.Classification).toBe('release-ci');
+    expect(ciWorkflowRow?.RtmCoverage).toBe('Yes');
+    expect(ciWorkflowRow?.Notes).toContain('VHS-REQ-615');
+    expect(closeoutRow?.Classification).toBe('mapped');
+    expect(closeoutRow?.RtmCoverage).toBe('Yes');
+    expect(closeoutRow?.Notes).toContain('VHS-REQ-615');
     const prTemplateRow = inventoryRows.find((row) => row.Path === '.github/pull_request_template.md');
     expect(prTemplateRow?.Classification).toBe('mapped');
     expect(prTemplateRow?.RtmCoverage).toBe('Yes');
