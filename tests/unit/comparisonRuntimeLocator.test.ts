@@ -387,6 +387,87 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     expect(selection.notes.join('\n')).toContain('will be acquired before launch');
   });
 
+  it('auto-selects the Linux container provider when Docker Desktop is running in Linux-container mode', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            image: 'nationalinstruments/labview:2026q1-linux',
+            provider: 'linux-container',
+            runtimePlatform: 'linux',
+            windowsContainerHostMode: 'linux',
+            imageAvailable: false
+          })
+        )
+      }
+    );
+
+    expect(selection).toMatchObject({
+      platform: 'win32',
+      provider: 'linux-container',
+      containerRuntimePlatform: 'linux',
+      containerHostMode: 'linux',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: false,
+      containerAcquisitionState: 'required'
+    });
+    expect(selection.labviewCli?.path).toBe('/usr/local/bin/LabVIEWCLI');
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'linux-container',
+        outcome: 'selected',
+        reason: 'auto-selected-linux-container-because-docker-installed'
+      })
+    );
+  });
+
+  it('fails closed in Windows auto mode when Docker is installed but the active container provider is unusable', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            dockerCliAvailable: true,
+            dockerDaemonReachable: true,
+            windowsContainerCapabilityAvailable: false,
+            windowsContainerHostMode: 'unknown',
+            imageAvailable: false
+          })
+        ),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'auto-docker-installed-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: true,
+      containerCapabilityAvailable: false
+    });
+    expect(selection.notes.join('\n')).toContain('Docker Desktop was detected on Windows');
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'auto-docker-installed-disallows-host-native'
+      })
+    );
+  });
+
   it('selects host-native only when requested host facts are available', async () => {
     const selection = await locateComparisonRuntime(
       'win32',

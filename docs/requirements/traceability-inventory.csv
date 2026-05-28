@@ -64,6 +64,7 @@ tests/unit/coverageMapScript.test.ts,mapped,Yes,Coverage traceability map tests;
 tests/unit/bundledDocumentation.test.ts,mapped,Yes,Bundled documentation manifest/page asset verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/bundledDocumentationAction.test.ts,mapped,Yes,Bundled documentation command/action routing verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/comparisonReportArchive.test.ts,mapped,Yes,Dashboard comparison report archive tests; mapped to VHS-REQ-610.
+tests/unit/comparisonReportAction.test.ts,mapped,Yes,Comparison report action orchestration tests; mapped to VHS-REQ-133 VHS-REQ-148 and VHS-REQ-155.
 tests/unit/comparisonReportPacket.test.ts,mapped,Yes,Comparison report packet tests; mapped through RTM.
 tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report preflight tests; mapped through RTM.
 tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM.
