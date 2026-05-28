@@ -1,5 +1,6 @@
 Path,Classification,RtmCoverage,Notes
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
+scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner; mapped to VHS-REQ-601.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
 src/dashboard/comparisonReportArchive.ts,mapped,Yes,Dashboard archive support; mapped to VHS-REQ-610.
@@ -52,10 +53,12 @@ scripts/preparePublicTestFixture.js,dev-only,No,Public test fixture preparation;
 scripts/publicRepoCloneCore.js,dev-only,No,Public repo clone core; CI infrastructure.
 scripts/runLinuxIntegrationHost.js,dev-only,No,Linux integration host runner; CI infrastructure.
 scripts/runPinnedVsce.js,supporting,No,Pinned VSCE runner; packaging support.
+scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification retry helper; mapped to VHS-REQ-609.
 scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
+tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation tests; mapped to VHS-REQ-601.
 tests/unit/bundledDocumentation.test.ts,mapped,Yes,Bundled documentation manifest/page asset verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/bundledDocumentationAction.test.ts,mapped,Yes,Bundled documentation command/action routing verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/comparisonReportArchive.test.ts,mapped,Yes,Dashboard comparison report archive tests; mapped to VHS-REQ-610.
@@ -76,6 +79,7 @@ tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; m
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
 tests/unit/integrationHostRuntime.test.ts,dev-only,No,Integration host runtime tests; testing infrastructure.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
+tests/unit/marketplaceListingVerification.test.ts,mapped,Yes,Marketplace listing verification retry tests; mapped to VHS-REQ-609.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
 tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM.

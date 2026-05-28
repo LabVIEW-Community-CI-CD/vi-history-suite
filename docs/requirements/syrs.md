@@ -185,6 +185,8 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - The RTM maps active requirements to implementation and verification evidence.
   - The ID index records active, superseded, and retired IDs.
   - CI fails when the requirements pack loses coherence.
+  - Umbrella issue closeout evidence includes mandatory standards-review output
+    from host Python or the Docker assurance workbench fallback.
 - Verification References:
   - `docs/requirements/README.md`
   - `docs/requirements/srs.md`
@@ -233,6 +235,8 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
     back-sync branches plus Dependabot maintenance branches by hosted CI.
   - Marketplace publication is tag-only from exact `vX.Y.Z` tags on commits
     reachable from `origin/main`.
+  - Marketplace live-listing verification distinguishes bounded propagation lag
+    from publication failure.
 - Verification References:
   - `.github/workflows/ci.yml`
   - `.github/workflows/marketplace-release.yml`

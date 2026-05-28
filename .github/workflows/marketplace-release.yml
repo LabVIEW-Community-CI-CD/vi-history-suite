@@ -116,16 +116,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-evidence
-          node scripts/runPinnedVsce.js show "$EXTENSION_ID" --json > release-evidence/marketplace-show.json
-          TAG_VERSION="${{ steps.version.outputs.tag_version }}" node - <<'NODE'
-          const fs = require('node:fs');
-          const evidence = JSON.parse(fs.readFileSync('release-evidence/marketplace-show.json', 'utf8'));
-          const tagVersion = process.env.TAG_VERSION;
-          const versions = Array.isArray(evidence.versions) ? evidence.versions : [];
-          if (!versions.some((version) => version.version === tagVersion)) {
-            throw new Error(`Marketplace listing does not contain version ${tagVersion}.`);
-          }
-          NODE
+          TAG_VERSION="${{ steps.version.outputs.tag_version }}"
+          node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION" --out release-evidence/marketplace-show.json --attempts 6 --delay-ms 30000
           {
             echo "## Marketplace Release Evidence"
             echo "- Extension: $EXTENSION_ID"

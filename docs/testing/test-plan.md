@@ -89,8 +89,24 @@ This runner is not used for pull requests and is not a required release gate.
 Marketplace publication is tag-only. Create an exact `vX.Y.Z` tag on the
 merged `main` commit after release evidence is complete. The `Marketplace
 Release` workflow verifies the tag, package version, `origin/main`
-reachability, lightweight package checks, pinned VSIX publication, and live
-Marketplace listing evidence.
+reachability, lightweight package checks, pinned VSIX publication, bounded live
+Marketplace listing retry, and retained Marketplace listing evidence.
+
+## Closeout Evidence Check
+
+Umbrella issue closeout requires generated evidence:
+
+```powershell
+npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates --save-dir assurance-closeout-evidence
+```
+
+The closeout command always runs standards evidence. It tries host Python first
+in `auto` mode and falls back to the
+`repo-standards-review-assurance-workbench:local` Docker image when host
+preflight is unavailable. A summary is not closable until local gates and
+mandatory standards evidence are both clean. Docs link-check/lychee and DoD
+gate findings remain deferred next-wave recommendations unless the target issue
+explicitly owns them.
 
 ## Optional Vagrant Check
 

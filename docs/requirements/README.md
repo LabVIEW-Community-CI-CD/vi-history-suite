@@ -87,7 +87,26 @@ implementation, verification, or inventory gaps.
 
 1. Confirm every child issue is closed or explicitly deferred to an open
    follow-up issue.
-2. Run the repo-local gates:
+2. Generate the closeout evidence summary. Standards evidence is mandatory and
+   the command fails closed unless host Python or the Docker assurance workbench
+   can produce it:
+
+```shell
+npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates --save-dir assurance-closeout-evidence
+```
+
+Use Docker explicitly when host Python is unavailable:
+
+```shell
+npm run closeout:evidence -- --kind standards --issue <issue-number> --standards-runner docker --save-dir assurance-closeout-evidence
+```
+
+The Docker runner expects the `repo-standards-review-assurance-workbench:local`
+image. Build it from the local `repo-standards-review` skill checkout before
+running closeout evidence, or use `--build-standards-image` when a rebuild is
+intentional.
+
+3. The closeout command runs these repo-local gates when `--run-gates` is set:
 
 ```shell
 npm run traceability:audit
@@ -96,8 +115,8 @@ npm test
 npm run package
 ```
 
-3. When maintainer-local standards tooling is available, run the advisory
-   standards evidence checks:
+4. The closeout command always runs the mandatory standards evidence checks
+   through the selected standards runner:
 
 ```shell
 python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\preflight_local_dependencies.py --json
@@ -106,9 +125,10 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\repo_evidence
 python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance.py <repo-root> --profile quick-triage
 ```
 
-4. Close the umbrella only when blocking traceability findings are resolved or
+5. Close the umbrella only when blocking traceability findings are resolved or
    deferred to open child issues with owners and validation commands.
-5. Treat standards maturity warnings outside the umbrella scope as next-wave
+6. Treat standards maturity warnings outside the umbrella scope, such as docs
+   link-check/lychee and Definition-of-Done gate evidence, as next-wave
    recommendations, not silent blockers for the current umbrella closeout.
 
 ## ID Policy
