@@ -287,7 +287,11 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('40% lines');
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
+    expect(testPlan).toContain('| VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts');
+    expect(testPlan).toContain('| VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts');
+    expect(testPlan).toContain('| VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts');
     expect(testPlan).toContain('| VHS-REQ-604 | TEST-604 | src/indexing/viEligibilityIndexer.ts');
+    expect(testPlan).toContain('| VHS-REQ-606 | TEST-606 | src/indexing/viEligibilityIndexer.ts');
     expect(testPlan).toContain('| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts');
     expect(testPlan).toContain('| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts');
     expect(testPlan).toContain('| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts');
@@ -393,6 +397,45 @@ describe('requirements documentation coherence', () => {
     expect(harnessTestRow?.Classification).toBe('mapped');
     expect(harnessTestRow?.RtmCoverage).toBe('Yes');
     expect(harnessTestRow?.Notes).toContain('VHS-REQ-614');
+  });
+
+  it('keeps command and history flow coverage mapped to existing requirements', () => {
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const openCommandRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/openViHistoryCommand.test.ts'
+    );
+    const modelTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/viHistoryModel.test.ts'
+    );
+
+    for (const id of ['VHS-REQ-012', 'VHS-REQ-016', 'VHS-REQ-039', 'VHS-REQ-606']) {
+      const row = rtmRows.find((entry) => entry.ReqID === id);
+      expect(row?.ImplementationRefs, `${id} implementation`).toContain(
+        'src/commands/openViHistoryCommand.ts'
+      );
+      expect(row?.VerificationRefs, `${id} verification`).toContain(
+        'tests/unit/openViHistoryCommand.test.ts'
+      );
+    }
+
+    for (const id of ['VHS-REQ-006', 'VHS-REQ-008', 'VHS-REQ-017']) {
+      const row = rtmRows.find((entry) => entry.ReqID === id);
+      expect(row?.ImplementationRefs, `${id} implementation`).toContain(
+        'src/services/viHistoryModel.ts'
+      );
+      expect(row?.VerificationRefs, `${id} verification`).toContain(
+        'tests/unit/viHistoryModel.test.ts'
+      );
+    }
+
+    expect(openCommandRow?.Classification).toBe('mapped');
+    expect(openCommandRow?.RtmCoverage).toBe('Yes');
+    expect(modelTestRow?.Classification).toBe('mapped');
+    expect(modelTestRow?.RtmCoverage).toBe('Yes');
+    expect(modelTestRow?.Notes).toContain('VHS-REQ-006');
+    expect(modelTestRow?.Notes).toContain('VHS-REQ-008');
+    expect(modelTestRow?.Notes).toContain('VHS-REQ-017');
   });
 
   it('keeps dependency maintenance automation targetable', () => {

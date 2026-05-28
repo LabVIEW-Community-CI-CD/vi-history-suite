@@ -103,6 +103,7 @@ tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,dev-only,No,Runtime set
 tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
 tests/unit/viEligibilityIndexer.test.ts,mapped,Yes,VI eligibility indexer tests; mapped through RTM.
 tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
+tests/unit/viHistoryModel.test.ts,mapped,Yes,VI history model direct eligibility/window tests; mapped to VHS-REQ-006 VHS-REQ-008 and VHS-REQ-017.
 tests/unit/viHistoryService.test.ts,mapped,Yes,VI history service tests; mapped through RTM.
 tests/unit/viMagic.test.ts,mapped,Yes,VI magic tests; mapped through RTM.
 tests/unit/viMagicWrapper.test.ts,mapped,Yes,VI magic wrapper tests; mapped through RTM.

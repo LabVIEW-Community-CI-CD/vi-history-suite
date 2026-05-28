@@ -2,48 +2,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ViHistoryViewModel } from '../../src/services/viHistoryModel';
 import { HistoryPanelTracker } from '../../src/ui/historyPanelTracker';
+import { defaultVsCodeTestHarness as vscodeHarness } from './vscodeTestHarness';
 
-const {
-  showInformationMessageMock,
-  showWarningMessageMock,
-  showErrorMessageMock,
-  workspaceState,
-  clipboardWriteTextMock,
-  createWebviewPanelMock
-} = vi.hoisted(() => ({
-  showInformationMessageMock: vi.fn(),
-  showWarningMessageMock: vi.fn(),
-  showErrorMessageMock: vi.fn(),
-  workspaceState: { isTrusted: true },
-  clipboardWriteTextMock: vi.fn(),
-  createWebviewPanelMock: vi.fn()
-}));
-
-vi.mock('vscode', () => ({
-  window: {
-    showInformationMessage: showInformationMessageMock,
-    showWarningMessage: showWarningMessageMock,
-    showErrorMessage: showErrorMessageMock,
-    activeTextEditor: undefined,
-    createWebviewPanel: createWebviewPanelMock
-  },
-  workspace: {
-    get isTrusted() {
-      return workspaceState.isTrusted;
-    },
-    getConfiguration: vi.fn().mockReturnValue({ get: vi.fn().mockReturnValue(undefined) })
-  },
-  ViewColumn: {
-    Active: 1
-  },
-  env: {
-    clipboard: {
-      writeText: clipboardWriteTextMock
-    }
-  }
-}));
+vi.mock('vscode', async () => {
+  const { defaultVsCodeTestHarness } = await import('./vscodeTestHarness');
+  return defaultVsCodeTestHarness.vscode;
+});
 
 import { createOpenViHistoryCommand } from '../../src/commands/openViHistoryCommand';
+
+const showInformationMessageMock = vscodeHarness.vscode.window.showInformationMessage;
+const showWarningMessageMock = vscodeHarness.vscode.window.showWarningMessage;
+const showErrorMessageMock = vscodeHarness.vscode.window.showErrorMessage;
+const workspaceState = vscodeHarness.workspaceState;
+const clipboardWriteTextMock = vscodeHarness.vscode.env.clipboard.writeText;
+const createWebviewPanelMock = vscodeHarness.vscode.window.createWebviewPanel;
 
 function createIneligibleModel(
   overrides: Partial<ViHistoryViewModel>
@@ -61,7 +34,7 @@ function createIneligibleModel(
 
 describe('openViHistoryCommand ineligibility messaging (VHS-REQ-016)', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vscodeHarness.reset();
     workspaceState.isTrusted = true;
   });
 
@@ -210,7 +183,7 @@ function createMockPanel() {
 
 describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vscodeHarness.reset();
     workspaceState.isTrusted = true;
     clipboardWriteTextMock.mockResolvedValue(undefined);
     createWebviewPanelMock.mockReturnValue(createMockPanel());
@@ -337,6 +310,180 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
   });
 });
 
+describe('openViHistoryCommand harness-backed routing and explicit stops', () => {
+  beforeEach(() => {
+    vscodeHarness.reset();
+    workspaceState.isTrusted = true;
+    clipboardWriteTextMock.mockResolvedValue(undefined);
+  });
+
+  it('stops with guidance when no URI or active editor is available', async () => {
+    const historyService = { load: vi.fn() };
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined
+    );
+
+    await command();
+
+    expect(historyService.load).not.toHaveBeenCalled();
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Select a tracked LabVIEW VI to open VI History.'
+    );
+  });
+
+  it('honors workspace trust before loading history', async () => {
+    workspaceState.isTrusted = false;
+    const historyService = { load: vi.fn() };
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined
+    );
+
+    await command(vscodeHarness.createUri('/workspace/repo/Sample.vi') as never);
+
+    expect(historyService.load).not.toHaveBeenCalled();
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI History indexing and comparison are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+    );
+  });
+
+  it('surfaces history service load errors without opening a panel', async () => {
+    const historyService = {
+      load: vi.fn().mockRejectedValue(new Error('fatal: not a git repository'))
+    };
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined
+    );
+
+    await command(vscodeHarness.createUri('/workspace/repo/Sample.vi') as never);
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'VI History could not load the selected file because it is not inside a tracked Git repository. Open a local Git-backed LabVIEW VI with commit history instead.'
+    );
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('routes documentation requests and records fallback to bundled overview', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const openDocumentationAction = vi
+      .fn()
+      .mockResolvedValueOnce({ outcome: 'unknown-documentation-page', pageId: 'missing-page' })
+      .mockResolvedValueOnce({
+        outcome: 'opened-documentation',
+        pageId: 'overview',
+        pageTitle: 'Overview',
+        manifestFilePath: '/extension/resources/bundled-docs/manifest.json',
+        pageFilePath: '/extension/resources/bundled-docs/pages/overview.html',
+        title: 'VI History Docs: Overview'
+      });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      openDocumentationAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'openDocumentation',
+      pageId: 'missing-page'
+    });
+
+    expect(openDocumentationAction).toHaveBeenNthCalledWith(1, { pageId: 'missing-page' });
+    expect(openDocumentationAction).toHaveBeenNthCalledWith(2);
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI History could not resolve the requested bundled documentation page. Opened the bundled overview page instead.'
+    );
+    expect(panelTracker.getLastActionSummary()).toMatchObject({
+      command: 'openDocumentation',
+      outcome: 'opened-documentation',
+      requestedDocumentationPageId: 'missing-page',
+      documentationPageId: 'overview',
+      documentationPageTitle: 'Overview',
+      documentationFallbackUsed: true
+    });
+  });
+
+  it('records explicit cancellation stage when comparison generation is stopped', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'cancelled',
+      cancellationStage: 'before-runtime-execution'
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abc1234567890abcdef1234567890abcdef12345'
+      })
+    );
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
+    );
+    expect(panelTracker.getLastActionSummary()).toMatchObject({
+      command: 'generateComparisonReport',
+      outcome: 'cancelled',
+      cancellationStage: 'before-runtime-execution'
+    });
+  });
+
+  it('records missing Git URI instead of opening stale revision content', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const gitApi = { toGitUri: vi.fn().mockReturnValue(undefined) };
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      gitApi as never,
+      panelTracker
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'openCommit',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(vscodeHarness.vscode.commands.executeCommand).not.toHaveBeenCalled();
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI History could not resolve the selected Git revision.'
+    );
+    expect(panelTracker.getLastActionSummary()).toMatchObject({
+      command: 'openCommit',
+      hash: 'abc1234567890abcdef1234567890abcdef12345',
+      outcome: 'missing-git-uri'
+    });
+  });
+});
+
 function defaultIndexingCacheDiagnostics() {
   return {
     storage: {
@@ -357,7 +504,7 @@ function defaultIndexingCacheDiagnostics() {
 
 describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vscodeHarness.reset();
     workspaceState.isTrusted = true;
   });
 
