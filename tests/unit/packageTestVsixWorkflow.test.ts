@@ -61,17 +61,27 @@ describe('Package Test VSIX workflow', () => {
     expect(workflow).toContain('retention-days: 14');
   });
 
-  it('can optionally update the diagnostic prerelease without marking it latest', () => {
+  it('can optionally create a unique immutable diagnostic prerelease without marking it latest', () => {
     const workflow = readWorkflow();
 
-    expect(workflow).toContain('TEST_VSIX_RELEASE_TAG: test-vsix-latest');
     expect(workflow).toContain('if: ${{ inputs.publish_prerelease }}');
-    expect(workflow).toContain('git tag --force "$TEST_VSIX_RELEASE_TAG" "$GITHUB_SHA"');
-    expect(workflow).toContain('gh release create "$TEST_VSIX_RELEASE_TAG"');
-    expect(workflow).toContain('gh release edit "$TEST_VSIX_RELEASE_TAG"');
-    expect(workflow).toContain('gh release upload "$TEST_VSIX_RELEASE_TAG"');
+    expect(workflow).toContain('Compute Diagnostic Prerelease Tag');
+    expect(workflow).toContain('diagnostic-test-vsix-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}');
+    expect(workflow).toContain('git tag "$diagnostic_release_tag" "$GITHUB_SHA"');
+    expect(workflow).toContain('git push origin "refs/tags/$diagnostic_release_tag"');
+    expect(workflow).toContain('gh release create "$diagnostic_release_tag"');
+    expect(workflow).toContain(
+      '"${{ steps.locate-vsix.outputs.vsix_path }}#VI History Suite diagnostic VSIX"'
+    );
+    expect(workflow).toContain('--verify-tag');
     expect(workflow).toContain('--prerelease');
     expect(workflow).toContain('--latest=false');
-    expect(workflow).toContain('--clobber');
+    expect(workflow).not.toContain('TEST_VSIX_RELEASE_TAG: test-vsix-latest');
+    expect(workflow).not.toContain('git tag --force');
+    expect(workflow).not.toContain('git push --force');
+    expect(workflow).not.toContain('gh release view');
+    expect(workflow).not.toContain('gh release edit');
+    expect(workflow).not.toContain('gh release upload');
+    expect(workflow).not.toContain('--clobber');
   });
 });

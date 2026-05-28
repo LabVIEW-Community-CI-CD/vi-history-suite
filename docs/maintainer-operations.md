@@ -71,9 +71,10 @@ Do not attach normal release VSIX files to GitHub Releases unless a future
 release plan makes GitHub a second install channel. The Marketplace is the
 install channel.
 
-The narrow exception is the mutable `test-vsix-latest` diagnostic prerelease
-used for reporter retesting. It is not a normal release, is not marked latest,
-and must not be described as Marketplace publication.
+The narrow exception is an immutable, unique diagnostic prerelease created only
+when a reporter needs a public VSIX download for retesting. It is not a normal
+release, is not marked latest, is never reused or edited, and must not be
+described as Marketplace publication.
 
 ## Marketplace Release Workflow
 
@@ -128,13 +129,15 @@ from the Marketplace.
 The workflow is manual-only and trusted-ref-only. It accepts `main`,
 `release/vX.Y.Z`, or an exact `vX.Y.Z` tag. It runs the same lightweight
 package checks as hosted CI, uploads the generated `vi-history-suite-*.vsix` as
-a 14-day Actions artifact, and can optionally update the public
-`test-vsix-latest` prerelease asset for easier reporter download.
+a 14-day Actions artifact, and can optionally create a public immutable
+diagnostic prerelease named `diagnostic-test-vsix-<run-id>-<run-attempt>` for
+easier reporter download.
 
 Dispatch defaults:
 
 - Ref: `main`, `release/vX.Y.Z`, or an exact `vX.Y.Z` tag.
-- `publish_prerelease`: `false` unless a public download link is needed.
+- `publish_prerelease`: `false` unless a public immutable prerelease download
+  link is needed.
 - `issue_number`: the issue being retested, such as `61`.
 
 Reporter install command:
@@ -214,6 +217,8 @@ What this evidence proves:
 - the run produced or explicitly failed to produce the expected VSIX evidence
 - a protected environment approved tag-only Marketplace publication
 - the live Marketplace listing contained the released version after publication
+- optional diagnostic prerelease evidence is unique per workflow run attempt
+  and not an edited or clobbered prior release
 - a bounded Marketplace listing retry window distinguished propagation lag from
   a publication or listing verification failure
 
@@ -222,6 +227,7 @@ What this evidence does **not** prove:
 - diagnostic VSIX publication is Marketplace publication
 - self-hosted validation is a public PR gate
 - untrusted refs were ever allowed to execute maintainer validation
+- a diagnostic prerelease is a stable latest-download endpoint
 
 Do not claim Vagrant evidence unless the Vagrant issue is run on a
 Vagrant-capable host and recorded separately.

@@ -575,7 +575,7 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('trusted ref for reporter retesting');
     expect(srs).toContain('release/vX.Y.Z');
     expect(srs).toContain('short-lived Actions artifact');
-    expect(srs).toContain('test-vsix-latest');
+    expect(srs).toContain('unique immutable diagnostic prerelease');
     expect(srs).toContain('does not use Marketplace publishing tokens');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-013');
     expect(requirementRow?.ImplementationRefs).toContain(
@@ -588,7 +588,7 @@ describe('requirements documentation coherence', () => {
     );
     expect(requirementRow?.VerificationRefs).toContain('manual:diagnostic-test-vsix-dispatch');
     expect(requirementRow?.Notes).toContain('trusted-ref-only');
-    expect(requirementRow?.Notes).toContain('test-vsix-latest');
+    expect(requirementRow?.Notes).toContain('unique immutable diagnostic prerelease');
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-608-diagnostic-test-vsix-distribution'
     );
