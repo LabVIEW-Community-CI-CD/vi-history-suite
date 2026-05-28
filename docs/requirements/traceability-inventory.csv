@@ -1,6 +1,7 @@
 Path,Classification,RtmCoverage,Notes
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
 scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner; mapped to VHS-REQ-601.
+scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
 src/dashboard/comparisonReportArchive.ts,mapped,Yes,Dashboard archive support; mapped to VHS-REQ-610.
@@ -59,6 +60,7 @@ tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code 
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
 tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation tests; mapped to VHS-REQ-601.
+tests/unit/coverageMapScript.test.ts,mapped,Yes,Coverage traceability map tests; mapped to VHS-REQ-613.
 tests/unit/bundledDocumentation.test.ts,mapped,Yes,Bundled documentation manifest/page asset verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/bundledDocumentationAction.test.ts,mapped,Yes,Bundled documentation command/action routing verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/comparisonReportArchive.test.ts,mapped,Yes,Dashboard comparison report archive tests; mapped to VHS-REQ-610.
@@ -118,7 +120,7 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/ISSUE_TEMPLATE/feature_request.yml,asset-doc,No,Feature request issue-intake support surface.
 .github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml,asset-doc,Yes,First-time onboarding feedback template; mapped through RTM.
 .github/ISSUE_TEMPLATE/requirement_target.yml,asset-doc,Yes,Requirement target template; mapped through RTM.
-vitest.config.ts,mapped,Yes,Vitest coverage reporter and baseline threshold configuration; mapped to VHS-REQ-597.
+vitest.config.ts,mapped,Yes,Vitest coverage reporter and baseline threshold configuration; mapped to VHS-REQ-597 and VHS-REQ-613.
 tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
 tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.
 package.json,mapped,Yes,Package manifest; mapped through RTM.

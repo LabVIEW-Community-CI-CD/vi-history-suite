@@ -1271,3 +1271,42 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep this requirement focused on installed CLI preparation and failure
     reporting; do not change runtime selection semantics.
+
+### VHS-REQ-613: Coverage Intelligence And Test-Risk Mapping
+
+- Status: Active
+- Parent: VHS-SYS-REQ-017
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a coverage intelligence command that
+  maps Vitest coverage evidence to the traceability inventory and RTM
+  requirements so low-coverage product risk is visible before coverage floor
+  ratchets.
+- Acceptance Criteria:
+  - `npm run coverage:map` reads `coverage/coverage-summary.json`,
+    `docs/requirements/traceability-inventory.csv`, and
+    `docs/requirements/rtm.csv`.
+  - The report highlights requirement-mapped files below 50% coverage by
+    requirement, classification, missing lines, missing branches, and missing
+    functions.
+  - The report highlights zero-coverage supporting files tied to active
+    requirements.
+  - The initial coverage floor ratchet is statements 40%, branches 33%,
+    functions 47%, and lines 40%.
+  - The command fails closed with an actionable message when coverage evidence
+    is absent.
+- Agent Work Scope:
+  - Change the coverage mapping command, coverage floor configuration,
+    requirements mapping, and verification references together.
+- Implementation References:
+  - `scripts/mapCoverageToTraceability.js`
+  - `package.json`
+  - `vitest.config.ts`
+  - `docs/testing/test-plan.md`
+- Verification References:
+  - `tests/unit/coverageMapScript.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
+- Change Guidance:
+  - Keep this requirement focused on coverage intelligence and risk
+    prioritization; do not use it to hide dev-only sources or reduce coverage
+    include scope without an explicit requirements update.

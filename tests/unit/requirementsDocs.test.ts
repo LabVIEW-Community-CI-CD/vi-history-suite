@@ -281,20 +281,24 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('PR Coverage Gate / coverage');
     expect(testPlan).toContain('coverage/cobertura-coverage.xml');
     expect(testPlan).toContain('coverage/coverage-summary.json');
-    expect(testPlan).toContain('39% statements');
-    expect(testPlan).toContain('32% branches');
-    expect(testPlan).toContain('45% functions');
-    expect(testPlan).toContain('39% lines');
+    expect(testPlan).toContain('40% statements');
+    expect(testPlan).toContain('33% branches');
+    expect(testPlan).toContain('47% functions');
+    expect(testPlan).toContain('40% lines');
+    expect(testPlan).toContain('Coverage Traceability Map');
+    expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('| VHS-REQ-604 | TEST-604 | src/indexing/viEligibilityIndexer.ts');
     expect(testPlan).toContain('| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts');
     expect(testPlan).toContain('| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts');
     expect(testPlan).toContain('| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts');
+    expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
-    expect(vitestConfig).toContain('statements: 39');
-    expect(vitestConfig).toContain('branches: 32');
-    expect(vitestConfig).toContain('functions: 45');
-    expect(vitestConfig).toContain('lines: 39');
+    expect(vitestConfig).toContain('statements: 40');
+    expect(vitestConfig).toContain('branches: 33');
+    expect(vitestConfig).toContain('functions: 47');
+    expect(vitestConfig).toContain('lines: 40');
+    expect(vitestConfig).toContain('scripts/mapCoverageToTraceability.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('vitest.config.ts');
@@ -305,6 +309,55 @@ describe('requirements documentation coherence', () => {
     expect(vitestInventoryRow?.Classification).toBe('mapped');
     expect(vitestInventoryRow?.RtmCoverage).toBe('Yes');
     expect(vitestInventoryRow?.Notes).toContain('VHS-REQ-597');
+    expect(vitestInventoryRow?.Notes).toContain('VHS-REQ-613');
+  });
+
+  it('keeps coverage intelligence traceable for VHS-REQ-613', () => {
+    const syrs = readRepoText('docs', 'requirements', 'syrs.md');
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const packageJson = JSON.parse(readRepoText('package.json')) as {
+      scripts: Record<string, string>;
+    };
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-613');
+    const softwareIndexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-613');
+    const systemIndexRow = idIndexRows.find((row) => row.ID === 'VHS-SYS-REQ-017');
+    const coverageScriptRow = inventoryRows.find(
+      (row) => row.Path === 'scripts/mapCoverageToTraceability.js'
+    );
+    const coverageTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/coverageMapScript.test.ts'
+    );
+
+    expect(syrs).toContain('### VHS-SYS-REQ-017: Coverage-Led Assurance Operating Model');
+    expect(syrs).toContain('low-coverage requirement-mapped files');
+    expect(srs).toContain('### VHS-REQ-613: Coverage Intelligence And Test-Risk Mapping');
+    expect(srs).toContain('`npm run coverage:map` reads `coverage/coverage-summary.json`');
+    expect(srs).toContain('requirement-mapped files below 50% coverage');
+    expect(testPlan).toContain('Coverage Traceability Map');
+    expect(testPlan).toContain('zero-coverage supporting files tied to active');
+    expect(testPlan).toContain('requirements so coverage-led assurance work starts');
+    expect(packageJson.scripts['coverage:map']).toBe('node scripts/mapCoverageToTraceability.js');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-017');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/mapCoverageToTraceability.js');
+    expect(requirementRow?.ImplementationRefs).toContain('vitest.config.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/coverageMapScript.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    expect(softwareIndexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-613-coverage-intelligence-and-test-risk-mapping'
+    );
+    expect(systemIndexRow?.CurrentAnchor).toBe(
+      'syrs.md#vhs-sys-req-017-coverage-led-assurance-operating-model'
+    );
+    expect(coverageScriptRow?.Classification).toBe('mapped');
+    expect(coverageScriptRow?.RtmCoverage).toBe('Yes');
+    expect(coverageScriptRow?.Notes).toContain('VHS-REQ-613');
+    expect(coverageTestRow?.Classification).toBe('mapped');
+    expect(coverageTestRow?.RtmCoverage).toBe('Yes');
+    expect(coverageTestRow?.Notes).toContain('VHS-REQ-613');
   });
 
   it('keeps dependency maintenance automation targetable', () => {
@@ -835,7 +888,9 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('asset-doc');
     expect(readme).toContain('gap');
     expect(readme).toContain('Agent Response');
-    expect(readme).toContain('New software requirements start at `VHS-REQ-613`.');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-614`.');
+    expect(readme).toContain('New system requirements start at `VHS-SYS-REQ-018`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-613`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
     expect(readme).toContain('Traceability Closeout Runbook');
     expect(readme).toContain('npm run closeout:evidence');

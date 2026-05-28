@@ -243,3 +243,27 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - `docs/maintainer-operations.md`
   - `tests/unit/branchGovernanceWorkflow.test.ts`
   - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+
+### VHS-SYS-REQ-017: Coverage-Led Assurance Operating Model
+
+- Status: Active
+- Area: CI And Developer Environment
+- Statement: The system shall use retained coverage evidence and requirements
+  traceability to prioritize product-risk discovery before raising coverage
+  floors.
+- Acceptance Criteria:
+  - Coverage evidence from Vitest is joined with RTM and traceability inventory
+    records so low-coverage requirement-mapped files are visible.
+  - The coverage risk map highlights requirement-mapped files below 50%
+    coverage and zero-coverage supporting files tied to active requirements.
+  - Hosted coverage thresholds are raised only from measured evidence and remain
+    documented as regression floors, not coverage-quality claims.
+  - Coverage-led follow-up work targets user-facing requirement-mapped dark
+    areas before dev-only tooling.
+- Verification References:
+  - `scripts/mapCoverageToTraceability.js`
+  - `package.json`
+  - `vitest.config.ts`
+  - `docs/testing/test-plan.md`
+  - `tests/unit/coverageMapScript.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`

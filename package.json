@@ -156,6 +156,7 @@
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",
     "traceability:audit": "node scripts/auditTraceabilitySteward.js",
+    "coverage:map": "node scripts/mapCoverageToTraceability.js",
     "closeout:evidence": "node scripts/generateCloseoutEvidence.js"
   },
   "devDependencies": {

@@ -30,10 +30,20 @@ the machine-readable coverage outputs from that run through the
 - `coverage/coverage-summary.json`
 
 The enforced coverage thresholds in `vitest.config.ts` are baseline regression
-floors: 39% statements, 32% branches, 45% functions, and 39% lines. These
+floors: 40% statements, 33% branches, 47% functions, and 40% lines. These
 floors preserve the current tested baseline; they are not a claim that the
 repository has complete coverage. Raise the thresholds only in a PR that shows
 new coverage evidence and updates this test plan with the new baseline.
+
+## Coverage Traceability Map
+
+Run `npm run coverage:map` after `npm test` to join
+`coverage/coverage-summary.json`, `docs/requirements/traceability-inventory.csv`,
+and `docs/requirements/rtm.csv`. The report highlights requirement-mapped files
+below 50% coverage and zero-coverage supporting files tied to active
+requirements so coverage-led assurance work starts with product-risk evidence
+instead of percentage chasing. Use the report to seed follow-up coverage issues
+and to justify future coverage threshold ratchets.
 
 ## Critical-Path Verification Evidence
 
@@ -44,6 +54,7 @@ new coverage evidence and updates this test plan with the new baseline.
 | VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts; src/dashboard/dashboardLatestRun.ts | tests/unit/comparisonReportArchive.test.ts; tests/unit/dashboardLatestRun.test.ts | Dashboard retained-evidence archive and latest-run behavior have focused unit coverage. |
 | VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts; src/docs/bundledDocumentationAction.ts | tests/unit/bundledDocumentation.test.ts; tests/unit/bundledDocumentationAction.test.ts | Installed documentation manifest/page loading and command routing are covered directly. |
 | VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts; src/extension.ts | tests/unit/packageManifest.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/integration/suite/extensionHost.test.ts | Installed runtime settings CLI command exposure is verified without changing runtime selection behavior. |
+| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js; vitest.config.ts | tests/unit/coverageMapScript.test.ts; tests/unit/requirementsDocs.test.ts | Coverage map links retained coverage evidence to RTM/inventory risk and protects the starter floor ratchet. |
 
 ## Diagnostic Test VSIX Check
 
