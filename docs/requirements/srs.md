@@ -837,7 +837,8 @@ Missing numeric IDs are intentional.
   - A closeout evidence command generates GitHub-ready umbrella issue summaries
     with mandatory standards evidence.
   - Closeout evidence supports host Python and Docker assurance-workbench
-    standards runners, and fails closed when neither can produce evidence.
+    standards runners, defaults Docker mode to the published GitLab registry
+    workbench image, and fails closed when neither can produce evidence.
   - Closeout evidence verifies `repo-standards-review` toolchain provenance by
     checking the GitLab source, private GitHub mirror, expected release tag,
     local non-authoritative skill cache, and published Docker registry image.

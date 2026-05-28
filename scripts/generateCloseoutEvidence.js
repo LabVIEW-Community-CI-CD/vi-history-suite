@@ -4,16 +4,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const DEFAULT_STANDARDS_IMAGE = 'repo-standards-review-assurance-workbench:local';
-const DEFAULT_SAVE_DIR = 'assurance-closeout-evidence';
-const DEFAULT_SKILL_ROOT = process.env.REPO_STANDARDS_REVIEW_ROOT ||
-  'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review';
 const STANDARDS_TOOLCHAIN_EXPECTED_COMMIT = 'd44f210ded557cda6d4598cdaffe938da51d873e';
 const STANDARDS_TOOLCHAIN_GITLAB_URL = 'https://gitlab.com/svelderrainruiz/repo-standards-review.git';
 const STANDARDS_TOOLCHAIN_GITHUB_URL = 'https://github.com/svelderrainruiz/repo-standards-review.git';
 const STANDARDS_TOOLCHAIN_GITHUB_TAG = 'v0.2.19';
 const STANDARDS_TOOLCHAIN_REGISTRY_IMAGE =
   'registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main';
+const LOCAL_STANDARDS_IMAGE = 'repo-standards-review-assurance-workbench:local';
+const DEFAULT_STANDARDS_IMAGE = STANDARDS_TOOLCHAIN_REGISTRY_IMAGE;
+const DEFAULT_SAVE_DIR = 'assurance-closeout-evidence';
+const DEFAULT_SKILL_ROOT = process.env.REPO_STANDARDS_REVIEW_ROOT ||
+  'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review';
 
 function npmCommand(platform = process.platform) {
   return platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -468,11 +469,60 @@ function runDockerStandards(options, deps = {}) {
     ...inspect
   }];
   let imageAvailable = inspect.status === 0;
+  let imageAccess = imageAvailable ? 'present' : 'missing';
+  const usesPublishedRegistryImage = options.standardsImage === STANDARDS_TOOLCHAIN_REGISTRY_IMAGE;
 
   if (!imageAvailable) {
+    if (usesPublishedRegistryImage) {
+      const pull = runCommand('docker', ['pull', options.standardsImage], deps);
+      results.push({ name: 'docker-pull', file: 'standards-docker-pull.txt', ...pull });
+      if (pull.status !== 0) {
+        return {
+          runner: 'docker',
+          image: options.standardsImage,
+          imageAccess: 'pull-failed',
+          success: false,
+          results,
+          summary: {
+            runner: 'docker',
+            success: false,
+            scorecard: '',
+            failed: [{ name: 'docker-pull', ...pull }]
+          },
+          failure: `Docker standards image '${options.standardsImage}' is unavailable. Run 'docker login registry.gitlab.com' and retry.`
+        };
+      }
+
+      const verifyPulledImage = runCommand('docker', ['image', 'inspect', options.standardsImage], deps);
+      results.push({
+        name: 'docker-image-after-pull',
+        file: 'standards-docker-image-after-pull.txt',
+        ...verifyPulledImage
+      });
+      imageAvailable = verifyPulledImage.status === 0;
+      imageAccess = imageAvailable ? 'pulled' : 'pull-unverified';
+      if (!imageAvailable) {
+        return {
+          runner: 'docker',
+          image: options.standardsImage,
+          imageAccess,
+          success: false,
+          results,
+          summary: {
+            runner: 'docker',
+            success: false,
+            scorecard: '',
+            failed: [{ name: 'docker-image-after-pull', ...verifyPulledImage }]
+          },
+          failure: `Docker standards image '${options.standardsImage}' was pulled, but it could not be inspected.`
+        };
+      }
+    } else {
     if (!options.buildStandardsImage) {
       return {
         runner: 'docker',
+        image: options.standardsImage,
+        imageAccess: 'missing',
         success: false,
         results,
         summary: {
@@ -481,7 +531,7 @@ function runDockerStandards(options, deps = {}) {
           scorecard: '',
           failed: results
         },
-        failure: `Docker standards image '${options.standardsImage}' is missing. Build it with: docker build -f "${path.join(options.skillRoot, 'docker', 'assurance-workbench', 'Dockerfile')}" -t ${options.standardsImage} "${options.skillRoot}"`
+        failure: `Docker standards image '${options.standardsImage}' is missing. Use the published default image or build the explicit local override with: docker build -f "${path.join(options.skillRoot, 'docker', 'assurance-workbench', 'Dockerfile')}" -t ${options.standardsImage} "${options.skillRoot}"`
       };
     }
 
@@ -497,6 +547,8 @@ function runDockerStandards(options, deps = {}) {
     if (build.status !== 0) {
       return {
         runner: 'docker',
+        image: options.standardsImage,
+        imageAccess: 'build-failed',
         success: false,
         results,
         summary: {
@@ -516,9 +568,12 @@ function runDockerStandards(options, deps = {}) {
       ...verifyImage
     });
     imageAvailable = verifyImage.status === 0;
+    imageAccess = imageAvailable ? 'built-local' : 'build-unverified';
     if (!imageAvailable) {
       return {
         runner: 'docker',
+        image: options.standardsImage,
+        imageAccess,
         success: false,
         results,
         summary: {
@@ -529,6 +584,7 @@ function runDockerStandards(options, deps = {}) {
         },
         failure: 'Docker standards image build completed, but the image could not be inspected.'
       };
+    }
     }
   }
 
@@ -545,6 +601,8 @@ function runDockerStandards(options, deps = {}) {
   );
   return {
     runner: 'docker',
+    image: options.standardsImage,
+    imageAccess,
     success: imageAvailable && summary.success,
     results,
     summary,
@@ -709,13 +767,17 @@ function renderStandardsSummary(standards) {
   }
 
   const summary = standards.summary;
-  return [
+  const lines = [
     `- Standards runner: ${summary.runner}`,
     `- Requirements quality: ${summary.requirementsQuality?.ok === true ? 'PASS' : 'see raw evidence'}`,
     `- Evidence scan: ${summary.fileCount ?? 'unknown'} files; REQ=${summary.reqSignal ?? 'unknown'}; TEST=${summary.testSignal ?? 'unknown'}`,
     `- Gate scorecard: coverage=${summary.coverageGate ?? 'see scorecard'}; doc=${summary.docGate ?? 'not flagged'}; dod=${summary.dodGate ?? 'not flagged'}`,
     '- Deferred recommendations: Definition-of-Done gate evidence remains a next-wave advisory finding.'
-  ].join('\n');
+  ];
+  if (standards.runner === 'docker') {
+    lines.splice(1, 0, `- Docker image: ${standards.image}; image access=${standards.imageAccess}`);
+  }
+  return lines.join('\n');
 }
 
 function renderProvenanceSummary(provenance) {
@@ -864,6 +926,7 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_SAVE_DIR,
   DEFAULT_STANDARDS_IMAGE,
+  LOCAL_STANDARDS_IMAGE,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
   STANDARDS_TOOLCHAIN_GITHUB_TAG,
   STANDARDS_TOOLCHAIN_GITHUB_URL,

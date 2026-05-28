@@ -130,12 +130,14 @@ npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates
 The closeout command runs `npm run traceability:audit`, `npm run docs:links`,
 `npm run check`, `npm test`, and `npm run package` when `--run-gates` is set.
 It always runs standards evidence and standards toolchain provenance. It tries
-host Python first in `auto` mode and falls back to the
-`repo-standards-review-assurance-workbench:local` Docker image when host
-preflight is unavailable. Provenance evidence verifies GitLab source authority,
-the private GitHub mirror, `v0.2.19`, the local non-authoritative skill cache,
-and access to the published GitLab registry workbench image. A summary is not
-closable until local gates, mandatory standards evidence, and provenance are
+host Python first in `auto` mode and falls back to the published GitLab registry
+workbench image when host preflight is unavailable. Docker mode inspects the
+selected image, pulls the published default when missing, and reports the
+selected image plus pull/auth status in closeout evidence; local images are used
+only through an explicit `--standards-image` override. Provenance evidence
+verifies GitLab source authority, the private GitHub mirror, `v0.2.19`, the
+local non-authoritative skill cache, and registry image access. A summary is
+not closable until local gates, mandatory standards evidence, and provenance are
 clean. Definition-of-Done gate findings remain deferred next-wave
 recommendations unless the target issue explicitly owns them.
 

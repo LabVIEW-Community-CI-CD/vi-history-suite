@@ -1,7 +1,7 @@
 Path,Classification,RtmCoverage,Notes
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command; mapped to VHS-REQ-597.
-scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner and standards toolchain provenance verification; mapped to VHS-REQ-601.
+scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner published Docker workbench support and standards toolchain provenance verification; mapped to VHS-REQ-601.
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
@@ -60,7 +60,7 @@ scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
-tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation and standards toolchain provenance tests; mapped to VHS-REQ-601.
+tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner and standards toolchain provenance tests; mapped to VHS-REQ-601.
 tests/unit/coverageMapScript.test.ts,mapped,Yes,Coverage traceability map tests; mapped to VHS-REQ-613.
 tests/unit/docsLinkCheckScript.test.ts,mapped,Yes,Documentation link-check command tests; mapped to VHS-REQ-597.
 tests/unit/bundledDocumentation.test.ts,mapped,Yes,Bundled documentation manifest/page asset verification coverage; mapped through RTM to VHS-REQ-611.
