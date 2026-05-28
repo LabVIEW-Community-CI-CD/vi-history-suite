@@ -564,6 +564,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
     expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
     expect(findReachableCommitHashesMock).toHaveBeenCalledTimes(1);
+    expect(indexer.getLastRefreshResult()?.state).toBe('warm-restart');
     expect(indexer.getLastRefreshResult()?.counts.reused).toBe(1);
     expect(indexer.getLastRefreshResult()?.counts.evaluated).toBe(0);
     expect(indexer.getLastRefreshResult()?.cache).toEqual(
@@ -581,6 +582,106 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       })
     );
     expect(cacheStore.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports restored large-repository cache reuse as warm restart after VS Code restarts', async () => {
+    configurationValues.set('maxIndexedConcurrency', 64);
+    const largeRepoPaths = Array.from(
+      { length: 6000 },
+      (_value, index) => `bulk-${index.toString().padStart(4, '0')}.vi`
+    );
+    listTrackedFilesMock.mockResolvedValue(largeRepoPaths);
+    getRepoHeadMock
+      .mockResolvedValueOnce('head-main')
+      .mockResolvedValueOnce('head-main')
+      .mockResolvedValueOnce('head-feature');
+    evaluateViEligibilityMock.mockResolvedValue({
+      eligible: true,
+      signature: 'LVIN',
+      commitHashes: ['commit-a', 'commit-b']
+    });
+    const cacheStore = createEligibilityCacheStorageMock();
+    const firstSessionIndexer = createSingleRepoIndexer(cacheStore);
+
+    await firstSessionIndexer.refresh();
+
+    expect(firstSessionIndexer.getLastRefreshResult()).toMatchObject({
+      state: 'cold-scan',
+      counts: {
+        tracked: 6000,
+        reused: 0,
+        evaluated: 6000,
+        eligible: 6000
+      },
+      cache: {
+        storage: {
+          restoreOutcome: 'empty',
+          persistOutcome: 'written',
+          persistedEntryCount: 6000
+        },
+        reuse: {
+          cacheableTrackedFileCount: 6000,
+          hitCount: 0,
+          missCount: 6000,
+          proofRejectedCount: 0
+        }
+      }
+    });
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(6000);
+    firstSessionIndexer.dispose();
+    evaluateViEligibilityMock.mockClear();
+    findReachableCommitHashesMock.mockClear();
+
+    const restartedIndexer = createSingleRepoIndexer(cacheStore);
+    await restartedIndexer.refresh();
+
+    expect(restartedIndexer.getLastRefreshResult()).toMatchObject({
+      state: 'warm-restart',
+      counts: {
+        tracked: 6000,
+        reused: 6000,
+        evaluated: 0,
+        eligible: 6000
+      },
+      cache: {
+        storage: {
+          restoreOutcome: 'restored',
+          restoredEntryCount: 6000,
+          persistOutcome: 'written',
+          persistedEntryCount: 6000
+        },
+        reuse: {
+          cacheableTrackedFileCount: 6000,
+          uncacheableTrackedFileCount: 0,
+          hitCount: 6000,
+          missCount: 0,
+          proofRejectedCount: 0
+        }
+      }
+    });
+    expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
+    expect(findReachableCommitHashesMock).toHaveBeenCalledTimes(1);
+
+    await restartedIndexer.refresh();
+
+    expect(restartedIndexer.getLastRefreshResult()).toMatchObject({
+      state: 'branch-switch',
+      counts: {
+        tracked: 6000,
+        reused: 6000,
+        evaluated: 0,
+        eligible: 6000
+      },
+      cache: {
+        reuse: {
+          cacheableTrackedFileCount: 6000,
+          hitCount: 6000,
+          missCount: 0,
+          proofRejectedCount: 0
+        }
+      }
+    });
+    expect(evaluateViEligibilityMock).not.toHaveBeenCalled();
   });
 
   it('treats missing storage cache as a miss and evaluates eligibility', async () => {

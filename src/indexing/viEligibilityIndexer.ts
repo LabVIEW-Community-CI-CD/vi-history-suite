@@ -413,8 +413,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     const nextIndexedTrackedPathsByRepository = new Map<string, Set<string>>();
     let refreshOutcome: 'applied' | 'cancelled' | 'workspace-untrusted' = 'applied';
 
-    // Track whether any HEAD changed to determine cold-scan vs warm-restart vs branch-switch
-    let hadPriorIndexedRoots = this.lastIndexedRepositoryRoots.length > 0;
+    // Track whether prior eligibility evidence exists to determine cold-scan vs warm-restart vs branch-switch.
+    const hadPriorEligibilityData =
+      this.lastIndexedRepositoryRoots.length > 0 ||
+      this.lastCacheRestoreDiagnostics.restoredEntryCount > 0;
     let anyHeadChanged = false;
 
     for (const repository of repositories) {
@@ -488,7 +490,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
     // Determine initial state type based on prior index state
     let determinedState: IndexRefreshState;
-    if (!hadPriorIndexedRoots) {
+    if (!hadPriorEligibilityData) {
       determinedState = 'cold-scan';
     } else if (anyHeadChanged) {
       determinedState = 'branch-switch';
