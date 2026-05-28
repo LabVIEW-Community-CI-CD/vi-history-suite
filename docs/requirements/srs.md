@@ -814,6 +814,13 @@ Missing numeric IDs are intentional.
   - Active SRS IDs and RTM IDs match exactly.
   - Active and historical IDs remain discoverable through `id-index.csv`.
   - GitHub issue templates support requirement-targeted agent work.
+  - The requirement-target issue template defines a decision-complete
+    requirement-target issue payload (requirement ID, files to inspect,
+    acceptance criteria, validation commands, out-of-scope boundaries, and
+    requirement/RTM update expectations) before implementation starts.
+  - The requirement-target issue template includes an optional bounded
+    Copilot prompt field that can be used without replacing the required issue
+    contract fields.
   - A committed requirement-wave guide defines requirement-first, RTM-first
     Copilot Web issue generation with fail-closed issue-quality gates.
   - The requirement-wave guide defines a requirement-gap lane for bounded field
@@ -1371,8 +1378,9 @@ Missing numeric IDs are intentional.
   before work is treated as complete.
 - Acceptance Criteria:
   - Target issues name the requirement ID, source evidence, files to inspect,
-    acceptance criteria, validation commands, and explicit out-of-scope
-    boundaries.
+    acceptance criteria, validation commands, explicit out-of-scope
+    boundaries, requirement/RTM update expectations, and an optional bounded
+    Copilot prompt.
   - PR evidence references the target issue without premature closure language
     unless the PR actually satisfies the issue closeout contract.
   - PR evidence reports required hosted CI checks, local gates, targeted tests,

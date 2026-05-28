@@ -8,18 +8,24 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 
 const {
   REQUIRED_CLOSEOUT_GATES,
+  REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS,
+  REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS,
   assertOrdered,
+  checkIssueTemplate,
   checkStaleDodDeferrals,
   parseCsvLine,
   renderResult,
   runDefinitionOfDoneGate
 } = require('../../scripts/checkDefinitionOfDone.js') as {
   REQUIRED_CLOSEOUT_GATES: string[];
+  REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS: string[];
+  REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS: string[];
   assertOrdered: (
     text: string,
     labels: string[],
     needleForLabel: (label: string) => string
   ) => { passed: boolean; details: string };
+  checkIssueTemplate: (cwd: string) => { name: string; passed: boolean; details: string };
   checkStaleDodDeferrals: (cwd: string) => { passed: boolean; details: string };
   parseCsvLine: (line: string) => string[];
   renderResult: (result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }> }) => string;
@@ -40,6 +46,52 @@ function createFixture(files: Record<string, string>): string {
     fs.writeFileSync(filePath, body, 'utf8');
   }
   return root;
+}
+
+function buildRequirementTemplate(options: { includeOptionalCopilotPrompt: boolean }): string {
+  const copilotPromptField = options.includeOptionalCopilotPrompt
+    ? `
+  - type: textarea
+    id: copilot_prompt
+    attributes:
+      label: Optional Copilot Prompt
+      description: Optional bounded Copilot prompt.
+`
+    : '\n';
+  return `name: Requirement Target
+body:
+  - type: input
+    id: requirement_id
+    validations:
+      required: true
+  - type: textarea
+    id: problem_statement
+    validations:
+      required: true
+  - type: textarea
+    id: files_to_inspect
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    validations:
+      required: true
+  - type: textarea
+    id: required_tests
+    validations:
+      required: true
+  - type: textarea
+    id: validation_commands
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    validations:
+      required: true
+  - type: textarea
+    id: requirement_updates
+    validations:
+      required: true${copilotPromptField}`;
 }
 
 describe('Definition-of-Done gate', () => {
@@ -111,5 +163,34 @@ describe('Definition-of-Done gate', () => {
 
   it('parses quoted CSV cells for traceability checks', () => {
     expect(parseCsvLine('A,"B, C","D ""quoted"""')).toEqual(['A', 'B, C', 'D "quoted"']);
+  });
+
+  it('requires decision-complete issue template fields and optional copilot prompt slot', () => {
+    expect(REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS).toEqual([
+      'requirement_id',
+      'files_to_inspect',
+      'acceptance_criteria',
+      'validation_commands',
+      'out_of_scope',
+      'requirement_updates'
+    ]);
+    expect(REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS).toEqual(['copilot_prompt']);
+
+    const missingOptionalRoot = createFixture({
+      '.github/ISSUE_TEMPLATE/requirement_target.yml': buildRequirementTemplate({
+        includeOptionalCopilotPrompt: false
+      })
+    });
+    const missingOptionalResult = checkIssueTemplate(missingOptionalRoot);
+    expect(missingOptionalResult.passed).toBe(false);
+    expect(missingOptionalResult.details).toContain('missing optional field slots: copilot_prompt');
+
+    const completeRoot = createFixture({
+      '.github/ISSUE_TEMPLATE/requirement_target.yml': buildRequirementTemplate({
+        includeOptionalCopilotPrompt: true
+      })
+    });
+    const completeResult = checkIssueTemplate(completeRoot);
+    expect(completeResult.passed).toBe(true);
   });
 });

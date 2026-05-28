@@ -36,6 +36,19 @@ const REQUIRED_ISSUE_TEMPLATE_FIELDS = [
   'requirement_updates'
 ];
 
+const REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS = [
+  'requirement_id',
+  'files_to_inspect',
+  'acceptance_criteria',
+  'validation_commands',
+  'out_of_scope',
+  'requirement_updates'
+];
+
+const REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS = [
+  'copilot_prompt'
+];
+
 const FORBIDDEN_DOD_DEFERRED_PATTERNS = [
   /Definition-of-Done gate findings remain deferred/iu,
   /Deferred recommendations:\s*Definition-of-Done/iu,
@@ -178,13 +191,23 @@ function checkStandardsProvenance(cwd) {
 function checkIssueTemplate(cwd) {
   const template = readRepoFile(cwd, '.github/ISSUE_TEMPLATE/requirement_target.yml');
   const missing = REQUIRED_ISSUE_TEMPLATE_FIELDS.filter((field) => !template.includes(`id: ${field}`));
+  const missingDecisionComplete = REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS.filter(
+    (field) => !template.includes(`id: ${field}`)
+  );
+  const missingOptional = REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS.filter(
+    (field) => !template.includes(`id: ${field}`)
+  );
   const requiredCount = (template.match(/required:\s*true/gu) || []).length;
+  const passed = missing.length === 0 &&
+    missingDecisionComplete.length === 0 &&
+    missingOptional.length === 0 &&
+    requiredCount >= REQUIRED_ISSUE_TEMPLATE_FIELDS.length;
   return {
     name: 'requirement-target issue template',
-    passed: missing.length === 0 && requiredCount >= REQUIRED_ISSUE_TEMPLATE_FIELDS.length,
-    details: missing.length === 0
-      ? `${REQUIRED_ISSUE_TEMPLATE_FIELDS.length} fields present with required validations`
-      : `Missing fields: ${missing.join(', ')}`
+    passed,
+    details: passed
+      ? `${REQUIRED_ISSUE_TEMPLATE_FIELDS.length} required fields plus optional Copilot prompt slot present`
+      : `Missing required fields: ${missing.join(', ') || 'none'}; missing decision-complete fields: ${missingDecisionComplete.join(', ') || 'none'}; missing optional field slots: ${missingOptional.join(', ') || 'none'}`
   };
 }
 
@@ -307,8 +330,11 @@ module.exports = {
   FORBIDDEN_DOD_DEFERRED_PATTERNS,
   REQUIRED_CI_STEPS,
   REQUIRED_CLOSEOUT_GATES,
+  REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS,
   REQUIRED_ISSUE_TEMPLATE_FIELDS,
+  REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS,
   assertOrdered,
+  checkIssueTemplate,
   checkStaleDodDeferrals,
   parseCsvLine,
   parseCsvRows,
