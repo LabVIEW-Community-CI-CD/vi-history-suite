@@ -15,13 +15,13 @@ src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
 src/domain/viMagic.ts,mapped,Yes,VI magic wrapper; mapped through RTM.
 src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM.
 src/extension.ts,mapped,Yes,Extension entry point; mapped through RTM.
-src/git/gitApi.ts,supporting,No,Git API wrapper enabling viHistoryService Git state resolution; supporting VHS-REQ-061.
+src/git/gitApi.ts,mapped,Yes,Git API wrapper enabling viHistoryService Git state resolution; mapped through RTM.
 src/git/gitCli.ts,mapped,Yes,Git CLI wrapper; mapped through RTM.
 src/indexing/viEligibilityIndexer.ts,mapped,Yes,VI eligibility indexer; mapped through RTM.
 src/reporting/comparisonReportAction.ts,mapped,Yes,Comparison report action; mapped through RTM.
-src/reporting/comparisonReportExecutionPlan.ts,gap,No,Comparison execution plan; pending RTM classification.
+src/reporting/comparisonReportExecutionPlan.ts,mapped,Yes,Comparison execution plan; mapped through RTM.
 src/reporting/comparisonReportPacket.ts,mapped,Yes,Comparison report packet; mapped through RTM.
-src/reporting/comparisonReportPlan.ts,gap,No,Comparison report plan; pending RTM classification.
+src/reporting/comparisonReportPlan.ts,mapped,Yes,Comparison report plan; mapped through RTM.
 src/reporting/comparisonReportPreflight.ts,mapped,Yes,Comparison report preflight; mapped through RTM.
 src/reporting/comparisonReportRuntimeExecution.ts,mapped,Yes,Comparison runtime execution; mapped through RTM.
 src/reporting/comparisonRuntimeDoctor.ts,mapped,Yes,Comparison runtime doctor; mapped through RTM.
@@ -67,7 +67,7 @@ tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests;
 tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
 tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM.
 tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.
-tests/unit/gitApi.test.ts,supporting,No,Unit verification coverage for Git API wrapper; supporting VHS-REQ-061.
+tests/unit/gitApi.test.ts,mapped,Yes,Unit verification coverage for Git API wrapper; mapped through RTM.
 tests/unit/gitCli.test.ts,mapped,Yes,Git CLI tests; mapped through RTM.
 tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering tests; mapped through RTM.
 tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
@@ -134,8 +134,12 @@ docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation; mapped through RTM.
+docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
+docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runbook documentation; simplification process reference.
+docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
+docs/requirements/traceability-inventory.csv,mapped,Yes,Traceability inventory; mapped through RTM.
 resources/bundled-docs/manifest.json,asset-doc,No,Bundled documentation manifest asset delivered with the extension package.
 resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,asset-doc,No,Bundled comparison/dashboard documentation page asset.
 resources/bundled-docs/pages/install-and-release.html,asset-doc,No,Bundled install/release documentation page asset.

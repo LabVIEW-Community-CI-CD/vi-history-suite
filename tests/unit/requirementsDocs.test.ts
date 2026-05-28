@@ -620,6 +620,8 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('asset-doc');
     expect(readme).toContain('gap');
     expect(readme).toContain('Agent Response');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-611`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-610`.');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'
     );
@@ -683,6 +685,15 @@ describe('requirements documentation coherence', () => {
       expect(row?.Notes, `${filePath} notes`).toContain(reqId);
     }
 
+    function expectMappedClassification(
+      row: Record<string, string> | undefined,
+      filePath: string
+    ): void {
+      expect(row?.Classification, `${filePath} classification`).toBe('mapped');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('Yes');
+      expect(row?.Notes, `${filePath} notes`).toContain('mapped through RTM');
+    }
+
     const reviewScenarioSupportingPaths = [
       'src/review/humanReviewSubmission.ts',
       'src/review/humanReviewSubmissionAction.ts',
@@ -696,14 +707,34 @@ describe('requirements documentation coherence', () => {
       expectSupportingClassification(row, filePath, 'VHS-REQ-610');
     }
 
-    // Git API wrapper and tests classified as supporting
-    const gitApiSupportingPaths = [
+    // Git API wrapper and tests are directly mapped through RTM
+    const gitApiMappedPaths = [
       'src/git/gitApi.ts',
       'tests/unit/gitApi.test.ts'
     ];
-    for (const filePath of gitApiSupportingPaths) {
+    for (const filePath of gitApiMappedPaths) {
       const row = inventoryByPath.get(filePath);
-      expectSupportingClassification(row, filePath, 'VHS-REQ-061');
+      expectMappedClassification(row, filePath);
+    }
+
+    // Comparison report plans are directly mapped through RTM.
+    for (const filePath of [
+      'src/reporting/comparisonReportPlan.ts',
+      'src/reporting/comparisonReportExecutionPlan.ts'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expectMappedClassification(row, filePath);
+    }
+
+    // Broader tracked-file documentation candidates are intentionally inventoried as asset docs.
+    for (const filePath of [
+      'docs/architecture/overview.md',
+      'docs/simplification/github-cutover-runbook.md',
+      'docs/simplification/github-first-simplification-analysis.md'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification, `${filePath} classification`).toBe('asset-doc');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
     }
   });
 });
