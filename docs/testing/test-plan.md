@@ -136,9 +136,12 @@ selected image, pulls the published default when missing, and reports the
 selected image plus pull/auth status in closeout evidence; local images are used
 only through an explicit `--standards-image` override. Provenance evidence
 verifies GitLab source authority, the private GitHub mirror, `v0.2.19`, the
-local non-authoritative skill cache, and registry image access. A summary is
-not closable until local gates, mandatory standards evidence, and provenance are
-clean. Definition-of-Done gate findings remain deferred next-wave
+local non-authoritative skill cache, and registry image access. The DoD parser
+reports explicit `PASS`, `N/A`, or `FAIL` and only lets scanner-visible workflow
+evidence under `.github/workflows/` promote DoD to `PASS`; generated
+`assurance-*-evidence` outputs and unit-test fixtures are disqualified sources.
+A summary is not closable until local gates, mandatory standards evidence, and
+provenance are clean. Definition-of-Done gate findings remain deferred next-wave
 recommendations unless the target issue explicitly owns them.
 
 ## Optional Vagrant Check

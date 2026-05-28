@@ -9,9 +9,11 @@ const {
   STANDARDS_TOOLCHAIN_GITLAB_URL,
   STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
   generateCloseoutEvidence,
+  parseGateScorecard,
   parseArgs,
   parseLsRemote,
   runDockerStandards,
+  summarizeDodGateEvidence,
   verifyStandardsToolchainProvenance
 } = require('../../scripts/generateCloseoutEvidence.js') as {
   DEFAULT_STANDARDS_IMAGE: string;
@@ -21,6 +23,7 @@ const {
   STANDARDS_TOOLCHAIN_GITHUB_URL: string;
   STANDARDS_TOOLCHAIN_GITLAB_URL: string;
   STANDARDS_TOOLCHAIN_REGISTRY_IMAGE: string;
+  parseGateScorecard: (scorecard: string) => Record<string, string>;
   parseArgs: (argv: string[]) => {
     kind: string;
     issue?: string;
@@ -29,6 +32,16 @@ const {
     runGates: boolean;
   };
   parseLsRemote: (stdout: string) => Array<{ commit: string; ref: string }>;
+  summarizeDodGateEvidence: (
+    evidenceScan: Record<string, unknown> | undefined,
+    scorecard: string
+  ) => {
+    status: 'PASS' | 'N/A' | 'FAIL';
+    scorecardStatus: 'PASS' | 'N/A' | 'FAIL';
+    source: string;
+    trustedSources: Array<{ path: string; classification: string }>;
+    disqualifiedSources: Array<{ path: string; classification: string }>;
+  };
   runDockerStandards: (
     options: { standardsImage: string; skillRoot: string; buildStandardsImage?: boolean },
     deps: {
@@ -67,7 +80,20 @@ const {
     exitCode: number;
     markdown: string;
     context: {
-      standards: { runner: string; success: boolean; failure?: string };
+      standards: {
+        runner: string;
+        success: boolean;
+        failure?: string;
+        summary?: {
+          dodGate?: string;
+          dodGateEvidence?: {
+            status: 'PASS' | 'N/A' | 'FAIL';
+            source: string;
+            trustedSources: Array<{ path: string; classification: string }>;
+            disqualifiedSources: Array<{ path: string; classification: string }>;
+          };
+        };
+      };
       provenance: { success: boolean; failure?: string };
       gates?: Array<{ name: string; success: boolean }>;
     };
@@ -97,6 +123,14 @@ const scorecardOk = [
   '| arch | PASS | High | - |',
   '| doc | FAIL | High | A docs link-check such as lychee |',
   '| dod | N/A | Low | DoD Gate / dod |'
+].join('\n');
+const scorecardDodPass = [
+  'Gate Scorecard',
+  '| Gate | Status | Confidence | Missing Proof |',
+  '| --- | --- | --- | --- |',
+  '| coverage | PASS | High | - |',
+  '| doc | PASS | High | - |',
+  '| dod | PASS | Med | - |'
 ].join('\n');
 
 function gitlabRemoteOk(): string {
@@ -203,6 +237,89 @@ describe('closeout evidence script', () => {
       standardsImage: STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
       runGates: true
     });
+  });
+
+  it('parses explicit gate scorecard statuses', () => {
+    expect(parseGateScorecard(scorecardDodPass)).toMatchObject({
+      coverage: 'PASS',
+      doc: 'PASS',
+      dod: 'PASS'
+    });
+  });
+
+  it('does not let generated assurance evidence satisfy the DoD gate', () => {
+    const dod = summarizeDodGateEvidence(
+      {
+        evidence: [
+          {
+            path: 'assurance-closeout-evidence/assurance-scorecard.txt',
+            rule_source: 'GATE:dod:context',
+            matched_text: 'DoD Gate / dod'
+          }
+        ]
+      },
+      scorecardDodPass
+    );
+
+    expect(dod).toMatchObject({
+      status: 'N/A',
+      scorecardStatus: 'PASS',
+      source: 'disqualified-only'
+    });
+    expect(dod.disqualifiedSources).toEqual([
+      expect.objectContaining({
+        path: 'assurance-closeout-evidence/assurance-scorecard.txt',
+        classification: 'generated-assurance-evidence'
+      })
+    ]);
+  });
+
+  it('does not let unit-test fixture text satisfy the DoD gate', () => {
+    const dod = summarizeDodGateEvidence(
+      {
+        evidence: [
+          {
+            path: 'tests/unit/closeoutEvidenceScript.test.ts',
+            rule_source: 'GATE:dod:context',
+            matched_text: 'DoD Gate / dod'
+          }
+        ]
+      },
+      scorecardDodPass
+    );
+
+    expect(dod.status).toBe('N/A');
+    expect(dod.disqualifiedSources[0]).toMatchObject({
+      classification: 'test-fixture',
+      path: 'tests/unit/closeoutEvidenceScript.test.ts'
+    });
+  });
+
+  it('allows DoD to pass only when scanner-visible evidence is a workflow', () => {
+    const dod = summarizeDodGateEvidence(
+      {
+        evidence: [
+          {
+            path: '.github/workflows/ci.yml',
+            rule_source: 'GATE:dod:context',
+            matched_text: 'name: DoD Gate / dod'
+          }
+        ]
+      },
+      scorecardDodPass
+    );
+
+    expect(dod).toMatchObject({
+      status: 'PASS',
+      scorecardStatus: 'PASS',
+      source: 'workflow'
+    });
+    expect(dod.trustedSources).toEqual([
+      expect.objectContaining({
+        classification: 'workflow',
+        path: '.github/workflows/ci.yml'
+      })
+    ]);
   });
 
   it('pulls the published Docker standards image when it is not present locally', () => {
