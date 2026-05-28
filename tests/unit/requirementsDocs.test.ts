@@ -334,7 +334,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
     expect(testPlan).toContain(
-      '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; scripts/checkDefinitionOfDone.js'
+      '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml'
     );
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
     expect(workflowTest).toContain('keeps the docs link-check lychee gate');
@@ -467,8 +467,15 @@ describe('requirements documentation coherence', () => {
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-615');
     const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-615');
     const ciWorkflowRow = inventoryRows.find((row) => row.Path === '.github/workflows/ci.yml');
+    const marketplaceWorkflowRow = inventoryRows.find(
+      (row) => row.Path === '.github/workflows/marketplace-release.yml'
+    );
     const checkerRow = inventoryRows.find((row) => row.Path === 'scripts/checkDefinitionOfDone.js');
     const closeoutRow = inventoryRows.find((row) => row.Path === 'scripts/generateCloseoutEvidence.js');
+    const marketplaceListingRow = inventoryRows.find(
+      (row) => row.Path === 'scripts/verifyMarketplaceListing.js'
+    );
+    const maintainerOpsRow = inventoryRows.find((row) => row.Path === 'docs/maintainer-operations.md');
     const checkerTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/definitionOfDoneGate.test.ts'
     );
@@ -482,14 +489,19 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('closeout readiness');
     expect(srs).toContain('optional bounded');
     expect(srs).toContain('Copilot prompt');
+    expect(srs).toContain('Release-readiness evidence remains decision-complete');
+    expect(srs).toContain('docs link check');
+    expect(srs).toContain('Marketplace listing evidence');
     expect(srs).toContain('The repo-native `npm run dod:gate` command verifies the DoD contract');
     expect(srs).toContain('Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`');
     expect(srs).toContain('`scripts/generateCloseoutEvidence.js`');
     expect(srs).toContain('`.github/workflows/ci.yml`');
     expect(testPlan).toContain(
-      '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; scripts/checkDefinitionOfDone.js'
+      '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml'
     );
-    expect(testPlan).toContain('.github/pull_request_template.md; docs/requirements/srs.md');
+    expect(testPlan).toContain('scripts/verifyMarketplaceListing.js; .github/pull_request_template.md');
+    expect(testPlan).toContain('docs/maintainer-operations.md; docs/requirements/srs.md');
+    expect(testPlan).toContain('.github/pull_request_template.md; docs/maintainer-operations.md');
     expect(testPlan).toContain('docs/requirements/traceability-inventory.csv');
     expect(testPlan).toContain('lightweight evidence surface');
     expect(testPlan).toContain('target requirement');
@@ -498,14 +510,18 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('out-of-scope statement');
     expect(testPlan).toContain('closeout readiness');
     expect(testPlan).toContain('hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`');
+    expect(testPlan).toContain('release-evidence/release-evidence-contract.json');
     expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
     expect(packageJson.scripts['dod:gate']).toBe('node scripts/checkDefinitionOfDone.js');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-012');
     expect(requirementRow?.ImplementationRefs).toContain('package.json');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
+    expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/marketplace-release.yml');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/checkDefinitionOfDone.js');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/verifyMarketplaceListing.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/pull_request_template.md');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/maintainer-operations.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/srs.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/id-index.csv');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
@@ -525,9 +541,18 @@ describe('requirements documentation coherence', () => {
     expect(ciWorkflowRow?.Classification).toBe('release-ci');
     expect(ciWorkflowRow?.RtmCoverage).toBe('Yes');
     expect(ciWorkflowRow?.Notes).toContain('VHS-REQ-615');
+    expect(marketplaceWorkflowRow?.Classification).toBe('release-ci');
+    expect(marketplaceWorkflowRow?.RtmCoverage).toBe('Yes');
+    expect(marketplaceWorkflowRow?.Notes).toContain('VHS-REQ-615');
     expect(closeoutRow?.Classification).toBe('mapped');
     expect(closeoutRow?.RtmCoverage).toBe('Yes');
     expect(closeoutRow?.Notes).toContain('VHS-REQ-615');
+    expect(marketplaceListingRow?.Classification).toBe('mapped');
+    expect(marketplaceListingRow?.RtmCoverage).toBe('Yes');
+    expect(marketplaceListingRow?.Notes).toContain('VHS-REQ-615');
+    expect(maintainerOpsRow?.Classification).toBe('asset-doc');
+    expect(maintainerOpsRow?.RtmCoverage).toBe('Yes');
+    expect(maintainerOpsRow?.Notes).toContain('VHS-REQ-615');
     const prTemplateRow = inventoryRows.find((row) => row.Path === '.github/pull_request_template.md');
     expect(prTemplateRow?.Classification).toBe('mapped');
     expect(prTemplateRow?.RtmCoverage).toBe('Yes');
@@ -718,6 +743,8 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('reachable from `origin/main`');
     expect(srs).toContain('pinned VSCE wrapper');
     expect(srs).toContain('Marketplace listing verification retries bounded propagation lag');
+    expect(srs).toContain('retained artifacts');
+    expect(srs).toContain('traceability audit, docs link check, tests');
 
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-016');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
@@ -740,6 +767,7 @@ describe('requirements documentation coherence', () => {
       'manual:marketplace-release-environment-setup'
     );
     expect(requirementRow?.Notes).toContain('exact-tag-only');
+    expect(requirementRow?.Notes).toContain('retained evidence naming required validation surfaces');
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-609-governed-branch-promotion-and-marketplace-release-automation'
     );
@@ -754,6 +782,12 @@ describe('requirements documentation coherence', () => {
       expect(row?.Classification, `${filePath} classification`).toBe('mapped');
       expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('Yes');
     }
+    expect(
+      inventoryByPath.get('.github/workflows/marketplace-release.yml')?.Notes
+    ).toContain('VHS-REQ-609');
+    expect(inventoryByPath.get('scripts/verifyMarketplaceListing.js')?.Notes).toContain(
+      'bounded attempt evidence'
+    );
   });
 
   it('keeps dashboard aggregate review traceable for VHS-REQ-610', () => {
@@ -1185,9 +1219,12 @@ describe('requirements documentation coherence', () => {
     );
     expect(readme).toContain('docker login registry.gitlab.com');
     expect(readme).toContain('Definition-of-Done gate as explicit');
+    expect(readme).toContain('DoD Gate / dod');
+    expect(readme).toContain('.github/workflows/ci.yml');
     expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
     expect(readme).toContain('blocking traceability and Definition-of-Done');
     expect(readme).toContain('Treat non-PASS DoD evidence as active closeout evidence');
+    expect(readme).not.toContain('dedicated CI issue adds it');
     expect(srs).toContain('closeout evidence command generates GitHub-ready umbrella issue summaries');
     expect(srs).toContain('host Python and Docker assurance-workbench');
     expect(srs).toContain('published GitLab registry');

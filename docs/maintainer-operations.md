@@ -90,8 +90,13 @@ It must:
 - publish the located VSIX with `node scripts/runPinnedVsce.js publish --packagePath`
 - verify the live Marketplace listing with bounded `vsce show` retry through
   `node scripts/verifyMarketplaceListing.js`
-- upload `release-evidence/marketplace-show.json` and the VSIX as retained
-  release evidence
+- retain release evidence that names required validation surfaces
+  (traceability audit, docs link check, tests, package, Marketplace listing, and
+  closeout expectation)
+- upload retained release artifacts including:
+  `release-evidence/marketplace-show.json`,
+  `release-evidence/marketplace-listing-verification.json`,
+  `release-evidence/release-evidence-contract.json`, `coverage/**`, and the VSIX
 
 The workflow uses the protected GitHub environment `marketplace-release`.
 Configure that environment with required approval and `VSCE_PAT`.
@@ -205,6 +210,10 @@ Maintainer evidence should be small and repeatable:
 - packaged VSIX artifact from that run (`vi-history-suite-*.vsix`)
 - Marketplace release workflow URL and tag ref for publication evidence
 - `release-evidence/marketplace-show.json` from post-publish verification
+- `release-evidence/marketplace-listing-verification.json` with bounded retry
+  attempt outcomes (`--attempts`, `--delay-ms`, and total bounded window)
+- `release-evidence/release-evidence-contract.json` naming required validation
+  surfaces and retained artifacts for release closeout
 - retained `coverage/**` output from the Marketplace release test run
 - closeout evidence generated with `npm run closeout:evidence`, including
   mandatory standards-review output from host Python or the Docker assurance
@@ -245,7 +254,7 @@ Manual verification steps:
 
    ```powershell
    node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
-   node scripts/verifyMarketplaceListing.js svelderrainruiz.vi-history-suite 1.4.2 --out release-evidence/marketplace-show.json --attempts 6 --delay-ms 30000
+   node scripts/verifyMarketplaceListing.js svelderrainruiz.vi-history-suite 1.4.2 --out release-evidence/marketplace-show.json --report-out release-evidence/marketplace-listing-verification.json --attempts 6 --delay-ms 30000
    ```
 
 2. Confirm the returned URLs use the organization repository as their base:

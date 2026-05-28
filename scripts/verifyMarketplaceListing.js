@@ -11,6 +11,7 @@ function parseArgs(argv) {
     extensionId,
     expectedVersion,
     out: undefined,
+    reportOut: undefined,
     attempts: 1,
     delayMs: 0
   };
@@ -27,6 +28,7 @@ function parseArgs(argv) {
     };
 
     if (arg === '--out') options.out = next();
+    else if (arg === '--report-out') options.reportOut = next();
     else if (arg === '--attempts') options.attempts = Number(next());
     else if (arg === '--delay-ms') options.delayMs = Number(next());
     else if (arg === '--help' || arg === '-h') options.help = true;
@@ -51,7 +53,7 @@ function parseArgs(argv) {
 }
 
 function usage() {
-  return 'Usage: node scripts/verifyMarketplaceListing.js <extension-id> <version> --out <path> --attempts 6 --delay-ms 30000';
+  return 'Usage: node scripts/verifyMarketplaceListing.js <extension-id> <version> --out <path> --report-out <path> --attempts 6 --delay-ms 30000';
 }
 
 function sleepSync(ms) {
@@ -100,6 +102,8 @@ function runVsceShow(extensionId, deps = {}) {
 function verifyMarketplaceListing(options, deps = {}) {
   const sleep = deps.sleepSync || sleepSync;
   const attempts = [];
+  const maxWindowMs =
+    options.attempts > 0 ? options.delayMs * Math.max(options.attempts - 1, 0) : 0;
 
   for (let attempt = 1; attempt <= options.attempts; attempt += 1) {
     const show = runVsceShow(options.extensionId, deps);
@@ -127,7 +131,8 @@ function verifyMarketplaceListing(options, deps = {}) {
             success: true,
             attempts,
             payload,
-            message: attemptRecord.message
+            message: attemptRecord.message,
+            boundedWindowMs: maxWindowMs
           };
         }
 
@@ -149,7 +154,21 @@ function verifyMarketplaceListing(options, deps = {}) {
   return {
     success: false,
     attempts,
+    boundedWindowMs: maxWindowMs,
     message: `Marketplace listing verification did not find version ${options.expectedVersion} after ${options.attempts} attempts; this may be Marketplace propagation lag or absent publication.`
+  };
+}
+
+function buildVerificationReport(options, result) {
+  return {
+    extensionId: options.extensionId,
+    expectedVersion: options.expectedVersion,
+    configuredAttempts: options.attempts,
+    configuredDelayMs: options.delayMs,
+    boundedWindowMs: result.boundedWindowMs ?? options.delayMs * Math.max(options.attempts - 1, 0),
+    success: result.success,
+    message: result.message,
+    attempts: result.attempts
   };
 }
 
@@ -162,6 +181,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
     }
 
     const result = verifyMarketplaceListing(options, deps);
+    writeJson(options.reportOut, buildVerificationReport(options, result));
     process.stdout.write(`${result.message}\n`);
     return result.success ? 0 : 1;
   } catch (error) {
@@ -181,5 +201,6 @@ module.exports = {
   parseMarketplaceShow,
   runVsceShow,
   sleepSync,
+  buildVerificationReport,
   verifyMarketplaceListing
 };

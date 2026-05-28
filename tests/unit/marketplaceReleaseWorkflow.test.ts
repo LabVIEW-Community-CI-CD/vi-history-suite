@@ -59,6 +59,11 @@ describe('Marketplace release workflow', () => {
 
     expect(workflow).toContain('node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION"');
     expect(workflow).toContain('release-evidence/marketplace-show.json');
+    expect(workflow).toContain('release-evidence/marketplace-listing-verification.json');
+    expect(workflow).toContain('release-evidence/release-evidence-contract.json');
+    expect(workflow).toContain('npm run traceability:audit');
+    expect(workflow).toContain('npm run docs:links');
+    expect(workflow).toContain('Closeout expectation: npm run closeout:evidence');
     expect(workflow).toContain('--attempts 6');
     expect(workflow).toContain('--delay-ms 30000');
     expect(workflow).toContain('actions/upload-artifact@v7');
