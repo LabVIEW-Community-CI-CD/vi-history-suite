@@ -93,30 +93,17 @@ function commandLine(command, args) {
   return [command, ...args].join(' ');
 }
 
-function quoteForWindowsShell(value) {
-  const text = String(value);
-  if (/^[A-Za-z0-9_./:\\=-]+$/.test(text)) {
-    return text;
-  }
-
-  return `"${text.replace(/"/g, '\\"')}"`;
-}
-
-function windowsShellLine(command, args) {
-  return [command, ...args].map(quoteForWindowsShell).join(' ');
-}
-
 function runCommand(command, args, deps = {}) {
   const spawnSyncImpl = deps.spawnSync || spawnSync;
   const platform = deps.platform || process.platform;
-  const useWindowsShellLine = platform === 'win32' && !deps.spawnSync;
+  const useWindowsCommandProcessor = platform === 'win32' && !deps.spawnSync;
   const result = spawnSyncImpl(
-    useWindowsShellLine ? windowsShellLine(command, args) : command,
-    useWindowsShellLine ? [] : args,
+    useWindowsCommandProcessor ? 'cmd.exe' : command,
+    useWindowsCommandProcessor ? ['/d', '/s', '/c', command, ...args] : args,
     {
-    cwd: deps.cwd,
-    encoding: 'utf8',
-    shell: platform === 'win32'
+      cwd: deps.cwd,
+      encoding: 'utf8',
+      shell: false
     }
   );
 
