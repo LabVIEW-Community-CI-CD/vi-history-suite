@@ -40,6 +40,33 @@ const TEST_GLOBS = [
   'tests/integration/**/*.ts'
 ];
 
+const TRACEABILITY_SURFACE_GLOBS = [
+  ...IMPLEMENTATION_GLOBS,
+  ...TEST_GLOBS,
+  'docs/requirements/*.md',
+  'docs/requirements/*.csv',
+  '.github/workflows/*.yml',
+  '.github/ISSUE_TEMPLATE/*.yml',
+  'resources/bundled-docs/**',
+  'package.json',
+  'package-lock.json',
+  'README.md',
+  'INSTALL.md',
+  'FIRST-RUN.md',
+  'SUPPORT.md',
+  'SECURITY.md',
+  'vagrant/Vagrantfile',
+  'vagrant/provision/**/*.ps1',
+  '.devcontainer/**',
+  '.vscode/*.json'
+];
+
+const ALLOWED_HIDDEN_DIRECTORIES = new Set([
+  '.github',
+  '.devcontainer',
+  '.vscode'
+]);
+
 function parseCsv(text) {
   const rows = [];
   let currentRow = [];
@@ -155,7 +182,8 @@ function findMatchingFiles(patterns, cwd) {
       const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
 
       if (entry.isDirectory()) {
-        if (!entry.name.startsWith('.') && entry.name !== 'node_modules' && entry.name !== 'out' && entry.name !== 'out-tests') {
+        const shouldTraverseHiddenDirectory = ALLOWED_HIDDEN_DIRECTORIES.has(entry.name);
+        if ((shouldTraverseHiddenDirectory || !entry.name.startsWith('.')) && entry.name !== 'node_modules' && entry.name !== 'out' && entry.name !== 'out-tests') {
           walkDir(fullPath, relPath);
         }
       } else if (entry.isFile()) {
@@ -202,6 +230,8 @@ function auditTraceability(deps = {}) {
     unmappedTestCandidates: [],
     missingInventoryEntries: [],
     missingRtmReferences: [],
+    rtmCoverageMismatches: [],
+    gapEntriesPresentInRtm: [],
     gapCount: 0,
     totalInventoryEntries: 0
   };
@@ -224,16 +254,48 @@ function auditTraceability(deps = {}) {
 
   findings.totalInventoryEntries = inventory.rows.length;
 
-  // Validate classifications
+  // Validate classifications and RTM coverage consistency.
   for (const row of inventory.rows) {
+    const isInRtm = rtmPaths.has(row.Path);
+    const normalizedCoverage = (row.RtmCoverage || '').trim().toLowerCase();
+    const expectsRtmMembership = normalizedCoverage === 'yes';
+    const expectsNoRtmMembership = normalizedCoverage === 'no';
+
     if (!VALID_CLASSIFICATIONS.includes(row.Classification)) {
       findings.invalidClassifications.push({
         path: row.Path,
         classification: row.Classification
       });
     }
+
+    if (
+      (expectsRtmMembership && !isInRtm) ||
+      (expectsNoRtmMembership && isInRtm)
+    ) {
+      findings.rtmCoverageMismatches.push({
+        path: row.Path,
+        rtmCoverage: row.RtmCoverage,
+        inRtm: isInRtm
+      });
+    }
+
+    if (row.Classification === 'mapped' && !isInRtm) {
+      findings.missingRtmReferences.push(row.Path);
+    }
+
     if (row.Classification === 'gap') {
       findings.gapCount += 1;
+      if (isInRtm) {
+        findings.gapEntriesPresentInRtm.push(row.Path);
+      }
+    }
+  }
+
+  // Find committed traceability surface files that must be inventoried.
+  const candidateFiles = findMatchingFiles(TRACEABILITY_SURFACE_GLOBS, cwd);
+  for (const file of candidateFiles) {
+    if (!inventory.byPath.has(file)) {
+      findings.missingInventoryEntries.push(file);
     }
   }
 
@@ -242,12 +304,9 @@ function auditTraceability(deps = {}) {
   for (const file of implementationFiles) {
     const inventoryEntry = inventory.byPath.get(file);
     if (!inventoryEntry) {
-      findings.missingInventoryEntries.push(file);
       if (!rtmPaths.has(file)) {
         findings.unmappedImplementationCandidates.push(file);
       }
-    } else if (inventoryEntry.Classification === 'mapped' && !rtmPaths.has(file)) {
-      findings.missingRtmReferences.push(file);
     }
   }
 
@@ -256,12 +315,9 @@ function auditTraceability(deps = {}) {
   for (const file of testFiles) {
     const inventoryEntry = inventory.byPath.get(file);
     if (!inventoryEntry) {
-      findings.missingInventoryEntries.push(file);
       if (!rtmPaths.has(file)) {
         findings.unmappedTestCandidates.push(file);
       }
-    } else if (inventoryEntry.Classification === 'mapped' && !rtmPaths.has(file)) {
-      findings.missingRtmReferences.push(file);
     }
   }
 
@@ -305,11 +361,27 @@ function auditTraceability(deps = {}) {
     }
   }
 
+  if (findings.rtmCoverageMismatches.length > 0) {
+    stderr.write(`[traceability-audit] Inventory RtmCoverage mismatches: ${findings.rtmCoverageMismatches.length}\n`);
+    for (const mismatch of findings.rtmCoverageMismatches) {
+      stderr.write(`  - ${mismatch.path}: RtmCoverage='${mismatch.rtmCoverage}' but ${mismatch.inRtm ? 'is' : 'is not'} in RTM\n`);
+    }
+  }
+
+  if (findings.gapEntriesPresentInRtm.length > 0) {
+    stderr.write(`[traceability-audit] Gap entries already represented in RTM: ${findings.gapEntriesPresentInRtm.length}\n`);
+    for (const filePath of findings.gapEntriesPresentInRtm) {
+      stderr.write(`  - ${filePath}\n`);
+    }
+  }
+
   // Non-punitive baseline: report but do not fail for gap entries
   const hasBlockingIssues =
     findings.invalidClassifications.length > 0 ||
     findings.missingInventoryEntries.length > 0 ||
-    findings.missingRtmReferences.length > 0;
+    findings.missingRtmReferences.length > 0 ||
+    findings.rtmCoverageMismatches.length > 0 ||
+    findings.gapEntriesPresentInRtm.length > 0;
 
   if (hasBlockingIssues) {
     stderr.write('[traceability-audit] Audit found blocking issues.\n');
@@ -341,6 +413,7 @@ module.exports = {
   VALID_CLASSIFICATIONS,
   IMPLEMENTATION_GLOBS,
   TEST_GLOBS,
+  TRACEABILITY_SURFACE_GLOBS,
   auditTraceability,
   extractRtmPaths,
   findMatchingFiles,
