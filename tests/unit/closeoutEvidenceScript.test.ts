@@ -1,19 +1,44 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const {
+  STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
+  STANDARDS_TOOLCHAIN_GITHUB_TAG,
+  STANDARDS_TOOLCHAIN_GITHUB_URL,
+  STANDARDS_TOOLCHAIN_GITLAB_URL,
+  STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
   generateCloseoutEvidence,
-  parseArgs
+  parseArgs,
+  parseLsRemote,
+  verifyStandardsToolchainProvenance
 } = require('../../scripts/generateCloseoutEvidence.js') as {
+  STANDARDS_TOOLCHAIN_EXPECTED_COMMIT: string;
+  STANDARDS_TOOLCHAIN_GITHUB_TAG: string;
+  STANDARDS_TOOLCHAIN_GITHUB_URL: string;
+  STANDARDS_TOOLCHAIN_GITLAB_URL: string;
+  STANDARDS_TOOLCHAIN_REGISTRY_IMAGE: string;
   parseArgs: (argv: string[]) => {
     kind: string;
     issue?: string;
     standardsRunner: string;
     runGates: boolean;
   };
+  parseLsRemote: (stdout: string) => Array<{ commit: string; ref: string }>;
+  verifyStandardsToolchainProvenance: (
+    options: { skillRoot: string },
+    deps: {
+      existsSync?: (targetPath: string) => boolean;
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { cwd?: string; encoding?: string; shell?: boolean }
+      ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
+    }
+  ) => { success: boolean; failure?: string; registry: { image: string; success: boolean } };
   generateCloseoutEvidence: (
     argv: string[],
     deps: {
       cwd?: string;
+      existsSync?: (targetPath: string) => boolean;
       platform?: string;
       spawnSync?: (
         command: string,
@@ -26,6 +51,7 @@ const {
     markdown: string;
     context: {
       standards: { runner: string; success: boolean; failure?: string };
+      provenance: { success: boolean; failure?: string };
       gates?: Array<{ name: string; success: boolean }>;
     };
   };
@@ -56,13 +82,37 @@ const scorecardOk = [
   '| dod | N/A | Low | DoD Gate / dod |'
 ].join('\n');
 
+function gitlabRemoteOk(): string {
+  return [
+    `${STANDARDS_TOOLCHAIN_EXPECTED_COMMIT}\tHEAD`,
+    `${STANDARDS_TOOLCHAIN_EXPECTED_COMMIT}\trefs/heads/main`
+  ].join('\n');
+}
+
+function githubRemoteOk(): string {
+  return [
+    `${STANDARDS_TOOLCHAIN_EXPECTED_COMMIT}\tHEAD`,
+    `${STANDARDS_TOOLCHAIN_EXPECTED_COMMIT}\trefs/heads/main`,
+    `${STANDARDS_TOOLCHAIN_EXPECTED_COMMIT}\trefs/tags/${STANDARDS_TOOLCHAIN_GITHUB_TAG}`
+  ].join('\n');
+}
+
 function hostSuccessSpawnSync() {
   return vi.fn((command: string, args: string[]) => {
     const line = [command, ...args].join(' ');
+    if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+      return { status: 0, stdout: gitlabRemoteOk() };
+    }
+    if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+      return { status: 0, stdout: githubRemoteOk() };
+    }
     if (command === 'git' && args.includes('--show-current')) return { status: 0, stdout: 'feature/test\n' };
     if (command === 'git' && args.includes('--short=8')) return { status: 0, stdout: '12345678\n' };
     if (command === 'git' && args.includes('HEAD')) return { status: 0, stdout: '1234567890abcdef\n' };
     if (command === 'gh') return { status: 1, stderr: 'not authenticated' };
+    if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+      return { status: 0, stdout: json({ schemaVersion: 2 }) };
+    }
     if (command === 'npm.cmd' && args.join(' ') === 'run traceability:audit') {
       return {
         status: 0,
@@ -80,6 +130,54 @@ function hostSuccessSpawnSync() {
 }
 
 describe('closeout evidence script', () => {
+  it('parses ls-remote output for provenance checks', () => {
+    expect(parseLsRemote(`${STANDARDS_TOOLCHAIN_EXPECTED_COMMIT}\trefs/heads/main\n`)).toEqual([
+      { commit: STANDARDS_TOOLCHAIN_EXPECTED_COMMIT, ref: 'refs/heads/main' }
+    ]);
+  });
+
+  it('verifies standards toolchain provenance as machine-readable evidence', () => {
+    const provenance = verifyStandardsToolchainProvenance(
+      { skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review' },
+      {
+        existsSync: () => true,
+        spawnSync: hostSuccessSpawnSync()
+      }
+    );
+
+    expect(provenance.success).toBe(true);
+    expect(provenance.registry).toMatchObject({
+      image: STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
+      success: true
+    });
+  });
+
+  it('fails provenance when the published Docker registry image is inaccessible', () => {
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+        return { status: 0, stdout: gitlabRemoteOk() };
+      }
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+        return { status: 0, stdout: githubRemoteOk() };
+      }
+      if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+        return { status: 1, stderr: 'denied: access forbidden' };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const provenance = verifyStandardsToolchainProvenance(
+      { skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review' },
+      {
+        existsSync: () => true,
+        spawnSync
+      }
+    );
+
+    expect(provenance.success).toBe(false);
+    expect(provenance.failure).toContain('docker login registry.gitlab.com');
+  });
+
   it('parses standards closeout options', () => {
     expect(parseArgs(['--kind', 'standards', '--issue', '130', '--run-gates'])).toMatchObject({
       kind: 'standards',
@@ -95,6 +193,7 @@ describe('closeout evidence script', () => {
       {
         platform: 'win32',
         cwd: 'C:\\repo',
+        existsSync: () => true,
         spawnSync: hostSuccessSpawnSync()
       }
     );
@@ -105,6 +204,9 @@ describe('closeout evidence script', () => {
     expect(result.markdown).toContain('GitHub issue: unavailable; supply manually if needed');
     expect(result.markdown).toContain('| traceability summary | INFO | 156 inventory entries; 0 gaps |');
     expect(result.markdown).toContain('Standards runner: host');
+    expect(result.markdown).toContain('## Standards Toolchain Provenance');
+    expect(result.markdown).toContain('| GitLab source main | PASS |');
+    expect(result.markdown).toContain('non-authoritative-cache');
     expect(result.markdown).toContain('Evidence scan: 251 files; REQ=strong; TEST=strong');
     expect(result.markdown).toContain('Closable: yes');
     expect(result.markdown).toContain('| docs:links | PASS | npm.cmd run docs:links |');
@@ -116,6 +218,7 @@ describe('closeout evidence script', () => {
     const result = generateCloseoutEvidence(['--kind', 'standards', '--issue', '130'], {
       platform: 'win32',
       cwd: 'C:\\repo',
+      existsSync: () => true,
       spawnSync: hostSuccessSpawnSync()
     });
 
@@ -128,8 +231,17 @@ describe('closeout evidence script', () => {
     const spawnSync = vi.fn((command: string, args: string[]) => {
       const line = [command, ...args].join(' ');
       if (command === 'git' && args.includes('--show-current')) return { status: 0, stdout: 'feature/test\n' };
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+        return { status: 0, stdout: gitlabRemoteOk() };
+      }
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+        return { status: 0, stdout: githubRemoteOk() };
+      }
       if (command === 'git') return { status: 0, stdout: '1234567890abcdef\n' };
       if (command === 'gh') return { status: 1, stderr: 'gh unavailable' };
+      if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+        return { status: 0, stdout: json({ schemaVersion: 2 }) };
+      }
       if (line.includes('preflight_local_dependencies.py')) return { status: 1, stderr: 'python3 missing' };
       if (command === 'docker' && args.join(' ').startsWith('image inspect')) return { status: 0, stdout: '[]' };
       if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
@@ -140,6 +252,7 @@ describe('closeout evidence script', () => {
 
     const result = generateCloseoutEvidence(['--kind', 'standards', '--issue', '130'], {
       cwd: 'C:\\repo',
+      existsSync: () => true,
       spawnSync
     });
 
@@ -162,6 +275,7 @@ describe('closeout evidence script', () => {
 
     const result = generateCloseoutEvidence(['--kind', 'standards', '--issue', '130'], {
       cwd: 'C:\\repo',
+      existsSync: () => false,
       spawnSync
     });
 
@@ -189,6 +303,7 @@ describe('closeout evidence script', () => {
       {
         platform: 'win32',
         cwd: 'C:\\repo',
+        existsSync: () => true,
         spawnSync: hostSuccessSpawnSync()
       }
     );

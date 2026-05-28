@@ -87,9 +87,10 @@ implementation, verification, or inventory gaps.
 
 1. Confirm every child issue is closed or explicitly deferred to an open
    follow-up issue.
-2. Generate the closeout evidence summary. Standards evidence is mandatory and
-   the command fails closed unless host Python or the Docker assurance workbench
-   can produce it:
+2. Generate the closeout evidence summary. Standards evidence and standards
+   toolchain provenance are mandatory, and the command fails closed unless host
+   Python or the Docker assurance workbench can produce evidence and the
+   `repo-standards-review` source/mirror/registry facts can be verified:
 
 ```shell
 npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates --save-dir assurance-closeout-evidence
@@ -101,10 +102,14 @@ Use Docker explicitly when host Python is unavailable:
 npm run closeout:evidence -- --kind standards --issue <issue-number> --standards-runner docker --save-dir assurance-closeout-evidence
 ```
 
-The Docker runner expects the `repo-standards-review-assurance-workbench:local`
-image. Build it from the local `repo-standards-review` skill checkout before
-running closeout evidence, or use `--build-standards-image` when a rebuild is
-intentional.
+The Docker standards runner currently expects the
+`repo-standards-review-assurance-workbench:local` image. Build it from the local
+`repo-standards-review` skill checkout before running closeout evidence, or use
+`--build-standards-image` when a rebuild is intentional. Provenance evidence
+separately verifies GitLab source authority, the private GitHub mirror,
+`v0.2.19`, the local non-authoritative skill cache, and access to
+`registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`;
+run `docker login registry.gitlab.com` if the registry image is denied.
 
 3. The closeout command runs these repo-local gates when `--run-gates` is set:
 
