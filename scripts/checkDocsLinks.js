@@ -149,9 +149,8 @@ function resolveTargetPath(cwd, sourceRelativePath, pathPart) {
 
 function slugHeading(heading) {
   return heading
-    .replace(/<[^>]*>/g, '')
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[`*_~]/g, '')
+    .replace(/[`*_~<>]/g, '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9 _-]/g, '')
