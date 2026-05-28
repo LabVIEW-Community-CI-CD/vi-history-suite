@@ -217,7 +217,8 @@ describe('requirements documentation coherence', () => {
     ].join('\n');
 
     for (const retiredPattern of [
-      /\bGitLab\b/i,
+      /gitlab\.com\/svelderrainruiz\/vi-history-suite/i,
+      /GitLab authority/i,
       /\bGitFlow\b/i,
       /private release/i,
       /governed proof/i,
@@ -1067,15 +1068,22 @@ describe('requirements documentation coherence', () => {
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
     expect(readme).toContain('Traceability Closeout Runbook');
     expect(readme).toContain('npm run closeout:evidence');
-    expect(readme).toContain('Standards evidence is mandatory');
+    expect(readme).toContain('Standards evidence and standards');
+    expect(readme).toContain('toolchain provenance');
     expect(readme).toContain('repo-standards-review-assurance-workbench:local');
+    expect(readme).toContain(
+      'registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main'
+    );
     expect(readme).toContain('Definition-of-Done gate evidence');
     expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
     expect(readme).toContain('blocking traceability findings are resolved or');
     expect(readme).toContain('standards maturity warnings outside the umbrella scope');
     expect(srs).toContain('closeout evidence command generates GitHub-ready umbrella issue summaries');
     expect(srs).toContain('host Python and Docker assurance-workbench');
+    expect(srs).toContain('toolchain provenance');
+    expect(srs).toContain('private GitHub mirror');
     expect(srs).toContain('Definition-of-Done gate');
+    expect(requirementRow?.Notes).toContain('standards toolchain provenance checks');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'
@@ -1096,6 +1104,7 @@ describe('requirements documentation coherence', () => {
       const row = inventoryByPath.get(filePath);
       expect(row?.Classification, `${filePath} classification`).toBe('mapped');
       expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('Yes');
+      expect(row?.Notes).toContain('provenance');
     }
 
     const bundledDocumentationImplementationPaths = [

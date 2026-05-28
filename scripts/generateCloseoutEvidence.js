@@ -8,6 +8,12 @@ const DEFAULT_STANDARDS_IMAGE = 'repo-standards-review-assurance-workbench:local
 const DEFAULT_SAVE_DIR = 'assurance-closeout-evidence';
 const DEFAULT_SKILL_ROOT = process.env.REPO_STANDARDS_REVIEW_ROOT ||
   'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review';
+const STANDARDS_TOOLCHAIN_EXPECTED_COMMIT = 'd44f210ded557cda6d4598cdaffe938da51d873e';
+const STANDARDS_TOOLCHAIN_GITLAB_URL = 'https://gitlab.com/svelderrainruiz/repo-standards-review.git';
+const STANDARDS_TOOLCHAIN_GITHUB_URL = 'https://github.com/svelderrainruiz/repo-standards-review.git';
+const STANDARDS_TOOLCHAIN_GITHUB_TAG = 'v0.2.19';
+const STANDARDS_TOOLCHAIN_REGISTRY_IMAGE =
+  'registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main';
 
 function npmCommand(platform = process.platform) {
   return platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -206,6 +212,144 @@ function parseJsonOrUndefined(text) {
   } catch (_error) {
     return undefined;
   }
+}
+
+function parseLsRemote(stdout) {
+  return String(stdout || '')
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [commit, ref] = line.split(/\s+/u);
+      return { commit, ref };
+    })
+    .filter((entry) => entry.commit && entry.ref);
+}
+
+function findRemoteCommit(entries, refName) {
+  return entries.find((entry) => entry.ref === refName)?.commit;
+}
+
+function findTagCommit(entries, tagName) {
+  const tagRef = `refs/tags/${tagName}`;
+  return (
+    entries.find((entry) => entry.ref === `${tagRef}^{}`)?.commit ||
+    entries.find((entry) => entry.ref === tagRef)?.commit
+  );
+}
+
+function buildProvenanceCheck(name, commandResult, actualCommit, expectedCommit, unavailableMessage) {
+  const success = commandResult.status === 0 && actualCommit === expectedCommit;
+  let message = `${name} resolves to ${actualCommit || 'unknown'}.`;
+  if (commandResult.status !== 0) {
+    message = unavailableMessage;
+  } else if (actualCommit !== expectedCommit) {
+    message = `${name} resolved to ${actualCommit || 'unknown'}; expected ${expectedCommit}.`;
+  }
+
+  return {
+    name,
+    command: commandResult.command,
+    status: commandResult.status,
+    success,
+    expectedCommit,
+    actualCommit,
+    message,
+    stderr: commandResult.stderr,
+    error: commandResult.error
+  };
+}
+
+function verifyStandardsToolchainProvenance(options, deps = {}) {
+  const existsSyncImpl = deps.existsSync || fs.existsSync;
+  const expectedCommit = STANDARDS_TOOLCHAIN_EXPECTED_COMMIT;
+  const gitlabMain = runCommand('git', [
+    'ls-remote',
+    STANDARDS_TOOLCHAIN_GITLAB_URL,
+    'HEAD',
+    'refs/heads/main'
+  ], deps);
+  const githubMirror = runCommand('git', [
+    'ls-remote',
+    STANDARDS_TOOLCHAIN_GITHUB_URL,
+    'HEAD',
+    'refs/heads/main',
+    `refs/tags/${STANDARDS_TOOLCHAIN_GITHUB_TAG}`,
+    `refs/tags/${STANDARDS_TOOLCHAIN_GITHUB_TAG}^{}`
+  ], deps);
+  const dockerManifest = runCommand('docker', [
+    'manifest',
+    'inspect',
+    STANDARDS_TOOLCHAIN_REGISTRY_IMAGE
+  ], deps);
+  const gitlabEntries = parseLsRemote(gitlabMain.stdout);
+  const githubEntries = parseLsRemote(githubMirror.stdout);
+  const checks = [
+    buildProvenanceCheck(
+      'GitLab source main',
+      gitlabMain,
+      findRemoteCommit(gitlabEntries, 'refs/heads/main'),
+      expectedCommit,
+      `GitLab source is unavailable; verify access to ${STANDARDS_TOOLCHAIN_GITLAB_URL}.`
+    ),
+    buildProvenanceCheck(
+      'GitHub mirror main',
+      githubMirror,
+      findRemoteCommit(githubEntries, 'refs/heads/main'),
+      expectedCommit,
+      `GitHub mirror is unavailable; verify access to ${STANDARDS_TOOLCHAIN_GITHUB_URL}.`
+    ),
+    buildProvenanceCheck(
+      `GitHub mirror tag ${STANDARDS_TOOLCHAIN_GITHUB_TAG}`,
+      githubMirror,
+      findTagCommit(githubEntries, STANDARDS_TOOLCHAIN_GITHUB_TAG),
+      expectedCommit,
+      `GitHub mirror tag ${STANDARDS_TOOLCHAIN_GITHUB_TAG} is unavailable; verify mirror access.`
+    )
+  ];
+  const skillCache = {
+    path: options.skillRoot,
+    exists: existsSyncImpl(options.skillRoot),
+    authority: 'non-authoritative-cache',
+    success: existsSyncImpl(options.skillRoot),
+    message: existsSyncImpl(options.skillRoot)
+      ? 'Local repo-standards-review skill cache exists but is not source authority.'
+      : 'Local repo-standards-review skill cache is missing; install or refresh the local skill cache before closeout.'
+  };
+  const registry = {
+    image: STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
+    command: dockerManifest.command,
+    status: dockerManifest.status,
+    success: dockerManifest.status === 0,
+    message: dockerManifest.status === 0
+      ? 'Published Docker workbench image is accessible.'
+      : `Published Docker workbench image is unavailable; run 'docker login registry.gitlab.com' and retry ${dockerManifest.command}.`,
+    stderr: dockerManifest.stderr,
+    error: dockerManifest.error
+  };
+  const success = checks.every((check) => check.success) && skillCache.success && registry.success;
+
+  return {
+    success,
+    expectedCommit,
+    gitlab: {
+      url: STANDARDS_TOOLCHAIN_GITLAB_URL
+    },
+    github: {
+      url: STANDARDS_TOOLCHAIN_GITHUB_URL,
+      tag: STANDARDS_TOOLCHAIN_GITHUB_TAG
+    },
+    skillCache,
+    registry,
+    checks,
+    failure: success
+      ? undefined
+      : [
+        ...checks.filter((check) => !check.success).map((check) => check.message),
+        skillCache.success ? undefined : skillCache.message,
+        registry.success ? undefined : registry.message
+      ].filter(Boolean).join(' ')
+  };
 }
 
 function summarizeStandardsResults(results, runner) {
@@ -574,6 +718,26 @@ function renderStandardsSummary(standards) {
   ].join('\n');
 }
 
+function renderProvenanceSummary(provenance) {
+  const rows = [
+    '| Surface | Status | Evidence |',
+    '| --- | --- | --- |'
+  ];
+  for (const check of provenance.checks) {
+    rows.push(`| ${check.name} | ${check.success ? 'PASS' : 'FAIL'} | ${check.message} |`);
+  }
+  rows.push(
+    `| local skill cache | ${provenance.skillCache.success ? 'PASS' : 'FAIL'} | ${provenance.skillCache.message} Authority: ${provenance.skillCache.authority}. |`
+  );
+  rows.push(
+    `| Docker registry image | ${provenance.registry.success ? 'PASS' : 'FAIL'} | ${provenance.registry.message} |`
+  );
+  if (!provenance.success && provenance.failure) {
+    rows.push(`| provenance decision | FAIL | ${provenance.failure} |`);
+  }
+  return rows.join('\n');
+}
+
 function renderReleaseReferences(options, githubContext) {
   if (options.kind !== 'release') {
     return '';
@@ -591,7 +755,8 @@ function renderReleaseReferences(options, githubContext) {
 
 function renderCloseoutMarkdown(context) {
   const gatesPassed = context.gates ? context.gates.every((gate) => gate.success) : false;
-  const closable = context.standards.success && gatesPassed;
+  const provenancePassed = context.provenance?.success === true;
+  const closable = context.standards.success && provenancePassed && gatesPassed;
   const traceabilitySummary = context.traceabilitySummary || {};
   const issueLabel = context.options.issue ? `#${context.options.issue}` : 'unspecified issue';
   const releaseReferences = renderReleaseReferences(context.options, context.githubContext);
@@ -614,11 +779,15 @@ function renderCloseoutMarkdown(context) {
     '',
     renderStandardsSummary(context.standards),
     '',
+    '## Standards Toolchain Provenance',
+    '',
+    renderProvenanceSummary(context.provenance),
+    '',
     '## Closure Decision',
     '',
     closable
-      ? '- Closable: yes. Mandatory standards evidence and local gates passed.'
-      : '- Closable: no. Not closable yet until mandatory standards evidence and local gates are both clean.',
+      ? '- Closable: yes. Mandatory standards evidence, standards toolchain provenance, and local gates passed.'
+      : '- Closable: no. Not closable yet until mandatory standards evidence, standards toolchain provenance, and local gates are all clean.',
     '',
     '## Next Wave',
     '',
@@ -643,9 +812,18 @@ function generateCloseoutEvidence(argv, deps = {}) {
     `${traceabilityGate?.stdout || ''}\n${traceabilityGate?.stderr || ''}`
   );
   const standards = runStandardsEvidence(options, { ...deps, cwd });
+  const provenance = verifyStandardsToolchainProvenance(options, { ...deps, cwd });
   const records = [
     ...(gates || []).map((gate) => ({ ...gate, file: `gate-${gate.name.replace(/[:/\\]/g, '-')}.txt` })),
-    ...standards.results
+    ...standards.results,
+    {
+      name: 'standards-toolchain-provenance',
+      file: 'standards-toolchain-provenance.json',
+      stdout: JSON.stringify(provenance, null, 2),
+      stderr: '',
+      error: '',
+      status: provenance.success ? 0 : 1
+    }
   ];
 
   writeEvidenceFiles(saveDir, records);
@@ -656,12 +834,13 @@ function generateCloseoutEvidence(argv, deps = {}) {
     githubContext,
     gates,
     traceabilitySummary,
-    standards
+    standards,
+    provenance
   };
   const markdown = renderCloseoutMarkdown(context);
   const gateFailure = gates ? gates.some((gate) => !gate.success) : false;
   return {
-    exitCode: standards.success && !gateFailure ? 0 : 1,
+    exitCode: standards.success && provenance.success && !gateFailure ? 0 : 1,
     markdown,
     context
   };
@@ -685,18 +864,27 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_SAVE_DIR,
   DEFAULT_STANDARDS_IMAGE,
+  STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
+  STANDARDS_TOOLCHAIN_GITHUB_TAG,
+  STANDARDS_TOOLCHAIN_GITHUB_URL,
+  STANDARDS_TOOLCHAIN_GITLAB_URL,
+  STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
   collectGithubContext,
   collectGitContext,
   dockerStandardsCommands,
+  findRemoteCommit,
+  findTagCommit,
   generateCloseoutEvidence,
   hostStandardsCommands,
   main,
   parseArgs,
+  parseLsRemote,
   parseTraceabilitySummary,
   renderCloseoutMarkdown,
   runDockerStandards,
   runGateCommands,
   runHostStandards,
   runStandardsEvidence,
-  summarizeStandardsResults
+  summarizeStandardsResults,
+  verifyStandardsToolchainProvenance
 };

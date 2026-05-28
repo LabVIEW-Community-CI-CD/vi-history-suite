@@ -838,6 +838,9 @@ Missing numeric IDs are intentional.
     with mandatory standards evidence.
   - Closeout evidence supports host Python and Docker assurance-workbench
     standards runners, and fails closed when neither can produce evidence.
+  - Closeout evidence verifies `repo-standards-review` toolchain provenance by
+    checking the GitLab source, private GitHub mirror, expected release tag,
+    local non-authoritative skill cache, and published Docker registry image.
   - Closeout summaries separate blocking closure findings from deferred
     standards maturity recommendations such as Definition-of-Done gate
     evidence.
