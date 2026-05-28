@@ -683,7 +683,8 @@ Missing numeric IDs are intentional.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
   - The workflow enforces the baseline global coverage thresholds declared in
-    `vitest.config.ts`.
+    `vitest.config.ts`: 60% statements, 50% branches, 65% functions, and
+    60% lines after the coverage-led assurance wave.
   - The workflow runs `npm run package`.
   - The workflow runs on `main`, `develop`, `feature/**`, `release/**`, and
     `hotfix/**` branch pushes.

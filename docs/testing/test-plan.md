@@ -29,11 +29,13 @@ the machine-readable coverage outputs from that run through the
 - `coverage/cobertura-coverage.xml`
 - `coverage/coverage-summary.json`
 
-The enforced coverage thresholds in `vitest.config.ts` are baseline regression
-floors: 40% statements, 33% branches, 47% functions, and 40% lines. These
-floors preserve the current tested baseline; they are not a claim that the
-repository has complete coverage. Raise the thresholds only in a PR that shows
-new coverage evidence and updates this test plan with the new baseline.
+The enforced coverage thresholds in `vitest.config.ts` are evidence-backed
+baseline regression floors: 60% statements, 50% branches, 65% functions, and
+60% lines. These floors were ratcheted after the coverage-led assurance wave
+measured 68.73% statements, 56.85% branches, 78.07% functions, and 68.74%
+lines on merged `develop`; they are not a claim that the repository has
+complete coverage. Raise the thresholds only in a PR that shows new coverage
+evidence and updates this test plan with the new baseline.
 
 ## Coverage Traceability Map
 
@@ -49,7 +51,7 @@ and to justify future coverage threshold ratchets.
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
 | --- | --- | --- | --- | --- |
-| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts and enforces baseline thresholds. |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts and enforces evidence-backed baseline thresholds at 60% statements, 50% branches, 65% functions, and 60% lines. |
 | VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts | tests/unit/openViHistoryCommand.test.ts | User-facing command stops cover missing URI, trust gate, ineligible file guidance, history-load failures, documentation routing, and explicit cancellation stages. |
 | VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/viHistoryModel.test.ts; tests/unit/historyPanelRendering.test.ts | History model facts cover repository/path/signature/history-window decisions and previous-hash links before rendering. |
 | VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts; src/ui/historyPanelTracker.ts | tests/unit/openViHistoryCommand.test.ts; tests/unit/historyPanelTracker.test.ts | Review packet and hash copy routes are verified through clipboard and panel action summaries. |
@@ -62,7 +64,7 @@ and to justify future coverage threshold ratchets.
 | VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts; src/dashboard/dashboardLatestRun.ts; src/dashboard/multiReportDashboard.ts; src/dashboard/multiReportDashboardAction.ts; src/dashboard/retainedDashboardEvidence.ts; src/review/humanReviewSubmission.ts; src/scenarios/decisionRecord.ts; src/scenarios/reviewScenarioRegistry.ts; src/support/repositorySupportPolicy.ts | tests/unit/comparisonReportArchive.test.ts; tests/unit/dashboardLatestRun.test.ts; tests/unit/multiReportDashboard.test.ts; tests/unit/multiReportDashboardAction.test.ts; tests/unit/retainedDashboardEvidence.test.ts; tests/unit/humanReviewSubmission.test.ts; tests/unit/reviewDecisionRecord.test.ts; tests/unit/reviewScenarioSupportPolicy.test.ts | Dashboard retained-evidence archive, latest-run, aggregate rendering, action routing, proof seeding, review submission boundaries, decision records, scenario contracts, and support-tier rules have focused unit coverage. |
 | VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts; src/docs/bundledDocumentationAction.ts | tests/unit/bundledDocumentation.test.ts; tests/unit/bundledDocumentationAction.test.ts | Installed documentation manifest/page loading and command routing are covered directly. |
 | VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts; src/extension.ts | tests/unit/localRuntimeSettingsCli.test.ts; tests/unit/packageManifest.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/integration/suite/extensionHost.test.ts | Installed runtime settings CLI command exposure, argument parsing, launcher materialization, idempotent settings refresh, malformed-config errors, validation proof output, terminal output, and missing global-storage handling are verified without changing runtime selection behavior. |
-| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js; vitest.config.ts | tests/unit/coverageMapScript.test.ts; tests/unit/requirementsDocs.test.ts | Coverage map links retained coverage evidence to RTM/inventory risk and protects the starter floor ratchet. |
+| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js; vitest.config.ts | tests/unit/coverageMapScript.test.ts; tests/unit/requirementsDocs.test.ts | Coverage map links retained coverage evidence to RTM/inventory risk and protects evidence-backed threshold ratchets. |
 | VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts | tests/unit/vscodeTestHarness.test.ts; tests/unit/requirementsDocs.test.ts | Shared VS Code fakes support coverage-led command, webview, storage, filesystem, clipboard, progress, output, and runtime CLI tests. |
 
 ## Diagnostic Test VSIX Check
