@@ -1210,3 +1210,41 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep this requirement scoped to installed bundled documentation behavior and
     packaged assets, not external website or wiki governance.
+
+### VHS-REQ-612: Installed Runtime Settings CLI Preparation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall expose installed runtime settings CLI
+  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` so the
+  local `vihs` launcher is materialized or refreshed and preparation failures
+  are reported with actionable outcomes.
+- Acceptance Criteria:
+  - The extension manifest contributes
+    `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on that
+    command.
+  - Command registration routes preparation through
+    `admitLocalRuntimeSettingsCliToTerminalPath`, returns
+    `prepared-local-runtime-settings-cli` with launcher/settings-target
+    contract fields, and surfaces an actionable success message.
+  - When extension global storage is unavailable, the command reports
+    `missing-global-storage-uri` and a user-facing warning that preparation
+    could not proceed.
+  - Preparation remains admitted in untrusted workspaces as a low-risk local
+    materialization path while compare execution remains blocked there.
+- Agent Work Scope:
+  - Change command exposure evidence, requirement mapping, and verification
+    references together without changing runtime provider selection behavior.
+- Implementation References:
+  - `package.json`
+  - `src/extension.ts`
+  - `src/tooling/localRuntimeSettingsCli.ts`
+- Verification References:
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/integration/suite/extensionHost.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep this requirement focused on installed CLI preparation and failure
+    reporting; do not change runtime selection semantics.
