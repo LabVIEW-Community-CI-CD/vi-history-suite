@@ -1070,20 +1070,24 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('npm run closeout:evidence');
     expect(readme).toContain('Standards evidence and standards');
     expect(readme).toContain('toolchain provenance');
+    expect(readme).toContain('published GitLab registry image');
     expect(readme).toContain('repo-standards-review-assurance-workbench:local');
     expect(readme).toContain(
       'registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main'
     );
+    expect(readme).toContain('docker login registry.gitlab.com');
     expect(readme).toContain('Definition-of-Done gate evidence');
     expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
     expect(readme).toContain('blocking traceability findings are resolved or');
     expect(readme).toContain('standards maturity warnings outside the umbrella scope');
     expect(srs).toContain('closeout evidence command generates GitHub-ready umbrella issue summaries');
     expect(srs).toContain('host Python and Docker assurance-workbench');
+    expect(srs).toContain('published GitLab registry');
     expect(srs).toContain('toolchain provenance');
     expect(srs).toContain('private GitHub mirror');
     expect(srs).toContain('Definition-of-Done gate');
     expect(requirementRow?.Notes).toContain('standards toolchain provenance checks');
+    expect(requirementRow?.Notes).toContain('published Docker workbench runner');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'

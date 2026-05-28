@@ -102,14 +102,14 @@ Use Docker explicitly when host Python is unavailable:
 npm run closeout:evidence -- --kind standards --issue <issue-number> --standards-runner docker --save-dir assurance-closeout-evidence
 ```
 
-The Docker standards runner currently expects the
-`repo-standards-review-assurance-workbench:local` image. Build it from the local
-`repo-standards-review` skill checkout before running closeout evidence, or use
-`--build-standards-image` when a rebuild is intentional. Provenance evidence
-separately verifies GitLab source authority, the private GitHub mirror,
-`v0.2.19`, the local non-authoritative skill cache, and access to
-`registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`;
-run `docker login registry.gitlab.com` if the registry image is denied.
+The Docker standards runner defaults to the published GitLab registry image
+`registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`.
+It inspects the image locally, pulls it when missing, and fails closed with
+`docker login registry.gitlab.com` guidance when registry access is denied. Use
+`--standards-image repo-standards-review-assurance-workbench:local` only as an
+explicit local override. Provenance evidence separately verifies GitLab source
+authority, the private GitHub mirror, `v0.2.19`, the local non-authoritative
+skill cache, and registry image access.
 
 3. The closeout command runs these repo-local gates when `--run-gates` is set:
 

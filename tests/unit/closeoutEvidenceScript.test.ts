@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const {
+  DEFAULT_STANDARDS_IMAGE,
+  LOCAL_STANDARDS_IMAGE,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
   STANDARDS_TOOLCHAIN_GITHUB_TAG,
   STANDARDS_TOOLCHAIN_GITHUB_URL,
@@ -9,8 +11,11 @@ const {
   generateCloseoutEvidence,
   parseArgs,
   parseLsRemote,
+  runDockerStandards,
   verifyStandardsToolchainProvenance
 } = require('../../scripts/generateCloseoutEvidence.js') as {
+  DEFAULT_STANDARDS_IMAGE: string;
+  LOCAL_STANDARDS_IMAGE: string;
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT: string;
   STANDARDS_TOOLCHAIN_GITHUB_TAG: string;
   STANDARDS_TOOLCHAIN_GITHUB_URL: string;
@@ -20,9 +25,21 @@ const {
     kind: string;
     issue?: string;
     standardsRunner: string;
+    standardsImage: string;
     runGates: boolean;
   };
   parseLsRemote: (stdout: string) => Array<{ commit: string; ref: string }>;
+  runDockerStandards: (
+    options: { standardsImage: string; skillRoot: string; buildStandardsImage?: boolean },
+    deps: {
+      cwd?: string;
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { cwd?: string; encoding?: string; shell?: boolean }
+      ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
+    }
+  ) => { runner: string; image?: string; imageAccess?: string; success: boolean; failure?: string };
   verifyStandardsToolchainProvenance: (
     options: { skillRoot: string },
     deps: {
@@ -183,8 +200,92 @@ describe('closeout evidence script', () => {
       kind: 'standards',
       issue: '130',
       standardsRunner: 'auto',
+      standardsImage: STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
       runGates: true
     });
+  });
+
+  it('pulls the published Docker standards image when it is not present locally', () => {
+    let inspectCalls = 0;
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args.join(' ') === `image inspect ${DEFAULT_STANDARDS_IMAGE}`) {
+        inspectCalls += 1;
+        if (inspectCalls === 1) {
+          return { status: 1, stderr: 'missing' };
+        }
+        return { status: 0, stdout: '[]' };
+      }
+      if (command === 'docker' && args.join(' ') === `pull ${DEFAULT_STANDARDS_IMAGE}`) {
+        return { status: 0, stdout: 'pulled' };
+      }
+      const line = [command, ...args].join(' ');
+      if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceOk };
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardOk };
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runDockerStandards(
+      {
+        standardsImage: DEFAULT_STANDARDS_IMAGE,
+        skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review'
+      },
+      { cwd: 'C:\\repo', spawnSync }
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.image).toBe(DEFAULT_STANDARDS_IMAGE);
+    expect(result.imageAccess).toBe('pulled');
+    expect(spawnSync).toHaveBeenCalledWith(
+      'docker',
+      ['pull', DEFAULT_STANDARDS_IMAGE],
+      expect.objectContaining({ encoding: 'utf8', shell: false })
+    );
+  });
+
+  it('fails Docker standards with registry login guidance when the published image cannot be pulled', () => {
+    const result = runDockerStandards(
+      {
+        standardsImage: DEFAULT_STANDARDS_IMAGE,
+        skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review'
+      },
+      {
+        spawnSync: vi.fn((command: string, args: string[]) => {
+          if (command === 'docker' && args.join(' ') === `image inspect ${DEFAULT_STANDARDS_IMAGE}`) {
+            return { status: 1, stderr: 'missing' };
+          }
+          if (command === 'docker' && args.join(' ') === `pull ${DEFAULT_STANDARDS_IMAGE}`) {
+            return { status: 1, stderr: 'denied' };
+          }
+          return { status: 0, stdout: '' };
+        })
+      }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.imageAccess).toBe('pull-failed');
+    expect(result.failure).toContain('docker login registry.gitlab.com');
+  });
+
+  it('keeps local Docker image usage behind an explicit standards image override', () => {
+    const result = runDockerStandards(
+      {
+        standardsImage: LOCAL_STANDARDS_IMAGE,
+        skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review'
+      },
+      {
+        spawnSync: vi.fn((command: string, args: string[]) => {
+          if (command === 'docker' && args.join(' ') === `image inspect ${LOCAL_STANDARDS_IMAGE}`) {
+            return { status: 1, stderr: 'missing local image' };
+          }
+          return { status: 0, stdout: '' };
+        })
+      }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failure).toContain('explicit local override');
+    expect(result.failure).toContain('docker build');
   });
 
   it('renders a closable standards summary when mandatory standards and gates pass', () => {
@@ -259,6 +360,7 @@ describe('closeout evidence script', () => {
     expect(result.exitCode).toBe(0);
     expect(result.context.standards.runner).toBe('docker');
     expect(result.markdown).toContain('Standards runner: docker');
+    expect(result.markdown).toContain(`Docker image: ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}; image access=present`);
   });
 
   it('fails closeout when mandatory host and Docker standards evidence fail', () => {
