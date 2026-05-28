@@ -671,5 +671,39 @@ describe('requirements documentation coherence', () => {
       expect(row?.Classification).toBe('asset-doc');
       expect(row?.RtmCoverage).toBe('No');
     }
+
+    // VHS-REQ-601: Review/scenario/support-policy files classified as supporting
+    function expectSupportingClassification(
+      row: Record<string, string> | undefined,
+      filePath: string,
+      reqId: string
+    ): void {
+      expect(row?.Classification, `${filePath} classification`).toBe('supporting');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('No');
+      expect(row?.Notes, `${filePath} notes`).toContain(reqId);
+    }
+
+    const reviewScenarioSupportingPaths = [
+      'src/review/humanReviewSubmission.ts',
+      'src/review/humanReviewSubmissionAction.ts',
+      'src/scenarios/decisionRecord.ts',
+      'src/scenarios/reviewDecisionRecordAction.ts',
+      'src/scenarios/reviewScenarioRegistry.ts',
+      'src/support/repositorySupportPolicy.ts'
+    ];
+    for (const filePath of reviewScenarioSupportingPaths) {
+      const row = inventoryByPath.get(filePath);
+      expectSupportingClassification(row, filePath, 'VHS-REQ-610');
+    }
+
+    // Git API wrapper and tests classified as supporting
+    const gitApiSupportingPaths = [
+      'src/git/gitApi.ts',
+      'tests/unit/gitApi.test.ts'
+    ];
+    for (const filePath of gitApiSupportingPaths) {
+      const row = inventoryByPath.get(filePath);
+      expectSupportingClassification(row, filePath, 'VHS-REQ-061');
+    }
   });
 });
