@@ -137,8 +137,12 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Statement: The required public verification path shall remain lightweight:
   install, typecheck, unit tests, and package sanity.
 - Acceptance Criteria:
-  - Hosted CI runs `npm ci`, `npm run check`, `npm test`, and `npm run package`.
+  - Hosted CI runs `npm ci`, `npm run check`, `npm run traceability:audit`,
+    `npm test`, and `npm run package`.
   - The test plan names the same command set.
+  - Hosted CI retains machine-readable coverage evidence from the required test
+    run.
+  - The test plan names the coverage artifact and baseline threshold policy.
   - Branch governance is enforced in the required hosted CI job for pull
     requests targeting `main` and `develop`.
   - Heavier local validation is not required as a public pull request gate.

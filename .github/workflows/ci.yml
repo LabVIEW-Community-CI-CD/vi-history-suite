@@ -76,5 +76,15 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: PR Coverage Gate / coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-coverage-${{ github.run_id }}
+          path: |
+            coverage/cobertura-coverage.xml
+            coverage/coverage-summary.json
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Package
         run: npm run package

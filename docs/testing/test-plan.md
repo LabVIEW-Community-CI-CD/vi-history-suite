@@ -20,6 +20,31 @@ The traceability audit is part of the required hosted gate so newly added
 implementation, test, workflow, and documentation surfaces remain classified
 before merge.
 
+## Coverage Evidence And Threshold Policy
+
+`npm test` runs Vitest with coverage enabled. The required hosted CI job retains
+the machine-readable coverage outputs from that run through the
+`PR Coverage Gate / coverage` step:
+
+- `coverage/cobertura-coverage.xml`
+- `coverage/coverage-summary.json`
+
+The enforced coverage thresholds in `vitest.config.ts` are baseline regression
+floors: 40% statements, 33% branches, 47% functions, and 40% lines. These
+floors preserve the current tested baseline; they are not a claim that the
+repository has complete coverage. Raise the thresholds only in a PR that shows
+new coverage evidence and updates this test plan with the new baseline.
+
+## Critical-Path Verification Evidence
+
+| Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
+| --- | --- | --- | --- | --- |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts and enforces baseline thresholds. |
+| VHS-REQ-604 | TEST-604 | src/indexing/viEligibilityIndexer.ts | tests/unit/viEligibilityIndexer.test.ts | Persistent cache reuse and fail-closed cache handling are covered directly. |
+| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts; src/dashboard/dashboardLatestRun.ts | tests/unit/comparisonReportArchive.test.ts; tests/unit/dashboardLatestRun.test.ts | Dashboard retained-evidence archive and latest-run behavior have focused unit coverage. |
+| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts; src/docs/bundledDocumentationAction.ts | tests/unit/bundledDocumentation.test.ts; tests/unit/bundledDocumentationAction.test.ts | Installed documentation manifest/page loading and command routing are covered directly. |
+| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts; src/extension.ts | tests/unit/packageManifest.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/integration/suite/extensionHost.test.ts | Installed runtime settings CLI command exposure is verified without changing runtime selection behavior. |
+
 ## Diagnostic Test VSIX Check
 
 When a reporter needs to retest a fix before Marketplace publication, manually
