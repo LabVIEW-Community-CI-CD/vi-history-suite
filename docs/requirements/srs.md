@@ -1310,3 +1310,37 @@ Missing numeric IDs are intentional.
   - Keep this requirement focused on coverage intelligence and risk
     prioritization; do not use it to hide dev-only sources or reduce coverage
     include scope without an explicit requirements update.
+
+### VHS-REQ-614: Test Harness Architecture For VS Code Orchestration
+
+- Status: Active
+- Parent: VHS-SYS-REQ-017
+- Area: CI And Developer Environment
+- Statement: The repository shall provide reusable unit-test harness utilities
+  for VS Code orchestration surfaces so coverage-led follow-up work can test
+  commands, webviews, workspace storage, filesystem, clipboard, progress, and
+  output behavior through stable fakes.
+- Acceptance Criteria:
+  - Shared fakes cover extension context, command registration/execution,
+    webview panels, workspace memento storage, workspace filesystem access,
+    clipboard writes, progress reporting, and output channels.
+  - The harness supports tests for VI History open-command routing, comparison
+    action routing, dashboard action routing, and installed runtime settings CLI
+    preparation.
+  - Runtime behavior, command IDs, persisted formats, package identity, and
+    Marketplace behavior are unchanged.
+  - Production refactors for later coverage work remain limited to dependency
+    injection needed for testability.
+- Agent Work Scope:
+  - Change shared test harness utilities, harness proof tests, requirement
+    mapping, and verification references together.
+- Implementation References:
+  - `tests/unit/vscodeTestHarness.ts`
+- Verification References:
+  - `tests/unit/vscodeTestHarness.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
+- Change Guidance:
+  - Keep this requirement focused on reusable test architecture. Do not change
+    extension command exposure, runtime selection behavior, persisted data
+    formats, package version, or Marketplace release flow under this requirement.

@@ -292,6 +292,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts');
     expect(testPlan).toContain('| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts');
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
+    expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
     expect(vitestConfig).toContain('statements: 40');
@@ -358,6 +359,40 @@ describe('requirements documentation coherence', () => {
     expect(coverageTestRow?.Classification).toBe('mapped');
     expect(coverageTestRow?.RtmCoverage).toBe('Yes');
     expect(coverageTestRow?.Notes).toContain('VHS-REQ-613');
+  });
+
+  it('keeps VS Code test harness architecture traceable for VHS-REQ-614', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-614');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-614');
+    const harnessRow = inventoryRows.find((row) => row.Path === 'tests/unit/vscodeTestHarness.ts');
+    const harnessTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/vscodeTestHarness.test.ts'
+    );
+
+    expect(srs).toContain(
+      '### VHS-REQ-614: Test Harness Architecture For VS Code Orchestration'
+    );
+    expect(srs).toContain('commands, webviews, workspace storage, filesystem, clipboard');
+    expect(srs).toContain('Runtime behavior, command IDs, persisted formats');
+    expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-017');
+    expect(requirementRow?.ImplementationRefs).toContain('tests/unit/vscodeTestHarness.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/vscodeTestHarness.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-614-test-harness-architecture-for-vs-code-orchestration'
+    );
+    expect(harnessRow?.Classification).toBe('mapped');
+    expect(harnessRow?.RtmCoverage).toBe('Yes');
+    expect(harnessRow?.Notes).toContain('VHS-REQ-614');
+    expect(harnessTestRow?.Classification).toBe('mapped');
+    expect(harnessTestRow?.RtmCoverage).toBe('Yes');
+    expect(harnessTestRow?.Notes).toContain('VHS-REQ-614');
   });
 
   it('keeps dependency maintenance automation targetable', () => {
@@ -888,8 +923,9 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('asset-doc');
     expect(readme).toContain('gap');
     expect(readme).toContain('Agent Response');
-    expect(readme).toContain('New software requirements start at `VHS-REQ-614`.');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-615`.');
     expect(readme).toContain('New system requirements start at `VHS-SYS-REQ-018`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-614`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-613`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
     expect(readme).toContain('Traceability Closeout Runbook');

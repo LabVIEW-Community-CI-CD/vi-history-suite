@@ -136,7 +136,7 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance
 - Active software requirements use `VHS-REQ-*`.
 - Active system requirements use `VHS-SYS-REQ-*`.
 - Historical gaps are intentional.
-- New software requirements start at `VHS-REQ-614`.
+- New software requirements start at `VHS-REQ-615`.
 - New system requirements start at `VHS-SYS-REQ-018`.
 - Retired IDs remain in `id-index.csv` so an agent can distinguish an
   intentional retirement from a missing document.
