@@ -466,6 +466,42 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps installed runtime settings CLI preparation traceable for VHS-REQ-612', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const packageManifestTest = readRepoText('tests', 'unit', 'packageManifest.test.ts');
+    const extensionActivationTest = readRepoText(
+      'tests',
+      'unit',
+      'extensionActivationLazySideEffects.test.ts'
+    );
+    const extensionHostTest = readRepoText('tests', 'integration', 'suite', 'extensionHost.test.ts');
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-612');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-612');
+
+    expect(srs).toContain('### VHS-REQ-612: Installed Runtime Settings CLI Preparation');
+    expect(srs).toContain('labviewViHistory.prepareLocalRuntimeSettingsCli');
+    expect(srs).toContain('missing-global-storage-uri');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-004');
+    expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('src/extension.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('src/tooling/localRuntimeSettingsCli.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/integration/suite/extensionHost.test.ts');
+    expect(packageManifestTest).toContain('onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli');
+    expect(extensionActivationTest).toContain(
+      "commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')"
+    );
+    expect(extensionHostTest).toContain('prepared-local-runtime-settings-cli');
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-612-installed-runtime-settings-cli-preparation'
+    );
+  });
+
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
@@ -658,8 +694,8 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('asset-doc');
     expect(readme).toContain('gap');
     expect(readme).toContain('Agent Response');
-    expect(readme).toContain('New software requirements start at `VHS-REQ-612`.');
-    expect(readme).not.toContain('New software requirements start at `VHS-REQ-611`.');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-613`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'
     );
@@ -704,6 +740,22 @@ describe('requirements documentation coherence', () => {
       expect(row?.Classification).toBe('mapped');
       expect(row?.RtmCoverage).toBe('Yes');
       expect(row?.Notes).toContain('VHS-REQ-611');
+    }
+
+    const localRuntimeSettingsCliRow = inventoryByPath.get('src/tooling/localRuntimeSettingsCli.ts');
+    expect(localRuntimeSettingsCliRow?.Classification).toBe('mapped');
+    expect(localRuntimeSettingsCliRow?.RtmCoverage).toBe('Yes');
+    expect(localRuntimeSettingsCliRow?.Notes).toContain('VHS-REQ-612');
+
+    for (const filePath of [
+      'src/tooling/runtimeSettingsLiveSessionProbe.ts',
+      'src/tooling/runtimeSettingsLiveSessionProbePacket.ts',
+      'src/tooling/runtimeSettingsLiveSessionSafeRestore.ts'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification).toBe('dev-only');
+      expect(row?.RtmCoverage).toBe('No');
+      expect(row?.Notes).toContain('not contributed in package.json');
     }
 
     for (const filePath of [

@@ -610,6 +610,7 @@ VHS-REQ-608,Software,Active,srs.md#vhs-req-608-diagnostic-test-vsix-distribution
 VHS-REQ-609,Software,Active,srs.md#vhs-req-609-governed-branch-promotion-and-marketplace-release-automation,,,docs/requirements/srs.md
 VHS-REQ-610,Software,Active,srs.md#vhs-req-610-dashboard-aggregate-review,,,docs/requirements/srs.md
 VHS-REQ-611,Software,Active,srs.md#vhs-req-611-installed-bundled-documentation-surface,,,docs/requirements/srs.md
+VHS-REQ-612,Software,Active,srs.md#vhs-req-612-installed-runtime-settings-cli-preparation,,,docs/requirements/srs.md
 VHS-SYS-REQ-001,System,Active,syrs.md#vhs-sys-req-001-vs-code-labview-vi-history-system,,,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-002,System,Superseded,,VHS-SYS-REQ-014,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-003,System,Active,syrs.md#vhs-sys-req-003-system-and-software-requirement-split,,,pre-simplification docs/requirements/syrs.md

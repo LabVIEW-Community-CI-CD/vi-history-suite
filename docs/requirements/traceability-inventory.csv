@@ -38,10 +38,10 @@ src/tooling/buildInfo.ts,dev-only,No,Build info generation for development.
 src/tooling/devHostLoop.ts,dev-only,No,Development host loop; development tooling.
 src/tooling/integrationHostRuntime.ts,dev-only,No,Integration host runtime; testing infrastructure.
 src/tooling/integrationHostStage.ts,dev-only,No,Integration host stage; testing infrastructure.
-src/tooling/localRuntimeSettingsCli.ts,dev-only,No,Runtime settings CLI for contributor workflow validation and runtime setup diagnostics; not installed-user behavior.
-src/tooling/runtimeSettingsLiveSessionProbe.ts,dev-only,No,Live-session probe for runtime settings drift detection; contributor validation tooling.
-src/tooling/runtimeSettingsLiveSessionProbePacket.ts,dev-only,No,Probe packet persistence for runtime validation evidence; contributor tooling.
-src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,dev-only,No,Safe restore for runtime settings during live-session probing; contributor tooling.
+src/tooling/localRuntimeSettingsCli.ts,mapped,Yes,Installed runtime settings CLI preparation surface mapped to VHS-REQ-612 through the contributed labviewViHistory.prepareLocalRuntimeSettingsCli command.
+src/tooling/runtimeSettingsLiveSessionProbe.ts,dev-only,No,Live-session probe command is not contributed in package.json; maintainer diagnostics only and not installed command surface.
+src/tooling/runtimeSettingsLiveSessionProbePacket.ts,dev-only,No,Probe packet persistence supports maintainer-only live-session diagnostics for the non-contributed probe command that is not contributed in package.json.
+src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,dev-only,No,Safe restore supports maintainer-only live-session probing for the non-contributed probe command that is not contributed in package.json.
 src/ui/historyPanel.ts,mapped,Yes,History panel UI; mapped through RTM.
 src/ui/historyPanelTracker.ts,mapped,Yes,History panel tracker; mapped through RTM.
 scripts/auditPackagedRuntimeSurface.js,mapped,Yes,Package audit script; mapped through RTM.
