@@ -38,10 +38,10 @@ src/tooling/buildInfo.ts,dev-only,No,Build info generation for development.
 src/tooling/devHostLoop.ts,dev-only,No,Development host loop; development tooling.
 src/tooling/integrationHostRuntime.ts,dev-only,No,Integration host runtime; testing infrastructure.
 src/tooling/integrationHostStage.ts,dev-only,No,Integration host stage; testing infrastructure.
-src/tooling/localRuntimeSettingsCli.ts,gap,No,Local runtime settings CLI; pending RTM classification.
-src/tooling/runtimeSettingsLiveSessionProbe.ts,gap,No,Runtime settings probe; pending RTM classification.
-src/tooling/runtimeSettingsLiveSessionProbePacket.ts,gap,No,Runtime settings probe packet; pending RTM classification.
-src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,gap,No,Runtime settings safe restore; pending RTM classification.
+src/tooling/localRuntimeSettingsCli.ts,dev-only,No,Runtime settings CLI for contributor workflow validation and runtime setup diagnostics; not installed-user behavior.
+src/tooling/runtimeSettingsLiveSessionProbe.ts,dev-only,No,Live-session probe for runtime settings drift detection; contributor validation tooling.
+src/tooling/runtimeSettingsLiveSessionProbePacket.ts,dev-only,No,Probe packet persistence for runtime validation evidence; contributor tooling.
+src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,dev-only,No,Safe restore for runtime settings during live-session probing; contributor tooling.
 src/ui/historyPanel.ts,mapped,Yes,History panel UI; mapped through RTM.
 src/ui/historyPanelTracker.ts,mapped,Yes,History panel tracker; mapped through RTM.
 scripts/auditPackagedRuntimeSurface.js,mapped,Yes,Package audit script; mapped through RTM.
@@ -87,9 +87,9 @@ tests/unit/requirementsDocs.test.ts,mapped,Yes,Requirements documentation tests;
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
-tests/unit/runtimeSettingsLiveSessionProbe.test.ts,gap,No,Runtime settings probe tests; pending RTM classification.
-tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,gap,No,Runtime settings probe packet tests; pending RTM classification.
-tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,gap,No,Runtime settings safe restore tests; pending RTM classification.
+tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings probe tests; contributor validation tooling.
+tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,dev-only,No,Runtime settings probe packet tests; contributor tooling.
+tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,dev-only,No,Runtime settings safe restore tests; contributor tooling.
 tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
 tests/unit/viEligibilityIndexer.test.ts,mapped,Yes,VI eligibility indexer tests; mapped through RTM.
 tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
@@ -99,6 +99,8 @@ tests/unit/viMagicWrapper.test.ts,mapped,Yes,VI magic wrapper tests; mapped thro
 tests/unit/windowsLabviewMaintainerWorkflow.test.ts,mapped,Yes,Windows LabVIEW maintainer workflow tests; mapped through RTM.
 tests/integration/suite/extensionHost.test.ts,mapped,Yes,Extension host integration tests; mapped through RTM.
 tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testing infrastructure.
+tests/integration/runTests.ts,dev-only,No,Integration test runner; testing infrastructure.
+tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace preparation; testing infrastructure.
 .github/workflows/ci.yml,release-ci,Yes,CI workflow; mapped through RTM.
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
 .github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow; mapped through RTM.
