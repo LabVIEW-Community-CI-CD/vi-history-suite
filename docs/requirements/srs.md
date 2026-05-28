@@ -1167,3 +1167,46 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep dashboard behavior concentrated on evidence aggregation and review, not
     comparison execution.
+
+### VHS-REQ-611: Installed Bundled Documentation Surface
+
+- Status: Active
+- Parent: VHS-SYS-REQ-001
+- Area: Bundled Docs
+- Statement: The extension shall provide installed bundled documentation through
+  the `labviewViHistory.openDocumentation` command by loading packaged manifest
+  and page assets that ship with the extension.
+- Acceptance Criteria:
+  - The extension manifest contributes `labviewViHistory.openDocumentation` and
+    activates on that command.
+  - The command registration routes requests to the bundled documentation action
+    and surfaces user-facing outcomes for missing bundles or unknown pages.
+  - Bundled documentation manifest and page loading resolves packaged
+    `resources/bundled-docs` assets and renders an in-product documentation
+    panel.
+  - Packaged bundled documentation includes the manifest and shipped HTML pages
+    for overview, user workflow, install/release, and comparison/dashboard
+    review guidance.
+- Agent Work Scope:
+  - Change bundled documentation command routing, packaged docs assets,
+    requirements mapping, and verification references together.
+- Implementation References:
+  - `src/docs/bundledDocumentation.ts`
+  - `src/docs/bundledDocumentationAction.ts`
+  - `resources/bundled-docs/manifest.json`
+  - `resources/bundled-docs/pages/overview.html`
+  - `resources/bundled-docs/pages/user-workflow.html`
+  - `resources/bundled-docs/pages/install-and-release.html`
+  - `resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html`
+  - `package.json`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/bundledDocumentation.test.ts`
+  - `tests/unit/bundledDocumentationAction.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/integration/suite/extensionHost.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep this requirement scoped to installed bundled documentation behavior and
+    packaged assets, not external website or wiki governance.

@@ -9,8 +9,8 @@ src/dashboard/multiReportDashboard.ts,mapped,Yes,Multi-report dashboard; mapped 
 src/dashboard/multiReportDashboardAction.ts,mapped,Yes,Multi-report dashboard action; mapped to VHS-REQ-610.
 src/dashboard/niComparisonReportParser.ts,mapped,Yes,NI comparison report parser; mapped to VHS-REQ-610.
 src/dashboard/retainedDashboardEvidence.ts,mapped,Yes,Retained dashboard evidence; mapped to VHS-REQ-610.
-src/docs/bundledDocumentation.ts,gap,No,Active bundled documentation manifest/page loading and rendering behavior; requirement coverage gap pending requirement mapping.
-src/docs/bundledDocumentationAction.ts,gap,No,Active bundled documentation command/action routing behavior; requirement coverage gap pending requirement mapping.
+src/docs/bundledDocumentation.ts,mapped,Yes,Bundled documentation manifest/page loading and rendering behavior; mapped to VHS-REQ-611.
+src/docs/bundledDocumentationAction.ts,mapped,Yes,Bundled documentation command/action routing behavior; mapped to VHS-REQ-611.
 src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
 src/domain/viMagic.ts,mapped,Yes,VI magic wrapper; mapped through RTM.
 src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM.
@@ -56,8 +56,8 @@ scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
-tests/unit/bundledDocumentation.test.ts,supporting,No,Unit verification coverage for bundled documentation manifest/page assets and rendering behavior.
-tests/unit/bundledDocumentationAction.test.ts,supporting,No,Unit verification coverage for bundled documentation command/action routing behavior.
+tests/unit/bundledDocumentation.test.ts,mapped,Yes,Bundled documentation manifest/page asset verification coverage; mapped through RTM to VHS-REQ-611.
+tests/unit/bundledDocumentationAction.test.ts,mapped,Yes,Bundled documentation command/action routing verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/comparisonReportPacket.test.ts,mapped,Yes,Comparison report packet tests; mapped through RTM.
 tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report preflight tests; mapped through RTM.
 tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM.
@@ -140,11 +140,11 @@ docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
 docs/requirements/traceability-inventory.csv,mapped,Yes,Traceability inventory; mapped through RTM.
-resources/bundled-docs/manifest.json,asset-doc,No,Bundled documentation manifest asset delivered with the extension package.
-resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,asset-doc,No,Bundled comparison/dashboard documentation page asset.
-resources/bundled-docs/pages/install-and-release.html,asset-doc,No,Bundled install/release documentation page asset.
-resources/bundled-docs/pages/overview.html,asset-doc,No,Bundled overview documentation page asset.
-resources/bundled-docs/pages/user-workflow.html,asset-doc,No,Bundled user-workflow documentation page asset.
+resources/bundled-docs/manifest.json,mapped,Yes,Bundled documentation manifest asset delivered with the extension package; mapped to VHS-REQ-611.
+resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,mapped,Yes,Bundled comparison/dashboard documentation page asset; mapped to VHS-REQ-611.
+resources/bundled-docs/pages/install-and-release.html,mapped,Yes,Bundled install/release documentation page asset; mapped to VHS-REQ-611.
+resources/bundled-docs/pages/overview.html,mapped,Yes,Bundled overview documentation page asset; mapped to VHS-REQ-611.
+resources/bundled-docs/pages/user-workflow.html,mapped,Yes,Bundled user-workflow documentation page asset; mapped to VHS-REQ-611.
 vagrant/Vagrantfile,supporting,Yes,Vagrant configuration; mapped through RTM.
 vagrant/provision/bootstrap.ps1,supporting,Yes,Vagrant bootstrap provisioner; mapped to VHS-REQ-599.
 vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW preparation; mapped to VHS-REQ-599.
