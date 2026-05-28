@@ -107,8 +107,9 @@ describe('closeout evidence script', () => {
     expect(result.markdown).toContain('Standards runner: host');
     expect(result.markdown).toContain('Evidence scan: 251 files; REQ=strong; TEST=strong');
     expect(result.markdown).toContain('Closable: yes');
-    expect(result.markdown).toContain('docs link-check/lychee');
+    expect(result.markdown).toContain('| docs:links | PASS | npm.cmd run docs:links |');
     expect(result.markdown).toContain('Definition-of-Done');
+    expect(result.markdown).not.toContain('Defer docs link-check/lychee automation');
   });
 
   it('marks the summary not closable when local gates are not run', () => {

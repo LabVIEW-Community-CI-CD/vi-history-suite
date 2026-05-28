@@ -135,11 +135,13 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Status: Active
 - Area: Verification
 - Statement: The required public verification path shall remain lightweight:
-  install, typecheck, unit tests, and package sanity.
+  install, typecheck, traceability audit, documentation link check, unit tests,
+  and package sanity.
 - Acceptance Criteria:
   - Hosted CI runs `npm ci`, `npm run check`, `npm run traceability:audit`,
-    `npm test`, and `npm run package`.
+    `npm run docs:links`, `npm test`, and `npm run package`.
   - The test plan names the same command set.
+  - Hosted CI runs a lychee-named documentation link-check step before tests.
   - Hosted CI retains machine-readable coverage evidence from the required test
     run.
   - The test plan names the coverage artifact and baseline threshold policy.
