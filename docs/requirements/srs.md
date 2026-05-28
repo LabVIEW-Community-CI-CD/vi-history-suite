@@ -1164,6 +1164,8 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/dashboardEtaAccuracy.test.ts`
   - `tests/unit/niComparisonReportParser.test.ts`
+  - `tests/unit/comparisonReportArchive.test.ts`
+  - `tests/unit/dashboardLatestRun.test.ts`
 - Change Guidance:
   - Keep dashboard behavior concentrated on evidence aggregation and review, not
     comparison execution.
