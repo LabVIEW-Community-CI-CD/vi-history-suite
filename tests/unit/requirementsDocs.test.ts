@@ -428,6 +428,44 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps installed bundled documentation traceable for VHS-REQ-611', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const packageManifestTest = readRepoText('tests', 'unit', 'packageManifest.test.ts');
+    const extensionHostTest = readRepoText('tests', 'integration', 'suite', 'extensionHost.test.ts');
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-611');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-611');
+
+    expect(srs).toContain('### VHS-REQ-611: Installed Bundled Documentation Surface');
+    expect(srs).toContain('labviewViHistory.openDocumentation');
+    expect(srs).toContain('resources/bundled-docs');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-001');
+    expect(requirementRow?.ImplementationRefs).toContain('src/docs/bundledDocumentation.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('src/docs/bundledDocumentationAction.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('resources/bundled-docs/manifest.json');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('src/extension.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/bundledDocumentation.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/bundledDocumentationAction.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/integration/suite/extensionHost.test.ts');
+    expect(packageManifestTest).toContain('onCommand:labviewViHistory.openDocumentation');
+    expect(extensionHostTest).toContain("command: 'openDocumentation'");
+    expect(extensionHostTest).toContain('getLastOpenedDocumentationPanel');
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-611-installed-bundled-documentation-surface'
+    );
+  });
+
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
@@ -620,8 +658,8 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('asset-doc');
     expect(readme).toContain('gap');
     expect(readme).toContain('Agent Response');
-    expect(readme).toContain('New software requirements start at `VHS-REQ-611`.');
-    expect(readme).not.toContain('New software requirements start at `VHS-REQ-610`.');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-612`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-611`.');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'
     );
@@ -632,14 +670,15 @@ describe('requirements documentation coherence', () => {
       'tests/unit/traceabilityAuditScript.test.ts'
     );
 
-    const bundledDocumentationGapPaths = [
+    const bundledDocumentationImplementationPaths = [
       'src/docs/bundledDocumentation.ts',
       'src/docs/bundledDocumentationAction.ts'
     ];
-    for (const filePath of bundledDocumentationGapPaths) {
+    for (const filePath of bundledDocumentationImplementationPaths) {
       const row = inventoryByPath.get(filePath);
-      expect(row?.Classification).toBe('gap');
-      expect(row?.Notes).toContain('requirement coverage gap');
+      expect(row?.Classification).toBe('mapped');
+      expect(row?.RtmCoverage).toBe('Yes');
+      expect(row?.Notes).toContain('VHS-REQ-611');
     }
 
     const bundledDocumentationAssetPaths = [
@@ -651,8 +690,9 @@ describe('requirements documentation coherence', () => {
     ];
     for (const filePath of bundledDocumentationAssetPaths) {
       const row = inventoryByPath.get(filePath);
-      expect(row?.Classification).toBe('asset-doc');
-      expect(row?.RtmCoverage).toBe('No');
+      expect(row?.Classification).toBe('mapped');
+      expect(row?.RtmCoverage).toBe('Yes');
+      expect(row?.Notes).toContain('VHS-REQ-611');
     }
 
     const bundledDocumentationTests = [
@@ -661,8 +701,9 @@ describe('requirements documentation coherence', () => {
     ];
     for (const filePath of bundledDocumentationTests) {
       const row = inventoryByPath.get(filePath);
-      expect(row?.Classification).toBe('supporting');
-      expect(row?.Notes).toContain('Unit verification coverage');
+      expect(row?.Classification).toBe('mapped');
+      expect(row?.RtmCoverage).toBe('Yes');
+      expect(row?.Notes).toContain('VHS-REQ-611');
     }
 
     for (const filePath of [
