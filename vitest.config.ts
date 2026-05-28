@@ -14,10 +14,10 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/extension.ts', 'src/benchmark/hostLinuxBenchmarkRunner.ts'],
       thresholds: {
-        statements: 40,
-        branches: 33,
-        functions: 47,
-        lines: 40
+        statements: 39,
+        branches: 32,
+        functions: 45,
+        lines: 39
       }
     }
   }

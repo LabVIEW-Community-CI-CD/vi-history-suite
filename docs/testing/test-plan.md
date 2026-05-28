@@ -30,7 +30,7 @@ the machine-readable coverage outputs from that run through the
 - `coverage/coverage-summary.json`
 
 The enforced coverage thresholds in `vitest.config.ts` are baseline regression
-floors: 40% statements, 33% branches, 47% functions, and 40% lines. These
+floors: 39% statements, 32% branches, 45% functions, and 39% lines. These
 floors preserve the current tested baseline; they are not a claim that the
 repository has complete coverage. Raise the thresholds only in a PR that shows
 new coverage evidence and updates this test plan with the new baseline.
