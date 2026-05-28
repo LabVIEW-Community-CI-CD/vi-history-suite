@@ -12,6 +12,7 @@ const {
   REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS,
   assertOrdered,
   checkIssueTemplate,
+  checkPrEvidenceDocs,
   checkStaleDodDeferrals,
   parseCsvLine,
   renderResult,
@@ -26,6 +27,7 @@ const {
     needleForLabel: (label: string) => string
   ) => { passed: boolean; details: string };
   checkIssueTemplate: (cwd: string) => { name: string; passed: boolean; details: string };
+  checkPrEvidenceDocs: (cwd: string) => { name: string; passed: boolean; details: string };
   checkStaleDodDeferrals: (cwd: string) => { passed: boolean; details: string };
   parseCsvLine: (line: string) => string[];
   renderResult: (result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }> }) => string;
@@ -191,6 +193,55 @@ describe('Definition-of-Done gate', () => {
       })
     });
     const completeResult = checkIssueTemplate(completeRoot);
+    expect(completeResult.passed).toBe(true);
+  });
+
+  it('requires lightweight requirement-targeted PR evidence in docs and PR template', () => {
+    const missingTemplateFieldRoot = createFixture({
+      'docs/testing/test-plan.md': `## PR Evidence Contract
+linked issue
+target requirement
+validation commands
+traceability/RTM impact
+out-of-scope
+closeout readiness
+\`npm run dod:gate\`
+standards provenance
+`,
+      '.github/pull_request_template.md': `## Requirement-Targeted PR Evidence (lightweight)
+- **Linked issue (required):**
+- **Target requirement (required):**
+- **Validation commands (required):**
+- **Out-of-scope (required):**
+- **Closeout readiness (required):**
+`
+    });
+    const missingTemplateFieldResult = checkPrEvidenceDocs(missingTemplateFieldRoot);
+    expect(missingTemplateFieldResult.passed).toBe(false);
+    expect(missingTemplateFieldResult.details).toContain('missing in PR template');
+    expect(missingTemplateFieldResult.details).toContain('Traceability / RTM impact (required)');
+
+    const completeRoot = createFixture({
+      'docs/testing/test-plan.md': `## PR Evidence Contract
+linked issue
+target requirement
+validation commands
+traceability/RTM impact
+out-of-scope
+closeout readiness
+\`npm run dod:gate\`
+standards provenance
+`,
+      '.github/pull_request_template.md': `## Requirement-Targeted PR Evidence (lightweight)
+- **Linked issue (required):**
+- **Target requirement (required):**
+- **Validation commands (required):**
+- **Traceability / RTM impact (required):**
+- **Out-of-scope (required):**
+- **Closeout readiness (required):**
+`
+    });
+    const completeResult = checkPrEvidenceDocs(completeRoot);
     expect(completeResult.passed).toBe(true);
   });
 });

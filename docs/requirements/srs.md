@@ -1383,8 +1383,10 @@ Missing numeric IDs are intentional.
     Copilot prompt.
   - PR evidence references the target issue without premature closure language
     unless the PR actually satisfies the issue closeout contract.
-  - PR evidence reports required hosted CI checks, local gates, targeted tests,
-    standards provenance status, and any environment blockers.
+  - PR evidence uses a lightweight contract that includes linked issue, target
+    requirement, validation commands, traceability/RTM impact, out-of-scope
+    statement, closeout readiness, required hosted CI checks, local gates,
+    targeted tests, standards provenance status, and any environment blockers.
   - Local validation includes traceability audit, documentation link check,
     typecheck, full unit tests, package sanity, and targeted tests for the
     changed requirement or implementation surface.
@@ -1404,6 +1406,7 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `package.json`
   - `scripts/checkDefinitionOfDone.js`
+  - `.github/pull_request_template.md`
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
