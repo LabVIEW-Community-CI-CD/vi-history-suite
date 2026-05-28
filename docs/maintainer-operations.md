@@ -87,7 +87,8 @@ It must:
 - fail closed unless the tagged commit is reachable from `origin/main`
 - run `npm ci`, `npm run check`, `npm test`, and `npm run package`
 - publish the located VSIX with `node scripts/runPinnedVsce.js publish --packagePath`
-- verify the live Marketplace listing with `vsce show`
+- verify the live Marketplace listing with bounded `vsce show` retry through
+  `node scripts/verifyMarketplaceListing.js`
 - upload `release-evidence/marketplace-show.json` and the VSIX as retained
   release evidence
 
@@ -202,6 +203,9 @@ Maintainer evidence should be small and repeatable:
 - Marketplace release workflow URL and tag ref for publication evidence
 - `release-evidence/marketplace-show.json` from post-publish verification
 - retained `coverage/**` output from the Marketplace release test run
+- closeout evidence generated with `npm run closeout:evidence`, including
+  mandatory standards-review output from host Python or the Docker assurance
+  workbench fallback
 
 What this evidence proves:
 
@@ -210,6 +214,8 @@ What this evidence proves:
 - the run produced or explicitly failed to produce the expected VSIX evidence
 - a protected environment approved tag-only Marketplace publication
 - the live Marketplace listing contained the released version after publication
+- a bounded Marketplace listing retry window distinguished propagation lag from
+  a publication or listing verification failure
 
 What this evidence does **not** prove:
 
@@ -229,10 +235,11 @@ itself requires verification after publication.
 
 Manual verification steps:
 
-1. Run the `vsce show` command:
+1. Run the `vsce show` command or the bounded verification helper:
 
    ```powershell
    node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
+   node scripts/verifyMarketplaceListing.js svelderrainruiz.vi-history-suite 1.4.2 --out release-evidence/marketplace-show.json --attempts 6 --delay-ms 30000
    ```
 
 2. Confirm the returned URLs use the organization repository as their base:

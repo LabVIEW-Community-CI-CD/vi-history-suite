@@ -393,6 +393,8 @@ describe('requirements documentation coherence', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const inventoryByPath = new Map(inventoryRows.map((row) => [row.Path, row]));
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-609');
     const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-609');
     const systemIndexRow = idIndexRows.find((row) => row.ID === 'VHS-SYS-REQ-016');
@@ -402,6 +404,7 @@ describe('requirements documentation coherence', () => {
     expect(syrs).toContain('release/vX.Y.Z');
     expect(syrs).toContain('hotfix/vX.Y.Z');
     expect(syrs).toContain('Marketplace publication is tag-only');
+    expect(syrs).toContain('Marketplace live-listing verification distinguishes bounded propagation lag');
 
     expect(srs).toContain(
       '### VHS-REQ-609: Governed Branch Promotion And Marketplace Release Automation'
@@ -410,6 +413,7 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('dependabot/*');
     expect(srs).toContain('reachable from `origin/main`');
     expect(srs).toContain('pinned VSCE wrapper');
+    expect(srs).toContain('Marketplace listing verification retries bounded propagation lag');
 
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-016');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
@@ -418,11 +422,15 @@ describe('requirements documentation coherence', () => {
     );
     expect(requirementRow?.ImplementationRefs).toContain('.github/dependabot.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/maintainer-operations.md');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/verifyMarketplaceListing.js');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/branchGovernanceWorkflow.test.ts'
     );
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/marketplaceReleaseWorkflow.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/marketplaceListingVerification.test.ts'
     );
     expect(requirementRow?.VerificationRefs).toContain(
       'manual:marketplace-release-environment-setup'
@@ -434,6 +442,14 @@ describe('requirements documentation coherence', () => {
     expect(systemIndexRow?.CurrentAnchor).toBe(
       'syrs.md#vhs-sys-req-016-governed-release-branch-promotion'
     );
+    for (const filePath of [
+      'scripts/verifyMarketplaceListing.js',
+      'tests/unit/marketplaceListingVerification.test.ts'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification, `${filePath} classification`).toBe('mapped');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('Yes');
+    }
   });
 
   it('keeps dashboard aggregate review traceable for VHS-REQ-610', () => {
@@ -803,6 +819,7 @@ describe('requirements documentation coherence', () => {
 
   it('keeps traceability steward inventory traceable for VHS-REQ-601', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
     const inventoryByPath = new Map(inventoryRows.map((row) => [row.Path, row]));
@@ -821,10 +838,18 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('New software requirements start at `VHS-REQ-613`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
     expect(readme).toContain('Traceability Closeout Runbook');
-    expect(readme).toContain('repo-local gates');
+    expect(readme).toContain('npm run closeout:evidence');
+    expect(readme).toContain('Standards evidence is mandatory');
+    expect(readme).toContain('repo-standards-review-assurance-workbench:local');
+    expect(readme).toContain('link-check/lychee');
+    expect(readme).toContain('Definition-of-Done gate evidence');
     expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
     expect(readme).toContain('blocking traceability findings are resolved or');
     expect(readme).toContain('standards maturity warnings outside the umbrella scope');
+    expect(srs).toContain('closeout evidence command generates GitHub-ready umbrella issue summaries');
+    expect(srs).toContain('host Python and Docker assurance-workbench');
+    expect(srs).toContain('docs link-check and DoD gates');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'
     );
@@ -834,6 +859,17 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/traceabilityAuditScript.test.ts'
     );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/closeoutEvidenceScript.test.ts'
+    );
+    for (const filePath of [
+      'scripts/generateCloseoutEvidence.js',
+      'tests/unit/closeoutEvidenceScript.test.ts'
+    ]) {
+      const row = inventoryByPath.get(filePath);
+      expect(row?.Classification, `${filePath} classification`).toBe('mapped');
+      expect(row?.RtmCoverage, `${filePath} RTM coverage`).toBe('Yes');
+    }
 
     const bundledDocumentationImplementationPaths = [
       'src/docs/bundledDocumentation.ts',

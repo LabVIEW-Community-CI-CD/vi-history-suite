@@ -828,10 +828,18 @@ Missing numeric IDs are intentional.
   - The guard is designed so a later PR can fail closed on newly added
     unclassified implementation files.
   - Documentation tells agents how to respond when touched code is unmapped.
+  - A closeout evidence command generates GitHub-ready umbrella issue summaries
+    with mandatory standards evidence.
+  - Closeout evidence supports host Python and Docker assurance-workbench
+    standards runners, and fails closed when neither can produce evidence.
+  - Closeout summaries separate blocking closure findings from deferred
+    standards maturity recommendations such as docs link-check and DoD gates.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
   - Change traceability inventory and audit script together with RTM updates.
+  - Change closeout evidence automation, standards runner docs, and closeout
+    tests together.
 - Implementation References:
   - `docs/requirements/README.md`
   - `docs/requirements/copilot-web-issue-generation-prompt.md`
@@ -841,10 +849,12 @@ Missing numeric IDs are intentional.
   - `docs/requirements/id-index.csv`
   - `docs/requirements/traceability-inventory.csv`
   - `scripts/auditTraceabilitySteward.js`
+  - `scripts/generateCloseoutEvidence.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/closeoutEvidenceScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
@@ -1119,6 +1129,8 @@ Missing numeric IDs are intentional.
     package commands before publication.
   - Marketplace publication uses the pinned VSCE wrapper and verifies the live
     Marketplace listing after publication.
+  - Marketplace listing verification retries bounded propagation lag and retains
+    the final `vsce show` evidence.
   - Release evidence is retained as a workflow artifact.
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
@@ -1129,9 +1141,11 @@ Missing numeric IDs are intentional.
   - `.github/dependabot.yml`
   - `docs/maintainer-operations.md`
   - `docs/testing/test-plan.md`
+  - `scripts/verifyMarketplaceListing.js`
 - Verification References:
   - `tests/unit/branchGovernanceWorkflow.test.ts`
   - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/marketplaceListingVerification.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:marketplace-release-environment-setup`
   - `manual:marketplace-release-tag-dispatch`
