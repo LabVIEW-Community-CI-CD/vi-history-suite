@@ -137,6 +137,7 @@ docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web 
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation; mapped through RTM.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
+docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md,asset-doc,No,Architecture decision record reference documentation for GitHub-first release and traceability governance; not directly mapped in RTM.
 docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runbook documentation; simplification process reference.
 docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.

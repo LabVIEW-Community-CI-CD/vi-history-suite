@@ -89,6 +89,7 @@ describe('traceability audit script', () => {
     expect(IMPLEMENTATION_GLOBS).toContain('scripts/*.js');
     expect(TEST_GLOBS).toContain('tests/unit/*.ts');
     expect(TEST_GLOBS).toContain('tests/integration/**/*.ts');
+    expect(TRACEABILITY_SURFACE_GLOBS).toContain('docs/architecture/**/*.md');
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('docs/requirements/*.md');
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('.github/workflows/*.yml');
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('resources/bundled-docs/**');
@@ -366,6 +367,8 @@ describe('traceability audit execution', () => {
   it('flags missing inventory entries across expanded traceability surface', () => {
     const fixtureRoot = createAuditFixture({
       files: [
+        'docs/architecture/overview.md',
+        'docs/architecture/adr/ADR-0001.md',
         'docs/requirements/README.md',
         '.github/workflows/ci.yml',
         '.github/ISSUE_TEMPLATE/bug_report.yml',
@@ -393,6 +396,8 @@ describe('traceability audit execution', () => {
     expect(result.success).toBe(false);
     expect(result.findings.missingInventoryEntries).toEqual(
       expect.arrayContaining([
+        'docs/architecture/overview.md',
+        'docs/architecture/adr/ADR-0001.md',
         'docs/requirements/README.md',
         '.github/workflows/ci.yml',
         '.github/ISSUE_TEMPLATE/bug_report.yml',

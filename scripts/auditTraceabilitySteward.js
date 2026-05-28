@@ -43,6 +43,8 @@ const TEST_GLOBS = [
 const TRACEABILITY_SURFACE_GLOBS = [
   ...IMPLEMENTATION_GLOBS,
   ...TEST_GLOBS,
+  'docs/architecture/*.md',
+  'docs/architecture/**/*.md',
   'docs/requirements/*.md',
   'docs/requirements/*.csv',
   '.github/workflows/*.yml',
