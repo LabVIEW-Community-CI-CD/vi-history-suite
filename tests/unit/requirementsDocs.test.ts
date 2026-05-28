@@ -383,6 +383,51 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps dashboard aggregate review traceable for VHS-REQ-610', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-610');
+    const indexRow = idIndexRows.find((row) => row.ID === 'VHS-REQ-610');
+
+    expect(srs).toContain('### VHS-REQ-610: Dashboard Aggregate Review');
+    expect(srs).toContain('dashboard aggregate review');
+    expect(srs).toContain('multiple commit pairs');
+    expect(srs).toContain('ETA estimation');
+    expect(srs).toContain('Evidence seeding imports retained evidence');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-008');
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/multiReportDashboard.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/multiReportDashboardAction.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/niComparisonReportParser.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/comparisonReportArchive.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/dashboardEtaAccuracy.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/dashboardLatestRun.ts'
+    );
+    expect(requirementRow?.ImplementationRefs).toContain(
+      'src/dashboard/retainedDashboardEvidence.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/dashboardEtaAccuracy.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/niComparisonReportParser.test.ts'
+    );
+    expect(indexRow?.CurrentAnchor).toBe(
+      'srs.md#vhs-req-610-dashboard-aggregate-review'
+    );
+  });
+
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));

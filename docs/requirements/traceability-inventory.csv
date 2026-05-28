@@ -2,13 +2,13 @@ Path,Classification,RtmCoverage,Notes
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
-src/dashboard/comparisonReportArchive.ts,gap,No,Dashboard archive support; pending RTM classification.
-src/dashboard/dashboardEtaAccuracy.ts,gap,No,Dashboard ETA accuracy; pending RTM classification.
-src/dashboard/dashboardLatestRun.ts,gap,No,Dashboard latest run support; pending RTM classification.
-src/dashboard/multiReportDashboard.ts,gap,No,Multi-report dashboard; pending RTM classification.
-src/dashboard/multiReportDashboardAction.ts,gap,No,Multi-report dashboard action; pending RTM classification.
-src/dashboard/niComparisonReportParser.ts,gap,No,NI comparison report parser; pending RTM classification.
-src/dashboard/retainedDashboardEvidence.ts,gap,No,Retained dashboard evidence; pending RTM classification.
+src/dashboard/comparisonReportArchive.ts,mapped,Yes,Dashboard archive support; mapped to VHS-REQ-610.
+src/dashboard/dashboardEtaAccuracy.ts,mapped,Yes,Dashboard ETA accuracy; mapped to VHS-REQ-610.
+src/dashboard/dashboardLatestRun.ts,mapped,Yes,Dashboard latest run support; mapped to VHS-REQ-610.
+src/dashboard/multiReportDashboard.ts,mapped,Yes,Multi-report dashboard; mapped to VHS-REQ-610.
+src/dashboard/multiReportDashboardAction.ts,mapped,Yes,Multi-report dashboard action; mapped to VHS-REQ-610.
+src/dashboard/niComparisonReportParser.ts,mapped,Yes,NI comparison report parser; mapped to VHS-REQ-610.
+src/dashboard/retainedDashboardEvidence.ts,mapped,Yes,Retained dashboard evidence; mapped to VHS-REQ-610.
 src/docs/bundledDocumentation.ts,gap,No,Active bundled documentation manifest/page loading and rendering behavior; requirement coverage gap pending requirement mapping.
 src/docs/bundledDocumentationAction.ts,gap,No,Active bundled documentation command/action routing behavior; requirement coverage gap pending requirement mapping.
 src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
@@ -63,7 +63,7 @@ tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report prefli
 tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM.
 tests/unit/comparisonRuntimeDoctor.test.ts,mapped,Yes,Comparison runtime doctor tests; mapped through RTM.
 tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locator tests; mapped through RTM.
-tests/unit/dashboardEtaAccuracy.test.ts,gap,No,Dashboard ETA accuracy tests; pending RTM classification.
+tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests; mapped to VHS-REQ-610.
 tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
 tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM.
 tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.
@@ -74,7 +74,7 @@ tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; m
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
 tests/unit/integrationHostRuntime.test.ts,dev-only,No,Integration host runtime tests; testing infrastructure.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
-tests/unit/niComparisonReportParser.test.ts,gap,No,NI comparison report parser tests; pending RTM classification.
+tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
 tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM.
 tests/unit/packageRuntimeSurfaceAudit.test.ts,mapped,Yes,Package runtime surface audit tests; mapped through RTM.

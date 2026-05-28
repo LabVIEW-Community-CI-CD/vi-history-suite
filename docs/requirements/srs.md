@@ -1131,3 +1131,39 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Do not publish from branch refs; tag the merged `main` commit and publish
     from that exact tag only.
+
+### VHS-REQ-610: Dashboard Aggregate Review
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall provide a dashboard aggregate review that
+  concentrates retained comparison report evidence across multiple commit pairs
+  into a single HTML surface.
+- Acceptance Criteria:
+  - The dashboard shows all commit pairs in the loaded history window.
+  - Each pair entry shows archive status, evidence state, and artifact links.
+  - Report metadata including overview images, detail sections, and included
+    attributes is extracted from NI comparison reports and displayed.
+  - ETA estimation provides user feedback during dashboard preparation.
+  - Dashboard artifacts are persisted to extension storage for reproducibility.
+  - Evidence seeding imports retained evidence from external sources when
+    available.
+  - Dashboard generation requires at least three commits to form comparison
+    pairs.
+- Agent Work Scope:
+  - Change dashboard build, action, evidence handling, and tests together.
+- Implementation References:
+  - `src/dashboard/multiReportDashboard.ts`
+  - `src/dashboard/multiReportDashboardAction.ts`
+  - `src/dashboard/niComparisonReportParser.ts`
+  - `src/dashboard/comparisonReportArchive.ts`
+  - `src/dashboard/dashboardEtaAccuracy.ts`
+  - `src/dashboard/dashboardLatestRun.ts`
+  - `src/dashboard/retainedDashboardEvidence.ts`
+- Verification References:
+  - `tests/unit/dashboardEtaAccuracy.test.ts`
+  - `tests/unit/niComparisonReportParser.test.ts`
+- Change Guidance:
+  - Keep dashboard behavior concentrated on evidence aggregation and review, not
+    comparison execution.
