@@ -254,6 +254,28 @@ describe('requirements documentation coherence', () => {
     expect(titles).toContain('Devcontainer Source Evaluation');
   });
 
+  it('keeps lightweight hosted CI traceability audit gating documented', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const workflowTest = readRepoText('tests', 'unit', 'branchGovernanceWorkflow.test.ts');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-597');
+
+    expect(srs).toContain('### VHS-REQ-597: Lightweight Hosted CI');
+    expect(srs).toContain('typecheck, traceability audit, unit tests, and package sanity');
+    expect(srs).toContain('The workflow runs `npm run traceability:audit`.');
+    expect(testPlan).toContain('npm run traceability:audit');
+    expect(testPlan).toContain(
+      'implementation, test, workflow, and documentation surfaces remain classified'
+    );
+    expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
+    expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/branchGovernanceWorkflow.test.ts'
+    );
+  });
+
   it('keeps dependency maintenance automation targetable', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
@@ -702,6 +724,11 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('Agent Response');
     expect(readme).toContain('New software requirements start at `VHS-REQ-613`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
+    expect(readme).toContain('Traceability Closeout Runbook');
+    expect(readme).toContain('repo-local gates');
+    expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
+    expect(readme).toContain('blocking traceability findings are resolved or');
+    expect(readme).toContain('standards maturity warnings outside the umbrella scope');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'
     );
