@@ -121,6 +121,7 @@ function runGateCommands(options, deps = {}) {
   const npm = npmCommand(platform);
   const gates = [
     ['traceability:audit', npm, ['run', 'traceability:audit']],
+    ['docs:links', npm, ['run', 'docs:links']],
     ['check', npm, ['run', 'check']],
     ['test', npm, ['test']],
     ['package', npm, ['run', 'package']]
@@ -569,7 +570,7 @@ function renderStandardsSummary(standards) {
     `- Requirements quality: ${summary.requirementsQuality?.ok === true ? 'PASS' : 'see raw evidence'}`,
     `- Evidence scan: ${summary.fileCount ?? 'unknown'} files; REQ=${summary.reqSignal ?? 'unknown'}; TEST=${summary.testSignal ?? 'unknown'}`,
     `- Gate scorecard: coverage=${summary.coverageGate ?? 'see scorecard'}; doc=${summary.docGate ?? 'not flagged'}; dod=${summary.dodGate ?? 'not flagged'}`,
-    '- Deferred recommendations: docs link-check/lychee and DoD gate evidence remain next-wave advisory findings, not #130 blockers.'
+    '- Deferred recommendations: Definition-of-Done gate evidence remains a next-wave advisory finding.'
   ].join('\n');
 }
 
@@ -621,7 +622,6 @@ function renderCloseoutMarkdown(context) {
     '',
     '## Next Wave',
     '',
-    '- Defer docs link-check/lychee automation to the next standards maturity issue.',
     '- Defer explicit Definition-of-Done gate evidence to the next standards maturity issue.'
   ].filter((line) => line !== undefined).join('\n');
 }

@@ -8,6 +8,7 @@ Run these on pull requests and pushes to governed public branches:
 npm ci
 npm run check
 npm run traceability:audit
+npm run docs:links
 npm test
 npm run package
 ```
@@ -18,7 +19,9 @@ work and Dependabot maintenance target `develop`, while only
 `release/vX.Y.Z` and `hotfix/vX.Y.Z` branches target `main`.
 The traceability audit is part of the required hosted gate so newly added
 implementation, test, workflow, and documentation surfaces remain classified
-before merge.
+before merge. The `Docs Link Check / lychee` step runs `npm run docs:links`
+inside the same required job so committed Markdown and bundled documentation
+local links are checked before tests and packaging.
 
 ## Coverage Evidence And Threshold Policy
 
@@ -122,13 +125,15 @@ Umbrella issue closeout requires generated evidence:
 npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates --save-dir assurance-closeout-evidence
 ```
 
-The closeout command always runs standards evidence. It tries host Python first
-in `auto` mode and falls back to the
+The closeout command runs `npm run traceability:audit`, `npm run docs:links`,
+`npm run check`, `npm test`, and `npm run package` when `--run-gates` is set.
+It always runs standards evidence. It tries host Python first in `auto` mode
+and falls back to the
 `repo-standards-review-assurance-workbench:local` Docker image when host
 preflight is unavailable. A summary is not closable until local gates and
-mandatory standards evidence are both clean. Docs link-check/lychee and DoD
-gate findings remain deferred next-wave recommendations unless the target issue
-explicitly owns them.
+mandatory standards evidence are both clean. Definition-of-Done gate findings
+remain deferred next-wave recommendations unless the target issue explicitly
+owns them.
 
 ## Optional Vagrant Check
 

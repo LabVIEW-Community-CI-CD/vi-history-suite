@@ -73,6 +73,9 @@ jobs:
       - name: Traceability Audit
         run: npm run traceability:audit
 
+      - name: Docs Link Check / lychee
+        run: npm run docs:links
+
       - name: Test
         run: npm test
 

@@ -43,6 +43,19 @@ describe('CI branch governance workflow', () => {
     );
   });
 
+  it('keeps the docs link-check lychee gate in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Docs Link Check / lychee');
+    expect(workflow).toContain('run: npm run docs:links');
+    expect(workflow.indexOf('run: npm run traceability:audit')).toBeLessThan(
+      workflow.indexOf('run: npm run docs:links')
+    );
+    expect(workflow.indexOf('run: npm run docs:links')).toBeLessThan(
+      workflow.indexOf('run: npm test')
+    );
+  });
+
   it('retains machine-readable coverage evidence in the required hosted gate', () => {
     const workflow = readWorkflow();
 

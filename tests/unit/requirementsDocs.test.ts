@@ -254,32 +254,48 @@ describe('requirements documentation coherence', () => {
     expect(titles).toContain('Devcontainer Source Evaluation');
   });
 
-  it('keeps lightweight hosted CI traceability audit gating documented', () => {
+  it('keeps lightweight hosted CI traceability and docs link gating documented', () => {
     const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
     const workflowTest = readRepoText('tests', 'unit', 'branchGovernanceWorkflow.test.ts');
     const vitestConfig = readRepoText('vitest.config.ts');
+    const packageJson = JSON.parse(readRepoText('package.json')) as {
+      scripts: Record<string, string>;
+    };
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
     const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-597');
     const vitestInventoryRow = inventoryRows.find((row) => row.Path === 'vitest.config.ts');
+    const docsLinksInventoryRow = inventoryRows.find(
+      (row) => row.Path === 'scripts/checkDocsLinks.js'
+    );
+    const docsLinksTestInventoryRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/docsLinkCheckScript.test.ts'
+    );
 
     expect(syrs).toContain('`npm run traceability:audit`');
+    expect(syrs).toContain('`npm run docs:links`');
+    expect(syrs).toContain('lychee-named documentation link-check step');
     expect(syrs).toContain('machine-readable coverage evidence');
     expect(syrs).toContain('coverage artifact and baseline threshold policy');
     expect(srs).toContain('### VHS-REQ-597: Lightweight Hosted CI');
-    expect(srs).toContain('typecheck, traceability audit, unit tests, and package sanity');
+    expect(srs).toContain('typecheck, traceability audit, documentation link check');
     expect(srs).toContain('The workflow runs `npm run traceability:audit`.');
+    expect(srs).toContain('The workflow runs `npm run docs:links`');
+    expect(srs).toContain('Docs Link Check /');
     expect(srs).toContain('coverage/cobertura-coverage.xml');
     expect(srs).toContain('coverage/coverage-summary.json');
     expect(srs).toContain('baseline global coverage thresholds declared in');
     expect(srs).toContain('60% statements, 50% branches, 65% functions');
     expect(syrs).toContain('post-wave hosted floors are 60% statements');
     expect(testPlan).toContain('npm run traceability:audit');
+    expect(testPlan).toContain('npm run docs:links');
     expect(testPlan).toContain(
       'implementation, test, workflow, and documentation surfaces remain classified'
     );
+    expect(testPlan).toContain('Docs Link Check / lychee');
+    expect(testPlan).toContain('committed Markdown and bundled documentation');
     expect(testPlan).toContain('PR Coverage Gate / coverage');
     expect(testPlan).toContain('coverage/cobertura-coverage.xml');
     expect(testPlan).toContain('coverage/coverage-summary.json');
@@ -312,7 +328,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('| VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
+    expect(workflowTest).toContain('keeps the docs link-check lychee gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
+    expect(packageJson.scripts['docs:links']).toBe('node scripts/checkDocsLinks.js');
     expect(vitestConfig).toContain('statements: 60');
     expect(vitestConfig).toContain('branches: 50');
     expect(vitestConfig).toContain('functions: 65');
@@ -320,15 +338,23 @@ describe('requirements documentation coherence', () => {
     expect(vitestConfig).toContain('scripts/mapCoverageToTraceability.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/checkDocsLinks.js');
     expect(requirementRow?.ImplementationRefs).toContain('vitest.config.ts');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/branchGovernanceWorkflow.test.ts'
     );
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/docsLinkCheckScript.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
     expect(vitestInventoryRow?.Classification).toBe('mapped');
     expect(vitestInventoryRow?.RtmCoverage).toBe('Yes');
     expect(vitestInventoryRow?.Notes).toContain('VHS-REQ-597');
     expect(vitestInventoryRow?.Notes).toContain('VHS-REQ-613');
+    expect(docsLinksInventoryRow?.Classification).toBe('mapped');
+    expect(docsLinksInventoryRow?.RtmCoverage).toBe('Yes');
+    expect(docsLinksInventoryRow?.Notes).toContain('VHS-REQ-597');
+    expect(docsLinksTestInventoryRow?.Classification).toBe('mapped');
+    expect(docsLinksTestInventoryRow?.RtmCoverage).toBe('Yes');
+    expect(docsLinksTestInventoryRow?.Notes).toContain('VHS-REQ-597');
   });
 
   it('keeps coverage intelligence traceable for VHS-REQ-613', () => {
@@ -1043,14 +1069,13 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('npm run closeout:evidence');
     expect(readme).toContain('Standards evidence is mandatory');
     expect(readme).toContain('repo-standards-review-assurance-workbench:local');
-    expect(readme).toContain('link-check/lychee');
     expect(readme).toContain('Definition-of-Done gate evidence');
     expect(readme).toContain('requirements_quality_check.py <repo-root> --requirements-spec-scope system --json');
     expect(readme).toContain('blocking traceability findings are resolved or');
     expect(readme).toContain('standards maturity warnings outside the umbrella scope');
     expect(srs).toContain('closeout evidence command generates GitHub-ready umbrella issue summaries');
     expect(srs).toContain('host Python and Docker assurance-workbench');
-    expect(srs).toContain('docs link-check and DoD gates');
+    expect(srs).toContain('Definition-of-Done gate');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
     expect(requirementRow?.ImplementationRefs).toContain(
       'docs/requirements/traceability-inventory.csv'

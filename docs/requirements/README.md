@@ -110,6 +110,7 @@ intentional.
 
 ```shell
 npm run traceability:audit
+npm run docs:links
 npm run check
 npm test
 npm run package
@@ -127,9 +128,9 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance
 
 5. Close the umbrella only when blocking traceability findings are resolved or
    deferred to open child issues with owners and validation commands.
-6. Treat standards maturity warnings outside the umbrella scope, such as docs
-   link-check/lychee and Definition-of-Done gate evidence, as next-wave
-   recommendations, not silent blockers for the current umbrella closeout.
+6. Treat standards maturity warnings outside the umbrella scope, such as
+   Definition-of-Done gate evidence, as next-wave recommendations, not silent
+   blockers for the current umbrella closeout.
 
 ## ID Policy
 

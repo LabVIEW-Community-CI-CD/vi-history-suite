@@ -674,11 +674,14 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-012
 - Area: CI And Developer Environment
 - Statement: Hosted CI shall run the lightweight public check set: install,
-  typecheck, traceability audit, unit tests, and package sanity.
+  typecheck, traceability audit, documentation link check, unit tests, and
+  package sanity.
 - Acceptance Criteria:
   - The workflow runs `npm ci`.
   - The workflow runs `npm run check`.
   - The workflow runs `npm run traceability:audit`.
+  - The workflow runs `npm run docs:links` through the `Docs Link Check /
+    lychee` step.
   - The workflow runs `npm test`.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
@@ -695,9 +698,11 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `.github/workflows/ci.yml`
   - `docs/testing/test-plan.md`
+  - `scripts/checkDocsLinks.js`
   - `vitest.config.ts`
 - Verification References:
   - `tests/unit/branchGovernanceWorkflow.test.ts`
+  - `tests/unit/docsLinkCheckScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:github-actions-build-test-package`
 - Change Guidance:
@@ -834,7 +839,8 @@ Missing numeric IDs are intentional.
   - Closeout evidence supports host Python and Docker assurance-workbench
     standards runners, and fails closed when neither can produce evidence.
   - Closeout summaries separate blocking closure findings from deferred
-    standards maturity recommendations such as docs link-check and DoD gates.
+    standards maturity recommendations such as Definition-of-Done gate
+    evidence.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
