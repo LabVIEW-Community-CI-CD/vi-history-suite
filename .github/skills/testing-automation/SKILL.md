@@ -34,6 +34,7 @@ Use `bash .github/skills/testing-automation/scripts/run-pr-gates.sh` when you ne
 - If threshold or gate behavior changes, update:
   - [docs/testing/test-plan.md](../../../docs/testing/test-plan.md)
   - [vitest.config.ts](../../../vitest.config.ts)
+- When adding new source or test files, update [docs/requirements/traceability-inventory.csv](../../../docs/requirements/traceability-inventory.csv) classification to keep `npm run traceability:audit` green.
 
 ## References
 - [docs/testing/test-plan.md](../../../docs/testing/test-plan.md)
