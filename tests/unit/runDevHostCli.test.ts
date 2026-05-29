@@ -21,7 +21,7 @@ describe('runDevHostCli', () => {
 
     expect(outcome).toBe('help');
     expect(write).toHaveBeenCalledTimes(1);
-    expect(write.mock.calls[0]?.[0]).toContain('Usage: node out/cli/runDevHost.js');
+    expect(write.mock.calls[0]?.[0]).toContain('Usage: runDevHost');
   });
 
   it('prepares a workspace and reports fixture paths for --prepare-workspace-only', async () => {
