@@ -15,6 +15,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 ### Build & Test Commands
 - **Build:** `npm run compile`
 - **Test:** `npm test`
+- **Customization Audit:** `npm run customization:audit`
 - **Integration Test Build:** `npm run test:integration:compile`
 - **Dev Watch:** `npm run dev:watch`
 - **Check:** `npm run check`

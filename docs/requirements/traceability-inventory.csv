@@ -1,4 +1,5 @@
 Path,Classification,RtmCoverage,Notes
+scripts/auditCustomizationGovernance.js,mapped,Yes,Customization governance audit script for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
@@ -107,6 +108,7 @@ tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and re
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
+tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
 tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
 tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings probe tests; contributor validation tooling.

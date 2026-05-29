@@ -35,11 +35,24 @@ describe('CI branch governance workflow', () => {
 
     expect(workflow).toContain('name: Traceability Audit');
     expect(workflow).toContain('run: npm run traceability:audit');
-    expect(workflow.indexOf('run: npm run check')).toBeLessThan(
+    expect(workflow.indexOf('run: npm run customization:audit')).toBeLessThan(
       workflow.indexOf('run: npm run traceability:audit')
     );
     expect(workflow.indexOf('run: npm run traceability:audit')).toBeLessThan(
       workflow.indexOf('run: npm test')
+    );
+  });
+
+  it('keeps the customization audit in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Customization Audit');
+    expect(workflow).toContain('run: npm run customization:audit');
+    expect(workflow.indexOf('run: npm run check')).toBeLessThan(
+      workflow.indexOf('run: npm run customization:audit')
+    );
+    expect(workflow.indexOf('run: npm run customization:audit')).toBeLessThan(
+      workflow.indexOf('run: npm run traceability:audit')
     );
   });
 
