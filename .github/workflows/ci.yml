@@ -71,7 +71,21 @@ jobs:
         run: npm run check
 
       - name: Customization Audit
-        run: npm run customization:audit
+        run: |
+          set +e
+          npm run customization:audit
+          audit_status=$?
+          node scripts/auditCustomizationGovernance.js --json > customization-audit-report.json
+          exit $audit_status
+
+      - name: Customization Audit Report / custom-audit
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: customization-audit-report-${{ github.run_id }}
+          path: customization-audit-report.json
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Traceability Audit
         run: npm run traceability:audit

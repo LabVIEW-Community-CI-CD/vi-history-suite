@@ -23,6 +23,10 @@ The traceability audit is part of the required hosted gate so newly added
 implementation, test, workflow, and documentation surfaces remain classified
 before merge, and the customization audit runs before traceability so AGENTS and
 workspace customization drift fails closed.
+The required job also emits `customization-audit-report.json` and uploads it
+through `Customization Audit Report / custom-audit` so CI triage can classify
+runtime issues, AGENTS sync drift, frontmatter drift, applyTo drift, markdown
+link drift, and command-reference drift.
 The `Docs Link Check / lychee` step runs `npm run docs:links`
 inside the same required job so committed Markdown and bundled documentation
 local links are checked before tests and packaging.

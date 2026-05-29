@@ -332,6 +332,10 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain(
       'implementation, test, workflow, and documentation surfaces remain classified'
     );
+    expect(testPlan).toContain('customization-audit-report.json');
+    expect(testPlan).toContain('Customization Audit Report / custom-audit');
+    expect(testPlan).toContain('AGENTS sync drift');
+    expect(testPlan).toContain('command-reference drift');
     expect(testPlan).toContain('Docs Link Check / lychee');
     expect(testPlan).toContain('committed Markdown and bundled documentation');
     expect(testPlan).toContain('PR Coverage Gate / coverage');
@@ -370,6 +374,9 @@ describe('requirements documentation coherence', () => {
     );
     expect(workflowTest).toContain('keeps the traceability audit in the required hosted gate');
     expect(workflowTest).toContain('keeps the customization audit in the required hosted gate');
+    expect(workflowTest).toContain(
+      'uploads machine-readable customization audit evidence in the hosted gate'
+    );
     expect(workflowTest).toContain('keeps the docs link-check lychee gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
     expect(workflowTest).toContain('keeps the hosted DoD gate in the required CI workflow');

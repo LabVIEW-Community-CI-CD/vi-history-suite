@@ -10,6 +10,7 @@ const REQUIRED_CI_STEPS = [
   'Install',
   'Typecheck',
   'Customization Audit',
+  'Customization Audit Report / custom-audit',
   'Traceability Audit',
   'Docs Link Check / lychee',
   'Test',
@@ -147,11 +148,28 @@ function checkCiStepOrder(cwd) {
     return { name: 'CI required step order', ...requiredOrder };
   }
 
-  if (!/- name: Customization Audit\s*\r?\n\s*run: npm run customization:audit/iu.test(workflow)) {
+  for (const customizationAuditSnippet of [
+    'npm run customization:audit',
+    'node scripts/auditCustomizationGovernance.js --json > customization-audit-report.json'
+  ]) {
+    if (!workflow.includes(customizationAuditSnippet)) {
+      return {
+        name: 'CI required step order',
+        passed: false,
+        details: `Customization Audit must include '${customizationAuditSnippet}' in .github/workflows/ci.yml.`
+      };
+    }
+  }
+
+  if (
+    !/- name: Customization Audit Report \/ custom-audit[\s\S]*name: customization-audit-report-\$\{\{ github\.run_id \}\}[\s\S]*path: customization-audit-report\.json/iu.test(
+      workflow
+    )
+  ) {
     return {
       name: 'CI required step order',
       passed: false,
-      details: 'Customization Audit must run exactly npm run customization:audit in .github/workflows/ci.yml.'
+      details: 'Customization Audit Report / custom-audit must upload customization-audit-report.json as an artifact.'
     };
   }
 
@@ -166,7 +184,7 @@ function checkCiStepOrder(cwd) {
   return {
     name: 'CI required step order',
     passed: true,
-    details: `${requiredOrder.details}; hosted customization and DoD steps present`
+    details: `${requiredOrder.details}; hosted customization audit reporting and DoD steps present`
   };
 }
 
