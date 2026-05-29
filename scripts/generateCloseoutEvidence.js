@@ -15,6 +15,7 @@ const DEFAULT_STANDARDS_IMAGE = STANDARDS_TOOLCHAIN_REGISTRY_IMAGE;
 const DEFAULT_SAVE_DIR = 'assurance-closeout-evidence';
 const DEFAULT_SKILL_ROOT = process.env.REPO_STANDARDS_REVIEW_ROOT ||
   'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review';
+const TRUSTED_REPO_ROOT = path.resolve(__dirname, '..');
 const COMMAND_TIMEOUT_MS = Object.freeze({
   gitRemote: 45000,
   ghApi: 45000,
@@ -790,7 +791,7 @@ function replaceRepoMount(args, repoRoot) {
 }
 
 function runDockerStandards(options, deps = {}) {
-  const repoRoot = deps.cwd || process.cwd();
+  const repoRoot = TRUSTED_REPO_ROOT;
   const inspect = runCommand('docker', ['image', 'inspect', options.standardsImage], withCommandPolicy(deps, {
     timeoutMs: COMMAND_TIMEOUT_MS.dockerImageInspect,
     maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
@@ -1366,7 +1367,7 @@ function generateCloseoutEvidence(argv, deps = {}) {
     return { exitCode: 0, markdown: usage(), context: { options } };
   }
 
-  const cwd = deps.cwd || process.cwd();
+  const cwd = TRUSTED_REPO_ROOT;
   const saveDir = options.saveDir ? path.resolve(cwd, options.saveDir) : undefined;
   prepareEvidenceDirectory(saveDir, cwd);
   const git = collectGitContext({ ...deps, cwd });

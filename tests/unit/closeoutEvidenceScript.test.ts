@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
+
+const repoRoot = path.resolve(__dirname, '..', '..');
 
 const {
   ALLOWED_EXECUTABLE_COMMANDS,
@@ -762,9 +763,8 @@ describe('closeout evidence script', () => {
   });
 
   it('writes closeout-summary.json when save-dir is provided', () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-closeout-summary-'));
-    const repoRoot = path.join(tempRoot, 'repo');
-    fs.mkdirSync(repoRoot, { recursive: true });
+    const saveDirRel = `.tmp-closeout-summary-${Date.now()}-${process.pid}`;
+    const saveDirAbs = path.join(repoRoot, saveDirRel);
 
     try {
       const result = generateCloseoutEvidence(
@@ -775,17 +775,16 @@ describe('closeout evidence script', () => {
           '130',
           '--run-gates',
           '--save-dir',
-          'assurance-closeout-evidence'
+          saveDirRel
         ],
         {
           platform: 'win32',
-          cwd: repoRoot,
           existsSync: () => true,
           spawnSync: hostSuccessSpawnSync()
         }
       );
 
-      const summaryPath = path.join(repoRoot, 'assurance-closeout-evidence', 'closeout-summary.json');
+      const summaryPath = path.join(saveDirAbs, 'closeout-summary.json');
       expect(fs.existsSync(summaryPath)).toBe(true);
 
       const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8')) as {
@@ -818,7 +817,7 @@ describe('closeout evidence script', () => {
       expect(summary.exitCode).toBe(0);
       expect(result.context.machineReadableSummary?.closureDecision.closable).toBe(true);
     } finally {
-      fs.rmSync(tempRoot, { recursive: true, force: true });
+      fs.rmSync(saveDirAbs, { recursive: true, force: true });
     }
   });
 
