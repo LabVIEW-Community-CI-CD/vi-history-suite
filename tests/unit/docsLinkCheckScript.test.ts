@@ -49,6 +49,8 @@ describe('docs link check script', () => {
   it('collects Markdown and bundled HTML documentation files only', () => {
     const root = createFixture({
       'README.md': '# Readme\n',
+      '.cache/node/README.md': '[Missing](missing.md)\n',
+      'assurance-release-evidence/report.md': '[Missing](missing.md)\n',
       'docs/guide.md': '# Guide\n',
       'resources/bundled-docs/pages/overview.html': '<h1>Overview</h1>',
       'resources/other/page.html': '<a href="missing.html">not checked</a>',

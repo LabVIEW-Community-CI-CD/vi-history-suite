@@ -70,6 +70,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - Some scripts/tools expect a Linux environment (see [scripts/](./scripts/) and [docs/vagrant.md](./docs/vagrant.md))
 - Integration tests may require specific Git setup or Vagrant (see [docs/vagrant.md](./docs/vagrant.md))
 - Workflow contract tests can become brittle if they assert exact single-line `run:` snippets; prefer step-name ordering checks when CI steps use multiline `run: |` blocks.
+- On Linux closeout runs, pass `--skill-root /home/sergio/.codex/skills/repo-standards-review` or set `REPO_STANDARDS_REVIEW_ROOT` when the default Windows standards skill cache path is unavailable.
 - For troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) and [SUPPORT.md](./SUPPORT.md)
 
 ### Troubleshooting Route
