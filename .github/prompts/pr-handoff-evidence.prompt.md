@@ -26,3 +26,4 @@ Constraints:
 - Keep each line concise and factual.
 - Do not invent command results.
 - Preserve exact field labels so DoD documentation checks remain aligned.
+- If customization surfaces changed (`AGENTS.md`, `.github/skills/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/agents/**`), include `npm run customization:audit` in Validation commands.
