@@ -69,6 +69,9 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - `.github/prompts/pr-handoff-evidence.prompt.md`: one-shot PR evidence block generation with required field labels
 - `.github/prompts/requirement-target-execution.prompt.md`: requirement-targeted execution workflow with SRS and RTM checkpoints
 
+### Custom Agents (Workspace)
+- `.github/agents/workflow-governor.agent.md`: task execution with branch policy, requirement traceability, test gates, and PR evidence compliance
+
 ### File Instructions (Workspace)
 - `.github/instructions/reporting-orchestration.instructions.md`: guardrails for report orchestration files in `src/reporting/**`
 - `.github/instructions/unit-tests.instructions.md`: deterministic unit-test patterns for `tests/unit/**/*.test.ts`
