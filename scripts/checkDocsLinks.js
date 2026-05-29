@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const SKIPPED_DIRECTORIES = new Set([
+  '.cache',
   '.git',
   '.vscode-test',
   'assurance-closeout-evidence',
@@ -12,6 +13,10 @@ const SKIPPED_DIRECTORIES = new Set([
   'out',
   'out-tests'
 ]);
+
+function shouldSkipDirectory(name) {
+  return SKIPPED_DIRECTORIES.has(name) || /^assurance-.*-evidence$/u.test(name);
+}
 
 function toPosixPath(value) {
   return value.replace(/\\/g, '/');
@@ -83,7 +88,7 @@ function collectDocumentationFiles(cwd) {
   function walk(directory) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       if (entry.isDirectory()) {
-        if (!SKIPPED_DIRECTORIES.has(entry.name)) {
+        if (!shouldSkipDirectory(entry.name)) {
           walk(path.join(directory, entry.name));
         }
         continue;
