@@ -129,6 +129,7 @@ describe('Definition-of-Done gate', () => {
       'Setup Node',
       'Install',
       'Typecheck',
+      'Customization Audit',
       'Traceability Audit',
       'Docs Link Check / lychee',
       'Test',

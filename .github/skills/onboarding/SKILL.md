@@ -15,8 +15,9 @@ argument-hint: 'Optional context: installed-extension, source-evaluation, troubl
 1. `npm install`
 2. `npm run compile`
 3. `npm run check`
-4. `npm test`
-5. `npm run package`
+4. `npm run customization:audit`
+5. `npm test`
+6. `npm run package`
 
 If you are in a devcontainer or Codespace, run `F5` with `Run VI History Suite` after `postStartCommand` completes.
 

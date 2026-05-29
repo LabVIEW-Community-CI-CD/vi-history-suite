@@ -9,6 +9,7 @@ const REQUIRED_CI_STEPS = [
   'Setup Node',
   'Install',
   'Typecheck',
+  'Customization Audit',
   'Traceability Audit',
   'Docs Link Check / lychee',
   'Test',
@@ -146,6 +147,14 @@ function checkCiStepOrder(cwd) {
     return { name: 'CI required step order', ...requiredOrder };
   }
 
+  if (!/- name: Customization Audit\s*\r?\n\s*run: npm run customization:audit/iu.test(workflow)) {
+    return {
+      name: 'CI required step order',
+      passed: false,
+      details: 'Customization Audit must run exactly npm run customization:audit in .github/workflows/ci.yml.'
+    };
+  }
+
   if (!/- name: DoD Gate \/ dod\s*\r?\n\s*run: npm run dod:gate/iu.test(workflow)) {
     return {
       name: 'CI required step order',
@@ -157,7 +166,7 @@ function checkCiStepOrder(cwd) {
   return {
     name: 'CI required step order',
     passed: true,
-    details: `${requiredOrder.details}; hosted DoD step present`
+    details: `${requiredOrder.details}; hosted customization and DoD steps present`
   };
 }
 
@@ -250,16 +259,23 @@ function checkTraceabilityMapping(cwd) {
   const ciWorkflowRow = inventory.find((entry) => entry.Path === '.github/workflows/ci.yml');
   const marketplaceWorkflowRow = inventory.find((entry) => entry.Path === '.github/workflows/marketplace-release.yml');
   const scriptRow = inventory.find((entry) => entry.Path === 'scripts/checkDefinitionOfDone.js');
+  const customizationScriptRow = inventory.find(
+    (entry) => entry.Path === 'scripts/auditCustomizationGovernance.js'
+  );
   const closeoutRow = inventory.find((entry) => entry.Path === 'scripts/generateCloseoutEvidence.js');
   const marketplaceListingRow = inventory.find((entry) => entry.Path === 'scripts/verifyMarketplaceListing.js');
   const maintainerOpsRow = inventory.find((entry) => entry.Path === 'docs/maintainer-operations.md');
   const testRow = inventory.find((entry) => entry.Path === 'tests/unit/definitionOfDoneGate.test.ts');
+  const customizationTestRow = inventory.find(
+    (entry) => entry.Path === 'tests/unit/customizationGovernanceAuditScript.test.ts'
+  );
   const prTemplateRow = inventory.find((entry) => entry.Path === '.github/pull_request_template.md');
   const requiredImplementation = [
     '.github/workflows/ci.yml',
     '.github/workflows/marketplace-release.yml',
     'package.json',
     'scripts/checkDefinitionOfDone.js',
+    'scripts/auditCustomizationGovernance.js',
     'scripts/generateCloseoutEvidence.js',
     'scripts/verifyMarketplaceListing.js',
     '.github/pull_request_template.md',
@@ -270,6 +286,7 @@ function checkTraceabilityMapping(cwd) {
   ];
   const requiredVerification = [
     'tests/unit/definitionOfDoneGate.test.ts',
+    'tests/unit/customizationGovernanceAuditScript.test.ts',
     'tests/unit/requirementsDocs.test.ts',
     'tests/unit/traceabilityAuditScript.test.ts'
   ];
@@ -278,6 +295,9 @@ function checkTraceabilityMapping(cwd) {
   const inventoryOk = scriptRow?.Classification === 'mapped' &&
     scriptRow?.RtmCoverage === 'Yes' &&
     scriptRow?.Notes.includes('VHS-REQ-615') &&
+    customizationScriptRow?.Classification === 'mapped' &&
+    customizationScriptRow?.RtmCoverage === 'Yes' &&
+    customizationScriptRow?.Notes.includes('VHS-REQ-615') &&
     closeoutRow?.Classification === 'mapped' &&
     closeoutRow?.RtmCoverage === 'Yes' &&
     closeoutRow?.Notes.includes('VHS-REQ-615') &&
@@ -296,6 +316,9 @@ function checkTraceabilityMapping(cwd) {
     testRow?.Classification === 'mapped' &&
     testRow?.RtmCoverage === 'Yes' &&
     testRow?.Notes.includes('VHS-REQ-615') &&
+    customizationTestRow?.Classification === 'mapped' &&
+    customizationTestRow?.RtmCoverage === 'Yes' &&
+    customizationTestRow?.Notes.includes('VHS-REQ-615') &&
     prTemplateRow?.Classification === 'mapped' &&
     prTemplateRow?.RtmCoverage === 'Yes' &&
     prTemplateRow?.Notes.includes('VHS-REQ-615');

@@ -6,6 +6,7 @@ if [[ "${1:-}" != "--skip-install" ]]; then
 fi
 
 npm run check
+npm run customization:audit
 npm run traceability:audit
 npm run docs:links
 npm test
