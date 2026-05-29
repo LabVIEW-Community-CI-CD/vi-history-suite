@@ -136,7 +136,8 @@ describe('Definition-of-Done gate', () => {
       'Test',
       'PR Coverage Gate / coverage',
       'Package',
-      'DoD Gate / dod'
+      'DoD Gate / dod',
+      'Governance Gate Reports / governance-gates'
     ]);
     expect(REQUIRED_CLOSEOUT_GATES).toEqual([
       'traceability:audit',

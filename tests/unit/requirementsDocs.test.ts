@@ -334,6 +334,9 @@ describe('requirements documentation coherence', () => {
     );
     expect(testPlan).toContain('customization-audit-report.json');
     expect(testPlan).toContain('Customization Audit Report / custom-audit');
+    expect(testPlan).toContain('traceability-audit-report.txt');
+    expect(testPlan).toContain('dod-gate-report.txt');
+    expect(testPlan).toContain('Governance Gate Reports / governance-gates');
     expect(testPlan).toContain('AGENTS sync drift');
     expect(testPlan).toContain('command-reference drift');
     expect(testPlan).toContain('Docs Link Check / lychee');
@@ -377,6 +380,7 @@ describe('requirements documentation coherence', () => {
     expect(workflowTest).toContain(
       'uploads machine-readable customization audit evidence in the hosted gate'
     );
+    expect(workflowTest).toContain('uploads traceability and DoD gate reports for governance triage');
     expect(workflowTest).toContain('keeps the docs link-check lychee gate');
     expect(workflowTest).toContain('retains machine-readable coverage evidence');
     expect(workflowTest).toContain('keeps the hosted DoD gate in the required CI workflow');
@@ -499,8 +503,10 @@ describe('requirements documentation coherence', () => {
 
   it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
+    const maintainerOperations = readRepoText('docs', 'maintainer-operations.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const troubleshooting = readRepoText('TROUBLESHOOTING.md');
     const packageJson = JSON.parse(readRepoText('package.json')) as {
       scripts: Record<string, string>;
     };
@@ -559,8 +565,19 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('traceability/RTM impact');
     expect(testPlan).toContain('out-of-scope statement');
     expect(testPlan).toContain('closeout readiness');
+    expect(testPlan).toContain('closeout-summary.json');
+    expect(testPlan).toContain('bounded timeout windows and');
+    expect(testPlan).toContain('one transient-network retry');
+    expect(testPlan).toContain('non-retryable');
     expect(testPlan).toContain('hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`');
     expect(testPlan).toContain('release-evidence/release-evidence-contract.json');
+    expect(maintainerOperations).toContain('## Non-Interactive Closeout Authentication');
+    expect(maintainerOperations).toContain('GIT_ASKPASS');
+    expect(maintainerOperations).toContain('docker login registry.gitlab.com');
+    expect(maintainerOperations).toContain('credential-helper');
+    expect(troubleshooting).toContain('## Closeout Evidence Registry Access Fails');
+    expect(troubleshooting).toContain('error getting credentials');
+    expect(troubleshooting).toContain('manifest unknown');
     expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
     expect(packageJson.scripts['dod:gate']).toBe('node scripts/checkDefinitionOfDone.js');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-012');
@@ -1500,6 +1517,11 @@ describe('requirements documentation coherence', () => {
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-612`.');
     expect(readme).toContain('Traceability Closeout Runbook');
     expect(readme).toContain('npm run closeout:evidence');
+    expect(readme).toContain('closeout-summary.json');
+    expect(readme).toContain('machine-readable gate, standards, provenance');
+    expect(readme).toContain('bounded timeouts and one');
+    expect(readme).toContain('transient-network retry');
+    expect(readme).toContain('fail-closed and are not retried');
     expect(readme).toContain('Standards evidence and standards');
     expect(readme).toContain('toolchain provenance');
     expect(readme).toContain('published GitLab registry image');
@@ -1508,6 +1530,11 @@ describe('requirements documentation coherence', () => {
       'registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main'
     );
     expect(readme).toContain('docker login registry.gitlab.com');
+    expect(readme).toContain('GIT_TERMINAL_PROMPT=0');
+    expect(readme).toContain('GIT_ASKPASS=/absolute/path/to/askpass-helper.sh');
+    expect(readme).toContain('error getting credentials');
+    expect(readme).toContain('credsStore');
+    expect(readme).toContain('manifest unknown');
     expect(readme).toContain('Definition-of-Done gate as explicit');
     expect(readme).toContain('DoD Gate / dod');
     expect(readme).toContain('.github/workflows/ci.yml');

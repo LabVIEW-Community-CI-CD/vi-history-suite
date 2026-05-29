@@ -1,6 +1,11 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 const {
+  ALLOWED_EXECUTABLE_COMMANDS,
   DEFAULT_STANDARDS_IMAGE,
   LOCAL_STANDARDS_IMAGE,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
@@ -8,14 +13,20 @@ const {
   STANDARDS_TOOLCHAIN_GITHUB_URL,
   STANDARDS_TOOLCHAIN_GITLAB_URL,
   STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
+  classifyDockerRegistryFailure,
+  isAllowedExecutableCommand,
+  assertAllowedExecutableCommand,
+  isTransientNetworkFailure,
   generateCloseoutEvidence,
   parseGateScorecard,
   parseArgs,
   parseLsRemote,
+  runCommand,
   runDockerStandards,
   summarizeDodGateEvidence,
   verifyStandardsToolchainProvenance
 } = require('../../scripts/generateCloseoutEvidence.js') as {
+  ALLOWED_EXECUTABLE_COMMANDS: string[];
   DEFAULT_STANDARDS_IMAGE: string;
   LOCAL_STANDARDS_IMAGE: string;
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT: string;
@@ -23,6 +34,18 @@ const {
   STANDARDS_TOOLCHAIN_GITHUB_URL: string;
   STANDARDS_TOOLCHAIN_GITLAB_URL: string;
   STANDARDS_TOOLCHAIN_REGISTRY_IMAGE: string;
+  classifyDockerRegistryFailure: (
+    commandResult: { status: number; stderr?: string; error?: string; command?: string; timedOut?: boolean },
+    image: string,
+    commandDescription: string
+  ) => { category: string; message: string };
+  isAllowedExecutableCommand: (command: string) => boolean;
+  assertAllowedExecutableCommand: (command: string) => void;
+  isTransientNetworkFailure: (commandResult: {
+    stderr?: string;
+    error?: string;
+    timedOut?: boolean;
+  }) => boolean;
   parseGateScorecard: (scorecard: string) => Record<string, string>;
   parseArgs: (argv: string[]) => {
     kind: string;
@@ -52,7 +75,14 @@ const {
         options: { cwd?: string; encoding?: string; shell?: boolean }
       ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
     }
-  ) => { runner: string; image?: string; imageAccess?: string; success: boolean; failure?: string };
+  ) => {
+    runner: string;
+    image?: string;
+    imageAccess?: string;
+    success: boolean;
+    failure?: string;
+    failureCategory?: string;
+  };
   verifyStandardsToolchainProvenance: (
     options: { skillRoot: string },
     deps: {
@@ -63,7 +93,19 @@ const {
         options: { cwd?: string; encoding?: string; shell?: boolean }
       ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
     }
-  ) => { success: boolean; failure?: string; registry: { image: string; success: boolean } };
+  ) => {
+    success: boolean;
+    failure?: string;
+    checks: Array<{ name: string; attempts?: number; maxAttempts?: number }>;
+    registry: {
+      image: string;
+      success: boolean;
+      failureCategory?: string;
+      timedOut?: boolean;
+      attempts?: number;
+      maxAttempts?: number;
+    };
+  };
   generateCloseoutEvidence: (
     argv: string[],
     deps: {
@@ -96,7 +138,39 @@ const {
       };
       provenance: { success: boolean; failure?: string };
       gates?: Array<{ name: string; success: boolean }>;
+      closureDecision?: { closable: boolean; reasons: string[] };
+      machineReadableSummary?: {
+        schemaVersion: number;
+        localGates: {
+          ran: boolean;
+          passed: boolean;
+          results: Array<{ name: string; status: string; command: string }>;
+        };
+        standards: { success: boolean };
+        provenance: { success: boolean };
+        closureDecision: { closable: boolean; reasons: string[] };
+        exitCode: number;
+      };
     };
+  };
+  runCommand: (
+    command: string,
+    args: string[],
+    deps?: {
+      cwd?: string;
+      platform?: string;
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { cwd?: string; encoding?: string; shell?: boolean; timeout?: number }
+      ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
+    }
+  ) => {
+    command: string;
+    status: number;
+    stdout: string;
+    stderr: string;
+    error: string;
   };
 };
 
@@ -187,6 +261,31 @@ describe('closeout evidence script', () => {
     ]);
   });
 
+  it('keeps closeout command execution on an explicit executable allowlist', () => {
+    expect(ALLOWED_EXECUTABLE_COMMANDS).toEqual([
+      'npm',
+      'npm.cmd',
+      'git',
+      'docker',
+      'python3',
+      'gh'
+    ]);
+    expect(isAllowedExecutableCommand('git')).toBe(true);
+    expect(isAllowedExecutableCommand('/tmp/evil')).toBe(false);
+  });
+
+  it('rejects unsupported executable commands before spawn', () => {
+    const spawnSync = vi.fn(() => ({ status: 0, stdout: '' }));
+
+    expect(() => runCommand('/tmp/evil', [], { spawnSync })).toThrow(
+      "Unsupported executable command '/tmp/evil'"
+    );
+    expect(() => assertAllowedExecutableCommand('/tmp/evil')).toThrow(
+      "Unsupported executable command '/tmp/evil'"
+    );
+    expect(spawnSync).not.toHaveBeenCalled();
+  });
+
   it('verifies standards toolchain provenance as machine-readable evidence', () => {
     const provenance = verifyStandardsToolchainProvenance(
       { skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review' },
@@ -201,6 +300,41 @@ describe('closeout evidence script', () => {
       image: STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
       success: true
     });
+  });
+
+  it('retries transient git remote failures before failing provenance', () => {
+    let gitlabAttempts = 0;
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+        gitlabAttempts += 1;
+        if (gitlabAttempts === 1) {
+          return { status: 1, stderr: 'TLS handshake timeout' };
+        }
+        return { status: 0, stdout: gitlabRemoteOk() };
+      }
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+        return { status: 0, stdout: githubRemoteOk() };
+      }
+      if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+        return { status: 0, stdout: json({ schemaVersion: 2 }) };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const provenance = verifyStandardsToolchainProvenance(
+      { skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review' },
+      {
+        existsSync: () => true,
+        spawnSync
+      }
+    );
+
+    const gitlabCheck = provenance.checks.find((check) => check.name === 'GitLab source main');
+
+    expect(provenance.success).toBe(true);
+    expect(gitlabAttempts).toBe(2);
+    expect(gitlabCheck?.attempts).toBe(2);
+    expect(gitlabCheck?.maxAttempts).toBe(2);
   });
 
   it('fails provenance when the published Docker registry image is inaccessible', () => {
@@ -226,7 +360,89 @@ describe('closeout evidence script', () => {
     );
 
     expect(provenance.success).toBe(false);
+    expect(provenance.registry.failureCategory).toBe('auth-denied');
     expect(provenance.failure).toContain('docker login registry.gitlab.com');
+  });
+
+  it('classifies Docker credential-helper registry failures with explicit remediation', () => {
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+        return { status: 0, stdout: gitlabRemoteOk() };
+      }
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+        return { status: 0, stdout: githubRemoteOk() };
+      }
+      if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+        return { status: 1, stderr: 'error getting credentials - err: exit status 1, out: `not implemented`' };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const provenance = verifyStandardsToolchainProvenance(
+      { skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review' },
+      {
+        existsSync: () => true,
+        spawnSync
+      }
+    );
+
+    expect(provenance.success).toBe(false);
+    expect(provenance.registry.failureCategory).toBe('credential-helper');
+    expect(provenance.failure).toContain('credential helper');
+  });
+
+  it('classifies Docker registry timeout failures and records retry attempts', () => {
+    let manifestAttempts = 0;
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+        return { status: 0, stdout: gitlabRemoteOk() };
+      }
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+        return { status: 0, stdout: githubRemoteOk() };
+      }
+      if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+        manifestAttempts += 1;
+        return {
+          status: null,
+          error: Object.assign(new Error('command timed out'), { code: 'ETIMEDOUT' })
+        };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const provenance = verifyStandardsToolchainProvenance(
+      { skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review' },
+      {
+        existsSync: () => true,
+        spawnSync
+      }
+    );
+
+    expect(provenance.success).toBe(false);
+    expect(manifestAttempts).toBe(2);
+    expect(provenance.registry.failureCategory).toBe('timeout');
+    expect(provenance.registry.timedOut).toBe(true);
+    expect(provenance.registry.attempts).toBe(2);
+    expect(provenance.failure).toContain('timed out');
+  });
+
+  it('classifies missing published registry images separately from auth failures', () => {
+    const classification = classifyDockerRegistryFailure(
+      {
+        status: 1,
+        stderr: 'manifest unknown: manifest unknown',
+        command: `docker manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`
+      },
+      STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
+      'docker manifest inspect'
+    );
+
+    expect(classification.category).toBe('image-unavailable');
+    expect(classification.message).toContain('verify image publication');
+  });
+
+  it('treats explicit timeout metadata as transient network failure', () => {
+    expect(isTransientNetworkFailure({ timedOut: true })).toBe(true);
   });
 
   it('parses standards closeout options', () => {
@@ -388,6 +604,71 @@ describe('closeout evidence script', () => {
   });
 
   it('fails Docker standards with registry login guidance when the published image cannot be pulled', () => {
+    let pullCalls = 0;
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args.join(' ') === `image inspect ${DEFAULT_STANDARDS_IMAGE}`) {
+        return { status: 1, stderr: 'missing' };
+      }
+      if (command === 'docker' && args.join(' ') === `pull ${DEFAULT_STANDARDS_IMAGE}`) {
+        pullCalls += 1;
+        return { status: 1, stderr: 'denied' };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runDockerStandards(
+      {
+        standardsImage: DEFAULT_STANDARDS_IMAGE,
+        skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review'
+      },
+      { spawnSync }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.imageAccess).toBe('pull-failed');
+    expect(result.failureCategory).toBe('auth-denied');
+    expect(result.failure).toContain('docker login registry.gitlab.com');
+    expect(pullCalls).toBe(1);
+  });
+
+  it('retries docker pull once for transient network failures', () => {
+    let pullCalls = 0;
+    let inspectCalls = 0;
+    const result = runDockerStandards(
+      {
+        standardsImage: DEFAULT_STANDARDS_IMAGE,
+        skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review'
+      },
+      {
+        spawnSync: vi.fn((command: string, args: string[]) => {
+          if (command === 'docker' && args.join(' ') === `image inspect ${DEFAULT_STANDARDS_IMAGE}`) {
+            inspectCalls += 1;
+            if (inspectCalls === 1) {
+              return { status: 1, stderr: 'missing' };
+            }
+            return { status: 0, stdout: '[]' };
+          }
+          if (command === 'docker' && args.join(' ') === `pull ${DEFAULT_STANDARDS_IMAGE}`) {
+            pullCalls += 1;
+            if (pullCalls === 1) {
+              return { status: 1, stderr: 'TLS handshake timeout' };
+            }
+            return { status: 0, stdout: 'pulled' };
+          }
+          const line = [command, ...args].join(' ');
+          if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
+          if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceOk };
+          if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardOk };
+          return { status: 0, stdout: '' };
+        })
+      }
+    );
+
+    expect(result.success).toBe(true);
+    expect(pullCalls).toBe(2);
+  });
+
+  it('reports credential-helper remediation when docker pull fails before standards execution', () => {
     const result = runDockerStandards(
       {
         standardsImage: DEFAULT_STANDARDS_IMAGE,
@@ -399,7 +680,10 @@ describe('closeout evidence script', () => {
             return { status: 1, stderr: 'missing' };
           }
           if (command === 'docker' && args.join(' ') === `pull ${DEFAULT_STANDARDS_IMAGE}`) {
-            return { status: 1, stderr: 'denied' };
+            return {
+              status: 1,
+              stderr: 'error getting credentials - err: exit status 1, out: `not implemented`'
+            };
           }
           return { status: 0, stdout: '' };
         })
@@ -408,7 +692,8 @@ describe('closeout evidence script', () => {
 
     expect(result.success).toBe(false);
     expect(result.imageAccess).toBe('pull-failed');
-    expect(result.failure).toContain('docker login registry.gitlab.com');
+    expect(result.failureCategory).toBe('credential-helper');
+    expect(result.failure).toContain('credential helper');
   });
 
   it('keeps local Docker image usage behind an explicit standards image override', () => {
@@ -470,6 +755,71 @@ describe('closeout evidence script', () => {
     expect(result.exitCode).toBe(0);
     expect(result.markdown).toContain('NOT RUN');
     expect(result.markdown).toContain('Not closable yet');
+    expect(result.context.machineReadableSummary?.schemaVersion).toBe(1);
+    expect(result.context.machineReadableSummary?.localGates.ran).toBe(false);
+    expect(result.context.machineReadableSummary?.closureDecision.closable).toBe(false);
+    expect(result.context.machineReadableSummary?.closureDecision.reasons[0]).toContain('Local gates were not run');
+  });
+
+  it('writes closeout-summary.json when save-dir is provided', () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-closeout-summary-'));
+    const repoRoot = path.join(tempRoot, 'repo');
+    fs.mkdirSync(repoRoot, { recursive: true });
+
+    try {
+      const result = generateCloseoutEvidence(
+        [
+          '--kind',
+          'standards',
+          '--issue',
+          '130',
+          '--run-gates',
+          '--save-dir',
+          'assurance-closeout-evidence'
+        ],
+        {
+          platform: 'win32',
+          cwd: repoRoot,
+          existsSync: () => true,
+          spawnSync: hostSuccessSpawnSync()
+        }
+      );
+
+      const summaryPath = path.join(repoRoot, 'assurance-closeout-evidence', 'closeout-summary.json');
+      expect(fs.existsSync(summaryPath)).toBe(true);
+
+      const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8')) as {
+        schemaVersion: number;
+        localGates: {
+          ran: boolean;
+          passed: boolean;
+          traceabilitySummary: { inventoryEntries?: number };
+          results: Array<{ name: string; status: string }>;
+        };
+        standards: { success: boolean };
+        provenance: { success: boolean };
+        closureDecision: { closable: boolean };
+        exitCode: number;
+      };
+
+      expect(summary.schemaVersion).toBe(1);
+      expect(summary.localGates.ran).toBe(true);
+      expect(summary.localGates.passed).toBe(true);
+      expect(summary.localGates.traceabilitySummary.inventoryEntries).toBe(156);
+      expect(summary.localGates.results).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'traceability:audit', status: 'PASS' }),
+          expect.objectContaining({ name: 'docs:links', status: 'PASS' })
+        ])
+      );
+      expect(summary.standards.success).toBe(true);
+      expect(summary.provenance.success).toBe(true);
+      expect(summary.closureDecision.closable).toBe(true);
+      expect(summary.exitCode).toBe(0);
+      expect(result.context.machineReadableSummary?.closureDecision.closable).toBe(true);
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 
   it('falls back to Docker standards evidence when host preflight fails', () => {
