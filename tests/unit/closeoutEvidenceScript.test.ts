@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 const {
+  ALLOWED_EXECUTABLE_COMMANDS,
   DEFAULT_STANDARDS_IMAGE,
   LOCAL_STANDARDS_IMAGE,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
@@ -13,15 +14,19 @@ const {
   STANDARDS_TOOLCHAIN_GITLAB_URL,
   STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
   classifyDockerRegistryFailure,
+  isAllowedExecutableCommand,
+  assertAllowedExecutableCommand,
   isTransientNetworkFailure,
   generateCloseoutEvidence,
   parseGateScorecard,
   parseArgs,
   parseLsRemote,
+  runCommand,
   runDockerStandards,
   summarizeDodGateEvidence,
   verifyStandardsToolchainProvenance
 } = require('../../scripts/generateCloseoutEvidence.js') as {
+  ALLOWED_EXECUTABLE_COMMANDS: string[];
   DEFAULT_STANDARDS_IMAGE: string;
   LOCAL_STANDARDS_IMAGE: string;
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT: string;
@@ -34,6 +39,8 @@ const {
     image: string,
     commandDescription: string
   ) => { category: string; message: string };
+  isAllowedExecutableCommand: (command: string) => boolean;
+  assertAllowedExecutableCommand: (command: string) => void;
   isTransientNetworkFailure: (commandResult: {
     stderr?: string;
     error?: string;
@@ -146,6 +153,25 @@ const {
       };
     };
   };
+  runCommand: (
+    command: string,
+    args: string[],
+    deps?: {
+      cwd?: string;
+      platform?: string;
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { cwd?: string; encoding?: string; shell?: boolean; timeout?: number }
+      ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
+    }
+  ) => {
+    command: string;
+    status: number;
+    stdout: string;
+    stderr: string;
+    error: string;
+  };
 };
 
 function json(value: unknown): string {
@@ -233,6 +259,31 @@ describe('closeout evidence script', () => {
     expect(parseLsRemote(`${STANDARDS_TOOLCHAIN_EXPECTED_COMMIT}\trefs/heads/main\n`)).toEqual([
       { commit: STANDARDS_TOOLCHAIN_EXPECTED_COMMIT, ref: 'refs/heads/main' }
     ]);
+  });
+
+  it('keeps closeout command execution on an explicit executable allowlist', () => {
+    expect(ALLOWED_EXECUTABLE_COMMANDS).toEqual([
+      'npm',
+      'npm.cmd',
+      'git',
+      'docker',
+      'python3',
+      'gh'
+    ]);
+    expect(isAllowedExecutableCommand('git')).toBe(true);
+    expect(isAllowedExecutableCommand('/tmp/evil')).toBe(false);
+  });
+
+  it('rejects unsupported executable commands before spawn', () => {
+    const spawnSync = vi.fn(() => ({ status: 0, stdout: '' }));
+
+    expect(() => runCommand('/tmp/evil', [], { spawnSync })).toThrow(
+      "Unsupported executable command '/tmp/evil'"
+    );
+    expect(() => assertAllowedExecutableCommand('/tmp/evil')).toThrow(
+      "Unsupported executable command '/tmp/evil'"
+    );
+    expect(spawnSync).not.toHaveBeenCalled();
   });
 
   it('verifies standards toolchain provenance as machine-readable evidence', () => {

@@ -29,6 +29,14 @@ const COMMAND_RETRY_ATTEMPTS = Object.freeze({
   none: 1,
   transientNetwork: 2
 });
+const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze([
+  'npm',
+  'npm.cmd',
+  'git',
+  'docker',
+  'python3',
+  'gh'
+]);
 
 function npmCommand(platform = process.platform) {
   return platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -112,6 +120,18 @@ function usage() {
 
 function commandLine(command, args) {
   return [command, ...args].join(' ');
+}
+
+function isAllowedExecutableCommand(command) {
+  return ALLOWED_EXECUTABLE_COMMANDS.includes(String(command || ''));
+}
+
+function assertAllowedExecutableCommand(command) {
+  if (!isAllowedExecutableCommand(command)) {
+    throw new Error(
+      `Unsupported executable command '${command}'. Allowed commands: ${ALLOWED_EXECUTABLE_COMMANDS.join(', ')}`
+    );
+  }
 }
 
 function combinedCommandErrorText(commandResult) {
@@ -216,6 +236,7 @@ function classifyDockerRegistryFailure(commandResult, image, commandDescription)
 }
 
 function runCommand(command, args, deps = {}) {
+  assertAllowedExecutableCommand(command);
   const policy = deps.commandPolicy || {};
   const spawnSyncImpl = deps.spawnSync || spawnSync;
   const platform = deps.platform || process.platform;
@@ -1440,6 +1461,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  ALLOWED_EXECUTABLE_COMMANDS,
   DEFAULT_SAVE_DIR,
   DEFAULT_STANDARDS_IMAGE,
   LOCAL_STANDARDS_IMAGE,
@@ -1461,6 +1483,9 @@ module.exports = {
   parseLsRemote,
   parseTraceabilitySummary,
   renderCloseoutMarkdown,
+  isAllowedExecutableCommand,
+  assertAllowedExecutableCommand,
+  runCommand,
   evaluateClosureDecision,
   buildMachineReadableCloseoutSummary,
   runDockerStandards,
