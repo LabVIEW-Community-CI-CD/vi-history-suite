@@ -122,6 +122,25 @@ function systemRequirementId(sequence: number): string {
   return `VHS-SYS-REQ-${sequence.toString().padStart(3, '0')}`;
 }
 
+function toPosixPath(value: string): string {
+  return value.replace(/\\/g, '/');
+}
+
+function extractFrontmatter(text: string): string {
+  const match = text.match(/^---\n([\s\S]*?)\n---\n/);
+  return match?.[1] ?? '';
+}
+
+function extractFrontmatterScalar(text: string, key: string): string | undefined {
+  const frontmatter = extractFrontmatter(text);
+  const match = frontmatter.match(new RegExp(`^${key}:\\s*(.+)$`, 'm'));
+  if (!match) {
+    return undefined;
+  }
+
+  return match[1].trim().replace(/^['"]|['"]$/g, '');
+}
+
 describe('requirements documentation coherence', () => {
   it('restores the active requirements package', () => {
     for (const relativePath of [
@@ -1119,6 +1138,64 @@ describe('requirements documentation coherence', () => {
       expect(index, `gate order drifted at ${command}`).toBeGreaterThan(previousIndex);
       previousIndex = index;
     }
+  });
+
+  it('keeps workspace customization files structurally aligned', () => {
+    const agentsGuide = readRepoText('AGENTS.md');
+
+    const skillsDir = path.join(repoRoot, '.github', 'skills');
+    const skillFolders = fs
+      .readdirSync(skillsDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+    expect(skillFolders.length).toBeGreaterThan(0);
+
+    for (const folder of skillFolders) {
+      const relativeSkillPath = toPosixPath(path.join('.github', 'skills', folder, 'SKILL.md'));
+      const skillPath = path.join(repoRoot, relativeSkillPath);
+      expect(fs.existsSync(skillPath), `missing ${relativeSkillPath}`).toBe(true);
+
+      const skillText = fs.readFileSync(skillPath, 'utf8').replace(/\r\n/g, '\n');
+      expect(extractFrontmatterScalar(skillText, 'name')).toBe(folder);
+      expect(extractFrontmatterScalar(skillText, 'description')).toBeTruthy();
+      expect(agentsGuide).toContain(relativeSkillPath);
+    }
+
+    const promptsDir = path.join(repoRoot, '.github', 'prompts');
+    const promptFiles = fs
+      .readdirSync(promptsDir)
+      .filter((fileName) => fileName.endsWith('.prompt.md'))
+      .sort();
+    expect(promptFiles.length).toBeGreaterThan(0);
+
+    for (const fileName of promptFiles) {
+      const relativePromptPath = `.github/prompts/${fileName}`;
+      const promptText = readRepoText('.github', 'prompts', fileName);
+      expect(extractFrontmatterScalar(promptText, 'description')).toBeTruthy();
+      expect(extractFrontmatterScalar(promptText, 'agent')).toBe('agent');
+      expect(agentsGuide).toContain(relativePromptPath);
+    }
+
+    const instructionsDir = path.join(repoRoot, '.github', 'instructions');
+    const instructionFiles = fs
+      .readdirSync(instructionsDir)
+      .filter((fileName) => fileName.endsWith('.instructions.md'))
+      .sort();
+    expect(instructionFiles.length).toBeGreaterThan(0);
+
+    for (const fileName of instructionFiles) {
+      const relativeInstructionPath = `.github/instructions/${fileName}`;
+      const instructionText = readRepoText('.github', 'instructions', fileName);
+      expect(extractFrontmatterScalar(instructionText, 'description')).toBeTruthy();
+      expect(extractFrontmatter(instructionText)).toContain('applyTo:');
+      expect(agentsGuide).toContain(relativeInstructionPath);
+    }
+
+    const workflowGovernor = readRepoText('.github', 'agents', 'workflow-governor.agent.md');
+    expect(extractFrontmatterScalar(workflowGovernor, 'name')).toBe('Workflow Governor');
+    expect(extractFrontmatterScalar(workflowGovernor, 'description')).toContain('Use when');
+    expect(agentsGuide).toContain('.github/agents/workflow-governor.agent.md');
   });
 
   it('keeps large-repository indexing requirement wave traceable', () => {
