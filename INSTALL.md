@@ -30,6 +30,7 @@ Use a devcontainer or Codespace when you want to inspect or test the source:
 
 ```bash
 npm run check
+npm run customization:audit
 npm test
 npm run package
 ```

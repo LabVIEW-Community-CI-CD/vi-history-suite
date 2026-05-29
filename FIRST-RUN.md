@@ -32,6 +32,7 @@ without turning your workstation into the project test harness:
 
 ```bash
 npm run check
+npm run customization:audit
 npm test
 npm run package
 ```

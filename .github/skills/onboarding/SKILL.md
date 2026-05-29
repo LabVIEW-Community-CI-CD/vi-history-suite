@@ -21,6 +21,11 @@ argument-hint: 'Optional context: installed-extension, source-evaluation, troubl
 
 If you are in a devcontainer or Codespace, run `F5` with `Run VI History Suite` after `postStartCommand` completes.
 
+## Customization Drift Check
+- If your change touches `AGENTS.md`, `.github/skills/**`, `.github/prompts/**`, `.github/instructions/**`, or `.github/agents/**`, run `npm run customization:audit` before handoff.
+- Include `npm run customization:audit` in PR validation commands when customization surfaces changed.
+- Use `.github/prompts/pr-handoff-evidence.prompt.md` to keep the PR evidence block labels aligned.
+
 ## Installed Extension First-Run
 1. Run `VI History: Prepare Local Runtime Settings CLI`.
 2. Run `vihs`.

@@ -22,6 +22,7 @@ Required validation commands:
 - npm run check
 - npm test
 - npm run docs:links
+- npm run customization:audit (required when customization surfaces changed)
 
 Required PR evidence fields:
 - Linked issue (required)

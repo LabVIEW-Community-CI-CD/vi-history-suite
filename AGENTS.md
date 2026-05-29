@@ -12,6 +12,12 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - Use file instructions for file-type or folder-specific edit guardrails.
 - Use the workflow-governor custom agent for end-to-end execution with branch, validation, and PR-evidence compliance.
 
+### First-Step Decision Matrix
+- Requirement-targeted work (`VHS-REQ-*`): start with `.github/skills/requirements-traceability/SKILL.md`, then run `npm run traceability:audit`.
+- Customization-surface edits (`AGENTS.md`, `.github/skills/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/agents/**`): run `npm run customization:audit` before PR handoff and include it in PR evidence validation commands.
+- General implementation and test work: start with `.github/skills/testing-automation/SKILL.md`, then run `npm run check` and `npm test`.
+- First-run/setup questions: start with `.github/skills/onboarding/SKILL.md`.
+
 ### Build & Test Commands
 - **Build:** `npm run compile`
 - **Test:** `npm test`
@@ -64,6 +70,11 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - Some scripts/tools expect a Linux environment (see [scripts/](./scripts/) and [docs/vagrant.md](./docs/vagrant.md))
 - Integration tests may require specific Git setup or Vagrant (see [docs/vagrant.md](./docs/vagrant.md))
 - For troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) and [SUPPORT.md](./SUPPORT.md)
+
+### Troubleshooting Route
+- First-run or environment blockers: `.github/skills/onboarding/SKILL.md` then [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+- Gate and CI failures: `.github/skills/testing-automation/SKILL.md` and the PR gate script.
+- Requirement or RTM drift: `.github/skills/requirements-traceability/SKILL.md` before editing requirements artifacts.
 
 ### Agent Skills (Workspace)
 - `.github/skills/testing-automation/SKILL.md`: prioritized testing and PR-gate workflow

@@ -989,6 +989,9 @@ describe('requirements documentation coherence', () => {
 
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const firstRun = readRepoText('FIRST-RUN.md');
+    const installGuide = readRepoText('INSTALL.md');
+    const onboardingSkill = readRepoText('.github', 'skills', 'onboarding', 'SKILL.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const sourceEvaluationRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-596');
     const marketplaceRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-600');
@@ -1003,6 +1006,10 @@ describe('requirements documentation coherence', () => {
     expect(sourceEvaluationRow?.VerificationRefs).toContain(
       'tests/unit/publicDevcontainerSurface.test.ts'
     );
+    expect(firstRun).toContain('npm run customization:audit');
+    expect(installGuide).toContain('npm run customization:audit');
+    expect(onboardingSkill).toContain('## Customization Drift Check');
+    expect(onboardingSkill).toContain('Include `npm run customization:audit` in PR validation commands');
     expect(marketplaceRow?.ImplementationRefs).toContain('FIRST-RUN.md');
     expect(marketplaceRow?.ImplementationRefs).toContain(
       '.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml'
@@ -1108,6 +1115,7 @@ describe('requirements documentation coherence', () => {
       'prompts',
       'requirement-target-execution.prompt.md'
     );
+    const onboardingSkill = readRepoText('.github', 'skills', 'onboarding', 'SKILL.md');
 
     for (const guideReference of [
       '.github/skills/testing-automation/SKILL.md',
@@ -1135,8 +1143,14 @@ describe('requirements documentation coherence', () => {
 
     expect(prHandoffPrompt).toContain('Requirement Target Execution');
     expect(prHandoffPrompt).toContain('./requirement-target-execution.prompt.md');
+    expect(prHandoffPrompt).toContain('include `npm run customization:audit` in Validation commands');
     expect(requirementTargetPrompt).toContain('PR Handoff Evidence');
     expect(requirementTargetPrompt).toContain('./pr-handoff-evidence.prompt.md');
+    expect(requirementTargetPrompt).toContain(
+      'npm run customization:audit (required when customization surfaces changed)'
+    );
+    expect(onboardingSkill).toContain('## Customization Drift Check');
+    expect(onboardingSkill).toContain('.github/prompts/pr-handoff-evidence.prompt.md');
 
     for (const requiredLabel of [
       'Linked issue (required):',
@@ -1237,10 +1251,15 @@ describe('requirements documentation coherence', () => {
     const agentsGuide = readRepoText('AGENTS.md');
 
     expect(agentsGuide).toContain('### Customization Entry Path');
+    expect(agentsGuide).toContain('### First-Step Decision Matrix');
     expect(agentsGuide).toContain('Use skills for repeatable multi-step workflows');
     expect(agentsGuide).toContain('Use prompts for one-shot output generation');
     expect(agentsGuide).toContain('Use file instructions for file-type or folder-specific edit guardrails');
     expect(agentsGuide).toContain('Use the workflow-governor custom agent');
+    expect(agentsGuide).toContain('Customization-surface edits');
+    expect(agentsGuide).toContain('include it in PR evidence validation commands');
+    expect(agentsGuide).toContain('### Troubleshooting Route');
+    expect(agentsGuide).toContain('Gate and CI failures');
 
     const skillsDir = path.join(repoRoot, '.github', 'skills');
     const skillFolders = fs
