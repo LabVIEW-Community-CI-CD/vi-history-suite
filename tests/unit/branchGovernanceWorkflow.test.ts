@@ -35,7 +35,7 @@ describe('CI branch governance workflow', () => {
 
     expect(workflow).toContain('name: Traceability Audit');
     expect(workflow).toContain('run: npm run traceability:audit');
-    expect(workflow.indexOf('run: npm run customization:audit')).toBeLessThan(
+    expect(workflow.indexOf('npm run customization:audit')).toBeLessThan(
       workflow.indexOf('run: npm run traceability:audit')
     );
     expect(workflow.indexOf('run: npm run traceability:audit')).toBeLessThan(
@@ -47,12 +47,30 @@ describe('CI branch governance workflow', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Customization Audit');
-    expect(workflow).toContain('run: npm run customization:audit');
-    expect(workflow.indexOf('run: npm run check')).toBeLessThan(
-      workflow.indexOf('run: npm run customization:audit')
+    expect(workflow).toContain('npm run customization:audit');
+    expect(workflow).toContain(
+      'node scripts/auditCustomizationGovernance.js --json > customization-audit-report.json'
     );
-    expect(workflow.indexOf('run: npm run customization:audit')).toBeLessThan(
+    expect(workflow.indexOf('run: npm run check')).toBeLessThan(
+      workflow.indexOf('npm run customization:audit')
+    );
+    expect(workflow.indexOf('npm run customization:audit')).toBeLessThan(
       workflow.indexOf('run: npm run traceability:audit')
+    );
+  });
+
+  it('uploads machine-readable customization audit evidence in the hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Customization Audit Report / custom-audit');
+    expect(workflow).toContain('name: customization-audit-report-${{ github.run_id }}');
+    expect(workflow).toContain('path: customization-audit-report.json');
+    expect(workflow).toContain('if-no-files-found: ignore');
+    expect(workflow.indexOf('name: Customization Audit')).toBeLessThan(
+      workflow.indexOf('name: Customization Audit Report / custom-audit')
+    );
+    expect(workflow.indexOf('name: Customization Audit Report / custom-audit')).toBeLessThan(
+      workflow.indexOf('name: Traceability Audit')
     );
   });
 

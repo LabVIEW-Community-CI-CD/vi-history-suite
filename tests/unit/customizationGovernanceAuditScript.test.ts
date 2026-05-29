@@ -11,7 +11,10 @@ const {
   discoverCustomizationFiles,
   extractAgentsCustomizationReferences,
   extractNpmScriptReferences,
-  globToRegex
+  globToRegex,
+  main,
+  parseMainArgs,
+  toMachineReadableReport
 } = require('../../scripts/auditCustomizationGovernance.js') as {
   auditCustomizationGovernance: (options?: { cwd?: string }) => {
     success: boolean;
@@ -30,6 +33,45 @@ const {
   extractAgentsCustomizationReferences: (text: string) => string[];
   extractNpmScriptReferences: (text: string) => string[];
   globToRegex: (globPattern: string) => RegExp;
+  main: (
+    argv?: string[],
+    deps?: {
+      cwd?: string;
+      now?: Date;
+      stdout?: { write: (text: string) => void };
+      stderr?: { write: (text: string) => void };
+    }
+  ) => number;
+  parseMainArgs: (argv: string[]) => { cwd: string; emitJson: boolean };
+  toMachineReadableReport: (
+    result: {
+      success: boolean;
+      customizationFilesChecked: number;
+      findings: {
+        runtimeIssues: Array<{ issue: string }>;
+        missingAgentsReferences: string[];
+        staleAgentsReferences: string[];
+        frontmatterIssues: Array<{ path: string; issue: string }>;
+        applyToIssues: Array<{ path: string; pattern: string; issue: string }>;
+        linkIssues: Array<{ source: string; line: number; target: string; issue: string }>;
+        commandIssues: Array<{ source: string; script: string; issue: string }>;
+      };
+    },
+    now?: Date
+  ) => {
+    schemaVersion: number;
+    generatedAt: string;
+    success: boolean;
+    customizationFilesChecked: number;
+    totals: { issues: number; failingCategories: number };
+    categories: Array<{
+      key: string;
+      label: string;
+      count: number;
+      remediation: string;
+      items: unknown[];
+    }>;
+  };
 };
 
 const fixtureRoots: string[] = [];
@@ -307,5 +349,41 @@ Instruction body.
     expect(globToRegex('src/**/*.ts').test('src/domain/example.ts')).toBe(true);
     expect(globToRegex('src/**/*.ts').test('src/example.ts')).toBe(true);
     expect(globToRegex('src/**/*.ts').test('tests/unit/example.test.ts')).toBe(false);
+  });
+
+  it('emits machine-readable JSON with categorized remediation guidance', () => {
+    const files = baseFixtureFiles();
+    files['AGENTS.md'] += '\n- npm run not-a-script\n';
+    const fixtureRoot = createFixture(files);
+
+    let output = '';
+    const exitCode = main(['--json', fixtureRoot], {
+      stdout: {
+        write: (text: string) => {
+          output += text;
+        }
+      }
+    });
+
+    expect(exitCode).toBe(1);
+    const report = JSON.parse(output) as ReturnType<typeof toMachineReadableReport>;
+    expect(report.schemaVersion).toBe(1);
+    expect(report.success).toBe(false);
+    expect(report.totals.issues).toBeGreaterThan(0);
+
+    const commandCategory = report.categories.find((category) => category.key === 'commandIssues');
+    expect(commandCategory?.count).toBe(1);
+    expect(commandCategory?.remediation).toContain('package.json');
+  });
+
+  it('parses CLI args for json mode and rejects unknown options', () => {
+    expect(parseMainArgs(['--json', '/tmp/custom-cwd'])).toEqual({
+      cwd: '/tmp/custom-cwd',
+      emitJson: true
+    });
+
+    expect(() => parseMainArgs(['--unsupported-option'])).toThrow(
+      "Unknown option '--unsupported-option'"
+    );
   });
 });

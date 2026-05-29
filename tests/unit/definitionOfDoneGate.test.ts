@@ -130,6 +130,7 @@ describe('Definition-of-Done gate', () => {
       'Install',
       'Typecheck',
       'Customization Audit',
+      'Customization Audit Report / custom-audit',
       'Traceability Audit',
       'Docs Link Check / lychee',
       'Test',

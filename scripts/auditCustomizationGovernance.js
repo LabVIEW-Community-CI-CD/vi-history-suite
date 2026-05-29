@@ -18,6 +18,44 @@ const SKIPPED_DIRECTORIES = new Set([
 
 const ALLOWED_AGENT_TOOLS = new Set(['read', 'search', 'edit', 'execute', 'todo']);
 
+const FINDING_CATEGORIES = [
+  {
+    key: 'runtimeIssues',
+    label: 'runtime',
+    remediation: 'Resolve missing foundational files or invalid JSON before triaging other findings.'
+  },
+  {
+    key: 'missingAgentsReferences',
+    label: 'agents-sync-missing',
+    remediation: 'Add discovered customization files to AGENTS workspace sections.'
+  },
+  {
+    key: 'staleAgentsReferences',
+    label: 'agents-sync-stale',
+    remediation: 'Remove stale AGENTS references or restore deleted customization files.'
+  },
+  {
+    key: 'frontmatterIssues',
+    label: 'frontmatter-schema',
+    remediation: 'Fix required frontmatter keys and safe defaults for each customization artifact type.'
+  },
+  {
+    key: 'applyToIssues',
+    label: 'instruction-applyto',
+    remediation: 'Adjust instruction applyTo globs to avoid catch-all patterns and match committed files.'
+  },
+  {
+    key: 'linkIssues',
+    label: 'markdown-links',
+    remediation: 'Fix local markdown targets so links resolve to existing in-repo files.'
+  },
+  {
+    key: 'commandIssues',
+    label: 'command-references',
+    remediation: 'Align npm run command references in AGENTS/onboarding with package.json scripts.'
+  }
+];
+
 function toPosixPath(value) {
   return value.replace(/\\/g, '/');
 }
@@ -718,6 +756,36 @@ function auditCustomizationGovernance(options = {}) {
   };
 }
 
+function toMachineReadableReport(result, now = new Date()) {
+  const categories = FINDING_CATEGORIES.map((category) => {
+    const rawItems = result.findings[category.key] || [];
+    const items = Array.isArray(rawItems) ? rawItems : [];
+
+    return {
+      key: category.key,
+      label: category.label,
+      count: items.length,
+      remediation: category.remediation,
+      items
+    };
+  });
+
+  const totalIssues = categories.reduce((sum, category) => sum + category.count, 0);
+  const failingCategories = categories.filter((category) => category.count > 0).length;
+
+  return {
+    schemaVersion: 1,
+    generatedAt: now.toISOString(),
+    success: result.success,
+    customizationFilesChecked: result.customizationFilesChecked,
+    totals: {
+      issues: totalIssues,
+      failingCategories
+    },
+    categories
+  };
+}
+
 function renderSummary(result) {
   const { findings } = result;
   const lines = [
@@ -792,9 +860,51 @@ function renderSummary(result) {
   return lines.join('\n');
 }
 
+function parseMainArgs(argv) {
+  let cwd;
+  let emitJson = false;
+
+  for (const arg of argv) {
+    if (arg === '--json') {
+      emitJson = true;
+      continue;
+    }
+
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown option '${arg}'. Supported options: --json [cwd].`);
+    }
+
+    if (cwd) {
+      throw new Error('Only one cwd argument is supported.');
+    }
+
+    cwd = arg;
+  }
+
+  return {
+    cwd: cwd || process.cwd(),
+    emitJson
+  };
+}
+
 function main(argv = process.argv.slice(2), deps = {}) {
-  const cwd = argv[0] || deps.cwd || process.cwd();
+  let parsedArgs;
+  try {
+    parsedArgs = parseMainArgs(argv);
+  } catch (error) {
+    (deps.stderr || process.stderr).write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+
+  const cwd = deps.cwd || parsedArgs.cwd;
   const result = auditCustomizationGovernance({ cwd });
+
+  if (parsedArgs.emitJson) {
+    const report = toMachineReadableReport(result, deps.now || new Date());
+    (deps.stdout || process.stdout).write(`${JSON.stringify(report, null, 2)}\n`);
+    return result.success ? 0 : 1;
+  }
+
   const output = `${renderSummary(result)}\n`;
 
   if (result.success) {
@@ -822,11 +932,14 @@ module.exports = {
   globToRegex,
   isCustomizationPath,
   main,
+  parseMainArgs,
   parseFrontmatter,
   renderSummary,
+  toMachineReadableReport,
   validateAgentsSynchronization,
   validateCommandReferences,
   validateFrontmatterSchemas,
   validateInstructionApplyTo,
-  validateLocalMarkdownLinks
+  validateLocalMarkdownLinks,
+  FINDING_CATEGORIES
 };
