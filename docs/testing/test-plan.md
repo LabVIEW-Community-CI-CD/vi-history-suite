@@ -27,6 +27,10 @@ The required job also emits `customization-audit-report.json` and uploads it
 through `Customization Audit Report / custom-audit` so CI triage can classify
 runtime issues, AGENTS sync drift, frontmatter drift, applyTo drift, markdown
 link drift, and command-reference drift.
+The `Traceability Audit` and `DoD Gate / dod` steps also retain
+`traceability-audit-report.txt` and `dod-gate-report.txt`, uploaded through
+`Governance Gate Reports / governance-gates`, so CI triage can inspect gate
+evidence even when a required gate fails.
 The `Docs Link Check / lychee` step runs `npm run docs:links`
 inside the same required job so committed Markdown and bundled documentation
 local links are checked before tests and packaging.
@@ -108,7 +112,7 @@ Inside the devcontainer or Codespace:
 If this first-run path fails or a step is unclear, record the environment,
 command, and first blocked step in the onboarding tracker:
 
-https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
+[Onboarding tracker issue #12](https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12)
 
 ## Maintainer Windows/LabVIEW Check
 
@@ -150,6 +154,12 @@ The closeout command runs `npm run traceability:audit`, `npm run docs:links`,
 `--run-gates` is set. It always runs standards evidence and standards toolchain
 provenance. It tries host Python first in `auto` mode and falls back to the
 published GitLab registry workbench image when host preflight is unavailable.
+When `--save-dir` is provided, closeout evidence writes a machine-readable
+`closeout-summary.json` artifact with gate status, standards status, provenance
+status, and closure-decision state.
+Remote provenance and registry operations run with bounded timeout windows and
+one transient-network retry; auth-denied and credential-helper failures remain
+fail-closed and non-retryable.
 Docker mode inspects the selected image, pulls the published default when
 missing, and reports the selected image plus pull/auth status in closeout
 evidence; local images are used only through an explicit `--standards-image`

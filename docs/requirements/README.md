@@ -99,6 +99,10 @@ implementation, verification, or inventory gaps.
 npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates --save-dir assurance-closeout-evidence
 ```
 
+When `--save-dir` is provided, closeout evidence also writes
+`closeout-summary.json` with machine-readable gate, standards, provenance, and
+closure-decision status.
+
 Use Docker explicitly when host Python is unavailable:
 
 ```shell
@@ -114,7 +118,29 @@ explicit local override. Provenance evidence separately verifies GitLab source
 authority, the private GitHub mirror, `v0.2.19`, the local non-authoritative
 skill cache, and registry image access.
 
-3. The closeout command runs these repo-local gates when `--run-gates` is set:
+For non-interactive closeout environments, configure source and registry auth
+before running the closeout command:
+
+```shell
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/absolute/path/to/askpass-helper.sh
+printf '%s' "$RSR_PAT" | docker login registry.gitlab.com -u oauth2 --password-stdin
+```
+
+If Docker reports `error getting credentials`, `credential helper`,
+`credsStore`, or `credHelpers`, treat that as a Docker credential-helper
+configuration failure and fix Docker config before retrying closeout. If Docker
+reports `unauthorized`, `access forbidden`, or `denied`, refresh credentials and
+rerun `docker login registry.gitlab.com`. If Docker reports `manifest unknown`
+or repository-not-found errors, verify published image availability before
+closeout reruns.
+
+Closeout provenance and registry commands run with bounded timeouts and one
+transient-network retry for remote operations such as `git ls-remote`,
+`docker manifest inspect`, and published-image `docker pull`. Auth-denied and
+credential-helper failures are fail-closed and are not retried.
+
+- The closeout command runs these repo-local gates when `--run-gates` is set:
 
 ```shell
 npm run traceability:audit
@@ -125,7 +151,7 @@ npm test
 npm run package
 ```
 
-4. The closeout command always runs the mandatory standards evidence checks
+- The closeout command always runs the mandatory standards evidence checks
    through the selected standards runner:
 
 ```shell
@@ -142,10 +168,10 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance
    references, and unit-test fixture strings are recorded as disqualified
    sources and cannot promote DoD.
 
-5. Close the umbrella only when blocking traceability and Definition-of-Done
+- Close the umbrella only when blocking traceability and Definition-of-Done
    findings are resolved or deferred to open child issues with owners and
    validation commands.
-6. Treat non-PASS DoD evidence as active closeout evidence. The hosted
+- Treat non-PASS DoD evidence as active closeout evidence. The hosted
    `DoD Gate / dod` step and the local `dod:gate` result must both stay clean
    or be tied to a blocking follow-up issue with an owner and validation
    commands.

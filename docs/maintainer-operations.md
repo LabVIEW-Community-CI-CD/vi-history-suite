@@ -113,6 +113,31 @@ Marketplace publishing tokens are controlled maintainer secrets.
 
 GitHub secret scanning and push protection are enabled for this repository.
 
+## Non-Interactive Closeout Authentication
+
+Standards closeout evidence relies on authenticated Git source and Docker
+registry access in non-interactive environments.
+
+Recommended preflight before `npm run closeout:evidence`:
+
+```bash
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/absolute/path/to/askpass-helper.sh
+printf '%s' "$RSR_PAT" | docker login registry.gitlab.com -u oauth2 --password-stdin
+```
+
+Operational guidance:
+
+- Use `GIT_ASKPASS` and `GIT_TERMINAL_PROMPT=0` so `git ls-remote` provenance
+  checks never block on interactive prompts.
+- If Docker emits `error getting credentials`, `credential helper`,
+  `credsStore`, or `credHelpers`, fix the Docker credential-helper
+  configuration first, then retry.
+- If Docker emits `unauthorized`, `access forbidden`, or `denied`, refresh the
+  token and rerun `docker login registry.gitlab.com`.
+- If Docker emits `manifest unknown` or repository-not-found errors, verify the
+  published image exists before rerunning closeout evidence.
+
 ## Validation Surfaces
 
 | Surface | Role | Release Claim |

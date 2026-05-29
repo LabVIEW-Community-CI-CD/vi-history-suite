@@ -34,11 +34,12 @@ describe('CI branch governance workflow', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Traceability Audit');
-    expect(workflow).toContain('run: npm run traceability:audit');
+    expect(workflow).toContain('npm run traceability:audit');
+    expect(workflow).toContain('traceability-audit-report.txt');
     expect(workflow.indexOf('npm run customization:audit')).toBeLessThan(
-      workflow.indexOf('run: npm run traceability:audit')
+      workflow.indexOf('name: Traceability Audit')
     );
-    expect(workflow.indexOf('run: npm run traceability:audit')).toBeLessThan(
+    expect(workflow.indexOf('name: Traceability Audit')).toBeLessThan(
       workflow.indexOf('run: npm test')
     );
   });
@@ -55,7 +56,7 @@ describe('CI branch governance workflow', () => {
       workflow.indexOf('npm run customization:audit')
     );
     expect(workflow.indexOf('npm run customization:audit')).toBeLessThan(
-      workflow.indexOf('run: npm run traceability:audit')
+      workflow.indexOf('name: Traceability Audit')
     );
   });
 
@@ -79,10 +80,10 @@ describe('CI branch governance workflow', () => {
 
     expect(workflow).toContain('name: Docs Link Check / lychee');
     expect(workflow).toContain('run: npm run docs:links');
-    expect(workflow.indexOf('run: npm run traceability:audit')).toBeLessThan(
-      workflow.indexOf('run: npm run docs:links')
+    expect(workflow.indexOf('name: Traceability Audit')).toBeLessThan(
+      workflow.indexOf('name: Docs Link Check / lychee')
     );
-    expect(workflow.indexOf('run: npm run docs:links')).toBeLessThan(
+    expect(workflow.indexOf('name: Docs Link Check / lychee')).toBeLessThan(
       workflow.indexOf('run: npm test')
     );
   });
@@ -108,9 +109,23 @@ describe('CI branch governance workflow', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: DoD Gate / dod');
-    expect(workflow).toContain('run: npm run dod:gate');
+    expect(workflow).toContain('npm run dod:gate');
+    expect(workflow).toContain('dod-gate-report.txt');
     expect(workflow.indexOf('run: npm run package')).toBeLessThan(
       workflow.indexOf('name: DoD Gate / dod')
+    );
+  });
+
+  it('uploads traceability and DoD gate reports for governance triage', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Governance Gate Reports / governance-gates');
+    expect(workflow).toContain('name: governance-gate-reports-${{ github.run_id }}');
+    expect(workflow).toContain('traceability-audit-report.txt');
+    expect(workflow).toContain('dod-gate-report.txt');
+    expect(workflow).toContain('if-no-files-found: ignore');
+    expect(workflow.indexOf('name: DoD Gate / dod')).toBeLessThan(
+      workflow.indexOf('name: Governance Gate Reports / governance-gates')
     );
   });
 

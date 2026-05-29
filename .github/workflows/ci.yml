@@ -88,7 +88,12 @@ jobs:
           retention-days: 30
 
       - name: Traceability Audit
-        run: npm run traceability:audit
+        run: |
+          set +e
+          set -o pipefail
+          npm run traceability:audit | tee traceability-audit-report.txt
+          traceability_status=${PIPESTATUS[0]}
+          exit $traceability_status
 
       - name: Docs Link Check / lychee
         run: npm run docs:links
@@ -110,4 +115,20 @@ jobs:
         run: npm run package
 
       - name: DoD Gate / dod
-        run: npm run dod:gate
+        run: |
+          set +e
+          set -o pipefail
+          npm run dod:gate | tee dod-gate-report.txt
+          dod_status=${PIPESTATUS[0]}
+          exit $dod_status
+
+      - name: Governance Gate Reports / governance-gates
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: governance-gate-reports-${{ github.run_id }}
+          path: |
+            traceability-audit-report.txt
+            dod-gate-report.txt
+          if-no-files-found: ignore
+          retention-days: 30

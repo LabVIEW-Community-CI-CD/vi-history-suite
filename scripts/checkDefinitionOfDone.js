@@ -16,7 +16,8 @@ const REQUIRED_CI_STEPS = [
   'Test',
   'PR Coverage Gate / coverage',
   'Package',
-  'DoD Gate / dod'
+  'DoD Gate / dod',
+  'Governance Gate Reports / governance-gates'
 ];
 
 const REQUIRED_CLOSEOUT_GATES = [
@@ -173,18 +174,48 @@ function checkCiStepOrder(cwd) {
     };
   }
 
-  if (!/- name: DoD Gate \/ dod\s*\r?\n\s*run: npm run dod:gate/iu.test(workflow)) {
+  for (const traceabilitySnippet of [
+    'npm run traceability:audit',
+    'traceability-audit-report.txt'
+  ]) {
+    if (!workflow.includes(traceabilitySnippet)) {
+      return {
+        name: 'CI required step order',
+        passed: false,
+        details: `Traceability Audit must include '${traceabilitySnippet}' in .github/workflows/ci.yml.`
+      };
+    }
+  }
+
+  for (const dodSnippet of [
+    'npm run dod:gate',
+    'dod-gate-report.txt'
+  ]) {
+    if (!workflow.includes(dodSnippet)) {
+      return {
+        name: 'CI required step order',
+        passed: false,
+        details: `DoD Gate / dod must include '${dodSnippet}' in .github/workflows/ci.yml.`
+      };
+    }
+  }
+
+  if (
+    !/- name: Governance Gate Reports \/ governance-gates[\s\S]*name: governance-gate-reports-\$\{\{ github\.run_id \}\}[\s\S]*traceability-audit-report\.txt[\s\S]*dod-gate-report\.txt/iu.test(
+      workflow
+    )
+  ) {
     return {
       name: 'CI required step order',
       passed: false,
-      details: 'DoD Gate / dod must run exactly npm run dod:gate in .github/workflows/ci.yml.'
+      details: 'Governance Gate Reports / governance-gates must upload traceability-audit-report.txt and dod-gate-report.txt.'
     };
   }
 
   return {
     name: 'CI required step order',
     passed: true,
-    details: `${requiredOrder.details}; hosted customization audit reporting and DoD steps present`
+    details: `${requiredOrder.details}; hosted customization and governance report steps present`
   };
 }
 

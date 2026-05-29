@@ -15,6 +15,20 @@ const DEFAULT_STANDARDS_IMAGE = STANDARDS_TOOLCHAIN_REGISTRY_IMAGE;
 const DEFAULT_SAVE_DIR = 'assurance-closeout-evidence';
 const DEFAULT_SKILL_ROOT = process.env.REPO_STANDARDS_REVIEW_ROOT ||
   'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review';
+const COMMAND_TIMEOUT_MS = Object.freeze({
+  gitRemote: 45000,
+  ghApi: 45000,
+  dockerManifestInspect: 45000,
+  dockerImageInspect: 30000,
+  dockerPull: 180000,
+  dockerBuild: 900000,
+  dockerRun: 900000,
+  hostPython: 900000
+});
+const COMMAND_RETRY_ATTEMPTS = Object.freeze({
+  none: 1,
+  transientNetwork: 2
+});
 
 function npmCommand(platform = process.platform) {
   return platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -100,26 +114,158 @@ function commandLine(command, args) {
   return [command, ...args].join(' ');
 }
 
+function combinedCommandErrorText(commandResult) {
+  return `${commandResult?.stderr || ''}\n${String(commandResult?.error || '')}`.toLowerCase();
+}
+
+function isSpawnTimeout(rawResult) {
+  const code = String(rawResult?.error?.code || '').toUpperCase();
+  const errorText = String(rawResult?.error?.message || rawResult?.error || '').toLowerCase();
+  return code === 'ETIMEDOUT' || errorText.includes('timed out') || errorText.includes('timeout');
+}
+
+function isTransientNetworkFailure(commandResult) {
+  if (commandResult?.timedOut) {
+    return true;
+  }
+
+  const errorText = combinedCommandErrorText(commandResult);
+  return [
+    'tls handshake timeout',
+    'i/o timeout',
+    'connection reset',
+    'econnreset',
+    'network is unreachable',
+    'temporary failure',
+    'service unavailable',
+    'bad gateway',
+    'gateway timeout',
+    'eai_again',
+    'etimedout',
+    'ehostunreach',
+    'no route to host'
+  ].some((pattern) => errorText.includes(pattern));
+}
+
+function classifyDockerRegistryFailure(commandResult, image, commandDescription) {
+  if (commandResult.status === 0) {
+    return {
+      category: 'none',
+      message: 'Published Docker workbench image is accessible.'
+    };
+  }
+
+  const errorText = combinedCommandErrorText(commandResult);
+  const loginGuidance = "Run 'docker login registry.gitlab.com' and retry.";
+  const credentialHelperGuidance =
+    "Docker credential helper configuration failed; configure a supported helper in Docker config or clear invalid credHelpers settings, then retry.";
+  const timeoutGuidance =
+    'Registry command timed out; verify network connectivity and retry.';
+
+  if (commandResult.timedOut || errorText.includes('timed out') || errorText.includes('timeout')) {
+    return {
+      category: 'timeout',
+      message: `Published Docker workbench image access timed out during ${commandDescription}. ${timeoutGuidance}`
+    };
+  }
+
+  if (
+    errorText.includes('error getting credentials') ||
+    errorText.includes('credential helper') ||
+    errorText.includes('credsstore') ||
+    errorText.includes('credhelpers') ||
+    errorText.includes('not implemented')
+  ) {
+    return {
+      category: 'credential-helper',
+      message: `Published Docker workbench image access failed during ${commandDescription}. ${credentialHelperGuidance}`
+    };
+  }
+
+  if (
+    errorText.includes('authentication required') ||
+    errorText.includes('unauthorized') ||
+    errorText.includes('access forbidden') ||
+    errorText.includes('requested access to the resource is denied') ||
+    errorText.includes('pull access denied') ||
+    errorText.includes('permission denied') ||
+    errorText.includes('denied')
+  ) {
+    return {
+      category: 'auth-denied',
+      message: `Published Docker workbench image access failed during ${commandDescription}. ${loginGuidance}`
+    };
+  }
+
+  if (
+    errorText.includes('manifest unknown') ||
+    errorText.includes('not found') ||
+    errorText.includes('name unknown') ||
+    errorText.includes('repository does not exist')
+  ) {
+    return {
+      category: 'image-unavailable',
+      message: `Published Docker workbench image '${image}' is unavailable in the registry; verify image publication and retry.`
+    };
+  }
+
+  return {
+    category: 'unknown',
+    message: `Published Docker workbench image access failed during ${commandDescription}; inspect stderr and retry ${commandResult.command}.`
+  };
+}
+
 function runCommand(command, args, deps = {}) {
+  const policy = deps.commandPolicy || {};
   const spawnSyncImpl = deps.spawnSync || spawnSync;
   const platform = deps.platform || process.platform;
   const useWindowsCommandProcessor = platform === 'win32' && !deps.spawnSync;
-  const result = spawnSyncImpl(
-    useWindowsCommandProcessor ? 'cmd.exe' : command,
-    useWindowsCommandProcessor ? ['/d', '/s', '/c', command, ...args] : args,
-    {
-      cwd: deps.cwd,
-      encoding: 'utf8',
-      shell: false
-    }
-  );
+  const maxAttempts = Math.max(1, Number(policy.maxAttempts || 1));
+  const timeoutMs = Number(policy.timeoutMs || 0);
+  const retryOnTransient = policy.retryOnTransient === true;
+  let finalResult;
 
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const result = spawnSyncImpl(
+      useWindowsCommandProcessor ? 'cmd.exe' : command,
+      useWindowsCommandProcessor ? ['/d', '/s', '/c', command, ...args] : args,
+      {
+        cwd: deps.cwd,
+        encoding: 'utf8',
+        shell: false,
+        timeout: timeoutMs > 0 ? timeoutMs : undefined
+      }
+    );
+
+    const normalized = {
+      command: commandLine(command, args),
+      status: result.status ?? (result.error ? 1 : 0),
+      stdout: result.stdout || '',
+      stderr: result.stderr || '',
+      error: result.error ? String(result.error.message || result.error) : '',
+      timedOut: isSpawnTimeout(result),
+      attempts: attempt,
+      maxAttempts,
+      timeoutMs: timeoutMs > 0 ? timeoutMs : undefined
+    };
+
+    finalResult = normalized;
+    if (normalized.status === 0) {
+      break;
+    }
+
+    if (!(retryOnTransient && attempt < maxAttempts && isTransientNetworkFailure(normalized))) {
+      break;
+    }
+  }
+
+  return finalResult;
+}
+
+function withCommandPolicy(deps, commandPolicy) {
   return {
-    command: commandLine(command, args),
-    status: result.status ?? (result.error ? 1 : 0),
-    stdout: result.stdout || '',
-    stderr: result.stderr || '',
-    error: result.error ? String(result.error.message || result.error) : ''
+    ...deps,
+    commandPolicy
   };
 }
 
@@ -388,19 +534,28 @@ function buildProvenanceCheck(name, commandResult, actualCommit, expectedCommit,
     actualCommit,
     message,
     stderr: commandResult.stderr,
-    error: commandResult.error
+    error: commandResult.error,
+    timedOut: commandResult.timedOut,
+    attempts: commandResult.attempts,
+    maxAttempts: commandResult.maxAttempts,
+    timeoutMs: commandResult.timeoutMs
   };
 }
 
 function verifyStandardsToolchainProvenance(options, deps = {}) {
   const existsSyncImpl = deps.existsSync || fs.existsSync;
   const expectedCommit = STANDARDS_TOOLCHAIN_EXPECTED_COMMIT;
+  const gitRemoteDeps = withCommandPolicy(deps, {
+    timeoutMs: COMMAND_TIMEOUT_MS.gitRemote,
+    maxAttempts: COMMAND_RETRY_ATTEMPTS.transientNetwork,
+    retryOnTransient: true
+  });
   const gitlabMain = runCommand('git', [
     'ls-remote',
     STANDARDS_TOOLCHAIN_GITLAB_URL,
     'HEAD',
     'refs/heads/main'
-  ], deps);
+  ], gitRemoteDeps);
   const githubMirror = runCommand('git', [
     'ls-remote',
     STANDARDS_TOOLCHAIN_GITHUB_URL,
@@ -408,12 +563,22 @@ function verifyStandardsToolchainProvenance(options, deps = {}) {
     'refs/heads/main',
     `refs/tags/${STANDARDS_TOOLCHAIN_GITHUB_TAG}`,
     `refs/tags/${STANDARDS_TOOLCHAIN_GITHUB_TAG}^{}`
-  ], deps);
+  ], gitRemoteDeps);
+  const dockerManifestDeps = withCommandPolicy(deps, {
+    timeoutMs: COMMAND_TIMEOUT_MS.dockerManifestInspect,
+    maxAttempts: COMMAND_RETRY_ATTEMPTS.transientNetwork,
+    retryOnTransient: true
+  });
   const dockerManifest = runCommand('docker', [
     'manifest',
     'inspect',
     STANDARDS_TOOLCHAIN_REGISTRY_IMAGE
-  ], deps);
+  ], dockerManifestDeps);
+  const registryFailure = classifyDockerRegistryFailure(
+    dockerManifest,
+    STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
+    'docker manifest inspect'
+  );
   const gitlabEntries = parseLsRemote(gitlabMain.stdout);
   const githubEntries = parseLsRemote(githubMirror.stdout);
   const checks = [
@@ -453,9 +618,14 @@ function verifyStandardsToolchainProvenance(options, deps = {}) {
     command: dockerManifest.command,
     status: dockerManifest.status,
     success: dockerManifest.status === 0,
+    failureCategory: registryFailure.category,
+    timedOut: dockerManifest.timedOut,
+    attempts: dockerManifest.attempts,
+    maxAttempts: dockerManifest.maxAttempts,
+    timeoutMs: dockerManifest.timeoutMs,
     message: dockerManifest.status === 0
       ? 'Published Docker workbench image is accessible.'
-      : `Published Docker workbench image is unavailable; run 'docker login registry.gitlab.com' and retry ${dockerManifest.command}.`,
+      : `${registryFailure.message} Command: ${dockerManifest.command}.`,
     stderr: dockerManifest.stderr,
     error: dockerManifest.error
   };
@@ -515,7 +685,11 @@ function summarizeStandardsResults(results, runner) {
 function runHostStandards(options, deps = {}) {
   const results = hostStandardsCommands(options.skillRoot).map((step) => ({
     ...step,
-    ...runCommand(step.command, step.args, deps)
+    ...runCommand(step.command, step.args, withCommandPolicy(deps, {
+      timeoutMs: COMMAND_TIMEOUT_MS.hostPython,
+      maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
+      retryOnTransient: false
+    }))
   }));
   const summary = summarizeStandardsResults(results, 'host');
   const preflightOk = summary.preflight?.ok === true;
@@ -596,7 +770,11 @@ function replaceRepoMount(args, repoRoot) {
 
 function runDockerStandards(options, deps = {}) {
   const repoRoot = deps.cwd || process.cwd();
-  const inspect = runCommand('docker', ['image', 'inspect', options.standardsImage], deps);
+  const inspect = runCommand('docker', ['image', 'inspect', options.standardsImage], withCommandPolicy(deps, {
+    timeoutMs: COMMAND_TIMEOUT_MS.dockerImageInspect,
+    maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
+    retryOnTransient: false
+  }));
   const results = [{
     name: 'docker-preflight',
     file: 'standards-docker-preflight.txt',
@@ -608,13 +786,23 @@ function runDockerStandards(options, deps = {}) {
 
   if (!imageAvailable) {
     if (usesPublishedRegistryImage) {
-      const pull = runCommand('docker', ['pull', options.standardsImage], deps);
+      const pull = runCommand('docker', ['pull', options.standardsImage], withCommandPolicy(deps, {
+        timeoutMs: COMMAND_TIMEOUT_MS.dockerPull,
+        maxAttempts: COMMAND_RETRY_ATTEMPTS.transientNetwork,
+        retryOnTransient: true
+      }));
       results.push({ name: 'docker-pull', file: 'standards-docker-pull.txt', ...pull });
       if (pull.status !== 0) {
+        const pullFailure = classifyDockerRegistryFailure(
+          pull,
+          options.standardsImage,
+          'docker pull'
+        );
         return {
           runner: 'docker',
           image: options.standardsImage,
           imageAccess: 'pull-failed',
+          failureCategory: pullFailure.category,
           success: false,
           results,
           summary: {
@@ -623,11 +811,15 @@ function runDockerStandards(options, deps = {}) {
             scorecard: '',
             failed: [{ name: 'docker-pull', ...pull }]
           },
-          failure: `Docker standards image '${options.standardsImage}' is unavailable. Run 'docker login registry.gitlab.com' and retry.`
+          failure: `${pullFailure.message} Command: ${pull.command}.`
         };
       }
 
-      const verifyPulledImage = runCommand('docker', ['image', 'inspect', options.standardsImage], deps);
+      const verifyPulledImage = runCommand('docker', ['image', 'inspect', options.standardsImage], withCommandPolicy(deps, {
+        timeoutMs: COMMAND_TIMEOUT_MS.dockerImageInspect,
+        maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
+        retryOnTransient: false
+      }));
       results.push({
         name: 'docker-image-after-pull',
         file: 'standards-docker-image-after-pull.txt',
@@ -676,7 +868,11 @@ function runDockerStandards(options, deps = {}) {
       '-t',
       options.standardsImage,
       options.skillRoot
-    ], deps);
+    ], withCommandPolicy(deps, {
+      timeoutMs: COMMAND_TIMEOUT_MS.dockerBuild,
+      maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
+      retryOnTransient: false
+    }));
     results.push({ name: 'docker-build', file: 'standards-docker-build.txt', ...build });
     if (build.status !== 0) {
       return {
@@ -695,7 +891,11 @@ function runDockerStandards(options, deps = {}) {
       };
     }
 
-    const verifyImage = runCommand('docker', ['image', 'inspect', options.standardsImage], deps);
+    const verifyImage = runCommand('docker', ['image', 'inspect', options.standardsImage], withCommandPolicy(deps, {
+      timeoutMs: COMMAND_TIMEOUT_MS.dockerImageInspect,
+      maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
+      retryOnTransient: false
+    }));
     results.push({
       name: 'docker-image-after-build',
       file: 'standards-docker-image-after-build.txt',
@@ -726,7 +926,11 @@ function runDockerStandards(options, deps = {}) {
     ...dockerStandardsCommands(options.standardsImage).map((step) => ({
       ...step,
       args: replaceRepoMount(step.args, repoRoot),
-      ...runCommand(step.command, replaceRepoMount(step.args, repoRoot), deps)
+      ...runCommand(step.command, replaceRepoMount(step.args, repoRoot), withCommandPolicy(deps, {
+        timeoutMs: COMMAND_TIMEOUT_MS.dockerRun,
+        maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
+        retryOnTransient: false
+      }))
     }))
   );
   const summary = summarizeStandardsResults(
@@ -782,7 +986,11 @@ function runStandardsEvidence(options, deps = {}) {
 }
 
 function tryGhJson(args, deps = {}) {
-  const result = runCommand('gh', args, deps);
+  const result = runCommand('gh', args, withCommandPolicy(deps, {
+    timeoutMs: COMMAND_TIMEOUT_MS.ghApi,
+    maxAttempts: COMMAND_RETRY_ATTEMPTS.transientNetwork,
+    retryOnTransient: true
+  }));
   if (result.status !== 0) {
     return undefined;
   }
@@ -961,10 +1169,138 @@ function renderReleaseReferences(options, githubContext) {
   ].join('\n');
 }
 
-function renderCloseoutMarkdown(context) {
-  const gatesPassed = context.gates ? context.gates.every((gate) => gate.success) : false;
+function evaluateClosureDecision(context) {
+  const localGatesRan = Array.isArray(context.gates);
+  const localGatesPassed = localGatesRan ? context.gates.every((gate) => gate.success) : false;
+  const failedLocalGates = localGatesRan
+    ? context.gates.filter((gate) => !gate.success).map((gate) => gate.name)
+    : [];
+  const standardsPassed = context.standards?.success === true;
   const provenancePassed = context.provenance?.success === true;
-  const closable = context.standards.success && provenancePassed && gatesPassed;
+  const reasons = [];
+
+  if (!localGatesRan) {
+    reasons.push('Local gates were not run; use --run-gates or provide equivalent gate evidence.');
+  } else if (!localGatesPassed) {
+    reasons.push(`Local gate failures detected: ${failedLocalGates.join(', ')}.`);
+  }
+
+  if (!standardsPassed) {
+    reasons.push(context.standards?.failure || 'Standards evidence failed.');
+  }
+
+  if (!provenancePassed) {
+    reasons.push(context.provenance?.failure || 'Standards toolchain provenance failed.');
+  }
+
+  return {
+    closable: localGatesPassed && standardsPassed && provenancePassed,
+    localGatesRan,
+    localGatesPassed,
+    failedLocalGates,
+    standardsPassed,
+    provenancePassed,
+    reasons
+  };
+}
+
+function buildMachineReadableCloseoutSummary(context, exitCode) {
+  const closureDecision = context.closureDecision || evaluateClosureDecision(context);
+  const standardsSummary = context.standards?.summary || {};
+
+  return {
+    schemaVersion: 1,
+    kind: context.options.kind,
+    issueNumber: context.options.issue ? Number(context.options.issue) : undefined,
+    githubIssueUrl: context.githubContext.issue?.url,
+    git: {
+      branch: context.git.branch,
+      commit: context.git.fullCommit,
+      shortCommit: context.git.commit
+    },
+    localGates: {
+      ran: closureDecision.localGatesRan,
+      passed: closureDecision.localGatesPassed,
+      failed: closureDecision.failedLocalGates,
+      traceabilitySummary: {
+        inventoryEntries: context.traceabilitySummary?.inventoryEntries,
+        gapEntries: context.traceabilitySummary?.gapEntries
+      },
+      results: (context.gates || []).map((gate) => ({
+        name: gate.name,
+        status: gate.success ? 'PASS' : 'FAIL',
+        command: gate.command,
+        durationMs: gate.durationMs
+      }))
+    },
+    standards: {
+      runner: context.standards.runner,
+      success: context.standards.success,
+      failure: context.standards.failure,
+      failureCategory: context.standards.failureCategory,
+      image: context.standards.image,
+      imageAccess: context.standards.imageAccess,
+      hostFailure: context.standards.hostFailure,
+      summary: {
+        fileCount: standardsSummary.fileCount,
+        reqSignal: standardsSummary.reqSignal,
+        testSignal: standardsSummary.testSignal,
+        coverageGate: standardsSummary.coverageGate,
+        docGate: standardsSummary.docGate,
+        dodGate: standardsSummary.dodGate,
+        dodGateEvidence: standardsSummary.dodGateEvidence
+      }
+    },
+    provenance: {
+      success: context.provenance.success,
+      failure: context.provenance.failure,
+      expectedCommit: context.provenance.expectedCommit,
+      checks: context.provenance.checks.map((check) => ({
+        name: check.name,
+        success: check.success,
+        expectedCommit: check.expectedCommit,
+        actualCommit: check.actualCommit,
+        message: check.message,
+        status: check.status,
+        timedOut: check.timedOut,
+        attempts: check.attempts,
+        maxAttempts: check.maxAttempts,
+        timeoutMs: check.timeoutMs
+      })),
+      skillCache: {
+        path: context.provenance.skillCache.path,
+        exists: context.provenance.skillCache.exists,
+        authority: context.provenance.skillCache.authority,
+        success: context.provenance.skillCache.success,
+        message: context.provenance.skillCache.message
+      },
+      registry: {
+        image: context.provenance.registry.image,
+        success: context.provenance.registry.success,
+        failureCategory: context.provenance.registry.failureCategory,
+        message: context.provenance.registry.message,
+        timedOut: context.provenance.registry.timedOut,
+        attempts: context.provenance.registry.attempts,
+        maxAttempts: context.provenance.registry.maxAttempts,
+        timeoutMs: context.provenance.registry.timeoutMs
+      }
+    },
+    closureDecision: {
+      closable: closureDecision.closable,
+      requirements: {
+        localGates: closureDecision.localGatesPassed,
+        standardsEvidence: closureDecision.standardsPassed,
+        standardsProvenance: closureDecision.provenancePassed
+      },
+      reasons: closureDecision.reasons
+    },
+    exitCode
+  };
+}
+
+function renderCloseoutMarkdown(context) {
+  const closureDecision = context.closureDecision || evaluateClosureDecision(context);
+  const closable = closureDecision.closable;
   const traceabilitySummary = context.traceabilitySummary || {};
   const issueLabel = context.options.issue ? `#${context.options.issue}` : 'unspecified issue';
   const releaseReferences = renderReleaseReferences(context.options, context.githubContext);
@@ -1054,8 +1390,6 @@ function generateCloseoutEvidence(argv, deps = {}) {
     }
   ];
 
-  writeEvidenceFiles(saveDir, records);
-
   const context = {
     options,
     git,
@@ -1065,10 +1399,26 @@ function generateCloseoutEvidence(argv, deps = {}) {
     standards,
     provenance
   };
+  const closureDecision = evaluateClosureDecision(context);
+  context.closureDecision = closureDecision;
+  const gateFailure = closureDecision.localGatesRan ? !closureDecision.localGatesPassed : false;
+  const exitCode = standards.success && provenance.success && !gateFailure ? 0 : 1;
+  const machineReadableSummary = buildMachineReadableCloseoutSummary(context, exitCode);
+  context.machineReadableSummary = machineReadableSummary;
+  records.push({
+    name: 'closeout-summary',
+    file: 'closeout-summary.json',
+    stdout: JSON.stringify(machineReadableSummary, null, 2),
+    stderr: '',
+    error: '',
+    status: exitCode
+  });
+
+  writeEvidenceFiles(saveDir, records);
+
   const markdown = renderCloseoutMarkdown(context);
-  const gateFailure = gates ? gates.some((gate) => !gate.success) : false;
   return {
-    exitCode: standards.success && provenance.success && !gateFailure ? 0 : 1,
+    exitCode,
     markdown,
     context
   };
@@ -1111,11 +1461,15 @@ module.exports = {
   parseLsRemote,
   parseTraceabilitySummary,
   renderCloseoutMarkdown,
+  evaluateClosureDecision,
+  buildMachineReadableCloseoutSummary,
   runDockerStandards,
   runGateCommands,
   runHostStandards,
   runStandardsEvidence,
   summarizeStandardsResults,
   summarizeDodGateEvidence,
-  verifyStandardsToolchainProvenance
+  verifyStandardsToolchainProvenance,
+  classifyDockerRegistryFailure,
+  isTransientNetworkFailure
 };
