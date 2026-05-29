@@ -33,6 +33,12 @@ Execute repository changes while keeping branch policy, requirements traceabilit
 6. Iteration:
    - Capture one durable guidance improvement per substantial task using [.github/skills/agent-effectiveness-loop/SKILL.md](../skills/agent-effectiveness-loop/SKILL.md).
 
+## Routing Examples
+- Requirement-targeted flow:
+   - Start with [.github/skills/requirements-traceability/SKILL.md](../skills/requirements-traceability/SKILL.md), apply scoped edits, run traceability plus full gates, then draft PR evidence.
+- Non-requirement flow:
+   - Start with [.github/skills/testing-automation/SKILL.md](../skills/testing-automation/SKILL.md), apply scoped edits, run relevant gates, then draft PR evidence when handing off.
+
 ## Required Outputs
 - A concise change summary with exact validation commands run.
 - A PR evidence block aligned to [.github/pull_request_template.md](../pull_request_template.md).

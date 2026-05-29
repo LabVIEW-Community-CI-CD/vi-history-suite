@@ -7,6 +7,8 @@ agent: "agent"
 
 Generate a PR evidence block that matches the required fields in [.github/pull_request_template.md](../pull_request_template.md) and the PR evidence contract in [docs/testing/test-plan.md](../../docs/testing/test-plan.md).
 
+If you are still implementing requirement-scoped changes, run [Requirement Target Execution](./requirement-target-execution.prompt.md) first.
+
 Use user-provided values when available. If a required field is missing, include `TODO` for that field.
 
 Output exactly this structure:

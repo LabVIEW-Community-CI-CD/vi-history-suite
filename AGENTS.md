@@ -6,6 +6,12 @@ This file provides concise, actionable guidance for AI coding agents working in 
 
 ## Quick Reference
 
+### Customization Entry Path
+- Use skills for repeatable multi-step workflows tied to repository contracts.
+- Use prompts for one-shot output generation with fixed field labels.
+- Use file instructions for file-type or folder-specific edit guardrails.
+- Use the workflow-governor custom agent for end-to-end execution with branch, validation, and PR-evidence compliance.
+
 ### Build & Test Commands
 - **Build:** `npm run compile`
 - **Test:** `npm test`

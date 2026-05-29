@@ -15,6 +15,8 @@ Required process:
 5. Update requirements artifacts together when behavior or evidence paths changed.
 6. Run validation commands and summarize results factually.
 
+After implementation and validation are complete, use [PR Handoff Evidence](./pr-handoff-evidence.prompt.md) to format the PR evidence block.
+
 Required validation commands:
 - npm run traceability:audit
 - npm run check
