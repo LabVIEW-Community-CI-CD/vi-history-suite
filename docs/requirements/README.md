@@ -35,7 +35,10 @@ Target VHS-REQ-###. Change behavior to ____. Update implementation, tests, SRS, 
 On GitHub, use the `Requirement Target` issue template for agent or Copilot
 work. The template captures the target requirement ID, files to inspect,
 acceptance criteria, required tests, validation commands, and out-of-scope
-boundaries before implementation starts.
+boundaries before implementation starts. It also requires a
+requirement/RTM-update decision and provides an optional bounded
+`copilot_prompt` field so the issue itself is decision-complete before
+implementation starts.
 
 For creating new requirement-scoped Copilot Web issue waves, use the committed
 [Copilot Web issue-generation guidance](./copilot-web-issue-generation-prompt.md)
@@ -87,17 +90,69 @@ implementation, verification, or inventory gaps.
 
 1. Confirm every child issue is closed or explicitly deferred to an open
    follow-up issue.
-2. Run the repo-local gates:
+2. Generate the closeout evidence summary. Standards evidence and standards
+   toolchain provenance are mandatory, and the command fails closed unless host
+   Python or the Docker assurance workbench can produce evidence and the
+   `repo-standards-review` source/mirror/registry facts can be verified:
+
+```shell
+npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates --save-dir assurance-closeout-evidence
+```
+
+When `--save-dir` is provided, closeout evidence also writes
+`closeout-summary.json` with machine-readable gate, standards, provenance, and
+closure-decision status.
+
+Use Docker explicitly when host Python is unavailable:
+
+```shell
+npm run closeout:evidence -- --kind standards --issue <issue-number> --standards-runner docker --save-dir assurance-closeout-evidence
+```
+
+The Docker standards runner defaults to the published GitLab registry image
+`registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`.
+It inspects the image locally, pulls it when missing, and fails closed with
+`docker login registry.gitlab.com` guidance when registry access is denied. Use
+`--standards-image repo-standards-review-assurance-workbench:local` only as an
+explicit local override. Provenance evidence separately verifies GitLab source
+authority, the private GitHub mirror, `v0.2.19`, the local non-authoritative
+skill cache, and registry image access.
+
+For non-interactive closeout environments, configure source and registry auth
+before running the closeout command:
+
+```shell
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/absolute/path/to/askpass-helper.sh
+printf '%s' "$RSR_PAT" | docker login registry.gitlab.com -u oauth2 --password-stdin
+```
+
+If Docker reports `error getting credentials`, `credential helper`,
+`credsStore`, or `credHelpers`, treat that as a Docker credential-helper
+configuration failure and fix Docker config before retrying closeout. If Docker
+reports `unauthorized`, `access forbidden`, or `denied`, refresh credentials and
+rerun `docker login registry.gitlab.com`. If Docker reports `manifest unknown`
+or repository-not-found errors, verify published image availability before
+closeout reruns.
+
+Closeout provenance and registry commands run with bounded timeouts and one
+transient-network retry for remote operations such as `git ls-remote`,
+`docker manifest inspect`, and published-image `docker pull`. Auth-denied and
+credential-helper failures are fail-closed and are not retried.
+
+- The closeout command runs these repo-local gates when `--run-gates` is set:
 
 ```shell
 npm run traceability:audit
+npm run docs:links
+npm run dod:gate
 npm run check
 npm test
 npm run package
 ```
 
-3. When maintainer-local standards tooling is available, run the advisory
-   standards evidence checks:
+- The closeout command always runs the mandatory standards evidence checks
+   through the selected standards runner:
 
 ```shell
 python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\preflight_local_dependencies.py --json
@@ -106,18 +161,28 @@ python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\repo_evidence
 python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\run_assurance.py <repo-root> --profile quick-triage
 ```
 
-4. Close the umbrella only when blocking traceability findings are resolved or
-   deferred to open child issues with owners and validation commands.
-5. Treat standards maturity warnings outside the umbrella scope as next-wave
-   recommendations, not silent blockers for the current umbrella closeout.
+   Closeout parsing reports the Definition-of-Done gate as explicit `PASS`,
+   `N/A`, or `FAIL`. A DoD `PASS` requires scanner-visible evidence from a
+   hosted `DoD Gate / dod` step in `.github/workflows/ci.yml`; generated
+   `assurance-*-evidence` outputs, generated build output, docs-only
+   references, and unit-test fixture strings are recorded as disqualified
+   sources and cannot promote DoD.
+
+- Close the umbrella only when blocking traceability and Definition-of-Done
+   findings are resolved or deferred to open child issues with owners and
+   validation commands.
+- Treat non-PASS DoD evidence as active closeout evidence. The hosted
+   `DoD Gate / dod` step and the local `dod:gate` result must both stay clean
+   or be tied to a blocking follow-up issue with an owner and validation
+   commands.
 
 ## ID Policy
 
 - Active software requirements use `VHS-REQ-*`.
 - Active system requirements use `VHS-SYS-REQ-*`.
 - Historical gaps are intentional.
-- New software requirements start at `VHS-REQ-613`.
-- New system requirements start at `VHS-SYS-REQ-017`.
+- New software requirements start at `VHS-REQ-616`.
+- New system requirements start at `VHS-SYS-REQ-018`.
 - Retired IDs remain in `id-index.csv` so an agent can distinguish an
   intentional retirement from a missing document.
 

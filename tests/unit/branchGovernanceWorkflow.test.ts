@@ -34,12 +34,98 @@ describe('CI branch governance workflow', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Traceability Audit');
-    expect(workflow).toContain('run: npm run traceability:audit');
-    expect(workflow.indexOf('run: npm run check')).toBeLessThan(
-      workflow.indexOf('run: npm run traceability:audit')
+    expect(workflow).toContain('npm run traceability:audit');
+    expect(workflow).toContain('traceability-audit-report.txt');
+    expect(workflow.indexOf('npm run customization:audit')).toBeLessThan(
+      workflow.indexOf('name: Traceability Audit')
     );
-    expect(workflow.indexOf('run: npm run traceability:audit')).toBeLessThan(
+    expect(workflow.indexOf('name: Traceability Audit')).toBeLessThan(
       workflow.indexOf('run: npm test')
+    );
+  });
+
+  it('keeps the customization audit in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Customization Audit');
+    expect(workflow).toContain('npm run customization:audit');
+    expect(workflow).toContain(
+      'node scripts/auditCustomizationGovernance.js --json > customization-audit-report.json'
+    );
+    expect(workflow.indexOf('run: npm run check')).toBeLessThan(
+      workflow.indexOf('npm run customization:audit')
+    );
+    expect(workflow.indexOf('npm run customization:audit')).toBeLessThan(
+      workflow.indexOf('name: Traceability Audit')
+    );
+  });
+
+  it('uploads machine-readable customization audit evidence in the hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Customization Audit Report / custom-audit');
+    expect(workflow).toContain('name: customization-audit-report-${{ github.run_id }}');
+    expect(workflow).toContain('path: customization-audit-report.json');
+    expect(workflow).toContain('if-no-files-found: ignore');
+    expect(workflow.indexOf('name: Customization Audit')).toBeLessThan(
+      workflow.indexOf('name: Customization Audit Report / custom-audit')
+    );
+    expect(workflow.indexOf('name: Customization Audit Report / custom-audit')).toBeLessThan(
+      workflow.indexOf('name: Traceability Audit')
+    );
+  });
+
+  it('keeps the docs link-check lychee gate in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Docs Link Check / lychee');
+    expect(workflow).toContain('run: npm run docs:links');
+    expect(workflow.indexOf('name: Traceability Audit')).toBeLessThan(
+      workflow.indexOf('name: Docs Link Check / lychee')
+    );
+    expect(workflow.indexOf('name: Docs Link Check / lychee')).toBeLessThan(
+      workflow.indexOf('run: npm test')
+    );
+  });
+
+  it('retains machine-readable coverage evidence in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: PR Coverage Gate / coverage');
+    expect(workflow).toContain('uses: actions/upload-artifact@v7');
+    expect(workflow).toContain('coverage/cobertura-coverage.xml');
+    expect(workflow).toContain('coverage/coverage-summary.json');
+    expect(workflow).toContain('if-no-files-found: error');
+    expect(workflow).toContain('retention-days: 30');
+    expect(workflow.indexOf('run: npm test')).toBeLessThan(
+      workflow.indexOf('name: PR Coverage Gate / coverage')
+    );
+    expect(workflow.indexOf('name: PR Coverage Gate / coverage')).toBeLessThan(
+      workflow.indexOf('run: npm run package')
+    );
+  });
+
+  it('keeps the hosted DoD gate in the required CI workflow', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: DoD Gate / dod');
+    expect(workflow).toContain('npm run dod:gate');
+    expect(workflow).toContain('dod-gate-report.txt');
+    expect(workflow.indexOf('run: npm run package')).toBeLessThan(
+      workflow.indexOf('name: DoD Gate / dod')
+    );
+  });
+
+  it('uploads traceability and DoD gate reports for governance triage', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Governance Gate Reports / governance-gates');
+    expect(workflow).toContain('name: governance-gate-reports-${{ github.run_id }}');
+    expect(workflow).toContain('traceability-audit-report.txt');
+    expect(workflow).toContain('dod-gate-report.txt');
+    expect(workflow).toContain('if-no-files-found: ignore');
+    expect(workflow.indexOf('name: DoD Gate / dod')).toBeLessThan(
+      workflow.indexOf('name: Governance Gate Reports / governance-gates')
     );
   });
 

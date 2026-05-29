@@ -10,6 +10,29 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.4.3] - 2026-05-29
+
+### Changed
+
+- Opened the next patch release-candidate line around the GitHub-first
+  Definition-of-Done contract, keeping issue quality, PR evidence, hosted CI,
+  local validation, traceability drift prevention, standards provenance, and
+  closeout readiness visible before release promotion.
+- Added a fail-closed customization governance audit, workspace skills,
+  prompts, file instructions, workflow-governor agent guidance, and retained CI
+  audit evidence so agent customization changes are reviewable and repeatable.
+- Expanded release-readiness validation with a documentation link gate,
+  coverage-to-traceability risk mapping, higher evidence-backed coverage
+  floors, and broader focused unit coverage across command, comparison,
+  dashboard, runtime-settings, closeout, and Marketplace workflow surfaces.
+- Hardened closeout evidence with standards toolchain provenance, published
+  standards workbench fallback handling, bounded remote retries, trusted-root
+  execution, explicit release references, and machine-readable closeout
+  summaries.
+- Strengthened diagnostic VSIX and Marketplace release evidence so diagnostic
+  packages stay distinct from Marketplace publication and exact-tag release
+  evidence names the required validation and live-listing surfaces.
+
 ## [1.4.2] - 2026-05-28
 
 ### Fixed

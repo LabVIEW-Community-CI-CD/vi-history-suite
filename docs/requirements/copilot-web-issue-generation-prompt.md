@@ -27,6 +27,20 @@ If any required file is missing, stop and return no issue candidates.
 5. Avoid duplicates by checking for existing open issues already targeting the
    same requirement ID and outcome.
 
+## Decision-Complete Issue Payload
+
+Requirement-target issues must be decision-complete before implementation
+starts. Candidate issue bodies must include:
+
+- `requirement_id`
+- `files_to_inspect`
+- `acceptance_criteria`
+- `validation_commands`
+- `out_of_scope`
+- `requirement_updates` (explicit requirement/RTM update expectation)
+- optional `copilot_prompt` (bounded prompt aligned to the same requirement and
+  scope)
+
 ## Requirement-Gap Wave Flow
 
 Use this lane only when bounded field evidence shows that no active SRS
@@ -75,8 +89,9 @@ Reject the wave and return no candidate issues when any of the following occur:
 - Missing requirements files listed above.
 - Missing required label on the template (`copilot-target`).
 - Missing required issue-template fields (`requirement_id`, `problem_statement`,
-  `files_to_inspect`, `acceptance_criteria`, `required_tests`,
-  `validation_commands`, `out_of_scope`, `requirement_updates`).
+   `files_to_inspect`, `acceptance_criteria`, `required_tests`,
+   `validation_commands`, `out_of_scope`, `requirement_updates`).
+- Missing optional `copilot_prompt` slot in the issue template.
 - Duplicate requirement-targeted issues for the same requirement/outcome.
 - Requirement-gap waves that do not name source evidence, current requirement
   gaps, proposed new IDs, RTM impacts, and fail-closed checks.

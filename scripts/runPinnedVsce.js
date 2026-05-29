@@ -4,29 +4,38 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const VSCE_PACKAGE_SPEC = '@vscode/vsce@3.7.1';
+const VSCE_PACKAGE_NAME = '@vscode/vsce';
+const VSCE_PACKAGE_VERSION = '3.7.1';
+const VSCE_PACKAGE_SPEC = `${VSCE_PACKAGE_NAME}@${VSCE_PACKAGE_VERSION}`;
 
-function quoteCmdArg(value) {
-  const text = String(value);
-  if (!/[ \t"&^<>|()]/u.test(text)) {
-    return text;
+function resolveLocalVsceCliPath(deps = {}) {
+  const cwd = deps.cwd ?? process.cwd();
+  const requireResolveImpl = deps.requireResolve ?? require.resolve;
+  const readFileSyncImpl = deps.readFileSync ?? fs.readFileSync;
+  const packageJsonPath = requireResolveImpl(`${VSCE_PACKAGE_NAME}/package.json`, {
+    paths: [cwd]
+  });
+  const manifest = JSON.parse(readFileSyncImpl(packageJsonPath, 'utf8'));
+
+  if (manifest.version !== VSCE_PACKAGE_VERSION) {
+    throw new Error(
+      `Expected ${VSCE_PACKAGE_SPEC}, but resolved ${VSCE_PACKAGE_NAME}@${manifest.version}.`
+    );
   }
-  return `"${text.replace(/(["^])/gu, '^$1')}"`;
+
+  const binPath = typeof manifest.bin === 'string' ? manifest.bin : manifest.bin?.vsce;
+  if (typeof binPath !== 'string' || binPath.trim().length === 0) {
+    throw new Error(`Resolved ${VSCE_PACKAGE_SPEC} does not declare a vsce CLI bin.`);
+  }
+
+  return path.resolve(path.dirname(packageJsonPath), binPath);
 }
 
 function buildPinnedVsceInvocation(args, deps = {}) {
-  const platform = deps.platform ?? process.platform;
-  const baseArgs = ['exec', '--yes', '--package', VSCE_PACKAGE_SPEC, '--', 'vsce', ...args];
-  if (platform === 'win32') {
-    return {
-      command: 'cmd.exe',
-      args: ['/d', '/s', '/c', ['npm.cmd', ...baseArgs].map(quoteCmdArg).join(' ')]
-    };
-  }
-
+  const vsceCliPath = deps.vsceCliPath ?? resolveLocalVsceCliPath(deps);
   return {
-    command: 'npm',
-    args: baseArgs
+    command: deps.execPath ?? process.execPath,
+    args: [vsceCliPath, ...args]
   };
 }
 
@@ -95,8 +104,11 @@ if (require.main === module) {
 }
 
 module.exports = {
+  VSCE_PACKAGE_NAME,
   VSCE_PACKAGE_SPEC,
+  VSCE_PACKAGE_VERSION,
   buildPinnedVsceInvocation,
+  resolveLocalVsceCliPath,
   resolvePathApi,
   resolveVsceOutputPath,
   runPinnedVsce

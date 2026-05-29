@@ -1,5 +1,10 @@
 Path,Classification,RtmCoverage,Notes
+scripts/auditCustomizationGovernance.js,mapped,Yes,Customization governance audit script for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
+scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command; mapped to VHS-REQ-597.
+scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
+scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner published Docker workbench support standards toolchain provenance verification and DoD evidence-source hygiene; mapped to VHS-REQ-601 and VHS-REQ-615.
+scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
 src/dashboard/comparisonReportArchive.ts,mapped,Yes,Dashboard archive support; mapped to VHS-REQ-610.
@@ -52,13 +57,20 @@ scripts/preparePublicTestFixture.js,dev-only,No,Public test fixture preparation;
 scripts/publicRepoCloneCore.js,dev-only,No,Public repo clone core; CI infrastructure.
 scripts/runLinuxIntegrationHost.js,dev-only,No,Linux integration host runner; CI infrastructure.
 scripts/runPinnedVsce.js,supporting,No,Pinned VSCE runner; packaging support.
+scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification retry helper with retained bounded attempt evidence report; mapped to VHS-REQ-609 and VHS-REQ-615.
 scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
+tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards toolchain provenance and DoD evidence-source hygiene tests; mapped to VHS-REQ-601.
+tests/unit/definitionOfDoneGate.test.ts,mapped,Yes,Definition-of-Done gate checker tests; mapped to VHS-REQ-615.
+tests/unit/coverageMapScript.test.ts,mapped,Yes,Coverage traceability map tests; mapped to VHS-REQ-613.
+tests/unit/docsLinkCheckScript.test.ts,mapped,Yes,Documentation link-check command tests; mapped to VHS-REQ-597.
 tests/unit/bundledDocumentation.test.ts,mapped,Yes,Bundled documentation manifest/page asset verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/bundledDocumentationAction.test.ts,mapped,Yes,Bundled documentation command/action routing verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/comparisonReportArchive.test.ts,mapped,Yes,Dashboard comparison report archive tests; mapped to VHS-REQ-610.
+tests/unit/comparisonReportAction.test.ts,mapped,Yes,Comparison report action orchestration tests; mapped to VHS-REQ-133 VHS-REQ-148 and VHS-REQ-155.
+tests/unit/comparisonReportExecutionPlan.test.ts,supporting,No,Comparison report execution plan tests supporting runtime command orchestration coverage.
 tests/unit/comparisonReportPacket.test.ts,mapped,Yes,Comparison report packet tests; mapped through RTM.
 tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report preflight tests; mapped through RTM.
 tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM.
@@ -74,8 +86,13 @@ tests/unit/gitCli.test.ts,mapped,Yes,Git CLI tests; mapped through RTM.
 tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering tests; mapped through RTM.
 tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
+tests/unit/humanReviewSubmission.test.ts,mapped,Yes,Human review submission boundary tests; mapped to VHS-REQ-610.
 tests/unit/integrationHostRuntime.test.ts,dev-only,No,Integration host runtime tests; testing infrastructure.
+tests/unit/localRuntimeSettingsCli.test.ts,mapped,Yes,Installed runtime settings CLI direct tests; mapped to VHS-REQ-612.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
+tests/unit/marketplaceListingVerification.test.ts,mapped,Yes,Marketplace listing verification retry tests; mapped to VHS-REQ-609.
+tests/unit/multiReportDashboard.test.ts,mapped,Yes,Multi-report dashboard rendering and concentration tests; mapped to VHS-REQ-610.
+tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
 tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM.
@@ -86,15 +103,23 @@ tests/unit/preparePublicTestFixtureScript.test.ts,dev-only,No,Public test fixtur
 tests/unit/publicDevcontainerSurface.test.ts,mapped,Yes,Public devcontainer surface tests; mapped through RTM.
 tests/unit/publicDocSourceLinks.test.ts,mapped,Yes,Public doc source links tests; mapped through RTM.
 tests/unit/requirementsDocs.test.ts,mapped,Yes,Requirements documentation tests; mapped through RTM.
+tests/unit/retainedDashboardEvidence.test.ts,mapped,Yes,Retained dashboard evidence seeding tests; mapped to VHS-REQ-610.
+tests/unit/reviewDecisionRecord.test.ts,mapped,Yes,Review decision record persistence and action tests; mapped to VHS-REQ-610.
+tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
+tests/unit/runDevHostCli.test.ts,dev-only,No,Development host CLI tests; development tooling.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
+tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
+tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
+tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
 tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings probe tests; contributor validation tooling.
 tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,dev-only,No,Runtime settings probe packet tests; contributor tooling.
 tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,dev-only,No,Runtime settings safe restore tests; contributor tooling.
 tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
 tests/unit/viEligibilityIndexer.test.ts,mapped,Yes,VI eligibility indexer tests; mapped through RTM.
 tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
+tests/unit/viHistoryModel.test.ts,mapped,Yes,VI history model direct eligibility/window tests; mapped to VHS-REQ-006 VHS-REQ-008 and VHS-REQ-017.
 tests/unit/viHistoryService.test.ts,mapped,Yes,VI history service tests; mapped through RTM.
 tests/unit/viMagic.test.ts,mapped,Yes,VI magic tests; mapped through RTM.
 tests/unit/viMagicWrapper.test.ts,mapped,Yes,VI magic wrapper tests; mapped through RTM.
@@ -103,9 +128,9 @@ tests/integration/suite/extensionHost.test.ts,mapped,Yes,Extension host integrat
 tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testing infrastructure.
 tests/integration/runTests.ts,dev-only,No,Integration test runner; testing infrastructure.
 tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace preparation; testing infrastructure.
-.github/workflows/ci.yml,release-ci,Yes,CI workflow; mapped through RTM.
+.github/workflows/ci.yml,release-ci,Yes,CI workflow with hosted DoD Gate / dod; mapped through RTM including VHS-REQ-597 and VHS-REQ-615.
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
-.github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow; mapped through RTM.
+.github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow with retained evidence naming validation surfaces and artifacts; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
 .github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
@@ -114,7 +139,8 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/ISSUE_TEMPLATE/feature_request.yml,asset-doc,No,Feature request issue-intake support surface.
 .github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml,asset-doc,Yes,First-time onboarding feedback template; mapped through RTM.
 .github/ISSUE_TEMPLATE/requirement_target.yml,asset-doc,Yes,Requirement target template; mapped through RTM.
-vitest.config.ts,dev-only,No,Vitest configuration; testing infrastructure.
+.github/pull_request_template.md,mapped,Yes,Lightweight requirement-targeted PR evidence contract template; mapped to VHS-REQ-615.
+vitest.config.ts,mapped,Yes,Vitest coverage reporter and evidence-backed threshold configuration; mapped to VHS-REQ-597 and VHS-REQ-613.
 tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
 tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.
 package.json,mapped,Yes,Package manifest; mapped through RTM.
@@ -135,11 +161,12 @@ docs/requirements/rtm.csv,mapped,Yes,Requirements traceability matrix; mapped th
 docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
-docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation; mapped through RTM.
+docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
+docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md,asset-doc,No,Architecture decision record reference documentation for GitHub-first release and traceability governance; not directly mapped in RTM.
 docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runbook documentation; simplification process reference.
 docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.
-docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation; mapped through RTM.
+docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation including release evidence retention expectations; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
 docs/requirements/traceability-inventory.csv,mapped,Yes,Traceability inventory; mapped through RTM.
 resources/bundled-docs/manifest.json,mapped,Yes,Bundled documentation manifest asset delivered with the extension package; mapped to VHS-REQ-611.

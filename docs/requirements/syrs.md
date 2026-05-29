@@ -135,10 +135,16 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Status: Active
 - Area: Verification
 - Statement: The required public verification path shall remain lightweight:
-  install, typecheck, unit tests, and package sanity.
+  install, typecheck, traceability audit, documentation link check, unit tests,
+  and package sanity.
 - Acceptance Criteria:
-  - Hosted CI runs `npm ci`, `npm run check`, `npm test`, and `npm run package`.
+  - Hosted CI runs `npm ci`, `npm run check`, `npm run traceability:audit`,
+    `npm run docs:links`, `npm test`, and `npm run package`.
   - The test plan names the same command set.
+  - Hosted CI runs a lychee-named documentation link-check step before tests.
+  - Hosted CI retains machine-readable coverage evidence from the required test
+    run.
+  - The test plan names the coverage artifact and baseline threshold policy.
   - Branch governance is enforced in the required hosted CI job for pull
     requests targeting `main` and `develop`.
   - Heavier local validation is not required as a public pull request gate.
@@ -181,6 +187,8 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - The RTM maps active requirements to implementation and verification evidence.
   - The ID index records active, superseded, and retired IDs.
   - CI fails when the requirements pack loses coherence.
+  - Umbrella issue closeout evidence includes mandatory standards-review output
+    from host Python or the Docker assurance workbench fallback.
 - Verification References:
   - `docs/requirements/README.md`
   - `docs/requirements/srs.md`
@@ -229,9 +237,37 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
     back-sync branches plus Dependabot maintenance branches by hosted CI.
   - Marketplace publication is tag-only from exact `vX.Y.Z` tags on commits
     reachable from `origin/main`.
+  - Marketplace live-listing verification distinguishes bounded propagation lag
+    from publication failure.
 - Verification References:
   - `.github/workflows/ci.yml`
   - `.github/workflows/marketplace-release.yml`
   - `docs/maintainer-operations.md`
   - `tests/unit/branchGovernanceWorkflow.test.ts`
   - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+
+### VHS-SYS-REQ-017: Coverage-Led Assurance Operating Model
+
+- Status: Active
+- Area: CI And Developer Environment
+- Statement: The system shall use retained coverage evidence and requirements
+  traceability to prioritize product-risk discovery before raising coverage
+  floors.
+- Acceptance Criteria:
+  - Coverage evidence from Vitest is joined with RTM and traceability inventory
+    records so low-coverage requirement-mapped files are visible.
+  - The coverage risk map highlights requirement-mapped files below 50%
+    coverage and zero-coverage supporting files tied to active requirements.
+  - Hosted coverage thresholds are raised only from measured evidence and remain
+    documented as regression floors, not coverage-quality claims; the
+    post-wave hosted floors are 60% statements, 50% branches, 65% functions,
+    and 60% lines.
+  - Coverage-led follow-up work targets user-facing requirement-mapped dark
+    areas before dev-only tooling.
+- Verification References:
+  - `scripts/mapCoverageToTraceability.js`
+  - `package.json`
+  - `vitest.config.ts`
+  - `docs/testing/test-plan.md`
+  - `tests/unit/coverageMapScript.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`

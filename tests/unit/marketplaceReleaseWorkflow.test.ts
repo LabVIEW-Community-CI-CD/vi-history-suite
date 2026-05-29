@@ -57,9 +57,15 @@ describe('Marketplace release workflow', () => {
   it('verifies the live Marketplace listing and uploads retained release evidence', () => {
     const workflow = readWorkflow();
 
-    expect(workflow).toContain('node scripts/runPinnedVsce.js show "$EXTENSION_ID" --json');
+    expect(workflow).toContain('node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION"');
     expect(workflow).toContain('release-evidence/marketplace-show.json');
-    expect(workflow).toContain('Marketplace listing does not contain version');
+    expect(workflow).toContain('release-evidence/marketplace-listing-verification.json');
+    expect(workflow).toContain('release-evidence/release-evidence-contract.json');
+    expect(workflow).toContain('npm run traceability:audit');
+    expect(workflow).toContain('npm run docs:links');
+    expect(workflow).toContain('Closeout expectation: npm run closeout:evidence');
+    expect(workflow).toContain('--attempts 6');
+    expect(workflow).toContain('--delay-ms 30000');
     expect(workflow).toContain('actions/upload-artifact@v7');
     expect(workflow).toContain('coverage/**');
     expect(workflow).toContain('retention-days: 90');

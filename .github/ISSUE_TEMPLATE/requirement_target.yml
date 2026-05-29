@@ -7,7 +7,10 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this template when a maintainer wants implementation work to start from a committed requirement ID. Agents should inspect the SRS block and RTM row before editing.
+        Use this template when a maintainer wants implementation work to start from a committed requirement ID.
+        Issues must be decision-complete before implementation starts: requirement ID, files to inspect, acceptance criteria,
+        validation commands, out-of-scope boundaries, and requirement/RTM update expectations.
+        Agents should inspect the SRS block and RTM row before editing.
   - type: input
     id: requirement_id
     attributes:
@@ -28,7 +31,7 @@ body:
     id: files_to_inspect
     attributes:
       label: Files To Inspect
-      description: Include the requirement block, RTM row, implementation references, and verification references the agent should inspect first.
+      description: Include the requirement block, RTM row, and the implementation/verification evidence files the agent should inspect first.
       placeholder: |
         - docs/requirements/srs.md
         - docs/requirements/rtm.csv
@@ -60,7 +63,7 @@ body:
     id: validation_commands
     attributes:
       label: Validation Commands
-      description: Commands a maintainer or agent must run before the PR is ready.
+      description: Commands a maintainer or agent must run before the PR is ready, including targeted requirement checks.
       render: shell
       placeholder: |
         npx vitest run tests/unit/...
@@ -82,7 +85,16 @@ body:
     id: requirement_updates
     attributes:
       label: Requirement And RTM Updates
-      description: State whether implementation changes require SRS, RTM, or ID index updates.
+      description: State whether implementation changes require SRS, RTM, ID index, or traceability inventory updates.
       placeholder: Update implementation, tests, SRS, and RTM when behavior or evidence paths change.
     validations:
       required: true
+  - type: textarea
+    id: copilot_prompt
+    attributes:
+      label: Optional Copilot Prompt
+      description: Optional bounded prompt for Copilot Web or other agents. Keep it aligned to this issue scope and requirement ID.
+      placeholder: |
+        Target VHS-REQ-###.
+        Read docs/requirements/srs.md and docs/requirements/rtm.csv first.
+        Implement only the accepted criteria above and keep out-of-scope boundaries unchanged.

@@ -611,6 +611,9 @@ VHS-REQ-609,Software,Active,srs.md#vhs-req-609-governed-branch-promotion-and-mar
 VHS-REQ-610,Software,Active,srs.md#vhs-req-610-dashboard-aggregate-review,,,docs/requirements/srs.md
 VHS-REQ-611,Software,Active,srs.md#vhs-req-611-installed-bundled-documentation-surface,,,docs/requirements/srs.md
 VHS-REQ-612,Software,Active,srs.md#vhs-req-612-installed-runtime-settings-cli-preparation,,,docs/requirements/srs.md
+VHS-REQ-613,Software,Active,srs.md#vhs-req-613-coverage-intelligence-and-test-risk-mapping,,,docs/requirements/srs.md
+VHS-REQ-614,Software,Active,srs.md#vhs-req-614-test-harness-architecture-for-vs-code-orchestration,,,docs/requirements/srs.md
+VHS-REQ-615,Software,Active,srs.md#vhs-req-615-definition-of-done-operating-requirement,,,docs/requirements/srs.md
 VHS-SYS-REQ-001,System,Active,syrs.md#vhs-sys-req-001-vs-code-labview-vi-history-system,,,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-002,System,Superseded,,VHS-SYS-REQ-014,Superseded by the simplified GitHub-first system boundary.,pre-simplification docs/requirements/syrs.md
 VHS-SYS-REQ-003,System,Active,syrs.md#vhs-sys-req-003-system-and-software-requirement-split,,,pre-simplification docs/requirements/syrs.md
@@ -627,3 +630,4 @@ VHS-SYS-REQ-013,System,Active,syrs.md#vhs-sys-req-013-optional-human-validation-
 VHS-SYS-REQ-014,System,Active,syrs.md#vhs-sys-req-014-agent-targetable-requirements,,,docs/requirements/syrs.md
 VHS-SYS-REQ-015,System,Active,syrs.md#vhs-sys-req-015-large-repository-branch-switch-responsiveness,,,docs/requirements/syrs.md
 VHS-SYS-REQ-016,System,Active,syrs.md#vhs-sys-req-016-governed-release-branch-promotion,,,docs/requirements/syrs.md
+VHS-SYS-REQ-017,System,Active,syrs.md#vhs-sys-req-017-coverage-led-assurance-operating-model,,,docs/requirements/syrs.md

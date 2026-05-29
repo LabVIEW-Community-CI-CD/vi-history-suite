@@ -674,13 +674,23 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-012
 - Area: CI And Developer Environment
 - Statement: Hosted CI shall run the lightweight public check set: install,
-  typecheck, traceability audit, unit tests, and package sanity.
+  typecheck, traceability audit, documentation link check, unit tests, and
+  package sanity.
 - Acceptance Criteria:
   - The workflow runs `npm ci`.
   - The workflow runs `npm run check`.
   - The workflow runs `npm run traceability:audit`.
+  - The workflow runs `npm run docs:links` through the `Docs Link Check /
+    lychee` step.
   - The workflow runs `npm test`.
+  - The workflow retains `coverage/cobertura-coverage.xml` and
+    `coverage/coverage-summary.json` as PR coverage evidence.
+  - The workflow enforces the baseline global coverage thresholds declared in
+    `vitest.config.ts`: 60% statements, 50% branches, 65% functions, and
+    60% lines after the coverage-led assurance wave.
   - The workflow runs `npm run package`.
+  - The workflow runs `npm run dod:gate` through the `DoD Gate / dod` step
+    after `npm run package`.
   - The workflow runs on `main`, `develop`, `feature/**`, `release/**`, and
     `hotfix/**` branch pushes.
   - Pull request branch governance is enforced inside the required
@@ -690,8 +700,12 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `.github/workflows/ci.yml`
   - `docs/testing/test-plan.md`
+  - `scripts/checkDocsLinks.js`
+  - `vitest.config.ts`
 - Verification References:
   - `tests/unit/branchGovernanceWorkflow.test.ts`
+  - `tests/unit/docsLinkCheckScript.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
   - `manual:github-actions-build-test-package`
 - Change Guidance:
   - Keep branch governance inside the required hosted CI job so the public
@@ -802,6 +816,13 @@ Missing numeric IDs are intentional.
   - Active SRS IDs and RTM IDs match exactly.
   - Active and historical IDs remain discoverable through `id-index.csv`.
   - GitHub issue templates support requirement-targeted agent work.
+  - The requirement-target issue template defines a decision-complete
+    requirement-target issue payload (requirement ID, files to inspect,
+    acceptance criteria, validation commands, out-of-scope boundaries, and
+    requirement/RTM update expectations) before implementation starts.
+  - The requirement-target issue template includes an optional bounded
+    Copilot prompt field that can be used without replacing the required issue
+    contract fields.
   - A committed requirement-wave guide defines requirement-first, RTM-first
     Copilot Web issue generation with fail-closed issue-quality gates.
   - The requirement-wave guide defines a requirement-gap lane for bounded field
@@ -822,10 +843,27 @@ Missing numeric IDs are intentional.
   - The guard is designed so a later PR can fail closed on newly added
     unclassified implementation files.
   - Documentation tells agents how to respond when touched code is unmapped.
+  - A closeout evidence command generates GitHub-ready umbrella issue summaries
+    with mandatory standards evidence.
+  - Closeout evidence supports host Python and Docker assurance-workbench
+    standards runners, defaults Docker mode to the published GitLab registry
+    workbench image, and fails closed when neither can produce evidence.
+  - Closeout evidence verifies `repo-standards-review` toolchain provenance by
+    checking the GitLab source, private GitHub mirror, expected release tag,
+    local non-authoritative skill cache, and published Docker registry image.
+  - Closeout evidence reports Definition-of-Done status as explicit `PASS`,
+    `N/A`, or `FAIL`, and a DoD `PASS` requires scanner-visible workflow
+    evidence instead of generated evidence directories, generated build output,
+    docs-only references, or unit-test fixture strings.
+  - Closeout summaries treat Definition-of-Done evidence as active closeout
+    evidence and separate any unresolved findings into blocking follow-up
+    issues.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
   - Change traceability inventory and audit script together with RTM updates.
+  - Change closeout evidence automation, standards runner docs, and closeout
+    tests together.
 - Implementation References:
   - `docs/requirements/README.md`
   - `docs/requirements/copilot-web-issue-generation-prompt.md`
@@ -835,10 +873,12 @@ Missing numeric IDs are intentional.
   - `docs/requirements/id-index.csv`
   - `docs/requirements/traceability-inventory.csv`
   - `scripts/auditTraceabilitySteward.js`
+  - `scripts/generateCloseoutEvidence.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/closeoutEvidenceScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
@@ -1071,8 +1111,8 @@ Missing numeric IDs are intentional.
   - The workflow runs install, typecheck, unit tests, and package commands
     before exposing a VSIX.
   - The workflow always uploads the VSIX as a short-lived Actions artifact.
-  - Maintainers may optionally update a `test-vsix-latest` prerelease asset for
-    reporter retesting.
+  - Maintainers may optionally create a unique immutable diagnostic prerelease
+    asset for reporter retesting.
   - The workflow does not use Marketplace publishing tokens or run Marketplace
     publication commands.
 - Agent Work Scope:
@@ -1113,6 +1153,11 @@ Missing numeric IDs are intentional.
     package commands before publication.
   - Marketplace publication uses the pinned VSCE wrapper and verifies the live
     Marketplace listing after publication.
+  - Marketplace listing verification retries bounded propagation lag and retains
+    the final `vsce show` evidence plus bounded retry-attempt evidence.
+  - Retained release evidence names required validation and retained artifacts
+    for release closeout, including traceability audit, docs link check, tests,
+    package validation, Marketplace listing evidence, and closeout expectation.
   - Release evidence is retained as a workflow artifact.
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
@@ -1123,9 +1168,11 @@ Missing numeric IDs are intentional.
   - `.github/dependabot.yml`
   - `docs/maintainer-operations.md`
   - `docs/testing/test-plan.md`
+  - `scripts/verifyMarketplaceListing.js`
 - Verification References:
   - `tests/unit/branchGovernanceWorkflow.test.ts`
   - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/marketplaceListingVerification.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:marketplace-release-environment-setup`
   - `manual:marketplace-release-tag-dispatch`
@@ -1251,3 +1298,140 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep this requirement focused on installed CLI preparation and failure
     reporting; do not change runtime selection semantics.
+
+### VHS-REQ-613: Coverage Intelligence And Test-Risk Mapping
+
+- Status: Active
+- Parent: VHS-SYS-REQ-017
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a coverage intelligence command that
+  maps Vitest coverage evidence to the traceability inventory and RTM
+  requirements so low-coverage product risk is visible before coverage floor
+  ratchets.
+- Acceptance Criteria:
+  - `npm run coverage:map` reads `coverage/coverage-summary.json`,
+    `docs/requirements/traceability-inventory.csv`, and
+    `docs/requirements/rtm.csv`.
+  - The report highlights requirement-mapped files below 50% coverage by
+    requirement, classification, missing lines, missing branches, and missing
+    functions.
+  - The report highlights zero-coverage supporting files tied to active
+    requirements.
+  - The initial coverage floor ratchet is statements 40%, branches 33%,
+    functions 47%, and lines 40%.
+  - The command fails closed with an actionable message when coverage evidence
+    is absent.
+- Agent Work Scope:
+  - Change the coverage mapping command, coverage floor configuration,
+    requirements mapping, and verification references together.
+- Implementation References:
+  - `scripts/mapCoverageToTraceability.js`
+  - `package.json`
+  - `vitest.config.ts`
+  - `docs/testing/test-plan.md`
+- Verification References:
+  - `tests/unit/coverageMapScript.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
+- Change Guidance:
+  - Keep this requirement focused on coverage intelligence and risk
+    prioritization; do not use it to hide dev-only sources or reduce coverage
+    include scope without an explicit requirements update.
+
+### VHS-REQ-614: Test Harness Architecture For VS Code Orchestration
+
+- Status: Active
+- Parent: VHS-SYS-REQ-017
+- Area: CI And Developer Environment
+- Statement: The repository shall provide reusable unit-test harness utilities
+  for VS Code orchestration surfaces so coverage-led follow-up work can test
+  commands, webviews, workspace storage, filesystem, clipboard, progress, and
+  output behavior through stable fakes.
+- Acceptance Criteria:
+  - Shared fakes cover extension context, command registration/execution,
+    webview panels, workspace memento storage, workspace filesystem access,
+    clipboard writes, progress reporting, and output channels.
+  - The harness supports tests for VI History open-command routing, comparison
+    action routing, dashboard action routing, and installed runtime settings CLI
+    preparation.
+  - Runtime behavior, command IDs, persisted formats, package identity, and
+    Marketplace behavior are unchanged.
+  - Production refactors for later coverage work remain limited to dependency
+    injection needed for testability.
+- Agent Work Scope:
+  - Change shared test harness utilities, harness proof tests, requirement
+    mapping, and verification references together.
+- Implementation References:
+  - `tests/unit/vscodeTestHarness.ts`
+- Verification References:
+  - `tests/unit/vscodeTestHarness.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
+- Change Guidance:
+  - Keep this requirement focused on reusable test architecture. Do not change
+    extension command exposure, runtime selection behavior, persisted data
+    formats, package version, or Marketplace release flow under this requirement.
+
+### VHS-REQ-615: Definition-of-Done Operating Requirement
+
+- Status: Active
+- Parent: VHS-SYS-REQ-012
+- Area: CI And Developer Environment
+- Statement: The repository shall define Done as an end-to-end release-readiness
+  contract that joins issue quality, PR evidence, hosted CI, local validation,
+  standards provenance, closeout evidence, and traceability drift prevention
+  before work is treated as complete.
+- Acceptance Criteria:
+  - Target issues name the requirement ID, source evidence, files to inspect,
+    acceptance criteria, validation commands, explicit out-of-scope
+    boundaries, requirement/RTM update expectations, and an optional bounded
+    Copilot prompt.
+  - PR evidence references the target issue without premature closure language
+    unless the PR actually satisfies the issue closeout contract.
+  - PR evidence uses a lightweight contract that includes linked issue, target
+    requirement, validation commands, traceability/RTM impact, out-of-scope
+    statement, closeout readiness, required hosted CI checks, local gates,
+    targeted tests, standards provenance status, and any environment blockers.
+  - Local validation includes traceability audit, documentation link check,
+    typecheck, full unit tests, package sanity, and targeted tests for the
+    changed requirement or implementation surface.
+  - Standards closeout evidence reports host or Docker runner results,
+    standards toolchain provenance, Definition-of-Done status, and disqualified
+    evidence sources when a gate would otherwise pass from generated or fixture
+    content.
+  - Traceability drift prevention updates SRS, RTM, ID index, test plan,
+    inventory, and requirements tests together when requirement scope changes.
+  - The repo-native `npm run dod:gate` command verifies the DoD contract from
+    committed repository evidence.
+  - Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`, and this
+    `.github/workflows/ci.yml` evidence is the only scanner-visible standards
+    source that can promote DoD to `PASS`.
+  - Release-readiness evidence remains decision-complete by naming traceability
+    audit, docs link check, tests, package validation, Marketplace listing
+    evidence, and closeout expectation for release closeout review.
+- Agent Work Scope:
+  - Change requirements docs, RTM, ID index, test plan, and requirements
+    coherence tests together.
+- Implementation References:
+  - `.github/workflows/marketplace-release.yml`
+  - `.github/workflows/ci.yml`
+  - `package.json`
+  - `scripts/checkDefinitionOfDone.js`
+  - `scripts/generateCloseoutEvidence.js`
+  - `scripts/verifyMarketplaceListing.js`
+  - `.github/pull_request_template.md`
+  - `docs/maintainer-operations.md`
+  - `docs/requirements/srs.md`
+  - `docs/requirements/rtm.csv`
+  - `docs/requirements/id-index.csv`
+  - `docs/requirements/README.md`
+  - `docs/testing/test-plan.md`
+  - `docs/requirements/traceability-inventory.csv`
+- Verification References:
+  - `tests/unit/definitionOfDoneGate.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `tests/unit/traceabilityAuditScript.test.ts`
+  - `manual:definition-of-done-release-readiness-review`
+- Change Guidance:
+  - Keep this requirement as the operating contract for Done and keep hosted
+    `DoD Gate / dod` enforcement inside the required public CI workflow.

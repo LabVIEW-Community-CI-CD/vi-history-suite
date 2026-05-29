@@ -418,6 +418,110 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(removePath).toHaveBeenCalled();
   });
 
+  it('copies Linux container reports back with canonical staged names and retained asset directories', async () => {
+    const record = createReadyRecord();
+    record.artifactPlan.fullFilename = 'foo bar.vi';
+    record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
+    record.artifactPlan.reportFilePath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi.html`;
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash
+    });
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'win32',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: true,
+      containerAcquisitionState: 'not-required',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: '/usr/local/bin/LabVIEWCLI',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      }
+    };
+    const aliasReportPath = `${record.artifactPlan.reportDirectory}/diff-report-foo_bar.vi.html`;
+    const aliasAssetsPath = `${record.artifactPlan.reportDirectory}/diff-report-foo_bar.vi_files`;
+    const canonicalAssetsPath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi_files`;
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const copyDirectory = vi.fn().mockResolvedValue(undefined);
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === aliasReportPath) {
+        return [
+          record.stagedRevisionPlan.leftFilename.replaceAll(' ', '_'),
+          record.stagedRevisionPlan.rightFilename.replaceAll(' ', '_'),
+          'diff-report-foo_bar.vi_files'
+        ].join('\n');
+      }
+      return '';
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: writeFile as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: copyDirectory as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath === aliasReportPath || filePath === aliasAssetsPath
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.\n',
+          stderr: ''
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-05-28T10:00:00.000Z')
+          .mockReturnValueOnce('2026-05-28T10:00:02.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    expect(writeFile).toHaveBeenCalledWith(
+      record.artifactPlan.reportFilePath,
+      expect.stringContaining(record.stagedRevisionPlan.leftFilename),
+      'utf8'
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      record.artifactPlan.reportFilePath,
+      expect.not.stringContaining(record.stagedRevisionPlan.leftFilename.replaceAll(' ', '_')),
+      'utf8'
+    );
+    expect(copyDirectory).toHaveBeenCalledWith(aliasAssetsPath, canonicalAssetsPath, {
+      recursive: true,
+      force: true
+    });
+  });
+
   it('skips the clean-host Windows preflight when installed-user host compare admits an existing LabVIEW session', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.allowExistingWindowsHostRuntime = true;

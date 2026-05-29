@@ -71,9 +71,10 @@ Do not attach normal release VSIX files to GitHub Releases unless a future
 release plan makes GitHub a second install channel. The Marketplace is the
 install channel.
 
-The narrow exception is the mutable `test-vsix-latest` diagnostic prerelease
-used for reporter retesting. It is not a normal release, is not marked latest,
-and must not be described as Marketplace publication.
+The narrow exception is an immutable, unique diagnostic prerelease created only
+when a reporter needs a public VSIX download for retesting. It is not a normal
+release, is not marked latest, is never reused or edited, and must not be
+described as Marketplace publication.
 
 ## Marketplace Release Workflow
 
@@ -87,9 +88,15 @@ It must:
 - fail closed unless the tagged commit is reachable from `origin/main`
 - run `npm ci`, `npm run check`, `npm test`, and `npm run package`
 - publish the located VSIX with `node scripts/runPinnedVsce.js publish --packagePath`
-- verify the live Marketplace listing with `vsce show`
-- upload `release-evidence/marketplace-show.json` and the VSIX as retained
-  release evidence
+- verify the live Marketplace listing with bounded `vsce show` retry through
+  `node scripts/verifyMarketplaceListing.js`
+- retain release evidence that names required validation surfaces
+  (traceability audit, docs link check, tests, package, Marketplace listing, and
+  closeout expectation)
+- upload retained release artifacts including:
+  `release-evidence/marketplace-show.json`,
+  `release-evidence/marketplace-listing-verification.json`,
+  `release-evidence/release-evidence-contract.json`, `coverage/**`, and the VSIX
 
 The workflow uses the protected GitHub environment `marketplace-release`.
 Configure that environment with required approval and `VSCE_PAT`.
@@ -105,6 +112,31 @@ Marketplace publishing tokens are controlled maintainer secrets.
 - Rotate or revoke temporary Marketplace tokens after publication when used.
 
 GitHub secret scanning and push protection are enabled for this repository.
+
+## Non-Interactive Closeout Authentication
+
+Standards closeout evidence relies on authenticated Git source and Docker
+registry access in non-interactive environments.
+
+Recommended preflight before `npm run closeout:evidence`:
+
+```bash
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=/absolute/path/to/askpass-helper.sh
+printf '%s' "$RSR_PAT" | docker login registry.gitlab.com -u oauth2 --password-stdin
+```
+
+Operational guidance:
+
+- Use `GIT_ASKPASS` and `GIT_TERMINAL_PROMPT=0` so `git ls-remote` provenance
+  checks never block on interactive prompts.
+- If Docker emits `error getting credentials`, `credential helper`,
+  `credsStore`, or `credHelpers`, fix the Docker credential-helper
+  configuration first, then retry.
+- If Docker emits `unauthorized`, `access forbidden`, or `denied`, refresh the
+  token and rerun `docker login registry.gitlab.com`.
+- If Docker emits `manifest unknown` or repository-not-found errors, verify the
+  published image exists before rerunning closeout evidence.
 
 ## Validation Surfaces
 
@@ -127,13 +159,15 @@ from the Marketplace.
 The workflow is manual-only and trusted-ref-only. It accepts `main`,
 `release/vX.Y.Z`, or an exact `vX.Y.Z` tag. It runs the same lightweight
 package checks as hosted CI, uploads the generated `vi-history-suite-*.vsix` as
-a 14-day Actions artifact, and can optionally update the public
-`test-vsix-latest` prerelease asset for easier reporter download.
+a 14-day Actions artifact, and can optionally create a public immutable
+diagnostic prerelease named `diagnostic-test-vsix-<run-id>-<run-attempt>` for
+easier reporter download.
 
 Dispatch defaults:
 
 - Ref: `main`, `release/vX.Y.Z`, or an exact `vX.Y.Z` tag.
-- `publish_prerelease`: `false` unless a public download link is needed.
+- `publish_prerelease`: `false` unless a public immutable prerelease download
+  link is needed.
 - `issue_number`: the issue being retested, such as `61`.
 
 Reporter install command:
@@ -201,7 +235,14 @@ Maintainer evidence should be small and repeatable:
 - packaged VSIX artifact from that run (`vi-history-suite-*.vsix`)
 - Marketplace release workflow URL and tag ref for publication evidence
 - `release-evidence/marketplace-show.json` from post-publish verification
+- `release-evidence/marketplace-listing-verification.json` with bounded retry
+  attempt outcomes (`--attempts`, `--delay-ms`, and total bounded window)
+- `release-evidence/release-evidence-contract.json` naming required validation
+  surfaces and retained artifacts for release closeout
 - retained `coverage/**` output from the Marketplace release test run
+- closeout evidence generated with `npm run closeout:evidence`, including
+  mandatory standards-review output from host Python or the Docker assurance
+  workbench fallback
 
 What this evidence proves:
 
@@ -210,12 +251,17 @@ What this evidence proves:
 - the run produced or explicitly failed to produce the expected VSIX evidence
 - a protected environment approved tag-only Marketplace publication
 - the live Marketplace listing contained the released version after publication
+- optional diagnostic prerelease evidence is unique per workflow run attempt
+  and not an edited or clobbered prior release
+- a bounded Marketplace listing retry window distinguished propagation lag from
+  a publication or listing verification failure
 
 What this evidence does **not** prove:
 
 - diagnostic VSIX publication is Marketplace publication
 - self-hosted validation is a public PR gate
 - untrusted refs were ever allowed to execute maintainer validation
+- a diagnostic prerelease is a stable latest-download endpoint
 
 Do not claim Vagrant evidence unless the Vagrant issue is run on a
 Vagrant-capable host and recorded separately.
@@ -229,10 +275,11 @@ itself requires verification after publication.
 
 Manual verification steps:
 
-1. Run the `vsce show` command:
+1. Run the `vsce show` command or the bounded verification helper:
 
    ```powershell
    node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
+   node scripts/verifyMarketplaceListing.js svelderrainruiz.vi-history-suite 1.4.2 --out release-evidence/marketplace-show.json --report-out release-evidence/marketplace-listing-verification.json --attempts 6 --delay-ms 30000
    ```
 
 2. Confirm the returned URLs use the organization repository as their base:
