@@ -1029,6 +1029,98 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps agent customization contract surfaces synchronized', () => {
+    const agentsGuide = readRepoText('AGENTS.md');
+    const prTemplate = readRepoText('.github', 'pull_request_template.md');
+    const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const gateScript = readRepoText(
+      '.github',
+      'skills',
+      'testing-automation',
+      'scripts',
+      'run-pr-gates.sh'
+    );
+    const workflowGovernor = readRepoText(
+      '.github',
+      'agents',
+      'workflow-governor.agent.md'
+    );
+    const prHandoffPrompt = readRepoText(
+      '.github',
+      'prompts',
+      'pr-handoff-evidence.prompt.md'
+    );
+    const requirementTargetPrompt = readRepoText(
+      '.github',
+      'prompts',
+      'requirement-target-execution.prompt.md'
+    );
+
+    for (const guideReference of [
+      '.github/skills/testing-automation/SKILL.md',
+      '.github/skills/onboarding/SKILL.md',
+      '.github/skills/agent-effectiveness-loop/SKILL.md',
+      '.github/skills/requirements-traceability/SKILL.md',
+      '.github/skills/pr-handoff-evidence/SKILL.md',
+      '.github/prompts/pr-handoff-evidence.prompt.md',
+      '.github/prompts/requirement-target-execution.prompt.md',
+      '.github/agents/workflow-governor.agent.md',
+      '.github/instructions/reporting-orchestration.instructions.md',
+      '.github/instructions/unit-tests.instructions.md',
+      '.github/instructions/requirements-and-test-docs.instructions.md',
+      '.github/instructions/scripts-validation.instructions.md'
+    ]) {
+      expect(agentsGuide).toContain(guideReference);
+    }
+
+    expect(workflowGovernor).toContain('feature branch rooted on develop');
+    expect(workflowGovernor).toContain(
+      '.github/skills/requirements-traceability/SKILL.md'
+    );
+    expect(workflowGovernor).toContain('.github/skills/testing-automation/SKILL.md');
+    expect(workflowGovernor).toContain('.github/skills/pr-handoff-evidence/SKILL.md');
+
+    expect(prHandoffPrompt).toContain('Requirement Target Execution');
+    expect(prHandoffPrompt).toContain('./requirement-target-execution.prompt.md');
+    expect(requirementTargetPrompt).toContain('PR Handoff Evidence');
+    expect(requirementTargetPrompt).toContain('./pr-handoff-evidence.prompt.md');
+
+    for (const requiredLabel of [
+      'Linked issue (required):',
+      'Target requirement (required):',
+      'Validation commands (required):',
+      'Traceability / RTM impact (required):',
+      'Out-of-scope (required):',
+      'Closeout readiness (required):'
+    ]) {
+      expect(prTemplate).toContain(requiredLabel);
+    }
+
+    expect(testPlan).toContain('## PR Evidence Contract');
+    expect(testPlan).toContain('linked issue');
+    expect(testPlan).toContain('target requirement');
+    expect(testPlan).toContain('validation commands');
+    expect(testPlan).toContain('traceability/RTM impact');
+    expect(testPlan).toContain('out-of-scope');
+    expect(testPlan).toContain('closeout readiness');
+
+    const requiredGateOrder = [
+      'npm run check',
+      'npm run traceability:audit',
+      'npm run docs:links',
+      'npm test',
+      'npm run package',
+      'npm run dod:gate'
+    ];
+    let previousIndex = -1;
+    for (const command of requiredGateOrder) {
+      const index = gateScript.indexOf(command);
+      expect(index, `missing gate command ${command}`).toBeGreaterThanOrEqual(0);
+      expect(index, `gate order drifted at ${command}`).toBeGreaterThan(previousIndex);
+      previousIndex = index;
+    }
+  });
+
   it('keeps large-repository indexing requirement wave traceable', () => {
     const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
