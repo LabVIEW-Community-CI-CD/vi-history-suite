@@ -141,6 +141,19 @@ function extractFrontmatterScalar(text: string, key: string): string | undefined
   return match[1].trim().replace(/^['"]|['"]$/g, '');
 }
 
+function extractFrontmatterArray(text: string, key: string): string[] {
+  const frontmatter = extractFrontmatter(text);
+  const match = frontmatter.match(new RegExp(`^${key}:\\s*\\[(.+)\\]$`, 'm'));
+  if (!match) {
+    return [];
+  }
+
+  return match[1]
+    .split(',')
+    .map((value) => value.trim().replace(/^['"]|['"]$/g, ''))
+    .filter((value) => value.length > 0);
+}
+
 describe('requirements documentation coherence', () => {
   it('restores the active requirements package', () => {
     for (const relativePath of [
@@ -1196,6 +1209,66 @@ describe('requirements documentation coherence', () => {
     expect(extractFrontmatterScalar(workflowGovernor, 'name')).toBe('Workflow Governor');
     expect(extractFrontmatterScalar(workflowGovernor, 'description')).toContain('Use when');
     expect(agentsGuide).toContain('.github/agents/workflow-governor.agent.md');
+  });
+
+  it('keeps customization frontmatter quality and safety defaults aligned', () => {
+    const agentsGuide = readRepoText('AGENTS.md');
+
+    expect(agentsGuide).toContain('### Customization Entry Path');
+    expect(agentsGuide).toContain('Use skills for repeatable multi-step workflows');
+    expect(agentsGuide).toContain('Use prompts for one-shot output generation');
+    expect(agentsGuide).toContain('Use file instructions for file-type or folder-specific edit guardrails');
+    expect(agentsGuide).toContain('Use the workflow-governor custom agent');
+
+    const skillsDir = path.join(repoRoot, '.github', 'skills');
+    const skillFolders = fs
+      .readdirSync(skillsDir, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
+
+    for (const folder of skillFolders) {
+      const skillText = readRepoText('.github', 'skills', folder, 'SKILL.md');
+      const description = extractFrontmatterScalar(skillText, 'description') ?? '';
+      expect(description.length, `${folder} description`).toBeGreaterThan(0);
+      expect(description, `${folder} description should include usage trigger`).toContain('Use');
+      expect(extractFrontmatterScalar(skillText, 'argument-hint'), `${folder} argument-hint`).toBeTruthy();
+    }
+
+    const promptsDir = path.join(repoRoot, '.github', 'prompts');
+    const promptFiles = fs
+      .readdirSync(promptsDir)
+      .filter((fileName) => fileName.endsWith('.prompt.md'))
+      .sort();
+
+    for (const fileName of promptFiles) {
+      const promptText = readRepoText('.github', 'prompts', fileName);
+      expect(extractFrontmatterScalar(promptText, 'description'), `${fileName} description`).toBeTruthy();
+      expect(extractFrontmatterScalar(promptText, 'argument-hint'), `${fileName} argument-hint`).toBeTruthy();
+      expect(extractFrontmatterScalar(promptText, 'agent'), `${fileName} agent`).toBe('agent');
+    }
+
+    const instructionsDir = path.join(repoRoot, '.github', 'instructions');
+    const instructionFiles = fs
+      .readdirSync(instructionsDir)
+      .filter((fileName) => fileName.endsWith('.instructions.md'))
+      .sort();
+
+    for (const fileName of instructionFiles) {
+      const instructionText = readRepoText('.github', 'instructions', fileName);
+      const frontmatter = extractFrontmatter(instructionText);
+      const description = extractFrontmatterScalar(instructionText, 'description') ?? '';
+      expect(description.length, `${fileName} description`).toBeGreaterThan(0);
+      expect(description, `${fileName} description should include usage trigger`).toContain('Use when');
+      expect(frontmatter, `${fileName} applyTo`).toContain('applyTo:');
+      expect(frontmatter).not.toContain('applyTo: "**"');
+      expect(frontmatter).not.toContain("applyTo: '**'");
+    }
+
+    const workflowGovernor = readRepoText('.github', 'agents', 'workflow-governor.agent.md');
+    const workflowTools = extractFrontmatterArray(workflowGovernor, 'tools');
+    expect(workflowTools).toEqual(['read', 'search', 'edit', 'execute', 'todo']);
+    expect(extractFrontmatterScalar(workflowGovernor, 'user-invocable')).toBe('true');
   });
 
   it('keeps large-repository indexing requirement wave traceable', () => {
