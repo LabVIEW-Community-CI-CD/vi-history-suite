@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.6.0] - 2026-05-31
+
+### Added
+
+- Git prerequisite detection on activation: a single `git --version` probe
+  is cached for the session and surfaces a `Git not detected` status bar
+  warning plus a one-time first-run information notice with an `Install
+  Git` action that opens [https://git-scm.com/downloads](https://git-scm.com/downloads)
+  when Git is not on PATH (VHS-REQ-619).
+- `labviewViHistory.open` is gated by the cached Git detection. When Git is
+  missing the command refuses with a warning toast linking to the install
+  page instead of starting the comparison flow and failing later inside the
+  Git CLI wrapper (VHS-REQ-619).
+
 ## [1.5.0] - 2026-05-31
 
 ### Added

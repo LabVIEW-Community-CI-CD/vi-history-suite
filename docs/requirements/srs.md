@@ -1555,3 +1555,60 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep first-run gating, throttling, and copy in this requirement; runtime
     detection itself stays under VHS-REQ-616.
+
+### VHS-REQ-619: Git Prerequisite Detection And First-Run Guidance
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall probe `git --version` once per activation,
+  cache the result for the session, surface a status bar warning plus a
+  one-time first-run information notification when Git is not detected, and
+  refuse `labviewViHistory.open` with a warning toast that links to the Git
+  install page so users learn before launching a comparison that the
+  prerequisite is missing.
+- Acceptance Criteria:
+  - On activation the extension runs a single `git --version` probe through
+    an injectable command runner and caches the discriminated detection
+    result for re-use by the status bar, the first-run notice, and the
+    `labviewViHistory.open` gate without re-spawning the child process.
+  - When the probe reports Git is missing, a status bar item titled
+    `VI History Git prerequisite` is shown with the text
+    `Git not detected` and a tooltip pointing at install guidance; when the
+    probe succeeds the status bar item stays hidden to avoid clutter.
+  - When the probe reports Git is missing, a one-time information
+    notification surfaces install guidance gated by the user globalState
+    flag `vihs.firstRunGitNoticeShown` so the message is not repeated on
+    subsequent activations.
+  - The first-run notification offers an `Install Git` action that opens
+    `https://git-scm.com/downloads` via `vscode.env.openExternal`.
+  - `labviewViHistory.open` consults the cached detection. When Git is
+    missing the command refuses with a warning toast that explains the
+    prerequisite, offers an `Install Git` action linking to the install
+    page, and does not start the comparison flow. When the cached result is
+    not yet available the command falls back to allowing execution so
+    activation races never block users.
+  - The watcher is registered as an extension subscription so its status
+    bar item is disposed when the extension deactivates, and probe
+    failures are logged but never throw out of activation.
+- Agent Work Scope:
+  - Change Git detection, the cached UX surfaces, and the open-command gate
+    together. The pure decision helpers (`buildGitStatusBarPresentation`,
+    `decideGitFirstRunPresentation`, `decideOpenGate`) live in
+    `src/ui/gitPrerequisiteNotice.ts` so unit tests can exercise routing
+    without a window. Detection lives in
+    `src/tooling/gitPrerequisiteDetect.ts` with an injected
+    `runGitVersion` boundary.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/tooling/gitPrerequisiteDetect.ts`
+  - `src/ui/gitPrerequisiteNotice.ts`
+- Verification References:
+  - `tests/unit/gitPrerequisiteDetect.test.ts`
+  - `tests/unit/gitPrerequisiteNotice.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep Git detection synchronous in spirit (one probe, cached) and never
+    re-probe inside the `labviewViHistory.open` hot path. Richer health
+    checks (worktree state, repo bounds) belong to the existing Git CLI
+    wrappers under `src/git/`.

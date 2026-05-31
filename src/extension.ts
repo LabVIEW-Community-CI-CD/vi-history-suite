@@ -44,6 +44,11 @@ import {
 import { detectAvailableRuntimes } from './tooling/runtimeAutoDetect';
 import { applyRuntimeSettingsSeed } from './tooling/runtimeSettingsSeed';
 import { createRuntimeAvailabilityWatcher } from './ui/runtimeAvailabilityNotice';
+import {
+  createGitPrerequisiteWatcher,
+  decideOpenGate,
+  presentOpenBlockedToast
+} from './ui/gitPrerequisiteNotice';
 import { registerRuntimeRuntimeCommands } from './commands/runtimeCommands';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
@@ -184,6 +189,14 @@ export async function activate(
   context.subscriptions.push(runtimeAvailabilityWatcher);
   registerRuntimeRuntimeCommands(context, runtimeAvailabilityWatcher);
 
+  // VHS-REQ-619: Detect Git on PATH once per activation, surface a status
+  // bar warning plus a one-time first-run information notice when Git is
+  // missing, and gate `labviewViHistory.open` with a toast that points at
+  // the install link. Comparison flows depend on `git log`/`git show`, so
+  // refusing to start without Git fails fast and clearly.
+  const gitPrerequisiteWatcher = createGitPrerequisiteWatcher(context);
+  context.subscriptions.push(gitPrerequisiteWatcher);
+
   const ensureWorkspaceRuntime = async (): Promise<WorkspaceRuntime> => {
     if (workspaceRuntime) {
       return workspaceRuntime;
@@ -231,6 +244,14 @@ export async function activate(
     vscode.commands.registerCommand(
       'labviewViHistory.open',
       async (uri?: vscode.Uri) => {
+        const detection = gitPrerequisiteWatcher.getDetection();
+        if (detection) {
+          const decision = decideOpenGate(detection);
+          if (decision.kind === 'block') {
+            await presentOpenBlockedToast();
+            return;
+          }
+        }
         const runtime = await ensureWorkspaceRuntime();
         return runtime.openViHistory(uri);
       }
