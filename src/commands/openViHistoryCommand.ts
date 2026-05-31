@@ -454,7 +454,18 @@ export function createOpenViHistoryCommand(
           result
         );
         if (runtimeWarningMessage) {
-          void vscode.window.showWarningMessage(runtimeWarningMessage);
+          if (isBitnessConflictComparisonRuntimeResult(result)) {
+            const PICK_RUNTIME_PROVIDER_ACTION = 'Pick Runtime Provider';
+            void vscode.window
+              .showWarningMessage(runtimeWarningMessage, PICK_RUNTIME_PROVIDER_ACTION)
+              .then((selection) => {
+                if (selection === PICK_RUNTIME_PROVIDER_ACTION) {
+                  void vscode.commands.executeCommand('labviewViHistory.pickRuntimeProvider');
+                }
+              });
+          } else {
+            void vscode.window.showWarningMessage(runtimeWarningMessage);
+          }
         }
         const runtimeInformationMessage = buildComparisonRuntimeInformationMessage(
           actionCommand,
@@ -1195,6 +1206,15 @@ function buildComparisonRuntimeProgressPanelUpdate(
   };
 }
 
+function isBitnessConflictComparisonRuntimeResult(
+  result: ComparisonReportActionResult
+): boolean {
+  return (
+    result.blockedReason === 'windows-host-bitness-conflict' ||
+    result.runtimeFailureReason === 'labview-host-bitness-conflict'
+  );
+}
+
 function buildComparisonRuntimeWarningMessage(
   actionCommand: string,
   result: ComparisonReportActionResult
@@ -1207,7 +1227,6 @@ function buildComparisonRuntimeWarningMessage(
   if (status !== 'blocked' && status !== 'failed') {
     return undefined;
   }
-
   const commandLabel = deriveComparisonCommandLabel(actionCommand);
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines

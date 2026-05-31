@@ -1688,3 +1688,82 @@ Missing numeric IDs are intentional.
     re-runs gated by the existing focus-event throttle — config-change
     refreshes must always re-render from the cached detection.
 
+### VHS-REQ-621: Concurrent LabVIEW Bitness Conflict Diagnostic
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When the comparison-report runtime detects a running LabVIEW
+  process whose bitness differs from the selected runtime bitness, the
+  extension shall emit an actionable diagnostic in both the preflight
+  blocking path (new `windows-host-bitness-conflict` runtime locator
+  blocked reason) and the post-failure classification path (new
+  `labview-host-bitness-conflict` execution failure reason), retain the
+  observed LabVIEW bitness and executable path on the runtime selection
+  facts and process-observation packet fields, and offer a
+  `Pick Runtime Provider` action button on the resulting warning toast
+  that invokes `labviewViHistory.pickRuntimeProvider` so the user can
+  align `viHistorySuite.labviewBitness` with the running session without
+  hunting for the setting.
+- Acceptance Criteria:
+  - The Windows host runtime preflight inspects the retained process
+    observation, resolves the executable path for the first observed
+    `LabVIEW.exe` via the injectable `resolveWindowsLabviewExecutablePath`
+    seam, infers `'x86'` from a path under `\Program Files (x86)\`,
+    `'x64'` from a path under `\Program Files\`, and `'unknown'`
+    otherwise, and exposes the result on
+    `RuntimeProcessObservation.labviewProcessBitness` plus
+    `labviewProcessExecutablePath`.
+  - `comparisonRuntimeLocator.locate()` short-circuits to
+    `blockedReason='windows-host-bitness-conflict'` when the observed
+    bitness is known and differs from the selected bitness, ahead of the
+    generic `windows-host-runtime-surface-contaminated` arm, and retains
+    `hostObservedLabviewBitness` and `hostObservedLabviewExecutablePath`
+    on the resulting `ComparisonRuntimeSelection` so the doctor and
+    quick-pick action can render the running bitness.
+  - `classifyRuntimeFailure` rewrites a generic `command-exited-nonzero`
+    failure to `'labview-host-bitness-conflict'` when the retained
+    process-exit observation shows a running `LabVIEW.exe` whose
+    `labviewProcessBitness` is known and differs from the selected
+    bitness, attaching a note that names both bitnesses.
+  - `comparisonRuntimeDoctor` emits a next-action line that names the
+    observed bitness (or `match the running session` when unknown),
+    references `viHistorySuite.labviewBitness`, and surfaces the same
+    guidance for both the preflight `windows-host-bitness-conflict`
+    blocked reason and the post-failure
+    `labview-host-bitness-conflict` failure reason.
+  - The VS Code comparison-report command shows a warning toast with a
+    `Pick Runtime Provider` action button whenever the action result
+    carries `blockedReason='windows-host-bitness-conflict'` or
+    `runtimeFailureReason='labview-host-bitness-conflict'`; selecting
+    the action invokes `labviewViHistory.pickRuntimeProvider`.
+- Agent Work Scope:
+  - Keep bitness inference path-based (no PE-header probe) and resolve the
+    executable through `Get-Process -Id <pid>` so the diagnostic does not
+    depend on additional probes. Reuse the existing
+    `observeWindowsProcesses` injection seam, the
+    `hostRuntimeConflictDetected` / `allowExistingWindowsHostRuntime`
+    flow, and the doctor blocked-reason switch. Do not introduce a
+    separate auto-correction path — VHS-REQ-621 surfaces the conflict
+    and hands off to VHS-REQ-620's quick-pick.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/commands/openViHistoryCommand.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - When extending the locator with new fact fields, propagate
+    `hostObservedLabviewBitness` and `hostObservedLabviewExecutablePath`
+    through every `locate()` return site so positive-path consumers can
+    surface the running session details without re-detecting.
+    Keep the diagnostic actionable: name both bitnesses in notes and
+    reuse the `Pick Runtime Provider` action rather than introducing a
+    new bespoke command.
+
+

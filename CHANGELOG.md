@@ -10,6 +10,25 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.8.0] - 2026-05-31
+
+### Added
+
+- Concurrent LabVIEW bitness conflict diagnostic for the Windows
+  comparison-report runtime (VHS-REQ-621). When a LabVIEW session is
+  already running at a different bitness than the selected runtime,
+  preflight now short-circuits with the new
+  `windows-host-bitness-conflict` blocked reason and the post-failure
+  classifier rewrites a generic `command-exited-nonzero` to
+  `labview-host-bitness-conflict`. The retained doctor summary names both
+  the observed running bitness and the currently selected bitness, the
+  process-observation packet retains `labviewProcessBitness` and
+  `labviewProcessExecutablePath`, and the comparison-report warning toast
+  exposes a `Pick Runtime Provider` action button that invokes
+  `labviewViHistory.pickRuntimeProvider` (reusing the VHS-REQ-620
+  quick-pick) so users can align `viHistorySuite.labviewBitness` with the
+  running LabVIEW session without hunting for the setting.
+
 ## [1.7.0] - 2026-05-31
 
 ### Added

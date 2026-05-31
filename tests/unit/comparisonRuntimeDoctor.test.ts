@@ -218,4 +218,63 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(joinedSummary).toContain('No matching LabVIEW x64 installation detected');
     expect(joinedSummary).toContain('will not auto-switch bitness');
   });
+
+  it('gives an actionable next step for concurrent LabVIEW bitness conflict (VHS-REQ-621)', () => {
+    const summary = blockedSummary('windows-host-bitness-conflict', {
+      bitness: 'x86',
+      hostObservedLabviewBitness: 'x64',
+      hostObservedLabviewExecutablePath:
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    });
+
+    const action = summary.at(-1) ?? '';
+    expect(action).toContain('close the running LabVIEW x64 session');
+    expect(action).toContain('viHistorySuite.labviewBitness');
+    expect(action).toContain('currently x86');
+    expect(action).toContain('rerun comparison report generation');
+  });
+
+  it('falls back to a generic bitness message when the observed bitness is unknown (VHS-REQ-621)', () => {
+    const summary = blockedSummary('windows-host-bitness-conflict', {
+      bitness: 'x64',
+      hostObservedLabviewBitness: 'unknown'
+    });
+
+    const action = summary.at(-1) ?? '';
+    expect(action).toContain('match the running session');
+    expect(action).toContain('currently x64');
+  });
+
+  it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621)', () => {
+    const runtimeSelection: ComparisonRuntimeSelection = {
+      platform: 'win32',
+      executionMode: 'host-only',
+      requestedProvider: 'host',
+      requestedLabviewVersion: '2026',
+      bitness: 'x86',
+      provider: 'host-native',
+      providerDecisions: [],
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    };
+    const runtimeExecution: ComparisonReportRuntimeExecution = {
+      state: 'failed',
+      attempted: true,
+      reportExists: false,
+      failureReason: 'labview-host-bitness-conflict'
+    };
+
+    const summary = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'failed',
+      runtimeSelection,
+      runtimeExecution
+    });
+
+    const action = summary.at(-1) ?? '';
+    expect(action).toContain('close the running LabVIEW session');
+    expect(action).toContain('viHistorySuite.labviewBitness');
+    expect(action).toContain('currently x86');
+    expect(action).toContain('rerun comparison report generation');
+  });
 });

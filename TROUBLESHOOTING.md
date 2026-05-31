@@ -20,6 +20,18 @@ vihs --validate
 Check the selected provider, LabVIEW year, bitness, runtime engine, and any
 `VIHS_E_*` error code. Fix the reported runtime state before retrying compare.
 
+## Concurrent LabVIEW Bitness Conflict
+
+If a LabVIEW session is already running at a different bitness than the
+extension's selected runtime, compare will be blocked or fail with a
+runtime reason of `windows-host-bitness-conflict` (preflight) or
+`labview-host-bitness-conflict` (post-failure). The warning toast includes
+a `Pick Runtime Provider` action button that opens the runtime quick-pick
+so you can change `viHistorySuite.labviewBitness` to match the running
+LabVIEW. Alternatively, close the running LabVIEW session, then rerun
+comparison report generation. The retained doctor summary names both the
+observed running bitness and the currently selected bitness.
+
 ## Status Bar Label Does Not Match The CLI Choice
 
 The `VI History runtime` status bar label is sourced from the persisted

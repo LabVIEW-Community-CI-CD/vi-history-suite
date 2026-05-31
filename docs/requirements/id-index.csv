@@ -635,3 +635,4 @@ VHS-REQ-616,Software,Active,srs.md#vhs-req-616-runtime-auto-selection-and-stale-
 VHS-REQ-617,Software,Active,srs.md#vhs-req-617-missing-runtime-user-notification-and-status-surface,,,docs/requirements/srs.md
 VHS-REQ-619,Software,Active,srs.md#vhs-req-619-git-prerequisite-detection-and-first-run-guidance,,,docs/requirements/srs.md
 VHS-REQ-620,Software,Active,srs.md#vhs-req-620-reactive-runtime-provider-selection-and-quick-pick,,,docs/requirements/srs.md
+VHS-REQ-621,Software,Active,srs.md#vhs-req-621-concurrent-labview-bitness-conflict-diagnostic,,,docs/requirements/srs.md
