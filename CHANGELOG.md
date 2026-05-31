@@ -10,6 +10,30 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.9.0] - 2026-05-31
+
+### Added
+
+- Automated end-to-end Windows runtime conflict verification harness
+  (VHS-REQ-622). A new manually-dispatched `Windows Runtime Conflict Matrix`
+  workflow drives `vihs --validate` against a real running LabVIEW 2026 in
+  both steady-state bitness directions (x64 host with x86 selected, and x86
+  host with x64 selected), asserts the proof JSON reports the
+  `windows-host-bitness-conflict` blocked reason, and uploads the matrix
+  evidence plus per-scenario proofs as a 90-day retention artifact. The Node
+  driver (`scripts/runWindowsRuntimeMatrix.js`) and PowerShell scenario
+  helpers run on the self-hosted `vihs-windows-labview-maintainer` runner;
+  race-condition coverage is delegated to the existing comparison-runtime
+  unit-test contract and recorded in the evidence schema.
+
+### Changed
+
+- Narrowed hosted CI branch governance to gitflow-only families. Pull
+  requests to `develop` are now admitted from `feature/*`, `release/vX.Y.Z`,
+  `hotfix/vX.Y.Z`, or `main` back-sync branches; the `copilot/**` push
+  trigger and the `copilot/*` and `dependabot/*` pull-request allowances were
+  removed.
+
 ## [1.8.0] - 2026-05-31
 
 ### Added
