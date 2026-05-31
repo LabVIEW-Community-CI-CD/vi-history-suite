@@ -15,11 +15,21 @@ interface FakeStats {
 }
 
 function createFakeFs(presentFiles: readonly string[]): RuntimeAutoDetectFs {
-  const set = new Set(presentFiles.map((entry) => path.normalize(entry)));
+  // Match using both posix and win32 normalization so the same fake fs works
+  // for tests that pass Windows-style paths regardless of the host CI OS.
+  const set = new Set<string>();
+  for (const entry of presentFiles) {
+    set.add(path.win32.normalize(entry));
+    set.add(path.posix.normalize(entry));
+    set.add(entry);
+  }
   return {
     async stat(filePath: string): Promise<FakeStats> {
-      const normalized = path.normalize(filePath);
-      if (set.has(normalized)) {
+      if (
+        set.has(filePath) ||
+        set.has(path.win32.normalize(filePath)) ||
+        set.has(path.posix.normalize(filePath))
+      ) {
         return { isFile: () => true, isDirectory: () => false };
       }
       const error: NodeJS.ErrnoException = Object.assign(

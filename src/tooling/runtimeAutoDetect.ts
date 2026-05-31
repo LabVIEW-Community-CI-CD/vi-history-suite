@@ -59,7 +59,7 @@ const WINDOWS_LABVIEW_FOLDER_CANDIDATES = (year: number): readonly string[] => [
 
 const WINDOWS_DEFAULT_PROGRAM_FILES = 'C:\\Program Files';
 const WINDOWS_DEFAULT_PROGRAM_FILES_X86 = 'C:\\Program Files (x86)';
-const WINDOWS_SHARED_LABVIEW_CLI_RELATIVE = path.join(
+const WINDOWS_SHARED_LABVIEW_CLI_RELATIVE = path.win32.join(
   'National Instruments',
   'Shared',
   'LabVIEW CLI',
@@ -110,14 +110,14 @@ async function detectWindowsHostInstallations(
 ): Promise<DetectedHostInstallation[]> {
   const programFiles = env.ProgramFiles ?? WINDOWS_DEFAULT_PROGRAM_FILES;
   const programFilesX86 = env['ProgramFiles(x86)'] ?? WINDOWS_DEFAULT_PROGRAM_FILES_X86;
-  const sharedCliPath = path.join(programFilesX86, WINDOWS_SHARED_LABVIEW_CLI_RELATIVE);
+  const sharedCliPath = path.win32.join(programFilesX86, WINDOWS_SHARED_LABVIEW_CLI_RELATIVE);
   const sharedCliPresent = await isFile(fs, sharedCliPath);
 
   const installations: DetectedHostInstallation[] = [];
   for (let year = MAXIMUM_HOST_LABVIEW_YEAR; year >= MINIMUM_HOST_LABVIEW_YEAR; year -= 1) {
     for (const folder of WINDOWS_LABVIEW_FOLDER_CANDIDATES(year)) {
-      const x64Exe = path.join(programFiles, 'National Instruments', folder, 'LabVIEW.exe');
-      const x86Exe = path.join(programFilesX86, 'National Instruments', folder, 'LabVIEW.exe');
+      const x64Exe = path.win32.join(programFiles, 'National Instruments', folder, 'LabVIEW.exe');
+      const x86Exe = path.win32.join(programFilesX86, 'National Instruments', folder, 'LabVIEW.exe');
       if (await isFile(fs, x64Exe)) {
         installations.push({
           year: String(year),
@@ -181,7 +181,8 @@ async function detectDockerCli(
 
   for (const directory of directories) {
     for (const candidate of candidateFileNames) {
-      const fullPath = path.join(directory, candidate);
+      const joiner = platform === 'win32' ? path.win32 : path.posix;
+      const fullPath = joiner.join(directory, candidate);
       if (await isFile(fs, fullPath)) {
         return { cliAvailable: true, cliPath: fullPath };
       }
