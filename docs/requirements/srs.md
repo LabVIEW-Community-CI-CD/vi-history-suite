@@ -1767,3 +1767,81 @@ Missing numeric IDs are intentional.
     new bespoke command.
 
 
+
+
+### VHS-REQ-622: Automated End-to-End Windows Runtime Conflict Verification Harness
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Verification Infrastructure
+- Statement: The repository shall provide a maintainer-driven Windows
+  end-to-end verification harness that, when invoked on a host with both
+  bitnesses of LabVIEW 2026 installed, drives the real `vihs --validate`
+  CLI against a real running LabVIEW process in each of the two
+  steady-state bitness directions (x64 host with x86 selected, x86 host
+  with x64 selected), captures the resulting `runtimeBlockedReason` and
+  proof JSON, and emits a machine-readable evidence file
+  (`assurance-closeout-evidence/manual-vhs-req-621.json`) so VHS-REQ-621
+  can be closed against deterministic, reproducible proof rather than
+  manual screenshots. Race-condition reclassification scenarios
+  (`labview-host-bitness-conflict`) remain covered by the existing
+  unit-test contract at
+  `tests/unit/comparisonReportRuntimeExecution.test.ts` and are
+  out-of-scope for this harness.
+- Acceptance Criteria:
+  - `scripts/runWindowsRuntimeMatrix.js` exposes a pure
+    `runRuntimeMatrix(deps)` module entry whose `spawnSync`,
+    `getCimProcesses`, `closeLabview`, `now`, and `cwd` collaborators
+    are injectable for deterministic unit tests; the default CLI
+    binding refuses to run on non-Windows hosts unless
+    `VIHS_FAKE_WINDOWS=1` is set for tests.
+  - Two scenarios — `steady-A` (`HostBitness=x64,
+    SelectedBitness=x86`) and `steady-B` (`HostBitness=x86,
+    SelectedBitness=x64`) — are driven by per-scenario PowerShell
+    helpers under `scripts/windows-runtime-matrix/` that (i) close any
+    running LabVIEW, (ii) launch LabVIEW at the chosen bitness from the
+    bitness-correct install root, (iii) invoke `vihs --validate
+    --proof-out <path>`, (iv) parse the emitted proof JSON, and (v)
+    assert `runtimeBlockedReason === 'windows-host-bitness-conflict'`
+    plus the observed `LabVIEW.exe` `ExecutablePath` matches the
+    intended bitness root.
+  - The harness aggregates scenario outcomes into a single evidence
+    object validating the schema string
+    `vi-history-suite/runtime-matrix-evidence@v1` with shape
+    `{schema, runId, host, labviewVersion, scenarios:[{id, expected,
+    observed, pass, durationMs, artifacts}], summary:{passed, failed,
+    raceCoverage:'covered-by-unit-tests'}}` and exits zero only when
+    `summary.failed === 0` and the file was written.
+  - A new `.github/workflows/windows-runtime-matrix.yml` GitHub Actions
+    workflow is `workflow_dispatch`-only, runs on
+    `[self-hosted, Windows, X64, vihs-windows-labview-maintainer]`,
+    enforces the trusted-ref allow-list (`main`, `release/v*`,
+    `v*.*.*` tags, and the `chore/phase6-windows-runtime-matrix-*`
+    branch for the introduction PR), and uploads the matrix evidence
+    plus captured proofs as a build artifact.
+- Agent Work Scope:
+  - Reuse the `vihs --validate --proof-out` channel as the assertion
+    surface rather than parsing extension UI; do not extend the CLI
+    error-code mapping in this requirement — assert on
+    `runtimeBlockedReason` directly in the proof JSON. Do not couple
+    to the `labview-icon-editor` repository at runtime; copy only the
+    narrow helpers we need (path-based `LabVIEW.exe` cim filter,
+    bitness install-root resolution) into this repo so the harness
+    stays self-contained. Race-condition reclassification stays
+    deferred to the existing unit-test contract.
+- Implementation References:
+  - `scripts/runWindowsRuntimeMatrix.js`
+  - `scripts/windows-runtime-matrix/Invoke-RuntimeMatrixSteadyState.ps1`
+  - `scripts/windows-runtime-matrix/Close-LabviewProcesses.ps1`
+  - `.github/workflows/windows-runtime-matrix.yml`
+- Verification References:
+  - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the assertion key on `runtimeBlockedReason` string equality
+    so the harness stays decoupled from the CLI error-code mapping. If
+    a future requirement tightens that mapping (dedicated
+    `VIHS_E_WINDOWS_HOST_BITNESS_CONFLICT` code), extend the harness
+    to also assert on `runtimeErrorCode` in addition to the
+    blocked-reason string — never replace the string assertion.
+

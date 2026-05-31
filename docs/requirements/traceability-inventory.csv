@@ -196,3 +196,7 @@ tests/unit/gitPrerequisiteNotice.test.ts,mapped,Yes,Git prerequisite UX helper u
 src/commands/pickRuntimeProviderCommand.ts,mapped,Yes,Runtime provider quick-pick command mapped to VHS-REQ-620.
 tests/unit/pickRuntimeProviderCommand.test.ts,mapped,Yes,Runtime provider quick-pick unit tests mapped to VHS-REQ-620.
 tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-620.
+scripts/runWindowsRuntimeMatrix.js,mapped,Yes,Windows runtime conflict verification harness driver; mapped to VHS-REQ-622.
+tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conflict verification harness driver tests; mapped to VHS-REQ-622.
+tests/unit/windowsRuntimeMatrixWorkflow.test.ts,mapped,Yes,Windows runtime matrix workflow contract tests; mapped to VHS-REQ-622.
+.github/workflows/windows-runtime-matrix.yml,release-ci,Yes,Windows runtime matrix workflow; mapped to VHS-REQ-622.
