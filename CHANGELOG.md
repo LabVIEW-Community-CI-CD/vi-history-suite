@@ -10,7 +10,45 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
-## [1.4.3] - 2026-05-29
+## [1.5.0] - 2026-05-31
+
+### Added
+
+- Auto-materialized the local `vihs` runtime-settings launcher on every
+  extension activation so fresh installs and upgrades no longer require
+  running `labviewViHistory.prepareLocalRuntimeSettingsCli` before invoking
+  bare `vihs` from the integrated terminal (VHS-REQ-612).
+- Self-healing `vihs` launcher: when the stamped extension build folder is
+  missing after an upgrade, the launcher scans the per-user VS Code extension
+  roots for `svelderrainruiz.vi-history-suite-*` and rebinds to the newest
+  installed build instead of failing with `MODULE_NOT_FOUND`.
+- Filesystem-only runtime auto-detection on activation that scans for
+  installed LabVIEW host years (≥2025) and a Docker CLI, then seeds
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness` on first install and repairs them when the
+  persisted combination is no longer satisfiable, so users do not have to
+  configure the comparison runtime by hand (VHS-REQ-616).
+- Missing-runtime user experience: a `VI History runtime` status bar item
+  reflects detection outcome, a one-time first-run information notice
+  surfaces install guidance for LabVIEW ≥2025 or Docker Desktop, and a
+  focus-event re-detect (throttled to 5 seconds) picks up runtime installs
+  performed after VS Code launched (VHS-REQ-617).
+- Three trust-gated VS Code commands under category `VI History` to make the
+  detection surface controllable from the palette: `Detect Runtime Now`
+  bypasses the focus-event throttle and refreshes the status bar; `Reset
+  First-Run Runtime Notice` clears the `vihs.firstRunNoRuntimeNoticeShown`
+  globalState flag after explicit modal confirmation; `Show Runtime Summary`
+  writes a structured report (platform, host installations, docker
+  availability, recommendation, persisted settings) to a `VI History:
+  Runtime` output channel with a clipboard `Copy` action (VHS-REQ-617).
+
+### Known Limitations
+
+- macOS host LabVIEW detection is not yet implemented. On `darwin`,
+  auto-detection returns no host installations and falls through to the
+  Docker CLI check; Marketplace-published builds for macOS still require
+  Docker Desktop until ≥2025 macOS builds of LabVIEW ship and the
+  `/Applications` scan is added (tracked as VHS-REQ-618).
 
 ### Changed
 

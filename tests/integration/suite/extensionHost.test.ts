@@ -105,6 +105,7 @@ export async function runIntegrationSuite(): Promise<void> {
   await testPreparedLocalRuntimeSettingsTerminalEntrypoint(api);
   await testPrepareLocalRuntimeSettingsCli();
   await testProbeRuntimeSettingsLiveSession();
+  await testRuntimeConvenienceCommandsRegistered();
   await testPanelOpenFlow(api, metadata);
 }
 
@@ -158,6 +159,20 @@ async function testEligibleVersusIneligibleFlow(
 
   assert.equal(api.isEligible(eligibleUri), true);
   assert.equal(api.isEligible(ineligibleUri), false);
+}
+
+async function testRuntimeConvenienceCommandsRegistered(): Promise<void> {
+  const commands = await vscode.commands.getCommands(true);
+  for (const commandId of [
+    'labviewViHistory.detectRuntimeNow',
+    'labviewViHistory.resetFirstRunNotice',
+    'labviewViHistory.showRuntimeSummary'
+  ]) {
+    assert.ok(
+      commands.includes(commandId),
+      `expected runtime convenience command to be registered: ${commandId}`
+    );
+  }
 }
 
 async function testPanelOpenFlow(
@@ -762,14 +777,18 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
 async function testPreparedLocalRuntimeSettingsTerminalEntrypoint(
   api: ViHistorySuiteApi
 ): Promise<void> {
-  assert.equal(
-    api.getLocalRuntimeSettingsTerminalEntrypoint(),
-    undefined,
-    'extension activation should not admit the bare vihs terminal entrypoint before the explicit prepare command'
+  // VHS-REQ-612: Activation auto-materializes the launcher so the bare vihs
+  // terminal entrypoint is available before the explicit prepare command runs.
+  // The explicit prepare command remains available as an idempotent refresh.
+  const initiallyAdmitted = api.getLocalRuntimeSettingsTerminalEntrypoint();
+  assert.ok(
+    initiallyAdmitted,
+    'extension activation should auto-admit the bare vihs terminal entrypoint without an explicit prepare command'
   );
+  assert.equal(initiallyAdmitted.terminalCommandName, 'vihs');
   await vscode.commands.executeCommand('labviewViHistory.prepareLocalRuntimeSettingsCli');
   const admitted = api.getLocalRuntimeSettingsTerminalEntrypoint();
-  assert.ok(admitted, 'the explicit prepare command should admit the bare vihs terminal entrypoint');
+  assert.ok(admitted, 'the explicit prepare command should keep admitting the bare vihs terminal entrypoint');
   assert.equal(admitted.terminalCommandName, 'vihs');
   assert.ok(admitted.pathPrependValue);
   assert.ok(admitted.currentPlatformTerminalEntrypointPath);
