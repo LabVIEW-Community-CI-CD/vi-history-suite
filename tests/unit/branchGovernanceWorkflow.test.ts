@@ -138,17 +138,19 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('Pull requests to main must come from release/v* or hotfix/v*');
   });
 
-  it('allows feature, dependabot, release, hotfix, and main back-sync branches to target develop', () => {
+  it('allows feature, release, hotfix, and main back-sync branches to target develop', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('develop)');
     expect(workflow).toContain('^feature/.+');
-    expect(workflow).toContain('^dependabot/.+');
     expect(workflow).toContain('^release/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('^hotfix/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('"$head" == "main"');
     expect(workflow).toContain(
-      'pull requests to develop must come from feature/*, copilot/*, dependabot/*, release/v*, hotfix/v*, or main'
+      'pull requests to develop must come from feature/*, release/v*, hotfix/v*, or main'
     );
+    expect(workflow).not.toMatch(/\^copilot\//);
+    expect(workflow).not.toMatch(/\^dependabot\//);
+    expect(workflow).not.toContain("'copilot/**'");
   });
 });

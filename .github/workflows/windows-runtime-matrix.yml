@@ -1,0 +1,107 @@
+name: Windows Runtime Conflict Matrix
+
+# VHS-REQ-622 — Automated End-to-End Windows Runtime Conflict Verification Harness.
+# Drives `vihs --validate --proof-out` against a real running LabVIEW 2026 in
+# the two steady-state bitness directions and uploads the resulting matrix
+# evidence as a build artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: 'Scenario to run (steady-A, steady-B, or all)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - steady-A
+          - steady-B
+      labview_version:
+        description: 'LabVIEW major version (default 2026)'
+        required: false
+        default: '2026'
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+defaults:
+  run:
+    shell: powershell
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-runtime-matrix:
+    name: Windows Runtime Conflict Matrix
+    runs-on: [self-hosted, Windows, X64, vihs-windows-labview-maintainer]
+    timeout-minutes: 60
+
+    steps:
+      - name: Guard Trusted Ref
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path runner-evidence | Out-Null
+          $summaryPath = Join-Path 'runner-evidence' 'windows-runtime-matrix-summary.txt'
+          $isMain = $env:GITHUB_REF -eq 'refs/heads/main'
+          $isReleaseBranch = $env:GITHUB_REF -match '^refs/heads/release/v\d+\.\d+\.\d+$'
+          $isExactVersionTag = $env:GITHUB_REF -match '^refs/tags/v\d+\.\d+\.\d+$'
+          $isTrustedRef = $isMain -or $isReleaseBranch -or $isExactVersionTag
+          $decision = if ($isTrustedRef) { 'allowed' } else { 'blocked' }
+          $guardLine = "Trusted ref decision: $decision (main=$isMain, releaseBranch=$isReleaseBranch, exactVersionTag=$isExactVersionTag, ref=$env:GITHUB_REF)"
+          $guardLine | Tee-Object -LiteralPath $summaryPath
+          if (-not $isTrustedRef) {
+            throw "windows-runtime-matrix only accepts main, release/v* branches, or exact v* release tags. Ref was: $env:GITHUB_REF"
+          }
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Refuse Marketplace Tokens
+        shell: powershell
+        run: |
+          if ($env:VSCE_PAT -or $env:AZURE_DEVOPS_EXT_PAT -or $env:OVSX_PAT) {
+            throw "Marketplace publishing tokens must not be present on this runtime matrix runner."
+          }
+
+      - name: Install
+        run: npm.cmd ci
+
+      - name: Compile
+        run: npm.cmd run compile
+
+      - name: Run Windows Runtime Matrix
+        shell: powershell
+        run: |
+          $scenario = '${{ inputs.scenario }}'
+          if (-not $scenario) { $scenario = 'all' }
+          $labviewVersion = '${{ inputs.labview_version }}'
+          if (-not $labviewVersion) { $labviewVersion = '2026' }
+          node scripts/runWindowsRuntimeMatrix.js `
+            --scenario $scenario `
+            --labview-version $labviewVersion `
+            --out assurance-closeout-evidence/manual-vhs-req-621.json `
+            --proof-dir assurance-closeout-evidence/runtime-matrix-proofs
+
+      - name: Upload Runtime Matrix Evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-runtime-matrix-evidence
+          path: |
+            assurance-closeout-evidence/manual-vhs-req-621.json
+            assurance-closeout-evidence/runtime-matrix-proofs/**
+            runner-evidence/**
+          retention-days: 90
+          if-no-files-found: warn
