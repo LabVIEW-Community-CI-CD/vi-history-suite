@@ -13,6 +13,7 @@ Execute repository changes while keeping branch policy, requirements traceabilit
 
 ## Non-Negotiable Constraints
 - Work from a feature branch rooted on develop, never direct push to develop.
+- Branch naming MUST match the hosted CI "Branch Governance" allow-list. PRs to `develop` are admitted only from `feature/<slug>`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, or `main` back-sync. Do not use `chore/`, `copilot/`, `dependabot/`, `fix/`, or `docs/` prefixes — the gate blocks them. PRs to `main` are admitted only from `release/v*` or `hotfix/v*`.
 - If a task targets VHS-REQ-*, follow the requirements traceability workflow before editing.
 - Keep implementation, tests, and requirement evidence in sync when behavior changes.
 - Run validation commands appropriate to changed surfaces before handoff.
