@@ -193,3 +193,6 @@ src/tooling/gitPrerequisiteDetect.ts,mapped,Yes,Git --version probe with injecta
 src/ui/gitPrerequisiteNotice.ts,mapped,Yes,Git prerequisite status bar and first-run notice helpers mapped to VHS-REQ-619.
 tests/unit/gitPrerequisiteDetect.test.ts,mapped,Yes,Git --version probe unit tests mapped to VHS-REQ-619.
 tests/unit/gitPrerequisiteNotice.test.ts,mapped,Yes,Git prerequisite UX helper unit tests mapped to VHS-REQ-619.
+src/commands/pickRuntimeProviderCommand.ts,mapped,Yes,Runtime provider quick-pick command mapped to VHS-REQ-620.
+tests/unit/pickRuntimeProviderCommand.test.ts,mapped,Yes,Runtime provider quick-pick unit tests mapped to VHS-REQ-620.
+tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-620.

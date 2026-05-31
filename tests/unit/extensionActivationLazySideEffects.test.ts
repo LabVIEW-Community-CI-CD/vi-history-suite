@@ -111,8 +111,11 @@ vi.mock('../../src/tooling/runtimeSettingsSeed', () => ({
 vi.mock('../../src/ui/runtimeAvailabilityNotice', () => ({
   createRuntimeAvailabilityWatcher: vi.fn(() => ({
     dispose: vi.fn(),
-    forceRefresh: vi.fn(async () => undefined)
-  }))
+    forceRefresh: vi.fn(async () => undefined),
+    getLastDetection: vi.fn(() => undefined),
+    getLastSnapshot: vi.fn(() => undefined)
+  })),
+  STATUS_BAR_PICK_COMMAND_ID: 'labviewViHistory.pickRuntimeProvider'
 }));
 
 vi.mock('../../src/ui/gitPrerequisiteNotice', () => ({
@@ -127,6 +130,10 @@ vi.mock('../../src/ui/gitPrerequisiteNotice', () => ({
 
 vi.mock('../../src/commands/runtimeCommands', () => ({
   registerRuntimeRuntimeCommands: vi.fn()
+}));
+
+vi.mock('../../src/commands/pickRuntimeProviderCommand', () => ({
+  registerPickRuntimeProviderCommand: vi.fn()
 }));
 
 vi.mock('../../src/indexing/viEligibilityIndexer', () => ({

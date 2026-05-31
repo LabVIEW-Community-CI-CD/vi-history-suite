@@ -12,6 +12,7 @@ import {
   decideFirstRunPresentation,
   evaluateRuntimeAvailability,
   RUNTIME_RE_DETECT_THROTTLE_MS,
+  selectActiveRuntime,
   shouldThrottleReDetect,
   STATUS_BAR_TEXT_AVAILABLE,
   STATUS_BAR_TEXT_MISSING
@@ -114,5 +115,63 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     expect(shouldThrottleReDetect(1_000, 1_000 + RUNTIME_RE_DETECT_THROTTLE_MS - 1)).toBe(true);
     expect(shouldThrottleReDetect(1_000, 1_000 + RUNTIME_RE_DETECT_THROTTLE_MS)).toBe(false);
     expect(shouldThrottleReDetect(1_000, 10_000)).toBe(false);
+  });
+});
+
+describe('selectActiveRuntime (VHS-REQ-620)', () => {
+  it('falls back to the recommendation when no persisted selection is provided', () => {
+    const snapshot = selectActiveRuntime(detectionHost, {});
+    expect(snapshot.source).toBe('auto-detected');
+    expect(snapshot.label).toEqual({
+      provider: 'host',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      installation: detectionHost.host.installations[0]
+    });
+  });
+
+  it('honours a satisfiable persisted host selection', () => {
+    const snapshot = selectActiveRuntime(detectionHost, {
+      runtimeProvider: 'host',
+      labviewVersion: '2026',
+      labviewBitness: 'x64'
+    });
+    expect(snapshot.source).toBe('persisted');
+    expect(snapshot.label.provider).toBe('host');
+    expect(snapshot.label.installation).toBe(detectionHost.host.installations[0]);
+  });
+
+  it('honours a satisfiable persisted docker selection', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64'
+    });
+    expect(snapshot.source).toBe('persisted');
+    expect(snapshot.label.provider).toBe('docker');
+  });
+
+  it('silently falls back to the recommendation when the persisted selection is unsatisfiable', () => {
+    const snapshot = selectActiveRuntime(detectionHost, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64'
+    });
+    expect(snapshot.source).toBe('auto-detected');
+    expect(snapshot.label.provider).toBe('host');
+  });
+
+  it('falls back to the recommendation when only a partial persisted selection is set', () => {
+    const snapshot = selectActiveRuntime(detectionHost, {
+      runtimeProvider: 'host'
+    });
+    expect(snapshot.source).toBe('auto-detected');
+  });
+
+  it('returns a missing snapshot when no runtime is available and nothing is persisted', () => {
+    const snapshot = selectActiveRuntime(detectionMissing, {});
+    expect(snapshot.kind).toBe('missing');
+    expect(snapshot.label.provider).toBe('none');
+    expect(snapshot.source).toBe('auto-detected');
   });
 });

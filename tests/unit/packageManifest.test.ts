@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.6.0');
+    expect(manifest.version).toBe('1.7.0');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -110,6 +110,9 @@ describe('extension manifest public metadata', () => {
     expect(manifest.activationEvents).toContain(
       'onCommand:labviewViHistory.showRuntimeSummary'
     );
+    expect(manifest.activationEvents).toContain(
+      'onCommand:labviewViHistory.pickRuntimeProvider'
+    );
     expect(manifest.extensionDependencies ?? []).not.toContain('vscode.git');
   });
 
@@ -128,6 +131,10 @@ describe('extension manifest public metadata', () => {
     });
     expect(titles.get('labviewViHistory.showRuntimeSummary')).toMatchObject({
       title: 'Show Runtime Summary',
+      category: 'VI History'
+    });
+    expect(titles.get('labviewViHistory.pickRuntimeProvider')).toMatchObject({
+      title: 'Pick Runtime Provider',
       category: 'VI History'
     });
   });

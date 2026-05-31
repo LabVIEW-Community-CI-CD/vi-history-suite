@@ -1612,3 +1612,79 @@ Missing numeric IDs are intentional.
     re-probe inside the `labviewViHistory.open` hot path. Richer health
     checks (worktree state, repo bounds) belong to the existing Git CLI
     wrappers under `src/git/`.
+
+### VHS-REQ-620: Reactive Runtime Provider Selection And Quick-Pick
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall source the `VI History runtime` status bar
+  label from the user's persisted runtime selection
+  (`viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`,
+  `viHistorySuite.labviewBitness`) when all three keys are populated and the
+  combination is satisfiable on this host, fall back silently to the
+  auto-detection recommendation otherwise, refresh the label immediately on
+  `vscode.workspace.onDidChangeConfiguration` so a `vihs --provider …` CLI
+  invocation or a manual `settings.json` edit is reflected without waiting
+  for the focus-event throttle, and provide a status-bar-targeted
+  `Pick Runtime Provider` quick-pick command that writes the same three
+  settings keys to `ConfigurationTarget.Global` (or clears them).
+- Acceptance Criteria:
+  - `selectActiveRuntime(detection, persisted)` honors a persisted selection
+    only when `runtimeProvider`, `labviewVersion`, and `labviewBitness` are
+    all populated and the combination is satisfiable per
+    `isPersistedSelectionSatisfiable`; otherwise it returns the
+    auto-detection recommendation. There is no `mismatch` snapshot kind —
+    unsatisfiable persisted selections cause a silent fallback.
+  - `createRuntimeAvailabilityWatcher` caches the most recent detection,
+    subscribes to `vscode.workspace.onDidChangeConfiguration` filtered to
+    the `viHistorySuite` section, and re-renders the status bar from the
+    cached detection (no re-detect) when those keys change. The watcher
+    exposes `getLastDetection()` and `getLastSnapshot()` for downstream
+    consumers and disposes the configuration listener with the watcher.
+  - The runtime status bar item targets the
+    `labviewViHistory.pickRuntimeProvider` command. The tooltip reads
+    `Selected via settings.json. Click to change.` when the label sources
+    from a persisted selection and `Auto-detected. Click to override.`
+    when it sources from the recommendation.
+  - The `Pick Runtime Provider` command builds quick-pick items from the
+    cached detection: one entry per detected host LabVIEW installation,
+    one entry for Docker when `cliAvailable` is true, plus a Clear option
+    that removes the three persisted keys. The handler refuses execution
+    in untrusted workspaces with a warning, surfaces a clear warning when
+    detection has not completed or no runtimes are detected, and writes
+    selections to `ConfigurationTarget.Global`.
+  - The `Show Runtime Summary` report appends a `Drift:` line that reads
+    `none` when no persisted selection is set or it matches the
+    recommendation, `selection differs from recommendation: persisted=…,
+    recommendation=…` when persisted is satisfiable but diverges, and
+    `selection unsatisfiable on this host; falling back to recommendation`
+    when the persisted combination cannot be served on this host.
+- Agent Work Scope:
+  - Keep the persisted-selection arbitration in
+    `src/ui/runtimeAvailabilityNotice.ts::selectActiveRuntime` reusing
+    `isPersistedSelectionSatisfiable` from
+    `src/tooling/runtimeSettingsSeed.ts`. The quick-pick handler lives in
+    `src/commands/pickRuntimeProviderCommand.ts` and exports pure helpers
+    (`buildPickRuntimeProviderItems`, `applyPickRuntimeProviderSelection`)
+    so the routing logic is unit testable without a window. Drift
+    classification lives in
+    `src/commands/runtimeCommands.ts::buildDriftSummaryLine`.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/commands/pickRuntimeProviderCommand.ts`
+  - `src/commands/runtimeCommands.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/runtimeAvailabilityWatcher.test.ts`
+  - `tests/unit/pickRuntimeProviderCommand.test.ts`
+  - `tests/unit/runtimeCommands.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Treat the persisted selection as the authoritative source of truth
+    when satisfiable; do not introduce a `mismatch` UI state or repeated
+    toasts that nag the user about the divergence. Keep auto-detection
+    re-runs gated by the existing focus-event throttle — config-change
+    refreshes must always re-render from the cached detection.
+

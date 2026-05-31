@@ -15,6 +15,7 @@ import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
 import {
   buildRuntimeSummaryLine,
   buildRuntimeSummaryReport,
+  buildDriftSummaryLine,
   registerRuntimeRuntimeCommands,
   RESET_FIRST_RUN_NOTICE_CONFIRM_BUTTON,
   RESET_FIRST_RUN_NOTICE_TOAST_MESSAGE,
@@ -54,7 +55,9 @@ function createFakeContext(): FakeContext {
 function createFakeWatcher() {
   return {
     dispose: vi.fn(),
-    forceRefresh: vi.fn(async () => undefined)
+    forceRefresh: vi.fn(async () => undefined),
+    getLastDetection: vi.fn(() => undefined),
+    getLastSnapshot: vi.fn(() => undefined)
   };
 }
 
@@ -154,6 +157,123 @@ describe('buildRuntimeSummaryReport', () => {
     expect(report).toContain('(unset)');
     expect(report).toContain('Host installations: 0');
     expect(report).toContain('Docker CLI available: false');
+  });
+});
+
+describe('buildDriftSummaryLine (VHS-REQ-620)', () => {
+  it('reports none when nothing is persisted', () => {
+    expect(
+      buildDriftSummaryLine(
+        detectionAvailableHost,
+        {
+          provider: 'host',
+          labviewVersion: '2025',
+          labviewBitness: 'x64',
+          installation: detectionAvailableHost.host.installations[0]!
+        },
+        {
+          runtimeProvider: undefined,
+          labviewVersion: undefined,
+          labviewBitness: undefined
+        }
+      )
+    ).toBe('none');
+  });
+
+  it('reports none when persisted matches the recommendation', () => {
+    expect(
+      buildDriftSummaryLine(
+        detectionAvailableHost,
+        {
+          provider: 'host',
+          labviewVersion: '2025',
+          labviewBitness: 'x64',
+          installation: detectionAvailableHost.host.installations[0]!
+        },
+        {
+          runtimeProvider: 'host',
+          labviewVersion: '2025',
+          labviewBitness: 'x64'
+        }
+      )
+    ).toBe('none');
+  });
+
+  it('reports unsatisfiable fallback when the persisted host install is missing', () => {
+    expect(
+      buildDriftSummaryLine(
+        detectionAvailableHost,
+        {
+          provider: 'host',
+          labviewVersion: '2099',
+          labviewBitness: 'x64',
+          installation: detectionAvailableHost.host.installations[0]!
+        },
+        {
+          runtimeProvider: 'host',
+          labviewVersion: '2099',
+          labviewBitness: 'x64'
+        }
+      )
+    ).toBe('selection unsatisfiable on this host; falling back to recommendation');
+  });
+
+  it('reports unsatisfiable fallback when persisted is partial', () => {
+    expect(
+      buildDriftSummaryLine(
+        detectionAvailableHost,
+        {
+          provider: 'host',
+          labviewVersion: '2025',
+          labviewBitness: 'x64',
+          installation: detectionAvailableHost.host.installations[0]!
+        },
+        {
+          runtimeProvider: 'host',
+          labviewVersion: undefined,
+          labviewBitness: undefined
+        }
+      )
+    ).toBe('selection unsatisfiable on this host; falling back to recommendation');
+  });
+
+  it('reports a satisfiable diverging selection', () => {
+    const detection: DetectedRuntimes = {
+      platform: 'win32',
+      host: {
+        installations: [
+          {
+            year: '2025',
+            bitness: 'x86',
+            labviewExePath: 'X'
+          },
+          {
+            year: '2026',
+            bitness: 'x64',
+            labviewExePath: 'Y'
+          }
+        ]
+      },
+      docker: { cliAvailable: false }
+    };
+    expect(
+      buildDriftSummaryLine(
+        detection,
+        {
+          provider: 'host',
+          labviewVersion: '2026',
+          labviewBitness: 'x64',
+          installation: detection.host.installations[1]!
+        },
+        {
+          runtimeProvider: 'host',
+          labviewVersion: '2025',
+          labviewBitness: 'x86'
+        }
+      )
+    ).toBe(
+      'selection differs from recommendation: persisted=host 2025 x86, recommendation=host 2026 x64'
+    );
   });
 });
 

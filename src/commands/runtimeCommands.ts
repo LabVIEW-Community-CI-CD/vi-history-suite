@@ -29,6 +29,7 @@ import {
   type DetectedRuntimes,
   type RuntimeRecommendation
 } from '../tooling/runtimeAutoDetect';
+import { isPersistedSelectionSatisfiable } from '../tooling/runtimeSettingsSeed';
 import {
   FIRST_RUN_NO_RUNTIME_NOTICE_KEY,
   type RuntimeAvailabilityWatcher
@@ -96,7 +97,53 @@ export function buildRuntimeSummaryReport(
   lines.push(`  viHistorySuite.runtimeProvider: ${formatPersisted(persisted.runtimeProvider)}`);
   lines.push(`  viHistorySuite.labviewVersion:  ${formatPersisted(persisted.labviewVersion)}`);
   lines.push(`  viHistorySuite.labviewBitness:  ${formatPersisted(persisted.labviewBitness)}`);
+  lines.push('');
+  lines.push(`Drift: ${buildDriftSummaryLine(detection, recommendation, persisted)}`);
   return lines.join('\n');
+}
+
+/**
+ * VHS-REQ-620: Classify the relationship between the persisted runtime
+ * selection and the auto-detection recommendation. Three states are surfaced:
+ *
+ *   - `none` — either nothing is persisted, or the persisted selection
+ *     matches the recommendation exactly.
+ *   - `selection differs from recommendation: persisted=…, recommendation=…`
+ *     — all three persisted keys are set, the selection is satisfiable on
+ *     this host, and the persisted provider/version/bitness diverges from
+ *     the recommendation. The status bar honors the persisted choice.
+ *   - `selection unsatisfiable on this host; falling back to recommendation`
+ *     — at least one persisted key is set but the combination cannot be
+ *     served (e.g. the requested host install is not present, or docker is
+ *     persisted without a docker CLI). The status bar silently falls back.
+ */
+export function buildDriftSummaryLine(
+  detection: DetectedRuntimes,
+  recommendation: RuntimeRecommendation,
+  persisted: PersistedRuntimeSelection
+): string {
+  const hasAnyPersistedKey =
+    Boolean(persisted.runtimeProvider) ||
+    Boolean(persisted.labviewVersion) ||
+    Boolean(persisted.labviewBitness);
+  if (!hasAnyPersistedKey) {
+    return 'none';
+  }
+
+  const hasAllPersistedKeys =
+    Boolean(persisted.runtimeProvider) &&
+    Boolean(persisted.labviewVersion) &&
+    Boolean(persisted.labviewBitness);
+  if (!hasAllPersistedKeys || !isPersistedSelectionSatisfiable(persisted, detection)) {
+    return 'selection unsatisfiable on this host; falling back to recommendation';
+  }
+
+  const persistedDescription = `${persisted.runtimeProvider} ${persisted.labviewVersion} ${persisted.labviewBitness}`;
+  const recommendationDescription = describeRecommendation(recommendation);
+  if (persistedDescription === recommendationDescription) {
+    return 'none';
+  }
+  return `selection differs from recommendation: persisted=${persistedDescription}, recommendation=${recommendationDescription}`;
 }
 
 export interface PersistedRuntimeSelection {
