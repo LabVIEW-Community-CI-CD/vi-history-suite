@@ -578,7 +578,7 @@ describe('requirements documentation coherence', () => {
     expect(troubleshooting).toContain('## Closeout Evidence Registry Access Fails');
     expect(troubleshooting).toContain('error getting credentials');
     expect(troubleshooting).toContain('manifest unknown');
-    expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-620`.');
     expect(packageJson.scripts['dod:gate']).toBe('node scripts/checkDefinitionOfDone.js');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-012');
     expect(requirementRow?.ImplementationRefs).toContain('package.json');
@@ -1509,8 +1509,9 @@ describe('requirements documentation coherence', () => {
     expect(readme).toContain('asset-doc');
     expect(readme).toContain('gap');
     expect(readme).toContain('Agent Response');
-    expect(readme).toContain('New software requirements start at `VHS-REQ-616`.');
+    expect(readme).toContain('New software requirements start at `VHS-REQ-620`.');
     expect(readme).toContain('New system requirements start at `VHS-SYS-REQ-018`.');
+    expect(readme).not.toContain('New software requirements start at `VHS-REQ-616`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-615`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-614`.');
     expect(readme).not.toContain('New software requirements start at `VHS-REQ-613`.');

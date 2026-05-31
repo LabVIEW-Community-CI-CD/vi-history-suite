@@ -633,3 +633,4 @@ VHS-SYS-REQ-016,System,Active,syrs.md#vhs-sys-req-016-governed-release-branch-pr
 VHS-SYS-REQ-017,System,Active,syrs.md#vhs-sys-req-017-coverage-led-assurance-operating-model,,,docs/requirements/syrs.md
 VHS-REQ-616,Software,Active,srs.md#vhs-req-616-runtime-auto-selection-and-stale-settings-repair,,,docs/requirements/srs.md
 VHS-REQ-617,Software,Active,srs.md#vhs-req-617-missing-runtime-user-notification-and-status-surface,,,docs/requirements/srs.md
+VHS-REQ-619,Software,Active,srs.md#vhs-req-619-git-prerequisite-detection-and-first-run-guidance,,,docs/requirements/srs.md

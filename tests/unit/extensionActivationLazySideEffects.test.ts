@@ -115,6 +115,16 @@ vi.mock('../../src/ui/runtimeAvailabilityNotice', () => ({
   }))
 }));
 
+vi.mock('../../src/ui/gitPrerequisiteNotice', () => ({
+  createGitPrerequisiteWatcher: vi.fn(() => ({
+    dispose: vi.fn(),
+    forceRefresh: vi.fn(async () => undefined),
+    getDetection: vi.fn(() => ({ available: true, version: '2.46.0' }))
+  })),
+  decideOpenGate: vi.fn(() => ({ kind: 'allow' })),
+  presentOpenBlockedToast: vi.fn(async () => undefined)
+}));
+
 vi.mock('../../src/commands/runtimeCommands', () => ({
   registerRuntimeRuntimeCommands: vi.fn()
 }));
