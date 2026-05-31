@@ -37,11 +37,28 @@ export const MISSING_RUNTIME_MODAL_BUTTONS = {
 } as const;
 
 export const STATUS_BAR_TEXT_AVAILABLE = '$(check) VI History runtime';
-export const STATUS_BAR_TEXT_MISSING = '$(warning) VI History: no runtime';
+export const STATUS_BAR_TEXT_MISSING = '$(warning) VI History runtime: missing';
 export const STATUS_BAR_TOOLTIP_AVAILABLE =
   'A LabVIEW or Docker comparison runtime is available.';
 export const STATUS_BAR_TOOLTIP_MISSING =
   'Install LabVIEW \u22652025 or Docker Desktop to enable VI comparisons.';
+
+/**
+ * Builds the provider-specific suffix that follows the
+ * `VI History runtime:` prefix in the status bar (e.g.,
+ * `LabVIEW 2026 x64`, `Docker`).
+ */
+export function buildAvailableStatusBarSuffix(
+  recommendation: RuntimeRecommendation
+): string {
+  if (recommendation.provider === 'host') {
+    return `LabVIEW ${recommendation.labviewVersion} ${recommendation.labviewBitness}`;
+  }
+  if (recommendation.provider === 'docker') {
+    return 'Docker';
+  }
+  return '';
+}
 
 export const FIRST_RUN_NOTICE_MESSAGE =
   'VI History could not find a comparison runtime. Install LabVIEW \u22652025 or Docker Desktop to enable VI comparisons.';
@@ -92,8 +109,11 @@ export function buildStatusBarPresentation(
   snapshot: RuntimeAvailabilitySnapshot
 ): StatusBarPresentation {
   if (snapshot.kind === 'available') {
+    const suffix = buildAvailableStatusBarSuffix(snapshot.recommendation);
     return {
-      text: STATUS_BAR_TEXT_AVAILABLE,
+      text: suffix
+        ? `${STATUS_BAR_TEXT_AVAILABLE}: ${suffix}`
+        : STATUS_BAR_TEXT_AVAILABLE,
       tooltip: STATUS_BAR_TOOLTIP_AVAILABLE
     };
   }

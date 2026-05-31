@@ -7,6 +7,7 @@ vi.mock('vscode', async () => {
 
 import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
 import {
+  buildAvailableStatusBarSuffix,
   buildStatusBarPresentation,
   decideFirstRunPresentation,
   evaluateRuntimeAvailability,
@@ -20,6 +21,21 @@ const detectionAvailable: DetectedRuntimes = {
   platform: 'linux',
   host: { installations: [] },
   docker: { cliAvailable: true, cliPath: '/usr/local/bin/docker' }
+};
+
+const detectionHost: DetectedRuntimes = {
+  platform: 'win32',
+  host: {
+    installations: [
+      {
+        year: '2026',
+        bitness: 'x64',
+        labviewExePath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      }
+    ]
+  },
+  docker: { cliAvailable: false }
 };
 
 const detectionMissing: DetectedRuntimes = {
@@ -62,13 +78,35 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     });
   });
 
-  it('renders distinct status bar text for missing vs available', () => {
+  it('renders provider-specific status bar text for host, docker, and missing runtimes', () => {
+    expect(buildStatusBarPresentation(evaluateRuntimeAvailability(detectionHost)).text).toBe(
+      `${STATUS_BAR_TEXT_AVAILABLE}: LabVIEW 2026 x64`
+    );
     expect(buildStatusBarPresentation(evaluateRuntimeAvailability(detectionAvailable)).text).toBe(
-      STATUS_BAR_TEXT_AVAILABLE
+      `${STATUS_BAR_TEXT_AVAILABLE}: Docker`
     );
     expect(buildStatusBarPresentation(evaluateRuntimeAvailability(detectionMissing)).text).toBe(
       STATUS_BAR_TEXT_MISSING
     );
+  });
+
+  it('builds the provider suffix from a recommendation', () => {
+    expect(
+      buildAvailableStatusBarSuffix({
+        provider: 'host',
+        labviewVersion: '2025',
+        labviewBitness: 'x86',
+        installation: detectionHost.host.installations[0]!
+      })
+    ).toBe('LabVIEW 2025 x86');
+    expect(
+      buildAvailableStatusBarSuffix({
+        provider: 'docker',
+        labviewVersion: '2026',
+        labviewBitness: 'x64'
+      })
+    ).toBe('Docker');
+    expect(buildAvailableStatusBarSuffix({ provider: 'none' })).toBe('');
   });
 
   it('throttles re-detect within the configured window and allows it after', () => {

@@ -1507,7 +1507,11 @@ Missing numeric IDs are intentional.
   without paying repeated detection costs.
 - Acceptance Criteria:
   - A status bar item titled `VI History runtime` is shown after activation
-    and reflects the latest detection outcome (available vs missing).
+    and reflects the latest detection outcome. When a runtime is available,
+    the label includes the provider-specific suffix (e.g.,
+    `VI History runtime: LabVIEW 2026 x64`, `VI History runtime: Docker`);
+    when no runtime is detected, the label reads
+    `VI History runtime: missing`.
   - When detection reports no runtime, the extension shows a single
     information notification per user globalState flag
     `vihs.firstRunNoRuntimeNoticeShown` so the message is not repeated on

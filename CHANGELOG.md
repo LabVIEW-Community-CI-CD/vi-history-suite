@@ -29,9 +29,11 @@ Burned exact-version releases now include `v1.0.2`.
   persisted combination is no longer satisfiable, so users do not have to
   configure the comparison runtime by hand (VHS-REQ-616).
 - Missing-runtime user experience: a `VI History runtime` status bar item
-  reflects detection outcome, a one-time first-run information notice
-  surfaces install guidance for LabVIEW ≥2025 or Docker Desktop, and a
-  focus-event re-detect (throttled to 5 seconds) picks up runtime installs
+  reflects detection outcome with a provider-specific label (e.g.,
+  `VI History runtime: LabVIEW 2026 x64`, `VI History runtime: Docker`,
+  or `VI History runtime: missing`), a one-time first-run information
+  notice surfaces install guidance for LabVIEW ≥2025 or Docker Desktop, and
+  a focus-event re-detect (throttled to 5 seconds) picks up runtime installs
   performed after VS Code launched (VHS-REQ-617).
 - Three trust-gated VS Code commands under category `VI History` to make the
   detection surface controllable from the palette: `Detect Runtime Now`
