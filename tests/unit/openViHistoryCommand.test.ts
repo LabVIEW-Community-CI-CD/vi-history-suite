@@ -417,8 +417,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
   });
 
-  it('records explicit cancellation stage when comparison generation is stopped', async () => {
-    const model = createEligibleModel();
+  it('records explicit cancellation stage when comparison generation is stopped', async () => {    const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
     const comparisonReportAction = vi.fn().mockResolvedValue({
@@ -454,8 +453,89 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
   });
 
-  it('records missing Git URI instead of opening stale revision content', async () => {
+  it('offers a Pick Runtime Provider action when the runtime is blocked by a concurrent LabVIEW bitness conflict (VHS-REQ-621)', async () => {
     const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-retained-comparison-report',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'windows-host-bitness-conflict',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=unavailable; engine=none; platform=win32; bitness=x86.',
+        'Provider request=host.',
+        'Runtime blocked reason: windows-host-bitness-conflict.',
+        'Next action: close the running LabVIEW x64 session, or set viHistorySuite.labviewBitness to x64 (currently x86), then rerun comparison report generation.'
+      ]
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('windows-host-bitness-conflict'),
+      'Pick Runtime Provider'
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'labviewViHistory.pickRuntimeProvider'
+    );
+  });
+
+  it('offers a Pick Runtime Provider action when comparison runtime reclassifies failure as labview-host-bitness-conflict (VHS-REQ-621)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-retained-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'labview-host-bitness-conflict',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.',
+        'Provider request=host.',
+        'Runtime failure reason: labview-host-bitness-conflict.',
+        'Next action: close the running LabVIEW session that contended with comparison-report execution, or set viHistorySuite.labviewBitness to match the running LabVIEW (currently x86), then rerun comparison report generation.'
+      ]
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      {} as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('labview-host-bitness-conflict'),
+      'Pick Runtime Provider'
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'labviewViHistory.pickRuntimeProvider'
+    );
+  });
+
+  it('records missing Git URI instead of opening stale revision content', async () => {    const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
     const gitApi = { toGitUri: vi.fn().mockReturnValue(undefined) };

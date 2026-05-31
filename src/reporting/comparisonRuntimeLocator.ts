@@ -92,6 +92,14 @@ export interface ComparisonRuntimeSelection {
   hostLabviewIniPath?: string;
   hostLabviewTcpPort?: number;
   hostRuntimeConflictDetected?: boolean;
+  /**
+   * VHS-REQ-621: bitness of a running LabVIEW.exe observed during host
+   * preflight, when detectable. `'unknown'` when LabVIEW was running but its
+   * executable path could not be resolved.
+   */
+  hostObservedLabviewBitness?: RuntimeBitness | 'unknown';
+  /** VHS-REQ-621: executable path of the offending LabVIEW.exe, when known. */
+  hostObservedLabviewExecutablePath?: string;
   allowExistingWindowsHostRuntime?: boolean;
   dockerCliAvailable?: boolean;
   dockerDaemonReachable?: boolean;
@@ -188,6 +196,17 @@ interface WindowsHostRuntimeSurfaceFacts {
   hostLabviewIniPath?: string;
   hostLabviewTcpPort?: number;
   hostRuntimeConflictDetected?: boolean;
+  /**
+   * VHS-REQ-621: bitness of an already-running LabVIEW.exe on the host, when
+   * detected. Doctor messaging and the locator's bitness-conflict guard both
+   * read this to differentiate "close LabVIEW" from "switch bitness."
+   */
+  hostObservedLabviewBitness?: RuntimeBitness | 'unknown';
+  /**
+   * VHS-REQ-621: path of the offending LabVIEW.exe, when known, so doctor
+   * messaging can name the install precisely.
+   */
+  hostObservedLabviewExecutablePath?: string;
   notes: string[];
 }
 
@@ -1048,10 +1067,69 @@ export async function locateComparisonRuntime(
   const hostLabviewIniPath = hostRuntimeSurfaceFacts?.hostLabviewIniPath;
   const hostLabviewTcpPort = hostRuntimeSurfaceFacts?.hostLabviewTcpPort;
   const hostRuntimeConflictDetected = hostRuntimeSurfaceFacts?.hostRuntimeConflictDetected;
+  const hostObservedLabviewBitness = hostRuntimeSurfaceFacts?.hostObservedLabviewBitness;
+  const hostObservedLabviewExecutablePath =
+    hostRuntimeSurfaceFacts?.hostObservedLabviewExecutablePath;
+  // VHS-REQ-621: a running LabVIEW.exe at a bitness different from the
+  // requested execution bitness is always blocking, even when the user has
+  // opted into `allowExistingWindowsHostRuntime` (which exists to admit
+  // matching-bitness sessions). LabVIEW refuses to start a second instance at
+  // a different bitness, so we surface this before any provider selection.
+  const hostBitnessConflictDetected =
+    platform === 'win32' &&
+    hostObservedLabviewBitness !== undefined &&
+    hostObservedLabviewBitness !== 'unknown' &&
+    hostObservedLabviewBitness !== bitness;
   const hostRuntimeConflictAdmitted =
     platform === 'win32' &&
     hostRuntimeConflictDetected === true &&
-    allowExistingWindowsHostRuntime;
+    allowExistingWindowsHostRuntime &&
+    !hostBitnessConflictDetected;
+
+  if (platform === 'win32' && hostBitnessConflictDetected) {
+    notes.push(
+      `Validated Windows host runtime surface observed LabVIEW ${hostObservedLabviewBitness} already running while comparison-report execution requested LabVIEW ${bitness}; LabVIEW refuses to start a second instance at a different bitness, so the compare cannot proceed against the host-native provider.`
+    );
+    return {
+      platform,
+      executionMode,
+      requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
+      bitness,
+      provider: 'unavailable',
+      blockedReason: 'windows-host-bitness-conflict',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        containerRuntimePlatform: containerFacts?.runtimePlatform,
+        executionMode,
+        requestedProvider: settings.requestedProvider,
+        bitness,
+        configuredWindowsContainerImage: windowsContainerImage,
+        configuredLinuxContainerImage: linuxContainerImage,
+        containerImage: containerFacts?.image,
+        containerAvailable,
+        containerEvaluated,
+        ...buildContainerDecisionFacts(),
+        hostRuntimeConflictDetected,
+        blockedReason: 'windows-host-bitness-conflict',
+        labviewExeFound: true,
+        labviewCliFound: Boolean(labviewCli),
+        lvCompareFound: Boolean(lvCompare)
+      }),
+      ...buildContainerSelectionFactsForReturn(),
+      labviewExe,
+      labviewCli,
+      lvCompare,
+      hostLabviewIniPath,
+      hostLabviewTcpPort,
+      hostRuntimeConflictDetected,
+      hostObservedLabviewBitness,
+      hostObservedLabviewExecutablePath,
+      notes,
+      registryQueryPlans,
+      candidates
+    };
+  }
 
   if (platform === 'win32' && hostRuntimeConflictDetected && !hostRuntimeConflictAdmitted) {
     if (executionMode === 'auto' && bitness === 'x64') {
@@ -1440,6 +1518,10 @@ async function observeWindowsHostRuntimeSurfaceFacts(
     hostLabviewIniPath: tcpSettings.labviewIniPath,
     hostLabviewTcpPort: tcpSettings.labviewTcpPort,
     hostRuntimeConflictDetected,
+    hostObservedLabviewBitness:
+      processObservation?.labviewProcessBitness ??
+      (processObservation?.labviewProcessObserved ? 'unknown' : undefined),
+    hostObservedLabviewExecutablePath: processObservation?.labviewProcessExecutablePath,
     notes
   };
 }

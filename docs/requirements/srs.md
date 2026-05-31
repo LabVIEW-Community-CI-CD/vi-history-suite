@@ -1267,22 +1267,30 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
 - Statement: The extension shall expose installed runtime settings CLI
-  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` so the
-  local `vihs` launcher is materialized or refreshed and preparation failures
-  are reported with actionable outcomes.
+  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` and
+  shall additionally auto-materialize the local `vihs` launcher on every
+  activation so users do not need to rerun the prepare command after install
+  or upgrade. Preparation failures, including stale-launcher recovery, must
+  surface actionable outcomes.
 - Acceptance Criteria:
   - The extension manifest contributes
-    `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on that
-    command.
-  - Command registration routes preparation through
-    `admitLocalRuntimeSettingsCliToTerminalPath`, returns
-    `prepared-local-runtime-settings-cli` with launcher/settings-target
-    contract fields, and surfaces an actionable success message.
+    `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on
+    `onStartupFinished` plus that command.
+  - Activation calls `admitLocalRuntimeSettingsCliToTerminalPath` idempotently
+    so the bare `vihs` terminal entrypoint always points at the currently
+    installed extension build.
+  - Command registration routes manual preparation through the same admission
+    helper, returns `prepared-local-runtime-settings-cli` with
+    launcher/settings-target contract fields, and surfaces an actionable
+    success message.
   - When extension global storage is unavailable, the command reports
     `missing-global-storage-uri` and a user-facing warning that preparation
     could not proceed.
   - Preparation remains admitted in untrusted workspaces as a low-risk local
     materialization path while compare execution remains blocked there.
+  - The generated `vihs` JavaScript launcher self-heals when its stamped
+    module path is missing by scanning the per-user VS Code extension roots
+    for any installed `svelderrainruiz.vi-history-suite-*` build.
 - Agent Work Scope:
   - Change command exposure evidence, requirement mapping, and verification
     references together without changing runtime provider selection behavior.
@@ -1296,8 +1304,10 @@ Missing numeric IDs are intentional.
   - `tests/integration/suite/extensionHost.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
-  - Keep this requirement focused on installed CLI preparation and failure
-    reporting; do not change runtime selection semantics.
+  - Keep this requirement focused on installed CLI preparation, activation
+    auto-materialization, and launcher self-healing; do not change runtime
+    selection semantics here. Selection seed-or-repair and missing-runtime UX
+    are owned by VHS-REQ-616 and VHS-REQ-617 respectively.
 
 ### VHS-REQ-613: Coverage Intelligence And Test-Risk Mapping
 
@@ -1435,3 +1445,325 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep this requirement as the operating contract for Done and keep hosted
     `DoD Gate / dod` enforcement inside the required public CI workflow.
+
+### VHS-REQ-616: Runtime Auto-Selection And Stale Settings Repair
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall detect installed comparison runtimes
+  (LabVIEW host \u22652025 and Docker CLI) on activation through a bounded
+  filesystem-only probe, and shall seed or repair the persisted
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness` user settings so a working comparison
+  selection is in place after fresh installs and upgrades without requiring a
+  manual command.
+- Acceptance Criteria:
+  - Activation runs `detectAvailableRuntimes` whose Windows, Linux, and macOS
+    branches read only from the filesystem and PATH and never spawn child
+    processes.
+  - When no VI History runtime keys are persisted, the extension seeds the
+    user settings.json with the recommended provider, year, and bitness.
+  - When all three keys are persisted but the persisted combination is not
+    satisfiable by the current detection, the extension repairs the values to
+    the recommendation; partially populated keys are also repaired.
+  - When the persisted combination is satisfiable, the extension preserves
+    the existing values verbatim.
+  - When no runtime is detected, the extension leaves persisted values
+    unchanged and reports `no-runtime-detected` from the seed module.
+  - The recommendation precedence is: highest installed LabVIEW year wins,
+    tied years prefer x64; otherwise Docker host runtime at year 2026 / x64;
+    otherwise no recommendation.
+  - Failures during detection or seeding never block extension activation;
+    they are logged with the `[vi-history-suite]` prefix.
+- Agent Work Scope:
+  - Change activation seed/repair logic, detection helpers, and their tests
+    together; do not move logic into `comparisonRuntimeLocator` which remains
+    the heavier validation surface.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/tooling/runtimeAutoDetect.ts`
+  - `src/tooling/runtimeSettingsSeed.ts`
+  - `src/tooling/localRuntimeSettingsCli.ts`
+- Verification References:
+  - `tests/unit/runtimeAutoDetect.test.ts`
+  - `tests/unit/runtimeSettingsSeed.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep detection filesystem-only at activation time; richer registry,
+    daemon-reachability, or process probes belong to
+    `comparisonRuntimeLocator` and `vihs --validate`.
+
+### VHS-REQ-617: Missing-Runtime User Notification And Status Surface
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall surface comparison runtime availability in
+  the VS Code status bar and shall raise a one-time first-run notification
+  when no comparison runtime is detected, with a focus-event re-detect that is
+  throttled so users learn promptly when they install LabVIEW or Docker
+  without paying repeated detection costs.
+- Acceptance Criteria:
+  - A status bar item titled `VI History runtime` is shown after activation
+    and reflects the latest detection outcome. When a runtime is available,
+    the label includes the provider-specific suffix (e.g.,
+    `VI History runtime: LabVIEW 2026 x64`, `VI History runtime: Docker`);
+    when no runtime is detected, the label reads
+    `VI History runtime: missing`.
+  - When detection reports no runtime, the extension shows a single
+    information notification per user globalState flag
+    `vihs.firstRunNoRuntimeNoticeShown` so the message is not repeated on
+    subsequent activations until the user clears it.
+  - The watcher re-detects on `vscode.window.onDidChangeWindowState` focus
+    transitions and ignores re-detect requests received within
+    `RUNTIME_RE_DETECT_THROTTLE_MS` of the last run.
+  - The watcher is registered as an extension subscription so its status bar
+    item and listener are disposed when the extension deactivates.
+  - Detection failures inside the watcher are logged but never throw out of
+    activation.
+  - The extension contributes three palette commands under category `VI
+    History`: `Detect Runtime Now`
+    (`labviewViHistory.detectRuntimeNow`), `Reset First-Run Runtime Notice`
+    (`labviewViHistory.resetFirstRunNotice`), and `Show Runtime Summary`
+    (`labviewViHistory.showRuntimeSummary`). Each command refuses to run in
+    untrusted workspaces with a warning message.
+  - `Detect Runtime Now` bypasses the focus-event throttle by forcing a
+    fresh detection pass and updating the status bar.
+  - `Reset First-Run Runtime Notice` requires explicit modal confirmation
+    before clearing the `vihs.firstRunNoRuntimeNoticeShown` globalState
+    flag.
+  - `Show Runtime Summary` writes a structured multi-line report (platform,
+    host installations, docker availability, recommendation, persisted
+    settings) to the `VI History: Runtime` output channel and offers a
+    `Copy` action to place the report on the clipboard.
+- Agent Work Scope:
+  - Change runtime availability UX surfaces, their pure decision helpers,
+    and their tests together; modal copy and external install URLs are
+    centralized in `runtimeAvailabilityNotice.ts`. The three runtime
+    convenience commands live in `src/commands/runtimeCommands.ts` and
+    inject `detect`/`isTrusted` boundaries for deterministic tests.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/commands/runtimeCommands.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/runtimeCommands.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep first-run gating, throttling, and copy in this requirement; runtime
+    detection itself stays under VHS-REQ-616.
+
+### VHS-REQ-619: Git Prerequisite Detection And First-Run Guidance
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall probe `git --version` once per activation,
+  cache the result for the session, surface a status bar warning plus a
+  one-time first-run information notification when Git is not detected, and
+  refuse `labviewViHistory.open` with a warning toast that links to the Git
+  install page so users learn before launching a comparison that the
+  prerequisite is missing.
+- Acceptance Criteria:
+  - On activation the extension runs a single `git --version` probe through
+    an injectable command runner and caches the discriminated detection
+    result for re-use by the status bar, the first-run notice, and the
+    `labviewViHistory.open` gate without re-spawning the child process.
+  - When the probe reports Git is missing, a status bar item titled
+    `VI History Git prerequisite` is shown with the text
+    `Git not detected` and a tooltip pointing at install guidance; when the
+    probe succeeds the status bar item stays hidden to avoid clutter.
+  - When the probe reports Git is missing, a one-time information
+    notification surfaces install guidance gated by the user globalState
+    flag `vihs.firstRunGitNoticeShown` so the message is not repeated on
+    subsequent activations.
+  - The first-run notification offers an `Install Git` action that opens
+    `https://git-scm.com/downloads` via `vscode.env.openExternal`.
+  - `labviewViHistory.open` consults the cached detection. When Git is
+    missing the command refuses with a warning toast that explains the
+    prerequisite, offers an `Install Git` action linking to the install
+    page, and does not start the comparison flow. When the cached result is
+    not yet available the command falls back to allowing execution so
+    activation races never block users.
+  - The watcher is registered as an extension subscription so its status
+    bar item is disposed when the extension deactivates, and probe
+    failures are logged but never throw out of activation.
+- Agent Work Scope:
+  - Change Git detection, the cached UX surfaces, and the open-command gate
+    together. The pure decision helpers (`buildGitStatusBarPresentation`,
+    `decideGitFirstRunPresentation`, `decideOpenGate`) live in
+    `src/ui/gitPrerequisiteNotice.ts` so unit tests can exercise routing
+    without a window. Detection lives in
+    `src/tooling/gitPrerequisiteDetect.ts` with an injected
+    `runGitVersion` boundary.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/tooling/gitPrerequisiteDetect.ts`
+  - `src/ui/gitPrerequisiteNotice.ts`
+- Verification References:
+  - `tests/unit/gitPrerequisiteDetect.test.ts`
+  - `tests/unit/gitPrerequisiteNotice.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep Git detection synchronous in spirit (one probe, cached) and never
+    re-probe inside the `labviewViHistory.open` hot path. Richer health
+    checks (worktree state, repo bounds) belong to the existing Git CLI
+    wrappers under `src/git/`.
+
+### VHS-REQ-620: Reactive Runtime Provider Selection And Quick-Pick
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall source the `VI History runtime` status bar
+  label from the user's persisted runtime selection
+  (`viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`,
+  `viHistorySuite.labviewBitness`) when all three keys are populated and the
+  combination is satisfiable on this host, fall back silently to the
+  auto-detection recommendation otherwise, refresh the label immediately on
+  `vscode.workspace.onDidChangeConfiguration` so a `vihs --provider …` CLI
+  invocation or a manual `settings.json` edit is reflected without waiting
+  for the focus-event throttle, and provide a status-bar-targeted
+  `Pick Runtime Provider` quick-pick command that writes the same three
+  settings keys to `ConfigurationTarget.Global` (or clears them).
+- Acceptance Criteria:
+  - `selectActiveRuntime(detection, persisted)` honors a persisted selection
+    only when `runtimeProvider`, `labviewVersion`, and `labviewBitness` are
+    all populated and the combination is satisfiable per
+    `isPersistedSelectionSatisfiable`; otherwise it returns the
+    auto-detection recommendation. There is no `mismatch` snapshot kind —
+    unsatisfiable persisted selections cause a silent fallback.
+  - `createRuntimeAvailabilityWatcher` caches the most recent detection,
+    subscribes to `vscode.workspace.onDidChangeConfiguration` filtered to
+    the `viHistorySuite` section, and re-renders the status bar from the
+    cached detection (no re-detect) when those keys change. The watcher
+    exposes `getLastDetection()` and `getLastSnapshot()` for downstream
+    consumers and disposes the configuration listener with the watcher.
+  - The runtime status bar item targets the
+    `labviewViHistory.pickRuntimeProvider` command. The tooltip reads
+    `Selected via settings.json. Click to change.` when the label sources
+    from a persisted selection and `Auto-detected. Click to override.`
+    when it sources from the recommendation.
+  - The `Pick Runtime Provider` command builds quick-pick items from the
+    cached detection: one entry per detected host LabVIEW installation,
+    one entry for Docker when `cliAvailable` is true, plus a Clear option
+    that removes the three persisted keys. The handler refuses execution
+    in untrusted workspaces with a warning, surfaces a clear warning when
+    detection has not completed or no runtimes are detected, and writes
+    selections to `ConfigurationTarget.Global`.
+  - The `Show Runtime Summary` report appends a `Drift:` line that reads
+    `none` when no persisted selection is set or it matches the
+    recommendation, `selection differs from recommendation: persisted=…,
+    recommendation=…` when persisted is satisfiable but diverges, and
+    `selection unsatisfiable on this host; falling back to recommendation`
+    when the persisted combination cannot be served on this host.
+- Agent Work Scope:
+  - Keep the persisted-selection arbitration in
+    `src/ui/runtimeAvailabilityNotice.ts::selectActiveRuntime` reusing
+    `isPersistedSelectionSatisfiable` from
+    `src/tooling/runtimeSettingsSeed.ts`. The quick-pick handler lives in
+    `src/commands/pickRuntimeProviderCommand.ts` and exports pure helpers
+    (`buildPickRuntimeProviderItems`, `applyPickRuntimeProviderSelection`)
+    so the routing logic is unit testable without a window. Drift
+    classification lives in
+    `src/commands/runtimeCommands.ts::buildDriftSummaryLine`.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/commands/pickRuntimeProviderCommand.ts`
+  - `src/commands/runtimeCommands.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/runtimeAvailabilityWatcher.test.ts`
+  - `tests/unit/pickRuntimeProviderCommand.test.ts`
+  - `tests/unit/runtimeCommands.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Treat the persisted selection as the authoritative source of truth
+    when satisfiable; do not introduce a `mismatch` UI state or repeated
+    toasts that nag the user about the divergence. Keep auto-detection
+    re-runs gated by the existing focus-event throttle — config-change
+    refreshes must always re-render from the cached detection.
+
+### VHS-REQ-621: Concurrent LabVIEW Bitness Conflict Diagnostic
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When the comparison-report runtime detects a running LabVIEW
+  process whose bitness differs from the selected runtime bitness, the
+  extension shall emit an actionable diagnostic in both the preflight
+  blocking path (new `windows-host-bitness-conflict` runtime locator
+  blocked reason) and the post-failure classification path (new
+  `labview-host-bitness-conflict` execution failure reason), retain the
+  observed LabVIEW bitness and executable path on the runtime selection
+  facts and process-observation packet fields, and offer a
+  `Pick Runtime Provider` action button on the resulting warning toast
+  that invokes `labviewViHistory.pickRuntimeProvider` so the user can
+  align `viHistorySuite.labviewBitness` with the running session without
+  hunting for the setting.
+- Acceptance Criteria:
+  - The Windows host runtime preflight inspects the retained process
+    observation, resolves the executable path for the first observed
+    `LabVIEW.exe` via the injectable `resolveWindowsLabviewExecutablePath`
+    seam, infers `'x86'` from a path under `\Program Files (x86)\`,
+    `'x64'` from a path under `\Program Files\`, and `'unknown'`
+    otherwise, and exposes the result on
+    `RuntimeProcessObservation.labviewProcessBitness` plus
+    `labviewProcessExecutablePath`.
+  - `comparisonRuntimeLocator.locate()` short-circuits to
+    `blockedReason='windows-host-bitness-conflict'` when the observed
+    bitness is known and differs from the selected bitness, ahead of the
+    generic `windows-host-runtime-surface-contaminated` arm, and retains
+    `hostObservedLabviewBitness` and `hostObservedLabviewExecutablePath`
+    on the resulting `ComparisonRuntimeSelection` so the doctor and
+    quick-pick action can render the running bitness.
+  - `classifyRuntimeFailure` rewrites a generic `command-exited-nonzero`
+    failure to `'labview-host-bitness-conflict'` when the retained
+    process-exit observation shows a running `LabVIEW.exe` whose
+    `labviewProcessBitness` is known and differs from the selected
+    bitness, attaching a note that names both bitnesses.
+  - `comparisonRuntimeDoctor` emits a next-action line that names the
+    observed bitness (or `match the running session` when unknown),
+    references `viHistorySuite.labviewBitness`, and surfaces the same
+    guidance for both the preflight `windows-host-bitness-conflict`
+    blocked reason and the post-failure
+    `labview-host-bitness-conflict` failure reason.
+  - The VS Code comparison-report command shows a warning toast with a
+    `Pick Runtime Provider` action button whenever the action result
+    carries `blockedReason='windows-host-bitness-conflict'` or
+    `runtimeFailureReason='labview-host-bitness-conflict'`; selecting
+    the action invokes `labviewViHistory.pickRuntimeProvider`.
+- Agent Work Scope:
+  - Keep bitness inference path-based (no PE-header probe) and resolve the
+    executable through `Get-Process -Id <pid>` so the diagnostic does not
+    depend on additional probes. Reuse the existing
+    `observeWindowsProcesses` injection seam, the
+    `hostRuntimeConflictDetected` / `allowExistingWindowsHostRuntime`
+    flow, and the doctor blocked-reason switch. Do not introduce a
+    separate auto-correction path — VHS-REQ-621 surfaces the conflict
+    and hands off to VHS-REQ-620's quick-pick.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/commands/openViHistoryCommand.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - When extending the locator with new fact fields, propagate
+    `hostObservedLabviewBitness` and `hostObservedLabviewExecutablePath`
+    through every `locate()` return site so positive-path consumers can
+    surface the running session details without re-detecting.
+    Keep the diagnostic actionable: name both bitnesses in notes and
+    reuse the `Pick Runtime Provider` action rather than introducing a
+    new bespoke command.
+
+

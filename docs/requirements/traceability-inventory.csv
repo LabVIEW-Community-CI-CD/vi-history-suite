@@ -181,3 +181,18 @@ vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW p
 .vscode/extensions.json,dev-only,No,VS Code recommended extensions; workspace configuration.
 .vscode/launch.json,dev-only,No,VS Code debug launch configurations; workspace configuration.
 .vscode/tasks.json,dev-only,No,VS Code task definitions; workspace configuration.
+src/tooling/runtimeAutoDetect.ts,mapped,Yes,Filesystem-only host and Docker runtime detector mapped to VHS-REQ-616.
+src/tooling/runtimeSettingsSeed.ts,mapped,Yes,Activation seed-or-repair policy for VI History runtime settings mapped to VHS-REQ-616.
+src/ui/runtimeAvailabilityNotice.ts,mapped,Yes,Status bar and first-run missing-runtime notification surface mapped to VHS-REQ-617.
+src/commands/runtimeCommands.ts,mapped,Yes,Runtime convenience commands (detectRuntimeNow; resetFirstRunNotice; showRuntimeSummary) mapped to VHS-REQ-617.
+tests/unit/runtimeAutoDetect.test.ts,mapped,Yes,Detector unit tests mapped to VHS-REQ-616.
+tests/unit/runtimeSettingsSeed.test.ts,mapped,Yes,Settings seed-or-repair unit tests mapped to VHS-REQ-616.
+tests/unit/runtimeAvailabilityNotice.test.ts,mapped,Yes,Missing-runtime UX unit tests mapped to VHS-REQ-617.
+tests/unit/runtimeCommands.test.ts,mapped,Yes,Runtime convenience command unit tests mapped to VHS-REQ-617.
+src/tooling/gitPrerequisiteDetect.ts,mapped,Yes,Git --version probe with injectable runner mapped to VHS-REQ-619.
+src/ui/gitPrerequisiteNotice.ts,mapped,Yes,Git prerequisite status bar and first-run notice helpers mapped to VHS-REQ-619.
+tests/unit/gitPrerequisiteDetect.test.ts,mapped,Yes,Git --version probe unit tests mapped to VHS-REQ-619.
+tests/unit/gitPrerequisiteNotice.test.ts,mapped,Yes,Git prerequisite UX helper unit tests mapped to VHS-REQ-619.
+src/commands/pickRuntimeProviderCommand.ts,mapped,Yes,Runtime provider quick-pick command mapped to VHS-REQ-620.
+tests/unit/pickRuntimeProviderCommand.test.ts,mapped,Yes,Runtime provider quick-pick unit tests mapped to VHS-REQ-620.
+tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-620.

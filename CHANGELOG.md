@@ -10,7 +10,108 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
-## [1.4.3] - 2026-05-29
+## [1.8.0] - 2026-05-31
+
+### Added
+
+- Concurrent LabVIEW bitness conflict diagnostic for the Windows
+  comparison-report runtime (VHS-REQ-621). When a LabVIEW session is
+  already running at a different bitness than the selected runtime,
+  preflight now short-circuits with the new
+  `windows-host-bitness-conflict` blocked reason and the post-failure
+  classifier rewrites a generic `command-exited-nonzero` to
+  `labview-host-bitness-conflict`. The retained doctor summary names both
+  the observed running bitness and the currently selected bitness, the
+  process-observation packet retains `labviewProcessBitness` and
+  `labviewProcessExecutablePath`, and the comparison-report warning toast
+  exposes a `Pick Runtime Provider` action button that invokes
+  `labviewViHistory.pickRuntimeProvider` (reusing the VHS-REQ-620
+  quick-pick) so users can align `viHistorySuite.labviewBitness` with the
+  running LabVIEW session without hunting for the setting.
+
+## [1.7.0] - 2026-05-31
+
+### Added
+
+- CLI-driven runtime provider flip with reactive status bar (VHS-REQ-620).
+  Editing `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`,
+  or `viHistorySuite.labviewBitness` — whether by hand, by the bundled
+  `vihs --provider … --year … --bitness …` CLI, or by the new quick-pick —
+  immediately re-renders the `VI History runtime` status bar without waiting
+  for the focus-event throttle and without re-running filesystem detection.
+  The label now sources from the persisted selection when all three keys
+  are populated and the combination is satisfiable on this host, and
+  silently falls back to the auto-detection recommendation otherwise.
+- New `Pick Runtime Provider` command (id `labviewViHistory.pickRuntimeProvider`).
+  The status-bar item now targets this command, so a click opens a
+  quick-pick built from the cached detection: one entry per detected
+  LabVIEW host installation, one entry for Docker when the CLI is
+  available, plus a `Clear` option that removes the three persisted keys
+  and returns to auto-detection. Selections are written to
+  `ConfigurationTarget.Global` (VHS-REQ-620).
+- `Show Runtime Summary` now appends a `Drift:` line: `none` when the
+  persisted selection matches the recommendation or nothing is persisted,
+  `selection differs from recommendation: persisted=…, recommendation=…`
+  when persisted is satisfiable but diverges, and
+  `selection unsatisfiable on this host; falling back to recommendation`
+  when the persisted combination cannot be served on this host
+  (VHS-REQ-620).
+
+## [1.6.0] - 2026-05-31
+
+### Added
+
+- Git prerequisite detection on activation: a single `git --version` probe
+  is cached for the session and surfaces a `Git not detected` status bar
+  warning plus a one-time first-run information notice with an `Install
+  Git` action that opens [https://git-scm.com/downloads](https://git-scm.com/downloads)
+  when Git is not on PATH (VHS-REQ-619).
+- `labviewViHistory.open` is gated by the cached Git detection. When Git is
+  missing the command refuses with a warning toast linking to the install
+  page instead of starting the comparison flow and failing later inside the
+  Git CLI wrapper (VHS-REQ-619).
+
+## [1.5.0] - 2026-05-31
+
+### Added
+
+- Auto-materialized the local `vihs` runtime-settings launcher on every
+  extension activation so fresh installs and upgrades no longer require
+  running `labviewViHistory.prepareLocalRuntimeSettingsCli` before invoking
+  bare `vihs` from the integrated terminal (VHS-REQ-612).
+- Self-healing `vihs` launcher: when the stamped extension build folder is
+  missing after an upgrade, the launcher scans the per-user VS Code extension
+  roots for `svelderrainruiz.vi-history-suite-*` and rebinds to the newest
+  installed build instead of failing with `MODULE_NOT_FOUND`.
+- Filesystem-only runtime auto-detection on activation that scans for
+  installed LabVIEW host years (≥2025) and a Docker CLI, then seeds
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness` on first install and repairs them when the
+  persisted combination is no longer satisfiable, so users do not have to
+  configure the comparison runtime by hand (VHS-REQ-616).
+- Missing-runtime user experience: a `VI History runtime` status bar item
+  reflects detection outcome with a provider-specific label (e.g.,
+  `VI History runtime: LabVIEW 2026 x64`, `VI History runtime: Docker`,
+  or `VI History runtime: missing`), a one-time first-run information
+  notice surfaces install guidance for LabVIEW ≥2025 or Docker Desktop, and
+  a focus-event re-detect (throttled to 5 seconds) picks up runtime installs
+  performed after VS Code launched (VHS-REQ-617).
+- Three trust-gated VS Code commands under category `VI History` to make the
+  detection surface controllable from the palette: `Detect Runtime Now`
+  bypasses the focus-event throttle and refreshes the status bar; `Reset
+  First-Run Runtime Notice` clears the `vihs.firstRunNoRuntimeNoticeShown`
+  globalState flag after explicit modal confirmation; `Show Runtime Summary`
+  writes a structured report (platform, host installations, docker
+  availability, recommendation, persisted settings) to a `VI History:
+  Runtime` output channel with a clipboard `Copy` action (VHS-REQ-617).
+
+### Known Limitations
+
+- macOS host LabVIEW detection is not yet implemented. On `darwin`,
+  auto-detection returns no host installations and falls through to the
+  Docker CLI check; Marketplace-published builds for macOS still require
+  Docker Desktop until ≥2025 macOS builds of LabVIEW ship and the
+  `/Applications` scan is added (tracked as VHS-REQ-618).
 
 ### Changed
 

@@ -8,6 +8,7 @@ import {
 import {
   classifyLabviewCliDiagnosticText,
   executeComparisonReport,
+  inferLabviewBitnessFromExecutablePath,
   runComparisonCommandPlanWithObservation
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -664,6 +665,150 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.exitObservedProcessNames).toEqual([]);
   });
 
+  it('reclassifies a nonzero exit as labview-host-bitness-conflict when exit snapshot shows different-bitness LabVIEW (VHS-REQ-621)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.bitness = 'x86';
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: 'launch failed',
+          stderr: 'failed to launch',
+          exitProcessObservation: {
+            capturedAt: '2026-05-31T12:00:01.000Z',
+            trigger: 'process-exit',
+            observedProcesses: [
+              { imageName: 'LabVIEW.exe', pid: 1234 }
+            ],
+            observedProcessNames: ['LabVIEW.exe'],
+            labviewProcessObserved: true,
+            labviewCliProcessObserved: false,
+            lvcompareProcessObserved: false,
+            labviewProcessBitness: 'x64',
+            labviewProcessExecutablePath:
+              'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-05-31T12:00:00.000Z')
+          .mockReturnValueOnce('2026-05-31T12:00:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.failureReason).toBe('labview-host-bitness-conflict');
+    expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
+      'LabVIEW x64 was running at the retained process-exit snapshot'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
+      'comparison-report execution targeted LabVIEW x86'
+    );
+  });
+
+  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot shows matching-bitness LabVIEW (VHS-REQ-621)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.bitness = 'x64';
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: '',
+          stderr: 'other error',
+          exitProcessObservation: {
+            capturedAt: '2026-05-31T12:00:01.000Z',
+            trigger: 'process-exit',
+            observedProcesses: [{ imageName: 'LabVIEW.exe', pid: 4242 }],
+            observedProcessNames: ['LabVIEW.exe'],
+            labviewProcessObserved: true,
+            labviewCliProcessObserved: false,
+            lvcompareProcessObserved: false,
+            labviewProcessBitness: 'x64',
+            labviewProcessExecutablePath:
+              'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-05-31T12:00:00.000Z')
+          .mockReturnValueOnce('2026-05-31T12:00:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+  });
+
+  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot has unknown-bitness LabVIEW (VHS-REQ-621)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.bitness = 'x64';
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: '',
+          stderr: 'launch fail',
+          exitProcessObservation: {
+            capturedAt: '2026-05-31T12:00:01.000Z',
+            trigger: 'process-exit',
+            observedProcesses: [{ imageName: 'LabVIEW.exe', pid: 7777 }],
+            observedProcessNames: ['LabVIEW.exe'],
+            labviewProcessObserved: true,
+            labviewCliProcessObserved: false,
+            lvcompareProcessObserved: false,
+            labviewProcessBitness: 'unknown'
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-05-31T12:00:00.000Z')
+          .mockReturnValueOnce('2026-05-31T12:00:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+  });
+
   it('does not attach stale Linux headless diagnostics to a non-headless host success', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
@@ -1000,5 +1145,43 @@ describe('comparisonReportRuntimeExecution', () => {
       expect(result.record.runtimeExecution.doctorSummaryLines?.length).toBeGreaterThan(0);
       expect(writePacketRecord).toHaveBeenCalled();
     });
+  });
+});
+
+describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621)', () => {
+  it('returns x86 when path is under Program Files (x86)', () => {
+    expect(
+      inferLabviewBitnessFromExecutablePath(
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    ).toBe('x86');
+  });
+
+  it('returns x64 when path is under Program Files (without x86 suffix)', () => {
+    expect(
+      inferLabviewBitnessFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    ).toBe('x64');
+  });
+
+  it('returns unknown for a non-canonical install path', () => {
+    expect(
+      inferLabviewBitnessFromExecutablePath('D:\\Tools\\LabVIEW\\LabVIEW.exe')
+    ).toBe('unknown');
+  });
+
+  it('returns undefined for missing or empty input', () => {
+    expect(inferLabviewBitnessFromExecutablePath(undefined)).toBeUndefined();
+    expect(inferLabviewBitnessFromExecutablePath('')).toBeUndefined();
+    expect(inferLabviewBitnessFromExecutablePath('   ')).toBeUndefined();
+  });
+
+  it('normalizes forward slashes before classifying', () => {
+    expect(
+      inferLabviewBitnessFromExecutablePath(
+        'C:/Program Files (x86)/National Instruments/LabVIEW 2026/LabVIEW.exe'
+      )
+    ).toBe('x86');
   });
 });

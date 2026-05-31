@@ -16,3 +16,7 @@ vagrant/shared/
 vagrant/evidence/
 vagrant/.vagrant/
 vagrant/.vagrant-ci/
+
+# Offline installer ISOs (never commit)
+*.iso
+

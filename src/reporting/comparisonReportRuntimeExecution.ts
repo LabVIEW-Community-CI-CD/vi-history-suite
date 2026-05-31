@@ -103,6 +103,8 @@ export interface RuntimeObservedProcess {
   memUsage?: string;
 }
 
+export type ObservedLabviewBitness = 'x86' | 'x64' | 'unknown';
+
 export interface RuntimeProcessObservation {
   capturedAt: string;
   hostPlatform: NodeJS.Platform;
@@ -113,6 +115,17 @@ export interface RuntimeProcessObservation {
   labviewProcessObserved: boolean;
   labviewCliProcessObserved: boolean;
   lvcompareProcessObserved: boolean;
+  /**
+   * VHS-REQ-621: bitness of the first observed `LabVIEW.exe` running on the
+   * Windows host, inferred from its executable path. `undefined` when no
+   * LabVIEW.exe is running or when the path probe was skipped/failed.
+   */
+  labviewProcessBitness?: ObservedLabviewBitness;
+  /**
+   * Path of the first observed LabVIEW.exe that the bitness probe inspected.
+   * Captured so doctor notes can name the offending install precisely.
+   */
+  labviewProcessExecutablePath?: string;
 }
 
 export interface WindowsTcpListenerObservation {
@@ -149,6 +162,15 @@ export interface ObserveWindowsTcpListenersOptions {
 export interface ObserveWindowsProcessesDeps {
   execFileImpl?: typeof execFile;
   nowIso?: () => string;
+  /**
+   * VHS-REQ-621: optional override used by tests to resolve the executable
+   * path for a given LabVIEW.exe pid. Returns `undefined` to indicate the
+   * path could not be determined (e.g. access denied, process exited).
+   */
+  resolveWindowsLabviewExecutablePath?: (
+    pid: number,
+    hostPlatform: NodeJS.Platform
+  ) => Promise<string | undefined>;
 }
 
 export interface ObserveWindowsTcpListenersDeps {
@@ -539,6 +561,7 @@ async function runHostNativeExecution(
             engine: record.runtimeSelection.engine,
             exitCode: commandResult.exitCode,
             reportExists,
+            selectedBitness: record.runtimeSelection.bitness,
             stdout: commandResult.stdout,
             stderr: commandResult.stderr,
             processObservation: processObservation?.bannerSnapshot,
@@ -2936,6 +2959,7 @@ function classifyRuntimeFailure(options: {
   engine?: 'labview-cli' | 'lvcompare';
   exitCode: number;
   reportExists: boolean;
+  selectedBitness?: 'x86' | 'x64';
   stdout: string;
   stderr: string;
   processObservation?: RuntimeProcessObservation;
@@ -3008,6 +3032,27 @@ function classifyRuntimeFailure(options: {
         reason: 'labview-cli-connection-failed',
         notes: [
           'LabVIEW CLI launched or reused a headless LabVIEW session but failed to establish the required VI Server connection.'
+        ]
+      };
+    }
+
+    // VHS-REQ-621: Race-condition fallback. Preflight may have admitted a
+    // host runtime that became contaminated by a different-bitness LabVIEW
+    // launched between preflight and process-exit. Reclassify so the user
+    // sees the actionable bitness-conflict diagnostic instead of the generic
+    // nonzero exit message.
+    if (
+      options.selectedBitness &&
+      options.exitProcessObservation?.labviewProcessObserved === true &&
+      options.exitProcessObservation.labviewProcessBitness &&
+      options.exitProcessObservation.labviewProcessBitness !== 'unknown' &&
+      options.exitProcessObservation.labviewProcessBitness !== options.selectedBitness
+    ) {
+      const observed = options.exitProcessObservation.labviewProcessBitness;
+      return {
+        reason: 'labview-host-bitness-conflict',
+        notes: [
+          `LabVIEW ${observed} was running at the retained process-exit snapshot while comparison-report execution targeted LabVIEW ${options.selectedBitness}; LabVIEW refuses to start a second instance at a different bitness, which is consistent with the observed nonzero exit.`
         ]
       };
     }
@@ -3254,6 +3299,22 @@ export async function observeWindowsRuntimeProcesses(
   );
   const observedProcessNames = [...new Set(observedProcesses.map((processInfo) => processInfo.imageName))];
 
+  const labviewProcess = observedProcesses.find((processInfo) =>
+    isExactObservedRuntimeProcessName(processInfo.imageName, 'LabVIEW.exe')
+  );
+  let labviewProcessBitness: ObservedLabviewBitness | undefined;
+  let labviewProcessExecutablePath: string | undefined;
+  if (labviewProcess) {
+    try {
+      const resolver =
+        deps.resolveWindowsLabviewExecutablePath ?? resolveWindowsLabviewExecutablePath;
+      labviewProcessExecutablePath = await resolver(labviewProcess.pid, options.hostPlatform);
+      labviewProcessBitness = inferLabviewBitnessFromExecutablePath(labviewProcessExecutablePath);
+    } catch {
+      labviewProcessBitness = undefined;
+    }
+  }
+
   return {
     capturedAt: (deps.nowIso ?? defaultNowIso)(),
     hostPlatform: options.hostPlatform,
@@ -3261,16 +3322,84 @@ export async function observeWindowsRuntimeProcesses(
     trigger: options.trigger,
     observedProcesses,
     observedProcessNames,
-    labviewProcessObserved: observedProcesses.some((processInfo) =>
-      isExactObservedRuntimeProcessName(processInfo.imageName, 'LabVIEW.exe')
-    ),
+    labviewProcessObserved: Boolean(labviewProcess),
     labviewCliProcessObserved: observedProcesses.some((processInfo) =>
       isExactObservedRuntimeProcessName(processInfo.imageName, 'LabVIEWCLI.exe')
     ),
     lvcompareProcessObserved: observedProcesses.some((processInfo) =>
       isExactObservedRuntimeProcessName(processInfo.imageName, 'LVCompare.exe')
-    )
+    ),
+    labviewProcessBitness,
+    labviewProcessExecutablePath
   };
+}
+
+/**
+ * VHS-REQ-621: Infer LabVIEW.exe bitness from its filesystem path. The Windows
+ * installer for LabVIEW always lands x86 under `Program Files (x86)\National
+ * Instruments\...` and x64 under `Program Files\National Instruments\...`. This
+ * pattern is the same canonical-path discipline used by the runtime locator's
+ * documented scan paths, so reuse it instead of probing PE headers.
+ */
+export function inferLabviewBitnessFromExecutablePath(
+  executablePath: string | undefined
+): ObservedLabviewBitness | undefined {
+  if (typeof executablePath !== 'string' || executablePath.trim().length === 0) {
+    return undefined;
+  }
+  const normalized = executablePath.toLowerCase().replace(/\//g, '\\');
+  if (normalized.includes('\\program files (x86)\\')) {
+    return 'x86';
+  }
+  if (normalized.includes('\\program files\\')) {
+    return 'x64';
+  }
+  return 'unknown';
+}
+
+/**
+ * VHS-REQ-621: Resolve the executable path for a Windows process id via
+ * PowerShell. Returns `undefined` on any failure so the caller can record an
+ * `unknown` bitness without throwing.
+ */
+async function resolveWindowsLabviewExecutablePath(
+  pid: number,
+  hostPlatform: NodeJS.Platform
+): Promise<string | undefined> {
+  if (hostPlatform !== 'win32' || !Number.isInteger(pid) || pid <= 0) {
+    return undefined;
+  }
+  const powershell = path.win32.join(
+    process.env.SYSTEMROOT ?? 'C:\\Windows',
+    'System32',
+    'WindowsPowerShell',
+    'v1.0',
+    'powershell.exe'
+  );
+  return await new Promise<string | undefined>((resolve) => {
+    execFile(
+      powershell,
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `try { (Get-Process -Id ${pid} -ErrorAction Stop).Path } catch { '' }`
+      ],
+      {
+        encoding: 'utf8',
+        windowsHide: true,
+        maxBuffer: 1024 * 1024
+      },
+      (error, stdout) => {
+        if (error) {
+          resolve(undefined);
+          return;
+        }
+        const trimmed = String(stdout ?? '').trim();
+        resolve(trimmed.length > 0 ? trimmed : undefined);
+      }
+    );
+  });
 }
 
 export async function observeWindowsTcpListeners(

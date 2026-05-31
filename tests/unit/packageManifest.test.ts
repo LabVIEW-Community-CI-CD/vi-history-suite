@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.4.3');
+    expect(manifest.version).toBe('1.8.0');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -83,7 +83,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('uses explicit command activation without startup or manifest-level Git activation', () => {
+  it('activates on startup plus explicit commands without manifest-level Git activation', () => {
     const manifest = readManifest();
 
     expect(manifest.files).toEqual([
@@ -95,17 +95,51 @@ describe('extension manifest public metadata', () => {
       'LICENSE'
     ]);
     expect(manifest.icon).toBe('resources/marketplace/vi-history-suite-icon.png');
-    expect(manifest.activationEvents).not.toContain('onStartupFinished');
+    expect(manifest.activationEvents).toContain('onStartupFinished');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
     expect(manifest.activationEvents).toContain(
       'onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli'
     );
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
+    expect(manifest.activationEvents).toContain(
+      'onCommand:labviewViHistory.detectRuntimeNow'
+    );
+    expect(manifest.activationEvents).toContain(
+      'onCommand:labviewViHistory.resetFirstRunNotice'
+    );
+    expect(manifest.activationEvents).toContain(
+      'onCommand:labviewViHistory.showRuntimeSummary'
+    );
+    expect(manifest.activationEvents).toContain(
+      'onCommand:labviewViHistory.pickRuntimeProvider'
+    );
     expect(manifest.extensionDependencies ?? []).not.toContain('vscode.git');
   });
 
-  it('contributes the visibility gate in explorer and editor title menus', () => {
+  it('contributes the runtime convenience commands under the VI History category', () => {
     const manifest = readManifest();
+    const commands = manifest.contributes?.commands ?? [];
+    const titles = new Map(commands.map((entry) => [entry.command ?? '', entry]));
+
+    expect(titles.get('labviewViHistory.detectRuntimeNow')).toMatchObject({
+      title: 'Detect Runtime Now',
+      category: 'VI History'
+    });
+    expect(titles.get('labviewViHistory.resetFirstRunNotice')).toMatchObject({
+      title: 'Reset First-Run Runtime Notice',
+      category: 'VI History'
+    });
+    expect(titles.get('labviewViHistory.showRuntimeSummary')).toMatchObject({
+      title: 'Show Runtime Summary',
+      category: 'VI History'
+    });
+    expect(titles.get('labviewViHistory.pickRuntimeProvider')).toMatchObject({
+      title: 'Pick Runtime Provider',
+      category: 'VI History'
+    });
+  });
+
+  it('contributes the visibility gate in explorer and editor title menus', () => {    const manifest = readManifest();
     const expectedMenuEntry = {
       command: 'labviewViHistory.open',
       group: '3_compare',
