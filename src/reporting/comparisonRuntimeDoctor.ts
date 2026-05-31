@@ -244,6 +244,15 @@ function deriveRuntimeDoctorNextAction(options: {
 
     if (
       options.runtimeSelection.platform === 'win32' &&
+      blockedReason === 'windows-host-bitness-conflict'
+    ) {
+      const observedBitness = options.runtimeSelection.hostObservedLabviewBitness ?? 'unknown';
+      const selectedBitness = options.runtimeSelection.bitness;
+      return `Next action: close the running LabVIEW ${observedBitness} session, or set viHistorySuite.labviewBitness to ${observedBitness === 'unknown' ? 'match the running session' : observedBitness} (currently ${selectedBitness}), then rerun comparison report generation.`;
+    }
+
+    if (
+      options.runtimeSelection.platform === 'win32' &&
       blockedReason === 'windows-host-runtime-surface-contaminated'
     ) {
       if (providerRequest === 'host') {
@@ -304,6 +313,15 @@ function deriveRuntimeDoctorNextAction(options: {
   if (options.runtimeExecution.state === 'failed') {
     if (options.runtimeExecution.diagnosticReason === 'labview-cli-vi-password-protected') {
       return 'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.';
+    }
+
+    // VHS-REQ-621: post-failure bitness conflict reclassification.
+    if (
+      options.runtimeSelection.platform === 'win32' &&
+      options.runtimeExecution.failureReason === 'labview-host-bitness-conflict'
+    ) {
+      const selectedBitness = options.runtimeSelection.bitness;
+      return `Next action: close the running LabVIEW session that contended with comparison-report execution, or set viHistorySuite.labviewBitness to match the running LabVIEW (currently ${selectedBitness}), then rerun comparison report generation.`;
     }
 
     if (
