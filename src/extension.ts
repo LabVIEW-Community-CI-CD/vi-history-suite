@@ -37,9 +37,14 @@ import {
 import {
   admitLocalRuntimeSettingsCliToTerminalPath,
   type MaterializedLocalRuntimeSettingsCli,
+  resolveDefaultVsCodeSettingsPath,
   resolveLocalRuntimeSettingsCliContract,
   runLocalRuntimeSettingsCli
 } from './tooling/localRuntimeSettingsCli';
+import { detectAvailableRuntimes } from './tooling/runtimeAutoDetect';
+import { applyRuntimeSettingsSeed } from './tooling/runtimeSettingsSeed';
+import { createRuntimeAvailabilityWatcher } from './ui/runtimeAvailabilityNotice';
+import { registerRuntimeRuntimeCommands } from './commands/runtimeCommands';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
 import {
@@ -136,6 +141,48 @@ export async function activate(
   let admittedLocalRuntimeSettingsCli: MaterializedLocalRuntimeSettingsCli | undefined;
   let workspaceRuntime: WorkspaceRuntime | undefined;
   let workspaceRuntimePromise: Promise<WorkspaceRuntime> | undefined;
+
+  // VHS-REQ-612: Idempotently materialize the local runtime settings CLI on every
+  // activation so terminal users never need to manually run the prepare command
+  // after install or upgrade. The explicit prepare command remains as a manual
+  // refresh path. Failures are logged but never block extension activation.
+  if (context.globalStorageUri) {
+    try {
+      admittedLocalRuntimeSettingsCli = await admitLocalRuntimeSettingsCliToTerminalPath(
+        context.globalStorageUri.fsPath,
+        context.extensionPath,
+        context.environmentVariableCollection
+      );
+    } catch (error) {
+      console.error(
+        '[vi-history-suite] Failed to auto-materialize local runtime settings CLI during activation.',
+        error
+      );
+    }
+  }
+
+  // VHS-REQ-616: Seed or repair runtime selection in the user settings.json so
+  // that fresh installs and upgrades arrive with a working comparison provider
+  // already chosen, and stale persisted values are corrected automatically.
+  // Detection is filesystem-only so activation cost stays bounded; the heavier
+  // `comparisonRuntimeLocator` continues to gate report execution.
+  try {
+    const detection = await detectAvailableRuntimes();
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath();
+    await applyRuntimeSettingsSeed(detection, settingsFilePath);
+  } catch (error) {
+    console.error(
+      '[vi-history-suite] Failed to seed or repair runtime selection in user settings.',
+      error
+    );
+  }
+
+  // VHS-REQ-617: Surface runtime availability in the status bar plus a
+  // first-run notification when no comparison runtime is detected. The watcher
+  // re-detects on window focus events with a 5 second throttle.
+  const runtimeAvailabilityWatcher = createRuntimeAvailabilityWatcher(context);
+  context.subscriptions.push(runtimeAvailabilityWatcher);
+  registerRuntimeRuntimeCommands(context, runtimeAvailabilityWatcher);
 
   const ensureWorkspaceRuntime = async (): Promise<WorkspaceRuntime> => {
     if (workspaceRuntime) {

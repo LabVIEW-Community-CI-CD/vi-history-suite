@@ -135,7 +135,7 @@ const VALIDATION_PROOF_ISSUE_FILE_NAME = 'vihs-validation-issue.md';
 const MISSING_NODE_RUNTIME_MESSAGE =
   'VI History runtime-settings CLI requires the standard VS Code runtime or a usable Node.js runtime. Install or repair VS Code, set VI_HISTORY_SUITE_NODE_EXE, or install Node.js, then rerun \"VI History: Prepare Local Runtime Settings CLI\" to refresh the launcher if this dependency changed.';
 const STALE_LAUNCHER_MESSAGE =
-  'VI History runtime-settings CLI launcher is stale or incomplete. Run \"VI History: Prepare Local Runtime Settings CLI\" again to refresh the generated launcher files.';
+  'VI History runtime-settings CLI launcher could not locate any installed extension build. Open VS Code once to let the extension refresh the launcher, or reinstall the VI History Suite extension.';
 
 export type RuntimeValidationErrorCode =
   | 'VIHS_OK'
@@ -1168,7 +1168,7 @@ function buildValidationIssueBody(proof: Record<string, unknown>): string {
   ].join('\n');
 }
 
-async function writeVsCodeSettingsFile(
+export async function writeVsCodeSettingsFile(
   settingsFilePath: string,
   provider: LocalRuntimeSettingsCliProvider,
   labviewVersion: string,
@@ -1207,14 +1207,14 @@ async function writeVsCodeSettingsFile(
   );
 }
 
-interface PersistedRuntimeSettingsFacts {
+export interface PersistedRuntimeSettingsFacts {
   persistedProvider?: string;
   persistedLabviewVersion?: string;
   persistedLabviewBitness?: string;
   runtimeSettings: ComparisonRuntimeSettings;
 }
 
-async function readPersistedRuntimeSettingsFacts(
+export async function readPersistedRuntimeSettingsFacts(
   settingsFilePath: string,
   fsApi: Pick<typeof fs, 'readFile'>
 ): Promise<PersistedRuntimeSettingsFacts> {
@@ -1503,11 +1503,26 @@ function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platfo
   return `'${escapeSingleQuotedShellString(launcherPath)}'`;
 }
 
+export const VI_HISTORY_SUITE_EXTENSION_FOLDER_PREFIX = 'svelderrainruiz.vi-history-suite-';
+export const VI_HISTORY_SUITE_LAUNCHER_MODULE_RELATIVE_PATH = path.posix.join(
+  'out',
+  'tooling',
+  'localRuntimeSettingsCli.js'
+);
+
 function renderJavascriptLauncher(modulePath: string): string {
+  // Self-healing template (VHS-REQ-616): when the originally-stamped module
+  // path is missing because the extension was upgraded after this launcher was
+  // generated, fall back to scanning the well-known per-user extension roots
+  // for any installed `svelderrainruiz.vi-history-suite-*` folder and load its
+  // bundled `out/tooling/localRuntimeSettingsCli.js`.
   return [
     'const fs = require(\'node:fs\');',
+    'const os = require(\'node:os\');',
     'const path = require(\'node:path\');',
-    `const modulePath = ${JSON.stringify(modulePath)};`,
+    `const stampedModulePath = ${JSON.stringify(modulePath)};`,
+    `const extensionFolderPrefix = ${JSON.stringify(VI_HISTORY_SUITE_EXTENSION_FOLDER_PREFIX)};`,
+    `const launcherModuleRelativePath = ${JSON.stringify(VI_HISTORY_SUITE_LAUNCHER_MODULE_RELATIVE_PATH)};`,
     'function writeError(message) {',
     '  try {',
     '    fs.writeSync(2, `${String(message)}\\n`);',
@@ -1515,21 +1530,88 @@ function renderJavascriptLauncher(modulePath: string): string {
     '    console.error(message);',
     '  }',
     '}',
-    'let cli;',
-    'try {',
-    '  cli = require(modulePath);',
-    '} catch (error) {',
+    'function pathExists(candidate) {',
+    '  try {',
+    '    fs.accessSync(candidate);',
+    '    return true;',
+    '  } catch {',
+    '    return false;',
+    '  }',
+    '}',
+    'function buildExtensionRootCandidates() {',
+    '  const home = os.homedir();',
+    '  const roots = [',
+    '    path.join(home, \'.vscode\', \'extensions\'),',
+    '    path.join(home, \'.vscode-insiders\', \'extensions\'),',
+    '    path.join(home, \'.vscode-server\', \'extensions\'),',
+    '    path.join(home, \'.vscode-server-insiders\', \'extensions\')',
+    '  ];',
+    '  return roots.filter(pathExists);',
+    '}',
+    'function compareExtensionFolderNames(left, right) {',
+    '  // Sort newest-first using natural numeric comparison on the version suffix.',
+    '  const leftVersion = left.slice(extensionFolderPrefix.length);',
+    '  const rightVersion = right.slice(extensionFolderPrefix.length);',
+    '  return rightVersion.localeCompare(leftVersion, undefined, { numeric: true, sensitivity: \'base\' });',
+    '}',
+    'function findInstalledExtensionModulePath() {',
+    '  const roots = buildExtensionRootCandidates();',
+    '  for (const root of roots) {',
+    '    let entries;',
+    '    try {',
+    '      entries = fs.readdirSync(root);',
+    '    } catch {',
+    '      continue;',
+    '    }',
+    '    const matches = entries',
+    '      .filter((entry) => entry.startsWith(extensionFolderPrefix))',
+    '      .sort(compareExtensionFolderNames);',
+    '    for (const match of matches) {',
+    '      const candidate = path.join(root, match, launcherModuleRelativePath);',
+    '      if (pathExists(candidate)) {',
+    '        return candidate;',
+    '      }',
+    '    }',
+    '  }',
+    '  return undefined;',
+    '}',
+    'function tryRequire(candidate) {',
+    '  try {',
+    '    return { module: require(candidate), error: undefined };',
+    '  } catch (error) {',
+    '    return { module: undefined, error };',
+    '  }',
+    '}',
+    'function isModuleNotFoundError(error) {',
+    '  return Boolean(',
+    '    error &&',
+    '      typeof error === \'object\' &&',
+    '      \'code\' in error &&',
+    '      error.code === \'MODULE_NOT_FOUND\'',
+    '  );',
+    '}',
+    'let resolvedModulePath = stampedModulePath;',
+    'let attempt = tryRequire(resolvedModulePath);',
+    'if (!attempt.module && isModuleNotFoundError(attempt.error)) {',
+    '  const fallback = findInstalledExtensionModulePath();',
+    '  if (fallback && fallback !== stampedModulePath) {',
+    '    resolvedModulePath = fallback;',
+    '    attempt = tryRequire(resolvedModulePath);',
+    '  }',
+    '}',
+    'if (!attempt.module) {',
     `  writeError(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
-    '  if (error instanceof Error && error.message) {',
-    "    writeError(`Module: ${path.resolve(modulePath)}`);",
-    '    writeError(error.message);',
+    '  if (attempt.error instanceof Error && attempt.error.message) {',
+    '    writeError(`Module: ${path.resolve(resolvedModulePath)}`);',
+    '    writeError(attempt.error.message);',
     '  }',
     '  process.exitCode = 1;',
     '  return;',
     '}',
+    'const cli = attempt.module;',
     'if (!cli || typeof cli.runLocalRuntimeSettingsCliMain !== \'function\') {',
     `  writeError(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
-    "  writeError(`Module: ${path.resolve(modulePath)}`);",
+    "  writeError(`Module: ${path.resolve(resolvedModulePath)}`);",
     '  process.exitCode = 1;',
     '  return;',
     '}',

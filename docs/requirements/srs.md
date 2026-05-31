@@ -1267,22 +1267,30 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
 - Statement: The extension shall expose installed runtime settings CLI
-  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` so the
-  local `vihs` launcher is materialized or refreshed and preparation failures
-  are reported with actionable outcomes.
+  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` and
+  shall additionally auto-materialize the local `vihs` launcher on every
+  activation so users do not need to rerun the prepare command after install
+  or upgrade. Preparation failures, including stale-launcher recovery, must
+  surface actionable outcomes.
 - Acceptance Criteria:
   - The extension manifest contributes
-    `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on that
-    command.
-  - Command registration routes preparation through
-    `admitLocalRuntimeSettingsCliToTerminalPath`, returns
-    `prepared-local-runtime-settings-cli` with launcher/settings-target
-    contract fields, and surfaces an actionable success message.
+    `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on
+    `onStartupFinished` plus that command.
+  - Activation calls `admitLocalRuntimeSettingsCliToTerminalPath` idempotently
+    so the bare `vihs` terminal entrypoint always points at the currently
+    installed extension build.
+  - Command registration routes manual preparation through the same admission
+    helper, returns `prepared-local-runtime-settings-cli` with
+    launcher/settings-target contract fields, and surfaces an actionable
+    success message.
   - When extension global storage is unavailable, the command reports
     `missing-global-storage-uri` and a user-facing warning that preparation
     could not proceed.
   - Preparation remains admitted in untrusted workspaces as a low-risk local
     materialization path while compare execution remains blocked there.
+  - The generated `vihs` JavaScript launcher self-heals when its stamped
+    module path is missing by scanning the per-user VS Code extension roots
+    for any installed `svelderrainruiz.vi-history-suite-*` build.
 - Agent Work Scope:
   - Change command exposure evidence, requirement mapping, and verification
     references together without changing runtime provider selection behavior.
@@ -1296,8 +1304,10 @@ Missing numeric IDs are intentional.
   - `tests/integration/suite/extensionHost.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
-  - Keep this requirement focused on installed CLI preparation and failure
-    reporting; do not change runtime selection semantics.
+  - Keep this requirement focused on installed CLI preparation, activation
+    auto-materialization, and launcher self-healing; do not change runtime
+    selection semantics here. Selection seed-or-repair and missing-runtime UX
+    are owned by VHS-REQ-616 and VHS-REQ-617 respectively.
 
 ### VHS-REQ-613: Coverage Intelligence And Test-Risk Mapping
 
@@ -1435,3 +1445,113 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep this requirement as the operating contract for Done and keep hosted
     `DoD Gate / dod` enforcement inside the required public CI workflow.
+
+### VHS-REQ-616: Runtime Auto-Selection And Stale Settings Repair
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall detect installed comparison runtimes
+  (LabVIEW host \u22652025 and Docker CLI) on activation through a bounded
+  filesystem-only probe, and shall seed or repair the persisted
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness` user settings so a working comparison
+  selection is in place after fresh installs and upgrades without requiring a
+  manual command.
+- Acceptance Criteria:
+  - Activation runs `detectAvailableRuntimes` whose Windows, Linux, and macOS
+    branches read only from the filesystem and PATH and never spawn child
+    processes.
+  - When no VI History runtime keys are persisted, the extension seeds the
+    user settings.json with the recommended provider, year, and bitness.
+  - When all three keys are persisted but the persisted combination is not
+    satisfiable by the current detection, the extension repairs the values to
+    the recommendation; partially populated keys are also repaired.
+  - When the persisted combination is satisfiable, the extension preserves
+    the existing values verbatim.
+  - When no runtime is detected, the extension leaves persisted values
+    unchanged and reports `no-runtime-detected` from the seed module.
+  - The recommendation precedence is: highest installed LabVIEW year wins,
+    tied years prefer x64; otherwise Docker host runtime at year 2026 / x64;
+    otherwise no recommendation.
+  - Failures during detection or seeding never block extension activation;
+    they are logged with the `[vi-history-suite]` prefix.
+- Agent Work Scope:
+  - Change activation seed/repair logic, detection helpers, and their tests
+    together; do not move logic into `comparisonRuntimeLocator` which remains
+    the heavier validation surface.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/tooling/runtimeAutoDetect.ts`
+  - `src/tooling/runtimeSettingsSeed.ts`
+  - `src/tooling/localRuntimeSettingsCli.ts`
+- Verification References:
+  - `tests/unit/runtimeAutoDetect.test.ts`
+  - `tests/unit/runtimeSettingsSeed.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep detection filesystem-only at activation time; richer registry,
+    daemon-reachability, or process probes belong to
+    `comparisonRuntimeLocator` and `vihs --validate`.
+
+### VHS-REQ-617: Missing-Runtime User Notification And Status Surface
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall surface comparison runtime availability in
+  the VS Code status bar and shall raise a one-time first-run notification
+  when no comparison runtime is detected, with a focus-event re-detect that is
+  throttled so users learn promptly when they install LabVIEW or Docker
+  without paying repeated detection costs.
+- Acceptance Criteria:
+  - A status bar item titled `VI History runtime` is shown after activation
+    and reflects the latest detection outcome. When a runtime is available,
+    the label includes the provider-specific suffix (e.g.,
+    `VI History runtime: LabVIEW 2026 x64`, `VI History runtime: Docker`);
+    when no runtime is detected, the label reads
+    `VI History runtime: missing`.
+  - When detection reports no runtime, the extension shows a single
+    information notification per user globalState flag
+    `vihs.firstRunNoRuntimeNoticeShown` so the message is not repeated on
+    subsequent activations until the user clears it.
+  - The watcher re-detects on `vscode.window.onDidChangeWindowState` focus
+    transitions and ignores re-detect requests received within
+    `RUNTIME_RE_DETECT_THROTTLE_MS` of the last run.
+  - The watcher is registered as an extension subscription so its status bar
+    item and listener are disposed when the extension deactivates.
+  - Detection failures inside the watcher are logged but never throw out of
+    activation.
+  - The extension contributes three palette commands under category `VI
+    History`: `Detect Runtime Now`
+    (`labviewViHistory.detectRuntimeNow`), `Reset First-Run Runtime Notice`
+    (`labviewViHistory.resetFirstRunNotice`), and `Show Runtime Summary`
+    (`labviewViHistory.showRuntimeSummary`). Each command refuses to run in
+    untrusted workspaces with a warning message.
+  - `Detect Runtime Now` bypasses the focus-event throttle by forcing a
+    fresh detection pass and updating the status bar.
+  - `Reset First-Run Runtime Notice` requires explicit modal confirmation
+    before clearing the `vihs.firstRunNoRuntimeNoticeShown` globalState
+    flag.
+  - `Show Runtime Summary` writes a structured multi-line report (platform,
+    host installations, docker availability, recommendation, persisted
+    settings) to the `VI History: Runtime` output channel and offers a
+    `Copy` action to place the report on the clipboard.
+- Agent Work Scope:
+  - Change runtime availability UX surfaces, their pure decision helpers,
+    and their tests together; modal copy and external install URLs are
+    centralized in `runtimeAvailabilityNotice.ts`. The three runtime
+    convenience commands live in `src/commands/runtimeCommands.ts` and
+    inject `detect`/`isTrusted` boundaries for deterministic tests.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/commands/runtimeCommands.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/runtimeCommands.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep first-run gating, throttling, and copy in this requirement; runtime
+    detection itself stays under VHS-REQ-616.

@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -43,9 +43,13 @@
     "LICENSE"
   ],
   "activationEvents": [
+    "onStartupFinished",
     "onCommand:labviewViHistory.open",
     "onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli",
-    "onCommand:labviewViHistory.openDocumentation"
+    "onCommand:labviewViHistory.openDocumentation",
+    "onCommand:labviewViHistory.detectRuntimeNow",
+    "onCommand:labviewViHistory.resetFirstRunNotice",
+    "onCommand:labviewViHistory.showRuntimeSummary"
   ],
   "contributes": {
     "commands": [
@@ -62,6 +66,21 @@
       {
         "command": "labviewViHistory.prepareLocalRuntimeSettingsCli",
         "title": "Prepare Local Runtime Settings CLI",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.detectRuntimeNow",
+        "title": "Detect Runtime Now",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.resetFirstRunNotice",
+        "title": "Reset First-Run Runtime Notice",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.showRuntimeSummary",
+        "title": "Show Runtime Summary",
         "category": "VI History"
       }
     ],

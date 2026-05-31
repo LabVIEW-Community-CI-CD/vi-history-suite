@@ -90,6 +90,35 @@ vi.mock('../../src/git/gitApi', () => ({
   getBuiltInGitApi: getBuiltInGitApiMock
 }));
 
+vi.mock('../../src/tooling/runtimeAutoDetect', () => ({
+  detectAvailableRuntimes: vi.fn(async () => ({
+    platform: 'linux',
+    host: { installations: [] },
+    docker: { cliAvailable: false }
+  })),
+  recommendRuntimeFromDetection: vi.fn(() => ({ provider: 'none' as const }))
+}));
+
+vi.mock('../../src/tooling/runtimeSettingsSeed', () => ({
+  applyRuntimeSettingsSeed: vi.fn(async () => ({
+    outcome: 'no-runtime-detected',
+    settingsFilePath: '/home/test/.config/Code/User/settings.json',
+    recommendation: { provider: 'none' as const },
+    previous: {}
+  }))
+}));
+
+vi.mock('../../src/ui/runtimeAvailabilityNotice', () => ({
+  createRuntimeAvailabilityWatcher: vi.fn(() => ({
+    dispose: vi.fn(),
+    forceRefresh: vi.fn(async () => undefined)
+  }))
+}));
+
+vi.mock('../../src/commands/runtimeCommands', () => ({
+  registerRuntimeRuntimeCommands: vi.fn()
+}));
+
 vi.mock('../../src/indexing/viEligibilityIndexer', () => ({
   ViEligibilityIndexer: class MockViEligibilityIndexer {
     constructor(gitApi: unknown, workspaceState: unknown) {
@@ -157,6 +186,7 @@ vi.mock('../../src/git/gitCli', () => ({
 vi.mock('../../src/tooling/localRuntimeSettingsCli', () => ({
   admitLocalRuntimeSettingsCliToTerminalPath: admitLocalRuntimeSettingsCliToTerminalPathMock,
   resolveLocalRuntimeSettingsCliContract: resolveLocalRuntimeSettingsCliContractMock,
+  resolveDefaultVsCodeSettingsPath: vi.fn(() => '/home/test/.config/Code/User/settings.json'),
   runLocalRuntimeSettingsCli: vi.fn()
 }));
 
@@ -174,6 +204,8 @@ vi.mock('../../src/tooling/runtimeSettingsLiveSessionSafeRestore', () => ({
 }));
 
 import { activate } from '../../src/extension';
+import { registerRuntimeRuntimeCommands } from '../../src/commands/runtimeCommands';
+import { createRuntimeAvailabilityWatcher } from '../../src/ui/runtimeAvailabilityNotice';
 
 function createContext(overrides: Record<string, unknown> = {}) {
   return {
@@ -224,14 +256,28 @@ describe('extension activation lazy side effects', () => {
     });
   });
 
-  it('does not resolve Git, index, or prepare vihs during activation, docs, or prepare', async () => {
+  it('auto-materializes the runtime CLI on activation without resolving Git or starting indexing', async () => {
     const api = await activate(createContext() as never);
 
+    expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledTimes(1);
+    expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledWith(
+      '/tmp/vihs-global-storage',
+      '/workspace/vi-history-suite',
+      expect.objectContaining({ prepend: expect.any(Function) })
+    );
+    expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(materializedCli);
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(viEligibilityIndexerConstructedWith).toEqual([]);
     expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);
     expect(viEligibilityIndexerStartMock).not.toHaveBeenCalled();
-    expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBeUndefined();
+    const watcherInstance = vi
+      .mocked(createRuntimeAvailabilityWatcher)
+      .mock.results[0]?.value;
+    expect(registerRuntimeRuntimeCommands).toHaveBeenCalledTimes(1);
+    expect(registerRuntimeRuntimeCommands).toHaveBeenCalledWith(
+      expect.anything(),
+      watcherInstance
+    );
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
     expect(api.getEligibilityDebugSnapshot()).toEqual({
       indexedRepositoryRoots: [],
@@ -247,11 +293,8 @@ describe('extension activation lazy side effects', () => {
 
     await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
 
-    expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledWith(
-      '/tmp/vihs-global-storage',
-      '/workspace/vi-history-suite',
-      expect.objectContaining({ prepend: expect.any(Function) })
-    );
+    // Manual prepare remains a refresh path; admission is invoked again, idempotently.
+    expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledTimes(2);
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(viEligibilityIndexerConstructedWith).toEqual([]);
     expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);

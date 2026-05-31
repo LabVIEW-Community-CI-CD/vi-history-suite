@@ -150,6 +150,33 @@ Operational guidance:
 | Maintainer Windows/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
 | Vagrant | Optional isolated local helper | Not a release gate |
 
+## Activation-Time Runtime Auto-Detect
+
+The extension performs a filesystem-only runtime probe on every activation
+(VHS-REQ-616 and VHS-REQ-617):
+
+- Windows scans `${ProgramFiles}\National Instruments\LabVIEW <year>[ Q1|Q3]`
+  and the `Program Files (x86)` mirror; Linux scans
+  `/usr/local/natinst/LabVIEW-<year>-64`; macOS hosts are treated as
+  Docker-only. The probe walks `PATH` for a `docker` binary and never spawns
+  child processes.
+- Activation seeds `viHistorySuite.runtimeProvider`,
+  `viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness` when
+  unset and repairs them when the persisted combination is not satisfiable
+  by the current detection. Persisted satisfiable values are preserved
+  verbatim.
+- The `vihs` launcher is auto-materialized on activation
+  (`labviewViHistory.prepareLocalRuntimeSettingsCli` remains as the manual
+  refresh entry point) and self-heals on `MODULE_NOT_FOUND` after upgrades.
+- A `VI History runtime` status bar item reflects detection outcome and a
+  first-run information notice fires once per user when no runtime is
+  detected (`vihs.firstRunNoRuntimeNoticeShown` globalState flag). Re-detect
+  on focus events is throttled to 5 seconds.
+
+These probes are intentionally lightweight; richer registry, daemon, or
+process probes belong to `comparisonRuntimeLocator` and the `vihs --validate`
+CLI surface.
+
 ## Diagnostic Test VSIX
 
 Use the `Package Test VSIX` workflow when a reporter needs to retest a fix that

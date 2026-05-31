@@ -631,3 +631,5 @@ VHS-SYS-REQ-014,System,Active,syrs.md#vhs-sys-req-014-agent-targetable-requireme
 VHS-SYS-REQ-015,System,Active,syrs.md#vhs-sys-req-015-large-repository-branch-switch-responsiveness,,,docs/requirements/syrs.md
 VHS-SYS-REQ-016,System,Active,syrs.md#vhs-sys-req-016-governed-release-branch-promotion,,,docs/requirements/syrs.md
 VHS-SYS-REQ-017,System,Active,syrs.md#vhs-sys-req-017-coverage-led-assurance-operating-model,,,docs/requirements/syrs.md
+VHS-REQ-616,Software,Active,srs.md#vhs-req-616-runtime-auto-selection-and-stale-settings-repair,,,docs/requirements/srs.md
+VHS-REQ-617,Software,Active,srs.md#vhs-req-617-missing-runtime-user-notification-and-status-surface,,,docs/requirements/srs.md
