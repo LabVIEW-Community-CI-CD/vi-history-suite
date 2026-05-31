@@ -1142,7 +1142,7 @@ Missing numeric IDs are intentional.
   - Hosted CI admits pull requests to `main` only from `release/vX.Y.Z` or
     `hotfix/vX.Y.Z` branches.
   - Hosted CI admits pull requests to `develop` from `feature/*`,
-    `dependabot/*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, or `main` back-sync
+    `release/vX.Y.Z`, `hotfix/vX.Y.Z`, or `main` back-sync
     branches.
   - The Marketplace release workflow uses the protected
     `marketplace-release` environment.

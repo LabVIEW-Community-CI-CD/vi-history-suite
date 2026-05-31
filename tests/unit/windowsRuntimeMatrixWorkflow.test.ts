@@ -33,13 +33,13 @@ describe('Windows runtime matrix workflow', () => {
     expect(workflow).toContain('shell: powershell');
   });
 
-  it('fails closed to trusted refs (main, release/v*, v*, harness introduction branch)', () => {
+  it('fails closed to trusted refs (main, release/v*, exact v* tags only)', () => {
     const workflow = readWorkflow();
     expect(workflow).toContain("refs/heads/main");
     expect(workflow).toContain('^refs/heads/release/v\\d+\\.\\d+\\.\\d+$');
     expect(workflow).toContain('^refs/tags/v\\d+\\.\\d+\\.\\d+$');
-    expect(workflow).toContain('chore/phase6-windows-runtime-matrix-harness');
     expect(workflow).toContain('Trusted ref decision:');
+    expect(workflow).not.toMatch(/refs\/heads\/(chore|feature)\//);
   });
 
   it('refuses Marketplace publishing tokens on the runner', () => {

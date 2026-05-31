@@ -52,13 +52,12 @@ jobs:
           $isMain = $env:GITHUB_REF -eq 'refs/heads/main'
           $isReleaseBranch = $env:GITHUB_REF -match '^refs/heads/release/v\d+\.\d+\.\d+$'
           $isExactVersionTag = $env:GITHUB_REF -match '^refs/tags/v\d+\.\d+\.\d+$'
-          $isHarnessIntroductionBranch = $env:GITHUB_REF -eq 'refs/heads/chore/phase6-windows-runtime-matrix-harness'
-          $isTrustedRef = $isMain -or $isReleaseBranch -or $isExactVersionTag -or $isHarnessIntroductionBranch
+          $isTrustedRef = $isMain -or $isReleaseBranch -or $isExactVersionTag
           $decision = if ($isTrustedRef) { 'allowed' } else { 'blocked' }
-          $guardLine = "Trusted ref decision: $decision (main=$isMain, releaseBranch=$isReleaseBranch, exactVersionTag=$isExactVersionTag, harnessIntroductionBranch=$isHarnessIntroductionBranch, ref=$env:GITHUB_REF)"
+          $guardLine = "Trusted ref decision: $decision (main=$isMain, releaseBranch=$isReleaseBranch, exactVersionTag=$isExactVersionTag, ref=$env:GITHUB_REF)"
           $guardLine | Tee-Object -LiteralPath $summaryPath
           if (-not $isTrustedRef) {
-            throw "windows-runtime-matrix only accepts main, release/v* branches, exact v* release tags, or the introduction branch chore/phase6-windows-runtime-matrix-harness. Ref was: $env:GITHUB_REF"
+            throw "windows-runtime-matrix only accepts main, release/v* branches, or exact v* release tags. Ref was: $env:GITHUB_REF"
           }
 
       - name: Checkout

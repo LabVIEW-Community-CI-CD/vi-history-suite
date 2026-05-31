@@ -816,7 +816,7 @@ describe('requirements documentation coherence', () => {
       '### VHS-REQ-609: Governed Branch Promotion And Marketplace Release Automation'
     );
     expect(srs).toContain('marketplace-release');
-    expect(srs).toContain('dependabot/*');
+    expect(srs).not.toContain('dependabot/*');
     expect(srs).toContain('reachable from `origin/main`');
     expect(srs).toContain('pinned VSCE wrapper');
     expect(srs).toContain('Marketplace listing verification retries bounded propagation lag');
