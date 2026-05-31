@@ -234,7 +234,7 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - Pull requests to `main` are limited to `release/vX.Y.Z` and
     `hotfix/vX.Y.Z` branches by hosted CI.
   - Pull requests to `develop` admit `feature/*`, release, hotfix, and `main`
-    back-sync branches plus Dependabot maintenance branches by hosted CI.
+    back-sync branches by hosted CI.
   - Marketplace publication is tag-only from exact `vX.Y.Z` tags on commits
     reachable from `origin/main`.
   - Marketplace live-listing verification distinguishes bounded propagation lag

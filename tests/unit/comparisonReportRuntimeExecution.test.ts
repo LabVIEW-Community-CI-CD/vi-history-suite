@@ -407,6 +407,7 @@ describe('comparisonReportRuntimeExecution', () => {
         nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        enforceWindowsHostPreflight: false,
         processPlatform: 'win32'
       }
     );
@@ -647,6 +648,7 @@ describe('comparisonReportRuntimeExecution', () => {
           .mockReturnValueOnce('2026-04-19T21:02:01.000Z'),
         nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(121000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        enforceWindowsHostPreflight: false,
         processPlatform: 'win32'
       }
     );
@@ -706,6 +708,7 @@ describe('comparisonReportRuntimeExecution', () => {
           .mockReturnValueOnce('2026-05-31T12:00:01.000Z'),
         nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        enforceWindowsHostPreflight: false,
         processPlatform: 'win32'
       }
     );
@@ -758,6 +761,7 @@ describe('comparisonReportRuntimeExecution', () => {
           .mockReturnValueOnce('2026-05-31T12:00:01.000Z'),
         nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        enforceWindowsHostPreflight: false,
         processPlatform: 'win32'
       }
     );
@@ -802,6 +806,7 @@ describe('comparisonReportRuntimeExecution', () => {
           .mockReturnValueOnce('2026-05-31T12:00:01.000Z'),
         nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        enforceWindowsHostPreflight: false,
         processPlatform: 'win32'
       }
     );
@@ -1033,6 +1038,7 @@ describe('comparisonReportRuntimeExecution', () => {
             .mockReturnValueOnce('2026-05-25T10:00:05.000Z'),
           nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(6000),
           writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          enforceWindowsHostPreflight: false,
           processPlatform: 'win32'
         }
       );
@@ -1101,6 +1107,7 @@ describe('comparisonReportRuntimeExecution', () => {
           nowIso: vi.fn().mockReturnValue('2026-05-25T10:00:00.000Z'),
           nowMs: vi.fn().mockReturnValue(1000),
           writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          enforceWindowsHostPreflight: false,
           processPlatform: 'win32'
         }
       );
