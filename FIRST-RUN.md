@@ -16,6 +16,16 @@
 If validation reports a blocked runtime, fix that runtime first. The extension
 does not silently switch provider, year, or bitness during compare.
 
+The `VI History runtime` status bar item is clickable. Selecting it opens
+`Pick Runtime Provider`, a quick-pick listing every detected host LabVIEW
+installation plus Docker (when the Docker CLI is detected) and a
+`(none) — auto-detect` option that clears the persisted selection. Choices
+are written to your User settings as `viHistorySuite.runtimeProvider`,
+`viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness`. The
+status bar label updates immediately when those keys change, whether you
+edit them in `settings.json`, run `vihs --provider …`, or use the
+quick-pick. (VHS-REQ-620)
+
 Expected quiet behavior:
 
 - Installing or selecting the extension should not ask for GitHub

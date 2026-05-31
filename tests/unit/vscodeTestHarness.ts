@@ -260,6 +260,7 @@ export function createVsCodeTestHarness() {
       showInformationMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
       showWarningMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
       showErrorMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
+      showQuickPick: vi.fn(async (_items: unknown, _options?: unknown) => undefined),
       withProgress: vi.fn(async (options: unknown, task: (progress: unknown, token: unknown) => unknown) => {
         const progress = {
           report: vi.fn((update: unknown) => {
@@ -331,6 +332,11 @@ export function createVsCodeTestHarness() {
     StatusBarAlignment: {
       Left: 1,
       Right: 2
+    },
+    ConfigurationTarget: {
+      Global: 1,
+      Workspace: 2,
+      WorkspaceFolder: 3
     },
     Disposable: {
       from: (...disposables: Array<{ dispose?: () => void }>) =>

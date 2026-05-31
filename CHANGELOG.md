@@ -10,6 +10,34 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.7.0] - 2026-05-31
+
+### Added
+
+- CLI-driven runtime provider flip with reactive status bar (VHS-REQ-620).
+  Editing `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`,
+  or `viHistorySuite.labviewBitness` — whether by hand, by the bundled
+  `vihs --provider … --year … --bitness …` CLI, or by the new quick-pick —
+  immediately re-renders the `VI History runtime` status bar without waiting
+  for the focus-event throttle and without re-running filesystem detection.
+  The label now sources from the persisted selection when all three keys
+  are populated and the combination is satisfiable on this host, and
+  silently falls back to the auto-detection recommendation otherwise.
+- New `Pick Runtime Provider` command (id `labviewViHistory.pickRuntimeProvider`).
+  The status-bar item now targets this command, so a click opens a
+  quick-pick built from the cached detection: one entry per detected
+  LabVIEW host installation, one entry for Docker when the CLI is
+  available, plus a `Clear` option that removes the three persisted keys
+  and returns to auto-detection. Selections are written to
+  `ConfigurationTarget.Global` (VHS-REQ-620).
+- `Show Runtime Summary` now appends a `Drift:` line: `none` when the
+  persisted selection matches the recommendation or nothing is persisted,
+  `selection differs from recommendation: persisted=…, recommendation=…`
+  when persisted is satisfiable but diverges, and
+  `selection unsatisfiable on this host; falling back to recommendation`
+  when the persisted combination cannot be served on this host
+  (VHS-REQ-620).
+
 ## [1.6.0] - 2026-05-31
 
 ### Added

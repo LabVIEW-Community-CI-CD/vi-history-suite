@@ -50,6 +50,7 @@ import {
   presentOpenBlockedToast
 } from './ui/gitPrerequisiteNotice';
 import { registerRuntimeRuntimeCommands } from './commands/runtimeCommands';
+import { registerPickRuntimeProviderCommand } from './commands/pickRuntimeProviderCommand';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
 import {
@@ -188,6 +189,10 @@ export async function activate(
   const runtimeAvailabilityWatcher = createRuntimeAvailabilityWatcher(context);
   context.subscriptions.push(runtimeAvailabilityWatcher);
   registerRuntimeRuntimeCommands(context, runtimeAvailabilityWatcher);
+  // VHS-REQ-620: Register the runtime provider quick-pick. The status bar
+  // item created by the watcher targets this command, so a click flips the
+  // persisted runtime selection just like a `vihs --provider …` invocation.
+  registerPickRuntimeProviderCommand(context, runtimeAvailabilityWatcher);
 
   // VHS-REQ-619: Detect Git on PATH once per activation, surface a status
   // bar warning plus a one-time first-run information notice when Git is
