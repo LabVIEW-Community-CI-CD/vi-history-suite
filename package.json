@@ -156,6 +156,13 @@
             "x64"
           ],
           "description": "Installed-user LabVIEW bitness for comparison reports."
+        },
+        "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
+          "type": "integer",
+          "default": 180,
+          "minimum": 30,
+          "maximum": 600,
+          "description": "VHS-REQ-148: LabVIEW CLI connect-window timeout (in seconds) written into LabVIEWCLI.ini before each Windows host-native compare. Sets OpenAppReferenceTimeoutInSecond and AfterLaunchOpenAppReferenceTimeoutInSecond. Default 180 matches the shipped Windows-container value; lower it only on hosts with confirmed sub-30s LabVIEW cold launches."
         }
       }
     }

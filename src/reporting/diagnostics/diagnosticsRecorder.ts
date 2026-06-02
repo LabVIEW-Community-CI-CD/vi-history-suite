@@ -70,6 +70,15 @@ export interface EnvironmentFingerprint {
     labviewIniStartupKeys?: Record<string, string | undefined>;
     labviewTcpPort?: number;
   };
+  cliConnectTimeoutHardening?: {
+    applied: boolean;
+    requestedValue: number;
+    iniPath?: string;
+    previousValues?: Record<string, string | undefined>;
+    currentValues?: Record<string, string | undefined>;
+    backupCreated?: boolean;
+    reason?: string;
+  };
 }
 
 export interface PreLaunchBaselineSnapshot {
@@ -120,8 +129,15 @@ export interface DiagnosticsManifest {
   entries: DiagnosticsManifestEntry[];
 }
 
+export interface EnvironmentFingerprintContext {
+  cliConnectTimeoutHardening?: EnvironmentFingerprint['cliConnectTimeoutHardening'];
+}
+
 export interface DiagnosticsRecorder {
-  recordEnvironmentFingerprint(record: ComparisonReportPacketRecord): Promise<void>;
+  recordEnvironmentFingerprint(
+    record: ComparisonReportPacketRecord,
+    context?: EnvironmentFingerprintContext
+  ): Promise<void>;
   recordPreLaunchBaseline(
     record: ComparisonReportPacketRecord,
     attemptIndex: number,
@@ -267,7 +283,7 @@ export function createDiagnosticsRecorder(deps: DiagnosticsRecorderDeps = {}): D
   };
 
   return {
-    async recordEnvironmentFingerprint(record) {
+    async recordEnvironmentFingerprint(record, context) {
       try {
         const runtime = record.runtimeExecution ?? ({} as ComparisonReportPacketRecord['runtimeExecution']);
         const selection = record.runtimeSelection;
@@ -319,7 +335,8 @@ export function createDiagnosticsRecorder(deps: DiagnosticsRecorderDeps = {}): D
             labviewIniSha256: labviewIniFp.sha256,
             labviewIniStartupKeys: labviewIniFp.startupKeys,
             labviewTcpPort: runtime?.labviewTcpPort ?? selection?.hostLabviewTcpPort
-          }
+          },
+          cliConnectTimeoutHardening: context?.cliConnectTimeoutHardening
         };
 
         const filePath = environmentFingerprintFilePath(record.artifactPlan.reportDirectory);

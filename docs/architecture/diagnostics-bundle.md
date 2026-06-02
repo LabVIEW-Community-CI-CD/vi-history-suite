@@ -66,6 +66,22 @@ Captured once per `executeComparisonReport` invocation.
   startup-relevant settings (`server.tcp.enabled`, `server.tcp.port`,
   `LoadAddOns`, `RestoreOnLaunch`, `showWelcomeOnLaunch`, `autoLoadProject`,
   `recentProjectsListSize`); resolved `labviewTcpPort`.
+- `cliConnectTimeoutHardening` (Windows host-native + `labview-cli` only;
+  VHS-REQ-148): outcome of writing the configurable connect-window timeout
+  into `LabVIEWCLI.ini` before the CLI is spawned. Fields:
+  - `applied` — `true` when both `OpenAppReferenceTimeoutInSecond` and
+    `AfterLaunchOpenAppReferenceTimeoutInSecond` were rewritten this run.
+    `false` when the helper short-circuited or failed (see `reason`).
+  - `requestedValue` — the integer seconds requested via
+    `viHistorySuite.runtime.cliConnectTimeoutSeconds` (default 180).
+  - `iniPath` — the first existing candidate path, when one was found.
+  - `previousValues` / `currentValues` — key→value snapshots before and
+    after the write (omitted when no candidate was found).
+  - `backupCreated` — `true` only the first time the helper rewrites the
+    file; the `LabVIEWCLI.ini.vhs-backup` sidecar is never overwritten.
+  - `reason` — `already-current` (idempotent short-circuit),
+    `no-candidate`, `read-failed`, `write-failed`, `rename-failed`, or
+    `invalid-value`. Absent when `applied` is `true`.
 
 ### `attempt-N/pre-launch-baseline.json`
 

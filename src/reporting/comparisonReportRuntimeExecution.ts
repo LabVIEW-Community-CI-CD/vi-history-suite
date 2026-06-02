@@ -16,6 +16,12 @@ import {
   DiagnosticsRecorder,
   noopDiagnosticsRecorder
 } from './diagnostics/diagnosticsRecorder';
+import {
+  applyLabVIEWCliIniHardening,
+  LABVIEW_CLI_INI_AFTER_LAUNCH_KEY,
+  LABVIEW_CLI_INI_OPEN_APP_KEY,
+  LabVIEWCliIniHardeningResult
+} from './runtime/labviewCliIni';
 
 export interface ExecuteComparisonReportOptions {
   record: ComparisonReportPacketRecord;
@@ -63,6 +69,17 @@ export interface ComparisonReportRuntimeExecutionDeps {
   diagnosticsRecorder?: DiagnosticsRecorder;
   /** When true, suppress the default diagnostics recorder construction. */
   disableDiagnostics?: boolean;
+  /**
+   * VHS-REQ-148: optional override for the LabVIEWCLI.ini connect-window hardening helper.
+   * When omitted, the default helper is used. Pass a noop in tests to skip filesystem touches.
+   */
+  applyLabviewCliIniHardening?: typeof applyLabVIEWCliIniHardening;
+  /**
+   * VHS-REQ-148: requested value (in seconds) for `OpenAppReferenceTimeoutInSecond` and
+   * `AfterLaunchOpenAppReferenceTimeoutInSecond`. When undefined, the helper is not invoked
+   * and the existing NI default applies.
+   */
+  cliConnectTimeoutSeconds?: number;
 }
 
 export interface ComparisonRuntimeCancellationToken {
@@ -251,7 +268,34 @@ export async function executeComparisonReport(
           observeWindowsTcpListeners: observeWindowsTcpListenersFn
         }));
 
-  await diagnosticsRecorder.recordEnvironmentFingerprint(options.record);
+  // VHS-REQ-148: harden NI LabVIEWCLI.ini connect-window keys before recording the environment
+  // fingerprint so the resulting fingerprint reflects the values actually used by the upcoming
+  // CreateComparisonReport invocation. Host-native + labview-cli only; container path embeds its
+  // own ini work in the PowerShell script and is not touched here.
+  let cliConnectTimeoutHardening: LabVIEWCliIniHardeningResult | undefined;
+  if (
+    processPlatform === 'win32' &&
+    options.record.runtimeSelection.provider === 'host-native' &&
+    options.record.runtimeSelection.engine === 'labview-cli' &&
+    typeof deps.cliConnectTimeoutSeconds === 'number'
+  ) {
+    const harden = deps.applyLabviewCliIniHardening ?? applyLabVIEWCliIniHardening;
+    try {
+      cliConnectTimeoutHardening = await harden({
+        requestedValueSeconds: deps.cliConnectTimeoutSeconds
+      });
+    } catch {
+      cliConnectTimeoutHardening = {
+        applied: false,
+        requestedValue: deps.cliConnectTimeoutSeconds,
+        reason: 'write-failed'
+      };
+    }
+  }
+
+  await diagnosticsRecorder.recordEnvironmentFingerprint(options.record, {
+    cliConnectTimeoutHardening
+  });
 
   let runtimeExecution: ComparisonReportRuntimeExecution;
 
@@ -2507,8 +2551,8 @@ export function buildWindowsContainerLabviewCliScript(
     `$cliIniCandidates = ${buildWindowsPowerShellArrayLiteral(cliIniCandidates)}`,
     '$cliIni = $cliIniCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1',
     'if ($cliIni) {',
-    `  Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS}'`,
-    `  Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}'`,
+    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_OPEN_APP_KEY}' -Value '${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS}'`,
+    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_AFTER_LAUNCH_KEY}' -Value '${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}'`,
     '}',
     '$prelaunchAttempted = $false',
     "if (-not [string]::IsNullOrWhiteSpace([string]$labviewPath) -and (Test-Path -LiteralPath $labviewPath)) {",

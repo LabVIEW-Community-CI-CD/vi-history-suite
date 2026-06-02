@@ -32,6 +32,7 @@ src/reporting/comparisonReportRuntimeExecution.ts,mapped,Yes,Comparison runtime 
 src/reporting/comparisonRuntimeDoctor.ts,mapped,Yes,Comparison runtime doctor; mapped through RTM.
 src/reporting/comparisonRuntimeLocator.ts,mapped,Yes,Comparison runtime locator; mapped through RTM.
 src/reporting/diagnostics/diagnosticsRecorder.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder; retained runtime evidence schema mapped through RTM (VHS-REQ-148).
+src/reporting/runtime/labviewCliIni.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper for Windows host-native compare; mapped through RTM (VHS-REQ-148).
 src/review/humanReviewSubmission.ts,supporting,No,Maintainer-only review submission persistence infrastructure; supporting VHS-REQ-610 dashboard aggregate review. Requires canonical host machine matching.
 src/review/humanReviewSubmissionAction.ts,supporting,No,Maintainer-only review submission action routing; supporting VHS-REQ-610 dashboard aggregate review. Requires canonical host machine matching.
 src/scenarios/decisionRecord.ts,supporting,No,Decision record persistence infrastructure; supporting VHS-REQ-610 dashboard aggregate review.
@@ -80,6 +81,7 @@ tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locato
 tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests; mapped to VHS-REQ-610.
 tests/unit/dashboardLatestRun.test.ts,mapped,Yes,Dashboard latest-run record tests; mapped to VHS-REQ-610.
 tests/unit/diagnosticsRecorder.test.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder tests; mapped to VHS-REQ-148 retained runtime evidence.
+tests/unit/labviewCliIni.test.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper tests; mapped to VHS-REQ-148.
 tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
 tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM.
 tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.
