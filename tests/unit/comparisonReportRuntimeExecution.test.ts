@@ -9,6 +9,8 @@ import {
   classifyLabviewCliDiagnosticText,
   executeComparisonReport,
   inferLabviewBitnessFromExecutablePath,
+  resolveLinuxLabviewTcpSettings,
+  buildLinuxLabviewIniCandidatePaths,
   runComparisonCommandPlanWithObservation
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -858,7 +860,12 @@ describe('comparisonReportRuntimeExecution', () => {
         removePath: vi.fn().mockResolvedValue(undefined) as never,
         unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
         readdir: readdir as never,
-        readFile: vi.fn().mockResolvedValue('Recursive load during LEIF load!') as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+          }
+          return 'Recursive load during LEIF load!';
+        }) as never,
         pathExists: vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath),
         runCommand: vi.fn().mockResolvedValue({
           exitCode: 0,
@@ -1439,5 +1446,153 @@ describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621)', () => {
         'C:/Program Files (x86)/National Instruments/LabVIEW 2026/LabVIEW.exe'
       )
     ).toBe('x86');
+  });
+});
+
+describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
+  function createLinuxRecord(): ComparisonReportPacketRecord {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.engine = 'labview-cli';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    return record;
+  }
+
+  it('builds candidate paths under ~/natinst/.config and /etc/natinst', () => {
+    const candidates = buildLinuxLabviewIniCandidatePaths({
+      homeDir: '/home/sergio',
+      requestedLabviewVersion: '2026',
+      bitness: 'x64'
+    });
+    expect(candidates).toContain('/home/sergio/natinst/.config/LabVIEW-2026/labview.conf');
+    expect(candidates).toContain('/home/sergio/natinst/.config/LabVIEW-2026-64/labview.conf');
+    expect(candidates).toContain('/etc/natinst/LabVIEW-2026/labview.conf');
+  });
+
+  it('returns viServerTcpEnabled=true and the explicit port when labview.conf enables TCP', async () => {
+    const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
+      readFile: vi.fn().mockResolvedValue(
+        'server.tcp.access="+localhost"\nserver.tcp.enabled=True\nserver.tcp.port=3363\n'
+      ) as never,
+      homeDir: () => '/home/sergio'
+    });
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3363);
+    expect(settings.labviewIniPath).toBe('/home/sergio/natinst/.config/LabVIEW-2026/labview.conf');
+  });
+
+  it('defaults to port 3363 when TCP is enabled but server.tcp.port is omitted', async () => {
+    const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
+      readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\n') as never,
+      homeDir: () => '/home/sergio'
+    });
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3363);
+  });
+
+  it('flags VI Server TCP disabled when server.tcp.enabled=False', async () => {
+    const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
+      readFile: vi.fn().mockResolvedValue('server.tcp.enabled=False\n') as never,
+      homeDir: () => '/home/sergio'
+    });
+    expect(settings.viServerTcpEnabled).toBe(false);
+    expect(settings.notes.join(' ')).toMatch(/server\.tcp\.enabled=False/);
+  });
+
+  it('flags VI Server TCP disabled when labview.conf has no server.tcp.enabled key (Linux default)', async () => {
+    const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
+      readFile: vi.fn().mockResolvedValue('LoadAddOns=False\n') as never,
+      homeDir: () => '/home/sergio'
+    });
+    expect(settings.viServerTcpEnabled).toBe(false);
+    expect(settings.notes.join(' ')).toMatch(/server\.tcp\.enabled is missing/);
+  });
+
+  it('returns viServerTcpEnabled=unknown when no candidate file is readable', async () => {
+    const enoent = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
+      readFile: vi.fn().mockRejectedValue(enoent) as never,
+      homeDir: () => '/home/sergio'
+    });
+    expect(settings.viServerTcpEnabled).toBe('unknown');
+    expect(settings.inspectedCandidatePaths.length).toBeGreaterThan(0);
+  });
+
+  it('skips resolution for non-linux runtime selections', async () => {
+    const record = createReadyRecord();
+    const settings = await resolveLinuxLabviewTcpSettings(record, {
+      readFile: vi.fn() as never,
+      homeDir: () => '/home/sergio'
+    });
+    expect(settings.viServerTcpEnabled).toBe('unknown');
+    expect(settings.inspectedCandidatePaths).toEqual([]);
+  });
+});
+
+describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
+  it('blocks execution with linux-vi-server-tcp-disabled when labview.conf disables VI Server TCP', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const runCommand = vi.fn();
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=False\n';
+          }
+          throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+        }) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: runCommand as never,
+        nowIso: vi.fn().mockReturnValue('2026-06-02T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('not-available');
+    expect(result.record.runtimeExecution.blockedReason).toBe('linux-vi-server-tcp-disabled');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-vi-server-tcp-disabled');
+    expect(result.record.runtimeExecution.labviewIniPath).toMatch(/labview\.conf$/);
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
+      /VI Server/i
+    );
   });
 });

@@ -666,6 +666,15 @@ Missing numeric IDs are intentional.
     LabVIEW CLI diagnostic-log reasons; only `linux-headless-recursive-load`
     triggers the headless-session-reset retry, so init-failed runs do not
     waste a second attempt.
+  - Before launching LabVIEWCLI, Linux host-native runs read the active
+    `labview.conf` (searched under `~/natinst/.config/LabVIEW-<version>/`,
+    `~/.config/natinst/LabVIEW-<version>/`, and
+    `/etc/natinst/LabVIEW-<version>/`) and block execution with
+    `blockedReason: 'linux-vi-server-tcp-disabled'` when
+    `server.tcp.enabled=False` or the key is absent (NI Linux defaults VI
+    Server TCP off). When TCP is enabled, the resolved
+    `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
+    `-PortNumber`.
 - Agent Work Scope:
   - Change the execution plan, runtime classification, and unit tests
     together; update troubleshooting notes when surfacing new symptoms.

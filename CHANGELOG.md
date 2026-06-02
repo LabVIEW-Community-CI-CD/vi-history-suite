@@ -34,6 +34,13 @@ Burned exact-version releases now include `v1.0.2`.
   LabVIEW builds where host-native headless mode works can opt in by setting
   `LV_RTE_LINUX_HEADLESS=1` in the VS Code extension host environment.
   (VHS-REQ-156)
+- Linux host-native runs now read `labview.conf` (under
+  `~/natinst/.config/LabVIEW-<version>/`,
+  `~/.config/natinst/LabVIEW-<version>/`, and
+  `/etc/natinst/LabVIEW-<version>/`) before launching LabVIEWCLI. Runs are
+  blocked with `linux-vi-server-tcp-disabled` when `server.tcp.enabled` is
+  `False` or missing, and the configured `server.tcp.port` (default `3363`)
+  is passed to LabVIEWCLI as `-PortNumber`. (VHS-REQ-156)
 
 ## [1.9.1] - 2026-06-02
 

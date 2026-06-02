@@ -1,5 +1,6 @@
 import { execFile, ExecFileException, spawn } from 'node:child_process';
 import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { ComparisonCommandPlan } from './comparisonReportPlan';
@@ -168,6 +169,20 @@ export interface WindowsTcpListenerObservation {
 export interface WindowsLabviewTcpSettings {
   labviewIniPath?: string;
   labviewTcpPort?: number;
+  notes: string[];
+}
+
+export interface LinuxLabviewTcpSettings {
+  labviewIniPath?: string;
+  labviewTcpPort?: number;
+  /**
+   * VHS-REQ-156: tri-state. `true` when `server.tcp.enabled=True` was found,
+   * `false` when the key was explicitly disabled or the file was readable but
+   * lacked any TCP keys (NI Linux defaults VI Server TCP off), `'unknown'`
+   * when no candidate config file was readable.
+   */
+  viServerTcpEnabled: boolean | 'unknown';
+  inspectedCandidatePaths: string[];
   notes: string[];
 }
 
@@ -559,16 +574,29 @@ async function runHostNativeExecution(
       processPlatform: deps.processPlatform
     }
   );
+  const linuxLabviewTcpSettings = await resolveLinuxLabviewTcpSettings(record, {
+    readFile: deps.readFile
+  });
+  const effectivePortFromIni =
+    windowsLabviewTcpSettings.labviewTcpPort ?? linuxLabviewTcpSettings.labviewTcpPort;
   const effectiveExecutionContext: PreparedExecutionContext = {
     ...executionContext,
     commandPlan: {
       executable: executionContext.commandPlan.executable,
       args: appendLabviewCliPortNumberArg(
         executionContext.commandPlan.args,
-        windowsLabviewTcpSettings.labviewTcpPort
+        effectivePortFromIni
       )
     }
   };
+  const linuxHostSurfacePreflight = preflightLinuxHostRuntimeSurface(
+    record,
+    effectiveExecutionContext.commandPlan,
+    linuxLabviewTcpSettings
+  );
+  if (linuxHostSurfacePreflight) {
+    return linuxHostSurfacePreflight.blockedExecution;
+  }
   const windowsHostSurfacePreflight = await preflightWindowsHostRuntimeSurface(
     record,
     effectiveExecutionContext.commandPlan,
@@ -694,12 +722,17 @@ async function runHostNativeExecution(
             notes: []
           };
       const retainedLabviewIniPath =
-        windowsContainerRuntimeFacts.labviewIniPath ?? windowsLabviewTcpSettings.labviewIniPath;
+        windowsContainerRuntimeFacts.labviewIniPath ??
+        windowsLabviewTcpSettings.labviewIniPath ??
+        linuxLabviewTcpSettings.labviewIniPath;
       const retainedLabviewTcpPort =
-        windowsContainerRuntimeFacts.labviewTcpPort ?? windowsLabviewTcpSettings.labviewTcpPort;
+        windowsContainerRuntimeFacts.labviewTcpPort ??
+        windowsLabviewTcpSettings.labviewTcpPort ??
+        linuxLabviewTcpSettings.labviewTcpPort;
       const diagnosticNotes = mergeDiagnosticNotes(
         buildProcessObservationNotes(processObservation),
         windowsLabviewTcpSettings.notes,
+        linuxLabviewTcpSettings.notes,
         windowsContainerRuntimeFacts.notes,
         diagnostics.notes,
         timeoutDiagnostic.notes,
@@ -780,11 +813,17 @@ async function runHostNativeExecution(
         reportExists: false,
         failureReason: 'command-spawn-failed',
         diagnosticReason: diagnostics.reason,
-        diagnosticNotes: mergeDiagnosticNotes(windowsLabviewTcpSettings.notes, diagnostics.notes),
+        diagnosticNotes: mergeDiagnosticNotes(
+          windowsLabviewTcpSettings.notes,
+          linuxLabviewTcpSettings.notes,
+          diagnostics.notes
+        ),
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
-        labviewIniPath: windowsLabviewTcpSettings.labviewIniPath,
-        labviewTcpPort: windowsLabviewTcpSettings.labviewTcpPort,
+        labviewIniPath:
+          windowsLabviewTcpSettings.labviewIniPath ?? linuxLabviewTcpSettings.labviewIniPath,
+        labviewTcpPort:
+          windowsLabviewTcpSettings.labviewTcpPort ?? linuxLabviewTcpSettings.labviewTcpPort,
         headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
         executable: effectiveExecutionContext.commandPlan.executable,
         args: effectiveExecutionContext.commandPlan.args,
@@ -1069,6 +1108,150 @@ export function appendLabviewCliPortNumberArg(
   }
 
   return [...args, '-PortNumber', String(labviewTcpPort)];
+}
+
+const DEFAULT_LINUX_LABVIEW_TCP_PORT = 3363;
+
+export function buildLinuxLabviewIniCandidatePaths(options: {
+  homeDir: string;
+  requestedLabviewVersion?: string;
+  bitness?: string;
+}): string[] {
+  const homeDir = options.homeDir;
+  const versionTokens = new Set<string>();
+  const requested = options.requestedLabviewVersion?.trim();
+  if (requested) {
+    versionTokens.add(requested);
+    if (options.bitness === 'x64') {
+      versionTokens.add(`${requested}-64`);
+    } else if (options.bitness === 'x86') {
+      versionTokens.add(`${requested}-32`);
+    } else {
+      versionTokens.add(`${requested}-64`);
+    }
+  }
+
+  const candidates: string[] = [];
+  for (const token of versionTokens) {
+    candidates.push(path.posix.join(homeDir, 'natinst', '.config', `LabVIEW-${token}`, 'labview.conf'));
+    candidates.push(path.posix.join(homeDir, '.config', 'natinst', `LabVIEW-${token}`, 'labview.conf'));
+    candidates.push(path.posix.join('/etc', 'natinst', `LabVIEW-${token}`, 'labview.conf'));
+  }
+  // Generic fallback when the version is unknown — caller can iterate via deps.readdir if desired.
+  return [...new Set(candidates)];
+}
+
+export async function resolveLinuxLabviewTcpSettings(
+  record: ComparisonReportPacketRecord,
+  deps: {
+    readFile: typeof fs.readFile;
+    processPlatform?: NodeJS.Platform;
+    homeDir?: () => string;
+  }
+): Promise<LinuxLabviewTcpSettings> {
+  if (
+    record.runtimeSelection.platform !== 'linux' ||
+    record.runtimeSelection.engine !== 'labview-cli' ||
+    record.runtimeSelection.provider !== 'host-native'
+  ) {
+    return { viServerTcpEnabled: 'unknown', inspectedCandidatePaths: [], notes: [] };
+  }
+
+  const homeDir = (deps.homeDir ?? os.homedir)();
+  const candidates = buildLinuxLabviewIniCandidatePaths({
+    homeDir,
+    requestedLabviewVersion: record.runtimeSelection.requestedLabviewVersion,
+    bitness: record.runtimeSelection.bitness
+  });
+
+  for (const candidate of candidates) {
+    let iniText: string;
+    try {
+      iniText = await deps.readFile(candidate, 'utf8');
+    } catch {
+      continue;
+    }
+
+    const enabledMatch = iniText.match(/^\s*server\.tcp\.enabled\s*=\s*(true|false)\s*$/im);
+    const portMatch = iniText.match(/^\s*server\.tcp\.port\s*=\s*(\d+)\s*$/im);
+
+    if (!enabledMatch) {
+      // Linux LabVIEW ships with VI Server TCP off; absence of the key means disabled.
+      return {
+        labviewIniPath: candidate,
+        viServerTcpEnabled: false,
+        inspectedCandidatePaths: candidates,
+        notes: [
+          `Linux LabVIEW config at ${candidate} does not enable VI Server TCP/IP (server.tcp.enabled is missing). LabVIEWCLI cannot connect to LabVIEW until VI Server is enabled in Tools \u2192 Options \u2192 VI Server.`
+        ]
+      };
+    }
+
+    const tcpEnabled = enabledMatch[1].toLowerCase() === 'true';
+    if (!tcpEnabled) {
+      return {
+        labviewIniPath: candidate,
+        viServerTcpEnabled: false,
+        inspectedCandidatePaths: candidates,
+        notes: [
+          `Linux LabVIEW config at ${candidate} sets server.tcp.enabled=False, which prevents LabVIEWCLI from connecting to LabVIEW. Enable VI Server in Tools \u2192 Options \u2192 VI Server.`
+        ]
+      };
+    }
+
+    const labviewTcpPort = portMatch
+      ? Number.parseInt(portMatch[1], 10)
+      : DEFAULT_LINUX_LABVIEW_TCP_PORT;
+
+    return {
+      labviewIniPath: candidate,
+      labviewTcpPort,
+      viServerTcpEnabled: true,
+      inspectedCandidatePaths: candidates,
+      notes: [
+        `Derived VI Server TCP port ${String(labviewTcpPort)} from ${candidate} and passed it explicitly to LabVIEWCLI.`
+      ]
+    };
+  }
+
+  return {
+    viServerTcpEnabled: 'unknown',
+    inspectedCandidatePaths: candidates,
+    notes: [
+      `No readable Linux LabVIEW config was found in any of: ${candidates.join(', ')}. VI Server TCP/IP status could not be verified before launch.`
+    ]
+  };
+}
+
+function preflightLinuxHostRuntimeSurface(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  linuxLabviewTcpSettings: LinuxLabviewTcpSettings
+): { blockedExecution: ComparisonReportRuntimeExecution } | undefined {
+  if (
+    record.runtimeSelection.platform !== 'linux' ||
+    record.runtimeSelection.provider !== 'host-native' ||
+    linuxLabviewTcpSettings.viServerTcpEnabled !== false
+  ) {
+    return undefined;
+  }
+
+  return {
+    blockedExecution: {
+      state: 'not-available',
+      attempted: false,
+      reportExists: false,
+      blockedReason: 'linux-vi-server-tcp-disabled',
+      diagnosticReason: 'linux-vi-server-tcp-disabled',
+      diagnosticNotes: linuxLabviewTcpSettings.notes,
+      labviewIniPath: linuxLabviewTcpSettings.labviewIniPath,
+      labviewTcpPort: linuxLabviewTcpSettings.labviewTcpPort,
+      executable: commandPlan.executable,
+      args: commandPlan.args,
+      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+      stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+    }
+  };
 }
 
 async function preflightWindowsHostRuntimeSurface(

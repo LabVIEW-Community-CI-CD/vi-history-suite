@@ -194,6 +194,15 @@ Two independent issues can cause this on a Linux host running LabVIEW 2026:
    ss -lnt | grep 3363
    ```
 
+   `vi-history-suite` reads the active `labview.conf` before launching
+   LabVIEWCLI (searched in `~/natinst/.config/LabVIEW-<version>/`,
+   `~/.config/natinst/LabVIEW-<version>/`, then
+   `/etc/natinst/LabVIEW-<version>/`) and blocks the run with
+   `runtimeExecution.blockedReason = 'linux-vi-server-tcp-disabled'` when
+   `server.tcp.enabled` is `False` or absent. When enabled, the resolved
+   `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
+   `-PortNumber`.
+
 2. Leave the comparison invocation **non-headless** on Linux host-native.
    `vi-history-suite` keeps Linux host-native runs non-headless by default;
    the Linux container provider continues to invoke `-Headless` because the
@@ -216,6 +225,10 @@ Open the retained packet for a Linux host-native run and confirm that:
 
 Check the retained `runtimeExecution.diagnosticReason`:
 
+- `linux-vi-server-tcp-disabled`: VI Server TCP/IP is off in `labview.conf`
+  (or the file is missing). Enable VI Server in LabVIEW Tools → Options →
+  VI Server. The blocked run records the inspected `labviewIniPath` so you
+  can see which config file was read.
 - `labview-cli-create-report-permission-error`: LabVIEW returned error 8.
   Confirm VI Server TCP/IP is enabled and reachable from the extension host.
 - `linux-headless-init-failed`: Your LabVIEW build cannot initialize
