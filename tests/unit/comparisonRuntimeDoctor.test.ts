@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildComparisonRuntimeDoctorSummaryFromFacts } from '../../src/reporting/comparisonRuntimeDoctor';
-import { ComparisonReportRuntimeExecution } from '../../src/reporting/comparisonReportPacket';
+import {
+  ComparisonReportPacketRecord,
+  ComparisonReportRuntimeExecution
+} from '../../src/reporting/comparisonReportPacket';
 import { ComparisonRuntimeSelection } from '../../src/reporting/comparisonRuntimeLocator';
 
 function blockedSummary(
@@ -276,5 +279,70 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('viHistorySuite.labviewBitness');
     expect(action).toContain('currently x86');
     expect(action).toContain('rerun comparison report generation');
+  });
+
+  describe('cli connect window surfacing (VHS-REQ-148)', () => {
+    function buildLabviewCliConnectFailedSummary(
+      executionOverrides: Partial<ComparisonReportRuntimeExecution> = {}
+    ): string[] {
+      const runtimeSelection: ComparisonRuntimeSelection = {
+        platform: 'win32',
+        executionMode: 'host-only',
+        requestedProvider: 'host',
+        requestedLabviewVersion: '2026',
+        bitness: 'x64',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        providerDecisions: [],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      };
+      const runtimeExecution: ComparisonReportRuntimeExecution = {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'labview-cli-connection-failed',
+        ...executionOverrides
+      };
+      return buildComparisonRuntimeDoctorSummaryFromFacts({
+        reportStatus: 'failed' as ComparisonReportPacketRecord['reportStatus'],
+        runtimeSelection,
+        runtimeExecution
+      });
+    }
+
+    it('emits applied=true line when hardening succeeded', () => {
+      const summary = buildLabviewCliConnectFailedSummary({
+        cliConnectTimeoutHardening: { applied: true, requestedValue: 180 }
+      });
+      expect(summary).toContain('cli connect window: applied=true requestedValue=180.');
+    });
+
+    it('emits applied=false line with reason when hardening did not apply', () => {
+      const summary = buildLabviewCliConnectFailedSummary({
+        cliConnectTimeoutHardening: {
+          applied: false,
+          requestedValue: 180,
+          reason: 'no-candidate'
+        }
+      });
+      expect(summary).toContain(
+        'cli connect window: applied=false requestedValue=180 reason=no-candidate.'
+      );
+    });
+
+    it('omits the line when cliConnectTimeoutHardening is absent', () => {
+      const summary = buildLabviewCliConnectFailedSummary();
+      expect(summary.some((line) => line.startsWith('cli connect window:'))).toBe(false);
+    });
+
+    it('omits the line for other failure reasons even when hardening data is present', () => {
+      const summary = buildLabviewCliConnectFailedSummary({
+        failureReason: 'labview-host-bitness-conflict',
+        cliConnectTimeoutHardening: { applied: true, requestedValue: 180 }
+      });
+      expect(summary.some((line) => line.startsWith('cli connect window:'))).toBe(false);
+    });
   });
 });
