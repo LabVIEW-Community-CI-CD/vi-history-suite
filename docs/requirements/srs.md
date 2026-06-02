@@ -698,6 +698,30 @@ Missing numeric IDs are intentional.
     `(Hex 0x8) File permission error.` when staged inputs live under
     deep, dot-prefixed paths such as
     `~/.config/Code/User/workspaceStorage/...`.
+  - Copying the generated report and its sibling `<report>_files` asset
+    tree back to the canonical `reportFilePath` is resilient to the
+    read-only directories LabVIEW emits (for example the `support/`
+    folder): a prior run's destination is removed by normalizing
+    permissions (`chmod`) and retrying on `EACCES`/`EPERM` rather than
+    relying on force-overwrite, and the freshly copied tree is normalized
+    to owner-writable so subsequent runs can replace it. When the report
+    command itself succeeds but this copy-back step fails, the runtime
+    surfaces the distinct `failureReason: 'report-finalize-failed'` (with a
+    diagnostic note naming the copy failure) instead of misclassifying it
+    as `command-spawn-failed`. When the copy-back still cannot clear the
+    destination after the permission reset (an `EPERM`/`EACCES` typically
+    caused by a prior containerized run leaving root-owned files), the
+    diagnostic note explains the cross-ownership cause and includes the
+    exact `rm -rf` (prefix with `sudo`) remediation.
+  - Linux containerized comparisons isolate their root-owned output in a
+    dedicated `container-out/` subdirectory of the report directory instead
+    of the shared retained report path. LabVIEW runs as root inside the
+    container, so its generated report, `<report>_files`, and
+    `container-temp` artifacts are confined to `container-out/`; the host
+    copies the finished report back into the canonical `reportFilePath` as
+    the invoking user, keeping the retained host-native report path
+    user-owned and immune to cross-ownership collisions from prior
+    container runs.
 - Agent Work Scope:
   - Change the execution plan, runtime classification, and unit tests
     together; update troubleshooting notes when surfacing new symptoms.
