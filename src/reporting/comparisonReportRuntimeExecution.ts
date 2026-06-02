@@ -46,6 +46,7 @@ export interface ComparisonReportRuntimeExecutionDeps {
   copyDirectory?: typeof fs.cp;
   removePath?: typeof fs.rm;
   unlinkFile?: typeof fs.unlink;
+  chmod?: typeof fs.chmod;
   readFile?: typeof fs.readFile;
   readdir?: typeof fs.readdir;
   pathExists?: (filePath: string) => Promise<boolean>;
@@ -255,6 +256,7 @@ export async function executeComparisonReport(
   const copyDirectory = deps.copyDirectory ?? fs.cp;
   const removePath = deps.removePath ?? fs.rm;
   const unlinkFile = deps.unlinkFile ?? fs.unlink;
+  const chmod = deps.chmod ?? fs.chmod;
   const readFile = deps.readFile ?? fs.readFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
   const processPlatform = deps.processPlatform ?? process.platform;
@@ -348,6 +350,7 @@ export async function executeComparisonReport(
         copyDirectory,
         removePath,
         unlinkFile,
+        chmod,
         readFile,
         readdir: deps.readdir ?? fs.readdir,
         pathExists,
@@ -489,6 +492,7 @@ async function runHostNativeExecution(
     copyDirectory: typeof fs.cp;
     removePath: typeof fs.rm;
     unlinkFile: typeof fs.unlink;
+    chmod: typeof fs.chmod;
     readFile: typeof fs.readFile;
     readdir: typeof fs.readdir;
     pathExists: (filePath: string) => Promise<boolean>;
@@ -600,6 +604,7 @@ async function runHostNativeExecutionWithContext(
     copyDirectory: typeof fs.cp;
     removePath: typeof fs.rm;
     unlinkFile: typeof fs.unlink;
+    chmod: typeof fs.chmod;
     readFile: typeof fs.readFile;
     readdir: typeof fs.readdir;
     pathExists: (filePath: string) => Promise<boolean>;
@@ -681,7 +686,9 @@ async function runHostNativeExecutionWithContext(
     attemptIndex = 1
   ): Promise<ComparisonReportRuntimeExecution> => {
     await clearStaleExecutedReportArtifacts(record, effectiveExecutionContext, {
-      removePath: deps.removePath
+      removePath: deps.removePath,
+      chmod: deps.chmod,
+      readdir: deps.readdir
     });
 
     if (deps.diagnosticsRecorder) {
@@ -738,11 +745,24 @@ async function runHostNativeExecutionWithContext(
           copyFile: deps.copyFile,
           copyDirectory: deps.copyDirectory,
           removePath: deps.removePath,
+          chmod: deps.chmod,
+          readdir: deps.readdir,
           readFile: deps.readFile,
           writeFile: deps.writeFile,
           mkdir: deps.mkdir
         }
-      );
+      ).catch((finalizeError: unknown) => {
+        // The CreateComparisonReport command itself completed; only the copy of
+        // the LabVIEW-generated report into the retained report directory threw
+        // (for example a stale read-only `<report>_files/support` tree that
+        // could not be overwritten). Surface this as a distinct
+        // report-finalize-failed outcome instead of misclassifying it as a
+        // command-spawn-failed launch error.
+        throw new ReportFinalizationError(
+          normalizeComparisonProcessError(finalizeError).stderr,
+          extractErrorCode(finalizeError)
+        );
+      });
       const reportExists = finalizedReport.reportExists;
       const succeeded =
         !commandResult.timedOut &&
@@ -869,17 +889,38 @@ async function runHostNativeExecutionWithContext(
           record.runtimeSelection.labviewExe?.path
       });
 
+      // CreateComparisonReport succeeded but copying the generated report into
+      // the retained directory failed: keep this distinct from launch failures
+      // so troubleshooting points at filesystem permissions, not the CLI.
+      const isFinalizeFailure = error instanceof ReportFinalizationError;
+      const finalizeErrorCode = isFinalizeFailure ? error.code : undefined;
+      const failureNote = isFinalizeFailure
+        ? [
+            `LabVIEW generated the comparison report, but copying it into the retained report directory failed: ${
+              processError.stderr.trim() || 'unknown filesystem error'
+            }.`,
+            ...((finalizeErrorCode === 'EPERM' || finalizeErrorCode === 'EACCES'
+              ? [
+                  `The retained report directory still could not be cleared after a permission reset, which usually means it contains files left by a prior containerized LabVIEW run owned by a different user (often root). Remove the stale output and rerun: rm -rf "${record.artifactPlan.reportFilePath}" "${buildReportAssetsDirectoryPath(
+                    record.artifactPlan.reportFilePath
+                  )}" (prefix with sudo if the files are owned by root).`
+                ]
+              : []) as string[])
+          ]
+        : [];
+
       return {
         state: 'failed',
         attempted: true,
         reportExists: false,
-        failureReason: 'command-spawn-failed',
+        failureReason: isFinalizeFailure ? 'report-finalize-failed' : 'command-spawn-failed',
         diagnosticReason: diagnostics.reason,
         diagnosticNotes: mergeDiagnosticNotes(
           windowsLabviewTcpSettings.notes,
           linuxLabviewTcpSettings.notes,
           diagnostics.notes,
-          executionContext.preparationNotes
+          executionContext.preparationNotes,
+          failureNote
         ),
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
@@ -1061,6 +1102,12 @@ const WINDOWS_CONTAINER_WORKSPACE_ROOT = 'C:\\vi-history-suite';
 const WINDOWS_CONTAINER_TEMP_ROOT = `${WINDOWS_CONTAINER_WORKSPACE_ROOT}\\container-temp`;
 const LINUX_CONTAINER_WORKSPACE_ROOT = '/workspace';
 const LINUX_CONTAINER_TEMP_ROOT = `${LINUX_CONTAINER_WORKSPACE_ROOT}/container-temp`;
+// Linux containers run LabVIEW as root, so anything written into the bind-mounted
+// workspace lands on the host owned by root. Confine that root-owned output to a
+// dedicated subdirectory of the retained report directory so the host-native
+// provider's canonical report path only ever contains user-owned files and never
+// collides with a prior container run's root-owned artifacts.
+const LINUX_CONTAINER_OUTPUT_DIRNAME = 'container-out';
 const WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS = 8;
@@ -2069,6 +2116,8 @@ async function finalizeExecutedReport(
     copyFile: typeof fs.copyFile;
     copyDirectory: typeof fs.cp;
     removePath: typeof fs.rm;
+    chmod: typeof fs.chmod;
+    readdir: typeof fs.readdir;
     readFile: typeof fs.readFile;
     writeFile: typeof fs.writeFile;
     mkdir: typeof fs.mkdir;
@@ -2096,7 +2145,9 @@ async function finalizeExecutedReport(
     });
     if (validationNotes.length > 0) {
       await clearStaleExecutedReportArtifacts(record, executionContext, {
-        removePath: deps.removePath
+        removePath: deps.removePath,
+        chmod: deps.chmod,
+        readdir: deps.readdir
       });
       return {
         reportExists: false,
@@ -2130,6 +2181,9 @@ async function finalizeExecutedReport(
   await copyReportAssetsDirectory(executionContext.reportFilePath, record.artifactPlan.reportFilePath, {
     pathExists: deps.pathExists,
     copyDirectory: deps.copyDirectory,
+    removePath: deps.removePath,
+    chmod: deps.chmod,
+    readdir: deps.readdir,
     mkdir: deps.mkdir
   });
   return {
@@ -2160,6 +2214,8 @@ async function clearStaleExecutedReportArtifacts(
   executionContext: PreparedExecutionContext,
   deps: {
     removePath: typeof fs.rm;
+    chmod: typeof fs.chmod;
+    readdir: typeof fs.readdir;
   }
 ): Promise<void> {
   const reportPaths = new Set([
@@ -2170,9 +2226,10 @@ async function clearStaleExecutedReportArtifacts(
   for (const reportFilePath of reportPaths) {
     for (const targetPath of [reportFilePath, buildReportAssetsDirectoryPath(reportFilePath)]) {
       try {
-        await deps.removePath(targetPath, {
-          recursive: true,
-          force: true
+        await forceRemovePathResilient(targetPath, {
+          removePath: deps.removePath,
+          chmod: deps.chmod,
+          readdir: deps.readdir
         });
       } catch {
         // Fail closed on the subsequent existence checks even if stale cleanup cannot complete.
@@ -2716,12 +2773,39 @@ export async function prepareLinuxContainerExecutionContext(
     await deps.writeFile(hostLayout.leftFilePath, deps.leftBlob);
     await deps.writeFile(hostLayout.rightFilePath, deps.rightBlob);
   } else {
+    // Linux container on a Linux host: isolate the root-owned container output in
+    // a dedicated subdirectory so the retained, host-native report path is never
+    // polluted with root-owned artifacts from a prior container run. The finished
+    // report is copied back into the canonical report path by the host (this)
+    // process during finalize, so the retained path stays user-owned.
+    const containerOutputDirectory = joinPreservingExplicitPathStyle(
+      record.artifactPlan.reportDirectory,
+      LINUX_CONTAINER_OUTPUT_DIRNAME
+    );
+    const containerStagingDirectory = joinPreservingExplicitPathStyle(
+      containerOutputDirectory,
+      'staging'
+    );
+    const containerLeftFilePath = joinPreservingExplicitPathStyle(
+      containerStagingDirectory,
+      record.stagedRevisionPlan.leftFilename
+    );
+    const containerRightFilePath = joinPreservingExplicitPathStyle(
+      containerStagingDirectory,
+      record.stagedRevisionPlan.rightFilename
+    );
+    await deps.mkdir(containerStagingDirectory, { recursive: true });
+    await deps.writeFile(containerLeftFilePath, deps.leftBlob);
+    await deps.writeFile(containerRightFilePath, deps.rightBlob);
     hostLayout = {
-      reportDirectory: record.artifactPlan.reportDirectory,
-      stagingDirectory: record.artifactPlan.stagingDirectory,
-      leftFilePath: record.stagedRevisionPlan.leftFilePath,
-      rightFilePath: record.stagedRevisionPlan.rightFilePath,
-      reportFilePath: record.artifactPlan.reportFilePath
+      reportDirectory: containerOutputDirectory,
+      stagingDirectory: containerStagingDirectory,
+      leftFilePath: containerLeftFilePath,
+      rightFilePath: containerRightFilePath,
+      reportFilePath: joinPreservingExplicitPathStyle(
+        containerOutputDirectory,
+        record.artifactPlan.reportFilename
+      )
     };
   }
 
@@ -3273,6 +3357,9 @@ async function copyReportAssetsDirectory(
   deps: {
     pathExists: (filePath: string) => Promise<boolean>;
     copyDirectory: typeof fs.cp;
+    removePath: typeof fs.rm;
+    chmod: typeof fs.chmod;
+    readdir: typeof fs.readdir;
     mkdir: typeof fs.mkdir;
   }
 ): Promise<void> {
@@ -3282,11 +3369,107 @@ async function copyReportAssetsDirectory(
   }
 
   const destinationAssetsDirectory = buildReportAssetsDirectoryPath(destinationReportFilePath);
+  // LabVIEW emits the assets tree (including the read-only `support/` directory)
+  // with restrictive permissions, so a prior run leaves a non-writable
+  // destination. fs.cp with force tries to unlink the existing files, which
+  // fails with EACCES because their parent directories are not writable. Clear
+  // the destination resiliently first instead of relying on force-overwrite.
+  await forceRemovePathResilient(destinationAssetsDirectory, {
+    removePath: deps.removePath,
+    chmod: deps.chmod,
+    readdir: deps.readdir
+  });
   await deps.mkdir(path.dirname(destinationAssetsDirectory), { recursive: true });
   await deps.copyDirectory(sourceAssetsDirectory, destinationAssetsDirectory, {
     recursive: true,
     force: true
   });
+  // Normalize the copied tree to owner-writable so a subsequent run (or stale
+  // cleanup) can replace it without hitting EACCES on the read-only directories
+  // LabVIEW emits.
+  await normalizeReportTreePermissions(destinationAssetsDirectory, {
+    chmod: deps.chmod,
+    readdir: deps.readdir
+  });
+}
+
+/**
+ * Recursively chmod a report subtree so directories are owner-writable/traversable
+ * and files are owner-readable/writable. Best-effort: individual chmod failures
+ * are ignored so callers can still attempt removal or copy.
+ */
+async function normalizeReportTreePermissions(
+  targetPath: string,
+  deps: {
+    chmod: typeof fs.chmod;
+    readdir: typeof fs.readdir;
+  }
+): Promise<void> {
+  let entries: Array<{ name: string; isDirectory: () => boolean }>;
+  try {
+    entries = (await deps.readdir(targetPath, { withFileTypes: true })) as Array<{
+      name: string;
+      isDirectory: () => boolean;
+    }>;
+  } catch {
+    // Not a readable directory (likely a leaf file); make it owner-writable.
+    try {
+      await deps.chmod(targetPath, 0o644);
+    } catch {
+      // Best-effort.
+    }
+    return;
+  }
+
+  try {
+    await deps.chmod(targetPath, 0o755);
+  } catch {
+    // Best-effort.
+  }
+
+  for (const entry of entries) {
+    const childPath = path.join(targetPath, entry.name);
+    if (entry.isDirectory()) {
+      await normalizeReportTreePermissions(childPath, deps);
+    } else {
+      try {
+        await deps.chmod(childPath, 0o644);
+      } catch {
+        // Best-effort.
+      }
+    }
+  }
+}
+
+/**
+ * Remove a path with `fs.rm({ recursive, force })`, retrying after normalizing
+ * permissions if the first attempt fails with EACCES/EPERM. LabVIEW-generated
+ * `<report>_files/support` directories are emitted read-only, which otherwise
+ * blocks both stale cleanup and copy-back overwrite.
+ */
+async function forceRemovePathResilient(
+  targetPath: string,
+  deps: {
+    removePath: typeof fs.rm;
+    chmod: typeof fs.chmod;
+    readdir: typeof fs.readdir;
+  }
+): Promise<void> {
+  try {
+    await deps.removePath(targetPath, { recursive: true, force: true });
+    return;
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    if (code !== 'EACCES' && code !== 'EPERM') {
+      throw error;
+    }
+  }
+
+  await normalizeReportTreePermissions(targetPath, {
+    chmod: deps.chmod,
+    readdir: deps.readdir
+  });
+  await deps.removePath(targetPath, { recursive: true, force: true });
 }
 
 function buildReportAssetsDirectoryPath(reportFilePath: string): string {
@@ -4517,6 +4700,32 @@ export function runComparisonCommandPlan(
       requestTermination();
     }
   });
+}
+
+/**
+ * Thrown when CreateComparisonReport completed but copying the generated report
+ * into the retained report directory failed (for example an EACCES while
+ * overwriting a stale read-only `<report>_files/support` tree). Lets the outer
+ * handler report `report-finalize-failed` instead of `command-spawn-failed`.
+ */
+class ReportFinalizationError extends Error {
+  readonly code?: string;
+
+  constructor(message: string, code?: string) {
+    super(message);
+    this.name = 'ReportFinalizationError';
+    this.code = code;
+  }
+}
+
+function extractErrorCode(error: unknown): string | undefined {
+  if (error && typeof error === 'object') {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (typeof code === 'string') {
+      return code;
+    }
+  }
+  return undefined;
 }
 
 export function normalizeComparisonProcessError(error: unknown): {
