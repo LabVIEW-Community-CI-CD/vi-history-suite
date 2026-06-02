@@ -10,6 +10,37 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.9.1] - 2026-06-02
+
+### Fixed
+
+- Cold-launch comparisons against LabVIEW no longer fail with
+  `labview-cli-connection-failed` (`-350000`) on hosts where LabVIEW takes
+  longer than NI's 60 s default to bind its VI Server listener. The
+  extension now hardens NI's connect-window keys
+  (`OpenAppReferenceTimeoutInSecond` and
+  `AfterLaunchOpenAppReferenceTimeoutInSecond`) in `LabVIEWCLI.ini` before
+  each Windows host-native LabVIEW CLI compare and applies the same
+  timeout to the Windows-container compare path. (VHS-REQ-148)
+
+### Added
+
+- Setting `viHistorySuite.runtime.cliConnectTimeoutSeconds` (integer,
+  default 180, range 30–600) drives the LabVIEW CLI connect-window
+  timeout for both Windows host-native and Windows-container compare
+  paths. (VHS-REQ-148)
+- The diagnostics bundle records a `cliConnectTimeoutHardening`
+  fingerprint (requested value, ini path, before/after key snapshot) for
+  each retained Windows host-native run; failed-run doctor summaries
+  surface a compact `cli connect window: applied=<bool>
+  requestedValue=<int>[ reason=<reason>]` line on
+  `labview-cli-connection-failed` failures so operators can confirm the
+  fix from the comparison report packet without opening the manifest.
+  (VHS-REQ-148)
+- TROUBLESHOOTING.md gains a `Cold-launch comparison failures` section
+  covering symptoms, the new setting, how to confirm the fix from the
+  diagnostics bundle, and how to restore NI defaults. (VHS-REQ-148)
+
 ## [1.9.0] - 2026-05-31
 
 ### Added
