@@ -1277,7 +1277,7 @@ function preflightLinuxHostRuntimeSurface(
   if (
     record.runtimeSelection.platform !== 'linux' ||
     record.runtimeSelection.provider !== 'host-native' ||
-    linuxLabviewTcpSettings.viServerTcpEnabled !== false
+    linuxLabviewTcpSettings.viServerTcpEnabled === true
   ) {
     return undefined;
   }
@@ -2185,10 +2185,20 @@ export function shouldUseLinuxHostNativeShortPathStaging(
   }
   const tmpRoot = resolveLinuxRuntimeTmpRoot(processEnv);
   const reportDir = record.artifactPlan.reportDirectory;
-  if (typeof reportDir === 'string' && reportDir.startsWith(tmpRoot)) {
+  if (typeof reportDir === 'string' && isPathInsideDirectory(reportDir, tmpRoot)) {
     return false;
   }
   return true;
+}
+
+function isPathInsideDirectory(candidate: string, directory: string): boolean {
+  // Use path.posix on Linux short-path staging where both inputs are POSIX strings.
+  const normalizedDir = path.posix.normalize(directory).replace(/\/+$/u, '');
+  const normalizedCandidate = path.posix.normalize(candidate);
+  if (normalizedCandidate === normalizedDir) {
+    return true;
+  }
+  return normalizedCandidate.startsWith(`${normalizedDir}/`);
 }
 
 function resolveLinuxRuntimeTmpRoot(processEnv: NodeJS.ProcessEnv): string {

@@ -827,6 +827,7 @@ describe('comparisonReportRuntimeExecution', () => {
     record.runtimeSelection.provider = 'host-native';
     record.runtimeSelection.executionMode = 'host-only';
     record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
     record.runtimeSelection.labviewExe = {
       kind: 'labview-exe',
       path: '/usr/local/natinst/LabVIEW-2026-64/labview',
@@ -1600,6 +1601,65 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
       /VI Server/i
     );
   });
+
+  it('blocks execution with linux-vi-server-tcp-disabled when no labview.conf candidate is readable', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const runCommand = vi.fn();
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi
+          .fn()
+          .mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' })) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: runCommand as never,
+        nowIso: vi.fn().mockReturnValue('2026-06-02T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('not-available');
+    expect(result.record.runtimeExecution.blockedReason).toBe('linux-vi-server-tcp-disabled');
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
+      /No readable Linux LabVIEW config/
+    );
+  });
 });
 
 describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
@@ -1610,6 +1670,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     record.runtimeSelection.provider = 'host-native';
     record.runtimeSelection.executionMode = 'host-only';
     record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
     record.runtimeSelection.labviewExe = {
       kind: 'labview-exe',
       path: '/usr/local/natinst/LabVIEW-2026-64/labview',
@@ -1661,6 +1722,18 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
         LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/vi-history-suite-runtime'
       })
     ).toBe(false);
+  });
+
+  it('shouldUseLinuxHostNativeShortPathStaging returns true when reportDir only shares a prefix with the tmp root', () => {
+    // /tmp/vi-history-suite-runtime-old/... must not be treated as inside /tmp/vi-history-suite-runtime.
+    const record = makeLinuxHostNativeRecord();
+    record.artifactPlan.reportDirectory =
+      '/tmp/vi-history-suite-runtime-old/repoid123456/fileid123456';
+    expect(
+      shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {
+        LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/vi-history-suite-runtime'
+      })
+    ).toBe(true);
   });
 
   it('buildLinuxHostNativeShortPathLayout uses LVIE_LINUX_RUNTIME_TMPDIR when set', () => {

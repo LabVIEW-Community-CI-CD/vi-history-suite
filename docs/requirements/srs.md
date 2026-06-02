@@ -671,14 +671,19 @@ Missing numeric IDs are intentional.
     `~/.config/natinst/LabVIEW-<version>/`, and
     `/etc/natinst/LabVIEW-<version>/`) and block execution with
     `blockedReason: 'linux-vi-server-tcp-disabled'` when
-    `server.tcp.enabled=False` or the key is absent (NI Linux defaults VI
-    Server TCP off). When TCP is enabled, the resolved
+    `server.tcp.enabled=False`, when the key is absent in a readable
+    config, or when no candidate config is readable at all (NI Linux
+    defaults VI Server TCP off, so the surface cannot be confirmed
+    enabled). When TCP is enabled, the resolved
     `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
     `-PortNumber`.
   - Linux host-native runs mirror the staged VI inputs and report output
     under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
     overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
     `LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1`) before invoking LabVIEWCLI. The
+    "already inside the tmp root" guard uses an exact directory boundary
+    match so similarly-prefixed paths (e.g. `/tmp/foo` vs `/tmp/foo-old`)
+    do not falsely disable the workaround. The
     rewritten command targets the tmp paths; on success the produced
     report and any sibling assets are copied back to the canonical
     `reportFilePath`. The tmp directory is removed after every run

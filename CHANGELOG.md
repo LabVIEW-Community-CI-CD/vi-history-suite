@@ -39,8 +39,11 @@ Burned exact-version releases now include `v1.0.2`.
   `~/.config/natinst/LabVIEW-<version>/`, and
   `/etc/natinst/LabVIEW-<version>/`) before launching LabVIEWCLI. Runs are
   blocked with `linux-vi-server-tcp-disabled` when `server.tcp.enabled` is
-  `False` or missing, and the configured `server.tcp.port` (default `3363`)
-  is passed to LabVIEWCLI as `-PortNumber`. (VHS-REQ-156)
+  `False`, the key is missing from a readable config, or no candidate
+  `labview.conf` is readable at all (NI Linux defaults VI Server TCP off,
+  so the surface cannot be confirmed enabled). When TCP is enabled, the
+  configured `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
+  `-PortNumber`. (VHS-REQ-156)
 - Linux host-native runs now mirror staged VI inputs and the report output
   under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
   overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
