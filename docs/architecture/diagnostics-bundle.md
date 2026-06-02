@@ -68,7 +68,9 @@ Captured once per `executeComparisonReport` invocation.
   `recentProjectsListSize`); resolved `labviewTcpPort`.
 - `cliConnectTimeoutHardening` (Windows host-native + `labview-cli` only;
   VHS-REQ-148): outcome of writing the configurable connect-window timeout
-  into `LabVIEWCLI.ini` before the CLI is spawned. Fields:
+  into `LabVIEWCLI.ini` before the CLI is spawned. Operator-facing
+  guidance lives in [TROUBLESHOOTING.md](../../TROUBLESHOOTING.md#cold-launch-comparison-failures-350000-labview-cli-connection-failed).
+  Fields:
   - `applied` — `true` when both `OpenAppReferenceTimeoutInSecond` and
     `AfterLaunchOpenAppReferenceTimeoutInSecond` were rewritten this run.
     `false` when the helper short-circuited or failed (see `reason`).

@@ -75,6 +75,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 
 ### Troubleshooting Route
 - First-run or environment blockers: `.github/skills/onboarding/SKILL.md` then [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
+- Comparison runtime failures (including cold-launch `-350000` / `labview-cli-connection-failed`): open the diagnostics manifest at `<runDir>/diagnostics/diagnostics-manifest.json` first, then see the [Cold-launch comparison failures](./TROUBLESHOOTING.md#cold-launch-comparison-failures-350000-labview-cli-connection-failed) section.
 - Gate and CI failures: `.github/skills/testing-automation/SKILL.md` and the PR gate script.
 - Requirement or RTM drift: `.github/skills/requirements-traceability/SKILL.md` before editing requirements artifacts.
 
