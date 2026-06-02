@@ -31,6 +31,8 @@ src/reporting/comparisonReportPreflight.ts,mapped,Yes,Comparison report prefligh
 src/reporting/comparisonReportRuntimeExecution.ts,mapped,Yes,Comparison runtime execution; mapped through RTM.
 src/reporting/comparisonRuntimeDoctor.ts,mapped,Yes,Comparison runtime doctor; mapped through RTM.
 src/reporting/comparisonRuntimeLocator.ts,mapped,Yes,Comparison runtime locator; mapped through RTM.
+src/reporting/diagnostics/diagnosticsRecorder.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder; retained runtime evidence schema mapped through RTM (VHS-REQ-148).
+src/reporting/runtime/labviewCliIni.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper for Windows host-native compare; mapped through RTM (VHS-REQ-148).
 src/review/humanReviewSubmission.ts,supporting,No,Maintainer-only review submission persistence infrastructure; supporting VHS-REQ-610 dashboard aggregate review. Requires canonical host machine matching.
 src/review/humanReviewSubmissionAction.ts,supporting,No,Maintainer-only review submission action routing; supporting VHS-REQ-610 dashboard aggregate review. Requires canonical host machine matching.
 src/scenarios/decisionRecord.ts,supporting,No,Decision record persistence infrastructure; supporting VHS-REQ-610 dashboard aggregate review.
@@ -78,6 +80,9 @@ tests/unit/comparisonRuntimeDoctor.test.ts,mapped,Yes,Comparison runtime doctor 
 tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locator tests; mapped through RTM.
 tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests; mapped to VHS-REQ-610.
 tests/unit/dashboardLatestRun.test.ts,mapped,Yes,Dashboard latest-run record tests; mapped to VHS-REQ-610.
+tests/unit/diagnosticsRecorder.test.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder tests; mapped to VHS-REQ-148 retained runtime evidence.
+tests/unit/labviewCliIni.test.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper tests; mapped to VHS-REQ-148.
+tests/unit/windowsContainerLabviewCliScript.test.ts,mapped,Yes,Windows-container LabVIEW CLI script builder cliConnectTimeoutSeconds parity tests; mapped to VHS-REQ-148.
 tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
 tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM.
 tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.
@@ -164,6 +169,7 @@ docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
 docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md,asset-doc,No,Architecture decision record reference documentation for GitHub-first release and traceability governance; not directly mapped in RTM.
+docs/architecture/diagnostics-bundle.md,asset-doc,No,Comparison runtime diagnostics bundle schema and analyzer guide; reference documentation supporting VHS-REQ-148 retained runtime evidence; not directly mapped in RTM.
 docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runbook documentation; simplification process reference.
 docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation including release evidence retention expectations; mapped through RTM.

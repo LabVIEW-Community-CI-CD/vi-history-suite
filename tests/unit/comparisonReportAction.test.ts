@@ -256,11 +256,14 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         })
       })
     );
-    expect(executeComparisonReport).toHaveBeenCalledWith({
-      record: persistedRecord,
-      repositoryRoot: '/workspace/repo',
-      cancellationToken: undefined
-    });
+    expect(executeComparisonReport).toHaveBeenCalledWith(
+      {
+        record: persistedRecord,
+        repositoryRoot: '/workspace/repo',
+        cancellationToken: undefined
+      },
+      { cliConnectTimeoutSeconds: 180 }
+    );
     expect(archiveComparisonReportSource).toHaveBeenCalledWith(executedRecord);
     expect(result).toMatchObject({
       outcome: 'opened-comparison-report',

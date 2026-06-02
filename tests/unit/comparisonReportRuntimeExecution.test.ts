@@ -586,7 +586,8 @@ describe('comparisonReportRuntimeExecution', () => {
         processPlatform: 'win32',
         enforceWindowsHostPreflight: true,
         observeWindowsProcesses,
-        observeWindowsTcpListeners
+        observeWindowsTcpListeners,
+        disableDiagnostics: true
       }
     );
 
@@ -1152,6 +1153,238 @@ describe('comparisonReportRuntimeExecution', () => {
       expect(result.record.runtimeExecution.doctorSummaryLines?.length).toBeGreaterThan(0);
       expect(writePacketRecord).toHaveBeenCalled();
     });
+  });
+});
+
+describe('cliConnectTimeoutSeconds hardening invocation (VHS-REQ-148)', () => {
+  function createBlockedRecord(overrides: {
+    platform: 'win32' | 'linux' | 'darwin';
+    provider: 'host-native' | 'windows-container' | 'linux-container';
+    engine: 'labview-cli' | 'lvcompare';
+  }): ComparisonReportPacketRecord {
+    const record = createReadyRecord();
+    record.reportStatus = 'blocked-runtime';
+    record.runtimeSelection.platform = overrides.platform;
+    record.runtimeSelection.provider = overrides.provider;
+    record.runtimeSelection.engine = overrides.engine;
+    return record;
+  }
+
+  async function runWith(deps: {
+    processPlatform: NodeJS.Platform;
+    record: ComparisonReportPacketRecord;
+    cliConnectTimeoutSeconds?: number;
+  }) {
+    const harden = vi.fn().mockResolvedValue({ applied: true, requestedValue: 180 });
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    await executeComparisonReport(
+      { record: deps.record, repositoryRoot: '/workspace/repo' },
+      {
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-06-02T08:30:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: deps.processPlatform,
+        enforceWindowsHostPreflight: false,
+        disableDiagnostics: true,
+        applyLabviewCliIniHardening: harden as never,
+        cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
+      }
+    );
+    return { harden };
+  }
+
+  it('invokes the helper exactly once on win32 + host-native + labview-cli', async () => {
+    const record = createBlockedRecord({
+      platform: 'win32',
+      provider: 'host-native',
+      engine: 'labview-cli'
+    });
+    const { harden } = await runWith({
+      processPlatform: 'win32',
+      record,
+      cliConnectTimeoutSeconds: 180
+    });
+    expect(harden).toHaveBeenCalledTimes(1);
+    expect(harden).toHaveBeenCalledWith({ requestedValueSeconds: 180 });
+  });
+
+  it('does not invoke the helper for the lvcompare engine', async () => {
+    const record = createBlockedRecord({
+      platform: 'win32',
+      provider: 'host-native',
+      engine: 'lvcompare'
+    });
+    const { harden } = await runWith({
+      processPlatform: 'win32',
+      record,
+      cliConnectTimeoutSeconds: 180
+    });
+    expect(harden).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke the helper for the windows-container provider', async () => {
+    const record = createBlockedRecord({
+      platform: 'win32',
+      provider: 'windows-container',
+      engine: 'labview-cli'
+    });
+    const { harden } = await runWith({
+      processPlatform: 'win32',
+      record,
+      cliConnectTimeoutSeconds: 180
+    });
+    expect(harden).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke the helper on non-Windows hosts', async () => {
+    const record = createBlockedRecord({
+      platform: 'linux',
+      provider: 'host-native',
+      engine: 'labview-cli'
+    });
+    const { harden } = await runWith({
+      processPlatform: 'linux',
+      record,
+      cliConnectTimeoutSeconds: 180
+    });
+    expect(harden).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke the helper when cliConnectTimeoutSeconds is undefined', async () => {
+    const record = createBlockedRecord({
+      platform: 'win32',
+      provider: 'host-native',
+      engine: 'labview-cli'
+    });
+    const { harden } = await runWith({
+      processPlatform: 'win32',
+      record,
+      cliConnectTimeoutSeconds: undefined
+    });
+    expect(harden).not.toHaveBeenCalled();
+  });
+
+  it('attaches a compact hardening summary to runtimeExecution on the persisted record', async () => {
+    const record = createBlockedRecord({
+      platform: 'win32',
+      provider: 'host-native',
+      engine: 'labview-cli'
+    });
+    const harden = vi.fn().mockResolvedValue({ applied: true, requestedValue: 180 });
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-06-02T08:30:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false,
+        disableDiagnostics: true,
+        applyLabviewCliIniHardening: harden as never,
+        cliConnectTimeoutSeconds: 180
+      }
+    );
+    expect(writePacketRecord).toHaveBeenCalledTimes(1);
+    const persisted = writePacketRecord.mock.calls[0][0] as ComparisonReportPacketRecord;
+    expect(persisted.runtimeExecution.cliConnectTimeoutHardening).toEqual({
+      applied: true,
+      requestedValue: 180
+    });
+  });
+
+  it('preserves the reason in the compact hardening summary when hardening did not apply', async () => {
+    const record = createBlockedRecord({
+      platform: 'win32',
+      provider: 'host-native',
+      engine: 'labview-cli'
+    });
+    const harden = vi
+      .fn()
+      .mockResolvedValue({ applied: false, requestedValue: 180, reason: 'no-candidate' });
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-06-02T08:30:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false,
+        disableDiagnostics: true,
+        applyLabviewCliIniHardening: harden as never,
+        cliConnectTimeoutSeconds: 180
+      }
+    );
+    const persisted = writePacketRecord.mock.calls[0][0] as ComparisonReportPacketRecord;
+    expect(persisted.runtimeExecution.cliConnectTimeoutHardening).toEqual({
+      applied: false,
+      requestedValue: 180,
+      reason: 'no-candidate'
+    });
+  });
+
+  it('omits cliConnectTimeoutHardening from runtimeExecution when the helper is not invoked', async () => {
+    const record = createBlockedRecord({
+      platform: 'linux',
+      provider: 'host-native',
+      engine: 'labview-cli'
+    });
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-06-02T08:30:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'linux',
+        enforceWindowsHostPreflight: false,
+        disableDiagnostics: true,
+        cliConnectTimeoutSeconds: 180
+      }
+    );
+    const persisted = writePacketRecord.mock.calls[0][0] as ComparisonReportPacketRecord;
+    expect(persisted.runtimeExecution.cliConnectTimeoutHardening).toBeUndefined();
   });
 });
 

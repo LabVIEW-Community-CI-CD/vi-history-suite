@@ -67,6 +67,95 @@ docker info --format "{{.OSType}}"
 
 The first Docker compare can pull a large LabVIEW runtime image.
 
+## Cold-launch comparison failures (-350000 / `labview-cli-connection-failed`)
+
+### Symptom
+
+The first comparison after VS Code starts (no LabVIEW already running) fails
+with retained-runtime evidence containing
+`failureReason: "labview-cli-connection-failed"` and a stderr line ending in
+`(-350000)` from `LabVIEWCLI.exe`. Subsequent compares succeed because the
+LabVIEW process spawned by the failed attempt is still running.
+
+### What changed (VHS-REQ-148)
+
+`vi-history-suite` now writes the NI LabVIEWCLI connect-window keys
+`OpenAppReferenceTimeoutInSecond` and
+`AfterLaunchOpenAppReferenceTimeoutInSecond` into the active
+`LabVIEWCLI.ini` before each Windows host-native LabVIEW CLI compare. NI's
+default of 60 s is shorter than a true cold LabVIEW launch on most hosts;
+the extension's default of 180 s matches the value already used on the
+Windows-container path.
+
+The hardening is:
+
+- atomic (write tempfile + rename),
+- idempotent (no write when both keys already match the requested value),
+- fail-soft (any error is recorded in the diagnostics bundle; the compare
+  is not blocked by an ini failure), and
+- one-shot for the backup: a `LabVIEWCLI.ini.vhs-backup` sidecar is created
+  the first time the helper rewrites the file and is never overwritten.
+
+Linux and Windows-container compares are unchanged.
+
+### Tuning the connect window
+
+Configure `viHistorySuite.runtime.cliConnectTimeoutSeconds` (integer, default
+`180`, range `30`–`600`) in user or workspace settings. A higher value is
+appropriate when LabVIEW takes longer than 180 s to come up cold (slow disks,
+heavy startup VIs, anti-virus scanning); a lower value is appropriate when
+you want the CLI to fail fast against a clearly broken LabVIEW install.
+
+The configured value is recorded in every diagnostics bundle so retained
+evidence stays internally consistent if the setting changes between runs.
+
+### Confirming the fix took effect
+
+Open the run's diagnostics manifest and look for the
+`environmentFingerprint.cliConnectTimeoutHardening` block:
+
+```jsonc
+{
+  "applied": true,
+  "requestedValue": 180,
+  "iniPath": "C:/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.ini",
+  "previousValues": { "OpenAppReferenceTimeoutInSecond": "60", "AfterLaunchOpenAppReferenceTimeoutInSecond": "60" },
+  "currentValues": { "OpenAppReferenceTimeoutInSecond": "180", "AfterLaunchOpenAppReferenceTimeoutInSecond": "180" },
+  "backupCreated": true
+}
+```
+
+`applied: true` with matching `currentValues` means the connect window is
+hardened. Subsequent runs typically show `applied: false` with
+`reason: "already-current"` — that is the expected idempotent steady state,
+not a failure.
+
+If `applied` is `false` and `reason` is one of `no-candidate`,
+`read-failed`, `write-failed`, `rename-failed`, or `invalid-value`, the
+ini was not rewritten this run; check that `LabVIEWCLI.ini` exists in one
+of NI's standard locations and that the VS Code process can write to it.
+
+### When `-350000` still occurs after hardening
+
+If a cold compare still fails with `-350000` after `cliConnectTimeoutHardening.applied`
+shows the keys at your configured value, attach the run's full
+`diagnostics/` directory (manifest, environment fingerprint, every
+`attempt-N/` subdir, runtime stdout/stderr) when filing the report. The
+manifest path is shown at the top of the comparison-report panel.
+
+You can also widen the window further (for example to `300` or `600`) and
+re-run; `vi-history-suite` enforces the same value on every compare so the
+new ceiling applies immediately.
+
+### Restoring NI's defaults
+
+Stop VS Code, then either delete `LabVIEWCLI.ini` (NI recreates it on next
+use) or restore it from the `LabVIEWCLI.ini.vhs-backup` sidecar that the
+extension wrote the first time it hardened the file. To stop the extension
+from re-hardening, set `viHistorySuite.runtime.cliConnectTimeoutSeconds` to
+`60` (NI's default) — the keys will then be rewritten to match NI's value
+and stay there.
+
 ## Source Evaluation
 
 Inside a devcontainer or Codespace, reset the basic loop with:
