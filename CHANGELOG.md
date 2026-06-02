@@ -41,6 +41,17 @@ Burned exact-version releases now include `v1.0.2`.
   blocked with `linux-vi-server-tcp-disabled` when `server.tcp.enabled` is
   `False` or missing, and the configured `server.tcp.port` (default `3363`)
   is passed to LabVIEWCLI as `-PortNumber`. (VHS-REQ-156)
+- Linux host-native runs now mirror staged VI inputs and the report output
+  under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
+  overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
+  `LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1`) and copy the produced report back
+  to the canonical workspaceStorage path. The tmp directory is cleaned up
+  on every run. This works around a LabVIEW 2026 (`26.1.1f1`) Linux
+  path-table corruption that surfaces as
+  `Possible path leak, unable to purge elements of base #0` followed by
+  `CreateComparisonReport operation failed.` when staged inputs live under
+  deep, dot-prefixed paths such as
+  `~/.config/Code/User/workspaceStorage/...`. (VHS-REQ-156)
 
 ## [1.9.1] - 2026-06-02
 

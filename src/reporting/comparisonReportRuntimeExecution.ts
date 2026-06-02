@@ -554,6 +554,7 @@ async function runHostNativeExecution(
   });
 
   if (executionContext.outcome === 'blocked') {
+    await cleanupPreparedExecutionContext(executionContext, deps.removePath);
     return {
       state: 'failed',
       attempted: false,
@@ -566,6 +567,49 @@ async function runHostNativeExecution(
     };
   }
 
+  try {
+    return await runHostNativeExecutionWithContext(
+      record,
+      commandPlan,
+      executionContext,
+      deps
+    );
+  } finally {
+    await cleanupPreparedExecutionContext(executionContext, deps.removePath);
+  }
+}
+
+async function runHostNativeExecutionWithContext(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  executionContext: PreparedExecutionContext,
+  deps: {
+    readBlob: typeof readRevisionBlob;
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    copyFile: typeof fs.copyFile;
+    copyDirectory: typeof fs.cp;
+    removePath: typeof fs.rm;
+    unlinkFile: typeof fs.unlink;
+    readFile: typeof fs.readFile;
+    readdir: typeof fs.readdir;
+    pathExists: (filePath: string) => Promise<boolean>;
+    runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
+    nowIso: () => string;
+    nowMs: () => number;
+    processPlatform: NodeJS.Platform;
+    enforceWindowsHostPreflight: boolean;
+    observeWindowsProcesses: (
+      options: ObserveWindowsProcessesOptions
+    ) => Promise<RuntimeProcessObservation | undefined>;
+    observeWindowsTcpListeners: (
+      options: ObserveWindowsTcpListenersOptions
+    ) => Promise<WindowsTcpListenerObservation[]>;
+    commandTimeoutMs?: number;
+    diagnosticsRecorder?: DiagnosticsRecorder;
+    cliConnectTimeoutSeconds?: number;
+  }
+): Promise<ComparisonReportRuntimeExecution> {
   const windowsLabviewTcpSettings = await resolveWindowsLabviewTcpSettings(
     record,
     executionContext.commandPlan,
@@ -737,7 +781,8 @@ async function runHostNativeExecution(
         diagnostics.notes,
         timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
-        failureClassification.notes
+        failureClassification.notes,
+        executionContext.preparationNotes
       );
 
       return {
@@ -816,7 +861,8 @@ async function runHostNativeExecution(
         diagnosticNotes: mergeDiagnosticNotes(
           windowsLabviewTcpSettings.notes,
           linuxLabviewTcpSettings.notes,
-          diagnostics.notes
+          diagnostics.notes,
+          executionContext.preparationNotes
         ),
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
@@ -1843,6 +1889,15 @@ export interface PreparedExecutionContext {
   diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
   reportIdentityFilenames?: string[];
   reportTextReplacements?: RuntimeTextReplacement[];
+  /**
+   * VHS-REQ-156: directories to remove after execution completes (success or failure).
+   * Used by the Linux host-native short-path staging workaround for the LabVIEW 2026
+   * Linux path-table corruption that occurs when staged VIs/reports live under deep,
+   * dot-prefixed workspaceStorage paths.
+   */
+  cleanupPaths?: string[];
+  /** VHS-REQ-156: human-readable note describing why a path rewrite was applied. */
+  preparationNotes?: string[];
 }
 
 async function prepareExecutionContext(
@@ -1864,6 +1919,10 @@ async function prepareExecutionContext(
 
   if (record.runtimeSelection.provider === 'linux-container') {
     return prepareLinuxContainerExecutionContext(record, commandPlan, interopWorkspaceRoot, deps);
+  }
+
+  if (shouldUseLinuxHostNativeShortPathStaging(record, deps.processPlatform)) {
+    return prepareLinuxHostNativeShortPathExecutionContext(record, commandPlan, deps);
   }
 
   if (!requiresWindowsInterop(resolveEffectiveRuntimePlatform(record.runtimeSelection), deps.processPlatform)) {
@@ -1986,6 +2045,23 @@ async function finalizeExecutedReport(
   };
 }
 
+async function cleanupPreparedExecutionContext(
+  executionContext: PreparedExecutionContext,
+  removePath: typeof fs.rm
+): Promise<void> {
+  const cleanupPaths = executionContext.cleanupPaths;
+  if (!cleanupPaths || cleanupPaths.length === 0) {
+    return;
+  }
+  for (const targetPath of cleanupPaths) {
+    try {
+      await removePath(targetPath, { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup; tmp dirs reclaimed on reboot if removal fails.
+    }
+  }
+}
+
 async function clearStaleExecutedReportArtifacts(
   record: ComparisonReportPacketRecord,
   executionContext: PreparedExecutionContext,
@@ -2078,6 +2154,150 @@ function buildWindowsInteropLayout(
     leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
     rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
     reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
+  };
+}
+
+/**
+ * VHS-REQ-156: Linux host-native short-path staging.
+ *
+ * LabVIEW 2026 (26.1.1f1) on Linux logs `Possible path leak, unable to purge elements
+ * of base #0` and fails CreateComparisonReport with LabVIEW error 8 (file permission)
+ * when staged VIs / report paths live under deep, dot-prefixed paths such as
+ * `~/.config/Code/User/workspaceStorage/<hash>/<extension>/reports/...`. Mirroring
+ * the staged inputs under a short tmpdir avoids the path-table corruption.
+ */
+export function shouldUseLinuxHostNativeShortPathStaging(
+  record: ComparisonReportPacketRecord,
+  processPlatform: NodeJS.Platform,
+  processEnv: NodeJS.ProcessEnv = process.env
+): boolean {
+  if (processPlatform !== 'linux') {
+    return false;
+  }
+  if (record.runtimeSelection.platform !== 'linux') {
+    return false;
+  }
+  if (record.runtimeSelection.provider !== 'host-native') {
+    return false;
+  }
+  if (processEnv.LVIE_LINUX_DISABLE_RUNTIME_TMPDIR === '1') {
+    return false;
+  }
+  const tmpRoot = resolveLinuxRuntimeTmpRoot(processEnv);
+  const reportDir = record.artifactPlan.reportDirectory;
+  if (typeof reportDir === 'string' && reportDir.startsWith(tmpRoot)) {
+    return false;
+  }
+  return true;
+}
+
+function resolveLinuxRuntimeTmpRoot(processEnv: NodeJS.ProcessEnv): string {
+  const override = processEnv.LVIE_LINUX_RUNTIME_TMPDIR?.trim();
+  if (override) {
+    return override;
+  }
+  return path.join(os.tmpdir(), 'vi-history-suite-runtime');
+}
+
+export function buildLinuxHostNativeShortPathLayout(
+  record: ComparisonReportPacketRecord,
+  processEnv: NodeJS.ProcessEnv = process.env
+): WindowsInteropLayout {
+  const baseDir = resolveLinuxRuntimeTmpRoot(processEnv);
+  const reportDirectory = path.join(
+    baseDir,
+    record.artifactPlan.repoId,
+    record.artifactPlan.fileId
+  );
+  const stagingDirectory = path.join(reportDirectory, 'staging');
+  return {
+    reportDirectory,
+    stagingDirectory,
+    leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
+    rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
+    reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
+  };
+}
+
+export function buildLinuxHostNativeShortPathCommandPlan(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  layout: WindowsInteropLayout
+): ComparisonCommandPlan | undefined {
+  if (record.runtimeSelection.engine === 'labview-cli') {
+    const args: string[] = [];
+    for (let index = 0; index < commandPlan.args.length; index += 1) {
+      const current = commandPlan.args[index];
+      if (current === '-VI1' || current === '-vi1') {
+        args.push(current, layout.leftFilePath);
+        index += 1;
+        continue;
+      }
+      if (current === '-VI2' || current === '-vi2') {
+        args.push(current, layout.rightFilePath);
+        index += 1;
+        continue;
+      }
+      if (current === '-ReportPath' || current === '-reportPath') {
+        args.push(current, layout.reportFilePath);
+        index += 1;
+        continue;
+      }
+      args.push(current);
+    }
+    return {
+      executable: commandPlan.executable,
+      args
+    };
+  }
+
+  if (record.runtimeSelection.engine === 'lvcompare') {
+    if (commandPlan.args.length < 2) {
+      return undefined;
+    }
+    const args = [layout.leftFilePath, layout.rightFilePath, ...commandPlan.args.slice(2)];
+    return {
+      executable: commandPlan.executable,
+      args
+    };
+  }
+
+  return undefined;
+}
+
+async function prepareLinuxHostNativeShortPathExecutionContext(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  deps: {
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    leftBlob: Buffer;
+    rightBlob: Buffer;
+  }
+): Promise<PreparedExecutionContext> {
+  const layout = buildLinuxHostNativeShortPathLayout(record);
+  const rewritten = buildLinuxHostNativeShortPathCommandPlan(record, commandPlan, layout);
+  if (!rewritten) {
+    return {
+      outcome: 'ready',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath
+    };
+  }
+
+  await deps.mkdir(layout.reportDirectory, { recursive: true });
+  await deps.mkdir(layout.stagingDirectory, { recursive: true });
+  await deps.writeFile(layout.leftFilePath, deps.leftBlob);
+  await deps.writeFile(layout.rightFilePath, deps.rightBlob);
+
+  return {
+    outcome: 'ready',
+    commandPlan: rewritten,
+    reportFilePath: layout.reportFilePath,
+    cleanupPaths: [layout.reportDirectory],
+    preparationNotes: [
+      `Staged Linux host-native runtime inputs under ${layout.reportDirectory} to avoid LabVIEW 2026 Linux path-table corruption observed for deep workspaceStorage paths (set LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1 to opt out).`
+    ]
   };
 }
 

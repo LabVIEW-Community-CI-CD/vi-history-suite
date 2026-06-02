@@ -675,6 +675,19 @@ Missing numeric IDs are intentional.
     Server TCP off). When TCP is enabled, the resolved
     `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
     `-PortNumber`.
+  - Linux host-native runs mirror the staged VI inputs and report output
+    under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
+    overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
+    `LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1`) before invoking LabVIEWCLI. The
+    rewritten command targets the tmp paths; on success the produced
+    report and any sibling assets are copied back to the canonical
+    `reportFilePath`. The tmp directory is removed after every run
+    (success or failure). This works around a LabVIEW 2026 (26.1.1f1)
+    Linux path-table corruption that surfaces as
+    `Possible path leak, unable to purge elements of base #0` followed by
+    `(Hex 0x8) File permission error.` when staged inputs live under
+    deep, dot-prefixed paths such as
+    `~/.config/Code/User/workspaceStorage/...`.
 - Agent Work Scope:
   - Change the execution plan, runtime classification, and unit tests
     together; update troubleshooting notes when surfacing new symptoms.

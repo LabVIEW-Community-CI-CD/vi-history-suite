@@ -11,6 +11,9 @@ import {
   inferLabviewBitnessFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
   buildLinuxLabviewIniCandidatePaths,
+  buildLinuxHostNativeShortPathLayout,
+  buildLinuxHostNativeShortPathCommandPlan,
+  shouldUseLinuxHostNativeShortPathStaging,
   runComparisonCommandPlanWithObservation
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -866,7 +869,9 @@ describe('comparisonReportRuntimeExecution', () => {
           }
           return 'Recursive load during LEIF load!';
         }) as never,
-        pathExists: vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath),
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
         runCommand: vi.fn().mockResolvedValue({
           exitCode: 0,
           stdout: 'CreateComparisonReport operation succeeded.',
@@ -1594,5 +1599,191 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
     expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
       /VI Server/i
     );
+  });
+});
+
+describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
+  function makeLinuxHostNativeRecord() {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    return record;
+  }
+
+  it('shouldUseLinuxHostNativeShortPathStaging returns true for linux host-native deep workspaceStorage paths', () => {
+    const record = makeLinuxHostNativeRecord();
+    expect(shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {})).toBe(true);
+  });
+
+  it('shouldUseLinuxHostNativeShortPathStaging returns false on non-linux host', () => {
+    const record = makeLinuxHostNativeRecord();
+    expect(shouldUseLinuxHostNativeShortPathStaging(record, 'win32', {})).toBe(false);
+    expect(shouldUseLinuxHostNativeShortPathStaging(record, 'darwin', {})).toBe(false);
+  });
+
+  it('shouldUseLinuxHostNativeShortPathStaging returns false for non host-native providers', () => {
+    const record = makeLinuxHostNativeRecord();
+    record.runtimeSelection.provider = 'linux-container';
+    expect(shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {})).toBe(false);
+  });
+
+  it('shouldUseLinuxHostNativeShortPathStaging returns false when LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1', () => {
+    const record = makeLinuxHostNativeRecord();
+    expect(
+      shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {
+        LVIE_LINUX_DISABLE_RUNTIME_TMPDIR: '1'
+      })
+    ).toBe(false);
+  });
+
+  it('shouldUseLinuxHostNativeShortPathStaging returns false when staging already lives under the tmp root', () => {
+    const record = makeLinuxHostNativeRecord();
+    record.artifactPlan.reportDirectory = '/tmp/vi-history-suite-runtime/repoid123456/fileid123456';
+    expect(
+      shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {
+        LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/vi-history-suite-runtime'
+      })
+    ).toBe(false);
+  });
+
+  it('buildLinuxHostNativeShortPathLayout uses LVIE_LINUX_RUNTIME_TMPDIR when set', () => {
+    const record = makeLinuxHostNativeRecord();
+    const layout = buildLinuxHostNativeShortPathLayout(record, {
+      LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
+    });
+    expect(layout.reportDirectory).toBe('/tmp/lvie-runtime/repoid123456/fileid123456');
+    expect(layout.stagingDirectory).toBe('/tmp/lvie-runtime/repoid123456/fileid123456/staging');
+    expect(layout.leftFilePath).toBe(
+      '/tmp/lvie-runtime/repoid123456/fileid123456/staging/left-111111112222-foo.vi'
+    );
+    expect(layout.rightFilePath).toBe(
+      '/tmp/lvie-runtime/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi'
+    );
+    expect(layout.reportFilePath).toBe(
+      '/tmp/lvie-runtime/repoid123456/fileid123456/diff-report-foo.vi.html'
+    );
+  });
+
+  it('buildLinuxHostNativeShortPathCommandPlan rewrites -VI1, -VI2, -ReportPath and preserves -LabVIEWPath', () => {
+    const record = makeLinuxHostNativeRecord();
+    const layout = buildLinuxHostNativeShortPathLayout(record, {
+      LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
+    });
+    const rewritten = buildLinuxHostNativeShortPathCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-LogToConsole',
+          'TRUE',
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'HTML',
+          '-ReportPath',
+          '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-LabVIEWPath',
+          '/usr/local/natinst/LabVIEW-2026-64/labview'
+        ]
+      },
+      layout
+    );
+    expect(rewritten?.executable).toBe('/usr/local/bin/LabVIEWCLI');
+    expect(rewritten?.args).toContain(layout.leftFilePath);
+    expect(rewritten?.args).toContain(layout.rightFilePath);
+    expect(rewritten?.args).toContain(layout.reportFilePath);
+    expect(rewritten?.args).toContain('/usr/local/natinst/LabVIEW-2026-64/labview');
+    expect(rewritten?.args).not.toContain(
+      '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi'
+    );
+    expect(rewritten?.args).not.toContain(
+      '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
+    );
+  });
+
+  it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {
+    const record = makeLinuxHostNativeRecord();
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const copyFile = vi.fn().mockResolvedValue(undefined);
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.',
+      stderr: ''
+    });
+    const tmpRoot = '/tmp/lvie-runtime-test';
+    const expectedTmpReportPath = `${tmpRoot}/repoid123456/fileid123456/diff-report-foo.vi.html`;
+
+    process.env.LVIE_LINUX_RUNTIME_TMPDIR = tmpRoot;
+    try {
+      const result = await executeComparisonReport(
+        { record, repositoryRoot: '/workspace/repo' },
+        {
+          readRevisionBlob: vi
+            .fn()
+            .mockResolvedValueOnce(Buffer.from('left'))
+            .mockResolvedValueOnce(Buffer.from('right')),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: writeFile as never,
+          copyFile: copyFile as never,
+          copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+          removePath: removePath as never,
+          unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+          readdir: vi.fn().mockResolvedValue([]) as never,
+          readFile: vi.fn(async (filePath: string) => {
+            if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+              return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+            }
+            return '';
+          }) as never,
+          pathExists: vi.fn(async (filePath: string) =>
+            typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+          ),
+          runCommand: runCommand as never,
+          nowIso: vi.fn().mockReturnValue('2026-06-02T18:00:00.000Z'),
+          nowMs: vi.fn().mockReturnValue(1000),
+          writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          processPlatform: 'linux'
+        }
+      );
+
+      expect(result.record.runtimeExecution.state).toBe('succeeded');
+      const issuedArgs = runCommand.mock.calls[0]?.[0]?.args ?? [];
+      expect(issuedArgs).toContain(expectedTmpReportPath);
+      expect(issuedArgs).toContain(`${tmpRoot}/repoid123456/fileid123456/staging/left-111111112222-foo.vi`);
+      expect(copyFile).toHaveBeenCalledWith(
+        expectedTmpReportPath,
+        record.artifactPlan.reportFilePath
+      );
+      expect(removePath).toHaveBeenCalledWith(
+        `${tmpRoot}/repoid123456/fileid123456`,
+        expect.objectContaining({ recursive: true, force: true })
+      );
+      const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
+      expect(notes.some((note) => /short-path|path-table corruption|workspaceStorage/i.test(note))).toBe(true);
+    } finally {
+      delete process.env.LVIE_LINUX_RUNTIME_TMPDIR;
+    }
   });
 });
