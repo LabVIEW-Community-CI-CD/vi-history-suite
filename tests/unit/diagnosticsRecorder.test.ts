@@ -218,6 +218,77 @@ describe('diagnosticsRecorder', () => {
         harness.recorder.recordEnvironmentFingerprint(createRecord())
       ).resolves.toBeUndefined();
     });
+
+    it('omits cliConnectTimeoutHardening when no context is provided', async () => {
+      const harness = createHarness();
+      const record = createRecord();
+      await harness.recorder.recordEnvironmentFingerprint(record);
+      const fingerprintWrite = harness.writes.find((w) =>
+        w.filePath.includes(ENVIRONMENT_FINGERPRINT_FILENAME)
+      );
+      const parsed = JSON.parse(fingerprintWrite!.contents);
+      expect(parsed.cliConnectTimeoutHardening).toBeUndefined();
+    });
+
+    it('emits the cliConnectTimeoutHardening block when context supplies it', async () => {
+      const harness = createHarness();
+      const record = createRecord();
+      await harness.recorder.recordEnvironmentFingerprint(record, {
+        cliConnectTimeoutHardening: {
+          applied: true,
+          requestedValue: 180,
+          iniPath: 'C:\\fake\\LabVIEWCLI.ini',
+          previousValues: {
+            OpenAppReferenceTimeoutInSecond: '30',
+            AfterLaunchOpenAppReferenceTimeoutInSecond: '30'
+          },
+          currentValues: {
+            OpenAppReferenceTimeoutInSecond: '180',
+            AfterLaunchOpenAppReferenceTimeoutInSecond: '180'
+          },
+          backupCreated: true
+        }
+      });
+      const fingerprintWrite = harness.writes.find((w) =>
+        w.filePath.includes(ENVIRONMENT_FINGERPRINT_FILENAME)
+      );
+      const parsed = JSON.parse(fingerprintWrite!.contents);
+      expect(parsed.cliConnectTimeoutHardening).toEqual({
+        applied: true,
+        requestedValue: 180,
+        iniPath: 'C:\\fake\\LabVIEWCLI.ini',
+        previousValues: {
+          OpenAppReferenceTimeoutInSecond: '30',
+          AfterLaunchOpenAppReferenceTimeoutInSecond: '30'
+        },
+        currentValues: {
+          OpenAppReferenceTimeoutInSecond: '180',
+          AfterLaunchOpenAppReferenceTimeoutInSecond: '180'
+        },
+        backupCreated: true
+      });
+    });
+
+    it('emits a non-applied cliConnectTimeoutHardening block with reason when supplied', async () => {
+      const harness = createHarness();
+      const record = createRecord();
+      await harness.recorder.recordEnvironmentFingerprint(record, {
+        cliConnectTimeoutHardening: {
+          applied: false,
+          requestedValue: 180,
+          reason: 'no-candidate'
+        }
+      });
+      const fingerprintWrite = harness.writes.find((w) =>
+        w.filePath.includes(ENVIRONMENT_FINGERPRINT_FILENAME)
+      );
+      const parsed = JSON.parse(fingerprintWrite!.contents);
+      expect(parsed.cliConnectTimeoutHardening).toEqual({
+        applied: false,
+        requestedValue: 180,
+        reason: 'no-candidate'
+      });
+    });
   });
 
   describe('pre-launch baseline', () => {

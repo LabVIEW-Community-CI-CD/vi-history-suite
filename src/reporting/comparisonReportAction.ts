@@ -90,6 +90,12 @@ export interface ComparisonReportActionDeps {
   readFile?: typeof fs.readFile;
   pathExists?: (targetPath: string) => Promise<boolean>;
   getRuntimeSettings?: () => ComparisonRuntimeSettings;
+  /**
+   * VHS-REQ-148: optional override for the LabVIEWCLI.ini connect-window timeout, in seconds.
+   * When omitted, `readCliConnectTimeoutSeconds` is used, which reads
+   * `viHistorySuite.runtime.cliConnectTimeoutSeconds`.
+   */
+  getCliConnectTimeoutSeconds?: () => number;
   archiveComparisonReportSource?: typeof archiveComparisonReportSource;
 }
 
@@ -416,6 +422,8 @@ async function ensureComparisonReportEvidence(
       record: packet.record,
       repositoryRoot: request.model.repositoryRoot,
       cancellationToken: request.cancellationToken
+    }, {
+      cliConnectTimeoutSeconds: (deps.getCliConnectTimeoutSeconds ?? readCliConnectTimeoutSeconds)()
     });
     if (request.cancellationToken?.isCancellationRequested) {
       return buildCancelledComparisonReportResult('after-runtime-execution', packet);
@@ -1262,6 +1270,31 @@ function readConfiguredRuntimeProvider(
   }
 
   return { invalidProvider: value };
+}
+
+export const DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS = 180;
+const MIN_CLI_CONNECT_TIMEOUT_SECONDS = 30;
+const MAX_CLI_CONNECT_TIMEOUT_SECONDS = 600;
+
+/**
+ * VHS-REQ-148: read the configured LabVIEW CLI connect-window timeout (seconds) from
+ * `viHistorySuite.runtime.cliConnectTimeoutSeconds`. Falls back to the shipped default
+ * (180s, matching the existing Windows-container constant). Out-of-range values fall back
+ * to the default to keep the helper idempotent and predictable.
+ */
+export function readCliConnectTimeoutSeconds(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'> = vscode.workspace.getConfiguration(
+    'viHistorySuite'
+  )
+): number {
+  const raw = configuration.get<unknown>('runtime.cliConnectTimeoutSeconds');
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw)) {
+    return DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS;
+  }
+  if (raw < MIN_CLI_CONNECT_TIMEOUT_SECONDS || raw > MAX_CLI_CONNECT_TIMEOUT_SECONDS) {
+    return DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS;
+  }
+  return raw;
 }
 
 export function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
