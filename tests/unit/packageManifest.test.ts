@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.9.1');
+    expect(manifest.version).toBe('1.9.2');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -186,7 +186,7 @@ describe('extension manifest public metadata', () => {
     expect(manifest.dependencies ?? {}).toEqual({
       'jsonc-parser': expect.any(String)
     });
-    expect(manifest.devDependencies).toHaveProperty('@vscode/vsce', '3.7.1');
+    expect(manifest.devDependencies).toHaveProperty('@vscode/vsce', '3.9.1');
     expect(manifest.scripts).toMatchObject({
       clean: 'rimraf out out-tests coverage',
       compile: 'tsc -p . && node scripts/generateBuildInfo.js',

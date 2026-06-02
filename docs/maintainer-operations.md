@@ -86,16 +86,36 @@ It must:
 - fail closed unless `package.json` version equals the tag without `v`
 - fail closed unless the tagged commit is reachable from `origin/main`
 - run `npm ci`, `npm run check`, `npm test`, and `npm run package`
+- pre-check the live Marketplace listing for the target version and skip
+  `Publish To Marketplace` when the version is already published, so reruns
+  of a previously failed verifier step never re-attempt publish
 - publish the located VSIX with `node scripts/runPinnedVsce.js publish --packagePath`
 - verify the live Marketplace listing with bounded `vsce show` retry through
-  `node scripts/verifyMarketplaceListing.js`
+  `node scripts/verifyMarketplaceListing.js` (20 attempts at 30s = 10 minutes)
 - retain release evidence that names required validation surfaces
   (traceability audit, docs link check, tests, package, Marketplace listing, and
   closeout expectation)
-- upload retained release artifacts including:
+- upload retained release artifacts even when listing verification times out
+  (`Upload Release Evidence` runs with `if: always()`), including:
   `release-evidence/marketplace-show.json`,
   `release-evidence/marketplace-listing-verification.json`,
+  `release-evidence/marketplace-prepublish-show.json`,
+  `release-evidence/marketplace-prepublish-check.json`,
   `release-evidence/release-evidence-contract.json`, `coverage/**`, and the VSIX
+
+If `Verify Marketplace Listing` times out because Marketplace propagation
+exceeds the 10-minute window, the published listing is still live; rerun the
+failed step with `gh run rerun <run-id> --failed` (the pre-publish check now
+recognizes the already-published version and skips publish, so the rerun
+will only re-execute the verifier and evidence upload). Manual confirmation
+remains:
+
+```shell
+node scripts/verifyMarketplaceListing.js svelderrainruiz.vi-history-suite \
+  <version> --out release-evidence/marketplace-show.json \
+  --report-out release-evidence/marketplace-listing-verification.json \
+  --attempts 20 --delay-ms 30000
+```
 
 The workflow uses the protected GitHub environment `marketplace-release`.
 Configure that environment with required approval and `VSCE_PAT`.

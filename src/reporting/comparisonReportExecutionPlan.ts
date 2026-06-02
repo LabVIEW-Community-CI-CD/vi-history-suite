@@ -51,10 +51,21 @@ export function buildComparisonReportExecutionPlan(
     const labviewCliPath = record.runtimeSelection.labviewCli?.path?.trim();
     const labviewExePath = record.runtimeSelection.labviewExe?.path?.trim();
     const effectiveRuntimePlatform = resolveEffectiveRuntimePlatform(record);
+    // Linux host-native LabVIEW host-headless mode is broken on at least LabVIEW 2026
+    // 26.1.1f1 (HeadlessManager logs "Failed to initialize headless LabVIEW." and the
+    // CLI hangs). Stay non-headless by default and let LV_RTE_LINUX_HEADLESS=1 opt in
+    // for LabVIEW builds where headless mode works. The Linux container provider
+    // continues to force -Headless because its bundled LabVIEW image initializes
+    // headless mode correctly.
+    const linuxHostHeadlessOptIn =
+      effectiveRuntimePlatform === 'linux' &&
+      record.runtimeSelection.provider === 'host-native' &&
+      process.env.LV_RTE_LINUX_HEADLESS === '1';
     const headlessRequested =
       record.runtimeSelection.provider === 'windows-container' ||
       record.runtimeSelection.provider === 'linux-container' ||
       record.runtimeSelection.headlessRequested === true ||
+      linuxHostHeadlessOptIn ||
       (effectiveRuntimePlatform === 'win32' &&
         process.env.LV_RTE_HEADLESS === '1');
     if (!labviewCliPath) {

@@ -636,6 +636,84 @@ Missing numeric IDs are intentional.
   - Treat external tool execution as evidence-producing, not inherently
     trustworthy.
 
+### VHS-REQ-156: Linux Host-Native Headless Comparison Invocation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When the active runtime selection is host-native LabVIEW CLI on
+  Linux, the comparison execution plan shall keep the invocation
+  non-headless by default and only pass `-Headless` when the operator
+  explicitly opts in via `LV_RTE_LINUX_HEADLESS=1`. Runtime classification
+  shall recognize a broken `HeadlessManager` (LabVIEW logs `Failed to
+  initialize headless LabVIEW.`) and the `(Hex 0x8) File permission error.`
+  + `CreateComparisonReport operation failed.` stderr signature so operators
+  receive an actionable, classified failure instead of an unbounded stall.
+- Acceptance Criteria:
+  - Linux host-native LabVIEWCLI args do not include `-Headless` unless
+    `LV_RTE_LINUX_HEADLESS=1` is set in the extension host environment.
+  - The Linux container provider continues to invoke LabVIEWCLI with
+    `-Headless` regardless of the env var.
+  - Windows host-native invocations remain unchanged unless
+    `LV_RTE_HEADLESS=1` or an explicit headless request is present.
+  - Headless-log scanning emits `linux-headless-init-failed` when
+    `Failed to initialize headless LabVIEW.` is observed.
+  - Stderr classification recognizes the LabVIEW error 8 /
+    `CreateComparisonReport operation failed.` failure with reason
+    `labview-cli-create-report-permission-error`.
+  - Either Linux headless reason (`linux-headless-init-failed` or
+    `linux-headless-recursive-load`) wins over more general stderr or
+    LabVIEW CLI diagnostic-log reasons; only `linux-headless-recursive-load`
+    triggers the headless-session-reset retry, so init-failed runs do not
+    waste a second attempt.
+  - Before launching LabVIEWCLI, Linux host-native `labview-cli` runs read
+    the active `labview.conf` (searched under
+    `~/natinst/.config/LabVIEW-<version>/`,
+    `~/.config/natinst/LabVIEW-<version>/`, and
+    `/etc/natinst/LabVIEW-<version>/`) and block execution with
+    `blockedReason: 'linux-vi-server-tcp-disabled'` when
+    `server.tcp.enabled=False`, when the key is absent in a readable
+    config, or when no candidate config is readable at all (NI Linux
+    defaults VI Server TCP off, so the surface cannot be confirmed
+    enabled). When the runtime selection does not carry an explicit
+    `requestedLabviewVersion`, the year is inferred from the resolved
+    `labviewExe` directory segment (e.g. `LabVIEW-2026-64`) so the preflight
+    can still locate the config. The `lvcompare` engine is exempt from this
+    preflight because it does not connect to LabVIEW VI Server. When TCP is
+    enabled, the resolved `server.tcp.port` (default `3363`) is passed to
+    LabVIEWCLI as `-PortNumber`.
+  - Linux host-native runs mirror the staged VI inputs and report output
+    under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
+    overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
+    `LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1`) before invoking LabVIEWCLI. The
+    "already inside the tmp root" guard uses an exact directory boundary
+    match so similarly-prefixed paths (e.g. `/tmp/foo` vs `/tmp/foo-old`)
+    do not falsely disable the workaround. The
+    rewritten command targets the tmp paths; on success the produced
+    report and any sibling assets are copied back to the canonical
+    `reportFilePath`. The tmp directory is removed after every run
+    (success or failure). This works around a LabVIEW 2026 (26.1.1f1)
+    Linux path-table corruption that surfaces as
+    `Possible path leak, unable to purge elements of base #0` followed by
+    `(Hex 0x8) File permission error.` when staged inputs live under
+    deep, dot-prefixed paths such as
+    `~/.config/Code/User/workspaceStorage/...`.
+- Agent Work Scope:
+  - Change the execution plan, runtime classification, and unit tests
+    together; update troubleshooting notes when surfacing new symptoms.
+- Implementation References:
+  - `src/reporting/comparisonReportExecutionPlan.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/comparisonReportExecutionPlan.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+- Change Guidance:
+  - Keep the headless decision inside the plan so runtime evidence reflects
+    the actual args used. Do not silently force `-Headless` on Linux
+    host-native; LabVIEW 2026 26.1.1f1 hangs in headless mode, while the
+    non-headless path succeeds when VI Server TCP/IP is enabled
+    (default port 3363).
+
 ### VHS-REQ-596: Devcontainer Source Evaluation
 
 - Status: Active
@@ -1153,8 +1231,17 @@ Missing numeric IDs are intentional.
     package commands before publication.
   - Marketplace publication uses the pinned VSCE wrapper and verifies the live
     Marketplace listing after publication.
-  - Marketplace listing verification retries bounded propagation lag and retains
+  - Marketplace publication is idempotent: a pre-publish check inspects the
+    live Marketplace listing for the target version and skips
+    `Publish To Marketplace` when the version is already published, so a
+    rerun of a previously failed verifier step never re-attempts publish and
+    never aborts on `Version already exists`.
+  - Marketplace listing verification retries bounded propagation lag (at
+    least 20 attempts at 30s = 10 minutes) and retains
     the final `vsce show` evidence plus bounded retry-attempt evidence.
+  - Release evidence is uploaded even when listing verification times out,
+    so propagation lag never erases the release-evidence artifact (the
+    upload step runs with `if: always()`).
   - Retained release evidence names required validation and retained artifacts
     for release closeout, including traceability audit, docs link check, tests,
     package validation, Marketplace listing evidence, and closeout expectation.

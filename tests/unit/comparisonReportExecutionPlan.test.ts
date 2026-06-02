@@ -200,6 +200,84 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
+  it('keeps linux host-native LabVIEWCLI invocations non-headless by default', () => {
+    const originalHeadless = process.env.LV_RTE_HEADLESS;
+    const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
+    delete process.env.LV_RTE_HEADLESS;
+    delete process.env.LV_RTE_LINUX_HEADLESS;
+    try {
+      const linuxHostNativePlan = buildComparisonReportExecutionPlan(
+        createBaseRecord({
+          runtimeSelection: {
+            ...createBaseRecord().runtimeSelection,
+            platform: 'linux',
+            provider: 'host-native'
+          }
+        })
+      );
+      expect(linuxHostNativePlan.outcome).toBe('ready');
+      expect(linuxHostNativePlan.commandPlan?.args).not.toContain('-Headless');
+    } finally {
+      if (originalHeadless === undefined) {
+        delete process.env.LV_RTE_HEADLESS;
+      } else {
+        process.env.LV_RTE_HEADLESS = originalHeadless;
+      }
+      if (originalLinuxHeadless === undefined) {
+        delete process.env.LV_RTE_LINUX_HEADLESS;
+      } else {
+        process.env.LV_RTE_LINUX_HEADLESS = originalLinuxHeadless;
+      }
+    }
+  });
+
+  it('lets LV_RTE_LINUX_HEADLESS=1 opt in to headless on linux host-native', () => {
+    const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
+    process.env.LV_RTE_LINUX_HEADLESS = '1';
+    try {
+      const plan = buildComparisonReportExecutionPlan(
+        createBaseRecord({
+          runtimeSelection: {
+            ...createBaseRecord().runtimeSelection,
+            platform: 'linux',
+            provider: 'host-native'
+          }
+        })
+      );
+      expect(plan.outcome).toBe('ready');
+      expect(plan.commandPlan?.args).toContain('-Headless');
+    } finally {
+      if (originalLinuxHeadless === undefined) {
+        delete process.env.LV_RTE_LINUX_HEADLESS;
+      } else {
+        process.env.LV_RTE_LINUX_HEADLESS = originalLinuxHeadless;
+      }
+    }
+  });
+
+  it('keeps the linux-container provider headless regardless of LV_RTE_LINUX_HEADLESS', () => {
+    const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
+    delete process.env.LV_RTE_LINUX_HEADLESS;
+    try {
+      const plan = buildComparisonReportExecutionPlan(
+        createBaseRecord({
+          runtimeSelection: {
+            ...createBaseRecord().runtimeSelection,
+            platform: 'linux',
+            provider: 'linux-container'
+          }
+        })
+      );
+      expect(plan.commandPlan?.args).toContain('-Headless');
+    } finally {
+      if (originalLinuxHeadless === undefined) {
+        delete process.env.LV_RTE_LINUX_HEADLESS;
+      } else {
+        process.env.LV_RTE_LINUX_HEADLESS = originalLinuxHeadless;
+      }
+    }
+  });
+
   it('blocks labview-cli plans when selection is incomplete', () => {
     const record = createBaseRecord({
       runtimeSelection: {

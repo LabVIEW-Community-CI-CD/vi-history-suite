@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -197,13 +197,13 @@
   "devDependencies": {
     "@types/node": "^24.12.4",
     "@types/vscode": "^1.90.0",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@vitest/coverage-v8": "^4.1.8",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "3.7.1",
+    "@vscode/vsce": "3.9.1",
     "marked": "^18.0.4",
     "rimraf": "^6.0.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.8"
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1"
