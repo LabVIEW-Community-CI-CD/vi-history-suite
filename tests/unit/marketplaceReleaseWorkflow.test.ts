@@ -64,10 +64,32 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain('npm run traceability:audit');
     expect(workflow).toContain('npm run docs:links');
     expect(workflow).toContain('Closeout expectation: npm run closeout:evidence');
-    expect(workflow).toContain('--attempts 6');
+    expect(workflow).toContain('--attempts 20');
     expect(workflow).toContain('--delay-ms 30000');
     expect(workflow).toContain('actions/upload-artifact@v7');
     expect(workflow).toContain('coverage/**');
     expect(workflow).toContain('retention-days: 90');
+  });
+
+  it('publishes idempotently and uploads evidence even when verification times out', () => {
+    const workflow = readWorkflow();
+
+    // Idempotent publish: pre-publish check sets already_published, and the publish
+    // step is skipped on rerun when the version is already on Marketplace.
+    expect(workflow).toContain('name: Marketplace Pre-Publish Check');
+    expect(workflow).toContain('id: prepublish-check');
+    expect(workflow).toContain('release-evidence/marketplace-prepublish-show.json');
+    expect(workflow).toContain('release-evidence/marketplace-prepublish-check.json');
+    expect(workflow).toContain('already_published=true');
+    expect(workflow).toContain('already_published=false');
+    expect(workflow).toContain(
+      "if: steps.prepublish-check.outputs.already_published != 'true'"
+    );
+
+    // Evidence upload runs regardless of the verification step outcome so propagation
+    // lag never erases the release-evidence artifact.
+    expect(workflow).toMatch(
+      /- name: Upload Release Evidence\n\s+if: always\(\)\n\s+uses: actions\/upload-artifact@v7/
+    );
   });
 });
