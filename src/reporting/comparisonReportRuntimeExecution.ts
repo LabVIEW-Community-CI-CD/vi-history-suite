@@ -1187,6 +1187,30 @@ export function buildLinuxLabviewIniCandidatePaths(options: {
   return [...new Set(candidates)];
 }
 
+/**
+ * VHS-REQ-156: Infer the LabVIEW year token (e.g. `2026`) from a Linux
+ * `labviewExe.path` like `/usr/local/natinst/LabVIEW-2026-64/labview` so the
+ * labview.conf preflight can locate the config when `requestedLabviewVersion`
+ * was not explicitly set on the runtime selection. Returns `undefined` when
+ * the directory segment does not match the canonical `LabVIEW-<year>[-bits]`
+ * shape.
+ */
+export function inferLinuxLabviewVersionFromExecutablePath(
+  executablePath: string | undefined
+): string | undefined {
+  if (!executablePath) {
+    return undefined;
+  }
+  const segments = executablePath.split('/').filter(Boolean);
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const match = segments[index].match(/^LabVIEW-(\d{4})(?:-(?:32|64))?$/u);
+    if (match) {
+      return match[1];
+    }
+  }
+  return undefined;
+}
+
 export async function resolveLinuxLabviewTcpSettings(
   record: ComparisonReportPacketRecord,
   deps: {
@@ -1204,9 +1228,12 @@ export async function resolveLinuxLabviewTcpSettings(
   }
 
   const homeDir = (deps.homeDir ?? os.homedir)();
+  const requestedLabviewVersion =
+    record.runtimeSelection.requestedLabviewVersion ??
+    inferLinuxLabviewVersionFromExecutablePath(record.runtimeSelection.labviewExe?.path);
   const candidates = buildLinuxLabviewIniCandidatePaths({
     homeDir,
-    requestedLabviewVersion: record.runtimeSelection.requestedLabviewVersion,
+    requestedLabviewVersion,
     bitness: record.runtimeSelection.bitness
   });
 
@@ -1277,6 +1304,7 @@ function preflightLinuxHostRuntimeSurface(
   if (
     record.runtimeSelection.platform !== 'linux' ||
     record.runtimeSelection.provider !== 'host-native' ||
+    record.runtimeSelection.engine !== 'labview-cli' ||
     linuxLabviewTcpSettings.viServerTcpEnabled === true
   ) {
     return undefined;

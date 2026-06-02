@@ -666,17 +666,22 @@ Missing numeric IDs are intentional.
     LabVIEW CLI diagnostic-log reasons; only `linux-headless-recursive-load`
     triggers the headless-session-reset retry, so init-failed runs do not
     waste a second attempt.
-  - Before launching LabVIEWCLI, Linux host-native runs read the active
-    `labview.conf` (searched under `~/natinst/.config/LabVIEW-<version>/`,
+  - Before launching LabVIEWCLI, Linux host-native `labview-cli` runs read
+    the active `labview.conf` (searched under
+    `~/natinst/.config/LabVIEW-<version>/`,
     `~/.config/natinst/LabVIEW-<version>/`, and
     `/etc/natinst/LabVIEW-<version>/`) and block execution with
     `blockedReason: 'linux-vi-server-tcp-disabled'` when
     `server.tcp.enabled=False`, when the key is absent in a readable
     config, or when no candidate config is readable at all (NI Linux
     defaults VI Server TCP off, so the surface cannot be confirmed
-    enabled). When TCP is enabled, the resolved
-    `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
-    `-PortNumber`.
+    enabled). When the runtime selection does not carry an explicit
+    `requestedLabviewVersion`, the year is inferred from the resolved
+    `labviewExe` directory segment (e.g. `LabVIEW-2026-64`) so the preflight
+    can still locate the config. The `lvcompare` engine is exempt from this
+    preflight because it does not connect to LabVIEW VI Server. When TCP is
+    enabled, the resolved `server.tcp.port` (default `3363`) is passed to
+    LabVIEWCLI as `-PortNumber`.
   - Linux host-native runs mirror the staged VI inputs and report output
     under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
     overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via

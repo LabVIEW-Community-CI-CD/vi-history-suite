@@ -9,6 +9,7 @@ import {
   classifyLabviewCliDiagnosticText,
   executeComparisonReport,
   inferLabviewBitnessFromExecutablePath,
+  inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
   buildLinuxLabviewIniCandidatePaths,
   buildLinuxHostNativeShortPathLayout,
@@ -1534,6 +1535,63 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     });
     expect(settings.viServerTcpEnabled).toBe('unknown');
     expect(settings.inspectedCandidatePaths).toEqual([]);
+  });
+
+  it('infers requestedLabviewVersion from labviewExe path when not explicitly set', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.engine = 'labview-cli';
+    record.runtimeSelection.requestedLabviewVersion = undefined;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('LabVIEW-2026-64/labview.conf')) {
+        return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+      }
+      throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    });
+
+    const settings = await resolveLinuxLabviewTcpSettings(record, {
+      readFile: readFile as never,
+      homeDir: () => '/home/sergio'
+    });
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3363);
+    expect(settings.labviewIniPath).toMatch(/LabVIEW-2026-64\/labview\.conf$/);
+  });
+});
+
+describe('inferLinuxLabviewVersionFromExecutablePath (VHS-REQ-156)', () => {
+  it('extracts the year from a 64-bit install path', () => {
+    expect(
+      inferLinuxLabviewVersionFromExecutablePath('/usr/local/natinst/LabVIEW-2026-64/labview')
+    ).toBe('2026');
+  });
+
+  it('extracts the year from a 32-bit install path', () => {
+    expect(
+      inferLinuxLabviewVersionFromExecutablePath('/usr/local/natinst/LabVIEW-2025-32/labview')
+    ).toBe('2025');
+  });
+
+  it('extracts the year from a version-only directory', () => {
+    expect(
+      inferLinuxLabviewVersionFromExecutablePath('/opt/natinst/LabVIEW-2024/labview')
+    ).toBe('2024');
+  });
+
+  it('returns undefined for non-canonical paths', () => {
+    expect(inferLinuxLabviewVersionFromExecutablePath('/usr/local/bin/labview')).toBeUndefined();
+    expect(inferLinuxLabviewVersionFromExecutablePath(undefined)).toBeUndefined();
+    expect(inferLinuxLabviewVersionFromExecutablePath('')).toBeUndefined();
   });
 });
 
