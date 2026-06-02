@@ -14,6 +14,16 @@ Burned exact-version releases now include `v1.0.2`.
 
 ### Fixed
 
+- Marketplace release workflow: `Publish To Marketplace` is now idempotent on
+  rerun. A new `Marketplace Pre-Publish Check` step inspects the live
+  Marketplace listing for the target version and skips publish when the
+  version is already published, so a rerun of a previously failed
+  `Verify Marketplace Listing` step never re-attempts publish and never
+  aborts on `Version already exists`. The verifier budget grew from 6×30s
+  (3 min) to 20×30s (10 min) to cover observed Marketplace propagation lag.
+  `Upload Release Evidence` now runs with `if: always()` so propagation
+  timeouts no longer erase the release-evidence artifact. (VHS-REQ-609,
+  fixes #199, #190)
 - Linux host-native comparisons surface clearer evidence when LabVIEW's
   cold-launch path or VI Server configuration breaks `CreateComparisonReport`.
   Stderr classification now recognizes the LabVIEW error 8 (`File permission

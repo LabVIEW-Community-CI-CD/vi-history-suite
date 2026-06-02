@@ -1231,8 +1231,17 @@ Missing numeric IDs are intentional.
     package commands before publication.
   - Marketplace publication uses the pinned VSCE wrapper and verifies the live
     Marketplace listing after publication.
-  - Marketplace listing verification retries bounded propagation lag and retains
+  - Marketplace publication is idempotent: a pre-publish check inspects the
+    live Marketplace listing for the target version and skips
+    `Publish To Marketplace` when the version is already published, so a
+    rerun of a previously failed verifier step never re-attempts publish and
+    never aborts on `Version already exists`.
+  - Marketplace listing verification retries bounded propagation lag (at
+    least 20 attempts at 30s = 10 minutes) and retains
     the final `vsce show` evidence plus bounded retry-attempt evidence.
+  - Release evidence is uploaded even when listing verification times out,
+    so propagation lag never erases the release-evidence artifact (the
+    upload step runs with `if: always()`).
   - Retained release evidence names required validation and retained artifacts
     for release closeout, including traceability audit, docs link check, tests,
     package validation, Marketplace listing evidence, and closeout expectation.

@@ -101,7 +101,22 @@ jobs:
           echo "vsix_path=$vsix_path" >> "$GITHUB_OUTPUT"
           echo "VSIX: $vsix_path" | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - name: Marketplace Pre-Publish Check
+        id: prepublish-check
+        run: |
+          set -euo pipefail
+          mkdir -p release-evidence
+          TAG_VERSION="${{ steps.version.outputs.tag_version }}"
+          if node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION" --attempts 1 --delay-ms 0 --out release-evidence/marketplace-prepublish-show.json --report-out release-evidence/marketplace-prepublish-check.json; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "Marketplace listing already contains version $TAG_VERSION; Publish To Marketplace step will be skipped (idempotent rerun)." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+            echo "Marketplace listing does not yet contain version $TAG_VERSION; Publish To Marketplace step will run." | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Publish To Marketplace
+        if: steps.prepublish-check.outputs.already_published != 'true'
         run: |
           set -euo pipefail
           if [[ -z "${VSCE_PAT:-}" ]]; then
@@ -117,7 +132,7 @@ jobs:
           set -euo pipefail
           mkdir -p release-evidence
           TAG_VERSION="${{ steps.version.outputs.tag_version }}"
-          node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION" --out release-evidence/marketplace-show.json --report-out release-evidence/marketplace-listing-verification.json --attempts 6 --delay-ms 30000
+          node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION" --out release-evidence/marketplace-show.json --report-out release-evidence/marketplace-listing-verification.json --attempts 20 --delay-ms 30000
           node <<'NODE'
           const fs = require('node:fs');
           const payload = {
@@ -160,6 +175,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Release Evidence
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: marketplace-release-${{ github.run_id }}
