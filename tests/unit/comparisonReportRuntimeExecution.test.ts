@@ -586,7 +586,8 @@ describe('comparisonReportRuntimeExecution', () => {
         processPlatform: 'win32',
         enforceWindowsHostPreflight: true,
         observeWindowsProcesses,
-        observeWindowsTcpListeners
+        observeWindowsTcpListeners,
+        disableDiagnostics: true
       }
     );
 

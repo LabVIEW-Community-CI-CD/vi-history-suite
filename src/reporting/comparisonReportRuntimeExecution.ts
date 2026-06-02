@@ -11,6 +11,11 @@ import {
 } from './comparisonReportPacket';
 import { buildComparisonRuntimeDoctorSummary } from './comparisonRuntimeDoctor';
 import { readRevisionBlob } from './comparisonReportPreflight';
+import {
+  createDiagnosticsRecorder,
+  DiagnosticsRecorder,
+  noopDiagnosticsRecorder
+} from './diagnostics/diagnosticsRecorder';
 
 export interface ExecuteComparisonReportOptions {
   record: ComparisonReportPacketRecord;
@@ -50,6 +55,14 @@ export interface ComparisonReportRuntimeExecutionDeps {
   ) => Promise<WindowsTcpListenerObservation[]>;
   enforceWindowsHostPreflight?: boolean;
   commandTimeoutMs?: number;
+  /**
+   * Optional diagnostics recorder. When omitted, a default recorder is
+   * constructed using the same fs/observation deps. Pass `noopDiagnosticsRecorder()`
+   * from tests to disable diagnostics emission.
+   */
+  diagnosticsRecorder?: DiagnosticsRecorder;
+  /** When true, suppress the default diagnostics recorder construction. */
+  disableDiagnostics?: boolean;
 }
 
 export interface ComparisonRuntimeCancellationToken {
@@ -109,7 +122,7 @@ export interface RuntimeProcessObservation {
   capturedAt: string;
   hostPlatform: NodeJS.Platform;
   runtimePlatform: string;
-  trigger: 'preflight' | 'cli-log-banner' | 'process-spawn' | 'process-exit';
+  trigger: 'preflight' | 'cli-log-banner' | 'process-spawn' | 'process-exit' | 'pre-launch-baseline';
   observedProcesses: RuntimeObservedProcess[];
   observedProcessNames: string[];
   labviewProcessObserved: boolean;
@@ -224,6 +237,22 @@ export async function executeComparisonReport(
   const nowMs = deps.nowMs ?? defaultNowMs;
   const writePacketRecord = deps.writePacketRecord ?? writeComparisonReportPacketRecord;
 
+  const diagnosticsRecorder: DiagnosticsRecorder =
+    deps.diagnosticsRecorder ??
+    (deps.disableDiagnostics
+      ? noopDiagnosticsRecorder()
+      : createDiagnosticsRecorder({
+          mkdir,
+          writeFile,
+          readFile,
+          processPlatform,
+          nowIso,
+          observeWindowsProcesses,
+          observeWindowsTcpListeners: observeWindowsTcpListenersFn
+        }));
+
+  await diagnosticsRecorder.recordEnvironmentFingerprint(options.record);
+
   let runtimeExecution: ComparisonReportRuntimeExecution;
 
   if (plan.outcome === 'blocked' || !plan.commandPlan) {
@@ -261,7 +290,8 @@ export async function executeComparisonReport(
         enforceWindowsHostPreflight,
         observeWindowsProcesses,
         observeWindowsTcpListeners: observeWindowsTcpListenersFn,
-        commandTimeoutMs: deps.commandTimeoutMs
+        commandTimeoutMs: deps.commandTimeoutMs,
+        diagnosticsRecorder
       }
     );
   }
@@ -278,6 +308,28 @@ export async function executeComparisonReport(
     mkdir,
     writeFile
   });
+
+  if (
+    updatedRecord.runtimeExecution.state === 'failed' &&
+    updatedRecord.runtimeExecution.attempted &&
+    updatedRecord.runtimeExecution.failureReason
+  ) {
+    await diagnosticsRecorder.recordFailureClassification(updatedRecord, 1, {
+      failureReason: updatedRecord.runtimeExecution.failureReason,
+      diagnosticReason: updatedRecord.runtimeExecution.diagnosticReason,
+      exitCode: updatedRecord.runtimeExecution.exitCode,
+      signal: updatedRecord.runtimeExecution.signal,
+      durationMs: updatedRecord.runtimeExecution.durationMs,
+      artifactPaths: {
+        stdout: updatedRecord.runtimeExecution.stdoutFilePath,
+        stderr: updatedRecord.runtimeExecution.stderrFilePath,
+        diagnosticLog: updatedRecord.runtimeExecution.diagnosticLogArtifactPath,
+        processObservation: updatedRecord.runtimeExecution.processObservationArtifactPath
+      }
+    });
+  }
+
+  await diagnosticsRecorder.flushManifest(updatedRecord);
 
   return {
     record: updatedRecord,
@@ -374,6 +426,7 @@ async function runHostNativeExecution(
       options: ObserveWindowsTcpListenersOptions
     ) => Promise<WindowsTcpListenerObservation[]>;
     commandTimeoutMs?: number;
+    diagnosticsRecorder?: DiagnosticsRecorder;
   }
 ): Promise<ComparisonReportRuntimeExecution> {
   await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
@@ -479,10 +532,18 @@ async function runHostNativeExecution(
     return windowsHostSurfacePreflight.blockedExecution;
   }
 
-  const executeAttempt = async (): Promise<ComparisonReportRuntimeExecution> => {
+  const executeAttempt = async (
+    attemptIndex = 1
+  ): Promise<ComparisonReportRuntimeExecution> => {
     await clearStaleExecutedReportArtifacts(record, effectiveExecutionContext, {
       removePath: deps.removePath
     });
+
+    if (deps.diagnosticsRecorder) {
+      await deps.diagnosticsRecorder.recordPreLaunchBaseline(record, attemptIndex, {
+        requestedTcpPort: windowsLabviewTcpSettings.labviewTcpPort
+      });
+    }
 
     const startedAt = deps.nowIso();
     const startedMs = deps.nowMs();
@@ -681,7 +742,10 @@ async function runHostNativeExecution(
     }
   };
 
-  const initialResult = await executeAttempt();
+  const initialResult = await executeAttempt(1);
+  if (deps.diagnosticsRecorder) {
+    await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 1);
+  }
   if (shouldAttemptLinuxHeadlessRecovery(record, initialResult)) {
     const recovery = await attemptLabviewCliHeadlessSessionReset(
       'Linux',
@@ -690,7 +754,10 @@ async function runHostNativeExecution(
       effectiveExecutionContext,
       windowsLabviewTcpSettings.labviewTcpPort
     );
-    const retriedResult = await executeAttempt();
+    const retriedResult = await executeAttempt(2);
+    if (deps.diagnosticsRecorder) {
+      await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 2);
+    }
     return buildRecoveredExecutionResult(
       initialResult,
       recovery,
@@ -707,7 +774,10 @@ async function runHostNativeExecution(
       effectiveExecutionContext,
       initialResult.labviewTcpPort ?? windowsLabviewTcpSettings.labviewTcpPort
     );
-    const retriedResult = await executeAttempt();
+    const retriedResult = await executeAttempt(2);
+    if (deps.diagnosticsRecorder) {
+      await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 2);
+    }
     return buildRecoveredExecutionResult(
       initialResult,
       recovery,
