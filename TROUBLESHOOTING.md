@@ -156,6 +156,57 @@ from re-hardening, set `viHistorySuite.runtime.cliConnectTimeoutSeconds` to
 `60` (NI's default) — the keys will then be rewritten to match NI's value
 and stay there.
 
+## Linux host-native compare fails with LabVIEW error 8 (`File permission error`)
+
+### Symptom
+
+On Linux, the host-native LabVIEW CLI compare succeeds at connecting and even
+writes a partial report directory, but the run fails with retained evidence
+similar to:
+
+```
+LabVIEW: (Hex 0x8) File permission error.
+CreateComparisonReport operation failed.
+```
+
+The same compare succeeds when the runtime selection is the Linux Docker
+container, and the LabVIEW interactive log
+(`/tmp/lvrt_<version>_interactive_<user>_log.txt`) shows entries like:
+
+```
+GSW.lvlibp/.../GSW_MainPanel.vi
+Recursive load during LEIF load!
+Possible path leak, unable to purge elements of base #0
+```
+
+### Root cause (VHS-REQ-156)
+
+LabVIEW's Linux host-native cold launch initializes the GSW main panel and
+recursively reloads `GSW.lvlibp/.../GSW_MainPanel.vi`, which destabilizes
+LabVIEW's path table. By the time `CreateComparisonReport` writes the final
+HTML, internal path lookups fail with LabVIEW error 8. The Linux container
+provider already runs LabVIEW with `-Headless`, which suppresses the GSW
+cold-launch path entirely, so it is unaffected.
+
+### Fix
+
+`vi-history-suite` now always passes `-Headless` to LabVIEWCLI when the
+effective runtime platform is Linux, regardless of provider. The flag is
+recorded in retained `runtimeExecution.args`. Stderr classification adds the
+`labview-cli-create-report-permission-error` reason for the LabVIEW error 8 /
+`CreateComparisonReport operation failed.` signature; when `LVStatus.txt`
+also reports a recursive GSW LEIF load, the existing
+`linux-headless-recursive-load` reason still wins so the headless-session
+recovery retry can fire.
+
+### Confirming the fix took effect
+
+Open the retained packet for a Linux host-native run and confirm
+`runtimeExecution.args` contains `-Headless`. If a compare still fails with
+`labview-cli-create-report-permission-error` while `-Headless` is present in
+the args, attach the run's full `diagnostics/` directory and the LabVIEW
+interactive log when filing the report.
+
 ## Source Evaluation
 
 Inside a devcontainer or Codespace, reset the basic loop with:

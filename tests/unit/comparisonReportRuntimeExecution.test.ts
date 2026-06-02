@@ -815,7 +815,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
   });
 
-  it('does not attach stale Linux headless diagnostics to a non-headless host success', async () => {
+  it('does not attach stale Linux headless diagnostics to a successful Linux host-native headless run', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -873,10 +873,9 @@ describe('comparisonReportRuntimeExecution', () => {
     );
 
     expect(result.record.runtimeExecution.state).toBe('succeeded');
-    expect(result.record.runtimeExecution.args).not.toContain('-Headless');
+    expect(result.record.runtimeExecution.args).toContain('-Headless');
     expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
     expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths).toEqual([]);
-    expect(readdir).not.toHaveBeenCalled();
   });
 
   it('classifies password-protected CreateComparisonReport failures from retained LabVIEW CLI diagnostics', () => {
@@ -895,6 +894,22 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.notes).toContain(
       'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
     );
+  });
+
+  it('classifies CreateComparisonReport file permission errors (LabVIEW error 8) from stderr', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
+        'LabVIEW launched successfully.',
+        'Operation output:',
+        'LabVIEW: (Hex 0x8) File permission error.',
+        'CreateComparisonReport operation failed.'
+      ].join('\n'),
+      '/usr/local/natinst/LabVIEW-2026-64/labview'
+    );
+
+    expect(result.reason).toBe('labview-cli-create-report-permission-error');
+    expect(result.notes.some((note) => /CreateComparisonReport returned LabVIEW error 8/i.test(note))).toBe(true);
   });
 
   it('does not retain a false failure note when LabVIEW CLI reports CreateComparisonReport success', () => {

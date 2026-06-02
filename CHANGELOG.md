@@ -10,6 +10,22 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Fixed
+
+- Linux host-native comparisons no longer fail with LabVIEW error 8
+  (`File permission error.` / `CreateComparisonReport operation failed.`) on
+  cold launch. `vi-history-suite` now always passes `-Headless` to LabVIEWCLI
+  when the effective runtime platform is Linux, suppressing the GSW main-panel
+  cold-launch path that recursively reloads `GSW_MainPanel.vi`, destabilizes
+  LabVIEW's path table, and breaks the final HTML write. Stderr classification
+  also recognizes the LabVIEW error 8 signature as
+  `labview-cli-create-report-permission-error`, while the existing
+  `linux-headless-recursive-load` reason still wins when `LVStatus.txt`
+  reports a recursive GSW LEIF load so the headless-session recovery retry
+  can fire. (VHS-REQ-156)
+
 ## [1.9.1] - 2026-06-02
 
 ### Fixed

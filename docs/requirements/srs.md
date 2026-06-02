@@ -636,6 +636,42 @@ Missing numeric IDs are intentional.
   - Treat external tool execution as evidence-producing, not inherently
     trustworthy.
 
+### VHS-REQ-156: Linux Host-Native Headless Comparison Invocation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When the active runtime selection is host-native LabVIEW CLI on
+  Linux, the comparison execution plan shall invoke `LabVIEWCLI` with
+  `-Headless` so that LabVIEW does not cold-launch the GSW main panel and
+  recursively reload `GSW.lvlibp/.../GSW_MainPanel.vi`, which destabilizes
+  LabVIEW's path table and causes `CreateComparisonReport` to fail with
+  LabVIEW error 8 (File permission error) when writing the final HTML.
+- Acceptance Criteria:
+  - The execution plan appends `-Headless` to LabVIEWCLI args whenever the
+    effective runtime platform is `linux`, regardless of provider, in addition
+    to the existing container and `LV_RTE_HEADLESS` cases.
+  - Windows host-native invocations remain unchanged unless
+    `LV_RTE_HEADLESS=1` or an explicit headless request is present.
+  - Stderr classification recognizes the LabVIEW error 8 / `CreateComparisonReport
+    operation failed.` failure with reason
+    `labview-cli-create-report-permission-error`.
+  - When `LVStatus.txt` reports a recursive GSW LEIF load, the existing
+    `linux-headless-recursive-load` reason still wins so the headless-session
+    recovery retry can fire.
+- Agent Work Scope:
+  - Change the execution plan, runtime classification, and unit tests
+    together; update troubleshooting notes when surfacing new symptoms.
+- Implementation References:
+  - `src/reporting/comparisonReportExecutionPlan.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/comparisonReportExecutionPlan.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+- Change Guidance:
+  - Keep the headless decision inside the plan so runtime evidence reflects
+    the actual args used; do not rely on environment variables on Linux.
+
 ### VHS-REQ-596: Devcontainer Source Evaluation
 
 - Status: Active

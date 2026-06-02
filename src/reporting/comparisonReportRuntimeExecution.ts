@@ -1245,7 +1245,7 @@ async function captureRuntimeDiagnostics(
   if (!diagnosticLogSourcePath) {
     await clearStaleArtifactIfPresent();
     return {
-      reason: stderrClassification.reason ?? headlessDiagnostics.reason,
+      reason: selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason),
       notes: mergeDiagnosticNotes(stderrClassification.notes, headlessDiagnostics.notes),
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
@@ -1266,8 +1266,7 @@ async function captureRuntimeDiagnostics(
       ),
       sourcePath: diagnosticLogSourcePath,
       reason:
-        stderrClassification.reason ??
-        headlessDiagnostics.reason ??
+        selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason) ??
         'runtime-diagnostic-log-unreadable',
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
@@ -1279,12 +1278,34 @@ async function captureRuntimeDiagnostics(
   const classification = classifyLabviewCliDiagnosticText(diagnosticText, deps.expectedLabviewPath);
 
   return {
-    reason: stderrClassification.reason ?? classification.reason ?? headlessDiagnostics.reason,
+    reason: selectDiagnosticReason(
+      headlessDiagnostics.reason,
+      stderrClassification.reason,
+      classification.reason
+    ),
     notes: mergeDiagnosticNotes(stderrClassification.notes, classification.notes, headlessDiagnostics.notes),
     sourcePath: diagnosticLogSourcePath,
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
   };
+}
+
+// linux-headless-recursive-load is the trigger for the headless-session recovery retry,
+// so it must win when LVStatus.txt observed a recursive GSW LEIF load even if stderr or the
+// LabVIEW CLI diagnostic log carry a more specific post-failure reason.
+function selectDiagnosticReason(
+  headlessReason: string | undefined,
+  ...otherReasons: Array<string | undefined>
+): string | undefined {
+  if (headlessReason === 'linux-headless-recursive-load') {
+    return headlessReason;
+  }
+  for (const reason of otherReasons) {
+    if (reason) {
+      return reason;
+    }
+  }
+  return headlessReason;
 }
 
 function shouldCaptureLinuxHeadlessDiagnostics(
@@ -3069,6 +3090,21 @@ export function classifyLabviewCliDiagnosticText(
     );
     return {
       reason: 'labview-cli-call-by-reference',
+      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
+    };
+  }
+
+  if (
+    /\(Hex 0x8\) File permission error\./i.test(diagnosticText) &&
+    /CreateComparisonReport operation failed\./i.test(diagnosticText)
+  ) {
+    notes.push(
+      launchSucceeded
+        ? 'LabVIEW CLI launched LabVIEW successfully but CreateComparisonReport returned LabVIEW error 8 (File permission error) while writing the report.'
+        : 'LabVIEW CLI reported CreateComparisonReport returned LabVIEW error 8 (File permission error).'
+    );
+    return {
+      reason: 'labview-cli-create-report-permission-error',
       notes: appendLaunchConfirmationNote(notes, launchSucceeded)
     };
   }

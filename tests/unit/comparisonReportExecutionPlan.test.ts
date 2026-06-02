@@ -200,6 +200,33 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
+  it('forces headless mode on linux host-native LabVIEWCLI invocations', () => {
+    const originalHeadless = process.env.LV_RTE_HEADLESS;
+    delete process.env.LV_RTE_HEADLESS;
+    try {
+      const linuxHostNativePlan = buildComparisonReportExecutionPlan(
+        createBaseRecord({
+          runtimeSelection: {
+            ...createBaseRecord().runtimeSelection,
+            platform: 'linux',
+            provider: 'host-native'
+          }
+        })
+      );
+      expect(linuxHostNativePlan.outcome).toBe('ready');
+      expect(linuxHostNativePlan.commandPlan?.args).toContain('-Headless');
+
+      const win32HostNativePlan = buildComparisonReportExecutionPlan(createBaseRecord());
+      expect(win32HostNativePlan.commandPlan?.args).not.toContain('-Headless');
+    } finally {
+      if (originalHeadless === undefined) {
+        delete process.env.LV_RTE_HEADLESS;
+      } else {
+        process.env.LV_RTE_HEADLESS = originalHeadless;
+      }
+    }
+  });
+
   it('blocks labview-cli plans when selection is incomplete', () => {
     const record = createBaseRecord({
       runtimeSelection: {
