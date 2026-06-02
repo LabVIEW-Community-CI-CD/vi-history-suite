@@ -156,56 +156,79 @@ from re-hardening, set `viHistorySuite.runtime.cliConnectTimeoutSeconds` to
 `60` (NI's default) — the keys will then be rewritten to match NI's value
 and stay there.
 
-## Linux host-native compare fails with LabVIEW error 8 (`File permission error`)
+## Linux host-native compare fails with LabVIEW error 8 (`File permission error`) or hangs in headless mode
 
 ### Symptom
 
-On Linux, the host-native LabVIEW CLI compare succeeds at connecting and even
-writes a partial report directory, but the run fails with retained evidence
-similar to:
+On Linux, the host-native LabVIEW CLI compare either:
 
-```
-LabVIEW: (Hex 0x8) File permission error.
-CreateComparisonReport operation failed.
-```
+- fails quickly with retained evidence containing
+  `LabVIEW: (Hex 0x8) File permission error.` followed by
+  `CreateComparisonReport operation failed.`, or
+- runs for minutes without producing a report and the operator must cancel.
 
 The same compare succeeds when the runtime selection is the Linux Docker
-container, and the LabVIEW interactive log
-(`/tmp/lvrt_<version>_interactive_<user>_log.txt`) shows entries like:
+container.
 
-```
-GSW.lvlibp/.../GSW_MainPanel.vi
-Recursive load during LEIF load!
-Possible path leak, unable to purge elements of base #0
-```
+### Root causes
 
-### Root cause (VHS-REQ-156)
+Two independent issues can cause this on a Linux host running LabVIEW 2026:
 
-LabVIEW's Linux host-native cold launch initializes the GSW main panel and
-recursively reloads `GSW.lvlibp/.../GSW_MainPanel.vi`, which destabilizes
-LabVIEW's path table. By the time `CreateComparisonReport` writes the final
-HTML, internal path lookups fail with LabVIEW error 8. The Linux container
-provider already runs LabVIEW with `-Headless`, which suppresses the GSW
-cold-launch path entirely, so it is unaffected.
+1. **VI Server TCP/IP is disabled.** `LabVIEWCLI` connects to LabVIEW over
+   VI Server TCP. If the LabVIEW install has not enabled the VI Server TCP
+   listener (default port `3363`), the CLI cannot drive `CreateComparisonReport`,
+   the GSW splash path runs to completion, and the run eventually fails with
+   LabVIEW error 8.
+2. **`HeadlessManager` is broken on the active LabVIEW build.** On at least
+   LabVIEW 2026 `26.1.1f1`, the headless manager logs
+   `Failed to initialize headless LabVIEW.` every 10 seconds and never binds
+   a working session, so any `-Headless` invocation hangs until the operator
+   cancels.
 
 ### Fix
 
-`vi-history-suite` now always passes `-Headless` to LabVIEWCLI when the
-effective runtime platform is Linux, regardless of provider. The flag is
-recorded in retained `runtimeExecution.args`. Stderr classification adds the
-`labview-cli-create-report-permission-error` reason for the LabVIEW error 8 /
-`CreateComparisonReport operation failed.` signature; when `LVStatus.txt`
-also reports a recursive GSW LEIF load, the existing
-`linux-headless-recursive-load` reason still wins so the headless-session
-recovery retry can fire.
+1. Enable VI Server TCP/IP in LabVIEW (Tools → Options → VI Server) and
+   confirm port `3363` (or your configured port) is listening:
+
+   ```bash
+   ss -lnt | grep 3363
+   ```
+
+2. Leave the comparison invocation **non-headless** on Linux host-native.
+   `vi-history-suite` keeps Linux host-native runs non-headless by default;
+   the Linux container provider continues to invoke `-Headless` because the
+   container's bundled LabVIEW image initializes headless mode correctly.
+
+3. Only set `LV_RTE_LINUX_HEADLESS=1` (in the VS Code extension host
+   environment, e.g. `~/.profile` or a shell that launches `code`) if your
+   active LabVIEW build's headless manager is known to work.
 
 ### Confirming the fix took effect
 
-Open the retained packet for a Linux host-native run and confirm
-`runtimeExecution.args` contains `-Headless`. If a compare still fails with
-`labview-cli-create-report-permission-error` while `-Headless` is present in
-the args, attach the run's full `diagnostics/` directory and the LabVIEW
-interactive log when filing the report.
+Open the retained packet for a Linux host-native run and confirm that:
+
+- `runtimeExecution.args` does **not** contain `-Headless` (default), or
+  contains `-Headless` only when you explicitly opted in.
+- `runtimeExecution.state` is `succeeded` and `runtimeExecution.reportExists`
+  is `true`.
+
+### When a Linux host-native compare still fails
+
+Check the retained `runtimeExecution.diagnosticReason`:
+
+- `labview-cli-create-report-permission-error`: LabVIEW returned error 8.
+  Confirm VI Server TCP/IP is enabled and reachable from the extension host.
+- `linux-headless-init-failed`: Your LabVIEW build cannot initialize
+  headless mode. Unset `LV_RTE_LINUX_HEADLESS` (or set it to anything other
+  than `1`) to drop back to the non-headless path.
+- `linux-headless-recursive-load`: A recursive GSW LEIF load was observed
+  while running in headless mode. The headless-session-reset retry will
+  attempt one recovery; if it also fails, switch to non-headless or use the
+  Linux container provider.
+
+If the failure persists, attach the run's full `diagnostics/` directory and
+the LabVIEW interactive log
+(`/tmp/lvrt_<version>_interactive_<user>_log.txt`) when filing the report.
 
 ## Source Evaluation
 

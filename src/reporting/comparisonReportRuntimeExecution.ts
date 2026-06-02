@@ -1290,14 +1290,18 @@ async function captureRuntimeDiagnostics(
   };
 }
 
-// linux-headless-recursive-load is the trigger for the headless-session recovery retry,
-// so it must win when LVStatus.txt observed a recursive GSW LEIF load even if stderr or the
-// LabVIEW CLI diagnostic log carry a more specific post-failure reason.
+// linux-headless-init-failed is terminal (no retry can help) and linux-headless-recursive-load
+// is the trigger for the headless-session recovery retry. Either headless reason must win when
+// observed in LVStatus.txt / lvrt headless logs, even if stderr or the LabVIEW CLI diagnostic
+// log carry a more specific post-failure reason.
 function selectDiagnosticReason(
   headlessReason: string | undefined,
   ...otherReasons: Array<string | undefined>
 ): string | undefined {
-  if (headlessReason === 'linux-headless-recursive-load') {
+  if (
+    headlessReason === 'linux-headless-init-failed' ||
+    headlessReason === 'linux-headless-recursive-load'
+  ) {
     return headlessReason;
   }
   for (const reason of otherReasons) {
@@ -1625,7 +1629,12 @@ async function captureLinuxHeadlessDiagnostics(
       continue;
     }
 
-    if (/Recursive load during LEIF load!/i.test(diagnosticText)) {
+    if (/Failed to initialize headless LabVIEW\./i.test(diagnosticText)) {
+      reason = 'linux-headless-init-failed';
+      notes.push(
+        'Retained Linux headless log reported "Failed to initialize headless LabVIEW." Headless mode is unusable on this LabVIEW build; set LV_RTE_LINUX_HEADLESS=0 to opt out, or switch to the Linux container provider.'
+      );
+    } else if (/Recursive load during LEIF load!/i.test(diagnosticText)) {
       reason = reason ?? 'linux-headless-recursive-load';
       const mainPanelMatch = diagnosticText.match(/loading ([^\r\n]+GSW_MainPanel\.vi)/i);
       notes.push(

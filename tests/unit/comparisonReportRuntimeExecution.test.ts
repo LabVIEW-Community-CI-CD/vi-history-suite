@@ -815,7 +815,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
   });
 
-  it('does not attach stale Linux headless diagnostics to a successful Linux host-native headless run', async () => {
+  it('does not attach stale Linux headless diagnostics to a non-headless host success', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -873,9 +873,10 @@ describe('comparisonReportRuntimeExecution', () => {
     );
 
     expect(result.record.runtimeExecution.state).toBe('succeeded');
-    expect(result.record.runtimeExecution.args).toContain('-Headless');
+    expect(result.record.runtimeExecution.args).not.toContain('-Headless');
     expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
     expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths).toEqual([]);
+    expect(readdir).not.toHaveBeenCalled();
   });
 
   it('classifies password-protected CreateComparisonReport failures from retained LabVIEW CLI diagnostics', () => {

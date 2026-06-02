@@ -642,23 +642,30 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
 - Statement: When the active runtime selection is host-native LabVIEW CLI on
-  Linux, the comparison execution plan shall invoke `LabVIEWCLI` with
-  `-Headless` so that LabVIEW does not cold-launch the GSW main panel and
-  recursively reload `GSW.lvlibp/.../GSW_MainPanel.vi`, which destabilizes
-  LabVIEW's path table and causes `CreateComparisonReport` to fail with
-  LabVIEW error 8 (File permission error) when writing the final HTML.
+  Linux, the comparison execution plan shall keep the invocation
+  non-headless by default and only pass `-Headless` when the operator
+  explicitly opts in via `LV_RTE_LINUX_HEADLESS=1`. Runtime classification
+  shall recognize a broken `HeadlessManager` (LabVIEW logs `Failed to
+  initialize headless LabVIEW.`) and the `(Hex 0x8) File permission error.`
+  + `CreateComparisonReport operation failed.` stderr signature so operators
+  receive an actionable, classified failure instead of an unbounded stall.
 - Acceptance Criteria:
-  - The execution plan appends `-Headless` to LabVIEWCLI args whenever the
-    effective runtime platform is `linux`, regardless of provider, in addition
-    to the existing container and `LV_RTE_HEADLESS` cases.
+  - Linux host-native LabVIEWCLI args do not include `-Headless` unless
+    `LV_RTE_LINUX_HEADLESS=1` is set in the extension host environment.
+  - The Linux container provider continues to invoke LabVIEWCLI with
+    `-Headless` regardless of the env var.
   - Windows host-native invocations remain unchanged unless
     `LV_RTE_HEADLESS=1` or an explicit headless request is present.
-  - Stderr classification recognizes the LabVIEW error 8 / `CreateComparisonReport
-    operation failed.` failure with reason
+  - Headless-log scanning emits `linux-headless-init-failed` when
+    `Failed to initialize headless LabVIEW.` is observed.
+  - Stderr classification recognizes the LabVIEW error 8 /
+    `CreateComparisonReport operation failed.` failure with reason
     `labview-cli-create-report-permission-error`.
-  - When `LVStatus.txt` reports a recursive GSW LEIF load, the existing
-    `linux-headless-recursive-load` reason still wins so the headless-session
-    recovery retry can fire.
+  - Either Linux headless reason (`linux-headless-init-failed` or
+    `linux-headless-recursive-load`) wins over more general stderr or
+    LabVIEW CLI diagnostic-log reasons; only `linux-headless-recursive-load`
+    triggers the headless-session-reset retry, so init-failed runs do not
+    waste a second attempt.
 - Agent Work Scope:
   - Change the execution plan, runtime classification, and unit tests
     together; update troubleshooting notes when surfacing new symptoms.
@@ -670,7 +677,10 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
 - Change Guidance:
   - Keep the headless decision inside the plan so runtime evidence reflects
-    the actual args used; do not rely on environment variables on Linux.
+    the actual args used. Do not silently force `-Headless` on Linux
+    host-native; LabVIEW 2026 26.1.1f1 hangs in headless mode, while the
+    non-headless path succeeds when VI Server TCP/IP is enabled
+    (default port 3363).
 
 ### VHS-REQ-596: Devcontainer Source Evaluation
 

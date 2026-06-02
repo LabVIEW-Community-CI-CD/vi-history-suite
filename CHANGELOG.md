@@ -14,17 +14,26 @@ Burned exact-version releases now include `v1.0.2`.
 
 ### Fixed
 
-- Linux host-native comparisons no longer fail with LabVIEW error 8
-  (`File permission error.` / `CreateComparisonReport operation failed.`) on
-  cold launch. `vi-history-suite` now always passes `-Headless` to LabVIEWCLI
-  when the effective runtime platform is Linux, suppressing the GSW main-panel
-  cold-launch path that recursively reloads `GSW_MainPanel.vi`, destabilizes
-  LabVIEW's path table, and breaks the final HTML write. Stderr classification
-  also recognizes the LabVIEW error 8 signature as
-  `labview-cli-create-report-permission-error`, while the existing
-  `linux-headless-recursive-load` reason still wins when `LVStatus.txt`
-  reports a recursive GSW LEIF load so the headless-session recovery retry
-  can fire. (VHS-REQ-156)
+- Linux host-native comparisons surface clearer evidence when LabVIEW's
+  cold-launch path or VI Server configuration breaks `CreateComparisonReport`.
+  Stderr classification now recognizes the LabVIEW error 8 (`File permission
+  error.` / `CreateComparisonReport operation failed.`) signature as
+  `labview-cli-create-report-permission-error`, and the headless-log scanner
+  emits `linux-headless-init-failed` when LabVIEW logs `Failed to initialize
+  headless LabVIEW.` so operators on broken headless builds (e.g. LabVIEW
+  2026 `26.1.1f1`) get an actionable classified failure instead of an
+  unbounded stall. The headless-session-reset retry only fires for
+  `linux-headless-recursive-load` so init-failed runs do not waste a second
+  attempt. (VHS-REQ-156)
+
+### Changed
+
+- Linux host-native LabVIEWCLI invocations stay non-headless by default. The
+  Linux container provider continues to invoke `-Headless` because its
+  bundled LabVIEW image initializes headless mode correctly. Operators on
+  LabVIEW builds where host-native headless mode works can opt in by setting
+  `LV_RTE_LINUX_HEADLESS=1` in the VS Code extension host environment.
+  (VHS-REQ-156)
 
 ## [1.9.1] - 2026-06-02
 
