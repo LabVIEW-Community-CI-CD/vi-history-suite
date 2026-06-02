@@ -82,6 +82,7 @@ tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests;
 tests/unit/dashboardLatestRun.test.ts,mapped,Yes,Dashboard latest-run record tests; mapped to VHS-REQ-610.
 tests/unit/diagnosticsRecorder.test.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder tests; mapped to VHS-REQ-148 retained runtime evidence.
 tests/unit/labviewCliIni.test.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper tests; mapped to VHS-REQ-148.
+tests/unit/windowsContainerLabviewCliScript.test.ts,mapped,Yes,Windows-container LabVIEW CLI script builder cliConnectTimeoutSeconds parity tests; mapped to VHS-REQ-148.
 tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
 tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM.
 tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.

@@ -335,7 +335,8 @@ export async function executeComparisonReport(
         observeWindowsProcesses,
         observeWindowsTcpListeners: observeWindowsTcpListenersFn,
         commandTimeoutMs: deps.commandTimeoutMs,
-        diagnosticsRecorder
+        diagnosticsRecorder,
+        cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
       }
     );
   }
@@ -480,6 +481,7 @@ async function runHostNativeExecution(
     ) => Promise<WindowsTcpListenerObservation[]>;
     commandTimeoutMs?: number;
     diagnosticsRecorder?: DiagnosticsRecorder;
+    cliConnectTimeoutSeconds?: number;
   }
 ): Promise<ComparisonReportRuntimeExecution> {
   await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
@@ -532,7 +534,8 @@ async function runHostNativeExecution(
     writeFile: deps.writeFile,
     processPlatform: deps.processPlatform,
     leftBlob,
-    rightBlob
+    rightBlob,
+    cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
   });
 
   if (executionContext.outcome === 'blocked') {
@@ -1350,6 +1353,7 @@ async function attemptLabviewCliHeadlessSessionReset(
     nowMs: () => number;
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
+    cliConnectTimeoutSeconds?: number;
   },
   executionContext: PreparedExecutionContext,
   labviewTcpPort?: number
@@ -1386,7 +1390,8 @@ async function attemptLabviewCliHeadlessSessionReset(
             path.win32.join(path.win32.dirname(executionContext.reportFilePath), 'container-temp'),
           containerWorkspaceRoot: WINDOWS_CONTAINER_WORKSPACE_ROOT,
           containerImage: windowsContainerImage,
-          processPlatform: executionContext.reportFilePath.includes('\\') ? 'win32' : 'linux'
+          processPlatform: executionContext.reportFilePath.includes('\\') ? 'win32' : 'linux',
+          cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
         }) ?? baseCloseCommandPlan
       : record.runtimeSelection.provider === 'linux-container' && linuxContainerImage
       ? buildLinuxContainerCommandPlan(record, baseCloseCommandPlan, {
@@ -1637,6 +1642,7 @@ async function prepareExecutionContext(
     processPlatform: NodeJS.Platform;
     leftBlob: Buffer;
     rightBlob: Buffer;
+    cliConnectTimeoutSeconds?: number;
   }
 ): Promise<PreparedExecutionContext> {
   if (record.runtimeSelection.provider === 'windows-container') {
@@ -2049,6 +2055,7 @@ export async function prepareWindowsContainerExecutionContext(
     processPlatform: NodeJS.Platform;
     leftBlob: Buffer;
     rightBlob: Buffer;
+    cliConnectTimeoutSeconds?: number;
   }
 ): Promise<PreparedExecutionContext> {
   const containerImage =
@@ -2111,7 +2118,8 @@ export async function prepareWindowsContainerExecutionContext(
     hostTempDirectory: hostTempDirectoryWindows,
     containerWorkspaceRoot: WINDOWS_CONTAINER_WORKSPACE_ROOT,
     containerImage,
-    processPlatform: deps.processPlatform
+    processPlatform: deps.processPlatform,
+    cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
   });
   if (!containerCommandPlan) {
     return {
@@ -2250,6 +2258,7 @@ export function buildWindowsContainerCommandPlan(
     containerWorkspaceRoot: string;
     containerImage: string;
     processPlatform: NodeJS.Platform;
+    cliConnectTimeoutSeconds?: number;
   }
 ): ComparisonCommandPlan | undefined {
   if (!record.runtimeSelection.engine) {
@@ -2281,7 +2290,8 @@ export function buildWindowsContainerCommandPlan(
           buildWindowsContainerLabviewCliScript(
             commandPlan.executable,
             containerArgs,
-            record.runtimeSelection.labviewExe?.path
+            record.runtimeSelection.labviewExe?.path,
+            options.cliConnectTimeoutSeconds
           )
         )
       : encodeWindowsPowerShellScript(
@@ -2525,8 +2535,17 @@ function buildBashArrayLiteral(values: string[]): string {
 export function buildWindowsContainerLabviewCliScript(
   executable: string,
   args: string[],
-  labviewPath?: string
+  labviewPath?: string,
+  cliConnectTimeoutSeconds?: number
 ): string {
+  const openAppTimeout =
+    typeof cliConnectTimeoutSeconds === 'number' && Number.isInteger(cliConnectTimeoutSeconds) && cliConnectTimeoutSeconds > 0
+      ? cliConnectTimeoutSeconds
+      : WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS;
+  const afterLaunchTimeout =
+    typeof cliConnectTimeoutSeconds === 'number' && Number.isInteger(cliConnectTimeoutSeconds) && cliConnectTimeoutSeconds > 0
+      ? cliConnectTimeoutSeconds
+      : WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS;
   const cliIniCandidates = [
     'C:\\ProgramData\\National Instruments\\LabVIEW CLI\\LabVIEWCLI.ini',
     'C:\\ProgramData\\National Instruments\\LabVIEWCLI\\LabVIEWCLI.ini',
@@ -2560,8 +2579,8 @@ export function buildWindowsContainerLabviewCliScript(
     `$cliIniCandidates = ${buildWindowsPowerShellArrayLiteral(cliIniCandidates)}`,
     '$cliIni = $cliIniCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1',
     'if ($cliIni) {',
-    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_OPEN_APP_KEY}' -Value '${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS}'`,
-    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_AFTER_LAUNCH_KEY}' -Value '${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}'`,
+    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_OPEN_APP_KEY}' -Value '${openAppTimeout}'`,
+    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_AFTER_LAUNCH_KEY}' -Value '${afterLaunchTimeout}'`,
     '}',
     '$prelaunchAttempted = $false',
     "if (-not [string]::IsNullOrWhiteSpace([string]$labviewPath) -and (Test-Path -LiteralPath $labviewPath)) {",
