@@ -101,6 +101,17 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     lines.push(`Runtime failure reason: ${execution.failureReason}.`);
   }
 
+  if (
+    execution.failureReason === 'labview-cli-connection-failed' &&
+    execution.cliConnectTimeoutHardening
+  ) {
+    const hardening = execution.cliConnectTimeoutHardening;
+    const reasonSuffix = hardening.reason ? ` reason=${hardening.reason}` : '';
+    lines.push(
+      `cli connect window: applied=${hardening.applied} requestedValue=${hardening.requestedValue}${reasonSuffix}.`
+    );
+  }
+
   if (execution.diagnosticReason) {
     lines.push(`Runtime diagnostic reason: ${execution.diagnosticReason}.`);
   }

@@ -347,6 +347,15 @@ export async function executeComparisonReport(
       ...runtimeExecution
     }
   };
+  if (cliConnectTimeoutHardening) {
+    updatedRecord.runtimeExecution.cliConnectTimeoutHardening = {
+      applied: cliConnectTimeoutHardening.applied,
+      requestedValue: cliConnectTimeoutHardening.requestedValue,
+      ...(cliConnectTimeoutHardening.reason
+        ? { reason: cliConnectTimeoutHardening.reason }
+        : {})
+    };
+  }
   updatedRecord.runtimeExecution.doctorSummaryLines = buildComparisonRuntimeDoctorSummary(updatedRecord);
   await writePacketRecord(updatedRecord, {
     mkdir,

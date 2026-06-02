@@ -60,6 +60,11 @@ export interface ComparisonReportRuntimeExecution {
   labviewProcessObservedAtExit?: boolean;
   labviewCliProcessObservedAtExit?: boolean;
   lvcompareProcessObservedAtExit?: boolean;
+  cliConnectTimeoutHardening?: {
+    applied: boolean;
+    requestedValue: number;
+    reason?: string;
+  };
 }
 
 export interface ComparisonReportRevisionMetadata {
