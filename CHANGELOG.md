@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.9.2] - 2026-06-02
+
 ### Fixed
 
 - Marketplace release workflow: `Publish To Marketplace` is now idempotent on
