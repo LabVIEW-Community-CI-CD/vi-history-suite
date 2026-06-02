@@ -154,7 +154,7 @@ VHS-REQ-152,Software,Retired,,,Historical requirement is outside the curated act
 VHS-REQ-153,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
 VHS-REQ-154,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
 VHS-REQ-155,Software,Active,srs.md#vhs-req-155-comparison-runtime-discovery-diagnostics,,,pre-simplification docs/requirements/srs.md
-VHS-REQ-156,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
+VHS-REQ-156,Software,Active,srs.md#vhs-req-156-linux-host-native-headless-comparison-invocation,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-157,Software,Superseded,,VHS-REQ-148,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
 VHS-REQ-158,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
 VHS-REQ-159,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md

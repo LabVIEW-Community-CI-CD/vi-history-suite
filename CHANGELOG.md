@@ -10,6 +10,56 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Fixed
+
+- Linux host-native comparisons surface clearer evidence when LabVIEW's
+  cold-launch path or VI Server configuration breaks `CreateComparisonReport`.
+  Stderr classification now recognizes the LabVIEW error 8 (`File permission
+  error.` / `CreateComparisonReport operation failed.`) signature as
+  `labview-cli-create-report-permission-error`, and the headless-log scanner
+  emits `linux-headless-init-failed` when LabVIEW logs `Failed to initialize
+  headless LabVIEW.` so operators on broken headless builds (e.g. LabVIEW
+  2026 `26.1.1f1`) get an actionable classified failure instead of an
+  unbounded stall. The headless-session-reset retry only fires for
+  `linux-headless-recursive-load` so init-failed runs do not waste a second
+  attempt. (VHS-REQ-156)
+
+### Changed
+
+- Linux host-native LabVIEWCLI invocations stay non-headless by default. The
+  Linux container provider continues to invoke `-Headless` because its
+  bundled LabVIEW image initializes headless mode correctly. Operators on
+  LabVIEW builds where host-native headless mode works can opt in by setting
+  `LV_RTE_LINUX_HEADLESS=1` in the VS Code extension host environment.
+  (VHS-REQ-156)
+- Linux host-native `labview-cli` invocations now read `labview.conf` (under
+  `~/natinst/.config/LabVIEW-<version>/`,
+  `~/.config/natinst/LabVIEW-<version>/`, and
+  `/etc/natinst/LabVIEW-<version>/`) before launching LabVIEWCLI. Runs are
+  blocked with `linux-vi-server-tcp-disabled` when `server.tcp.enabled` is
+  `False`, the key is missing from a readable config, or no candidate
+  `labview.conf` is readable at all (NI Linux defaults VI Server TCP off,
+  so the surface cannot be confirmed enabled). When the runtime selection
+  does not carry an explicit `requestedLabviewVersion`, the year is inferred
+  from the resolved `labviewExe` directory (e.g. `LabVIEW-2026-64`) so the
+  preflight does not fail open. The `lvcompare` engine is exempt because it
+  does not connect to LabVIEW VI Server. When TCP is enabled, the configured
+  `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
+  `-PortNumber`. (VHS-REQ-156)
+- Linux host-native runs now mirror staged VI inputs and the report output
+  under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
+  overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
+  `LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1`) and copy the produced report back
+  to the canonical workspaceStorage path. The tmp directory is cleaned up
+  on every run. This works around a LabVIEW 2026 (`26.1.1f1`) Linux
+  path-table corruption that surfaces as
+  `Possible path leak, unable to purge elements of base #0` followed by
+  `CreateComparisonReport operation failed.` when staged inputs live under
+  deep, dot-prefixed paths such as
+  `~/.config/Code/User/workspaceStorage/...`. (VHS-REQ-156)
+
 ## [1.9.1] - 2026-06-02
 
 ### Fixed

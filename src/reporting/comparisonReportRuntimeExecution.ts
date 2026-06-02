@@ -1,5 +1,6 @@
 import { execFile, ExecFileException, spawn } from 'node:child_process';
 import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { ComparisonCommandPlan } from './comparisonReportPlan';
@@ -168,6 +169,20 @@ export interface WindowsTcpListenerObservation {
 export interface WindowsLabviewTcpSettings {
   labviewIniPath?: string;
   labviewTcpPort?: number;
+  notes: string[];
+}
+
+export interface LinuxLabviewTcpSettings {
+  labviewIniPath?: string;
+  labviewTcpPort?: number;
+  /**
+   * VHS-REQ-156: tri-state. `true` when `server.tcp.enabled=True` was found,
+   * `false` when the key was explicitly disabled or the file was readable but
+   * lacked any TCP keys (NI Linux defaults VI Server TCP off), `'unknown'`
+   * when no candidate config file was readable.
+   */
+  viServerTcpEnabled: boolean | 'unknown';
+  inspectedCandidatePaths: string[];
   notes: string[];
 }
 
@@ -539,6 +554,7 @@ async function runHostNativeExecution(
   });
 
   if (executionContext.outcome === 'blocked') {
+    await cleanupPreparedExecutionContext(executionContext, deps.removePath);
     return {
       state: 'failed',
       attempted: false,
@@ -551,6 +567,49 @@ async function runHostNativeExecution(
     };
   }
 
+  try {
+    return await runHostNativeExecutionWithContext(
+      record,
+      commandPlan,
+      executionContext,
+      deps
+    );
+  } finally {
+    await cleanupPreparedExecutionContext(executionContext, deps.removePath);
+  }
+}
+
+async function runHostNativeExecutionWithContext(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  executionContext: PreparedExecutionContext,
+  deps: {
+    readBlob: typeof readRevisionBlob;
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    copyFile: typeof fs.copyFile;
+    copyDirectory: typeof fs.cp;
+    removePath: typeof fs.rm;
+    unlinkFile: typeof fs.unlink;
+    readFile: typeof fs.readFile;
+    readdir: typeof fs.readdir;
+    pathExists: (filePath: string) => Promise<boolean>;
+    runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
+    nowIso: () => string;
+    nowMs: () => number;
+    processPlatform: NodeJS.Platform;
+    enforceWindowsHostPreflight: boolean;
+    observeWindowsProcesses: (
+      options: ObserveWindowsProcessesOptions
+    ) => Promise<RuntimeProcessObservation | undefined>;
+    observeWindowsTcpListeners: (
+      options: ObserveWindowsTcpListenersOptions
+    ) => Promise<WindowsTcpListenerObservation[]>;
+    commandTimeoutMs?: number;
+    diagnosticsRecorder?: DiagnosticsRecorder;
+    cliConnectTimeoutSeconds?: number;
+  }
+): Promise<ComparisonReportRuntimeExecution> {
   const windowsLabviewTcpSettings = await resolveWindowsLabviewTcpSettings(
     record,
     executionContext.commandPlan,
@@ -559,16 +618,29 @@ async function runHostNativeExecution(
       processPlatform: deps.processPlatform
     }
   );
+  const linuxLabviewTcpSettings = await resolveLinuxLabviewTcpSettings(record, {
+    readFile: deps.readFile
+  });
+  const effectivePortFromIni =
+    windowsLabviewTcpSettings.labviewTcpPort ?? linuxLabviewTcpSettings.labviewTcpPort;
   const effectiveExecutionContext: PreparedExecutionContext = {
     ...executionContext,
     commandPlan: {
       executable: executionContext.commandPlan.executable,
       args: appendLabviewCliPortNumberArg(
         executionContext.commandPlan.args,
-        windowsLabviewTcpSettings.labviewTcpPort
+        effectivePortFromIni
       )
     }
   };
+  const linuxHostSurfacePreflight = preflightLinuxHostRuntimeSurface(
+    record,
+    effectiveExecutionContext.commandPlan,
+    linuxLabviewTcpSettings
+  );
+  if (linuxHostSurfacePreflight) {
+    return linuxHostSurfacePreflight.blockedExecution;
+  }
   const windowsHostSurfacePreflight = await preflightWindowsHostRuntimeSurface(
     record,
     effectiveExecutionContext.commandPlan,
@@ -694,17 +766,23 @@ async function runHostNativeExecution(
             notes: []
           };
       const retainedLabviewIniPath =
-        windowsContainerRuntimeFacts.labviewIniPath ?? windowsLabviewTcpSettings.labviewIniPath;
+        windowsContainerRuntimeFacts.labviewIniPath ??
+        windowsLabviewTcpSettings.labviewIniPath ??
+        linuxLabviewTcpSettings.labviewIniPath;
       const retainedLabviewTcpPort =
-        windowsContainerRuntimeFacts.labviewTcpPort ?? windowsLabviewTcpSettings.labviewTcpPort;
+        windowsContainerRuntimeFacts.labviewTcpPort ??
+        windowsLabviewTcpSettings.labviewTcpPort ??
+        linuxLabviewTcpSettings.labviewTcpPort;
       const diagnosticNotes = mergeDiagnosticNotes(
         buildProcessObservationNotes(processObservation),
         windowsLabviewTcpSettings.notes,
+        linuxLabviewTcpSettings.notes,
         windowsContainerRuntimeFacts.notes,
         diagnostics.notes,
         timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
-        failureClassification.notes
+        failureClassification.notes,
+        executionContext.preparationNotes
       );
 
       return {
@@ -780,11 +858,18 @@ async function runHostNativeExecution(
         reportExists: false,
         failureReason: 'command-spawn-failed',
         diagnosticReason: diagnostics.reason,
-        diagnosticNotes: mergeDiagnosticNotes(windowsLabviewTcpSettings.notes, diagnostics.notes),
+        diagnosticNotes: mergeDiagnosticNotes(
+          windowsLabviewTcpSettings.notes,
+          linuxLabviewTcpSettings.notes,
+          diagnostics.notes,
+          executionContext.preparationNotes
+        ),
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
-        labviewIniPath: windowsLabviewTcpSettings.labviewIniPath,
-        labviewTcpPort: windowsLabviewTcpSettings.labviewTcpPort,
+        labviewIniPath:
+          windowsLabviewTcpSettings.labviewIniPath ?? linuxLabviewTcpSettings.labviewIniPath,
+        labviewTcpPort:
+          windowsLabviewTcpSettings.labviewTcpPort ?? linuxLabviewTcpSettings.labviewTcpPort,
         headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
         executable: effectiveExecutionContext.commandPlan.executable,
         args: effectiveExecutionContext.commandPlan.args,
@@ -1071,6 +1156,178 @@ export function appendLabviewCliPortNumberArg(
   return [...args, '-PortNumber', String(labviewTcpPort)];
 }
 
+const DEFAULT_LINUX_LABVIEW_TCP_PORT = 3363;
+
+export function buildLinuxLabviewIniCandidatePaths(options: {
+  homeDir: string;
+  requestedLabviewVersion?: string;
+  bitness?: string;
+}): string[] {
+  const homeDir = options.homeDir;
+  const versionTokens = new Set<string>();
+  const requested = options.requestedLabviewVersion?.trim();
+  if (requested) {
+    versionTokens.add(requested);
+    if (options.bitness === 'x64') {
+      versionTokens.add(`${requested}-64`);
+    } else if (options.bitness === 'x86') {
+      versionTokens.add(`${requested}-32`);
+    } else {
+      versionTokens.add(`${requested}-64`);
+    }
+  }
+
+  const candidates: string[] = [];
+  for (const token of versionTokens) {
+    candidates.push(path.posix.join(homeDir, 'natinst', '.config', `LabVIEW-${token}`, 'labview.conf'));
+    candidates.push(path.posix.join(homeDir, '.config', 'natinst', `LabVIEW-${token}`, 'labview.conf'));
+    candidates.push(path.posix.join('/etc', 'natinst', `LabVIEW-${token}`, 'labview.conf'));
+  }
+  // Generic fallback when the version is unknown — caller can iterate via deps.readdir if desired.
+  return [...new Set(candidates)];
+}
+
+/**
+ * VHS-REQ-156: Infer the LabVIEW year token (e.g. `2026`) from a Linux
+ * `labviewExe.path` like `/usr/local/natinst/LabVIEW-2026-64/labview` so the
+ * labview.conf preflight can locate the config when `requestedLabviewVersion`
+ * was not explicitly set on the runtime selection. Returns `undefined` when
+ * the directory segment does not match the canonical `LabVIEW-<year>[-bits]`
+ * shape.
+ */
+export function inferLinuxLabviewVersionFromExecutablePath(
+  executablePath: string | undefined
+): string | undefined {
+  if (!executablePath) {
+    return undefined;
+  }
+  const segments = executablePath.split('/').filter(Boolean);
+  for (let index = segments.length - 1; index >= 0; index -= 1) {
+    const match = segments[index].match(/^LabVIEW-(\d{4})(?:-(?:32|64))?$/u);
+    if (match) {
+      return match[1];
+    }
+  }
+  return undefined;
+}
+
+export async function resolveLinuxLabviewTcpSettings(
+  record: ComparisonReportPacketRecord,
+  deps: {
+    readFile: typeof fs.readFile;
+    processPlatform?: NodeJS.Platform;
+    homeDir?: () => string;
+  }
+): Promise<LinuxLabviewTcpSettings> {
+  if (
+    record.runtimeSelection.platform !== 'linux' ||
+    record.runtimeSelection.engine !== 'labview-cli' ||
+    record.runtimeSelection.provider !== 'host-native'
+  ) {
+    return { viServerTcpEnabled: 'unknown', inspectedCandidatePaths: [], notes: [] };
+  }
+
+  const homeDir = (deps.homeDir ?? os.homedir)();
+  const requestedLabviewVersion =
+    record.runtimeSelection.requestedLabviewVersion ??
+    inferLinuxLabviewVersionFromExecutablePath(record.runtimeSelection.labviewExe?.path);
+  const candidates = buildLinuxLabviewIniCandidatePaths({
+    homeDir,
+    requestedLabviewVersion,
+    bitness: record.runtimeSelection.bitness
+  });
+
+  for (const candidate of candidates) {
+    let iniText: string;
+    try {
+      iniText = await deps.readFile(candidate, 'utf8');
+    } catch {
+      continue;
+    }
+
+    const enabledMatch = iniText.match(/^\s*server\.tcp\.enabled\s*=\s*(true|false)\s*$/im);
+    const portMatch = iniText.match(/^\s*server\.tcp\.port\s*=\s*(\d+)\s*$/im);
+
+    if (!enabledMatch) {
+      // Linux LabVIEW ships with VI Server TCP off; absence of the key means disabled.
+      return {
+        labviewIniPath: candidate,
+        viServerTcpEnabled: false,
+        inspectedCandidatePaths: candidates,
+        notes: [
+          `Linux LabVIEW config at ${candidate} does not enable VI Server TCP/IP (server.tcp.enabled is missing). LabVIEWCLI cannot connect to LabVIEW until VI Server is enabled in Tools \u2192 Options \u2192 VI Server.`
+        ]
+      };
+    }
+
+    const tcpEnabled = enabledMatch[1].toLowerCase() === 'true';
+    if (!tcpEnabled) {
+      return {
+        labviewIniPath: candidate,
+        viServerTcpEnabled: false,
+        inspectedCandidatePaths: candidates,
+        notes: [
+          `Linux LabVIEW config at ${candidate} sets server.tcp.enabled=False, which prevents LabVIEWCLI from connecting to LabVIEW. Enable VI Server in Tools \u2192 Options \u2192 VI Server.`
+        ]
+      };
+    }
+
+    const labviewTcpPort = portMatch
+      ? Number.parseInt(portMatch[1], 10)
+      : DEFAULT_LINUX_LABVIEW_TCP_PORT;
+
+    return {
+      labviewIniPath: candidate,
+      labviewTcpPort,
+      viServerTcpEnabled: true,
+      inspectedCandidatePaths: candidates,
+      notes: [
+        `Derived VI Server TCP port ${String(labviewTcpPort)} from ${candidate} and passed it explicitly to LabVIEWCLI.`
+      ]
+    };
+  }
+
+  return {
+    viServerTcpEnabled: 'unknown',
+    inspectedCandidatePaths: candidates,
+    notes: [
+      `No readable Linux LabVIEW config was found in any of: ${candidates.join(', ')}. VI Server TCP/IP status could not be verified before launch.`
+    ]
+  };
+}
+
+function preflightLinuxHostRuntimeSurface(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  linuxLabviewTcpSettings: LinuxLabviewTcpSettings
+): { blockedExecution: ComparisonReportRuntimeExecution } | undefined {
+  if (
+    record.runtimeSelection.platform !== 'linux' ||
+    record.runtimeSelection.provider !== 'host-native' ||
+    record.runtimeSelection.engine !== 'labview-cli' ||
+    linuxLabviewTcpSettings.viServerTcpEnabled === true
+  ) {
+    return undefined;
+  }
+
+  return {
+    blockedExecution: {
+      state: 'not-available',
+      attempted: false,
+      reportExists: false,
+      blockedReason: 'linux-vi-server-tcp-disabled',
+      diagnosticReason: 'linux-vi-server-tcp-disabled',
+      diagnosticNotes: linuxLabviewTcpSettings.notes,
+      labviewIniPath: linuxLabviewTcpSettings.labviewIniPath,
+      labviewTcpPort: linuxLabviewTcpSettings.labviewTcpPort,
+      executable: commandPlan.executable,
+      args: commandPlan.args,
+      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+      stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+    }
+  };
+}
+
 async function preflightWindowsHostRuntimeSurface(
   record: ComparisonReportPacketRecord,
   commandPlan: ComparisonCommandPlan,
@@ -1245,7 +1502,7 @@ async function captureRuntimeDiagnostics(
   if (!diagnosticLogSourcePath) {
     await clearStaleArtifactIfPresent();
     return {
-      reason: stderrClassification.reason ?? headlessDiagnostics.reason,
+      reason: selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason),
       notes: mergeDiagnosticNotes(stderrClassification.notes, headlessDiagnostics.notes),
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
@@ -1266,8 +1523,7 @@ async function captureRuntimeDiagnostics(
       ),
       sourcePath: diagnosticLogSourcePath,
       reason:
-        stderrClassification.reason ??
-        headlessDiagnostics.reason ??
+        selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason) ??
         'runtime-diagnostic-log-unreadable',
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
@@ -1279,12 +1535,38 @@ async function captureRuntimeDiagnostics(
   const classification = classifyLabviewCliDiagnosticText(diagnosticText, deps.expectedLabviewPath);
 
   return {
-    reason: stderrClassification.reason ?? classification.reason ?? headlessDiagnostics.reason,
+    reason: selectDiagnosticReason(
+      headlessDiagnostics.reason,
+      stderrClassification.reason,
+      classification.reason
+    ),
     notes: mergeDiagnosticNotes(stderrClassification.notes, classification.notes, headlessDiagnostics.notes),
     sourcePath: diagnosticLogSourcePath,
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
   };
+}
+
+// linux-headless-init-failed is terminal (no retry can help) and linux-headless-recursive-load
+// is the trigger for the headless-session recovery retry. Either headless reason must win when
+// observed in LVStatus.txt / lvrt headless logs, even if stderr or the LabVIEW CLI diagnostic
+// log carry a more specific post-failure reason.
+function selectDiagnosticReason(
+  headlessReason: string | undefined,
+  ...otherReasons: Array<string | undefined>
+): string | undefined {
+  if (
+    headlessReason === 'linux-headless-init-failed' ||
+    headlessReason === 'linux-headless-recursive-load'
+  ) {
+    return headlessReason;
+  }
+  for (const reason of otherReasons) {
+    if (reason) {
+      return reason;
+    }
+  }
+  return headlessReason;
 }
 
 function shouldCaptureLinuxHeadlessDiagnostics(
@@ -1604,7 +1886,12 @@ async function captureLinuxHeadlessDiagnostics(
       continue;
     }
 
-    if (/Recursive load during LEIF load!/i.test(diagnosticText)) {
+    if (/Failed to initialize headless LabVIEW\./i.test(diagnosticText)) {
+      reason = 'linux-headless-init-failed';
+      notes.push(
+        'Retained Linux headless log reported "Failed to initialize headless LabVIEW." Headless mode is unusable on this LabVIEW build; set LV_RTE_LINUX_HEADLESS=0 to opt out, or switch to the Linux container provider.'
+      );
+    } else if (/Recursive load during LEIF load!/i.test(diagnosticText)) {
       reason = reason ?? 'linux-headless-recursive-load';
       const mainPanelMatch = diagnosticText.match(/loading ([^\r\n]+GSW_MainPanel\.vi)/i);
       notes.push(
@@ -1630,6 +1917,15 @@ export interface PreparedExecutionContext {
   diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
   reportIdentityFilenames?: string[];
   reportTextReplacements?: RuntimeTextReplacement[];
+  /**
+   * VHS-REQ-156: directories to remove after execution completes (success or failure).
+   * Used by the Linux host-native short-path staging workaround for the LabVIEW 2026
+   * Linux path-table corruption that occurs when staged VIs/reports live under deep,
+   * dot-prefixed workspaceStorage paths.
+   */
+  cleanupPaths?: string[];
+  /** VHS-REQ-156: human-readable note describing why a path rewrite was applied. */
+  preparationNotes?: string[];
 }
 
 async function prepareExecutionContext(
@@ -1651,6 +1947,10 @@ async function prepareExecutionContext(
 
   if (record.runtimeSelection.provider === 'linux-container') {
     return prepareLinuxContainerExecutionContext(record, commandPlan, interopWorkspaceRoot, deps);
+  }
+
+  if (shouldUseLinuxHostNativeShortPathStaging(record, deps.processPlatform)) {
+    return prepareLinuxHostNativeShortPathExecutionContext(record, commandPlan, deps);
   }
 
   if (!requiresWindowsInterop(resolveEffectiveRuntimePlatform(record.runtimeSelection), deps.processPlatform)) {
@@ -1773,6 +2073,23 @@ async function finalizeExecutedReport(
   };
 }
 
+async function cleanupPreparedExecutionContext(
+  executionContext: PreparedExecutionContext,
+  removePath: typeof fs.rm
+): Promise<void> {
+  const cleanupPaths = executionContext.cleanupPaths;
+  if (!cleanupPaths || cleanupPaths.length === 0) {
+    return;
+  }
+  for (const targetPath of cleanupPaths) {
+    try {
+      await removePath(targetPath, { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup; tmp dirs reclaimed on reboot if removal fails.
+    }
+  }
+}
+
 async function clearStaleExecutedReportArtifacts(
   record: ComparisonReportPacketRecord,
   executionContext: PreparedExecutionContext,
@@ -1865,6 +2182,160 @@ function buildWindowsInteropLayout(
     leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
     rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
     reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
+  };
+}
+
+/**
+ * VHS-REQ-156: Linux host-native short-path staging.
+ *
+ * LabVIEW 2026 (26.1.1f1) on Linux logs `Possible path leak, unable to purge elements
+ * of base #0` and fails CreateComparisonReport with LabVIEW error 8 (file permission)
+ * when staged VIs / report paths live under deep, dot-prefixed paths such as
+ * `~/.config/Code/User/workspaceStorage/<hash>/<extension>/reports/...`. Mirroring
+ * the staged inputs under a short tmpdir avoids the path-table corruption.
+ */
+export function shouldUseLinuxHostNativeShortPathStaging(
+  record: ComparisonReportPacketRecord,
+  processPlatform: NodeJS.Platform,
+  processEnv: NodeJS.ProcessEnv = process.env
+): boolean {
+  if (processPlatform !== 'linux') {
+    return false;
+  }
+  if (record.runtimeSelection.platform !== 'linux') {
+    return false;
+  }
+  if (record.runtimeSelection.provider !== 'host-native') {
+    return false;
+  }
+  if (processEnv.LVIE_LINUX_DISABLE_RUNTIME_TMPDIR === '1') {
+    return false;
+  }
+  const tmpRoot = resolveLinuxRuntimeTmpRoot(processEnv);
+  const reportDir = record.artifactPlan.reportDirectory;
+  if (typeof reportDir === 'string' && isPathInsideDirectory(reportDir, tmpRoot)) {
+    return false;
+  }
+  return true;
+}
+
+function isPathInsideDirectory(candidate: string, directory: string): boolean {
+  // Use path.posix on Linux short-path staging where both inputs are POSIX strings.
+  const normalizedDir = path.posix.normalize(directory).replace(/\/+$/u, '');
+  const normalizedCandidate = path.posix.normalize(candidate);
+  if (normalizedCandidate === normalizedDir) {
+    return true;
+  }
+  return normalizedCandidate.startsWith(`${normalizedDir}/`);
+}
+
+function resolveLinuxRuntimeTmpRoot(processEnv: NodeJS.ProcessEnv): string {
+  const override = processEnv.LVIE_LINUX_RUNTIME_TMPDIR?.trim();
+  if (override) {
+    return override;
+  }
+  return path.join(os.tmpdir(), 'vi-history-suite-runtime');
+}
+
+export function buildLinuxHostNativeShortPathLayout(
+  record: ComparisonReportPacketRecord,
+  processEnv: NodeJS.ProcessEnv = process.env
+): WindowsInteropLayout {
+  const baseDir = resolveLinuxRuntimeTmpRoot(processEnv);
+  const reportDirectory = path.join(
+    baseDir,
+    record.artifactPlan.repoId,
+    record.artifactPlan.fileId
+  );
+  const stagingDirectory = path.join(reportDirectory, 'staging');
+  return {
+    reportDirectory,
+    stagingDirectory,
+    leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
+    rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
+    reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
+  };
+}
+
+export function buildLinuxHostNativeShortPathCommandPlan(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  layout: WindowsInteropLayout
+): ComparisonCommandPlan | undefined {
+  if (record.runtimeSelection.engine === 'labview-cli') {
+    const args: string[] = [];
+    for (let index = 0; index < commandPlan.args.length; index += 1) {
+      const current = commandPlan.args[index];
+      if (current === '-VI1' || current === '-vi1') {
+        args.push(current, layout.leftFilePath);
+        index += 1;
+        continue;
+      }
+      if (current === '-VI2' || current === '-vi2') {
+        args.push(current, layout.rightFilePath);
+        index += 1;
+        continue;
+      }
+      if (current === '-ReportPath' || current === '-reportPath') {
+        args.push(current, layout.reportFilePath);
+        index += 1;
+        continue;
+      }
+      args.push(current);
+    }
+    return {
+      executable: commandPlan.executable,
+      args
+    };
+  }
+
+  if (record.runtimeSelection.engine === 'lvcompare') {
+    if (commandPlan.args.length < 2) {
+      return undefined;
+    }
+    const args = [layout.leftFilePath, layout.rightFilePath, ...commandPlan.args.slice(2)];
+    return {
+      executable: commandPlan.executable,
+      args
+    };
+  }
+
+  return undefined;
+}
+
+async function prepareLinuxHostNativeShortPathExecutionContext(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  deps: {
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    leftBlob: Buffer;
+    rightBlob: Buffer;
+  }
+): Promise<PreparedExecutionContext> {
+  const layout = buildLinuxHostNativeShortPathLayout(record);
+  const rewritten = buildLinuxHostNativeShortPathCommandPlan(record, commandPlan, layout);
+  if (!rewritten) {
+    return {
+      outcome: 'ready',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath
+    };
+  }
+
+  await deps.mkdir(layout.reportDirectory, { recursive: true });
+  await deps.mkdir(layout.stagingDirectory, { recursive: true });
+  await deps.writeFile(layout.leftFilePath, deps.leftBlob);
+  await deps.writeFile(layout.rightFilePath, deps.rightBlob);
+
+  return {
+    outcome: 'ready',
+    commandPlan: rewritten,
+    reportFilePath: layout.reportFilePath,
+    cleanupPaths: [layout.reportDirectory],
+    preparationNotes: [
+      `Staged Linux host-native runtime inputs under ${layout.reportDirectory} to avoid LabVIEW 2026 Linux path-table corruption observed for deep workspaceStorage paths (set LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1 to opt out).`
+    ]
   };
 }
 
@@ -3069,6 +3540,21 @@ export function classifyLabviewCliDiagnosticText(
     );
     return {
       reason: 'labview-cli-call-by-reference',
+      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
+    };
+  }
+
+  if (
+    /\(Hex 0x8\) File permission error\./i.test(diagnosticText) &&
+    /CreateComparisonReport operation failed\./i.test(diagnosticText)
+  ) {
+    notes.push(
+      launchSucceeded
+        ? 'LabVIEW CLI launched LabVIEW successfully but CreateComparisonReport returned LabVIEW error 8 (File permission error) while writing the report.'
+        : 'LabVIEW CLI reported CreateComparisonReport returned LabVIEW error 8 (File permission error).'
+    );
+    return {
+      reason: 'labview-cli-create-report-permission-error',
       notes: appendLaunchConfirmationNote(notes, launchSucceeded)
     };
   }
