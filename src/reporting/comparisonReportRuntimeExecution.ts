@@ -2301,18 +2301,18 @@ export function buildLinuxHostNativeShortPathLayout(
   processEnv: NodeJS.ProcessEnv = process.env
 ): WindowsInteropLayout {
   const baseDir = resolveLinuxRuntimeTmpRoot(processEnv);
-  const reportDirectory = path.join(
+  const reportDirectory = path.posix.join(
     baseDir,
     record.artifactPlan.repoId,
     record.artifactPlan.fileId
   );
-  const stagingDirectory = path.join(reportDirectory, 'staging');
+  const stagingDirectory = path.posix.join(reportDirectory, 'staging');
   return {
     reportDirectory,
     stagingDirectory,
-    leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
-    rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
-    reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
+    leftFilePath: path.posix.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
+    rightFilePath: path.posix.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
+    reportFilePath: path.posix.join(reportDirectory, record.artifactPlan.reportFilename)
   };
 }
 
