@@ -16,6 +16,7 @@ import {
   buildLinuxHostNativeShortPathLayout,
   buildLinuxHostNativeShortPathCommandPlan,
   shouldUseLinuxHostNativeShortPathStaging,
+  rewriteLabviewCliArgsForLinuxContainerWorkspace,
   runComparisonCommandPlanWithObservation
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -1274,6 +1275,82 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(readdir).not.toHaveBeenCalled();
   });
 
+  it('suppresses the benign recursive-load diagnosticReason when a headless Linux run still succeeds', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    // Headless was requested, so the recursive-load LVStatus.txt line is captured
+    // even though LabVIEW recovered and CreateComparisonReport succeeded.
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const readdir = vi.fn().mockResolvedValue([
+      'LVStatus.txt',
+      'lvrt_26.1.1f1_headless_sergio_cur.txt'
+    ]);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+          }
+          return 'Recursive load during LEIF load!';
+        }) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-05-16T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    // The run succeeded, so no failure-implying diagnosticReason should leak even
+    // though the benign recursive-load line was observed and captured.
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.failureReason).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
+    expect(readdir).toHaveBeenCalled();
+  });
+
   it('classifies password-protected CreateComparisonReport failures from retained LabVIEW CLI diagnostics', () => {
     const result = classifyLabviewCliDiagnosticText(
       [
@@ -2358,6 +2435,48 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(rewritten?.args).not.toContain(
       '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
     );
+  });
+
+  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets labviewprofull headless under the container workspace', () => {
+    const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
+      [
+        '-LogToConsole',
+        'TRUE',
+        '-OperationName',
+        'CreateComparisonReport',
+        '-VI1',
+        '/host/staging/left-111111112222-foo.vi',
+        '-VI2',
+        '/host/staging/right-abcdef123456-foo.vi',
+        '-ReportType',
+        'HTML',
+        '-ReportPath',
+        '/host/diff-report-foo.vi.html',
+        '-LabVIEWPath',
+        '/usr/local/natinst/LabVIEW-2026-64/labview'
+      ],
+      {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'left-111111112222-foo.vi',
+        rightFilename: 'right-abcdef123456-foo.vi',
+        reportFilename: 'diff-report-foo.vi.html'
+      }
+    );
+
+    expect(rewritten).toBeDefined();
+    // VI and report paths are remapped under the container workspace mount.
+    expect(rewritten).toContain('/workspace/staging/left-111111112222-foo.vi');
+    expect(rewritten).toContain('/workspace/staging/right-abcdef123456-foo.vi');
+    expect(rewritten).toContain('/workspace/diff-report-foo.vi.html');
+    // NI's canonical container compare (vidiff.sh) uses the Professional binary
+    // plus -Headless; the inbound plain `labview` -LabVIEWPath is replaced.
+    const labviewPathIndex = rewritten?.indexOf('-LabVIEWPath') ?? -1;
+    expect(labviewPathIndex).toBeGreaterThanOrEqual(0);
+    expect(rewritten?.[labviewPathIndex + 1]).toBe(
+      '/usr/local/natinst/LabVIEW-2026-64/labviewprofull'
+    );
+    expect(rewritten).toContain('-Headless');
+    expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labview');
   });
 
   it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {

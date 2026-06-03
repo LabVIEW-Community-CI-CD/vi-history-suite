@@ -827,7 +827,7 @@ async function runHostNativeExecutionWithContext(
         attempted: true,
         reportExists,
         failureReason: succeeded ? undefined : failureClassification.reason,
-        diagnosticReason: diagnostics.reason ?? timeoutDiagnostic.reason,
+        diagnosticReason: succeeded ? undefined : (diagnostics.reason ?? timeoutDiagnostic.reason),
         diagnosticNotes,
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
@@ -1108,6 +1108,13 @@ const LINUX_CONTAINER_TEMP_ROOT = `${LINUX_CONTAINER_WORKSPACE_ROOT}/container-t
 // provider's canonical report path only ever contains user-owned files and never
 // collides with a prior container run's root-owned artifacts.
 const LINUX_CONTAINER_OUTPUT_DIRNAME = 'container-out';
+// NI's official LabVIEW container images bundle the full Professional IDE under
+// `labviewprofull`. NI's own canonical CreateComparisonReport script
+// (`vidiff.sh` in ni/labview-for-containers) invokes `-LabVIEWPath .../labviewprofull`
+// with `-Headless`; the plain `labview` binary fails to fully engage headless mode
+// inside the container (recursive GSW LEIF load). Use the Professional binary so the
+// container provider can complete a comparison report.
+const LINUX_CONTAINER_LABVIEW_EXECUTABLE = '/usr/local/natinst/LabVIEW-2026-64/labviewprofull';
 const WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS = 8;
@@ -3138,7 +3145,7 @@ export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
     rewritten.push(current);
   }
 
-  rewritten.push('-LabVIEWPath', '/usr/local/natinst/LabVIEW-2026-64/labview');
+  rewritten.push('-LabVIEWPath', LINUX_CONTAINER_LABVIEW_EXECUTABLE);
   rewritten.push('-Headless');
 
   return rewritten.length > 0 ? rewritten : undefined;
