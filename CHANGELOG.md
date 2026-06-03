@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.10.1] - 2026-06-03
+
 ### Fixed
 
 - Linux host-native comparisons no longer fail when a report is regenerated
@@ -43,6 +45,17 @@ Burned exact-version releases now include `v1.0.2`.
   finished report from `container-out/` back into the canonical report path as
   the invoking user, keeping the retained host-native path user-owned and
   immune to cross-ownership collisions from prior container runs. (VHS-REQ-156)
+
+### Documentation
+
+- TROUBLESHOOTING.md now documents a Linux container image headless limitation:
+  some published NI LabVIEW Linux images (observed on
+  `nationalinstruments/labview:2026q1-linux`) cannot initialize LabVIEW in
+  headless mode (recursive GSW LEIF load plus a missing
+  `libniDotNETCoreInterop.so`), so the Linux container comparison provider
+  cannot generate a report. The previous guidance incorrectly recommended the
+  container provider as a fallback for `linux-headless-recursive-load`; it now
+  recommends the host-native provider and links the tracking issue (#232).
 
 ## [1.10.0] - 2026-06-03
 

@@ -206,7 +206,9 @@ Two independent issues can cause this on a Linux host running LabVIEW 2026:
 2. Leave the comparison invocation **non-headless** on Linux host-native.
    `vi-history-suite` keeps Linux host-native runs non-headless by default;
    the Linux container provider continues to invoke `-Headless` because the
-   container's bundled LabVIEW image initializes headless mode correctly.
+   container provider has no interactive display. Note that some published
+   NI LabVIEW Linux images do **not** initialize headless mode correctly
+   (see [Linux container image headless limitation](#linux-container-image-headless-limitation)).
 
 3. Only set `LV_RTE_LINUX_HEADLESS=1` (in the VS Code extension host
    environment, e.g. `~/.profile` or a shell that launches `code`) if your
@@ -236,12 +238,48 @@ Check the retained `runtimeExecution.diagnosticReason`:
   than `1`) to drop back to the non-headless path.
 - `linux-headless-recursive-load`: A recursive GSW LEIF load was observed
   while running in headless mode. The headless-session-reset retry will
-  attempt one recovery; if it also fails, switch to non-headless or use the
-  Linux container provider.
+  attempt one recovery; if it also fails, switch to non-headless (unset
+  `LV_RTE_LINUX_HEADLESS` on Linux host-native runs). The Linux container
+  provider is **not** a guaranteed fallback here, because some NI LabVIEW
+  Linux images reproduce this exact recursive-load failure (see
+  [Linux container image headless limitation](#linux-container-image-headless-limitation)).
 
 If the failure persists, attach the run's full `diagnostics/` directory and
 the LabVIEW interactive log
 (`/tmp/lvrt_<version>_interactive_<user>_log.txt`) when filing the report.
+
+### Linux container image headless limitation
+
+Some published NI LabVIEW Linux container images cannot initialize LabVIEW in
+headless mode, so the Linux container comparison provider fails before it can
+generate a report. This was observed on `nationalinstruments/labview:2026q1-linux`,
+which fails with two independent defects in the image itself (tracked in
+[issue #232](https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/232)):
+
+- A recursive GSW LEIF load during headless startup, retained in
+  `headless-diagnostics/LVStatus.txt`:
+
+  ```
+  Recursive load during LEIF load! .../resource/dialog/GSW/GSW.lvlibp/.../GSW_MainPanel.vi is loading .../GSW_MainPanel.vi/<uuid>.vi
+  ```
+
+- A missing .NET interop library, retained in `runtime-stderr.txt`:
+
+  ```
+  Can't load library libniDotNETCoreInterop.so
+  libniDotNETCoreInterop.so: cannot open shared object file: No such file or directory
+  ```
+
+Because LabVIEW never finishes initializing, `LabVIEWCLI` rejects the
+otherwise-valid staged VI paths and the headless-session-reset retry exits with
+`-350000` (`labview-cli-connection-failed`). The extension records this as
+`diagnosticReason = linux-headless-recursive-load` with the full `diagnostics/`
+bundle retained.
+
+**Workaround:** use the Linux **host-native** provider
+(`viHistorySuite.runtimeProvider=host`), which is unaffected by this image
+limitation, or supply a container image whose bundled LabVIEW initializes
+headless mode correctly.
 
 ## Source Evaluation
 
