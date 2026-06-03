@@ -12,6 +12,25 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-06-03
+
+### Added
+
+- Windows host-native comparisons now run a VI Server TCP preflight that mirrors
+  the Linux gate. When `LabVIEW.ini` explicitly sets `server.tcp.enabled=False`
+  (quoted or unquoted), the runtime fails fast with the classified
+  `windows-vi-server-tcp-disabled` blocked reason and an actionable diagnostic
+  note instead of stalling on the opaque `-350000` / `labview-cli-connection-failed`
+  cold-launch firewall failure. Absent keys preserve the Windows default-on
+  behavior, and `server.tcp.port` is honored (quoted or unquoted, default 3363).
+  (VHS-REQ-623, relates to #225)
+
+### Fixed
+
+- `buildLinuxHostNativeShortPathLayout` now uses `path.posix.join` so the staged
+  short-path layout is computed deterministically as POSIX paths regardless of
+  the host running the comparison. (VHS-REQ-156)
+
 ## [1.9.2] - 2026-06-02
 
 ### Fixed

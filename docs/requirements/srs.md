@@ -1932,3 +1932,66 @@ Missing numeric IDs are intentional.
     to also assert on `runtimeErrorCode` in addition to the
     blocked-reason string — never replace the string assertion.
 
+### VHS-REQ-623: Windows Host-Native VI Server TCP Preflight Parity
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: Before launching LabVIEWCLI, Windows host-native
+  `labview-cli` runs shall read the `LabVIEW.ini` adjacent to the
+  selected LabVIEW executable and block execution with
+  `blockedReason: 'windows-vi-server-tcp-disabled'` when
+  `server.tcp.enabled=False` is explicitly set, so operators receive
+  an actionable, classified preflight failure instead of the generic
+  `labview-cli-connection-failed` reason after a `-350000` connect
+  timeout. This mirrors the Linux `labview.conf` preflight
+  established by VHS-REQ-156 while preserving the Windows default
+  (VI Server TCP enabled when the key is absent or the file is not
+  readable).
+- Acceptance Criteria:
+  - When the runtime selection is `platform='win32'`,
+    `provider='host-native'`, and `engine='labview-cli'`, the existing
+    Windows `LabVIEW.ini` parser exposes a tri-state
+    `viServerTcpEnabled` field on `WindowsLabviewTcpSettings`:
+    `true` when `server.tcp.enabled=True` is parsed or the key is
+    absent in a readable ini, `false` only when the key is parsed as
+    explicitly `False`, and `'unknown'` when the ini is not readable.
+  - When `viServerTcpEnabled === false`, execution is blocked with
+    `state='not-available'`, `blockedReason='windows-vi-server-tcp-disabled'`,
+    `diagnosticReason='windows-vi-server-tcp-disabled'`, and a
+    diagnostic note that names the inspected `LabVIEW.ini` path and
+    points at Tools → Options → VI Server as remediation. The
+    LabVIEWCLI process is not spawned in this state.
+  - When `viServerTcpEnabled !== false` (true or unknown), the
+    Windows host-native flow proceeds unchanged, preserving the
+    pre-existing implicit-enabled behavior for unreadable `LabVIEW.ini`
+    files (Windows LabVIEW defaults VI Server TCP on, opposite of NI
+    Linux).
+  - The `windows-vi-server-tcp-disabled` block runs after the Linux
+    host preflight and before `preflightWindowsHostRuntimeSurface`, so
+    the explicit ini-disabled signal wins over the bitness-conflict /
+    contaminated-surface arm covered by VHS-REQ-621.
+  - The `lvcompare` engine remains exempt from this preflight because
+    it does not connect to LabVIEW VI Server.
+- Agent Work Scope:
+  - Reuse the existing `resolveWindowsLabviewTcpSettingsForLabviewPath`
+    parser; do not introduce a second ini reader. Add a small
+    `preflightWindowsHostViServerTcpDisabled` function next to the
+    existing Linux/Windows preflight helpers, wire it in
+    `executeComparisonReport` between the Linux preflight check and
+    `preflightWindowsHostRuntimeSurface`, and update unit tests
+    together. Do not auto-mutate `LabVIEW.ini` — write actions race
+    with running LabVIEW IDE rewrites on clean shutdown and are out of
+    scope for this requirement.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportPacket.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Treat absent `server.tcp.enabled` on Windows as enabled; do not
+    flip this default without a separate requirement. The Linux
+    parity is intentionally one-way: Linux blocks on absent or
+    unreadable, Windows only blocks on explicit `False`.
+
