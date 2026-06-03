@@ -1720,6 +1720,57 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
   });
 });
 
+describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
+  it('blocks execution with windows-vi-server-tcp-disabled when LabVIEW.ini sets server.tcp.enabled=False', async () => {
+    const record = createReadyRecord();
+    // createReadyRecord() defaults to platform='win32', host-native, labview-cli;
+    // labviewExe.path = 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+    const expectedIniPath =
+      'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini';
+
+    const runCommand = vi.fn();
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+            return 'server.tcp.enabled=False\nserver.tcp.port=3363\n';
+          }
+          throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+        }) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: runCommand as never,
+        nowIso: vi.fn().mockReturnValue('2026-06-03T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('not-available');
+    expect(result.record.runtimeExecution.blockedReason).toBe('windows-vi-server-tcp-disabled');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('windows-vi-server-tcp-disabled');
+    expect(result.record.runtimeExecution.labviewIniPath).toBe(expectedIniPath);
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
+      /server\.tcp\.enabled=False/
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(/VI Server/i);
+  });
+});
+
 describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
   function makeLinuxHostNativeRecord() {
     const record = createReadyRecord();

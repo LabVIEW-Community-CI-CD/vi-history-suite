@@ -169,6 +169,15 @@ export interface WindowsTcpListenerObservation {
 export interface WindowsLabviewTcpSettings {
   labviewIniPath?: string;
   labviewTcpPort?: number;
+  /**
+   * VHS-REQ-623: tri-state mirroring `LinuxLabviewTcpSettings.viServerTcpEnabled`.
+   * `true` when `server.tcp.enabled=True` is parsed or the key is absent in a
+   * readable ini (Windows LabVIEW defaults VI Server TCP on, opposite of NI
+   * Linux). `false` only when the key is parsed as explicitly `False`.
+   * `'unknown'` when the ini is not readable; absent/undefined when the
+   * runtime selection is not Windows host-native LabVIEWCLI.
+   */
+  viServerTcpEnabled?: boolean | 'unknown';
   notes: string[];
 }
 
@@ -641,6 +650,14 @@ async function runHostNativeExecutionWithContext(
   if (linuxHostSurfacePreflight) {
     return linuxHostSurfacePreflight.blockedExecution;
   }
+  const windowsViServerTcpDisabledPreflight = preflightWindowsHostViServerTcpDisabled(
+    record,
+    effectiveExecutionContext.commandPlan,
+    windowsLabviewTcpSettings
+  );
+  if (windowsViServerTcpDisabledPreflight) {
+    return windowsViServerTcpDisabledPreflight.blockedExecution;
+  }
   const windowsHostSurfacePreflight = await preflightWindowsHostRuntimeSurface(
     record,
     effectiveExecutionContext.commandPlan,
@@ -1107,6 +1124,7 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
   } catch {
     return {
       labviewIniPath,
+      viServerTcpEnabled: 'unknown',
       notes: [
         `Selected LabVIEW.ini was not readable at ${labviewIniPath}, so VI Server port derivation remained implicit.`
       ]
@@ -1119,8 +1137,9 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
   if (!tcpEnabled) {
     return {
       labviewIniPath,
+      viServerTcpEnabled: false,
       notes: [
-        `Selected LabVIEW.ini at ${labviewIniPath} disables VI Server TCP, so no explicit -PortNumber was derived.`
+        `Selected LabVIEW.ini at ${labviewIniPath} sets server.tcp.enabled=False, which prevents LabVIEWCLI from connecting to LabVIEW. Enable VI Server in Tools \u2192 Options \u2192 VI Server.`
       ]
     };
   }
@@ -1132,6 +1151,7 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
   return {
     labviewIniPath,
     labviewTcpPort,
+    viServerTcpEnabled: true,
     notes: [
       `Derived VI Server TCP port ${String(labviewTcpPort)} from ${labviewIniPath} and passed it explicitly to LabVIEW CLI.`
     ]
@@ -1320,6 +1340,45 @@ function preflightLinuxHostRuntimeSurface(
       diagnosticNotes: linuxLabviewTcpSettings.notes,
       labviewIniPath: linuxLabviewTcpSettings.labviewIniPath,
       labviewTcpPort: linuxLabviewTcpSettings.labviewTcpPort,
+      executable: commandPlan.executable,
+      args: commandPlan.args,
+      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+      stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+    }
+  };
+}
+
+/**
+ * VHS-REQ-623: Block Windows host-native LabVIEWCLI runs when the selected
+ * `LabVIEW.ini` explicitly disables VI Server TCP. Mirrors
+ * `preflightLinuxHostRuntimeSurface` but only fires on the explicit-`False`
+ * signal because Windows LabVIEW defaults VI Server TCP on (absent key or
+ * unreadable ini preserves prior implicit-enabled behavior).
+ */
+function preflightWindowsHostViServerTcpDisabled(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  windowsLabviewTcpSettings: WindowsLabviewTcpSettings
+): { blockedExecution: ComparisonReportRuntimeExecution } | undefined {
+  if (
+    record.runtimeSelection.platform !== 'win32' ||
+    record.runtimeSelection.provider !== 'host-native' ||
+    record.runtimeSelection.engine !== 'labview-cli' ||
+    windowsLabviewTcpSettings.viServerTcpEnabled !== false
+  ) {
+    return undefined;
+  }
+
+  return {
+    blockedExecution: {
+      state: 'not-available',
+      attempted: false,
+      reportExists: false,
+      blockedReason: 'windows-vi-server-tcp-disabled',
+      diagnosticReason: 'windows-vi-server-tcp-disabled',
+      diagnosticNotes: windowsLabviewTcpSettings.notes,
+      labviewIniPath: windowsLabviewTcpSettings.labviewIniPath,
+      labviewTcpPort: windowsLabviewTcpSettings.labviewTcpPort,
       executable: commandPlan.executable,
       args: commandPlan.args,
       stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
