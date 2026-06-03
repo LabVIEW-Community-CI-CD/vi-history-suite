@@ -11,6 +11,7 @@ import {
   inferLabviewBitnessFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
+  resolveWindowsLabviewTcpSettingsForLabviewPath,
   buildLinuxLabviewIniCandidatePaths,
   buildLinuxHostNativeShortPathLayout,
   buildLinuxHostNativeShortPathCommandPlan,
@@ -1772,6 +1773,77 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
       /server\.tcp\.enabled=False/
     );
     expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(/VI Server/i);
+  });
+});
+
+describe('resolveWindowsLabviewTcpSettingsForLabviewPath (VHS-REQ-623)', () => {
+  const labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe';
+  const expectedIniPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini';
+
+  it('returns viServerTcpEnabled=true and the explicit port for quoted enabled values', async () => {
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+      readFile: vi.fn().mockResolvedValue('server.tcp.enabled="TRUE"\nserver.tcp.port="3363"\n') as never,
+      processPlatform: 'win32'
+    });
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3363);
+    expect(settings.labviewIniPath).toBe(expectedIniPath);
+  });
+
+  it('returns viServerTcpEnabled=true and the explicit port for unquoted enabled values', async () => {
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+      readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\nserver.tcp.port=3380\n') as never,
+      processPlatform: 'win32'
+    });
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3380);
+  });
+
+  it('defaults viServerTcpEnabled=true (Windows default-on) when server.tcp.enabled is absent', async () => {
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+      readFile: vi.fn().mockResolvedValue('LoadAddOns=False\n') as never,
+      processPlatform: 'win32'
+    });
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3363);
+  });
+
+  it('defaults the port to 3363 when TCP is enabled but server.tcp.port is omitted', async () => {
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+      readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\n') as never,
+      processPlatform: 'win32'
+    });
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3363);
+  });
+
+  it('flags viServerTcpEnabled=false for the quoted disabled form', async () => {
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+      readFile: vi.fn().mockResolvedValue('server.tcp.enabled="FALSE"\n') as never,
+      processPlatform: 'win32'
+    });
+    expect(settings.viServerTcpEnabled).toBe(false);
+    expect(settings.notes.join(' ')).toMatch(/server\.tcp\.enabled=False/);
+    expect(settings.notes.join(' ')).toMatch(/VI Server/i);
+  });
+
+  it('flags viServerTcpEnabled=false for the unquoted disabled form', async () => {
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+      readFile: vi.fn().mockResolvedValue('server.tcp.enabled=false\n') as never,
+      processPlatform: 'win32'
+    });
+    expect(settings.viServerTcpEnabled).toBe(false);
+  });
+
+  it('returns viServerTcpEnabled=unknown when the LabVIEW.ini is not readable', async () => {
+    const enoent = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+      readFile: vi.fn().mockRejectedValue(enoent) as never,
+      processPlatform: 'win32'
+    });
+    expect(settings.viServerTcpEnabled).toBe('unknown');
+    expect(settings.labviewTcpPort).toBeUndefined();
+    expect(settings.notes.join(' ')).toMatch(/not readable/);
   });
 });
 
