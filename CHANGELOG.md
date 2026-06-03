@@ -14,6 +14,19 @@ Burned exact-version releases now include `v1.0.2`.
 
 ### Fixed
 
+- The Linux **container** comparison provider can now generate reports on the
+  official `nationalinstruments/labview:<release>-linux` images. The container
+  invocation targeted the plain `labview` binary, which does not fully engage
+  headless mode (LabVIEW tried to bring up the Getting Started Window), so
+  `CreateComparisonReport` never bound the supplied VI paths and the run failed
+  with `-350000`. The provider now invokes the bundled LabVIEW Professional
+  executable (`labviewprofull`) with `-Headless`, matching NI's own canonical
+  container compare script, which lets the session connect and produce a report.
+- A successful headless Linux comparison no longer reports a misleading
+  `diagnosticReason = linux-headless-recursive-load`. LabVIEW logs a benign
+  "Recursive load during LEIF load!" line while initializing the Getting
+  Started Window and then recovers; the diagnostic reason is now suppressed
+  when the run succeeds, mirroring how `failureReason` is already cleared.
 - Linux host-native comparisons no longer fail when a report is regenerated
   over a prior run's output. LabVIEW emits the `<report>_files/support`
   asset directory read-only, so copying a freshly generated report back over
