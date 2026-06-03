@@ -205,8 +205,10 @@ Two independent issues can cause this on a Linux host running LabVIEW 2026:
 
 2. Leave the comparison invocation **non-headless** on Linux host-native.
    `vi-history-suite` keeps Linux host-native runs non-headless by default;
-   the Linux container provider continues to invoke `-Headless` because the
-   container's bundled LabVIEW image initializes headless mode correctly.
+   the Linux container provider continues to invoke `-Headless` against the
+   container's bundled LabVIEW Professional executable
+   (`/usr/local/natinst/LabVIEW-<year>-64/labviewprofull`), which engages
+   headless mode and completes comparison reports.
 
 3. Only set `LV_RTE_LINUX_HEADLESS=1` (in the VS Code extension host
    environment, e.g. `~/.profile` or a shell that launches `code`) if your
@@ -235,13 +237,38 @@ Check the retained `runtimeExecution.diagnosticReason`:
   headless mode. Unset `LV_RTE_LINUX_HEADLESS` (or set it to anything other
   than `1`) to drop back to the non-headless path.
 - `linux-headless-recursive-load`: A recursive GSW LEIF load was observed
-  while running in headless mode. The headless-session-reset retry will
-  attempt one recovery; if it also fails, switch to non-headless or use the
-  Linux container provider.
+  while running in headless mode. LabVIEW logs this line during Getting
+  Started Window initialization and usually recovers, so it is only reported
+  when the run **also** failed (it is suppressed on a successful run). If the
+  run failed, the headless-session-reset retry will attempt one recovery; if
+  that also fails, switch to non-headless or use the Linux container provider.
 
 If the failure persists, attach the run's full `diagnostics/` directory and
 the LabVIEW interactive log
 (`/tmp/lvrt_<version>_interactive_<user>_log.txt`) when filing the report.
+
+### Linux container compare reports "VI path invalid" (Docker bind-mount not visible)
+
+If the Linux **container** provider runs but `CreateComparisonReport` reports
+`VI 1 path invalid or does not exist: /workspace/staging/...` even though the
+staged VI files exist on the host, the container almost certainly cannot see
+the bind-mounted report directory. The most common cause is **snap-packaged
+Docker confinement**: a snap `docker` can only bind-mount paths it has been
+granted access to. By default the `home` interface is connected (so paths
+under `$HOME` mount correctly), but `/tmp` and removable media are **not**;
+mounting such a path silently yields an empty `tmpfs` at `/workspace`.
+
+Confirm with:
+
+```bash
+snap connections docker | grep -E 'home|removable-media'
+docker run --rm -v "$HOME/some/dir:/workspace" <image> ls -la /workspace
+```
+
+Resolve it by keeping the extension's report storage under `$HOME` (the
+default VS Code `workspaceStorage` location already qualifies), or connect the
+required snap interface (for removable media, `sudo snap connect
+docker:removable-media`). Native (non-snap) Docker is unaffected.
 
 ## Source Evaluation
 
