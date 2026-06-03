@@ -1746,7 +1746,11 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
         readdir: vi.fn().mockResolvedValue([]) as never,
         readFile: vi.fn(async (filePath: string) => {
           if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
-            return 'server.tcp.enabled=False\nserver.tcp.port=3363\n';
+            // VHS-REQ-623: LabVIEW.ini commonly writes VI Server values quoted
+            // (e.g. server.tcp.enabled="FALSE"). Use the quoted form here so a
+            // future regression in the parser regex (matching only unquoted
+            // values) is caught by this test.
+            return 'server.tcp.enabled="FALSE"\nserver.tcp.port="3363"\n';
           }
           throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
         }) as never,

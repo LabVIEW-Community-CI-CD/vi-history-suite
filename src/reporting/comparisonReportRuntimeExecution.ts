@@ -1131,8 +1131,14 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
     };
   }
 
-  const enabledMatch = iniText.match(/^\s*server\.tcp\.enabled\s*=\s*(true|false)\s*$/im);
-  const portMatch = iniText.match(/^\s*server\.tcp\.port\s*=\s*(\d+)\s*$/im);
+  // VHS-REQ-623: LabVIEW.ini commonly stores VI Server values in quoted form
+  // (e.g. server.tcp.enabled="FALSE", server.tcp.port="3363"). Accept optional
+  // surrounding double quotes so the preflight does not silently fall through
+  // to the default-on branch when LabVIEW writes quoted values.
+  const enabledMatch = iniText.match(
+    /^\s*server\.tcp\.enabled\s*=\s*"?(true|false)"?\s*$/im
+  );
+  const portMatch = iniText.match(/^\s*server\.tcp\.port\s*=\s*"?(\d+)"?\s*$/im);
   const tcpEnabled = enabledMatch ? enabledMatch[1].toLowerCase() === 'true' : true;
   if (!tcpEnabled) {
     return {
