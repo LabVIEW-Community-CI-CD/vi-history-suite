@@ -12,6 +12,53 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.10.2] - 2026-06-03
+
+### Fixed
+
+- The Linux **container** comparison provider can now generate reports on the
+  official `nationalinstruments/labview:<release>-linux` images. The container
+  invocation targeted the plain `labview` binary, which does not fully engage
+  headless mode (LabVIEW tried to bring up the Getting Started Window), so
+  `CreateComparisonReport` never bound the supplied VI paths and the run failed
+  with `-350000`. The provider now invokes the bundled LabVIEW Professional
+  executable (`labviewprofull`) with `-Headless`, matching NI's own canonical
+  container compare script, which lets the session connect and produce a report.
+- A successful headless Linux comparison no longer reports a misleading
+  `diagnosticReason = linux-headless-recursive-load`. LabVIEW logs a benign
+  "Recursive load during LEIF load!" line while initializing the Getting
+  Started Window and then recovers; the diagnostic reason is now suppressed
+  when the run succeeds, mirroring how `failureReason` is already cleared.
+- Linux host-native comparisons no longer fail when a report is regenerated
+  over a prior run's output. LabVIEW emits the `<report>_files/support`
+  asset directory read-only, so copying a freshly generated report back over
+  the stale destination raised `EACCES: permission denied, unlink ...` and was
+  misreported as `command-spawn-failed` even though `CreateComparisonReport`
+  had succeeded. The copy-back now clears the destination by normalizing
+  permissions (`chmod`) and retrying on `EACCES`/`EPERM`, and normalizes the
+  freshly copied tree to owner-writable so subsequent runs can replace it.
+  When the report command succeeds but copy-back still fails, the runtime now
+  surfaces the distinct `report-finalize-failed` reason with a diagnostic note
+  naming the copy failure, instead of the misleading `command-spawn-failed`.
+  When the destination still cannot be cleared after the permission reset
+  (an `EPERM`/`EACCES` that usually means a prior containerized run left
+  root-owned files in the retained report directory), the diagnostic note now
+  explains the cross-ownership cause and includes the exact `rm -rf` (prefix
+  with `sudo`) remediation for the stale report and `_files` outputs.
+  (VHS-REQ-156)
+
+### Changed
+
+- Linux containerized comparisons now write their root-owned output into an
+  isolated `container-out/` subdirectory of the report directory instead of the
+  shared retained report path. LabVIEW runs as root inside the container, so its
+  generated report, `_files`, and `container-temp` artifacts were previously
+  left root-owned directly in the host-native report path, where a later
+  host-native run could not overwrite or clean them. The host now copies the
+  finished report from `container-out/` back into the canonical report path as
+  the invoking user, keeping the retained host-native path user-owned and
+  immune to cross-ownership collisions from prior container runs. (VHS-REQ-156)
+
 ## [1.10.0] - 2026-06-03
 
 ### Added

@@ -16,6 +16,7 @@ import {
   buildLinuxHostNativeShortPathLayout,
   buildLinuxHostNativeShortPathCommandPlan,
   shouldUseLinuxHostNativeShortPathStaging,
+  rewriteLabviewCliArgsForLinuxContainerWorkspace,
   runComparisonCommandPlanWithObservation
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -461,8 +462,8 @@ describe('comparisonReportRuntimeExecution', () => {
         bitness: 'x64'
       }
     };
-    const aliasReportPath = `${record.artifactPlan.reportDirectory}/diff-report-foo_bar.vi.html`;
-    const aliasAssetsPath = `${record.artifactPlan.reportDirectory}/diff-report-foo_bar.vi_files`;
+    const aliasReportPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi.html`;
+    const aliasAssetsPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi_files`;
     const canonicalAssetsPath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi_files`;
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const copyDirectory = vi.fn().mockResolvedValue(undefined);
@@ -529,6 +530,386 @@ describe('comparisonReportRuntimeExecution', () => {
       recursive: true,
       force: true
     });
+  });
+
+  it('mounts Linux container output under container-out so it cannot pollute the retained report path', async () => {
+    const record = createReadyRecord();
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash
+    });
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: true,
+      containerAcquisitionState: 'not-required',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: '/usr/local/bin/LabVIEWCLI',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      }
+    };
+    const containerOutDirectory = `${record.artifactPlan.reportDirectory}/container-out`;
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.\n',
+      stderr: ''
+    });
+
+    await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        chmod: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-05-28T10:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalled();
+    const dockerPlan = runCommand.mock.calls[0][0] as { executable: string; args: string[] };
+    expect(dockerPlan.executable).toBe('docker');
+    // The bind mount targets the isolated container-out directory, never the
+    // canonical retained report directory, so a root-owned container run can
+    // never collide with the host-native report path.
+    expect(dockerPlan.args).toEqual(
+      expect.arrayContaining([`${containerOutDirectory}:/workspace`])
+    );
+    expect(dockerPlan.args).not.toEqual(
+      expect.arrayContaining([`${record.artifactPlan.reportDirectory}:/workspace`])
+    );
+  });
+
+  it('reports copy-back filesystem failures as report-finalize-failed rather than command-spawn-failed', async () => {
+    const record = createReadyRecord();
+    record.artifactPlan.fullFilename = 'foo bar.vi';
+    record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
+    record.artifactPlan.reportFilePath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi.html`;
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash
+    });
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'win32',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: true,
+      containerAcquisitionState: 'not-required',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: '/usr/local/bin/LabVIEWCLI',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      }
+    };
+    const aliasReportPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi.html`;
+    const aliasAssetsPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi_files`;
+    const eaccesError = Object.assign(
+      new Error("EACCES: permission denied, unlink '.../diff-report-foo bar.vi_files/support/style.css'"),
+      { code: 'EACCES' }
+    );
+    const copyDirectory = vi.fn().mockRejectedValue(eaccesError);
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === aliasReportPath) {
+        return [
+          record.stagedRevisionPlan.leftFilename.replaceAll(' ', '_'),
+          record.stagedRevisionPlan.rightFilename.replaceAll(' ', '_'),
+          'diff-report-foo_bar.vi_files'
+        ].join('\n');
+      }
+      return '';
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: copyDirectory as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        chmod: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath === aliasReportPath || filePath === aliasAssetsPath
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.\n',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-05-28T10:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe('report-finalize-failed');
+    expect(result.record.runtimeExecution.failureReason).not.toBe('command-spawn-failed');
+    expect(result.record.runtimeExecution.diagnosticNotes).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('copying it into the retained report directory failed')
+      ])
+    );
+  });
+
+  it('adds a cross-ownership remediation note when copy-back fails with EPERM (foreign-owned stale output)', async () => {
+    const record = createReadyRecord();
+    record.artifactPlan.fullFilename = 'foo bar.vi';
+    record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
+    record.artifactPlan.reportFilePath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi.html`;
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash
+    });
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'win32',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: true,
+      containerAcquisitionState: 'not-required',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: '/usr/local/bin/LabVIEWCLI',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      }
+    };
+    const aliasReportPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi.html`;
+    const aliasAssetsPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi_files`;
+    const canonicalAssetsPath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi_files`;
+    // Removal of the foreign-owned destination keeps failing with EPERM even
+    // after the chmod retry, mimicking root-owned files a non-root process
+    // cannot reset.
+    const removePath = vi.fn(async (target: string) => {
+      if (target === canonicalAssetsPath) {
+        throw Object.assign(new Error('EPERM: operation not permitted, rmdir'), { code: 'EPERM' });
+      }
+      return undefined;
+    });
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === aliasReportPath) {
+        return [
+          record.stagedRevisionPlan.leftFilename.replaceAll(' ', '_'),
+          record.stagedRevisionPlan.rightFilename.replaceAll(' ', '_'),
+          'diff-report-foo_bar.vi_files'
+        ].join('\n');
+      }
+      return '';
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: removePath as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        chmod: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath === aliasReportPath || filePath === aliasAssetsPath
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.\n',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-05-28T10:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('report-finalize-failed');
+    expect(result.record.runtimeExecution.diagnosticNotes).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('prior containerized LabVIEW run owned by a different user')
+      ])
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toEqual(
+      expect.arrayContaining([expect.stringContaining(record.artifactPlan.reportFilePath)])
+    );
+  });
+
+  it('retries report-asset removal after chmod when the destination tree is read-only (EACCES)', async () => {
+    const record = createReadyRecord();
+    record.artifactPlan.fullFilename = 'foo bar.vi';
+    record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
+    record.artifactPlan.reportFilePath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi.html`;
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash
+    });
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'win32',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: true,
+      containerAcquisitionState: 'not-required',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: '/usr/local/bin/LabVIEWCLI',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      }
+    };
+    const aliasReportPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi.html`;
+    const aliasAssetsPath = `${record.artifactPlan.reportDirectory}/container-out/diff-report-foo_bar.vi_files`;
+    const canonicalAssetsPath = `${record.artifactPlan.reportDirectory}/diff-report-foo bar.vi_files`;
+    const eaccesPaths = new Set<string>();
+    const removePath = vi.fn(async (target: string) => {
+      if (target === canonicalAssetsPath && !eaccesPaths.has(target)) {
+        eaccesPaths.add(target);
+        throw Object.assign(new Error('EACCES: permission denied, rmdir'), { code: 'EACCES' });
+      }
+      return undefined;
+    });
+    const chmod = vi.fn().mockResolvedValue(undefined);
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === aliasReportPath) {
+        return [
+          record.stagedRevisionPlan.leftFilename.replaceAll(' ', '_'),
+          record.stagedRevisionPlan.rightFilename.replaceAll(' ', '_'),
+          'diff-report-foo_bar.vi_files'
+        ].join('\n');
+      }
+      return '';
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: removePath as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        chmod: chmod as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath === aliasReportPath || filePath === aliasAssetsPath
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.\n',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-05-28T10:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    expect(chmod).toHaveBeenCalled();
+    // The EACCES path is removed twice: once it throws, once after chmod succeeds.
+    expect(
+      removePath.mock.calls.filter(([target]) => target === canonicalAssetsPath).length
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it('skips the clean-host Windows preflight when installed-user host compare admits an existing LabVIEW session', async () => {
@@ -892,6 +1273,82 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
     expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths).toEqual([]);
     expect(readdir).not.toHaveBeenCalled();
+  });
+
+  it('suppresses the benign recursive-load diagnosticReason when a headless Linux run still succeeds', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    // Headless was requested, so the recursive-load LVStatus.txt line is captured
+    // even though LabVIEW recovered and CreateComparisonReport succeeded.
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const readdir = vi.fn().mockResolvedValue([
+      'LVStatus.txt',
+      'lvrt_26.1.1f1_headless_sergio_cur.txt'
+    ]);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+          }
+          return 'Recursive load during LEIF load!';
+        }) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-05-16T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    // The run succeeded, so no failure-implying diagnosticReason should leak even
+    // though the benign recursive-load line was observed and captured.
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.failureReason).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
+    expect(readdir).toHaveBeenCalled();
   });
 
   it('classifies password-protected CreateComparisonReport failures from retained LabVIEW CLI diagnostics', () => {
@@ -1978,6 +2435,48 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(rewritten?.args).not.toContain(
       '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
     );
+  });
+
+  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets labviewprofull headless under the container workspace', () => {
+    const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
+      [
+        '-LogToConsole',
+        'TRUE',
+        '-OperationName',
+        'CreateComparisonReport',
+        '-VI1',
+        '/host/staging/left-111111112222-foo.vi',
+        '-VI2',
+        '/host/staging/right-abcdef123456-foo.vi',
+        '-ReportType',
+        'HTML',
+        '-ReportPath',
+        '/host/diff-report-foo.vi.html',
+        '-LabVIEWPath',
+        '/usr/local/natinst/LabVIEW-2026-64/labview'
+      ],
+      {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'left-111111112222-foo.vi',
+        rightFilename: 'right-abcdef123456-foo.vi',
+        reportFilename: 'diff-report-foo.vi.html'
+      }
+    );
+
+    expect(rewritten).toBeDefined();
+    // VI and report paths are remapped under the container workspace mount.
+    expect(rewritten).toContain('/workspace/staging/left-111111112222-foo.vi');
+    expect(rewritten).toContain('/workspace/staging/right-abcdef123456-foo.vi');
+    expect(rewritten).toContain('/workspace/diff-report-foo.vi.html');
+    // NI's canonical container compare (vidiff.sh) uses the Professional binary
+    // plus -Headless; the inbound plain `labview` -LabVIEWPath is replaced.
+    const labviewPathIndex = rewritten?.indexOf('-LabVIEWPath') ?? -1;
+    expect(labviewPathIndex).toBeGreaterThanOrEqual(0);
+    expect(rewritten?.[labviewPathIndex + 1]).toBe(
+      '/usr/local/natinst/LabVIEW-2026-64/labviewprofull'
+    );
+    expect(rewritten).toContain('-Headless');
+    expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labview');
   });
 
   it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {
