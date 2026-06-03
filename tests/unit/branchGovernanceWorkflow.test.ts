@@ -135,22 +135,36 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('main)');
     expect(workflow).toContain('^release/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('^hotfix/v[0-9]+\\.[0-9]+\\.[0-9]+$');
-    expect(workflow).toContain('Pull requests to main must come from release/v* or hotfix/v*');
+    expect(workflow).toContain('PRs to main must come from release/v* or hotfix/v*');
   });
 
-  it('allows feature, release, hotfix, and main back-sync branches to target develop', () => {
+  it('requires develop-targeted feature branches to reference an issue', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('develop)');
-    expect(workflow).toContain('^feature/.+');
+    // feature branches must be named feature/<issue#>-...; a plain feature/* is rejected.
+    expect(workflow).toContain('^feature/[0-9]+-.+');
+    expect(workflow).not.toContain('^feature/.+');
     expect(workflow).toContain('^release/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('^hotfix/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('"$head" == "main"');
-    expect(workflow).toContain(
-      'pull requests to develop must come from feature/*, release/v*, hotfix/v*, or main'
-    );
+    expect(workflow).toContain('feature/* branches must reference an issue');
     expect(workflow).not.toMatch(/\^copilot\//);
     expect(workflow).not.toMatch(/\^dependabot\//);
     expect(workflow).not.toContain("'copilot/**'");
+  });
+
+  it('routes fix branches into feature branches and blocks them from develop or main', () => {
+    const workflow = readWorkflow();
+
+    // fix/* PRs are gated by adding feature/** to the pull_request triggers.
+    expect(workflow).toContain("- 'feature/**'");
+    // fix/* targeting develop or main is rejected with a targeted message.
+    expect(workflow).toContain(
+      "fix/* branches must merge into a feature/* branch, not '$base'"
+    );
+    // A feature/* base admits fix/* and stacked feature/<issue#>-* heads.
+    expect(workflow).toContain('feature/*)');
+    expect(workflow).toContain('"$head" =~ ^fix/.+ || "$head" =~ ^feature/[0-9]+-.+');
   });
 });

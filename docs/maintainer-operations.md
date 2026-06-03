@@ -22,8 +22,9 @@ Hotfix branches from `main` merge into `main` and merge into `develop`.
 | Branch | Role | Promotion Rule |
 | --- | --- | --- |
 | `main` | Released Marketplace baseline | Accepts `release/vX.Y.Z` or `hotfix/vX.Y.Z` pull requests only |
-| `develop` | Integration branch | Accepts `feature/*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, and `main` back-sync pull requests |
-| `feature/*` | Normal development | Branch from and merge back to `develop` |
+| `develop` | Integration branch | Accepts `feature/<issue#>-*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, and `main` back-sync pull requests |
+| `feature/<issue#>-*` | Normal development (MUST reference an issue) | Branch from and merge back to `develop` |
+| `fix/*` | Focused fix | Branch from a `feature/*` branch and merge back into that `feature/*` branch only — never directly into `develop` or `main` |
 | `release/vX.Y.Z` | Frozen release candidate | Branch from `develop`, stabilize, then merge to `main` |
 | `hotfix/vX.Y.Z` | Urgent production fix | Branch from `main`, merge to `main`, then back-sync to `develop` |
 

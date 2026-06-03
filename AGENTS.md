@@ -64,6 +64,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - Domain logic isolated in `domain/`
 - Use of `Action` suffix for command/operation files
 - Integration with Git via both API and CLI wrappers
+- Branch/PR flow (`fix/* -> feature/<issue#>-* -> develop -> main`) is enforced by the hosted CI Branch Governance step; feature branches MUST reference an issue. See [Branch and PR Flow](./CONTRIBUTING.md#branch-and-pr-flow).
 
 ### Common Pitfalls / Environment Issues
 - Requires Node.js and npm (see [INSTALL.md](./INSTALL.md))
@@ -112,6 +113,7 @@ At the end of substantial tasks, improve the agent guidance in the same PR when 
 - [Requirements](./docs/requirements/README.md)
 - [Test Plan](./docs/testing/test-plan.md)
 - [Development Guide](./docs/development.md)
+- [Branch and PR Flow](./CONTRIBUTING.md#branch-and-pr-flow)
 - [Maintainer Operations](./docs/maintainer-operations.md)
 - [Vagrant Guide](./docs/vagrant.md)
 - [Contributing](./CONTRIBUTING.md)
