@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.10.2] - 2026-06-03
+
 ### Fixed
 
 - The Linux **container** comparison provider can now generate reports on the
