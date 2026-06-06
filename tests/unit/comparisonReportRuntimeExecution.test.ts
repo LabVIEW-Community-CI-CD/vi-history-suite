@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import * as path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -2682,9 +2683,12 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       })
     );
     // Both renamed VIs live under the same tree root at the VI's relative depth.
+    // Normalize separators so the containment check holds on win32 hosts, where
+    // path.join yields backslashes while the staging-root string keeps forward slashes.
+    const toPosix = (value: string): string => value.replace(/\\/g, '/');
     expect(plan.relativeDirectory).toBe('Source/Sub');
-    expect(plan.leftFilePath.startsWith(plan.treeRoot as string)).toBe(true);
-    expect(plan.rightFilePath.startsWith(plan.treeRoot as string)).toBe(true);
+    expect(toPosix(plan.leftFilePath).startsWith(toPosix(plan.treeRoot as string))).toBe(true);
+    expect(toPosix(plan.rightFilePath).startsWith(toPosix(plan.treeRoot as string))).toBe(true);
     expect(plan.leftFilePath).toContain('Source');
     // Base blob -> left filename; selected blob -> right filename.
     expect(writeFile).toHaveBeenCalledWith(plan.leftFilePath, Buffer.from('base-blob'));
@@ -2932,7 +2936,10 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
 
       expect(plan.relativeDirectory).toBe('');
       expect(plan.leftFilePath).toBe(
-        '/workspace/.storage/reports/repoid/fileid/staging/left-111111112222-main.vi'
+        path.join(
+          '/workspace/.storage/reports/repoid/fileid/staging',
+          'left-111111112222-main.vi'
+        )
       );
       expect(plan.leftFilePath).not.toContain('..');
       expect(plan.rightFilePath).not.toContain('..');

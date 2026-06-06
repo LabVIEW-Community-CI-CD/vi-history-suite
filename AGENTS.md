@@ -75,6 +75,8 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - In Codespaces, the ambient `GITHUB_TOKEN`/`GH_TOKEN` is read-only for this repo (push, `gh issue create`, and `gh pr create` fail with 403 / "Resource not accessible by integration"). Run `unset GITHUB_TOKEN GH_TOKEN` and authenticate with `gh auth login --web` (device flow) before any push/issue/PR, and keep unsetting it per command in shells that re-inherit it.
 - Vitest only includes `tests/unit/**` (see `vitest.config.ts`). Ad-hoc or manual bench drivers placed elsewhere report "No test files found"; put a temporary driver under `tests/unit/` to run it, then delete it (do not ship drivers that spawn external runtimes such as a LabVIEW container).
 - Run `npm ci` before invoking `node_modules/.bin/vitest` in a fresh clone. Bare `npx vitest` triggers an interactive package-download prompt that hangs piped/non-interactive commands.
+- Stale `node_modules` surfaces as version-pin assertion failures, not generic errors. Example: `tests/unit/marketplaceListingVerification.test.ts` fails with `Expected @vscode/vsce@<pinned>, but resolved @vscode/vsce@<old>` when `node_modules` predates a `package.json`/`package-lock.json` bump; `npm ci` resyncs and clears it.
+- Unit tests run on Linux CI but should stay separator-agnostic so they also pass on Windows dev hosts. Assert staged-path layout via normalized separators (e.g. `value.replace(/\\/g, '/')`) or `path.join`-derived expected values, never hard-coded POSIX strings; production `buildStagedRevisionPlan` mixes a raw `treeRoot` with `path.join` paths that diverge on win32.
 - For troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) and [SUPPORT.md](./SUPPORT.md)
 
 ### Troubleshooting Route
