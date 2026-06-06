@@ -605,14 +605,17 @@ async function runHostNativeExecution(
   // revision's tree once so both staged VIs resolve in-repo dependencies at load
   // time. Fail closed before reading blobs or invoking the runtime when the tree
   // cannot be materialized. Container/interop providers re-stage from in-memory
-  // buffers and do not use this tree.
+  // buffers and do not use this tree. The Linux short-path staging redirect owns
+  // its own materialization into a cleaned tmp directory, so skip it here to
+  // avoid writing the tree into the retained report directory uselessly.
   const stagedPlan = record.stagedRevisionPlan;
   let materializedTree: ComparisonReportRuntimeExecution['materializedTree'];
   if (
     record.runtimeSelection.provider === 'host-native' &&
     deps.materializeSelectedRevisionTree &&
     stagedPlan.treeRoot &&
-    stagedPlan.treeRevisionId
+    stagedPlan.treeRevisionId &&
+    !shouldUseLinuxHostNativeShortPathStaging(record, deps.processPlatform)
   ) {
     const pathspec = stagedPlan.materializedPathspec?.trim() || '.';
     try {
@@ -2584,28 +2587,51 @@ async function prepareLinuxHostNativeShortPathExecutionContext(
     writeFile: typeof fs.writeFile;
     leftBlob: Buffer;
     rightBlob: Buffer;
+    repositoryRoot?: string;
+    materializeSelectedRevisionTree?: MaterializeSelectedRevisionTree;
   }
 ): Promise<PreparedExecutionContext> {
   const layout = buildLinuxHostNativeShortPathLayout(record);
-  const rewritten = buildLinuxHostNativeShortPathCommandPlan(record, commandPlan, layout);
+  await deps.mkdir(layout.reportDirectory, { recursive: true });
+
+  // VHS-REQ-624: materialize the selected-revision tree into the short-path
+  // staging directory so Linux host-native comparisons resolve in-repo
+  // dependencies at load time. The short tmp directory is removed via
+  // cleanupPaths after the run, so the retained report directory keeps only the
+  // two staged VIs (written separately as evidence) and the generated report.
+  const staged = await stageSelectedRevisionTreeIntoDirectory(record, layout.stagingDirectory, deps);
+  if (staged.outcome === 'blocked') {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: staged.failureReason,
+      cleanupPaths: [layout.reportDirectory]
+    };
+  }
+
+  const stagedLayout: WindowsInteropLayout = {
+    ...layout,
+    leftFilePath: staged.leftFilePath,
+    rightFilePath: staged.rightFilePath
+  };
+  const rewritten = buildLinuxHostNativeShortPathCommandPlan(record, commandPlan, stagedLayout);
   if (!rewritten) {
     return {
       outcome: 'ready',
       commandPlan,
-      reportFilePath: record.artifactPlan.reportFilePath
+      reportFilePath: record.artifactPlan.reportFilePath,
+      cleanupPaths: [layout.reportDirectory],
+      materializedTree: staged.materializedTree
     };
   }
-
-  await deps.mkdir(layout.reportDirectory, { recursive: true });
-  await deps.mkdir(layout.stagingDirectory, { recursive: true });
-  await deps.writeFile(layout.leftFilePath, deps.leftBlob);
-  await deps.writeFile(layout.rightFilePath, deps.rightBlob);
 
   return {
     outcome: 'ready',
     commandPlan: rewritten,
     reportFilePath: layout.reportFilePath,
     cleanupPaths: [layout.reportDirectory],
+    materializedTree: staged.materializedTree,
     preparationNotes: [
       `Staged Linux host-native runtime inputs under ${layout.reportDirectory} to avoid LabVIEW 2026 Linux path-table corruption observed for deep workspaceStorage paths (set LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1 to opt out).`
     ]
