@@ -1011,3 +1011,28 @@ describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
     expect(html).not.toContain('Dependency context:');
   });
 });
+
+describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
+  it('discloses the library-member caveat naming the owning library when detected', () => {
+    const record = createBaseRecord();
+    record.preflight.comparedViLibraryMembership = {
+      isMember: true,
+      libraryRelativePath: 'Dependencies/dependencies.lvlib',
+      libraryKind: 'lvlib'
+    };
+
+    const html = renderComparisonReportPacketHtml(record);
+
+    expect(html).toContain('data-testid="comparison-report-library-member-caveat"');
+    expect(html).toContain('Library member:');
+    expect(html).toContain('Dependencies/dependencies.lvlib');
+    expect(html.toLowerCase()).toContain('namespace');
+  });
+
+  it('omits the library-member caveat when the compared VI is not a library member', () => {
+    const html = renderComparisonReportPacketHtml(createBaseRecord());
+
+    expect(html).not.toContain('data-testid="comparison-report-library-member-caveat"');
+    expect(html).not.toContain('Library member:');
+  });
+});

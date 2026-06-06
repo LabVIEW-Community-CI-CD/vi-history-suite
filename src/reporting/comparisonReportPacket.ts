@@ -216,6 +216,19 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       per-commit diff.
     </div>`
     : '';
+  // VHS-REQ-625: when the compared VI is itself a library/class member at the
+  // selected revision, disclose that staging renames it outside its owning
+  // library so library-context resolution may differ from the in-project VI.
+  const libraryMembership = record.preflight.comparedViLibraryMembership;
+  const libraryMemberCaveatMarkup = libraryMembership?.isMember
+    ? `<div class="note" data-testid="comparison-report-library-member-caveat">
+      <strong>Library member:</strong> This VI is a member of
+      <code>${escapeHtml(libraryMembership.libraryRelativePath ?? 'a LabVIEW library')}</code>
+      at the selected revision. Comparison stages it under a renamed standalone file outside its
+      owning ${escapeHtml(libraryMembership.libraryKind === 'lvclass' ? 'class' : 'library')}
+      namespace, so library-context resolution may differ from the in-project VI.
+    </div>`
+    : '';
   const runtimeDoctorMarkup =
     runtimeExecution.doctorSummaryLines && runtimeExecution.doctorSummaryLines.length > 0
       ? `<div class="note" data-testid="comparison-report-runtime-doctor">
@@ -277,6 +290,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Right staged file:</strong> ${escapeHtml(record.stagedRevisionPlan.rightFilename)}</div>
     </div>
     ${dependencyCaveatMarkup}
+    ${libraryMemberCaveatMarkup}
     <div class="note" data-testid="comparison-report-runtime-note">
       <strong>Runtime note:</strong> ${escapeHtml(runtimeNote)}
     </div>

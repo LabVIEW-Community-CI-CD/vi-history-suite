@@ -593,6 +593,38 @@ Missing numeric IDs are intentional.
   - Optimize for dependency load success and simplicity; do not claim
     per-revision dependency fidelity or true historical diffing.
 
+### VHS-REQ-625: Library-Member Compared-VI Disclosure
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: When the compared VI is itself listed as a member of a LabVIEW
+  library (`.lvlib`) or class (`.lvclass`) at the selected revision, the
+  comparison report shall disclose that the VI is staged outside its owning
+  library for side-by-side comparison.
+- Acceptance Criteria:
+  - Preflight detects, from the selected revision's tree, whether the compared
+    VI's normalized path is a member URL of a `.lvlib` or `.lvclass`.
+  - Detection is best-effort and never blocks the comparison or changes runtime
+    behavior; failures resolve to no disclosure.
+  - When membership is detected, the report packet renders a factual caveat
+    naming the owning library and noting that staging renames the VI outside the
+    library namespace, so library-context resolution may differ from the
+    in-project VI.
+  - When the VI is not a library member, no library-member caveat is rendered.
+- Agent Work Scope:
+  - Change preflight membership detection and packet caveat rendering together
+    with their unit tests.
+- Implementation References:
+  - `src/reporting/comparisonReportPreflight.ts`
+  - `src/reporting/comparisonReportPacket.ts`
+- Verification References:
+  - `tests/unit/comparisonReportPreflight.test.ts`
+  - `tests/unit/comparisonReportPacket.test.ts`
+- Change Guidance:
+  - Keep the disclosure factual; do not claim a specific comparison defect that
+    has not been observed.
+
 ### VHS-REQ-155: Comparison Runtime Discovery Diagnostics
 
 - Status: Active
