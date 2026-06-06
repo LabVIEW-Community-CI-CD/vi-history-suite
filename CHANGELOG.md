@@ -12,6 +12,26 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Comparison reports no longer show a false "no difference" (or load a VI with
+  missing dependencies) when an in-repo dependency changed between the two
+  compared commits. Staging previously wrote only the two selected VI blobs into
+  a flat directory, so subVIs, `.ctl` typedefs, and `.lvlib`/`.lvclass` members
+  resolved against the working tree or collapsed to a single copy. Comparison now
+  materializes the selected (newest) revision's surrounding tree once and places
+  both staged VIs at the VI's repository-relative path, so LabVIEW resolves
+  in-repo dependencies at load time. This applies to the host-native, Windows
+  container, and Linux container comparison providers.
+
+### Changed
+
+- The comparison report packet now discloses a dependency caveat when a
+  selected-revision tree was materialized: both revisions are evaluated against
+  the selected revision's dependencies, so dependency-only changes may not appear
+  and loading the older revision against newer dependencies may recompile it and
+  distort the rendered diff.
+
 ## [1.10.2] - 2026-06-03
 
 ### Fixed
