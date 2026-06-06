@@ -2780,4 +2780,109 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       expect(plan.rightFilePath).not.toContain('..');
     }
   });
+
+  it('materializes the dependency tree for linux-container on a Windows interop host', async () => {
+    const record = createReadyRecord();
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: record.artifactPlan.normalizedRelativePath
+    });
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'win32',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: true,
+      containerAcquisitionState: 'not-required'
+    };
+
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\repo', interopWorkspaceRoot: 'C:\\interop' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base'))
+          .mockResolvedValueOnce(Buffer.from('selected')),
+        materializeSelectedRevisionTree,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.\n',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    // The interop branch now materializes the dependency tree into the bind-mounted
+    // interop staging directory (was a documented gap before VHS-REQ-624 completion).
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({ repositoryRoot: 'C:\\repo', revisionId: record.selectedHash })
+    );
+    expect(result.record.runtimeExecution.materializedTree?.revisionId).toBe(record.selectedHash);
+  });
+
+  it('materializes the dependency tree for the windows-container provider', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: record.artifactPlan.normalizedRelativePath
+    });
+
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base'))
+          .mockResolvedValueOnce(Buffer.from('selected')),
+        materializeSelectedRevisionTree,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.\n',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({ repositoryRoot: 'C:\\repo', revisionId: record.selectedHash })
+    );
+    expect(result.record.runtimeExecution.materializedTree?.revisionId).toBe(record.selectedHash);
+  });
 });

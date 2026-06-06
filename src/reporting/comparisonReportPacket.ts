@@ -202,9 +202,9 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
   const comparisonContextMarkup = renderComparisonContextSection(record);
   const compactEvidenceSummary = renderCompactEvidenceSummary(record);
   // VHS-REQ-624: only disclose the dependency caveat when a selected-revision tree
-  // was actually materialized for this run. Providers/states that do not stage a
-  // tree (pre-runtime packets, windows-container, linux-container on Windows
-  // interop) would otherwise carry a misleading past-tense claim.
+  // was actually materialized for this run. Pre-runtime packets (no runtime
+  // attempt yet) and any run where the materializer was unavailable would
+  // otherwise carry a misleading past-tense claim.
   const dependencyCaveatMarkup = runtimeExecution.materializedTree
     ? `<div class="note" data-testid="comparison-report-dependency-caveat">
       <strong>Dependency context:</strong> Both revisions of this VI were loaded against the
