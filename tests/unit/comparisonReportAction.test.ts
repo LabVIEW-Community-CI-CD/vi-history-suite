@@ -262,7 +262,10 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         repositoryRoot: '/workspace/repo',
         cancellationToken: undefined
       },
-      { cliConnectTimeoutSeconds: 180 }
+      expect.objectContaining({
+        cliConnectTimeoutSeconds: 180,
+        materializeSelectedRevisionTree: expect.any(Function)
+      })
     );
     expect(archiveComparisonReportSource).toHaveBeenCalledWith(executedRecord);
     expect(result).toMatchObject({
