@@ -2691,6 +2691,83 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     expect(writeFile).toHaveBeenCalledWith(plan.rightFilePath, Buffer.from('selected-blob'));
   });
 
+  it('prunes the retained materialized tree back to the two staged VIs on win32 host-native', async () => {
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const record = createNestedReadyRecord();
+    const plan = record.stagedRevisionPlan;
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base-blob'))
+          .mockResolvedValueOnce(Buffer.from('selected-blob')),
+        materializeSelectedRevisionTree,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: writeFile as never,
+        removePath: removePath as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    // After the run, the whole-repo tree in the retained staging dir is removed...
+    expect(removePath).toHaveBeenCalledWith(
+      plan.treeRoot,
+      expect.objectContaining({ recursive: true, force: true })
+    );
+    // ...and the two staged VIs are re-written so retained evidence keeps only them.
+    const leftWrites = writeFile.mock.calls.filter(
+      (call) => call[0] === plan.leftFilePath && Buffer.isBuffer(call[1]) && call[1].equals(Buffer.from('base-blob'))
+    );
+    const rightWrites = writeFile.mock.calls.filter(
+      (call) => call[0] === plan.rightFilePath && Buffer.isBuffer(call[1]) && call[1].equals(Buffer.from('selected-blob'))
+    );
+    // Written once during staging and once during prune re-stage.
+    expect(leftWrites.length).toBeGreaterThanOrEqual(2);
+    expect(rightWrites.length).toBeGreaterThanOrEqual(2);
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.materializedTree?.revisionId).toBe(record.selectedHash);
+  });
+
+  it('does not prune when materialization is skipped (no materializer injected)', async () => {
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const record = createNestedReadyRecord();
+    const plan = record.stagedRevisionPlan;
+
+    await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base-blob'))
+          .mockResolvedValueOnce(Buffer.from('selected-blob')),
+        // no materializeSelectedRevisionTree -> staging stays flat, nothing to prune
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: removePath as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(removePath).not.toHaveBeenCalledWith(
+      plan.treeRoot,
+      expect.objectContaining({ recursive: true, force: true })
+    );
+  });
+
   it('fails closed with a retained reason when the selected-revision tree cannot be materialized', async () => {
     const runCommand = vi.fn();
     const record = createNestedReadyRecord();
