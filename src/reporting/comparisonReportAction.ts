@@ -19,7 +19,7 @@ import {
   ComparisonReportRevisionMetadata,
   persistComparisonReportPacket
 } from './comparisonReportPacket';
-import { executeComparisonReport } from './comparisonReportRuntimeExecution';
+import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 
 export interface ComparisonReportActionRequest {
@@ -423,7 +423,8 @@ async function ensureComparisonReportEvidence(
       repositoryRoot: request.model.repositoryRoot,
       cancellationToken: request.cancellationToken
     }, {
-      cliConnectTimeoutSeconds: (deps.getCliConnectTimeoutSeconds ?? readCliConnectTimeoutSeconds)()
+      cliConnectTimeoutSeconds: (deps.getCliConnectTimeoutSeconds ?? readCliConnectTimeoutSeconds)(),
+      materializeSelectedRevisionTree: materializeSelectedRevisionTreeWithGit
     });
     if (request.cancellationToken?.isCancellationRequested) {
       return buildCancelledComparisonReportResult('after-runtime-execution', packet);

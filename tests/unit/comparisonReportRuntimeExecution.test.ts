@@ -2673,4 +2673,85 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     expect(result.record.stagedRevisionPlan.leftFilename).toBe('left-111111112222-foo.vi');
     expect(result.record.stagedRevisionPlan.rightFilename).toBe('right-abcdef123456-foo.vi');
   });
+
+  it('materializes the selected tree into the linux-container workspace and mounts it', async () => {
+    const record = createReadyRecord();
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: record.artifactPlan.normalizedRelativePath
+    });
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux',
+      containerImageAvailable: true,
+      containerAcquisitionState: 'not-required',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: '/usr/local/bin/LabVIEWCLI',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      }
+    };
+
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const expectedContainerStagingDir = `${record.artifactPlan.reportDirectory}/container-out/staging`;
+    let capturedDockerArgs: string[] = [];
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base'))
+          .mockResolvedValueOnce(Buffer.from('selected')),
+        materializeSelectedRevisionTree,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn(async (plan: { args: string[] }) => {
+          capturedDockerArgs = plan.args;
+          return { exitCode: 0, stdout: 'CreateComparisonReport operation succeeded.\n', stderr: '' };
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    // One materialization, pinned to the selected revision, into the container staging dir.
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repositoryRoot: '/workspace/repo',
+        revisionId: record.selectedHash,
+        destinationRoot: expectedContainerStagingDir
+      })
+    );
+    // Docker mounts the container-out tree and the VI args resolve inside /workspace/staging.
+    expect(capturedDockerArgs.join(' ')).toContain('/workspace/staging/');
+    expect(result.record.runtimeExecution.materializedTree).toMatchObject({
+      revisionId: record.selectedHash,
+      root: expectedContainerStagingDir
+    });
+  });
 });

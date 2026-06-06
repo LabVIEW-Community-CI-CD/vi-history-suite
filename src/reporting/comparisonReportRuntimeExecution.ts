@@ -350,8 +350,7 @@ export async function executeComparisonReport(
       options.interopWorkspaceRoot,
       {
         readBlob: deps.readRevisionBlob ?? readRevisionBlob,
-        materializeSelectedRevisionTree:
-          deps.materializeSelectedRevisionTree ?? materializeSelectedRevisionTreeWithGit,
+        materializeSelectedRevisionTree: deps.materializeSelectedRevisionTree,
         mkdir,
         writeFile,
         copyFile,
@@ -502,9 +501,10 @@ export type MaterializeSelectedRevisionTree = (
  * VHS-REQ-624: default selected-revision tree materializer. Streams
  * `git archive <revision> -- <pathspec>` into `tar -x` so the staged VIs sit
  * beside their in-repo dependencies at the recorded revision. Used for the
- * host-native provider; container/interop paths re-stage from in-memory buffers.
+ * host-native and linux-container providers; wired at the production action call
+ * site and injected explicitly by unit tests so execution stays deterministic.
  */
-async function materializeSelectedRevisionTreeWithGit(
+export async function materializeSelectedRevisionTreeWithGit(
   options: MaterializeSelectedRevisionTreeOptions
 ): Promise<void> {
   const pathspec = options.pathspec?.trim() || '.';
@@ -689,7 +689,9 @@ async function runHostNativeExecution(
     processPlatform: deps.processPlatform,
     leftBlob,
     rightBlob,
-    cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
+    cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds,
+    repositoryRoot,
+    materializeSelectedRevisionTree: deps.materializeSelectedRevisionTree
   });
 
   if (executionContext.outcome === 'blocked') {
@@ -715,6 +717,8 @@ async function runHostNativeExecution(
     );
     if (materializedTree) {
       executionResult.materializedTree = materializedTree;
+    } else if (executionContext.materializedTree) {
+      executionResult.materializedTree = executionContext.materializedTree;
     }
     return executionResult;
   } finally {
@@ -2175,6 +2179,11 @@ export interface PreparedExecutionContext {
   cleanupPaths?: string[];
   /** VHS-REQ-156: human-readable note describing why a path rewrite was applied. */
   preparationNotes?: string[];
+  /**
+   * VHS-REQ-624: manifest of the materialized selected-revision tree, when a
+   * provider (currently the linux-container path) staged one during preparation.
+   */
+  materializedTree?: ComparisonReportRuntimeExecution['materializedTree'];
 }
 
 async function prepareExecutionContext(
@@ -2188,6 +2197,8 @@ async function prepareExecutionContext(
     leftBlob: Buffer;
     rightBlob: Buffer;
     cliConnectTimeoutSeconds?: number;
+    repositoryRoot?: string;
+    materializeSelectedRevisionTree?: MaterializeSelectedRevisionTree;
   }
 ): Promise<PreparedExecutionContext> {
   if (record.runtimeSelection.provider === 'windows-container') {
@@ -2414,6 +2425,7 @@ interface WindowsInteropLayout {
 interface LinuxContainerWorkspaceLayout {
   reportDirectory: string;
   stagingDirectory: string;
+  relativeDirectory: string;
   leftFilename: string;
   rightFilename: string;
   reportFilename: string;
@@ -2600,7 +2612,8 @@ async function prepareLinuxHostNativeShortPathExecutionContext(
 
 function buildLinuxContainerWorkspaceLayout(
   record: ComparisonReportPacketRecord,
-  hostLayout: WindowsInteropLayout
+  hostLayout: WindowsInteropLayout,
+  relativeDirectory = ''
 ): LinuxContainerWorkspaceLayout {
   const leftFilename = buildLinuxContainerRuntimeFilenameAlias(record.stagedRevisionPlan.leftFilename);
   const rightFilename = buildLinuxContainerRuntimeFilenameAlias(record.stagedRevisionPlan.rightFilename);
@@ -2637,11 +2650,12 @@ function buildLinuxContainerWorkspaceLayout(
   return {
     reportDirectory: hostLayout.reportDirectory,
     stagingDirectory: hostLayout.stagingDirectory,
+    relativeDirectory,
     leftFilename,
     rightFilename,
     reportFilename,
-    leftFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, leftFilename),
-    rightFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, rightFilename),
+    leftFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, relativeDirectory, leftFilename),
+    rightFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, relativeDirectory, rightFilename),
     reportFilePath: joinPreservingExplicitPathStyle(hostLayout.reportDirectory, reportFilename),
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
@@ -2654,6 +2668,14 @@ function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]
   }
 
   return path.join(rootPath, ...segments);
+}
+
+function posixDirname(filePath: string): string {
+  if (filePath.startsWith('/')) {
+    return path.posix.dirname(filePath);
+  }
+
+  return path.dirname(filePath);
 }
 
 function buildLinuxContainerRuntimeFilenameAlias(filename: string): string {
@@ -2881,6 +2903,8 @@ export async function prepareLinuxContainerExecutionContext(
     processPlatform: NodeJS.Platform;
     leftBlob: Buffer;
     rightBlob: Buffer;
+    repositoryRoot?: string;
+    materializeSelectedRevisionTree?: MaterializeSelectedRevisionTree;
   }
 ): Promise<PreparedExecutionContext> {
   const containerImage = record.runtimeSelection.containerImage?.trim();
@@ -2892,6 +2916,14 @@ export async function prepareLinuxContainerExecutionContext(
       failureReason: 'container-image-unavailable'
     };
   }
+
+  // VHS-REQ-624: directory of the compared VI within the materialized tree. The
+  // selected-revision tree is staged into the container staging directory (which
+  // becomes the repo root inside the container at /workspace/staging) so the VIs
+  // resolve in-repo dependencies at load time. Empty when the VI sits at the
+  // repository root (e.g. the dependency test harness).
+  let containerRelativeDirectory = '';
+  let materializedTree: ComparisonReportRuntimeExecution['materializedTree'];
 
   let hostLayout: WindowsInteropLayout;
   if (requiresWindowsInterop(resolveEffectiveRuntimePlatform(record.runtimeSelection), deps.processPlatform)) {
@@ -2923,15 +2955,51 @@ export async function prepareLinuxContainerExecutionContext(
       containerOutputDirectory,
       'staging'
     );
+    await deps.mkdir(containerStagingDirectory, { recursive: true });
+
+    // VHS-REQ-624: materialize the selected (newest) revision's tree into the
+    // container staging directory so dependencies sit beside the staged VIs.
+    // Fail closed before reading blobs or launching the container.
+    if (
+      deps.materializeSelectedRevisionTree &&
+      deps.repositoryRoot &&
+      record.stagedRevisionPlan.treeRevisionId
+    ) {
+      containerRelativeDirectory = record.stagedRevisionPlan.relativeDirectory ?? '';
+      const pathspec = record.stagedRevisionPlan.materializedPathspec?.trim() || '.';
+      try {
+        await deps.materializeSelectedRevisionTree({
+          repositoryRoot: deps.repositoryRoot,
+          revisionId: record.stagedRevisionPlan.treeRevisionId,
+          destinationRoot: containerStagingDirectory,
+          pathspec
+        });
+        materializedTree = {
+          root: containerStagingDirectory,
+          revisionId: record.stagedRevisionPlan.treeRevisionId,
+          pathspec
+        };
+      } catch {
+        return {
+          outcome: 'blocked',
+          commandPlan,
+          reportFilePath: record.artifactPlan.reportFilePath,
+          failureReason: 'selected-tree-materialize-failed'
+        };
+      }
+    }
+
     const containerLeftFilePath = joinPreservingExplicitPathStyle(
       containerStagingDirectory,
+      containerRelativeDirectory,
       record.stagedRevisionPlan.leftFilename
     );
     const containerRightFilePath = joinPreservingExplicitPathStyle(
       containerStagingDirectory,
+      containerRelativeDirectory,
       record.stagedRevisionPlan.rightFilename
     );
-    await deps.mkdir(containerStagingDirectory, { recursive: true });
+    await deps.mkdir(posixDirname(containerLeftFilePath), { recursive: true });
     await deps.writeFile(containerLeftFilePath, deps.leftBlob);
     await deps.writeFile(containerRightFilePath, deps.rightBlob);
     hostLayout = {
@@ -2966,11 +3034,13 @@ export async function prepareLinuxContainerExecutionContext(
     'container-temp'
   );
   await deps.mkdir(hostTempDirectory, { recursive: true });
-  const workspaceLayout = buildLinuxContainerWorkspaceLayout(record, hostLayout);
+  const workspaceLayout = buildLinuxContainerWorkspaceLayout(record, hostLayout, containerRelativeDirectory);
   if (workspaceLayout.leftFilePath !== hostLayout.leftFilePath) {
+    await deps.mkdir(posixDirname(workspaceLayout.leftFilePath), { recursive: true });
     await deps.writeFile(workspaceLayout.leftFilePath, deps.leftBlob);
   }
   if (workspaceLayout.rightFilePath !== hostLayout.rightFilePath) {
+    await deps.mkdir(posixDirname(workspaceLayout.rightFilePath), { recursive: true });
     await deps.writeFile(workspaceLayout.rightFilePath, deps.rightBlob);
   }
 
@@ -2980,6 +3050,7 @@ export async function prepareLinuxContainerExecutionContext(
     containerWorkspaceRoot: LINUX_CONTAINER_WORKSPACE_ROOT,
     containerImage,
     processPlatform: deps.processPlatform,
+    relativeDirectory: workspaceLayout.relativeDirectory,
     leftFilename: workspaceLayout.leftFilename,
     rightFilename: workspaceLayout.rightFilename,
     reportFilename: workspaceLayout.reportFilename
@@ -3002,7 +3073,8 @@ export async function prepareLinuxContainerExecutionContext(
       hostRoot: hostTempDirectory
     },
     reportIdentityFilenames: workspaceLayout.reportIdentityFilenames,
-    reportTextReplacements: workspaceLayout.reportTextReplacements
+    reportTextReplacements: workspaceLayout.reportTextReplacements,
+    materializedTree
   };
 }
 
@@ -3084,6 +3156,7 @@ export function buildLinuxContainerCommandPlan(
     containerWorkspaceRoot: string;
     containerImage: string;
     processPlatform: NodeJS.Platform;
+    relativeDirectory?: string;
     leftFilename?: string;
     rightFilename?: string;
     reportFilename?: string;
@@ -3093,19 +3166,32 @@ export function buildLinuxContainerCommandPlan(
     return undefined;
   }
 
+  // VHS-REQ-624: when the selected-revision tree is materialized, the staged VIs
+  // live at their repo-relative depth inside /workspace/staging so in-repo
+  // dependencies resolve at load time. Prefix the VI filenames with that depth.
+  const relativeDirectory = options.relativeDirectory?.replace(/^\/+|\/+$/g, '') ?? '';
+  const baseLeftFilename = options.leftFilename ?? record.stagedRevisionPlan.leftFilename;
+  const baseRightFilename = options.rightFilename ?? record.stagedRevisionPlan.rightFilename;
+  const containerLeftFilename = relativeDirectory
+    ? `${relativeDirectory}/${baseLeftFilename}`
+    : baseLeftFilename;
+  const containerRightFilename = relativeDirectory
+    ? `${relativeDirectory}/${baseRightFilename}`
+    : baseRightFilename;
+
   const containerArgs =
     record.runtimeSelection.engine === 'labview-cli'
       ? rewriteLabviewCliArgsForLinuxContainerWorkspace(commandPlan.args, {
           containerWorkspaceRoot: options.containerWorkspaceRoot,
-          leftFilename: options.leftFilename ?? record.stagedRevisionPlan.leftFilename,
-          rightFilename: options.rightFilename ?? record.stagedRevisionPlan.rightFilename,
+          leftFilename: containerLeftFilename,
+          rightFilename: containerRightFilename,
           reportFilename: options.reportFilename ?? record.artifactPlan.reportFilename,
           labviewPath: record.runtimeSelection.labviewExe?.path
         })
       : rewriteLvcompareArgsForLinuxContainerWorkspace(commandPlan.args, {
           containerWorkspaceRoot: options.containerWorkspaceRoot,
-          leftFilename: options.leftFilename ?? record.stagedRevisionPlan.leftFilename,
-          rightFilename: options.rightFilename ?? record.stagedRevisionPlan.rightFilename,
+          leftFilename: containerLeftFilename,
+          rightFilename: containerRightFilename,
           labviewPath: record.runtimeSelection.labviewExe?.path
         });
   if (!containerArgs) {
