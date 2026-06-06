@@ -26,6 +26,39 @@ README or install notes when user-facing behavior changes.
 Use GitHub Issues for bugs and feature requests. Do not open public issues for
 security vulnerabilities; use [SECURITY.md](./SECURITY.md) instead.
 
+## Branch and PR Flow
+
+This repository follows a GitFlow-style model. The hosted CI **Branch
+Governance** step enforces these rules on every pull request, so name branches
+accordingly:
+
+- **`feature/<issue#>-<slug>`** — normal development. A feature branch MUST
+  reference an issue in its name (for example `feature/235-branch-policy-docs`).
+  Branch from and merge back into `develop`.
+- **`fix/<slug>`** — a focused fix that MUST merge into a `feature/*` branch,
+  never directly into `develop` or `main`.
+- **`release/vX.Y.Z`** — branch from `develop`, stabilize, then merge into
+  `main`; back-sync `main` into `develop` after publication.
+- **`hotfix/vX.Y.Z`** — branch from `main`, merge into `main`, then back-sync
+  into `develop`.
+
+```text
+fix/* ─▶ feature/<issue#>-* ─▶ develop ─▶ release/vX.Y.Z ─▶ main
+                                  ▲                            │
+                                  └──────── back-sync ─────────┘
+```
+
+Allowed pull-request targets enforced by CI:
+
+| PR base | Allowed head branches |
+| --- | --- |
+| `main` | `release/vX.Y.Z`, `hotfix/vX.Y.Z` |
+| `develop` | `feature/<issue#>-*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, `main` (back-sync) |
+| `feature/*` | `fix/*`, `feature/<issue#>-*` |
+
+See [docs/maintainer-operations.md](./docs/maintainer-operations.md#branch-model)
+for the full branch model and release flow.
+
 ## Optional Test Repositories
 
 To clone the standard public fixture:

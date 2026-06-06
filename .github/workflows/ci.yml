@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - develop
+      - 'feature/**'
   workflow_dispatch:
 
 permissions:
@@ -35,6 +36,14 @@ jobs:
           head="${{ github.head_ref }}"
           decision=blocked
 
+          # fix/* branches must merge into a feature/* branch, never directly
+          # into develop or main. Reject early with a targeted message.
+          if [[ "$head" =~ ^fix/.+ && ( "$base" == "develop" || "$base" == "main" ) ]]; then
+            echo "Branch governance decision: blocked (base=$base, head=$head)" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "fix/* branches must merge into a feature/* branch, not '$base'. Flow: fix/* -> feature/<issue#>-... -> develop -> main." >&2
+            exit 1
+          fi
+
           case "$base" in
             main)
               if [[ "$head" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" =~ ^hotfix/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -42,7 +51,13 @@ jobs:
               fi
               ;;
             develop)
-              if [[ "$head" =~ ^feature/.+ || "$head" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" =~ ^hotfix/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" == "main" ]]; then
+              if [[ "$head" =~ ^feature/[0-9]+-.+ || "$head" =~ ^release/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" =~ ^hotfix/v[0-9]+\.[0-9]+\.[0-9]+$ || "$head" == "main" ]]; then
+                decision=allowed
+              fi
+              ;;
+            feature/*)
+              # fix/* and stacked feature/<issue#>-* branches may target a feature branch.
+              if [[ "$head" =~ ^fix/.+ || "$head" =~ ^feature/[0-9]+-.+ ]]; then
                 decision=allowed
               fi
               ;;
@@ -50,7 +65,7 @@ jobs:
 
           echo "Branch governance decision: $decision (base=$base, head=$head)" | tee -a "$GITHUB_STEP_SUMMARY"
           if [[ "$decision" != "allowed" ]]; then
-            echo "Pull requests to main must come from release/v* or hotfix/v*; pull requests to develop must come from feature/*, release/v*, hotfix/v*, or main." >&2
+            echo "Branch policy: PRs to main must come from release/v* or hotfix/v*; PRs to develop must come from feature/<issue#>-*, release/v*, hotfix/v*, or main; PRs to a feature/* branch must come from fix/* or feature/<issue#>-*. feature/* branches must reference an issue (feature/<issue#>-...)." >&2
             exit 1
           fi
 

@@ -38,6 +38,13 @@ export interface StagedRevisionPlanOptions {
   fullFilename: string;
   leftRevisionId?: string;
   rightRevisionId?: string;
+  /**
+   * VHS-REQ-624: normalized repo-relative path of the compared VI. When provided,
+   * the staged VIs are placed at the VI's relative depth inside the materialized
+   * selected-revision tree so in-repo dependencies resolve at load time. When
+   * omitted, staging falls back to the flat single-file layout.
+   */
+  normalizedRelativePath?: string;
 }
 
 export interface StagedRevisionPlan {
@@ -45,6 +52,26 @@ export interface StagedRevisionPlan {
   leftFilePath: string;
   rightFilename: string;
   rightFilePath: string;
+  /**
+   * VHS-REQ-624: root of the materialized selected (newest) revision tree that
+   * both staged VIs live inside. The default builder uses the staging directory.
+   */
+  treeRoot?: string;
+  /**
+   * VHS-REQ-624: revision whose surrounding tree is materialized once (the
+   * selected/newest revision). Both staged VIs resolve dependencies against it.
+   */
+  treeRevisionId?: string;
+  /**
+   * VHS-REQ-624: repo-relative directory (POSIX) of the compared VI within the
+   * tree. Empty string when the VI sits at the repository root.
+   */
+  relativeDirectory?: string;
+  /**
+   * VHS-REQ-624: pathspec materialized from the selected revision. Defaults to
+   * the whole repository (`.`) so all in-repo dependencies are present.
+   */
+  materializedPathspec?: string;
 }
 
 export interface LabviewCliComparisonReportPlanOptions {
@@ -135,11 +162,22 @@ export function buildStagedRevisionPlan(options: StagedRevisionPlanOptions): Sta
   const leftFilename = `${leftLabel}-${fullFilename}`;
   const rightFilename = `${rightLabel}-${fullFilename}`;
 
+  // VHS-REQ-624: place the staged VIs at their repo-relative depth inside the
+  // materialized selected-revision tree (rooted at the staging directory) so
+  // sibling dependencies resolve at load time. Falls back to a flat layout when
+  // no relative path is supplied.
+  const relativeDirectory = deriveRelativeDirectory(options.normalizedRelativePath);
+  const treeRevisionId = options.rightRevisionId?.trim() ?? '';
+
   return {
     leftFilename,
-    leftFilePath: path.join(stagingDirectory, leftFilename),
+    leftFilePath: path.join(stagingDirectory, relativeDirectory, leftFilename),
     rightFilename,
-    rightFilePath: path.join(stagingDirectory, rightFilename)
+    rightFilePath: path.join(stagingDirectory, relativeDirectory, rightFilename),
+    treeRoot: stagingDirectory,
+    treeRevisionId,
+    relativeDirectory,
+    materializedPathspec: '.'
   };
 }
 
@@ -209,6 +247,32 @@ export function buildLvComparePlan(options: LvComparePlanOptions): ComparisonCom
 
 function createDeterministicId(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
+}
+
+function deriveRelativeDirectory(normalizedRelativePath?: string): string {
+  const trimmed = normalizedRelativePath?.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const posixPath = trimmed.replace(/\\/g, '/');
+  const directory = path.posix.dirname(posixPath);
+  if (directory === '.' || directory === '/' || directory === '') {
+    return '';
+  }
+  // VHS-REQ-624 (security): the staged tree directory is joined onto the staging
+  // root, so reject anything that is not a plain relative subpath. Absolute paths,
+  // Windows drive prefixes, and `..` traversal segments fall back to flat staging
+  // rather than escaping the report workspace.
+  const normalizedSegments = directory.split('/');
+  const isUnsafe =
+    directory.startsWith('/') ||
+    /^[A-Za-z]:/.test(directory) ||
+    normalizedSegments.some((segment) => segment === '..');
+  if (isUnsafe) {
+    return '';
+  }
+  return directory;
 }
 
 function buildStageLabel(side: 'left' | 'right', revisionId?: string): string {

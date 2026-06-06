@@ -526,6 +526,8 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportPreflight.test.ts`
 - Change Guidance:
   - Preserve revision-specific comparison, not current-file comparison.
+  - The single-blob guarantee covers the selected VI only; staging the
+    surrounding dependency tree is governed by VHS-REQ-624.
 
 ### VHS-REQ-128: Revision Blob VI Verification
 
@@ -547,6 +549,81 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportPreflight.test.ts`
 - Change Guidance:
   - Do not invoke external comparison tooling before content checks pass.
+
+### VHS-REQ-624: Newest-Revision Tree Staging For Comparison
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: Comparison staging shall materialize the selected (newest)
+  revision's surrounding tree once and place both compared VI blobs (base and
+  selected) at the compared VI's normalized repository-relative path within that
+  tree, under distinct left and right filenames, so LabVIEW resolves in-repo
+  dependencies at load time when CreateComparisonReport runs.
+- Acceptance Criteria:
+  - A single tree is materialized from the selected (newest) revision; the base
+    revision does not receive its own tree.
+  - Both compared VI blobs are written at the compared VI's normalized
+    repo-relative path inside that tree, under distinct left and right filenames,
+    so the two top-level VIs never collide on qualified name in one LabVIEW
+    session.
+  - The left filename carries the base blob and the right filename carries the
+    selected blob; CreateComparisonReport receives them as VI1 and VI2.
+  - When the selected-revision tree cannot be materialized, the run degrades to a
+    factual blocked state with a recorded reason and the runtime is not invoked.
+  - The report and retained packet disclose that both VIs were evaluated against
+    the selected revision's dependencies, that dependency-only changes between
+    the two revisions may therefore not appear, and that loading the base VI
+    against newer dependencies may recompile it and distort the rendered diff.
+  - Staged inputs and a materialized-tree manifest are retained as runtime
+    evidence consistent with VHS-REQ-147 and VHS-REQ-148.
+- Agent Work Scope:
+  - Change staging-plan construction, host-native execution-context preparation,
+    and the report and packet caveat text together; add deterministic unit
+    coverage for the single-tree layout and the fail-closed path.
+- Implementation References:
+  - `src/reporting/comparisonReportPlan.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportPacket.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonReportPacket.test.ts`
+  - `manual:dependency-harness-newest-tree-staging`
+- Change Guidance:
+  - Optimize for dependency load success and simplicity; do not claim
+    per-revision dependency fidelity or true historical diffing.
+
+### VHS-REQ-625: Library-Member Compared-VI Disclosure
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: When the compared VI is itself listed as a member of a LabVIEW
+  library (`.lvlib`) or class (`.lvclass`) at the selected revision, the
+  comparison report shall disclose that the VI is staged outside its owning
+  library for side-by-side comparison.
+- Acceptance Criteria:
+  - Preflight detects, from the selected revision's tree, whether the compared
+    VI's normalized path is a member URL of a `.lvlib` or `.lvclass`.
+  - Detection is best-effort and never blocks the comparison or changes runtime
+    behavior; failures resolve to no disclosure.
+  - When membership is detected, the report packet renders a factual caveat
+    naming the owning library and noting that staging renames the VI outside the
+    library namespace, so library-context resolution may differ from the
+    in-project VI.
+  - When the VI is not a library member, no library-member caveat is rendered.
+- Agent Work Scope:
+  - Change preflight membership detection and packet caveat rendering together
+    with their unit tests.
+- Implementation References:
+  - `src/reporting/comparisonReportPreflight.ts`
+  - `src/reporting/comparisonReportPacket.ts`
+- Verification References:
+  - `tests/unit/comparisonReportPreflight.test.ts`
+  - `tests/unit/comparisonReportPacket.test.ts`
+- Change Guidance:
+  - Keep the disclosure factual; do not claim a specific comparison defect that
+    has not been observed.
 
 ### VHS-REQ-155: Comparison Runtime Discovery Diagnostics
 

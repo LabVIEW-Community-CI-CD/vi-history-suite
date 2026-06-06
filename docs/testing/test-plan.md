@@ -130,6 +130,36 @@ evidence.
 
 This runner is not used for pull requests and is not a required release gate.
 
+## Dependency-Aware Comparison Check
+
+`manual:dependency-harness-newest-tree-staging` (VHS-REQ-624). On a host with a
+LabVIEW comparison provider available (a local Docker engine with the
+`nationalinstruments/labview:<release>-linux` image is sufficient), verify that a
+compared VI loads with its in-repo dependencies present rather than as an
+isolated file.
+
+1. Use the `vihs-test-harness-lvdependency` fixture, where `main.vi` depends on
+   `Dependencies/dependencies.lvlib` (`data.ctl`, `dependency.vi`).
+2. Select the commit window where both the VI and its dependencies changed:
+   base `35b92bc` to selected `299c2a5`.
+3. Generate a comparison report through the linux-container provider.
+4. Confirm the staged tree under `<runDir>/container-out/staging` contains the
+   renamed `left-*`/`right-*` VIs beside the materialized `Dependencies/` folder
+   and the project file, and that the diagnostics manifest records
+   `materializedTree` pinned to the selected revision.
+5. Confirm the LabVIEW CLI reports `CreateComparisonReport operation succeeded.`
+   and an HTML report is produced.
+
+Expected scope: the report reflects the selected VI's own changes evaluated
+against the selected revision's dependencies. Differences confined to shared
+library members may not appear independently, matching the dependency caveat
+rendered in the report packet. Retain the generated report and the
+`<runDir>/diagnostics/diagnostics-manifest.json` as evidence.
+
+This check requires a LabVIEW comparison runtime and is not a required public
+PR gate; the deterministic staging contract is covered by
+`tests/unit/comparisonReportRuntimeExecution.test.ts`.
+
 ## Marketplace Release Check
 
 Marketplace publication is tag-only. Create an exact `vX.Y.Z` tag on the

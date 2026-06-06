@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { detectViSignature, ViSignature } from '../domain/viMagicCore';
 import { normalizeRelativeGitPath, runGit } from '../git/gitCli';
 
@@ -18,6 +20,13 @@ export interface ComparisonReportPreflightBlobResult {
   blockedReason?: 'revision-id-missing' | 'blob-read-failed' | 'blob-not-vi';
 }
 
+export interface ComparedViLibraryMembership {
+  isMember: boolean;
+  /** Repo-relative path of the owning `.lvlib`/`.lvclass`, when detected. */
+  libraryRelativePath?: string;
+  libraryKind?: 'lvlib' | 'lvclass';
+}
+
 export interface ComparisonReportPreflightResult {
   normalizedRelativePath: string;
   ready: boolean;
@@ -30,11 +39,17 @@ export interface ComparisonReportPreflightResult {
     | 'right-blob-not-vi';
   left: ComparisonReportPreflightBlobResult;
   right: ComparisonReportPreflightBlobResult;
+  /**
+   * VHS-REQ-625: whether the compared VI is a member of a LabVIEW library/class
+   * at the selected (right) revision. Best-effort; omitted when not detected.
+   */
+  comparedViLibraryMembership?: ComparedViLibraryMembership;
 }
 
 export interface ComparisonReportPreflightDeps {
   readRevisionBlob?: typeof readRevisionBlob;
   resolveRevisionRelativePaths?: typeof resolveRevisionRelativePaths;
+  detectComparedViLibraryMembership?: typeof detectComparedViLibraryMembership;
 }
 
 export function buildRevisionBlobSpecifier(revisionId: string, relativePath: string): string {
@@ -98,13 +113,98 @@ export async function preflightComparisonReportRevisions(
       )
     : createMissingRevisionBlobResult();
 
+  // VHS-REQ-625: best-effort detection of whether the compared VI is a library
+  // member at the selected (right) revision. Never blocks the comparison.
+  let comparedViLibraryMembership: ComparedViLibraryMembership | undefined;
+  if (right.isVi && rightRevisionId) {
+    try {
+      const detected = await (
+        deps.detectComparedViLibraryMembership ?? detectComparedViLibraryMembership
+      )(
+        options.repoRoot,
+        rightRevisionId,
+        right.resolvedRelativePath ?? normalizedRelativePath
+      );
+      if (detected.isMember) {
+        comparedViLibraryMembership = detected;
+      }
+    } catch {
+      comparedViLibraryMembership = undefined;
+    }
+  }
+
   return {
     normalizedRelativePath,
     ready: left.isVi && right.isVi,
     blockedReason: deriveBlockedReason(left, right),
     left,
-    right
+    right,
+    ...(comparedViLibraryMembership ? { comparedViLibraryMembership } : {})
   };
+}
+
+/**
+ * VHS-REQ-625: determines whether `normalizedRelativePath` is listed as a member
+ * of any `.lvlib`/`.lvclass` at `revisionId`. LabVIEW libraries list members as
+ * `<Item ... URL="relative/path"/>` resolved against the library file's
+ * directory. Best-effort and git-only; no VI parsing.
+ */
+export async function detectComparedViLibraryMembership(
+  repoRoot: string,
+  revisionId: string,
+  relativePath: string,
+  runGitImpl: typeof runGit = runGit
+): Promise<ComparedViLibraryMembership> {
+  const normalizedTarget = normalizeRelativeGitPath(relativePath);
+  if (!normalizedTarget) {
+    return { isMember: false };
+  }
+
+  let treeListing: string;
+  try {
+    const stdout = await runGitImpl(['ls-tree', '-r', '--name-only', revisionId], repoRoot, 'utf8');
+    treeListing = String(stdout);
+  } catch {
+    return { isMember: false };
+  }
+
+  const libraryPaths = treeListing
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => /\.(lvlib|lvclass)$/iu.test(line));
+
+  for (const libraryPath of libraryPaths) {
+    let libraryContent: string;
+    try {
+      const stdout = await runGitImpl(
+        ['show', `${revisionId}:${libraryPath}`],
+        repoRoot,
+        'utf8'
+      );
+      libraryContent = String(stdout);
+    } catch {
+      continue;
+    }
+
+    const libraryDirectory = path.posix.dirname(libraryPath.replace(/\\/g, '/'));
+    const memberUrls = [...libraryContent.matchAll(/URL\s*=\s*"([^"]+)"/giu)].map(
+      (match) => match[1]
+    );
+    for (const memberUrl of memberUrls) {
+      const resolvedMember = normalizeRelativeGitPath(
+        path.posix.join(libraryDirectory === '.' ? '' : libraryDirectory, memberUrl.replace(/\\/g, '/'))
+      );
+      if (resolvedMember && resolvedMember === normalizedTarget) {
+        return {
+          isMember: true,
+          libraryRelativePath: libraryPath,
+          libraryKind: /\.lvclass$/iu.test(libraryPath) ? 'lvclass' : 'lvlib'
+        };
+      }
+    }
+  }
+
+  return { isMember: false };
 }
 
 async function inspectRevisionBlob(
