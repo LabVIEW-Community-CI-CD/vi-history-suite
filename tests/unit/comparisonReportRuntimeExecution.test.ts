@@ -233,6 +233,7 @@ describe('comparisonReportRuntimeExecution', () => {
       },
       {
         readRevisionBlob,
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile: vi.fn().mockResolvedValue(undefined) as never,
         pathExists: vi.fn().mockResolvedValue(true),
@@ -288,6 +289,7 @@ describe('comparisonReportRuntimeExecution', () => {
           .fn()
           .mockResolvedValueOnce(Buffer.from('left-blob-content'))
           .mockResolvedValueOnce(Buffer.from('right-blob-content')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile: writeFile as never,
         pathExists: vi.fn().mockResolvedValue(true),
@@ -2542,5 +2544,133 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     } finally {
       delete process.env.LVIE_LINUX_RUNTIME_TMPDIR;
     }
+  });
+});
+
+describe('newest-revision tree staging (VHS-REQ-624)', () => {
+  function createNestedReadyRecord(): ComparisonReportPacketRecord {
+    const record = createReadyRecord();
+    record.preflight.normalizedRelativePath = 'Source/Sub/foo.vi';
+    record.artifactPlan.normalizedRelativePath = 'Source/Sub/foo.vi';
+    record.preflight.left.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.preflight.left.blobSpecifier = '1111111122222222:Source/Sub/foo.vi';
+    record.preflight.right.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.preflight.right.blobSpecifier = 'abcdef1234567890:Source/Sub/foo.vi';
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: 'Source/Sub/foo.vi'
+    });
+    return record;
+  }
+
+  it('materializes one selected-revision tree and stages both VIs at repo-relative depth', async () => {
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const record = createNestedReadyRecord();
+    const plan = record.stagedRevisionPlan;
+
+    await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base-blob'))
+          .mockResolvedValueOnce(Buffer.from('selected-blob')),
+        materializeSelectedRevisionTree,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: writeFile as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    // Exactly one tree, pinned to the selected (newest) revision, into the staging root.
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repositoryRoot: '/workspace/repo',
+        revisionId: record.selectedHash,
+        destinationRoot: plan.treeRoot
+      })
+    );
+    // Both renamed VIs live under the same tree root at the VI's relative depth.
+    expect(plan.relativeDirectory).toBe('Source/Sub');
+    expect(plan.leftFilePath.startsWith(plan.treeRoot as string)).toBe(true);
+    expect(plan.rightFilePath.startsWith(plan.treeRoot as string)).toBe(true);
+    expect(plan.leftFilePath).toContain('Source');
+    // Base blob -> left filename; selected blob -> right filename.
+    expect(writeFile).toHaveBeenCalledWith(plan.leftFilePath, Buffer.from('base-blob'));
+    expect(writeFile).toHaveBeenCalledWith(plan.rightFilePath, Buffer.from('selected-blob'));
+  });
+
+  it('fails closed with a retained reason when the selected-revision tree cannot be materialized', async () => {
+    const runCommand = vi.fn();
+    const record = createNestedReadyRecord();
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi.fn().mockResolvedValue(Buffer.from('vi')),
+        materializeSelectedRevisionTree: vi.fn().mockRejectedValue(new Error('partial-clone')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution).toMatchObject({
+      state: 'failed',
+      attempted: false,
+      failureReason: 'selected-tree-materialize-failed'
+    });
+  });
+
+  it('stages and runs a dependency-free root VI without regression', async () => {
+    const runCommand = vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' });
+    const record = createReadyRecord();
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: record.artifactPlan.normalizedRelativePath
+    });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base'))
+          .mockResolvedValueOnce(Buffer.from('selected')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(record.stagedRevisionPlan.relativeDirectory).toBe('');
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.stagedRevisionPlan.leftFilename).toBe('left-111111112222-foo.vi');
+    expect(result.record.stagedRevisionPlan.rightFilename).toBe('right-abcdef123456-foo.vi');
   });
 });

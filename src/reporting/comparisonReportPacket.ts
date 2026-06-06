@@ -65,6 +65,15 @@ export interface ComparisonReportRuntimeExecution {
     requestedValue: number;
     reason?: string;
   };
+  /**
+   * VHS-REQ-624: manifest of the materialized selected-revision tree both staged
+   * VIs were loaded against. Retained as runtime evidence when staging succeeds.
+   */
+  materializedTree?: {
+    root: string;
+    revisionId: string;
+    pathspec: string;
+  };
 }
 
 export interface ComparisonReportRevisionMetadata {
@@ -131,7 +140,8 @@ export async function persistComparisonReportPacket(
     stagingDirectory: artifactPlan.stagingDirectory,
     fullFilename: artifactPlan.fullFilename,
     leftRevisionId: options.baseHash,
-    rightRevisionId: options.selectedHash
+    rightRevisionId: options.selectedHash,
+    normalizedRelativePath: artifactPlan.normalizedRelativePath
   });
 
   const record: ComparisonReportPacketRecord = {
@@ -250,6 +260,15 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Metadata file:</strong> ${escapeHtml(path.basename(record.artifactPlan.metadataFilePath))}</div>
       <div><strong>Left staged file:</strong> ${escapeHtml(record.stagedRevisionPlan.leftFilename)}</div>
       <div><strong>Right staged file:</strong> ${escapeHtml(record.stagedRevisionPlan.rightFilename)}</div>
+    </div>
+    <div class="note" data-testid="comparison-report-dependency-caveat">
+      <strong>Dependency context:</strong> Both revisions of this VI were loaded against the
+      selected (newest) revision's dependencies. Changes confined to dependencies between the two
+      revisions may not appear in this report, and loading the older revision against newer
+      dependencies may cause LabVIEW to recompile it, so some differences shown here may reflect
+      that recompile rather than the historical state at the base commit. Treat this as a
+      comparison of the selected VI's own changes under current dependencies, not a faithful
+      per-commit diff.
     </div>
     <div class="note" data-testid="comparison-report-runtime-note">
       <strong>Runtime note:</strong> ${escapeHtml(runtimeNote)}

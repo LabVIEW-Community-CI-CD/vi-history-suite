@@ -195,7 +195,8 @@ export async function seedRetainedDashboardEvidence(
       stagingDirectory: currentArtifactPlan.stagingDirectory,
       fullFilename: currentArtifactPlan.fullFilename,
       leftRevisionId: pair.baseHash,
-      rightRevisionId: pair.selectedHash
+      rightRevisionId: pair.selectedHash,
+      normalizedRelativePath: currentArtifactPlan.normalizedRelativePath
     });
 
     const copied = await copyArchiveArtifacts(

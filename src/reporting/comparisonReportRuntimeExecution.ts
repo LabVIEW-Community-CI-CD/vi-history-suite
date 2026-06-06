@@ -40,6 +40,12 @@ export interface ExecuteComparisonReportResult {
 
 export interface ComparisonReportRuntimeExecutionDeps {
   readRevisionBlob?: typeof readRevisionBlob;
+  /**
+   * VHS-REQ-624: materializes the selected (newest) revision's tree so staged VIs
+   * resolve in-repo dependencies at load time. When omitted, a git-archive-based
+   * default is used. Host-native provider only.
+   */
+  materializeSelectedRevisionTree?: MaterializeSelectedRevisionTree;
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
@@ -344,6 +350,8 @@ export async function executeComparisonReport(
       options.interopWorkspaceRoot,
       {
         readBlob: deps.readRevisionBlob ?? readRevisionBlob,
+        materializeSelectedRevisionTree:
+          deps.materializeSelectedRevisionTree ?? materializeSelectedRevisionTreeWithGit,
         mkdir,
         writeFile,
         copyFile,
@@ -479,6 +487,81 @@ function appendCancellationMessage(stderr: string): string {
   return `${stderr}comparison-command cancelled by user\n`;
 }
 
+export interface MaterializeSelectedRevisionTreeOptions {
+  repositoryRoot: string;
+  revisionId: string;
+  destinationRoot: string;
+  pathspec: string;
+}
+
+export type MaterializeSelectedRevisionTree = (
+  options: MaterializeSelectedRevisionTreeOptions
+) => Promise<void>;
+
+/**
+ * VHS-REQ-624: default selected-revision tree materializer. Streams
+ * `git archive <revision> -- <pathspec>` into `tar -x` so the staged VIs sit
+ * beside their in-repo dependencies at the recorded revision. Used for the
+ * host-native provider; container/interop paths re-stage from in-memory buffers.
+ */
+async function materializeSelectedRevisionTreeWithGit(
+  options: MaterializeSelectedRevisionTreeOptions
+): Promise<void> {
+  const pathspec = options.pathspec?.trim() || '.';
+
+  await new Promise<void>((resolve, reject) => {
+    let settled = false;
+    const fail = (error: Error): void => {
+      if (!settled) {
+        settled = true;
+        reject(error);
+      }
+    };
+
+    const git = spawn(
+      'git',
+      ['-C', options.repositoryRoot, 'archive', '--format=tar', options.revisionId, '--', pathspec],
+      { windowsHide: true }
+    );
+    const tar = spawn('tar', ['-x', '-C', options.destinationRoot], { windowsHide: true });
+
+    let gitStderr = '';
+    git.stderr?.on('data', (chunk) => {
+      gitStderr += String(chunk);
+    });
+    let tarStderr = '';
+    tar.stderr?.on('data', (chunk) => {
+      tarStderr += String(chunk);
+    });
+
+    git.on('error', fail);
+    tar.on('error', fail);
+    if (git.stdout && tar.stdin) {
+      git.stdout.pipe(tar.stdin);
+    } else {
+      fail(new Error('git archive / tar pipe could not be established'));
+      return;
+    }
+
+    git.on('close', (code) => {
+      if (code !== 0) {
+        fail(new Error(`git archive exited ${code}: ${gitStderr.trim()}`));
+      }
+    });
+    tar.on('close', (code) => {
+      if (settled) {
+        return;
+      }
+      if (code !== 0) {
+        fail(new Error(`tar extract exited ${code}: ${tarStderr.trim()}`));
+        return;
+      }
+      settled = true;
+      resolve();
+    });
+  });
+}
+
 async function runHostNativeExecution(
   record: ComparisonReportPacketRecord,
   repositoryRoot: string,
@@ -486,6 +569,7 @@ async function runHostNativeExecution(
   interopWorkspaceRoot: string | undefined,
   deps: {
     readBlob: typeof readRevisionBlob;
+    materializeSelectedRevisionTree?: MaterializeSelectedRevisionTree;
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
     copyFile: typeof fs.copyFile;
@@ -515,6 +599,46 @@ async function runHostNativeExecution(
   await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
   await deps.mkdir(record.artifactPlan.stagingDirectory, { recursive: true });
 
+  // VHS-REQ-624: for the host-native provider, materialize the selected (newest)
+  // revision's tree once so both staged VIs resolve in-repo dependencies at load
+  // time. Fail closed before reading blobs or invoking the runtime when the tree
+  // cannot be materialized. Container/interop providers re-stage from in-memory
+  // buffers and do not use this tree.
+  const stagedPlan = record.stagedRevisionPlan;
+  let materializedTree: ComparisonReportRuntimeExecution['materializedTree'];
+  if (
+    record.runtimeSelection.provider === 'host-native' &&
+    deps.materializeSelectedRevisionTree &&
+    stagedPlan.treeRoot &&
+    stagedPlan.treeRevisionId
+  ) {
+    const pathspec = stagedPlan.materializedPathspec?.trim() || '.';
+    try {
+      await deps.materializeSelectedRevisionTree({
+        repositoryRoot,
+        revisionId: stagedPlan.treeRevisionId,
+        destinationRoot: stagedPlan.treeRoot,
+        pathspec
+      });
+      materializedTree = {
+        root: stagedPlan.treeRoot,
+        revisionId: stagedPlan.treeRevisionId,
+        pathspec
+      };
+    } catch {
+      return {
+        state: 'failed',
+        attempted: false,
+        reportExists: false,
+        failureReason: 'selected-tree-materialize-failed',
+        executable: commandPlan.executable,
+        args: commandPlan.args,
+        stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+        stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+      };
+    }
+  }
+
   let leftBlob: Buffer;
   try {
     leftBlob = await deps.readBlob(
@@ -522,6 +646,7 @@ async function runHostNativeExecution(
       record.preflight.left.revisionId,
       record.preflight.left.resolvedRelativePath ?? record.preflight.normalizedRelativePath
     );
+    await deps.mkdir(path.dirname(record.stagedRevisionPlan.leftFilePath), { recursive: true });
     await deps.writeFile(record.stagedRevisionPlan.leftFilePath, leftBlob);
   } catch {
     return {
@@ -543,6 +668,7 @@ async function runHostNativeExecution(
       record.preflight.right.revisionId,
       record.preflight.right.resolvedRelativePath ?? record.preflight.normalizedRelativePath
     );
+    await deps.mkdir(path.dirname(record.stagedRevisionPlan.rightFilePath), { recursive: true });
     await deps.writeFile(record.stagedRevisionPlan.rightFilePath, rightBlob);
   } catch {
     return {
@@ -581,12 +707,16 @@ async function runHostNativeExecution(
   }
 
   try {
-    return await runHostNativeExecutionWithContext(
+    const executionResult = await runHostNativeExecutionWithContext(
       record,
       commandPlan,
       executionContext,
       deps
     );
+    if (materializedTree) {
+      executionResult.materializedTree = materializedTree;
+    }
+    return executionResult;
   } finally {
     await cleanupPreparedExecutionContext(executionContext, deps.removePath);
   }

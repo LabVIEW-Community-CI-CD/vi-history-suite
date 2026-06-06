@@ -980,3 +980,17 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
     });
   });
 });
+
+describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
+  it('discloses the newest-tree dependency caveat with the recompile hazard', () => {
+    const html = renderComparisonReportPacketHtml(createBaseRecord());
+
+    expect(html).toContain('data-testid="comparison-report-dependency-caveat"');
+    expect(html).toContain('Dependency context:');
+    // Both VIs evaluated against the selected revision's dependencies.
+    expect(html.toLowerCase()).toContain('selected');
+    // The base-VI recompile-against-newer-dependencies distortion hazard.
+    expect(html.toLowerCase()).toContain('recompile');
+    expect(html.toLowerCase()).toContain('not a faithful');
+  });
+});
