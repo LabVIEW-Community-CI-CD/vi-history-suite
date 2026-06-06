@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  detectComparedViLibraryMembership,
   preflightComparisonReportRevisions,
   resolveRevisionRelativePaths
 } from '../../src/reporting/comparisonReportPreflight';
@@ -451,6 +452,81 @@ describe('comparisonReportPreflight', () => {
       isVi: false,
       blockedReason: 'blob-read-failed'
     });
+  });
+});
+
+describe('detectComparedViLibraryMembership (VHS-REQ-625)', () => {
+  async function initRepo(repoRoot: string): Promise<void> {
+    await git(repoRoot, ['init']);
+    await git(repoRoot, ['config', 'user.name', 'VI History Suite']);
+    await git(repoRoot, ['config', 'user.email', 'vi-history-suite@example.com']);
+  }
+
+  it('detects a VI listed as a member of a .lvlib at the selected revision', async () => {
+    const repoRoot = await createTempRepoRoot();
+    await initRepo(repoRoot);
+    await fs.mkdir(path.join(repoRoot, 'Dependencies'), { recursive: true });
+    // Library lists the member by URL relative to the library's own directory.
+    await fs.writeFile(
+      path.join(repoRoot, 'Dependencies', 'dependencies.lvlib'),
+      '<?xml version="1.0"?>\n<Library>\n  <Item Name="dependency.vi" Type="VI" URL="../dependency.vi"/>\n</Library>\n'
+    );
+    await writeViLikeFile(path.join(repoRoot, 'dependency.vi'), 'LVIN');
+    await git(repoRoot, ['add', '.']);
+    await git(repoRoot, ['commit', '-m', 'Add library member']);
+    const revisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    const membership = await detectComparedViLibraryMembership(repoRoot, revisionId, 'dependency.vi');
+
+    expect(membership.isMember).toBe(true);
+    expect(membership.libraryRelativePath).toBe('Dependencies/dependencies.lvlib');
+    expect(membership.libraryKind).toBe('lvlib');
+  });
+
+  it('reports non-membership for a VI that is not listed in any library', async () => {
+    const repoRoot = await createTempRepoRoot();
+    await initRepo(repoRoot);
+    await fs.writeFile(
+      path.join(repoRoot, 'lib.lvlib'),
+      '<?xml version="1.0"?>\n<Library>\n  <Item Name="member.vi" Type="VI" URL="member.vi"/>\n</Library>\n'
+    );
+    await writeViLikeFile(path.join(repoRoot, 'member.vi'), 'LVIN');
+    await writeViLikeFile(path.join(repoRoot, 'standalone.vi'), 'LVIN');
+    await git(repoRoot, ['add', '.']);
+    await git(repoRoot, ['commit', '-m', 'Add standalone VI']);
+    const revisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    const membership = await detectComparedViLibraryMembership(repoRoot, revisionId, 'standalone.vi');
+
+    expect(membership.isMember).toBe(false);
+  });
+
+  it('surfaces membership through preflight on the selected revision', async () => {
+    const repoRoot = await createTempRepoRoot();
+    await initRepo(repoRoot);
+    await fs.writeFile(
+      path.join(repoRoot, 'thing.lvclass'),
+      '<?xml version="1.0"?>\n<LVClass>\n  <Item Name="method.vi" Type="VI" URL="method.vi"/>\n</LVClass>\n'
+    );
+    await writeViLikeFile(path.join(repoRoot, 'method.vi'), 'LVIN');
+    await git(repoRoot, ['add', '.']);
+    await git(repoRoot, ['commit', '-m', 'v1']);
+    const baseRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+    await writeViLikeFile(path.join(repoRoot, 'method.vi'), 'LVCC');
+    await git(repoRoot, ['add', '.']);
+    await git(repoRoot, ['commit', '-m', 'v2']);
+    const selectedRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    const result = await preflightComparisonReportRevisions({
+      repoRoot,
+      relativePath: 'method.vi',
+      leftRevisionId: baseRevisionId,
+      rightRevisionId: selectedRevisionId
+    });
+
+    expect(result.comparedViLibraryMembership?.isMember).toBe(true);
+    expect(result.comparedViLibraryMembership?.libraryKind).toBe('lvclass');
+    expect(result.comparedViLibraryMembership?.libraryRelativePath).toBe('thing.lvclass');
   });
 });
 
