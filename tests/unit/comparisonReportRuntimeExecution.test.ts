@@ -2545,6 +2545,87 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
       delete process.env.LVIE_LINUX_RUNTIME_TMPDIR;
     }
   });
+
+  it('materializes the dependency tree into the short-path staging dir, not the retained report dir (VHS-REQ-624)', async () => {
+    const record = makeLinuxHostNativeRecord();
+    record.preflight.normalizedRelativePath = 'Source/Sub/foo.vi';
+    record.artifactPlan.normalizedRelativePath = 'Source/Sub/foo.vi';
+    record.preflight.left.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.preflight.right.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: 'Source/Sub/foo.vi'
+    });
+
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const tmpRoot = '/tmp/lvie-runtime-test';
+    const expectedShortPathStagingDir = `${tmpRoot}/repoid123456/fileid123456/staging`;
+
+    process.env.LVIE_LINUX_RUNTIME_TMPDIR = tmpRoot;
+    try {
+      const result = await executeComparisonReport(
+        { record, repositoryRoot: '/workspace/repo' },
+        {
+          readRevisionBlob: vi
+            .fn()
+            .mockResolvedValueOnce(Buffer.from('base'))
+            .mockResolvedValueOnce(Buffer.from('selected')),
+          materializeSelectedRevisionTree,
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: vi.fn().mockResolvedValue(undefined) as never,
+          copyFile: vi.fn().mockResolvedValue(undefined) as never,
+          copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+          removePath: vi.fn().mockResolvedValue(undefined) as never,
+          unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+          readdir: vi.fn().mockResolvedValue([]) as never,
+          readFile: vi.fn(async (filePath: string) => {
+            if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+              return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+            }
+            return '';
+          }) as never,
+          pathExists: vi.fn(async (filePath: string) =>
+            typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+          ),
+          runCommand: vi.fn().mockResolvedValue({
+            exitCode: 0,
+            stdout: 'CreateComparisonReport operation succeeded.',
+            stderr: ''
+          }) as never,
+          nowIso: vi.fn().mockReturnValue('2026-06-02T18:00:00.000Z'),
+          nowMs: vi.fn().mockReturnValue(1000),
+          writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          processPlatform: 'linux'
+        }
+      );
+
+      // The fix: the tree is materialized into the SHORT-PATH staging dir that the
+      // run actually executes against, not the retained report directory.
+      expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+      expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repositoryRoot: '/workspace/repo',
+          revisionId: record.selectedHash,
+          destinationRoot: expectedShortPathStagingDir
+        })
+      );
+      // It must NOT materialize into the retained report/staging directory.
+      const retainedStagingDir = record.artifactPlan.stagingDirectory;
+      for (const call of materializeSelectedRevisionTree.mock.calls) {
+        expect(call[0].destinationRoot).not.toBe(retainedStagingDir);
+      }
+      expect(result.record.runtimeExecution.materializedTree).toMatchObject({
+        revisionId: record.selectedHash,
+        root: expectedShortPathStagingDir
+      });
+      expect(result.record.runtimeExecution.state).toBe('succeeded');
+    } finally {
+      delete process.env.LVIE_LINUX_RUNTIME_TMPDIR;
+    }
+  });
 });
 
 describe('newest-revision tree staging (VHS-REQ-624)', () => {
