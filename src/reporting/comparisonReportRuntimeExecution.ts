@@ -564,6 +564,41 @@ export async function materializeSelectedRevisionTreeWithGit(
   });
 }
 
+/**
+ * VHS-REQ-624 / VHS-REQ-147: after a host-native run that materialized the
+ * selected-revision tree directly into the retained staging directory (the
+ * win32 host-native path, and the Linux opt-out path), remove the materialized
+ * dependency tree but re-stage the two compared VIs so retained evidence keeps
+ * only the deterministic staged inputs, not the whole repository. The Linux
+ * short-path and container providers already stage into ephemeral directories
+ * cleaned via `cleanupPaths`, so they do not use this helper.
+ */
+async function pruneRetainedMaterializedTree(
+  record: ComparisonReportPacketRecord,
+  deps: {
+    removePath: typeof fs.rm;
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+  },
+  leftBlob: Buffer,
+  rightBlob: Buffer
+): Promise<void> {
+  const treeRoot = record.stagedRevisionPlan.treeRoot;
+  if (!treeRoot) {
+    return;
+  }
+
+  try {
+    await deps.removePath(treeRoot, { recursive: true, force: true });
+    await deps.mkdir(path.dirname(record.stagedRevisionPlan.leftFilePath), { recursive: true });
+    await deps.writeFile(record.stagedRevisionPlan.leftFilePath, leftBlob);
+    await deps.mkdir(path.dirname(record.stagedRevisionPlan.rightFilePath), { recursive: true });
+    await deps.writeFile(record.stagedRevisionPlan.rightFilePath, rightBlob);
+  } catch {
+    // Preserve the deterministic execution result even if cleanup cannot complete.
+  }
+}
+
 async function runHostNativeExecution(
   record: ComparisonReportPacketRecord,
   repositoryRoot: string,
@@ -701,6 +736,9 @@ async function runHostNativeExecution(
 
   if (executionContext.outcome === 'blocked') {
     await cleanupPreparedExecutionContext(executionContext, deps.removePath);
+    if (materializedTree) {
+      await pruneRetainedMaterializedTree(record, deps, leftBlob, rightBlob);
+    }
     return {
       state: 'failed',
       attempted: false,
@@ -728,6 +766,12 @@ async function runHostNativeExecution(
     return executionResult;
   } finally {
     await cleanupPreparedExecutionContext(executionContext, deps.removePath);
+    // VHS-REQ-624: when the tree was materialized into the retained staging
+    // directory (win32 host-native / Linux opt-out), prune it back to the two
+    // staged VIs so retained storage does not grow by the repository size per run.
+    if (materializedTree) {
+      await pruneRetainedMaterializedTree(record, deps, leftBlob, rightBlob);
+    }
   }
 }
 
