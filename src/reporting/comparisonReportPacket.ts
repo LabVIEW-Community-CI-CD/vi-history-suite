@@ -201,6 +201,21 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
   const runtimeNote = renderRuntimeNote(record);
   const comparisonContextMarkup = renderComparisonContextSection(record);
   const compactEvidenceSummary = renderCompactEvidenceSummary(record);
+  // VHS-REQ-624: only disclose the dependency caveat when a selected-revision tree
+  // was actually materialized for this run. Providers/states that do not stage a
+  // tree (pre-runtime packets, windows-container, linux-container on Windows
+  // interop) would otherwise carry a misleading past-tense claim.
+  const dependencyCaveatMarkup = runtimeExecution.materializedTree
+    ? `<div class="note" data-testid="comparison-report-dependency-caveat">
+      <strong>Dependency context:</strong> Both revisions of this VI were loaded against the
+      selected (newest) revision's dependencies. Changes confined to dependencies between the two
+      revisions may not appear in this report, and loading the older revision against newer
+      dependencies may cause LabVIEW to recompile it, so some differences shown here may reflect
+      that recompile rather than the historical state at the base commit. Treat this as a
+      comparison of the selected VI's own changes under current dependencies, not a faithful
+      per-commit diff.
+    </div>`
+    : '';
   const runtimeDoctorMarkup =
     runtimeExecution.doctorSummaryLines && runtimeExecution.doctorSummaryLines.length > 0
       ? `<div class="note" data-testid="comparison-report-runtime-doctor">
@@ -261,15 +276,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Left staged file:</strong> ${escapeHtml(record.stagedRevisionPlan.leftFilename)}</div>
       <div><strong>Right staged file:</strong> ${escapeHtml(record.stagedRevisionPlan.rightFilename)}</div>
     </div>
-    <div class="note" data-testid="comparison-report-dependency-caveat">
-      <strong>Dependency context:</strong> Both revisions of this VI were loaded against the
-      selected (newest) revision's dependencies. Changes confined to dependencies between the two
-      revisions may not appear in this report, and loading the older revision against newer
-      dependencies may cause LabVIEW to recompile it, so some differences shown here may reflect
-      that recompile rather than the historical state at the base commit. Treat this as a
-      comparison of the selected VI's own changes under current dependencies, not a faithful
-      per-commit diff.
-    </div>
+    ${dependencyCaveatMarkup}
     <div class="note" data-testid="comparison-report-runtime-note">
       <strong>Runtime note:</strong> ${escapeHtml(runtimeNote)}
     </div>

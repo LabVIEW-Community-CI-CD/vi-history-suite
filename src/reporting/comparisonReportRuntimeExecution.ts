@@ -42,8 +42,10 @@ export interface ComparisonReportRuntimeExecutionDeps {
   readRevisionBlob?: typeof readRevisionBlob;
   /**
    * VHS-REQ-624: materializes the selected (newest) revision's tree so staged VIs
-   * resolve in-repo dependencies at load time. When omitted, a git-archive-based
-   * default is used. Host-native provider only.
+   * resolve in-repo dependencies at load time. There is no built-in default: when
+   * this dependency is omitted, tree materialization is skipped (staging stays
+   * flat). Wired by the production action and used by the host-native and
+   * Linux-host linux-container providers.
    */
   materializeSelectedRevisionTree?: MaterializeSelectedRevisionTree;
   mkdir?: typeof fs.mkdir;
@@ -2936,6 +2938,11 @@ export async function prepareLinuxContainerExecutionContext(
       };
     }
 
+    // VHS-REQ-624 known limitation: dependency-tree materialization is not yet
+    // applied on the Windows-interop branch (linux-container provider on a
+    // Windows/macOS host). Only the two VI blobs are staged here, so in-repo
+    // dependencies are not present for that host scenario. The dependency caveat
+    // is gated on `materializedTree`, so it is correctly omitted for these runs.
     hostLayout = buildWindowsInteropLayout(record, interopWorkspaceRoot);
     await deps.mkdir(hostLayout.reportDirectory, { recursive: true });
     await deps.mkdir(hostLayout.stagingDirectory, { recursive: true });

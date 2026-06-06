@@ -260,7 +260,18 @@ function deriveRelativeDirectory(normalizedRelativePath?: string): string {
   if (directory === '.' || directory === '/' || directory === '') {
     return '';
   }
-
+  // VHS-REQ-624 (security): the staged tree directory is joined onto the staging
+  // root, so reject anything that is not a plain relative subpath. Absolute paths,
+  // Windows drive prefixes, and `..` traversal segments fall back to flat staging
+  // rather than escaping the report workspace.
+  const normalizedSegments = directory.split('/');
+  const isUnsafe =
+    directory.startsWith('/') ||
+    /^[A-Za-z]:/.test(directory) ||
+    normalizedSegments.some((segment) => segment === '..');
+  if (isUnsafe) {
+    return '';
+  }
   return directory;
 }
 

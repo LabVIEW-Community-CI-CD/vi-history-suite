@@ -2754,4 +2754,30 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       root: expectedContainerStagingDir
     });
   });
+
+  it('does not let a traversal/absolute relative path escape the staging directory (security)', () => {
+    // VHS-REQ-624 security: deriveRelativeDirectory must reject unsafe paths so the
+    // staged VIs never land outside the staging root.
+    for (const unsafe of [
+      '../../../etc/passwd/main.vi',
+      '/etc/cron.d/main.vi',
+      'C:/Windows/system32/main.vi',
+      'a/../../b/main.vi'
+    ]) {
+      const plan = buildStagedRevisionPlan({
+        stagingDirectory: '/workspace/.storage/reports/repoid/fileid/staging',
+        fullFilename: 'main.vi',
+        leftRevisionId: '1111111122222222',
+        rightRevisionId: 'abcdef1234567890',
+        normalizedRelativePath: unsafe
+      });
+
+      expect(plan.relativeDirectory).toBe('');
+      expect(plan.leftFilePath).toBe(
+        '/workspace/.storage/reports/repoid/fileid/staging/left-111111112222-main.vi'
+      );
+      expect(plan.leftFilePath).not.toContain('..');
+      expect(plan.rightFilePath).not.toContain('..');
+    }
+  });
 });

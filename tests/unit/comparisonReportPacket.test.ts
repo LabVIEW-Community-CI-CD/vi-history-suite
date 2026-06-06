@@ -982,8 +982,16 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
 });
 
 describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
-  it('discloses the newest-tree dependency caveat with the recompile hazard', () => {
-    const html = renderComparisonReportPacketHtml(createBaseRecord());
+  it('discloses the newest-tree dependency caveat with the recompile hazard when a tree was materialized', () => {
+    const record = createBaseRecord({
+      materializedTree: {
+        root: '/workspace/.storage/reports/repoid123456/fileid123456/container-out/staging',
+        revisionId: 'abcdef1234567890',
+        pathspec: '.'
+      }
+    });
+
+    const html = renderComparisonReportPacketHtml(record);
 
     expect(html).toContain('data-testid="comparison-report-dependency-caveat"');
     expect(html).toContain('Dependency context:');
@@ -992,5 +1000,14 @@ describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
     // The base-VI recompile-against-newer-dependencies distortion hazard.
     expect(html.toLowerCase()).toContain('recompile');
     expect(html.toLowerCase()).toContain('not a faithful');
+  });
+
+  it('omits the dependency caveat when no selected-revision tree was materialized', () => {
+    // Pre-runtime packets and providers that do not stage a tree (e.g. windows
+    // container) must not carry the past-tense dependency disclosure.
+    const html = renderComparisonReportPacketHtml(createBaseRecord());
+
+    expect(html).not.toContain('data-testid="comparison-report-dependency-caveat"');
+    expect(html).not.toContain('Dependency context:');
   });
 });
