@@ -638,3 +638,4 @@ VHS-REQ-620,Software,Active,srs.md#vhs-req-620-reactive-runtime-provider-selecti
 VHS-REQ-621,Software,Active,srs.md#vhs-req-621-concurrent-labview-bitness-conflict-diagnostic,,,docs/requirements/srs.md
 VHS-REQ-622,Software,Active,srs.md#vhs-req-622-automated-end-to-end-windows-runtime-conflict-verification-harness,,,docs/requirements/srs.md
 VHS-REQ-623,Software,Active,srs.md#vhs-req-623-windows-host-native-vi-server-tcp-preflight-parity,,,docs/requirements/srs.md
+VHS-REQ-624,Software,Active,srs.md#vhs-req-624-newest-revision-tree-staging-for-comparison,,,docs/requirements/srs.md
