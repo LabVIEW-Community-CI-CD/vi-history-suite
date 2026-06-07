@@ -24,6 +24,11 @@ Burned exact-version releases now include `v1.0.2`.
   staged VI, so dependencies tracked through a submodule resolve at load time
   instead of rendering as whiteboxes. Submodule materialization is best-effort:
   an unavailable submodule is skipped without failing the comparison.
+- The comparison report now states that only files tracked in the repository are
+  staged, so dependencies outside the repository (for example LabVIEW-installed
+  paths such as `vi.lib`, `instr.lib`, `user.lib`, or the `resource` directory)
+  are not staged and may appear as placeholder (white) items. This clarifies
+  that such whiteboxes are a staging limitation rather than a change in the VI.
 
 ## [1.12.0] - 2026-06-07
 

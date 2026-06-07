@@ -1000,6 +1000,12 @@ describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
     // The base-VI recompile-against-newer-dependencies distortion hazard.
     expect(html.toLowerCase()).toContain('recompile');
     expect(html.toLowerCase()).toContain('not a faithful');
+    // VHS-REQ-624 (#284): out-of-repo / LabVIEW-install dependencies are not
+    // staged and may render as whiteboxes; disclose that as a staging limitation.
+    expect(html.toLowerCase()).toContain('outside the repository');
+    expect(html.toLowerCase()).toContain('staging');
+    expect(html.toLowerCase()).toContain('placeholder (white)');
+    expect(html).toContain('vi.lib');
   });
 
   it('omits the dependency caveat when no selected-revision tree was materialized', () => {
@@ -1009,6 +1015,8 @@ describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
 
     expect(html).not.toContain('data-testid="comparison-report-dependency-caveat"');
     expect(html).not.toContain('Dependency context:');
+    // The out-of-repo staging-limitation disclosure rides on the same condition.
+    expect(html.toLowerCase()).not.toContain('outside the repository');
   });
 });
 

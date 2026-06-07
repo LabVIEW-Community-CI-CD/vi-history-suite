@@ -214,6 +214,13 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       that recompile rather than the historical state at the base commit. Treat this as a
       comparison of the selected VI's own changes under current dependencies, not a faithful
       per-commit diff.
+      <br /><br />
+      Only files tracked in the repository at the selected revision are staged beside the VI.
+      Dependencies that live outside the repository &mdash; for example LabVIEW-installed paths such as
+      <code>vi.lib</code>, <code>instr.lib</code>, <code>user.lib</code>, or the LabVIEW
+      <code>resource</code> directory, and any dependency referenced by an absolute path &mdash; are not
+      staged and may appear as missing or as placeholder (white) items. That reflects a staging
+      limitation, not necessarily a change in the compared VI.
     </div>`
     : '';
   // VHS-REQ-625: when the compared VI is itself a library/class member at the
