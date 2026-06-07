@@ -10,6 +10,16 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Fixed
+
+- Comparison reports now reproduce the selected revision's tracked files
+  faithfully when staging a VI for comparison, so in-repo dependencies that Git
+  excludes from archives via `.gitattributes export-ignore` are present beside
+  the VI at load time. Previously these files were dropped, which could make
+  LabVIEW render dependent controls as whiteboxes in the generated comparison.
+
 ## [1.12.0] - 2026-06-07
 
 ### Added
