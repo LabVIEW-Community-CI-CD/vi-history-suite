@@ -32,7 +32,7 @@ export default defineConfig({
         // floored per file; aggregate lines stay protected by the global floor.
         // (VHS-REQ-597; risk-ranked via scripts/mapCoverageToTraceability.js.)
         'src/reporting/comparisonRuntimeLocator.ts': {
-          branches: 45
+          branches: 53
         },
         'src/reporting/comparisonReportRuntimeExecution.ts': {
           branches: 52
