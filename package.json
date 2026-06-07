@@ -50,7 +50,8 @@
     "onCommand:labviewViHistory.detectRuntimeNow",
     "onCommand:labviewViHistory.resetFirstRunNotice",
     "onCommand:labviewViHistory.showRuntimeSummary",
-    "onCommand:labviewViHistory.pickRuntimeProvider"
+    "onCommand:labviewViHistory.pickRuntimeProvider",
+    "onCommand:labviewViHistory.exportComparisonReport"
   ],
   "contributes": {
     "commands": [
@@ -88,6 +89,12 @@
         "command": "labviewViHistory.pickRuntimeProvider",
         "title": "Pick Runtime Provider",
         "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.exportComparisonReport",
+        "title": "Export Comparison Report (HTML)",
+        "category": "VI History",
+        "icon": "$(save-as)"
       }
     ],
     "menus": {
@@ -103,6 +110,19 @@
           "command": "labviewViHistory.open",
           "group": "3_compare",
           "when": "(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit) && isWorkspaceTrusted"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "labviewViHistory.exportComparisonReport",
+          "group": "navigation",
+          "when": "activeWebviewPanelId == viHistorySuite.comparisonReport"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "labviewViHistory.exportComparisonReport",
+          "when": "activeWebviewPanelId == viHistorySuite.comparisonReport"
         }
       ]
     },
