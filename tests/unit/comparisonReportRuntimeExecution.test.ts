@@ -1,4 +1,7 @@
+import { execFileSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -9,6 +12,8 @@ import {
 import {
   classifyLabviewCliDiagnosticText,
   executeComparisonReport,
+  materializeSelectedRevisionTreeWithGit,
+  parseSubmoduleGitlinks,
   inferLabviewBitnessFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
@@ -3734,5 +3739,371 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.state).toBe('failed');
     expect(result.record.runtimeExecution.attempted).toBe(false);
     expect(result.record.runtimeExecution.failureReason).toBe('container-image-unavailable');
+  });
+});
+
+describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
+  async function createTempGitRepo(): Promise<string> {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-repo-'));
+    execFileSync('git', ['-C', root, 'init', '-q'], { stdio: 'pipe' });
+    execFileSync('git', ['-C', root, 'config', 'user.email', 'test@example.com'], { stdio: 'pipe' });
+    execFileSync('git', ['-C', root, 'config', 'user.name', 'Test'], { stdio: 'pipe' });
+    execFileSync('git', ['-C', root, 'config', 'commit.gpgsign', 'false'], { stdio: 'pipe' });
+    return root;
+  }
+
+  it('faithfully materializes every tracked file at the revision, including export-ignored in-repo dependencies', async () => {
+    const repoRoot = await createTempGitRepo();
+    const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
+    try {
+      // Top-level compared VI.
+      await fs.writeFile(path.join(repoRoot, 'lv_icon.vi'), 'top');
+      // Nested in-repo dependency with a space in the filename.
+      const controlsDir = path.join(repoRoot, 'resource', 'plugins', 'NIIconEditor', 'Controls');
+      await fs.mkdir(controlsDir, { recursive: true });
+      await fs.writeFile(path.join(controlsDir, 'References Cluster.ctl'), 'ctl');
+      // An in-repo dependency that `git archive` would silently drop via export-ignore.
+      await fs.writeFile(path.join(repoRoot, 'EXPORT_IGNORED.vi'), 'dep');
+      await fs.writeFile(path.join(repoRoot, '.gitattributes'), 'EXPORT_IGNORED.vi export-ignore\n');
+      execFileSync('git', ['-C', repoRoot, 'add', '-A'], { stdio: 'pipe' });
+      execFileSync('git', ['-C', repoRoot, 'commit', '-qm', 'seed'], { stdio: 'pipe' });
+      const revisionId = execFileSync('git', ['-C', repoRoot, 'rev-parse', 'HEAD'], { stdio: 'pipe' })
+        .toString()
+        .trim();
+
+      await materializeSelectedRevisionTreeWithGit({
+        repositoryRoot: repoRoot,
+        revisionId,
+        destinationRoot,
+        pathspec: '.'
+      });
+
+      // The export-ignored in-repo dependency must be present. This is the bug:
+      // with the prior `git archive` implementation it was dropped, leaving the
+      // relocated VI unable to resolve it (LabVIEW renders a whitebox).
+      await expect(fs.access(path.join(destinationRoot, 'EXPORT_IGNORED.vi'))).resolves.toBeUndefined();
+      // The nested, space-containing dependency and the compared VI itself are present too.
+      await expect(
+        fs.access(
+          path.join(
+            destinationRoot,
+            'resource',
+            'plugins',
+            'NIIconEditor',
+            'Controls',
+            'References Cluster.ctl'
+          )
+        )
+      ).resolves.toBeUndefined();
+      await expect(fs.access(path.join(destinationRoot, 'lv_icon.vi'))).resolves.toBeUndefined();
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+      await fs.rm(destinationRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('fails closed when the selected revision cannot be read', async () => {
+    const repoRoot = await createTempGitRepo();
+    const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
+    try {
+      // No commits exist, so reading an arbitrary revision must reject rather
+      // than silently producing an empty staged tree.
+      await expect(
+        materializeSelectedRevisionTreeWithGit({
+          repositoryRoot: repoRoot,
+          revisionId: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          destinationRoot,
+          pathspec: '.'
+        })
+      ).rejects.toThrow();
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+      await fs.rm(destinationRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('reconstructs through an isolated temp index (read-tree then checkout-index) and removes it', async () => {
+    const calls: Array<{ args: string[]; env: NodeJS.ProcessEnv }> = [];
+    const runGit = vi.fn(async (args: string[], opts: { env: NodeJS.ProcessEnv }) => {
+      calls.push({ args, env: opts.env });
+    });
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-AAAA');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+
+    await materializeSelectedRevisionTreeWithGit(
+      {
+        repositoryRoot: '/workspace/repo',
+        revisionId: 'abcdef1234567890',
+        destinationRoot: '/stage/dest',
+        pathspec: '.'
+      },
+      {
+        runGit,
+        mkdtemp: mkdtemp as never,
+        removePath: removePath as never,
+        tmpdir,
+        // No submodules: keep the assertion focused on the superproject checkout.
+        listSubmoduleGitlinks: vi.fn().mockResolvedValue([])
+      }
+    );
+
+    expect(calls).toHaveLength(2);
+    // The temp index is populated from the revision's full tree first.
+    expect(calls[0].args).toEqual(['-C', '/workspace/repo', 'read-tree', 'abcdef1234567890']);
+    // Then every tracked entry is checked out into the destination work tree.
+    expect(calls[1].args).toEqual([
+      '-C',
+      '/workspace/repo',
+      '--work-tree',
+      '/stage/dest',
+      'checkout-index',
+      '-a',
+      '-f'
+    ]);
+    // Both git steps share the isolated temporary index via GIT_INDEX_FILE.
+    const expectedIndex = path.join('/tmp/vihs-stage-index-AAAA', 'index');
+    expect(calls[0].env.GIT_INDEX_FILE).toBe(expectedIndex);
+    expect(calls[1].env.GIT_INDEX_FILE).toBe(expectedIndex);
+    // The temporary index is cleaned up afterward.
+    expect(removePath).toHaveBeenCalledWith('/tmp/vihs-stage-index-AAAA', {
+      recursive: true,
+      force: true
+    });
+  });
+
+  it('cleans up the temporary index even when a git step fails', async () => {
+    const runGit = vi.fn(async () => {
+      throw new Error('read-tree boom');
+    });
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-BBBB');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+
+    await expect(
+      materializeSelectedRevisionTreeWithGit(
+        {
+          repositoryRoot: '/r',
+          revisionId: 'rev',
+          destinationRoot: '/d',
+          pathspec: '.'
+        },
+        { runGit, mkdtemp: mkdtemp as never, removePath: removePath as never, tmpdir }
+      )
+    ).rejects.toThrow('read-tree boom');
+
+    // checkout-index is never attempted once read-tree fails ...
+    expect(runGit).toHaveBeenCalledTimes(1);
+    // ... but the temporary index is still removed.
+    expect(removePath).toHaveBeenCalledWith('/tmp/vihs-stage-index-BBBB', {
+      recursive: true,
+      force: true
+    });
+  });
+
+  it('materializes submodule contents beside the superproject tree (#283)', async () => {
+    const subRepo = await createTempGitRepo();
+    const superRepo = await createTempGitRepo();
+    const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
+    try {
+      // Submodule source repo carries a control dependency (space in the name).
+      const subControls = path.join(subRepo, 'Controls');
+      await fs.mkdir(subControls, { recursive: true });
+      await fs.writeFile(path.join(subControls, 'Shared Cluster.ctl'), 'subctl');
+      execFileSync('git', ['-C', subRepo, 'add', '-A'], { stdio: 'pipe' });
+      execFileSync('git', ['-C', subRepo, 'commit', '-qm', 'sub'], { stdio: 'pipe' });
+
+      // Superproject embeds the submodule plus a top-level VI.
+      await fs.writeFile(path.join(superRepo, 'lv_icon.vi'), 'top');
+      execFileSync(
+        'git',
+        [
+          '-C',
+          superRepo,
+          '-c',
+          'protocol.file.allow=always',
+          'submodule',
+          'add',
+          '-q',
+          subRepo,
+          'vendor/reuse'
+        ],
+        { stdio: 'pipe' }
+      );
+      execFileSync('git', ['-C', superRepo, 'add', '-A'], { stdio: 'pipe' });
+      execFileSync('git', ['-C', superRepo, 'commit', '-qm', 'super'], { stdio: 'pipe' });
+      const revisionId = execFileSync('git', ['-C', superRepo, 'rev-parse', 'HEAD'], {
+        stdio: 'pipe'
+      })
+        .toString()
+        .trim();
+
+      await materializeSelectedRevisionTreeWithGit({
+        repositoryRoot: superRepo,
+        revisionId,
+        destinationRoot,
+        pathspec: '.'
+      });
+
+      // The submodule's tracked dependency is materialized at its repo-relative
+      // path, so a VI that depends on it resolves it instead of whiteboxing.
+      // Previously only the superproject's own blobs were checked out (#283).
+      await expect(
+        fs.access(path.join(destinationRoot, 'vendor', 'reuse', 'Controls', 'Shared Cluster.ctl'))
+      ).resolves.toBeUndefined();
+      await expect(fs.access(path.join(destinationRoot, 'lv_icon.vi'))).resolves.toBeUndefined();
+    } finally {
+      await fs.rm(subRepo, { recursive: true, force: true });
+      await fs.rm(superRepo, { recursive: true, force: true });
+      await fs.rm(destinationRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('attempts each submodule but skips unavailable ones without failing the comparison (#283)', async () => {
+    const calls: string[][] = [];
+    const runGit = vi.fn(async (args: string[]) => {
+      calls.push(args);
+      const contextIndex = args.indexOf('-C');
+      const context = contextIndex >= 0 ? args[contextIndex + 1] : '';
+      // The submodule's objects are unavailable: its read-tree rejects.
+      if (context.includes('vendor/reuse')) {
+        throw new Error('submodule objects unavailable');
+      }
+    });
+    const listSubmoduleGitlinks = vi
+      .fn()
+      .mockResolvedValue([{ path: 'vendor/reuse', revisionId: 'f0f0f0f0f0f0f0f0' }]);
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-CCCC');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+
+    await expect(
+      materializeSelectedRevisionTreeWithGit(
+        {
+          repositoryRoot: '/workspace/repo',
+          revisionId: 'abcdef1234567890',
+          destinationRoot: '/stage/dest',
+          pathspec: '.'
+        },
+        {
+          runGit,
+          listSubmoduleGitlinks,
+          mkdtemp: mkdtemp as never,
+          removePath: removePath as never,
+          tmpdir
+        }
+      )
+    ).resolves.toBeUndefined();
+
+    // Superproject fully checked out.
+    expect(calls).toContainEqual(['-C', '/workspace/repo', 'read-tree', 'abcdef1234567890']);
+    expect(calls).toContainEqual([
+      '-C',
+      '/workspace/repo',
+      '--work-tree',
+      '/stage/dest',
+      'checkout-index',
+      '-a',
+      '-f'
+    ]);
+    // The submodule checkout was attempted at its repo-relative source.
+    const submoduleSource = path.posix.join('/workspace/repo', 'vendor', 'reuse');
+    expect(calls).toContainEqual(['-C', submoduleSource, 'read-tree', 'f0f0f0f0f0f0f0f0']);
+    // The failed submodule's temporary index is still cleaned up.
+    expect(removePath).toHaveBeenCalled();
+  });
+
+  it('leaves the superproject tree intact when submodule enumeration fails (#283)', async () => {
+    const calls: string[][] = [];
+    const runGit = vi.fn(async (args: string[]) => {
+      calls.push(args);
+    });
+    const listSubmoduleGitlinks = vi.fn().mockRejectedValue(new Error('ls-tree boom'));
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-DDDD');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+
+    await expect(
+      materializeSelectedRevisionTreeWithGit(
+        {
+          repositoryRoot: '/workspace/repo',
+          revisionId: 'abcdef1234567890',
+          destinationRoot: '/stage/dest',
+          pathspec: '.'
+        },
+        {
+          runGit,
+          listSubmoduleGitlinks,
+          mkdtemp: mkdtemp as never,
+          removePath: removePath as never,
+          tmpdir
+        }
+      )
+    ).resolves.toBeUndefined();
+
+    // Superproject checkout completed (read-tree + checkout-index) before the
+    // enumeration was attempted; no further git ran after enumeration failed.
+    expect(calls).toHaveLength(2);
+    expect(listSubmoduleGitlinks).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores submodule gitlinks with unsafe paths (#283)', async () => {
+    const calls: string[][] = [];
+    const runGit = vi.fn(async (args: string[]) => {
+      calls.push(args);
+    });
+    const listSubmoduleGitlinks = vi.fn().mockResolvedValue([
+      { path: '../escape', revisionId: 'aaaaaaaaaaaaaaaa' },
+      { path: '/abs/evil', revisionId: 'bbbbbbbbbbbbbbbb' },
+      { path: '', revisionId: 'cccccccccccccccc' }
+    ]);
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-EEEE');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+
+    await expect(
+      materializeSelectedRevisionTreeWithGit(
+        {
+          repositoryRoot: '/workspace/repo',
+          revisionId: 'abcdef1234567890',
+          destinationRoot: '/stage/dest',
+          pathspec: '.'
+        },
+        {
+          runGit,
+          listSubmoduleGitlinks,
+          mkdtemp: mkdtemp as never,
+          removePath: removePath as never,
+          tmpdir
+        }
+      )
+    ).resolves.toBeUndefined();
+
+    // Only the superproject was checked out; no unsafe path was acted on.
+    expect(calls).toHaveLength(2);
+    for (const call of calls) {
+      expect(call).not.toContain('aaaaaaaaaaaaaaaa');
+      expect(call).not.toContain('bbbbbbbbbbbbbbbb');
+      expect(call).not.toContain('cccccccccccccccc');
+    }
+  });
+
+  it('parseSubmoduleGitlinks returns only gitlink entries from NUL-delimited ls-tree output', () => {
+    const output =
+      [
+        '100644 blob 1111111111111111111111111111111111111111\t.gitmodules',
+        '100644 blob 2222222222222222222222222222222222222222\tlv_icon.vi',
+        '160000 commit 3333333333333333333333333333333333333333\tvendor/reuse',
+        '160000 commit 4444444444444444444444444444444444444444\tdeps/with space/mod'
+      ].join('\0') + '\0';
+
+    expect(parseSubmoduleGitlinks(output)).toEqual([
+      { path: 'vendor/reuse', revisionId: '3333333333333333333333333333333333333333' },
+      { path: 'deps/with space/mod', revisionId: '4444444444444444444444444444444444444444' }
+    ]);
+  });
+
+  it('parseSubmoduleGitlinks tolerates empty output', () => {
+    expect(parseSubmoduleGitlinks('')).toEqual([]);
   });
 });

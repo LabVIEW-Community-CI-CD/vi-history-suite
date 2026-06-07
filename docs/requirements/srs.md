@@ -563,6 +563,15 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - A single tree is materialized from the selected (newest) revision; the base
     revision does not receive its own tree.
+  - Tree materialization faithfully reproduces every file tracked at the
+    selected revision, including paths excluded from `git archive` by
+    `.gitattributes export-ignore`, so in-repo dependencies are present beside
+    the staged VIs at load time instead of being dropped.
+  - Contents of submodules recorded at the selected revision are materialized at
+    their repo-relative paths (including nested submodules) on a best-effort
+    basis, so dependencies tracked through a submodule resolve at load time.
+    When a submodule's objects are unavailable, it is skipped without failing
+    the comparison.
   - Both compared VI blobs are written at the compared VI's normalized
     repo-relative path inside that tree, under distinct left and right filenames,
     so the two top-level VIs never collide on qualified name in one LabVIEW
@@ -575,6 +584,12 @@ Missing numeric IDs are intentional.
     the selected revision's dependencies, that dependency-only changes between
     the two revisions may therefore not appear, and that loading the base VI
     against newer dependencies may recompile it and distort the rendered diff.
+  - When a selected-revision tree was materialized, the report and retained
+    packet also disclose that only files tracked in the repository are staged, so
+    dependencies outside the repository (for example LabVIEW-installed paths such
+    as `vi.lib`, `instr.lib`, `user.lib`, or the `resource` directory, and
+    absolute-path references) are not staged and may render as placeholder
+    (white) items as a staging limitation rather than a change in the VI.
   - Staged inputs and a materialized-tree manifest are retained as runtime
     evidence consistent with VHS-REQ-147 and VHS-REQ-148.
 - Agent Work Scope:
@@ -592,6 +607,13 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Optimize for dependency load success and simplicity; do not claim
     per-revision dependency fidelity or true historical diffing.
+  - Materialize the tree with a faithful working-tree checkout (for example a
+    temporary-index `git read-tree` then `git checkout-index`), not
+    `git archive`, so files excluded by `.gitattributes export-ignore` are not
+    dropped from the staged tree.
+  - Recurse into submodule gitlinks best-effort (skip on failure) so submodule
+    contents resolve, since `checkout-index` materializes only the
+    superproject's own blobs; keep superproject materialization fail-closed.
 
 ### VHS-REQ-625: Library-Member Compared-VI Disclosure
 

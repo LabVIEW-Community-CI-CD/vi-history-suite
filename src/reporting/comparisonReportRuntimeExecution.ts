@@ -528,18 +528,250 @@ export type MaterializeSelectedRevisionTree = (
 ) => Promise<void>;
 
 /**
- * VHS-REQ-624: default selected-revision tree materializer. Streams
- * `git archive <revision> -- <pathspec>` into `tar -x` so the staged VIs sit
- * beside their in-repo dependencies at the recorded revision. Used by the
- * host-native and container providers; wired at the production action call site
- * and injected explicitly by unit tests so execution stays deterministic.
+ * VHS-REQ-624: runs a single git invocation to completion, resolving on a clean
+ * exit and rejecting with captured stderr otherwise. Injected by unit tests so
+ * the materializer's command sequence stays deterministically assertable.
+ */
+export type RunGitToCompletion = (
+  args: string[],
+  options: { env: NodeJS.ProcessEnv }
+) => Promise<void>;
+
+export interface SubmoduleGitlink {
+  /** Repository-relative POSIX path of the submodule within its parent tree. */
+  path: string;
+  /** Pinned commit recorded for the submodule at the parent revision. */
+  revisionId: string;
+}
+
+export type ListSubmoduleGitlinks = (options: {
+  workingDirectory: string;
+  revisionId: string;
+}) => Promise<SubmoduleGitlink[]>;
+
+export interface MaterializeSelectedRevisionTreeDeps {
+  runGit?: RunGitToCompletion;
+  /**
+   * VHS-REQ-624 (#283): enumerates the submodule gitlinks recorded at a revision
+   * so their contents can be materialized beside the staged VIs. Defaults to a
+   * `git ls-tree` reader; injected by unit tests so enumeration stays
+   * deterministic.
+   */
+  listSubmoduleGitlinks?: ListSubmoduleGitlinks;
+  mkdtemp?: typeof fs.mkdtemp;
+  removePath?: typeof fs.rm;
+  tmpdir?: () => string;
+}
+
+/** VHS-REQ-624 (#283): cap recursion so a pathological submodule graph cannot loop. */
+const MAX_SUBMODULE_RECURSION_DEPTH = 10;
+
+/**
+ * VHS-REQ-624: default selected-revision tree materializer. Faithfully
+ * reproduces every file tracked at the selected revision into
+ * `destinationRoot` so the staged VIs resolve their in-repo dependencies at
+ * load time. It populates an isolated temporary index with
+ * `git read-tree <revision>` and then `git checkout-index -a -f` against an
+ * alternate work tree. Unlike `git archive`, `checkout-index` mirrors the full
+ * tracked tree: files excluded from archives via `.gitattributes export-ignore`
+ * are still materialized, so in-repo dependencies under export-ignored paths
+ * resolve instead of rendering as whiteboxes.
+ *
+ * VHS-REQ-624 (#283): `checkout-index` materializes only the superproject's own
+ * blobs, so after the superproject tree is reproduced this recurses into each
+ * submodule gitlink recorded at the revision and materializes the submodule's
+ * pinned tree at its repo-relative location (and into nested submodules).
+ * Superproject materialization stays fail-closed; submodule materialization is
+ * best-effort, so an uninitialized or otherwise unavailable submodule never
+ * fails the comparison — it simply stays absent as it did before.
+ *
+ * Used by the host-native and container providers; wired at the production
+ * action call site and injectable for deterministic unit tests.
  */
 export async function materializeSelectedRevisionTreeWithGit(
-  options: MaterializeSelectedRevisionTreeOptions
+  options: MaterializeSelectedRevisionTreeOptions,
+  deps: MaterializeSelectedRevisionTreeDeps = {}
 ): Promise<void> {
-  const pathspec = options.pathspec?.trim() || '.';
+  const runGit = deps.runGit ?? spawnGitToCompletion;
+  const mkdtemp = deps.mkdtemp ?? fs.mkdtemp;
+  const removePath = deps.removePath ?? fs.rm;
+  const tmpdir = deps.tmpdir ?? os.tmpdir;
+  const listSubmoduleGitlinks = deps.listSubmoduleGitlinks ?? spawnGitListSubmoduleGitlinks;
 
-  await new Promise<void>((resolve, reject) => {
+  // Fail closed: the superproject tree must materialize for the comparison to be
+  // meaningful.
+  await checkoutRevisionIntoWorkTree({
+    sourceWorkingDirectory: options.repositoryRoot,
+    revisionId: options.revisionId,
+    destinationRoot: options.destinationRoot,
+    runGit,
+    mkdtemp,
+    removePath,
+    tmpdir
+  });
+
+  // Best effort: materialize submodule contents beside the staged VIs so
+  // dependencies tracked through submodules resolve at load time (#283).
+  await materializeSubmoduleTreesBestEffort({
+    sourceWorkingDirectory: options.repositoryRoot,
+    revisionId: options.revisionId,
+    destinationRoot: options.destinationRoot,
+    runGit,
+    mkdtemp,
+    removePath,
+    tmpdir,
+    listSubmoduleGitlinks,
+    depth: 0
+  });
+}
+
+interface CheckoutRevisionIntoWorkTreeParams {
+  sourceWorkingDirectory: string;
+  revisionId: string;
+  destinationRoot: string;
+  runGit: RunGitToCompletion;
+  mkdtemp: typeof fs.mkdtemp;
+  removePath: typeof fs.rm;
+  tmpdir: () => string;
+}
+
+/**
+ * VHS-REQ-624: reproduce a single revision's tracked tree into a work tree via a
+ * throwaway temporary index (`read-tree` then `checkout-index`). The temporary
+ * index is always removed, and `GIT_INDEX_FILE` is absolute because git runs
+ * with the source repository as its working directory.
+ */
+async function checkoutRevisionIntoWorkTree(
+  params: CheckoutRevisionIntoWorkTreeParams
+): Promise<void> {
+  // Reconstruct the tree through an isolated temporary index so it never
+  // disturbs the source repository's real index.
+  const indexParent = await params.mkdtemp(path.join(params.tmpdir(), 'vihs-stage-index-'));
+  const indexFile = path.join(indexParent, 'index');
+  const env = { ...process.env, GIT_INDEX_FILE: indexFile };
+
+  try {
+    // Populate the temp index with the revision's full tree.
+    await params.runGit(
+      ['-C', params.sourceWorkingDirectory, 'read-tree', params.revisionId],
+      { env }
+    );
+    // Check out every tracked entry into the destination work tree.
+    // `checkout-index` creates the directory structure and does not apply the
+    // archive-only `export-ignore` attribute, so the materialized tree mirrors
+    // the repository at the revision.
+    await params.runGit(
+      [
+        '-C',
+        params.sourceWorkingDirectory,
+        '--work-tree',
+        params.destinationRoot,
+        'checkout-index',
+        '-a',
+        '-f'
+      ],
+      { env }
+    );
+  } finally {
+    try {
+      await params.removePath(indexParent, { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup of the temporary index; ignore failures.
+    }
+  }
+}
+
+interface MaterializeSubmoduleTreesParams extends CheckoutRevisionIntoWorkTreeParams {
+  listSubmoduleGitlinks: ListSubmoduleGitlinks;
+  depth: number;
+}
+
+/**
+ * VHS-REQ-624 (#283): materialize the contents of every submodule recorded at
+ * `revisionId` into the destination, recursing into nested submodules. Each
+ * submodule is best-effort: when its objects are unavailable (for example an
+ * uninitialized submodule) the checkout is skipped rather than failing the
+ * whole comparison. Submodule paths are validated as plain relative subpaths so
+ * a crafted tree entry cannot escape the destination root.
+ */
+async function materializeSubmoduleTreesBestEffort(
+  params: MaterializeSubmoduleTreesParams
+): Promise<void> {
+  if (params.depth >= MAX_SUBMODULE_RECURSION_DEPTH) {
+    return;
+  }
+
+  let gitlinks: SubmoduleGitlink[];
+  try {
+    gitlinks = await params.listSubmoduleGitlinks({
+      workingDirectory: params.sourceWorkingDirectory,
+      revisionId: params.revisionId
+    });
+  } catch {
+    // Enumeration failed (for example a git error); leave the superproject tree
+    // as already materialized.
+    return;
+  }
+
+  for (const gitlink of gitlinks) {
+    if (!isSafeRelativeSubpath(gitlink.path)) {
+      continue;
+    }
+    const segments = gitlink.path.split('/').filter((segment) => segment.length > 0);
+    const submoduleSource = joinPreservingExplicitPathStyle(
+      params.sourceWorkingDirectory,
+      ...segments
+    );
+    const submoduleDestination = joinPreservingExplicitPathStyle(
+      params.destinationRoot,
+      ...segments
+    );
+
+    try {
+      await checkoutRevisionIntoWorkTree({
+        sourceWorkingDirectory: submoduleSource,
+        revisionId: gitlink.revisionId,
+        destinationRoot: submoduleDestination,
+        runGit: params.runGit,
+        mkdtemp: params.mkdtemp,
+        removePath: params.removePath,
+        tmpdir: params.tmpdir
+      });
+    } catch {
+      // Submodule objects unavailable (e.g. not initialized); skip it.
+      continue;
+    }
+
+    // Recurse so submodules-of-submodules are materialized too.
+    await materializeSubmoduleTreesBestEffort({
+      ...params,
+      sourceWorkingDirectory: submoduleSource,
+      revisionId: gitlink.revisionId,
+      destinationRoot: submoduleDestination,
+      depth: params.depth + 1
+    });
+  }
+}
+
+/**
+ * VHS-REQ-624 (#283): only accept plain relative subpaths for submodule
+ * destinations. Absolute paths, drive prefixes, and `.`/`..` segments are
+ * rejected so a tree entry can never resolve outside the staging destination.
+ */
+function isSafeRelativeSubpath(candidate: string): boolean {
+  if (!candidate || candidate.startsWith('/') || /^[A-Za-z]:/.test(candidate)) {
+    return false;
+  }
+  return candidate
+    .split('/')
+    .every((segment) => segment.length > 0 && segment !== '.' && segment !== '..');
+}
+
+function spawnGitToCompletion(
+  args: string[],
+  options: { env: NodeJS.ProcessEnv }
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     let settled = false;
     const fail = (error: Error): void => {
       if (!settled) {
@@ -548,48 +780,99 @@ export async function materializeSelectedRevisionTreeWithGit(
       }
     };
 
-    const git = spawn(
-      'git',
-      ['-C', options.repositoryRoot, 'archive', '--format=tar', options.revisionId, '--', pathspec],
-      { windowsHide: true }
-    );
-    const tar = spawn('tar', ['-x', '-C', options.destinationRoot], { windowsHide: true });
-
-    let gitStderr = '';
-    git.stderr?.on('data', (chunk) => {
-      gitStderr += String(chunk);
+    const child = spawn('git', args, { windowsHide: true, env: options.env });
+    let stderr = '';
+    child.stderr?.on('data', (chunk) => {
+      stderr += String(chunk);
     });
-    let tarStderr = '';
-    tar.stderr?.on('data', (chunk) => {
-      tarStderr += String(chunk);
-    });
-
-    git.on('error', fail);
-    tar.on('error', fail);
-    if (git.stdout && tar.stdin) {
-      git.stdout.pipe(tar.stdin);
-    } else {
-      fail(new Error('git archive / tar pipe could not be established'));
-      return;
-    }
-
-    git.on('close', (code) => {
-      if (code !== 0) {
-        fail(new Error(`git archive exited ${code}: ${gitStderr.trim()}`));
-      }
-    });
-    tar.on('close', (code) => {
+    child.on('error', fail);
+    child.on('close', (code) => {
       if (settled) {
         return;
       }
       if (code !== 0) {
-        fail(new Error(`tar extract exited ${code}: ${tarStderr.trim()}`));
+        fail(new Error(`git ${args.join(' ')} exited ${code}: ${stderr.trim()}`));
         return;
       }
       settled = true;
       resolve();
     });
   });
+}
+
+/**
+ * VHS-REQ-624 (#283): default submodule enumerator. Reads gitlink entries from
+ * `git ls-tree -r -z <revision>` (NUL-delimited so paths containing spaces stay
+ * intact) and returns each submodule's path and pinned commit.
+ */
+function spawnGitListSubmoduleGitlinks(options: {
+  workingDirectory: string;
+  revisionId: string;
+}): Promise<SubmoduleGitlink[]> {
+  return new Promise<SubmoduleGitlink[]>((resolve, reject) => {
+    let settled = false;
+    const fail = (error: Error): void => {
+      if (!settled) {
+        settled = true;
+        reject(error);
+      }
+    };
+
+    const child = spawn(
+      'git',
+      ['-C', options.workingDirectory, 'ls-tree', '-r', '-z', options.revisionId],
+      { windowsHide: true }
+    );
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr?.on('data', (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on('error', fail);
+    child.on('close', (code) => {
+      if (settled) {
+        return;
+      }
+      if (code !== 0) {
+        fail(new Error(`git ls-tree exited ${code}: ${stderr.trim()}`));
+        return;
+      }
+      settled = true;
+      resolve(parseSubmoduleGitlinks(stdout));
+    });
+  });
+}
+
+/**
+ * VHS-REQ-624 (#283): parse NUL-delimited `git ls-tree -r -z` output and return
+ * only the submodule gitlink entries (mode `160000`, type `commit`). Each record
+ * is `<mode> <type> <object>\t<path>`; the path is kept verbatim (POSIX,
+ * unquoted) because `-z` disables path quoting.
+ */
+export function parseSubmoduleGitlinks(lsTreeOutput: string): SubmoduleGitlink[] {
+  const entries: SubmoduleGitlink[] = [];
+  for (const record of lsTreeOutput.split('\0')) {
+    if (!record) {
+      continue;
+    }
+    const tabIndex = record.indexOf('\t');
+    if (tabIndex < 0) {
+      continue;
+    }
+    const metadata = record.slice(0, tabIndex).split(' ');
+    const entryPath = record.slice(tabIndex + 1);
+    if (metadata.length < 3) {
+      continue;
+    }
+    const [mode, type, object] = metadata;
+    if (mode === '160000' && type === 'commit' && object) {
+      entries.push({ path: entryPath, revisionId: object });
+    }
+  }
+  return entries;
 }
 
 /**

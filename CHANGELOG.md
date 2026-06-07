@@ -10,6 +10,26 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.12.1] - 2026-06-07
+
+### Fixed
+
+- Comparison reports now reproduce the selected revision's tracked files
+  faithfully when staging a VI for comparison, so in-repo dependencies that Git
+  excludes from archives via `.gitattributes export-ignore` are present beside
+  the VI at load time. Previously these files were dropped, which could make
+  LabVIEW render dependent controls as whiteboxes in the generated comparison.
+- Comparison staging now also materializes the contents of Git submodules
+  recorded at the selected revision (including nested submodules) beside the
+  staged VI, so dependencies tracked through a submodule resolve at load time
+  instead of rendering as whiteboxes. Submodule materialization is best-effort:
+  an unavailable submodule is skipped without failing the comparison.
+- The comparison report now states that only files tracked in the repository are
+  staged, so dependencies outside the repository (for example LabVIEW-installed
+  paths such as `vi.lib`, `instr.lib`, `user.lib`, or the `resource` directory)
+  are not staged and may appear as placeholder (white) items. This clarifies
+  that such whiteboxes are a staging limitation rather than a change in the VI.
+
 ## [1.12.0] - 2026-06-07
 
 ### Added
