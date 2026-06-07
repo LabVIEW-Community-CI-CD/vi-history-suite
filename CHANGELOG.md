@@ -19,6 +19,11 @@ Burned exact-version releases now include `v1.0.2`.
   excludes from archives via `.gitattributes export-ignore` are present beside
   the VI at load time. Previously these files were dropped, which could make
   LabVIEW render dependent controls as whiteboxes in the generated comparison.
+- Comparison staging now also materializes the contents of Git submodules
+  recorded at the selected revision (including nested submodules) beside the
+  staged VI, so dependencies tracked through a submodule resolve at load time
+  instead of rendering as whiteboxes. Submodule materialization is best-effort:
+  an unavailable submodule is skipped without failing the comparison.
 
 ## [1.12.0] - 2026-06-07
 

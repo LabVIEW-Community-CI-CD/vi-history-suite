@@ -567,6 +567,11 @@ Missing numeric IDs are intentional.
     selected revision, including paths excluded from `git archive` by
     `.gitattributes export-ignore`, so in-repo dependencies are present beside
     the staged VIs at load time instead of being dropped.
+  - Contents of submodules recorded at the selected revision are materialized at
+    their repo-relative paths (including nested submodules) on a best-effort
+    basis, so dependencies tracked through a submodule resolve at load time.
+    When a submodule's objects are unavailable, it is skipped without failing
+    the comparison.
   - Both compared VI blobs are written at the compared VI's normalized
     repo-relative path inside that tree, under distinct left and right filenames,
     so the two top-level VIs never collide on qualified name in one LabVIEW
@@ -600,6 +605,9 @@ Missing numeric IDs are intentional.
     temporary-index `git read-tree` then `git checkout-index`), not
     `git archive`, so files excluded by `.gitattributes export-ignore` are not
     dropped from the staged tree.
+  - Recurse into submodule gitlinks best-effort (skip on failure) so submodule
+    contents resolve, since `checkout-index` materializes only the
+    superproject's own blobs; keep superproject materialization fail-closed.
 
 ### VHS-REQ-625: Library-Member Compared-VI Disclosure
 
