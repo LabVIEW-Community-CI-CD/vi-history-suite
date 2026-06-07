@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Added
+
+- An **Export Comparison Report (HTML)** action in the comparison-report panel
+  title bar saves the report to an accessible folder so you can open it outside
+  VS Code in Edge or Chrome and zoom into the graphics. The export writes a
+  self-contained, timestamped bundle that copies the LabVIEW-generated report
+  together with its graphics dependency folder so block-diagram and front-panel
+  images keep resolving in a browser, then offers to open the exported file in
+  your default browser or reveal it in the OS file manager. When no
+  LabVIEW-generated graphics report is available, it explains the exact reason
+  and offers the diagnostic evidence packet instead.
+
 ## [1.11.1] - 2026-06-07
 
 ### Fixed
