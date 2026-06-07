@@ -63,11 +63,12 @@ the machine-readable coverage outputs from that run through the
 - `coverage/coverage-summary.json`
 
 The enforced coverage thresholds in `vitest.config.ts` are evidence-backed
-baseline regression floors: 70% statements, 58% branches, 78% functions, and
-70% lines. These floors were ratcheted after the Windows CI leg landed, when
-merged `develop` measured 74.27% statements, 62.37% branches, 81.33% functions,
-and 74.29% lines; they are not a claim that the repository has complete
-coverage. The two highest-risk comparison-runtime files
+baseline regression floors: 71% statements, 60% branches, 78% functions, and
+71% lines. These floors were ratcheted after the C1+C2 runtime branch-coverage
+work, when merged `develop` measured 74.0% statements, 62.72% branches, 80.08%
+functions, and 74.02% lines on the lower-running Ubuntu CI leg; they are not a
+claim that the repository has complete coverage. The two highest-risk
+comparison-runtime files
 (`src/reporting/comparisonRuntimeLocator.ts` and
 `src/reporting/comparisonReportRuntimeExecution.ts`) additionally carry per-file
 floors pinned just under their current actuals to prevent silent branch-coverage
@@ -89,7 +90,7 @@ and to justify future coverage threshold ratchets.
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
 | --- | --- | --- | --- | --- |
-| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 70% statements, 58% branches, 78% functions, and 70% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 71% statements, 60% branches, 78% functions, and 71% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
 | VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts | tests/unit/openViHistoryCommand.test.ts | User-facing command stops cover missing URI, trust gate, ineligible file guidance, history-load failures, documentation routing, and explicit cancellation stages. |
 | VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/viHistoryModel.test.ts; tests/unit/historyPanelRendering.test.ts | History model facts cover repository/path/signature/history-window decisions and previous-hash links before rendering. |
 | VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts; src/ui/historyPanelTracker.ts | tests/unit/openViHistoryCommand.test.ts; tests/unit/historyPanelTracker.test.ts | Review packet and hash copy routes are verified through clipboard and panel action summaries. |
