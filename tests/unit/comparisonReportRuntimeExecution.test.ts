@@ -20,7 +20,9 @@ import {
   rewriteLabviewCliArgsForLinuxContainerWorkspace,
   runComparisonCommandPlanWithObservation,
   prepareWindowsContainerExecutionContext,
-  prepareLinuxContainerExecutionContext
+  prepareLinuxContainerExecutionContext,
+  resolveEffectiveCommandTimeoutMs,
+  LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
@@ -1556,6 +1558,105 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('bounds the host-native headless opt-in so an indefinite init-failure hang is classified deterministically (issue #269)', async () => {
+    // Issue #269 deeper finding: production wires no commandTimeoutMs, so on a build
+    // with a broken HeadlessManager the -Headless CLI hangs forever during VI load and
+    // the post-process headless classifier never fires. The fix applies a default bound
+    // ONLY to the Linux host-native headless opt-in, converting the stall into a
+    // deterministic command-timed-out failure that still carries the
+    // linux-headless-init-failed diagnostic. This test omits commandTimeoutMs entirely
+    // (matching the production action) and proves the default bound is propagated.
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const headlessLog = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+    const readdir = vi.fn(async (dir: string) =>
+      dir === '/tmp' ? ['lvrt_26.1.1f1_headless_sergio_cur.txt'] : []
+    );
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+        return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+      }
+      if (filePath === headlessLog) {
+        return 'Failed to initialize headless LabVIEW.';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async (filePath: string) => filePath === headlessLog);
+    // The bounded CLI is SIGKILLed; the result reports timedOut WITHOUT a timeoutMs
+    // field so the surfaced note must fall back to the propagated effective bound.
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 124,
+      signal: 'SIGKILL',
+      stdout: '',
+      stderr: 'comparison-command timed out\n',
+      timedOut: true
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:43:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+        // commandTimeoutMs deliberately omitted to mirror the production action.
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('command-timed-out');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-headless-init-failed');
+    // The surfaced timeout note reflects the default bound (not "the configured"),
+    // proving the host-native headless opt-in is no longer unbounded in production.
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).toEqual(
+      expect.arrayContaining([
+        `Comparison-report runtime timed out after ${String(
+          LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
+        )}ms.`
+      ])
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
+      'LV_RTE_LINUX_HEADLESS=0'
+    );
+  });
+
   it('gates the headless-init note on a SUCCEEDED headless run so a stale init-failure log cannot leak (Refs #270)', async () => {
     // Defense-in-depth half of issue #270: even when the headless capture yields an
     // init-failure note, a SUCCEEDED run must not surface it (the note is gated on
@@ -1935,6 +2036,87 @@ describe('comparisonReportRuntimeExecution', () => {
       expect(result.record.runtimeExecution.doctorSummaryLines?.length).toBeGreaterThan(0);
       expect(writePacketRecord).toHaveBeenCalled();
     });
+  });
+});
+
+describe('resolveEffectiveCommandTimeoutMs (VHS-REQ-156, issue #269)', () => {
+  function createLinuxHostNativeRecord(overrides: {
+    provider?: 'host-native' | 'linux-container';
+    engine?: 'labview-cli' | 'lvcompare';
+    headlessRequested?: boolean;
+  }): ComparisonReportPacketRecord {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = overrides.provider ?? 'host-native';
+    record.runtimeSelection.engine = overrides.engine ?? 'labview-cli';
+    if (typeof overrides.headlessRequested === 'boolean') {
+      record.runtimeSelection.headlessRequested = overrides.headlessRequested;
+    }
+    return record;
+  }
+
+  const headlessPlan = {
+    executable: 'LabVIEWCLI',
+    args: ['-OperationName', 'CreateComparisonReport', '-Headless']
+  };
+  const nonHeadlessPlan = {
+    executable: 'LabVIEWCLI',
+    args: ['-OperationName', 'CreateComparisonReport']
+  };
+
+  it('defaults the Linux host-native headless opt-in (headlessRequested flag) to the bounded timeout', () => {
+    const record = createLinuxHostNativeRecord({ headlessRequested: true });
+    expect(
+      resolveEffectiveCommandTimeoutMs({ record, commandPlan: nonHeadlessPlan })
+    ).toBe(LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS);
+  });
+
+  it('defaults the env-var opt-in (-Headless in command plan, flag unset) to the bounded timeout', () => {
+    const record = createLinuxHostNativeRecord({ headlessRequested: false });
+    expect(
+      resolveEffectiveCommandTimeoutMs({ record, commandPlan: headlessPlan })
+    ).toBe(LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS);
+  });
+
+  it('leaves the safe non-headless Linux host-native default unbounded', () => {
+    const record = createLinuxHostNativeRecord({ headlessRequested: false });
+    expect(
+      resolveEffectiveCommandTimeoutMs({ record, commandPlan: nonHeadlessPlan })
+    ).toBeUndefined();
+  });
+
+  it('leaves the Linux container provider unbounded even with -Headless (working bundled image)', () => {
+    const record = createLinuxHostNativeRecord({ provider: 'linux-container' });
+    expect(
+      resolveEffectiveCommandTimeoutMs({ record, commandPlan: headlessPlan })
+    ).toBeUndefined();
+  });
+
+  it('leaves the lvcompare engine unbounded (does not connect to LabVIEW headless)', () => {
+    const record = createLinuxHostNativeRecord({ engine: 'lvcompare', headlessRequested: true });
+    expect(
+      resolveEffectiveCommandTimeoutMs({ record, commandPlan: headlessPlan })
+    ).toBeUndefined();
+  });
+
+  it('leaves Windows host-native headless unbounded (not the broken Linux surface)', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.headlessRequested = true;
+    expect(
+      resolveEffectiveCommandTimeoutMs({ record, commandPlan: headlessPlan })
+    ).toBeUndefined();
+  });
+
+  it('honors an explicitly configured timeout over the default bound (validation harness wins)', () => {
+    const record = createLinuxHostNativeRecord({ headlessRequested: true });
+    expect(
+      resolveEffectiveCommandTimeoutMs({
+        record,
+        commandPlan: headlessPlan,
+        configuredTimeoutMs: 120000
+      })
+    ).toBe(120000);
   });
 });
 
