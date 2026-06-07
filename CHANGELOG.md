@@ -10,7 +10,7 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
-## [Unreleased]
+## [1.11.0] - 2026-06-06
 
 ### Fixed
 
@@ -31,6 +31,11 @@ Burned exact-version releases now include `v1.0.2`.
   the selected revision's dependencies, so dependency-only changes may not appear
   and loading the older revision against newer dependencies may recompile it and
   distort the rendered diff.
+- The comparison report packet now discloses when the compared VI is itself a
+  member of a LabVIEW library (`.lvlib`) or class (`.lvclass`) at the selected
+  revision, noting that the VI is staged outside its owning library for
+  side-by-side comparison so library-context resolution may differ from the
+  in-project VI.
 
 ## [1.10.2] - 2026-06-03
 
