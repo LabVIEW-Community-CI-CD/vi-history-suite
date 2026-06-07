@@ -21,6 +21,23 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toMatch(/pull_request:\n\s+branches:\n\s+- main\n\s+- develop/);
   });
 
+  it('runs a Windows unit-test leg alongside the required Ubuntu gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('windows-unit-test:');
+    expect(workflow).toContain('name: Windows Unit Tests');
+    expect(workflow).toContain('runs-on: windows-latest');
+
+    // The Windows leg lives after the required Ubuntu job and runs the same
+    // fast unit checks: typecheck plus the unit suite.
+    const windowsJobIndex = workflow.indexOf('windows-unit-test:');
+    expect(windowsJobIndex).toBeGreaterThan(workflow.indexOf('build-test-package:'));
+    const windowsSegment = workflow.slice(windowsJobIndex);
+    expect(windowsSegment).toContain('run: npm ci');
+    expect(windowsSegment).toContain('run: npm run check');
+    expect(windowsSegment).toContain('run: npm test');
+  });
+
   it('keeps branch governance inside the required build-test-package job', () => {
     const workflow = readWorkflow();
 

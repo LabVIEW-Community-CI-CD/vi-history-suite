@@ -146,3 +146,32 @@ jobs:
             dod-gate-report.txt
           if-no-files-found: ignore
           retention-days: 30
+
+  windows-unit-test:
+    name: Windows Unit Tests
+    runs-on: windows-latest
+
+    steps:
+      # Lightweight Windows leg (VHS-REQ-597): runs the same fast unit checks as
+      # the required Ubuntu gate so platform-specific regressions (for example
+      # path-separator assumptions in staging tests) fail closed in CI. It does
+      # not duplicate branch governance, packaging, coverage upload, or the
+      # governance gates, and it does not exercise the heavier Windows/LabVIEW
+      # integration path, which stays maintainer-dispatch.
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run check
+
+      - name: Test
+        run: npm test

@@ -19,6 +19,13 @@ This hosted CI job remains the required public merge gate for `develop` and
 `main`. The same required job also enforces branch governance: normal feature
 work and Dependabot maintenance target `develop`, while only
 `release/vX.Y.Z` and `hotfix/vX.Y.Z` branches target `main`.
+A parallel `Windows Unit Tests` job runs `npm ci`, `npm run check`, and
+`npm test` on `windows-latest` so platform-specific unit regressions (for
+example path-separator assumptions in staging tests) fail closed in CI. It
+intentionally omits packaging, governance gates, and coverage upload, which
+remain in the required Ubuntu `Build, Test, Package` job, and it does not
+exercise the heavier Windows/LabVIEW integration path, which stays
+maintainer-dispatch.
 The traceability audit is part of the required hosted gate so newly added
 implementation, test, workflow, and documentation surfaces remain classified
 before merge, and the customization audit runs before traceability so AGENTS and

@@ -34,7 +34,12 @@ function normalizeAssertPath(candidatePath: string): string {
 }
 
 async function createTempGitRepo(): Promise<string> {
-  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-cli-'));
+  const createdRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-cli-'));
+  // Canonicalize the temp root so it matches what `git rev-parse --show-toplevel`
+  // returns: on Windows runners os.tmpdir() yields an 8.3 short name
+  // (C:\Users\RUNNER~1\...) while git reports the long name
+  // (C:\Users\runneradmin\...), and on macOS /var is a symlink to /private/var.
+  const repoRoot = await fs.realpath(createdRoot);
   tempDirectories.push(repoRoot);
   await runGit(['init'], repoRoot);
   await runGit(['config', 'user.name', 'VI History Suite Test'], repoRoot);
