@@ -261,7 +261,7 @@ export async function readArchivedComparisonReportSourceRecordFromSelection(
   ) as ArchivedComparisonReportSourceRecord;
 }
 
-function buildReportAssetsDirectoryName(reportFilename: string): string {
+export function buildReportAssetsDirectoryName(reportFilename: string): string {
   return reportFilename.replace(/\.html$/i, '') + '_files';
 }
 

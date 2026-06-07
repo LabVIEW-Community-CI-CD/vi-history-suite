@@ -20,6 +20,7 @@ import {
   persistComparisonReportPacket
 } from './comparisonReportPacket';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
+import { ComparisonReportExportRegistry } from './comparisonReportExport';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 
 export interface ComparisonReportActionRequest {
@@ -97,6 +98,7 @@ export interface ComparisonReportActionDeps {
    */
   getCliConnectTimeoutSeconds?: () => number;
   archiveComparisonReportSource?: typeof archiveComparisonReportSource;
+  exportRegistry?: ComparisonReportExportRegistry;
 }
 
 export function createComparisonReportAction(
@@ -639,6 +641,17 @@ async function openPersistedComparisonReportPanel(
       localResourceRoots: [options.context.storageUri!, repoRootUri]
     }
   );
+  deps.exportRegistry?.register(panel, {
+    reportTitle: options.record.reportTitle,
+    generatedReportExists: options.record.runtimeExecution.reportExists,
+    reportFilePath: options.reportFilePath,
+    packetFilePath: options.packetFilePath,
+    reportStatus: options.record.reportStatus,
+    runtimeExecutionState: options.record.runtimeExecutionState,
+    graphicsReportUnavailableReason:
+      deriveComparisonBlockedReason(options.record) ??
+      options.record.runtimeExecution.failureReason
+  });
   const packetWebviewUri = panel.webview.asWebviewUri(packetFileUri).toString();
   const reportWebviewUri = panel.webview.asWebviewUri(reportFileUri).toString();
   const panelHtmlOptions = {
