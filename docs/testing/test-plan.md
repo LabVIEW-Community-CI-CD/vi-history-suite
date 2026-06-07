@@ -26,6 +26,17 @@ intentionally omits packaging, governance gates, and coverage upload, which
 remain in the required Ubuntu `Build, Test, Package` job, and it does not
 exercise the heavier Windows/LabVIEW integration path, which stays
 maintainer-dispatch.
+A parallel `Integration Host (Linux)` job runs the LabVIEW-free VS Code
+extension-host suite through `npm run test:integration:linux` on
+`ubuntu-24.04` (the entrypoint auto-wraps in `xvfb-run`). It exercises
+activation, eligibility indexing, command registration, panel render, and the
+runtime-settings CLI against a real downloaded VS Code, putting a behavioral
+floor under the command/activation layer (notably
+`src/commands/openViHistoryCommand.ts`). The suite uses synthetic VI fixtures
+and self-skips LabVIEW-path assertions, so it needs no LabVIEW, Docker, or real
+compare; the heavier real-runtime compare path stays maintainer-dispatch. This
+leg is behavioral coverage and does not contribute to the vitest coverage
+number, which is collected only in the required `Build, Test, Package` job.
 The traceability audit is part of the required hosted gate so newly added
 implementation, test, workflow, and documentation surfaces remain classified
 before merge, and the customization audit runs before traceability so AGENTS and

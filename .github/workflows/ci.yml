@@ -175,3 +175,34 @@ jobs:
 
       - name: Test
         run: npm test
+
+  integration-host:
+    name: Integration Host (Linux)
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Hosted VS Code extension-host integration leg (VHS-REQ-597): exercises
+      # activation, eligibility indexing, command registration, panel render,
+      # and the runtime-settings CLI on a real downloaded VS Code under xvfb.
+      # The suite is LabVIEW-free (synthetic VI fixtures; LabVIEW-path
+      # assertions self-skip) and does not run Docker or a real compare, so it
+      # is a behavioral floor under the command/activation layer without
+      # requiring the maintainer-dispatch Windows/LabVIEW runner. Coverage is
+      # not collected here; it runs in Electron, outside the vitest run.
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Bootstrap Linux VS Code host
+        run: npm run public:host:bootstrap-linux install
+
+      - name: Integration Host (Linux)
+        run: npm run test:integration:linux
