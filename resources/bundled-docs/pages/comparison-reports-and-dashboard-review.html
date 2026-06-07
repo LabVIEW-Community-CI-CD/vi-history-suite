@@ -42,3 +42,12 @@ Runtime-diagnostic and process-observation detail remain retained for diagnosis,
 <li>retained partial evidence when cancellation happens after artifacts are built</li>
 <li>cancellation honored before a comparison-report panel opens</li>
 </ul>
+<h2>Export For Browser Viewing</h2>
+<p>An open comparison-report panel carries an <code>Export Comparison Report (HTML)</code> action in the editor title bar so you can open the evidence outside VS Code in Edge or Chrome and zoom into the graphics.</p>
+<p>Export behavior includes:</p>
+<ul>
+<li>prompts for an accessible destination folder and writes a self-contained, timestamped bundle</li>
+<li>copies the LabVIEW-generated report together with its graphics dependency folder so block-diagram and front-panel images keep resolving in a browser</li>
+<li>prefers the graphics report and explains the exact reason before falling back to the diagnostic evidence packet when no graphics report is available</li>
+<li>offers to open the exported file in your default browser or reveal it in the OS file manager</li>
+</ul>

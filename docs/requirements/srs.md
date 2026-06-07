@@ -625,6 +625,43 @@ Missing numeric IDs are intentional.
   - Keep the disclosure factual; do not claim a specific comparison defect that
     has not been observed.
 
+### VHS-REQ-626: Comparison Report Export For External Viewing
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall let users export an open comparison report,
+  together with its graphics dependency folder, to a user-chosen accessible
+  location for viewing in an external browser.
+- Acceptance Criteria:
+  - An export action is available from the comparison-report panel title bar
+    while a comparison-report webview panel is the active panel.
+  - The export prefers the LabVIEW-generated graphics report and copies its
+    sibling assets directory so relative image links keep resolving when the
+    exported HTML is opened in an external browser.
+  - When no LabVIEW-generated graphics report is available, the export states
+    the specific reason and only writes the diagnostic evidence packet after an
+    explicit user confirmation.
+  - The export writes a self-contained, timestamped bundle into the
+    user-selected destination folder without overwriting prior exports.
+  - After a successful export the user can open the exported HTML in the default
+    external browser or reveal it in the operating-system file manager.
+  - The comparison-report webview keeps scripts disabled; the export action is
+    driven through the extension command surface rather than in-webview scripts.
+- Agent Work Scope:
+  - Change the export module, panel registration, command registration, and
+    export tests together when changing export behavior.
+- Implementation References:
+  - `src/reporting/comparisonReportExport.ts`
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/comparisonReportExport.test.ts`
+- Change Guidance:
+  - Keep the export limited to copying retained comparison evidence to an
+    accessible location; do not run comparison execution or mutate retained
+    artifacts.
+
 ### VHS-REQ-155: Comparison Runtime Discovery Diagnostics
 
 - Status: Active

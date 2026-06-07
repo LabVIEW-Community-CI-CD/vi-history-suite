@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as vscode from 'vscode';
 
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
@@ -17,6 +18,10 @@ import {
   readComparisonRuntimeSettings,
   createOpenRetainedComparisonReportAction
 } from './reporting/comparisonReportAction';
+import {
+  ComparisonReportExportRegistry,
+  runComparisonReportExport
+} from './reporting/comparisonReportExport';
 import {
   createHumanReviewSubmissionAction,
   resolveHumanReviewMachineCapability
@@ -99,10 +104,15 @@ export async function activate(
   context: vscode.ExtensionContext
 ): Promise<ViHistorySuiteApi> {
   const panelTracker = new HistoryPanelTracker();
-  const comparisonReportAction = createComparisonReportAction(context);
+  const comparisonReportExportRegistry = new ComparisonReportExportRegistry();
+  const comparisonReportAction = createComparisonReportAction(context, {
+    exportRegistry: comparisonReportExportRegistry
+  });
   const ensureComparisonReportEvidenceAction =
     createEnsureComparisonReportEvidenceAction(context);
-  const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
+  const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context, {
+    exportRegistry: comparisonReportExportRegistry
+  });
   const reviewDecisionRecordAction = createReviewDecisionRecordAction(context);
   const humanReviewMachineCapability = resolveHumanReviewMachineCapability();
   const humanReviewSubmissionAction = humanReviewMachineCapability.isCanonicalHostMachine
@@ -261,6 +271,23 @@ export async function activate(
         return runtime.openViHistory(uri);
       }
     )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('labviewViHistory.exportComparisonReport', async () => {
+      return runComparisonReportExport(comparisonReportExportRegistry.getActiveSource(), {
+        showOpenDialog: (options) => vscode.window.showOpenDialog(options),
+        showInformationMessage: (message, ...items) =>
+          vscode.window.showInformationMessage(message, ...items),
+        showWarningMessage: (message, options, ...items) =>
+          vscode.window.showWarningMessage(message, options ?? {}, ...items),
+        showErrorMessage: (message) => vscode.window.showErrorMessage(message),
+        openExternal: (target) => vscode.env.openExternal(target),
+        executeCommand: (command, ...rest) => vscode.commands.executeCommand(command, ...rest),
+        uriFile: (fsPath) => vscode.Uri.file(fsPath),
+        defaultDestinationDirectory: os.homedir()
+      });
+    })
   );
 
   context.subscriptions.push(
