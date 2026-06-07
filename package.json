@@ -192,7 +192,8 @@
     "docs:links": "node scripts/checkDocsLinks.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
     "dod:gate": "node scripts/checkDefinitionOfDone.js",
-    "closeout:evidence": "node scripts/generateCloseoutEvidence.js"
+    "closeout:evidence": "node scripts/generateCloseoutEvidence.js",
+    "validation:file-gap": "node scripts/fileLinuxValidationGap.js"
   },
   "devDependencies": {
     "@types/node": "^24.12.4",
