@@ -19,6 +19,24 @@ This hosted CI job remains the required public merge gate for `develop` and
 `main`. The same required job also enforces branch governance: normal feature
 work and Dependabot maintenance target `develop`, while only
 `release/vX.Y.Z` and `hotfix/vX.Y.Z` branches target `main`.
+A parallel `Windows Unit Tests` job runs `npm ci`, `npm run check`, and
+`npm test` on `windows-latest` so platform-specific unit regressions (for
+example path-separator assumptions in staging tests) fail closed in CI. It
+intentionally omits packaging, governance gates, and coverage upload, which
+remain in the required Ubuntu `Build, Test, Package` job, and it does not
+exercise the heavier Windows/LabVIEW integration path, which stays
+maintainer-dispatch.
+A parallel `Integration Host (Linux)` job runs the LabVIEW-free VS Code
+extension-host suite through `npm run test:integration:linux` on
+`ubuntu-24.04` (the entrypoint auto-wraps in `xvfb-run`). It exercises
+activation, eligibility indexing, command registration, panel render, and the
+runtime-settings CLI against a real downloaded VS Code, putting a behavioral
+floor under the command/activation layer (notably
+`src/commands/openViHistoryCommand.ts`). The suite uses synthetic VI fixtures
+and self-skips LabVIEW-path assertions, so it needs no LabVIEW, Docker, or real
+compare; the heavier real-runtime compare path stays maintainer-dispatch. This
+leg is behavioral coverage and does not contribute to the vitest coverage
+number, which is collected only in the required `Build, Test, Package` job.
 The traceability audit is part of the required hosted gate so newly added
 implementation, test, workflow, and documentation surfaces remain classified
 before merge, and the customization audit runs before traceability so AGENTS and
@@ -45,12 +63,18 @@ the machine-readable coverage outputs from that run through the
 - `coverage/coverage-summary.json`
 
 The enforced coverage thresholds in `vitest.config.ts` are evidence-backed
-baseline regression floors: 60% statements, 50% branches, 65% functions, and
-60% lines. These floors were ratcheted after the coverage-led assurance wave
-measured 68.73% statements, 56.85% branches, 78.07% functions, and 68.74%
-lines on merged `develop`; they are not a claim that the repository has
-complete coverage. Raise the thresholds only in a PR that shows new coverage
-evidence and updates this test plan with the new baseline.
+baseline regression floors: 71% statements, 60% branches, 78% functions, and
+71% lines. These floors were ratcheted after the C1+C2 runtime branch-coverage
+work, when merged `develop` measured 74.0% statements, 62.72% branches, 80.08%
+functions, and 74.02% lines on the lower-running Ubuntu CI leg; they are not a
+claim that the repository has complete coverage. The two highest-risk
+comparison-runtime files
+(`src/reporting/comparisonRuntimeLocator.ts` and
+`src/reporting/comparisonReportRuntimeExecution.ts`) additionally carry per-file
+floors pinned just under their current actuals to prevent silent branch-coverage
+drift on provider-selection and fail-closed paths. Raise the thresholds only in
+a PR that shows new coverage evidence and updates this test plan with the new
+baseline.
 
 ## Coverage Traceability Map
 
@@ -66,7 +90,7 @@ and to justify future coverage threshold ratchets.
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
 | --- | --- | --- | --- | --- |
-| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 60% statements, 50% branches, 65% functions, and 60% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 71% statements, 60% branches, 78% functions, and 71% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
 | VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts | tests/unit/openViHistoryCommand.test.ts | User-facing command stops cover missing URI, trust gate, ineligible file guidance, history-load failures, documentation routing, and explicit cancellation stages. |
 | VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/viHistoryModel.test.ts; tests/unit/historyPanelRendering.test.ts | History model facts cover repository/path/signature/history-window decisions and previous-hash links before rendering. |
 | VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts; src/ui/historyPanelTracker.ts | tests/unit/openViHistoryCommand.test.ts; tests/unit/historyPanelTracker.test.ts | Review packet and hash copy routes are verified through clipboard and panel action summaries. |

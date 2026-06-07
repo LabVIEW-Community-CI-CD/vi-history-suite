@@ -10,6 +10,33 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.11.1] - 2026-06-07
+
+### Fixed
+
+- Opting into Linux host-native headless comparisons with
+  `LV_RTE_LINUX_HEADLESS=1` no longer hangs indefinitely on LabVIEW builds whose
+  `HeadlessManager` is broken (for example LabVIEW Community 2026 `26.1.1f1`,
+  which logs `Failed to initialize headless LabVIEW.` every 10 seconds and never
+  binds a session). The production comparison path wired no command timeout, so
+  the opt-in `-Headless` CLI could stall during VI load and the post-process
+  headless classifier never ran. The host-native headless opt-in is now bounded
+  by a default timeout, converting the stall into a deterministic
+  `command-timed-out` failure that still surfaces the
+  `linux-headless-init-failed` diagnostic and its remediation guidance (set
+  `LV_RTE_LINUX_HEADLESS=0` to opt out, or use the Linux container provider). The
+  safe non-headless default and the working Linux container provider remain
+  unbounded and unchanged.
+- A successful Linux **container** comparison run on a Linux host is no longer
+  contaminated by a stale host-native headless log. The headless diagnostic
+  scanner read host `/tmp` whenever the host platform was Linux, so a prior
+  host-native run's leftover `lvrt_*_headless_*_cur.txt` (with
+  `Failed to initialize headless LabVIEW.`) could bleed into a passing container
+  run and surface a misleading failure note. The linux-container provider now
+  reads only its mapped container-temp directory (matching the windows-container
+  provider), and headless bring-up notes are gated on run success so they can
+  never appear on a successful run.
+
 ## [1.11.0] - 2026-06-06
 
 ### Fixed

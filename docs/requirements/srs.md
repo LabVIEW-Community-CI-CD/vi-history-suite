@@ -865,8 +865,8 @@ Missing numeric IDs are intentional.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
   - The workflow enforces the baseline global coverage thresholds declared in
-    `vitest.config.ts`: 60% statements, 50% branches, 65% functions, and
-    60% lines after the coverage-led assurance wave.
+    `vitest.config.ts`: 71% statements, 60% branches, 78% functions, and
+    71% lines after the coverage-led assurance wave.
   - The workflow runs `npm run package`.
   - The workflow runs `npm run dod:gate` through the `DoD Gate / dod` step
     after `npm run package`.
@@ -874,6 +874,16 @@ Missing numeric IDs are intentional.
     `hotfix/**` branch pushes.
   - Pull request branch governance is enforced inside the required
     `Build, Test, Package` job.
+  - A parallel `Windows Unit Tests` job runs `npm ci`, `npm run check`, and
+    `npm test` on `windows-latest` so platform-specific unit regressions fail
+    closed in CI without promoting the heavier Windows/LabVIEW integration path
+    to a required gate.
+  - A parallel `Integration Host (Linux)` job runs the LabVIEW-free VS Code
+    extension-host suite via `npm run test:integration:linux` on
+    `ubuntu-24.04`, exercising activation, eligibility indexing, command
+    registration, panel render, and the runtime-settings CLI so command-layer
+    regressions fail closed; it requires no LabVIEW, Docker, or real compare and
+    does not collect coverage (it runs in Electron, outside the vitest run).
 - Agent Work Scope:
   - Change workflow commands and test plan together.
 - Implementation References:

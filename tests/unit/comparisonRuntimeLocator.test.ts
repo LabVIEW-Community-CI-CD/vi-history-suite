@@ -824,3 +824,206 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     expect(selection.blockedReason).toBeUndefined();
   });
 });
+
+describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS-REQ-621)', () => {
+  function contaminatedHostProcessObservation() {
+    return {
+      capturedAt: '2026-05-31T00:00:00.000Z',
+      hostPlatform: 'win32' as const,
+      runtimePlatform: 'win32',
+      trigger: 'preflight' as const,
+      observedProcesses: [{ imageName: 'LabVIEW.exe', pid: 4321 }],
+      observedProcessNames: ['LabVIEW.exe'],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false,
+      labviewProcessBitness: 'x64',
+      labviewProcessExecutablePath: WINDOWS_LABVIEW_2026_X64
+    };
+  }
+
+  it('names a missing LabVIEW version alone before probing runtime tools', async () => {
+    const selection = await locateComparisonRuntime('win32', {
+      requestedProvider: 'host',
+      requireVersionAndBitness: true,
+      bitness: 'x64'
+    });
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-version-required',
+      bitness: 'x64'
+    });
+    expect(selection.notes.join('\n')).toContain('viHistorySuite.labviewVersion');
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-labview-version-required'
+      })
+    );
+  });
+
+  it('names a missing LabVIEW bitness alone before probing runtime tools', async () => {
+    const selection = await locateComparisonRuntime('win32', {
+      requestedProvider: 'host',
+      requireVersionAndBitness: true,
+      labviewVersion: '2026'
+    });
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-bitness-required',
+      requestedLabviewVersion: '2026'
+    });
+    expect(selection.notes.join('\n')).toContain('viHistorySuite.labviewBitness');
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-labview-bitness-required'
+      })
+    );
+  });
+
+  it('blocks macOS hosts as unsupported for LabVIEW 2026 Q1 comparison reports', async () => {
+    const selection = await locateComparisonRuntime('darwin', {
+      requestedProvider: 'host',
+      labviewVersion: '2026',
+      bitness: 'x64'
+    });
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-2026q1-unsupported-on-macos'
+    });
+    expect(selection.notes.join('\n')).toContain('macOS');
+  });
+
+  it('retains a missing configured LabVIEW executable path as a checked candidate fact', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64',
+        labviewExePath: 'C:\\missing\\LabVIEW.exe'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false)
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'configured-labview-exe-path-missing',
+      requestedLabviewVersion: '2026'
+    });
+    expect(selection.candidates).toContainEqual(
+      expect.objectContaining({
+        kind: 'labview-exe',
+        path: 'C:\\missing\\LabVIEW.exe',
+        source: 'configured',
+        exists: false
+      })
+    );
+  });
+
+  it('blocks docker-only execution for a not-yet-implemented LabVIEW version', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2025',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(windowsContainerFacts())
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-provider-labview-version-not-implemented',
+      requestedLabviewVersion: '2025'
+    });
+    expect(selection.notes.join('\n')).toContain('not implemented yet');
+  });
+
+  it('blocks docker-only execution that requests x86 instead of the supported x64 container', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2026',
+        bitness: 'x86'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(windowsContainerFacts())
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-only-requires-windows-x64-provider',
+      bitness: 'x86'
+    });
+    expect(selection.notes.join('\n')).toContain('64-bit container provider');
+  });
+
+  it('blocks docker-only execution when the container provider is unavailable', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            dockerCliAvailable: false,
+            dockerDaemonReachable: false,
+            windowsContainerCapabilityAvailable: false,
+            imageAvailable: false,
+            notes: ['Docker CLI is not available.']
+          })
+        )
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-only-provider-unavailable',
+      requestedLabviewVersion: '2026',
+      bitness: 'x64'
+    });
+  });
+
+  it('blocks host-native compare when the Windows host runtime surface is contaminated', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(contaminatedHostProcessObservation()) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'windows-host-runtime-surface-contaminated'
+    });
+    expect(selection.notes.join('\n')).toContain('contaminated');
+  });
+});

@@ -253,6 +253,25 @@ export interface RunComparisonCommandPlanWithObservationDeps {
   terminateProcessTree?: (pid: number, hostPlatform: NodeJS.Platform) => Promise<void>;
 }
 
+/**
+ * VHS-REQ-156 (issue #269): default command bound (ms) applied only to the Linux
+ * host-native headless OPT-IN path (`LV_RTE_LINUX_HEADLESS=1`). On LabVIEW builds
+ * with a broken `HeadlessManager` (e.g. 2026 26.1.1f1, which logs "Failed to
+ * initialize headless LabVIEW." every 10s and never binds a session) the
+ * `-Headless` CLI hangs indefinitely during VI load. The production action wires
+ * no `commandTimeoutMs`, so without this bound the post-process headless classifier
+ * never fires and the operator sees an unbounded stall. Bounding the opt-in path
+ * converts the stall into a deterministic `command-timed-out` failure that still
+ * carries the `linux-headless-init-failed` diagnostic and remediation guidance.
+ *
+ * The value is well above the 180s (`DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS`)
+ * app-reference connect window so a legitimately slow-but-working headless run on
+ * a healthy build is never killed prematurely; it matches the existing
+ * `DEFAULT_GIT_TIMEOUT_MS` convention. The safe non-headless default (no
+ * `-Headless`) and the working Linux container provider stay unbounded.
+ */
+export const LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS = 300000;
+
 export async function executeComparisonReport(
   options: ExecuteComparisonReportOptions,
   deps: ComparisonReportRuntimeExecutionDeps = {}
@@ -273,6 +292,15 @@ export async function executeComparisonReport(
   const observeWindowsProcesses = deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses;
   const observeWindowsTcpListenersFn =
     deps.observeWindowsTcpListeners ?? observeWindowsTcpListeners;
+  // VHS-REQ-156 (issue #269): bound the Linux host-native headless opt-in so a
+  // broken HeadlessManager cannot hang indefinitely without surfacing the
+  // linux-headless-init-failed diagnostic. An explicitly configured timeout always
+  // wins; all other paths stay unbounded as before.
+  const effectiveCommandTimeoutMs = resolveEffectiveCommandTimeoutMs({
+    record: options.record,
+    commandPlan: plan.commandPlan,
+    configuredTimeoutMs: deps.commandTimeoutMs
+  });
   const runCommand =
     deps.runCommand ??
     buildDefaultRunCommand({
@@ -281,7 +309,7 @@ export async function executeComparisonReport(
       runtimePlatform: resolveEffectiveRuntimePlatform(options.record.runtimeSelection),
       observeWindowsProcesses,
       engine: options.record.runtimeSelection.engine,
-      timeoutMs: deps.commandTimeoutMs,
+      timeoutMs: effectiveCommandTimeoutMs,
       cancellationToken: options.cancellationToken
     });
   const nowIso = deps.nowIso ?? defaultNowIso;
@@ -370,7 +398,7 @@ export async function executeComparisonReport(
         enforceWindowsHostPreflight,
         observeWindowsProcesses,
         observeWindowsTcpListeners: observeWindowsTcpListenersFn,
-        commandTimeoutMs: deps.commandTimeoutMs,
+        commandTimeoutMs: effectiveCommandTimeoutMs,
         diagnosticsRecorder,
         cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
       }
@@ -999,6 +1027,13 @@ async function runHostNativeExecutionWithContext(
         linuxLabviewTcpSettings.notes,
         windowsContainerRuntimeFacts.notes,
         diagnostics.notes,
+        // Headless bring-up notes describe a failure to initialize LabVIEW headless.
+        // Gate them on success exactly like diagnosticReason so a stale or residual
+        // headless log can never contaminate a passing run's evidence (issue #270).
+        // Only the headless notes are gated here; process-observation, TCP,
+        // container-fact, timeout, preparation, and failure-classification notes are
+        // always retained.
+        succeeded ? [] : (diagnostics.headlessNotes ?? []),
         timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
         failureClassification.notes,
@@ -1102,6 +1137,9 @@ async function runHostNativeExecutionWithContext(
           windowsLabviewTcpSettings.notes,
           linuxLabviewTcpSettings.notes,
           diagnostics.notes,
+          // This branch is always a failure (command-spawn or report-finalize), so the
+          // headless bring-up notes are retained rather than gated (issue #270).
+          diagnostics.headlessNotes ?? [],
           executionContext.preparationNotes,
           failureNote
         ),
@@ -1266,6 +1304,11 @@ async function persistRuntimePreflightObservation(
 interface CapturedRuntimeDiagnostics {
   reason?: string;
   notes: string[];
+  // Notes derived from the Linux headless status logs (LVStatus.txt / lvrt headless
+  // logs). Kept separate from `notes` so the caller can gate them on run success
+  // exactly like the headless diagnosticReason — a successful run must never surface
+  // a headless bring-up failure note (see issue #270).
+  headlessNotes?: string[];
   sourcePath?: string;
   artifactPath?: string;
   headlessArtifactPaths?: string[];
@@ -1805,7 +1848,8 @@ async function captureRuntimeDiagnostics(
     await clearStaleArtifactIfPresent();
     return {
       reason: selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason),
-      notes: mergeDiagnosticNotes(stderrClassification.notes, headlessDiagnostics.notes),
+      notes: mergeDiagnosticNotes(stderrClassification.notes),
+      headlessNotes: headlessDiagnostics.notes,
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
   }
@@ -1820,9 +1864,9 @@ async function captureRuntimeDiagnostics(
     return {
       notes: mergeDiagnosticNotes(
         stderrClassification.notes,
-        ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.'],
-        headlessDiagnostics.notes
+        ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.']
       ),
+      headlessNotes: headlessDiagnostics.notes,
       sourcePath: diagnosticLogSourcePath,
       reason:
         selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason) ??
@@ -1842,7 +1886,8 @@ async function captureRuntimeDiagnostics(
       stderrClassification.reason,
       classification.reason
     ),
-    notes: mergeDiagnosticNotes(stderrClassification.notes, classification.notes, headlessDiagnostics.notes),
+    notes: mergeDiagnosticNotes(stderrClassification.notes, classification.notes),
+    headlessNotes: headlessDiagnostics.notes,
     sourcePath: diagnosticLogSourcePath,
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
@@ -1927,6 +1972,50 @@ function isHeadlessLabviewCliExecution(args: string[] | undefined): boolean {
 
   const headlessIndex = args.findIndex((argument) => argument.toLowerCase() === '-headless');
   return headlessIndex >= 0;
+}
+
+/**
+ * VHS-REQ-156 (issue #269): the Linux host-native headless OPT-IN path is the only
+ * surface that can hang indefinitely on a broken `HeadlessManager`. The env-var
+ * opt-in (`LV_RTE_LINUX_HEADLESS=1`) is reflected as `-Headless` in the resolved
+ * command plan even when `headlessRequested` was not persisted, so detect both the
+ * persisted flag and the actual `-Headless` argument. The linux-container provider
+ * is deliberately excluded: its bundled image initializes headless mode correctly
+ * and must stay unbounded.
+ */
+function isLinuxHostNativeHeadlessOptIn(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan | undefined
+): boolean {
+  return (
+    resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'linux' &&
+    record.runtimeSelection.engine === 'labview-cli' &&
+    record.runtimeSelection.provider === 'host-native' &&
+    (record.runtimeSelection.headlessRequested === true ||
+      isHeadlessLabviewCliExecution(commandPlan?.args))
+  );
+}
+
+/**
+ * VHS-REQ-156 (issue #269): resolve the effective command timeout (ms). An
+ * explicitly configured `commandTimeoutMs` always wins (e.g. a validation harness
+ * bound). Otherwise the Linux host-native headless opt-in receives a default bound
+ * so a broken HeadlessManager surfaces `linux-headless-init-failed` deterministically
+ * instead of stalling forever. All other paths (non-headless default, container
+ * providers, non-Linux, non-CLI) stay unbounded by returning `undefined`.
+ */
+export function resolveEffectiveCommandTimeoutMs(options: {
+  record: ComparisonReportPacketRecord;
+  commandPlan: ComparisonCommandPlan | undefined;
+  configuredTimeoutMs?: number;
+}): number | undefined {
+  if (typeof options.configuredTimeoutMs === 'number') {
+    return options.configuredTimeoutMs;
+  }
+  if (isLinuxHostNativeHeadlessOptIn(options.record, options.commandPlan)) {
+    return LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS;
+  }
+  return undefined;
 }
 
 async function attemptLabviewCliHeadlessSessionReset(
@@ -2127,8 +2216,14 @@ async function captureLinuxHeadlessDiagnostics(
     };
   }
 
+  // A genuine host-native Linux run leaves its LabVIEW headless logs in the host
+  // /tmp. A linux-container run, even on a Linux host, writes them under the mapped
+  // container-temp (diagnosticPathMapping.hostRoot) exactly like the windows-container
+  // provider. Reading host /tmp for a container run would let a PRIOR host-native
+  // run's stale /tmp/lvrt_*_headless_*_cur.txt bleed into the container run's
+  // diagnostics, so only the host-native provider may read /tmp (see issue #270).
   const sourceRoot =
-    deps.processPlatform === 'linux'
+    deps.processPlatform === 'linux' && record.runtimeSelection.provider !== 'linux-container'
       ? '/tmp'
       : deps.diagnosticPathMapping?.hostRoot ?? path.join(record.artifactPlan.reportDirectory, 'container-temp');
   const artifactRoot = path.join(record.artifactPlan.reportDirectory, 'headless-diagnostics');
