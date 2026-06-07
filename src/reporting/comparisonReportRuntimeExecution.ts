@@ -528,18 +528,84 @@ export type MaterializeSelectedRevisionTree = (
 ) => Promise<void>;
 
 /**
- * VHS-REQ-624: default selected-revision tree materializer. Streams
- * `git archive <revision> -- <pathspec>` into `tar -x` so the staged VIs sit
- * beside their in-repo dependencies at the recorded revision. Used by the
- * host-native and container providers; wired at the production action call site
- * and injected explicitly by unit tests so execution stays deterministic.
+ * VHS-REQ-624: runs a single git invocation to completion, resolving on a clean
+ * exit and rejecting with captured stderr otherwise. Injected by unit tests so
+ * the materializer's command sequence stays deterministically assertable.
+ */
+export type RunGitToCompletion = (
+  args: string[],
+  options: { env: NodeJS.ProcessEnv }
+) => Promise<void>;
+
+export interface MaterializeSelectedRevisionTreeDeps {
+  runGit?: RunGitToCompletion;
+  mkdtemp?: typeof fs.mkdtemp;
+  removePath?: typeof fs.rm;
+  tmpdir?: () => string;
+}
+
+/**
+ * VHS-REQ-624: default selected-revision tree materializer. Faithfully
+ * reproduces every file tracked at the selected revision into
+ * `destinationRoot` so the staged VIs resolve their in-repo dependencies at
+ * load time. It populates an isolated temporary index with
+ * `git read-tree <revision>` and then `git checkout-index -a -f` against an
+ * alternate work tree. Unlike `git archive` (the prior implementation),
+ * `checkout-index` mirrors the full tracked tree: files excluded from archives
+ * via `.gitattributes export-ignore` are still materialized, so in-repo
+ * dependencies under export-ignored paths resolve instead of rendering as
+ * whiteboxes. Used by the host-native and container providers; wired at the
+ * production action call site and injectable for deterministic unit tests.
  */
 export async function materializeSelectedRevisionTreeWithGit(
-  options: MaterializeSelectedRevisionTreeOptions
+  options: MaterializeSelectedRevisionTreeOptions,
+  deps: MaterializeSelectedRevisionTreeDeps = {}
 ): Promise<void> {
-  const pathspec = options.pathspec?.trim() || '.';
+  const runGit = deps.runGit ?? spawnGitToCompletion;
+  const mkdtemp = deps.mkdtemp ?? fs.mkdtemp;
+  const removePath = deps.removePath ?? fs.rm;
+  const tmpdir = deps.tmpdir ?? os.tmpdir;
 
-  await new Promise<void>((resolve, reject) => {
+  // Reconstruct the tree through an isolated temporary index so it never
+  // disturbs the repository's real index. GIT_INDEX_FILE is absolute because
+  // git runs with the repository as its working directory.
+  const indexParent = await mkdtemp(path.join(tmpdir(), 'vihs-stage-index-'));
+  const indexFile = path.join(indexParent, 'index');
+  const env = { ...process.env, GIT_INDEX_FILE: indexFile };
+
+  try {
+    // Populate the temp index with the selected revision's full tree.
+    await runGit(['-C', options.repositoryRoot, 'read-tree', options.revisionId], { env });
+    // Check out every tracked entry into the destination work tree.
+    // `checkout-index` creates the directory structure and does not apply the
+    // archive-only `export-ignore` attribute, so the materialized tree mirrors
+    // the repository at the revision.
+    await runGit(
+      [
+        '-C',
+        options.repositoryRoot,
+        '--work-tree',
+        options.destinationRoot,
+        'checkout-index',
+        '-a',
+        '-f'
+      ],
+      { env }
+    );
+  } finally {
+    try {
+      await removePath(indexParent, { recursive: true, force: true });
+    } catch {
+      // Best-effort cleanup of the temporary index; ignore failures.
+    }
+  }
+}
+
+function spawnGitToCompletion(
+  args: string[],
+  options: { env: NodeJS.ProcessEnv }
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
     let settled = false;
     const fail = (error: Error): void => {
       if (!settled) {
@@ -548,42 +614,18 @@ export async function materializeSelectedRevisionTreeWithGit(
       }
     };
 
-    const git = spawn(
-      'git',
-      ['-C', options.repositoryRoot, 'archive', '--format=tar', options.revisionId, '--', pathspec],
-      { windowsHide: true }
-    );
-    const tar = spawn('tar', ['-x', '-C', options.destinationRoot], { windowsHide: true });
-
-    let gitStderr = '';
-    git.stderr?.on('data', (chunk) => {
-      gitStderr += String(chunk);
+    const child = spawn('git', args, { windowsHide: true, env: options.env });
+    let stderr = '';
+    child.stderr?.on('data', (chunk) => {
+      stderr += String(chunk);
     });
-    let tarStderr = '';
-    tar.stderr?.on('data', (chunk) => {
-      tarStderr += String(chunk);
-    });
-
-    git.on('error', fail);
-    tar.on('error', fail);
-    if (git.stdout && tar.stdin) {
-      git.stdout.pipe(tar.stdin);
-    } else {
-      fail(new Error('git archive / tar pipe could not be established'));
-      return;
-    }
-
-    git.on('close', (code) => {
-      if (code !== 0) {
-        fail(new Error(`git archive exited ${code}: ${gitStderr.trim()}`));
-      }
-    });
-    tar.on('close', (code) => {
+    child.on('error', fail);
+    child.on('close', (code) => {
       if (settled) {
         return;
       }
       if (code !== 0) {
-        fail(new Error(`tar extract exited ${code}: ${tarStderr.trim()}`));
+        fail(new Error(`git ${args.join(' ')} exited ${code}: ${stderr.trim()}`));
         return;
       }
       settled = true;

@@ -1,4 +1,7 @@
+import { execFileSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -9,6 +12,7 @@ import {
 import {
   classifyLabviewCliDiagnosticText,
   executeComparisonReport,
+  materializeSelectedRevisionTreeWithGit,
   inferLabviewBitnessFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
@@ -3734,5 +3738,158 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.state).toBe('failed');
     expect(result.record.runtimeExecution.attempted).toBe(false);
     expect(result.record.runtimeExecution.failureReason).toBe('container-image-unavailable');
+  });
+});
+
+describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
+  async function createTempGitRepo(): Promise<string> {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-repo-'));
+    execFileSync('git', ['-C', root, 'init', '-q'], { stdio: 'pipe' });
+    execFileSync('git', ['-C', root, 'config', 'user.email', 'test@example.com'], { stdio: 'pipe' });
+    execFileSync('git', ['-C', root, 'config', 'user.name', 'Test'], { stdio: 'pipe' });
+    execFileSync('git', ['-C', root, 'config', 'commit.gpgsign', 'false'], { stdio: 'pipe' });
+    return root;
+  }
+
+  it('faithfully materializes every tracked file at the revision, including export-ignored in-repo dependencies', async () => {
+    const repoRoot = await createTempGitRepo();
+    const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
+    try {
+      // Top-level compared VI.
+      await fs.writeFile(path.join(repoRoot, 'lv_icon.vi'), 'top');
+      // Nested in-repo dependency with a space in the filename.
+      const controlsDir = path.join(repoRoot, 'resource', 'plugins', 'NIIconEditor', 'Controls');
+      await fs.mkdir(controlsDir, { recursive: true });
+      await fs.writeFile(path.join(controlsDir, 'References Cluster.ctl'), 'ctl');
+      // An in-repo dependency that `git archive` would silently drop via export-ignore.
+      await fs.writeFile(path.join(repoRoot, 'EXPORT_IGNORED.vi'), 'dep');
+      await fs.writeFile(path.join(repoRoot, '.gitattributes'), 'EXPORT_IGNORED.vi export-ignore\n');
+      execFileSync('git', ['-C', repoRoot, 'add', '-A'], { stdio: 'pipe' });
+      execFileSync('git', ['-C', repoRoot, 'commit', '-qm', 'seed'], { stdio: 'pipe' });
+      const revisionId = execFileSync('git', ['-C', repoRoot, 'rev-parse', 'HEAD'], { stdio: 'pipe' })
+        .toString()
+        .trim();
+
+      await materializeSelectedRevisionTreeWithGit({
+        repositoryRoot: repoRoot,
+        revisionId,
+        destinationRoot,
+        pathspec: '.'
+      });
+
+      // The export-ignored in-repo dependency must be present. This is the bug:
+      // with the prior `git archive` implementation it was dropped, leaving the
+      // relocated VI unable to resolve it (LabVIEW renders a whitebox).
+      await expect(fs.access(path.join(destinationRoot, 'EXPORT_IGNORED.vi'))).resolves.toBeUndefined();
+      // The nested, space-containing dependency and the compared VI itself are present too.
+      await expect(
+        fs.access(
+          path.join(
+            destinationRoot,
+            'resource',
+            'plugins',
+            'NIIconEditor',
+            'Controls',
+            'References Cluster.ctl'
+          )
+        )
+      ).resolves.toBeUndefined();
+      await expect(fs.access(path.join(destinationRoot, 'lv_icon.vi'))).resolves.toBeUndefined();
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+      await fs.rm(destinationRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('fails closed when the selected revision cannot be read', async () => {
+    const repoRoot = await createTempGitRepo();
+    const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
+    try {
+      // No commits exist, so reading an arbitrary revision must reject rather
+      // than silently producing an empty staged tree.
+      await expect(
+        materializeSelectedRevisionTreeWithGit({
+          repositoryRoot: repoRoot,
+          revisionId: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
+          destinationRoot,
+          pathspec: '.'
+        })
+      ).rejects.toThrow();
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+      await fs.rm(destinationRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('reconstructs through an isolated temp index (read-tree then checkout-index) and removes it', async () => {
+    const calls: Array<{ args: string[]; env: NodeJS.ProcessEnv }> = [];
+    const runGit = vi.fn(async (args: string[], opts: { env: NodeJS.ProcessEnv }) => {
+      calls.push({ args, env: opts.env });
+    });
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-AAAA');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+
+    await materializeSelectedRevisionTreeWithGit(
+      {
+        repositoryRoot: '/workspace/repo',
+        revisionId: 'abcdef1234567890',
+        destinationRoot: '/stage/dest',
+        pathspec: '.'
+      },
+      { runGit, mkdtemp: mkdtemp as never, removePath: removePath as never, tmpdir }
+    );
+
+    expect(calls).toHaveLength(2);
+    // The temp index is populated from the revision's full tree first.
+    expect(calls[0].args).toEqual(['-C', '/workspace/repo', 'read-tree', 'abcdef1234567890']);
+    // Then every tracked entry is checked out into the destination work tree.
+    expect(calls[1].args).toEqual([
+      '-C',
+      '/workspace/repo',
+      '--work-tree',
+      '/stage/dest',
+      'checkout-index',
+      '-a',
+      '-f'
+    ]);
+    // Both git steps share the isolated temporary index via GIT_INDEX_FILE.
+    const expectedIndex = path.join('/tmp/vihs-stage-index-AAAA', 'index');
+    expect(calls[0].env.GIT_INDEX_FILE).toBe(expectedIndex);
+    expect(calls[1].env.GIT_INDEX_FILE).toBe(expectedIndex);
+    // The temporary index is cleaned up afterward.
+    expect(removePath).toHaveBeenCalledWith('/tmp/vihs-stage-index-AAAA', {
+      recursive: true,
+      force: true
+    });
+  });
+
+  it('cleans up the temporary index even when a git step fails', async () => {
+    const runGit = vi.fn(async () => {
+      throw new Error('read-tree boom');
+    });
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-BBBB');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+
+    await expect(
+      materializeSelectedRevisionTreeWithGit(
+        {
+          repositoryRoot: '/r',
+          revisionId: 'rev',
+          destinationRoot: '/d',
+          pathspec: '.'
+        },
+        { runGit, mkdtemp: mkdtemp as never, removePath: removePath as never, tmpdir }
+      )
+    ).rejects.toThrow('read-tree boom');
+
+    // checkout-index is never attempted once read-tree fails ...
+    expect(runGit).toHaveBeenCalledTimes(1);
+    // ... but the temporary index is still removed.
+    expect(removePath).toHaveBeenCalledWith('/tmp/vihs-stage-index-BBBB', {
+      recursive: true,
+      force: true
+    });
   });
 });

@@ -563,6 +563,10 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - A single tree is materialized from the selected (newest) revision; the base
     revision does not receive its own tree.
+  - Tree materialization faithfully reproduces every file tracked at the
+    selected revision, including paths excluded from `git archive` by
+    `.gitattributes export-ignore`, so in-repo dependencies are present beside
+    the staged VIs at load time instead of being dropped.
   - Both compared VI blobs are written at the compared VI's normalized
     repo-relative path inside that tree, under distinct left and right filenames,
     so the two top-level VIs never collide on qualified name in one LabVIEW
@@ -592,6 +596,10 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Optimize for dependency load success and simplicity; do not claim
     per-revision dependency fidelity or true historical diffing.
+  - Materialize the tree with a faithful working-tree checkout (for example a
+    temporary-index `git read-tree` then `git checkout-index`), not
+    `git archive`, so files excluded by `.gitattributes export-ignore` are not
+    dropped from the staged tree.
 
 ### VHS-REQ-625: Library-Member Compared-VI Disclosure
 
