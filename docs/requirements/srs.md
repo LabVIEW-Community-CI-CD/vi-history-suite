@@ -874,6 +874,10 @@ Missing numeric IDs are intentional.
     `hotfix/**` branch pushes.
   - Pull request branch governance is enforced inside the required
     `Build, Test, Package` job.
+  - A parallel `Windows Unit Tests` job runs `npm ci`, `npm run check`, and
+    `npm test` on `windows-latest` so platform-specific unit regressions fail
+    closed in CI without promoting the heavier Windows/LabVIEW integration path
+    to a required gate.
 - Agent Work Scope:
   - Change workflow commands and test plan together.
 - Implementation References:
