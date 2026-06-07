@@ -18,7 +18,9 @@ import {
   buildLinuxHostNativeShortPathCommandPlan,
   shouldUseLinuxHostNativeShortPathStaging,
   rewriteLabviewCliArgsForLinuxContainerWorkspace,
-  runComparisonCommandPlanWithObservation
+  runComparisonCommandPlanWithObservation,
+  prepareWindowsContainerExecutionContext,
+  prepareLinuxContainerExecutionContext
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
@@ -3049,5 +3051,217 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       expect.objectContaining({ repositoryRoot: 'C:\\repo', revisionId: record.selectedHash })
     );
     expect(result.record.runtimeExecution.materializedTree?.revisionId).toBe(record.selectedHash);
+  });
+});
+
+describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-148, VHS-REQ-156, VHS-REQ-624)', () => {
+  const containerCommandPlan = { executable: 'docker', args: ['run'] };
+
+  function containerBuilderDeps(processPlatform: NodeJS.Platform) {
+    return {
+      mkdir: vi.fn().mockResolvedValue(undefined) as never,
+      writeFile: vi.fn().mockResolvedValue(undefined) as never,
+      processPlatform,
+      leftBlob: Buffer.from('left'),
+      rightBlob: Buffer.from('right')
+    };
+  }
+
+  it('blocks the Windows container context when no container image is configured', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.containerImage = '';
+    record.runtimeSelection.windowsContainerImage = undefined;
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      containerCommandPlan,
+      undefined,
+      containerBuilderDeps('win32')
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('container-image-unavailable');
+  });
+
+  it('blocks the Windows container context when the interop workspace root is unavailable', async () => {
+    const record = createWindowsContainerReadyRecord();
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      containerCommandPlan,
+      undefined,
+      containerBuilderDeps('linux')
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('windows-interop-root-unavailable');
+  });
+
+  it('blocks the Linux container context when no container image is configured', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.provider = 'linux-container';
+    record.runtimeSelection.containerImage = '';
+    record.runtimeSelection.windowsContainerImage = undefined;
+
+    const context = await prepareLinuxContainerExecutionContext(
+      record,
+      containerCommandPlan,
+      undefined,
+      containerBuilderDeps('linux')
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('container-image-unavailable');
+  });
+
+  it('fails closed end-to-end when the Windows container provider has no image', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.containerImage = '';
+    record.runtimeSelection.windowsContainerImage = undefined;
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn(),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe('container-image-unavailable');
+  });
+
+  it('reports command-spawn-failed when the runtime command throws before finalization', async () => {
+    const record = createReadyRecord();
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockRejectedValue(new Error('spawn ENOENT')),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('command-spawn-failed');
+  });
+
+  it('reclassifies a -350000 LabVIEW CLI exit as labview-cli-connection-failed', async () => {
+    const record = createReadyRecord();
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: '',
+          stderr: 'LabVIEWCLI connection failure. Error code: -350000'
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('labview-cli-connection-failed');
+  });
+
+  it('classifies an LVCompare exit-zero-without-report as lvcompare-exited-zero-without-report', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+    record.runtimeSelection.lvCompare = {
+      kind: 'lvcompare',
+      path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe',
+      source: 'configured',
+      exists: true
+    };
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('lvcompare-exited-zero-without-report');
+  });
+
+  it('fails closed end-to-end when the Linux container provider has no image', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.provider = 'linux-container';
+    record.runtimeSelection.containerImage = '';
+    record.runtimeSelection.windowsContainerImage = undefined;
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn(),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe('container-image-unavailable');
   });
 });

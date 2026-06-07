@@ -35,7 +35,7 @@ export default defineConfig({
           branches: 53
         },
         'src/reporting/comparisonReportRuntimeExecution.ts': {
-          branches: 52
+          branches: 55
         }
       }
     }
