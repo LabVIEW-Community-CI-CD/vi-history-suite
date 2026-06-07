@@ -141,9 +141,13 @@ describe('describeMissingGraphicsReportReason', () => {
 describe('resolveComparisonReportExportPlan', () => {
   it('prefers the generated report with its assets directory when both exist', async () => {
     const source = createSource();
-    const pathExists = vi.fn(async (target: string) =>
-      target === source.reportFilePath ||
-      target === '/storage/reports/repo/file/diff-report-foo.vi_files'
+    const expectedAssetsDirectoryPath = path.join(
+      path.dirname(source.reportFilePath),
+      'diff-report-foo.vi_files'
+    );
+    const pathExists = vi.fn(
+      async (target: string) =>
+        target === source.reportFilePath || target === expectedAssetsDirectoryPath
     );
 
     const plan = await resolveComparisonReportExportPlan(source, pathExists);
@@ -152,7 +156,7 @@ describe('resolveComparisonReportExportPlan', () => {
       evidenceKind: 'generated-report',
       htmlSourcePath: source.reportFilePath,
       htmlFileName: 'diff-report-foo.vi.html',
-      assetsSourceDirectoryPath: '/storage/reports/repo/file/diff-report-foo.vi_files',
+      assetsSourceDirectoryPath: expectedAssetsDirectoryPath,
       assetsDirectoryName: 'diff-report-foo.vi_files'
     });
   });
