@@ -999,6 +999,13 @@ async function runHostNativeExecutionWithContext(
         linuxLabviewTcpSettings.notes,
         windowsContainerRuntimeFacts.notes,
         diagnostics.notes,
+        // Headless bring-up notes describe a failure to initialize LabVIEW headless.
+        // Gate them on success exactly like diagnosticReason so a stale or residual
+        // headless log can never contaminate a passing run's evidence (issue #270).
+        // Only the headless notes are gated here; process-observation, TCP,
+        // container-fact, timeout, preparation, and failure-classification notes are
+        // always retained.
+        succeeded ? [] : (diagnostics.headlessNotes ?? []),
         timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
         failureClassification.notes,
@@ -1102,6 +1109,9 @@ async function runHostNativeExecutionWithContext(
           windowsLabviewTcpSettings.notes,
           linuxLabviewTcpSettings.notes,
           diagnostics.notes,
+          // This branch is always a failure (command-spawn or report-finalize), so the
+          // headless bring-up notes are retained rather than gated (issue #270).
+          diagnostics.headlessNotes ?? [],
           executionContext.preparationNotes,
           failureNote
         ),
@@ -1266,6 +1276,11 @@ async function persistRuntimePreflightObservation(
 interface CapturedRuntimeDiagnostics {
   reason?: string;
   notes: string[];
+  // Notes derived from the Linux headless status logs (LVStatus.txt / lvrt headless
+  // logs). Kept separate from `notes` so the caller can gate them on run success
+  // exactly like the headless diagnosticReason — a successful run must never surface
+  // a headless bring-up failure note (see issue #270).
+  headlessNotes?: string[];
   sourcePath?: string;
   artifactPath?: string;
   headlessArtifactPaths?: string[];
@@ -1805,7 +1820,8 @@ async function captureRuntimeDiagnostics(
     await clearStaleArtifactIfPresent();
     return {
       reason: selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason),
-      notes: mergeDiagnosticNotes(stderrClassification.notes, headlessDiagnostics.notes),
+      notes: mergeDiagnosticNotes(stderrClassification.notes),
+      headlessNotes: headlessDiagnostics.notes,
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
   }
@@ -1820,9 +1836,9 @@ async function captureRuntimeDiagnostics(
     return {
       notes: mergeDiagnosticNotes(
         stderrClassification.notes,
-        ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.'],
-        headlessDiagnostics.notes
+        ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.']
       ),
+      headlessNotes: headlessDiagnostics.notes,
       sourcePath: diagnosticLogSourcePath,
       reason:
         selectDiagnosticReason(headlessDiagnostics.reason, stderrClassification.reason) ??
@@ -1842,7 +1858,8 @@ async function captureRuntimeDiagnostics(
       stderrClassification.reason,
       classification.reason
     ),
-    notes: mergeDiagnosticNotes(stderrClassification.notes, classification.notes, headlessDiagnostics.notes),
+    notes: mergeDiagnosticNotes(stderrClassification.notes, classification.notes),
+    headlessNotes: headlessDiagnostics.notes,
     sourcePath: diagnosticLogSourcePath,
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
@@ -2127,8 +2144,14 @@ async function captureLinuxHeadlessDiagnostics(
     };
   }
 
+  // A genuine host-native Linux run leaves its LabVIEW headless logs in the host
+  // /tmp. A linux-container run, even on a Linux host, writes them under the mapped
+  // container-temp (diagnosticPathMapping.hostRoot) exactly like the windows-container
+  // provider. Reading host /tmp for a container run would let a PRIOR host-native
+  // run's stale /tmp/lvrt_*_headless_*_cur.txt bleed into the container run's
+  // diagnostics, so only the host-native provider may read /tmp (see issue #270).
   const sourceRoot =
-    deps.processPlatform === 'linux'
+    deps.processPlatform === 'linux' && record.runtimeSelection.provider !== 'linux-container'
       ? '/tmp'
       : deps.diagnosticPathMapping?.hostRoot ?? path.join(record.artifactPlan.reportDirectory, 'container-temp');
   const artifactRoot = path.join(record.artifactPlan.reportDirectory, 'headless-diagnostics');

@@ -166,6 +166,35 @@ function createWindowsContainerReadyRecord(): ComparisonReportPacketRecord {
   };
 }
 
+function createLinuxContainerReadyRecord(): ComparisonReportPacketRecord {
+  const record = createReadyRecord();
+  record.runtimeSelection = {
+    ...record.runtimeSelection,
+    platform: 'linux',
+    bitness: 'x64',
+    containerRuntimePlatform: 'linux',
+    provider: 'linux-container',
+    containerImage: 'nationalinstruments/labview:2026q1-linux',
+    containerImageAvailable: true,
+    containerAcquisitionState: 'not-required',
+    labviewExe: {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    },
+    labviewCli: {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    }
+  };
+  return record;
+}
+
 describe('comparisonReportRuntimeExecution', () => {
   it('settles observed host commands on process exit even when LabVIEW keeps stdio open', async () => {
     const stdout = Object.assign(new EventEmitter(), {
@@ -1354,6 +1383,266 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBeUndefined();
     expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
     expect(readdir).toHaveBeenCalled();
+  });
+
+  it('routes a SUCCEEDED linux-container run to its own container-temp diagnostics, not host /tmp (Refs #270)', async () => {
+    // Regression for issue #270: on a Linux host running the linux-container
+    // provider, captureLinuxHeadlessDiagnostics() must read the container's mapped
+    // container-temp (diagnosticPathMapping.hostRoot), never host /tmp. Otherwise a
+    // PRIOR host-native headless run's stale /tmp/lvrt_*_headless_*_cur.txt bleeds in
+    // and a false "Failed to initialize headless" note contaminates a passing run.
+    const record = createLinuxContainerReadyRecord();
+    const reportDirectory = record.artifactPlan.reportDirectory;
+    const containerTempDirectory = `${reportDirectory}/container-out/container-temp`;
+    const containerReportPath = `${reportDirectory}/container-out/${record.artifactPlan.reportFilename}`;
+    const containerStatusLog = `${containerTempDirectory}/LVStatus.txt`;
+    const staleHostHeadlessLog = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+
+    const readdir = vi.fn(async (dir: string) => {
+      if (dir === '/tmp') {
+        // PRIOR host-native run's stale init-failure log left behind in host /tmp.
+        return ['lvrt_26.1.1f1_headless_sergio_cur.txt'];
+      }
+      if (dir === containerTempDirectory) {
+        // The container's OWN clean status log for this run.
+        return ['LVStatus.txt'];
+      }
+      return [];
+    });
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === staleHostHeadlessLog) {
+        return 'Failed to initialize headless LabVIEW.';
+      }
+      if (filePath === containerStatusLog) {
+        return 'LabVIEW 2026 started successfully in the headless container.';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async (filePath: string) =>
+      filePath === containerReportPath ||
+      filePath === containerStatusLog ||
+      filePath === staleHostHeadlessLog
+    );
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        chmod: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.\n',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:50:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    // (a) the stale host /tmp init-failure note must NOT contaminate a passing run.
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('Failed to initialize headless')])
+    );
+    expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
+    // (b) the container still captures its OWN container-temp LVStatus.txt.
+    expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths).toEqual([
+      path.join(reportDirectory, 'headless-diagnostics', 'LVStatus.txt')
+    ]);
+    // The container run must read the mapped container-temp and never host /tmp.
+    expect(readdir).toHaveBeenCalledWith(containerTempDirectory);
+    expect(readdir).not.toHaveBeenCalledWith('/tmp');
+  });
+
+  it('still classifies a genuine host-native headless init failure with #269 guidance (no regression)', async () => {
+    // A real host-native headless bring-up failure (issue #269) must still be
+    // classified and surfaced. The #270 fix only stops contamination of PASSING
+    // container runs; it must not suppress a genuine host-native failure signal.
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const headlessLog = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+    const readdir = vi.fn(async (dir: string) =>
+      dir === '/tmp' ? ['lvrt_26.1.1f1_headless_sergio_cur.txt'] : []
+    );
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+        return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+      }
+      if (filePath === headlessLog) {
+        return 'Failed to initialize headless LabVIEW.';
+      }
+      return '';
+    });
+    // The report is never generated (headless never came up), so the run fails.
+    const pathExists = vi.fn(async (filePath: string) => filePath === headlessLog);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:43:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-headless-init-failed');
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Failed to initialize headless LabVIEW.')
+      ])
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
+      'LV_RTE_LINUX_HEADLESS=0'
+    );
+  });
+
+  it('gates the headless-init note on a SUCCEEDED headless run so a stale init-failure log cannot leak (Refs #270)', async () => {
+    // Defense-in-depth half of issue #270: even when the headless capture yields an
+    // init-failure note, a SUCCEEDED run must not surface it (the note is gated on
+    // success exactly like diagnosticReason). This isolates the success-gating from
+    // the source-routing fix by exercising the host-native /tmp read directly.
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const staleHeadlessLog = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+    const readdir = vi.fn(async (dir: string) =>
+      dir === '/tmp' ? ['lvrt_26.1.1f1_headless_sergio_cur.txt'] : []
+    );
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+        return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+      }
+      if (filePath === staleHeadlessLog) {
+        return 'Failed to initialize headless LabVIEW.';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async (filePath: string) =>
+      filePath === staleHeadlessLog ||
+      (typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename))
+    );
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:50:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.failureReason).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
+    // The init-failure note describes a bring-up failure and must be gated on success.
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('Failed to initialize headless')])
+    );
+    // But the headless log was still captured as evidence (artifact retained).
+    expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths).toEqual([
+      path.join(record.artifactPlan.reportDirectory, 'headless-diagnostics', 'lvrt_26.1.1f1_headless_sergio_cur.txt')
+    ]);
   });
 
   it('classifies password-protected CreateComparisonReport failures from retained LabVIEW CLI diagnostics', () => {
