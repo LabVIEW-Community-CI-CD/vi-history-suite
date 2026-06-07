@@ -878,6 +878,12 @@ Missing numeric IDs are intentional.
     `npm test` on `windows-latest` so platform-specific unit regressions fail
     closed in CI without promoting the heavier Windows/LabVIEW integration path
     to a required gate.
+  - A parallel `Integration Host (Linux)` job runs the LabVIEW-free VS Code
+    extension-host suite via `npm run test:integration:linux` on
+    `ubuntu-24.04`, exercising activation, eligibility indexing, command
+    registration, panel render, and the runtime-settings CLI so command-layer
+    regressions fail closed; it requires no LabVIEW, Docker, or real compare and
+    does not collect coverage (it runs in Electron, outside the vitest run).
 - Agent Work Scope:
   - Change workflow commands and test plan together.
 - Implementation References:

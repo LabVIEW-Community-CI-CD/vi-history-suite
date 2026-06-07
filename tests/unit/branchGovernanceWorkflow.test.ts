@@ -38,6 +38,22 @@ describe('CI branch governance workflow', () => {
     expect(windowsSegment).toContain('run: npm test');
   });
 
+  it('runs a hosted Linux integration-host leg alongside the required Ubuntu gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('integration-host:');
+    expect(workflow).toContain('name: Integration Host (Linux)');
+
+    // The integration leg lives after the required Ubuntu job and runs the
+    // LabVIEW-free extension-host suite via the xvfb-wrapping entrypoint.
+    const integrationJobIndex = workflow.indexOf('integration-host:');
+    expect(integrationJobIndex).toBeGreaterThan(workflow.indexOf('build-test-package:'));
+    const integrationSegment = workflow.slice(integrationJobIndex);
+    expect(integrationSegment).toContain('runs-on: ubuntu-24.04');
+    expect(integrationSegment).toContain('run: npm ci');
+    expect(integrationSegment).toContain('run: npm run test:integration:linux');
+  });
+
   it('keeps branch governance inside the required build-test-package job', () => {
     const workflow = readWorkflow();
 
