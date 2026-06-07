@@ -584,6 +584,12 @@ Missing numeric IDs are intentional.
     the selected revision's dependencies, that dependency-only changes between
     the two revisions may therefore not appear, and that loading the base VI
     against newer dependencies may recompile it and distort the rendered diff.
+  - When a selected-revision tree was materialized, the report and retained
+    packet also disclose that only files tracked in the repository are staged, so
+    dependencies outside the repository (for example LabVIEW-installed paths such
+    as `vi.lib`, `instr.lib`, `user.lib`, or the `resource` directory, and
+    absolute-path references) are not staged and may render as placeholder
+    (white) items as a staging limitation rather than a change in the VI.
   - Staged inputs and a materialized-tree manifest are retained as runtime
     evidence consistent with VHS-REQ-147 and VHS-REQ-148.
 - Agent Work Scope:
