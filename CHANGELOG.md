@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.13.0] - 2026-06-08
+
+### Added
+
+- Opening `VI History` now stops before the panel loads when the LabVIEW CLI
+  (`LabVIEWCLI`) is not installed, showing a warning notification that names the
+  missing prerequisite and offers an `Install LabVIEW` action that opens the NI
+  download page. This replaces discovering the missing runtime only after
+  selecting two revisions and choosing `Compare`. Detection reuses the existing
+  cached runtime probe, so the check adds no startup cost. The command still
+  opens when the LabVIEW CLI is present, when a Docker comparison runtime is the
+  active provider (container compare does not need a host LabVIEW CLI), or while
+  runtime detection has not yet completed.
+
 ## [1.12.2] - 2026-06-08
 
 ### Changed

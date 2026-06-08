@@ -2026,6 +2026,65 @@ Missing numeric IDs are intentional.
 
 
 
+### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall consult the cached runtime detection when
+  `labviewViHistory.open` is invoked and refuse to open the VI History panel
+  with a warning toast that names the missing LabVIEW CLI prerequisite when no
+  host LabVIEW CLI is installed and no satisfiable Docker comparison runtime is
+  the active provider, so users learn before selecting revisions that the
+  comparison runtime is missing instead of meeting a failure after choosing
+  Compare.
+- Acceptance Criteria:
+  - `isLabviewCliInstalled(detection)` returns true only when at least one
+    detected host installation exposes a non-empty `labviewCliPath`
+    (`LabVIEWCLI.exe` on Windows, `labviewcli` on Linux).
+  - `decideLabviewCliOpenGate(detection, snapshot)` returns `allow` when the
+    cached detection is not yet available so an activation race never blocks
+    the command, matching the Git prerequisite gate.
+  - The gate returns `allow` when the LabVIEW CLI is installed, and also when
+    the active runtime snapshot is an available Docker provider because
+    container comparison runs the LabVIEW CLI inside the image and does not
+    depend on a host LabVIEW CLI.
+  - The gate returns `block` with `LABVIEW_CLI_OPEN_BLOCKED_MESSAGE` when the
+    LabVIEW CLI is not installed and no satisfiable Docker provider is active,
+    including when a host LabVIEW is the active provider but the shared LabVIEW
+    CLI component is absent.
+  - `labviewViHistory.open` consults the runtime availability watcher's cached
+    detection and snapshot after the Git prerequisite gate; when the gate
+    blocks it presents a warning toast offering an `Install LabVIEW` action
+    that opens the NI download page via `vscode.env.openExternal` and does not
+    start the history panel or the comparison flow.
+  - The block decision reuses the existing filesystem-only runtime detection
+    cached by VHS-REQ-617's watcher; the gate never spawns a child process or
+    re-probes the filesystem on the open hot path.
+- Agent Work Scope:
+  - Change the LabVIEW CLI gate decision helpers and the open-command wiring
+    together. The pure decision helpers (`isLabviewCliInstalled`,
+    `decideLabviewCliOpenGate`) and the toast copy
+    (`LABVIEW_CLI_OPEN_BLOCKED_MESSAGE`, `presentLabviewCliOpenBlockedToast`)
+    live in `src/ui/runtimeAvailabilityNotice.ts` so unit tests exercise
+    routing without a window. Reuse the watcher's `getLastDetection()` and
+    `getLastSnapshot()` seams rather than introducing a second detection pass.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the gate keyed on the LabVIEW CLI prerequisite and the cached
+    detection; richer compare-time runtime diagnostics belong to
+    `comparisonRuntimeLocator` and VHS-REQ-155. Do not re-probe the filesystem
+    inside the `labviewViHistory.open` hot path; the watcher already caches and
+    refreshes detection.
+
+
+
+
 ### VHS-REQ-622: Automated End-to-End Windows Runtime Conflict Verification Harness
 
 - Status: Active
