@@ -660,10 +660,15 @@ async function checkoutRevisionIntoWorkTree(
     // `checkout-index` creates the directory structure and does not apply the
     // archive-only `export-ignore` attribute, so the materialized tree mirrors
     // the repository at the revision.
+    // VHS-REQ-624 (#303): enable `core.longpaths` so deep destination roots (for
+    // example a deep Windows workspaceStorage path) do not trip the Win32
+    // MAX_PATH (260) limit and fail materialization with "Filename too long".
     await params.runGit(
       [
         '-C',
         params.sourceWorkingDirectory,
+        '-c',
+        'core.longpaths=true',
         '--work-tree',
         params.destinationRoot,
         'checkout-index',

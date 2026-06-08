@@ -3855,9 +3855,13 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     // The temp index is populated from the revision's full tree first.
     expect(calls[0].args).toEqual(['-C', '/workspace/repo', 'read-tree', 'abcdef1234567890']);
     // Then every tracked entry is checked out into the destination work tree.
+    // VHS-REQ-624 (#303): `-c core.longpaths=true` keeps deep destination roots
+    // from tripping the Win32 MAX_PATH limit during checkout-index.
     expect(calls[1].args).toEqual([
       '-C',
       '/workspace/repo',
+      '-c',
+      'core.longpaths=true',
       '--work-tree',
       '/stage/dest',
       'checkout-index',
@@ -4003,6 +4007,8 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     expect(calls).toContainEqual([
       '-C',
       '/workspace/repo',
+      '-c',
+      'core.longpaths=true',
       '--work-tree',
       '/stage/dest',
       'checkout-index',
