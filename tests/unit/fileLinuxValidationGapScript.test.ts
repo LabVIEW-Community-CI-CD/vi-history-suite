@@ -18,6 +18,7 @@ const {
   usage,
   readRunEvidence,
   detectGap,
+  derivePlatformLabel,
   composeIssueContent,
   buildGhIssueCreateArgs,
   fileIssue,
@@ -45,6 +46,7 @@ const {
     metadataPresent: boolean;
     manifestPresent: boolean;
     provider?: string;
+    platform?: string;
     reportStatus?: string;
     runtimeState?: string;
     failureReason?: string;
@@ -58,6 +60,7 @@ const {
     evidence: Record<string, unknown>,
     options?: { note?: string; expectedBlock?: string }
   ) => { severity: 'hard' | 'observational' | 'none'; reasons: string[] };
+  derivePlatformLabel: (evidence: { platform?: string; provider?: string }) => string;
   composeIssueContent: (
     evidence: Record<string, unknown>,
     gap: { severity: string; reasons: string[] },
@@ -92,6 +95,23 @@ function metadata(overrides: Record<string, unknown> = {}) {
   return JSON.stringify({
     reportStatus: 'ready-for-runtime',
     runtimeSelection: { provider: 'host-native' },
+    runtimeExecution: {
+      state: 'succeeded',
+      attempted: true,
+      reportExists: true,
+      failureReason: undefined,
+      ...overrides
+    }
+  });
+}
+
+function metadataForSelection(
+  runtimeSelection: Record<string, unknown>,
+  overrides: Record<string, unknown> = {}
+) {
+  return JSON.stringify({
+    reportStatus: 'ready-for-runtime',
+    runtimeSelection,
     runtimeExecution: {
       state: 'succeeded',
       attempted: true,
@@ -299,6 +319,83 @@ describe('fileLinuxValidationGap composeIssueContent', () => {
     expect(content.body).toContain('surfaced a gap');
     expect(content.body).toContain('## Detected signal');
     expect(content.labels).toContain('bug');
+  });
+
+  it('labels a win32 windows-container run as a Windows validation issue', () => {
+    const evidence = readRunEvidence(
+      RUN_DIR,
+      fakeFs({
+        [METADATA_PATH]: metadataForSelection(
+          { provider: 'windows-container', platform: 'win32' },
+          { state: 'succeeded', reportExists: true }
+        ),
+        [MANIFEST_PATH]: manifest([])
+      })
+    );
+    const note = 'Section W-C windows-container PASS on real hardware';
+    const gap = detectGap(evidence, { note });
+    const content = composeIssueContent(evidence, gap, { note });
+    expect(content.title).toContain('Windows validation observation');
+    expect(content.title).toContain('windows-container');
+    expect(content.title).not.toContain('Linux validation');
+    expect(content.body).toContain('A maintainer Windows validation run');
+    expect(content.body).not.toContain('A maintainer Linux validation run');
+  });
+
+  it('labels a win32 host-native run as Windows (platform-driven, not provider-driven)', () => {
+    const evidence = readRunEvidence(
+      RUN_DIR,
+      fakeFs({
+        [METADATA_PATH]: metadataForSelection(
+          { provider: 'host-native', platform: 'win32' },
+          { state: 'failed', failureReason: 'report-finalize-failed' }
+        ),
+        [MANIFEST_PATH]: manifest([])
+      })
+    );
+    const gap = detectGap(evidence, {});
+    const content = composeIssueContent(evidence, gap, {});
+    // `host-native` is shared across platforms; the platform word must come from
+    // runtimeSelection.platform, so this Windows host-native run is not "Linux".
+    expect(content.title).toContain('Windows validation gap');
+    expect(content.title).toContain('host-native');
+    expect(content.title).not.toContain('Linux validation');
+    expect(content.body).toContain('A maintainer Windows validation run');
+  });
+
+  it('keeps the Linux label for a linux-container run', () => {
+    const evidence = readRunEvidence(
+      RUN_DIR,
+      fakeFs({
+        [METADATA_PATH]: metadataForSelection(
+          { provider: 'linux-container', platform: 'linux' },
+          { state: 'succeeded', reportExists: true }
+        ),
+        [MANIFEST_PATH]: manifest([])
+      })
+    );
+    const note = 'Section B linux-container PASS on real hardware';
+    const gap = detectGap(evidence, { note });
+    const content = composeIssueContent(evidence, gap, { note });
+    expect(content.title).toContain('Linux validation observation');
+    expect(content.title).toContain('linux-container');
+    expect(content.title).not.toContain('Windows validation');
+  });
+});
+
+describe('fileLinuxValidationGap derivePlatformLabel', () => {
+  it('maps win32 to Windows and linux to Linux', () => {
+    expect(derivePlatformLabel({ platform: 'win32' })).toBe('Windows');
+    expect(derivePlatformLabel({ platform: 'linux' })).toBe('Linux');
+  });
+
+  it('falls back to the provider when platform is absent', () => {
+    expect(derivePlatformLabel({ provider: 'windows-container' })).toBe('Windows');
+    expect(derivePlatformLabel({ provider: 'host-native' })).toBe('Linux');
+  });
+
+  it('defaults to Linux when platform and provider are unknown', () => {
+    expect(derivePlatformLabel({})).toBe('Linux');
   });
 });
 

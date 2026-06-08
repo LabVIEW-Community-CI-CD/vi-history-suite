@@ -127,6 +127,7 @@ function readRunEvidence(runDir, deps = {}) {
     metadataPresent: Boolean(metadata) && !metadata.__parseError,
     manifestPresent: Boolean(manifest) && !manifest.__parseError,
     provider: runtimeSelection.provider,
+    platform: runtimeSelection.platform,
     reportStatus: metadata && metadata.reportStatus,
     runtimeState: runtimeExecution.state,
     failureReason: runtimeExecution.failureReason,
@@ -186,16 +187,37 @@ function truncate(value, max) {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
+// The same severity-aware filer composes evidence issues for both the Linux
+// (#259) and Windows (#296) real-hardware validation runs. The compare provider
+// `host-native` is shared across platforms, so the platform word is taken from
+// the persisted `runtimeSelection.platform` (`win32`/`linux`). When platform is
+// absent, fall back to the provider (`windows-container` implies Windows) and
+// otherwise default to Linux to preserve the original behavior.
+function derivePlatformLabel(evidence) {
+  const platform = evidence && evidence.platform;
+  if (platform === 'win32') {
+    return 'Windows';
+  }
+  if (platform === 'linux') {
+    return 'Linux';
+  }
+  if (!platform && evidence && evidence.provider === 'windows-container') {
+    return 'Windows';
+  }
+  return 'Linux';
+}
+
 function composeIssueContent(evidence, gap, options = {}) {
   const note = options.note && String(options.note).trim();
   const providerLabel = evidence.provider || 'unknown-provider';
+  const platformLabel = derivePlatformLabel(evidence);
   const isObservation = gap.severity === 'observational';
   const signal = isObservation
     ? truncate(note, 60)
     : evidence.failureReason || evidence.runtimeState || 'unexpected outcome';
 
   const kindLabel = isObservation ? 'observation' : 'gap';
-  const title = `Linux validation ${kindLabel} (${providerLabel}): ${truncate(signal, 80)}`;
+  const title = `${platformLabel} validation ${kindLabel} (${providerLabel}): ${truncate(signal, 80)}`;
 
   const manifestList =
     evidence.manifestEntries.length > 0
@@ -205,11 +227,11 @@ function composeIssueContent(evidence, gap, options = {}) {
       : '- (no diagnostics manifest entries found)';
 
   const summary = isObservation
-    ? `A maintainer Linux validation run (relates to #${RELATED_VALIDATION_ISSUE}) on real hardware` +
+    ? `A maintainer ${platformLabel} validation run (relates to #${RELATED_VALIDATION_ISSUE}) on real hardware` +
       ` recorded an observation on the \`${providerLabel}\` provider. This is validation evidence,` +
       ' not a confirmed defect. It was filed by `scripts/fileLinuxValidationGap.js` so the session —' +
       ' not the human operator — is the author of record.'
-    : `A maintainer Linux validation run (relates to #${RELATED_VALIDATION_ISSUE}) on real hardware` +
+    : `A maintainer ${platformLabel} validation run (relates to #${RELATED_VALIDATION_ISSUE}) on real hardware` +
       ` surfaced a gap on the \`${providerLabel}\` provider. This issue was filed by` +
       ' `scripts/fileLinuxValidationGap.js` so the session — not the human operator — is the author of record.';
 
@@ -355,6 +377,7 @@ module.exports = {
   usage,
   readRunEvidence,
   detectGap,
+  derivePlatformLabel,
   composeIssueContent,
   buildGhIssueCreateArgs,
   fileIssue,
