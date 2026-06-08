@@ -41,6 +41,9 @@ accordingly:
   `main`; back-sync `main` into `develop` after publication.
 - **`hotfix/vX.Y.Z`** — branch from `main`, merge into `main`, then back-sync
   into `develop`.
+- **`dependabot/*`** — automated dependency PRs opened by Dependabot against
+  `develop` (see [.github/dependabot.yml](./.github/dependabot.yml)). Allowed to
+  target `develop` only, and still gated by the full CI suite.
 
 ```text
 fix/* ─▶ feature/<issue#>-* ─▶ develop ─▶ release/vX.Y.Z ─▶ main
@@ -53,7 +56,7 @@ Allowed pull-request targets enforced by CI:
 | PR base | Allowed head branches |
 | --- | --- |
 | `main` | `release/vX.Y.Z`, `hotfix/vX.Y.Z` |
-| `develop` | `feature/<issue#>-*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, `main` (back-sync) |
+| `develop` | `feature/<issue#>-*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, `main` (back-sync), `dependabot/*` |
 | `feature/*` | `fix/*`, `feature/<issue#>-*` |
 
 See [docs/maintainer-operations.md](./docs/maintainer-operations.md#branch-model)
