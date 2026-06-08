@@ -3055,7 +3055,8 @@ async function prepareLinuxHostNativeShortPathExecutionContext(
     cleanupPaths: [layout.reportDirectory],
     materializedTree: staged.materializedTree,
     preparationNotes: [
-      `Staged Linux host-native runtime inputs under ${layout.reportDirectory} to avoid LabVIEW 2026 Linux path-table corruption observed for deep workspaceStorage paths (set LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1 to opt out).`
+      `Staged Linux host-native runtime inputs under ${layout.reportDirectory} to avoid LabVIEW 2026 Linux path-table corruption observed for deep workspaceStorage paths (set LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1 to opt out).`,
+      'The host-native LabVIEW launched for this comparison stays running after it completes so later comparisons can reuse the warm session; quit LabVIEW from its window when you no longer need it.'
     ]
   };
 }

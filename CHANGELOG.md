@@ -10,6 +10,15 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Changed
+
+- Linux host-native comparison reports now disclose that LabVIEW stays running
+  after the comparison so later comparisons can reuse the warm session, and
+  `TROUBLESHOOTING.md` explains how to close the resident LabVIEW (it runs under
+  the `labview` name). No runtime behavior change.
+
 ## [1.12.1] - 2026-06-07
 
 ### Fixed

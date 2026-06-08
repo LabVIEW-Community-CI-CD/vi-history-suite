@@ -3020,6 +3020,9 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
       );
       const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
       expect(notes.some((note) => /short-path|path-table corruption|workspaceStorage/i.test(note))).toBe(true);
+      // VHS-REQ-156 (#292): the packet discloses that host-native LabVIEW stays
+      // resident after the run so it is not mistaken for a leak.
+      expect(notes.some((note) => /stays running|reuse the warm session|quit LabVIEW/i.test(note))).toBe(true);
     } finally {
       delete process.env.LVIE_LINUX_RUNTIME_TMPDIR;
     }
