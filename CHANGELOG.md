@@ -22,6 +22,10 @@ Burned exact-version releases now include `v1.0.2`.
   a clean-run `--note` record as a "Linux validation observation" (labelled
   `copilot-target` only) instead of a "Linux validation gap" labelled `bug`, so
   PASS evidence is no longer misreported as a defect. Hard gaps are unchanged.
+- The validation gap filer now derives the platform word in composed issue titles
+  and summaries from the run's `runtimeSelection.platform`, so a Windows
+  validation run is titled "Windows validation …" instead of "Linux validation …".
+  Linux runs are unchanged.
 
 ### Fixed
 
