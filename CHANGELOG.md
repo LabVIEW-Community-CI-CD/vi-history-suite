@@ -23,6 +23,14 @@ Burned exact-version releases now include `v1.0.2`.
   `copilot-target` only) instead of a "Linux validation gap" labelled `bug`, so
   PASS evidence is no longer misreported as a defect. Hard gaps are unchanged.
 
+### Fixed
+
+- Comparison report generation no longer fails to stage a VI's tracked tree when
+  the report storage root is deep enough to exceed the Windows `MAX_PATH` (260)
+  limit. Staging now enables Git `core.longpaths`, and a deep-path failure that is
+  still recognized surfaces an actionable long-path diagnostic (shorten the report
+  storage root, or enable Windows long paths) instead of an opaque staging error.
+
 ## [1.12.1] - 2026-06-07
 
 ### Fixed
