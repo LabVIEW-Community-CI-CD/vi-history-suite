@@ -2224,3 +2224,62 @@ Missing numeric IDs are intentional.
     parity is intentionally one-way: Linux blocks on absent or
     unreadable, Windows only blocks on explicit `False`.
 
+### VHS-REQ-628: Actionable VI Server Disabled Comparison Guidance
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When a comparison report is blocked because LabVIEW VI
+  Server (TCP/IP) is disabled
+  (`blockedReason`/`diagnosticReason` of `windows-vi-server-tcp-disabled`
+  or `linux-vi-server-tcp-disabled` from the VHS-REQ-623 / VHS-REQ-156
+  preflights), the runtime doctor shall emit a specific, actionable
+  next-action that names VI Server as the unmet prerequisite and the
+  enable path, so the existing blocked-compare warning notification,
+  history panel runtime summary, and retained evidence tell the user how
+  to fix it instead of falling back to the generic host-runtime guidance.
+- Acceptance Criteria:
+  - `deriveRuntimeDoctorNextAction` returns a VI-Server-specific
+    next-action when the resolved runtime blocked reason is
+    `windows-vi-server-tcp-disabled`: it names enabling VI Server in
+    LabVIEW (Tools → Options → VI Server), mentions the
+    `server.tcp.enabled=True` LabVIEW.ini key as an alternative, and
+    instructs the user to restart LabVIEW and rerun comparison report
+    generation.
+  - `deriveRuntimeDoctorNextAction` returns a VI-Server-specific
+    next-action when the resolved runtime blocked reason is
+    `linux-vi-server-tcp-disabled`: it names enabling VI Server TCP/IP
+    for the selected LabVIEW (`server.tcp.enabled=True` in
+    `labview.conf`, or LabVIEW Tools → Options → VI Server), and
+    instructs the user to restart LabVIEW and rerun comparison report
+    generation.
+  - The VI-Server next-action becomes the doctor summary's final line, so
+    the open-command warning notification (which extracts the
+    `Next action:` line from the doctor summary) and the history panel
+    runtime result surface the same actionable guidance for both
+    platforms.
+  - The guidance points at the manual LabVIEW VI Server setting rather
+    than a `viHistorySuite.*` runtime setting or a VS Code command,
+    because VI Server enablement is not a runtime selection the
+    extension can change.
+- Agent Work Scope:
+  - Add the two blocked-reason branches in `deriveRuntimeDoctorNextAction`
+    inside `src/reporting/comparisonRuntimeDoctor.ts` and cover them with
+    doctor unit tests. Reuse the existing blocked-reason resolution
+    (`runtimeExecution.blockedReason ?? runtimeSelection.blockedReason`);
+    do not add a second detection path or a pre-panel gate, because VI
+    Server TCP state is only known once the selected runtime's
+    `LabVIEW.ini` / `labview.conf` is read at compare time.
+- Implementation References:
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+- Verification References:
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the VI Server detection itself in the VHS-REQ-623 / VHS-REQ-156
+    preflights; this requirement only owns the user-facing next-action
+    copy. Keep the guidance a compare-time surface — do not promote it
+    into a pre-panel `labviewViHistory.open` gate, which would be
+    Windows-only and could not see the Linux `labview.conf` state.
+
+

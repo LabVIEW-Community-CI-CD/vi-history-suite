@@ -281,6 +281,36 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
+  it('names VI Server and the enable path for a Windows VI-Server-disabled block (VHS-REQ-628)', () => {
+    const summary = blockedSummary(
+      'windows-vi-server-tcp-disabled',
+      { provider: 'host-native', engine: 'labview-cli' },
+      { engine: 'labview-cli' }
+    );
+
+    const action = summary.at(-1) ?? '';
+    expect(action).toContain('enable VI Server in LabVIEW');
+    expect(action).toContain('Tools');
+    expect(action).toContain('VI Server');
+    expect(action).toContain('server.tcp.enabled=True');
+    expect(action).toContain('restart LabVIEW');
+    expect(action).toContain('rerun comparison report generation');
+  });
+
+  it('names VI Server and the enable path for a Linux VI-Server-disabled block (VHS-REQ-628)', () => {
+    const summary = blockedSummary(
+      'linux-vi-server-tcp-disabled',
+      { platform: 'linux', provider: 'host-native', engine: 'labview-cli' },
+      { engine: 'labview-cli' }
+    );
+
+    const action = summary.at(-1) ?? '';
+    expect(action).toContain('enable VI Server TCP/IP');
+    expect(action).toContain('server.tcp.enabled=True in labview.conf');
+    expect(action).toContain('restart LabVIEW');
+    expect(action).toContain('rerun comparison report generation');
+  });
+
   describe('cli connect window surfacing (VHS-REQ-148)', () => {
     function buildLabviewCliConnectFailedSummary(
       executionOverrides: Partial<ComparisonReportRuntimeExecution> = {}
