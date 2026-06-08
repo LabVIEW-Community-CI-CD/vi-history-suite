@@ -237,9 +237,14 @@ try {
     Copy-Item -LiteralPath $latestProof.FullName -Destination $ProofOutPath -Force
 
     $proofJson = Get-Content -LiteralPath $ProofOutPath -Raw | ConvertFrom-Json
+    # The runtime-validation-proof@v1 schema nests the blocked reason under
+    # `runtime.blockedReason`; the flat `runtimeBlockedReason` token only exists
+    # in the CLI stdout, not in the proof JSON.
     $blockedReason = $null
-    if ($proofJson.PSObject.Properties.Match('runtimeBlockedReason').Count -gt 0) {
-        $blockedReason = $proofJson.runtimeBlockedReason
+    if ($proofJson.PSObject.Properties.Match('runtime').Count -gt 0 -and
+        $null -ne $proofJson.runtime -and
+        $proofJson.runtime.PSObject.Properties.Match('blockedReason').Count -gt 0) {
+        $blockedReason = $proofJson.runtime.blockedReason
     }
     $payload.observed.runtimeBlockedReason = $blockedReason
 

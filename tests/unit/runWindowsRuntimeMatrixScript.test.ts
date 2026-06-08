@@ -328,6 +328,67 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     expect(Array.from(fake.writes.keys()).some((key) => key.endsWith('manual-vhs-req-621.json'))).toBe(true);
   });
 
+  it('tolerates a UTF-8 BOM in the scenario log (Windows PowerShell Set-Content)', () => {
+    const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
+    const sep = require('node:path').sep;
+    const scenarioLogPayloads = {
+      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}steady-A.scenario.json`]: {
+        pass: true,
+        durationMs: 100,
+        observed: {
+          runtimeBlockedReason: 'windows-host-bitness-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x86',
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      },
+      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}steady-B.scenario.json`]: {
+        pass: true,
+        durationMs: 110,
+        observed: {
+          runtimeBlockedReason: 'windows-host-bitness-conflict',
+          hostBitness: 'x86',
+          selectedBitness: 'x64',
+          labviewExecutablePath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      }
+    };
+    // Emulate Windows PowerShell 5.1 `Set-Content -Encoding UTF8`, which prepends a BOM.
+    const writes = new Map<string, string>();
+    const fakeFs = {
+      existsSync: (target: string) => target in scenarioLogPayloads,
+      readFileSync: (target: string) => {
+        if (!(target in scenarioLogPayloads)) {
+          throw new Error(`unexpected read: ${target}`);
+        }
+        return `\uFEFF${JSON.stringify(scenarioLogPayloads[target])}`;
+      },
+      writeFileSync: (target: string, contents: string) => {
+        writes.set(target, contents);
+      },
+      mkdirSync: () => undefined
+    };
+
+    const result = harness.runRuntimeMatrix([], {
+      spawnSync,
+      fs: fakeFs,
+      now: () => new Date('2026-05-31T00:00:00Z'),
+      hostname: () => 'fake-runner',
+      platform: 'win32',
+      env: { VIHS_FAKE_WINDOWS: '1' },
+      cwd: () => '.',
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.evidence?.summary).toEqual({
+      passed: harness.KNOWN_SCENARIOS.length,
+      failed: 0,
+      raceCoverage: harness.RACE_COVERAGE_NOTE
+    });
+  });
+
   it('exits non-zero when any scenario fails', () => {
     const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
     const scenarioLogPayloads = {
