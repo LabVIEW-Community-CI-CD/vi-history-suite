@@ -272,6 +272,20 @@ function deriveRuntimeDoctorNextAction(options: {
       return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the selected VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
     }
 
+    // VHS-REQ-628: Name the VI Server prerequisite and the exact fix so the
+    // blocked-compare warning toast and history panel tell the user that
+    // LabVIEWCLI could not connect because VI Server (TCP/IP) is disabled,
+    // mirroring the actionable LabVIEW CLI guidance. Enabling VI Server is a
+    // manual LabVIEW setting, so the guidance points at the IDE toggle and the
+    // underlying config key rather than a runtime setting or command.
+    if (blockedReason === 'windows-vi-server-tcp-disabled') {
+      return 'Next action: enable VI Server in LabVIEW (Tools \u2192 Options \u2192 VI Server) so LabVIEWCLI can connect over TCP \u2014 or set server.tcp.enabled=True in the selected LabVIEW.ini \u2014 then restart LabVIEW and rerun comparison report generation.';
+    }
+
+    if (blockedReason === 'linux-vi-server-tcp-disabled') {
+      return 'Next action: enable VI Server TCP/IP for the selected LabVIEW (set server.tcp.enabled=True in labview.conf, or enable it in LabVIEW Tools \u2192 Options \u2192 VI Server) so LabVIEWCLI can connect, then restart LabVIEW and rerun comparison report generation.';
+    }
+
     if (
       blockedReason === 'docker-only-provider-not-supported-on-platform' ||
       blockedReason === 'docker-provider-not-supported-on-platform'

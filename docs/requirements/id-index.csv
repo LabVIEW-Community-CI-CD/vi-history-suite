@@ -642,3 +642,4 @@ VHS-REQ-624,Software,Active,srs.md#vhs-req-624-newest-revision-tree-staging-for-
 VHS-REQ-625,Software,Active,srs.md#vhs-req-625-library-member-compared-vi-disclosure,,,docs/requirements/srs.md
 VHS-REQ-626,Software,Active,srs.md#vhs-req-626-comparison-report-export-for-external-viewing,,,docs/requirements/srs.md
 VHS-REQ-627,Software,Active,srs.md#vhs-req-627-labview-cli-prerequisite-gate-for-vi-history-open,,,docs/requirements/srs.md
+VHS-REQ-628,Software,Active,srs.md#vhs-req-628-actionable-vi-server-disabled-comparison-guidance,,,docs/requirements/srs.md

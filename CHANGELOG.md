@@ -10,6 +10,17 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.13.1] - 2026-06-08
+
+### Changed
+
+- When a comparison is blocked because LabVIEW VI Server (TCP/IP) is disabled,
+  the blocked-compare notification and history panel now give specific,
+  actionable guidance that names VI Server as the unmet prerequisite and how to
+  enable it (LabVIEW Tools → Options → VI Server, or `server.tcp.enabled=True`
+  in `LabVIEW.ini` on Windows / `labview.conf` on Linux), restart LabVIEW, then
+  rerun. Previously these blocks fell back to generic host-runtime guidance.
+
 ## [1.13.0] - 2026-06-08
 
 ### Added
