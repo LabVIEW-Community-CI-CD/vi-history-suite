@@ -5,7 +5,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const VSCE_PACKAGE_NAME = '@vscode/vsce';
-const VSCE_PACKAGE_VERSION = '3.9.1';
+const VSCE_PACKAGE_VERSION = '3.9.2';
 const VSCE_PACKAGE_SPEC = `${VSCE_PACKAGE_NAME}@${VSCE_PACKAGE_VERSION}`;
 
 function resolveLocalVsceCliPath(deps = {}) {
