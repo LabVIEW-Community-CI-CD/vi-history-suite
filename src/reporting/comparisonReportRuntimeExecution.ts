@@ -625,6 +625,45 @@ export async function materializeSelectedRevisionTreeWithGit(
   });
 }
 
+/**
+ * VHS-REQ-624 (#303): actionable diagnostic for a recognized selected-revision
+ * tree materialization failure. `failureReason` stays the stable
+ * `selected-tree-materialize-failed`; this adds a more specific `diagnosticReason`
+ * (plus operator-facing notes) only when the underlying cause is recognizable.
+ */
+export const SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC =
+  'selected-tree-materialize-long-path';
+
+export interface SelectedTreeMaterializeErrorClassification {
+  diagnosticReason?: string;
+  diagnosticNotes?: string[];
+}
+
+/**
+ * Classify an error thrown by `materializeSelectedRevisionTreeWithGit`. When git
+ * aborts the checkout because a staged dependency path exceeds the Win32 MAX_PATH
+ * (260) limit (stderr "Filename too long", or the POSIX "File name too long"
+ * spelling), surface an actionable long-path diagnostic so the otherwise opaque
+ * `selected-tree-materialize-failed` failure is self-explanatory. Unrecognized
+ * errors return an empty classification so the generic failure reason stands
+ * alone.
+ */
+export function classifySelectedTreeMaterializeError(
+  error: unknown
+): SelectedTreeMaterializeErrorClassification {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  if (/file ?name too long/i.test(message)) {
+    return {
+      diagnosticReason: SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC,
+      diagnosticNotes: [
+        'Selected-revision tree staging failed because a staged dependency path exceeded the Windows MAX_PATH (260) limit (git reported "Filename too long").',
+        'Use a shorter report storage root (closer to the drive root), or enable Windows long paths (the "Enable Win32 long paths" policy plus git config core.longpaths=true).'
+      ]
+    };
+  }
+  return {};
+}
+
 interface CheckoutRevisionIntoWorkTreeParams {
   sourceWorkingDirectory: string;
   revisionId: string;
@@ -981,12 +1020,22 @@ async function runHostNativeExecution(
         revisionId: stagedPlan.treeRevisionId,
         pathspec
       };
-    } catch {
+    } catch (error) {
+      // VHS-REQ-624 (#303): keep the stable failure reason but attach an
+      // actionable diagnostic when the cause is a recognized Win32 long-path
+      // violation, so a deep storage root surfaces a self-explanatory reason.
+      const classification = classifySelectedTreeMaterializeError(error);
       return {
         state: 'failed',
         attempted: false,
         reportExists: false,
         failureReason: 'selected-tree-materialize-failed',
+        ...(classification.diagnosticReason
+          ? { diagnosticReason: classification.diagnosticReason }
+          : {}),
+        ...(classification.diagnosticNotes
+          ? { diagnosticNotes: classification.diagnosticNotes }
+          : {}),
         executable: commandPlan.executable,
         args: commandPlan.args,
         stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
