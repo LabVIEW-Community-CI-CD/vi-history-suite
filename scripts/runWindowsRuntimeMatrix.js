@@ -180,7 +180,10 @@ function readScenarioLog(scenario, deps) {
   }
   try {
     const raw = fsImpl.readFileSync(scenario.logPath, 'utf8');
-    return JSON.parse(raw);
+    // Windows PowerShell 5.1 `Set-Content -Encoding UTF8` (the host that runs
+    // the helper) prepends a UTF-8 BOM; strip a leading BOM so JSON.parse does
+    // not choke on it.
+    return JSON.parse(raw.replace(/^\uFEFF/, ''));
   } catch (error) {
     return {
       readError: error instanceof Error ? error.message : String(error)
