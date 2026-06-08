@@ -255,6 +255,80 @@ export function buildStatusBarPresentation(
   };
 }
 
+/**
+ * VHS-REQ-627: True when at least one detected host LabVIEW installation
+ * exposes the LabVIEW CLI (`LabVIEWCLI.exe` on Windows, `labviewcli` on Linux).
+ * Host-native VI comparison shells out to the LabVIEW CLI, so its absence means
+ * the Compare action cannot succeed.
+ */
+export function isLabviewCliInstalled(detection: DetectedRuntimes): boolean {
+  return detection.host.installations.some(
+    (installation) =>
+      typeof installation.labviewCliPath === 'string' &&
+      installation.labviewCliPath.length > 0
+  );
+}
+
+export const LABVIEW_CLI_OPEN_BLOCKED_MESSAGE =
+  'VI History cannot open a comparison because the LabVIEW CLI (LabVIEWCLI) is not installed. Install LabVIEW \u22652025 with the LabVIEW Command-Line Interface, then reload the window to compare VIs.';
+
+export const LABVIEW_CLI_NOTICE_BUTTON_INSTALL = 'Install LabVIEW';
+
+export type LabviewCliOpenGateKind = 'allow' | 'block';
+
+export interface LabviewCliOpenGateDecision {
+  readonly kind: LabviewCliOpenGateKind;
+  readonly toastMessage?: string;
+}
+
+/**
+ * VHS-REQ-627: Decision contract for the `labviewViHistory.open` LabVIEW CLI
+ * gate. Mirrors the Git prerequisite gate (VHS-REQ-619): the pure decision is
+ * unit-tested without a window, and the activation wiring presents the toast.
+ *
+ * The command is blocked when the LabVIEW CLI is not installed so users learn
+ * before the panel opens that the prerequisite is missing, instead of meeting a
+ * runtime failure after selecting two revisions and choosing Compare.
+ *
+ * Two paths still allow the command:
+ *  - Detection has not completed yet (`undefined`): fail open so an activation
+ *    race never blocks the user, matching the Git gate.
+ *  - A satisfiable Docker runtime is the active provider: container compare
+ *    runs the LabVIEW CLI inside the image and does not depend on a host
+ *    LabVIEW CLI, so Docker users are not trapped.
+ */
+export function decideLabviewCliOpenGate(
+  detection: DetectedRuntimes | undefined,
+  snapshot?: RuntimeAvailabilitySnapshot
+): LabviewCliOpenGateDecision {
+  if (!detection) {
+    return { kind: 'allow' };
+  }
+  if (isLabviewCliInstalled(detection)) {
+    return { kind: 'allow' };
+  }
+  if (snapshot?.kind === 'available' && snapshot.label.provider === 'docker') {
+    return { kind: 'allow' };
+  }
+  return { kind: 'block', toastMessage: LABVIEW_CLI_OPEN_BLOCKED_MESSAGE };
+}
+
+/**
+ * Show the LabVIEW-CLI-missing toast for `labviewViHistory.open` and offer an
+ * `Install LabVIEW` action that opens the NI download page. Exported so the
+ * activation hook and any future palette command share the copy. Thin VS Code
+ * glue; the routing decision is covered by `decideLabviewCliOpenGate`.
+ */
+export async function presentLabviewCliOpenBlockedToast(): Promise<void> {
+  const choice = await vscode.window.showWarningMessage(
+    LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+    LABVIEW_CLI_NOTICE_BUTTON_INSTALL
+  );
+  if (choice === LABVIEW_CLI_NOTICE_BUTTON_INSTALL) {
+    void vscode.env.openExternal(vscode.Uri.parse(INSTALL_LABVIEW_URL));
+  }
+}
+
 /** Returns true when the proposed re-detect is allowed under the throttle. */
 export function shouldThrottleReDetect(
   lastRunAtMs: number | undefined,

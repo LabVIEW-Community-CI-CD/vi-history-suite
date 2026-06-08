@@ -48,7 +48,11 @@ import {
 } from './tooling/localRuntimeSettingsCli';
 import { detectAvailableRuntimes } from './tooling/runtimeAutoDetect';
 import { applyRuntimeSettingsSeed } from './tooling/runtimeSettingsSeed';
-import { createRuntimeAvailabilityWatcher } from './ui/runtimeAvailabilityNotice';
+import {
+  createRuntimeAvailabilityWatcher,
+  decideLabviewCliOpenGate,
+  presentLabviewCliOpenBlockedToast
+} from './ui/runtimeAvailabilityNotice';
 import {
   createGitPrerequisiteWatcher,
   decideOpenGate,
@@ -266,6 +270,20 @@ export async function activate(
             await presentOpenBlockedToast();
             return;
           }
+        }
+        // VHS-REQ-627: After the Git prerequisite gate, refuse to open the VI
+        // History panel when the LabVIEW CLI is not installed so users get an
+        // explicit, actionable toast instead of a panel whose Compare action
+        // would fail later. Detection is sourced from the cached runtime probe;
+        // a not-yet-available probe or a satisfiable Docker runtime allows the
+        // command so activation races and container users are never blocked.
+        const labviewCliGate = decideLabviewCliOpenGate(
+          runtimeAvailabilityWatcher.getLastDetection(),
+          runtimeAvailabilityWatcher.getLastSnapshot()
+        );
+        if (labviewCliGate.kind === 'block') {
+          await presentLabviewCliOpenBlockedToast();
+          return;
         }
         const runtime = await ensureWorkspaceRuntime();
         return runtime.openViHistory(uri);

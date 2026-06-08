@@ -641,3 +641,4 @@ VHS-REQ-623,Software,Active,srs.md#vhs-req-623-windows-host-native-vi-server-tcp
 VHS-REQ-624,Software,Active,srs.md#vhs-req-624-newest-revision-tree-staging-for-comparison,,,docs/requirements/srs.md
 VHS-REQ-625,Software,Active,srs.md#vhs-req-625-library-member-compared-vi-disclosure,,,docs/requirements/srs.md
 VHS-REQ-626,Software,Active,srs.md#vhs-req-626-comparison-report-export-for-external-viewing,,,docs/requirements/srs.md
+VHS-REQ-627,Software,Active,srs.md#vhs-req-627-labview-cli-prerequisite-gate-for-vi-history-open,,,docs/requirements/srs.md

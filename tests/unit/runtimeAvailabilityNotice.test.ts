@@ -10,7 +10,10 @@ import {
   buildAvailableStatusBarSuffix,
   buildStatusBarPresentation,
   decideFirstRunPresentation,
+  decideLabviewCliOpenGate,
   evaluateRuntimeAvailability,
+  isLabviewCliInstalled,
+  LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
   RUNTIME_RE_DETECT_THROTTLE_MS,
   selectActiveRuntime,
   shouldThrottleReDetect,
@@ -42,6 +45,23 @@ const detectionHost: DetectedRuntimes = {
 const detectionMissing: DetectedRuntimes = {
   platform: 'darwin',
   host: { installations: [] },
+  docker: { cliAvailable: false }
+};
+
+const detectionHostWithCli: DetectedRuntimes = {
+  platform: 'win32',
+  host: {
+    installations: [
+      {
+        year: '2026',
+        bitness: 'x64',
+        labviewExePath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        labviewCliPath:
+          'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+      }
+    ]
+  },
   docker: { cliAvailable: false }
 };
 
@@ -173,5 +193,47 @@ describe('selectActiveRuntime (VHS-REQ-620)', () => {
     expect(snapshot.kind).toBe('missing');
     expect(snapshot.label.provider).toBe('none');
     expect(snapshot.source).toBe('auto-detected');
+  });
+});
+
+describe('decideLabviewCliOpenGate (VHS-REQ-627)', () => {
+  it('detects the LabVIEW CLI only when a host installation exposes its path', () => {
+    expect(isLabviewCliInstalled(detectionHostWithCli)).toBe(true);
+    expect(isLabviewCliInstalled(detectionHost)).toBe(false);
+    expect(isLabviewCliInstalled(detectionAvailable)).toBe(false);
+    expect(isLabviewCliInstalled(detectionMissing)).toBe(false);
+  });
+
+  it('allows open when the LabVIEW CLI is installed', () => {
+    expect(decideLabviewCliOpenGate(detectionHostWithCli)).toEqual({ kind: 'allow' });
+  });
+
+  it('allows open before detection completes so activation races never block users', () => {
+    expect(decideLabviewCliOpenGate(undefined)).toEqual({ kind: 'allow' });
+  });
+
+  it('allows open when a satisfiable Docker runtime is the active provider', () => {
+    const snapshot = evaluateRuntimeAvailability(detectionAvailable);
+    expect(snapshot.kind).toBe('available');
+    expect(snapshot.label.provider).toBe('docker');
+    expect(decideLabviewCliOpenGate(detectionAvailable, snapshot)).toEqual({ kind: 'allow' });
+  });
+
+  it('blocks open with the LabVIEW CLI toast when no runtime can compare', () => {
+    const decision = decideLabviewCliOpenGate(
+      detectionMissing,
+      evaluateRuntimeAvailability(detectionMissing)
+    );
+    expect(decision.kind).toBe('block');
+    expect(decision.toastMessage).toBe(LABVIEW_CLI_OPEN_BLOCKED_MESSAGE);
+    expect(decision.toastMessage).toContain('LabVIEW CLI');
+  });
+
+  it('blocks open when a host LabVIEW is selected but the LabVIEW CLI is absent', () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    expect(snapshot.label.provider).toBe('host');
+    const decision = decideLabviewCliOpenGate(detectionHost, snapshot);
+    expect(decision.kind).toBe('block');
+    expect(decision.toastMessage).toBe(LABVIEW_CLI_OPEN_BLOCKED_MESSAGE);
   });
 });
