@@ -14,7 +14,11 @@ const { spawnSync } = require('node:child_process');
 const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const RELATED_VALIDATION_ISSUE = '259';
 const ISSUE_BODY_FILENAME = 'linux-validation-gap-issue.md';
+// Hard gaps (a real failure surfaced by validation) are bugs.
 const DEFAULT_LABELS = Object.freeze(['copilot-target', 'bug']);
+// Observational records (a `--note` on a clean/expected run) are validation
+// evidence, not defects, so they are not labelled `bug`.
+const OBSERVATIONAL_LABELS = Object.freeze(['copilot-target']);
 const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze(['gh']);
 const REPO_SLUG_PATTERN = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u;
 const GH_TIMEOUT_MS = 60000;
@@ -185,12 +189,13 @@ function truncate(value, max) {
 function composeIssueContent(evidence, gap, options = {}) {
   const note = options.note && String(options.note).trim();
   const providerLabel = evidence.provider || 'unknown-provider';
-  const signal =
-    gap.severity === 'observational'
-      ? truncate(note, 60)
-      : evidence.failureReason || evidence.runtimeState || 'unexpected outcome';
+  const isObservation = gap.severity === 'observational';
+  const signal = isObservation
+    ? truncate(note, 60)
+    : evidence.failureReason || evidence.runtimeState || 'unexpected outcome';
 
-  const title = `Linux validation gap (${providerLabel}): ${truncate(signal, 80)}`;
+  const kindLabel = isObservation ? 'observation' : 'gap';
+  const title = `Linux validation ${kindLabel} (${providerLabel}): ${truncate(signal, 80)}`;
 
   const manifestList =
     evidence.manifestEntries.length > 0
@@ -199,13 +204,30 @@ function composeIssueContent(evidence, gap, options = {}) {
           .join('\n')
       : '- (no diagnostics manifest entries found)';
 
+  const summary = isObservation
+    ? `A maintainer Linux validation run (relates to #${RELATED_VALIDATION_ISSUE}) on real hardware` +
+      ` recorded an observation on the \`${providerLabel}\` provider. This is validation evidence,` +
+      ' not a confirmed defect. It was filed by `scripts/fileLinuxValidationGap.js` so the session —' +
+      ' not the human operator — is the author of record.'
+    : `A maintainer Linux validation run (relates to #${RELATED_VALIDATION_ISSUE}) on real hardware` +
+      ` surfaced a gap on the \`${providerLabel}\` provider. This issue was filed by` +
+      ' `scripts/fileLinuxValidationGap.js` so the session — not the human operator — is the author of record.';
+
+  const signalHeading = isObservation ? '## Observed signal' : '## Detected signal';
+
+  const nextStep = isObservation
+    ? 'This records validation evidence and may need no action. If it describes a defect,' +
+      ' triage against the named requirement surface (VHS-REQ-156 / VHS-REQ-624 / VHS-REQ-147 /' +
+      ' VHS-REQ-148 as applicable) and reproduce from the retained run directory.'
+    : 'Triage against the named requirement surface (VHS-REQ-156 / VHS-REQ-624 / VHS-REQ-147 /' +
+      ' VHS-REQ-148 as applicable), reproduce from the retained run directory, and attach the full' +
+      ' `diagnostics/` bundle. Keep the fix scoped to the surfaced behavior.';
+
   const body = [
     '## Summary',
-    `A maintainer Linux validation run (relates to #${RELATED_VALIDATION_ISSUE}) on real hardware` +
-      ` surfaced a gap on the \`${providerLabel}\` provider. This issue was filed by` +
-      ' `scripts/fileLinuxValidationGap.js` so the session — not the human operator — is the author of record.',
+    summary,
     '',
-    '## Detected signal',
+    signalHeading,
     gap.reasons.map((reason) => `- ${reason}`).join('\n') || '- (none recorded)',
     '',
     note ? '## Operator note' : '',
@@ -224,14 +246,12 @@ function composeIssueContent(evidence, gap, options = {}) {
     manifestList,
     '',
     '## Next step',
-    'Triage against the named requirement surface (VHS-REQ-156 / VHS-REQ-624 / VHS-REQ-147 /' +
-      ' VHS-REQ-148 as applicable), reproduce from the retained run directory, and attach the full' +
-      ' `diagnostics/` bundle. Keep the fix scoped to the surfaced behavior.'
+    nextStep
   ]
     .filter((line) => line !== '')
     .join('\n');
 
-  return { title, body, labels: [...DEFAULT_LABELS] };
+  return { title, body, labels: isObservation ? [...OBSERVATIONAL_LABELS] : [...DEFAULT_LABELS] };
 }
 
 function buildGhIssueCreateArgs(content, repo, bodyFilePath) {
@@ -302,8 +322,9 @@ function main(argv = process.argv.slice(2), deps = {}) {
   const content = composeIssueContent(evidence, gap, options);
   const result = fileIssue(content, options, deps);
 
+  const kindLabel = gap.severity === 'observational' ? 'observation' : 'gap';
   if (result.filed) {
-    stdout.write(`Filed validation gap issue: ${result.url || '(url unavailable)'}\n`);
+    stdout.write(`Filed validation ${kindLabel} issue: ${result.url || '(url unavailable)'}\n`);
   } else {
     stdout.write(
       `Dry run: composed issue "${result.title}" written to ${result.bodyFilePath} (not filed).\n`
@@ -323,6 +344,7 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_REPO,
   DEFAULT_LABELS,
+  OBSERVATIONAL_LABELS,
   ALLOWED_EXECUTABLE_COMMANDS,
   RELATED_VALIDATION_ISSUE,
   ISSUE_BODY_FILENAME,

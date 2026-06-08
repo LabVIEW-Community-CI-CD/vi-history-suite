@@ -11,6 +11,7 @@ interface IssueContent {
 const {
   DEFAULT_REPO,
   DEFAULT_LABELS,
+  OBSERVATIONAL_LABELS,
   isValidRepoSlug,
   isAllowedExecutableCommand,
   parseArgs,
@@ -24,6 +25,7 @@ const {
 } = require('../../scripts/fileLinuxValidationGap.js') as {
   DEFAULT_REPO: string;
   DEFAULT_LABELS: string[];
+  OBSERVATIONAL_LABELS: string[];
   isValidRepoSlug: (repo: string) => boolean;
   isAllowedExecutableCommand: (command: string) => boolean;
   parseArgs: (argv: string[]) => {
@@ -259,6 +261,44 @@ describe('fileLinuxValidationGap composeIssueContent', () => {
     const content = composeIssueContent(evidence, gap, { note });
     expect(content.body).toContain('Operator note');
     expect(content.body).toContain(note);
+  });
+
+  it('frames an observational record as an observation, not a bug', () => {
+    const evidence = readRunEvidence(
+      RUN_DIR,
+      fakeFs({
+        [METADATA_PATH]: metadata({ state: 'succeeded', reportExists: true }),
+        [MANIFEST_PATH]: manifest([])
+      })
+    );
+    const note = 'Section A host-native PASS on real hardware';
+    const gap = detectGap(evidence, { note });
+    const content = composeIssueContent(evidence, gap, { note });
+    // Title and summary must not call a clean-run observation a "gap".
+    expect(content.title).toContain('Linux validation observation');
+    expect(content.title).not.toContain('Linux validation gap');
+    expect(content.body).toContain('recorded an observation');
+    expect(content.body).not.toContain('surfaced a gap');
+    expect(content.body).toContain('## Observed signal');
+    // Observations are validation evidence, not defects: no `bug` label.
+    expect(content.labels).toEqual([...OBSERVATIONAL_LABELS]);
+    expect(content.labels).not.toContain('bug');
+  });
+
+  it('keeps gap framing and the bug label for a hard gap', () => {
+    const evidence = readRunEvidence(
+      RUN_DIR,
+      fakeFs({
+        [METADATA_PATH]: metadata({ state: 'failed', failureReason: 'report-finalize-failed' }),
+        [MANIFEST_PATH]: manifest([])
+      })
+    );
+    const gap = detectGap(evidence, {});
+    const content = composeIssueContent(evidence, gap, {});
+    expect(content.title).toContain('Linux validation gap');
+    expect(content.body).toContain('surfaced a gap');
+    expect(content.body).toContain('## Detected signal');
+    expect(content.labels).toContain('bug');
   });
 });
 

@@ -18,6 +18,10 @@ Burned exact-version releases now include `v1.0.2`.
   after the comparison so later comparisons can reuse the warm session, and
   `TROUBLESHOOTING.md` explains how to close the resident LabVIEW (it runs under
   the `labview` name). No runtime behavior change.
+- The Linux-validation gap filer (`scripts/fileLinuxValidationGap.js`) now frames
+  a clean-run `--note` record as a "Linux validation observation" (labelled
+  `copilot-target` only) instead of a "Linux validation gap" labelled `bug`, so
+  PASS evidence is no longer misreported as a defect. Hard gaps are unchanged.
 
 ## [1.12.1] - 2026-06-07
 
