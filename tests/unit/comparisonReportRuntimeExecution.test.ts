@@ -11,6 +11,8 @@ import {
 } from '../../src/reporting/comparisonReportPlan';
 import {
   classifyLabviewCliDiagnosticText,
+  classifySelectedTreeMaterializeError,
+  SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC,
   executeComparisonReport,
   materializeSelectedRevisionTreeWithGit,
   parseSubmoduleGitlinks,
@@ -3020,6 +3022,9 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
       );
       const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
       expect(notes.some((note) => /short-path|path-table corruption|workspaceStorage/i.test(note))).toBe(true);
+      // VHS-REQ-156 (#292): the packet discloses that host-native LabVIEW stays
+      // resident after the run so it is not mistaken for a leak.
+      expect(notes.some((note) => /stays running|reuse the warm session|quit LabVIEW/i.test(note))).toBe(true);
     } finally {
       delete process.env.LVIE_LINUX_RUNTIME_TMPDIR;
     }
@@ -3276,6 +3281,43 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       attempted: false,
       failureReason: 'selected-tree-materialize-failed'
     });
+  });
+
+  it('surfaces an actionable long-path diagnostic when a deep storage root trips MAX_PATH (#303)', async () => {
+    const runCommand = vi.fn();
+    const record = createNestedReadyRecord();
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi.fn().mockResolvedValue(Buffer.from('vi')),
+        materializeSelectedRevisionTree: vi
+          .fn()
+          .mockRejectedValue(
+            new Error(
+              'git -C /workspace/repo -c core.longpaths=true --work-tree /deep checkout-index -a -f exited 1: ' +
+                'error: unable to create file resource/plugins/NIIconEditor/Class/FakedArray/ToMoreSpecificClass/ClusterRef_2_DisplayTemplatesRef.vi: Filename too long'
+            )
+          ),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    // The stable failure reason is retained for existing classifiers/auto-filer.
+    expect(result.record.runtimeExecution.failureReason).toBe('selected-tree-materialize-failed');
+    // A more specific, actionable diagnostic is attached on top of it.
+    expect(result.record.runtimeExecution.diagnosticReason).toBe(
+      SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(/MAX_PATH/);
   });
 
   it('stages and runs a dependency-free root VI without regression', async () => {
@@ -3742,6 +3784,39 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
   });
 });
 
+describe('classifySelectedTreeMaterializeError (VHS-REQ-624 #303)', () => {
+  it('classifies a git Win32 "Filename too long" error as a long-path diagnostic', () => {
+    const result = classifySelectedTreeMaterializeError(
+      new Error(
+        'git --work-tree /deep checkout-index -a -f exited 1: ' +
+          'error: unable to create file a/b/c.vi: Filename too long'
+      )
+    );
+    expect(result.diagnosticReason).toBe(SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC);
+    expect(result.diagnosticNotes?.length).toBeGreaterThan(0);
+    expect(result.diagnosticNotes?.join(' ')).toMatch(/core\.longpaths/);
+  });
+
+  it('also matches the POSIX "File name too long" spelling', () => {
+    const result = classifySelectedTreeMaterializeError(
+      new Error('checkout-index failed: File name too long')
+    );
+    expect(result.diagnosticReason).toBe(SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC);
+  });
+
+  it('returns an empty classification for an unrelated materialize failure', () => {
+    expect(classifySelectedTreeMaterializeError(new Error('partial-clone'))).toEqual({});
+  });
+
+  it('tolerates a non-Error value without throwing', () => {
+    expect(classifySelectedTreeMaterializeError('Filename too long')).toEqual({
+      diagnosticReason: SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC,
+      diagnosticNotes: expect.arrayContaining([expect.any(String)])
+    });
+    expect(classifySelectedTreeMaterializeError(undefined)).toEqual({});
+  });
+});
+
 describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
   async function createTempGitRepo(): Promise<string> {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-repo-'));
@@ -3852,9 +3927,13 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     // The temp index is populated from the revision's full tree first.
     expect(calls[0].args).toEqual(['-C', '/workspace/repo', 'read-tree', 'abcdef1234567890']);
     // Then every tracked entry is checked out into the destination work tree.
+    // VHS-REQ-624 (#303): `-c core.longpaths=true` keeps deep destination roots
+    // from tripping the Win32 MAX_PATH limit during checkout-index.
     expect(calls[1].args).toEqual([
       '-C',
       '/workspace/repo',
+      '-c',
+      'core.longpaths=true',
       '--work-tree',
       '/stage/dest',
       'checkout-index',
@@ -4000,6 +4079,8 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     expect(calls).toContainEqual([
       '-C',
       '/workspace/repo',
+      '-c',
+      'core.longpaths=true',
       '--work-tree',
       '/stage/dest',
       'checkout-index',

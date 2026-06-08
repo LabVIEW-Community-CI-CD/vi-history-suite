@@ -63,6 +63,20 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('Branch governance decision:');
   });
 
+  it('allows the dependabot/* head family to target develop (matches dependabot.yml)', () => {
+    const workflow = readWorkflow();
+
+    // Dependabot opens PRs against develop per .github/dependabot.yml; the
+    // governance gate must allow that head family so its PRs are not blocked.
+    // They remain gated by the full CI suite.
+    const developCaseIndex = workflow.indexOf('develop)');
+    expect(developCaseIndex).toBeGreaterThan(-1);
+    const developSegment = workflow.slice(developCaseIndex, workflow.indexOf('feature/*)'));
+    expect(developSegment).toMatch(/head" =~ \^dependabot\//);
+    // The operator-facing policy message documents the dependabot allowance.
+    expect(workflow).toContain('main, or dependabot/*');
+  });
+
   it('keeps the traceability audit in the required hosted gate', () => {
     const workflow = readWorkflow();
 
@@ -183,7 +197,6 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('"$head" == "main"');
     expect(workflow).toContain('feature/* branches must reference an issue');
     expect(workflow).not.toMatch(/\^copilot\//);
-    expect(workflow).not.toMatch(/\^dependabot\//);
     expect(workflow).not.toContain("'copilot/**'");
   });
 

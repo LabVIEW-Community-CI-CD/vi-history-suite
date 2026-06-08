@@ -247,6 +247,31 @@ If the failure persists, attach the run's full `diagnostics/` directory and
 the LabVIEW interactive log
 (`/tmp/lvrt_<version>_interactive_<user>_log.txt`) when filing the report.
 
+### LabVIEW stays open after a Linux host-native comparison
+
+On Linux host-native runs, `LabVIEWCLI` launches LabVIEW to generate the
+comparison report and **leaves it running** after the operation completes
+(`CreateComparisonReport operation succeeded`). This is expected: the resident
+LabVIEW process keeps the VI Server session warm so subsequent comparisons
+start faster instead of paying the cold-launch cost again. The retained
+packet's `runtimeExecution.diagnosticNotes` records this so it is not mistaken
+for a leak.
+
+The process runs under the `labview` name (a symlink to the installed
+executable such as `labviewcommunity`), so a cleanup that matches only
+`labviewcommunity` will miss it. When you no longer need the warm session:
+
+- Quit LabVIEW from its own window, or
+- Match the resident process by its full path, for example:
+
+  ```bash
+  pkill -f '/usr/local/natinst/LabVIEW-<version>-64/labview'
+  ```
+
+The container and headless paths do not leave a GUI behind (the container is
+ephemeral, and the headless path fails closed), so this note applies only to
+the Linux host-native, non-headless provider.
+
 ### Linux container compare reports "VI path invalid" (Docker bind-mount not visible)
 
 If the Linux **container** provider runs but `CreateComparisonReport` reports

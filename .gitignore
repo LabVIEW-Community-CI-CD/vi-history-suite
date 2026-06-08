@@ -10,6 +10,9 @@ coverage/
 tmp/
 assurance-*-evidence/
 
+# Windows comparison-runtime validation run evidence (issue #296 driver output)
+win-validation/
+
 
 # Vagrant acceptance artefacts
 vagrant/shared/
