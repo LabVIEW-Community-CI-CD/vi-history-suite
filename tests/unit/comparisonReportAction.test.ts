@@ -511,4 +511,14 @@ describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
     expect(settings.labviewCliPath).toBeUndefined();
     expect(settings.labviewExePath).toBeUndefined();
   });
+
+  it('ignores non-string setting values instead of throwing (misconfigured settings.json)', () => {
+    const settings = readComparisonRuntimeSettings({
+      get: (key: string) =>
+        key === 'labviewCliPath' ? 123 : key === 'labviewExePath' ? ['x'] : undefined
+    } as never);
+
+    expect(settings.labviewCliPath).toBeUndefined();
+    expect(settings.labviewExePath).toBeUndefined();
+  });
 });

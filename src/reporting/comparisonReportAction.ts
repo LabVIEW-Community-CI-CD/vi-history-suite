@@ -1260,8 +1260,14 @@ function readTrimmedStringSetting(
   configuration: Pick<vscode.WorkspaceConfiguration, 'get'>,
   key: string
 ): string | undefined {
-  const value = configuration.get<string>(key);
-  const trimmed = value?.trim();
+  const value = configuration.get<unknown>(key);
+  if (typeof value !== 'string') {
+    // Defend the system boundary: a misconfigured settings.json can return a
+    // non-string (e.g. a number) for a string-typed setting, and calling
+    // `.trim()` on it would throw and break runtime-settings resolution.
+    return undefined;
+  }
+  const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
 }
 
