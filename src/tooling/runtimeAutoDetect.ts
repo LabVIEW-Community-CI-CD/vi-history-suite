@@ -15,6 +15,15 @@ import * as fsPromises from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import {
+  LINUX_SHARED_LABVIEW_CLI_CANDIDATES,
+  WINDOWS_DEFAULT_PROGRAM_FILES,
+  WINDOWS_DEFAULT_PROGRAM_FILES_X86,
+  linuxLabviewInstallCandidates,
+  windowsLabviewExeCandidates,
+  windowsSharedLabviewCliPath
+} from './labviewInstallCatalog';
+
 export type DetectedHostBitness = 'x86' | 'x64';
 
 export interface DetectedHostInstallation {
@@ -47,34 +56,6 @@ export interface RuntimeAutoDetectDeps {
   env?: NodeJS.ProcessEnv;
   homedir?: () => string;
 }
-
-const MINIMUM_HOST_LABVIEW_YEAR = 2025;
-const MAXIMUM_HOST_LABVIEW_YEAR = 2030;
-
-const WINDOWS_LABVIEW_FOLDER_CANDIDATES = (year: number): readonly string[] => [
-  `LabVIEW ${year} Q1`,
-  `LabVIEW ${year} Q3`,
-  `LabVIEW ${year}`
-];
-
-const WINDOWS_DEFAULT_PROGRAM_FILES = 'C:\\Program Files';
-const WINDOWS_DEFAULT_PROGRAM_FILES_X86 = 'C:\\Program Files (x86)';
-const WINDOWS_SHARED_LABVIEW_CLI_RELATIVE = path.win32.join(
-  'National Instruments',
-  'Shared',
-  'LabVIEW CLI',
-  'LabVIEWCLI.exe'
-);
-const LINUX_LABVIEW_INSTALL_PARENT = '/usr/local/natinst';
-// On Linux the LabVIEW CLI ships as a shared, version-independent component
-// (`nilvcli`) rather than a sibling of each versioned `labview` binary. It is
-// exposed on PATH as `/usr/local/bin/LabVIEWCLI`, a symlink to the real launcher
-// under `<install parent>/share/nilvcli/LabVIEWCLI`. These mirror the execution
-// locator's Linux CLI candidates so detection and runtime agree.
-const LINUX_SHARED_LABVIEW_CLI_CANDIDATES: readonly string[] = [
-  '/usr/local/bin/LabVIEWCLI',
-  path.posix.join(LINUX_LABVIEW_INSTALL_PARENT, 'share', 'nilvcli', 'LabVIEWCLI')
-];
 
 export async function detectAvailableRuntimes(
   deps: RuntimeAutoDetectDeps = {}
@@ -119,30 +100,18 @@ async function detectWindowsHostInstallations(
 ): Promise<DetectedHostInstallation[]> {
   const programFiles = env.ProgramFiles ?? WINDOWS_DEFAULT_PROGRAM_FILES;
   const programFilesX86 = env['ProgramFiles(x86)'] ?? WINDOWS_DEFAULT_PROGRAM_FILES_X86;
-  const sharedCliPath = path.win32.join(programFilesX86, WINDOWS_SHARED_LABVIEW_CLI_RELATIVE);
+  const sharedCliPath = windowsSharedLabviewCliPath(programFilesX86);
   const sharedCliPresent = await isFile(fs, sharedCliPath);
 
   const installations: DetectedHostInstallation[] = [];
-  for (let year = MAXIMUM_HOST_LABVIEW_YEAR; year >= MINIMUM_HOST_LABVIEW_YEAR; year -= 1) {
-    for (const folder of WINDOWS_LABVIEW_FOLDER_CANDIDATES(year)) {
-      const x64Exe = path.win32.join(programFiles, 'National Instruments', folder, 'LabVIEW.exe');
-      const x86Exe = path.win32.join(programFilesX86, 'National Instruments', folder, 'LabVIEW.exe');
-      if (await isFile(fs, x64Exe)) {
-        installations.push({
-          year: String(year),
-          bitness: 'x64',
-          labviewExePath: x64Exe,
-          labviewCliPath: sharedCliPresent ? sharedCliPath : undefined
-        });
-      }
-      if (await isFile(fs, x86Exe)) {
-        installations.push({
-          year: String(year),
-          bitness: 'x86',
-          labviewExePath: x86Exe,
-          labviewCliPath: sharedCliPresent ? sharedCliPath : undefined
-        });
-      }
+  for (const candidate of windowsLabviewExeCandidates({ programFiles, programFilesX86 })) {
+    if (await isFile(fs, candidate.labviewExePath)) {
+      installations.push({
+        year: candidate.year,
+        bitness: candidate.bitness,
+        labviewExePath: candidate.labviewExePath,
+        labviewCliPath: sharedCliPresent ? sharedCliPath : undefined
+      });
     }
   }
   return installations;
@@ -156,26 +125,15 @@ async function detectLinuxHostInstallations(
   // sibling only when the shared launcher is absent (legacy/atypical layouts).
   const sharedCliPath = await firstExistingFile(fs, LINUX_SHARED_LABVIEW_CLI_CANDIDATES);
   const installations: DetectedHostInstallation[] = [];
-  for (let year = MAXIMUM_HOST_LABVIEW_YEAR; year >= MINIMUM_HOST_LABVIEW_YEAR; year -= 1) {
-    const versionDirectory = `LabVIEW-${year}-64`;
-    const labviewExePath = path.posix.join(
-      LINUX_LABVIEW_INSTALL_PARENT,
-      versionDirectory,
-      'labview'
-    );
-    if (await isFile(fs, labviewExePath)) {
-      const perVersionCliPath = path.posix.join(
-        LINUX_LABVIEW_INSTALL_PARENT,
-        versionDirectory,
-        'labviewcli'
-      );
+  for (const candidate of linuxLabviewInstallCandidates()) {
+    if (await isFile(fs, candidate.labviewExePath)) {
       const labviewCliPath =
         sharedCliPath ??
-        ((await isFile(fs, perVersionCliPath)) ? perVersionCliPath : undefined);
+        ((await isFile(fs, candidate.perVersionCliPath)) ? candidate.perVersionCliPath : undefined);
       installations.push({
-        year: String(year),
+        year: candidate.year,
         bitness: 'x64',
-        labviewExePath,
+        labviewExePath: candidate.labviewExePath,
         labviewCliPath
       });
     }

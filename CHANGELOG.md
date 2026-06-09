@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Fixed
+
+- Host LabVIEW runtime detection and the comparison runtime locator now share a
+  single install-location catalog, so the activation-time LabVIEW CLI gate
+  recognizes every documented filesystem install the compare engine can use.
+  This closes a class of false "install LabVIEW / the LabVIEW CLI" blocks: Linux
+  hosts whose LabVIEW lives in a quarterly install directory
+  (`LabVIEW-<year>Q1-64` / `Q3`) are now detected, and Windows installs are
+  recognized across the full supported year range rather than a hardcoded folder
+  list. The Windows registry scan remains a locator-only superset for installs
+  placed outside the default Program Files locations.
+
 ## [1.14.1] - 2026-06-09
 
 ### Fixed
