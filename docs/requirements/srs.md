@@ -2477,11 +2477,14 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
 - Statement: The extension shall derive the documented host LabVIEW,
-  LabVIEW CLI, and LVCompare install locations scanned by activation-time
-  runtime detection (VHS-REQ-616) and by the comparison runtime locator
-  (VHS-REQ-155) from a single shared install catalog, so the lightweight
-  activation detector recognizes every documented filesystem install
-  location the comparison locator recognizes. This prevents the LabVIEW CLI
+  LabVIEW CLI, and LVCompare install locations from a single shared install
+  catalog consumed by both activation-time runtime detection (VHS-REQ-616)
+  and the comparison runtime locator (VHS-REQ-155), so the lightweight
+  activation detector recognizes every documented LabVIEW and LabVIEW CLI
+  filesystem install location the comparison locator recognizes. Activation
+  detection resolves the host LabVIEW executable and its LabVIEW CLI;
+  LVCompare is a locator-only surface that draws its paths from the same
+  catalog. This prevents the LabVIEW CLI
   open gate (VHS-REQ-627 / VHS-REQ-629) from blocking a host the compare
   engine could serve when the two detectors' hardcoded path lists drift
   apart, the defect class first observed when a narrower Linux detector
@@ -2499,8 +2502,9 @@ Missing numeric IDs are intentional.
     gate gap that previously false-blocked it.
   - `buildDocumentedRuntimeCandidates` in the comparison runtime locator
     derives its filesystem scan from the same catalog, so the documented
-    Linux and Windows candidate paths the locator scans are a subset of
-    what activation detection probes; the locator's Windows registry query
+    LabVIEW executable and LabVIEW CLI candidate paths the locator scans are
+    a subset of what activation detection probes; LVCompare is a
+    locator-only candidate, and the locator's Windows registry query
     remains the locator-only superset for non-default installs.
   - The single canonical 32-bit shared Windows LabVIEW CLI scan path is
     unchanged.

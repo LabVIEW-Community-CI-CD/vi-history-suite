@@ -1,13 +1,13 @@
 /**
  * VHS-REQ-632: Single source of truth for documented host LabVIEW install
- * locations. Both the activation-time, filesystem-only runtime detector
- * (`runtimeAutoDetect.ts`, VHS-REQ-616) and the authoritative comparison
- * runtime locator (`comparisonRuntimeLocator.ts`, VHS-REQ-155) derive their
- * documented LabVIEW / LabVIEWCLI / LVCompare candidate paths from this module
- * so the two detectors can never diverge on hardcoded filesystem paths. A
- * narrower activation detector is what caused the LabVIEW CLI open-gate to
- * false-block hosts the compare engine could serve (issue #346 and the epic it
- * belongs to).
+ * locations. The activation-time, filesystem-only runtime detector
+ * (`runtimeAutoDetect.ts`, VHS-REQ-616) consumes the LabVIEW executable and
+ * LabVIEW CLI candidates; the authoritative comparison runtime locator
+ * (`comparisonRuntimeLocator.ts`, VHS-REQ-155) consumes those plus the
+ * LVCompare candidates. Sourcing both from this module keeps the two detectors
+ * from diverging on hardcoded filesystem paths. A narrower activation detector
+ * is what caused the LabVIEW CLI open-gate to false-block hosts the compare
+ * engine could serve (issue #346 and the epic it belongs to).
  *
  * Pure path/string knowledge only: no VS Code, no filesystem access, and no
  * child processes, so it stays safe to import from both the `tooling` and

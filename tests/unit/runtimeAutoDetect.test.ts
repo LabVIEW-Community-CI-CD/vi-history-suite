@@ -247,7 +247,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
-  it('detects a Windows install at a year not in the legacy locator list (issue #352)', async () => {
+  it('detects a Windows install at a year not in the legacy locator list (VHS-REQ-632)', async () => {
     // VHS-REQ-632: detection and the locator now share a 2025-2030 catalog, so a
     // newer-year Windows install (e.g. 2027) is recognized by activation
     // detection instead of being missed by a hardcoded folder list.
