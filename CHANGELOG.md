@@ -10,6 +10,18 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.13.2] - 2026-06-09
+
+### Changed
+
+- When opening `VI History` is blocked because the LabVIEW CLI is missing and
+  LabVIEW ≥2025 is already installed, the notification now says LabVIEW is
+  installed but the LabVIEW CLI is not, and offers an `Install LabVIEW CLI`
+  action that opens NI's dedicated LabVIEW Command-Line Interface download page.
+  Previously this case pointed at the full LabVIEW installer, which was
+  confusing when LabVIEW was already present. When no LabVIEW is installed, the
+  notification still offers `Install LabVIEW`.
+
 ## [1.13.1] - 2026-06-08
 
 ### Changed
