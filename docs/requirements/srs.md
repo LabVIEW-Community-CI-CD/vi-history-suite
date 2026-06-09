@@ -2471,5 +2471,65 @@ Missing numeric IDs are intentional.
     guidance. The accepted false-positive tradeoff (Windows VI Server on
     without an explicit key) is intentional for this gate.
 
+### VHS-REQ-632: Host LabVIEW Install Catalog Parity
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall derive the documented host LabVIEW,
+  LabVIEW CLI, and LVCompare install locations scanned by activation-time
+  runtime detection (VHS-REQ-616) and by the comparison runtime locator
+  (VHS-REQ-155) from a single shared install catalog, so the lightweight
+  activation detector recognizes every documented filesystem install
+  location the comparison locator recognizes. This prevents the LabVIEW CLI
+  open gate (VHS-REQ-627 / VHS-REQ-629) from blocking a host the compare
+  engine could serve when the two detectors' hardcoded path lists drift
+  apart, the defect class first observed when a narrower Linux detector
+  missed the shared LabVIEW CLI launcher.
+- Acceptance Criteria:
+  - A single module (`src/tooling/labviewInstallCatalog.ts`) is the source
+    of the supported LabVIEW year range, the Linux install directories
+    (the quarterly `LabVIEW-<year>Q1-64` / `LabVIEW-<year>Q3-64` forms and
+    the plain `LabVIEW-<year>-64` form), the shared `nilvcli` LabVIEW CLI
+    launchers, the Windows `LabVIEW <year>[ Q1| Q3]` folder names, the
+    shared Windows LabVIEW CLI path, and the LVCompare paths.
+  - `detectLinuxHostInstallations` and `detectWindowsHostInstallations`
+    enumerate the catalog candidates; a Linux host whose only LabVIEW lives
+    in a quarterly install directory is detected, closing the activation
+    gate gap that previously false-blocked it.
+  - `buildDocumentedRuntimeCandidates` in the comparison runtime locator
+    derives its filesystem scan from the same catalog, so the documented
+    Linux and Windows candidate paths the locator scans are a subset of
+    what activation detection probes; the locator's Windows registry query
+    remains the locator-only superset for non-default installs.
+  - The single canonical 32-bit shared Windows LabVIEW CLI scan path is
+    unchanged.
+  - The catalog is pure (no VS Code, filesystem, or child-process
+    dependencies) so both the tooling and reporting layers consume it
+    without an import cycle.
+- Agent Work Scope:
+  - Add `src/tooling/labviewInstallCatalog.ts` and refactor
+    `src/tooling/runtimeAutoDetect.ts` and
+    `src/reporting/comparisonRuntimeLocator.ts` to consume it. Do not add
+    registry or child-process probing to activation detection; the
+    VHS-REQ-616 filesystem-only cost contract stands and the Windows
+    registry-only divergence is tracked separately.
+- Implementation References:
+  - `src/tooling/labviewInstallCatalog.ts`
+  - `src/tooling/runtimeAutoDetect.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+- Verification References:
+  - `tests/unit/labviewInstallCatalog.test.ts`
+  - `tests/unit/runtimeAutoDetect.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the catalog the single source of truth: add new documented install
+    locations here, not in the detector or the locator. Preserve the
+    canonical 32-bit shared Windows LabVIEW CLI scan path so the locator's
+    documented-candidate contract holds. Activation detection stays
+    filesystem-only; registry-resolved and custom-path installs (the
+    locator-only superset) are out of scope for this parity requirement.
+
 
 

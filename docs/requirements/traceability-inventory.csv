@@ -191,10 +191,12 @@ vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW p
 .vscode/extensions.json,dev-only,No,VS Code recommended extensions; workspace configuration.
 .vscode/launch.json,dev-only,No,VS Code debug launch configurations; workspace configuration.
 .vscode/tasks.json,dev-only,No,VS Code task definitions; workspace configuration.
+src/tooling/labviewInstallCatalog.ts,mapped,Yes,Shared host LabVIEW install-candidate catalog and single source of truth for activation detection and the comparison locator mapped to VHS-REQ-632.
 src/tooling/runtimeAutoDetect.ts,mapped,Yes,Filesystem-only host and Docker runtime detector mapped to VHS-REQ-616.
 src/tooling/runtimeSettingsSeed.ts,mapped,Yes,Activation seed-or-repair policy for VI History runtime settings mapped to VHS-REQ-616.
 src/ui/runtimeAvailabilityNotice.ts,mapped,Yes,Status bar and first-run missing-runtime notification surface mapped to VHS-REQ-617; LabVIEW CLI open-command gate helpers mapped to VHS-REQ-627; LabVIEW-installed CLI-missing install offer mapped to VHS-REQ-629; pre-panel VI Server open gate mapped to VHS-REQ-631.
 src/commands/runtimeCommands.ts,mapped,Yes,Runtime convenience commands (detectRuntimeNow; resetFirstRunNotice; showRuntimeSummary) mapped to VHS-REQ-617.
+tests/unit/labviewInstallCatalog.test.ts,mapped,Yes,Install catalog builder unit tests mapped to VHS-REQ-632.
 tests/unit/runtimeAutoDetect.test.ts,mapped,Yes,Detector unit tests mapped to VHS-REQ-616.
 tests/unit/runtimeSettingsSeed.test.ts,mapped,Yes,Settings seed-or-repair unit tests mapped to VHS-REQ-616.
 tests/unit/runtimeAvailabilityNotice.test.ts,mapped,Yes,Missing-runtime UX unit tests mapped to VHS-REQ-617; LabVIEW CLI open-command gate tests mapped to VHS-REQ-627; LabVIEW-installed CLI-missing install offer tests mapped to VHS-REQ-629; pre-panel VI Server open gate tests mapped to VHS-REQ-631.
