@@ -216,6 +216,60 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     ]);
   });
 
+  it('detects a Linux quarterly install directory (LabVIEW-<year>Q1-64) (issue #352)', async () => {
+    // VHS-REQ-632: a host whose only LabVIEW lives in the quarterly install
+    // directory must be detected so the LabVIEW CLI open-gate does not
+    // false-block it, matching the comparison runtime locator's documented
+    // candidates (which already scan the quarterly form).
+    const fs = createFakeFs([
+      '/usr/local/natinst/LabVIEW-2026Q1-64/labview',
+      '/usr/local/bin/LabVIEWCLI'
+    ]);
+
+    const detection = await detectAvailableRuntimes({
+      fs,
+      platform: 'linux',
+      env: { PATH: '/usr/local/bin:/usr/bin' }
+    });
+
+    expect(detection.host.installations).toEqual([
+      {
+        year: '2026',
+        bitness: 'x64',
+        labviewExePath: '/usr/local/natinst/LabVIEW-2026Q1-64/labview',
+        labviewCliPath: '/usr/local/bin/LabVIEWCLI'
+      }
+    ]);
+    expect(recommendRuntimeFromDetection(detection)).toMatchObject({
+      provider: 'host',
+      labviewVersion: '2026',
+      labviewBitness: 'x64'
+    });
+  });
+
+  it('detects a Windows install at a year not in the legacy locator list (VHS-REQ-632)', async () => {
+    // VHS-REQ-632: detection and the locator now share a 2025-2030 catalog, so a
+    // newer-year Windows install (e.g. 2027) is recognized by activation
+    // detection instead of being missed by a hardcoded folder list.
+    const fs = createFakeFs([
+      'C:\\Program Files\\National Instruments\\LabVIEW 2027\\LabVIEW.exe'
+    ]);
+
+    const detection = await detectAvailableRuntimes({
+      fs,
+      platform: 'win32',
+      env: {
+        ProgramFiles: 'C:\\Program Files',
+        'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+        PATH: ''
+      }
+    });
+
+    expect(detection.host.installations).toEqual([
+      expect.objectContaining({ year: '2027', bitness: 'x64' })
+    ]);
+  });
+
   it('only checks docker on macOS (LabVIEW host comparison is unsupported)', async () => {
     const fs = createFakeFs(['/usr/local/bin/docker']);
 

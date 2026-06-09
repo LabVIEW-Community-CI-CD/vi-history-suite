@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.14.1');
+    expect(manifest.version).toBe('1.14.2');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);

@@ -10,6 +10,16 @@ import {
   RuntimeProcessObservation,
   WindowsTcpListenerObservation
 } from './comparisonReportRuntimeExecution';
+import {
+  LINUX_LVCOMPARE_PATH,
+  LINUX_SHARED_LABVIEW_CLI_CANDIDATES,
+  WINDOWS_DEFAULT_PROGRAM_FILES,
+  WINDOWS_DEFAULT_PROGRAM_FILES_X86,
+  WINDOWS_SHARED_LABVIEW_CLI_PATH,
+  linuxLabviewInstallCandidates,
+  windowsLabviewExeCandidates,
+  windowsLvComparePath
+} from '../tooling/labviewInstallCatalog';
 
 const execFileAsync = promisify(execFile);
 
@@ -170,17 +180,8 @@ interface BuildProviderDecisionsOptions {
   lvCompareFound?: boolean;
 }
 
-const WINDOWS_PROGRAM_FILES = 'C:\\Program Files';
-const WINDOWS_PROGRAM_FILES_X86 = 'C:\\Program Files (x86)';
-const WINDOWS_SHARED_LABVIEW_CLI =
-  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const WINDOWS_SHARED_LABVIEW_CLI = WINDOWS_SHARED_LABVIEW_CLI_PATH;
 const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
-const WINDOWS_LABVIEW_FOLDERS = [
-  'LabVIEW 2026 Q1',
-  'LabVIEW 2026',
-  'LabVIEW 2025 Q3',
-  'LabVIEW 2025'
-];
 const DEFAULT_WINDOWS_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-windows';
 const DEFAULT_LINUX_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-linux';
 const WINDOWS_CONTAINER_LABVIEW_EXE =
@@ -255,23 +256,22 @@ export function buildDocumentedRuntimeCandidates(
   platform: RuntimePlatform
 ): RuntimeToolCandidate[] {
   if (platform === 'win32') {
+    // VHS-REQ-632: derive the documented Windows scan from the shared install
+    // catalog so activation detection and this locator agree on folder names
+    // and the supported year range. The registry query (applied on top of these
+    // candidates) remains the locator-only superset for non-default installs.
+    const exeCandidates = windowsLabviewExeCandidates({
+      programFiles: WINDOWS_DEFAULT_PROGRAM_FILES,
+      programFilesX86: WINDOWS_DEFAULT_PROGRAM_FILES_X86
+    }).map((candidate) => ({
+      kind: 'labview-exe' as const,
+      path: candidate.labviewExePath,
+      source: 'scan' as const,
+      exists: false,
+      bitness: candidate.bitness
+    }));
     return [
-      ...WINDOWS_LABVIEW_FOLDERS.flatMap((folder) => [
-        {
-          kind: 'labview-exe' as const,
-          path: `${WINDOWS_PROGRAM_FILES_X86}\\National Instruments\\${folder}\\LabVIEW.exe`,
-          source: 'scan' as const,
-          exists: false,
-          bitness: 'x86' as const
-        },
-        {
-          kind: 'labview-exe' as const,
-          path: `${WINDOWS_PROGRAM_FILES}\\National Instruments\\${folder}\\LabVIEW.exe`,
-          source: 'scan' as const,
-          exists: false,
-          bitness: 'x64' as const
-        }
-      ]),
+      ...exeCandidates,
       {
         kind: 'labview-cli',
         path: WINDOWS_SHARED_LABVIEW_CLI,
@@ -281,13 +281,13 @@ export function buildDocumentedRuntimeCandidates(
       },
       {
         kind: 'lvcompare',
-        path: `${WINDOWS_PROGRAM_FILES}\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe`,
+        path: windowsLvComparePath(WINDOWS_DEFAULT_PROGRAM_FILES),
         source: 'scan',
         exists: false
       },
       {
         kind: 'lvcompare',
-        path: `${WINDOWS_PROGRAM_FILES_X86}\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe`,
+        path: windowsLvComparePath(WINDOWS_DEFAULT_PROGRAM_FILES_X86),
         source: 'scan',
         exists: false
       }
@@ -295,52 +295,29 @@ export function buildDocumentedRuntimeCandidates(
   }
 
   if (platform === 'linux') {
+    // VHS-REQ-632: same shared catalog feeds the Linux scan, including the
+    // quarterly (`LabVIEW-<year>Q1-64` / `Q3`) install directories and the
+    // shared `nilvcli` LabVIEW CLI launchers.
+    const exeCandidates = linuxLabviewInstallCandidates().map((candidate) => ({
+      kind: 'labview-exe' as const,
+      path: candidate.labviewExePath,
+      source: 'scan' as const,
+      exists: false,
+      bitness: 'x64' as const
+    }));
+    const cliCandidates = LINUX_SHARED_LABVIEW_CLI_CANDIDATES.map((cliPath) => ({
+      kind: 'labview-cli' as const,
+      path: cliPath,
+      source: 'scan' as const,
+      exists: false,
+      bitness: 'x64' as const
+    }));
     return [
-      {
-        kind: 'labview-exe',
-        path: '/usr/local/natinst/LabVIEW-2026Q1-64/labview',
-        source: 'scan',
-        exists: false,
-        bitness: 'x64'
-      },
-      {
-        kind: 'labview-exe',
-        path: '/usr/local/natinst/LabVIEW-2026-64/labview',
-        source: 'scan',
-        exists: false,
-        bitness: 'x64'
-      },
-      {
-        kind: 'labview-exe',
-        path: '/usr/local/natinst/LabVIEW-2025Q3-64/labview',
-        source: 'scan',
-        exists: false,
-        bitness: 'x64'
-      },
-      {
-        kind: 'labview-exe',
-        path: '/usr/local/natinst/LabVIEW-2025-64/labview',
-        source: 'scan',
-        exists: false,
-        bitness: 'x64'
-      },
-      {
-        kind: 'labview-cli',
-        path: '/usr/local/bin/LabVIEWCLI',
-        source: 'scan',
-        exists: false,
-        bitness: 'x64'
-      },
-      {
-        kind: 'labview-cli',
-        path: '/usr/local/natinst/share/nilvcli/LabVIEWCLI',
-        source: 'scan',
-        exists: false,
-        bitness: 'x64'
-      },
+      ...exeCandidates,
+      ...cliCandidates,
       {
         kind: 'lvcompare',
-        path: '/usr/local/bin/LVCompare',
+        path: LINUX_LVCOMPARE_PATH,
         source: 'scan',
         exists: false
       }
