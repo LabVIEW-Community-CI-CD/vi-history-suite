@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.14.3] - 2026-06-09
+
+### Added
+
+- New `viHistorySuite.labviewCliPath` and `viHistorySuite.labviewExePath`
+  settings let you point VI History at a LabVIEWCLI or LabVIEW executable that
+  auto-detection does not cover. A configured `labviewCliPath` also lets
+  `Open VI History` proceed past the LabVIEW CLI prerequisite gate; the
+  comparison runtime validates the path and reports a precise missing-path
+  error if it is wrong. Both settings are restricted in untrusted workspaces
+  because they name executables the comparison launches. This makes the runtime
+  doctor's existing "set `viHistorySuite.labviewCliPath`" guidance work end to
+  end.
+
 ## [1.14.2] - 2026-06-09
 
 ### Fixed

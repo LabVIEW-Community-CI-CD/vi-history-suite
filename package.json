@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.14.2",
+  "version": "1.14.3",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -24,7 +24,9 @@
       "restrictedConfigurations": [
         "viHistorySuite.runtimeProvider",
         "viHistorySuite.labviewVersion",
-        "viHistorySuite.labviewBitness"
+        "viHistorySuite.labviewBitness",
+        "viHistorySuite.labviewExePath",
+        "viHistorySuite.labviewCliPath"
       ]
     }
   },
@@ -176,6 +178,14 @@
             "x64"
           ],
           "description": "Installed-user LabVIEW bitness for comparison reports."
+        },
+        "viHistorySuite.labviewExePath": {
+          "type": "string",
+          "description": "Optional override for the host LabVIEW executable used for comparison reports. Set this to the exact LabVIEW.exe (Windows) or labview (Linux) when your install is at a location auto-detection does not cover. The comparison runtime validates the path and reports a missing-path error if it does not exist. Restricted in untrusted workspaces because it names an executable the comparison launches."
+        },
+        "viHistorySuite.labviewCliPath": {
+          "type": "string",
+          "description": "Optional override for the LabVIEWCLI executable used for comparison reports. Set this to the exact LabVIEWCLI(.exe) when your install is at a location auto-detection does not cover; this also lets VI History open when the LabVIEW CLI prerequisite gate would otherwise block. The comparison runtime validates the path and reports a missing-path error if it does not exist. Restricted in untrusted workspaces because it names an executable the comparison launches."
         },
         "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
           "type": "integer",

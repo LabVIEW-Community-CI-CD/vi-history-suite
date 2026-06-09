@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.14.2');
+    expect(manifest.version).toBe('1.14.3');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -166,7 +166,9 @@ describe('extension manifest public metadata', () => {
       restrictedConfigurations: [
         'viHistorySuite.runtimeProvider',
         'viHistorySuite.labviewVersion',
-        'viHistorySuite.labviewBitness'
+        'viHistorySuite.labviewBitness',
+        'viHistorySuite.labviewExePath',
+        'viHistorySuite.labviewCliPath'
       ]
     });
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
@@ -177,6 +179,12 @@ describe('extension manifest public metadata', () => {
     );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.labviewBitness'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewExePath'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewCliPath'
     );
   });
 

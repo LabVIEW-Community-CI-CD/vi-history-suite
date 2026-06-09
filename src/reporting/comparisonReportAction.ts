@@ -1247,6 +1247,11 @@ export function readComparisonRuntimeSettings(
     requireVersionAndBitness: true,
     labviewVersion,
     bitness: labviewBitness,
+    // VHS-REQ-633: optional manual overrides for installs auto-detection does
+    // not cover. The locator consumes these as `configured` candidates and
+    // reports configured-labview-(cli|exe)-path-missing when the path is wrong.
+    labviewCliPath: readTrimmedStringSetting(configuration, 'labviewCliPath'),
+    labviewExePath: readTrimmedStringSetting(configuration, 'labviewExePath'),
     allowExistingWindowsHostRuntime: configuredProvider.provider !== 'docker'
   };
 }
@@ -1255,8 +1260,14 @@ function readTrimmedStringSetting(
   configuration: Pick<vscode.WorkspaceConfiguration, 'get'>,
   key: string
 ): string | undefined {
-  const value = configuration.get<string>(key);
-  const trimmed = value?.trim();
+  const value = configuration.get<unknown>(key);
+  if (typeof value !== 'string') {
+    // Defend the system boundary: a misconfigured settings.json can return a
+    // non-string (e.g. a number) for a string-typed setting, and calling
+    // `.trim()` on it would throw and break runtime-settings resolution.
+    return undefined;
+  }
+  const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
 }
 
