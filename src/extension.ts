@@ -282,7 +282,7 @@ export async function activate(
           runtimeAvailabilityWatcher.getLastSnapshot()
         );
         if (labviewCliGate.kind === 'block') {
-          await presentLabviewCliOpenBlockedToast();
+          await presentLabviewCliOpenBlockedToast(labviewCliGate);
           return;
         }
         const runtime = await ensureWorkspaceRuntime();
