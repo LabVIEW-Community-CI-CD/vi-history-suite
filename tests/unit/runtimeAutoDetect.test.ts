@@ -120,10 +120,11 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     expect(recommendRuntimeFromDetection(detection)).toEqual({ provider: 'none' });
   });
 
-  it('detects Linux LabVIEW and the shared LabVIEWCLI launcher on PATH (issue #346)', async () => {
+  it('detects Linux LabVIEW and the shared /usr/local/bin LabVIEWCLI launcher (issue #346)', async () => {
     // Real NI Linux installs expose the CLI as the shared, version-independent
     // /usr/local/bin/LabVIEWCLI symlink, not a sibling of the versioned labview
-    // binary. Detection must recognize it so the open-gate does not false-block.
+    // binary. Detection probes that fixed absolute location (it does not search
+    // $PATH), so it must recognize it to keep the open-gate from false-blocking.
     const fs = createFakeFs([
       '/usr/local/natinst/LabVIEW-2026-64/labview',
       '/usr/local/bin/LabVIEWCLI',
