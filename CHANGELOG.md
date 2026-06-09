@@ -10,6 +10,18 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.14.4] - 2026-06-09
+
+### Fixed
+
+- On Windows, opening `VI History` is no longer falsely blocked when LabVIEW is
+  installed at a non-default location recorded only in the registry. Before
+  blocking, the LabVIEW CLI open gate now consults a bounded, on-demand registry
+  probe (reusing the comparison runtime's existing registry lookup) and allows
+  the panel when a registry-resolved LabVIEW and the shared LabVIEW CLI are both
+  present. Activation-time detection stays filesystem-only, and the probe runs
+  only when the gate would otherwise block.
+
 ## [1.14.3] - 2026-06-09
 
 ### Added

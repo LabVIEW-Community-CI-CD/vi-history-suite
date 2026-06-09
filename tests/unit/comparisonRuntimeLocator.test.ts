@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildDocumentedRuntimeCandidates,
   locateComparisonRuntime,
+  probeWindowsRegistryHostLabviewAvailable,
   WindowsContainerProviderFacts
 } from '../../src/reporting/comparisonRuntimeLocator';
 
@@ -1025,5 +1026,65 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
       blockedReason: 'windows-host-runtime-surface-contaminated'
     });
     expect(selection.notes.join('\n')).toContain('contaminated');
+  });
+});
+
+describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
+  const REGISTRY_LABVIEW_EXE =
+    'D:\\Custom\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+
+  function registryOutputFor(exePath: string): string {
+    return [
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
+      `    Path    REG_SZ    ${exePath}`,
+      ''
+    ].join('\r\n');
+  }
+
+  it('reports available when a registry-resolved LabVIEW.exe and the shared CLI both exist on disk', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_EXE),
+      pathExists: pathExistsFor([REGISTRY_LABVIEW_EXE, WINDOWS_LABVIEW_CLI_X86])
+    });
+
+    expect(available).toBe(true);
+  });
+
+  it('reports unavailable when the registry-resolved LabVIEW.exe is not on disk (stale registry)', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_EXE),
+      pathExists: pathExistsFor([WINDOWS_LABVIEW_CLI_X86])
+    });
+
+    expect(available).toBe(false);
+  });
+
+  it('reports unavailable when the shared LabVIEW CLI is not on disk', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_EXE),
+      pathExists: pathExistsFor([REGISTRY_LABVIEW_EXE])
+    });
+
+    expect(available).toBe(false);
+  });
+
+  it('reports unavailable when the registry names no LabVIEW install', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => 'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\r\n',
+      pathExists: pathExistsFor([WINDOWS_LABVIEW_CLI_X86])
+    });
+
+    expect(available).toBe(false);
+  });
+
+  it('never throws when the registry query fails (returns unavailable)', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => {
+        throw new Error('reg query failed');
+      },
+      pathExists: pathExistsFor([WINDOWS_LABVIEW_CLI_X86])
+    });
+
+    expect(available).toBe(false);
   });
 });

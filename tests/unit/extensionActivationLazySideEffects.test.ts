@@ -116,6 +116,7 @@ vi.mock('../../src/ui/runtimeAvailabilityNotice', () => ({
     getLastSnapshot: vi.fn(() => undefined)
   })),
   decideLabviewCliOpenGate: vi.fn(() => ({ kind: 'allow' })),
+  decideLabviewCliOpenGateWithRegistryFallback: vi.fn(async (decision) => decision),
   presentLabviewCliOpenBlockedToast: vi.fn(async () => undefined),
   decideViServerOpenGate: vi.fn(async () => ({ kind: 'allow' })),
   presentViServerOpenBlockedToast: vi.fn(async () => undefined),

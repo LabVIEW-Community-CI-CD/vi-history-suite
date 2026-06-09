@@ -405,6 +405,55 @@ export async function presentLabviewCliOpenBlockedToast(
   }
 }
 
+export interface LabviewCliOpenGateRegistryFallbackDeps {
+  platform?: NodeJS.Platform;
+  /**
+   * Bounded, on-demand authoritative probe for a host LabVIEW the lightweight
+   * filesystem detector cannot see (a Windows registry-resolved / custom-path
+   * install). Injected so the decision stays unit-testable; activation wiring
+   * passes `probeWindowsRegistryHostLabviewAvailable` from the comparison
+   * locator.
+   */
+  probeRegistryHostLabview?: () => Promise<boolean>;
+}
+
+/**
+ * VHS-REQ-634: Apply a bounded authoritative-host fallback to a LabVIEW CLI open
+ * gate decision. The synchronous `decideLabviewCliOpenGate` (VHS-REQ-627/629/633)
+ * decides from the filesystem-only activation detection, so a Windows install
+ * resolved only through the registry (which the detector intentionally does not
+ * query, per the VHS-REQ-616 cost contract) can produce a false `block`. This
+ * wrapper consults the injected registry probe — only when the base decision is
+ * `block`, only on Windows, and only when a probe is supplied — and flips the
+ * decision to `allow` when the registry names a host LabVIEW plus the shared CLI
+ * on disk. Every other case returns the base decision unchanged, including a
+ * probe that throws (fail closed to the original block).
+ *
+ * The probe runs at most once, only on the gate's block branch (an explicit
+ * `labviewViHistory.open`), so activation cost is unaffected.
+ */
+export async function decideLabviewCliOpenGateWithRegistryFallback(
+  baseDecision: LabviewCliOpenGateDecision,
+  deps: LabviewCliOpenGateRegistryFallbackDeps = {}
+): Promise<LabviewCliOpenGateDecision> {
+  if (baseDecision.kind !== 'block') {
+    return baseDecision;
+  }
+  const platform = deps.platform ?? process.platform;
+  if (platform !== 'win32' || !deps.probeRegistryHostLabview) {
+    return baseDecision;
+  }
+  try {
+    if (await deps.probeRegistryHostLabview()) {
+      return { kind: 'allow' };
+    }
+  } catch {
+    // Best-effort: a failed probe must never throw out of the open command;
+    // fall through to the original block decision.
+  }
+  return baseDecision;
+}
+
 /**
  * VHS-REQ-631: True only when the supplied LabVIEW VI Server config text
  * explicitly enables VI Server TCP with `server.tcp.enabled=True`. Tolerant of
