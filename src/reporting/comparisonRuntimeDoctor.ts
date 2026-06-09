@@ -361,6 +361,18 @@ function deriveRuntimeDoctorNextAction(options: {
       return 'Next action: review the retained runtime process observations and confirm the selected LabVIEW 2026 host bundle, then rerun comparison report generation or switch to a Docker-backed compare path if the host-native CreateComparisonReport seam remains blocked.';
     }
 
+    // VHS-REQ-630: A nonzero LabVIEWCLI exit carrying error -350000 means the
+    // CLI launched (or reused) LabVIEW but could not establish the VI Server
+    // connection it needs. The most common cause is VI Server (TCP/IP) being
+    // disabled for the selected LabVIEW, which the VHS-REQ-623 ini preflight
+    // cannot always catch (the key may be absent, the ini unreadable, or
+    // written only on clean LabVIEW exit). Name VI Server and the enable path
+    // so the failed-compare toast and history panel are actionable instead of
+    // falling back to the generic runtime-notes guidance.
+    if (options.runtimeExecution.failureReason === 'labview-cli-connection-failed') {
+      return 'Next action: LabVIEWCLI launched LabVIEW but could not connect over VI Server (error -350000), most often because VI Server (TCP/IP) is disabled for the selected LabVIEW. Enable VI Server in LabVIEW (Tools \u2192 Options \u2192 VI Server), confirm server.tcp.enabled=True and the configured port, restart LabVIEW, then rerun comparison report generation.';
+    }
+
     return 'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.';
   }
 
