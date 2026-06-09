@@ -10,7 +10,7 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
-## [Unreleased]
+## [1.14.4] - 2026-06-09
 
 ### Fixed
 
