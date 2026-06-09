@@ -10,6 +10,21 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.14.0] - 2026-06-09
+
+### Added
+
+- Opening `VI History` is now blocked before the panel loads when the selected
+  LabVIEW does not explicitly enable VI Server (TCP/IP). The notification names
+  VI Server and the enable path (Tools → Options → VI Server,
+  `server.tcp.enabled=True`, restart LabVIEW). The check reads the selected
+  LabVIEW's `LabVIEW.ini` (Windows) or `labview.conf` (Linux) and requires an
+  explicit `server.tcp.enabled=True`; an absent key, an explicit `False`, or an
+  unreadable config all block, so a disabled VI Server is caught before a
+  comparison attempt fails with `-350000`. The command still opens when VI
+  Server is explicitly enabled, when Docker is the active provider, when no host
+  LabVIEW is resolved, or while runtime detection has not completed.
+
 ## [1.13.3] - 2026-06-09
 
 ### Changed
