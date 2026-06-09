@@ -10,6 +10,19 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.13.3] - 2026-06-09
+
+### Changed
+
+- When a VI comparison fails because LabVIEWCLI launched LabVIEW but could not
+  connect over VI Server (error `-350000`), the failure notification now names
+  VI Server (TCP/IP) being disabled for the selected LabVIEW as the most common
+  cause and gives the enable path (LabVIEW Tools → Options → VI Server, or
+  `server.tcp.enabled=True` and the configured port), restart LabVIEW, then
+  rerun. Previously this failure showed generic runtime guidance that did not
+  mention VI Server. This complements the pre-attempt VI Server guidance added
+  in 1.13.1.
+
 ## [1.13.2] - 2026-06-09
 
 ### Changed
