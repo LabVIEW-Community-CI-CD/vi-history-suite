@@ -8,7 +8,8 @@ vi.mock('vscode', async () => {
 import {
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
-  createOpenRetainedComparisonReportAction
+  createOpenRetainedComparisonReportAction,
+  readComparisonRuntimeSettings
 } from '../../src/reporting/comparisonReportAction';
 import { buildComparisonReportArchivePlanFromSelection } from '../../src/dashboard/comparisonReportArchive';
 import {
@@ -479,5 +480,35 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       })
     ).resolves.toEqual({ outcome: 'invalid-retained-comparison-report' });
     expect(harness.panels).toHaveLength(0);
+  });
+});
+
+describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
+  function fakeConfiguration(values: Record<string, string | undefined>) {
+    return {
+      get: (key: string) => values[key]
+    } as never;
+  }
+
+  it('reads and trims the labviewCliPath and labviewExePath overrides', () => {
+    const settings = readComparisonRuntimeSettings(
+      fakeConfiguration({
+        runtimeProvider: 'host',
+        labviewCliPath: '  C:\\Tools\\LabVIEW CLI\\LabVIEWCLI.exe  ',
+        labviewExePath: '  C:\\Tools\\LabVIEW\\LabVIEW.exe  '
+      })
+    );
+
+    expect(settings.labviewCliPath).toBe('C:\\Tools\\LabVIEW CLI\\LabVIEWCLI.exe');
+    expect(settings.labviewExePath).toBe('C:\\Tools\\LabVIEW\\LabVIEW.exe');
+  });
+
+  it('leaves the overrides undefined when unset or blank', () => {
+    const settings = readComparisonRuntimeSettings(
+      fakeConfiguration({ runtimeProvider: 'host', labviewCliPath: '   ' })
+    );
+
+    expect(settings.labviewCliPath).toBeUndefined();
+    expect(settings.labviewExePath).toBeUndefined();
   });
 });

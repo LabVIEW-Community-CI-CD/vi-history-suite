@@ -1247,6 +1247,11 @@ export function readComparisonRuntimeSettings(
     requireVersionAndBitness: true,
     labviewVersion,
     bitness: labviewBitness,
+    // VHS-REQ-633: optional manual overrides for installs auto-detection does
+    // not cover. The locator consumes these as `configured` candidates and
+    // reports configured-labview-(cli|exe)-path-missing when the path is wrong.
+    labviewCliPath: readTrimmedStringSetting(configuration, 'labviewCliPath'),
+    labviewExePath: readTrimmedStringSetting(configuration, 'labviewExePath'),
     allowExistingWindowsHostRuntime: configuredProvider.provider !== 'docker'
   };
 }

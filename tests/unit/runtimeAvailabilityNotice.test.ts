@@ -268,6 +268,36 @@ describe('decideLabviewCliOpenGate (VHS-REQ-627)', () => {
   });
 });
 
+describe('decideLabviewCliOpenGate manual override (VHS-REQ-633)', () => {
+  it('allows open when a non-empty labviewCliPath override is configured despite a CLI-missing host', () => {
+    // Without the override this detection blocks (LabVIEW installed, CLI missing).
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    expect(decideLabviewCliOpenGate(detectionHost, snapshot).kind).toBe('block');
+
+    const decision = decideLabviewCliOpenGate(
+      detectionHost,
+      snapshot,
+      'C:\\Tools\\LabVIEW CLI\\LabVIEWCLI.exe'
+    );
+    expect(decision).toEqual({ kind: 'allow' });
+  });
+
+  it('allows open via the override even when no host LabVIEW is detected', () => {
+    const decision = decideLabviewCliOpenGate(
+      detectionMissing,
+      evaluateRuntimeAvailability(detectionMissing),
+      '/opt/labview/labviewcli'
+    );
+    expect(decision).toEqual({ kind: 'allow' });
+  });
+
+  it('ignores a blank override so the normal block still applies', () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    expect(decideLabviewCliOpenGate(detectionHost, snapshot, '   ').kind).toBe('block');
+    expect(decideLabviewCliOpenGate(detectionHost, snapshot, '').kind).toBe('block');
+  });
+});
+
 describe('isViServerExplicitlyEnabledInConfig (VHS-REQ-631)', () => {
   it('returns true only for an explicit enabled key (case/quote/whitespace tolerant)', () => {
     expect(isViServerExplicitlyEnabledInConfig('server.tcp.enabled=True')).toBe(true);

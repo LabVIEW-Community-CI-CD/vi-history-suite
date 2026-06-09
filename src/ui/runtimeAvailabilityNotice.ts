@@ -339,6 +339,12 @@ export interface LabviewCliOpenGateDecision {
  *    runs the LabVIEW CLI inside the image and does not depend on a host
  *    LabVIEW CLI, so Docker users are not trapped.
  *
+ * VHS-REQ-633: A non-empty `viHistorySuite.labviewCliPath` override also allows
+ * the command. The user has explicitly named a LabVIEWCLI the auto-detection
+ * catalog may not cover; the compare-time locator validates the path and reports
+ * `configured-labview-cli-path-missing` if it is wrong, so the gate trusts the
+ * override instead of false-blocking before the panel opens.
+ *
  * VHS-REQ-629: When the command is blocked, the toast is tailored to the
  * detected state. If LabVIEW \u22652025 is installed but the CLI is missing, the
  * toast names the LabVIEW CLI specifically and offers `Install LabVIEW CLI`
@@ -347,9 +353,16 @@ export interface LabviewCliOpenGateDecision {
  */
 export function decideLabviewCliOpenGate(
   detection: DetectedRuntimes | undefined,
-  snapshot?: RuntimeAvailabilitySnapshot
+  snapshot?: RuntimeAvailabilitySnapshot,
+  configuredLabviewCliPath?: string
 ): LabviewCliOpenGateDecision {
   if (!detection) {
+    return { kind: 'allow' };
+  }
+  if (
+    typeof configuredLabviewCliPath === 'string' &&
+    configuredLabviewCliPath.trim().length > 0
+  ) {
     return { kind: 'allow' };
   }
   if (isLabviewCliInstalled(detection)) {
