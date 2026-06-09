@@ -2626,6 +2626,52 @@ export async function runWindowsRegistryQuery(
   return stdout;
 }
 
+/**
+ * VHS-REQ-634: Bounded, on-demand authoritative probe for a host LabVIEW install
+ * the lightweight activation detector (VHS-REQ-616, filesystem-only) cannot see —
+ * specifically a Windows install resolved through the registry at a non-default
+ * path. Returns true only when the registry names a `LabVIEW.exe` that exists on
+ * disk AND the shared Windows LabVIEW CLI also exists on disk, i.e. exactly the
+ * state in which the comparison locator could serve a compare but the open gate
+ * would otherwise false-block.
+ *
+ * Reuses the same `reg query` path the locator already uses in production, so no
+ * new Windows runtime surface is introduced. Bounded to the registry query plans
+ * plus a handful of `fs.access` checks (no container or process probes); intended
+ * to run only when the open gate is about to block on Windows.
+ */
+export async function probeWindowsRegistryHostLabviewAvailable(
+  deps: {
+    queryWindowsRegistry?: (plan: WindowsRegistryQueryPlan) => Promise<string>;
+    pathExists?: (filePath: string) => Promise<boolean>;
+  } = {}
+): Promise<boolean> {
+  const query = deps.queryWindowsRegistry ?? ((plan: WindowsRegistryQueryPlan) => runWindowsRegistryQuery(plan));
+  const pathExists = deps.pathExists ?? ((filePath: string) => pathExistsWithFsAccess(filePath));
+
+  const registryCandidates: RuntimeToolCandidate[] = [];
+  for (const plan of buildWindowsRegistryQueryPlans()) {
+    try {
+      registryCandidates.push(...parseWindowsRegistryLabviewCandidates(await query(plan)));
+    } catch {
+      // Best-effort: a failed registry query must never throw out of the gate.
+    }
+  }
+
+  let registryExeOnDisk = false;
+  for (const candidate of registryCandidates) {
+    if (candidate.kind === 'labview-exe' && (await pathExists(candidate.path))) {
+      registryExeOnDisk = true;
+      break;
+    }
+  }
+  if (!registryExeOnDisk) {
+    return false;
+  }
+
+  return pathExists(WINDOWS_SHARED_LABVIEW_CLI);
+}
+
 export async function queryWindowsContainerImageAvailability(
   image: string,
   hostPlatform: NodeJS.Platform,

@@ -11,6 +11,7 @@ import {
   buildStatusBarPresentation,
   decideFirstRunPresentation,
   decideLabviewCliOpenGate,
+  decideLabviewCliOpenGateWithRegistryFallback,
   decideViServerOpenGate,
   evaluateRuntimeAvailability,
   INSTALL_LABVIEW_CLI_URL,
@@ -295,6 +296,68 @@ describe('decideLabviewCliOpenGate manual override (VHS-REQ-633)', () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     expect(decideLabviewCliOpenGate(detectionHost, snapshot, '   ').kind).toBe('block');
     expect(decideLabviewCliOpenGate(detectionHost, snapshot, '').kind).toBe('block');
+  });
+});
+
+describe('decideLabviewCliOpenGateWithRegistryFallback (VHS-REQ-634)', () => {
+  const blockDecision = {
+    kind: 'block' as const,
+    toastMessage: LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+    actionLabel: LABVIEW_CLI_NOTICE_BUTTON_INSTALL
+  };
+  const allowDecision = { kind: 'allow' as const };
+
+  it('returns an allow decision unchanged without consulting the probe', async () => {
+    const probe = vi.fn(async () => true);
+    const decision = await decideLabviewCliOpenGateWithRegistryFallback(allowDecision, {
+      platform: 'win32',
+      probeRegistryHostLabview: probe
+    });
+    expect(decision).toEqual({ kind: 'allow' });
+    expect(probe).not.toHaveBeenCalled();
+  });
+
+  it('flips a Windows block to allow when the registry probe reports an available host', async () => {
+    const decision = await decideLabviewCliOpenGateWithRegistryFallback(blockDecision, {
+      platform: 'win32',
+      probeRegistryHostLabview: async () => true
+    });
+    expect(decision).toEqual({ kind: 'allow' });
+  });
+
+  it('keeps the block when the registry probe reports no available host', async () => {
+    const decision = await decideLabviewCliOpenGateWithRegistryFallback(blockDecision, {
+      platform: 'win32',
+      probeRegistryHostLabview: async () => false
+    });
+    expect(decision).toBe(blockDecision);
+  });
+
+  it('does not consult the probe on non-Windows platforms', async () => {
+    const probe = vi.fn(async () => true);
+    const decision = await decideLabviewCliOpenGateWithRegistryFallback(blockDecision, {
+      platform: 'linux',
+      probeRegistryHostLabview: probe
+    });
+    expect(decision).toBe(blockDecision);
+    expect(probe).not.toHaveBeenCalled();
+  });
+
+  it('keeps the block when no probe is supplied', async () => {
+    const decision = await decideLabviewCliOpenGateWithRegistryFallback(blockDecision, {
+      platform: 'win32'
+    });
+    expect(decision).toBe(blockDecision);
+  });
+
+  it('fails closed to the block when the probe throws', async () => {
+    const decision = await decideLabviewCliOpenGateWithRegistryFallback(blockDecision, {
+      platform: 'win32',
+      probeRegistryHostLabview: async () => {
+        throw new Error('probe failed');
+      }
+    });
+    expect(decision).toBe(blockDecision);
   });
 });
 
