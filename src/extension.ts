@@ -51,7 +51,9 @@ import { applyRuntimeSettingsSeed } from './tooling/runtimeSettingsSeed';
 import {
   createRuntimeAvailabilityWatcher,
   decideLabviewCliOpenGate,
-  presentLabviewCliOpenBlockedToast
+  decideViServerOpenGate,
+  presentLabviewCliOpenBlockedToast,
+  presentViServerOpenBlockedToast
 } from './ui/runtimeAvailabilityNotice';
 import {
   createGitPrerequisiteWatcher,
@@ -283,6 +285,21 @@ export async function activate(
         );
         if (labviewCliGate.kind === 'block') {
           await presentLabviewCliOpenBlockedToast(labviewCliGate);
+          return;
+        }
+        // VHS-REQ-631: After the LabVIEW CLI gate, refuse to open the VI History
+        // panel when the selected LabVIEW does not explicitly enable VI Server
+        // (TCP/IP) in its LabVIEW.ini (Windows) / labview.conf (Linux). An absent
+        // server.tcp.enabled key is treated as not enabled, so users learn to
+        // turn VI Server on before meeting a -350000 connection failure at
+        // compare time. Reaches at most one bounded config read here because the
+        // Docker / no-CLI cases already short-circuited above.
+        const viServerGate = await decideViServerOpenGate(
+          runtimeAvailabilityWatcher.getLastDetection(),
+          runtimeAvailabilityWatcher.getLastSnapshot()
+        );
+        if (viServerGate.kind === 'block') {
+          await presentViServerOpenBlockedToast(viServerGate);
           return;
         }
         const runtime = await ensureWorkspaceRuntime();

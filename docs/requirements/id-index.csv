@@ -645,3 +645,4 @@ VHS-REQ-627,Software,Active,srs.md#vhs-req-627-labview-cli-prerequisite-gate-for
 VHS-REQ-628,Software,Active,srs.md#vhs-req-628-actionable-vi-server-disabled-comparison-guidance,,,docs/requirements/srs.md
 VHS-REQ-629,Software,Active,srs.md#vhs-req-629-labview-cli-install-offer-when-labview-is-installed,,,docs/requirements/srs.md
 VHS-REQ-630,Software,Active,srs.md#vhs-req-630-actionable-vi-server-guidance-for-labview-cli-connection-failure,,,docs/requirements/srs.md
+VHS-REQ-631,Software,Active,srs.md#vhs-req-631-pre-panel-vi-server-prerequisite-gate-for-vi-history-open,,,docs/requirements/srs.md

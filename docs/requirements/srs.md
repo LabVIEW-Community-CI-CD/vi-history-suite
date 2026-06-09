@@ -2403,5 +2403,73 @@ Missing numeric IDs are intentional.
     Server on without an explicit key; that belongs to a separate
     requirement with dedicated tests.
 
+### VHS-REQ-631: Pre-Panel VI Server Prerequisite Gate For VI History Open
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall consult the selected host LabVIEW's VI
+  Server configuration when `labviewViHistory.open` is invoked and refuse
+  to open the VI History panel with a warning toast when that
+  configuration does not explicitly enable VI Server TCP, so users learn
+  before selecting revisions that VI Server must be turned on instead of
+  meeting a `-350000` connection failure at compare time. Per the
+  maintainer decision the gate requires an explicit opt-in: an absent
+  `server.tcp.enabled` key is treated as not enabled, a stricter rule than
+  the compare-time VHS-REQ-623 preflight (which preserves the Windows
+  absent-key default of enabled). The accepted tradeoff is a possible
+  false-positive block for Windows hosts that run VI Server on without an
+  explicit key.
+- Acceptance Criteria:
+  - `isViServerExplicitlyEnabledInConfig(text)` returns true only when a
+    `server.tcp.enabled=True` line is present (case, surrounding
+    whitespace, and optional quotes tolerant). An absent key, an explicit
+    `False`, and unparseable text all return false.
+  - `decideViServerOpenGate(detection, snapshot, deps)` returns `allow`
+    when the cached detection is not yet available, when a satisfiable
+    Docker provider is the active runtime, when no host installation
+    resolves from the snapshot, or when the platform is not a host-compare
+    platform (for example macOS); these keep activation races, container
+    users, and unresolved selections from being blocked.
+  - Otherwise the gate resolves the selected LabVIEW's VI Server config —
+    on Windows the `LabVIEW.ini` adjacent to the selected `LabVIEW.exe`;
+    on Linux the `labview.conf` candidate set for the selected
+    version/bitness (reusing the VHS-REQ-156 candidate builder) — and
+    returns `block` unless at least one readable config is explicitly
+    enabled. Unreadable configs count as not enabled.
+  - `labviewViHistory.open` runs this gate after the Git and LabVIEW-CLI
+    gates using the watcher's cached detection and snapshot; when the gate
+    blocks it presents a warning toast that names VI Server and the enable
+    path (Tools → Options → VI Server, `server.tcp.enabled=True`, restart
+    LabVIEW) and does not open the history panel. Because the Docker and
+    no-CLI cases are short-circuited earlier, the gate performs at most one
+    bounded config read on the open hot path.
+  - The block decision is a pure, window-free async helper (an injected
+    `readFile` keeps it unit-testable); only the presenter touches
+    `vscode.window`.
+  - The compare-time VHS-REQ-623 / VHS-REQ-156 resolvers are unchanged;
+    this strict open-gate rule does not alter the compare-time preflight.
+- Agent Work Scope:
+  - Add the VI Server open-gate decision helpers and toast copy in
+    `src/ui/runtimeAvailabilityNotice.ts` and wire them into
+    `labviewViHistory.open` in `src/extension.ts` after the LabVIEW CLI
+    gate. Reuse the VHS-REQ-617 cached detection and the VHS-REQ-156 Linux
+    candidate builder; do not add a TCP port probe or change the
+    compare-time preflight.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the strict explicit-`True` rule open-gate-only; the compare-time
+    VHS-REQ-623 Windows default (absent key → enabled) stays so retained
+    runtime evidence is not changed. Detection is `LabVIEW.ini` /
+    `labview.conf` parsing only — no TCP port probe — and the toast copy
+    stays consistent with the VHS-REQ-628 / VHS-REQ-630 VI Server
+    guidance. The accepted false-positive tradeoff (Windows VI Server on
+    without an explicit key) is intentional for this gate.
+
 
 

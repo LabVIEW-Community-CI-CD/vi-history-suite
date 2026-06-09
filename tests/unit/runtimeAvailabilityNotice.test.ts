@@ -11,10 +11,12 @@ import {
   buildStatusBarPresentation,
   decideFirstRunPresentation,
   decideLabviewCliOpenGate,
+  decideViServerOpenGate,
   evaluateRuntimeAvailability,
   INSTALL_LABVIEW_CLI_URL,
   isLabviewCliInstalled,
   isLabviewHostInstalledWithoutCli,
+  isViServerExplicitlyEnabledInConfig,
   LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE,
   LABVIEW_CLI_NOTICE_BUTTON_INSTALL,
   LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI,
@@ -23,7 +25,8 @@ import {
   selectActiveRuntime,
   shouldThrottleReDetect,
   STATUS_BAR_TEXT_AVAILABLE,
-  STATUS_BAR_TEXT_MISSING
+  STATUS_BAR_TEXT_MISSING,
+  VI_SERVER_OPEN_BLOCKED_MESSAGE
 } from '../../src/ui/runtimeAvailabilityNotice';
 
 const detectionAvailable: DetectedRuntimes = {
@@ -262,5 +265,152 @@ describe('decideLabviewCliOpenGate (VHS-REQ-627)', () => {
     expect(decision.toastMessage).toBe(LABVIEW_CLI_OPEN_BLOCKED_MESSAGE);
     expect(decision.actionLabel).toBe(LABVIEW_CLI_NOTICE_BUTTON_INSTALL);
     expect(decision.installUrl).toContain('download.labview.html');
+  });
+});
+
+describe('isViServerExplicitlyEnabledInConfig (VHS-REQ-631)', () => {
+  it('returns true only for an explicit enabled key (case/quote/whitespace tolerant)', () => {
+    expect(isViServerExplicitlyEnabledInConfig('server.tcp.enabled=True')).toBe(true);
+    expect(isViServerExplicitlyEnabledInConfig('server.tcp.enabled=true')).toBe(true);
+    expect(isViServerExplicitlyEnabledInConfig('server.tcp.enabled="TRUE"')).toBe(true);
+    expect(
+      isViServerExplicitlyEnabledInConfig('[LabVIEW]\n  server.tcp.enabled = True \nserver.tcp.port=3363')
+    ).toBe(true);
+  });
+
+  it('returns false for an absent key, an explicit False, or garbage', () => {
+    expect(isViServerExplicitlyEnabledInConfig('server.tcp.port=3363')).toBe(false);
+    expect(isViServerExplicitlyEnabledInConfig('server.tcp.enabled=False')).toBe(false);
+    expect(isViServerExplicitlyEnabledInConfig('server.tcp.enabled=0')).toBe(false);
+    expect(isViServerExplicitlyEnabledInConfig('')).toBe(false);
+    expect(isViServerExplicitlyEnabledInConfig('not an ini at all')).toBe(false);
+  });
+});
+
+describe('decideViServerOpenGate (VHS-REQ-631)', () => {
+  const winReadFile = (content: string | Error) => async (filePath: string) => {
+    void filePath;
+    if (content instanceof Error) {
+      throw content;
+    }
+    return content;
+  };
+
+  it('allows open before detection completes so activation races never block users', async () => {
+    await expect(decideViServerOpenGate(undefined, undefined)).resolves.toEqual({
+      kind: 'allow'
+    });
+  });
+
+  it('allows open when a satisfiable Docker runtime is the active provider', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionAvailable);
+    expect(snapshot.label.provider).toBe('docker');
+    await expect(
+      decideViServerOpenGate(detectionAvailable, snapshot, { platform: 'linux' })
+    ).resolves.toEqual({ kind: 'allow' });
+  });
+
+  it('allows open when no host installation resolves from the snapshot', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionMissing);
+    expect(snapshot.label.installation).toBeUndefined();
+    await expect(
+      decideViServerOpenGate(detectionMissing, snapshot, { platform: 'win32' })
+    ).resolves.toEqual({ kind: 'allow' });
+  });
+
+  it('allows open on a non-host-compare platform (darwin)', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    await expect(
+      decideViServerOpenGate(detectionHost, snapshot, { platform: 'darwin' })
+    ).resolves.toEqual({ kind: 'allow' });
+  });
+
+  it('allows open when the selected Windows LabVIEW.ini explicitly enables VI Server', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const decision = await decideViServerOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      readFile: winReadFile('server.tcp.enabled=True\nserver.tcp.port=3363')
+    });
+    expect(decision.kind).toBe('allow');
+  });
+
+  it('blocks open when the selected Windows LabVIEW.ini omits the VI Server key', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const decision = await decideViServerOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      readFile: winReadFile('server.tcp.port=3363')
+    });
+    expect(decision.kind).toBe('block');
+    expect(decision.toastMessage).toBe(VI_SERVER_OPEN_BLOCKED_MESSAGE);
+    expect(decision.inspectedConfigPaths?.[0]).toContain('LabVIEW.ini');
+  });
+
+  it('blocks open when the selected Windows LabVIEW.ini disables VI Server', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const decision = await decideViServerOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      readFile: winReadFile('server.tcp.enabled=False')
+    });
+    expect(decision.kind).toBe('block');
+    expect(decision.toastMessage).toBe(VI_SERVER_OPEN_BLOCKED_MESSAGE);
+  });
+
+  it('blocks open when the selected Windows LabVIEW.ini is unreadable', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const decision = await decideViServerOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      readFile: winReadFile(new Error('ENOENT'))
+    });
+    expect(decision.kind).toBe('block');
+    expect(decision.toastMessage).toBe(VI_SERVER_OPEN_BLOCKED_MESSAGE);
+  });
+
+  it('allows open when a Linux labview.conf candidate explicitly enables VI Server', async () => {
+    const linuxDetection: DetectedRuntimes = {
+      platform: 'linux',
+      host: {
+        installations: [
+          {
+            year: '2026',
+            bitness: 'x64',
+            labviewExePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+            labviewCliPath: '/usr/local/natinst/LabVIEW-2026-64/labviewcli'
+          }
+        ]
+      },
+      docker: { cliAvailable: false }
+    };
+    const snapshot = evaluateRuntimeAvailability(linuxDetection);
+    const decision = await decideViServerOpenGate(linuxDetection, snapshot, {
+      platform: 'linux',
+      homedir: () => '/home/test',
+      readFile: winReadFile('server.tcp.enabled=True')
+    });
+    expect(decision.kind).toBe('allow');
+  });
+
+  it('blocks open when no Linux labview.conf candidate enables VI Server', async () => {
+    const linuxDetection: DetectedRuntimes = {
+      platform: 'linux',
+      host: {
+        installations: [
+          {
+            year: '2026',
+            bitness: 'x64',
+            labviewExePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+            labviewCliPath: '/usr/local/natinst/LabVIEW-2026-64/labviewcli'
+          }
+        ]
+      },
+      docker: { cliAvailable: false }
+    };
+    const snapshot = evaluateRuntimeAvailability(linuxDetection);
+    const decision = await decideViServerOpenGate(linuxDetection, snapshot, {
+      platform: 'linux',
+      homedir: () => '/home/test',
+      readFile: winReadFile(new Error('ENOENT'))
+    });
+    expect(decision.kind).toBe('block');
+    expect(decision.inspectedConfigPaths?.length).toBeGreaterThan(0);
   });
 });
