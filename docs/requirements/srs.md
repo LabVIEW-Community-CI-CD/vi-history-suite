@@ -2589,5 +2589,56 @@ Missing numeric IDs are intentional.
     in `restrictedConfigurations` because they name executables the comparison
     launches.
 
+### VHS-REQ-634: Authoritative Host Fallback For LabVIEW CLI Open Gate
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When the synchronous LabVIEW CLI open gate (VHS-REQ-627) would
+  block `labviewViHistory.open` from the filesystem-only activation detection
+  (VHS-REQ-616), the extension shall consult a bounded, on-demand authoritative
+  probe before blocking, so a Windows LabVIEW install resolved only through the
+  registry at a non-default path — which the activation detector intentionally
+  cannot see because it never queries the registry — does not false-block the
+  panel. Activation detection stays filesystem-only; the authoritative probe
+  runs only on the gate's block branch on Windows.
+- Acceptance Criteria:
+  - `probeWindowsRegistryHostLabviewAvailable(deps)` reuses the locator's
+    existing registry query plans and parser, returns true only when the
+    registry names a `LabVIEW.exe` that exists on disk AND the shared Windows
+    LabVIEW CLI exists on disk, and never throws (a failed registry query
+    yields false). It performs no container or process probes.
+  - `decideLabviewCliOpenGateWithRegistryFallback(baseDecision, deps)` returns
+    the base decision unchanged unless it is `block`, the platform is Windows,
+    and a probe is supplied; in that case it returns `allow` when the probe
+    reports an available host LabVIEW, and otherwise returns the base block
+    (including when the probe throws — fail closed).
+  - `labviewViHistory.open` computes the synchronous gate decision (with the
+    VHS-REQ-633 override) and then awaits the fallback with the registry probe
+    before presenting the block toast, so the probe runs at most once per open
+    and only when about to block.
+  - The synchronous `decideLabviewCliOpenGate` contract (VHS-REQ-627/629/633)
+    is unchanged; the fallback is an additive wrapper.
+- Agent Work Scope:
+  - Add the bounded registry probe to `src/reporting/comparisonRuntimeLocator.ts`
+    (reusing the shipped `reg query` helpers), add the async fallback wrapper to
+    `src/ui/runtimeAvailabilityNotice.ts`, and wire it into `labviewViHistory.open`
+    in `src/extension.ts`. Do not add registry or child-process probing to
+    activation detection.
+- Implementation References:
+  - `src/reporting/comparisonRuntimeLocator.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the probe bounded and fail-open-safe: it must never throw out of the
+    open command, and it must not add container or process probes. Activation
+    detection stays filesystem-only (VHS-REQ-616); only the gate's block branch
+    consults the registry, and only on Windows. The synchronous gate decision
+    helper stays pure so its existing tests and contract are preserved.
+
 
 

@@ -22,6 +22,7 @@ import {
   ComparisonReportExportRegistry,
   runComparisonReportExport
 } from './reporting/comparisonReportExport';
+import { probeWindowsRegistryHostLabviewAvailable } from './reporting/comparisonRuntimeLocator';
 import {
   createHumanReviewSubmissionAction,
   resolveHumanReviewMachineCapability
@@ -51,6 +52,7 @@ import { applyRuntimeSettingsSeed } from './tooling/runtimeSettingsSeed';
 import {
   createRuntimeAvailabilityWatcher,
   decideLabviewCliOpenGate,
+  decideLabviewCliOpenGateWithRegistryFallback,
   decideViServerOpenGate,
   presentLabviewCliOpenBlockedToast,
   presentViServerOpenBlockedToast
@@ -282,12 +284,20 @@ export async function activate(
         // VHS-REQ-633: an explicit viHistorySuite.labviewCliPath override also
         // allows the command (restricted in untrusted workspaces, so a malicious
         // workspace cannot supply it).
-        const labviewCliGate = decideLabviewCliOpenGate(
+        const baseLabviewCliGate = decideLabviewCliOpenGate(
           runtimeAvailabilityWatcher.getLastDetection(),
           runtimeAvailabilityWatcher.getLastSnapshot(),
           vscode.workspace
             .getConfiguration('viHistorySuite')
             .get<string>('labviewCliPath')
+        );
+        // VHS-REQ-634: before blocking, consult a bounded authoritative probe so
+        // a Windows registry-resolved / custom-path LabVIEW the filesystem-only
+        // activation detector cannot see does not false-block the panel. The
+        // probe runs only on the block branch, only on Windows.
+        const labviewCliGate = await decideLabviewCliOpenGateWithRegistryFallback(
+          baseLabviewCliGate,
+          { probeRegistryHostLabview: () => probeWindowsRegistryHostLabviewAvailable() }
         );
         if (labviewCliGate.kind === 'block') {
           await presentLabviewCliOpenBlockedToast(labviewCliGate);
