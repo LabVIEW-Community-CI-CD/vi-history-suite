@@ -2535,5 +2535,59 @@ Missing numeric IDs are intentional.
     filesystem-only; registry-resolved and custom-path installs (the
     locator-only superset) are out of scope for this parity requirement.
 
+### VHS-REQ-633: Manual LabVIEW Runtime Path Override
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: The extension shall let users override host LabVIEW runtime
+  discovery with `viHistorySuite.labviewCliPath` and
+  `viHistorySuite.labviewExePath`, which the comparison runtime locator
+  consumes as configured candidates and which the LabVIEW CLI open gate
+  honors, so a user whose LabVIEWCLI or LabVIEW executable lives where
+  auto-detection does not look can run comparisons instead of being blocked.
+  Both settings name executables the comparison launches, so both are
+  restricted in untrusted workspaces. This makes the runtime doctor guidance
+  that already advises setting these paths functional end to end.
+- Acceptance Criteria:
+  - `package.json` contributes `viHistorySuite.labviewCliPath` and
+    `viHistorySuite.labviewExePath` (string), and both appear in
+    `capabilities.untrustedWorkspaces.restrictedConfigurations` so an
+    untrusted workspace cannot point the extension at an arbitrary executable.
+  - `readComparisonRuntimeSettings` reads both keys (trimmed; blank becomes
+    `undefined`) into `ComparisonRuntimeSettings`, so `locateComparisonRuntime`
+    builds `configured` candidates and returns
+    `configured-labview-cli-path-missing` / `configured-labview-exe-path-missing`
+    when a configured path does not exist.
+  - `decideLabviewCliOpenGate` allows `labviewViHistory.open` when a non-empty
+    `viHistorySuite.labviewCliPath` is configured, trusting the explicit
+    override; existence validation stays with the compare-time locator, so a
+    wrong path yields a precise compare-time block rather than a gate block.
+  - The gate remains pure and window-free: it inspects the configured string
+    only and performs no filesystem probe.
+- Agent Work Scope:
+  - Contribute the two settings (and restrict them) in `package.json`, read
+    them in `readComparisonRuntimeSettings`, add the override allow path to
+    `decideLabviewCliOpenGate`, and pass the configured CLI path from
+    `labviewViHistory.open` in `src/extension.ts`. Do not add filesystem
+    probing to the gate; the locator owns existence validation.
+- Implementation References:
+  - `package.json`
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the gate override trust-based: the gate checks only that the
+    configured path is a non-empty string and never stats it, so existence
+    validation stays in the locator (a wrong path surfaces as
+    `configured-labview-cli-path-missing` at compare time). Keep both settings
+    in `restrictedConfigurations` because they name executables the comparison
+    launches.
+
 
 

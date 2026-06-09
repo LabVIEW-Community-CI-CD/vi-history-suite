@@ -166,7 +166,9 @@ describe('extension manifest public metadata', () => {
       restrictedConfigurations: [
         'viHistorySuite.runtimeProvider',
         'viHistorySuite.labviewVersion',
-        'viHistorySuite.labviewBitness'
+        'viHistorySuite.labviewBitness',
+        'viHistorySuite.labviewExePath',
+        'viHistorySuite.labviewCliPath'
       ]
     });
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
@@ -177,6 +179,12 @@ describe('extension manifest public metadata', () => {
     );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.labviewBitness'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewExePath'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewCliPath'
     );
   });
 

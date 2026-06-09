@@ -279,9 +279,15 @@ export async function activate(
         // would fail later. Detection is sourced from the cached runtime probe;
         // a not-yet-available probe or a satisfiable Docker runtime allows the
         // command so activation races and container users are never blocked.
+        // VHS-REQ-633: an explicit viHistorySuite.labviewCliPath override also
+        // allows the command (restricted in untrusted workspaces, so a malicious
+        // workspace cannot supply it).
         const labviewCliGate = decideLabviewCliOpenGate(
           runtimeAvailabilityWatcher.getLastDetection(),
-          runtimeAvailabilityWatcher.getLastSnapshot()
+          runtimeAvailabilityWatcher.getLastSnapshot(),
+          vscode.workspace
+            .getConfiguration('viHistorySuite')
+            .get<string>('labviewCliPath')
         );
         if (labviewCliGate.kind === 'block') {
           await presentLabviewCliOpenBlockedToast(labviewCliGate);

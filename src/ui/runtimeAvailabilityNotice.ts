@@ -332,12 +332,17 @@ export interface LabviewCliOpenGateDecision {
  * before the panel opens that the prerequisite is missing, instead of meeting a
  * runtime failure after selecting two revisions and choosing Compare.
  *
- * Two paths still allow the command:
+ * Three paths still allow the command:
  *  - Detection has not completed yet (`undefined`): fail open so an activation
  *    race never blocks the user, matching the Git gate.
  *  - A satisfiable Docker runtime is the active provider: container compare
  *    runs the LabVIEW CLI inside the image and does not depend on a host
  *    LabVIEW CLI, so Docker users are not trapped.
+ *  - VHS-REQ-633: a non-empty `viHistorySuite.labviewCliPath` override is
+ *    configured. The user has explicitly named a LabVIEWCLI the auto-detection
+ *    catalog may not cover; the compare-time locator validates the path and
+ *    reports `configured-labview-cli-path-missing` if it is wrong, so the gate
+ *    trusts the override instead of false-blocking before the panel opens.
  *
  * VHS-REQ-629: When the command is blocked, the toast is tailored to the
  * detected state. If LabVIEW \u22652025 is installed but the CLI is missing, the
@@ -347,9 +352,16 @@ export interface LabviewCliOpenGateDecision {
  */
 export function decideLabviewCliOpenGate(
   detection: DetectedRuntimes | undefined,
-  snapshot?: RuntimeAvailabilitySnapshot
+  snapshot?: RuntimeAvailabilitySnapshot,
+  configuredLabviewCliPath?: string
 ): LabviewCliOpenGateDecision {
   if (!detection) {
+    return { kind: 'allow' };
+  }
+  if (
+    typeof configuredLabviewCliPath === 'string' &&
+    configuredLabviewCliPath.trim().length > 0
+  ) {
     return { kind: 'allow' };
   }
   if (isLabviewCliInstalled(detection)) {
