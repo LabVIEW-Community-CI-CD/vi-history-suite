@@ -2342,5 +2342,66 @@ Missing numeric IDs are intentional.
     copy. Keep the guidance a compare-time surface — do not promote it
     into a pre-panel `labviewViHistory.open` gate, which would be
     Windows-only and could not see the Linux `labview.conf` state.
+  - VHS-REQ-630 owns the complementary post-attempt case: when the ini
+    preflight does not catch a disabled VI Server and LabVIEWCLI fails to
+    connect with `-350000` (`labview-cli-connection-failed`), the failed
+    next-action also names VI Server.
+
+### VHS-REQ-630: Actionable VI Server Guidance For LabVIEW CLI Connection Failure
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When a host-native LabVIEWCLI comparison attempt fails with
+  the VI Server connection error classified as
+  `labview-cli-connection-failed` (LabVIEWCLI exit error `-350000`), the
+  runtime doctor shall emit a specific, actionable next-action that names
+  VI Server (TCP/IP) being disabled for the selected LabVIEW as the most
+  common cause and the enable path, so the failed-compare warning
+  notification, history panel runtime result, and retained evidence are
+  actionable instead of falling back to the generic
+  retained-runtime-notes guidance. This complements VHS-REQ-628 by
+  covering the post-attempt failure that the VHS-REQ-623 / VHS-REQ-156 ini
+  preflight cannot always catch (the `server.tcp.enabled` key may be
+  absent, the ini unreadable, or written by LabVIEW only on clean exit).
+- Acceptance Criteria:
+  - `deriveRuntimeDoctorNextAction` returns a VI-Server-specific
+    next-action when `runtimeExecution.state` is `failed` and
+    `runtimeExecution.failureReason` is `labview-cli-connection-failed`:
+    it states that LabVIEWCLI launched LabVIEW but could not connect over
+    VI Server (error `-350000`), names VI Server (TCP/IP) being disabled
+    for the selected LabVIEW as the most common cause, and instructs the
+    user to enable VI Server in LabVIEW (Tools → Options → VI Server),
+    confirm `server.tcp.enabled=True` and the configured port, restart
+    LabVIEW, and rerun comparison report generation.
+  - The VI-Server next-action becomes the doctor summary's final line, so
+    the failed-compare warning notification (which extracts the
+    `Next action:` line from the doctor summary) and the history panel
+    runtime result surface the same actionable guidance.
+  - The `-350000` → `labview-cli-connection-failed` classification in
+    `classifyRuntimeFailure` is unchanged; this requirement only adds the
+    failed-state next-action copy.
+  - Existing failed-state next-action branches (password-protected,
+    bitness-conflict, host-native timeout) are unchanged.
+- Agent Work Scope:
+  - Add the `labview-cli-connection-failed` failed-state branch in
+    `deriveRuntimeDoctorNextAction` inside
+    `src/reporting/comparisonRuntimeDoctor.ts` and cover it with doctor
+    unit tests. Do not change the `-350000` classification, the
+    VHS-REQ-623 / VHS-REQ-156 ini preflight, or add a pre-panel gate.
+- Implementation References:
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+- Verification References:
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep VI Server enablement guidance pointed at the manual LabVIEW
+    setting, not a `viHistorySuite.*` runtime setting or command. A
+    stricter pre-attempt block (treating an absent or unreadable
+    `server.tcp.enabled` as blocked) is intentionally out of scope here
+    because it risks false-positives for hosts that legitimately run VI
+    Server on without an explicit key; that belongs to a separate
+    requirement with dedicated tests.
+
 
 

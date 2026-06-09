@@ -374,5 +374,15 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
       });
       expect(summary.some((line) => line.startsWith('cli connect window:'))).toBe(false);
     });
+
+    it('names VI Server and the enable path as the next action (VHS-REQ-630)', () => {
+      const action = buildLabviewCliConnectFailedSummary().at(-1) ?? '';
+      expect(action).toContain('VI Server');
+      expect(action).toContain('-350000');
+      expect(action).toContain('Tools');
+      expect(action).toContain('server.tcp.enabled=True');
+      expect(action).toContain('restart LabVIEW');
+      expect(action).toContain('rerun comparison report generation');
+    });
   });
 });
