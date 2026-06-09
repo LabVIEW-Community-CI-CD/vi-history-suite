@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Fixed
+
+- Linux host-native users are no longer falsely blocked from opening a
+  comparison when the LabVIEW CLI is installed. Runtime auto-detection now
+  recognizes the shared, version-independent LabVIEW CLI launcher
+  (`/usr/local/bin/LabVIEWCLI` and the underlying
+  `/usr/local/natinst/share/nilvcli/LabVIEWCLI`) instead of probing only a
+  per-version `labviewcli` sibling that does not exist on real NI Linux
+  installs. A per-version sibling is still honored as a fallback. This aligns
+  activation-time detection with the execution locator, so the LabVIEW CLI
+  open-gate allows the panel to open when the CLI is present.
+
 ## [1.14.0] - 2026-06-09
 
 ### Added

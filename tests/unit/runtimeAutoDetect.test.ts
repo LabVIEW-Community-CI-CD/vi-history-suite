@@ -120,11 +120,65 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     expect(recommendRuntimeFromDetection(detection)).toEqual({ provider: 'none' });
   });
 
-  it('detects Linux LabVIEW installations and the labviewcli sibling when present', async () => {
+  it('detects Linux LabVIEW and the shared /usr/local/bin LabVIEWCLI launcher (issue #346)', async () => {
+    // Real NI Linux installs expose the CLI as the shared, version-independent
+    // /usr/local/bin/LabVIEWCLI symlink, not a sibling of the versioned labview
+    // binary. Detection probes that fixed absolute location (it does not search
+    // $PATH), so it must recognize it to keep the open-gate from false-blocking.
     const fs = createFakeFs([
       '/usr/local/natinst/LabVIEW-2026-64/labview',
-      '/usr/local/natinst/LabVIEW-2026-64/labviewcli',
+      '/usr/local/bin/LabVIEWCLI',
       '/usr/local/bin/docker'
+    ]);
+
+    const detection = await detectAvailableRuntimes({
+      fs,
+      platform: 'linux',
+      env: { PATH: '/usr/local/bin:/usr/bin' }
+    });
+
+    expect(detection.host.installations).toEqual([
+      {
+        year: '2026',
+        bitness: 'x64',
+        labviewExePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        labviewCliPath: '/usr/local/bin/LabVIEWCLI'
+      }
+    ]);
+    expect(detection.docker.cliAvailable).toBe(true);
+    expect(recommendRuntimeFromDetection(detection)).toMatchObject({
+      provider: 'host',
+      labviewVersion: '2026',
+      labviewBitness: 'x64'
+    });
+  });
+
+  it('detects the shared nilvcli launcher when the /usr/local/bin symlink is absent (issue #346)', async () => {
+    const fs = createFakeFs([
+      '/usr/local/natinst/LabVIEW-2026-64/labview',
+      '/usr/local/natinst/share/nilvcli/LabVIEWCLI'
+    ]);
+
+    const detection = await detectAvailableRuntimes({
+      fs,
+      platform: 'linux',
+      env: { PATH: '/usr/local/bin:/usr/bin' }
+    });
+
+    expect(detection.host.installations).toEqual([
+      {
+        year: '2026',
+        bitness: 'x64',
+        labviewExePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        labviewCliPath: '/usr/local/natinst/share/nilvcli/LabVIEWCLI'
+      }
+    ]);
+  });
+
+  it('falls back to a per-version labviewcli sibling when no shared launcher exists', async () => {
+    const fs = createFakeFs([
+      '/usr/local/natinst/LabVIEW-2026-64/labview',
+      '/usr/local/natinst/LabVIEW-2026-64/labviewcli'
     ]);
 
     const detection = await detectAvailableRuntimes({
@@ -141,12 +195,25 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
         labviewCliPath: '/usr/local/natinst/LabVIEW-2026-64/labviewcli'
       }
     ]);
-    expect(detection.docker.cliAvailable).toBe(true);
-    expect(recommendRuntimeFromDetection(detection)).toMatchObject({
-      provider: 'host',
-      labviewVersion: '2026',
-      labviewBitness: 'x64'
+  });
+
+  it('reports Linux LabVIEW without a CLI path when no LabVIEWCLI launcher is present', async () => {
+    const fs = createFakeFs(['/usr/local/natinst/LabVIEW-2026-64/labview']);
+
+    const detection = await detectAvailableRuntimes({
+      fs,
+      platform: 'linux',
+      env: { PATH: '/usr/bin' }
     });
+
+    expect(detection.host.installations).toEqual([
+      {
+        year: '2026',
+        bitness: 'x64',
+        labviewExePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+        labviewCliPath: undefined
+      }
+    ]);
   });
 
   it('only checks docker on macOS (LabVIEW host comparison is unsupported)', async () => {
