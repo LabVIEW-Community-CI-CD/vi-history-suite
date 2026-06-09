@@ -66,6 +66,15 @@ const WINDOWS_SHARED_LABVIEW_CLI_RELATIVE = path.win32.join(
   'LabVIEWCLI.exe'
 );
 const LINUX_LABVIEW_INSTALL_PARENT = '/usr/local/natinst';
+// On Linux the LabVIEW CLI ships as a shared, version-independent component
+// (`nilvcli`) rather than a sibling of each versioned `labview` binary. It is
+// exposed on PATH as `/usr/local/bin/LabVIEWCLI`, a symlink to the real launcher
+// under `<install parent>/share/nilvcli/LabVIEWCLI`. These mirror the execution
+// locator's Linux CLI candidates so detection and runtime agree.
+const LINUX_SHARED_LABVIEW_CLI_CANDIDATES: readonly string[] = [
+  '/usr/local/bin/LabVIEWCLI',
+  path.posix.join(LINUX_LABVIEW_INSTALL_PARENT, 'share', 'nilvcli', 'LabVIEWCLI')
+];
 
 export async function detectAvailableRuntimes(
   deps: RuntimeAutoDetectDeps = {}
@@ -142,24 +151,32 @@ async function detectWindowsHostInstallations(
 async function detectLinuxHostInstallations(
   fs: RuntimeAutoDetectFs
 ): Promise<DetectedHostInstallation[]> {
+  // The LabVIEW CLI is shared across all installed years on Linux, so resolve it
+  // once and apply it to every detected installation. Fall back to a per-version
+  // sibling only when the shared launcher is absent (legacy/atypical layouts).
+  const sharedCliPath = await firstExistingFile(fs, LINUX_SHARED_LABVIEW_CLI_CANDIDATES);
   const installations: DetectedHostInstallation[] = [];
   for (let year = MAXIMUM_HOST_LABVIEW_YEAR; year >= MINIMUM_HOST_LABVIEW_YEAR; year -= 1) {
+    const versionDirectory = `LabVIEW-${year}-64`;
     const labviewExePath = path.posix.join(
       LINUX_LABVIEW_INSTALL_PARENT,
-      `LabVIEW-${year}-64`,
+      versionDirectory,
       'labview'
     );
     if (await isFile(fs, labviewExePath)) {
-      const labviewCliPath = path.posix.join(
+      const perVersionCliPath = path.posix.join(
         LINUX_LABVIEW_INSTALL_PARENT,
-        `LabVIEW-${year}-64`,
+        versionDirectory,
         'labviewcli'
       );
+      const labviewCliPath =
+        sharedCliPath ??
+        ((await isFile(fs, perVersionCliPath)) ? perVersionCliPath : undefined);
       installations.push({
         year: String(year),
         bitness: 'x64',
         labviewExePath,
-        labviewCliPath: (await isFile(fs, labviewCliPath)) ? labviewCliPath : undefined
+        labviewCliPath
       });
     }
   }
@@ -198,6 +215,18 @@ async function isFile(fs: RuntimeAutoDetectFs, filePath: string): Promise<boolea
   } catch {
     return false;
   }
+}
+
+async function firstExistingFile(
+  fs: RuntimeAutoDetectFs,
+  candidates: readonly string[]
+): Promise<string | undefined> {
+  for (const candidate of candidates) {
+    if (await isFile(fs, candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
 }
 
 /**
