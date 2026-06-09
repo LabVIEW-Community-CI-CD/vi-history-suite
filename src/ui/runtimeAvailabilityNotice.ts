@@ -10,6 +10,9 @@
  * or hand-edited settings.json) flip the status-bar label immediately.
  */
 
+import * as fsPromises from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import {
@@ -20,6 +23,10 @@ import {
   type RuntimeAutoDetectDeps,
   type RuntimeRecommendation
 } from '../tooling/runtimeAutoDetect';
+import {
+  buildLinuxLabviewIniCandidatePaths,
+  inferLinuxLabviewVersionFromExecutablePath
+} from '../reporting/comparisonReportRuntimeExecution';
 import { isPersistedSelectionSatisfiable } from '../tooling/runtimeSettingsSeed';
 
 export const FIRST_RUN_NO_RUNTIME_NOTICE_KEY =
@@ -384,6 +391,146 @@ export async function presentLabviewCliOpenBlockedToast(
   if (choice === actionLabel) {
     void vscode.env.openExternal(vscode.Uri.parse(installUrl));
   }
+}
+
+/**
+ * VHS-REQ-631: True only when the supplied LabVIEW VI Server config text
+ * explicitly enables VI Server TCP with `server.tcp.enabled=True`. Tolerant of
+ * surrounding whitespace, optional quotes, and case. An absent key, an explicit
+ * `False`, or unparseable text all return false — the open gate treats those as
+ * "VI Server not enabled" per the maintainer decision that the pre-panel gate
+ * requires an explicit opt-in (stricter than the VHS-REQ-623 compare-time
+ * preflight, which leaves the Windows absent-key default as enabled).
+ */
+export function isViServerExplicitlyEnabledInConfig(configText: string): boolean {
+  return /^\s*server\.tcp\.enabled\s*=\s*"?true"?\s*$/im.test(configText);
+}
+
+export const VI_SERVER_OPEN_BLOCKED_MESSAGE =
+  'VI History cannot open a comparison because VI Server (TCP/IP) is not enabled for the selected LabVIEW. Enable VI Server in LabVIEW (Tools \u2192 Options \u2192 VI Server), set server.tcp.enabled=True, restart LabVIEW, then reopen VI History.';
+
+export type ViServerOpenGateKind = 'allow' | 'block';
+
+export interface ViServerOpenGateDecision {
+  readonly kind: ViServerOpenGateKind;
+  readonly toastMessage?: string;
+  /**
+   * The VI Server config path(s) the gate inspected. Surfaced on `block` so the
+   * toast/log can name the exact `LabVIEW.ini` / `labview.conf` the user should
+   * edit, without the gate depending on a window.
+   */
+  readonly inspectedConfigPaths?: string[];
+}
+
+export interface ViServerOpenGateDeps {
+  readFile?: (filePath: string) => Promise<string>;
+  platform?: NodeJS.Platform;
+  homedir?: () => string;
+}
+
+/**
+ * VHS-REQ-631: Resolve the VI Server config path(s) to inspect for the selected
+ * host LabVIEW installation. Windows reads the single `LabVIEW.ini` adjacent to
+ * the selected `LabVIEW.exe`; Linux reuses the VHS-REQ-156 `labview.conf`
+ * candidate set for the selected version/bitness.
+ */
+function resolveViServerConfigCandidatePaths(
+  installation: DetectedHostInstallation,
+  platform: NodeJS.Platform,
+  homedir: () => string
+): string[] {
+  if (platform === 'win32') {
+    return [
+      path.win32.join(path.win32.dirname(installation.labviewExePath), 'LabVIEW.ini')
+    ];
+  }
+  const requestedLabviewVersion =
+    installation.year ??
+    inferLinuxLabviewVersionFromExecutablePath(installation.labviewExePath);
+  return buildLinuxLabviewIniCandidatePaths({
+    homeDir: homedir(),
+    requestedLabviewVersion,
+    bitness: installation.bitness
+  });
+}
+
+/**
+ * VHS-REQ-631: Pre-panel hard gate for `labviewViHistory.open`. Mirrors the
+ * LabVIEW CLI gate (VHS-REQ-627): the decision is window-free (an injected
+ * `readFile` keeps it unit-testable) and the activation wiring presents the
+ * toast.
+ *
+ * The command is blocked unless the selected LabVIEW's VI Server config
+ * explicitly enables VI Server TCP, so users learn before the panel opens that
+ * VI Server must be turned on — instead of attempting a compare that fails with
+ * `-350000`. Per the maintainer decision an absent `server.tcp.enabled` key is
+ * treated as "not enabled" (the gate requires an explicit opt-in), so the only
+ * `allow` outcomes are:
+ *  - Detection has not completed yet (`undefined`): fail open so an activation
+ *    race never blocks the user, matching the other open gates.
+ *  - A satisfiable Docker runtime is the active provider: container compare
+ *    runs LabVIEW inside the image, so the host VI Server config is irrelevant.
+ *  - No host installation resolves from the snapshot, or the platform is not a
+ *    host-compare platform (macOS / other): there is no selected LabVIEW ini to
+ *    inspect, so fail open rather than block on a missing selection.
+ *  - At least one inspected config explicitly enables VI Server.
+ *
+ * The compare-time VHS-REQ-623 / VHS-REQ-156 preflights are unchanged; this
+ * strict rule is open-gate-only.
+ */
+export async function decideViServerOpenGate(
+  detection: DetectedRuntimes | undefined,
+  snapshot: RuntimeAvailabilitySnapshot | undefined,
+  deps: ViServerOpenGateDeps = {}
+): Promise<ViServerOpenGateDecision> {
+  if (!detection) {
+    return { kind: 'allow' };
+  }
+  if (snapshot?.kind === 'available' && snapshot.label.provider === 'docker') {
+    return { kind: 'allow' };
+  }
+  const platform = deps.platform ?? process.platform;
+  if (platform !== 'win32' && platform !== 'linux') {
+    return { kind: 'allow' };
+  }
+  const installation = snapshot?.label.installation;
+  if (!installation) {
+    return { kind: 'allow' };
+  }
+  const readFile =
+    deps.readFile ?? ((filePath: string) => fsPromises.readFile(filePath, 'utf8'));
+  const homedir = deps.homedir ?? os.homedir;
+  const candidates = resolveViServerConfigCandidatePaths(installation, platform, homedir);
+  for (const candidate of candidates) {
+    let configText: string;
+    try {
+      configText = await readFile(candidate);
+    } catch {
+      continue;
+    }
+    if (isViServerExplicitlyEnabledInConfig(configText)) {
+      return { kind: 'allow' };
+    }
+  }
+  return {
+    kind: 'block',
+    toastMessage: VI_SERVER_OPEN_BLOCKED_MESSAGE,
+    inspectedConfigPaths: candidates
+  };
+}
+
+/**
+ * Show the VI-Server-disabled toast for `labviewViHistory.open`. Button-less and
+ * self-sufficient: the message names the exact LabVIEW setting to enable, matching
+ * the compare-time VI Server guidance (VHS-REQ-628 / VHS-REQ-630). Thin VS Code
+ * glue; the routing decision is covered by `decideViServerOpenGate`.
+ */
+export async function presentViServerOpenBlockedToast(
+  decision?: ViServerOpenGateDecision
+): Promise<void> {
+  await vscode.window.showWarningMessage(
+    decision?.toastMessage ?? VI_SERVER_OPEN_BLOCKED_MESSAGE
+  );
 }
 
 /** Returns true when the proposed re-detect is allowed under the throttle. */
