@@ -28,6 +28,8 @@ export const RUNTIME_RE_DETECT_THROTTLE_MS = 5_000;
 
 export const INSTALL_LABVIEW_URL =
   'https://www.ni.com/en/support/downloads/software-products/download.labview.html';
+export const INSTALL_LABVIEW_CLI_URL =
+  'https://www.ni.com/en/support/downloads/software-products/download.ni-labview-command-line-interface.html';
 export const INSTALL_DOCKER_URL = 'https://www.docker.com/products/docker-desktop/';
 
 export const MISSING_RUNTIME_MODAL_TITLE =
@@ -269,16 +271,49 @@ export function isLabviewCliInstalled(detection: DetectedRuntimes): boolean {
   );
 }
 
+/**
+ * VHS-REQ-629: True when at least one host LabVIEW (\u22652025) is installed but
+ * none of the detected installations expose the LabVIEW CLI. Detection only
+ * records installations for supported years, so a non-empty installation list
+ * already implies LabVIEW \u22652025. This is the "LabVIEW present, only the CLI
+ * missing" state, which deserves the dedicated LabVIEW CLI download rather than
+ * the full LabVIEW installer.
+ */
+export function isLabviewHostInstalledWithoutCli(
+  detection: DetectedRuntimes
+): boolean {
+  return detection.host.installations.length > 0 && !isLabviewCliInstalled(detection);
+}
+
 export const LABVIEW_CLI_OPEN_BLOCKED_MESSAGE =
   'VI History cannot open a comparison because the LabVIEW CLI (LabVIEWCLI) is not installed. Install LabVIEW \u22652025 with the LabVIEW Command-Line Interface, then reload the window to compare VIs.';
 
+/**
+ * VHS-REQ-629: Block message for the case where LabVIEW \u22652025 is installed
+ * but the LabVIEW CLI is not. Naming LabVIEW as already present and the CLI as
+ * the only missing piece keeps the guidance honest and points the user at the
+ * dedicated LabVIEW CLI download instead of the full LabVIEW installer.
+ */
+export const LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE =
+  'VI History cannot open a comparison because LabVIEW is installed but the LabVIEW CLI (LabVIEWCLI) is not. Install the LabVIEW Command-Line Interface, then reload the window to compare VIs.';
+
 export const LABVIEW_CLI_NOTICE_BUTTON_INSTALL = 'Install LabVIEW';
+
+export const LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI = 'Install LabVIEW CLI';
 
 export type LabviewCliOpenGateKind = 'allow' | 'block';
 
 export interface LabviewCliOpenGateDecision {
   readonly kind: LabviewCliOpenGateKind;
   readonly toastMessage?: string;
+  /**
+   * VHS-REQ-629: Action button label and external URL for the block toast.
+   * Populated on `block` so the presenter offers the right download
+   * (`Install LabVIEW CLI` when only the CLI is missing, `Install LabVIEW`
+   * when no LabVIEW host is installed at all).
+   */
+  readonly actionLabel?: string;
+  readonly installUrl?: string;
 }
 
 /**
@@ -296,6 +331,12 @@ export interface LabviewCliOpenGateDecision {
  *  - A satisfiable Docker runtime is the active provider: container compare
  *    runs the LabVIEW CLI inside the image and does not depend on a host
  *    LabVIEW CLI, so Docker users are not trapped.
+ *
+ * VHS-REQ-629: When the command is blocked, the toast is tailored to the
+ * detected state. If LabVIEW \u22652025 is installed but the CLI is missing, the
+ * toast names the LabVIEW CLI specifically and offers `Install LabVIEW CLI`
+ * (the dedicated NI CLI download). Otherwise it keeps the original
+ * `Install LabVIEW` action pointing at the full LabVIEW installer.
  */
 export function decideLabviewCliOpenGate(
   detection: DetectedRuntimes | undefined,
@@ -310,22 +351,38 @@ export function decideLabviewCliOpenGate(
   if (snapshot?.kind === 'available' && snapshot.label.provider === 'docker') {
     return { kind: 'allow' };
   }
-  return { kind: 'block', toastMessage: LABVIEW_CLI_OPEN_BLOCKED_MESSAGE };
+  if (isLabviewHostInstalledWithoutCli(detection)) {
+    return {
+      kind: 'block',
+      toastMessage: LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE,
+      actionLabel: LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI,
+      installUrl: INSTALL_LABVIEW_CLI_URL
+    };
+  }
+  return {
+    kind: 'block',
+    toastMessage: LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+    actionLabel: LABVIEW_CLI_NOTICE_BUTTON_INSTALL,
+    installUrl: INSTALL_LABVIEW_URL
+  };
 }
 
 /**
- * Show the LabVIEW-CLI-missing toast for `labviewViHistory.open` and offer an
- * `Install LabVIEW` action that opens the NI download page. Exported so the
- * activation hook and any future palette command share the copy. Thin VS Code
- * glue; the routing decision is covered by `decideLabviewCliOpenGate`.
+ * Show the LabVIEW-CLI-missing toast for `labviewViHistory.open` and offer the
+ * install action carried by the gate decision. Exported so the activation hook
+ * and any future palette command share the copy. Thin VS Code glue; the routing
+ * decision (message, action label, and URL) is covered by
+ * `decideLabviewCliOpenGate`.
  */
-export async function presentLabviewCliOpenBlockedToast(): Promise<void> {
-  const choice = await vscode.window.showWarningMessage(
-    LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
-    LABVIEW_CLI_NOTICE_BUTTON_INSTALL
-  );
-  if (choice === LABVIEW_CLI_NOTICE_BUTTON_INSTALL) {
-    void vscode.env.openExternal(vscode.Uri.parse(INSTALL_LABVIEW_URL));
+export async function presentLabviewCliOpenBlockedToast(
+  decision?: LabviewCliOpenGateDecision
+): Promise<void> {
+  const message = decision?.toastMessage ?? LABVIEW_CLI_OPEN_BLOCKED_MESSAGE;
+  const actionLabel = decision?.actionLabel ?? LABVIEW_CLI_NOTICE_BUTTON_INSTALL;
+  const installUrl = decision?.installUrl ?? INSTALL_LABVIEW_URL;
+  const choice = await vscode.window.showWarningMessage(message, actionLabel);
+  if (choice === actionLabel) {
+    void vscode.env.openExternal(vscode.Uri.parse(installUrl));
   }
 }
 

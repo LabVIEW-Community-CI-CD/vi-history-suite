@@ -2081,6 +2081,67 @@ Missing numeric IDs are intentional.
     `comparisonRuntimeLocator` and VHS-REQ-155. Do not re-probe the filesystem
     inside the `labviewViHistory.open` hot path; the watcher already caches and
     refreshes detection.
+  - VHS-REQ-629 refines the block toast copy and install action for the
+    "LabVIEW installed but CLI missing" state; keep both requirements'
+    decision logic in `decideLabviewCliOpenGate`.
+
+
+
+
+### VHS-REQ-629: LabVIEW CLI Install Offer When LabVIEW Is Installed
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When the `labviewViHistory.open` LabVIEW CLI gate (VHS-REQ-627)
+  blocks because the LabVIEW CLI is not installed, the extension shall tailor
+  the warning toast to the detected state so that a host with LabVIEW
+  \u22652025 installed but the LabVIEW CLI missing receives a message naming
+  LabVIEW as already present and an `Install LabVIEW CLI` action that opens the
+  dedicated NI LabVIEW Command-Line Interface download page, instead of the
+  generic `Install LabVIEW` action that points at the full LabVIEW installer.
+- Acceptance Criteria:
+  - `isLabviewHostInstalledWithoutCli(detection)` returns true only when
+    `detection.host.installations` is non-empty and no installation exposes a
+    `labviewCliPath`; detection only records supported years, so a non-empty
+    list already implies LabVIEW \u22652025.
+  - When the gate blocks and `isLabviewHostInstalledWithoutCli` is true, the
+    decision carries `LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE` (which states that
+    LabVIEW is installed but the LabVIEW CLI is not), an action label of
+    `Install LabVIEW CLI`, and an install URL of `INSTALL_LABVIEW_CLI_URL`
+    (`https://www.ni.com/en/support/downloads/software-products/download.ni-labview-command-line-interface.html`).
+  - When the gate blocks and no host LabVIEW is installed, the decision keeps
+    the original `LABVIEW_CLI_OPEN_BLOCKED_MESSAGE`, the `Install LabVIEW`
+    action label, and the `INSTALL_LABVIEW_URL` full-installer download
+    (no regression of VHS-REQ-627).
+  - `presentLabviewCliOpenBlockedToast(decision)` shows the decision's message
+    and action label and opens the decision's install URL via
+    `vscode.env.openExternal`; the `labviewViHistory.open` wiring passes the
+    gate decision to the presenter.
+  - The allow paths from VHS-REQ-627 are unchanged: the gate still allows the
+    command when the LabVIEW CLI is installed, when a satisfiable Docker
+    provider is active, and when cached detection is not yet available.
+  - The block decision remains a pure, window-free helper; only the presenter
+    touches `vscode.window` and `vscode.env`. No automatic download or
+    installer execution occurs \u2014 the action only offers an external link.
+- Agent Work Scope:
+  - Extend the LabVIEW CLI gate decision and toast copy in
+    `src/ui/runtimeAvailabilityNotice.ts` and pass the decision to the
+    presenter from `src/extension.ts`. Reuse the VHS-REQ-617 cached detection;
+    do not add a second detection pass, a new command, or a pre-panel gate
+    beyond the existing VHS-REQ-627 gate.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the dedicated LabVIEW CLI download URL free of volatile tracking
+    tokens (for example `srsltid`). The status-bar "runtime available"
+    labeling when LabVIEW is present but the CLI is missing stays under
+    VHS-REQ-616 / VHS-REQ-617; this requirement only owns the block-toast copy
+    and install action.
 
 
 

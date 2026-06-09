@@ -12,7 +12,12 @@ import {
   decideFirstRunPresentation,
   decideLabviewCliOpenGate,
   evaluateRuntimeAvailability,
+  INSTALL_LABVIEW_CLI_URL,
   isLabviewCliInstalled,
+  isLabviewHostInstalledWithoutCli,
+  LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE,
+  LABVIEW_CLI_NOTICE_BUTTON_INSTALL,
+  LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI,
   LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
   RUNTIME_RE_DETECT_THROTTLE_MS,
   selectActiveRuntime,
@@ -227,13 +232,35 @@ describe('decideLabviewCliOpenGate (VHS-REQ-627)', () => {
     expect(decision.kind).toBe('block');
     expect(decision.toastMessage).toBe(LABVIEW_CLI_OPEN_BLOCKED_MESSAGE);
     expect(decision.toastMessage).toContain('LabVIEW CLI');
+    expect(decision.actionLabel).toBe(LABVIEW_CLI_NOTICE_BUTTON_INSTALL);
   });
 
-  it('blocks open when a host LabVIEW is selected but the LabVIEW CLI is absent', () => {
+  it('detects the LabVIEW-installed-but-CLI-missing state (VHS-REQ-629)', () => {
+    expect(isLabviewHostInstalledWithoutCli(detectionHost)).toBe(true);
+    expect(isLabviewHostInstalledWithoutCli(detectionHostWithCli)).toBe(false);
+    expect(isLabviewHostInstalledWithoutCli(detectionMissing)).toBe(false);
+    expect(isLabviewHostInstalledWithoutCli(detectionAvailable)).toBe(false);
+  });
+
+  it('offers the dedicated Install LabVIEW CLI action when LabVIEW is installed but the CLI is missing (VHS-REQ-629)', () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     expect(snapshot.label.provider).toBe('host');
     const decision = decideLabviewCliOpenGate(detectionHost, snapshot);
     expect(decision.kind).toBe('block');
+    expect(decision.toastMessage).toBe(LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE);
+    expect(decision.toastMessage).toContain('LabVIEW is installed but the LabVIEW CLI');
+    expect(decision.actionLabel).toBe(LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI);
+    expect(decision.installUrl).toBe(INSTALL_LABVIEW_CLI_URL);
+  });
+
+  it('keeps the general Install LabVIEW action when no LabVIEW host is installed (VHS-REQ-629)', () => {
+    const decision = decideLabviewCliOpenGate(
+      detectionMissing,
+      evaluateRuntimeAvailability(detectionMissing)
+    );
+    expect(decision.kind).toBe('block');
     expect(decision.toastMessage).toBe(LABVIEW_CLI_OPEN_BLOCKED_MESSAGE);
+    expect(decision.actionLabel).toBe(LABVIEW_CLI_NOTICE_BUTTON_INSTALL);
+    expect(decision.installUrl).toContain('download.labview.html');
   });
 });
