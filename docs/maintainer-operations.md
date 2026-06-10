@@ -224,8 +224,8 @@ code --install-extension .\vi-history-suite-*.vsix --force
 ```
 
 After installation, ask the reporter to reload VS Code, reproduce the issue,
-and capture indexing diagnostics separately from comparison runtime validation
-output. If the Marketplace extension with the same identity is already
+and capture selected-file eligibility or Git history facts separately from
+comparison runtime validation output. If the Marketplace extension with the same identity is already
 installed, `--force` is required; uninstalling the Marketplace build first is
 also acceptable.
 

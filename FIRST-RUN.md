@@ -30,8 +30,10 @@ Expected quiet behavior:
 
 - Installing or selecting the extension should not ask for GitHub
   authorization.
-- Opening the bundled documentation should not start Git indexing, LabVIEW, or
-  `LabVIEWCLI`.
+- Opening the bundled documentation should not start Git history work, LabVIEW,
+  or `LabVIEWCLI`.
+- Opening `VI History` should evaluate only the selected file rather than scan
+  every VI in the repository.
 - LabVIEW or `LabVIEWCLI` should start only when you explicitly run validation
   or compare work that needs it.
 

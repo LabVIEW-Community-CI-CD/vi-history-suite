@@ -22,7 +22,7 @@ after migration.
 | Extension user | Factual VI history review, safe compare flow, installed bundled documentation, and clear blocked-state messages. |
 | Maintainer / release steward | Repeatable GitHub release promotion, Marketplace evidence, package identity, and branch-governed back-sync. |
 | Traceability steward | Requirements, RTM rows, traceability inventory, issue-driven closure evidence, and standards maturity findings kept separate from product behavior. |
-| Support / debugging user | Diagnostic facts without secrets, retained runtime evidence, and issue intake that separates indexing behavior from LabVIEW runtime failures. |
+| Support / debugging user | Diagnostic facts without secrets, retained runtime evidence, and issue intake that separates selected-file eligibility from LabVIEW runtime failures. |
 | Contributor | Lightweight source evaluation in VS Code, Codespaces or devcontainers, optional LabVIEW validation, and bounded tests that do not require Marketplace credentials. |
 
 ## Context View
@@ -46,9 +46,8 @@ interacts with:
 | --- | --- | --- |
 | Extension manifest | Declares activation events, commands, menu surfaces, settings, package metadata, bundled resources, and limited untrusted-workspace capability. | `package.json` |
 | Extension runtime | Lazily creates workspace runtime services, registers commands, owns extension storage integration, and keeps startup side effects bounded. | `src/extension.ts` |
-| Git adapter | Wraps built-in Git API and bounded Git CLI calls for repository roots, tracked files, history counts, blob IDs, and revision content. | `src/git/` |
-| VI eligibility indexer | Maintains dynamic eligibility context, persistent Git-object cache evidence, incremental invalidation facts, and indexing diagnostics. | `src/indexing/viEligibilityIndexer.ts` |
-| History command and panel | Orchestrates selected-file review, factual blocked states, retained commit windows, compare actions, review packets, and dashboard actions. | `src/commands/`, `src/ui/` |
+| Git adapter | Wraps built-in Git API and bounded Git CLI calls for repository roots, selected-file tracking and history facts, blob IDs, and revision content. | `src/git/` |
+| History command and panel | Orchestrates selected-file eligibility, factual blocked states, retained commit windows, compare actions, review packets, and dashboard actions. | `src/commands/`, `src/ui/` |
 | Reporting runtime | Plans comparison inputs, checks runtime provider facts, stages revision blobs, runs LabVIEW tooling, and retains comparison report packets. | `src/reporting/` |
 | Dashboard and review evidence | Concentrates retained comparison evidence, dashboard archive data, ETA facts, latest-run facts, decision records, and maintainer-only review submissions. | `src/dashboard/`, `src/scenarios/`, `src/review/` |
 | Bundled documentation | Loads the packaged documentation manifest and installed HTML pages through the open documentation command. | `src/docs/`, `resources/bundled-docs/` |
@@ -60,8 +59,8 @@ interacts with:
 | Area | Components | Boundary |
 | --- | --- | --- |
 | Activation | `activate`, command registrations, `HistoryPanelTracker` | Command activation creates runtime services lazily and exposes testable API summaries without changing Marketplace behavior. |
-| Workspace safety | Workspace trust checks, manifest untrusted-workspace capability, command handlers | Indexing and comparison execution are disabled or blocked in untrusted workspaces while bundled docs and local settings CLI preparation remain available. |
-| Git history eligibility | `ViEligibilityIndexer`, `gitCli`, `gitApi`, `viMagicCore` | Eligibility uses tracked Git state, VI content signatures, cache proofs, and conservative invalidation rather than editor visibility alone. |
+| Workspace safety | Workspace trust checks, manifest untrusted-workspace capability, command handlers | Selected-file VI History evaluation and comparison execution are disabled or blocked in untrusted workspaces while bundled docs and local settings CLI preparation remain available. |
+| Git history eligibility | `createOpenViHistoryCommand`, `ViHistoryService`, `gitCli`, `gitApi`, `viMagicCore` | Eligibility is evaluated for the selected file using tracked Git state, VI content signatures, and bounded single-file history queries rather than a repository-wide VI inventory. |
 | Review surface | `createOpenViHistoryCommand`, `ViHistoryService`, `historyPanel`, `historyPanelTracker` | The user-facing webview displays factual history, explicit selected/base pair state, copyable review facts, and command outcomes. |
 | Comparison reports | Runtime locator, doctor, preflight, execution, packet, archive, and retained report open action | Comparison uses staged revision blobs and records factual runtime outcome evidence; it does not silently substitute runtime providers. |
 | Dashboard aggregate review | Multi-report dashboard, parser, archive, ETA/latest-run records, retained evidence import | Dashboard surfaces concentrate retained evidence for human review and do not claim automatic VI correctness decisions. |
@@ -76,7 +75,7 @@ interacts with:
 | --- | --- | --- |
 | Installed VSIX | VS Code extension installation directory | Contains compiled `out/**`, `node_modules/jsonc-parser/**`, bundled docs, Marketplace icon, README, changelog, and license. |
 | Extension host process | User's VS Code desktop session | Executes command handlers and webviews under VS Code's extension host Node runtime. |
-| Workspace storage | VS Code workspace-scoped extension storage | Retains eligibility cache snapshots, comparison report archives, dashboard evidence, and review artifacts when workspace storage is available. |
+| Workspace storage | VS Code workspace-scoped extension storage | Retains comparison report archives, dashboard evidence, and review artifacts when workspace storage is available. |
 | Global storage | VS Code extension-global storage | Holds materialized local runtime settings CLI helpers prepared by the installed command. |
 | Local Git and LabVIEW tools | User machine `PATH`, configured settings, and local installation paths | Git is required for history facts; LabVIEW/LabVIEWCLI is required only for installed comparison execution. |
 | Optional Docker provider | User-selected local Docker environment | Expert path for comparison provider diagnostics and execution when explicitly configured. |
@@ -95,7 +94,7 @@ interacts with:
 | Lightweight public verification | `VHS-SYS-REQ-012`, `VHS-REQ-597` | Container, Deployment |
 | Optional human validation surfaces | `VHS-SYS-REQ-013`, `VHS-REQ-596`, `VHS-REQ-598`, `VHS-REQ-599`, `VHS-REQ-608` | Context, Deployment |
 | Requirements as agent work contracts | `VHS-SYS-REQ-014`, `VHS-REQ-601` | Container, Component |
-| Large repository indexing responsiveness | `VHS-SYS-REQ-015`, `VHS-REQ-603`, `VHS-REQ-604`, `VHS-REQ-605`, `VHS-REQ-606`, `VHS-REQ-607` | Container, Component, Deployment |
+| Selected-file history responsiveness | `VHS-SYS-REQ-018`, `VHS-REQ-006`, `VHS-REQ-008`, `VHS-REQ-013`, `VHS-REQ-607`, `VHS-REQ-635` | Container, Component, Deployment |
 | Installed bundled documentation | `VHS-REQ-611` | Container, Component, Deployment |
 | Installed runtime settings CLI preparation | `VHS-REQ-612` | Component, Deployment |
 

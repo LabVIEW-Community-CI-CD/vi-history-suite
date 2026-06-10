@@ -196,28 +196,32 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - `docs/requirements/id-index.csv`
   - `tests/unit/requirementsDocs.test.ts`
 
-### VHS-SYS-REQ-015: Large Repository Branch-Switch Responsiveness
+### VHS-SYS-REQ-018: Selected VI On-Demand History Eligibility
 
 - Status: Active
 - Area: Git History Eligibility
-- Statement: The system shall keep branch-switch indexing responsive for large
-  LabVIEW repositories by reusing file-level Git object eligibility evidence
-  for unchanged tracked files and re-evaluating only changed, unproven, or
-  invalidated files.
+- Statement: The system shall evaluate VI History eligibility for the selected
+  file requested by the user without requiring repository-wide VI enumeration,
+  branch-switch indexing, or a persistent repository eligibility cache before
+  opening that file's history.
 - Acceptance Criteria:
-  - Branch-switch eligibility reuse is based on repository identity, normalized
-    path, tracked Git blob object ID, strict header setting, cache schema
-    version, and reachable history proof evidence.
-  - The selected branch or `HEAD` controls reachability checks and refresh
-    state, but it is not the cache identity for unchanged clean file blobs.
-  - Dirty, staged, unmerged, cache-missing, malformed, or history-unproven files
-    fail closed by re-evaluating eligibility.
-  - User-visible diagnostics report tracked, reused, evaluated, removed,
-    skipped, failed, and eligible counts rather than wall-clock timing promises.
+  - Opening VI History evaluates only the requested file path for Git tracking,
+    VI signature, and the minimum two modifying commits needed for history
+    review.
+  - Repositories with thousands of VIs do not need a full tracked-VI scan before
+    the selected file can open or produce an ineligibility message.
+  - Workspace trust remains a safety boundary for selected-file history and
+    comparison execution.
+  - Comparison-runtime validation remains separate from selected-file
+    eligibility and runs only when comparison/report work requires it.
 - Verification References:
-  - `src/indexing/viEligibilityIndexer.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/services/viHistoryModel.ts`
+  - `src/services/viHistoryService.ts`
   - `src/git/gitCli.ts`
-  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/viHistoryModel.test.ts`
+  - `tests/unit/viHistoryService.test.ts`
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 

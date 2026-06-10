@@ -47,7 +47,6 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - `src/dashboard/`: Dashboard/reporting logic
 - `src/domain/`: Core domain models
 - `src/git/`: Git integration
-- `src/indexing/`: Indexing logic
 - `src/reporting/`: Report generation and execution
 - `src/review/`: Human review and scenario registry
 - `src/scenarios/`: Decision records and scenario logic
@@ -68,6 +67,8 @@ This file provides concise, actionable guidance for AI coding agents working in 
 
 ### Common Pitfalls / Environment Issues
 - Requires Node.js and npm (see [INSTALL.md](./INSTALL.md))
+- On Windows, if `npm` is missing but `winget` is available, install Node.js
+	LTS with `winget install --id OpenJS.NodeJS.LTS --exact --source winget`.
 - Some scripts/tools expect a Linux environment (see [scripts/](./scripts/) and [docs/vagrant.md](./docs/vagrant.md))
 - Integration tests may require specific Git setup or Vagrant (see [docs/vagrant.md](./docs/vagrant.md))
 - Workflow contract tests can become brittle if they assert exact single-line `run:` snippets; prefer step-name ordering checks when CI steps use multiline `run: |` blocks.
