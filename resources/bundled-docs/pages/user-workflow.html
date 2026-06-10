@@ -23,7 +23,7 @@
 <li>compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs</li>
 </ul>
 <h2>Repository Support</h2>
-<p>VI History is available on any trusted Git repository that contains eligible LabVIEW VIs.</p>
+<p>VI History can be opened from any trusted Git repository by selecting the LabVIEW file you want to review.</p>
 <p>Current scope:</p>
 <ul>
 <li>the checkbox-selected compare workflow is repo-agnostic</li>
@@ -32,7 +32,8 @@
 </ul>
 <h2>Primary Review Flow</h2>
 <ol>
-<li>Right-click an eligible VI and choose <code>VI History</code>.</li>
+<li>Right-click the VI you want to review and choose <code>VI History</code>.</li>
+<li>The extension evaluates that selected file for VI signature, Git tracking, and at least two modifying commits.</li>
 <li>Review the history panel facts:<ul>
 <li>repository name</li>
 <li>relative path</li>
@@ -54,7 +55,7 @@
 </ul>
 <p>Practical selection rule:</p>
 <ul>
-<li>any retained window with at least two commits is enough to use VI History</li>
+<li>a selected tracked VI with at least two modifying commits is enough to use VI History</li>
 <li>the adjacent-pair text in a row is chronology context only; the two checked revisions define the exact compare pair</li>
 <li>the newer selected revision becomes <code>selected</code> and the older selected revision becomes <code>base</code></li>
 <li>the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair</li>

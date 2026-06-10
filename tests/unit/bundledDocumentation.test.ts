@@ -77,7 +77,7 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).not.toContain('VI Server');
     expect(loaded?.pageBodyHtml).not.toContain('Software Requirements Specification');
     expect(loaded?.pageBodyHtml).not.toContain('Current State');
-    expect(loaded?.pageBodyHtml).toContain('VI History is available on any trusted Git repository that contains eligible LabVIEW VIs');
+    expect(loaded?.pageBodyHtml).toContain('VI History can be opened from any trusted Git repository by selecting the LabVIEW file you want to review');
     expect(loaded?.pageBodyHtml).toContain('the checkbox-selected compare workflow is repo-agnostic');
     expect(loaded?.pageBodyHtml).toContain('The packaged guide is intentionally concise');
     expect(loaded?.pageBodyHtml).toContain(

@@ -21,7 +21,7 @@ body:
       label: Affected Surface
       description: Pick the closest surface so maintainers can route the report.
       options:
-        - VI history indexing or cache
+        - VI history eligibility or Git history display
         - History panel or Git history display
         - Compare/runtime validation
         - Runtime settings CLI
@@ -61,23 +61,23 @@ body:
     validations:
       required: false
   - type: textarea
-    id: indexing_evidence
+    id: eligibility_evidence
     attributes:
-      label: Indexing Evidence
-      description: For indexing or cache reports, include repository scale, restart behavior, branch-switch behavior, and any indexing diagnostics. Leave blank for runtime-only reports. Do not include secrets.
+      label: Eligibility / Git History Evidence
+      description: For eligibility or Git history reports, include selected-file facts, tracking/history observations, and the ineligibility message when shown. Leave blank for runtime-only reports. Do not include secrets.
       render: text
       placeholder: |
-        - Approximate tracked VI count:
-        - Cold scan, warm restart, or branch switch:
-        - Indexing status or counts shown:
-        - Files unexpectedly reused, re-evaluated, eligible, or skipped:
+        - Selected file path or extension:
+        - Is the file tracked in Git, if known:
+        - Commit count or history facts shown, if known:
+        - Ineligibility message or Git/history error:
     validations:
       required: false
   - type: textarea
     id: runtime_validation_output
     attributes:
       label: Runtime Validation Output
-      description: Paste concise `vihs --validate` or comparison-runtime output separately from indexing evidence. Leave blank for indexing-only reports. Do not include secrets.
+      description: Paste concise `vihs --validate` or comparison-runtime output separately from eligibility evidence. Leave blank for eligibility-only reports. Do not include secrets.
       render: text
       placeholder: Paste runtime validation output here when relevant.
     validations:

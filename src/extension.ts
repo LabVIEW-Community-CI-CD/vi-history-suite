@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
@@ -8,10 +9,6 @@ import { createMultiReportDashboardAction } from './dashboard/multiReportDashboa
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
 import { type GitApi, getBuiltInGitApi } from './git/gitApi';
 import { getFileHistoryCount } from './git/gitCli';
-import {
-  EligibilityDebugSnapshot,
-  ViEligibilityIndexer
-} from './indexing/viEligibilityIndexer';
 import {
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
@@ -96,17 +93,89 @@ export interface ViHistorySuiteApi {
 
 interface WorkspaceRuntime {
   gitApi: GitApi | undefined;
-  eligibilityIndexer: ViEligibilityIndexer;
   historyService: ViHistoryService;
   openViHistory: ReturnType<typeof createOpenViHistoryCommand>;
+}
+
+interface EligibilityDebugSnapshot {
+  indexedRepositoryRoots: string[];
+  eligiblePathCount: number;
+  eligiblePathsSample: string[];
 }
 
 const EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT: EligibilityDebugSnapshot = {
   indexedRepositoryRoots: [],
   eligiblePathCount: 0,
-  eligiblePathsSample: [],
-  lastRefreshResult: undefined
+  eligiblePathsSample: []
 };
+
+function buildUntrustedWorkspaceHistoryModel(
+  uri: Pick<vscode.Uri, 'fsPath' | 'path'>
+): ViHistoryViewModel {
+  return {
+    repositoryName: '',
+    repositoryRoot: '',
+    relativePath: uri.fsPath || uri.path || '',
+    signature: 'unknown',
+    eligible: false,
+    commits: []
+  };
+}
+
+function rememberSelectedEligibility(
+  uri: vscode.Uri,
+  model: Pick<ViHistoryViewModel, 'eligible'>,
+  selectedEligiblePaths: Record<string, true>
+): void {
+  for (const key of selectedEligibilityContextKeysForUri(uri)) {
+    delete selectedEligiblePaths[key];
+    if (model.eligible) {
+      selectedEligiblePaths[key] = true;
+    }
+  }
+}
+
+function buildSelectedEligibilityDebugSnapshot(
+  selectedEligiblePaths: Record<string, true>
+): EligibilityDebugSnapshot {
+  const eligiblePaths = Object.keys(selectedEligiblePaths).sort();
+  return {
+    ...EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT,
+    eligiblePathCount: eligiblePaths.length,
+    eligiblePathsSample: eligiblePaths.slice(0, 12)
+  };
+}
+
+function selectedEligibilityContextKeysForUri(
+  uri: Pick<vscode.Uri, 'fsPath' | 'path'>
+): string[] {
+  const keys = new Set<string>();
+  addSelectedEligibilityPathVariants(keys, uri.fsPath);
+  addSelectedEligibilityPathVariants(keys, uri.path);
+  return [...keys];
+}
+
+function addSelectedEligibilityPathVariants(
+  keys: Set<string>,
+  value: string | undefined
+): void {
+  if (!value) {
+    return;
+  }
+
+  const normalizedPath = path.normalize(value);
+  const slashNormalized = normalizedPath.replaceAll('\\', '/');
+
+  keys.add(value);
+  keys.add(normalizedPath);
+  keys.add(slashNormalized);
+
+  if (process.platform === 'win32') {
+    keys.add(value.toLowerCase());
+    keys.add(normalizedPath.toLowerCase());
+    keys.add(slashNormalized.toLowerCase());
+  }
+}
 
 export async function activate(
   context: vscode.ExtensionContext
@@ -219,6 +288,7 @@ export async function activate(
   // refusing to start without Git fails fast and clearly.
   const gitPrerequisiteWatcher = createGitPrerequisiteWatcher(context);
   context.subscriptions.push(gitPrerequisiteWatcher);
+  const selectedEligiblePaths: Record<string, true> = {};
 
   const ensureWorkspaceRuntime = async (): Promise<WorkspaceRuntime> => {
     if (workspaceRuntime) {
@@ -228,11 +298,9 @@ export async function activate(
     if (!workspaceRuntimePromise) {
       workspaceRuntimePromise = (async () => {
         const gitApi = await getBuiltInGitApi();
-        const eligibilityIndexer = new ViEligibilityIndexer(gitApi, context.workspaceState);
         const historyService = new ViHistoryService(gitApi);
         const openViHistory = createOpenViHistoryCommand(
           historyService,
-          eligibilityIndexer,
           gitApi,
           panelTracker,
           comparisonReportAction,
@@ -244,12 +312,8 @@ export async function activate(
           humanReviewSubmissionAction
         );
 
-        context.subscriptions.push(eligibilityIndexer);
-        await eligibilityIndexer.start();
-
         workspaceRuntime = {
           gitApi,
-          eligibilityIndexer,
           historyService,
           openViHistory
         };
@@ -516,18 +580,26 @@ export async function activate(
   );
 
   return {
-    refreshEligibility: async () => {
-      const runtime = await ensureWorkspaceRuntime();
-      await runtime.eligibilityIndexer.refresh();
-    },
-    isEligible: (uri: vscode.Uri) => workspaceRuntime?.eligibilityIndexer.isEligible(uri) ?? false,
+    refreshEligibility: async () => undefined,
+    isEligible: (uri: vscode.Uri) =>
+      selectedEligibilityContextKeysForUri(uri).some(
+        (key) => selectedEligiblePaths[key] === true
+      ),
     loadHistory: async (uri: vscode.Uri) => {
+      // VHS-REQ-012: Honor the workspace-trust safety boundary on the exported
+      // API too, so history loading never invokes Git CLI operations from an
+      // untrusted workspace. Fail closed with an ineligible model instead of
+      // evaluating the selected file.
+      if (!vscode.workspace.isTrusted) {
+        return buildUntrustedWorkspaceHistoryModel(uri);
+      }
       const runtime = await ensureWorkspaceRuntime();
-      return runtime.historyService.load(uri);
+      const model = await runtime.historyService.load(uri);
+      rememberSelectedEligibility(uri, model, selectedEligiblePaths);
+      return model;
     },
     getLocalRuntimeSettingsTerminalEntrypoint: () => admittedLocalRuntimeSettingsCli,
-    getEligibilityDebugSnapshot: () =>
-      workspaceRuntime?.eligibilityIndexer.getDebugSnapshot() ?? EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT,
+    getEligibilityDebugSnapshot: () => buildSelectedEligibilityDebugSnapshot(selectedEligiblePaths),
     getLastOpenedPanel: () => panelTracker.getLastOpenedPanel(),
     getOpenHistoryPanelCount: () => panelTracker.getOpenCount(),
     dispatchLastPanelMessage: (message: HistoryPanelMessage) =>

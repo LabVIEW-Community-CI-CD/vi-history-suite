@@ -6,12 +6,6 @@ const {
   showInformationMessageMock,
   showWarningMessageMock,
   getBuiltInGitApiMock,
-  viEligibilityIndexerConstructedWith,
-  viEligibilityIndexerStorageConstructedWith,
-  viEligibilityIndexerStartMock,
-  viEligibilityIndexerRefreshMock,
-  viEligibilityIndexerIsEligibleMock,
-  viEligibilityIndexerGetDebugSnapshotMock,
   viHistoryServiceConstructedWith,
   viHistoryServiceLoadMock,
   createOpenViHistoryCommandMock,
@@ -50,12 +44,6 @@ const {
     showInformationMessageMock: vi.fn(),
     showWarningMessageMock: vi.fn(),
     getBuiltInGitApiMock: vi.fn(),
-    viEligibilityIndexerConstructedWith: [] as unknown[],
-    viEligibilityIndexerStorageConstructedWith: [] as unknown[],
-    viEligibilityIndexerStartMock: vi.fn(),
-    viEligibilityIndexerRefreshMock: vi.fn(),
-    viEligibilityIndexerIsEligibleMock: vi.fn(),
-    viEligibilityIndexerGetDebugSnapshotMock: vi.fn(),
     viHistoryServiceConstructedWith: [] as unknown[],
     viHistoryServiceLoadMock: vi.fn(),
     createOpenViHistoryCommandMock: vi.fn(),
@@ -139,21 +127,6 @@ vi.mock('../../src/commands/runtimeCommands', () => ({
 
 vi.mock('../../src/commands/pickRuntimeProviderCommand', () => ({
   registerPickRuntimeProviderCommand: vi.fn()
-}));
-
-vi.mock('../../src/indexing/viEligibilityIndexer', () => ({
-  ViEligibilityIndexer: class MockViEligibilityIndexer {
-    constructor(gitApi: unknown, workspaceState: unknown) {
-      viEligibilityIndexerConstructedWith.push(gitApi);
-      viEligibilityIndexerStorageConstructedWith.push(workspaceState);
-    }
-
-    start = viEligibilityIndexerStartMock;
-    refresh = viEligibilityIndexerRefreshMock;
-    isEligible = viEligibilityIndexerIsEligibleMock;
-    getDebugSnapshot = viEligibilityIndexerGetDebugSnapshotMock;
-    dispose = vi.fn();
-  }
 }));
 
 vi.mock('../../src/services/viHistoryService', () => ({
@@ -250,8 +223,6 @@ describe('extension activation lazy side effects', () => {
   beforeEach(() => {
     commandHandlers.clear();
     vi.clearAllMocks();
-    viEligibilityIndexerConstructedWith.length = 0;
-    viEligibilityIndexerStorageConstructedWith.length = 0;
     viHistoryServiceConstructedWith.length = 0;
     workspaceState.isTrusted = true;
     getBuiltInGitApiMock.mockResolvedValue({
@@ -259,14 +230,7 @@ describe('extension activation lazy side effects', () => {
       onDidOpenRepository: vi.fn(),
       onDidCloseRepository: vi.fn()
     });
-    viEligibilityIndexerStartMock.mockResolvedValue(undefined);
-    viEligibilityIndexerRefreshMock.mockResolvedValue(undefined);
-    viEligibilityIndexerIsEligibleMock.mockReturnValue(true);
-    viEligibilityIndexerGetDebugSnapshotMock.mockReturnValue({
-      indexedRepositoryRoots: ['/repo'],
-      eligiblePathCount: 1,
-      eligiblePathsSample: ['demo.vi']
-    });
+    viHistoryServiceLoadMock.mockResolvedValue({ eligible: true });
     openViHistoryHandlerMock.mockResolvedValue(undefined);
     createOpenViHistoryCommandMock.mockReturnValue(openViHistoryHandlerMock);
     bundledDocumentationActionMock.mockResolvedValue({ outcome: 'opened-documentation' });
@@ -289,9 +253,6 @@ describe('extension activation lazy side effects', () => {
     );
     expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(materializedCli);
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
-    expect(viEligibilityIndexerConstructedWith).toEqual([]);
-    expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);
-    expect(viEligibilityIndexerStartMock).not.toHaveBeenCalled();
     const watcherInstance = vi
       .mocked(createRuntimeAvailabilityWatcher)
       .mock.results[0]?.value;
@@ -310,43 +271,51 @@ describe('extension activation lazy side effects', () => {
     await commandHandlers.get('labviewViHistory.openDocumentation')?.();
 
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
-    expect(viEligibilityIndexerConstructedWith).toEqual([]);
-    expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);
 
     await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
 
     // Manual prepare remains a refresh path; admission is invoked again, idempotently.
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledTimes(2);
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
-    expect(viEligibilityIndexerConstructedWith).toEqual([]);
-    expect(viEligibilityIndexerStorageConstructedWith).toEqual([]);
     expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(materializedCli);
   });
 
-  it('resolves Git and starts eligibility indexing lazily for VI History open', async () => {
+  it('resolves Git and selected-file history runtime lazily for VI History open', async () => {
     const context = createContext();
     await activate(context as never);
 
     await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
 
     expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);
-    expect(viEligibilityIndexerConstructedWith).toHaveLength(1);
-    expect(viEligibilityIndexerStorageConstructedWith).toEqual([context.workspaceState]);
     expect(viHistoryServiceConstructedWith).toHaveLength(1);
-    expect(viEligibilityIndexerStartMock).toHaveBeenCalledTimes(1);
     expect(createOpenViHistoryCommandMock).toHaveBeenCalledTimes(1);
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
-  it('uses the same lazy runtime for explicit API refresh and history loading', async () => {
+  it('keeps refreshEligibility non-enumerating and uses lazy runtime for history loading', async () => {
     const api = await activate(createContext() as never);
 
     await api.refreshEligibility();
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+
     await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
 
     expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);
-    expect(viEligibilityIndexerRefreshMock).toHaveBeenCalledTimes(1);
     expect(viHistoryServiceLoadMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
+  });
+
+  it('fails closed on loadHistory in untrusted workspaces without invoking Git', async () => {
+    workspaceState.isTrusted = false;
+    const api = await activate(createContext() as never);
+
+    const model = await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+
+    expect(model.eligible).toBe(false);
+    expect(model.relativePath).toBe('/repo/demo.vi');
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(viHistoryServiceLoadMock).not.toHaveBeenCalled();
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
   });
 
   it('admits documentation command in untrusted workspaces as a low-risk path', async () => {
@@ -357,7 +326,6 @@ describe('extension activation lazy side effects', () => {
 
     expect(bundledDocumentationActionMock).toHaveBeenCalled();
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
-    expect(viEligibilityIndexerConstructedWith).toEqual([]);
     expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
@@ -369,7 +337,6 @@ describe('extension activation lazy side effects', () => {
 
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalled();
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
-    expect(viEligibilityIndexerConstructedWith).toEqual([]);
     expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
@@ -385,9 +352,9 @@ describe('extension activation lazy side effects', () => {
     );
   });
 
-  it('resolves lazy runtime for VI History open in untrusted workspaces (trust check happens in handler)', async () => {
+  it('resolves lazy runtime for VI History open in untrusted workspaces without starting indexing', async () => {
     // Note: In the actual implementation, VI History open resolves the workspace runtime
-    // (Git API, indexer) and then the handler checks trust. Since createOpenViHistoryCommand
+    // (Git API, history service) and then the handler checks trust. Since createOpenViHistoryCommand
     // is mocked here, we verify that the runtime resolution happens but the mock handler
     // does not proceed. The actual warning message behavior is verified in integration tests
     // via tests/integration/suite/extensionHost.test.ts.
@@ -400,11 +367,6 @@ describe('extension activation lazy side effects', () => {
     // happens inside the handler. The mock handler doesn't show warnings, but it also
     // doesn't do anything. This verifies the lazy resolution still happens.
     expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);
-    expect(viEligibilityIndexerConstructedWith).toHaveLength(1);
-    expect(viEligibilityIndexerStartMock).toHaveBeenCalledTimes(1);
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
-
-    // The indexer should have been started, but in an untrusted workspace it clears
-    // eligibility context. This is tested in viEligibilityIndexer.test.ts.
   });
 });

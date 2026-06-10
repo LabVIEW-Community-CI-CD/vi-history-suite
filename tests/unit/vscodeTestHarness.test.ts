@@ -98,7 +98,6 @@ describe('VS Code unit test harness (VHS-REQ-614)', () => {
     const historyService = { load: vi.fn() };
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -106,7 +105,7 @@ describe('VS Code unit test harness (VHS-REQ-614)', () => {
 
     expect(historyService.load).not.toHaveBeenCalled();
     expect(harness.vscode.window.showWarningMessage).toHaveBeenCalledWith(
-      'VI History indexing and comparison are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+      'VI History and comparison are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
     );
   });
 

@@ -41,9 +41,11 @@ unclear.
 
 ## Use
 
-1. Open a trusted Git repository that contains a tracked `.vi`, `.ctl`, or
-   `.vit` file.
-2. Right-click the file and choose `VI History`, or use the editor title action.
+1. Open a trusted Git repository that contains the tracked `.vi`, `.ctl`, or
+   `.vit` file you want to review.
+2. Right-click that file and choose `VI History`, or use the editor title
+   action. The extension evaluates the selected file directly instead of
+   scanning every VI in the repository first.
 3. Select exactly two retained revisions with the checkbox column.
 4. Review the compare preflight.
 5. Choose `Compare`.

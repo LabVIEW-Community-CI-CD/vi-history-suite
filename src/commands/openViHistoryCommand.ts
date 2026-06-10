@@ -2,7 +2,6 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { GitApi } from '../git/gitApi';
-import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import {
   ComparisonReportActionResult,
   readComparisonRuntimeSettings,
@@ -52,7 +51,7 @@ const UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX =
 
 /**
  * Formats a user-actionable warning message for features blocked in untrusted workspaces.
- * @param featurePrefix - The feature-specific prefix (e.g., "VI History indexing and comparison are disabled")
+ * @param featurePrefix - The feature-specific prefix (e.g., "VI History and comparison are disabled")
  * @returns The complete warning message with trust rationale and allowed paths
  */
 function formatUntrustedWorkspaceWarning(featurePrefix: string): string {
@@ -61,7 +60,6 @@ function formatUntrustedWorkspaceWarning(featurePrefix: string): string {
 
 export function createOpenViHistoryCommand(
   historyService: ViHistoryService,
-  eligibilityIndexer: ViEligibilityIndexer,
   gitApi: GitApi | undefined,
   panelTracker?: HistoryPanelTracker,
   comparisonReportAction?: (request: {
@@ -121,7 +119,7 @@ export function createOpenViHistoryCommand(
 
     if (!vscode.workspace.isTrusted) {
       void vscode.window.showWarningMessage(
-        formatUntrustedWorkspaceWarning('VI History indexing and comparison are disabled')
+        formatUntrustedWorkspaceWarning('VI History and comparison are disabled')
       );
       return;
     }

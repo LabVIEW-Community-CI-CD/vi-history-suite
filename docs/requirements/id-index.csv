@@ -11,9 +11,9 @@ VHS-REQ-009,Software,Superseded,,VHS-REQ-601,Covered by a curated active require
 VHS-REQ-010,Software,Active,srs.md#vhs-req-010-minimal-local-probe-reads,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-011,Software,Active,srs.md#vhs-req-011-non-file-uri-probe-fallback,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-012,Software,Active,srs.md#vhs-req-012-workspace-trust-gate,,,pre-simplification docs/requirements/srs.md
-VHS-REQ-013,Software,Active,srs.md#vhs-req-013-dynamic-eligibility-context,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-013,Software,Active,srs.md#vhs-req-013-selected-file-menu-entry-and-eligibility-gate,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-014,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
-VHS-REQ-015,Software,Active,srs.md#vhs-req-015-bounded-indexing-concurrency,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-015,Software,Superseded,,VHS-REQ-635,Repository-wide indexing concurrency was superseded by selected-file on-demand eligibility.,pre-simplification docs/requirements/srs.md
 VHS-REQ-016,Software,Active,srs.md#vhs-req-016-history-webview-panel,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-017,Software,Active,srs.md#vhs-req-017-factual-history-panel-content,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-018,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
@@ -601,11 +601,11 @@ VHS-REQ-599,Software,Active,srs.md#vhs-req-599-optional-vagrant-helper,,,docs/re
 VHS-REQ-600,Software,Active,srs.md#vhs-req-600-marketplace-identity-and-public-source-metadata,,,docs/requirements/srs.md
 VHS-REQ-601,Software,Active,srs.md#vhs-req-601-requirements-as-agent-work-contracts,,,docs/requirements/srs.md
 VHS-REQ-602,Software,Active,srs.md#vhs-req-602-dependency-maintenance-automation,,,docs/requirements/srs.md
-VHS-REQ-603,Software,Active,srs.md#vhs-req-603-large-repository-indexing-operating-model,,,docs/requirements/srs.md
-VHS-REQ-604,Software,Active,srs.md#vhs-req-604-persistent-git-object-eligibility-cache,,,docs/requirements/srs.md
-VHS-REQ-605,Software,Active,srs.md#vhs-req-605-incremental-refresh-and-invalidation-lifecycle,,,docs/requirements/srs.md
-VHS-REQ-606,Software,Active,srs.md#vhs-req-606-indexing-diagnostics-and-evidence,,,docs/requirements/srs.md
-VHS-REQ-607,Software,Active,srs.md#vhs-req-607-field-intake-separation-for-indexing-reports,,,docs/requirements/srs.md
+VHS-REQ-603,Software,Superseded,,VHS-REQ-635,Repository-wide indexing state accounting was superseded by selected-file on-demand eligibility.,docs/requirements/srs.md
+VHS-REQ-604,Software,Superseded,,VHS-REQ-635,Persistent repository eligibility cache was superseded by selected-file on-demand eligibility.,docs/requirements/srs.md
+VHS-REQ-605,Software,Superseded,,VHS-REQ-635,Incremental repository eligibility refresh was superseded by selected-file on-demand eligibility.,docs/requirements/srs.md
+VHS-REQ-606,Software,Superseded,,VHS-REQ-635,Repository-wide indexing diagnostics were superseded by selected-file eligibility and Git history evidence.,docs/requirements/srs.md
+VHS-REQ-607,Software,Active,srs.md#vhs-req-607-field-intake-separation-for-eligibility-reports,,,docs/requirements/srs.md
 VHS-REQ-608,Software,Active,srs.md#vhs-req-608-diagnostic-test-vsix-distribution,,,docs/requirements/srs.md
 VHS-REQ-609,Software,Active,srs.md#vhs-req-609-governed-branch-promotion-and-marketplace-release-automation,,,docs/requirements/srs.md
 VHS-REQ-610,Software,Active,srs.md#vhs-req-610-dashboard-aggregate-review,,,docs/requirements/srs.md
@@ -628,9 +628,10 @@ VHS-SYS-REQ-011,System,Active,syrs.md#vhs-sys-req-011-github-first-source-author
 VHS-SYS-REQ-012,System,Active,syrs.md#vhs-sys-req-012-lightweight-public-verification,,,docs/requirements/syrs.md
 VHS-SYS-REQ-013,System,Active,syrs.md#vhs-sys-req-013-optional-human-validation-surfaces,,,docs/requirements/syrs.md
 VHS-SYS-REQ-014,System,Active,syrs.md#vhs-sys-req-014-agent-targetable-requirements,,,docs/requirements/syrs.md
-VHS-SYS-REQ-015,System,Active,syrs.md#vhs-sys-req-015-large-repository-branch-switch-responsiveness,,,docs/requirements/syrs.md
+VHS-SYS-REQ-015,System,Superseded,,VHS-SYS-REQ-018,Large-repository branch-switch indexing was superseded by selected-VI on-demand history eligibility.,docs/requirements/syrs.md
 VHS-SYS-REQ-016,System,Active,syrs.md#vhs-sys-req-016-governed-release-branch-promotion,,,docs/requirements/syrs.md
 VHS-SYS-REQ-017,System,Active,syrs.md#vhs-sys-req-017-coverage-led-assurance-operating-model,,,docs/requirements/syrs.md
+VHS-SYS-REQ-018,System,Active,syrs.md#vhs-sys-req-018-selected-vi-on-demand-history-eligibility,,,docs/requirements/syrs.md
 VHS-REQ-616,Software,Active,srs.md#vhs-req-616-runtime-auto-selection-and-stale-settings-repair,,,docs/requirements/srs.md
 VHS-REQ-617,Software,Active,srs.md#vhs-req-617-missing-runtime-user-notification-and-status-surface,,,docs/requirements/srs.md
 VHS-REQ-619,Software,Active,srs.md#vhs-req-619-git-prerequisite-detection-and-first-run-guidance,,,docs/requirements/srs.md
@@ -649,3 +650,4 @@ VHS-REQ-631,Software,Active,srs.md#vhs-req-631-pre-panel-vi-server-prerequisite-
 VHS-REQ-632,Software,Active,srs.md#vhs-req-632-host-labview-install-catalog-parity,,,docs/requirements/srs.md
 VHS-REQ-633,Software,Active,srs.md#vhs-req-633-manual-labview-runtime-path-override,,,docs/requirements/srs.md
 VHS-REQ-634,Software,Active,srs.md#vhs-req-634-authoritative-host-fallback-for-labview-cli-open-gate,,,docs/requirements/srs.md
+VHS-REQ-635,Software,Active,srs.md#vhs-req-635-selected-file-on-demand-eligibility,,,docs/requirements/srs.md

@@ -23,7 +23,6 @@ src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM
 src/extension.ts,mapped,Yes,Extension entry point; mapped through RTM.
 src/git/gitApi.ts,mapped,Yes,Git API wrapper enabling viHistoryService Git state resolution; mapped through RTM.
 src/git/gitCli.ts,mapped,Yes,Git CLI wrapper; mapped through RTM.
-src/indexing/viEligibilityIndexer.ts,mapped,Yes,VI eligibility indexer; mapped through RTM.
 src/reporting/comparisonReportAction.ts,mapped,Yes,Comparison report action; mapped through RTM.
 src/reporting/comparisonReportExecutionPlan.ts,mapped,Yes,Comparison execution plan; mapped through RTM.
 src/reporting/comparisonReportExport.ts,mapped,Yes,Comparison report export to an accessible location for external browser viewing; mapped to VHS-REQ-626.
@@ -126,7 +125,6 @@ tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings 
 tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,dev-only,No,Runtime settings probe packet tests; contributor tooling.
 tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,dev-only,No,Runtime settings safe restore tests; contributor tooling.
 tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
-tests/unit/viEligibilityIndexer.test.ts,mapped,Yes,VI eligibility indexer tests; mapped through RTM.
 tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
 tests/unit/viHistoryModel.test.ts,mapped,Yes,VI history model direct eligibility/window tests; mapped to VHS-REQ-006 VHS-REQ-008 and VHS-REQ-017.
 tests/unit/viHistoryService.test.ts,mapped,Yes,VI history service tests; mapped through RTM.
