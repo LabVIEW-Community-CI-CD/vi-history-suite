@@ -9,13 +9,27 @@ const SKIPPED_DIRECTORIES = new Set([
   '.vscode-test',
   'assurance-closeout-evidence',
   'coverage',
+  'dist',
   'node_modules',
   'out',
-  'out-tests'
+  'out-tests',
+  'release-evidence',
+  'tmp',
+  'win-validation'
 ]);
 
-function shouldSkipDirectory(name) {
-  return SKIPPED_DIRECTORIES.has(name) || /^assurance-.*-evidence$/u.test(name);
+const SKIPPED_DIRECTORY_PATHS = new Set([
+  'vagrant/.vagrant',
+  'vagrant/.vagrant-ci',
+  'vagrant/evidence',
+  'vagrant/shared'
+]);
+
+function shouldSkipDirectory(name, relativePath = name) {
+  const normalizedRelativePath = toPosixPath(relativePath);
+  return SKIPPED_DIRECTORIES.has(name) ||
+    SKIPPED_DIRECTORY_PATHS.has(normalizedRelativePath) ||
+    /^assurance-.*-evidence$/u.test(name);
 }
 
 function toPosixPath(value) {
@@ -87,9 +101,12 @@ function collectDocumentationFiles(cwd) {
 
   function walk(directory) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const absolutePath = path.join(directory, entry.name);
+      const relativePath = toPosixPath(path.relative(cwd, absolutePath));
+
       if (entry.isDirectory()) {
-        if (!shouldSkipDirectory(entry.name)) {
-          walk(path.join(directory, entry.name));
+        if (!shouldSkipDirectory(entry.name, relativePath)) {
+          walk(absolutePath);
         }
         continue;
       }
@@ -98,8 +115,6 @@ function collectDocumentationFiles(cwd) {
         continue;
       }
 
-      const absolutePath = path.join(directory, entry.name);
-      const relativePath = toPosixPath(path.relative(cwd, absolutePath));
       const extension = path.extname(entry.name).toLowerCase();
       const isMarkdown = extension === '.md';
       const isBundledHtml =

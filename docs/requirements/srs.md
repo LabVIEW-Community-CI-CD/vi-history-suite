@@ -914,6 +914,9 @@ Missing numeric IDs are intentional.
   - The workflow runs `npm run traceability:audit`.
   - The workflow runs `npm run docs:links` through the `Docs Link Check /
     lychee` step.
+  - The documentation link check scans committed Markdown and bundled
+    documentation surfaces while excluding generated validation, cache,
+    coverage, package, release-evidence, and Vagrant evidence directories.
   - The workflow runs `npm test`.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
@@ -1522,6 +1525,10 @@ Missing numeric IDs are intentional.
     standards toolchain provenance, Definition-of-Done status, and disqualified
     evidence sources when a gate would otherwise pass from generated or fixture
     content.
+  - Standards closeout evidence runs the standards-review tools against a
+    temporary tracked-worktree snapshot from `git ls-files` and records
+    `standards.auditTarget.mode`, `trackedFileCount`, and
+    `generatedRootsExcluded` in `closeout-summary.json`.
   - Traceability drift prevention updates SRS, RTM, ID index, test plan,
     inventory, and requirements tests together when requirement scope changes.
   - The repo-native `npm run dod:gate` command verifies the DoD contract from
