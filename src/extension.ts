@@ -98,13 +98,11 @@ interface WorkspaceRuntime {
 }
 
 interface EligibilityDebugSnapshot {
-  indexedRepositoryRoots: string[];
   eligiblePathCount: number;
   eligiblePathsSample: string[];
 }
 
 const EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT: EligibilityDebugSnapshot = {
-  indexedRepositoryRoots: [],
   eligiblePathCount: 0,
   eligiblePathsSample: []
 };

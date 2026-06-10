@@ -263,7 +263,6 @@ describe('extension activation lazy side effects', () => {
     );
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
     expect(api.getEligibilityDebugSnapshot()).toEqual({
-      indexedRepositoryRoots: [],
       eligiblePathCount: 0,
       eligiblePathsSample: []
     });
