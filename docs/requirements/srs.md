@@ -2513,9 +2513,10 @@ Missing numeric IDs are intentional.
     facts.
   - Manifest menu visibility remains a hint; selected-file eligibility remains
     the command-time source of truth.
-  - Comparison-runtime validation remains separate from selected-file
-    eligibility and is not required to decide whether the history panel can
-    open.
+  - Selected-file eligibility is independent of repository-wide indexing and
+    does not depend on a repository-wide scan; the separate LabVIEW CLI and VI
+    Server pre-panel prerequisite gates (VHS-REQ-627, VHS-REQ-631) are unchanged
+    and out of scope for this requirement.
 - Agent Work Scope:
   - Change command open flow, selected-file history model, Git helper calls,
     manifest/menu assumptions, requirements, and verification together when the

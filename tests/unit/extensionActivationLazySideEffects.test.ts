@@ -305,6 +305,19 @@ describe('extension activation lazy side effects', () => {
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
   });
 
+  it('fails closed on loadHistory in untrusted workspaces without invoking Git', async () => {
+    workspaceState.isTrusted = false;
+    const api = await activate(createContext() as never);
+
+    const model = await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+
+    expect(model.eligible).toBe(false);
+    expect(model.relativePath).toBe('/repo/demo.vi');
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(viHistoryServiceLoadMock).not.toHaveBeenCalled();
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+  });
+
   it('admits documentation command in untrusted workspaces as a low-risk path', async () => {
     workspaceState.isTrusted = false;
     await activate(createContext() as never);

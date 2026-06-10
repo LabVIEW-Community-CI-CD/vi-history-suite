@@ -101,15 +101,26 @@ interface EligibilityDebugSnapshot {
   indexedRepositoryRoots: string[];
   eligiblePathCount: number;
   eligiblePathsSample: string[];
-  lastRefreshResult: undefined;
 }
 
 const EMPTY_ELIGIBILITY_DEBUG_SNAPSHOT: EligibilityDebugSnapshot = {
   indexedRepositoryRoots: [],
   eligiblePathCount: 0,
-  eligiblePathsSample: [],
-  lastRefreshResult: undefined
+  eligiblePathsSample: []
 };
+
+function buildUntrustedWorkspaceHistoryModel(
+  uri: Pick<vscode.Uri, 'fsPath' | 'path'>
+): ViHistoryViewModel {
+  return {
+    repositoryName: '',
+    repositoryRoot: '',
+    relativePath: uri.fsPath || uri.path || '',
+    signature: 'unknown',
+    eligible: false,
+    commits: []
+  };
+}
 
 function rememberSelectedEligibility(
   uri: vscode.Uri,
@@ -575,6 +586,13 @@ export async function activate(
         (key) => selectedEligiblePaths[key] === true
       ),
     loadHistory: async (uri: vscode.Uri) => {
+      // VHS-REQ-012: Honor the workspace-trust safety boundary on the exported
+      // API too, so history loading never invokes Git CLI operations from an
+      // untrusted workspace. Fail closed with an ineligible model instead of
+      // evaluating the selected file.
+      if (!vscode.workspace.isTrusted) {
+        return buildUntrustedWorkspaceHistoryModel(uri);
+      }
       const runtime = await ensureWorkspaceRuntime();
       const model = await runtime.historyService.load(uri);
       rememberSelectedEligibility(uri, model, selectedEligiblePaths);

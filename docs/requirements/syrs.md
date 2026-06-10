@@ -212,8 +212,9 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
     the selected file can open or produce an ineligibility message.
   - Workspace trust remains a safety boundary for selected-file history and
     comparison execution.
-  - Comparison-runtime validation remains separate from selected-file
-    eligibility and runs only when comparison/report work requires it.
+  - Selected-file eligibility is independent of repository-wide indexing; the
+    separate comparison-runtime prerequisite gates that protect VI History open
+    remain unchanged.
 - Verification References:
   - `src/commands/openViHistoryCommand.ts`
   - `src/services/viHistoryModel.ts`

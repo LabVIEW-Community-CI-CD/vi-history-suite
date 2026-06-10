@@ -1364,7 +1364,7 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('shall not wait for or require a repository-wide');
     expect(srs).toContain('Opening history for one selected file does not enumerate every tracked VI');
     expect(srs).toContain('Manifest menu visibility remains a hint');
-    expect(srs).toContain('Comparison-runtime validation remains separate from selected-file');
+    expect(srs).toContain('Selected-file eligibility is independent of repository-wide indexing');
     expect(rowsById.get('VHS-REQ-635')?.ParentID).toBe('VHS-SYS-REQ-018');
     expect(rowsById.get('VHS-REQ-635')?.ImplementationRefs).toContain(
       'src/commands/openViHistoryCommand.ts'
