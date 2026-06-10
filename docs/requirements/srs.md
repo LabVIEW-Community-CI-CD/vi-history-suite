@@ -914,6 +914,9 @@ Missing numeric IDs are intentional.
   - The workflow runs `npm run traceability:audit`.
   - The workflow runs `npm run docs:links` through the `Docs Link Check /
     lychee` step.
+  - The documentation link check scans committed Markdown and bundled
+    documentation surfaces while excluding generated validation, cache,
+    coverage, package, release-evidence, and Vagrant evidence directories.
   - The workflow runs `npm test`.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.

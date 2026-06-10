@@ -51,7 +51,10 @@ The `Traceability Audit` and `DoD Gate / dod` steps also retain
 evidence even when a required gate fails.
 The `Docs Link Check / lychee` step runs `npm run docs:links`
 inside the same required job so committed Markdown and bundled documentation
-local links are checked before tests and packaging.
+local links are checked before tests and packaging. Generated validation,
+cache, coverage, package, release-evidence, and Vagrant evidence directories
+are excluded from this documentation scan so retained run artifacts cannot
+redden or green the committed documentation gate.
 
 ## Coverage Evidence And Threshold Policy
 
