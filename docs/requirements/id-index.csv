@@ -81,7 +81,7 @@ VHS-REQ-079,Software,Retired,,,Historical requirement is outside the curated act
 VHS-REQ-080,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
 VHS-REQ-081,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
 VHS-REQ-082,Software,Active,srs.md#vhs-req-082-primary-command-identifier,,,pre-simplification docs/requirements/srs.md
-VHS-REQ-083,Software,Active,srs.md#vhs-req-083-command-only-activation,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-083,Software,Active,srs.md#vhs-req-083-lean-activation-without-indexing-side-effects,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-084,Software,Active,srs.md#vhs-req-084-limited-untrusted-workspace-capability,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-085,Software,Retired,,,Historical requirement is outside the curated active GitHub-first baseline; restore with current evidence before targeting.,pre-simplification docs/requirements/srs.md
 VHS-REQ-086,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md

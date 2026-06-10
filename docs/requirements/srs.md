@@ -304,16 +304,18 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Runtime eligibility must remain stricter than these visible menu hints.
 
-### VHS-REQ-083: Command-Only Activation
+### VHS-REQ-083: Lean Activation Without Indexing Side Effects
 
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: Extension Manifest
-- Statement: The extension shall avoid startup activation and activate through
-  explicit command events.
+- Statement: The extension shall activate lightly through `onStartupFinished`
+  and its contributed commands without eager repository indexing side effects.
 - Acceptance Criteria:
-  - The manifest does not use startup activation.
-  - Activation events include the public commands.
+  - The manifest's only explicit activation event is `onStartupFinished`; it
+    does not use the eager `*` startup activation.
+  - VS Code infers `onCommand` activation from `contributes.commands`, so the
+    public commands are not listed redundantly in `activationEvents`.
   - Lazy activation does not create indexing side effects before command use.
 - Agent Work Scope:
   - Change activation events and lazy side-effect tests together.
@@ -324,7 +326,8 @@ Missing numeric IDs are intentional.
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/extensionActivationLazySideEffects.test.ts`
 - Change Guidance:
-  - Do not add broad activation events without a requirement update.
+  - Do not add broad activation events (such as `*` or unfiltered language or
+    view events) without a requirement update.
 
 ### VHS-REQ-084: Limited Untrusted Workspace Capability
 
