@@ -100,15 +100,21 @@ interacts with:
 
 ## Retained Decision Rationale
 
-The current retained architecture decision is
-[ADR-0001: GitHub-First Release And Traceability Governance](./adr/ADR-0001-github-first-release-and-traceability-governance.md).
+The retained architecture decisions are
+[ADR-0001: GitHub-First Release And Traceability Governance](./adr/ADR-0001-github-first-release-and-traceability-governance.md)
+and
+[ADR-0002: Selected-File On-Demand VI History Eligibility](./adr/ADR-0002-selected-file-on-demand-vi-history-eligibility.md).
 
-The rationale is to keep GitHub source authority, Marketplace release
+ADR-0001's rationale is to keep GitHub source authority, Marketplace release
 automation, requirements traceability, and standards evidence in a single
 reviewable governance path while preserving the extension's local-first product
 behavior. This decision keeps architecture evidence lightweight and close to
 the repo surfaces agents already inspect, while allowing future ADRs for
 larger design decisions that need their own context and consequences.
+
+ADR-0002 records why VI History eligibility is evaluated on demand for the
+selected file (VHS-SYS-REQ-018, VHS-REQ-635) instead of through a
+repository-wide index, keeping open cost independent of repository VI count.
 
 ## Verification Model
 
