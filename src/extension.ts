@@ -290,13 +290,17 @@ export async function activate(
 
   // VHS-REQ-635 (#366): the selected-file eligibility cache is a best-effort
   // hint that is re-evaluated authoritatively on every `loadHistory`/open.
-  // Clear it whenever workspace, configuration, or workspace-trust state
-  // changes so a cached `true` can never outlive the conditions under which it
-  // was computed. Clearing (rather than recomputing) keeps activation cheap and
-  // avoids any repository-wide scan; the next open re-evaluates the file.
-  // Resetting to a fresh object (rather than deleting keys) avoids the V8
-  // dictionary-mode de-opt; all readers reference the variable, not the
-  // object identity.
+  // Clear it on configuration changes, workspace-folder changes, and when
+  // workspace trust is granted, so a cached `true` can never outlive the
+  // conditions under which it was computed. VS Code exposes only
+  // `onDidGrantWorkspaceTrust` (untrusted -> trusted); trust revocation requires
+  // a window reload that restarts the extension host and resets this cache, and
+  // `isEligible` additionally fails closed while the workspace is untrusted, so
+  // the grant-only subscription covers the trust lifecycle. Clearing (rather
+  // than recomputing) keeps activation cheap and avoids any repository-wide
+  // scan; the next open re-evaluates the file. Resetting to a fresh object
+  // (rather than deleting keys) avoids the V8 dictionary-mode de-opt; all
+  // readers reference the variable, not the object identity.
   const clearSelectedEligibilityCache = (): void => {
     selectedEligiblePaths = {};
   };

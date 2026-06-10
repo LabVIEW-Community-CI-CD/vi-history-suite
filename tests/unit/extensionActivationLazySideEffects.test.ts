@@ -375,6 +375,14 @@ describe('extension activation lazy side effects', () => {
     await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
 
+    // Model the real onDidGrantWorkspaceTrust semantics: VS Code only fires this
+    // event on an untrusted -> trusted transition. Drop to untrusted and back to
+    // trusted before invoking the listener so the final assertion runs while
+    // trusted (the trust gate is not masking it) and therefore proves the cache
+    // itself was cleared by the grant-trust listener.
+    workspaceState.isTrusted = false;
+    workspaceState.isTrusted = true;
+
     expect(eligibilityEventListeners.grantTrust).toHaveLength(1);
     eligibilityEventListeners.grantTrust.forEach((listener) => listener());
 
