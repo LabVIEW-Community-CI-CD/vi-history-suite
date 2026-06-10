@@ -100,7 +100,6 @@ export async function runIntegrationSuite(): Promise<void> {
   const metadata = await loadMetadata();
   const api = await loadExtensionApi();
 
-  await api.refreshEligibility();
   await testEligibleVersusIneligibleFlow(api, metadata);
   await testPreparedLocalRuntimeSettingsTerminalEntrypoint(api);
   await testPrepareLocalRuntimeSettingsCli();
@@ -134,29 +133,11 @@ async function testEligibleVersusIneligibleFlow(
   );
 
   const history = await api.loadHistory(eligibleUri);
+  const ineligibleHistory = await api.loadHistory(ineligibleUri);
   assert.equal(history.signature, 'LVIN');
   assert.equal(history.eligible, true);
   assert.equal(history.commits.length, 3);
-
-  await waitFor(
-    async () => {
-      await api.refreshEligibility();
-      return api.isEligible(eligibleUri);
-    },
-    10000,
-    () =>
-      JSON.stringify(
-        {
-          eligibleUri: eligibleUri.fsPath,
-          ineligibleUri: ineligibleUri.fsPath,
-          history,
-          eligibility: api.getEligibilityDebugSnapshot()
-        },
-        null,
-        2
-      )
-  );
-
+  assert.equal(ineligibleHistory.eligible, false);
   assert.equal(api.isEligible(eligibleUri), true);
   assert.equal(api.isEligible(ineligibleUri), false);
 }
