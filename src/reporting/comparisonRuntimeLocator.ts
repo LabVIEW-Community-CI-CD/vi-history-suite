@@ -338,12 +338,16 @@ export function parseWindowsRegistryLabviewCandidates(
   // VHS-REQ-634: A real National Instruments install records the LabVIEW install
   // DIRECTORY (for example `C:\Program Files\National Instruments\LabVIEW 2025\`)
   // in the registry `Path` value, not the executable. Accept that
-  // install-directory form too and derive `<dir>LabVIEW.exe`; the probe and the
-  // locator validate the derived executable on disk before trusting it.
+  // install-directory form too and derive `<dir>LabVIEW.exe`.
   const installDirPaths =
     registryOutput.match(/[A-Za-z]:\\[^\r\n"]*LabVIEW(?: [^\\\r\n"]+)?\\(?=\s|$|")/gi) ?? [];
   const derivedExePaths = installDirPaths.map((installDir) => `${installDir.trim()}LabVIEW.exe`);
 
+  // These are parse-time claims, not proof on disk: a registry subkey can be
+  // stale (a removed install) and the derived path may not exist. Mirror the
+  // documented-scan convention (`buildDocumentedRuntimeCandidates` seeds
+  // `exists: false`) and let the I/O boundary in `resolveWindowsRegistryCandidates`
+  // validate each path before the locator trusts it (#381).
   return dedupeCandidates(
     [...exePaths, ...derivedExePaths].map((rawPath) => {
       const exePath = rawPath.trim();
@@ -351,7 +355,7 @@ export function parseWindowsRegistryLabviewCandidates(
         kind: 'labview-exe' as const,
         path: exePath,
         source: 'registry' as const,
-        exists: true,
+        exists: false,
         bitness: inferBitnessFromPath(exePath)
       };
     })
@@ -551,7 +555,7 @@ export async function locateComparisonRuntime(
 
   const registryCandidates =
     platform === 'win32'
-      ? await resolveWindowsRegistryCandidates(registryQueryPlans, deps.queryWindowsRegistry)
+      ? await resolveWindowsRegistryCandidates(registryQueryPlans, deps.queryWindowsRegistry, pathExists)
       : [];
   const scannedCandidates = await resolveScanCandidates(
     buildDocumentedRuntimeCandidates(platform),
@@ -2394,21 +2398,33 @@ function buildConfiguredCandidate(
 
 async function resolveWindowsRegistryCandidates(
   plans: WindowsRegistryQueryPlan[],
-  queryWindowsRegistry: ComparisonRuntimeLocatorDeps['queryWindowsRegistry']
+  queryWindowsRegistry: ComparisonRuntimeLocatorDeps['queryWindowsRegistry'],
+  pathExists: (filePath: string) => Promise<boolean>
 ): Promise<RuntimeToolCandidate[]> {
   const query = queryWindowsRegistry ?? runWindowsRegistryQuery;
-  const allCandidates: RuntimeToolCandidate[] = [];
+  const parsedCandidates: RuntimeToolCandidate[] = [];
 
   for (const plan of plans) {
     try {
       const output = await query(plan);
-      allCandidates.push(...parseWindowsRegistryLabviewCandidates(output));
+      parsedCandidates.push(...parseWindowsRegistryLabviewCandidates(output));
     } catch {
       // Best-effort registry probing should not collapse documented scan paths.
     }
   }
 
-  return dedupeCandidates(allCandidates);
+  // #381 (VHS-REQ-634): registry values — including the LabVIEW.exe derived from
+  // an NI install-directory `Path` — are claims, not proof. Validate each on disk
+  // (as `resolveScanCandidates` does for the documented scan) so a stale registry
+  // subkey cannot make the locator select a nonexistent host LabVIEW executable.
+  const validatedCandidates = await Promise.all(
+    parsedCandidates.map(async (candidate) => ({
+      ...candidate,
+      exists: await pathExists(candidate.path)
+    }))
+  );
+
+  return dedupeCandidates(validatedCandidates);
 }
 
 async function resolveScanCandidates(
