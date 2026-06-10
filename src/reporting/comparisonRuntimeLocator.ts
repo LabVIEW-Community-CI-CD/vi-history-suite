@@ -330,7 +330,10 @@ export function buildDocumentedRuntimeCandidates(
 export function parseWindowsRegistryLabviewCandidates(
   registryOutput: string
 ): RuntimeToolCandidate[] {
-  const matches = registryOutput.match(/[A-Za-z]:\\[^\r\n"]*LabVIEW(?: [^\\\r\n"]+)?\\LabVIEW\.exe/gi) ?? [];
+  const registryValues = [...registryOutput.matchAll(/\bREG_(?:SZ|EXPAND_SZ)\s+([^\r\n]+)/gi)];
+  const matches = registryValues
+    .map((match) => resolveRegistryLabviewExePath(match[1]))
+    .filter((candidatePath): candidatePath is string => candidatePath !== undefined);
 
   return dedupeCandidates(
     matches.map((matchedPath) => ({
@@ -341,6 +344,23 @@ export function parseWindowsRegistryLabviewCandidates(
       bitness: inferBitnessFromPath(matchedPath.trim())
     }))
   );
+}
+
+function resolveRegistryLabviewExePath(rawValue: string): string | undefined {
+  const trimmedValue = rawValue.trim().replace(/^"+|"+$/g, '');
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  if (/^[A-Za-z]:\\[^\r\n"]*\\LabVIEW\.exe$/iu.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  if (/^[A-Za-z]:\\[^\r\n"]*\\LabVIEW(?: [^\\\r\n"]+)?\\?$/iu.test(trimmedValue)) {
+    return `${trimmedValue.replace(/[\\\/]+$/u, '')}\\LabVIEW.exe`;
+  }
+
+  return undefined;
 }
 
 export async function locateComparisonRuntime(

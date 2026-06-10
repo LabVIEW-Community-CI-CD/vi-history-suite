@@ -1030,18 +1030,28 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
 });
 
 describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
+  const REGISTRY_LABVIEW_DIR = 'D:\\Custom\\National Instruments\\LabVIEW 2026\\';
   const REGISTRY_LABVIEW_EXE =
-    'D:\\Custom\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+    `${REGISTRY_LABVIEW_DIR}LabVIEW.exe`;
 
-  function registryOutputFor(exePath: string): string {
+  function registryOutputFor(pathValue: string): string {
     return [
       'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
-      `    Path    REG_SZ    ${exePath}`,
+      `    Path    REG_SZ    ${pathValue}`,
       ''
     ].join('\r\n');
   }
 
-  it('reports available when a registry-resolved LabVIEW.exe and the shared CLI both exist on disk', async () => {
+  it('reports available when the registry path value names the install directory and the derived LabVIEW.exe plus shared CLI exist on disk', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_DIR),
+      pathExists: pathExistsFor([REGISTRY_LABVIEW_EXE, WINDOWS_LABVIEW_CLI_X86])
+    });
+
+    expect(available).toBe(true);
+  });
+
+  it('reports available when the registry value already names LabVIEW.exe', async () => {
     const available = await probeWindowsRegistryHostLabviewAvailable({
       queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_EXE),
       pathExists: pathExistsFor([REGISTRY_LABVIEW_EXE, WINDOWS_LABVIEW_CLI_X86])
