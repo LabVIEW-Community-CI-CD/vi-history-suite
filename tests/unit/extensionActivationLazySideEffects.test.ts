@@ -345,16 +345,35 @@ describe('extension activation lazy side effects', () => {
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
   });
 
-  it('invalidates cached eligibility when configuration changes so isEligible cannot go stale (#366)', async () => {
+  it('invalidates cached eligibility when viHistorySuite configuration changes so isEligible cannot go stale (#366)', async () => {
     const api = await activate(createContext() as never);
 
     await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
 
     expect(eligibilityEventListeners.configuration).toHaveLength(1);
-    eligibilityEventListeners.configuration.forEach((listener) => listener({}));
+    eligibilityEventListeners.configuration.forEach((listener) =>
+      listener({ affectsConfiguration: (section: string) => section === 'viHistorySuite' })
+    );
 
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+  });
+
+  it('does not invalidate cached eligibility on unrelated configuration changes (#366)', async () => {
+    // Regression guard: an unfiltered config listener wiped the cache on any
+    // settings churn (themes, other extensions, the extension's own runtime
+    // seeding on a later tick), making isEligible racy right after loadHistory.
+    const api = await activate(createContext() as never);
+
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
+
+    expect(eligibilityEventListeners.configuration).toHaveLength(1);
+    eligibilityEventListeners.configuration.forEach((listener) =>
+      listener({ affectsConfiguration: () => false })
+    );
+
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
   });
 
   it('invalidates cached eligibility when workspace folders change (#366)', async () => {

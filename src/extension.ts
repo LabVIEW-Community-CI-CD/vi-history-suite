@@ -305,7 +305,17 @@ export async function activate(
     selectedEligiblePaths = {};
   };
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration(clearSelectedEligibilityCache),
+    // VHS-REQ-635 (#366): mirror the runtime watcher and invalidate only on
+    // `viHistorySuite` configuration changes (e.g. `strictRsrcHeader`, which
+    // affects signature eligibility). Unrelated configuration churn — other
+    // extensions, themes, or VS Code's own startup events — must not wipe a
+    // freshly populated cache, otherwise `isEligible` becomes racy right after
+    // a `loadHistory`.
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('viHistorySuite')) {
+        clearSelectedEligibilityCache();
+      }
+    }),
     vscode.workspace.onDidChangeWorkspaceFolders(clearSelectedEligibilityCache),
     vscode.workspace.onDidGrantWorkspaceTrust(clearSelectedEligibilityCache)
   );
