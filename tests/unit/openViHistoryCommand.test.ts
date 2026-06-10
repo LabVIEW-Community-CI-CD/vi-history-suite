@@ -547,3 +547,116 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
   });
 });
 
+describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/016/635)', () => {
+  beforeEach(() => {
+    vscodeHarness.reset();
+    workspaceState.isTrusted = true;
+    vscodeHarness.vscode.window.activeTextEditor = undefined;
+    createWebviewPanelMock.mockReturnValue(createMockPanel());
+  });
+
+  it('prompts to select a file and skips history load when no URI and no active editor (VHS-REQ-006)', async () => {
+    const historyService = { load: vi.fn() };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command(undefined);
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Select a tracked LabVIEW VI to open VI History.'
+    );
+    expect(historyService.load).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the active editor URI when invoked without an explicit URI (VHS-REQ-006)', async () => {
+    const activeUri = vscodeHarness.createUri('/workspace/repo/active.vi');
+    vscodeHarness.vscode.window.activeTextEditor = { document: { uri: activeUri } };
+    const historyService = {
+      load: vi
+        .fn()
+        .mockResolvedValue(createIneligibleModel({ signature: 'LVIN', commits: [] }))
+    };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command(undefined);
+
+    expect(historyService.load).toHaveBeenCalledTimes(1);
+    const [loadedUri] = historyService.load.mock.calls[0] as [{ fsPath: string }];
+    expect(loadedUri.fsPath).toBe(activeUri.fsPath);
+  });
+
+  it('warns and skips history load in an untrusted workspace (VHS-REQ-013)', async () => {
+    workspaceState.isTrusted = false;
+    const historyService = { load: vi.fn() };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command({ fsPath: '/workspace/repo/file.vi' } as never);
+
+    expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    const [warning] = showWarningMessageMock.mock.calls[0] as [string];
+    expect(warning).toContain(
+      'VI History and comparison are disabled in untrusted workspaces'
+    );
+    expect(historyService.load).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a generic load-failure message when history load throws (VHS-REQ-013)', async () => {
+    const historyService = { load: vi.fn().mockRejectedValue(new Error('boom')) };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command({ fsPath: '/workspace/repo/file.vi' } as never);
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'VI History could not load the selected file.'
+    );
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a Git-repository load-failure message when the file is outside a repo (VHS-REQ-013)', async () => {
+    const historyService = {
+      load: vi.fn().mockRejectedValue(new Error('fatal: not a git repository'))
+    };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command({ fsPath: '/workspace/repo/file.vi' } as never);
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'VI History could not load the selected file because it is not inside a tracked Git repository. Open a local Git-backed LabVIEW VI with commit history instead.'
+    );
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('routes eligible models through an injected compare preflight resolver (VHS-REQ-627/631)', async () => {
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+    const comparePreflightResolver = vi.fn().mockResolvedValue({
+      status: 'ready',
+      provider: 'host',
+      labviewVersion: '2025',
+      labviewBitness: '64'
+    });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      comparePreflightResolver
+    );
+
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
+
+    expect(comparePreflightResolver).toHaveBeenCalledTimes(1);
+    expect(createWebviewPanelMock).toHaveBeenCalledTimes(1);
+  });
+});
+
