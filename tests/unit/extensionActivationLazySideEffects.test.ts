@@ -369,7 +369,7 @@ describe('extension activation lazy side effects', () => {
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
   });
 
-  it('recomputes cached eligibility on a workspace-trust transition (#366)', async () => {
+  it('invalidates cached eligibility on a workspace-trust transition (#366)', async () => {
     const api = await activate(createContext() as never);
 
     await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);

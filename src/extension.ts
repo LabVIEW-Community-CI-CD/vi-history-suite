@@ -286,7 +286,7 @@ export async function activate(
   // refusing to start without Git fails fast and clearly.
   const gitPrerequisiteWatcher = createGitPrerequisiteWatcher(context);
   context.subscriptions.push(gitPrerequisiteWatcher);
-  const selectedEligiblePaths: Record<string, true> = {};
+  let selectedEligiblePaths: Record<string, true> = {};
 
   // VHS-REQ-635 (#366): the selected-file eligibility cache is a best-effort
   // hint that is re-evaluated authoritatively on every `loadHistory`/open.
@@ -294,10 +294,11 @@ export async function activate(
   // changes so a cached `true` can never outlive the conditions under which it
   // was computed. Clearing (rather than recomputing) keeps activation cheap and
   // avoids any repository-wide scan; the next open re-evaluates the file.
+  // Resetting to a fresh object (rather than deleting keys) avoids the V8
+  // dictionary-mode de-opt; all readers reference the variable, not the
+  // object identity.
   const clearSelectedEligibilityCache = (): void => {
-    for (const key of Object.keys(selectedEligiblePaths)) {
-      delete selectedEligiblePaths[key];
-    }
+    selectedEligiblePaths = {};
   };
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(clearSelectedEligibilityCache),
