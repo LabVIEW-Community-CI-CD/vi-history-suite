@@ -288,6 +288,23 @@ export async function activate(
   context.subscriptions.push(gitPrerequisiteWatcher);
   const selectedEligiblePaths: Record<string, true> = {};
 
+  // VHS-REQ-635 (#366): the selected-file eligibility cache is a best-effort
+  // hint that is re-evaluated authoritatively on every `loadHistory`/open.
+  // Clear it whenever workspace, configuration, or workspace-trust state
+  // changes so a cached `true` can never outlive the conditions under which it
+  // was computed. Clearing (rather than recomputing) keeps activation cheap and
+  // avoids any repository-wide scan; the next open re-evaluates the file.
+  const clearSelectedEligibilityCache = (): void => {
+    for (const key of Object.keys(selectedEligiblePaths)) {
+      delete selectedEligiblePaths[key];
+    }
+  };
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration(clearSelectedEligibilityCache),
+    vscode.workspace.onDidChangeWorkspaceFolders(clearSelectedEligibilityCache),
+    vscode.workspace.onDidGrantWorkspaceTrust(clearSelectedEligibilityCache)
+  );
+
   const ensureWorkspaceRuntime = async (): Promise<WorkspaceRuntime> => {
     if (workspaceRuntime) {
       return workspaceRuntime;
@@ -579,7 +596,12 @@ export async function activate(
 
   return {
     refreshEligibility: async () => undefined,
+    // VHS-REQ-635 (#366): `isEligible` is a best-effort hint, refreshed
+    // authoritatively on every `loadHistory`/open. Fail closed in untrusted
+    // workspaces so a cached `true` recorded while trusted can never outlive
+    // the trust boundary, independent of when invalidation events fire.
     isEligible: (uri: vscode.Uri) =>
+      vscode.workspace.isTrusted &&
       selectedEligibilityContextKeysForUri(uri).some(
         (key) => selectedEligiblePaths[key] === true
       ),

@@ -14,7 +14,11 @@ const {
   admitLocalRuntimeSettingsCliToTerminalPathMock,
   resolveLocalRuntimeSettingsCliContractMock,
   materializedCli,
-  workspaceState
+  workspaceState,
+  eligibilityEventListeners,
+  onDidChangeConfigurationMock,
+  onDidChangeWorkspaceFoldersMock,
+  onDidGrantWorkspaceTrustMock
 } = vi.hoisted(() => {
   const handlers = new Map<string, (...args: unknown[]) => unknown>();
   const materialized = {
@@ -34,6 +38,11 @@ const {
   };
 
   const workspaceStateHolder = { isTrusted: true };
+  const eligibilityEventListenerStore = {
+    configuration: [] as Array<(...args: unknown[]) => unknown>,
+    workspaceFolders: [] as Array<(...args: unknown[]) => unknown>,
+    grantTrust: [] as Array<(...args: unknown[]) => unknown>
+  };
 
   return {
     commandHandlers: handlers,
@@ -52,7 +61,20 @@ const {
     admitLocalRuntimeSettingsCliToTerminalPathMock: vi.fn(),
     resolveLocalRuntimeSettingsCliContractMock: vi.fn(),
     materializedCli: materialized,
-    workspaceState: workspaceStateHolder
+    workspaceState: workspaceStateHolder,
+    eligibilityEventListeners: eligibilityEventListenerStore,
+    onDidChangeConfigurationMock: vi.fn((listener: (...args: unknown[]) => unknown) => {
+      eligibilityEventListenerStore.configuration.push(listener);
+      return { dispose: vi.fn() };
+    }),
+    onDidChangeWorkspaceFoldersMock: vi.fn((listener: (...args: unknown[]) => unknown) => {
+      eligibilityEventListenerStore.workspaceFolders.push(listener);
+      return { dispose: vi.fn() };
+    }),
+    onDidGrantWorkspaceTrustMock: vi.fn((listener: (...args: unknown[]) => unknown) => {
+      eligibilityEventListenerStore.grantTrust.push(listener);
+      return { dispose: vi.fn() };
+    })
   };
 });
 
@@ -70,7 +92,10 @@ vi.mock('vscode', () => ({
     },
     getConfiguration: () => ({
       get: () => undefined
-    })
+    }),
+    onDidChangeConfiguration: onDidChangeConfigurationMock,
+    onDidChangeWorkspaceFolders: onDidChangeWorkspaceFoldersMock,
+    onDidGrantWorkspaceTrust: onDidGrantWorkspaceTrustMock
   }
 }));
 
@@ -225,6 +250,9 @@ describe('extension activation lazy side effects', () => {
     vi.clearAllMocks();
     viHistoryServiceConstructedWith.length = 0;
     workspaceState.isTrusted = true;
+    eligibilityEventListeners.configuration.length = 0;
+    eligibilityEventListeners.workspaceFolders.length = 0;
+    eligibilityEventListeners.grantTrust.length = 0;
     getBuiltInGitApiMock.mockResolvedValue({
       repositories: [],
       onDidOpenRepository: vi.fn(),
@@ -314,6 +342,65 @@ describe('extension activation lazy side effects', () => {
     expect(model.relativePath).toBe('/repo/demo.vi');
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(viHistoryServiceLoadMock).not.toHaveBeenCalled();
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+  });
+
+  it('invalidates cached eligibility when configuration changes so isEligible cannot go stale (#366)', async () => {
+    const api = await activate(createContext() as never);
+
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
+
+    expect(eligibilityEventListeners.configuration).toHaveLength(1);
+    eligibilityEventListeners.configuration.forEach((listener) => listener({}));
+
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+  });
+
+  it('invalidates cached eligibility when workspace folders change (#366)', async () => {
+    const api = await activate(createContext() as never);
+
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
+
+    expect(eligibilityEventListeners.workspaceFolders).toHaveLength(1);
+    eligibilityEventListeners.workspaceFolders.forEach((listener) => listener({}));
+
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+  });
+
+  it('recomputes cached eligibility on a workspace-trust transition (#366)', async () => {
+    const api = await activate(createContext() as never);
+
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
+
+    expect(eligibilityEventListeners.grantTrust).toHaveLength(1);
+    eligibilityEventListeners.grantTrust.forEach((listener) => listener());
+
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+  });
+
+  it('never reports cached true eligibility once the workspace becomes untrusted (#366)', async () => {
+    const api = await activate(createContext() as never);
+
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
+
+    workspaceState.isTrusted = false;
+
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
+  });
+
+  it('drops a cached true when a fresh loadHistory flips the path to ineligible (#366)', async () => {
+    const api = await activate(createContext() as never);
+
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+    expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
+
+    viHistoryServiceLoadMock.mockResolvedValueOnce({ eligible: false });
+    await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
+
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
   });
 
