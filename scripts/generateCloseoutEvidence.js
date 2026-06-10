@@ -345,8 +345,7 @@ function parseTraceabilitySummary(output) {
 function parseGitTrackedFiles(output) {
   return String(output || '')
     .split('\0')
-    .map((entry) => entry.trim())
-    .filter(Boolean)
+    .filter((entry) => entry.length > 0)
     .map((entry) => entry.replace(/\\/g, '/'));
 }
 
@@ -1483,14 +1482,15 @@ function generateCloseoutEvidence(argv, deps = {}) {
     removeTrackedWorktreeSnapshot(auditTarget, deps);
   }
   const provenance = verifyStandardsToolchainProvenance(options, { ...deps, cwd });
+  const sanitizedAuditTarget = {
+    mode: standards.auditTarget?.mode,
+    trackedFileCount: standards.auditTarget?.trackedFileCount,
+    generatedRootsExcluded: standards.auditTarget?.generatedRootsExcluded,
+    symlinkFiles: standards.auditTarget?.symlinkFiles,
+    missingFiles: standards.auditTarget?.missingFiles
+  };
   const evidenceHygiene = {
-    auditTarget: {
-      mode: standards.auditTarget?.mode,
-      trackedFileCount: standards.auditTarget?.trackedFileCount,
-      generatedRootsExcluded: standards.auditTarget?.generatedRootsExcluded,
-      symlinkFiles: standards.auditTarget?.symlinkFiles,
-      missingFiles: standards.auditTarget?.missingFiles
-    },
+    auditTarget: sanitizedAuditTarget,
     dodGate: standards.summary?.dodGateEvidence,
     policy: {
       passSource: 'Only scanner-visible DoD evidence in .github/workflows/ci.yml can promote DoD to PASS.',
@@ -1516,7 +1516,7 @@ function generateCloseoutEvidence(argv, deps = {}) {
     {
       name: 'standards-audit-target',
       file: 'standards-audit-target.json',
-      stdout: JSON.stringify(standards.auditTarget, null, 2),
+      stdout: JSON.stringify(sanitizedAuditTarget, null, 2),
       stderr: '',
       error: '',
       status: 0

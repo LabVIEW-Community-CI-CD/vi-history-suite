@@ -297,9 +297,11 @@ describe('closeout evidence script', () => {
   });
 
   it('parses nul-delimited tracked files for audit snapshots', () => {
-    expect(parseGitTrackedFiles('package.json\0docs/requirements/syrs.md\0')).toEqual([
+    expect(parseGitTrackedFiles('package.json\0docs/requirements/srs.md\0 leading-space.md\0trailing-space.md \0')).toEqual([
       'package.json',
-      'docs/requirements/syrs.md'
+      'docs/requirements/srs.md',
+      ' leading-space.md',
+      'trailing-space.md '
     ]);
     expect(GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT).toEqual(
       expect.arrayContaining(['.cache/', 'win-validation/', 'assurance-*-evidence/'])
@@ -886,7 +888,9 @@ describe('closeout evidence script', () => {
       );
 
       const summaryPath = path.join(saveDirAbs, 'closeout-summary.json');
+      const auditTargetPath = path.join(saveDirAbs, 'standards-audit-target.json');
       expect(fs.existsSync(summaryPath)).toBe(true);
+      expect(fs.existsSync(auditTargetPath)).toBe(true);
 
       const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8')) as {
         schemaVersion: number;
@@ -908,6 +912,12 @@ describe('closeout evidence script', () => {
         closureDecision: { closable: boolean };
         exitCode: number;
       };
+      const auditTarget = JSON.parse(fs.readFileSync(auditTargetPath, 'utf8')) as {
+        path?: string;
+        mode: string;
+        trackedFileCount: number;
+        generatedRootsExcluded: string[];
+      };
 
       expect(summary.schemaVersion).toBe(1);
       expect(summary.localGates.ran).toBe(true);
@@ -925,6 +935,12 @@ describe('closeout evidence script', () => {
         trackedFileCount: 2,
         generatedRootsExcluded: expect.arrayContaining(['win-validation/', 'assurance-*-evidence/'])
       });
+      expect(auditTarget).toMatchObject({
+        mode: 'tracked-worktree-snapshot',
+        trackedFileCount: 2,
+        generatedRootsExcluded: expect.arrayContaining(['win-validation/', 'assurance-*-evidence/'])
+      });
+      expect(auditTarget.path).toBeUndefined();
       expect(summary.provenance.success).toBe(true);
       expect(summary.closureDecision.closable).toBe(true);
       expect(summary.exitCode).toBe(0);
