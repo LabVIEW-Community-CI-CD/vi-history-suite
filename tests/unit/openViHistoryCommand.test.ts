@@ -547,3 +547,72 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
   });
 });
 
+describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/627/631)', () => {
+  beforeEach(() => {
+    vscodeHarness.reset();
+    workspaceState.isTrusted = true;
+    vscodeHarness.vscode.window.activeTextEditor = undefined;
+    createWebviewPanelMock.mockReturnValue(createMockPanel());
+  });
+
+  it('falls back to the active editor URI when invoked without an explicit URI (VHS-REQ-006)', async () => {
+    const activeUri = vscodeHarness.createUri('/workspace/repo/active.vi');
+    vscodeHarness.vscode.window.activeTextEditor = { document: { uri: activeUri } };
+    const historyService = {
+      load: vi
+        .fn()
+        .mockResolvedValue(createIneligibleModel({ signature: 'LVIN', commits: [] }))
+    };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command(undefined);
+
+    expect(historyService.load).toHaveBeenCalledTimes(1);
+    const [loadedUri] = historyService.load.mock.calls[0] as [{ fsPath: string }];
+    expect(loadedUri.fsPath).toBe(activeUri.fsPath);
+  });
+
+  it('surfaces a generic load-failure message when history load throws (VHS-REQ-013)', async () => {
+    const historyService = { load: vi.fn().mockRejectedValue(new Error('boom')) };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command({ fsPath: '/workspace/repo/file.vi' } as never);
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'VI History could not load the selected file.'
+    );
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('routes eligible models through an injected compare preflight resolver (VHS-REQ-627/631)', async () => {
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+    const comparePreflightResolver = vi.fn().mockResolvedValue({
+      status: 'ready',
+      provider: 'host',
+      labviewVersion: '2025',
+      labviewBitness: '64'
+    });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      comparePreflightResolver
+    );
+
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
+
+    expect(comparePreflightResolver).toHaveBeenCalledTimes(1);
+    expect(createWebviewPanelMock).toHaveBeenCalledTimes(1);
+  });
+});
+
