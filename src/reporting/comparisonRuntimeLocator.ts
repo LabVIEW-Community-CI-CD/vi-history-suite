@@ -330,16 +330,31 @@ export function buildDocumentedRuntimeCandidates(
 export function parseWindowsRegistryLabviewCandidates(
   registryOutput: string
 ): RuntimeToolCandidate[] {
-  const matches = registryOutput.match(/[A-Za-z]:\\[^\r\n"]*LabVIEW(?: [^\\\r\n"]+)?\\LabVIEW\.exe/gi) ?? [];
+  // Direct `...\LabVIEW.exe` form (kept for forward compatibility with any
+  // registry value that records the executable itself).
+  const exePaths =
+    registryOutput.match(/[A-Za-z]:\\[^\r\n"]*LabVIEW(?: [^\\\r\n"]+)?\\LabVIEW\.exe/gi) ?? [];
+
+  // VHS-REQ-634: A real National Instruments install records the LabVIEW install
+  // DIRECTORY (for example `C:\Program Files\National Instruments\LabVIEW 2025\`)
+  // in the registry `Path` value, not the executable. Accept that
+  // install-directory form too and derive `<dir>LabVIEW.exe`; the probe and the
+  // locator validate the derived executable on disk before trusting it.
+  const installDirPaths =
+    registryOutput.match(/[A-Za-z]:\\[^\r\n"]*LabVIEW(?: [^\\\r\n"]+)?\\(?=\s|$|")/gi) ?? [];
+  const derivedExePaths = installDirPaths.map((installDir) => `${installDir.trim()}LabVIEW.exe`);
 
   return dedupeCandidates(
-    matches.map((matchedPath) => ({
-      kind: 'labview-exe' as const,
-      path: matchedPath.trim(),
-      source: 'registry' as const,
-      exists: true,
-      bitness: inferBitnessFromPath(matchedPath.trim())
-    }))
+    [...exePaths, ...derivedExePaths].map((rawPath) => {
+      const exePath = rawPath.trim();
+      return {
+        kind: 'labview-exe' as const,
+        path: exePath,
+        source: 'registry' as const,
+        exists: true,
+        bitness: inferBitnessFromPath(exePath)
+      };
+    })
   );
 }
 
@@ -2630,10 +2645,11 @@ export async function runWindowsRegistryQuery(
  * VHS-REQ-634: Bounded, on-demand authoritative probe for a host LabVIEW install
  * the lightweight activation detector (VHS-REQ-616, filesystem-only) cannot see —
  * specifically a Windows install resolved through the registry at a non-default
- * path. Returns true only when the registry names a `LabVIEW.exe` that exists on
- * disk AND the shared Windows LabVIEW CLI also exists on disk, i.e. exactly the
- * state in which the comparison locator could serve a compare but the open gate
- * would otherwise false-block.
+ * path. Returns true only when the registry resolves a `LabVIEW.exe` — named
+ * directly, or derived from the National Instruments install-directory `Path`
+ * value — that exists on disk AND the shared Windows LabVIEW CLI also exists on
+ * disk, i.e. exactly the state in which the comparison locator could serve a
+ * compare but the open gate would otherwise false-block.
  *
  * Reuses the same `reg query` path the locator already uses in production, so no
  * new Windows runtime surface is introduced. Bounded to the registry query plans

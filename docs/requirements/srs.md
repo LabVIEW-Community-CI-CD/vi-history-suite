@@ -2461,9 +2461,12 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - `probeWindowsRegistryHostLabviewAvailable(deps)` reuses the locator's
     existing registry query plans and parser, returns true only when the
-    registry names a `LabVIEW.exe` that exists on disk AND the shared Windows
-    LabVIEW CLI exists on disk, and never throws (a failed registry query
-    yields false). It performs no container or process probes.
+    registry resolves a `LabVIEW.exe` — either named directly or derived from
+    the National Instruments install-directory `Path` value (for example
+    `C:\Program Files\National Instruments\LabVIEW <year>\`, which is what a
+    stock NI install actually records) — that exists on disk AND the shared
+    Windows LabVIEW CLI exists on disk, and never throws (a failed registry
+    query yields false). It performs no container or process probes.
   - `decideLabviewCliOpenGateWithRegistryFallback(baseDecision, deps)` returns
     the base decision unchanged unless it is `block`, the platform is Windows,
     and a probe is supplied; in that case it returns `allow` when the probe
