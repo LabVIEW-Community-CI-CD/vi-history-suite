@@ -45,15 +45,7 @@
     "LICENSE"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:labviewViHistory.open",
-    "onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli",
-    "onCommand:labviewViHistory.openDocumentation",
-    "onCommand:labviewViHistory.detectRuntimeNow",
-    "onCommand:labviewViHistory.resetFirstRunNotice",
-    "onCommand:labviewViHistory.showRuntimeSummary",
-    "onCommand:labviewViHistory.pickRuntimeProvider",
-    "onCommand:labviewViHistory.exportComparisonReport"
+    "onStartupFinished"
   ],
   "contributes": {
     "commands": [
