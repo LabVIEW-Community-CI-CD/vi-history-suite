@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.14.4');
+    expect(manifest.version).toBe('1.14.5');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -83,7 +83,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('activates on startup plus explicit commands without manifest-level Git activation', () => {
+  it('activates on startup without redundant per-command activation events or manifest-level Git activation', () => {
     const manifest = readManifest();
 
     expect(manifest.files).toEqual([
@@ -96,22 +96,31 @@ describe('extension manifest public metadata', () => {
     ]);
     expect(manifest.icon).toBe('resources/marketplace/vi-history-suite-icon.png');
     expect(manifest.activationEvents).toContain('onStartupFinished');
-    expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
-    expect(manifest.activationEvents).toContain(
-      'onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli'
+    // #369: VS Code auto-infers onCommand activation from contributes.commands,
+    // so explicit onCommand:* activation events are redundant advisories and
+    // must not be reintroduced into the manifest.
+    const redundantCommandActivations = (manifest.activationEvents ?? []).filter(
+      (event) => event.startsWith('onCommand:')
     );
-    expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
-    expect(manifest.activationEvents).toContain(
-      'onCommand:labviewViHistory.detectRuntimeNow'
+    expect(redundantCommandActivations).toEqual([]);
+    // The commands that previously carried explicit activation events remain
+    // contributed, so VS Code still activates the extension on first invocation
+    // of labviewViHistory.open, labviewViHistory.openDocumentation,
+    // labviewViHistory.prepareLocalRuntimeSettingsCli, and the runtime commands.
+    const contributedCommandIds = (manifest.contributes?.commands ?? []).map(
+      (entry) => entry.command
     );
-    expect(manifest.activationEvents).toContain(
-      'onCommand:labviewViHistory.resetFirstRunNotice'
-    );
-    expect(manifest.activationEvents).toContain(
-      'onCommand:labviewViHistory.showRuntimeSummary'
-    );
-    expect(manifest.activationEvents).toContain(
-      'onCommand:labviewViHistory.pickRuntimeProvider'
+    expect(contributedCommandIds).toEqual(
+      expect.arrayContaining([
+        'labviewViHistory.open',
+        'labviewViHistory.openDocumentation',
+        'labviewViHistory.prepareLocalRuntimeSettingsCli',
+        'labviewViHistory.detectRuntimeNow',
+        'labviewViHistory.resetFirstRunNotice',
+        'labviewViHistory.showRuntimeSummary',
+        'labviewViHistory.pickRuntimeProvider',
+        'labviewViHistory.exportComparisonReport'
+      ])
     );
     expect(manifest.extensionDependencies ?? []).not.toContain('vscode.git');
   });
@@ -162,7 +171,7 @@ describe('extension manifest public metadata', () => {
     expect(manifest.capabilities?.untrustedWorkspaces).toEqual({
       supported: 'limited',
       description:
-        'VI History disables background indexing and comparison execution in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.',
+        'VI History disables selected-file history evaluation and comparison execution in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.',
       restrictedConfigurations: [
         'viHistorySuite.runtimeProvider',
         'viHistorySuite.labviewVersion',

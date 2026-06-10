@@ -23,7 +23,6 @@ src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM
 src/extension.ts,mapped,Yes,Extension entry point; mapped through RTM.
 src/git/gitApi.ts,mapped,Yes,Git API wrapper enabling viHistoryService Git state resolution; mapped through RTM.
 src/git/gitCli.ts,mapped,Yes,Git CLI wrapper; mapped through RTM.
-src/indexing/viEligibilityIndexer.ts,mapped,Yes,VI eligibility indexer; mapped through RTM.
 src/reporting/comparisonReportAction.ts,mapped,Yes,Comparison report action; mapped through RTM.
 src/reporting/comparisonReportExecutionPlan.ts,mapped,Yes,Comparison execution plan; mapped through RTM.
 src/reporting/comparisonReportExport.ts,mapped,Yes,Comparison report export to an accessible location for external browser viewing; mapped to VHS-REQ-626.
@@ -126,7 +125,6 @@ tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings 
 tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,dev-only,No,Runtime settings probe packet tests; contributor tooling.
 tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,dev-only,No,Runtime settings safe restore tests; contributor tooling.
 tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
-tests/unit/viEligibilityIndexer.test.ts,mapped,Yes,VI eligibility indexer tests; mapped through RTM.
 tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
 tests/unit/viHistoryModel.test.ts,mapped,Yes,VI history model direct eligibility/window tests; mapped to VHS-REQ-006 VHS-REQ-008 and VHS-REQ-017.
 tests/unit/viHistoryService.test.ts,mapped,Yes,VI history service tests; mapped through RTM.
@@ -173,6 +171,7 @@ docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
 docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md,asset-doc,No,Architecture decision record reference documentation for GitHub-first release and traceability governance; not directly mapped in RTM.
+docs/architecture/adr/ADR-0002-selected-file-on-demand-vi-history-eligibility.md,asset-doc,No,Architecture decision record reference documentation for selected-file on-demand VI History eligibility; not directly mapped in RTM.
 docs/architecture/diagnostics-bundle.md,asset-doc,No,Comparison runtime diagnostics bundle schema and analyzer guide; reference documentation supporting VHS-REQ-148 retained runtime evidence; not directly mapped in RTM.
 docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runbook documentation; simplification process reference.
 docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.

@@ -10,6 +10,18 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.14.5] - 2026-06-10
+
+### Fixed
+
+- The extension's exported `isEligible()` API no longer returns a stale result
+  after the selected file's eligibility changes. The selected-file eligibility
+  hint is now cleared on `viHistorySuite` configuration changes, workspace
+  folder changes, and workspace-trust grants, and reports ineligible in
+  untrusted workspaces, so a cached answer can never outlive the conditions
+  under which it was computed. The `VI History` open command was already
+  authoritative per invocation and is unchanged.
+
 ## [1.14.4] - 2026-06-09
 
 ### Fixed

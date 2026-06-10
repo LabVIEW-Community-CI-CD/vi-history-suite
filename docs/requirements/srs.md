@@ -112,48 +112,53 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: Git History Eligibility
-- Statement: A file shall be eligible for VI History only when it is tracked in
-  Git, content-detected as a VI, and has at least two modifying commits.
+- Statement: The selected target file shall be eligible for VI History only
+  when it is tracked in Git, content-detected as a VI, and has at least two
+  modifying commits.
 - Acceptance Criteria:
-  - Untracked files are not eligible.
-  - Files with fewer than two modifying commits are not eligible.
-  - Content detection is part of eligibility evaluation.
+  - The selected file is not eligible when Git cannot resolve it as tracked in
+    the selected repository.
+  - The selected file is not eligible when fewer than two modifying commits are
+    available for that file.
+  - Content detection is part of selected-file eligibility evaluation.
 - Agent Work Scope:
-  - Change shared history model and indexer behavior together when eligibility
-    rules change.
+  - Change shared history model, history service, command stops, and Git helper
+    behavior together when selected-file eligibility rules change.
 - Implementation References:
+  - `src/commands/openViHistoryCommand.ts`
   - `src/services/viHistoryModel.ts`
-  - `src/indexing/viEligibilityIndexer.ts`
+  - `src/services/viHistoryService.ts`
   - `src/git/gitCli.ts`
 - Verification References:
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/viHistoryService.test.ts`
-  - `tests/unit/viEligibilityIndexer.test.ts`
   - `tests/unit/gitCli.test.ts`
 - Change Guidance:
   - Keep eligibility stricter than menu visibility hints.
 
-### VHS-REQ-007: NUL-Safe Tracked File Enumeration
+### VHS-REQ-007: NUL-Safe Git Path Parsing
 
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: Git History Eligibility
-- Statement: The Git adapter shall enumerate tracked files with a NUL-safe
-  result equivalent to `git ls-files -z`.
+- Statement: The Git adapter shall parse NUL-delimited Git path output safely
+  whenever Git commands return path lists.
 - Acceptance Criteria:
   - Paths containing spaces are parsed correctly.
   - Empty trailing records are ignored.
   - Enumeration errors fail closed at the caller boundary.
 - Agent Work Scope:
-  - Change Git CLI parsing and indexer tests when altering tracked-file
-    enumeration.
+  - Change Git CLI parsing and Git adapter tests when altering path-list
+    parsing.
 - Implementation References:
   - `src/git/gitCli.ts`
-  - `src/indexing/viEligibilityIndexer.ts`
 - Verification References:
   - `tests/unit/gitCli.test.ts`
-  - `tests/unit/viEligibilityIndexer.test.ts`
 - Change Guidance:
-  - Do not switch to newline parsing for Git path lists.
+  - Do not switch to newline parsing for Git path lists, and do not treat this
+    parsing requirement as permission to scan every VI before opening one
+    selected file.
 
 ### VHS-REQ-008: Bounded Commit Queries
 
@@ -161,9 +166,10 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-001
 - Area: Git History Eligibility
 - Statement: The Git adapter shall use bounded commit queries when determining
-  minimum history eligibility.
+  minimum history eligibility for the selected file.
 - Acceptance Criteria:
-  - Eligibility can be established by querying at most two commit hashes.
+  - Selected-file eligibility can be established by querying at most two commit
+    hashes for that file.
   - File history queries normalize relative Git paths.
   - Rename following remains best effort and scoped to single-file history.
 - Agent Work Scope:
@@ -175,7 +181,8 @@ Missing numeric IDs are intentional.
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/viHistoryService.test.ts`
 - Change Guidance:
-  - Keep repository-wide scans bounded and cancellable.
+  - Keep minimum eligibility reads scoped to the requested file rather than
+    introducing repository-wide VI scans.
 
 ### VHS-REQ-061: Most-Specific Git Repository Resolution
 
@@ -205,71 +212,54 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-013
 - Area: Workspace Safety
-- Statement: The extension shall gate background scanning and external process
-  execution on VS Code workspace trust.
+- Statement: The extension shall gate selected-file VI History evaluation and
+  external process execution on VS Code workspace trust.
 - Acceptance Criteria:
-  - Untrusted workspaces clear the eligibility context.
+  - Invoking VI History in an untrusted workspace does not evaluate selected-file
+    eligibility.
   - Invoking VI History in an untrusted workspace stops with a warning.
   - External comparison execution does not proceed from an untrusted workspace.
-  - Warning messages explain why indexing and comparison are disabled and what
+  - Warning messages explain why VI History and comparison are disabled and what
     low-risk paths remain available.
 - Agent Work Scope:
-  - Change command, indexer, and manifest trust behavior together.
+  - Change command and manifest trust behavior together.
 - Implementation References:
-  - `src/indexing/viEligibilityIndexer.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `package.json`
 - Verification References:
-  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Trust checks are safety boundaries, not convenience prompts.
 
-### VHS-REQ-013: Dynamic Eligibility Context
+### VHS-REQ-013: Selected-File Menu Entry And Eligibility Gate
 
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: Menu Gating
-- Statement: The indexer shall maintain dynamic menu eligibility through the
-  `labviewViHistory.eligiblePaths` context key.
+- Statement: Explorer and editor menu hints shall remain broad while the
+  command validates the selected file's actual VI History eligibility at
+  invocation time.
 - Acceptance Criteria:
-  - Eligible files are represented in the context map.
-  - Windows path variants include lowercase forms.
-  - Empty or failed refreshes fail closed to an empty map.
+  - The manifest may expose VI History for trusted files with LabVIEW-related
+    extensions without requiring a repository-wide eligibility index.
+  - Invoking the command on a non-eligible selected file fails closed with a
+    factual reason and next action.
+  - Runtime eligibility is stricter than menu visibility hints.
 - Agent Work Scope:
-  - Change context-key shape and package menu expectations together.
+  - Change package menu expectations and command ineligibility behavior
+    together.
 - Implementation References:
-  - `src/indexing/viEligibilityIndexer.ts`
+  - `src/commands/openViHistoryCommand.ts`
   - `package.json`
 - Verification References:
-  - `tests/unit/viEligibilityIndexer.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/packageManifest.test.ts`
 - Change Guidance:
-  - Keep dynamic context conservative even if manifest menu hints remain broader.
-
-### VHS-REQ-015: Bounded Indexing Concurrency
-
-- Status: Active
-- Parent: VHS-SYS-REQ-001
-- Area: Menu Gating
-- Statement: Repository indexing shall bound concurrent eligibility checks using
-  the `viHistorySuite.maxIndexedConcurrency` setting.
-- Acceptance Criteria:
-  - The setting has a documented minimum and maximum.
-  - The indexer uses the configured value when processing tracked files.
-  - Worker loops stop cleanly when the queue is exhausted.
-- Agent Work Scope:
-  - Change indexer concurrency and package configuration together.
-- Implementation References:
-  - `src/indexing/viEligibilityIndexer.ts`
-  - `package.json`
-- Verification References:
-  - `tests/unit/viEligibilityIndexer.test.ts`
-  - `tests/unit/packageManifest.test.ts`
-- Change Guidance:
-  - Do not make large repositories spawn unbounded probe work.
+  - Keep command-time validation conservative even when manifest menu hints stay
+    intentionally broad.
 
 ### VHS-REQ-082: Primary Command Identifier
 
@@ -314,16 +304,18 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Runtime eligibility must remain stricter than these visible menu hints.
 
-### VHS-REQ-083: Command-Only Activation
+### VHS-REQ-083: Lean Activation Without Indexing Side Effects
 
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: Extension Manifest
-- Statement: The extension shall avoid startup activation and activate through
-  explicit command events.
+- Statement: The extension shall activate lightly through `onStartupFinished`
+  and its contributed commands without eager repository indexing side effects.
 - Acceptance Criteria:
-  - The manifest does not use startup activation.
-  - Activation events include the public commands.
+  - The manifest's only explicit activation event is `onStartupFinished`; it
+    does not use the eager `*` startup activation.
+  - VS Code infers `onCommand` activation from `contributes.commands`, so the
+    public commands are not listed redundantly in `activationEvents`.
   - Lazy activation does not create indexing side effects before command use.
 - Agent Work Scope:
   - Change activation events and lazy side-effect tests together.
@@ -334,7 +326,8 @@ Missing numeric IDs are intentional.
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/extensionActivationLazySideEffects.test.ts`
 - Change Guidance:
-  - Do not add broad activation events without a requirement update.
+  - Do not add broad activation events (such as `*` or unfiltered language or
+    view events) without a requirement update.
 
 ### VHS-REQ-084: Limited Untrusted Workspace Capability
 
@@ -346,7 +339,8 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - The manifest declares limited untrusted workspace support.
   - Runtime provider, LabVIEW version, and bitness settings are restricted.
-  - The description explains disabled indexing and comparison execution.
+  - The description explains disabled selected-file history evaluation and
+    comparison execution.
 - Agent Work Scope:
   - Change untrusted-workspace manifest capability only with matching runtime
     safety behavior.
@@ -1171,167 +1165,29 @@ Missing numeric IDs are intentional.
   - Keep major dependency updates independently reviewable unless a future
     requirement intentionally changes the dependency-maintenance policy.
 
-### VHS-REQ-603: Large-Repository Indexing Operating Model
-
-- Status: Active
-- Parent: VHS-SYS-REQ-015
-- Area: Git History Eligibility
-- Statement: Repository eligibility indexing shall define large-repository
-  refresh states, file-level branch-switch reuse behavior, and observable work
-  accounting without wall-clock performance promises.
-- Acceptance Criteria:
-  - The indexing model distinguishes cold scan, warm restart, branch switch,
-    cancellation, trust-disabled, and failed-refresh states.
-  - Indexing evidence reports tracked, reused, evaluated, removed, skipped,
-    failed, and eligible file counts where those counts are available.
-  - Warm restart and branch-switch behavior is specified in terms of cache reuse
-    and re-evaluated file counts rather than elapsed time, with unchanged clean
-    tracked blobs eligible for reuse across `HEAD` changes.
-  - Cancellation and failed refreshes preserve a last valid eligibility snapshot
-    when one exists.
-  - LabVIEWCLI or comparison-runtime validation failures are treated as separate
-    runtime setup evidence, not as indexing-cache causes.
-- Agent Work Scope:
-  - Change eligibility indexing behavior, diagnostics, tests, and requirements
-    together.
-- Implementation References:
-  - `src/indexing/viEligibilityIndexer.ts`
-- Verification References:
-  - `tests/unit/viEligibilityIndexer.test.ts`
-  - `tests/unit/requirementsDocs.test.ts`
-  - `manual:large-repo-indexing-evidence-review`
-- Change Guidance:
-  - Keep performance requirements algorithmic and evidence-based; do not add
-    wall-clock service-level promises without a new validated benchmark
-    requirement.
-
-### VHS-REQ-604: Persistent Git-Object Eligibility Cache
-
-- Status: Active
-- Parent: VHS-SYS-REQ-015
-- Area: Git History Eligibility
-- Statement: Eligibility indexing shall persist eligible and ineligible file
-  decisions in VS Code extension storage so warm sessions can reuse valid Git
-  object evidence without committing repository-local cache files.
-- Acceptance Criteria:
-  - Persistent eligibility cache data is stored through VS Code extension
-    storage, not through files written into the workspace or repository.
-  - Cache entries are reusable only when repository identity, normalized path,
-    tracked Git blob object ID, strict header setting, and cache schema version
-    match the current evaluation context.
-  - Cached eligible entries are reused only when their recorded history proof
-    commits remain reachable from the current `HEAD`; cached unknown-signature
-    entries may reuse ineligible for the same clean blob.
-  - Stale, missing, incompatible, or corrupt cache data fails closed by
-    re-evaluating affected files.
-  - Cache data records eligibility facts needed for reuse without storing file
-    contents, secrets, private runtime paths, or comparison-runtime output.
-  - Cache writes do not change Git working-tree status.
-- Agent Work Scope:
-  - Change indexer cache shape, extension storage wiring, invalidation tests, and
-    requirements together.
-- Implementation References:
-  - `src/indexing/viEligibilityIndexer.ts`
-  - `src/extension.ts`
-- Verification References:
-  - `tests/unit/viEligibilityIndexer.test.ts`
-  - `tests/unit/extensionActivationLazySideEffects.test.ts`
-  - `tests/unit/requirementsDocs.test.ts`
-- Change Guidance:
-  - Prefer conservative re-evaluation over using cache data whose provenance or
-    schema is uncertain.
-
-### VHS-REQ-605: Incremental Refresh And Invalidation Lifecycle
-
-- Status: Active
-- Parent: VHS-SYS-REQ-015
-- Area: Git History Eligibility
-- Statement: Eligibility indexing shall refresh incrementally when repository,
-  workspace, or indexing settings change while preserving a conservative
-  eligibility snapshot during cancellation or refresh coalescing.
-- Acceptance Criteria:
-  - Branch or HEAD changes, workspace-folder changes, Git repository state
-    changes, and relevant indexing setting changes trigger eligibility refresh
-    or invalidation.
-  - Clean tracked files with matching repository identity, normalized path, Git
-    blob object ID, strict header setting, cache schema version, and reachable
-    history proof are reused instead of re-evaluated.
-  - Removed files are dropped from the eligibility snapshot and counted as
-    removed in diagnostics.
-  - Changed, dirty, staged, unmerged, cache-missing, malformed, or
-    history-unproven files are re-evaluated before becoming eligible and are not
-    persisted as clean blob evidence unless clean tracked facts are available.
-  - Rapid refresh requests are coalesced so newer work supersedes obsolete work
-    without exposing partial obsolete results.
-  - Cancellation preserves the last valid eligibility snapshot when one exists
-    and reports that cancellation as a refresh reason.
-- Agent Work Scope:
-  - Change refresh triggers, invalidation accounting, cancellation behavior, and
-    tests together.
-- Implementation References:
-  - `src/indexing/viEligibilityIndexer.ts`
-- Verification References:
-  - `tests/unit/viEligibilityIndexer.test.ts`
-  - `tests/unit/requirementsDocs.test.ts`
-- Change Guidance:
-  - Keep invalidation facts explicit enough for users and agents to understand
-    why a file was reused, re-evaluated, dropped, or skipped.
-
-### VHS-REQ-606: Indexing Diagnostics And Evidence
-
-- Status: Active
-- Parent: VHS-SYS-REQ-015
-- Area: Menu Gating
-- Statement: The extension shall expose user-visible indexing diagnostics that
-  explain eligibility refresh state, work accounting, and the boundary between
-  indexing behavior and comparison-runtime validation.
-- Acceptance Criteria:
-  - User-visible status distinguishes cold scan, cache reuse, incremental
-    refresh, cancellation, trust-disabled, and failed-refresh states.
-  - Diagnostics include tracked, reused, evaluated, removed, skipped, failed,
-    and eligible counts where available.
-  - Diagnostics identify the refresh reason when a branch switch, HEAD change,
-    workspace-folder change, Git repository state change, relevant setting
-    change, cancellation, or trust-disabled state drives the result.
-  - Diagnostics state that LabVIEWCLI or comparison-runtime validation failures
-    are comparison/runtime setup evidence, not indexing-cache causes.
-  - Runtime discovery diagnostics required by `VHS-REQ-155` remain separate
-    from indexing diagnostics.
-- Agent Work Scope:
-  - Change indexing status surfaces, runtime-evidence wording, command behavior,
-    and tests together.
-- Implementation References:
-  - `src/indexing/viEligibilityIndexer.ts`
-  - `src/commands/openViHistoryCommand.ts`
-  - `src/reporting/comparisonRuntimeDoctor.ts`
-- Verification References:
-  - `tests/unit/viEligibilityIndexer.test.ts`
-  - `tests/unit/openViHistoryCommand.test.ts`
-  - `tests/unit/requirementsDocs.test.ts`
-- Change Guidance:
-  - Keep diagnostics factual and avoid implying runtime setup failures caused
-    indexing refresh behavior.
-
-### VHS-REQ-607: Field Intake Separation For Indexing Reports
+### VHS-REQ-607: Field Intake Separation For Eligibility Reports
 
 - Status: Active
 - Parent: VHS-SYS-REQ-014
 - Area: Requirements
-- Statement: Public issue intake shall collect indexing evidence separately from
-  runtime validation output so maintainers can route large-repository indexing
-  reports without confusing them with comparison-runtime setup failures.
+- Statement: Public issue intake shall collect selected-file eligibility and Git
+  history evidence separately from runtime validation output so maintainers can
+  route history-opening reports without confusing them with comparison-runtime
+  setup failures.
 - Acceptance Criteria:
-  - Bug and onboarding feedback templates collect affected surface, repository
-    scale, restart behavior, branch-switch behavior, and indexing diagnostics
-    separately from runtime validation output.
+  - Bug and onboarding feedback templates collect affected surface, selected
+    file path, tracking status when known, commit count or ineligibility
+    message when available, and concise Git/history output separately from
+    runtime validation output.
   - Runtime validation output fields request `vihs --validate` or comparison
-    runtime output without implying those facts are indexing-cache causes.
+    runtime output without implying those facts are selected-file eligibility
+    causes.
   - Intake copy includes no-secrets guidance for logs, diagnostics, paths, and
     runtime output.
-  - Indexing reports can be submitted without requiring LabVIEWCLI validation
-    output.
+  - Eligibility or Git history reports can be submitted without requiring
+    LabVIEWCLI validation output.
   - Runtime-only reports can be submitted without requiring indexing cache
-    evidence.
+    evidence or repository-wide VI counts.
 - Agent Work Scope:
   - Change public issue templates, intake wording, and requirements coherence
     tests together.
@@ -2640,5 +2496,50 @@ Missing numeric IDs are intentional.
     consults the registry, and only on Windows. The synchronous gate decision
     helper stays pure so its existing tests and contract are preserved.
 
+### VHS-REQ-635: Selected-File On-Demand Eligibility
 
+- Status: Active
+- Parent: VHS-SYS-REQ-018
+- Area: Git History Eligibility
+- Statement: The `labviewViHistory.open` command shall evaluate eligibility for
+  the selected URI on demand and shall not wait for or require a repository-wide
+  VI eligibility index before opening that file's history or returning a factual
+  ineligibility message.
+- Acceptance Criteria:
+  - The command path evaluates the requested URI's repository root, content
+    signature, Git tracking, and minimum two modifying commits for that file.
+  - Opening history for one selected file does not enumerate every tracked VI in
+    the repository or show repository-wide `Indexing LabVIEW VIs` progress as a
+    prerequisite to the selected file result.
+  - Ineligible selected files produce factual, actionable messages for unknown
+    LabVIEW format, no Git history, one commit, or other failed eligibility
+    facts.
+  - Manifest menu visibility remains a hint; selected-file eligibility remains
+    the command-time source of truth.
+  - Selected-file eligibility is independent of repository-wide indexing and
+    does not depend on a repository-wide scan; the separate LabVIEW CLI and VI
+    Server pre-panel prerequisite gates (VHS-REQ-627, VHS-REQ-631) are unchanged
+    and out of scope for this requirement.
+- Agent Work Scope:
+  - Change command open flow, selected-file history model, Git helper calls,
+    manifest/menu assumptions, requirements, and verification together when the
+    selected-file eligibility contract changes. Do not reintroduce
+    repository-wide VI scans as a prerequisite for opening one selected file.
+- Implementation References:
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/services/viHistoryModel.ts`
+  - `src/services/viHistoryService.ts`
+  - `src/git/gitCli.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/viHistoryModel.test.ts`
+  - `tests/unit/viHistoryService.test.ts`
+  - `tests/unit/gitCli.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Prefer selected-file Git and signature checks over background repository
+    inventory. If future features need repository-wide inventory, keep them
+    optional and outside the blocking open-history path.
 

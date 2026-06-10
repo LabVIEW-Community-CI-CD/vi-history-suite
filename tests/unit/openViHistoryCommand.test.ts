@@ -50,7 +50,6 @@ describe('openViHistoryCommand ineligibility messaging (VHS-REQ-016)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -76,7 +75,6 @@ describe('openViHistoryCommand ineligibility messaging (VHS-REQ-016)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -99,7 +97,6 @@ describe('openViHistoryCommand ineligibility messaging (VHS-REQ-016)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -129,7 +126,6 @@ describe('openViHistoryCommand ineligibility messaging (VHS-REQ-016)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -198,7 +194,6 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker
     );
@@ -223,7 +218,6 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker
     );
@@ -247,7 +241,6 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker
     );
@@ -270,7 +263,6 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker
     );
@@ -299,7 +291,6 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
 
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
       // no panelTracker
     );
@@ -321,7 +312,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     const historyService = { load: vi.fn() };
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -338,7 +328,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     const historyService = { load: vi.fn() };
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -346,7 +335,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
 
     expect(historyService.load).not.toHaveBeenCalled();
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'VI History indexing and comparison are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
+      'VI History and comparison are disabled in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.'
     );
   });
 
@@ -356,7 +345,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     };
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined
     );
 
@@ -385,7 +373,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       });
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker,
       undefined,
@@ -426,7 +413,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker,
       comparisonReportAction
@@ -471,7 +457,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker,
       comparisonReportAction
@@ -512,7 +497,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       undefined,
       panelTracker,
       comparisonReportAction
@@ -541,7 +525,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     const gitApi = { toGitUri: vi.fn().mockReturnValue(undefined) };
     const command = createOpenViHistoryCommand(
       historyService as never,
-      {} as never,
       gitApi as never,
       panelTracker
     );
@@ -564,210 +547,72 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
   });
 });
 
-function defaultIndexingCacheDiagnostics() {
-  return {
-    storage: {
-      restoreOutcome: 'not-configured' as const,
-      restoredEntryCount: 0,
-      persistOutcome: 'not-configured' as const,
-      persistedEntryCount: 0
-    },
-    reuse: {
-      cacheableTrackedFileCount: 0,
-      uncacheableTrackedFileCount: 0,
-      hitCount: 0,
-      missCount: 0,
-      proofRejectedCount: 0
-    }
-  };
-}
-
-describe('VHS-REQ-606 Indexing Diagnostics Evidence Separation', () => {
+describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/627/631)', () => {
   beforeEach(() => {
     vscodeHarness.reset();
     workspaceState.isTrusted = true;
+    vscodeHarness.vscode.window.activeTextEditor = undefined;
+    createWebviewPanelMock.mockReturnValue(createMockPanel());
   });
 
-  it('exposes buildIndexingDiagnosticSummary as separate from runtime doctor diagnostics', async () => {
-    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
-    const { buildComparisonRuntimeDoctorSummaryFromFacts } = await import('../../src/reporting/comparisonRuntimeDoctor');
-
-    // Verify both functions exist and are separate
-    expect(typeof buildIndexingDiagnosticSummary).toBe('function');
-    expect(typeof buildComparisonRuntimeDoctorSummaryFromFacts).toBe('function');
-
-    // Verify indexing diagnostics do not include runtime selection/execution facts
-    const indexingResult = {
-      state: 'cold-scan' as const,
-      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
-      indexedRepositoryRoots: ['/workspace/repo'],
-      snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const,
-      cache: defaultIndexingCacheDiagnostics()
+  it('falls back to the active editor URI when invoked without an explicit URI (VHS-REQ-006)', async () => {
+    const activeUri = vscodeHarness.createUri('/workspace/repo/active.vi');
+    vscodeHarness.vscode.window.activeTextEditor = { document: { uri: activeUri } };
+    const historyService = {
+      load: vi
+        .fn()
+        .mockResolvedValue(createIneligibleModel({ signature: 'LVIN', commits: [] }))
     };
-    const indexingSummary = buildIndexingDiagnosticSummary(indexingResult);
 
-    // Indexing summary should not include runtime-specific terms
-    const indexingText = indexingSummary.join(' ');
-    expect(indexingText).not.toContain('provider=');
-    expect(indexingText).not.toContain('engine=');
-    expect(indexingText).not.toContain('Next action:');
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
 
-    // Indexing summary should include indexing-specific terms
-    expect(indexingText).toContain('Indexing status');
-    expect(indexingText).toContain('Refresh reason');
-    expect(indexingText).toContain('Work counts');
+    await command(undefined);
+
+    expect(historyService.load).toHaveBeenCalledTimes(1);
+    const [loadedUri] = historyService.load.mock.calls[0] as [{ fsPath: string }];
+    expect(loadedUri.fsPath).toBe(activeUri.fsPath);
   });
 
-  it('indexing diagnostic summary explicitly states runtime failures are not indexing causes', async () => {
-    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+  it('surfaces a generic load-failure message when history load throws (VHS-REQ-013)', async () => {
+    const historyService = { load: vi.fn().mockRejectedValue(new Error('boom')) };
 
-    const result = {
-      state: 'cold-scan' as const,
-      counts: { tracked: 10, reused: 0, evaluated: 10, eligible: 5, removed: 0, skipped: 0, failed: 0 },
-      indexedRepositoryRoots: ['/workspace/repo'],
-      snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const,
-      cache: defaultIndexingCacheDiagnostics()
-    };
-    const summary = buildIndexingDiagnosticSummary(result);
-    const fullText = summary.join(' ');
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
 
-    // Key boundary statement required by VHS-REQ-606
-    expect(fullText).toContain('LabVIEWCLI or comparison-runtime validation failures');
-    expect(fullText).toContain('comparison/runtime setup evidence');
-    expect(fullText).toContain('not indexing-cache causes');
+    await command({ fsPath: '/workspace/repo/file.vi' } as never);
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'VI History could not load the selected file.'
+    );
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
-  it('indexing diagnostics keep VHS-REQ-155 runtime discovery diagnostics separate', async () => {
-    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
+  it('routes eligible models through an injected compare preflight resolver (VHS-REQ-627/631)', async () => {
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+    const comparePreflightResolver = vi.fn().mockResolvedValue({
+      status: 'ready',
+      provider: 'host',
+      labviewVersion: '2025',
+      labviewBitness: '64'
+    });
 
-    const result = {
-      state: 'warm-restart' as const,
-      counts: { tracked: 5, reused: 5, evaluated: 0, eligible: 3, removed: 0, skipped: 0, failed: 0 },
-      indexedRepositoryRoots: ['/workspace/repo'],
-      snapshotPreserved: false,
-      refreshReason: 'scheduled-refresh' as const,
-      cache: defaultIndexingCacheDiagnostics()
-    };
-    const summary = buildIndexingDiagnosticSummary(result);
-    const fullText = summary.join(' ');
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      comparePreflightResolver
+    );
 
-    // Verify explicit mention of separation
-    expect(fullText).toContain('VHS-REQ-155');
-    expect(fullText).toContain('separate from indexing diagnostics');
-  });
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
 
-  it('user-visible status distinguishes all required states', async () => {
-    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
-
-    const states = [
-      { state: 'cold-scan', expected: 'Cold scan' },
-      { state: 'warm-restart', expected: 'Warm restart' },
-      { state: 'branch-switch', expected: 'Branch switch' },
-      { state: 'cancelled', expected: 'Cancelled' },
-      { state: 'trust-disabled', expected: 'Trust disabled' },
-      { state: 'failed', expected: 'Failed' }
-    ] as const;
-
-    for (const { state, expected } of states) {
-      const result = {
-        state,
-        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
-        indexedRepositoryRoots: [],
-        snapshotPreserved: false,
-        refreshReason: 'initial-activation' as const,
-        cache: defaultIndexingCacheDiagnostics()
-      };
-      const summary = buildIndexingDiagnosticSummary(result);
-      const statusLine = summary.find(line => line.startsWith('Indexing status:'));
-
-      expect(statusLine, `State ${state} should be visible`).toContain(expected);
-    }
-  });
-
-  it('user-visible diagnostics include all work count fields', async () => {
-    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
-
-    const result = {
-      state: 'cold-scan' as const,
-      counts: { tracked: 100, reused: 20, evaluated: 80, eligible: 50, removed: 2, skipped: 5, failed: 3 },
-      indexedRepositoryRoots: ['/workspace/repo'],
-      snapshotPreserved: false,
-      refreshReason: 'initial-activation' as const,
-      cache: defaultIndexingCacheDiagnostics()
-    };
-    const summary = buildIndexingDiagnosticSummary(result);
-    const countsLine = summary.find(line => line.startsWith('Work counts:'));
-
-    expect(countsLine).toContain('tracked=100');
-    expect(countsLine).toContain('reused=20');
-    expect(countsLine).toContain('evaluated=80');
-    expect(countsLine).toContain('eligible=50');
-    expect(countsLine).toContain('removed=2');
-    expect(countsLine).toContain('skipped=5');
-    expect(countsLine).toContain('failed=3');
-  });
-
-  it('user-visible diagnostics include cache storage and reuse evidence', async () => {
-    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
-
-    const result = {
-      state: 'warm-restart' as const,
-      counts: { tracked: 12, reused: 9, evaluated: 3, eligible: 8, removed: 0, skipped: 0, failed: 0 },
-      indexedRepositoryRoots: ['/workspace/repo'],
-      snapshotPreserved: false,
-      refreshReason: 'scheduled-refresh' as const,
-      cache: {
-        storage: {
-          restoreOutcome: 'restored' as const,
-          restoredEntryCount: 14,
-          persistOutcome: 'written' as const,
-          persistedEntryCount: 15
-        },
-        reuse: {
-          cacheableTrackedFileCount: 10,
-          uncacheableTrackedFileCount: 2,
-          hitCount: 9,
-          missCount: 1,
-          proofRejectedCount: 2
-        }
-      }
-    };
-    const summary = buildIndexingDiagnosticSummary(result);
-
-    expect(summary).toContain('Cache storage: restored=14 (restored), persisted=15 (written).');
-    expect(summary).toContain('Cache reuse: cacheable=10, uncacheable=2, hits=9, misses=1, proofRejected=2.');
-  });
-
-  it('user-visible diagnostics identify all refresh reasons', async () => {
-    const { buildIndexingDiagnosticSummary } = await import('../../src/indexing/viEligibilityIndexer');
-
-    const reasons = [
-      { reason: 'initial-activation', expected: 'Initial extension activation' },
-      { reason: 'head-change', expected: 'HEAD change detected' },
-      { reason: 'workspace-folder-change', expected: 'Workspace folder change' },
-      { reason: 'git-state-change', expected: 'Git repository state change' },
-      { reason: 'setting-change', expected: 'Relevant setting change' },
-      { reason: 'user-cancellation', expected: 'User cancellation' },
-      { reason: 'trust-disabled', expected: 'Workspace trust disabled' },
-      { reason: 'repository-enumeration-failed', expected: 'Repository enumeration failed' },
-      { reason: 'scheduled-refresh', expected: 'Scheduled refresh' }
-    ] as const;
-
-    for (const { reason, expected } of reasons) {
-      const result = {
-        state: 'cold-scan' as const,
-        counts: { tracked: 0, reused: 0, evaluated: 0, eligible: 0, removed: 0, skipped: 0, failed: 0 },
-        indexedRepositoryRoots: [],
-        snapshotPreserved: false,
-        refreshReason: reason,
-        cache: defaultIndexingCacheDiagnostics()
-      };
-      const summary = buildIndexingDiagnosticSummary(result);
-      const reasonLine = summary.find(line => line.startsWith('Refresh reason:'));
-
-      expect(reasonLine, `Reason ${reason} should be visible`).toContain(expected);
-    }
+    expect(comparePreflightResolver).toHaveBeenCalledTimes(1);
+    expect(createWebviewPanelMock).toHaveBeenCalledTimes(1);
   });
 });
+

@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.14.4",
+  "version": "1.14.5",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -20,7 +20,7 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "VI History disables background indexing and comparison execution in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.",
+      "description": "VI History disables selected-file history evaluation and comparison execution in untrusted workspaces to prevent external process execution. Documentation and local runtime settings CLI preparation remain available.",
       "restrictedConfigurations": [
         "viHistorySuite.runtimeProvider",
         "viHistorySuite.labviewVersion",
@@ -45,15 +45,7 @@
     "LICENSE"
   ],
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:labviewViHistory.open",
-    "onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli",
-    "onCommand:labviewViHistory.openDocumentation",
-    "onCommand:labviewViHistory.detectRuntimeNow",
-    "onCommand:labviewViHistory.resetFirstRunNotice",
-    "onCommand:labviewViHistory.showRuntimeSummary",
-    "onCommand:labviewViHistory.pickRuntimeProvider",
-    "onCommand:labviewViHistory.exportComparisonReport"
+    "onStartupFinished"
   ],
   "contributes": {
     "commands": [
@@ -135,13 +127,6 @@
           "type": "boolean",
           "default": false,
           "description": "When enabled, require the leading RSRC CRLF bytes in addition to LVIN/LVCC at offset 8."
-        },
-        "viHistorySuite.maxIndexedConcurrency": {
-          "type": "number",
-          "default": 6,
-          "minimum": 1,
-          "maximum": 16,
-          "description": "Maximum concurrent eligibility checks during repository indexing."
         },
         "viHistorySuite.historyWindowMode": {
           "type": "string",
