@@ -214,11 +214,15 @@ npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates
 The closeout command runs `npm run traceability:audit`, `npm run docs:links`,
 `npm run dod:gate`, `npm run check`, `npm test`, and `npm run package` when
 `--run-gates` is set. It always runs standards evidence and standards toolchain
-provenance. It tries host Python first in `auto` mode and falls back to the
-published GitLab registry workbench image when host preflight is unavailable.
+provenance against a temporary tracked-worktree snapshot built from
+`git ls-files`, preserving symlink targets as text rather than following them
+into generated cache roots. It tries host Python first in `auto` mode and falls
+back to the published GitLab registry workbench image when host preflight is
+unavailable.
 When `--save-dir` is provided, closeout evidence writes a machine-readable
 `closeout-summary.json` artifact with gate status, standards status, provenance
-status, and closure-decision state.
+status, closure-decision state, and `standards.auditTarget` fields for
+`mode`, `trackedFileCount`, and `generatedRootsExcluded`.
 Remote provenance and registry operations run with bounded timeout windows and
 one transient-network retry; auth-denied and credential-helper failures remain
 fail-closed and non-retryable.

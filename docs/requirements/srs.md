@@ -1525,6 +1525,10 @@ Missing numeric IDs are intentional.
     standards toolchain provenance, Definition-of-Done status, and disqualified
     evidence sources when a gate would otherwise pass from generated or fixture
     content.
+  - Standards closeout evidence runs the standards-review tools against a
+    temporary tracked-worktree snapshot from `git ls-files` and records
+    `standards.auditTarget.mode`, `trackedFileCount`, and
+    `generatedRootsExcluded` in `closeout-summary.json`.
   - Traceability drift prevention updates SRS, RTM, ID index, test plan,
     inventory, and requirements tests together when requirement scope changes.
   - The repo-native `npm run dod:gate` command verifies the DoD contract from

@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -8,6 +9,7 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const {
   ALLOWED_EXECUTABLE_COMMANDS,
   DEFAULT_STANDARDS_IMAGE,
+  GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT,
   LOCAL_STANDARDS_IMAGE,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
   STANDARDS_TOOLCHAIN_GITHUB_TAG,
@@ -15,12 +17,14 @@ const {
   STANDARDS_TOOLCHAIN_GITLAB_URL,
   STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
   classifyDockerRegistryFailure,
+  createTrackedWorktreeSnapshot,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
   isTransientNetworkFailure,
   generateCloseoutEvidence,
   parseGateScorecard,
   parseArgs,
+  parseGitTrackedFiles,
   parseLsRemote,
   runCommand,
   runDockerStandards,
@@ -29,6 +33,7 @@ const {
 } = require('../../scripts/generateCloseoutEvidence.js') as {
   ALLOWED_EXECUTABLE_COMMANDS: string[];
   DEFAULT_STANDARDS_IMAGE: string;
+  GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT: string[];
   LOCAL_STANDARDS_IMAGE: string;
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT: string;
   STANDARDS_TOOLCHAIN_GITHUB_TAG: string;
@@ -40,6 +45,24 @@ const {
     image: string,
     commandDescription: string
   ) => { category: string; message: string };
+  createTrackedWorktreeSnapshot: (
+    repoRoot: string,
+    deps?: {
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { cwd?: string; encoding?: string; shell?: boolean; timeout?: number }
+      ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
+      tmpdir?: () => string;
+    }
+  ) => {
+    mode: string;
+    path: string;
+    trackedFileCount: number;
+    symlinkFiles: string[];
+    missingFiles: string[];
+    generatedRootsExcluded: string[];
+  };
   isAllowedExecutableCommand: (command: string) => boolean;
   assertAllowedExecutableCommand: (command: string) => void;
   isTransientNetworkFailure: (commandResult: {
@@ -48,6 +71,7 @@ const {
     timedOut?: boolean;
   }) => boolean;
   parseGateScorecard: (scorecard: string) => Record<string, string>;
+  parseGitTrackedFiles: (stdout: string) => string[];
   parseArgs: (argv: string[]) => {
     kind: string;
     issue?: string;
@@ -147,7 +171,14 @@ const {
           passed: boolean;
           results: Array<{ name: string; status: string; command: string }>;
         };
-        standards: { success: boolean };
+        standards: {
+          success: boolean;
+          auditTarget?: {
+            mode: string;
+            trackedFileCount: number;
+            generatedRootsExcluded: string[];
+          };
+        };
         provenance: { success: boolean };
         closureDecision: { closable: boolean; reasons: string[] };
         exitCode: number;
@@ -232,6 +263,9 @@ function hostSuccessSpawnSync() {
     if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
       return { status: 0, stdout: githubRemoteOk() };
     }
+    if (command === 'git' && args.join(' ') === 'ls-files -z') {
+      return { status: 0, stdout: 'package.json\0scripts/generateCloseoutEvidence.js\0' };
+    }
     if (command === 'git' && args.includes('--show-current')) return { status: 0, stdout: 'feature/test\n' };
     if (command === 'git' && args.includes('--short=8')) return { status: 0, stdout: '12345678\n' };
     if (command === 'git' && args.includes('HEAD')) return { status: 0, stdout: '1234567890abcdef\n' };
@@ -262,6 +296,16 @@ describe('closeout evidence script', () => {
     ]);
   });
 
+  it('parses nul-delimited tracked files for audit snapshots', () => {
+    expect(parseGitTrackedFiles('package.json\0docs/requirements/syrs.md\0')).toEqual([
+      'package.json',
+      'docs/requirements/syrs.md'
+    ]);
+    expect(GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT).toEqual(
+      expect.arrayContaining(['.cache/', 'win-validation/', 'assurance-*-evidence/'])
+    );
+  });
+
   it('keeps closeout command execution on an explicit executable allowlist', () => {
     expect(ALLOWED_EXECUTABLE_COMMANDS).toEqual([
       'npm',
@@ -285,6 +329,52 @@ describe('closeout evidence script', () => {
       "Unsupported executable command '/tmp/evil'"
     );
     expect(spawnSync).not.toHaveBeenCalled();
+  });
+
+  it('preserves tracked symlink targets in the audit snapshot without following them', () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'closeout-snapshot-test-'));
+    const snapshotRoot = path.join(tempRoot, 'snapshot');
+
+    try {
+      const snapshot = createTrackedWorktreeSnapshot('C:\\repo', {
+        tmpdir: () => tempRoot,
+        mkdtempSync: () => {
+          fs.mkdirSync(snapshotRoot, { recursive: true });
+          return snapshotRoot;
+        },
+        spawnSync: vi.fn((command: string, args: string[]) => {
+          if (command === 'git' && args.join(' ') === 'ls-files -z') {
+            return { status: 0, stdout: 'package.json\0.tools/bin/vagrant\0' };
+          }
+          return { status: 0, stdout: '' };
+        }),
+        lstatSync: (targetPath: string) => {
+          const normalized = targetPath.replace(/\\/g, '/');
+          return {
+            isSymbolicLink: () => normalized.endsWith('/.tools/bin/vagrant'),
+            isFile: () => !normalized.endsWith('/.tools/bin/vagrant')
+          };
+        },
+        copyFileSync: (_sourcePath: string, targetPath: string) => {
+          fs.writeFileSync(targetPath, 'tracked package content', 'utf8');
+        },
+        readlinkSync: () => '\\home\\sergio\\repos\\gl\\vi-history-suite\\.cache\\vagrant-install\\usr\\bin\\vagrant',
+        writeFileSync: fs.writeFileSync,
+        mkdirSync: fs.mkdirSync
+      } as any);
+
+      expect(snapshot).toMatchObject({
+        mode: 'tracked-worktree-snapshot',
+        trackedFileCount: 2,
+        symlinkFiles: ['.tools/bin/vagrant'],
+        missingFiles: []
+      });
+      expect(fs.readFileSync(path.join(snapshot.path, 'package.json'), 'utf8')).toBe('tracked package content');
+      expect(fs.readFileSync(path.join(snapshot.path, '.tools/bin/vagrant'), 'utf8')).toContain('.cache');
+      expect(snapshot.generatedRootsExcluded).toContain('win-validation/');
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 
   it('verifies standards toolchain provenance as machine-readable evidence', () => {
@@ -719,14 +809,18 @@ describe('closeout evidence script', () => {
   });
 
   it('renders a closable standards summary when mandatory standards and gates pass', () => {
+    const spawnSync = hostSuccessSpawnSync();
     const result = generateCloseoutEvidence(
       ['--kind', 'standards', '--issue', '130', '--run-gates'],
       {
         platform: 'win32',
         cwd: 'C:\\repo',
         existsSync: () => true,
-        spawnSync: hostSuccessSpawnSync()
+        spawnSync
       }
+    );
+    const requirementsQualityCall = spawnSync.mock.calls.find(([_command, args]) =>
+      args.join(' ').includes('requirements_quality_check.py')
     );
 
     expect(result.exitCode).toBe(0);
@@ -738,11 +832,18 @@ describe('closeout evidence script', () => {
     expect(result.markdown).toContain('## Standards Toolchain Provenance');
     expect(result.markdown).toContain('| GitLab source main | PASS |');
     expect(result.markdown).toContain('non-authoritative-cache');
+    expect(result.markdown).toContain('Audit target: tracked-worktree-snapshot; 2 tracked files; generated roots excluded.');
     expect(result.markdown).toContain('Evidence scan: 251 files; REQ=strong; TEST=strong');
     expect(result.markdown).toContain('Closable: yes');
     expect(result.markdown).toContain('| docs:links | PASS | npm.cmd run docs:links |');
     expect(result.markdown).toContain('Definition-of-Done');
     expect(result.markdown).not.toContain('Defer docs link-check/lychee automation');
+    expect(requirementsQualityCall?.[2].cwd).toContain('vi-history-suite-audit-snapshot-');
+    expect(result.context.machineReadableSummary?.standards.auditTarget).toMatchObject({
+      mode: 'tracked-worktree-snapshot',
+      trackedFileCount: 2,
+      generatedRootsExcluded: expect.arrayContaining(['win-validation/', '.cache/'])
+    });
   });
 
   it('marks the summary not closable when local gates are not run', () => {
@@ -795,7 +896,14 @@ describe('closeout evidence script', () => {
           traceabilitySummary: { inventoryEntries?: number };
           results: Array<{ name: string; status: string }>;
         };
-        standards: { success: boolean };
+        standards: {
+          success: boolean;
+          auditTarget?: {
+            mode: string;
+            trackedFileCount: number;
+            generatedRootsExcluded: string[];
+          };
+        };
         provenance: { success: boolean };
         closureDecision: { closable: boolean };
         exitCode: number;
@@ -812,6 +920,11 @@ describe('closeout evidence script', () => {
         ])
       );
       expect(summary.standards.success).toBe(true);
+      expect(summary.standards.auditTarget).toMatchObject({
+        mode: 'tracked-worktree-snapshot',
+        trackedFileCount: 2,
+        generatedRootsExcluded: expect.arrayContaining(['win-validation/', 'assurance-*-evidence/'])
+      });
       expect(summary.provenance.success).toBe(true);
       expect(summary.closureDecision.closable).toBe(true);
       expect(summary.exitCode).toBe(0);
@@ -830,6 +943,9 @@ describe('closeout evidence script', () => {
       }
       if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
         return { status: 0, stdout: githubRemoteOk() };
+      }
+      if (command === 'git' && args.join(' ') === 'ls-files -z') {
+        return { status: 0, stdout: 'package.json\0' };
       }
       if (command === 'git') return { status: 0, stdout: '1234567890abcdef\n' };
       if (command === 'gh') return { status: 1, stderr: 'gh unavailable' };
@@ -854,6 +970,11 @@ describe('closeout evidence script', () => {
     expect(result.context.standards.runner).toBe('docker');
     expect(result.markdown).toContain('Standards runner: docker');
     expect(result.markdown).toContain(`Docker image: ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}; image access=present`);
+    expect(spawnSync.mock.calls.some(([command, args]) =>
+      command === 'docker' &&
+      args.includes('-v') &&
+      args.some((arg) => arg.includes('vi-history-suite-audit-snapshot-') && arg.endsWith(':/target'))
+    )).toBe(true);
   });
 
   it('fails closeout when mandatory host and Docker standards evidence fail', () => {
