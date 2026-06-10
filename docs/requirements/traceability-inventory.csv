@@ -1,10 +1,10 @@
 Path,Classification,RtmCoverage,Notes
 scripts/auditCustomizationGovernance.js,mapped,Yes,Customization governance audit script for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
-scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command; mapped to VHS-REQ-597.
+scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command with generated validation/evidence root exclusions; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
 scripts/fileLinuxValidationGap.js,dev-only,No,Maintainer Linux-validation gap auto-filer (issue #259) so the session not the human authors fix issues; gh-only allow-list and injected fs/spawn boundaries.
-scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with mandatory standards runner published Docker workbench support standards toolchain provenance verification and DoD evidence-source hygiene; mapped to VHS-REQ-601 and VHS-REQ-615.
+scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with tracked-worktree standards audit snapshot mandatory standards runner published Docker workbench support standards toolchain provenance verification and DoD evidence-source hygiene; mapped to VHS-REQ-601 and VHS-REQ-615.
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
@@ -65,11 +65,11 @@ scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
-tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards toolchain provenance and DoD evidence-source hygiene tests; mapped to VHS-REQ-601.
+tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards audit snapshot standards toolchain provenance and DoD evidence-source hygiene tests; mapped to VHS-REQ-601.
 tests/unit/fileLinuxValidationGapScript.test.ts,dev-only,No,Tests for the maintainer Linux-validation gap auto-filer script (issue #259); covers parse/detect/compose and the injected gh boundary.
 tests/unit/definitionOfDoneGate.test.ts,mapped,Yes,Definition-of-Done gate checker tests; mapped to VHS-REQ-615.
 tests/unit/coverageMapScript.test.ts,mapped,Yes,Coverage traceability map tests; mapped to VHS-REQ-613.
-tests/unit/docsLinkCheckScript.test.ts,mapped,Yes,Documentation link-check command tests; mapped to VHS-REQ-597.
+tests/unit/docsLinkCheckScript.test.ts,mapped,Yes,Documentation link-check command tests including generated validation/evidence root exclusions; mapped to VHS-REQ-597.
 tests/unit/bundledDocumentation.test.ts,mapped,Yes,Bundled documentation manifest/page asset verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/bundledDocumentationAction.test.ts,mapped,Yes,Bundled documentation command/action routing verification coverage; mapped through RTM to VHS-REQ-611.
 tests/unit/comparisonReportArchive.test.ts,mapped,Yes,Dashboard comparison report archive tests; mapped to VHS-REQ-610.

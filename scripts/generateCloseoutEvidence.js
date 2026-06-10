@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
@@ -37,6 +38,22 @@ const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze([
   'docker',
   'python3',
   'gh'
+]);
+const GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT = Object.freeze([
+  '.cache/',
+  'win-validation/',
+  'assurance-*-evidence/',
+  'release-evidence/',
+  'coverage/',
+  'node_modules/',
+  'out/',
+  'out-tests/',
+  'dist/',
+  'tmp/',
+  'vagrant/shared/',
+  'vagrant/evidence/',
+  'vagrant/.vagrant/',
+  'vagrant/.vagrant-ci/'
 ]);
 
 function npmCommand(platform = process.platform) {
@@ -323,6 +340,77 @@ function parseTraceabilitySummary(output) {
     inventoryEntries: inventoryMatch ? Number(inventoryMatch[1]) : undefined,
     gapEntries: gapMatch ? Number(gapMatch[1]) : undefined
   };
+}
+
+function parseGitTrackedFiles(output) {
+  return String(output || '')
+    .split('\0')
+    .filter((entry) => entry.length > 0)
+    .map((entry) => entry.replace(/\\/g, '/'));
+}
+
+function createTrackedWorktreeSnapshot(repoRoot, deps = {}) {
+  const resolvedRepoRoot = path.resolve(repoRoot);
+  const listFiles = runCommand('git', ['ls-files', '-z'], withCommandPolicy({ ...deps, cwd: resolvedRepoRoot }, {
+    timeoutMs: COMMAND_TIMEOUT_MS.gitRemote,
+    maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
+    retryOnTransient: false
+  }));
+  if (listFiles.status !== 0) {
+    throw new Error(`Unable to enumerate tracked files for standards audit snapshot. ${listFiles.stderr || listFiles.error}`.trim());
+  }
+
+  const trackedFiles = parseGitTrackedFiles(listFiles.stdout);
+  const tmpRoot = deps.tmpdir ? deps.tmpdir() : os.tmpdir();
+  const mkdtempSyncImpl = deps.mkdtempSync || fs.mkdtempSync;
+  const mkdirSyncImpl = deps.mkdirSync || fs.mkdirSync;
+  const lstatSyncImpl = deps.lstatSync || fs.lstatSync;
+  const copyFileSyncImpl = deps.copyFileSync || fs.copyFileSync;
+  const readlinkSyncImpl = deps.readlinkSync || fs.readlinkSync;
+  const writeFileSyncImpl = deps.writeFileSync || fs.writeFileSync;
+  const snapshotPath = mkdtempSyncImpl(path.join(tmpRoot, 'vi-history-suite-audit-snapshot-'));
+  const symlinkFiles = [];
+  const missingFiles = [];
+
+  for (const trackedFile of trackedFiles) {
+    const sourcePath = path.join(resolvedRepoRoot, trackedFile);
+    const targetPath = path.join(snapshotPath, trackedFile);
+    mkdirSyncImpl(path.dirname(targetPath), { recursive: true });
+
+    try {
+      const stat = lstatSyncImpl(sourcePath);
+      if (stat.isSymbolicLink()) {
+        writeFileSyncImpl(targetPath, readlinkSyncImpl(sourcePath), 'utf8');
+        symlinkFiles.push(trackedFile);
+      } else if (stat.isFile()) {
+        copyFileSyncImpl(sourcePath, targetPath);
+      }
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        missingFiles.push(trackedFile);
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  return {
+    mode: 'tracked-worktree-snapshot',
+    path: snapshotPath,
+    trackedFileCount: trackedFiles.length,
+    symlinkFiles,
+    missingFiles,
+    generatedRootsExcluded: [...GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT]
+  };
+}
+
+function removeTrackedWorktreeSnapshot(snapshot, deps = {}) {
+  if (!snapshot?.path) {
+    return;
+  }
+
+  const rmSyncImpl = deps.rmSync || fs.rmSync;
+  rmSyncImpl(snapshot.path, { recursive: true, force: true });
 }
 
 function hostStandardsCommands(skillRoot) {
@@ -791,7 +879,7 @@ function replaceRepoMount(args, repoRoot) {
 }
 
 function runDockerStandards(options, deps = {}) {
-  const repoRoot = TRUSTED_REPO_ROOT;
+  const repoRoot = deps.auditTarget?.path || deps.cwd || TRUSTED_REPO_ROOT;
   const inspect = runCommand('docker', ['image', 'inspect', options.standardsImage], withCommandPolicy(deps, {
     timeoutMs: COMMAND_TIMEOUT_MS.dockerImageInspect,
     maxAttempts: COMMAND_RETRY_ATTEMPTS.none,
@@ -1145,11 +1233,14 @@ function renderStandardsSummary(standards) {
   const summary = standards.summary;
   const lines = [
     `- Standards runner: ${summary.runner}`,
+    standards.auditTarget
+      ? `- Audit target: ${standards.auditTarget.mode}; ${standards.auditTarget.trackedFileCount} tracked files; generated roots excluded.`
+      : undefined,
     `- Requirements quality: ${summary.requirementsQuality?.ok === true ? 'PASS' : 'see raw evidence'}`,
     `- Evidence scan: ${summary.fileCount ?? 'unknown'} files; REQ=${summary.reqSignal ?? 'unknown'}; TEST=${summary.testSignal ?? 'unknown'}`,
     `- Gate scorecard: coverage=${summary.coverageGate ?? 'FAIL'}; doc=${summary.docGate ?? 'FAIL'}; dod=${formatDodGateSummary(summary.dodGateEvidence)}`,
     '- Definition-of-Done evidence: local `dod:gate` and standards scorecard status are retained in closeout evidence.'
-  ];
+  ].filter(Boolean);
   if (standards.runner === 'docker') {
     lines.splice(1, 0, `- Docker image: ${standards.image}; image access=${standards.imageAccess}`);
   }
@@ -1263,6 +1354,11 @@ function buildMachineReadableCloseoutSummary(context, exitCode) {
       image: context.standards.image,
       imageAccess: context.standards.imageAccess,
       hostFailure: context.standards.hostFailure,
+      auditTarget: context.standards.auditTarget ? {
+        mode: context.standards.auditTarget.mode,
+        trackedFileCount: context.standards.auditTarget.trackedFileCount,
+        generatedRootsExcluded: context.standards.auditTarget.generatedRootsExcluded
+      } : undefined,
       summary: {
         fileCount: standardsSummary.fileCount,
         reqSignal: standardsSummary.reqSignal,
@@ -1377,9 +1473,24 @@ function generateCloseoutEvidence(argv, deps = {}) {
   const traceabilitySummary = parseTraceabilitySummary(
     `${traceabilityGate?.stdout || ''}\n${traceabilityGate?.stderr || ''}`
   );
-  const standards = runStandardsEvidence(options, { ...deps, cwd });
+  const auditTarget = createTrackedWorktreeSnapshot(cwd, deps);
+  let standards;
+  try {
+    standards = runStandardsEvidence(options, { ...deps, cwd: auditTarget.path, auditTarget });
+    standards.auditTarget = auditTarget;
+  } finally {
+    removeTrackedWorktreeSnapshot(auditTarget, deps);
+  }
   const provenance = verifyStandardsToolchainProvenance(options, { ...deps, cwd });
+  const sanitizedAuditTarget = {
+    mode: standards.auditTarget?.mode,
+    trackedFileCount: standards.auditTarget?.trackedFileCount,
+    generatedRootsExcluded: standards.auditTarget?.generatedRootsExcluded,
+    symlinkFiles: standards.auditTarget?.symlinkFiles,
+    missingFiles: standards.auditTarget?.missingFiles
+  };
   const evidenceHygiene = {
+    auditTarget: sanitizedAuditTarget,
     dodGate: standards.summary?.dodGateEvidence,
     policy: {
       passSource: 'Only scanner-visible DoD evidence in .github/workflows/ci.yml can promote DoD to PASS.',
@@ -1398,6 +1509,14 @@ function generateCloseoutEvidence(argv, deps = {}) {
       name: 'standards-evidence-hygiene',
       file: 'standards-evidence-hygiene.json',
       stdout: JSON.stringify(evidenceHygiene, null, 2),
+      stderr: '',
+      error: '',
+      status: 0
+    },
+    {
+      name: 'standards-audit-target',
+      file: 'standards-audit-target.json',
+      stdout: JSON.stringify(sanitizedAuditTarget, null, 2),
       stderr: '',
       error: '',
       status: 0
@@ -1465,6 +1584,7 @@ module.exports = {
   ALLOWED_EXECUTABLE_COMMANDS,
   DEFAULT_SAVE_DIR,
   DEFAULT_STANDARDS_IMAGE,
+  GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT,
   LOCAL_STANDARDS_IMAGE,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
   STANDARDS_TOOLCHAIN_GITHUB_TAG,
@@ -1473,6 +1593,7 @@ module.exports = {
   STANDARDS_TOOLCHAIN_REGISTRY_IMAGE,
   collectGithubContext,
   collectGitContext,
+  createTrackedWorktreeSnapshot,
   dockerStandardsCommands,
   findRemoteCommit,
   findTagCommit,
@@ -1481,9 +1602,11 @@ module.exports = {
   parseGateScorecard,
   main,
   parseArgs,
+  parseGitTrackedFiles,
   parseLsRemote,
   parseTraceabilitySummary,
   renderCloseoutMarkdown,
+  removeTrackedWorktreeSnapshot,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
   runCommand,

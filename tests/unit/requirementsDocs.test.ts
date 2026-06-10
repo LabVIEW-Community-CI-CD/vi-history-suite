@@ -341,6 +341,10 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('command-reference drift');
     expect(testPlan).toContain('Docs Link Check / lychee');
     expect(testPlan).toContain('committed Markdown and bundled documentation');
+    // VHS-REQ-597 generated-root exclusion contract (PR #393)
+    expect(srs).toContain('while excluding generated validation, cache,');
+    expect(srs).toContain('release-evidence, and Vagrant evidence directories');
+    expect(testPlan).toContain('release-evidence, and Vagrant evidence directories');
     expect(testPlan).toContain('PR Coverage Gate / coverage');
     expect(testPlan).toContain('coverage/cobertura-coverage.xml');
     expect(testPlan).toContain('coverage/coverage-summary.json');
@@ -566,6 +570,12 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('out-of-scope statement');
     expect(testPlan).toContain('closeout readiness');
     expect(testPlan).toContain('closeout-summary.json');
+    // VHS-REQ-615 closeout tracked-worktree audit snapshot contract (PR #393)
+    expect(srs).toContain('temporary tracked-worktree snapshot from `git ls-files`');
+    expect(srs).toContain('`standards.auditTarget.mode`');
+    expect(testPlan).toContain('`standards.auditTarget` fields for');
+    expect(readme).toContain('`standards.auditTarget` fields');
+    expect(readme).toContain('temporary tracked-worktree snapshot built from `git ls-files`');
     expect(testPlan).toContain('bounded timeout windows and');
     expect(testPlan).toContain('one transient-network retry');
     expect(testPlan).toContain('non-retryable');

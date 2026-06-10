@@ -100,8 +100,11 @@ npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates
 ```
 
 When `--save-dir` is provided, closeout evidence also writes
-`closeout-summary.json` with machine-readable gate, standards, provenance, and
-closure-decision status.
+`closeout-summary.json` with machine-readable gate, standards, provenance,
+closure-decision status, and `standards.auditTarget` fields. Standards evidence
+runs against a temporary tracked-worktree snapshot built from `git ls-files`, so
+generated validation, cache, coverage, package, and evidence directories cannot
+become formal proof.
 
 Use Docker explicitly when host Python is unavailable:
 
@@ -152,7 +155,7 @@ npm run package
 ```
 
 - The closeout command always runs the mandatory standards evidence checks
-   through the selected standards runner:
+   through the selected standards runner against the tracked-worktree snapshot:
 
 ```shell
 python3 C:\Users\sveld\.codex\skills\repo-standards-review\scripts\preflight_local_dependencies.py --json

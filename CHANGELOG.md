@@ -10,6 +10,17 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.14.6] - 2026-06-10
+
+### Fixed
+
+- On Windows, opening `VI History` now resolves LabVIEW installed at a
+  non-default location when the registry records the installation *directory*
+  (for example `C:\Program Files\National Instruments\LabVIEW 2025\`) rather
+  than the executable path. Registry-derived LabVIEW candidates are also
+  validated on disk before the comparison runtime locator selects them, so a
+  stale registry entry can never point the locator at a missing `LabVIEW.exe`.
+
 ## [1.14.5] - 2026-06-10
 
 ### Fixed

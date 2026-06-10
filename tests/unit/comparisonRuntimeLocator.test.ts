@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildDocumentedRuntimeCandidates,
   locateComparisonRuntime,
+  parseWindowsRegistryLabviewCandidates,
   probeWindowsRegistryHostLabviewAvailable,
   WindowsContainerProviderFacts
 } from '../../src/reporting/comparisonRuntimeLocator';
@@ -1030,18 +1031,60 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
 });
 
 describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
-  const REGISTRY_LABVIEW_EXE =
-    'D:\\Custom\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+  // A real National Instruments install records the install DIRECTORY (trailing
+  // backslash) in the registry `Path` value, not the executable. The probe must
+  // derive `<dir>LabVIEW.exe` and validate it on disk (issue #381).
+  const REGISTRY_LABVIEW_INSTALL_DIR = 'D:\\Custom\\National Instruments\\LabVIEW 2026\\';
+  const REGISTRY_LABVIEW_EXE = `${REGISTRY_LABVIEW_INSTALL_DIR}LabVIEW.exe`;
 
-  function registryOutputFor(exePath: string): string {
+  function registryOutputFor(pathValue: string, subkey = '26.0'): string {
     return [
-      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
-      `    Path    REG_SZ    ${exePath}`,
+      `HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\${subkey}`,
+      `    Path    REG_SZ    ${pathValue}`,
       ''
     ].join('\r\n');
   }
 
-  it('reports available when a registry-resolved LabVIEW.exe and the shared CLI both exist on disk', async () => {
+  // Faithful reproduction of the stock NI registry layout from issue #381: every
+  // version subkey records the install directory, not `...\LabVIEW.exe`.
+  function realRegistryOutput(): string {
+    const subkeys: ReadonlyArray<readonly [string, string]> = [
+      ['25.0', 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\'],
+      ['25.3', 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\'],
+      ['26.0', 'D:\\Custom\\National Instruments\\LabVIEW 2026\\'],
+      ['26.1', 'D:\\Custom\\National Instruments\\LabVIEW 2026\\']
+    ];
+    return subkeys
+      .flatMap(([subkey, installDir]) => [
+        `HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\${subkey}`,
+        `    Path    REG_SZ    ${installDir}`,
+        ''
+      ])
+      .join('\r\n');
+  }
+
+  it('reports available when the NI install-directory Path resolves a LabVIEW.exe on disk and the shared CLI exists', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_INSTALL_DIR),
+      pathExists: pathExistsFor([REGISTRY_LABVIEW_EXE, WINDOWS_LABVIEW_CLI_X86])
+    });
+
+    expect(available).toBe(true);
+  });
+
+  it('resolves a real stock NI registry layout where every subkey records the install directory', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () => realRegistryOutput(),
+      pathExists: pathExistsFor([
+        'D:\\Custom\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        WINDOWS_LABVIEW_CLI_X86
+      ])
+    });
+
+    expect(available).toBe(true);
+  });
+
+  it('still resolves a registry Path that records LabVIEW.exe directly (forward compatibility)', async () => {
     const available = await probeWindowsRegistryHostLabviewAvailable({
       queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_EXE),
       pathExists: pathExistsFor([REGISTRY_LABVIEW_EXE, WINDOWS_LABVIEW_CLI_X86])
@@ -1050,9 +1093,9 @@ describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
     expect(available).toBe(true);
   });
 
-  it('reports unavailable when the registry-resolved LabVIEW.exe is not on disk (stale registry)', async () => {
+  it('reports unavailable when the derived LabVIEW.exe is not on disk (stale registry)', async () => {
     const available = await probeWindowsRegistryHostLabviewAvailable({
-      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_EXE),
+      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_INSTALL_DIR),
       pathExists: pathExistsFor([WINDOWS_LABVIEW_CLI_X86])
     });
 
@@ -1061,7 +1104,7 @@ describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
 
   it('reports unavailable when the shared LabVIEW CLI is not on disk', async () => {
     const available = await probeWindowsRegistryHostLabviewAvailable({
-      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_EXE),
+      queryWindowsRegistry: async () => registryOutputFor(REGISTRY_LABVIEW_INSTALL_DIR),
       pathExists: pathExistsFor([REGISTRY_LABVIEW_EXE])
     });
 
@@ -1086,5 +1129,150 @@ describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
     });
 
     expect(available).toBe(false);
+  });
+});
+
+describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634)', () => {
+  function registryOutput(pathValue: string, subkey = '25.0'): string {
+    return [
+      `HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\${subkey}`,
+      `    Path    REG_SZ    ${pathValue}`,
+      ''
+    ].join('\r\n');
+  }
+
+  it('derives <dir>LabVIEW.exe from the NI install-directory Path value (issue #381)', () => {
+    const candidates = parseWindowsRegistryLabviewCandidates(
+      registryOutput('C:\\Program Files\\National Instruments\\LabVIEW 2025\\')
+    );
+
+    // The parser is pure: it emits a parse-time claim with exists: false; the
+    // locator validates the path on disk (see the resolveWindowsRegistryCandidates
+    // describe block) before trusting it.
+    expect(candidates).toEqual([
+      {
+        kind: 'labview-exe',
+        path: 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe',
+        source: 'registry',
+        exists: false,
+        bitness: 'x64'
+      }
+    ]);
+  });
+
+  it('still parses a Path value that records LabVIEW.exe directly (forward compatibility)', () => {
+    const candidates = parseWindowsRegistryLabviewCandidates(
+      registryOutput('C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe', '26.0')
+    );
+
+    expect(candidates).toEqual([
+      {
+        kind: 'labview-exe',
+        path: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        source: 'registry',
+        exists: false,
+        bitness: 'x86'
+      }
+    ]);
+  });
+
+  it('dedupes repeated install-directory subkeys to a single derived executable', () => {
+    const output = [
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\25.0',
+      '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2025\\',
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\25.3',
+      '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2025\\',
+      ''
+    ].join('\r\n');
+
+    const candidates = parseWindowsRegistryLabviewCandidates(output);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0].path).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+    );
+  });
+
+  it('does not treat non-LabVIEW subdirectories under the key as install candidates', () => {
+    const candidates = parseWindowsRegistryLabviewCandidates(
+      registryOutput('C:\\Program Files\\National Instruments\\LabVIEW 2026\\resource\\', '26.0')
+    );
+
+    expect(candidates).toEqual([]);
+  });
+});
+
+describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-634, #381)', () => {
+  // A non-default install drive that the documented scan never produces (it only
+  // covers C:), yet whose bitness is still inferable from `\Program Files\`, so
+  // these candidates can only reach selection via the registry parser/probe path.
+  const REGISTRY_NONDEFAULT_INSTALL_DIR =
+    'D:\\Program Files\\National Instruments\\LabVIEW 2026\\';
+  const REGISTRY_NONDEFAULT_LABVIEW_EXE = `${REGISTRY_NONDEFAULT_INSTALL_DIR}LabVIEW.exe`;
+
+  function installDirRegistryOutput(installDir: string): string {
+    return [
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
+      `    Path    REG_SZ    ${installDir}`,
+      ''
+    ].join('\r\n');
+  }
+
+  it('selects a registry-resolved non-default-path LabVIEW when the derived exe exists on disk', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: pathExistsFor([REGISTRY_NONDEFAULT_LABVIEW_EXE, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi
+          .fn()
+          .mockResolvedValue(installDirRegistryOutput(REGISTRY_NONDEFAULT_INSTALL_DIR)),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'host-native',
+      engine: 'labview-cli',
+      labviewExe: {
+        path: REGISTRY_NONDEFAULT_LABVIEW_EXE,
+        source: 'registry',
+        bitness: 'x64'
+      }
+    });
+    expect(selection.blockedReason).toBeUndefined();
+  });
+
+  it('does not select a stale registry install-dir whose derived exe is absent on disk (#381)', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        // Stale registry subkey: the install directory is recorded but the exe
+        // was removed, while the shared LabVIEWCLI is still installed. The
+        // locator must report unavailable, not select the nonexistent path.
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi
+          .fn()
+          .mockResolvedValue(installDirRegistryOutput(REGISTRY_NONDEFAULT_INSTALL_DIR)),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-exe-not-found'
+    });
+    expect(selection.labviewExe).toBeUndefined();
   });
 });

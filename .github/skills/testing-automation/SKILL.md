@@ -28,6 +28,9 @@ Use `bash .github/skills/testing-automation/scripts/run-pr-gates.sh` when you ne
 3. Re-run the failing command, then re-run the next gate in sequence.
 4. Confirm docs/traceability gates if requirements or docs changed.
 
+## Docs Link Hygiene
+- `npm run docs:links` checks committed Markdown and bundled documentation, not retained run output. If a failure points into generated roots such as `win-validation/`, `.cache/`, `assurance-*-evidence/`, `release-evidence/`, coverage/package output, or Vagrant evidence folders, harden the skip policy and tests instead of editing copied staging docs.
+
 ## Evidence Checklist
 - Mention exact commands used in PR notes.
 - Include whether failures were unit, integration, packaging, or DoD gates.

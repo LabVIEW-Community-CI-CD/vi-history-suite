@@ -914,6 +914,9 @@ Missing numeric IDs are intentional.
   - The workflow runs `npm run traceability:audit`.
   - The workflow runs `npm run docs:links` through the `Docs Link Check /
     lychee` step.
+  - The documentation link check scans committed Markdown and bundled
+    documentation surfaces while excluding generated validation, cache,
+    coverage, package, release-evidence, and Vagrant evidence directories.
   - The workflow runs `npm test`.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
@@ -1522,6 +1525,10 @@ Missing numeric IDs are intentional.
     standards toolchain provenance, Definition-of-Done status, and disqualified
     evidence sources when a gate would otherwise pass from generated or fixture
     content.
+  - Standards closeout evidence runs the standards-review tools against a
+    temporary tracked-worktree snapshot from `git ls-files` and records
+    `standards.auditTarget.mode`, `trackedFileCount`, and
+    `generatedRootsExcluded` in `closeout-summary.json`.
   - Traceability drift prevention updates SRS, RTM, ID index, test plan,
     inventory, and requirements tests together when requirement scope changes.
   - The repo-native `npm run dod:gate` command verifies the DoD contract from
@@ -2461,9 +2468,12 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - `probeWindowsRegistryHostLabviewAvailable(deps)` reuses the locator's
     existing registry query plans and parser, returns true only when the
-    registry names a `LabVIEW.exe` that exists on disk AND the shared Windows
-    LabVIEW CLI exists on disk, and never throws (a failed registry query
-    yields false). It performs no container or process probes.
+    registry resolves a `LabVIEW.exe` — either named directly or derived from
+    the National Instruments install-directory `Path` value (for example
+    `C:\Program Files\National Instruments\LabVIEW <year>\`, which is what a
+    stock NI install actually records) — that exists on disk AND the shared
+    Windows LabVIEW CLI exists on disk, and never throws (a failed registry
+    query yields false). It performs no container or process probes.
   - `decideLabviewCliOpenGateWithRegistryFallback(baseDecision, deps)` returns
     the base decision unchanged unless it is `block`, the platform is Windows,
     and a probe is supplied; in that case it returns `allow` when the probe
