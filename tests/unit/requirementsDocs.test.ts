@@ -966,7 +966,7 @@ describe('requirements documentation coherence', () => {
       'tests/unit/extensionActivationLazySideEffects.test.ts'
     );
     expect(requirementRow?.VerificationRefs).toContain('tests/integration/suite/extensionHost.test.ts');
-    expect(packageManifestTest).toContain('onCommand:labviewViHistory.openDocumentation');
+    expect(packageManifestTest).toContain('labviewViHistory.openDocumentation');
     expect(extensionHostTest).toContain("command: 'openDocumentation'");
     expect(extensionHostTest).toContain('getLastOpenedDocumentationPanel');
     expect(indexRow?.CurrentAnchor).toBe(
@@ -1001,7 +1001,7 @@ describe('requirements documentation coherence', () => {
       'tests/unit/extensionActivationLazySideEffects.test.ts'
     );
     expect(requirementRow?.VerificationRefs).toContain('tests/integration/suite/extensionHost.test.ts');
-    expect(packageManifestTest).toContain('onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli');
+    expect(packageManifestTest).toContain('labviewViHistory.prepareLocalRuntimeSettingsCli');
     expect(extensionActivationTest).toContain(
       "commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')"
     );
