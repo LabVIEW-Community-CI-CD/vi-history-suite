@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.17.0] - 2026-06-11
+
+### Changed
+
+- The `VI History` panel now shows each retained revision's full Git commit
+  message body in a dedicated `Commit body` column, replacing the former
+  `Adjacent pair` column. The adjacent-pair text only repeated hash pairings
+  already visible elsewhere in the table, while the commit body carries the
+  human rationale that is otherwise hard to recover from binary VI revisions.
+  Commit bodies render with their original line breaks and show a factual
+  fallback when a revision has no body. The copied review packet now lists
+  per-revision commit subject and body facts in place of the previous
+  compare-pair summary. (VHS-REQ-639)
+
 ## [1.16.0] - 2026-06-11
 
 ### Added

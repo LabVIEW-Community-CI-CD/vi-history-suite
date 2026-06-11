@@ -9,6 +9,7 @@ function createTestCommit(overrides: Partial<ViHistoryCommit> = {}): ViHistoryCo
     authorName: 'Test Author',
     authorDate: '2025-01-15',
     subject: 'Test commit subject',
+    body: 'Test commit body',
     ...overrides
   };
 }
@@ -508,37 +509,60 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('Add feature X');
     });
 
-    it('renders adjacent pair info for commits with previous hash', () => {
+    it('renders the commit body in a dedicated cell for each row', () => {
+      const model = createTestViewModel({
+        commits: [
+          createTestCommit({ hash: 'abc123', body: 'Investigated the wiring change' })
+        ]
+      });
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('data-testid="history-commit-body"');
+      expect(html).toContain('Investigated the wiring change');
+      expect(html).not.toContain('data-testid="history-compare-pair"');
+      expect(html).not.toContain('data-testid="history-compare-base"');
+    });
+
+    it('preserves multi-line commit bodies as line breaks and escapes HTML', () => {
       const model = createTestViewModel({
         commits: [
           createTestCommit({
-            hash: 'newer12345678901234567890123456789012345',
-            previousHash: 'older12345678901234567890123456789012345'
-          }),
-          createTestCommit({
-            hash: 'older12345678901234567890123456789012345'
+            hash: 'abc123',
+            body: 'First line\nSecond <script>alert(1)</script> line'
           })
         ]
       });
       const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('data-testid="history-compare-pair"');
-      expect(html).toContain('Adjacent:');
-      expect(html).toContain('vs prior:');
-      expect(html).toContain('<code>newer123</code>');
-      expect(html).toContain('<code>older123</code>');
+      expect(html).toContain('First line<br />Second');
+      expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+      expect(html).not.toContain('<script>alert(1)</script>');
     });
 
-    it('renders oldest revision note for commit without previous hash', () => {
+    it('preserves leading indentation in the commit body instead of trimming it', () => {
       const model = createTestViewModel({
         commits: [
-          createTestCommit({ hash: 'oldest123' })
+          createTestCommit({
+            hash: 'abc123',
+            body: '  - indented bullet\n    nested detail'
+          })
         ]
       });
       const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('Oldest retained revision');
-      expect(html).toContain('selectable as the older/base side of explicit compare preflight');
+      expect(html).toContain('  - indented bullet<br />    nested detail');
+    });
+
+    it('renders a factual fallback for commits with an empty body', () => {
+      const model = createTestViewModel({
+        commits: [
+          createTestCommit({ hash: 'oldest123', body: '' })
+        ]
+      });
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('data-testid="history-commit-body-empty"');
+      expect(html).toContain('No commit body');
     });
 
     it('renders commit actions including open and copy buttons', () => {

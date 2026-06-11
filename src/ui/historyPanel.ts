@@ -153,9 +153,6 @@ export function renderHistoryPanelHtml(
       const selectCheckbox = `<input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(commit.hash)}" ${
         comparisonSelectionEnabled ? '' : 'disabled'
       } />`;
-      const compareBase = commit.previousHash
-        ? `<div data-testid="history-compare-pair"><strong>Adjacent:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs prior:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
-        : 'Oldest retained revision (selectable as the older/base side of explicit compare preflight)';
 
       return `
         <tr data-testid="history-row" data-commit-index="${index}">
@@ -164,7 +161,7 @@ export function renderHistoryPanelHtml(
           <td data-testid="history-commit-date">${escapeHtml(commit.authorDate)}</td>
           <td data-testid="history-commit-author">${escapeHtml(commit.authorName)}</td>
           <td data-testid="history-commit-subject">${escapeHtml(commit.subject)}</td>
-          <td data-testid="history-compare-base">${compareBase}</td>
+          <td data-testid="history-commit-body" class="commit-body">${renderCommitBodyCell(commit)}</td>
           <td data-testid="history-commit-actions">
             <button data-testid="history-action-open" data-command="openCommit" data-hash="${escapeHtml(commit.hash)}">Open@commit</button>
             <button data-testid="history-action-copy" data-command="copyHash" data-hash="${escapeHtml(commit.hash)}">Copy hash</button>
@@ -335,7 +332,7 @@ export function renderHistoryPanelHtml(
           <th>Date</th>
           <th>Author</th>
           <th>Subject</th>
-          <th>Adjacent pair</th>
+          <th>Commit body</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -371,7 +368,7 @@ export function renderHistoryPanelHtml(
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
         <li data-testid="history-guidance-step">Use the commit checkboxes to select exactly two retained revisions, then review the compare preflight section before choosing <code>Compare</code>.</li>
-        <li data-testid="history-guidance-step">The compare preflight section defines the exact selected/base pair. The adjacent-pair text in each row is chronology context only and does not limit which two retained revisions you can compare.</li>
+        <li data-testid="history-guidance-step">The compare preflight section defines the exact selected/base pair. The commit body shown in each row is review context only and does not limit which two retained revisions you can compare.</li>
         <li data-testid="history-guidance-step">Use <code>Open docs</code> to open the bundled user documentation that ships with this installed extension version instead of leaving VS Code for repo-hosted docs.</li>
         ${reviewGuidanceBenchmarkStep}
         ${reviewGuidanceHumanReviewStep}
@@ -383,7 +380,7 @@ export function renderHistoryPanelHtml(
       <div class="confidence-grid">
         <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
         <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and explicit selected/base compare preflight facts.</div>
-        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, explicit selected/base compare preflight, and retained compare-pair summaries.</div>
+        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, explicit selected/base compare preflight, and per-revision commit subject and body.</div>
         <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.</div>
       </div>
     </details>
@@ -764,16 +761,15 @@ function deriveInitialCompareRuntimeStatus(
 export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string {
   const newestCommit = model.commits[0];
   const oldestCommit = model.commits[model.commits.length - 1];
-  const comparePairs =
+  const commitFacts =
     model.commits.length > 0
       ? model.commits
-          .map((commit) =>
-            commit.previousHash
-              ? `- ${renderPlainTextValue(commit.hash.slice(0, 8))} vs ${renderPlainTextValue(commit.previousHash.slice(0, 8))} :: ${renderPlainTextValue(commit.subject)}`
-              : `- ${renderPlainTextValue(commit.hash.slice(0, 8))} :: oldest retained revision :: ${renderPlainTextValue(commit.subject)}`
+          .map(
+            (commit) =>
+              `- ${renderPlainTextValue(commit.hash.slice(0, 8))} :: ${renderPlainTextValue(commit.subject)} :: ${renderCommitBodyText(commit)}`
           )
           .join('\n')
-      : '- No retained commits were loaded, so no compare pairs are available.';
+      : '- No retained commits were loaded, so no commit facts are available.';
 
   return [
     'VI History Review Packet',
@@ -790,10 +786,10 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     `Oldest retained commit: ${renderTextCommitSummary(oldestCommit)}`,
     'Confidence and scope:',
     '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
-    '- Included here: chronology, path provenance, retained hashes, explicit selected/base compare preflight, and retained compare pairs.',
+    '- Included here: chronology, path provenance, retained hashes, explicit selected/base compare preflight, and per-retained-commit subject and body facts.',
     '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.',
-    'Retained compare pairs:',
-    comparePairs
+    'Per-retained-commit facts:',
+    commitFacts
   ].join('\n');
 }
 
@@ -843,6 +839,20 @@ function deriveInitialComparePreflightSummary(
   }
 
   return 'Runtime settings need attention; select two retained revisions to try Compare and capture the exact failure if it cannot finish.';
+}
+
+function renderCommitBodyCell(commit: ViHistoryCommit): string {
+  const body = commit.body ?? '';
+  if (body.trim().length === 0) {
+    return '<span data-testid="history-commit-body-empty" class="commit-body-empty">No commit body</span>';
+  }
+
+  return escapeHtml(body).replace(/\r\n?|\n/g, '<br />');
+}
+
+function renderCommitBodyText(commit: ViHistoryCommit): string {
+  const body = renderPlainTextValue(commit.body ?? '');
+  return body.length > 0 ? body : 'No commit body';
 }
 
 function escapeHtml(value: string): string {
