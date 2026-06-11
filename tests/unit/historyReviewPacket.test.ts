@@ -9,6 +9,7 @@ function createTestCommit(overrides: Partial<ViHistoryCommit> = {}): ViHistoryCo
     authorName: 'Test Author',
     authorDate: '2025-01-15',
     subject: 'Test commit subject',
+    body: 'Test commit body',
     ...overrides
   };
 }
@@ -52,7 +53,7 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
 }
 
 describe('historyReviewPacket', () => {
-  it('renders direct factual fields and compare-pair facts for retained history (VHS-REQ-040)', () => {
+  it('renders direct factual fields and per-retained-commit subject and body facts (VHS-REQ-040)', () => {
     const text = renderHistoryReviewPacketText(createTestViewModel());
 
     expect(text).toContain('VI History Review Packet');
@@ -67,8 +68,11 @@ describe('historyReviewPacket', () => {
     expect(text).toContain('History window: full history loaded automatically (2/2 commits)');
     expect(text).toContain('Newest retained commit: newest12 · 2025-01-20 · Test Author');
     expect(text).toContain('Oldest retained commit: older123 · 2025-01-15 · Test Author');
-    expect(text).toContain('- newest12 vs older123 :: Newest commit');
-    expect(text).toContain('- older123 :: oldest retained revision :: Oldest retained revision');
+    expect(text).toContain('Per-retained-commit facts:');
+    expect(text).toContain('- newest12 :: Newest commit :: Test commit body');
+    expect(text).toContain('- older123 :: Oldest retained revision :: Test commit body');
+    expect(text).not.toContain('Retained compare pairs:');
+    expect(text).not.toContain('vs older123');
     expect(text).toContain(
       '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.'
     );
@@ -91,8 +95,24 @@ describe('historyReviewPacket', () => {
     expect(text).toContain('Newest retained commit: No retained commits');
     expect(text).toContain('Oldest retained commit: No retained commits');
     expect(text).toContain(
-      'Retained compare pairs:\n- No retained commits were loaded, so no compare pairs are available.'
+      'Per-retained-commit facts:\n- No retained commits were loaded, so no commit facts are available.'
     );
+  });
+
+  it('uses a factual fallback for retained commits with an empty body', () => {
+    const text = renderHistoryReviewPacketText(
+      createTestViewModel({
+        commits: [
+          createTestCommit({
+            hash: 'feedface1234567890abcdef1234567890abcd',
+            subject: 'No body commit',
+            body: ''
+          })
+        ]
+      })
+    );
+
+    expect(text).toContain('- feedface :: No body commit :: No commit body');
   });
 
   it('keeps copied packet content plain-text-safe for multiline and markup-like facts', () => {
@@ -104,7 +124,8 @@ describe('historyReviewPacket', () => {
           createTestCommit({
             hash: 'feedface1234567890abcdef1234567890abcd',
             authorName: 'Reviewer <script>alert(1)</script>\nName',
-            subject: 'Compare <br /> packet\nsubject'
+            subject: 'Compare <br /> packet\nsubject',
+            body: 'Body <b>bold</b>\nsecond line'
           })
         ]
       })
@@ -116,11 +137,12 @@ describe('historyReviewPacket', () => {
       'Newest retained commit: feedface · 2025-01-15 · Reviewer &lt;script&gt;alert(1)&lt;/script&gt; Name'
     );
     expect(text).toContain(
-      '- feedface :: oldest retained revision :: Compare &lt;br /&gt; packet subject'
+      '- feedface :: Compare &lt;br /&gt; packet subject :: Body &lt;b&gt;bold&lt;/b&gt; second line'
     );
     expect(text).not.toContain('<strong>');
     expect(text).not.toContain('<script>');
     expect(text).not.toContain('<br />');
+    expect(text).not.toContain('<b>bold</b>');
     expect(text).not.toContain('\r');
   });
 });

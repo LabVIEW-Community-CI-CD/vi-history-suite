@@ -196,8 +196,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-table"/);
   assert.match(panel.renderedHtml, /data-testid="history-row"/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-select"/);
-  assert.match(panel.renderedHtml, /data-testid="history-compare-base"/);
-  assert.match(panel.renderedHtml, /data-testid="history-compare-pair"/);
+  assert.match(panel.renderedHtml, /data-testid="history-commit-body"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
@@ -219,7 +218,8 @@ async function testPanelOpenFlow(
   );
   assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
   assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output\./);
-  assert.match(panel.renderedHtml, /Adjacent:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs prior:<\/strong> <code>[0-9a-f]{8}<\/code>/);
+  assert.match(panel.renderedHtml, /<td data-testid="history-commit-body" class="commit-body">/);
+  assert.match(panel.renderedHtml, /data-testid="history-commit-body-empty" class="commit-body-empty">No commit body<\/span>/);
   assert.match(panel.renderedHtml, /Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
@@ -255,11 +255,13 @@ async function testPanelOpenFlow(
       copiedReviewPacket,
       /Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output\./
     );
-    assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Update eligible fixture/);
+    assert.match(copiedReviewPacket, /Per-retained-commit facts:/);
+    assert.match(copiedReviewPacket, /- [0-9a-f]{8} :: Update eligible fixture :: No commit body/);
     assert.match(
       copiedReviewPacket,
-      /- [0-9a-f]{8} vs [0-9a-f]{8} :: Add third eligible fixture revision/
+      /- [0-9a-f]{8} :: Add third eligible fixture revision :: No commit body/
     );
+    assert.doesNotMatch(copiedReviewPacket, /Retained compare pairs:/);
     assert.equal(copiedReviewAction.copiedTextLength, copiedReviewPacket.length);
   }
 

@@ -395,6 +395,8 @@ Missing numeric IDs are intentional.
   - Rendered content includes the relative path and detected VI signature.
   - Rendered content includes retained commit count, newest commit, oldest
     commit, and chronology order.
+  - Rendered content includes the commit subject and full commit body for each
+    retained revision.
   - Binary review limitation text stays factual and does not claim semantic VI
     differences from Git-only history.
   - User-controlled or path-derived panel values are escaped in rendered HTML
@@ -447,12 +449,13 @@ Missing numeric IDs are intentional.
 - Area: History Panel
 - Statement: Copied review packet text shall include repository, root, origin
   or unavailable state, path, signature, retained revision count, history
-  window facts, newest and oldest retained commit facts, and compare-pair
-  facts.
+  window facts, newest and oldest retained commit facts, and
+  per-retained-commit subject and body facts.
 - Acceptance Criteria:
   - Packet text includes repository, root, origin or unavailable state, target
     path, signature, retained revision count, history window summary, newest
-    retained commit fact, oldest retained commit fact, and compare-pair facts.
+    retained commit fact, oldest retained commit fact, and per-retained-commit
+    subject and body facts.
   - Packet text remains plain text, avoids HTML-only markup in copied output,
     and uses factual fallback text when optional fields or retained history are
     missing.
@@ -468,6 +471,42 @@ Missing numeric IDs are intentional.
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Keep binary semantic claims out of Git-only packet text.
+
+### VHS-REQ-639: Commit Body In History Panel
+
+- Status: Active
+- Parent: VHS-SYS-REQ-001
+- Area: History Panel
+- Statement: The history panel shall display the full Git commit message body
+  for each retained revision in place of the adjacent-pair chronology column.
+- Acceptance Criteria:
+  - Each retained-revision row renders a dedicated commit body column populated
+    from the Git commit message body for that revision.
+  - The commit body column replaces the prior adjacent-pair column; adjacent
+    hash-pair text is no longer rendered as a row column.
+  - Commit body text is captured per revision from existing bounded Git history
+    reads without additional unbounded reads (no regression of VHS-REQ-008).
+  - Multi-line commit body content is preserved in rendered output and is
+    escaped in HTML text and attribute contexts (no regression of VHS-REQ-017
+    escaping rules).
+  - Revisions with an empty commit body render a factual fallback rather than a
+    blank or misleading cell.
+  - Explicit selected/base compare selection remains unchanged and independent
+    of the removed adjacent-pair column (no regression of VHS-REQ-133).
+- Agent Work Scope:
+  - Change Git history capture, history-panel rendering, and their tests
+    together.
+- Implementation References:
+  - `src/git/gitCli.ts`
+  - `src/services/viHistoryModel.ts`
+  - `src/ui/historyPanel.ts`
+- Verification References:
+  - `tests/unit/gitCli.test.ts`
+  - `tests/unit/historyPanelRendering.test.ts`
+  - `tests/integration/suite/extensionHost.test.ts`
+- Change Guidance:
+  - Keep panel content factual; render Git commit text without inferred
+    summaries.
 
 ### VHS-REQ-133: Explicit Compare Pair Workflow
 
