@@ -2627,6 +2627,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the gate window-free and keyed on the running-process bitness signal;
