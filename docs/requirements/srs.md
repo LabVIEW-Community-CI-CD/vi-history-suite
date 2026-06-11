@@ -2637,3 +2637,90 @@ Missing numeric IDs are intentional.
     best-effort. Reuse the `Pick Runtime Provider` quick-pick rather than a new
     command or an auto-switch of the bitness setting.
 
+### VHS-REQ-637: Pre-Panel LabVIEW Version Mismatch Gate For VI History Open
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When `labviewViHistory.open` is invoked on Windows and the runtime
+  detection observes a running LabVIEW process whose major version (year)
+  differs from the selected `viHistorySuite.labviewVersion` while its bitness
+  matches (a differing bitness is already a hard conflict handled by
+  VHS-REQ-636), the extension shall refuse to open the VI History panel and
+  present a single plain-language warning toast that names the running LabVIEW
+  year plus bitness and the selected LabVIEW year plus bitness, explains that VI
+  History would connect to the LabVIEW already running (the wrong version), and
+  instructs the user to save and close the running LabVIEW session, change
+  `viHistorySuite.labviewVersion` to match it, or use a Docker-backed compare on
+  x64 before retrying; the toast offers a `Pick Runtime Provider` action that
+  invokes `labviewViHistory.pickRuntimeProvider`. A running LabVIEW whose year
+  and bitness both match the selection remains admitted, preserving the
+  `allowExistingWindowsHostRuntime` workflow.
+- Acceptance Criteria:
+  - A best-effort LabVIEW year is inferred from the observed `LabVIEW.exe`
+    executable path (for example `...\National Instruments\LabVIEW 2026\LabVIEW.exe`
+    yields `2026`) and exposed on `RuntimeProcessObservation` alongside
+    `labviewProcessBitness`; the inferred year is treated as unknown when it
+    cannot be parsed or falls outside the supported host year bounds
+    (`MINIMUM_HOST_LABVIEW_YEAR`..`MAXIMUM_HOST_LABVIEW_YEAR`).
+  - A window-free `decideVersionOpenGate` decision helper, composed after the
+    VHS-REQ-636 bitness gate, returns `allow` when the cached detection is not
+    yet available, the platform is not Windows, the active snapshot is a
+    satisfiable Docker provider, no host LabVIEW installation resolves, the
+    observed bitness differs from the selected bitness (deferred to VHS-REQ-636
+    so the two gates never double-fire), the observed year is unknown, or the
+    observed year equals the selected `viHistorySuite.labviewVersion`.
+  - The gate returns `block` only when an observed running `LabVIEW.exe` has a
+    known year that differs from the selected `viHistorySuite.labviewVersion`
+    while the observed bitness matches the selected bitness (or is unknown); the
+    block decision carries the toast message and a `Pick Runtime Provider`
+    action label.
+  - `VERSION_OPEN_BLOCKED_MESSAGE` names the running LabVIEW (year plus bitness)
+    and the selected LabVIEW (year plus bitness), explains that VI History would
+    connect to the already-running wrong-version LabVIEW, and instructs the user
+    to save and close the running session, change `viHistorySuite.labviewVersion`
+    to match the running session, or use a Docker-backed compare on x64.
+  - `presentVersionOpenBlockedToast(decision)` shows the decision's message and
+    `Pick Runtime Provider` action and, when the action is selected, invokes
+    `labviewViHistory.pickRuntimeProvider`; it performs no automatic correction
+    of `viHistorySuite.labviewVersion` and never mandates Docker.
+  - `labviewViHistory.open` consults this gate after the VHS-REQ-636 bitness
+    gate and before opening the history panel; when the gate blocks it presents
+    the toast and does not start the history panel or the comparison flow.
+  - The gate performs at most one bounded, Windows-only, on-demand process
+    observation on the open path, reuses the existing `observeWindowsProcesses`
+    injection seam (sharing the bitness gate's observation where practical),
+    never spawns a process on non-Windows hosts, and fails open (allows the
+    command) when the observation throws.
+  - A running LabVIEW whose year and bitness both match the selection remains
+    admitted with no regression of `allowExistingWindowsHostRuntime`; the
+    compare-time VHS-REQ-621 and VHS-REQ-155 paths are unchanged.
+- Agent Work Scope:
+  - Add the best-effort year-inference seam next to the VHS-REQ-621 bitness
+    inference in `src/reporting/comparisonReportRuntimeExecution.ts`, add the
+    pure decision helper, block message constant, action label, and toast
+    presenter to `src/ui/runtimeAvailabilityNotice.ts`, and wire the gate into
+    the `labviewViHistory.open` gate chain in `src/extension.ts` after the
+    VHS-REQ-636 bitness gate. Reuse the existing `observeWindowsProcesses`
+    observation and the `labviewViHistory.pickRuntimeProvider` command. Do not
+    block or alter a matching-version session, do not add a new command or
+    setting, do not mandate Docker, and do not change the VHS-REQ-636 or
+    VHS-REQ-621 behavior.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the gate window-free and keyed on the running-process year signal,
+    composed strictly after the VHS-REQ-636 bitness gate so the two never
+    double-fire. Keep the bounded process observation Windows-only and off every
+    non-block path, and keep year inference best-effort and bounded to supported
+    host years. Offer Docker as one recovery option rather than a requirement,
+    and reuse the `Pick Runtime Provider` quick-pick rather than auto-switching
+    `viHistorySuite.labviewVersion`.
+
