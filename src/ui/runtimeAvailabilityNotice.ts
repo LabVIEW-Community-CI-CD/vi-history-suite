@@ -761,7 +761,7 @@ export async function presentBitnessOpenBlockedToast(
   const actionLabel = decision.actionLabel ?? BITNESS_OPEN_PICK_PROVIDER_ACTION;
   const choice = await vscode.window.showWarningMessage(decision.toastMessage, actionLabel);
   if (choice === actionLabel) {
-    void vscode.commands.executeCommand('labviewViHistory.pickRuntimeProvider');
+    void vscode.commands.executeCommand(STATUS_BAR_PICK_COMMAND_ID);
   }
 }
 
