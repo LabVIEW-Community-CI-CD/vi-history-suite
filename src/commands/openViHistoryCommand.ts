@@ -38,7 +38,7 @@ import {
   HistoryPanelTracker
 } from '../ui/historyPanelTracker';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
-import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
+import { isWorktreeRevision, WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 interface ComparisonRuntimePanelDetail {
   label: string;
@@ -882,43 +882,6 @@ export function createOpenViHistoryCommand(
         return;
       }
 
-      // VHS-REQ-641: compare the uncommitted working-tree VI against HEAD. Uses
-      // the reserved working-tree sentinel as the selected/newer side; the base
-      // defaults to the newest retained commit (HEAD) in the action.
-      if (command === 'compareWorkingTree') {
-        if (!model.workingTree?.hasUncommittedChanges) {
-          void vscode.window.showInformationMessage(
-            'The selected VI has no uncommitted working-tree changes to compare.'
-          );
-          panelTracker?.recordAction({
-            command,
-            outcome: 'ignored-no-uncommitted-changes'
-          });
-          return;
-        }
-        if (!comparisonReportAction) {
-          void vscode.window.showInformationMessage(
-            'VI Comparison Report generation is not available in this extension build.'
-          );
-          panelTracker?.recordAction({
-            command,
-            outcome: 'unsupported-command'
-          });
-          return;
-        }
-        await runComparisonReportCommand(
-          command,
-          'Comparing working tree against HEAD',
-          'VI History working-tree comparison was cancelled.',
-          comparisonReportAction,
-          {
-            selectedHash: WORKTREE_REVISION_SENTINEL,
-            baseHash: model.workingTree.headHash
-          }
-        );
-        return;
-      }
-
       if (!hash) {
         panelTracker?.recordAction({
           command,
@@ -1428,6 +1391,22 @@ function resolveExplicitComparisonPair(
   const uniqueHashes = [...new Set(selectedHashes)];
   if (uniqueHashes.length !== 2) {
     return undefined;
+  }
+
+  // VHS-REQ-641: the working-tree sentinel is not a committed revision, so it is
+  // not present in model.commits. When exactly one selected entry is the
+  // working-tree row, pair the uncommitted on-disk version (selected/newer side)
+  // against the other checked commit (base/older side).
+  const worktreeHashes = uniqueHashes.filter((candidateHash) => isWorktreeRevision(candidateHash));
+  if (worktreeHashes.length === 1) {
+    const baseHash = uniqueHashes.find((candidateHash) => !isWorktreeRevision(candidateHash));
+    if (!baseHash || model.commits.findIndex((commit) => commit.hash === baseHash) < 0) {
+      return undefined;
+    }
+    return {
+      selectedHash: WORKTREE_REVISION_SENTINEL,
+      baseHash
+    };
   }
 
   const rankedCommits = uniqueHashes

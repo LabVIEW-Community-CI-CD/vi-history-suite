@@ -766,22 +766,23 @@ Missing numeric IDs are intentional.
   can be reviewed before they are committed.
 - Acceptance Criteria:
   - When the selected VI has uncommitted tracked changes, the history panel
-    presents a working-tree comparison action alongside the committed-pair
-    compare, and a VI with at least one commit plus uncommitted changes is
-    eligible even when it has fewer than two commits.
-  - Selecting the working-tree action compares the on-disk file bytes (newer
-    side) against the newest retained commit (older side); both sides pass the
-    VI signature preflight before the runtime is invoked.
+    presents a selectable working-tree entry alongside the committed revisions,
+    and a VI with at least one commit plus uncommitted changes is eligible even
+    when it has fewer than two commits.
+  - Selecting the working-tree entry together with any one committed revision
+    compares the on-disk file bytes (newer side) against that selected revision
+    (older side); both sides pass the VI signature preflight before the runtime
+    is invoked.
   - The working-tree side resolves in-repo dependencies against the committed
-    tree of the base revision so the loose VI loads its siblings.
+    tree so the loose VI loads its siblings.
   - Working-tree comparisons are labeled as uncommitted and are excluded from
     retained dashboard pair evidence; committed-pair behavior is unchanged.
   - The working-tree comparison is read-only and never writes into the user's
     working directory, and the comparison-report webview keeps scripts disabled.
 - Agent Work Scope:
-  - Change the eligibility model, panel working-tree action, preflight/runtime
-    revision readers, and their tests together; use the reserved working-tree
-    revision sentinel rather than overloading a commit hash.
+  - Change the eligibility model, panel working-tree selection row,
+    preflight/runtime revision readers, and their tests together; use the
+    reserved working-tree revision sentinel rather than overloading a commit hash.
 - Implementation References:
   - `src/git/gitCli.ts`
   - `src/services/viHistoryModel.ts`
