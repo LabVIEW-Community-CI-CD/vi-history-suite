@@ -2553,3 +2553,87 @@ Missing numeric IDs are intentional.
     inventory. If future features need repository-wide inventory, keep them
     optional and outside the blocking open-history path.
 
+### VHS-REQ-636: Pre-Panel LabVIEW Bitness Conflict Gate For VI History Open
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When `labviewViHistory.open` is invoked on Windows and the runtime
+  detection observes a running LabVIEW process whose bitness differs from the
+  selected `viHistorySuite.labviewBitness`, the extension shall refuse to open
+  the VI History panel and instead present a single plain-language warning toast
+  that names the running LabVIEW (year when known, plus bitness) and the
+  selected LabVIEW (year plus bitness), instructs the user to save and close the
+  running LabVIEW session before retrying, and offers a `Pick Runtime Provider`
+  action that invokes `labviewViHistory.pickRuntimeProvider`, so the conflict is
+  caught at open time instead of after revision selection and Compare, where it
+  currently surfaces as the verbose `windows-host-bitness-conflict`
+  blocked-runtime comparison report (VHS-REQ-621).
+- Acceptance Criteria:
+  - A window-free `decideBitnessOpenGate` decision helper returns `allow` when
+    the cached detection is not yet available so an activation race never blocks
+    the command, matching the Git, LabVIEW CLI, and VI Server pre-panel gates.
+  - The gate returns `allow` when the platform is not Windows, when the active
+    runtime snapshot is a satisfiable Docker provider (container compare runs
+    LabVIEW inside the image so a host bitness conflict is irrelevant), when no
+    host LabVIEW installation resolves from the snapshot, and when no running
+    `LabVIEW.exe` of a known bitness differing from the selected bitness is
+    observed.
+  - The gate returns `block` only when an observed running `LabVIEW.exe` has a
+    known bitness (`x86` or `x64`) that differs from the selected
+    `viHistorySuite.labviewBitness`; the block decision carries the toast
+    message and a `Pick Runtime Provider` action label.
+  - The gate reuses the VHS-REQ-621 path-based bitness inference (a path under
+    `\Program Files (x86)\` is `x86`, a path under `\Program Files\` is `x64`,
+    otherwise `unknown`) and a best-effort running-year inference from the
+    observed executable path; the running year is omitted from the message when
+    it cannot be inferred.
+  - The block toast message (built by `buildBitnessOpenBlockedMessage`) names
+    the running LabVIEW (year when known plus bitness), names the selected
+    LabVIEW (year plus bitness), and instructs the user to save and close the
+    running LabVIEW session, or to change `viHistorySuite.labviewBitness` (and
+    `viHistorySuite.labviewVersion`) to match the running session, before
+    retrying.
+  - `presentBitnessOpenBlockedToast(decision)` shows the decision's message and
+    `Pick Runtime Provider` action and, when the action is selected, invokes
+    `labviewViHistory.pickRuntimeProvider`; it performs no automatic correction
+    of `viHistorySuite.labviewBitness`.
+  - `labviewViHistory.open` consults this gate after the VI Server gate
+    (VHS-REQ-631) and before opening the history panel; when the gate blocks it
+    presents the toast and does not start the history panel or the comparison
+    flow.
+  - The gate performs at most one bounded, Windows-only, on-demand process
+    observation on the open path, reuses the existing `observeWindowsProcesses`
+    injection seam, never spawns a process on non-Windows hosts, and fails open
+    (allows the command) when the observation throws.
+  - The compare-time VHS-REQ-621 detection and classification path is unchanged.
+- Agent Work Scope:
+  - Add the pure decision helper, the block message builder, the action label,
+    and the toast presenter to `src/ui/runtimeAvailabilityNotice.ts` so unit
+    tests exercise routing without a window, and wire the gate into the
+    `labviewViHistory.open` gate chain in `src/extension.ts` after the VI Server
+    gate. Reuse the VHS-REQ-621 bitness inference helpers
+    (`observeWindowsRuntimeProcesses`, `inferLabviewBitnessFromExecutablePath`)
+    plus the best-effort `inferLabviewYearFromExecutablePath` year helper from
+    `src/reporting/comparisonReportRuntimeExecution.ts` and the existing
+    `labviewViHistory.pickRuntimeProvider` command. Do not add a new process
+    probe to the activation hot path, do not introduce a new command, do not
+    auto-correct `viHistorySuite.labviewBitness`, and do not change the
+    compare-time VHS-REQ-621 path.
+- Implementation References:
+  - `src/extension.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the gate window-free and keyed on the running-process bitness signal;
+    richer compare-time runtime diagnostics stay with VHS-REQ-621 and
+    VHS-REQ-155. Keep the bounded process observation Windows-only and off every
+    non-block path. Name both bitnesses and treat the running year as
+    best-effort. Reuse the `Pick Runtime Provider` quick-pick rather than a new
+    command or an auto-switch of the bitness setting.
+

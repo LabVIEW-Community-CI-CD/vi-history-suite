@@ -5100,6 +5100,26 @@ export function inferLabviewBitnessFromExecutablePath(
 }
 
 /**
+ * VHS-REQ-636: Best-effort LabVIEW major-version (year) inference from a running
+ * `LabVIEW.exe` path, for diagnostic messages only. The Windows installer lays
+ * each version under a `LabVIEW <year>` directory (for example
+ * `C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe`), so a
+ * canonical-path scan recovers the year without probing the binary. Returns the
+ * 4-digit `20xx` year string, or `undefined` when no plausible year is present.
+ * The result is display-only: callers must treat `undefined` as "year unknown"
+ * and never block on it.
+ */
+export function inferLabviewYearFromExecutablePath(
+  executablePath: string | undefined
+): string | undefined {
+  if (typeof executablePath !== 'string' || executablePath.trim().length === 0) {
+    return undefined;
+  }
+  const match = executablePath.match(/labview[ _-]?(20\d{2})/i);
+  return match ? match[1] : undefined;
+}
+
+/**
  * VHS-REQ-621: Resolve the executable path for a Windows process id via
  * PowerShell. Returns `undefined` on any failure so the caller can record an
  * `unknown` bitness without throwing.
