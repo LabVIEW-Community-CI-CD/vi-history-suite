@@ -678,6 +678,41 @@ Missing numeric IDs are intentional.
     accessible location; do not run comparison execution or mutate retained
     artifacts.
 
+### VHS-REQ-638: Comparison Report VI History Re-Entry Action
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall provide a comparison-report title-bar action
+  that re-opens VI History for the report's source LabVIEW VI, so users can
+  return to the history panel after a comparison without depending on the
+  active editor resource.
+- Acceptance Criteria:
+  - A `VI History` action is available from the comparison-report panel title
+    bar while a comparison-report webview panel is the active panel.
+  - The action re-opens VI History for the source VI of the displayed report by
+    delegating to `labviewViHistory.open`, so trust, Git, and LabVIEW
+    prerequisite gates continue to apply.
+  - When the source VI path cannot be resolved, the action shows an actionable
+    warning instead of failing silently.
+  - Opening a comparison report places it beside the VI History panel so the
+    history panel remains visible.
+- Agent Work Scope:
+  - Change the export source shape, panel registration, command registration,
+    manifest contributions, and their tests together.
+- Implementation References:
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportExport.ts`
+  - `src/extension.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+- Change Guidance:
+  - The re-entry action must reuse `labviewViHistory.open` rather than
+    duplicating prerequisite gating, and must not run comparison execution.
+
 ### VHS-REQ-155: Comparison Runtime Discovery Diagnostics
 
 - Status: Active

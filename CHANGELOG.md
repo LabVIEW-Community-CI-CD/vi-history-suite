@@ -10,6 +10,17 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.16.0] - 2026-06-11
+
+### Added
+
+- The comparison report now has a `VI History` button in its title bar that
+  re-opens the history panel for the file the report compares, and the report
+  now opens beside the history panel instead of replacing it. Together these
+  resolve the friction where, after running a comparison, returning to a VI's
+  history required reselecting the file because the report had taken over the
+  editor. (VHS-REQ-638)
+
 ## [1.15.0] - 2026-06-11
 
 ### Added

@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.15.0');
+    expect(manifest.version).toBe('1.16.0');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -148,7 +148,8 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('contributes the visibility gate in explorer and editor title menus', () => {    const manifest = readManifest();
+  it('contributes the visibility gate in explorer and editor title menus', () => {
+    const manifest = readManifest();
     const expectedMenuEntry = {
       command: 'labviewViHistory.open',
       group: '3_compare',
@@ -160,6 +161,27 @@ describe('extension manifest public metadata', () => {
     expect(manifest.contributes?.menus?.['editor/title/context']).toContainEqual(
       expectedMenuEntry
     );
+  });
+
+  it('contributes the comparison report VI History re-entry action (VHS-REQ-638)', () => {
+    const manifest = readManifest();
+    const commands = manifest.contributes?.commands ?? [];
+    const titles = new Map(commands.map((entry) => [entry.command ?? '', entry]));
+
+    expect(titles.get('labviewViHistory.openViHistoryFromReport')).toMatchObject({
+      title: 'Open VI History',
+      category: 'VI History'
+    });
+
+    expect(manifest.contributes?.menus?.['editor/title']).toContainEqual({
+      command: 'labviewViHistory.openViHistoryFromReport',
+      group: 'navigation',
+      when: 'activeWebviewPanelId == viHistorySuite.comparisonReport'
+    });
+    expect(manifest.contributes?.menus?.['commandPalette']).toContainEqual({
+      command: 'labviewViHistory.openViHistoryFromReport',
+      when: 'activeWebviewPanelId == viHistorySuite.comparisonReport'
+    });
   });
 
   it('keeps desktop extension boundaries and runtime settings configuration', () => {

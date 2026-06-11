@@ -473,6 +473,30 @@ export async function activate(
     })
   );
 
+  // VHS-REQ-638: Re-open VI History for the comparison report's source VI from
+  // the report title bar. After Compare, the report webview becomes the active
+  // editor and clears `resourceExtname`, which hides the Explorer/editor
+  // `VI History` menu entry; this action restores a direct re-entry path that
+  // does not depend on the active editor resource. It delegates to
+  // `labviewViHistory.open`, so all trust, Git, and LabVIEW prerequisite gates
+  // continue to apply.
+  context.subscriptions.push(
+    vscode.commands.registerCommand('labviewViHistory.openViHistoryFromReport', async () => {
+      const sourceViFsPath = comparisonReportExportRegistry.getActiveSource()?.sourceViFsPath;
+      if (!sourceViFsPath) {
+        void vscode.window.showWarningMessage(
+          'VI History could not resolve the source file for this comparison report. Select the LabVIEW VI in the Explorer and choose VI History.'
+        );
+        return { outcome: 'missing-source-vi' as const };
+      }
+      await vscode.commands.executeCommand(
+        'labviewViHistory.open',
+        vscode.Uri.file(sourceViFsPath)
+      );
+      return { outcome: 'reopened-vi-history' as const, sourceViFsPath };
+    })
+  );
+
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'labviewViHistory.openDocumentation',
