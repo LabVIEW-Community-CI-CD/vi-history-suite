@@ -102,14 +102,14 @@
         {
           "command": "labviewViHistory.open",
           "group": "3_compare",
-          "when": "(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit || activeWebviewPanelId == viHistorySuite.history || activeWebviewPanelId == viHistorySuite.comparisonReport) && isWorkspaceTrusted"
+          "when": "(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit) && isWorkspaceTrusted"
         }
       ],
       "editor/title/context": [
         {
           "command": "labviewViHistory.open",
           "group": "3_compare",
-          "when": "(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit || activeWebviewPanelId == viHistorySuite.history || activeWebviewPanelId == viHistorySuite.comparisonReport) && isWorkspaceTrusted"
+          "when": "(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit) && isWorkspaceTrusted"
         }
       ],
       "editor/title": [

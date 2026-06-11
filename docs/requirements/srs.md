@@ -290,17 +290,11 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-001
 - Area: Extension Manifest
 - Statement: The extension shall contribute the `VI History` command to both
-  Explorer context and editor title context menus for trusted LabVIEW-like
-  files, and shall keep that entry reachable while a VI History or comparison
-  report webview is the active editor.
+  Explorer context and editor title context menus for trusted LabVIEW-like files.
 - Acceptance Criteria:
   - Explorer context contributes `labviewViHistory.open`.
   - Editor title context contributes `labviewViHistory.open`.
   - Menu visibility requires a trusted workspace.
-  - The entry remains visible when the active webview panel is the VI History
-    panel (`viHistorySuite.history`) or the comparison report
-    (`viHistorySuite.comparisonReport`), so opening a comparison report does not
-    hide the entry for the selected file.
 - Agent Work Scope:
   - Change menu entries and manifest tests together.
 - Implementation References:
