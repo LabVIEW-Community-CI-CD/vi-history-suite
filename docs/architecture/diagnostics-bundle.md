@@ -9,7 +9,7 @@ consume without re-running the failure or re-instrumenting the codebase.
 
 ```
 <reportDirectory>/
-├── diff-report-*.html              # NI-generated comparison report (when produced)
+├── diff-report-*.html              # NI-generated comparison report (when produced); self-contained single file with embedded images (VHS-REQ-640)
 ├── report-packet.html              # User-facing packet
 ├── report-metadata.json            # Full ComparisonReportPacketRecord
 ├── runtime-stdout.txt              # Latest CLI stdout
