@@ -218,7 +218,8 @@ async function testPanelOpenFlow(
   );
   assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
   assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output\./);
-  assert.match(panel.renderedHtml, /Adjacent:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs prior:<\/strong> <code>[0-9a-f]{8}<\/code>/);
+  assert.match(panel.renderedHtml, /<td data-testid="history-commit-body" class="commit-body">/);
+  assert.match(panel.renderedHtml, /data-testid="history-commit-body-empty" class="commit-body-empty">No commit body<\/span>/);
   assert.match(panel.renderedHtml, /Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
