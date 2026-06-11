@@ -364,6 +364,80 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(html).not.toContain('_files');
   });
 
+  it('compares the working tree against HEAD and does not retain the evidence (VHS-REQ-641)', async () => {
+    const context = harness.createContext();
+    const preflight = createPreflight();
+    const runtimeSelection = createRuntimeSelection();
+    const executedRecord = createPacketRecord({
+      preflight,
+      runtimeSelection,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: {
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true,
+        executable: 'LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport', '-ReportType', 'htmlsinglefile']
+      }
+    });
+    const preflightComparisonReport = vi.fn().mockResolvedValue(preflight);
+    const locateRuntime = vi.fn().mockResolvedValue(runtimeSelection);
+    // Reflect production: persist builds the record with the working-tree
+    // sentinel as the selected side and HEAD as the base.
+    const worktreeRecord: ComparisonReportPacketRecord = {
+      ...executedRecord,
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3'
+    };
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(worktreeRecord));
+    const executeComparisonReport = vi.fn().mockResolvedValue(createPacketResult(worktreeRecord));
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('<html><head></head><body>worktree report</body></html>');
+
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: () => ({
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      }),
+      persistComparisonReport,
+      executeComparisonReport,
+      archiveComparisonReportSource,
+      readFile: readFile as never
+    });
+
+    const model: ViHistoryViewModel = {
+      ...createModel(),
+      workingTree: { hasUncommittedChanges: true, headHash: 'c3' }
+    };
+
+    const result = await action({
+      model,
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3',
+      reportProgress: vi.fn()
+    });
+
+    // Preflight compares the working-tree sentinel (selected/right) against HEAD.
+    expect(preflightComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        leftRevisionId: 'c3',
+        rightRevisionId: 'WORKTREE'
+      })
+    );
+    expect(result.outcome).toBe('opened-comparison-report');
+    // VHS-REQ-641: working-tree comparisons are not reproducible, so they are
+    // never archived into retained dashboard evidence.
+    expect(archiveComparisonReportSource).not.toHaveBeenCalled();
+    expect(result.retainedArchiveAvailable).toBe(false);
+  });
+
   it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();

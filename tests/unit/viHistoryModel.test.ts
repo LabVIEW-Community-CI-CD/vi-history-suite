@@ -6,14 +6,16 @@ const {
   getFileHistoryCountMock,
   getFileHistoryEntriesMock,
   getRepoRemoteUrlMock,
-  getRepoRootMock
+  getRepoRootMock,
+  isFileDirtyInWorkingTreeMock
 } = vi.hoisted(() => ({
   detectViSignatureFromFsPathMock: vi.fn(),
   getFileCommitHashesMock: vi.fn(),
   getFileHistoryCountMock: vi.fn(),
   getFileHistoryEntriesMock: vi.fn(),
   getRepoRemoteUrlMock: vi.fn(),
-  getRepoRootMock: vi.fn()
+  getRepoRootMock: vi.fn(),
+  isFileDirtyInWorkingTreeMock: vi.fn()
 }));
 
 vi.mock('../../src/domain/viFile', () => ({
@@ -26,6 +28,7 @@ vi.mock('../../src/git/gitCli', () => ({
   getFileHistoryEntries: getFileHistoryEntriesMock,
   getRepoRemoteUrl: getRepoRemoteUrlMock,
   getRepoRoot: getRepoRootMock,
+  isFileDirtyInWorkingTree: isFileDirtyInWorkingTreeMock,
   normalizeRelativeGitPath: (value: string) => value.replace(/\\/g, '/')
 }));
 
@@ -62,6 +65,7 @@ describe('viHistoryModel direct history facts', () => {
     ]);
     getRepoRemoteUrlMock.mockResolvedValue('https://github.com/org/repo');
     getRepoRootMock.mockResolvedValue('/workspace/repo');
+    isFileDirtyInWorkingTreeMock.mockResolvedValue(false);
   });
 
   it('evaluates tracked VI eligibility with bounded commit proof', async () => {
@@ -79,6 +83,7 @@ describe('viHistoryModel direct history facts', () => {
       relativePath: 'src/Sample.vi',
       signature: 'LVIN',
       commitHashes: ['c3', 'b2'],
+      hasUncommittedChanges: false,
       eligible: true
     });
   });
@@ -106,6 +111,56 @@ describe('viHistoryModel direct history facts', () => {
       commitHashes: ['c3'],
       eligible: false
     });
+  });
+
+  it('makes a single-commit VI eligible when it has uncommitted working-tree changes (VHS-REQ-641)', async () => {
+    detectViSignatureFromFsPathMock.mockResolvedValueOnce('LVIN');
+    getFileCommitHashesMock.mockResolvedValueOnce(['c3']);
+    isFileDirtyInWorkingTreeMock.mockResolvedValueOnce(true);
+
+    const result = await evaluateViEligibilityForFsPath('/workspace/repo/src/Single.vi', {
+      repoRoot: '/workspace/repo'
+    });
+
+    expect(isFileDirtyInWorkingTreeMock).toHaveBeenCalledWith('/workspace/repo', 'src/Single.vi');
+    expect(result).toMatchObject({
+      signature: 'LVIN',
+      commitHashes: ['c3'],
+      hasUncommittedChanges: true,
+      eligible: true
+    });
+  });
+
+  it('does not probe working-tree status for a two-commit VI (VHS-REQ-641)', async () => {
+    await evaluateViEligibilityForFsPath('/workspace/repo/src/Sample.vi', {
+      repoRoot: '/workspace/repo'
+    });
+
+    expect(isFileDirtyInWorkingTreeMock).not.toHaveBeenCalled();
+  });
+
+  it('exposes working-tree state on the view model when the file is dirty (VHS-REQ-641)', async () => {
+    getFileCommitHashesMock.mockResolvedValue(['c3']);
+    getFileHistoryCountMock.mockResolvedValue(1);
+    getFileHistoryEntriesMock.mockResolvedValue([
+      { hash: 'c3', authorName: 'Dev', authorDate: '2026-01-03', subject: 'Only commit' }
+    ]);
+    isFileDirtyInWorkingTreeMock.mockResolvedValue(true);
+
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Single.vi', {
+      repoRoot: '/workspace/repo'
+    });
+
+    expect(model.eligible).toBe(true);
+    expect(model.workingTree).toEqual({ hasUncommittedChanges: true, headHash: 'c3' });
+  });
+
+  it('omits working-tree state when the file is clean (VHS-REQ-641)', async () => {
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Sample.vi', {
+      repoRoot: '/workspace/repo'
+    });
+
+    expect(model.workingTree).toBeUndefined();
   });
 
   it('loads factual history model content with previous-hash links and full-history decision', async () => {

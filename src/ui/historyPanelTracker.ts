@@ -42,6 +42,7 @@ export interface HistoryPanelActionSummary {
     | 'cancelled'
     | 'workspace-untrusted'
     | 'ignored-missing-hash'
+    | 'ignored-no-uncommitted-changes'
     | 'insufficient-dashboard-commits'
     | 'insufficient-decision-commits'
     | 'missing-dashboard-storage'

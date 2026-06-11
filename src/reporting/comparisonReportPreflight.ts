@@ -1,7 +1,8 @@
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { detectViSignature, ViSignature } from '../domain/viMagicCore';
-import { normalizeRelativeGitPath, runGit } from '../git/gitCli';
+import { isWorktreeRevision, normalizeRelativeGitPath, runGit } from '../git/gitCli';
 
 export interface ComparisonReportPreflightOptions {
   repoRoot: string;
@@ -64,6 +65,11 @@ export async function readRevisionBlob(
   revisionId: string,
   relativePath: string
 ): Promise<Buffer> {
+  // VHS-REQ-641: the working-tree sentinel has no git object; read the loose,
+  // uncommitted file directly from disk so it can be compared against a commit.
+  if (isWorktreeRevision(revisionId)) {
+    return fs.readFile(path.join(repoRoot, normalizeRelativeGitPath(relativePath)));
+  }
   const stdout = await runGit(['show', buildRevisionBlobSpecifier(revisionId, relativePath)], repoRoot, 'buffer');
   return Buffer.isBuffer(stdout) ? stdout : Buffer.from(String(stdout), 'utf8');
 }
@@ -272,11 +278,20 @@ export async function resolveRevisionRelativePaths(
     normalizeRelativeGitPath(relativePath),
     'relativePath'
   );
+  // VHS-REQ-641: the working-tree sentinel is not a git revision, so it has no
+  // rename history to follow; map it to the current relative path directly.
+  const gitRevisionIds = revisionIds.filter((value) => !isWorktreeRevision(value));
   const requestedRevisionIds = new Set(
-    revisionIds.map((value) => requireNonEmpty(value, 'revisionId'))
+    gitRevisionIds.map((value) => requireNonEmpty(value, 'revisionId'))
   );
+  const seededResolved = new Map<string, string>();
+  for (const revisionId of revisionIds) {
+    if (isWorktreeRevision(revisionId)) {
+      seededResolved.set(revisionId, normalizedRelativePath);
+    }
+  }
   if (requestedRevisionIds.size === 0) {
-    return new Map();
+    return seededResolved;
   }
 
   try {
@@ -285,13 +300,17 @@ export async function resolveRevisionRelativePaths(
       repoRoot,
       'utf8'
     );
-    return parseRevisionRelativePathHistory(
+    const resolved = parseRevisionRelativePathHistory(
       String(stdout),
       normalizedRelativePath,
       requestedRevisionIds
     );
+    for (const [revisionId, resolvedPath] of seededResolved) {
+      resolved.set(revisionId, resolvedPath);
+    }
+    return resolved;
   } catch {
-    return new Map();
+    return seededResolved;
   }
 }
 
