@@ -18,7 +18,9 @@ const {
   eligibilityEventListeners,
   onDidChangeConfigurationMock,
   onDidChangeWorkspaceFoldersMock,
-  onDidGrantWorkspaceTrustMock
+  onDidGrantWorkspaceTrustMock,
+  executeCommandMock,
+  exportRegistryActiveSourceHolder
 } = vi.hoisted(() => {
   const handlers = new Map<string, (...args: unknown[]) => unknown>();
   const materialized = {
@@ -74,13 +76,21 @@ const {
     onDidGrantWorkspaceTrustMock: vi.fn((listener: (...args: unknown[]) => unknown) => {
       eligibilityEventListenerStore.grantTrust.push(listener);
       return { dispose: vi.fn() };
-    })
+    }),
+    executeCommandMock: vi.fn(),
+    exportRegistryActiveSourceHolder: {
+      value: undefined as { sourceViFsPath?: string } | undefined
+    }
   };
 });
 
 vi.mock('vscode', () => ({
   commands: {
-    registerCommand: registerCommandMock
+    registerCommand: registerCommandMock,
+    executeCommand: executeCommandMock
+  },
+  Uri: {
+    file: (fsPath: string) => ({ fsPath, scheme: 'file' })
   },
   window: {
     showInformationMessage: showInformationMessageMock,
@@ -97,6 +107,16 @@ vi.mock('vscode', () => ({
     onDidChangeWorkspaceFolders: onDidChangeWorkspaceFoldersMock,
     onDidGrantWorkspaceTrust: onDidGrantWorkspaceTrustMock
   }
+}));
+
+vi.mock('../../src/reporting/comparisonReportExport', () => ({
+  ComparisonReportExportRegistry: class {
+    register(): void {}
+    getActiveSource(): { sourceViFsPath?: string } | undefined {
+      return exportRegistryActiveSourceHolder.value;
+    }
+  },
+  runComparisonReportExport: vi.fn(async () => ({ outcome: 'no-active-comparison-report' }))
 }));
 
 vi.mock('../../src/git/gitApi', () => ({
@@ -263,6 +283,7 @@ describe('extension activation lazy side effects', () => {
     eligibilityEventListeners.configuration.length = 0;
     eligibilityEventListeners.workspaceFolders.length = 0;
     eligibilityEventListeners.grantTrust.length = 0;
+    exportRegistryActiveSourceHolder.value = undefined;
     getBuiltInGitApiMock.mockResolvedValue({
       repositories: [],
       onDidOpenRepository: vi.fn(),
@@ -338,6 +359,26 @@ describe('extension activation lazy side effects', () => {
     expect(showWarningMessageMock).toHaveBeenCalledWith(
       'VI History could not resolve the source file for this comparison report. Select the LabVIEW VI in the Explorer and choose VI History.'
     );
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+  });
+
+  it('re-opens VI History for the active report source VI by delegating to labviewViHistory.open (VHS-REQ-638)', async () => {
+    exportRegistryActiveSourceHolder.value = { sourceViFsPath: '/repo/demo.vi' };
+    await activate(createContext() as never);
+
+    const result = await commandHandlers.get('labviewViHistory.openViHistoryFromReport')?.();
+
+    expect(executeCommandMock).toHaveBeenCalledWith('labviewViHistory.open', {
+      fsPath: '/repo/demo.vi',
+      scheme: 'file'
+    });
+    expect(result).toEqual({
+      outcome: 'reopened-vi-history',
+      sourceViFsPath: '/repo/demo.vi'
+    });
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
+    // Re-entry delegates through the command surface; the report command itself
+    // does not eagerly resolve Git (the delegated open runs that lazily).
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
   });
 
