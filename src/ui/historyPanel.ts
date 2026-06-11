@@ -4,6 +4,7 @@ import {
   ViHistoryViewModel
 } from '../services/viHistoryModel';
 import { HistoryPanelActionSummary } from './historyPanelTracker';
+import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 interface CompareRuntimeDetailItem {
   label: string;
@@ -148,6 +149,27 @@ export function renderHistoryPanelHtml(
   const repositorySupportHtml = support
     ? renderRepositorySupportSection(support)
     : '';
+  // VHS-REQ-641: when the selected VI has uncommitted working-tree changes, pin a
+  // selectable "Working Tree (uncommitted)" row at the top of the history table so
+  // the on-disk version can be paired with any commit via the same two-checkbox
+  // compare flow. data-commit-index="-1" sorts it as the newest entry, so it
+  // resolves as the `selected` side and the checked commit becomes the `base`.
+  const workingTreeRow =
+    comparisonSelectionEnabled && model.workingTree?.hasUncommittedChanges
+      ? `
+        <tr data-testid="history-working-tree-row" data-commit-index="-1">
+          <td data-testid="history-commit-select-cell"><input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(
+            WORKTREE_REVISION_SENTINEL
+          )}" /></td>
+          <td data-testid="history-commit-hash"><code>working tree</code></td>
+          <td data-testid="history-commit-date">uncommitted</td>
+          <td data-testid="history-commit-author">Working tree</td>
+          <td data-testid="history-commit-subject">Uncommitted changes (not retained)</td>
+          <td data-testid="history-commit-body" class="commit-body"><span class="commit-body-empty">On-disk changes not yet committed.</span></td>
+          <td data-testid="history-commit-actions"></td>
+        </tr>
+      `
+      : '';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
       const selectCheckbox = `<input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(commit.hash)}" ${
@@ -337,6 +359,7 @@ export function renderHistoryPanelHtml(
         </tr>
       </thead>
       <tbody>
+        ${workingTreeRow}
         ${rows}
       </tbody>
     </table>

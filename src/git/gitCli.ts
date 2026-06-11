@@ -26,6 +26,19 @@ const HISTORY_FIELD_SEPARATOR = '\x1f';
 const DEFAULT_GIT_TIMEOUT_MS = 300000;
 const GIT_TIMEOUT_ENVIRONMENT_KEY = 'VI_HISTORY_SUITE_GIT_TIMEOUT_MS';
 
+/**
+ * VHS-REQ-641: reserved pseudo-revision id representing the uncommitted
+ * working-tree (on-disk) version of a file. Git has no ref for "uncommitted",
+ * so the reporting pipeline special-cases this sentinel to read bytes from disk
+ * instead of `git show <rev>:path`. It is intentionally not a valid object id.
+ */
+export const WORKTREE_REVISION_SENTINEL = 'WORKTREE';
+
+/** VHS-REQ-641: whether a revision id refers to the uncommitted working tree. */
+export function isWorktreeRevision(revisionId: string | undefined): boolean {
+  return revisionId === WORKTREE_REVISION_SENTINEL;
+}
+
 export async function runGit(
   args: string[],
   cwd: string,
@@ -349,6 +362,44 @@ export async function listChangedTrackedPaths(cwd: string): Promise<string[]> {
   }
 
   return [...paths].sort((left, right) => left.localeCompare(right));
+}
+
+/**
+ * VHS-REQ-641: whether a single tracked file currently has uncommitted changes
+ * (staged or unstaged) in the working tree. Uses `git status --porcelain` scoped
+ * to the one path so it is cheap and ignores unrelated dirty files. Returns
+ * false on any git error so detection never blocks the panel.
+ */
+export async function isFileDirtyInWorkingTree(
+  cwd: string,
+  relativePath: string
+): Promise<boolean> {
+  const normalized = normalizeRelativeGitPath(relativePath);
+  if (!normalized) {
+    return false;
+  }
+  try {
+    const stdout = await runGit(
+      ['status', '--porcelain', '--untracked-files=no', '--', normalized],
+      cwd,
+      'buffer'
+    );
+    return parseStatusPorcelainHasChange(stdout);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * VHS-REQ-641: parses `git status --porcelain` output and reports whether any
+ * record indicates a tracked change. Each porcelain line is `XY <path>` where a
+ * non-space in either status column means staged/unstaged modification.
+ */
+export function parseStatusPorcelainHasChange(output: string | Buffer): boolean {
+  const text = Buffer.isBuffer(output) ? output.toString('utf8') : output;
+  return text
+    .split(/\r?\n/)
+    .some((line) => line.length >= 2 && line.slice(0, 2).trim().length > 0);
 }
 
 export async function listReachableCommitHashes(cwd: string): Promise<string[]> {

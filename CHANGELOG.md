@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.19.0] - 2026-06-11
+
+### Added
+
+- The VI History panel now detects uncommitted working-tree changes to the
+  selected VI and pins a selectable **Working Tree (uncommitted)** row at the top
+  of the history table. Check the working-tree row plus any committed revision
+  and choose **Compare** to review on-disk changes before they are committed
+  against any prior commit. A VI with a single commit plus uncommitted changes
+  becomes reviewable. The working-tree side reads the on-disk file (it is never
+  written to) and resolves its in-repo dependencies against the committed tree.
+  Working-tree comparisons are not retained as reproducible dashboard evidence.
+  (VHS-REQ-641)
+
 ## [1.18.0] - 2026-06-11
 
 ### Changed

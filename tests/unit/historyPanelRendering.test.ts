@@ -58,6 +58,37 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
 }
 
 describe('historyPanelRendering', () => {
+  describe('working-tree comparison (VHS-REQ-641)', () => {
+    it('renders a selectable working-tree row when uncommitted changes are present', () => {
+      const model = createTestViewModel({
+        workingTree: { hasUncommittedChanges: true, headHash: 'newest1234567890abcdef1234567890abcdef12' }
+      });
+      const html = renderHistoryPanelHtml(model);
+      expect(html).toContain('data-testid="history-working-tree-row"');
+      // The row carries a selection checkbox bound to the working-tree sentinel
+      // and sorts as the newest entry (commit-index -1).
+      expect(html).toContain('data-hash="WORKTREE"');
+      expect(html).toContain('data-commit-index="-1"');
+      // The standalone vs-HEAD button is replaced by the selectable row.
+      expect(html).not.toContain('data-command="compareWorkingTree"');
+    });
+
+    it('omits the working-tree row when the file is clean', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel());
+      expect(html).not.toContain('data-testid="history-working-tree-row"');
+      expect(html).not.toContain('data-hash="WORKTREE"');
+    });
+
+    it('omits the working-tree row when comparison generation is unavailable', () => {
+      const model = createTestViewModel({
+        workingTree: { hasUncommittedChanges: true, headHash: 'newest1234567890abcdef1234567890abcdef12' },
+        surfaceCapabilities: { comparisonGenerationAvailable: false }
+      });
+      const html = renderHistoryPanelHtml(model);
+      expect(html).not.toContain('data-testid="history-working-tree-row"');
+    });
+  });
+
   describe('repository facts rendering', () => {
     it('renders repository name in meta section', () => {
       const model = createTestViewModel({

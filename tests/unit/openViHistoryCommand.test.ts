@@ -439,6 +439,39 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
   });
 
+  it('dispatches a working-tree selection to the comparison action with the sentinel against the chosen commit (VHS-REQ-641)', async () => {
+    const model = createEligibleModel({
+      workingTree: { hasUncommittedChanges: true, headHash: 'abc1234567890abcdef1234567890abcdef12345' }
+    });
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded'
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    // Working-tree row checkbox (WORKTREE) plus an older committed revision.
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReportFromSelection',
+      selectedHashes: ['WORKTREE', 'def1234567890abcdef1234567890abcdef12345']
+    });
+
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'WORKTREE',
+        baseHash: 'def1234567890abcdef1234567890abcdef12345'
+      })
+    );
+  });
+
   it('offers a Pick Runtime Provider action when the runtime is blocked by a concurrent LabVIEW bitness conflict (VHS-REQ-621)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };

@@ -9,6 +9,7 @@ import {
   getRepoRemoteUrl,
   getRepoRoot,
   GitHistoryEntry,
+  isFileDirtyInWorkingTree,
   normalizeRelativeGitPath
 } from '../git/gitCli';
 import { classifyRepositorySupportPolicy, RepositorySupportPolicy } from '../support/repositorySupportPolicy';
@@ -61,6 +62,22 @@ export interface ViHistoryViewModel {
   historyWindow?: ViHistoryWindow;
   repositorySupport?: RepositorySupportPolicy;
   surfaceCapabilities?: ViHistorySurfaceCapabilities;
+  /**
+   * VHS-REQ-641: present when the tracked VI has uncommitted working-tree
+   * changes, enabling a working-tree-vs-HEAD comparison even when fewer than two
+   * commits exist.
+   */
+  workingTree?: ViHistoryWorkingTreeState;
+}
+
+/**
+ * VHS-REQ-641: uncommitted working-tree state for the selected VI. `headHash` is
+ * the commit the on-disk file would be compared against in the
+ * working-tree-vs-HEAD MVP.
+ */
+export interface ViHistoryWorkingTreeState {
+  hasUncommittedChanges: boolean;
+  headHash?: string;
 }
 
 export interface ViHistoryModelOptions {
@@ -77,6 +94,8 @@ export interface ViEligibilitySnapshot {
   signature: ViSignature | 'unknown';
   commitHashes: string[];
   eligible: boolean;
+  /** VHS-REQ-641: the tracked VI has uncommitted working-tree changes. */
+  hasUncommittedChanges: boolean;
 }
 
 export async function evaluateViEligibilityForFsPath(
@@ -90,13 +109,26 @@ export async function evaluateViEligibilityForFsPath(
       strictRsrcHeader: options.strictRsrcHeader ?? false
     })) ?? 'unknown';
   const commitHashes = await getFileCommitHashes(repositoryRoot, relativePath, 2);
+  // VHS-REQ-641: detect uncommitted working-tree changes for any tracked VI with
+  // at least one commit so a working-tree-vs-HEAD comparison is offered even when
+  // the file already has full history (the common "edit a committed VI" case).
+  // The scoped `git status --porcelain` is cheap relative to the history queries
+  // the panel already runs. Skipped only for unrecognized files or a file with no
+  // commit to compare against.
+  let hasUncommittedChanges = false;
+  if (signature !== 'unknown' && commitHashes.length >= 1) {
+    hasUncommittedChanges = await isFileDirtyInWorkingTree(repositoryRoot, relativePath);
+  }
 
   return {
     repositoryRoot,
     relativePath,
     signature,
     commitHashes,
-    eligible: signature !== 'unknown' && commitHashes.length >= 2
+    hasUncommittedChanges,
+    eligible:
+      signature !== 'unknown' &&
+      (commitHashes.length >= 2 || (commitHashes.length >= 1 && hasUncommittedChanges))
   };
 }
 
@@ -172,6 +204,16 @@ export async function loadViHistoryViewModelFromFsPath(
     repositorySupport: classifyRepositorySupportPolicy(
       repositoryUrl,
       path.basename(repositoryRoot)
-    )
+    ),
+    // VHS-REQ-641: surface uncommitted working-tree state so the panel can offer
+    // a working-tree-vs-HEAD comparison. headHash is the newest retained commit.
+    ...(eligibility.hasUncommittedChanges
+      ? {
+          workingTree: {
+            hasUncommittedChanges: true,
+            headHash: commits[0]?.hash
+          }
+        }
+      : {})
   };
 }

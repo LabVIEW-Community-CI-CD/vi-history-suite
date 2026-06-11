@@ -38,6 +38,7 @@ import {
   HistoryPanelTracker
 } from '../ui/historyPanelTracker';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
+import { isWorktreeRevision, WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 interface ComparisonRuntimePanelDetail {
   label: string;
@@ -1390,6 +1391,22 @@ function resolveExplicitComparisonPair(
   const uniqueHashes = [...new Set(selectedHashes)];
   if (uniqueHashes.length !== 2) {
     return undefined;
+  }
+
+  // VHS-REQ-641: the working-tree sentinel is not a committed revision, so it is
+  // not present in model.commits. When exactly one selected entry is the
+  // working-tree row, pair the uncommitted on-disk version (selected/newer side)
+  // against the other checked commit (base/older side).
+  const worktreeHashes = uniqueHashes.filter((candidateHash) => isWorktreeRevision(candidateHash));
+  if (worktreeHashes.length === 1) {
+    const baseHash = uniqueHashes.find((candidateHash) => !isWorktreeRevision(candidateHash));
+    if (!baseHash || model.commits.findIndex((commit) => commit.hash === baseHash) < 0) {
+      return undefined;
+    }
+    return {
+      selectedHash: WORKTREE_REVISION_SENTINEL,
+      baseHash
+    };
   }
 
   const rankedCommits = uniqueHashes
