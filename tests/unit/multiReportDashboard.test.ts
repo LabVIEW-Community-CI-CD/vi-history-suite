@@ -198,6 +198,7 @@ async function writeArchiveSourceRecord(options: {
   reportHtml?: string;
   blockedReason?: string;
   failureReason?: string;
+  singleFileReport?: boolean;
 }): Promise<ArchivedComparisonReportSourceRecord> {
   const archivePlan = buildComparisonReportArchivePlanFromSelection({
     storageRoot: options.storageRoot,
@@ -218,10 +219,14 @@ async function writeArchiveSourceRecord(options: {
   await fs.writeFile(archivePlan.packetFilePath, '<html>packet</html>', 'utf8');
   await fs.writeFile(archivePlan.metadataFilePath, JSON.stringify(packetRecord, null, 2), 'utf8');
   if (options.reportHtml) {
-    await fs.mkdir(archivePlan.reportAssetsDirectoryPath, { recursive: true });
     await fs.writeFile(archivePlan.reportFilePath, options.reportHtml, 'utf8');
-    await fs.writeFile(path.join(archivePlan.reportAssetsDirectoryPath, 'front.png'), 'front', 'utf8');
-    await fs.writeFile(path.join(archivePlan.reportAssetsDirectoryPath, 'block.png'), 'block', 'utf8');
+    // VHS-REQ-640: single-file reports embed images as data URIs and have no
+    // sibling `_files` assets directory; legacy multi-file reports write PNGs.
+    if (!options.singleFileReport) {
+      await fs.mkdir(archivePlan.reportAssetsDirectoryPath, { recursive: true });
+      await fs.writeFile(path.join(archivePlan.reportAssetsDirectoryPath, 'front.png'), 'front', 'utf8');
+      await fs.writeFile(path.join(archivePlan.reportAssetsDirectoryPath, 'block.png'), 'block', 'utf8');
+    }
   }
   await fs.writeFile(archivePlan.sourceRecordFilePath, JSON.stringify(sourceRecord, null, 2), 'utf8');
   return sourceRecord;
@@ -261,7 +266,70 @@ function createNiReportHtml(assetDirectoryName: string): string {
   </html>`;
 }
 
+// VHS-REQ-640: a single-file report embeds overview images as data URIs and has
+// no sibling `_files` assets directory.
+const SINGLE_FILE_PNG_DATA_URI =
+  'data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMCAYAAAH/zM2EAAAAASUVORK5CYII=';
+
+function createSingleFileNiReportHtml(): string {
+  return `<!DOCTYPE html>
+  <html>
+    <body>
+      <h1 class="report-title">LabVIEW VI Comparison Report</h1>
+      <p class="generation-time">5/4/2026 11:01:16 AM</p>
+      <details>
+        <summary class="difference-heading">
+          <div class="dropdown-left">First VI: C:\\repo\\VIP_Pre-Install Custom Action.vi</div>
+          <div class="dropdown-right">Second VI: C:\\repo\\VIP_Pre-Install Custom Action.vi</div>
+        </summary>
+        <table class="difference">
+          <tr class="compared-vi-image-captions"><td class="compared-vi-image-caption">Block Diagram Overview</td></tr>
+          <tr class="compared-images"><td><img class="difference-image" src="${SINGLE_FILE_PNG_DATA_URI}"/></td></tr>
+          <tr class="compared-vi-image-captions"><td class="compared-vi-image-caption">Front Panel Overview</td></tr>
+          <tr class="compared-images"><td><img class="difference-image" src="${SINGLE_FILE_PNG_DATA_URI}"/></td></tr>
+        </table>
+      </details>
+    </body>
+  </html>`;
+}
+
 describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
+  it('decodes single-file report data-URI overview images into dashboard PNG assets (VHS-REQ-640)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-sf-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const model = createModel();
+    await writeArchiveSourceRecord({
+      storageRoot,
+      model,
+      selectedHash: 'c4',
+      baseHash: 'c3',
+      reportExists: true,
+      singleFileReport: true,
+      reportHtml: createSingleFileNiReportHtml()
+    });
+
+    const dashboard = await buildAndPersistMultiReportDashboard(storageRoot, model, {
+      now: () => '2026-05-04T12:00:00.000Z'
+    });
+
+    const generatedEntry = dashboard.record.entries.find((entry) => entry.selectedHash === 'c4');
+    expect(generatedEntry?.dashboardImageAssets).toHaveLength(2);
+    for (const asset of generatedEntry?.dashboardImageAssets ?? []) {
+      // The asset path is a real file written into the dashboard assets dir,
+      // not a data URI, so the dashboard render path is unchanged.
+      expect(asset.dashboardRelativePath).not.toContain('data:');
+      const assetPath = path.join(
+        dashboard.record.artifactPlan.dashboardDirectory,
+        asset.dashboardRelativePath
+      );
+      await expect(fs.access(assetPath)).resolves.toBeUndefined();
+      const bytes = await fs.readFile(assetPath);
+      // Valid PNG magic header proves the data URI was decoded.
+      expect(bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    }
+  });
+
   it('concentrates generated, blocked, and missing retained evidence into the dashboard record and HTML', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-'));
     tempRoots.push(tempRoot);
