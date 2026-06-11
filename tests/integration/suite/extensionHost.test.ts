@@ -255,11 +255,13 @@ async function testPanelOpenFlow(
       copiedReviewPacket,
       /Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output\./
     );
-    assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Update eligible fixture/);
+    assert.match(copiedReviewPacket, /Per-retained-commit facts:/);
+    assert.match(copiedReviewPacket, /- [0-9a-f]{8} :: Update eligible fixture :: No commit body/);
     assert.match(
       copiedReviewPacket,
-      /- [0-9a-f]{8} vs [0-9a-f]{8} :: Add third eligible fixture revision/
+      /- [0-9a-f]{8} :: Add third eligible fixture revision :: No commit body/
     );
+    assert.doesNotMatch(copiedReviewPacket, /Retained compare pairs:/);
     assert.equal(copiedReviewAction.copiedTextLength, copiedReviewPacket.length);
   }
 
