@@ -30,6 +30,20 @@ Burned exact-version releases now include `v1.0.2`.
   it, change the configured version to match, or use a Docker-backed compare. A
   LabVIEW session whose version and bitness both match your selection continues
   to open normally. (VHS-REQ-637)
+- The comparison report now has a `VI History` button in its title bar that
+  re-opens the history panel for the file the report compares, and the report
+  now opens beside the history panel instead of replacing it. Together these let
+  you return to a file's history after a compare without reselecting the file.
+  (VHS-REQ-638)
+
+### Fixed
+
+- The `VI History` entry in the Explorer and editor right-click menus no longer
+  disappears after you run a comparison. Once the comparison report opened it
+  became the active editor, which cleared the file context the menu depended on,
+  so right-clicking the same VI no longer showed `VI History` until you clicked
+  another file and back. The entry now stays available while a VI History or
+  comparison report view is active. (VHS-REQ-004)
 
 ## [1.14.6] - 2026-06-10
 

@@ -329,6 +329,18 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
+  it('warns without resolving Git when report re-entry has no active comparison report source (VHS-REQ-638)', async () => {
+    await activate(createContext() as never);
+
+    const result = await commandHandlers.get('labviewViHistory.openViHistoryFromReport')?.();
+
+    expect(result).toEqual({ outcome: 'missing-source-vi' });
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI History could not resolve the source file for this comparison report. Select the LabVIEW VI in the Explorer and choose VI History.'
+    );
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+  });
+
   it('blocks VI History open with the bitness toast and does not resolve runtime when the bitness gate blocks (VHS-REQ-636)', async () => {
     vi.mocked(decideBitnessOpenGate).mockResolvedValueOnce({
       kind: 'block',

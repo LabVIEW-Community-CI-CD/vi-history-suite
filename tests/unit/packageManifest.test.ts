@@ -148,18 +148,53 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('contributes the visibility gate in explorer and editor title menus', () => {    const manifest = readManifest();
+  it('contributes the visibility gate in explorer and editor title menus', () => {
+    const manifest = readManifest();
     const expectedMenuEntry = {
       command: 'labviewViHistory.open',
       group: '3_compare',
       when:
-        '(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit) && isWorkspaceTrusted'
+        '(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit || activeWebviewPanelId == viHistorySuite.history || activeWebviewPanelId == viHistorySuite.comparisonReport) && isWorkspaceTrusted'
     };
 
     expect(manifest.contributes?.menus?.['explorer/context']).toContainEqual(expectedMenuEntry);
     expect(manifest.contributes?.menus?.['editor/title/context']).toContainEqual(
       expectedMenuEntry
     );
+  });
+
+  it('keeps the VI History menu reachable while a VI History or comparison report webview is active (VHS-REQ-004)', () => {
+    const manifest = readManifest();
+    const openEntries = (manifest.contributes?.menus?.['explorer/context'] ?? []).filter(
+      (entry) => entry.command === 'labviewViHistory.open'
+    );
+
+    expect(openEntries).toHaveLength(1);
+    const when = openEntries[0]?.when ?? '';
+    expect(when).toContain('activeWebviewPanelId == viHistorySuite.history');
+    expect(when).toContain('activeWebviewPanelId == viHistorySuite.comparisonReport');
+    expect(when).toContain('isWorkspaceTrusted');
+  });
+
+  it('contributes the comparison report VI History re-entry action (VHS-REQ-638)', () => {
+    const manifest = readManifest();
+    const commands = manifest.contributes?.commands ?? [];
+    const titles = new Map(commands.map((entry) => [entry.command ?? '', entry]));
+
+    expect(titles.get('labviewViHistory.openViHistoryFromReport')).toMatchObject({
+      title: 'Open VI History',
+      category: 'VI History'
+    });
+
+    expect(manifest.contributes?.menus?.['editor/title']).toContainEqual({
+      command: 'labviewViHistory.openViHistoryFromReport',
+      group: 'navigation',
+      when: 'activeWebviewPanelId == viHistorySuite.comparisonReport'
+    });
+    expect(manifest.contributes?.menus?.['commandPalette']).toContainEqual({
+      command: 'labviewViHistory.openViHistoryFromReport',
+      when: 'activeWebviewPanelId == viHistorySuite.comparisonReport'
+    });
   });
 
   it('keeps desktop extension boundaries and runtime settings configuration', () => {

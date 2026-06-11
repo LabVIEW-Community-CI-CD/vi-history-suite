@@ -128,7 +128,8 @@ export function createComparisonReportAction(
         metadataFilePath: ensured.packet.metadataFilePath,
         localResourceSegment: 'reports',
         retainedArchiveAvailable: ensured.result.retainedArchiveAvailable ?? false,
-        archiveFailureReason: ensured.result.archiveFailureReason
+        archiveFailureReason: ensured.result.archiveFailureReason,
+        sourceViFsPath: path.join(request.model.repositoryRoot, request.model.relativePath)
       },
       deps
     );
@@ -234,7 +235,8 @@ export function createOpenRetainedComparisonReportAction(
         reportFilePath: sourceRecord.archivePlan.reportFilePath,
         metadataFilePath: sourceRecord.archivePlan.metadataFilePath,
         localResourceSegment: 'report-history',
-        retainedArchiveAvailable: true
+        retainedArchiveAvailable: true,
+        sourceViFsPath: path.join(request.model.repositoryRoot, request.model.relativePath)
       },
       deps
     );
@@ -619,6 +621,7 @@ async function openPersistedComparisonReportPanel(
     localResourceSegment: 'reports' | 'report-history';
     retainedArchiveAvailable: boolean;
     archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
+    sourceViFsPath?: string;
   },
   deps: ComparisonReportActionDeps
 ): Promise<ComparisonReportActionResult> {
@@ -635,7 +638,7 @@ async function openPersistedComparisonReportPanel(
   const panel = createWebviewPanel(
     'viHistorySuite.comparisonReport',
     options.record.reportTitle,
-    vscode.ViewColumn.Active,
+    vscode.ViewColumn.Beside,
     {
       enableScripts: false,
       localResourceRoots: [options.context.storageUri!, repoRootUri]
@@ -650,7 +653,8 @@ async function openPersistedComparisonReportPanel(
     runtimeExecutionState: options.record.runtimeExecutionState,
     graphicsReportUnavailableReason:
       deriveComparisonBlockedReason(options.record) ??
-      options.record.runtimeExecution.failureReason
+      options.record.runtimeExecution.failureReason,
+    sourceViFsPath: options.sourceViFsPath
   });
   const packetWebviewUri = panel.webview.asWebviewUri(packetFileUri).toString();
   const reportWebviewUri = panel.webview.asWebviewUri(reportFileUri).toString();

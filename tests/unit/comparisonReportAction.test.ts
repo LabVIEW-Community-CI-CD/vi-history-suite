@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as path from 'node:path';
 
 vi.mock('vscode', async () => {
   const { defaultVsCodeTestHarness } = await import('./vscodeTestHarness');
@@ -285,6 +286,58 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(harness.panels[0]?.webview.html).toContain('Generated LabVIEW report');
     expect(harness.panels[0]?.webview.html).toContain('Comparison context');
     expect(harness.panels[0]?.webview.html).toContain('Explicit base revision');
+  });
+
+  it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638)', async () => {
+    const context = harness.createContext();
+    const preflight = createPreflight();
+    const runtimeSelection = createRuntimeSelection();
+    const persistedRecord = createPacketRecord({ preflight, runtimeSelection });
+    const executedRecord = createPacketRecord({
+      preflight,
+      runtimeSelection,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: {
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true,
+        executable: 'LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport']
+      }
+    });
+    const registeredSources: Array<{ sourceViFsPath?: string }> = [];
+    const exportRegistry = {
+      register: vi.fn((_panel: unknown, source: { sourceViFsPath?: string }) => {
+        registeredSources.push(source);
+      })
+    };
+
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(preflight),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      getRuntimeSettings: () => ({
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      }),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(persistedRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: vi.fn().mockResolvedValue('<html><body>report</body></html>') as never,
+      exportRegistry: exportRegistry as never
+    });
+
+    await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1'
+    });
+
+    const expectedSourceViFsPath = path.join('/workspace/repo', 'Source/Sample.vi');
+    expect(registeredSources).toHaveLength(1);
+    expect(registeredSources[0]?.sourceViFsPath).toBe(expectedSourceViFsPath);
+    expect(harness.panels).toHaveLength(1);
+    expect(harness.panels[0]?.viewColumn).toBe(harness.vscode.ViewColumn.Beside);
   });
 
   it('retains preflight rejection evidence without executing runtime', async () => {
