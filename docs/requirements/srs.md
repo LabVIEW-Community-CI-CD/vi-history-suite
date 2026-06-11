@@ -2588,11 +2588,12 @@ Missing numeric IDs are intentional.
     otherwise `unknown`) and a best-effort running-year inference from the
     observed executable path; the running year is omitted from the message when
     it cannot be inferred.
-  - `BITNESS_OPEN_BLOCKED_MESSAGE` names the running LabVIEW (year when known
-    plus bitness), names the selected LabVIEW (year plus bitness), and instructs
-    the user to save and close the running LabVIEW session, or to change
-    `viHistorySuite.labviewBitness` (and `viHistorySuite.labviewVersion`) to
-    match the running session, before retrying.
+  - The block toast message (built by `buildBitnessOpenBlockedMessage`) names
+    the running LabVIEW (year when known plus bitness), names the selected
+    LabVIEW (year plus bitness), and instructs the user to save and close the
+    running LabVIEW session, or to change `viHistorySuite.labviewBitness` (and
+    `viHistorySuite.labviewVersion`) to match the running session, before
+    retrying.
   - `presentBitnessOpenBlockedToast(decision)` shows the decision's message and
     `Pick Runtime Provider` action and, when the action is selected, invokes
     `labviewViHistory.pickRuntimeProvider`; it performs no automatic correction
@@ -2607,13 +2608,14 @@ Missing numeric IDs are intentional.
     (allows the command) when the observation throws.
   - The compare-time VHS-REQ-621 detection and classification path is unchanged.
 - Agent Work Scope:
-  - Add the pure decision helper, the block message constant, the action label,
+  - Add the pure decision helper, the block message builder, the action label,
     and the toast presenter to `src/ui/runtimeAvailabilityNotice.ts` so unit
     tests exercise routing without a window, and wire the gate into the
     `labviewViHistory.open` gate chain in `src/extension.ts` after the VI Server
     gate. Reuse the VHS-REQ-621 bitness inference helpers
     (`observeWindowsRuntimeProcesses`, `inferLabviewBitnessFromExecutablePath`)
-    from `src/reporting/comparisonReportRuntimeExecution.ts` and the existing
+    plus the best-effort `inferLabviewYearFromExecutablePath` year helper from
+    `src/reporting/comparisonReportRuntimeExecution.ts` and the existing
     `labviewViHistory.pickRuntimeProvider` command. Do not add a new process
     probe to the activation hot path, do not introduce a new command, do not
     auto-correct `viHistorySuite.labviewBitness`, and do not change the
@@ -2624,7 +2626,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportRuntimeExecution.ts`
 - Verification References:
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
-  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the gate window-free and keyed on the running-process bitness signal;

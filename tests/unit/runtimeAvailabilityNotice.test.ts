@@ -6,9 +6,14 @@ vi.mock('vscode', async () => {
 });
 
 import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
+import type { RuntimeProcessObservation } from '../../src/reporting/comparisonReportRuntimeExecution';
+import * as vscode from 'vscode';
 import {
+  BITNESS_OPEN_PICK_PROVIDER_ACTION,
   buildAvailableStatusBarSuffix,
+  buildBitnessOpenBlockedMessage,
   buildStatusBarPresentation,
+  decideBitnessOpenGate,
   decideFirstRunPresentation,
   decideLabviewCliOpenGate,
   decideLabviewCliOpenGateWithRegistryFallback,
@@ -22,6 +27,7 @@ import {
   LABVIEW_CLI_NOTICE_BUTTON_INSTALL,
   LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI,
   LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+  presentBitnessOpenBlockedToast,
   RUNTIME_RE_DETECT_THROTTLE_MS,
   selectActiveRuntime,
   shouldThrottleReDetect,
@@ -505,5 +511,184 @@ describe('decideViServerOpenGate (VHS-REQ-631)', () => {
     });
     expect(decision.kind).toBe('block');
     expect(decision.inspectedConfigPaths?.length).toBeGreaterThan(0);
+  });
+});
+
+describe('buildBitnessOpenBlockedMessage (VHS-REQ-636)', () => {
+  it('names the running and selected LabVIEW year and bitness and the recovery actions', () => {
+    const message = buildBitnessOpenBlockedMessage({
+      observedBitness: 'x86',
+      selectedBitness: 'x64',
+      observedYear: '2024',
+      selectedYear: '2026'
+    });
+    expect(message).toContain('LabVIEW 2024 (32-bit) is currently open');
+    expect(message).toContain('compare with LabVIEW 2026 (64-bit)');
+    expect(message).toContain('save and close');
+    expect(message).toContain('viHistorySuite.labviewBitness');
+  });
+
+  it('omits the year from each side when it is unknown', () => {
+    const message = buildBitnessOpenBlockedMessage({
+      observedBitness: 'x64',
+      selectedBitness: 'x86'
+    });
+    expect(message).toContain('LabVIEW (64-bit) is currently open');
+    expect(message).toContain('compare with LabVIEW (32-bit)');
+  });
+});
+
+describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
+  const observation = (
+    bitness: 'x86' | 'x64' | 'unknown' | undefined,
+    executablePath?: string
+  ): RuntimeProcessObservation => ({
+    capturedAt: '2026-01-01T00:00:00.000Z',
+    hostPlatform: 'win32',
+    runtimePlatform: 'win32',
+    trigger: 'preflight',
+    observedProcesses: [],
+    observedProcessNames: [],
+    labviewProcessObserved: bitness !== undefined,
+    labviewCliProcessObserved: false,
+    lvcompareProcessObserved: false,
+    labviewProcessBitness: bitness,
+    labviewProcessExecutablePath: executablePath
+  });
+
+  it('allows open before detection completes without observing processes', async () => {
+    const observe = vi.fn();
+    await expect(
+      decideBitnessOpenGate(undefined, undefined, {
+        platform: 'win32',
+        observeWindowsProcesses: observe
+      })
+    ).resolves.toEqual({ kind: 'allow' });
+    expect(observe).not.toHaveBeenCalled();
+  });
+
+  it('allows open when a satisfiable Docker runtime is the active provider', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionAvailable);
+    const observe = vi.fn();
+    await expect(
+      decideBitnessOpenGate(detectionAvailable, snapshot, {
+        platform: 'win32',
+        observeWindowsProcesses: observe
+      })
+    ).resolves.toEqual({ kind: 'allow' });
+    expect(observe).not.toHaveBeenCalled();
+  });
+
+  it('allows open on a non-Windows platform', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const observe = vi.fn();
+    await expect(
+      decideBitnessOpenGate(detectionHost, snapshot, {
+        platform: 'linux',
+        observeWindowsProcesses: observe
+      })
+    ).resolves.toEqual({ kind: 'allow' });
+    expect(observe).not.toHaveBeenCalled();
+  });
+
+  it('allows open when no host installation resolves from the snapshot', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionMissing);
+    const observe = vi.fn();
+    await expect(
+      decideBitnessOpenGate(detectionMissing, snapshot, {
+        platform: 'win32',
+        observeWindowsProcesses: observe
+      })
+    ).resolves.toEqual({ kind: 'allow' });
+    expect(observe).not.toHaveBeenCalled();
+  });
+
+  it('allows open when no running LabVIEW of a known bitness is observed', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const observe = vi.fn(async () => observation('unknown'));
+    await expect(
+      decideBitnessOpenGate(detectionHost, snapshot, {
+        platform: 'win32',
+        observeWindowsProcesses: observe
+      })
+    ).resolves.toEqual({ kind: 'allow' });
+    expect(observe).toHaveBeenCalledTimes(1);
+  });
+
+  it('allows open when the running bitness matches the selected bitness', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const observe = vi.fn(async () =>
+      observation(
+        'x64',
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    );
+    const decision = await decideBitnessOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      observeWindowsProcesses: observe
+    });
+    expect(decision.kind).toBe('allow');
+  });
+
+  it('blocks open when the running bitness differs from the selected bitness', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const observe = vi.fn(async () =>
+      observation(
+        'x86',
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+      )
+    );
+    const decision = await decideBitnessOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      observeWindowsProcesses: observe
+    });
+    expect(decision.kind).toBe('block');
+    expect(decision.observedBitness).toBe('x86');
+    expect(decision.selectedBitness).toBe('x64');
+    expect(decision.actionLabel).toBe(BITNESS_OPEN_PICK_PROVIDER_ACTION);
+    expect(decision.toastMessage).toContain('LabVIEW 2024 (32-bit)');
+    expect(decision.toastMessage).toContain('LabVIEW 2026 (64-bit)');
+  });
+
+  it('fails open when the bounded process observation throws', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const observe = vi.fn(async () => {
+      throw new Error('tasklist failed');
+    });
+    await expect(
+      decideBitnessOpenGate(detectionHost, snapshot, {
+        platform: 'win32',
+        observeWindowsProcesses: observe
+      })
+    ).resolves.toEqual({ kind: 'allow' });
+  });
+});
+
+describe('presentBitnessOpenBlockedToast (VHS-REQ-636)', () => {
+  it('shows the toast and dispatches Pick Runtime Provider when the action is chosen', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const executeCommand = vi.mocked(vscode.commands.executeCommand);
+    showWarning.mockClear();
+    executeCommand.mockClear();
+    await presentBitnessOpenBlockedToast({
+      kind: 'block',
+      toastMessage: 'Bitness conflict',
+      actionLabel: BITNESS_OPEN_PICK_PROVIDER_ACTION
+    });
+    expect(showWarning).toHaveBeenCalledWith(
+      'Bitness conflict',
+      BITNESS_OPEN_PICK_PROVIDER_ACTION
+    );
+    expect(executeCommand).toHaveBeenCalledWith('labviewViHistory.pickRuntimeProvider');
+  });
+
+  it('does nothing when the decision carries no toast message', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const executeCommand = vi.mocked(vscode.commands.executeCommand);
+    showWarning.mockClear();
+    executeCommand.mockClear();
+    await presentBitnessOpenBlockedToast({ kind: 'allow' });
+    expect(showWarning).not.toHaveBeenCalled();
+    expect(executeCommand).not.toHaveBeenCalled();
   });
 });

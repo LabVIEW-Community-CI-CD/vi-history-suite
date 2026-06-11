@@ -133,6 +133,8 @@ vi.mock('../../src/ui/runtimeAvailabilityNotice', () => ({
   presentLabviewCliOpenBlockedToast: vi.fn(async () => undefined),
   decideViServerOpenGate: vi.fn(async () => ({ kind: 'allow' })),
   presentViServerOpenBlockedToast: vi.fn(async () => undefined),
+  decideBitnessOpenGate: vi.fn(async () => ({ kind: 'allow' })),
+  presentBitnessOpenBlockedToast: vi.fn(async () => undefined),
   STATUS_BAR_PICK_COMMAND_ID: 'labviewViHistory.pickRuntimeProvider'
 }));
 

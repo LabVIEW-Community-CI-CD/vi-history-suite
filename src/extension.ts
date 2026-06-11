@@ -48,9 +48,11 @@ import { detectAvailableRuntimes } from './tooling/runtimeAutoDetect';
 import { applyRuntimeSettingsSeed } from './tooling/runtimeSettingsSeed';
 import {
   createRuntimeAvailabilityWatcher,
+  decideBitnessOpenGate,
   decideLabviewCliOpenGate,
   decideLabviewCliOpenGateWithRegistryFallback,
   decideViServerOpenGate,
+  presentBitnessOpenBlockedToast,
   presentLabviewCliOpenBlockedToast,
   presentViServerOpenBlockedToast
 } from './ui/runtimeAvailabilityNotice';
@@ -410,6 +412,22 @@ export async function activate(
         );
         if (viServerGate.kind === 'block') {
           await presentViServerOpenBlockedToast(viServerGate);
+          return;
+        }
+        // VHS-REQ-636: After the VI Server gate, refuse to open the VI History
+        // panel when a LabVIEW process is already running at a bitness that
+        // differs from the selected viHistorySuite.labviewBitness. LabVIEW
+        // cannot start a second instance at a different bitness, so a plain
+        // toast (offering Pick Runtime Provider) is shown before the panel
+        // instead of the verbose compare-time windows-host-bitness-conflict
+        // report. The gate runs a single bounded, Windows-only process
+        // observation and fails open on any error.
+        const bitnessGate = await decideBitnessOpenGate(
+          runtimeAvailabilityWatcher.getLastDetection(),
+          runtimeAvailabilityWatcher.getLastSnapshot()
+        );
+        if (bitnessGate.kind === 'block') {
+          await presentBitnessOpenBlockedToast(bitnessGate);
           return;
         }
         const runtime = await ensureWorkspaceRuntime();
