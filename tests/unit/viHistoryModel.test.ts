@@ -131,12 +131,17 @@ describe('viHistoryModel direct history facts', () => {
     });
   });
 
-  it('does not probe working-tree status for a two-commit VI (VHS-REQ-641)', async () => {
-    await evaluateViEligibilityForFsPath('/workspace/repo/src/Sample.vi', {
+  it('probes working-tree status and exposes it for a two-commit VI with uncommitted changes (VHS-REQ-641)', async () => {
+    // Default mocks return two commits; mark the file dirty.
+    isFileDirtyInWorkingTreeMock.mockResolvedValue(true);
+
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Sample.vi', {
       repoRoot: '/workspace/repo'
     });
 
-    expect(isFileDirtyInWorkingTreeMock).not.toHaveBeenCalled();
+    expect(isFileDirtyInWorkingTreeMock).toHaveBeenCalledWith('/workspace/repo', 'src/Sample.vi');
+    expect(model.commits.length).toBe(3);
+    expect(model.workingTree).toEqual({ hasUncommittedChanges: true, headHash: 'c3' });
   });
 
   it('exposes working-tree state on the view model when the file is dirty (VHS-REQ-641)', async () => {

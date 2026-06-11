@@ -109,12 +109,14 @@ export async function evaluateViEligibilityForFsPath(
       strictRsrcHeader: options.strictRsrcHeader ?? false
     })) ?? 'unknown';
   const commitHashes = await getFileCommitHashes(repositoryRoot, relativePath, 2);
-  // VHS-REQ-641: a VI with a single commit becomes reviewable when the on-disk
-  // file has uncommitted changes (working-tree-vs-HEAD). Only probed when it
-  // could change the outcome (recognized VI with exactly one commit) so the
-  // common two-commit path keeps its existing git cost.
+  // VHS-REQ-641: detect uncommitted working-tree changes for any tracked VI with
+  // at least one commit so a working-tree-vs-HEAD comparison is offered even when
+  // the file already has full history (the common "edit a committed VI" case).
+  // The scoped `git status --porcelain` is cheap relative to the history queries
+  // the panel already runs. Skipped only for unrecognized files or a file with no
+  // commit to compare against.
   let hasUncommittedChanges = false;
-  if (signature !== 'unknown' && commitHashes.length === 1) {
+  if (signature !== 'unknown' && commitHashes.length >= 1) {
     hasUncommittedChanges = await isFileDirtyInWorkingTree(repositoryRoot, relativePath);
   }
 
