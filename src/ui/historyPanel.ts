@@ -842,8 +842,8 @@ function deriveInitialComparePreflightSummary(
 }
 
 function renderCommitBodyCell(commit: ViHistoryCommit): string {
-  const body = (commit.body ?? '').trim();
-  if (body.length === 0) {
+  const body = commit.body ?? '';
+  if (body.trim().length === 0) {
     return '<span data-testid="history-commit-body-empty" class="commit-body-empty">No commit body</span>';
   }
 

@@ -539,6 +539,20 @@ describe('historyPanelRendering', () => {
       expect(html).not.toContain('<script>alert(1)</script>');
     });
 
+    it('preserves leading indentation in the commit body instead of trimming it', () => {
+      const model = createTestViewModel({
+        commits: [
+          createTestCommit({
+            hash: 'abc123',
+            body: '  - indented bullet\n    nested detail'
+          })
+        ]
+      });
+      const html = renderHistoryPanelHtml(model);
+
+      expect(html).toContain('  - indented bullet<br />    nested detail');
+    });
+
     it('renders a factual fallback for commits with an empty body', () => {
       const model = createTestViewModel({
         commits: [
