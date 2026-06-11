@@ -651,3 +651,5 @@ VHS-REQ-632,Software,Active,srs.md#vhs-req-632-host-labview-install-catalog-pari
 VHS-REQ-633,Software,Active,srs.md#vhs-req-633-manual-labview-runtime-path-override,,,docs/requirements/srs.md
 VHS-REQ-634,Software,Active,srs.md#vhs-req-634-authoritative-host-fallback-for-labview-cli-open-gate,,,docs/requirements/srs.md
 VHS-REQ-635,Software,Active,srs.md#vhs-req-635-selected-file-on-demand-eligibility,,,docs/requirements/srs.md
+VHS-REQ-636,Software,Active,srs.md#vhs-req-636-pre-panel-labview-bitness-conflict-gate-for-vi-history-open,,,docs/requirements/srs.md
+VHS-REQ-637,Software,Active,srs.md#vhs-req-637-pre-panel-labview-version-mismatch-gate-for-vi-history-open,,,docs/requirements/srs.md

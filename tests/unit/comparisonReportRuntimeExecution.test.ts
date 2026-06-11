@@ -17,6 +17,7 @@ import {
   materializeSelectedRevisionTreeWithGit,
   parseSubmoduleGitlinks,
   inferLabviewBitnessFromExecutablePath,
+  inferLabviewYearFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
   resolveWindowsLabviewTcpSettingsForLabviewPath,
@@ -2394,6 +2395,44 @@ describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621)', () => {
         'C:/Program Files (x86)/National Instruments/LabVIEW 2026/LabVIEW.exe'
       )
     ).toBe('x86');
+  });
+});
+
+describe('inferLabviewYearFromExecutablePath (VHS-REQ-636)', () => {
+  it('extracts the year from a canonical Windows LabVIEW path', () => {
+    expect(
+      inferLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    ).toBe('2026');
+  });
+
+  it('extracts the year from a Program Files (x86) path', () => {
+    expect(
+      inferLabviewYearFromExecutablePath(
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+      )
+    ).toBe('2024');
+  });
+
+  it('extracts the year from a forward-slash path', () => {
+    expect(
+      inferLabviewYearFromExecutablePath(
+        'C:/Program Files/National Instruments/LabVIEW 2030/LabVIEW.exe'
+      )
+    ).toBe('2030');
+  });
+
+  it('returns undefined when no plausible year is present', () => {
+    expect(
+      inferLabviewYearFromExecutablePath('D:\\Tools\\LabVIEW\\LabVIEW.exe')
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for missing or empty input', () => {
+    expect(inferLabviewYearFromExecutablePath(undefined)).toBeUndefined();
+    expect(inferLabviewYearFromExecutablePath('')).toBeUndefined();
+    expect(inferLabviewYearFromExecutablePath('   ')).toBeUndefined();
   });
 });
 

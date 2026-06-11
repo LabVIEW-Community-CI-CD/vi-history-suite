@@ -133,6 +133,10 @@ vi.mock('../../src/ui/runtimeAvailabilityNotice', () => ({
   presentLabviewCliOpenBlockedToast: vi.fn(async () => undefined),
   decideViServerOpenGate: vi.fn(async () => ({ kind: 'allow' })),
   presentViServerOpenBlockedToast: vi.fn(async () => undefined),
+  decideBitnessOpenGate: vi.fn(async () => ({ kind: 'allow' })),
+  presentBitnessOpenBlockedToast: vi.fn(async () => undefined),
+  decideVersionOpenGate: vi.fn(async () => ({ kind: 'allow' })),
+  presentVersionOpenBlockedToast: vi.fn(async () => undefined),
   STATUS_BAR_PICK_COMMAND_ID: 'labviewViHistory.pickRuntimeProvider'
 }));
 
@@ -225,7 +229,13 @@ vi.mock('../../src/tooling/runtimeSettingsLiveSessionSafeRestore', () => ({
 
 import { activate } from '../../src/extension';
 import { registerRuntimeRuntimeCommands } from '../../src/commands/runtimeCommands';
-import { createRuntimeAvailabilityWatcher } from '../../src/ui/runtimeAvailabilityNotice';
+import {
+  createRuntimeAvailabilityWatcher,
+  decideBitnessOpenGate,
+  decideVersionOpenGate,
+  presentBitnessOpenBlockedToast,
+  presentVersionOpenBlockedToast
+} from '../../src/ui/runtimeAvailabilityNotice';
 
 function createContext(overrides: Record<string, unknown> = {}) {
   return {
@@ -317,6 +327,50 @@ describe('extension activation lazy side effects', () => {
     expect(viHistoryServiceConstructedWith).toHaveLength(1);
     expect(createOpenViHistoryCommandMock).toHaveBeenCalledTimes(1);
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
+  });
+
+  it('blocks VI History open with the bitness toast and does not resolve runtime when the bitness gate blocks (VHS-REQ-636)', async () => {
+    vi.mocked(decideBitnessOpenGate).mockResolvedValueOnce({
+      kind: 'block',
+      toastMessage:
+        'LabVIEW 2024 (32-bit) is currently open, but VI History is set to compare with LabVIEW 2026 (64-bit).',
+      actionLabel: 'Pick Runtime Provider'
+    });
+    await activate(createContext() as never);
+
+    await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
+
+    // The blocked gate presents its toast and returns before the panel opens.
+    expect(presentBitnessOpenBlockedToast).toHaveBeenCalledTimes(1);
+    expect(presentBitnessOpenBlockedToast).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'block' })
+    );
+    // Early return: the workspace runtime (Git API, history command) is never resolved.
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(createOpenViHistoryCommandMock).not.toHaveBeenCalled();
+    expect(openViHistoryHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks VI History open with the version toast and does not resolve runtime when the version gate blocks (VHS-REQ-637)', async () => {
+    vi.mocked(decideVersionOpenGate).mockResolvedValueOnce({
+      kind: 'block',
+      toastMessage:
+        'LabVIEW 2024 (64-bit) is currently open, but VI History is set to compare with LabVIEW 2026 (64-bit).',
+      actionLabel: 'Pick Runtime Provider'
+    });
+    await activate(createContext() as never);
+
+    await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
+
+    // The version gate runs after the bitness gate; on block it presents its
+    // toast and returns before the panel opens.
+    expect(presentVersionOpenBlockedToast).toHaveBeenCalledTimes(1);
+    expect(presentVersionOpenBlockedToast).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'block' })
+    );
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(createOpenViHistoryCommandMock).not.toHaveBeenCalled();
+    expect(openViHistoryHandlerMock).not.toHaveBeenCalled();
   });
 
   it('keeps refreshEligibility non-enumerating and uses lazy runtime for history loading', async () => {

@@ -10,6 +10,27 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.15.0] - 2026-06-11
+
+### Added
+
+- On Windows, opening `VI History` now detects when a LabVIEW session is already
+  running at a different *bitness* than the one VI History is configured to use
+  (`viHistorySuite.labviewBitness`) and stops with a single plain-language prompt
+  before the comparison panel opens, instead of surfacing a verbose runtime
+  report only after you select revisions and start a compare. The message names
+  the running and selected LabVIEW (year and 32-/64-bit), asks you to save and
+  close the running session — or change the configured bitness to match it — and
+  offers a `Pick Runtime Provider` shortcut. (VHS-REQ-636)
+- On Windows, opening `VI History` now also detects when a LabVIEW session is
+  already running at a different *version (year)* than the configured
+  `viHistorySuite.labviewVersion` while the bitness matches, and stops with the
+  same kind of plain-language prompt — explaining that VI History would otherwise
+  connect to the wrong already-running LabVIEW — with options to save and close
+  it, change the configured version to match, or use a Docker-backed compare. A
+  LabVIEW session whose version and bitness both match your selection continues
+  to open normally. (VHS-REQ-637)
+
 ## [1.14.6] - 2026-06-10
 
 ### Fixed

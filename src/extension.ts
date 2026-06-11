@@ -48,10 +48,14 @@ import { detectAvailableRuntimes } from './tooling/runtimeAutoDetect';
 import { applyRuntimeSettingsSeed } from './tooling/runtimeSettingsSeed';
 import {
   createRuntimeAvailabilityWatcher,
+  decideBitnessOpenGate,
   decideLabviewCliOpenGate,
   decideLabviewCliOpenGateWithRegistryFallback,
+  decideVersionOpenGate,
   decideViServerOpenGate,
+  presentBitnessOpenBlockedToast,
   presentLabviewCliOpenBlockedToast,
+  presentVersionOpenBlockedToast,
   presentViServerOpenBlockedToast
 } from './ui/runtimeAvailabilityNotice';
 import {
@@ -410,6 +414,40 @@ export async function activate(
         );
         if (viServerGate.kind === 'block') {
           await presentViServerOpenBlockedToast(viServerGate);
+          return;
+        }
+        // VHS-REQ-636: After the VI Server gate, refuse to open the VI History
+        // panel when a LabVIEW process is already running at a bitness that
+        // differs from the selected viHistorySuite.labviewBitness. LabVIEW
+        // cannot start a second instance at a different bitness, so a plain
+        // toast (offering Pick Runtime Provider) is shown before the panel
+        // instead of the verbose compare-time windows-host-bitness-conflict
+        // report. The gate runs a single bounded, Windows-only process
+        // observation and fails open on any error.
+        const bitnessGate = await decideBitnessOpenGate(
+          runtimeAvailabilityWatcher.getLastDetection(),
+          runtimeAvailabilityWatcher.getLastSnapshot()
+        );
+        if (bitnessGate.kind === 'block') {
+          await presentBitnessOpenBlockedToast(bitnessGate);
+          return;
+        }
+        // VHS-REQ-637: After the bitness gate, refuse to open the VI History
+        // panel when a LabVIEW process is already running at a different major
+        // version (year) than the selected viHistorySuite.labviewVersion while
+        // its bitness matches. LabVIEWCLI would attach to the wrong-version
+        // LabVIEW already listening on VI Server, so a plain toast (offering
+        // Pick Runtime Provider and a Docker-on-x64 recovery option) is shown
+        // before the panel. A known differing bitness is the VHS-REQ-636 hard
+        // conflict and is deferred to that gate so the two never double-fire.
+        // The gate runs a single bounded, Windows-only observation and fails
+        // open on any error; a matching-version session is admitted.
+        const versionGate = await decideVersionOpenGate(
+          runtimeAvailabilityWatcher.getLastDetection(),
+          runtimeAvailabilityWatcher.getLastSnapshot()
+        );
+        if (versionGate.kind === 'block') {
+          await presentVersionOpenBlockedToast(versionGate);
           return;
         }
         const runtime = await ensureWorkspaceRuntime();
