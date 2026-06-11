@@ -164,6 +164,11 @@ describe('buildComparisonReportExecutionPlan', () => {
     );
     expect(plan.commandPlan?.args).toContain('-LabVIEWPath');
     expect(plan.commandPlan?.args).not.toContain('-Headless');
+    // VHS-REQ-640: reports are generated as a self-contained single file so the
+    // webview never issues per-image sub-requests.
+    const reportTypeIndex = plan.commandPlan?.args.indexOf('-ReportType') ?? -1;
+    expect(reportTypeIndex).toBeGreaterThanOrEqual(0);
+    expect(plan.commandPlan?.args[reportTypeIndex + 1]).toBe('htmlsinglefile');
   });
 
   it('adds headless mode for container providers and LV_RTE_HEADLESS win32 fallback', () => {

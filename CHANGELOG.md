@@ -12,6 +12,16 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Changed
+
+- LabVIEW comparison reports are now generated as a self-contained single-file
+  HTML document (`-ReportType htmlsinglefile`) with every difference image
+  embedded as a data URI, instead of a multi-file report plus a sibling
+  `<report>_files` image directory. This removes the per-image webview
+  sub-requests that could exhaust the resource loader on large reports, so the
+  comparison-report panel reliably renders every image. Previously retained
+  multi-file reports continue to render. (VHS-REQ-640)
+
 ### Fixed
 
 - Generated LabVIEW comparison reports now render every difference image in the

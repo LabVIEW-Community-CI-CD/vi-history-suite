@@ -80,7 +80,12 @@ export function buildComparisonReportExecutionPlan(
       rightViPath: record.stagedRevisionPlan.rightFilePath,
       reportFilePath: record.artifactPlan.reportFilePath,
       labviewPath: labviewExePath,
-      reportFormat: 'HTML',
+      // VHS-REQ-640: emit a self-contained single-file report (images embedded as
+      // base64 data URIs, no sibling `<report>_files/` directory). The previous
+      // multi-file `HTML` format made the webview request hundreds of per-object
+      // difference images at once, exhausting the resource loader so later images
+      // rendered as their path text. A single file produces zero sub-requests.
+      reportFormat: 'HTMLSingleFile',
       overwrite: true,
       createOutputDirectory: true,
       headless: headlessRequested
