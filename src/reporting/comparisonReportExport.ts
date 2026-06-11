@@ -17,6 +17,13 @@ export interface ComparisonReportExportSource {
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   graphicsReportUnavailableReason?: string;
+  /**
+   * Absolute filesystem path of the source LabVIEW VI the report compares, when
+   * known. Lets the comparison-report title-bar re-entry action (VHS-REQ-638)
+   * re-open VI History for the same file without relying on the active editor
+   * resource, which the report webview clears once it becomes active.
+   */
+  sourceViFsPath?: string;
 }
 
 export interface ComparisonReportExportPlan {

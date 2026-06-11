@@ -30,6 +30,12 @@ Burned exact-version releases now include `v1.0.2`.
   it, change the configured version to match, or use a Docker-backed compare. A
   LabVIEW session whose version and bitness both match your selection continues
   to open normally. (VHS-REQ-637)
+- The comparison report now has a `VI History` button in its title bar that
+  re-opens the history panel for the file the report compares, and the report
+  now opens beside the history panel instead of replacing it. Together these
+  resolve the friction where, after running a comparison, returning to a VI's
+  history required reselecting the file because the report had taken over the
+  editor. (VHS-REQ-638)
 
 ## [1.14.6] - 2026-06-10
 

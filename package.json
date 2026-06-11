@@ -89,6 +89,12 @@
         "title": "Export Comparison Report (HTML)",
         "category": "VI History",
         "icon": "$(save-as)"
+      },
+      {
+        "command": "labviewViHistory.openViHistoryFromReport",
+        "title": "Open VI History",
+        "category": "VI History",
+        "icon": "$(history)"
       }
     ],
     "menus": {
@@ -108,12 +114,21 @@
       ],
       "editor/title": [
         {
+          "command": "labviewViHistory.openViHistoryFromReport",
+          "group": "navigation",
+          "when": "activeWebviewPanelId == viHistorySuite.comparisonReport"
+        },
+        {
           "command": "labviewViHistory.exportComparisonReport",
           "group": "navigation",
           "when": "activeWebviewPanelId == viHistorySuite.comparisonReport"
         }
       ],
       "commandPalette": [
+        {
+          "command": "labviewViHistory.openViHistoryFromReport",
+          "when": "activeWebviewPanelId == viHistorySuite.comparisonReport"
+        },
         {
           "command": "labviewViHistory.exportComparisonReport",
           "when": "activeWebviewPanelId == viHistorySuite.comparisonReport"
