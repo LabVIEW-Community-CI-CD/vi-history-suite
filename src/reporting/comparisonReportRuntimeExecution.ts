@@ -12,6 +12,7 @@ import {
 } from './comparisonReportPacket';
 import { buildComparisonRuntimeDoctorSummary } from './comparisonRuntimeDoctor';
 import { readRevisionBlob } from './comparisonReportPreflight';
+import { isWorktreeRevision } from '../git/gitCli';
 import {
   createDiagnosticsRecorder,
   DiagnosticsRecorder,
@@ -597,12 +598,17 @@ export async function materializeSelectedRevisionTreeWithGit(
   const removePath = deps.removePath ?? fs.rm;
   const tmpdir = deps.tmpdir ?? os.tmpdir;
   const listSubmoduleGitlinks = deps.listSubmoduleGitlinks ?? spawnGitListSubmoduleGitlinks;
+  // VHS-REQ-641: the working-tree sentinel is not a git revision. Materialize the
+  // HEAD tree as the dependency context so the loose, uncommitted VI resolves its
+  // in-repo siblings; the uncommitted VI bytes themselves are staged separately
+  // by the disk-aware blob reader.
+  const revisionId = isWorktreeRevision(options.revisionId) ? 'HEAD' : options.revisionId;
 
   // Fail closed: the superproject tree must materialize for the comparison to be
   // meaningful.
   await checkoutRevisionIntoWorkTree({
     sourceWorkingDirectory: options.repositoryRoot,
-    revisionId: options.revisionId,
+    revisionId,
     destinationRoot: options.destinationRoot,
     runGit,
     mkdtemp,
@@ -614,7 +620,7 @@ export async function materializeSelectedRevisionTreeWithGit(
   // dependencies tracked through submodules resolve at load time (#283).
   await materializeSubmoduleTreesBestEffort({
     sourceWorkingDirectory: options.repositoryRoot,
-    revisionId: options.revisionId,
+    revisionId,
     destinationRoot: options.destinationRoot,
     runGit,
     mkdtemp,

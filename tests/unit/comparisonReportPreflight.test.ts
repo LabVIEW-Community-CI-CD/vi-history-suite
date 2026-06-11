@@ -117,6 +117,73 @@ describe('comparisonReportPreflight', () => {
     });
   });
 
+  it('reads the working-tree sentinel from disk and detects its signature (VHS-REQ-641)', async () => {
+    const repoRoot = await createTempRepoRoot();
+    const relativePath = 'Source/KeyDown.vi';
+    const absolutePath = path.join(repoRoot, relativePath);
+
+    await git(repoRoot, ['init']);
+    await git(repoRoot, ['config', 'user.name', 'VI History Suite']);
+    await git(repoRoot, ['config', 'user.email', 'vi-history-suite@example.com']);
+    await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeViLikeFile(absolutePath, 'LVIN');
+    await git(repoRoot, ['add', relativePath]);
+    await git(repoRoot, ['commit', '-m', 'Add VI']);
+    const headRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    // Make an uncommitted on-disk change (still a valid VI signature).
+    const dirtyBytes = createViLikeBuffer('LVIN');
+    Buffer.from('XX', 'ascii').copy(dirtyBytes, 6);
+    await fs.writeFile(absolutePath, dirtyBytes);
+
+    const result = await preflightComparisonReportRevisions({
+      repoRoot,
+      relativePath,
+      leftRevisionId: headRevisionId,
+      rightRevisionId: 'WORKTREE',
+      strictRsrcHeader: true
+    });
+
+    expect(result.ready).toBe(true);
+    expect(result.left.isVi).toBe(true);
+    expect(result.right).toMatchObject({
+      revisionId: 'WORKTREE',
+      resolvedRelativePath: relativePath,
+      isVi: true,
+      signature: 'LVIN'
+    });
+  });
+
+  it('blocks the working-tree sentinel when the on-disk file is not a VI (VHS-REQ-641)', async () => {
+    const repoRoot = await createTempRepoRoot();
+    const relativePath = 'Source/KeyDown.vi';
+    const absolutePath = path.join(repoRoot, relativePath);
+
+    await git(repoRoot, ['init']);
+    await git(repoRoot, ['config', 'user.name', 'VI History Suite']);
+    await git(repoRoot, ['config', 'user.email', 'vi-history-suite@example.com']);
+    await fs.mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeViLikeFile(absolutePath, 'LVIN');
+    await git(repoRoot, ['add', relativePath]);
+    await git(repoRoot, ['commit', '-m', 'Add VI']);
+    const headRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    // Corrupt the on-disk file so it no longer carries a VI signature.
+    await fs.writeFile(absolutePath, Buffer.from('not a vi at all', 'ascii'));
+
+    const result = await preflightComparisonReportRevisions({
+      repoRoot,
+      relativePath,
+      leftRevisionId: headRevisionId,
+      rightRevisionId: 'WORKTREE',
+      strictRsrcHeader: true
+    });
+
+    expect(result.ready).toBe(false);
+    expect(result.right.isVi).toBe(false);
+    expect(result.blockedReason).toBe('right-blob-not-vi');
+  });
+
   it.each([
     {
       name: 'base revision identifier is missing',

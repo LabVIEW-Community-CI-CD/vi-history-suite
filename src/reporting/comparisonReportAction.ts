@@ -22,6 +22,7 @@ import {
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
+import { isWorktreeRevision } from '../git/gitCli';
 
 export interface ComparisonReportActionRequest {
   model: ViHistoryViewModel;
@@ -305,12 +306,25 @@ async function ensureComparisonReportEvidence(
     message: 'Resolving retained revision pair.',
     increment: 10
   });
-  const selectedCommit = request.model.commits.find((commit) => commit.hash === request.selectedHash);
+  // VHS-REQ-641: the working-tree sentinel is not a committed revision, so it is
+  // not present in model.commits. Synthesize a selected-revision descriptor for
+  // it and default the base side to the newest retained commit (HEAD).
+  const selectedIsWorktree = isWorktreeRevision(request.selectedHash);
+  const selectedCommit = selectedIsWorktree
+    ? {
+        hash: request.selectedHash,
+        authorDate: '',
+        authorName: 'Working tree',
+        subject: 'Uncommitted working-tree changes'
+      }
+    : request.model.commits.find((commit) => commit.hash === request.selectedHash);
   if (!selectedCommit) {
     return { outcome: 'missing-selected-commit' };
   }
 
-  const baseHash = request.baseHash ?? selectedCommit.previousHash;
+  const baseHash = selectedIsWorktree
+    ? request.baseHash ?? request.model.commits[0]?.hash
+    : request.baseHash ?? (selectedCommit as ViHistoryViewModel['commits'][number]).previousHash;
   if (!baseHash) {
     return { outcome: 'missing-previous-hash' };
   }
@@ -538,6 +552,12 @@ function buildCancelledComparisonReportResult(
 function canArchiveComparisonReport(
   record: Parameters<typeof archiveComparisonReportSource>[0]
 ): boolean {
+  // VHS-REQ-641: working-tree comparisons compare uncommitted on-disk bytes that
+  // mutate over time, so their evidence is not reproducible and is intentionally
+  // excluded from the retained dashboard pair ledger.
+  if (isWorktreeRevision(record.selectedHash) || isWorktreeRevision(record.baseHash)) {
+    return false;
+  }
   return Boolean(
     record.artifactPlan.allowedLocalRootPaths?.[0] &&
       record.artifactPlan.normalizedRelativePath &&

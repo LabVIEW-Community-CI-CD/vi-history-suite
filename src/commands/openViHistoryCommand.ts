@@ -38,6 +38,7 @@ import {
   HistoryPanelTracker
 } from '../ui/historyPanelTracker';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
+import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 interface ComparisonRuntimePanelDetail {
   label: string;
@@ -877,6 +878,43 @@ export function createOpenViHistoryCommand(
           'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.',
           comparisonReportAction,
           explicitPair
+        );
+        return;
+      }
+
+      // VHS-REQ-641: compare the uncommitted working-tree VI against HEAD. Uses
+      // the reserved working-tree sentinel as the selected/newer side; the base
+      // defaults to the newest retained commit (HEAD) in the action.
+      if (command === 'compareWorkingTree') {
+        if (!model.workingTree?.hasUncommittedChanges) {
+          void vscode.window.showInformationMessage(
+            'The selected VI has no uncommitted working-tree changes to compare.'
+          );
+          panelTracker?.recordAction({
+            command,
+            outcome: 'ignored-no-uncommitted-changes'
+          });
+          return;
+        }
+        if (!comparisonReportAction) {
+          void vscode.window.showInformationMessage(
+            'VI Comparison Report generation is not available in this extension build.'
+          );
+          panelTracker?.recordAction({
+            command,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+        await runComparisonReportCommand(
+          command,
+          'Comparing working tree against HEAD',
+          'VI History working-tree comparison was cancelled.',
+          comparisonReportAction,
+          {
+            selectedHash: WORKTREE_REVISION_SENTINEL,
+            baseHash: model.workingTree.headHash
+          }
         );
         return;
       }

@@ -148,6 +148,15 @@ export function renderHistoryPanelHtml(
   const repositorySupportHtml = support
     ? renderRepositorySupportSection(support)
     : '';
+  // VHS-REQ-641: when the selected VI has uncommitted working-tree changes, offer
+  // a working-tree-vs-HEAD comparison alongside the committed-pair compare.
+  const workingTreeCompareMarkup =
+    comparisonSelectionEnabled && model.workingTree?.hasUncommittedChanges
+      ? `<div data-testid="history-working-tree-compare" class="working-tree-compare">
+        <div data-testid="history-working-tree-notice"><strong>Uncommitted changes detected.</strong> Compare the on-disk working-tree version of this VI against the latest commit (HEAD). Working-tree comparisons are not retained as reproducible evidence.</div>
+        <button data-testid="history-action-compare-working-tree" data-command="compareWorkingTree">Compare working tree vs HEAD</button>
+      </div>`
+      : '';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
       const selectCheckbox = `<input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(commit.hash)}" ${
@@ -323,6 +332,7 @@ export function renderHistoryPanelHtml(
       </details>
       <div data-testid="history-compare-preflight-cli-hint" id="compare-preflight-cli-hint">${escapeHtml(effectiveComparePreflightState.cliHint)}</div>
       <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" disabled>Compare</button>
+      ${workingTreeCompareMarkup}
     </div>
     <table data-testid="history-table">
       <thead>

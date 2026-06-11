@@ -756,6 +756,50 @@ Missing numeric IDs are intentional.
     the interim lazy-image-loading behavior so retained multi-file reports still
     render.
 
+### VHS-REQ-641: Working-Tree (Uncommitted) Comparison Against a Prior Revision
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall let users compare the uncommitted working-tree
+  version of a tracked LabVIEW VI against a prior committed revision, so changes
+  can be reviewed before they are committed.
+- Acceptance Criteria:
+  - When the selected VI has uncommitted tracked changes, the history panel
+    presents a working-tree comparison action alongside the committed-pair
+    compare, and a VI with at least one commit plus uncommitted changes is
+    eligible even when it has fewer than two commits.
+  - Selecting the working-tree action compares the on-disk file bytes (newer
+    side) against the newest retained commit (older side); both sides pass the
+    VI signature preflight before the runtime is invoked.
+  - The working-tree side resolves in-repo dependencies against the committed
+    tree of the base revision so the loose VI loads its siblings.
+  - Working-tree comparisons are labeled as uncommitted and are excluded from
+    retained dashboard pair evidence; committed-pair behavior is unchanged.
+  - The working-tree comparison is read-only and never writes into the user's
+    working directory, and the comparison-report webview keeps scripts disabled.
+- Agent Work Scope:
+  - Change the eligibility model, panel working-tree action, preflight/runtime
+    revision readers, and their tests together; use the reserved working-tree
+    revision sentinel rather than overloading a commit hash.
+- Implementation References:
+  - `src/git/gitCli.ts`
+  - `src/services/viHistoryModel.ts`
+  - `src/reporting/comparisonReportPreflight.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/ui/historyPanel.ts`
+- Verification References:
+  - `tests/unit/gitCli.test.ts`
+  - `tests/unit/viHistoryModel.test.ts`
+  - `tests/unit/comparisonReportPreflight.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+- Change Guidance:
+  - Keep the working-tree side read-only (never write to the user's working
+    directory) and keep working-tree comparisons out of the reproducible
+    retained-evidence path; do not weaken the committed two-revision flow.
+
 ### VHS-REQ-638: Comparison Report VI History Re-Entry Action
 
 - Status: Active

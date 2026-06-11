@@ -58,6 +58,33 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
 }
 
 describe('historyPanelRendering', () => {
+  describe('working-tree comparison (VHS-REQ-641)', () => {
+    it('renders the working-tree compare action when uncommitted changes are present', () => {
+      const model = createTestViewModel({
+        workingTree: { hasUncommittedChanges: true, headHash: 'newest1234567890abcdef1234567890abcdef12' }
+      });
+      const html = renderHistoryPanelHtml(model);
+      expect(html).toContain('data-testid="history-working-tree-compare"');
+      expect(html).toContain('data-command="compareWorkingTree"');
+      expect(html).toContain('Uncommitted changes detected.');
+    });
+
+    it('omits the working-tree compare action when the file is clean', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel());
+      expect(html).not.toContain('data-testid="history-working-tree-compare"');
+      expect(html).not.toContain('data-command="compareWorkingTree"');
+    });
+
+    it('omits the working-tree compare action when comparison generation is unavailable', () => {
+      const model = createTestViewModel({
+        workingTree: { hasUncommittedChanges: true, headHash: 'newest1234567890abcdef1234567890abcdef12' },
+        surfaceCapabilities: { comparisonGenerationAvailable: false }
+      });
+      const html = renderHistoryPanelHtml(model);
+      expect(html).not.toContain('data-command="compareWorkingTree"');
+    });
+  });
+
   describe('repository facts rendering', () => {
     it('renders repository name in meta section', () => {
       const model = createTestViewModel({

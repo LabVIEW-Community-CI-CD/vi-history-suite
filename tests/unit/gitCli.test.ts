@@ -12,6 +12,8 @@ import {
   getRepoHead,
   getRepoRoot,
   getWindowsGitExecutableCandidates,
+  isFileDirtyInWorkingTree,
+  isWorktreeRevision,
   listChangedTrackedPaths,
   listReachableCommitHashes,
   listTrackedFileEntries,
@@ -21,9 +23,11 @@ import {
   parseHistoryEntries,
   parseLsFilesStageZ,
   parseLsFilesZ,
+  parseStatusPorcelainHasChange,
   runGit,
   resolveGitExecutable,
-  resolveGitTimeoutMs
+  resolveGitTimeoutMs,
+  WORKTREE_REVISION_SENTINEL
 } from '../../src/git/gitCli';
 
 const tempDirectories: string[] = [];
@@ -56,6 +60,19 @@ afterEach(async () => {
 });
 
 describe('gitCli parsing', () => {
+  it('recognizes the working-tree revision sentinel (VHS-REQ-641)', () => {
+    expect(WORKTREE_REVISION_SENTINEL).toBe('WORKTREE');
+    expect(isWorktreeRevision('WORKTREE')).toBe(true);
+    expect(isWorktreeRevision('abc1234')).toBe(false);
+    expect(isWorktreeRevision(undefined)).toBe(false);
+  });
+
+  it('detects tracked change from git status porcelain output (VHS-REQ-641)', () => {
+    expect(parseStatusPorcelainHasChange(' M path/to/File.vi\n')).toBe(true);
+    expect(parseStatusPorcelainHasChange('M  staged.vi\n')).toBe(true);
+    expect(parseStatusPorcelainHasChange('')).toBe(false);
+    expect(parseStatusPorcelainHasChange('\n')).toBe(false);
+  });
   it('parses NUL-separated tracked files safely', () => {
     expect(parseLsFilesZ('alpha.vi\0folder/with spaces.vi\0')).toEqual([
       'alpha.vi',
@@ -249,6 +266,32 @@ describe('gitCli parsing', () => {
       'dirty.vi',
       'staged.vi'
     ]);
+  });
+
+  it('reports per-file working-tree dirtiness scoped to the path (VHS-REQ-641)', async () => {
+    const repoRoot = await createTempGitRepo();
+    const targetPath = path.join(repoRoot, 'nested', 'Target.vi');
+    const otherPath = path.join(repoRoot, 'Other.vi');
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.writeFile(targetPath, 'committed target');
+    await fs.writeFile(otherPath, 'committed other');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add files'], repoRoot);
+
+    // Clean working tree: no file is dirty.
+    await expect(isFileDirtyInWorkingTree(repoRoot, 'nested/Target.vi')).resolves.toBe(false);
+
+    // Dirty only the unrelated file: the scoped target stays clean.
+    await fs.writeFile(otherPath, 'changed other');
+    await expect(isFileDirtyInWorkingTree(repoRoot, 'nested/Target.vi')).resolves.toBe(false);
+
+    // Dirty the target file itself (unstaged): detected.
+    await fs.writeFile(targetPath, 'changed target');
+    await expect(isFileDirtyInWorkingTree(repoRoot, 'nested/Target.vi')).resolves.toBe(true);
+
+    // Staged change is also detected; backslash input is normalized.
+    await runGit(['add', 'nested/Target.vi'], repoRoot);
+    await expect(isFileDirtyInWorkingTree(repoRoot, 'nested\\Target.vi')).resolves.toBe(true);
   });
 
   it('lists commits reachable from HEAD in reverse chronological order', async () => {
