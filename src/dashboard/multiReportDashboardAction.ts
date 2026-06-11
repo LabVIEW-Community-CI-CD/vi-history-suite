@@ -1098,7 +1098,9 @@ async function renderInlineDashboardArtifactHtml(options: {
   readFile: typeof fs.readFile;
 }): Promise<string> {
   try {
-    const originalHtml = await options.readFile(options.artifactFilePath, 'utf8');
+    const originalHtml = enableLazyImageLoading(
+      await options.readFile(options.artifactFilePath, 'utf8')
+    );
     const csp = [
       "default-src 'none'",
       `frame-src ${options.cspSource} https:`,
@@ -1180,6 +1182,17 @@ function renderDashboardArtifactIframeHtml(options: {
     <iframe src="${escapeHtml(options.artifactUri)}" title="${escapeHtml(options.title)}"></iframe>
   </body>
 </html>`;
+}
+
+/**
+ * Adds `loading="lazy"` to report image tags so the webview fetches images only
+ * as they scroll into view. NI comparison reports can reference hundreds of
+ * per-object difference images; requesting them all at once exhausts the webview
+ * resource loader (Chromium net::ERR_INSUFFICIENT_RESOURCES), leaving later
+ * images broken and showing their path text instead of the picture.
+ */
+function enableLazyImageLoading(html: string): string {
+  return html.replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy"');
 }
 
 function escapeHtml(value: string): string {

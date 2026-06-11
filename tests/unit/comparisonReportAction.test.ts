@@ -211,7 +211,9 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     const executeComparisonReport = vi.fn().mockResolvedValue(createPacketResult(executedRecord));
     const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
     const readFile = vi.fn().mockResolvedValue(
-      '<html><head></head><body><h1>Generated LabVIEW report</h1></body></html>'
+      '<html><head></head><body><h1>Generated LabVIEW report</h1>' +
+        '<img class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png" alt="diff-report-Sample.vi_files/0_0_1.png">' +
+        '</body></html>'
     );
     const progress = vi.fn();
 
@@ -286,6 +288,80 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(harness.panels[0]?.webview.html).toContain('Generated LabVIEW report');
     expect(harness.panels[0]?.webview.html).toContain('Comparison context');
     expect(harness.panels[0]?.webview.html).toContain('Explicit base revision');
+    // Report images load lazily so large reports (hundreds of difference images)
+    // do not exhaust the webview resource loader and fall back to alt text.
+    expect(harness.panels[0]?.webview.html).toContain(
+      '<img loading="lazy" class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png"'
+    );
+  });
+
+  it('renders a self-contained single-file report with embedded data-URI images (VHS-REQ-640)', async () => {
+    const context = harness.createContext();
+    const preflight = createPreflight();
+    const runtimeSelection = createRuntimeSelection();
+    const persistedRecord = createPacketRecord({ preflight, runtimeSelection });
+    const executedRecord = createPacketRecord({
+      preflight,
+      runtimeSelection,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: {
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true,
+        executable: 'LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport', '-ReportType', 'htmlsinglefile']
+      }
+    });
+    const preflightComparisonReport = vi.fn().mockResolvedValue(preflight);
+    const locateRuntime = vi.fn().mockResolvedValue(runtimeSelection);
+    const persistComparisonReport = vi.fn().mockResolvedValue(createPacketResult(persistedRecord));
+    const executeComparisonReport = vi.fn().mockResolvedValue(createPacketResult(executedRecord));
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
+    // HTMLSingleFile output embeds every image as a data URI; there is no sibling
+    // _files directory, so the webview issues zero per-image sub-requests.
+    const dataUri =
+      'data:image/png;base64, iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M8AAAMCAYAAAH/zM2EAAAAASUVORK5CYII=';
+    const readFile = vi.fn().mockResolvedValue(
+      `<html><head></head><body><h1>Generated LabVIEW report</h1>` +
+        `<img class="difference-image" src="${dataUri}">` +
+        `</body></html>`
+    );
+
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: () => ({
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      }),
+      persistComparisonReport,
+      executeComparisonReport,
+      archiveComparisonReportSource,
+      readFile: readFile as never
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      headlessRequested: true,
+      reportProgress: vi.fn()
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'opened-comparison-report',
+      displayedEvidenceKind: 'generated-report',
+      generatedReportExists: true
+    });
+    expect(harness.panels).toHaveLength(1);
+    const html = harness.panels[0]?.webview.html ?? '';
+    // The embedded data URI survives into the rendered webview unchanged.
+    expect(html).toContain(dataUri);
+    // The CSP permits inline data: images and the report needs no _files directory.
+    expect(html).toContain('img-src');
+    expect(html).toContain('data:');
+    expect(html).not.toContain('_files');
   });
 
   it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638)', async () => {

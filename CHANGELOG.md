@@ -10,6 +10,33 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.18.0] - 2026-06-11
+
+### Changed
+
+- LabVIEW comparison reports are now generated as a self-contained single-file
+  HTML document (`-ReportType htmlsinglefile`) with every difference image
+  embedded as a data URI, instead of a multi-file report plus a sibling
+  `<report>_files` image directory. This removes the per-image webview
+  sub-requests that could exhaust the resource loader on large reports, so the
+  comparison-report panel reliably renders every image. Exporting a single-file
+  report now writes just the one self-contained HTML file (no sibling assets
+  folder); previously retained multi-file reports continue to render and export
+  with their assets. (VHS-REQ-640, VHS-REQ-610, VHS-REQ-626)
+
+### Fixed
+
+- Generated LabVIEW comparison reports now render every difference image in the
+  report webview. Large reports reference hundreds of per-object difference
+  images, and the webview previously requested them all at once when the report
+  opened. That exhausted the webview resource loader (Chromium
+  `net::ERR_INSUFFICIENT_RESOURCES`), so images past the limit failed to load and
+  showed their file-path `alt` text (for example
+  `diff-report-KeyDown.vi_files/380_0_1.png`) instead of the picture. Report
+  images now load lazily as they scroll into view, keeping concurrent requests
+  low so all images load. The fix applies to both the comparison report panel
+  and the VI Review Dashboard's inline report view.
+
 ## [1.17.0] - 2026-06-11
 
 ### Changed

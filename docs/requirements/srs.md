@@ -691,9 +691,11 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - An export action is available from the comparison-report panel title bar
     while a comparison-report webview panel is the active panel.
-  - The export prefers the LabVIEW-generated graphics report and copies its
-    sibling assets directory so relative image links keep resolving when the
-    exported HTML is opened in an external browser.
+  - The export prefers the LabVIEW-generated graphics report. A self-contained
+    single-file report (VHS-REQ-640) is exported as the HTML file alone; a
+    retained multi-file report also copies its sibling assets directory so
+    relative image links keep resolving when the exported HTML is opened in an
+    external browser.
   - When no LabVIEW-generated graphics report is available, the export states
     the specific reason and only writes the diagnostic evidence packet after an
     explicit user confirmation.
@@ -716,6 +718,43 @@ Missing numeric IDs are intentional.
   - Keep the export limited to copying retained comparison evidence to an
     accessible location; do not run comparison execution or mutate retained
     artifacts.
+
+### VHS-REQ-640: Self-Contained Single-File Comparison Report Output
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall generate LabVIEW comparison reports as a
+  self-contained single-file HTML document, with all difference images embedded
+  in the report file, so the comparison-report webview renders every image
+  without issuing one sub-resource request per image.
+- Acceptance Criteria:
+  - The LabVIEW comparison runtime is invoked with the single-file report type
+    (`-ReportType htmlsinglefile`) for every supported provider (host-native,
+    Linux container, and Windows container).
+  - A freshly generated report is a single HTML file whose images are embedded
+    as data URIs; no sibling `<report>_files` assets directory is required for
+    the report to display.
+  - The comparison-report panel renders the generated single-file report with
+    all images visible and keeps webview scripts disabled.
+  - Previously retained multi-file reports continue to render; the report panel
+    still loads their images without regression.
+- Agent Work Scope:
+  - Change the report format in the execution plan together with the
+    execution-plan and report-panel tests; update the diagnostics-bundle and
+    changelog notes describing the report file shape.
+- Implementation References:
+  - `src/reporting/comparisonReportExecutionPlan.ts`
+  - `src/reporting/comparisonReportPlan.ts`
+  - `src/reporting/comparisonReportAction.ts`
+- Verification References:
+  - `tests/unit/comparisonReportExecutionPlan.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+- Change Guidance:
+  - Keep the single-file report type applied uniformly across providers; do not
+    reintroduce a per-image multi-file layout for newly generated reports. Keep
+    the interim lazy-image-loading behavior so retained multi-file reports still
+    render.
 
 ### VHS-REQ-638: Comparison Report VI History Re-Entry Action
 
