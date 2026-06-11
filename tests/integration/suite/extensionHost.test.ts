@@ -196,8 +196,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-table"/);
   assert.match(panel.renderedHtml, /data-testid="history-row"/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-select"/);
-  assert.match(panel.renderedHtml, /data-testid="history-compare-base"/);
-  assert.match(panel.renderedHtml, /data-testid="history-compare-pair"/);
+  assert.match(panel.renderedHtml, /data-testid="history-commit-body"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);

@@ -90,23 +90,33 @@ describe('gitCli parsing', () => {
     expect(parseCommitHashes('abc123\n\ndef456\n')).toEqual(['abc123', 'def456']);
   });
 
-  it('parses history entry records', () => {
+  it('parses history entry records including single-line, multi-line, and empty commit bodies', () => {
     const stdout =
-      'abc123\x1f2026-04-02T10:00:00Z\x1fA User\x1fFirst subject\x1e' +
-      'def456\x1f2026-04-01T09:00:00Z\x1fB User\x1fSecond subject\x1e';
+      'abc123\x1f2026-04-02T10:00:00Z\x1fA User\x1fFirst subject\x1fFirst body line\x1e' +
+      'def456\x1f2026-04-01T09:00:00Z\x1fB User\x1fSecond subject\x1fSecond body\nwith two lines\x1e' +
+      'ghi789\x1f2026-03-31T08:00:00Z\x1fC User\x1fThird subject\x1f\x1e';
 
     expect(parseHistoryEntries(stdout)).toEqual([
       {
         hash: 'abc123',
         authorDate: '2026-04-02T10:00:00Z',
         authorName: 'A User',
-        subject: 'First subject'
+        subject: 'First subject',
+        body: 'First body line'
       },
       {
         hash: 'def456',
         authorDate: '2026-04-01T09:00:00Z',
         authorName: 'B User',
-        subject: 'Second subject'
+        subject: 'Second subject',
+        body: 'Second body\nwith two lines'
+      },
+      {
+        hash: 'ghi789',
+        authorDate: '2026-03-31T08:00:00Z',
+        authorName: 'C User',
+        subject: 'Third subject',
+        body: ''
       }
     ]);
   });
@@ -294,7 +304,7 @@ describe('gitCli parsing', () => {
     await runGit(['commit', '-m', 'Second revision'], repoRoot);
     await fs.writeFile(trackedPath, 'third');
     await runGit(['add', '.'], repoRoot);
-    await runGit(['commit', '-m', 'Third revision'], repoRoot);
+    await runGit(['commit', '-m', 'Third revision', '-m', 'Third revision body line'], repoRoot);
 
     const commitHashes = await getFileCommitHashes(repoRoot, 'nested\\history.vi', 2);
     const historyCount = await getFileHistoryCount(repoRoot, 'nested\\history.vi');
@@ -308,6 +318,9 @@ describe('gitCli parsing', () => {
     expect(historyEntries[0]?.subject).toBe('Third revision');
     expect(historyEntries[1]?.subject).toBe('Second revision');
     expect(historyEntries[2]?.subject).toBe('First revision');
+    expect(historyEntries[0]?.body).toBe('Third revision body line');
+    expect(historyEntries[1]?.body).toBe('');
+    expect(historyEntries[2]?.body).toBe('');
     expect(historyEntries[0]?.hash).toBe(commitHashes[0]);
     expect(historyEntries[0]?.authorName).toBe('VI History Suite Test');
     expect(historyEntries[0]?.authorDate).toMatch(/^\d{4}-\d{2}-\d{2}T/);

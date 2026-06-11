@@ -7,6 +7,7 @@ export interface GitHistoryEntry {
   authorDate: string;
   authorName: string;
   subject: string;
+  body: string;
 }
 
 export interface GitTrackedFileEntry {
@@ -287,12 +288,13 @@ export function parseHistoryEntries(output: string): GitHistoryEntry[] {
     .map((record) => record.trim())
     .filter((record) => record.length > 0)
     .map((record) => {
-      const [hash, authorDate, authorName, subject] = record.split(HISTORY_FIELD_SEPARATOR);
+      const [hash, authorDate, authorName, subject, body] = record.split(HISTORY_FIELD_SEPARATOR);
       return {
         hash,
         authorDate,
         authorName,
-        subject
+        subject,
+        body: body ?? ''
       };
     });
 }
@@ -403,7 +405,7 @@ export async function getFileHistoryEntries(
       '-n',
       String(limit),
       '--follow',
-      `--format=%H${HISTORY_FIELD_SEPARATOR}%aI${HISTORY_FIELD_SEPARATOR}%an${HISTORY_FIELD_SEPARATOR}%s${HISTORY_RECORD_SEPARATOR}`,
+      `--format=%H${HISTORY_FIELD_SEPARATOR}%aI${HISTORY_FIELD_SEPARATOR}%an${HISTORY_FIELD_SEPARATOR}%s${HISTORY_FIELD_SEPARATOR}%b${HISTORY_RECORD_SEPARATOR}`,
       '--',
       normalizeRelativeGitPath(relativePath)
     ],
