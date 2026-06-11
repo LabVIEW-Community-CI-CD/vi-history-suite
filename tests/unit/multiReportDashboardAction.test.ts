@@ -165,7 +165,11 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
         retainedArchiveAvailable: true
       } as ComparisonReportActionResult);
     const writeFile = vi.fn().mockResolvedValue(undefined);
-    const readFile = vi.fn().mockResolvedValue('<html><head></head><body>generated report</body></html>');
+    const readFile = vi.fn().mockResolvedValue(
+      '<html><head></head><body>generated report' +
+        '<img class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png" alt="diff-report-Sample.vi_files/0_0_1.png">' +
+        '</body></html>'
+    );
     const reportProgress = vi.fn();
     let clock = Date.parse('2026-05-04T12:00:00.000Z');
     const action = createMultiReportDashboardAction(context as never, {
@@ -242,6 +246,11 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     });
     expect(harness.panels[1].viewType).toBe('viHistorySuite.reviewDashboardArtifact');
     expect(harness.panels[1].webview.html).toContain('generated report');
+    // Report images load lazily so large reports do not exhaust the webview
+    // resource loader and fall back to alt text.
+    expect(harness.panels[1].webview.html).toContain(
+      '<img loading="lazy" class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png"'
+    );
 
     await harness.panels[0].dispatchMessage({
       command: 'openDashboardArtifact',

@@ -211,7 +211,9 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     const executeComparisonReport = vi.fn().mockResolvedValue(createPacketResult(executedRecord));
     const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
     const readFile = vi.fn().mockResolvedValue(
-      '<html><head></head><body><h1>Generated LabVIEW report</h1></body></html>'
+      '<html><head></head><body><h1>Generated LabVIEW report</h1>' +
+        '<img class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png" alt="diff-report-Sample.vi_files/0_0_1.png">' +
+        '</body></html>'
     );
     const progress = vi.fn();
 
@@ -286,6 +288,11 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(harness.panels[0]?.webview.html).toContain('Generated LabVIEW report');
     expect(harness.panels[0]?.webview.html).toContain('Comparison context');
     expect(harness.panels[0]?.webview.html).toContain('Explicit base revision');
+    // Report images load lazily so large reports (hundreds of difference images)
+    // do not exhaust the webview resource loader and fall back to alt text.
+    expect(harness.panels[0]?.webview.html).toContain(
+      '<img loading="lazy" class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png"'
+    );
   });
 
   it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638)', async () => {
