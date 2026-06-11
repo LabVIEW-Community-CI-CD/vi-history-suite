@@ -4,6 +4,7 @@ import {
   ViHistoryViewModel
 } from '../services/viHistoryModel';
 import { HistoryPanelActionSummary } from './historyPanelTracker';
+import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 interface CompareRuntimeDetailItem {
   label: string;
@@ -148,14 +149,26 @@ export function renderHistoryPanelHtml(
   const repositorySupportHtml = support
     ? renderRepositorySupportSection(support)
     : '';
-  // VHS-REQ-641: when the selected VI has uncommitted working-tree changes, offer
-  // a working-tree-vs-HEAD comparison alongside the committed-pair compare.
-  const workingTreeCompareMarkup =
+  // VHS-REQ-641: when the selected VI has uncommitted working-tree changes, pin a
+  // selectable "Working Tree (uncommitted)" row at the top of the history table so
+  // the on-disk version can be paired with any commit via the same two-checkbox
+  // compare flow. data-commit-index="-1" sorts it as the newest entry, so it
+  // resolves as the `selected` side and the checked commit becomes the `base`.
+  const workingTreeRow =
     comparisonSelectionEnabled && model.workingTree?.hasUncommittedChanges
-      ? `<div data-testid="history-working-tree-compare" class="working-tree-compare">
-        <div data-testid="history-working-tree-notice"><strong>Uncommitted changes detected.</strong> Compare the on-disk working-tree version of this VI against the latest commit (HEAD). Working-tree comparisons are not retained as reproducible evidence.</div>
-        <button data-testid="history-action-compare-working-tree" data-command="compareWorkingTree">Compare working tree vs HEAD</button>
-      </div>`
+      ? `
+        <tr data-testid="history-working-tree-row" data-commit-index="-1">
+          <td data-testid="history-commit-select-cell"><input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(
+            WORKTREE_REVISION_SENTINEL
+          )}" /></td>
+          <td data-testid="history-commit-hash"><code>working tree</code></td>
+          <td data-testid="history-commit-date">uncommitted</td>
+          <td data-testid="history-commit-author">Working tree</td>
+          <td data-testid="history-commit-subject">Uncommitted changes (not retained)</td>
+          <td data-testid="history-commit-body" class="commit-body"><span class="commit-body-empty">On-disk changes not yet committed.</span></td>
+          <td data-testid="history-commit-actions"></td>
+        </tr>
+      `
       : '';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
@@ -332,7 +345,6 @@ export function renderHistoryPanelHtml(
       </details>
       <div data-testid="history-compare-preflight-cli-hint" id="compare-preflight-cli-hint">${escapeHtml(effectiveComparePreflightState.cliHint)}</div>
       <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" disabled>Compare</button>
-      ${workingTreeCompareMarkup}
     </div>
     <table data-testid="history-table">
       <thead>
@@ -347,6 +359,7 @@ export function renderHistoryPanelHtml(
         </tr>
       </thead>
       <tbody>
+        ${workingTreeRow}
         ${rows}
       </tbody>
     </table>

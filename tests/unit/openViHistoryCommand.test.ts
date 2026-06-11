@@ -439,7 +439,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
   });
 
-  it('dispatches compareWorkingTree to the comparison action with the working-tree sentinel against HEAD (VHS-REQ-641)', async () => {
+  it('dispatches a working-tree selection to the comparison action with the sentinel against the chosen commit (VHS-REQ-641)', async () => {
     const model = createEligibleModel({
       workingTree: { hasUncommittedChanges: true, headHash: 'abc1234567890abcdef1234567890abcdef12345' }
     });
@@ -458,39 +458,18 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
 
     await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
-    await panelTracker.dispatchLastPanelMessage({ command: 'compareWorkingTree' });
+    // Working-tree row checkbox (WORKTREE) plus an older committed revision.
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReportFromSelection',
+      selectedHashes: ['WORKTREE', 'def1234567890abcdef1234567890abcdef12345']
+    });
 
     expect(comparisonReportAction).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedHash: 'WORKTREE',
-        baseHash: 'abc1234567890abcdef1234567890abcdef12345'
+        baseHash: 'def1234567890abcdef1234567890abcdef12345'
       })
     );
-  });
-
-  it('ignores compareWorkingTree when the model has no uncommitted changes (VHS-REQ-641)', async () => {
-    const model = createEligibleModel();
-    const historyService = { load: vi.fn().mockResolvedValue(model) };
-    const panelTracker = new HistoryPanelTracker();
-    const comparisonReportAction = vi.fn();
-    const command = createOpenViHistoryCommand(
-      historyService as never,
-      undefined,
-      panelTracker,
-      comparisonReportAction
-    );
-
-    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
-    await panelTracker.dispatchLastPanelMessage({ command: 'compareWorkingTree' });
-
-    expect(comparisonReportAction).not.toHaveBeenCalled();
-    expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'The selected VI has no uncommitted working-tree changes to compare.'
-    );
-    expect(panelTracker.getLastActionSummary()).toMatchObject({
-      command: 'compareWorkingTree',
-      outcome: 'ignored-no-uncommitted-changes'
-    });
   });
 
   it('offers a Pick Runtime Provider action when the runtime is blocked by a concurrent LabVIEW bitness conflict (VHS-REQ-621)', async () => {
