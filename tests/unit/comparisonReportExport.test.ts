@@ -275,6 +275,40 @@ describe('exportComparisonReportBundle', () => {
       fs.readFile(path.join(destinationDirectory, 'report-packet.html'), 'utf8')
     ).resolves.toContain('packet');
   });
+
+  it('exports a self-contained single-file report as the HTML alone (VHS-REQ-640)', async () => {
+    const tempRoot = await makeTempRoot();
+    const sourceDir = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceDir, { recursive: true });
+    const htmlPath = path.join(sourceDir, 'diff-report-foo.vi.html');
+    // Single-file report: images embedded as data URIs, no sibling _files dir.
+    await fs.writeFile(
+      htmlPath,
+      '<html><body><img src="data:image/png;base64,AAAA"></body></html>',
+      'utf8'
+    );
+
+    const destinationDirectory = path.join(tempRoot, 'export', 'bundle');
+
+    const result = await exportComparisonReportBundle({
+      plan: {
+        evidenceKind: 'generated-report',
+        htmlSourcePath: htmlPath,
+        htmlFileName: 'diff-report-foo.vi.html'
+      },
+      destinationDirectory
+    });
+
+    expect(result.copiedAssets).toBe(false);
+    expect(result.exportedAssetsDirectoryPath).toBeUndefined();
+    // No sibling _files directory is created for a single-file report.
+    await expect(
+      fs.access(path.join(destinationDirectory, 'diff-report-foo.vi_files'))
+    ).rejects.toThrow();
+    await expect(
+      fs.readFile(path.join(destinationDirectory, 'diff-report-foo.vi.html'), 'utf8')
+    ).resolves.toContain('data:image/png;base64,AAAA');
+  });
 });
 
 describe('runComparisonReportExport', () => {

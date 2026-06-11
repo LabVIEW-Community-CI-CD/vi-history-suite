@@ -691,9 +691,11 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - An export action is available from the comparison-report panel title bar
     while a comparison-report webview panel is the active panel.
-  - The export prefers the LabVIEW-generated graphics report and copies its
-    sibling assets directory so relative image links keep resolving when the
-    exported HTML is opened in an external browser.
+  - The export prefers the LabVIEW-generated graphics report. A self-contained
+    single-file report (VHS-REQ-640) is exported as the HTML file alone; a
+    retained multi-file report also copies its sibling assets directory so
+    relative image links keep resolving when the exported HTML is opened in an
+    external browser.
   - When no LabVIEW-generated graphics report is available, the export states
     the specific reason and only writes the diagnostic evidence packet after an
     explicit user confirmation.
