@@ -765,6 +765,189 @@ export async function presentBitnessOpenBlockedToast(
   }
 }
 
+export const VERSION_OPEN_PICK_PROVIDER_ACTION = 'Pick Runtime Provider';
+
+/**
+ * VHS-REQ-637: Build the version-mismatch open-gate toast. Names the running
+ * LabVIEW (year plus bitness) and the selected LabVIEW (year plus bitness),
+ * explains that VI History would otherwise connect to the already-running
+ * wrong-version LabVIEW, and lists the recovery options: save and close, change
+ * the version setting, or use a Docker-backed compare on x64. Pure string
+ * builder so the routing decision stays window-free and unit-testable.
+ */
+export function buildVersionOpenBlockedMessage(facts: {
+  observedYear: string;
+  selectedYear: string;
+  observedBitness?: 'x86' | 'x64';
+  selectedBitness: 'x86' | 'x64';
+}): string {
+  const bits = (bitness: 'x86' | 'x64'): string => (bitness === 'x86' ? '32-bit' : '64-bit');
+  const running = facts.observedBitness
+    ? `LabVIEW ${facts.observedYear} (${bits(facts.observedBitness)})`
+    : `LabVIEW ${facts.observedYear}`;
+  const selected = `LabVIEW ${facts.selectedYear} (${bits(facts.selectedBitness)})`;
+  return (
+    `${running} is currently open, but VI History is set to compare with ${selected}. ` +
+    'VI History would connect to the LabVIEW that is already running, which is the wrong ' +
+    `version. Please save and close LabVIEW ${facts.observedYear}, then reopen VI History ` +
+    `\u2014 or change viHistorySuite.labviewVersion to ${facts.observedYear} to match the ` +
+    'running session, or use a Docker-backed compare (x64).'
+  );
+}
+
+export type VersionOpenGateKind = 'allow' | 'block';
+
+export interface VersionOpenGateDecision {
+  readonly kind: VersionOpenGateKind;
+  readonly toastMessage?: string;
+  /**
+   * Action button label surfaced on `block`. Selecting it invokes
+   * `labviewViHistory.pickRuntimeProvider` so the user can align the version
+   * setting with the running session.
+   */
+  readonly actionLabel?: string;
+  readonly observedYear?: string;
+  readonly selectedYear?: string;
+  readonly observedBitness?: 'x86' | 'x64';
+  readonly selectedBitness?: 'x86' | 'x64';
+  /** Path of the observed running LabVIEW.exe, retained for diagnostics. */
+  readonly observedExecutablePath?: string;
+}
+
+export interface VersionOpenGateDeps {
+  platform?: NodeJS.Platform;
+  /**
+   * Bounded Windows-only running-process observation. Injected so the decision
+   * stays unit-testable; activation wiring passes the real
+   * `observeWindowsRuntimeProcesses`.
+   */
+  observeWindowsProcesses?: (
+    options: ObserveWindowsProcessesOptions
+  ) => Promise<RuntimeProcessObservation | undefined>;
+}
+
+/**
+ * VHS-REQ-637: Pre-panel hard gate for `labviewViHistory.open`, composed after
+ * the VHS-REQ-636 bitness gate. Keys on a running LabVIEW whose major version
+ * (year) differs from the selected `viHistorySuite.labviewVersion` while its
+ * bitness matches. Because LabVIEWCLI attaches over VI Server to whichever
+ * LabVIEW is already listening, a wrong-version session would silently answer;
+ * catching it before the panel opens replaces a confusing compare with a single
+ * plain-language toast offering `Pick Runtime Provider` (and a Docker-on-x64
+ * recovery option in the message).
+ *
+ * Window-free (the Windows process observation is injected) so routing is
+ * unit-tested without a window. Fails open \u2014 allowing the command \u2014 when:
+ *  - detection has not completed yet,
+ *  - the platform is not Windows,
+ *  - a satisfiable Docker runtime is the active provider,
+ *  - no host installation resolves from the snapshot,
+ *  - the selected year or selected bitness is unknown,
+ *  - no running `LabVIEW.exe` is observed,
+ *  - the observed year is unknown,
+ *  - the observed year equals the selected year,
+ *  - the observed bitness is known and differs from the selected bitness
+ *    (deferred to VHS-REQ-636 so the two gates never double-fire), or
+ *  - the bounded process observation throws.
+ *
+ * A running LabVIEW whose year and bitness both match the selection is admitted
+ * (preserving `allowExistingWindowsHostRuntime`). The compare-time VHS-REQ-621
+ * and VHS-REQ-155 paths are unchanged; this strict rule is open-gate-only.
+ */
+export async function decideVersionOpenGate(
+  detection: DetectedRuntimes | undefined,
+  snapshot: RuntimeAvailabilitySnapshot | undefined,
+  deps: VersionOpenGateDeps = {}
+): Promise<VersionOpenGateDecision> {
+  if (!detection) {
+    return { kind: 'allow' };
+  }
+  if (snapshot?.kind === 'available' && snapshot.label.provider === 'docker') {
+    return { kind: 'allow' };
+  }
+  const platform = deps.platform ?? process.platform;
+  if (platform !== 'win32') {
+    return { kind: 'allow' };
+  }
+  const installation = snapshot?.label.installation;
+  if (!installation) {
+    return { kind: 'allow' };
+  }
+  const selectedYear = snapshot?.label.labviewVersion;
+  const selectedBitness = snapshot?.label.labviewBitness;
+  if (!selectedYear || (selectedBitness !== 'x86' && selectedBitness !== 'x64')) {
+    return { kind: 'allow' };
+  }
+
+  let observation: RuntimeProcessObservation | undefined;
+  try {
+    const observe = deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses;
+    observation = await observe({
+      hostPlatform: platform,
+      runtimePlatform: 'win32',
+      trigger: 'preflight'
+    });
+  } catch {
+    // Best-effort: a failed observation must never throw out of the open
+    // command. Fail open so a probe error never blocks the user.
+    return { kind: 'allow' };
+  }
+
+  const observedYear = inferLabviewYearFromExecutablePath(
+    observation?.labviewProcessExecutablePath
+  );
+  if (!observedYear || observedYear === selectedYear) {
+    return { kind: 'allow' };
+  }
+  const observedBitness = observation?.labviewProcessBitness;
+  // A known differing bitness is the VHS-REQ-636 hard conflict; defer to it so
+  // the two gates never double-fire on the same running session.
+  if (
+    (observedBitness === 'x86' || observedBitness === 'x64') &&
+    observedBitness !== selectedBitness
+  ) {
+    return { kind: 'allow' };
+  }
+
+  const displayBitness =
+    observedBitness === 'x86' || observedBitness === 'x64' ? observedBitness : undefined;
+  return {
+    kind: 'block',
+    toastMessage: buildVersionOpenBlockedMessage({
+      observedYear,
+      selectedYear,
+      observedBitness: displayBitness,
+      selectedBitness
+    }),
+    actionLabel: VERSION_OPEN_PICK_PROVIDER_ACTION,
+    observedYear,
+    selectedYear,
+    observedBitness: displayBitness,
+    selectedBitness,
+    observedExecutablePath: observation?.labviewProcessExecutablePath
+  };
+}
+
+/**
+ * Show the version-mismatch toast for `labviewViHistory.open` and offer the
+ * `Pick Runtime Provider` action carried by the gate decision. Selecting the
+ * action invokes `labviewViHistory.pickRuntimeProvider` so the user can align
+ * `viHistorySuite.labviewVersion` with the running session. Thin VS Code glue;
+ * the routing decision is covered by `decideVersionOpenGate`.
+ */
+export async function presentVersionOpenBlockedToast(
+  decision?: VersionOpenGateDecision
+): Promise<void> {
+  if (!decision?.toastMessage) {
+    return;
+  }
+  const actionLabel = decision.actionLabel ?? VERSION_OPEN_PICK_PROVIDER_ACTION;
+  const choice = await vscode.window.showWarningMessage(decision.toastMessage, actionLabel);
+  if (choice === actionLabel) {
+    void vscode.commands.executeCommand(STATUS_BAR_PICK_COMMAND_ID);
+  }
+}
+
 /** Returns true when the proposed re-detect is allowed under the throttle. */
 export function shouldThrottleReDetect(
   lastRunAtMs: number | undefined,
