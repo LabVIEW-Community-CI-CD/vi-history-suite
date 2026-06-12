@@ -220,6 +220,7 @@
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",
     "traceability:audit": "node scripts/auditTraceabilitySteward.js",
     "docs:links": "node scripts/checkDocsLinks.js",
+    "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
     "dod:gate": "node scripts/checkDefinitionOfDone.js",
     "closeout:evidence": "node scripts/generateCloseoutEvidence.js",
