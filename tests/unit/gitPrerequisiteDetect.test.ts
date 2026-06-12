@@ -83,4 +83,45 @@ describe('detectGitPrerequisite', () => {
     expect(parseGitVersionOutput('Git Version 2.46.0\n')).toBe('2.46.0');
     expect(parseGitVersionOutput('not a version line')).toBeUndefined();
   });
+
+  it('falls back to a synthesized message when a non-zero exit has no stderr', async () => {
+    const detection = await detectGitPrerequisite({
+      runGitVersion: async () => ({
+        exitCode: 129,
+        stdout: '',
+        stderr: '   '
+      })
+    });
+    expect(detection.available).toBe(false);
+    if (!detection.available) {
+      expect(detection.reason).toBe('probe-failed');
+      // stderr is whitespace-only, so the synthesized exit-code message is used.
+      expect(detection.errorMessage).toBe('git --version exit code 129');
+    }
+  });
+
+  it('classifies a non-Error thrown value as probe-failed', async () => {
+    const detection = await detectGitPrerequisite({
+      runGitVersion: async () => {
+        // eslint-disable-next-line @typescript-eslint/no-throw-literal
+        throw 'string failure';
+      }
+    });
+    expect(detection.available).toBe(false);
+    if (!detection.available) {
+      expect(detection.reason).toBe('probe-failed');
+      expect(detection.errorMessage).toBe('string failure');
+    }
+  });
+
+  it('probes the real git on PATH through the default spawn runner', async () => {
+    // No injected runner: exercises defaultRunGitVersion (spawn + stdio + close
+    // + parse). Git is present on every CI leg, so this stays deterministic; we
+    // assert the discriminated shape rather than an exact version string.
+    const detection = await detectGitPrerequisite();
+    expect(detection.available).toBe(true);
+    if (detection.available) {
+      expect(detection.version).toMatch(/^\d+\.\d+/u);
+    }
+  });
 });
