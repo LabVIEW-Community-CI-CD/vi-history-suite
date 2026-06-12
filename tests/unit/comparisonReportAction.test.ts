@@ -10,6 +10,7 @@ import {
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction,
+  isDockerDaemonNotRunningBlock,
   readComparisonRuntimeSettings
 } from '../../src/reporting/comparisonReportAction';
 import { buildComparisonReportArchivePlanFromSelection } from '../../src/dashboard/comparisonReportArchive';
@@ -723,5 +724,164 @@ describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
 
     expect(settings.labviewCliPath).toBeUndefined();
     expect(settings.labviewExePath).toBeUndefined();
+  });
+});
+
+describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
+  const DAEMON_DOWN_REASONS = [
+    'docker-provider-unavailable',
+    'docker-only-provider-unavailable',
+    'auto-docker-installed-provider-unavailable'
+  ] as const;
+
+  it.each(DAEMON_DOWN_REASONS)(
+    'is true for a blocked-runtime %s block when Docker CLI is present but the daemon is unreachable',
+    (blockedReason) => {
+      expect(
+        isDockerDaemonNotRunningBlock({
+          reportStatus: 'blocked-runtime',
+          blockedReason,
+          dockerCliAvailable: true,
+          dockerDaemonReachable: false
+        })
+      ).toBe(true);
+    }
+  );
+
+  it.each([
+    ['Docker not installed (CLI absent)', 'blocked-runtime', 'docker-provider-unavailable', false, false],
+    ['daemon reachable, blocked for another reason', 'blocked-runtime', 'docker-provider-unavailable', true, true],
+    ['container image acquisition failed', 'blocked-runtime', 'container-image-acquisition-failed', true, false],
+    ['windows host bitness conflict', 'blocked-runtime', 'windows-host-bitness-conflict', true, false],
+    ['windows VI Server disabled', 'blocked-runtime', 'windows-vi-server-tcp-disabled', true, false],
+    ['blocked at preflight, not runtime', 'blocked-preflight', 'docker-provider-unavailable', true, false],
+    ['ready for runtime', 'ready-for-runtime', undefined, true, false],
+    ['no blocked reason', 'blocked-runtime', undefined, true, false],
+    ['docker CLI fact absent', 'blocked-runtime', 'docker-provider-unavailable', undefined, false],
+    ['docker daemon fact absent', 'blocked-runtime', 'docker-provider-unavailable', true, undefined]
+  ] as const)(
+    'is false: %s',
+    (_label, reportStatus, blockedReason, dockerCliAvailable, dockerDaemonReachable) => {
+      expect(
+        isDockerDaemonNotRunningBlock({
+          reportStatus,
+          blockedReason,
+          dockerCliAvailable,
+          dockerDaemonReachable
+        })
+      ).toBe(false);
+    }
+  );
+});
+
+describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('suppresses the diagnostics webview, still archives the packet, and returns the daemon-down outcome', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      providerDecisions: [
+        {
+          provider: 'windows-container',
+          outcome: 'rejected',
+          reason: 'docker-provider-unavailable',
+          detail:
+            'Docker CLI is present, but the Docker daemon was not reachable for Docker container validation.'
+        }
+      ],
+      notes: ['Docker CLI is present, but the Docker daemon was not reachable.']
+    });
+    const blockedRecord = createPacketRecord({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'docker-provider-unavailable'
+      }
+    });
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource,
+      createWebviewPanel
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1'
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'blocked-docker-daemon-not-running',
+      reportStatus: 'blocked-runtime',
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      retainedArchiveAvailable: true
+    });
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
+    expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
+  });
+
+  it('still opens the diagnostics webview when Docker is installed but the daemon is reachable (different block)', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'container-image-acquisition-failed',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: true,
+      notes: ['Container image acquisition failed.']
+    });
+    const blockedRecord = createPacketRecord({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'container-image-acquisition-failed',
+        doctorSummaryLines: ['Container image acquisition failed.']
+      }
+    });
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('<html><body>Packet fallback</body></html>');
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: readFile as never
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1'
+    });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    expect(harness.panels).toHaveLength(1);
   });
 });

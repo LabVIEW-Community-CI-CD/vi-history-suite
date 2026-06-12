@@ -43,11 +43,20 @@ export interface ComparisonReportActionResult {
     | 'workspace-untrusted'
     | 'missing-storage-uri'
     | 'missing-selected-commit'
-    | 'missing-previous-hash';
+    | 'missing-previous-hash'
+    | 'blocked-docker-daemon-not-running';
   cancellationStage?: string;
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   blockedReason?: string;
+  /**
+   * VHS-REQ-642: Docker provider availability facts surfaced so the command
+   * layer can detect the "Docker daemon not running" block without parsing
+   * doctor summary strings. Sourced from the runtime selection with the
+   * `windowsContainer*` fallback.
+   */
+  dockerCliAvailable?: boolean;
+  dockerDaemonReachable?: boolean;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
@@ -102,6 +111,40 @@ export interface ComparisonReportActionDeps {
   exportRegistry?: ComparisonReportExportRegistry;
 }
 
+/**
+ * VHS-REQ-642: Blocked reasons that mean a Docker comparison could not start
+ * because the Docker provider was unavailable. Paired with the daemon-down
+ * facts to distinguish "Docker Desktop is not running" (recoverable by starting
+ * Docker and retrying) from "Docker is not installed" or other container
+ * failures, which keep their full diagnostics surface.
+ */
+const DOCKER_DAEMON_BLOCKED_REASONS: ReadonlySet<string> = new Set([
+  'docker-provider-unavailable',
+  'docker-only-provider-unavailable',
+  'auto-docker-installed-provider-unavailable'
+]);
+
+/**
+ * VHS-REQ-642: Pure predicate that is true only when a comparison is blocked
+ * solely because the Docker daemon is not running (Docker CLI present but the
+ * daemon unreachable). Window-free so it gates both the report-panel open and
+ * the command-layer toast from one source of truth.
+ */
+export function isDockerDaemonNotRunningBlock(facts: {
+  reportStatus?: string;
+  blockedReason?: string;
+  dockerCliAvailable?: boolean;
+  dockerDaemonReachable?: boolean;
+}): boolean {
+  return (
+    facts.reportStatus === 'blocked-runtime' &&
+    typeof facts.blockedReason === 'string' &&
+    DOCKER_DAEMON_BLOCKED_REASONS.has(facts.blockedReason) &&
+    facts.dockerCliAvailable === true &&
+    facts.dockerDaemonReachable === false
+  );
+}
+
 export function createComparisonReportAction(
   context: vscode.ExtensionContext,
   deps: ComparisonReportActionDeps = {}
@@ -110,6 +153,25 @@ export function createComparisonReportAction(
     const ensured = await ensureComparisonReportEvidence(context, request, deps);
     if (!('packet' in ensured)) {
       return ensured;
+    }
+
+    // VHS-REQ-642: When the sole blocker is that the Docker daemon is not
+    // running (Docker CLI present but unreachable), do not open the full
+    // diagnostics report webview. The blocked packet is still persisted and
+    // archived inside ensureComparisonReportEvidence, so the command layer can
+    // surface a concise retry plus an on-demand diagnostics path instead.
+    if (
+      isDockerDaemonNotRunningBlock({
+        reportStatus: ensured.result.reportStatus,
+        blockedReason: ensured.result.blockedReason,
+        dockerCliAvailable: ensured.result.dockerCliAvailable,
+        dockerDaemonReachable: ensured.result.dockerDaemonReachable
+      })
+    ) {
+      return {
+        ...ensured.result,
+        outcome: 'blocked-docker-daemon-not-running'
+      };
     }
 
     await request.reportProgress?.({
@@ -588,6 +650,12 @@ function buildRetainedComparisonReportEvidenceResult(
     reportStatus: packet.record.reportStatus,
     runtimeExecutionState: packet.record.runtimeExecutionState,
     blockedReason: deriveComparisonBlockedReason(packet.record),
+    dockerCliAvailable:
+      packet.record.runtimeSelection?.dockerCliAvailable ??
+      packet.record.runtimeSelection?.windowsContainerDockerCliAvailable,
+    dockerDaemonReachable:
+      packet.record.runtimeSelection?.dockerDaemonReachable ??
+      packet.record.runtimeSelection?.windowsContainerDaemonReachable,
     runtimeFailureReason: packet.record.runtimeExecution.failureReason,
     runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
     runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,

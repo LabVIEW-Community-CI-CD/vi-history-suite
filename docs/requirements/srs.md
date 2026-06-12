@@ -836,6 +836,60 @@ Missing numeric IDs are intentional.
   - The re-entry action must reuse `labviewViHistory.open` rather than
     duplicating prerequisite gating, and must not run comparison execution.
 
+### VHS-REQ-642: Docker Daemon Not Running Comparison Toast
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When a comparison is blocked solely because the Docker daemon is
+  not running (Docker CLI present but unreachable), the extension shall suppress
+  the full diagnostics report webview and instead show a concise, actionable
+  notification offering Retry and Show diagnostics, so users can start Docker
+  Desktop and rerun without parsing the diagnostics packet.
+- Acceptance Criteria:
+  - `isDockerDaemonNotRunningBlock(facts)` returns true only when
+    `reportStatus === 'blocked-runtime'`, `blockedReason` is one of
+    `docker-provider-unavailable`, `docker-only-provider-unavailable`, or
+    `auto-docker-installed-provider-unavailable`, `dockerCliAvailable === true`,
+    and `dockerDaemonReachable === false`. Docker-not-installed
+    (`dockerCliAvailable === false`), a reachable daemon, image-acquisition
+    failures, bitness or VI-Server blocks, preflight blocks, and absent facts
+    all return false.
+  - `ComparisonReportActionResult` carries `dockerCliAvailable` and
+    `dockerDaemonReachable` (sourced from the runtime selection with the
+    `windowsContainer*` fallback) and, on a daemon-down block, the outcome
+    `blocked-docker-daemon-not-running`.
+  - On that outcome the comparison-report action does not create the report
+    webview panel; the blocked packet is still persisted and archived so the
+    full diagnostics remain reachable on demand.
+  - The comparison-report command shows a single warning notification stating
+    that Docker Desktop is not running, with a `Retry` action that re-runs the
+    same comparison for the same revision pair and a `Show diagnostics` action
+    that opens the retained comparison packet. The verbose
+    `buildComparisonRuntimeWarningMessage` notification is not shown for this
+    outcome.
+  - All other blocked and failed reasons retain their existing webview and
+    diagnostics surfaces unchanged.
+- Agent Work Scope:
+  - Add the pure `isDockerDaemonNotRunningBlock` helper and surface the two
+    Docker facts plus the new outcome on the action result in
+    `comparisonReportAction.ts`; gate the panel open on it. Branch the toast in
+    `openViHistoryCommand.ts` ahead of the existing warning and information
+    notification paths. Keep the decision window-free and unit-tested.
+- Implementation References:
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/ui/historyPanelTracker.ts`
+- Verification References:
+  - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Scope strictly to the daemon-down case; never suppress diagnostics for
+    image-acquisition, connection (`-350000`), bitness, or VI-Server failures.
+    Detection of the Docker facts stays in the locator (VHS-REQ-155); this
+    requirement owns only the suppression gate and toast copy.
+
 ### VHS-REQ-155: Comparison Runtime Discovery Diagnostics
 
 - Status: Active

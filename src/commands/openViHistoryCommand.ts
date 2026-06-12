@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { GitApi } from '../git/gitApi';
 import {
   ComparisonReportActionResult,
+  isDockerDaemonNotRunningBlock,
   readComparisonRuntimeSettings,
   resolveRuntimePlatform,
 } from '../reporting/comparisonReportAction';
@@ -49,6 +50,14 @@ const UNTRUSTED_WORKSPACE_TRUST_RATIONALE =
   'to prevent external process execution';
 const UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX =
   'Documentation and local runtime settings CLI preparation remain available.';
+
+/**
+ * VHS-REQ-642: Concise, actionable copy shown when a Docker comparison is
+ * blocked solely because Docker Desktop is not running. Replaces the verbose
+ * runtime diagnostics warning for this recoverable case.
+ */
+const DOCKER_DAEMON_NOT_RUNNING_MESSAGE =
+  'Docker Desktop is not running, so the VI comparison could not start. Start Docker Desktop, then retry.';
 
 /**
  * Formats a user-actionable warning message for features blocked in untrusted workspaces.
@@ -448,10 +457,52 @@ export function createOpenViHistoryCommand(
             'Retained VI Comparison evidence for this pair is stale or invalid. Use the compare preflight section to rebuild retained evidence for it.'
           );
         }
-        const runtimeWarningMessage = buildComparisonRuntimeWarningMessage(
-          actionCommand,
-          result
-        );
+        // VHS-REQ-642: A Docker-daemon-not-running block gets a concise toast
+        // with Retry plus an on-demand Show diagnostics path instead of the
+        // verbose runtime warning and the suppressed diagnostics webview.
+        const dockerDaemonNotRunning = isDockerDaemonNotRunningBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason,
+          dockerCliAvailable: result.dockerCliAvailable,
+          dockerDaemonReachable: result.dockerDaemonReachable
+        });
+        if (dockerDaemonNotRunning) {
+          const RETRY_COMPARISON_ACTION = 'Retry';
+          const SHOW_DIAGNOSTICS_ACTION = 'Show diagnostics';
+          const offerDiagnostics =
+            Boolean(openRetainedComparisonReportAction) &&
+            result.retainedArchiveAvailable !== false;
+          const toastActions = offerDiagnostics
+            ? [RETRY_COMPARISON_ACTION, SHOW_DIAGNOSTICS_ACTION]
+            : [RETRY_COMPARISON_ACTION];
+          void vscode.window
+            .showWarningMessage(DOCKER_DAEMON_NOT_RUNNING_MESSAGE, ...toastActions)
+            .then((selection) => {
+              if (selection === RETRY_COMPARISON_ACTION) {
+                void runComparisonReportCommand(
+                  actionCommand,
+                  title,
+                  cancelledMessage,
+                  action,
+                  { selectedHash, baseHash }
+                );
+              } else if (
+                selection === SHOW_DIAGNOSTICS_ACTION &&
+                openRetainedComparisonReportAction
+              ) {
+                void runComparisonReportCommand(
+                  'diffPrevious',
+                  'Opening retained VI Comparison Report',
+                  'Opening retained VI Comparison Report was cancelled before the retained comparison view opened.',
+                  openRetainedComparisonReportAction,
+                  { selectedHash, baseHash }
+                );
+              }
+            });
+        }
+        const runtimeWarningMessage = dockerDaemonNotRunning
+          ? undefined
+          : buildComparisonRuntimeWarningMessage(actionCommand, result);
         if (runtimeWarningMessage) {
           if (isBitnessConflictComparisonRuntimeResult(result)) {
             const PICK_RUNTIME_PROVIDER_ACTION = 'Pick Runtime Provider';
