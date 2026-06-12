@@ -193,6 +193,44 @@
           "minimum": 30,
           "maximum": 600,
           "description": "VHS-REQ-148: LabVIEW CLI connect-window timeout (in seconds) written into LabVIEWCLI.ini before each Windows host-native compare. Sets OpenAppReferenceTimeoutInSecond and AfterLaunchOpenAppReferenceTimeoutInSecond. Default 180 matches the shipped Windows-container value; lower it only on hosts with confirmed sub-30s LabVIEW cold launches."
+        },
+        "viHistorySuite.report.format": {
+          "type": "string",
+          "enum": [
+            "HTMLSingleFile",
+            "HTML"
+          ],
+          "enumDescriptions": [
+            "Self-contained single HTML file with images embedded as data URIs (no sibling _files folder). Recommended: avoids the per-image load limit that can leave large multi-file reports showing image paths instead of pictures.",
+            "Multi-file HTML with a sibling <report>_files folder of PNG images. Produces smaller individual files but requests many images at once for large reports."
+          ],
+          "default": "HTMLSingleFile",
+          "description": "VHS-REQ-645: format of the generated LabVIEW comparison report. Only HTML variants are supported by the in-panel viewer, dashboard, and export."
+        },
+        "viHistorySuite.report.ignoreViAttributes": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude VI attribute differences from comparison reports (LabVIEWCLI CreateComparisonReport -noattr)."
+        },
+        "viHistorySuite.report.ignoreFrontPanel": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude all front panel differences from comparison reports (LabVIEWCLI CreateComparisonReport -nofp)."
+        },
+        "viHistorySuite.report.ignoreFrontPanelObjectPosition": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude front panel object size and position differences from comparison reports (LabVIEWCLI CreateComparisonReport -nofppos)."
+        },
+        "viHistorySuite.report.ignoreBlockDiagram": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude all block diagram differences from comparison reports (LabVIEWCLI CreateComparisonReport -nobd)."
+        },
+        "viHistorySuite.report.ignoreBlockDiagramCosmetic": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude block diagram cosmetic differences, including object position and size, from comparison reports (LabVIEWCLI CreateComparisonReport -nobdcosm)."
         }
       }
     }

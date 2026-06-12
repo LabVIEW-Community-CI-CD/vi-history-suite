@@ -815,6 +815,54 @@ Missing numeric IDs are intentional.
     fallback pattern established for the history panel (VHS-REQ-639); do not
     introduce new Git reads or alter comparison runtime behavior.
 
+### VHS-REQ-645: Configurable Comparison Report Flags
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall expose the LabVIEW comparison report flags —
+  the report output format and the difference-suppression filters honored by the
+  LabVIEWCLI CreateComparisonReport operation — as native VS Code settings, so a
+  user can tailor what each generated report contains without code changes while
+  an unconfigured workspace reproduces the shipped defaults exactly.
+- Acceptance Criteria:
+  - The extension contributes user- and workspace-scoped settings under
+    `viHistorySuite.report.*`: a report `format` constrained to the HTML variants
+    the in-panel viewer, dashboard, and export support (`HTMLSingleFile` default
+    and `HTML`), and boolean difference-suppression filters `ignoreViAttributes`,
+    `ignoreFrontPanel`, `ignoreFrontPanelObjectPosition`, `ignoreBlockDiagram`,
+    and `ignoreBlockDiagramCosmetic`.
+  - Each enabled boolean adds exactly its verified CreateComparisonReport flag
+    (`-noattr`, `-nofp`, `-nofppos`, `-nobd`, `-nobdcosm` respectively) to the
+    generated command, and the report format selects the corresponding
+    `-ReportType` value.
+  - With no settings configured, the generated CreateComparisonReport invocation
+    is identical to the prior hardcoded behavior: single-file HTML output and no
+    suppression filters (no regression of VHS-REQ-640).
+  - An invalid or unsupported `report.format` value falls back to the single-file
+    HTML default rather than emitting an unsupported report type.
+  - The settings render in the native VS Code Settings editor; no scripted
+    webview is introduced and the comparison-report panel keeps scripts disabled
+    (no regression of VHS-REQ-626).
+- Agent Work Scope:
+  - Contribute the settings, read them at the comparison-report action boundary,
+    and thread them through the execution plan and CLI plan builder together with
+    their unit tests.
+- Implementation References:
+  - `package.json`
+  - `src/reporting/comparisonReportPlan.ts`
+  - `src/reporting/comparisonReportExecutionPlan.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportAction.ts`
+- Verification References:
+  - `tests/unit/comparisonReportExecutionPlan.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+- Change Guidance:
+  - Keep the difference-suppression flag names aligned with the LabVIEWCLI
+    CreateComparisonReport operation help; do not expose flags the CLI operation
+    does not honor, and do not surface report formats the in-panel viewer,
+    dashboard, or export cannot render.
+
 ### VHS-REQ-641: Working-Tree (Uncommitted) Comparison Against a Prior Revision
 
 - Status: Active

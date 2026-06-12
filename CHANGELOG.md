@@ -10,6 +10,20 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Added
+
+- Comparison report flags are now configurable through native VS Code settings
+  under `viHistorySuite.report.*` (user- and workspace-scoped, shown in the
+  Settings editor). A `report.format` setting chooses the report output format
+  (single-file HTML default, or multi-file HTML), and five toggles map to the
+  LabVIEWCLI `CreateComparisonReport` difference-suppression filters:
+  `ignoreViAttributes` (`-noattr`), `ignoreFrontPanel` (`-nofp`),
+  `ignoreFrontPanelObjectPosition` (`-nofppos`), `ignoreBlockDiagram` (`-nobd`),
+  and `ignoreBlockDiagramCosmetic` (`-nobdcosm`). With nothing configured, report
+  generation is unchanged. (VHS-REQ-645)
+
 ## [1.21.1] - 2026-06-12
 
 ### Changed

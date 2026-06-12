@@ -660,3 +660,4 @@ VHS-REQ-641,Software,Active,srs.md#vhs-req-641-working-tree-uncommitted-comparis
 VHS-REQ-642,Software,Active,srs.md#vhs-req-642-docker-daemon-not-running-comparison-toast,,,docs/requirements/srs.md
 VHS-REQ-643,Software,Active,srs.md#vhs-req-643-docker-not-installed-comparison-toast,,,docs/requirements/srs.md
 VHS-REQ-644,Software,Active,srs.md#vhs-req-644-commit-body-in-comparison-report,,,docs/requirements/srs.md
+VHS-REQ-645,Software,Active,srs.md#vhs-req-645-configurable-comparison-report-flags,,,docs/requirements/srs.md
