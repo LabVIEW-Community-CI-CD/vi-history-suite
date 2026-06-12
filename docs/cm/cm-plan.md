@@ -63,17 +63,18 @@ signals as release-readiness follow-up before publishing.
 
 ## Documentation Workbench Status
 
-The current GitHub checkout does not expose a repo-native documentation
-workbench. The standards detector should report `supported: false` until all of
-these surfaces exist together:
+This checkout exposes a repo-native documentation workbench, so the standards
+detector should report `supported: true`. The workbench is composed of these
+surfaces, which exist together and are verified fail-closed by
+`npm run docs:gate`:
 
 - `docker/docs-authoring/Dockerfile`
 - `docs/documentation-workbench.md`
 - `package.json` script `docs:gate`
 
-Until then, use the host-side standards runner or the explicit Docker standards
-runner documented in the closeout runbook. Do not treat expected workbench paths
-from the detector as proof that a documentation-package workbench is available.
+See [Documentation Workbench](../documentation-workbench.md) for build and gate
+usage. The host-side standards runner and the explicit Docker standards runner
+documented in the closeout runbook remain available for standards review.
 
 ## Evidence Map
 

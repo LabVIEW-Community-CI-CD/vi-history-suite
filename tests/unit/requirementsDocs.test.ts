@@ -324,8 +324,8 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('coverage/cobertura-coverage.xml');
     expect(srs).toContain('coverage/coverage-summary.json');
     expect(srs).toContain('baseline global coverage thresholds declared in');
-    expect(srs).toContain('71% statements, 60% branches, 78% functions');
-    expect(syrs).toContain('post-wave hosted floors are 71% statements');
+    expect(srs).toContain('72% statements, 61% branches, 79% functions');
+    expect(syrs).toContain('post-wave hosted floors are 72% statements');
     expect(testPlan).toContain('npm run traceability:audit');
     expect(testPlan).toContain('npm run docs:links');
     expect(testPlan).toContain('npm run dod:gate');
@@ -348,11 +348,11 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('PR Coverage Gate / coverage');
     expect(testPlan).toContain('coverage/cobertura-coverage.xml');
     expect(testPlan).toContain('coverage/coverage-summary.json');
-    expect(testPlan).toContain('71% statements');
-    expect(testPlan).toContain('60% branches');
-    expect(testPlan).toContain('78% functions');
-    expect(testPlan).toContain('71% lines');
-    expect(testPlan).toContain('74.0% statements, 62.72% branches');
+    expect(testPlan).toContain('72% statements');
+    expect(testPlan).toContain('61% branches');
+    expect(testPlan).toContain('79% functions');
+    expect(testPlan).toContain('72% lines');
+    expect(testPlan).toContain('74.97% statements, 64.60% branches');
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('| VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts');
@@ -392,10 +392,10 @@ describe('requirements documentation coherence', () => {
       'node scripts/auditCustomizationGovernance.js'
     );
     expect(packageJson.scripts['docs:links']).toBe('node scripts/checkDocsLinks.js');
-    expect(vitestConfig).toContain('statements: 71');
-    expect(vitestConfig).toContain('branches: 60');
-    expect(vitestConfig).toContain('functions: 78');
-    expect(vitestConfig).toContain('lines: 71');
+    expect(vitestConfig).toContain('statements: 72');
+    expect(vitestConfig).toContain('branches: 61');
+    expect(vitestConfig).toContain('functions: 79');
+    expect(vitestConfig).toContain('lines: 72');
     expect(vitestConfig).toContain('scripts/mapCoverageToTraceability.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
@@ -584,7 +584,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('before package validation');
     expect(cmPlan).toContain('coverage-to-traceability mapping');
     expect(cmPlan).toContain('26514-review');
-    expect(cmPlan).toContain('supported: false');
+    expect(cmPlan).toContain('supported: true');
     expect(maintainerOperations).toContain('Configuration Management Plan');
     // VHS-REQ-615 closeout tracked-worktree audit snapshot contract (PR #393)
     expect(srs).toContain('temporary tracked-worktree snapshot from `git ls-files`');

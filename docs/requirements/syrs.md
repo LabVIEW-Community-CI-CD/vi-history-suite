@@ -265,8 +265,8 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
     coverage and zero-coverage supporting files tied to active requirements.
   - Hosted coverage thresholds are raised only from measured evidence and remain
     documented as regression floors, not coverage-quality claims; the
-    post-wave hosted floors are 71% statements, 60% branches, 78% functions,
-    and 71% lines.
+    post-wave hosted floors are 72% statements, 61% branches, 79% functions,
+    and 72% lines.
   - Coverage-led follow-up work targets user-facing requirement-mapped dark
     areas before dev-only tooling.
 - Verification References:
