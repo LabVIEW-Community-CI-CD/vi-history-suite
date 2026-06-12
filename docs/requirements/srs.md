@@ -696,6 +696,14 @@ Missing numeric IDs are intentional.
     retained multi-file report also copies its sibling assets directory so
     relative image links keep resolving when the exported HTML is opened in an
     external browser.
+  - The exported LabVIEW-generated graphics report embeds the same revision
+    context block shown in the in-panel webview — the selected and base revision
+    hash, date, author, subject, and full commit body — rendered through the
+    shared context renderer so the commit body keeps its escaping, multi-line,
+    not-retained, and empty-body behavior (VHS-REQ-644). The context is injected
+    into the exported copy only; the retained source report is not mutated, no
+    `<base href>` is added, and the report's relative `<name>_files/...` image
+    links keep resolving in an external browser.
   - When no LabVIEW-generated graphics report is available, the export states
     the specific reason and only writes the diagnostic evidence packet after an
     explicit user confirmation.
@@ -711,13 +719,15 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonReportExport.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportContextMarkup.ts`
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/comparisonReportExport.test.ts`
 - Change Guidance:
-  - Keep the export limited to copying retained comparison evidence to an
-    accessible location; do not run comparison execution or mutate retained
-    artifacts.
+  - Keep the export limited to retained comparison evidence placed in an
+    accessible location; the exported copy may embed retained revision context
+    via the shared renderer, but the export must not run comparison execution or
+    mutate the retained source artifacts on disk.
 
 ### VHS-REQ-640: Self-Contained Single-File Comparison Report Output
 

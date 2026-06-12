@@ -10,6 +10,18 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Added
+
+- The **Export comparison report** title-bar action now embeds the same revision
+  context shown in the in-panel comparison view — the selected and base revision
+  hash, date, author, subject, and full commit body — at the top of the exported
+  LabVIEW-generated graphics report. Previously the exported graphics report
+  carried no revision context. The context is added to the exported copy only;
+  the retained report on disk is unchanged, and the report's images still
+  resolve when the exported HTML is opened in an external browser. (VHS-REQ-626)
+
 ## [1.20.0] - 2026-06-12
 
 ### Added
