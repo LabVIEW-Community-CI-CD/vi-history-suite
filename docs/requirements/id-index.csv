@@ -657,3 +657,4 @@ VHS-REQ-638,Software,Active,srs.md#vhs-req-638-comparison-report-vi-history-re-e
 VHS-REQ-639,Software,Active,srs.md#vhs-req-639-commit-body-in-history-panel,,,docs/requirements/srs.md
 VHS-REQ-640,Software,Active,srs.md#vhs-req-640-self-contained-single-file-comparison-report-output,,,docs/requirements/srs.md
 VHS-REQ-641,Software,Active,srs.md#vhs-req-641-working-tree-uncommitted-comparison-against-a-prior-revision,,,docs/requirements/srs.md
+VHS-REQ-642,Software,Active,srs.md#vhs-req-642-docker-daemon-not-running-comparison-toast,,,docs/requirements/srs.md

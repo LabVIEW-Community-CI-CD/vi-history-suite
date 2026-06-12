@@ -578,6 +578,193 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       outcome: 'missing-git-uri'
     });
   });
+
+  it('shows a concise Docker Desktop toast and suppresses the verbose runtime warning when the Docker daemon is not running (VHS-REQ-642)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-docker-daemon-not-running',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      platform: 'win32',
+      retainedArchiveAvailable: true,
+      runtimeDoctorSummaryLines: [
+        'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
+        'Runtime blocked reason: docker-provider-unavailable.'
+      ]
+    });
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report'
+    });
+    // User dismisses the toast so no follow-up action runs.
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('Docker Desktop is not running'),
+      'Retry',
+      'Show diagnostics'
+    );
+    // Only the concise daemon-down toast is shown; the verbose runtime-diagnostics
+    // warning (which names the blocked reason) is suppressed. Scan the first
+    // argument of every warning call so a multi-arg call (e.g., one carrying a
+    // "Pick Runtime Provider" action) cannot mask a regression.
+    const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0]);
+    expect(warningMessages).toHaveLength(1);
+    expect(
+      warningMessages.some(
+        (message) =>
+          typeof message === 'string' && message.includes('docker-provider-unavailable')
+      )
+    ).toBe(false);
+    expect(comparisonReportAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('names the Docker daemon (not Docker Desktop) on non-Windows hosts (VHS-REQ-642)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-docker-daemon-not-running',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-only-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      platform: 'linux',
+      retainedArchiveAvailable: true
+    });
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      vi.fn().mockResolvedValue({ outcome: 'opened-comparison-report' })
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('The Docker daemon is not running'),
+      'Retry',
+      'Show diagnostics'
+    );
+    const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0]);
+    expect(
+      warningMessages.some(
+        (message) => typeof message === 'string' && message.includes('Docker Desktop')
+      )
+    ).toBe(false);
+  });
+
+  it('re-runs the comparison for the same revision pair when Retry is selected (VHS-REQ-642)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi
+      .fn()
+      .mockResolvedValueOnce({
+        outcome: 'blocked-docker-daemon-not-running',
+        reportStatus: 'blocked-runtime',
+        runtimeExecutionState: 'not-available',
+        blockedReason: 'docker-provider-unavailable',
+        dockerCliAvailable: true,
+        dockerDaemonReachable: false,
+        retainedArchiveAvailable: true
+      })
+      .mockResolvedValue({
+        outcome: 'opened-comparison-report',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded'
+      });
+    // Default harness showWarningMessage resolves to the first action (Retry).
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      vi.fn().mockResolvedValue({ outcome: 'opened-comparison-report' })
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(comparisonReportAction).toHaveBeenCalledTimes(2);
+    expect(comparisonReportAction).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abc1234567890abcdef1234567890abcdef12345'
+      })
+    );
+  });
+
+  it('opens the retained diagnostics packet for the same pair when Show diagnostics is selected (VHS-REQ-642)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-docker-daemon-not-running',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      retainedArchiveAvailable: true
+    });
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report'
+    });
+    showWarningMessageMock.mockResolvedValueOnce('Show diagnostics');
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(openRetainedComparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abc1234567890abcdef1234567890abcdef12345'
+      })
+    );
+    expect(comparisonReportAction).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/627/631)', () => {
