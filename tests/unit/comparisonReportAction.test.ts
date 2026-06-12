@@ -14,6 +14,7 @@ import {
   createOpenRetainedComparisonReportAction,
   isDockerDaemonNotRunningBlock,
   isDockerNotInstalledBlock,
+  readComparisonReportOptions,
   readComparisonRuntimeSettings
 } from '../../src/reporting/comparisonReportAction';
 import { buildComparisonReportArchivePlanFromSelection } from '../../src/dashboard/comparisonReportArchive';
@@ -784,6 +785,70 @@ describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
 
     expect(settings.labviewCliPath).toBeUndefined();
     expect(settings.labviewExePath).toBeUndefined();
+  });
+});
+
+describe('readComparisonReportOptions (VHS-REQ-645)', () => {
+  function fakeConfiguration(values: Record<string, unknown>) {
+    return {
+      get: (key: string) => values[key]
+    } as never;
+  }
+
+  it('defaults to single-file HTML and no suppression filters when nothing is configured', () => {
+    const options = readComparisonReportOptions(fakeConfiguration({}));
+
+    expect(options).toEqual({
+      reportFormat: 'HTMLSingleFile',
+      ignoreViAttributes: false,
+      ignoreFrontPanel: false,
+      ignoreFrontPanelObjectPosition: false,
+      ignoreBlockDiagram: false,
+      ignoreBlockDiagramCosmetic: false
+    });
+  });
+
+  it('reads the configured format and each enabled difference-suppression filter', () => {
+    const options = readComparisonReportOptions(
+      fakeConfiguration({
+        'report.format': 'HTML',
+        'report.ignoreViAttributes': true,
+        'report.ignoreFrontPanel': true,
+        'report.ignoreFrontPanelObjectPosition': true,
+        'report.ignoreBlockDiagram': true,
+        'report.ignoreBlockDiagramCosmetic': true
+      })
+    );
+
+    expect(options).toEqual({
+      reportFormat: 'HTML',
+      ignoreViAttributes: true,
+      ignoreFrontPanel: true,
+      ignoreFrontPanelObjectPosition: true,
+      ignoreBlockDiagram: true,
+      ignoreBlockDiagramCosmetic: true
+    });
+  });
+
+  it('falls back to single-file HTML for an unsupported or invalid format value', () => {
+    expect(readComparisonReportOptions(fakeConfiguration({ 'report.format': 'MicrosoftWord' })).reportFormat).toBe(
+      'HTMLSingleFile'
+    );
+    expect(readComparisonReportOptions(fakeConfiguration({ 'report.format': 42 })).reportFormat).toBe(
+      'HTMLSingleFile'
+    );
+  });
+
+  it('treats non-boolean filter values as false (misconfigured settings.json)', () => {
+    const options = readComparisonReportOptions(
+      fakeConfiguration({
+        'report.ignoreViAttributes': 'true',
+        'report.ignoreBlockDiagram': 1
+      })
+    );
+
+    expect(options.ignoreViAttributes).toBe(false);
+    expect(options.ignoreBlockDiagram).toBe(false);
   });
 });
 

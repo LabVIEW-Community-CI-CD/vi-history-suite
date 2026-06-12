@@ -1,7 +1,8 @@
 import {
   buildLabviewCliCreateComparisonReportPlan,
   buildLvComparePlan,
-  ComparisonCommandPlan
+  ComparisonCommandPlan,
+  ComparisonReportOptions
 } from './comparisonReportPlan';
 import { ComparisonReportPacketRecord } from './comparisonReportPacket';
 
@@ -20,7 +21,8 @@ function resolveEffectiveRuntimePlatform(
 }
 
 export function buildComparisonReportExecutionPlan(
-  record: ComparisonReportPacketRecord
+  record: ComparisonReportPacketRecord,
+  reportOptions?: ComparisonReportOptions
 ): ComparisonReportExecutionPlan {
   if (record.reportStatus === 'blocked-preflight') {
     return {
@@ -80,15 +82,24 @@ export function buildComparisonReportExecutionPlan(
       rightViPath: record.stagedRevisionPlan.rightFilePath,
       reportFilePath: record.artifactPlan.reportFilePath,
       labviewPath: labviewExePath,
-      // VHS-REQ-640: emit a self-contained single-file report (images embedded as
-      // base64 data URIs, no sibling `<report>_files/` directory). The previous
-      // multi-file `HTML` format made the webview request hundreds of per-object
-      // difference images at once, exhausting the resource loader so later images
-      // rendered as their path text. A single file produces zero sub-requests.
-      reportFormat: 'HTMLSingleFile',
+      // VHS-REQ-640: default to a self-contained single-file report (images
+      // embedded as base64 data URIs, no sibling `<report>_files/` directory).
+      // The previous multi-file `HTML` format made the webview request hundreds
+      // of per-object difference images at once, exhausting the resource loader
+      // so later images rendered as their path text. A single file produces zero
+      // sub-requests.
+      // VHS-REQ-645: the user may override the format and add difference-
+      // suppression filters via `viHistorySuite.report.*`; an omitted option
+      // preserves this default behavior.
+      reportFormat: reportOptions?.reportFormat ?? 'HTMLSingleFile',
       overwrite: true,
       createOutputDirectory: true,
-      headless: headlessRequested
+      headless: headlessRequested,
+      ignoreViAttributes: reportOptions?.ignoreViAttributes,
+      ignoreFrontPanel: reportOptions?.ignoreFrontPanel,
+      ignoreFrontPanelObjectPosition: reportOptions?.ignoreFrontPanelObjectPosition,
+      ignoreBlockDiagram: reportOptions?.ignoreBlockDiagram,
+      ignoreBlockDiagramCosmetic: reportOptions?.ignoreBlockDiagramCosmetic
     });
 
     return {

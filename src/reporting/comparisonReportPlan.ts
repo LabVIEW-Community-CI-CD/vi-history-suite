@@ -6,6 +6,27 @@ import { normalizeRelativeGitPath } from '../git/gitCli';
 export type ComparisonReportType = 'diff' | 'print';
 export type ComparisonReportFormat = 'HTMLSingleFile' | 'HTML' | 'XML' | 'PlainText' | 'MicrosoftWord';
 
+/**
+ * VHS-REQ-645: user-configurable comparison report flags surfaced through native
+ * VS Code settings (`viHistorySuite.report.*`). The booleans map 1:1 to the
+ * LabVIEWCLI `CreateComparisonReport` difference-suppression filters (verified
+ * against the operation's own `-Help`). All fields are optional; an omitted field
+ * preserves the shipped default (single-file HTML, compare everything).
+ */
+export interface ComparisonReportOptions {
+  reportFormat?: ComparisonReportFormat;
+  /** `-noattr`: do not compare VI attributes. */
+  ignoreViAttributes?: boolean;
+  /** `-nofp`: do not compare front panels. */
+  ignoreFrontPanel?: boolean;
+  /** `-nofppos`: do not compare front-panel object size/position. */
+  ignoreFrontPanelObjectPosition?: boolean;
+  /** `-nobd`: do not compare block diagrams. */
+  ignoreBlockDiagram?: boolean;
+  /** `-nobdcosm`: do not compare block-diagram object appearance (incl. position/size). */
+  ignoreBlockDiagramCosmetic?: boolean;
+}
+
 export interface ComparisonArtifactPlanOptions {
   storageRoot: string;
   repositoryRoot: string;
@@ -86,6 +107,16 @@ export interface LabviewCliComparisonReportPlanOptions {
   headless?: boolean;
   logToConsole?: boolean;
   description?: string;
+  /**
+   * VHS-REQ-645: difference-suppression filters passed straight through to the
+   * LabVIEWCLI `CreateComparisonReport` operation. Each emits its flag only when
+   * true, so the default invocation (all false/undefined) compares everything.
+   */
+  ignoreViAttributes?: boolean;
+  ignoreFrontPanel?: boolean;
+  ignoreFrontPanelObjectPosition?: boolean;
+  ignoreBlockDiagram?: boolean;
+  ignoreBlockDiagramCosmetic?: boolean;
 }
 
 export interface ComparisonCommandPlan {
@@ -221,6 +252,25 @@ export function buildLabviewCliCreateComparisonReportPlan(
 
   if (options.headless ?? false) {
     args.push('-Headless');
+  }
+
+  // VHS-REQ-645: difference-suppression filters (verified flag names from the
+  // LabVIEWCLI CreateComparisonReport operation help). Each is emitted only when
+  // its option is true so the default invocation compares everything.
+  if (options.ignoreViAttributes) {
+    args.push('-noattr');
+  }
+  if (options.ignoreFrontPanel) {
+    args.push('-nofp');
+  }
+  if (options.ignoreFrontPanelObjectPosition) {
+    args.push('-nofppos');
+  }
+  if (options.ignoreBlockDiagram) {
+    args.push('-nobd');
+  }
+  if (options.ignoreBlockDiagramCosmetic) {
+    args.push('-nobdcosm');
   }
 
   return {

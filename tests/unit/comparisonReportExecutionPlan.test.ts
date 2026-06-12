@@ -171,6 +171,54 @@ describe('buildComparisonReportExecutionPlan', () => {
     expect(plan.commandPlan?.args[reportTypeIndex + 1]).toBe('htmlsinglefile');
   });
 
+  it('VHS-REQ-645: defaults to single-file HTML with no suppression filters when no options are given', () => {
+    const record = createBaseRecord();
+
+    const plan = buildComparisonReportExecutionPlan(record);
+    const args = plan.commandPlan?.args ?? [];
+    const reportTypeIndex = args.indexOf('-ReportType');
+    expect(args[reportTypeIndex + 1]).toBe('htmlsinglefile');
+    for (const flag of ['-noattr', '-nofp', '-nofppos', '-nobd', '-nobdcosm']) {
+      expect(args).not.toContain(flag);
+    }
+  });
+
+  it('VHS-REQ-645: applies the configured format and all difference-suppression filters', () => {
+    const record = createBaseRecord();
+
+    const plan = buildComparisonReportExecutionPlan(record, {
+      reportFormat: 'HTML',
+      ignoreViAttributes: true,
+      ignoreFrontPanel: true,
+      ignoreFrontPanelObjectPosition: true,
+      ignoreBlockDiagram: true,
+      ignoreBlockDiagramCosmetic: true
+    });
+    const args = plan.commandPlan?.args ?? [];
+    const reportTypeIndex = args.indexOf('-ReportType');
+    expect(args[reportTypeIndex + 1]).toBe('html');
+    expect(args).toContain('-noattr');
+    expect(args).toContain('-nofp');
+    expect(args).toContain('-nofppos');
+    expect(args).toContain('-nobd');
+    expect(args).toContain('-nobdcosm');
+  });
+
+  it('VHS-REQ-645: emits only the enabled suppression filters and keeps the single-file default format', () => {
+    const record = createBaseRecord();
+
+    const plan = buildComparisonReportExecutionPlan(record, {
+      ignoreBlockDiagramCosmetic: true
+    });
+    const args = plan.commandPlan?.args ?? [];
+    expect(args).toContain('-nobdcosm');
+    for (const flag of ['-noattr', '-nofp', '-nofppos', '-nobd']) {
+      expect(args).not.toContain(flag);
+    }
+    const reportTypeIndex = args.indexOf('-ReportType');
+    expect(args[reportTypeIndex + 1]).toBe('htmlsinglefile');
+  });
+
   it('adds headless mode for container providers and LV_RTE_HEADLESS win32 fallback', () => {
     const originalHeadless = process.env.LV_RTE_HEADLESS;
     process.env.LV_RTE_HEADLESS = '1';
