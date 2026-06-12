@@ -156,6 +156,14 @@ export interface MultiReportDashboardRecord {
     blockedPairIds: string[];
     overviewSectionCount: number;
     overviewImageCount: number;
+    // VHS-REQ-640: count of overview images actually concentrated into the
+    // dashboard assets directory. For single-file reports these are decoded
+    // from embedded data URIs; for legacy multi-file reports they are copied
+    // from the sibling `_files` directory. A value below `overviewImageCount`
+    // means some parsed overview images could not be materialized (e.g. a
+    // data URI the decoder did not recognize, or a missing `_files` PNG) and
+    // were skipped instead of silently disappearing without a trace.
+    materializedOverviewImageCount?: number;
     includedAttributeCount: number;
     detailSectionCount: number;
     detailItemCount: number;
@@ -334,6 +342,13 @@ export async function buildAndPersistMultiReportDashboard(
     });
   }
 
+  // VHS-REQ-640: record how many parsed overview images were actually
+  // concentrated into the dashboard assets directory. Newly generated
+  // single-file reports embed images as data URIs (no sibling `_files`
+  // directory), so this surfaces silent materialization loss rather than
+  // assuming every parsed overview image landed on disk.
+  record.summary.materializedOverviewImageCount = copiedDashboardImageCount;
+
   await writeFile(artifactPlan.jsonFilePath, JSON.stringify(record, null, 2), 'utf8');
   await writeFile(artifactPlan.htmlFilePath, renderMultiReportDashboardHtml(record), 'utf8');
   return {
@@ -381,6 +396,7 @@ export function renderMultiReportDashboardHtml(
     ['Pairs with report metadata', String(record.summary.reportMetadataPairCount)],
     ['Overview sections', String(record.summary.overviewSectionCount)],
     ['Overview images', String(record.summary.overviewImageCount)],
+    ['Overview images materialized', String(record.summary.materializedOverviewImageCount ?? 0)],
     ['Included attributes', String(record.summary.includedAttributeCount)],
     ['Detail sections', String(record.summary.detailSectionCount)],
     ['Detail items', String(record.summary.detailItemCount)],
