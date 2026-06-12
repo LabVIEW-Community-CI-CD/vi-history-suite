@@ -117,4 +117,62 @@ describe('comparisonReportArchive', () => {
       baseHash: 'base-sha'
     });
   });
+
+  it('archives single-file reports without creating a sibling assets directory (VHS-REQ-640)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-sf-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const sourceRoot = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceRoot, { recursive: true });
+
+    const packetFilePath = path.join(sourceRoot, 'report-packet.html');
+    const reportFilePath = path.join(sourceRoot, 'diff-report-My.vi.html');
+    // A single-file HTMLSingleFile report embeds images as data URIs and has no
+    // sibling `<report>_files` directory to copy.
+    await fs.writeFile(packetFilePath, '<html>packet</html>', 'utf8');
+    await fs.writeFile(
+      reportFilePath,
+      '<html><img src="data:image/png;base64,AAAA"/></html>',
+      'utf8'
+    );
+
+    const record = {
+      reportType: 'diff',
+      selectedHash: 'selected-sha',
+      baseHash: 'base-sha',
+      artifactPlan: {
+        allowedLocalRootPaths: [storageRoot],
+        repoId: 'repo-id',
+        fileId: 'file-id',
+        normalizedRelativePath: 'src/My.vi',
+        reportFilename: 'diff-report-My.vi.html',
+        packetFilename: 'report-packet.html',
+        packetFilePath,
+        reportFilePath,
+        metadataFilePath: path.join(sourceRoot, 'report-metadata.json'),
+        runtimeStdoutFilePath: path.join(sourceRoot, 'runtime-stdout.txt'),
+        runtimeStderrFilePath: path.join(sourceRoot, 'runtime-stderr.txt'),
+        runtimeDiagnosticLogFilePath: path.join(sourceRoot, 'runtime-diagnostic-log.txt'),
+        runtimeProcessObservationFilePath: path.join(sourceRoot, 'runtime-process-observation.json')
+      }
+    } as unknown as ComparisonReportPacketRecord;
+
+    const archived = await archiveComparisonReportSource(record, {
+      now: () => '2026-05-01T00:00:00.000Z',
+      pathExists: async (targetPath) => {
+        try {
+          await fs.access(targetPath);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+    });
+
+    // The single-file report HTML is archived...
+    expect(await fs.readFile(archived.archivePlan.reportFilePath, 'utf8')).toContain('data:image/png');
+    // ...but no sibling `_files` assets directory is created, because the
+    // single-file report has none to copy.
+    await expect(fs.access(archived.archivePlan.reportAssetsDirectoryPath)).rejects.toThrow();
+  });
 });

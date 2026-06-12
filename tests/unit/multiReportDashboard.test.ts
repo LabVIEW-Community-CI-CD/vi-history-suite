@@ -328,6 +328,48 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
       // Valid PNG magic header proves the data URI was decoded.
       expect(bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
     }
+    // VHS-REQ-640: the summary surfaces how many parsed overview images were
+    // actually concentrated into dashboard assets, so single-file
+    // materialization is observable rather than assumed.
+    expect(dashboard.record.summary.overviewImageCount).toBe(2);
+    expect(dashboard.record.summary.materializedOverviewImageCount).toBe(2);
+  });
+
+  it('surfaces overview images that cannot be materialized for single-file reports (VHS-REQ-640)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-unresolved-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const model = createModel();
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot,
+      repositoryRoot: model.repositoryRoot,
+      relativePath: model.relativePath,
+      reportType: 'diff',
+      selectedHash: 'c4',
+      baseHash: 'c3'
+    });
+    // A report that references `_files` PNGs that were never written: the image
+    // sources are neither data URIs nor on-disk files. Previously these images
+    // were silently dropped; now the summary records the materialization
+    // shortfall so single-file decode gaps do not disappear without a trace.
+    await writeArchiveSourceRecord({
+      storageRoot,
+      model,
+      selectedHash: 'c4',
+      baseHash: 'c3',
+      reportExists: true,
+      singleFileReport: true,
+      reportHtml: createNiReportHtml(archivePlan.reportAssetsDirectoryName)
+    });
+
+    const dashboard = await buildAndPersistMultiReportDashboard(storageRoot, model, {
+      now: () => '2026-05-04T12:00:00.000Z'
+    });
+
+    const generatedEntry = dashboard.record.entries.find((entry) => entry.selectedHash === 'c4');
+    expect(generatedEntry?.dashboardImageAssets).toHaveLength(0);
+    expect(dashboard.record.summary.overviewImageCount).toBe(2);
+    expect(dashboard.record.summary.materializedOverviewImageCount).toBe(0);
   });
 
   it('concentrates generated, blocked, and missing retained evidence into the dashboard record and HTML', async () => {
