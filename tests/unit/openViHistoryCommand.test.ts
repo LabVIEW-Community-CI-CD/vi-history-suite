@@ -590,6 +590,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       blockedReason: 'docker-provider-unavailable',
       dockerCliAvailable: true,
       dockerDaemonReachable: false,
+      platform: 'win32',
       retainedArchiveAvailable: true,
       runtimeDoctorSummaryLines: [
         'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
@@ -634,6 +635,49 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       )
     ).toBe(false);
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('names the Docker daemon (not Docker Desktop) on non-Windows hosts (VHS-REQ-642)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-docker-daemon-not-running',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-only-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      platform: 'linux',
+      retainedArchiveAvailable: true
+    });
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      vi.fn().mockResolvedValue({ outcome: 'opened-comparison-report' })
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('The Docker daemon is not running'),
+      'Retry',
+      'Show diagnostics'
+    );
+    const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0]);
+    expect(
+      warningMessages.some(
+        (message) => typeof message === 'string' && message.includes('Docker Desktop')
+      )
+    ).toBe(false);
   });
 
   it('re-runs the comparison for the same revision pair when Retry is selected (VHS-REQ-642)', async () => {

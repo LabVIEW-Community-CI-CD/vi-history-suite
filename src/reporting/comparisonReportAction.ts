@@ -57,6 +57,12 @@ export interface ComparisonReportActionResult {
    */
   dockerCliAvailable?: boolean;
   dockerDaemonReachable?: boolean;
+  /**
+   * VHS-REQ-642: Host platform of the selected runtime, surfaced so user-facing
+   * copy can name the platform-appropriate recovery ("Docker Desktop" on
+   * Windows vs the "Docker daemon" elsewhere) without parsing doctor strings.
+   */
+  platform?: RuntimePlatform;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
@@ -145,6 +151,20 @@ export function isDockerDaemonNotRunningBlock(facts: {
   );
 }
 
+/**
+ * VHS-REQ-642: Builds the concise, platform-aware notification shown when a
+ * comparison is blocked solely because the Docker daemon is not running. On
+ * Windows the recoverable surface is Docker Desktop; on other hosts it is the
+ * Docker daemon. Pure and window-free so the copy is unit-tested directly.
+ */
+export function buildDockerDaemonNotRunningMessage(platform?: RuntimePlatform): string {
+  if (platform === 'win32') {
+    return 'Docker Desktop is not running, so the VI comparison could not start. Start Docker Desktop, then retry.';
+  }
+
+  return 'The Docker daemon is not running, so the VI comparison could not start. Start the Docker daemon, then retry.';
+}
+
 export function createComparisonReportAction(
   context: vscode.ExtensionContext,
   deps: ComparisonReportActionDeps = {}
@@ -157,10 +177,12 @@ export function createComparisonReportAction(
 
     // VHS-REQ-642: When the sole blocker is that the Docker daemon is not
     // running (Docker CLI present but unreachable), do not open the full
-    // diagnostics report webview. The blocked packet is still persisted and
-    // archived inside ensureComparisonReportEvidence, so the command layer can
-    // surface a concise retry plus an on-demand diagnostics path instead.
+    // diagnostics report webview. Suppress only when the blocked packet was
+    // archived, so the command layer's on-demand "Show diagnostics" path is
+    // guaranteed; if archiving failed, fall through to open the webview
+    // directly so the user is never left without a diagnostics surface.
     if (
+      ensured.result.retainedArchiveAvailable !== false &&
       isDockerDaemonNotRunningBlock({
         reportStatus: ensured.result.reportStatus,
         blockedReason: ensured.result.blockedReason,
@@ -656,6 +678,7 @@ function buildRetainedComparisonReportEvidenceResult(
     dockerDaemonReachable:
       packet.record.runtimeSelection?.dockerDaemonReachable ??
       packet.record.runtimeSelection?.windowsContainerDaemonReachable,
+    platform: packet.record.runtimeSelection?.platform,
     runtimeFailureReason: packet.record.runtimeExecution.failureReason,
     runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
     runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,

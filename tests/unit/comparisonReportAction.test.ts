@@ -7,6 +7,7 @@ vi.mock('vscode', async () => {
 });
 
 import {
+  buildDockerDaemonNotRunningMessage,
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction,
@@ -774,6 +775,29 @@ describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
   );
 });
 
+describe('buildDockerDaemonNotRunningMessage (VHS-REQ-642)', () => {
+  it('names Docker Desktop on Windows hosts', () => {
+    const message = buildDockerDaemonNotRunningMessage('win32');
+    expect(message).toContain('Docker Desktop is not running');
+    expect(message).toContain('Start Docker Desktop');
+  });
+
+  it('names the Docker daemon on non-Windows hosts', () => {
+    for (const platform of ['linux', 'darwin'] as const) {
+      const message = buildDockerDaemonNotRunningMessage(platform);
+      expect(message).toContain('The Docker daemon is not running');
+      expect(message).toContain('Start the Docker daemon');
+      expect(message).not.toContain('Docker Desktop');
+    }
+  });
+
+  it('falls back to the Docker daemon copy when the platform is unknown', () => {
+    const message = buildDockerDaemonNotRunningMessage(undefined);
+    expect(message).toContain('The Docker daemon is not running');
+    expect(message).not.toContain('Docker Desktop');
+  });
+});
+
 describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
   beforeEach(() => {
     harness.reset();
@@ -882,6 +906,55 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     });
 
     expect(result.outcome).toBe('opened-comparison-report');
+    expect(harness.panels).toHaveLength(1);
+  });
+
+  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      notes: ['Docker CLI is present, but the Docker daemon was not reachable.']
+    });
+    const blockedRecord = createPacketRecord({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'docker-provider-unavailable',
+        doctorSummaryLines: ['Docker daemon was not reachable.']
+      }
+    });
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('<html><body>Packet fallback</body></html>');
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      // Simulate an archive write failure so retainedArchiveAvailable is false.
+      archiveComparisonReportSource: vi.fn().mockRejectedValue(new Error('disk full')),
+      readFile: readFile as never
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1'
+    });
+
+    // The daemon-down suppression is skipped because the on-demand diagnostics
+    // path (retained archive) is unavailable; the webview opens directly.
+    expect(result.outcome).toBe('opened-comparison-report');
+    expect(result.retainedArchiveAvailable).toBe(false);
     expect(harness.panels).toHaveLength(1);
   });
 });

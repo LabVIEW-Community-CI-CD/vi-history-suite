@@ -844,8 +844,8 @@ Missing numeric IDs are intentional.
 - Statement: When a comparison is blocked solely because the Docker daemon is
   not running (Docker CLI present but unreachable), the extension shall suppress
   the full diagnostics report webview and instead show a concise, actionable
-  notification offering Retry and Show diagnostics, so users can start Docker
-  Desktop and rerun without parsing the diagnostics packet.
+  notification offering Retry and Show diagnostics, so users can start the
+  platform's Docker surface and rerun without parsing the diagnostics packet.
 - Acceptance Criteria:
   - `isDockerDaemonNotRunningBlock(facts)` returns true only when
     `reportStatus === 'blocked-runtime'`, `blockedReason` is one of
@@ -855,27 +855,35 @@ Missing numeric IDs are intentional.
     (`dockerCliAvailable === false`), a reachable daemon, image-acquisition
     failures, bitness or VI-Server blocks, preflight blocks, and absent facts
     all return false.
-  - `ComparisonReportActionResult` carries `dockerCliAvailable` and
-    `dockerDaemonReachable` (sourced from the runtime selection with the
-    `windowsContainer*` fallback) and, on a daemon-down block, the outcome
+  - `ComparisonReportActionResult` carries `dockerCliAvailable`,
+    `dockerDaemonReachable`, and the selected runtime `platform` (sourced from
+    the runtime selection with the `windowsContainer*` fallback for the Docker
+    facts) and, on a daemon-down block, the outcome
     `blocked-docker-daemon-not-running`.
   - On that outcome the comparison-report action does not create the report
     webview panel; the blocked packet is still persisted and archived so the
-    full diagnostics remain reachable on demand.
-  - The comparison-report command shows a single warning notification stating
-    that Docker Desktop is not running, with a `Retry` action that re-runs the
-    same comparison for the same revision pair and a `Show diagnostics` action
-    that opens the retained comparison packet. The verbose
+    full diagnostics remain reachable on demand. The webview is suppressed only
+    when archiving succeeded (`retainedArchiveAvailable !== false`); if
+    archiving failed, the action falls through to open the webview directly so
+    the user is never left without a diagnostics surface.
+  - The comparison-report command shows a single warning notification whose copy
+    is built by `buildDockerDaemonNotRunningMessage(platform)` and names the
+    platform-appropriate recovery surface (Docker Desktop on `win32`, the Docker
+    daemon otherwise), with a `Retry` action that re-runs the same comparison
+    for the same revision pair and a `Show diagnostics` action that opens the
+    retained comparison packet. The verbose
     `buildComparisonRuntimeWarningMessage` notification is not shown for this
     outcome.
   - All other blocked and failed reasons retain their existing webview and
     diagnostics surfaces unchanged.
 - Agent Work Scope:
-  - Add the pure `isDockerDaemonNotRunningBlock` helper and surface the two
-    Docker facts plus the new outcome on the action result in
-    `comparisonReportAction.ts`; gate the panel open on it. Branch the toast in
-    `openViHistoryCommand.ts` ahead of the existing warning and information
-    notification paths. Keep the decision window-free and unit-tested.
+  - Add the pure `isDockerDaemonNotRunningBlock` predicate and
+    `buildDockerDaemonNotRunningMessage` copy builder, and surface the Docker
+    facts plus the selected `platform` and the new outcome on the action result
+    in `comparisonReportAction.ts`; gate the panel open on the predicate and on
+    archive success. Branch the toast in `openViHistoryCommand.ts` ahead of the
+    existing warning and information notification paths. Keep the decision and
+    copy window-free and unit-tested.
 - Implementation References:
   - `src/reporting/comparisonReportAction.ts`
   - `src/commands/openViHistoryCommand.ts`

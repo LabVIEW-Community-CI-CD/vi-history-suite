@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { GitApi } from '../git/gitApi';
 import {
   ComparisonReportActionResult,
+  buildDockerDaemonNotRunningMessage,
   isDockerDaemonNotRunningBlock,
   readComparisonRuntimeSettings,
   resolveRuntimePlatform,
@@ -50,14 +51,6 @@ const UNTRUSTED_WORKSPACE_TRUST_RATIONALE =
   'to prevent external process execution';
 const UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX =
   'Documentation and local runtime settings CLI preparation remain available.';
-
-/**
- * VHS-REQ-642: Concise, actionable copy shown when a Docker comparison is
- * blocked solely because Docker Desktop is not running. Replaces the verbose
- * runtime diagnostics warning for this recoverable case.
- */
-const DOCKER_DAEMON_NOT_RUNNING_MESSAGE =
-  'Docker Desktop is not running, so the VI comparison could not start. Start Docker Desktop, then retry.';
 
 /**
  * Formats a user-actionable warning message for features blocked in untrusted workspaces.
@@ -476,7 +469,10 @@ export function createOpenViHistoryCommand(
             ? [RETRY_COMPARISON_ACTION, SHOW_DIAGNOSTICS_ACTION]
             : [RETRY_COMPARISON_ACTION];
           void vscode.window
-            .showWarningMessage(DOCKER_DAEMON_NOT_RUNNING_MESSAGE, ...toastActions)
+            .showWarningMessage(
+              buildDockerDaemonNotRunningMessage(result.platform),
+              ...toastActions
+            )
             .then((selection) => {
               if (selection === RETRY_COMPARISON_ACTION) {
                 void runComparisonReportCommand(
