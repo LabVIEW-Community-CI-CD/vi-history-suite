@@ -22,7 +22,7 @@ Hotfix branches from `main` merge into `main` and merge into `develop`.
 | Branch | Role | Promotion Rule |
 | --- | --- | --- |
 | `main` | Released Marketplace baseline | Accepts `release/vX.Y.Z` or `hotfix/vX.Y.Z` pull requests only |
-| `develop` | Integration branch | Accepts `feature/<issue#>-*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, and `main` back-sync pull requests |
+| `develop` | Integration branch | Accepts `feature/<issue#>-*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, and `main` back-sync pull requests (the back-sync PR uses `head=main` directly — a `chore/*`/`backsync/*` head is rejected) |
 | `feature/<issue#>-*` | Normal development (MUST reference an issue) | Branch from and merge back to `develop` |
 | `fix/*` | Focused fix | Branch from a `feature/*` branch and merge back into that `feature/*` branch only — never directly into `develop` or `main` |
 | `release/vX.Y.Z` | Frozen release candidate | Branch from `develop`, stabilize, then merge to `main` |
@@ -54,11 +54,27 @@ Bootstrap sequence:
    node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
    ```
 
-10. Back-sync `main` to `develop` after release publication.
+10. Back-sync `main` to `develop` after release publication. Open the
+    back-sync pull request **directly with `head=main`** — do not create an
+    intermediate `chore/*` or `backsync/*` branch:
+
+    ```shell
+    gh pr create --base develop --head main \
+      --title "Back-sync main into develop after vX.Y.Z" \
+      --body "Reconcile develop with the released main baseline."
+    ```
+
+    Per the [Branch Model](#branch-model) table, the `Branch Governance` gate's
+    `base=develop` allow-list only permits `head` values of `main`,
+    `feature/<issue#>-*`, `release/vX.Y.Z`, `hotfix/vX.Y.Z`, or `dependabot/*`
+    (enforced by the `Branch Governance` step in `.github/workflows/ci.yml`). A
+    `chore/*` head is blocked in ~4 seconds, so reaching for a dedicated
+    back-sync branch fails the gate and wastes a CI cycle.
 
 Hotfixes use the same release evidence and tag-only Marketplace publication
 path, but branch from `main` as `hotfix/vX.Y.Z` and back-sync to `develop`
-after publication.
+after publication using the same `head=main` back-sync mechanic described in
+step 10.
 
 The Marketplace extension identity remains `svelderrainruiz.vi-history-suite`.
 Source, support, and release links point to
