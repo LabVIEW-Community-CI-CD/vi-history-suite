@@ -13,6 +13,7 @@ const REQUIRED_CI_STEPS = [
   'Customization Audit Report / custom-audit',
   'Traceability Audit',
   'Docs Link Check / lychee',
+  'Documentation Gate / docs-gate',
   'Test',
   'PR Coverage Gate / coverage',
   'Package',
@@ -26,6 +27,7 @@ const REQUIRED_CLOSEOUT_GATES = [
   'dod:gate',
   'check',
   'test',
+  'coverage:map',
   'package'
 ];
 

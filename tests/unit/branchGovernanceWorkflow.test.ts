@@ -135,6 +135,21 @@ describe('CI branch governance workflow', () => {
     );
   });
 
+  it('keeps the documentation workbench gate in the required hosted gate', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Documentation Gate / docs-gate');
+    expect(workflow).toContain('run: npm run docs:gate');
+    // The docs gate runs after the docs link check and before the unit suite,
+    // so documentation surfaces fail fast before the expensive Test step.
+    expect(workflow.indexOf('name: Docs Link Check / lychee')).toBeLessThan(
+      workflow.indexOf('name: Documentation Gate / docs-gate')
+    );
+    expect(workflow.indexOf('name: Documentation Gate / docs-gate')).toBeLessThan(
+      workflow.indexOf('run: npm test')
+    );
+  });
+
   it('retains machine-readable coverage evidence in the required hosted gate', () => {
     const workflow = readWorkflow();
 

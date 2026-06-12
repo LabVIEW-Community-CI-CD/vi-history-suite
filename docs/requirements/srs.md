@@ -1263,8 +1263,8 @@ Missing numeric IDs are intentional.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
   - The workflow enforces the baseline global coverage thresholds declared in
-    `vitest.config.ts`: 71% statements, 60% branches, 78% functions, and
-    71% lines after the coverage-led assurance wave.
+    `vitest.config.ts`: 72% statements, 61% branches, 79% functions, and
+    72% lines after the coverage-led assurance wave.
   - The workflow runs `npm run package`.
   - The workflow runs `npm run dod:gate` through the `DoD Gate / dod` step
     after `npm run package`.
@@ -1616,6 +1616,10 @@ Missing numeric IDs are intentional.
   - Retained release evidence names required validation and retained artifacts
     for release closeout, including traceability audit, docs link check, tests,
     package validation, Marketplace listing evidence, and closeout expectation.
+  - The CM plan records release baselines, branch-governed change control,
+    status-accounting evidence, user-information review triggers, and the
+    documentation-workbench support status without replacing the maintainer
+    operations runbook.
   - Release evidence is retained as a workflow artifact.
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
@@ -1625,6 +1629,7 @@ Missing numeric IDs are intentional.
   - `.github/workflows/marketplace-release.yml`
   - `.github/dependabot.yml`
   - `docs/maintainer-operations.md`
+  - `docs/cm/cm-plan.md`
   - `docs/testing/test-plan.md`
   - `scripts/verifyMarketplaceListing.js`
 - Verification References:
@@ -1789,16 +1794,21 @@ Missing numeric IDs are intentional.
     functions 47%, and lines 40%.
   - The command fails closed with an actionable message when coverage evidence
     is absent.
+  - Standards closeout invokes the coverage map after `npm test` and before
+    package validation so coverage-risk findings are retained with other
+    release-readiness evidence.
 - Agent Work Scope:
   - Change the coverage mapping command, coverage floor configuration,
     requirements mapping, and verification references together.
 - Implementation References:
   - `scripts/mapCoverageToTraceability.js`
+  - `scripts/generateCloseoutEvidence.js`
   - `package.json`
   - `vitest.config.ts`
   - `docs/testing/test-plan.md`
 - Verification References:
   - `tests/unit/coverageMapScript.test.ts`
+  - `tests/unit/closeoutEvidenceScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
 - Change Guidance:
@@ -1861,8 +1871,9 @@ Missing numeric IDs are intentional.
     statement, closeout readiness, required hosted CI checks, local gates,
     targeted tests, standards provenance status, and any environment blockers.
   - Local validation includes traceability audit, documentation link check,
-    typecheck, full unit tests, package sanity, and targeted tests for the
-    changed requirement or implementation surface.
+    typecheck, full unit tests, coverage-to-traceability mapping, package
+    sanity, and targeted tests for the changed requirement or implementation
+    surface.
   - Standards closeout evidence reports host or Docker runner results,
     standards toolchain provenance, Definition-of-Done status, and disqualified
     evidence sources when a gate would otherwise pass from generated or fixture
@@ -1871,6 +1882,9 @@ Missing numeric IDs are intentional.
     temporary tracked-worktree snapshot from `git ls-files` and records
     `standards.auditTarget.mode`, `trackedFileCount`, and
     `generatedRootsExcluded` in `closeout-summary.json`.
+  - Standards closeout evidence runs `npm run coverage:map` after `npm test`
+    and before `npm run package` so low-coverage requirement-mapped files are
+    visible as follow-up candidates.
   - Traceability drift prevention updates SRS, RTM, ID index, test plan,
     inventory, and requirements tests together when requirement scope changes.
   - The repo-native `npm run dod:gate` command verifies the DoD contract from
@@ -1893,6 +1907,7 @@ Missing numeric IDs are intentional.
   - `scripts/verifyMarketplaceListing.js`
   - `.github/pull_request_template.md`
   - `docs/maintainer-operations.md`
+  - `docs/cm/cm-plan.md`
   - `docs/requirements/srs.md`
   - `docs/requirements/rtm.csv`
   - `docs/requirements/id-index.csv`
@@ -3065,4 +3080,3 @@ Missing numeric IDs are intentional.
     host years. Offer Docker as one recovery option rather than a requirement,
     and reuse the `Pick Runtime Provider` quick-pick rather than auto-switching
     `viHistorySuite.labviewVersion`.
-

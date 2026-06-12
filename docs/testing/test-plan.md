@@ -66,11 +66,12 @@ the machine-readable coverage outputs from that run through the
 - `coverage/coverage-summary.json`
 
 The enforced coverage thresholds in `vitest.config.ts` are evidence-backed
-baseline regression floors: 71% statements, 60% branches, 78% functions, and
-71% lines. These floors were ratcheted after the C1+C2 runtime branch-coverage
-work, when merged `develop` measured 74.0% statements, 62.72% branches, 80.08%
-functions, and 74.02% lines on the lower-running Ubuntu CI leg; they are not a
-claim that the repository has complete coverage. The two highest-risk
+baseline regression floors: 72% statements, 61% branches, 79% functions, and
+72% lines. These floors were ratcheted toward the measured `develop` actuals at
+v1.21.0, which measured 74.97% statements, 64.60% branches, 80.54% functions,
+and 75.02% lines on the Linux run (the lower-running Ubuntu CI leg historically
+trails by ~1 point); they are not a claim that the repository has complete
+coverage. The two highest-risk
 comparison-runtime files
 (`src/reporting/comparisonRuntimeLocator.ts` and
 `src/reporting/comparisonReportRuntimeExecution.ts`) additionally carry per-file
@@ -87,13 +88,16 @@ and `docs/requirements/rtm.csv`. The report highlights requirement-mapped files
 below 50% coverage and zero-coverage supporting files tied to active
 requirements so coverage-led assurance work starts with product-risk evidence
 instead of percentage chasing. Use the report to seed follow-up coverage issues
-and to justify future coverage threshold ratchets.
+and to justify future coverage threshold ratchets. Standards closeout runs this
+map after `npm test` and before package validation so release-readiness evidence
+captures coverage-risk backlog candidates without changing the Vitest threshold
+gate semantics.
 
 ## Critical-Path Verification Evidence
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
 | --- | --- | --- | --- | --- |
-| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 71% statements, 60% branches, 78% functions, and 71% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 72% statements, 61% branches, 79% functions, and 72% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
 | VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts | tests/unit/openViHistoryCommand.test.ts | User-facing command stops cover missing URI, trust gate, ineligible file guidance, history-load failures, documentation routing, and explicit cancellation stages. |
 | VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/viHistoryModel.test.ts; tests/unit/historyPanelRendering.test.ts | History model facts cover repository/path/signature/history-window decisions and previous-hash links; panel rendering includes per-revision commit subject and full commit body. |
 | VHS-REQ-639 | TEST-639 | src/git/gitCli.ts; src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/gitCli.test.ts; tests/unit/historyPanelRendering.test.ts | Commit body (git `%b`) is captured per retained revision and rendered as a dedicated commit body column replacing the adjacent-pair column, HTML-escaped with multi-line preserved and an empty-body fallback. |
@@ -213,13 +217,13 @@ npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates
 ```
 
 The closeout command runs `npm run traceability:audit`, `npm run docs:links`,
-`npm run dod:gate`, `npm run check`, `npm test`, and `npm run package` when
-`--run-gates` is set. It always runs standards evidence and standards toolchain
-provenance against a temporary tracked-worktree snapshot built from
-`git ls-files`, preserving symlink targets as text rather than following them
-into generated cache roots. It tries host Python first in `auto` mode and falls
-back to the published GitLab registry workbench image when host preflight is
-unavailable.
+`npm run dod:gate`, `npm run check`, `npm test`, `npm run coverage:map`, and
+`npm run package` when `--run-gates` is set. It always runs standards evidence
+and standards toolchain provenance against a temporary tracked-worktree
+snapshot built from `git ls-files`, preserving symlink targets as text rather
+than following them into generated cache roots. It tries host Python first in
+`auto` mode and falls back to the published GitLab registry workbench image
+when host preflight is unavailable.
 When `--save-dir` is provided, closeout evidence writes a machine-readable
 `closeout-summary.json` artifact with gate status, standards status, provenance
 status, closure-decision state, and `standards.auditTarget` fields for

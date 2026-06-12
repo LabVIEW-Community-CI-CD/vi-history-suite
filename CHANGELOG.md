@@ -10,6 +10,18 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.21.1] - 2026-06-12
+
+### Changed
+
+- The multi-report comparison dashboard now reports an **Overview images
+  materialized** metric (and a `materializedOverviewImageCount` field in the
+  dashboard record) alongside the parsed overview-image count. Single-file
+  reports (the default since v1.21.0) embed difference images as data URIs with
+  no sibling `<report>_files` directory; surfacing the materialized count makes
+  any overview image that could not be decoded or located observable instead of
+  being silently dropped. (VHS-REQ-640)
+
 ## [1.21.0] - 2026-06-12
 
 ### Added

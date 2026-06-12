@@ -14,15 +14,17 @@ export default defineConfig({
       include: ['src/**/*.ts', 'scripts/mapCoverageToTraceability.js'],
       exclude: ['src/extension.ts', 'src/benchmark/hostLinuxBenchmarkRunner.ts'],
       thresholds: {
-        // Evidence-backed global regression floors held a conservative margin
-        // below measured develop actuals on the lower-running Ubuntu CI leg
-        // (statements 74.0, branches 62.72, functions 80.08, lines 74.02 after
-        // the C1+C2 runtime branch-coverage work) so cross-runner variance
-        // between the Ubuntu and Windows CI legs cannot redden the gate.
-        statements: 71,
-        branches: 60,
-        functions: 78,
-        lines: 71,
+        // Evidence-backed global regression floors hold a conservative margin
+        // below measured develop actuals (statements 74.97, branches 64.60,
+        // functions 80.54, lines 75.02 on the Linux run at v1.21.0; the Ubuntu
+        // CI leg historically runs ~1 point lower) so cross-runner variance
+        // between the Ubuntu and Windows CI legs cannot redden the gate. Raised
+        // toward those actuals to tighten regression protection against silent
+        // coverage drift. (VHS-REQ-597.)
+        statements: 72,
+        branches: 61,
+        functions: 79,
+        lines: 72,
         // Per-file branch floors for the highest-risk comparison-runtime
         // files, pinned with margin below the lower-runner (Ubuntu) actuals so
         // silent drift on the fail-closed/provider-selection branches fails

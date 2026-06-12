@@ -838,6 +838,7 @@ describe('closeout evidence script', () => {
     expect(result.markdown).toContain('Evidence scan: 251 files; REQ=strong; TEST=strong');
     expect(result.markdown).toContain('Closable: yes');
     expect(result.markdown).toContain('| docs:links | PASS | npm.cmd run docs:links |');
+    expect(result.markdown).toContain('| coverage:map | PASS | npm.cmd run coverage:map |');
     expect(result.markdown).toContain('Definition-of-Done');
     expect(result.markdown).not.toContain('Defer docs link-check/lychee automation');
     expect(requirementsQualityCall?.[2].cwd).toContain('vi-history-suite-audit-snapshot-');
@@ -926,7 +927,8 @@ describe('closeout evidence script', () => {
       expect(summary.localGates.results).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: 'traceability:audit', status: 'PASS' }),
-          expect.objectContaining({ name: 'docs:links', status: 'PASS' })
+          expect.objectContaining({ name: 'docs:links', status: 'PASS' }),
+          expect.objectContaining({ name: 'coverage:map', status: 'PASS' })
         ])
       );
       expect(summary.standards.success).toBe(true);
