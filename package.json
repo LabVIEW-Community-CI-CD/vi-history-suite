@@ -26,7 +26,8 @@
         "viHistorySuite.labviewVersion",
         "viHistorySuite.labviewBitness",
         "viHistorySuite.labviewExePath",
-        "viHistorySuite.labviewCliPath"
+        "viHistorySuite.labviewCliPath",
+        "viHistorySuite.container.imageVersion"
       ]
     }
   },
@@ -82,6 +83,11 @@
       {
         "command": "labviewViHistory.pickRuntimeProvider",
         "title": "Pick Runtime Provider",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.pickContainerImageVersion",
+        "title": "Pick LabVIEW Container Image Version",
         "category": "VI History"
       },
       {
@@ -186,6 +192,10 @@
         "viHistorySuite.labviewCliPath": {
           "type": "string",
           "description": "Optional override for the LabVIEWCLI executable used for comparison reports. Set this to the exact LabVIEWCLI(.exe) when your install is at a location auto-detection does not cover; this also lets VI History open when the LabVIEW CLI prerequisite gate would otherwise block. The comparison runtime validates the path and reports a missing-path error if it does not exist. Restricted in untrusted workspaces because it names an executable the comparison launches."
+        },
+        "viHistorySuite.container.imageVersion": {
+          "type": "string",
+          "description": "VHS-REQ-650: selected LabVIEW Docker image version for the container comparison providers, as a canonical tag such as 2026q1-windows, 2026q1patch2-windows, or 2026q1-linux. Leave empty to use the newest supported default. Use the 'Pick LabVIEW Container Image Version' command to choose from versions discovered on Docker Hub and already pulled locally; new National Instruments patches and release years become selectable without updating the extension. Restricted in untrusted workspaces because it names the image the comparison launches."
         },
         "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
           "type": "integer",

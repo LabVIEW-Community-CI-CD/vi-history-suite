@@ -226,6 +226,39 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 
+### VHS-SYS-REQ-019: Selectable LabVIEW Container Runtime Versions
+
+- Status: Active
+- Area: Runtime
+- Statement: The system shall let users select among the LabVIEW container image
+  versions that are actually available — across release year, quarter, and patch
+  revision, for both the Windows-container and Linux-container providers — and
+  shall derive the selectable set from published registry tags and locally
+  present images, so newly published images (including future release years and
+  new patch revisions) become selectable without modifying extension source.
+- Acceptance Criteria:
+  - Selectable container versions are derived at runtime from discovered image
+    tags, not from a single hardcoded tag per platform.
+  - A newly published LabVIEW image (a new patch within a supported
+    year/quarter, or a new supported year/quarter) becomes selectable with no
+    source-code change and no extension update, once it is published on the
+    configured registry namespace or pulled locally.
+  - Selection is available for both the Windows-container and Linux-container
+    providers.
+  - When no explicit selection is made, the system resolves a deterministic
+    default that preserves the prior pinned behavior for the current release.
+  - An explicitly selected version that cannot be launched fails closed with a
+    classified, actionable reason rather than silently substituting a different
+    version.
+- Verification References:
+  - `docs/architecture/adr/ADR-0003-dynamic-labview-container-image-selection.md`
+  - `src/tooling/containerImageCatalog.ts`
+  - `src/commands/pickContainerImageVersionCommand.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+  - `tests/unit/containerImageCatalog.test.ts`
+  - `tests/unit/pickContainerImageVersionCommand.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+
 ### VHS-SYS-REQ-016: Governed Release Branch Promotion
 
 - Status: Active

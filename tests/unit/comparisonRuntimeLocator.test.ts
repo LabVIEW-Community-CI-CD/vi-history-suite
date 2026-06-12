@@ -952,6 +952,105 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     expect(selection.notes.join('\n')).toContain('not implemented yet');
   });
 
+  it('drives the windows-container image from the selected container image version (VHS-REQ-650)', async () => {
+    const query = vi
+      .fn()
+      .mockImplementation((windowsImage: string) =>
+        Promise.resolve(windowsContainerFacts({ image: windowsImage }))
+      );
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2026',
+        bitness: 'x64',
+        containerImageVersion: '2026q1patch2-windows'
+      },
+      { queryWindowsContainerProviderFacts: query }
+    );
+
+    expect(query).toHaveBeenCalledWith(
+      'nationalinstruments/labview:2026q1patch2-windows',
+      expect.any(String),
+      expect.any(String)
+    );
+    expect(selection.containerImage).toBe('nationalinstruments/labview:2026q1patch2-windows');
+  });
+
+  it('preserves the default windows-container image when no version is selected (VHS-REQ-650)', async () => {
+    const query = vi
+      .fn()
+      .mockImplementation((windowsImage: string) =>
+        Promise.resolve(windowsContainerFacts({ image: windowsImage }))
+      );
+    await locateComparisonRuntime(
+      'win32',
+      { executionMode: 'docker-only', labviewVersion: '2026', bitness: 'x64' },
+      { queryWindowsContainerProviderFacts: query }
+    );
+
+    expect(query).toHaveBeenCalledWith(
+      'nationalinstruments/labview:2026q1-windows',
+      expect.any(String),
+      expect.any(String)
+    );
+  });
+
+  it('bypasses the version-not-implemented pin when a container image version is selected (VHS-REQ-650)', async () => {
+    const query = vi
+      .fn()
+      .mockImplementation((windowsImage: string) =>
+        Promise.resolve(windowsContainerFacts({ image: windowsImage }))
+      );
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2027',
+        bitness: 'x64',
+        containerImageVersion: '2027q1-windows'
+      },
+      { queryWindowsContainerProviderFacts: query }
+    );
+
+    expect(selection.blockedReason).not.toBe('docker-provider-labview-version-not-implemented');
+    expect(query).toHaveBeenCalledWith(
+      'nationalinstruments/labview:2027q1-windows',
+      expect.any(String),
+      expect.any(String)
+    );
+  });
+
+  it('drives the linux-container image from the selected container image version (VHS-REQ-650)', async () => {
+    const query = vi.fn().mockResolvedValue(
+      windowsContainerFacts({
+        image: 'nationalinstruments/labview:2026q1patch1-linux',
+        provider: 'linux-container',
+        runtimePlatform: 'linux',
+        windowsContainerHostMode: 'linux'
+      })
+    );
+    await locateComparisonRuntime(
+      'win32',
+      {
+        labviewVersion: '2026',
+        bitness: 'x64',
+        containerImageVersion: '2026q1patch1-linux'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: query
+      }
+    );
+
+    expect(query).toHaveBeenCalledWith(
+      expect.any(String),
+      'nationalinstruments/labview:2026q1patch1-linux',
+      expect.any(String)
+    );
+  });
+
   it('blocks docker-only execution that requests x86 instead of the supported x64 container', async () => {
     const selection = await locateComparisonRuntime(
       'win32',

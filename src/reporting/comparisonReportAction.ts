@@ -1405,6 +1405,9 @@ export function readComparisonRuntimeSettings(
     // reports configured-labview-(cli|exe)-path-missing when the path is wrong.
     labviewCliPath: readTrimmedStringSetting(configuration, 'labviewCliPath'),
     labviewExePath: readTrimmedStringSetting(configuration, 'labviewExePath'),
+    // VHS-REQ-650: optional selected LabVIEW container image version that drives
+    // the container provider's image; unset preserves the platform default.
+    containerImageVersion: readTrimmedStringSetting(configuration, 'container.imageVersion'),
     allowExistingWindowsHostRuntime: configuredProvider.provider !== 'docker'
   };
 }
