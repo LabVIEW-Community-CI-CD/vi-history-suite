@@ -821,7 +821,12 @@ async function openPersistedComparisonReportPanel(
     graphicsReportUnavailableReason:
       deriveComparisonBlockedReason(options.record) ??
       options.record.runtimeExecution.failureReason,
-    sourceViFsPath: options.sourceViFsPath
+    sourceViFsPath: options.sourceViFsPath,
+    relativePath: options.record.artifactPlan.normalizedRelativePath,
+    selectedHash: options.record.selectedHash,
+    baseHash: options.record.baseHash,
+    selectedRevision: options.record.selectedRevision,
+    baseRevision: options.record.baseRevision
   });
   const packetWebviewUri = panel.webview.asWebviewUri(packetFileUri).toString();
   const reportWebviewUri = panel.webview.asWebviewUri(reportFileUri).toString();
