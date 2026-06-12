@@ -317,6 +317,7 @@ function runGateCommands(options, deps = {}) {
     ['dod:gate', npm, ['run', 'dod:gate']],
     ['check', npm, ['run', 'check']],
     ['test', npm, ['test']],
+    ['coverage:map', npm, ['run', 'coverage:map']],
     ['package', npm, ['run', 'package']]
   ];
 

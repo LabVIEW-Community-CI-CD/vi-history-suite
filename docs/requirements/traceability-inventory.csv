@@ -4,7 +4,7 @@ scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command with generated validation/evidence root exclusions; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
 scripts/fileLinuxValidationGap.js,dev-only,No,Maintainer Linux-validation gap auto-filer (issue #259) so the session not the human authors fix issues; gh-only allow-list and injected fs/spawn boundaries.
-scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with tracked-worktree standards audit snapshot mandatory standards runner published Docker workbench support standards toolchain provenance verification and DoD evidence-source hygiene; mapped to VHS-REQ-601 and VHS-REQ-615.
+scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with tracked-worktree standards audit snapshot mandatory standards runner published Docker workbench support standards toolchain provenance verification coverage-risk mapping and DoD evidence-source hygiene; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
@@ -66,7 +66,7 @@ scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
-tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards audit snapshot standards toolchain provenance and DoD evidence-source hygiene tests; mapped to VHS-REQ-601.
+tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards audit snapshot standards toolchain provenance coverage-risk mapping and DoD evidence-source hygiene tests; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
 tests/unit/fileLinuxValidationGapScript.test.ts,dev-only,No,Tests for the maintainer Linux-validation gap auto-filer script (issue #259); covers parse/detect/compose and the injected gh boundary.
 tests/unit/definitionOfDoneGate.test.ts,mapped,Yes,Definition-of-Done gate checker tests; mapped to VHS-REQ-615.
 tests/unit/coverageMapScript.test.ts,mapped,Yes,Coverage traceability map tests; mapped to VHS-REQ-613.
@@ -170,6 +170,7 @@ docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
+docs/cm/cm-plan.md,asset-doc,Yes,Configuration management proof map for baselines change control status accounting standards audit cadence user-information review triggers and documentation-workbench status; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
 docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md,asset-doc,No,Architecture decision record reference documentation for GitHub-first release and traceability governance; not directly mapped in RTM.
 docs/architecture/adr/ADR-0002-selected-file-on-demand-vi-history-eligibility.md,asset-doc,No,Architecture decision record reference documentation for selected-file on-demand VI History eligibility; not directly mapped in RTM.

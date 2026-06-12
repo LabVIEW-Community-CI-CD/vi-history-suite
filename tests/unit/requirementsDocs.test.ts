@@ -448,14 +448,18 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('### VHS-REQ-613: Coverage Intelligence And Test-Risk Mapping');
     expect(srs).toContain('`npm run coverage:map` reads `coverage/coverage-summary.json`');
     expect(srs).toContain('requirement-mapped files below 50% coverage');
+    expect(srs).toContain('Standards closeout invokes the coverage map after `npm test`');
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('zero-coverage supporting files tied to active');
     expect(testPlan).toContain('requirements so coverage-led assurance work starts');
+    expect(testPlan).toContain('Standards closeout runs this');
     expect(packageJson.scripts['coverage:map']).toBe('node scripts/mapCoverageToTraceability.js');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-017');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/mapCoverageToTraceability.js');
+    expect(requirementRow?.ImplementationRefs).toContain('scripts/generateCloseoutEvidence.js');
     expect(requirementRow?.ImplementationRefs).toContain('vitest.config.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/coverageMapScript.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/closeoutEvidenceScript.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
     expect(softwareIndexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-613-coverage-intelligence-and-test-risk-mapping'
@@ -466,6 +470,9 @@ describe('requirements documentation coherence', () => {
     expect(coverageScriptRow?.Classification).toBe('mapped');
     expect(coverageScriptRow?.RtmCoverage).toBe('Yes');
     expect(coverageScriptRow?.Notes).toContain('VHS-REQ-613');
+    expect(inventoryRows.find((row) => row.Path === 'scripts/generateCloseoutEvidence.js')?.Notes).toContain(
+      'VHS-REQ-613'
+    );
     expect(coverageTestRow?.Classification).toBe('mapped');
     expect(coverageTestRow?.RtmCoverage).toBe('Yes');
     expect(coverageTestRow?.Notes).toContain('VHS-REQ-613');
@@ -508,6 +515,7 @@ describe('requirements documentation coherence', () => {
   it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     const maintainerOperations = readRepoText('docs', 'maintainer-operations.md');
+    const cmPlan = readRepoText('docs', 'cm', 'cm-plan.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
     const troubleshooting = readRepoText('TROUBLESHOOTING.md');
@@ -552,6 +560,8 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('docs link check');
     expect(srs).toContain('Marketplace listing evidence');
     expect(srs).toContain('The repo-native `npm run dod:gate` command verifies the DoD contract');
+    expect(srs).toContain('coverage-to-traceability mapping');
+    expect(srs).toContain('Standards closeout evidence runs `npm run coverage:map`');
     expect(srs).toContain('Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`');
     expect(srs).toContain('`scripts/generateCloseoutEvidence.js`');
     expect(srs).toContain('`.github/workflows/ci.yml`');
@@ -570,6 +580,12 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('out-of-scope statement');
     expect(testPlan).toContain('closeout readiness');
     expect(testPlan).toContain('closeout-summary.json');
+    expect(testPlan).toContain('`npm run coverage:map`');
+    expect(testPlan).toContain('before package validation');
+    expect(cmPlan).toContain('coverage-to-traceability mapping');
+    expect(cmPlan).toContain('26514-review');
+    expect(cmPlan).toContain('supported: false');
+    expect(maintainerOperations).toContain('Configuration Management Plan');
     // VHS-REQ-615 closeout tracked-worktree audit snapshot contract (PR #393)
     expect(srs).toContain('temporary tracked-worktree snapshot from `git ls-files`');
     expect(srs).toContain('`standards.auditTarget.mode`');
@@ -600,6 +616,7 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.ImplementationRefs).toContain('scripts/verifyMarketplaceListing.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/pull_request_template.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/maintainer-operations.md');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/cm/cm-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/srs.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/id-index.csv');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
@@ -631,12 +648,16 @@ describe('requirements documentation coherence', () => {
     expect(closeoutRow?.Classification).toBe('mapped');
     expect(closeoutRow?.RtmCoverage).toBe('Yes');
     expect(closeoutRow?.Notes).toContain('VHS-REQ-615');
+    expect(closeoutRow?.Notes).toContain('VHS-REQ-613');
     expect(marketplaceListingRow?.Classification).toBe('mapped');
     expect(marketplaceListingRow?.RtmCoverage).toBe('Yes');
     expect(marketplaceListingRow?.Notes).toContain('VHS-REQ-615');
     expect(maintainerOpsRow?.Classification).toBe('asset-doc');
     expect(maintainerOpsRow?.RtmCoverage).toBe('Yes');
     expect(maintainerOpsRow?.Notes).toContain('VHS-REQ-615');
+    expect(inventoryRows.find((row) => row.Path === 'docs/cm/cm-plan.md')?.Notes).toContain(
+      'VHS-REQ-615'
+    );
     const prTemplateRow = inventoryRows.find((row) => row.Path === '.github/pull_request_template.md');
     expect(prTemplateRow?.Classification).toBe('mapped');
     expect(prTemplateRow?.RtmCoverage).toBe('Yes');
@@ -807,6 +828,7 @@ describe('requirements documentation coherence', () => {
   it('keeps governed branch promotion and Marketplace release automation traceable', () => {
     const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const cmPlan = readRepoText('docs', 'cm', 'cm-plan.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
     const idIndexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
     const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
@@ -832,6 +854,11 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('Marketplace listing verification retries bounded propagation lag');
     expect(srs).toContain('retained artifacts');
     expect(srs).toContain('traceability audit, docs link check, tests');
+    expect(srs).toContain('The CM plan records release baselines');
+    expect(cmPlan).toContain('Controlled Baselines');
+    expect(cmPlan).toContain('Change Control');
+    expect(cmPlan).toContain('Status Accounting');
+    expect(cmPlan).toContain('Documentation Workbench Status');
 
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-016');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
@@ -840,6 +867,7 @@ describe('requirements documentation coherence', () => {
     );
     expect(requirementRow?.ImplementationRefs).toContain('.github/dependabot.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/maintainer-operations.md');
+    expect(requirementRow?.ImplementationRefs).toContain('docs/cm/cm-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/verifyMarketplaceListing.js');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/branchGovernanceWorkflow.test.ts'
@@ -855,6 +883,7 @@ describe('requirements documentation coherence', () => {
     );
     expect(requirementRow?.Notes).toContain('exact-tag-only');
     expect(requirementRow?.Notes).toContain('retained evidence naming required validation surfaces');
+    expect(requirementRow?.Notes).toContain('CM plan maps release baselines');
     expect(indexRow?.CurrentAnchor).toBe(
       'srs.md#vhs-req-609-governed-branch-promotion-and-marketplace-release-automation'
     );
@@ -872,6 +901,7 @@ describe('requirements documentation coherence', () => {
     expect(
       inventoryByPath.get('.github/workflows/marketplace-release.yml')?.Notes
     ).toContain('VHS-REQ-609');
+    expect(inventoryByPath.get('docs/cm/cm-plan.md')?.Notes).toContain('VHS-REQ-609');
     expect(inventoryByPath.get('scripts/verifyMarketplaceListing.js')?.Notes).toContain(
       'bounded attempt evidence'
     );

@@ -17,6 +17,11 @@ into `develop`. Release branches from `develop` merge into `main` and merge
 into `develop` after publication. Delete release branch after both merges complete.
 Hotfix branches from `main` merge into `main` and merge into `develop`.
 
+The compact CM proof map lives in [Configuration Management Plan](./cm/cm-plan.md).
+Use it as the standards-audit entry point for baselines, change control, status
+accounting, coverage-risk closeout evidence, user-information re-review
+triggers, and the current documentation-workbench support status.
+
 ## Branch Model
 
 | Branch | Role | Promotion Rule |

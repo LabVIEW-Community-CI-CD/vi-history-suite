@@ -26,6 +26,7 @@ const REQUIRED_CLOSEOUT_GATES = [
   'dod:gate',
   'check',
   'test',
+  'coverage:map',
   'package'
 ];
 
