@@ -621,10 +621,18 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       'Retry',
       'Show diagnostics'
     );
-    // The verbose runtime-diagnostics warning (which names the blocked reason) is not shown.
-    expect(showWarningMessageMock).not.toHaveBeenCalledWith(
-      expect.stringContaining('docker-provider-unavailable')
-    );
+    // Only the concise daemon-down toast is shown; the verbose runtime-diagnostics
+    // warning (which names the blocked reason) is suppressed. Scan the first
+    // argument of every warning call so a multi-arg call (e.g., one carrying a
+    // "Pick Runtime Provider" action) cannot mask a regression.
+    const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0]);
+    expect(warningMessages).toHaveLength(1);
+    expect(
+      warningMessages.some(
+        (message) =>
+          typeof message === 'string' && message.includes('docker-provider-unavailable')
+      )
+    ).toBe(false);
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
   });
 
