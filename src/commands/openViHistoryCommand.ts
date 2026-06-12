@@ -4,6 +4,10 @@ import * as vscode from 'vscode';
 import { GitApi } from '../git/gitApi';
 import {
   ComparisonReportActionResult,
+  buildDockerDaemonNotRunningMessage,
+  buildDockerNotInstalledMessage,
+  isDockerDaemonNotRunningBlock,
+  isDockerNotInstalledBlock,
   readComparisonRuntimeSettings,
   resolveRuntimePlatform,
 } from '../reporting/comparisonReportAction';
@@ -37,6 +41,7 @@ import {
   HistoryPanelMessage,
   HistoryPanelTracker
 } from '../ui/historyPanelTracker';
+import { INSTALL_DOCKER_URL } from '../ui/runtimeAvailabilityNotice';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
 import { isWorktreeRevision, WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
@@ -448,10 +453,96 @@ export function createOpenViHistoryCommand(
             'Retained VI Comparison evidence for this pair is stale or invalid. Use the compare preflight section to rebuild retained evidence for it.'
           );
         }
-        const runtimeWarningMessage = buildComparisonRuntimeWarningMessage(
-          actionCommand,
-          result
-        );
+        // VHS-REQ-642: A Docker-daemon-not-running block gets a concise toast
+        // with Retry plus an on-demand Show diagnostics path instead of the
+        // verbose runtime warning and the suppressed diagnostics webview.
+        const dockerDaemonNotRunning = isDockerDaemonNotRunningBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason,
+          dockerCliAvailable: result.dockerCliAvailable,
+          dockerDaemonReachable: result.dockerDaemonReachable
+        });
+        if (dockerDaemonNotRunning) {
+          const RETRY_COMPARISON_ACTION = 'Retry';
+          const SHOW_DIAGNOSTICS_ACTION = 'Show diagnostics';
+          const offerDiagnostics =
+            Boolean(openRetainedComparisonReportAction) &&
+            result.retainedArchiveAvailable !== false;
+          const toastActions = offerDiagnostics
+            ? [RETRY_COMPARISON_ACTION, SHOW_DIAGNOSTICS_ACTION]
+            : [RETRY_COMPARISON_ACTION];
+          void vscode.window
+            .showWarningMessage(
+              buildDockerDaemonNotRunningMessage(result.platform),
+              ...toastActions
+            )
+            .then((selection) => {
+              if (selection === RETRY_COMPARISON_ACTION) {
+                void runComparisonReportCommand(
+                  actionCommand,
+                  title,
+                  cancelledMessage,
+                  action,
+                  { selectedHash, baseHash }
+                );
+              } else if (
+                selection === SHOW_DIAGNOSTICS_ACTION &&
+                openRetainedComparisonReportAction
+              ) {
+                void runComparisonReportCommand(
+                  'diffPrevious',
+                  'Opening retained VI Comparison Report',
+                  'Opening retained VI Comparison Report was cancelled before the retained comparison view opened.',
+                  openRetainedComparisonReportAction,
+                  { selectedHash, baseHash }
+                );
+              }
+            });
+        }
+        // VHS-REQ-643: A Docker-not-installed block (CLI absent) gets a concise
+        // toast with an Install Docker link plus an on-demand Show diagnostics
+        // path, mirroring the daemon-down treatment with an install action in
+        // place of Retry.
+        const dockerNotInstalled = isDockerNotInstalledBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason,
+          dockerCliAvailable: result.dockerCliAvailable
+        });
+        if (dockerNotInstalled) {
+          const INSTALL_DOCKER_ACTION = 'Install Docker';
+          const SHOW_DIAGNOSTICS_ACTION = 'Show diagnostics';
+          const offerDiagnostics =
+            Boolean(openRetainedComparisonReportAction) &&
+            result.retainedArchiveAvailable !== false;
+          const toastActions = offerDiagnostics
+            ? [INSTALL_DOCKER_ACTION, SHOW_DIAGNOSTICS_ACTION]
+            : [INSTALL_DOCKER_ACTION];
+          void vscode.window
+            .showWarningMessage(
+              buildDockerNotInstalledMessage(result.platform),
+              ...toastActions
+            )
+            .then((selection) => {
+              if (selection === INSTALL_DOCKER_ACTION) {
+                void vscode.env.openExternal(vscode.Uri.parse(INSTALL_DOCKER_URL));
+              } else if (
+                selection === SHOW_DIAGNOSTICS_ACTION &&
+                openRetainedComparisonReportAction
+              ) {
+                void runComparisonReportCommand(
+                  'diffPrevious',
+                  'Opening retained VI Comparison Report',
+                  'Opening retained VI Comparison Report was cancelled before the retained comparison view opened.',
+                  openRetainedComparisonReportAction,
+                  { selectedHash, baseHash }
+                );
+              }
+            });
+        }
+        const runtimeWarningMessage =
+          dockerDaemonNotRunning || dockerNotInstalled
+            ? undefined
+            : buildComparisonRuntimeWarningMessage(actionCommand, result);
         if (runtimeWarningMessage) {
           if (isBitnessConflictComparisonRuntimeResult(result)) {
             const PICK_RUNTIME_PROVIDER_ACTION = 'Pick Runtime Provider';

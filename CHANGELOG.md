@@ -10,6 +10,23 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.20.0] - 2026-06-12
+
+### Added
+
+- When a VI comparison is started with the Docker runtime selected but the
+  Docker daemon is not running (Docker is installed yet Docker Desktop or the
+  daemon has not been started), VI History now shows a concise notification
+  instead of opening the full diagnostics report: it names the platform's Docker
+  surface (Docker Desktop on Windows, the Docker daemon on other hosts) and
+  offers **Retry** and **Show diagnostics**. Start Docker and choose **Retry**
+  to run the comparison again; the full diagnostics packet is still retained and
+  is reachable from **Show diagnostics**. (VHS-REQ-642)
+- When a VI comparison is started with the Docker runtime selected but Docker is
+  not installed at all, VI History now shows a concise notification with an
+  **Install Docker** action (opening the Docker download page) and a **Show
+  diagnostics** action, instead of the full diagnostics report. (VHS-REQ-643)
+
 ## [1.19.0] - 2026-06-11
 
 ### Added
