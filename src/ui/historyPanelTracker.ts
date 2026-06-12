@@ -40,6 +40,7 @@ export interface HistoryPanelActionSummary {
     | 'opened-comparison-report'
     | 'retained-comparison-report-evidence'
     | 'blocked-docker-daemon-not-running'
+    | 'blocked-docker-not-installed'
     | 'cancelled'
     | 'workspace-untrusted'
     | 'ignored-missing-hash'

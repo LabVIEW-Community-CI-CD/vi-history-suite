@@ -898,6 +898,69 @@ Missing numeric IDs are intentional.
     Detection of the Docker facts stays in the locator (VHS-REQ-155); this
     requirement owns only the suppression gate and toast copy.
 
+### VHS-REQ-643: Docker Not Installed Comparison Toast
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When a comparison is blocked solely because Docker is not installed
+  (Docker CLI absent), the extension shall suppress the full diagnostics report
+  webview and instead show a concise, actionable notification offering Install
+  Docker and Show diagnostics, the sibling of the VHS-REQ-642 daemon-down toast
+  for the not-installed case.
+- Acceptance Criteria:
+  - `isDockerNotInstalledBlock(facts)` returns true only when
+    `reportStatus === 'blocked-runtime'`, `blockedReason` is one of
+    `docker-provider-unavailable`, `docker-only-provider-unavailable`, or
+    `auto-docker-installed-provider-unavailable`, and
+    `dockerCliAvailable === false`. The daemon-down case
+    (`dockerCliAvailable === true`), other blocks, preflight blocks, and absent
+    facts all return false. The predicate is mutually exclusive with
+    `isDockerDaemonNotRunningBlock` on `dockerCliAvailable`.
+  - `ComparisonReportActionResult` gains the outcome
+    `blocked-docker-not-installed` for a not-installed block; the
+    `dockerCliAvailable` / `dockerDaemonReachable` / `platform` facts authored
+    for VHS-REQ-642 are reused.
+  - On that outcome the comparison-report action does not create the report
+    webview panel when the blocked packet archived
+    (`retainedArchiveAvailable !== false`); if archiving failed, it falls through
+    to open the webview directly so diagnostics are never lost (parity with the
+    VHS-REQ-642 archive-failure fallback).
+  - The comparison-report command shows a single warning notification whose copy
+    is built by `buildDockerNotInstalledMessage(platform)` and names the
+    platform-appropriate target (Docker Desktop on `win32`, Docker otherwise),
+    with an `Install Docker` action that opens `INSTALL_DOCKER_URL` via
+    `vscode.env.openExternal` and a `Show diagnostics` action that opens the
+    retained comparison packet. The verbose
+    `buildComparisonRuntimeWarningMessage` notification is not shown for this
+    outcome.
+  - No automatic Docker install or process launch occurs; the action only offers
+    an external link, mirroring the LabVIEW and Git install offers. All other
+    blocked and failed reasons (including the VHS-REQ-642 daemon-down case)
+    retain their existing surfaces unchanged.
+- Agent Work Scope:
+  - Add the pure `isDockerNotInstalledBlock` predicate and
+    `buildDockerNotInstalledMessage` copy builder and the new outcome on the
+    action result in `comparisonReportAction.ts`; gate the panel open on the
+    predicate and on archive success. Branch the toast in
+    `openViHistoryCommand.ts` ahead of the existing warning path, reusing
+    `INSTALL_DOCKER_URL` from `runtimeAvailabilityNotice.ts`. Keep the decision
+    and copy window-free and unit-tested.
+- Implementation References:
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/ui/historyPanelTracker.ts`
+- Verification References:
+  - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Scope strictly to the not-installed case; never suppress diagnostics for
+    image-acquisition, connection (`-350000`), bitness, or VI-Server failures.
+    Detection of the Docker facts stays in the locator (VHS-REQ-155) and the
+    install URL stays single-sourced in `runtimeAvailabilityNotice.ts`; this
+    requirement owns only the suppression gate, toast copy, and install action.
+
 ### VHS-REQ-155: Comparison Runtime Discovery Diagnostics
 
 - Status: Active

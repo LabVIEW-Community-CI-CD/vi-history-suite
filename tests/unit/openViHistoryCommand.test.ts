@@ -765,6 +765,106 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
   });
+
+  it('shows an Install Docker toast and suppresses the verbose warning when Docker is not installed (VHS-REQ-643)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-docker-not-installed',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      platform: 'win32',
+      retainedArchiveAvailable: true
+    });
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report'
+    });
+    // Select Install Docker so the install URL opens.
+    showWarningMessageMock.mockResolvedValueOnce('Install Docker');
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('Docker Desktop is not installed'),
+      'Install Docker',
+      'Show diagnostics'
+    );
+    // The verbose runtime-diagnostics warning is suppressed: exactly one warning fires.
+    const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0]);
+    expect(warningMessages).toHaveLength(1);
+    expect(
+      warningMessages.some(
+        (message) =>
+          typeof message === 'string' && message.includes('docker-provider-unavailable')
+      )
+    ).toBe(false);
+    // Install Docker opens the external install URL.
+    expect(vscodeHarness.vscode.env.openExternal).toHaveBeenCalledTimes(1);
+    expect(
+      vscodeHarness.openedExternalUris.some((uri) => uri.includes('docker-desktop'))
+    ).toBe(true);
+    expect(comparisonReportAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('names Docker (not Docker Desktop) in the not-installed toast on non-Windows hosts (VHS-REQ-643)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-docker-not-installed',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-only-provider-unavailable',
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      platform: 'linux',
+      retainedArchiveAvailable: true
+    });
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      vi.fn().mockResolvedValue({ outcome: 'opened-comparison-report' })
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('Docker is not installed'),
+      'Install Docker',
+      'Show diagnostics'
+    );
+    const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0]);
+    expect(
+      warningMessages.some(
+        (message) => typeof message === 'string' && message.includes('Docker Desktop')
+      )
+    ).toBe(false);
+  });
 });
 
 describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/627/631)', () => {
