@@ -145,11 +145,12 @@ describe('Definition-of-Done gate', () => {
       'dod:gate',
       'check',
       'test',
+      'coverage:map',
       'package'
     ]);
     expect(
       assertOrdered(
-        "['traceability:audit']\n['docs:links']\n['dod:gate']\n['check']\n['test']\n['package']",
+        "['traceability:audit']\n['docs:links']\n['dod:gate']\n['check']\n['test']\n['coverage:map']\n['package']",
         REQUIRED_CLOSEOUT_GATES,
         (gate) => `['${gate}'`
       ).passed

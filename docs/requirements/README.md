@@ -151,6 +151,7 @@ npm run docs:links
 npm run dod:gate
 npm run check
 npm test
+npm run coverage:map
 npm run package
 ```
 

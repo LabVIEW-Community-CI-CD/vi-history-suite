@@ -87,7 +87,10 @@ and `docs/requirements/rtm.csv`. The report highlights requirement-mapped files
 below 50% coverage and zero-coverage supporting files tied to active
 requirements so coverage-led assurance work starts with product-risk evidence
 instead of percentage chasing. Use the report to seed follow-up coverage issues
-and to justify future coverage threshold ratchets.
+and to justify future coverage threshold ratchets. Standards closeout runs this
+map after `npm test` and before package validation so release-readiness evidence
+captures coverage-risk backlog candidates without changing the Vitest threshold
+gate semantics.
 
 ## Critical-Path Verification Evidence
 
@@ -213,13 +216,13 @@ npm run closeout:evidence -- --kind standards --issue <issue-number> --run-gates
 ```
 
 The closeout command runs `npm run traceability:audit`, `npm run docs:links`,
-`npm run dod:gate`, `npm run check`, `npm test`, and `npm run package` when
-`--run-gates` is set. It always runs standards evidence and standards toolchain
-provenance against a temporary tracked-worktree snapshot built from
-`git ls-files`, preserving symlink targets as text rather than following them
-into generated cache roots. It tries host Python first in `auto` mode and falls
-back to the published GitLab registry workbench image when host preflight is
-unavailable.
+`npm run dod:gate`, `npm run check`, `npm test`, `npm run coverage:map`, and
+`npm run package` when `--run-gates` is set. It always runs standards evidence
+and standards toolchain provenance against a temporary tracked-worktree
+snapshot built from `git ls-files`, preserving symlink targets as text rather
+than following them into generated cache roots. It tries host Python first in
+`auto` mode and falls back to the published GitLab registry workbench image
+when host preflight is unavailable.
 When `--save-dir` is provided, closeout evidence writes a machine-readable
 `closeout-summary.json` artifact with gate status, standards status, provenance
 status, closure-decision state, and `standards.auditTarget` fields for
