@@ -44,7 +44,8 @@ export interface ComparisonReportActionResult {
     | 'missing-storage-uri'
     | 'missing-selected-commit'
     | 'missing-previous-hash'
-    | 'blocked-docker-daemon-not-running';
+    | 'blocked-docker-daemon-not-running'
+    | 'blocked-docker-not-installed';
   cancellationStage?: string;
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
@@ -118,13 +119,14 @@ export interface ComparisonReportActionDeps {
 }
 
 /**
- * VHS-REQ-642: Blocked reasons that mean a Docker comparison could not start
- * because the Docker provider was unavailable. Paired with the daemon-down
- * facts to distinguish "Docker Desktop is not running" (recoverable by starting
- * Docker and retrying) from "Docker is not installed" or other container
- * failures, which keep their full diagnostics surface.
+ * VHS-REQ-642 / VHS-REQ-643: Blocked reasons that mean a Docker comparison could
+ * not start because the Docker provider was unavailable. Paired with the Docker
+ * availability facts to distinguish "Docker daemon not running" (CLI present,
+ * daemon down — recoverable by starting Docker and retrying) from "Docker not
+ * installed" (CLI absent — recoverable by installing Docker), both of which get
+ * a concise toast instead of the full diagnostics webview.
  */
-const DOCKER_DAEMON_BLOCKED_REASONS: ReadonlySet<string> = new Set([
+const DOCKER_PROVIDER_UNAVAILABLE_BLOCKED_REASONS: ReadonlySet<string> = new Set([
   'docker-provider-unavailable',
   'docker-only-provider-unavailable',
   'auto-docker-installed-provider-unavailable'
@@ -145,9 +147,28 @@ export function isDockerDaemonNotRunningBlock(facts: {
   return (
     facts.reportStatus === 'blocked-runtime' &&
     typeof facts.blockedReason === 'string' &&
-    DOCKER_DAEMON_BLOCKED_REASONS.has(facts.blockedReason) &&
+    DOCKER_PROVIDER_UNAVAILABLE_BLOCKED_REASONS.has(facts.blockedReason) &&
     facts.dockerCliAvailable === true &&
     facts.dockerDaemonReachable === false
+  );
+}
+
+/**
+ * VHS-REQ-643: Pure predicate that is true only when a comparison is blocked
+ * solely because Docker is not installed (Docker CLI absent). Sibling of
+ * `isDockerDaemonNotRunningBlock`; the two are mutually exclusive on
+ * `dockerCliAvailable`.
+ */
+export function isDockerNotInstalledBlock(facts: {
+  reportStatus?: string;
+  blockedReason?: string;
+  dockerCliAvailable?: boolean;
+}): boolean {
+  return (
+    facts.reportStatus === 'blocked-runtime' &&
+    typeof facts.blockedReason === 'string' &&
+    DOCKER_PROVIDER_UNAVAILABLE_BLOCKED_REASONS.has(facts.blockedReason) &&
+    facts.dockerCliAvailable === false
   );
 }
 
@@ -163,6 +184,20 @@ export function buildDockerDaemonNotRunningMessage(platform?: RuntimePlatform): 
   }
 
   return 'The Docker daemon is not running, so the VI comparison could not start. Start the Docker daemon, then retry.';
+}
+
+/**
+ * VHS-REQ-643: Builds the concise, platform-aware notification shown when a
+ * comparison is blocked solely because Docker is not installed. On Windows the
+ * install target is Docker Desktop; on other hosts it is Docker. Pure and
+ * window-free so the copy is unit-tested directly.
+ */
+export function buildDockerNotInstalledMessage(platform?: RuntimePlatform): string {
+  if (platform === 'win32') {
+    return 'Docker Desktop is not installed, so the VI comparison could not start. Install Docker Desktop to compare with the Docker runtime.';
+  }
+
+  return 'Docker is not installed, so the VI comparison could not start. Install Docker to compare with the Docker runtime.';
 }
 
 export function createComparisonReportAction(
@@ -193,6 +228,24 @@ export function createComparisonReportAction(
       return {
         ...ensured.result,
         outcome: 'blocked-docker-daemon-not-running'
+      };
+    }
+
+    // VHS-REQ-643: Sibling of the daemon-down gate for when Docker is not
+    // installed at all (CLI absent). Same archive-success guard so the
+    // command layer's on-demand "Show diagnostics" path is guaranteed; if
+    // archiving failed, fall through to open the webview directly.
+    if (
+      ensured.result.retainedArchiveAvailable !== false &&
+      isDockerNotInstalledBlock({
+        reportStatus: ensured.result.reportStatus,
+        blockedReason: ensured.result.blockedReason,
+        dockerCliAvailable: ensured.result.dockerCliAvailable
+      })
+    ) {
+      return {
+        ...ensured.result,
+        outcome: 'blocked-docker-not-installed'
       };
     }
 
