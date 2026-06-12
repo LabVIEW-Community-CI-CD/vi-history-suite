@@ -452,7 +452,8 @@ async function ensureComparisonReportEvidence(
         hash: request.selectedHash,
         authorDate: '',
         authorName: 'Working tree',
-        subject: 'Uncommitted working-tree changes'
+        subject: 'Uncommitted working-tree changes',
+        body: ''
       }
     : request.model.commits.find((commit) => commit.hash === request.selectedHash);
   if (!selectedCommit) {
@@ -552,7 +553,8 @@ async function ensureComparisonReportEvidence(
       hash: selectedCommit.hash,
       authorDate: selectedCommit.authorDate,
       authorName: selectedCommit.authorName,
-      subject: selectedCommit.subject
+      subject: selectedCommit.subject,
+      body: selectedCommit.body
     },
     baseRevision: toRevisionMetadata(
       request.model.commits.find((commit) => commit.hash === baseHash),
@@ -1275,7 +1277,16 @@ function renderComparisonReportPanelRevisionCard(
       <div><strong>Date:</strong> ${renderPanelRevisionMetadataValue(revision?.authorDate)}</div>
       <div><strong>Author:</strong> ${renderPanelRevisionMetadataValue(revision?.authorName)}</div>
       <div><strong>Subject:</strong> ${renderPanelRevisionMetadataValue(revision?.subject)}</div>
+      <div><strong>Body:</strong> ${renderPanelRevisionBodyValue(revision?.body)}</div>
     </div>`;
+}
+
+function renderPanelRevisionBodyValue(value: string | undefined): string {
+  if (!value || value.trim().length === 0) {
+    return '<span class="vihs-compare-context-muted">No commit body</span>';
+  }
+
+  return escapeHtml(value).replace(/\r\n?|\n/g, '<br />');
 }
 
 function renderPanelRevisionMetadataValue(value: string | undefined): string {
@@ -1309,7 +1320,9 @@ function escapeHtml(value: string): string {
 }
 
 function toRevisionMetadata(
-  commit: Pick<ViHistoryViewModel['commits'][number], 'hash' | 'authorDate' | 'authorName' | 'subject'> | undefined,
+  commit:
+    | Pick<ViHistoryViewModel['commits'][number], 'hash' | 'authorDate' | 'authorName' | 'subject' | 'body'>
+    | undefined,
   fallbackHash: string
 ): ComparisonReportRevisionMetadata {
   if (!commit) {
@@ -1322,7 +1335,8 @@ function toRevisionMetadata(
     hash: commit.hash,
     authorDate: commit.authorDate,
     authorName: commit.authorName,
-    subject: commit.subject
+    subject: commit.subject,
+    body: commit.body
   };
 }
 

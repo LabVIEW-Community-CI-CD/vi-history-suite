@@ -81,6 +81,7 @@ export interface ComparisonReportRevisionMetadata {
   authorDate?: string;
   authorName?: string;
   subject?: string;
+  body?: string;
 }
 
 export interface PersistComparisonReportPacketOptions {
@@ -716,7 +717,16 @@ function renderRevisionContextCard(
       <div><strong>Date:</strong> ${renderRevisionMetadataValue(revision?.authorDate)}</div>
       <div><strong>Author:</strong> ${renderRevisionMetadataValue(revision?.authorName)}</div>
       <div><strong>Subject:</strong> ${renderRevisionMetadataValue(revision?.subject)}</div>
+      <div><strong>Body:</strong> ${renderRevisionBodyValue(revision?.body)}</div>
     </div>`;
+}
+
+function renderRevisionBodyValue(value: string | undefined): string {
+  if (!value || value.trim().length === 0) {
+    return '<span class="muted">No commit body</span>';
+  }
+
+  return escapeHtml(value).replace(/\r\n?|\n/g, '<br />');
 }
 
 function renderRevisionMetadataValue(value: string | undefined): string {

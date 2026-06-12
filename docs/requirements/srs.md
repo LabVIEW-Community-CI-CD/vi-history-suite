@@ -756,6 +756,47 @@ Missing numeric IDs are intentional.
     the interim lazy-image-loading behavior so retained multi-file reports still
     render.
 
+### VHS-REQ-644: Commit Body In Comparison Report
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The produced comparison report shall display the full Git commit
+  message body for each compared revision alongside the existing date, author,
+  and subject facts, so reviewers retain the human rationale captured in the
+  commit body that is otherwise unrecoverable from the rendered binary VI diff.
+- Acceptance Criteria:
+  - The retained comparison-report packet renders the full Git commit body for
+    both the selected and base revision context cards, in addition to the
+    existing date, author, and subject facts.
+  - The in-panel comparison context cards and the exported comparison report
+    render the same per-revision commit body through the shared context markup.
+  - Commit body text is sourced from the in-memory retained-history commits
+    already passed to comparison-report generation, without additional Git
+    history reads (no regression of VHS-REQ-008).
+  - Multi-line commit body content is preserved in rendered output and is
+    escaped in HTML text and attribute contexts (no regression of VHS-REQ-017
+    escaping rules).
+  - A revision with an empty commit body, including the synthesized
+    working-tree revision (VHS-REQ-641), renders a factual fallback rather than
+    a blank or misleading cell.
+  - Existing comparison-report behavior, staged evidence, and the history-panel
+    and review-packet commit body (VHS-REQ-639) remain unchanged.
+- Agent Work Scope:
+  - Carry the commit body through the comparison-report revision metadata and
+    render it in the packet and panel/export context cards together with their
+    unit tests.
+- Implementation References:
+  - `src/reporting/comparisonReportPacket.ts`
+  - `src/reporting/comparisonReportAction.ts`
+- Verification References:
+  - `tests/unit/comparisonReportPacket.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+- Change Guidance:
+  - Reuse the commit-body escaping, line-break preservation, and empty-body
+    fallback pattern established for the history panel (VHS-REQ-639); do not
+    introduce new Git reads or alter comparison runtime behavior.
+
 ### VHS-REQ-641: Working-Tree (Uncommitted) Comparison Against a Prior Revision
 
 - Status: Active

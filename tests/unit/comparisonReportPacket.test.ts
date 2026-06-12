@@ -1044,3 +1044,68 @@ describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
     expect(html).not.toContain('Library member:');
   });
 });
+
+describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
+  it('renders the full commit body for both revision context cards with multi-line preserved', () => {
+    const record = createBaseRecord(
+      {},
+      {
+        selectedRevision: {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02',
+          authorName: 'Selected Author',
+          subject: 'Selected subject',
+          body: 'Selected body line one\nSelected body line two'
+        },
+        baseRevision: {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01',
+          authorName: 'Base Author',
+          subject: 'Base subject',
+          body: 'Base body rationale'
+        }
+      }
+    );
+
+    const html = renderComparisonReportPacketHtml(record);
+
+    expect(html).toContain('<strong>Body:</strong>');
+    expect(html).toContain('Selected body line one<br />Selected body line two');
+    expect(html).toContain('Base body rationale');
+  });
+
+  it('escapes HTML in the commit body', () => {
+    const record = createBaseRecord(
+      {},
+      {
+        selectedRevision: {
+          hash: 'abcdef1234567890',
+          subject: 'Selected subject',
+          body: '<script>alert(1)</script>'
+        }
+      }
+    );
+
+    const html = renderComparisonReportPacketHtml(record);
+
+    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(html).not.toContain('<script>alert(1)</script>');
+  });
+
+  it('renders the empty-body fallback when a revision has no commit body', () => {
+    const record = createBaseRecord(
+      {},
+      {
+        selectedRevision: {
+          hash: 'abcdef1234567890',
+          subject: 'Selected subject',
+          body: ''
+        }
+      }
+    );
+
+    const html = renderComparisonReportPacketHtml(record);
+
+    expect(html).toContain('No commit body');
+  });
+});
