@@ -722,7 +722,11 @@ function renderRevisionContextCard(
 }
 
 function renderRevisionBodyValue(value: string | undefined): string {
-  if (!value || value.trim().length === 0) {
+  if (value === undefined) {
+    return '<span class="muted">not retained</span>';
+  }
+
+  if (value.trim().length === 0) {
     return '<span class="muted">No commit body</span>';
   }
 

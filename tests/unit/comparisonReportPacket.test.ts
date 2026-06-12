@@ -1092,7 +1092,7 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
     expect(html).not.toContain('<script>alert(1)</script>');
   });
 
-  it('renders the empty-body fallback when a revision has no commit body', () => {
+  it('renders the empty-body fallback when a revision has a retained but empty commit body', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1106,6 +1106,24 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
 
     const html = renderComparisonReportPacketHtml(record);
 
-    expect(html).toContain('No commit body');
+    expect(html).toContain('<strong>Body:</strong> <span class="muted">No commit body</span>');
+  });
+
+  it('renders the not-retained fallback for the body when revision metadata is undefined', () => {
+    const record = createBaseRecord(
+      {},
+      {
+        selectedRevision: {
+          hash: 'abcdef1234567890',
+          subject: 'Selected subject'
+          // body intentionally omitted: metadata was not retained.
+        }
+      }
+    );
+
+    const html = renderComparisonReportPacketHtml(record);
+
+    expect(html).toContain('<strong>Body:</strong> <span class="muted">not retained</span>');
+    expect(html).not.toContain('<strong>Body:</strong> <span class="muted">No commit body</span>');
   });
 });

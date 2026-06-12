@@ -1282,7 +1282,11 @@ function renderComparisonReportPanelRevisionCard(
 }
 
 function renderPanelRevisionBodyValue(value: string | undefined): string {
-  if (!value || value.trim().length === 0) {
+  if (value === undefined) {
+    return '<span class="vihs-compare-context-muted">not retained</span>';
+  }
+
+  if (value.trim().length === 0) {
     return '<span class="vihs-compare-context-muted">No commit body</span>';
   }
 
