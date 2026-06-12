@@ -696,6 +696,14 @@ Missing numeric IDs are intentional.
     retained multi-file report also copies its sibling assets directory so
     relative image links keep resolving when the exported HTML is opened in an
     external browser.
+  - The exported LabVIEW-generated graphics report embeds the same revision
+    context block shown in the in-panel webview — the selected and base revision
+    hash, date, author, subject, and full commit body — rendered through the
+    shared context renderer so the commit body keeps its escaping, multi-line,
+    not-retained, and empty-body behavior (VHS-REQ-644). The context is injected
+    into the exported copy only; the retained source report is not mutated, no
+    `<base href>` is added, and the report's relative `<name>_files/...` image
+    links keep resolving in an external browser.
   - When no LabVIEW-generated graphics report is available, the export states
     the specific reason and only writes the diagnostic evidence packet after an
     explicit user confirmation.
@@ -711,13 +719,15 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonReportExport.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportContextMarkup.ts`
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/comparisonReportExport.test.ts`
 - Change Guidance:
-  - Keep the export limited to copying retained comparison evidence to an
-    accessible location; do not run comparison execution or mutate retained
-    artifacts.
+  - Keep the export limited to retained comparison evidence placed in an
+    accessible location; the exported copy may embed retained revision context
+    via the shared renderer, but the export must not run comparison execution or
+    mutate the retained source artifacts on disk.
 
 ### VHS-REQ-640: Self-Contained Single-File Comparison Report Output
 
@@ -755,6 +765,55 @@ Missing numeric IDs are intentional.
     reintroduce a per-image multi-file layout for newly generated reports. Keep
     the interim lazy-image-loading behavior so retained multi-file reports still
     render.
+
+### VHS-REQ-644: Commit Body In Comparison Report
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The produced comparison report shall display the full Git commit
+  message body for each compared revision alongside the existing date, author,
+  and subject facts, so reviewers retain the human rationale captured in the
+  commit body that is otherwise unrecoverable from the rendered binary VI diff.
+- Acceptance Criteria:
+  - The retained comparison-report packet renders the full Git commit body for
+    both the selected and base revision context cards, in addition to the
+    existing date, author, and subject facts. Because the packet export
+    (VHS-REQ-626 fallback) copies this retained packet HTML, the exported packet
+    carries the commit body as well.
+  - The in-panel comparison context cards render the same per-revision commit
+    body through the shared panel context markup. The preferred graphics-report
+    export (VHS-REQ-626/VHS-REQ-640) copies the LabVIEW-generated report file
+    unchanged and therefore renders no revision context cards at all (neither
+    body nor date/author/subject); embedding revision context into the generated
+    graphics report is out of scope for this requirement.
+  - Commit body text is sourced from the in-memory retained-history commits
+    already passed to comparison-report generation, without additional Git
+    history reads (no regression of VHS-REQ-008).
+  - Multi-line commit body content is preserved in rendered output and is
+    escaped in HTML text and attribute contexts (no regression of VHS-REQ-017
+    escaping rules).
+  - A revision whose metadata was not retained renders the same "not retained"
+    fallback used for date/author/subject; a revision with retained but empty
+    commit body content, including the synthesized working-tree revision
+    (VHS-REQ-641), renders a distinct empty-body fallback rather than a blank or
+    misleading cell.
+  - Existing comparison-report behavior, staged evidence, and the history-panel
+    and review-packet commit body (VHS-REQ-639) remain unchanged.
+- Agent Work Scope:
+  - Carry the commit body through the comparison-report revision metadata and
+    render it in the packet and panel/export context cards together with their
+    unit tests.
+- Implementation References:
+  - `src/reporting/comparisonReportPacket.ts`
+  - `src/reporting/comparisonReportAction.ts`
+- Verification References:
+  - `tests/unit/comparisonReportPacket.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+- Change Guidance:
+  - Reuse the commit-body escaping, line-break preservation, and empty-body
+    fallback pattern established for the history panel (VHS-REQ-639); do not
+    introduce new Git reads or alter comparison runtime behavior.
 
 ### VHS-REQ-641: Working-Tree (Uncommitted) Comparison Against a Prior Revision
 

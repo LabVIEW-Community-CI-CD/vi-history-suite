@@ -40,20 +40,23 @@ function createModel(): ViHistoryViewModel {
         previousHash: 'b2',
         authorDate: '2026-01-03T00:00:00.000Z',
         authorName: 'Dev Three',
-        subject: 'Selected revision'
+        subject: 'Selected revision',
+        body: 'Adds the validation loop.\nResolves the race condition.'
       },
       {
         hash: 'b2',
         previousHash: 'a1',
         authorDate: '2026-01-02T00:00:00.000Z',
         authorName: 'Dev Two',
-        subject: 'Middle revision'
+        subject: 'Middle revision',
+        body: 'Middle revision body'
       },
       {
         hash: 'a1',
         authorDate: '2026-01-01T00:00:00.000Z',
         authorName: 'Dev One',
-        subject: 'Explicit base revision'
+        subject: 'Explicit base revision',
+        body: 'Initial import rationale.'
       }
     ]
   };
@@ -256,8 +259,14 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         relativePath: 'Source/Sample.vi',
         selectedHash: 'c3',
         baseHash: 'a1',
-        selectedRevision: expect.objectContaining({ hash: 'c3' }),
-        baseRevision: expect.objectContaining({ hash: 'a1' }),
+        selectedRevision: expect.objectContaining({
+          hash: 'c3',
+          body: 'Adds the validation loop.\nResolves the race condition.'
+        }),
+        baseRevision: expect.objectContaining({
+          hash: 'a1',
+          body: 'Initial import rationale.'
+        }),
         runtimeSelection: expect.objectContaining({
           provider: 'host-native',
           headlessRequested: true
@@ -292,6 +301,13 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(harness.panels[0]?.webview.html).toContain('Generated LabVIEW report');
     expect(harness.panels[0]?.webview.html).toContain('Comparison context');
     expect(harness.panels[0]?.webview.html).toContain('Explicit base revision');
+    // VHS-REQ-644: the comparison report carries the full commit body for both
+    // compared revisions, multi-line preserved, alongside the subject facts.
+    expect(harness.panels[0]?.webview.html).toContain('<strong>Body:</strong>');
+    expect(harness.panels[0]?.webview.html).toContain(
+      'Adds the validation loop.<br />Resolves the race condition.'
+    );
+    expect(harness.panels[0]?.webview.html).toContain('Initial import rationale.');
     // Report images load lazily so large reports (hundreds of difference images)
     // do not exhaust the webview resource loader and fall back to alt text.
     expect(harness.panels[0]?.webview.html).toContain(
@@ -435,6 +451,14 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         rightRevisionId: 'WORKTREE'
       })
     );
+    // VHS-REQ-644: the synthesized working-tree revision has no commit body, so
+    // it carries an empty body through the revision metadata (rendered as the
+    // empty-body fallback) rather than erroring.
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedRevision: expect.objectContaining({ hash: 'WORKTREE', body: '' })
+      })
+    );
     expect(result.outcome).toBe('opened-comparison-report');
     // VHS-REQ-641: working-tree comparisons are not reproducible, so they are
     // never archived into retained dashboard evidence.
@@ -459,11 +483,30 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         args: ['-OperationName', 'CreateComparisonReport']
       }
     });
-    const registeredSources: Array<{ sourceViFsPath?: string }> = [];
+    const registeredSources: Array<{
+      sourceViFsPath?: string;
+      relativePath?: string;
+      selectedHash?: string;
+      baseHash?: string;
+      selectedRevision?: { hash?: string; body?: string };
+      baseRevision?: { hash?: string; body?: string };
+    }> = [];
     const exportRegistry = {
-      register: vi.fn((_panel: unknown, source: { sourceViFsPath?: string }) => {
-        registeredSources.push(source);
-      })
+      register: vi.fn(
+        (
+          _panel: unknown,
+          source: {
+            sourceViFsPath?: string;
+            relativePath?: string;
+            selectedHash?: string;
+            baseHash?: string;
+            selectedRevision?: { hash?: string; body?: string };
+            baseRevision?: { hash?: string; body?: string };
+          }
+        ) => {
+          registeredSources.push(source);
+        }
+      )
     };
 
     const action = createComparisonReportAction(context as never, {
@@ -490,6 +533,20 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     const expectedSourceViFsPath = path.join('/workspace/repo', 'Source/Sample.vi');
     expect(registeredSources).toHaveLength(1);
     expect(registeredSources[0]?.sourceViFsPath).toBe(expectedSourceViFsPath);
+    // VHS-REQ-626: the registered export source carries the in-panel revision
+    // context so the exported graphics report embeds the same selected/base
+    // hashes and metadata instead of "not retained" fallbacks.
+    expect(registeredSources[0]?.relativePath).toBe('Source/Sample.vi');
+    expect(registeredSources[0]?.selectedHash).toBe('c3');
+    expect(registeredSources[0]?.baseHash).toBe('a1');
+    expect(registeredSources[0]?.selectedRevision).toMatchObject({
+      hash: 'c3',
+      body: 'Adds the validation loop.\nResolves the race condition.'
+    });
+    expect(registeredSources[0]?.baseRevision).toMatchObject({
+      hash: 'a1',
+      body: 'Initial import rationale.'
+    });
     expect(harness.panels).toHaveLength(1);
     expect(harness.panels[0]?.viewColumn).toBe(harness.vscode.ViewColumn.Beside);
   });

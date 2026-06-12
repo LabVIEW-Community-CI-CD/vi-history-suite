@@ -10,6 +10,7 @@ import {
   buildComparisonReportExportDirectoryName,
   describeMissingGraphicsReportReason,
   exportComparisonReportBundle,
+  injectRevisionContextIntoExportedReportHtml,
   resolveComparisonReportExportPlan,
   runComparisonReportExport
 } from '../../src/reporting/comparisonReportExport';
@@ -38,6 +39,23 @@ function createSource(overrides: Partial<ComparisonReportExportSource> = {}): Co
     generatedReportExists: true,
     reportFilePath: '/storage/reports/repo/file/diff-report-foo.vi.html',
     packetFilePath: '/storage/reports/repo/file/report-packet.html',
+    relativePath: 'src/foo.vi',
+    selectedHash: 'aaaaaaaaaaaa',
+    baseHash: 'bbbbbbbbbbbb',
+    selectedRevision: {
+      hash: 'aaaaaaaaaaaa',
+      authorDate: '2026-06-01 10:00:00 -0500',
+      authorName: 'Ada Lovelace',
+      subject: 'Selected subject',
+      body: 'Selected body line one\nSelected body line two'
+    },
+    baseRevision: {
+      hash: 'bbbbbbbbbbbb',
+      authorDate: '2026-05-01 09:00:00 -0500',
+      authorName: 'Grace Hopper',
+      subject: 'Base subject',
+      body: 'Base body'
+    },
     ...overrides
   };
 }
@@ -309,6 +327,143 @@ describe('exportComparisonReportBundle', () => {
       fs.readFile(path.join(destinationDirectory, 'diff-report-foo.vi.html'), 'utf8')
     ).resolves.toContain('data:image/png;base64,AAAA');
   });
+
+  it('embeds the revision context into the exported generated report without mutating the source (multi-file)', async () => {
+    const tempRoot = await makeTempRoot();
+    const sourceDir = path.join(tempRoot, 'source');
+    const assetsDir = path.join(sourceDir, 'diff-report-foo.vi_files');
+    await fs.mkdir(assetsDir, { recursive: true });
+    const htmlPath = path.join(sourceDir, 'diff-report-foo.vi.html');
+    const originalHtml =
+      '<html><head><title>NI</title></head><body><img src="diff-report-foo.vi_files/block.png" /></body></html>';
+    await fs.writeFile(htmlPath, originalHtml, 'utf8');
+    await fs.writeFile(path.join(assetsDir, 'block.png'), 'fake-png-bytes', 'utf8');
+
+    const destinationDirectory = path.join(tempRoot, 'export', 'bundle');
+
+    const result = await exportComparisonReportBundle({
+      plan: {
+        evidenceKind: 'generated-report',
+        htmlSourcePath: htmlPath,
+        htmlFileName: 'diff-report-foo.vi.html',
+        assetsSourceDirectoryPath: assetsDir,
+        assetsDirectoryName: 'diff-report-foo.vi_files'
+      },
+      destinationDirectory,
+      revisionContext: {
+        relativePath: 'src/foo.vi',
+        selectedHash: 'aaaaaaaaaaaa',
+        baseHash: 'bbbbbbbbbbbb',
+        selectedRevision: {
+          hash: 'aaaaaaaaaaaa',
+          authorDate: '2026-06-01',
+          authorName: 'Ada Lovelace',
+          subject: 'Selected subject',
+          body: 'Body A\nBody B'
+        },
+        baseRevision: {
+          hash: 'bbbbbbbbbbbb',
+          authorDate: '2026-05-01',
+          authorName: 'Grace Hopper',
+          subject: 'Base subject',
+          body: 'Base body'
+        }
+      }
+    });
+
+    expect(result.copiedAssets).toBe(true);
+    const exportedHtml = await fs.readFile(
+      path.join(destinationDirectory, 'diff-report-foo.vi.html'),
+      'utf8'
+    );
+    // Revision context block present for both selected and base revisions.
+    expect(exportedHtml).toContain('data-testid="comparison-report-panel-context"');
+    expect(exportedHtml).toContain('Ada Lovelace');
+    expect(exportedHtml).toContain('Grace Hopper');
+    expect(exportedHtml).toContain('Selected subject');
+    expect(exportedHtml).toContain('Base subject');
+    expect(exportedHtml).toContain('Body A<br />Body B');
+    expect(exportedHtml).toContain('aaaaaaaaaaaa');
+    expect(exportedHtml).toContain('bbbbbbbbbbbb');
+    // Original report content and relative image link are preserved.
+    expect(exportedHtml).toContain('diff-report-foo.vi_files/block.png');
+    // No <base href> is injected: relative links resolve via the sibling _files dir.
+    expect(exportedHtml).not.toContain('<base ');
+    // The retained source report on disk is never mutated.
+    await expect(fs.readFile(htmlPath, 'utf8')).resolves.toBe(originalHtml);
+  });
+
+  it('embeds the revision context into a self-contained single-file report (VHS-REQ-640)', async () => {
+    const tempRoot = await makeTempRoot();
+    const sourceDir = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceDir, { recursive: true });
+    const htmlPath = path.join(sourceDir, 'diff-report-foo.vi.html');
+    const originalHtml =
+      '<html><head></head><body><img src="data:image/png;base64,AAAA"></body></html>';
+    await fs.writeFile(htmlPath, originalHtml, 'utf8');
+
+    const destinationDirectory = path.join(tempRoot, 'export', 'bundle');
+
+    const result = await exportComparisonReportBundle({
+      plan: {
+        evidenceKind: 'generated-report',
+        htmlSourcePath: htmlPath,
+        htmlFileName: 'diff-report-foo.vi.html'
+      },
+      destinationDirectory,
+      revisionContext: {
+        selectedHash: 'aaaaaaaaaaaa',
+        baseHash: 'bbbbbbbbbbbb',
+        selectedRevision: { hash: 'aaaaaaaaaaaa', subject: 'Selected subject' },
+        baseRevision: { hash: 'bbbbbbbbbbbb', subject: 'Base subject' }
+      }
+    });
+
+    expect(result.copiedAssets).toBe(false);
+    // No sibling _files directory is created for a single-file report.
+    await expect(
+      fs.access(path.join(destinationDirectory, 'diff-report-foo.vi_files'))
+    ).rejects.toThrow();
+    const exportedHtml = await fs.readFile(
+      path.join(destinationDirectory, 'diff-report-foo.vi.html'),
+      'utf8'
+    );
+    expect(exportedHtml).toContain('data-testid="comparison-report-panel-context"');
+    expect(exportedHtml).toContain('Selected subject');
+    expect(exportedHtml).toContain('Base subject');
+    // The embedded data-URI image is preserved.
+    expect(exportedHtml).toContain('data:image/png;base64,AAAA');
+    // The retained source report on disk is never mutated.
+    await expect(fs.readFile(htmlPath, 'utf8')).resolves.toBe(originalHtml);
+  });
+
+  it('copies the packet export verbatim without injecting context (it already renders the cards)', async () => {
+    const tempRoot = await makeTempRoot();
+    const sourceDir = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceDir, { recursive: true });
+    const htmlPath = path.join(sourceDir, 'report-packet.html');
+    const originalHtml = '<html><body>packet</body></html>';
+    await fs.writeFile(htmlPath, originalHtml, 'utf8');
+
+    const destinationDirectory = path.join(tempRoot, 'export', 'bundle');
+
+    await exportComparisonReportBundle({
+      plan: {
+        evidenceKind: 'packet',
+        htmlSourcePath: htmlPath,
+        htmlFileName: 'report-packet.html'
+      },
+      destinationDirectory,
+      revisionContext: { selectedHash: 'aaaaaaaaaaaa', baseHash: 'bbbbbbbbbbbb' }
+    });
+
+    const exportedHtml = await fs.readFile(
+      path.join(destinationDirectory, 'report-packet.html'),
+      'utf8'
+    );
+    expect(exportedHtml).toBe(originalHtml);
+    expect(exportedHtml).not.toContain('data-testid="comparison-report-panel-context"');
+  });
 });
 
 describe('runComparisonReportExport', () => {
@@ -373,7 +528,12 @@ describe('runComparisonReportExport', () => {
       destinationDirectory: path.join(
         '/chosen',
         'vi-comparison-report-foo-vi-2026-06-07T12-00-00-000Z'
-      )
+      ),
+      revisionContext: expect.objectContaining({
+        relativePath: 'src/foo.vi',
+        selectedHash: 'aaaaaaaaaaaa',
+        baseHash: 'bbbbbbbbbbbb'
+      })
     });
   });
 
@@ -552,5 +712,82 @@ describe('ComparisonReportExportRegistry', () => {
     panel.fireDispose();
 
     expect(registry.getActiveSource()).toBeUndefined();
+  });
+});
+
+describe('injectRevisionContextIntoExportedReportHtml', () => {
+  const fullContext = {
+    relativePath: 'src/foo.vi',
+    selectedHash: 'aaaaaaaaaaaa',
+    baseHash: 'bbbbbbbbbbbb',
+    selectedRevision: {
+      hash: 'aaaaaaaaaaaa',
+      authorDate: '2026-06-01',
+      authorName: 'Ada Lovelace',
+      subject: 'Add <feature>',
+      body: 'Line one\nLine two'
+    },
+    baseRevision: {
+      hash: 'bbbbbbbbbbbb',
+      authorDate: '2026-05-01',
+      authorName: 'Grace Hopper',
+      subject: 'Base',
+      body: 'Base body'
+    }
+  };
+
+  it('injects the context style into <head> and the markup at the start of <body>', () => {
+    const html = '<html><head><title>NI</title></head><body><p>report</p></body></html>';
+
+    const out = injectRevisionContextIntoExportedReportHtml(html, fullContext);
+
+    expect(out).toContain('.vihs-compare-context {');
+    expect(out).toContain('<p>report</p>');
+    // Context markup precedes the original report body content.
+    expect(out.indexOf('comparison-report-panel-context')).toBeLessThan(
+      out.indexOf('<p>report</p>')
+    );
+    // No <base href> is injected so relative image links keep resolving.
+    expect(out).not.toContain('<base ');
+  });
+
+  it('escapes HTML and preserves a multi-line commit body', () => {
+    const out = injectRevisionContextIntoExportedReportHtml(
+      '<html><head></head><body></body></html>',
+      fullContext
+    );
+
+    expect(out).toContain('Add &lt;feature&gt;');
+    expect(out).toContain('Line one<br />Line two');
+  });
+
+  it('renders the not-retained fallback when revision metadata is absent', () => {
+    const out = injectRevisionContextIntoExportedReportHtml(
+      '<html><head></head><body></body></html>',
+      { selectedHash: 'aaaaaaaaaaaa', baseHash: 'bbbbbbbbbbbb' }
+    );
+
+    expect(out).toContain('not retained');
+    expect(out).not.toContain('No commit body');
+  });
+
+  it('renders the empty-body fallback for a retained revision with no body', () => {
+    const out = injectRevisionContextIntoExportedReportHtml(
+      '<html><head></head><body></body></html>',
+      {
+        selectedRevision: { hash: 'aaaaaaaaaaaa', subject: 'Selected', body: '' },
+        baseRevision: { hash: 'bbbbbbbbbbbb', subject: 'Base', body: '' }
+      }
+    );
+
+    expect(out).toContain('No commit body');
+  });
+
+  it('wraps content that has no <head> or <body> tags', () => {
+    const out = injectRevisionContextIntoExportedReportHtml('<p>loose</p>', fullContext);
+
+    expect(out).toContain('comparison-report-panel-context');
+    expect(out).toContain('<p>loose</p>');
+    expect(out).toContain('.vihs-compare-context {');
   });
 });

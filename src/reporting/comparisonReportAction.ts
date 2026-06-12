@@ -21,6 +21,7 @@ import {
 } from './comparisonReportPacket';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
+import { renderComparisonReportPanelContextMarkup } from './comparisonReportContextMarkup';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 import { isWorktreeRevision } from '../git/gitCli';
 
@@ -452,7 +453,8 @@ async function ensureComparisonReportEvidence(
         hash: request.selectedHash,
         authorDate: '',
         authorName: 'Working tree',
-        subject: 'Uncommitted working-tree changes'
+        subject: 'Uncommitted working-tree changes',
+        body: ''
       }
     : request.model.commits.find((commit) => commit.hash === request.selectedHash);
   if (!selectedCommit) {
@@ -552,7 +554,8 @@ async function ensureComparisonReportEvidence(
       hash: selectedCommit.hash,
       authorDate: selectedCommit.authorDate,
       authorName: selectedCommit.authorName,
-      subject: selectedCommit.subject
+      subject: selectedCommit.subject,
+      body: selectedCommit.body
     },
     baseRevision: toRevisionMetadata(
       request.model.commits.find((commit) => commit.hash === baseHash),
@@ -818,7 +821,12 @@ async function openPersistedComparisonReportPanel(
     graphicsReportUnavailableReason:
       deriveComparisonBlockedReason(options.record) ??
       options.record.runtimeExecution.failureReason,
-    sourceViFsPath: options.sourceViFsPath
+    sourceViFsPath: options.sourceViFsPath,
+    relativePath: options.record.artifactPlan.normalizedRelativePath,
+    selectedHash: options.record.selectedHash,
+    baseHash: options.record.baseHash,
+    selectedRevision: options.record.selectedRevision,
+    baseRevision: options.record.baseRevision
   });
   const packetWebviewUri = panel.webview.asWebviewUri(packetFileUri).toString();
   const reportWebviewUri = panel.webview.asWebviewUri(reportFileUri).toString();
@@ -1236,54 +1244,6 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
   }
 }
 
-function renderComparisonReportPanelContextMarkup(options: {
-  relativePath?: string;
-  selectedHash?: string;
-  baseHash?: string;
-  selectedRevision?: ComparisonReportRevisionMetadata;
-  baseRevision?: ComparisonReportRevisionMetadata;
-}): string {
-  return `<div class="vihs-compare-context" data-testid="comparison-report-panel-context">
-      <strong>Comparison context</strong>
-      <div><strong>Relative path:</strong> ${renderPanelRevisionMetadataValue(options.relativePath)}</div>
-      <div class="vihs-compare-context-grid">
-        ${renderComparisonReportPanelRevisionCard(
-          'Selected revision',
-          options.selectedHash,
-          options.selectedRevision,
-          'comparison-report-panel-context-selected'
-        )}
-        ${renderComparisonReportPanelRevisionCard(
-          'Base revision',
-          options.baseHash,
-          options.baseRevision,
-          'comparison-report-panel-context-base'
-        )}
-      </div>
-    </div>`;
-}
-
-function renderComparisonReportPanelRevisionCard(
-  label: string,
-  hash: string | undefined,
-  revision: ComparisonReportRevisionMetadata | undefined,
-  testId: string
-): string {
-  return `<div class="vihs-compare-context-card" data-testid="${testId}">
-      <strong>${escapeHtml(label)}</strong>
-      <div><code>${escapeHtml(revision?.hash ?? hash ?? 'not retained')}</code></div>
-      <div><strong>Date:</strong> ${renderPanelRevisionMetadataValue(revision?.authorDate)}</div>
-      <div><strong>Author:</strong> ${renderPanelRevisionMetadataValue(revision?.authorName)}</div>
-      <div><strong>Subject:</strong> ${renderPanelRevisionMetadataValue(revision?.subject)}</div>
-    </div>`;
-}
-
-function renderPanelRevisionMetadataValue(value: string | undefined): string {
-  return value && value.length > 0
-    ? escapeHtml(value)
-    : '<span class="vihs-compare-context-muted">not retained</span>';
-}
-
 function ensureTrailingSlash(value: string): string {
   return value.endsWith('/') ? value : `${value}/`;
 }
@@ -1309,7 +1269,9 @@ function escapeHtml(value: string): string {
 }
 
 function toRevisionMetadata(
-  commit: Pick<ViHistoryViewModel['commits'][number], 'hash' | 'authorDate' | 'authorName' | 'subject'> | undefined,
+  commit:
+    | Pick<ViHistoryViewModel['commits'][number], 'hash' | 'authorDate' | 'authorName' | 'subject' | 'body'>
+    | undefined,
   fallbackHash: string
 ): ComparisonReportRevisionMetadata {
   if (!commit) {
@@ -1322,7 +1284,8 @@ function toRevisionMetadata(
     hash: commit.hash,
     authorDate: commit.authorDate,
     authorName: commit.authorName,
-    subject: commit.subject
+    subject: commit.subject,
+    body: commit.body
   };
 }
 

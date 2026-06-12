@@ -3,13 +3,32 @@ import * as path from 'node:path';
 import type * as vscode from 'vscode';
 
 import { buildReportAssetsDirectoryName } from '../dashboard/comparisonReportArchive';
+import {
+  COMPARISON_REPORT_CONTEXT_STYLE,
+  renderComparisonReportPanelContextMarkup
+} from './comparisonReportContextMarkup';
+import type { ComparisonReportRevisionMetadata } from './comparisonReportPacket';
+
+/**
+ * Per-revision provenance shown in the in-panel comparison-report context cards
+ * (VHS-REQ-644). Carried onto the export source so the exported graphics report
+ * (VHS-REQ-626) can embed the same selected/base hash, date, author, subject,
+ * and commit body a reviewer sees inside VS Code.
+ */
+export interface ComparisonReportExportRevisionContext {
+  relativePath?: string;
+  selectedHash?: string;
+  baseHash?: string;
+  selectedRevision?: ComparisonReportRevisionMetadata;
+  baseRevision?: ComparisonReportRevisionMetadata;
+}
 
 /**
  * Describes the on-disk artifacts backing an open comparison-report panel so the
  * user can export a browser-openable copy (HTML plus any graphics dependency
  * folder) to an accessible location outside VS Code's webview sandbox.
  */
-export interface ComparisonReportExportSource {
+export interface ComparisonReportExportSource extends ComparisonReportExportRevisionContext {
   reportTitle: string;
   generatedReportExists: boolean;
   reportFilePath: string;
@@ -62,6 +81,8 @@ export interface ExportComparisonReportBundleDeps {
   mkdir?: typeof fs.mkdir;
   copyFile?: typeof fs.copyFile;
   copyDirectory?: typeof fs.cp;
+  readFile?: typeof fs.readFile;
+  writeFile?: typeof fs.writeFile;
 }
 
 export interface RunComparisonReportExportDeps {
@@ -172,6 +193,32 @@ export function buildComparisonReportExportDirectoryName(reportTitle: string, no
 }
 
 /**
+ * Injects the shared revision-context block (VHS-REQ-644) into a copy of the
+ * LabVIEW-generated report HTML so the exported graphics report carries the same
+ * selected/base provenance shown in the in-panel webview (VHS-REQ-626). The
+ * context CSS is added to `<head>` and the markup is inserted at the start of
+ * `<body>`. No `<base href>` is injected: the export keeps the report's own
+ * relative `<name>_files/...` image links, which resolve against the sibling
+ * assets directory copied alongside the HTML.
+ */
+export function injectRevisionContextIntoExportedReportHtml(
+  html: string,
+  revisionContext: ComparisonReportExportRevisionContext
+): string {
+  const contextMarkup = renderComparisonReportPanelContextMarkup(revisionContext);
+  const styleInjection = `<style>${COMPARISON_REPORT_CONTEXT_STYLE}</style>`;
+  const withHead = /<head\b[^>]*>/i.test(html)
+    ? html.replace(/<head\b[^>]*>/i, (match) => `${match}${styleInjection}`)
+    : `<!DOCTYPE html><html><head><meta charset="UTF-8" />${styleInjection}</head><body>${html}</body></html>`;
+
+  if (/<body\b[^>]*>/i.test(withHead)) {
+    return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${contextMarkup}`);
+  }
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${styleInjection}</head><body>${contextMarkup}${withHead}</body></html>`;
+}
+
+/**
  * Copies the chosen report HTML and, when present, its sibling assets directory
  * into a destination bundle directory, preserving the original filenames so the
  * report's relative `<name>_files/...` image links keep resolving in a browser.
@@ -180,17 +227,31 @@ export async function exportComparisonReportBundle(
   options: {
     plan: ComparisonReportExportPlan;
     destinationDirectory: string;
+    revisionContext?: ComparisonReportExportRevisionContext;
   },
   deps: ExportComparisonReportBundleDeps = {}
 ): Promise<ComparisonReportExportBundleResult> {
   const mkdir = deps.mkdir ?? fs.mkdir;
   const copyFile = deps.copyFile ?? fs.copyFile;
   const copyDirectory = deps.copyDirectory ?? fs.cp;
+  const readFile = deps.readFile ?? fs.readFile;
+  const writeFile = deps.writeFile ?? fs.writeFile;
 
   await mkdir(options.destinationDirectory, { recursive: true });
 
   const exportedHtmlPath = path.join(options.destinationDirectory, options.plan.htmlFileName);
-  await copyFile(options.plan.htmlSourcePath, exportedHtmlPath);
+  if (options.plan.evidenceKind === 'generated-report' && options.revisionContext) {
+    // Embed the in-panel revision context (VHS-REQ-644) into the exported copy
+    // only; the retained source report on disk is never mutated (VHS-REQ-626).
+    const originalHtml = await readFile(options.plan.htmlSourcePath, 'utf8');
+    const withContext = injectRevisionContextIntoExportedReportHtml(
+      originalHtml,
+      options.revisionContext
+    );
+    await writeFile(exportedHtmlPath, withContext, 'utf8');
+  } else {
+    await copyFile(options.plan.htmlSourcePath, exportedHtmlPath);
+  }
 
   if (options.plan.assetsSourceDirectoryPath && options.plan.assetsDirectoryName) {
     const exportedAssetsDirectoryPath = path.join(
@@ -286,7 +347,14 @@ export async function runComparisonReportExport(
   try {
     bundle = await (deps.exportBundle ?? exportComparisonReportBundle)({
       plan,
-      destinationDirectory: bundleDirectoryPath
+      destinationDirectory: bundleDirectoryPath,
+      revisionContext: {
+        relativePath: source.relativePath,
+        selectedHash: source.selectedHash,
+        baseHash: source.baseHash,
+        selectedRevision: source.selectedRevision,
+        baseRevision: source.baseRevision
+      }
     });
   } catch (error) {
     const failureReason = error instanceof Error ? error.message : String(error);
