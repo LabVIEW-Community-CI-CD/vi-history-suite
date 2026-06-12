@@ -115,6 +115,9 @@ jobs:
       - name: Docs Link Check / lychee
         run: npm run docs:links
 
+      - name: Documentation Gate / docs-gate
+        run: npm run docs:gate
+
       - name: Test
         run: npm test
 

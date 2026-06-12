@@ -133,6 +133,7 @@ describe('Definition-of-Done gate', () => {
       'Customization Audit Report / custom-audit',
       'Traceability Audit',
       'Docs Link Check / lychee',
+      'Documentation Gate / docs-gate',
       'Test',
       'PR Coverage Gate / coverage',
       'Package',
