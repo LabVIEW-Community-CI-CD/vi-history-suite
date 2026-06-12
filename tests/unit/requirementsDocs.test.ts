@@ -584,7 +584,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('before package validation');
     expect(cmPlan).toContain('coverage-to-traceability mapping');
     expect(cmPlan).toContain('26514-review');
-    expect(cmPlan).toContain('supported: false');
+    expect(cmPlan).toContain('supported: true');
     expect(maintainerOperations).toContain('Configuration Management Plan');
     // VHS-REQ-615 closeout tracked-worktree audit snapshot contract (PR #393)
     expect(srs).toContain('temporary tracked-worktree snapshot from `git ls-files`');
