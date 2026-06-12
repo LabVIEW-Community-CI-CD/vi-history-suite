@@ -21,6 +21,7 @@ import {
 } from './comparisonReportPacket';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
+import { renderComparisonReportPanelContextMarkup } from './comparisonReportContextMarkup';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 import { isWorktreeRevision } from '../git/gitCli';
 
@@ -1236,67 +1237,6 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
   } catch {
     return renderComparisonReportPanelHtml(options);
   }
-}
-
-function renderComparisonReportPanelContextMarkup(options: {
-  relativePath?: string;
-  selectedHash?: string;
-  baseHash?: string;
-  selectedRevision?: ComparisonReportRevisionMetadata;
-  baseRevision?: ComparisonReportRevisionMetadata;
-}): string {
-  return `<div class="vihs-compare-context" data-testid="comparison-report-panel-context">
-      <strong>Comparison context</strong>
-      <div><strong>Relative path:</strong> ${renderPanelRevisionMetadataValue(options.relativePath)}</div>
-      <div class="vihs-compare-context-grid">
-        ${renderComparisonReportPanelRevisionCard(
-          'Selected revision',
-          options.selectedHash,
-          options.selectedRevision,
-          'comparison-report-panel-context-selected'
-        )}
-        ${renderComparisonReportPanelRevisionCard(
-          'Base revision',
-          options.baseHash,
-          options.baseRevision,
-          'comparison-report-panel-context-base'
-        )}
-      </div>
-    </div>`;
-}
-
-function renderComparisonReportPanelRevisionCard(
-  label: string,
-  hash: string | undefined,
-  revision: ComparisonReportRevisionMetadata | undefined,
-  testId: string
-): string {
-  return `<div class="vihs-compare-context-card" data-testid="${testId}">
-      <strong>${escapeHtml(label)}</strong>
-      <div><code>${escapeHtml(revision?.hash ?? hash ?? 'not retained')}</code></div>
-      <div><strong>Date:</strong> ${renderPanelRevisionMetadataValue(revision?.authorDate)}</div>
-      <div><strong>Author:</strong> ${renderPanelRevisionMetadataValue(revision?.authorName)}</div>
-      <div><strong>Subject:</strong> ${renderPanelRevisionMetadataValue(revision?.subject)}</div>
-      <div><strong>Body:</strong> ${renderPanelRevisionBodyValue(revision?.body)}</div>
-    </div>`;
-}
-
-function renderPanelRevisionBodyValue(value: string | undefined): string {
-  if (value === undefined) {
-    return '<span class="vihs-compare-context-muted">not retained</span>';
-  }
-
-  if (value.trim().length === 0) {
-    return '<span class="vihs-compare-context-muted">No commit body</span>';
-  }
-
-  return escapeHtml(value).replace(/\r\n?|\n/g, '<br />');
-}
-
-function renderPanelRevisionMetadataValue(value: string | undefined): string {
-  return value && value.length > 0
-    ? escapeHtml(value)
-    : '<span class="vihs-compare-context-muted">not retained</span>';
 }
 
 function ensureTrailingSlash(value: string): string {
