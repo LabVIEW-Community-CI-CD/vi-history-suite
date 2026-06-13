@@ -58,6 +58,8 @@ export const PICK_CONTAINER_IMAGE_VERSION_CLEAR_TOAST_MESSAGE =
 const REGISTRY_MAX_PAGES = 5;
 /** Per-request registry timeout. */
 const REGISTRY_REQUEST_TIMEOUT_MS = 10_000;
+/** Bounded wait for the `docker info` daemon-mode probe before giving up. */
+const DOCKER_DAEMON_PROBE_TIMEOUT_MS = 5_000;
 
 export interface ContainerImageVersionQuickPickOption {
   readonly kind: 'version' | 'clear';
@@ -96,7 +98,14 @@ export async function resolveEffectiveContainerPlatform(
   probeDaemonPlatform: DockerDaemonPlatformProber,
   hostPlatform: NodeJS.Platform = process.platform
 ): Promise<ContainerImagePlatform> {
-  const probed = await probeDaemonPlatform();
+  let probed: ContainerImagePlatform | undefined;
+  try {
+    probed = await probeDaemonPlatform();
+  } catch {
+    // VHS-REQ-649: a throwing/rejecting probe must never block selection.
+    // Degrade to the host default exactly like an inconclusive probe.
+    probed = undefined;
+  }
   return probed ?? resolveHostContainerPlatform(hostPlatform);
 }
 
@@ -309,25 +318,39 @@ export const defaultListLocalImages: LocalImageLister = () =>
  * VHS-REQ-649: Default Docker daemon container-mode prober. Runs
  * `docker info --format {{.OSType}}` with discrete arguments (no shell) and maps
  * the result to `windows`/`linux`. Any failure — missing Docker CLI, unreachable
- * daemon, or unrecognized output — resolves to undefined so the caller falls
- * back to the host default rather than erroring.
+ * daemon, unrecognized output, or a wedged daemon that does not respond within
+ * `DOCKER_DAEMON_PROBE_TIMEOUT_MS` — resolves to undefined so the caller falls
+ * back to the host default rather than erroring or hanging the picker.
  */
 export const defaultProbeDockerDaemonPlatform: DockerDaemonPlatformProber = () =>
   new Promise((resolve) => {
     let stdout = '';
     let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let child: ReturnType<typeof spawn> | undefined;
     const finish = (value: ContainerImagePlatform | undefined): void => {
-      if (!settled) {
-        settled = true;
-        resolve(value);
+      if (settled) {
+        return;
       }
+      settled = true;
+      if (timer) {
+        clearTimeout(timer);
+      }
+      resolve(value);
     };
     try {
-      const child = spawn('docker', ['info', '--format', '{{.OSType}}'], { windowsHide: true });
+      child = spawn('docker', ['info', '--format', '{{.OSType}}'], { windowsHide: true });
+      timer = setTimeout(() => {
+        child?.kill();
+        finish(undefined);
+      }, DOCKER_DAEMON_PROBE_TIMEOUT_MS);
+      timer.unref?.();
       child.stdout?.setEncoding('utf8');
       child.stdout?.on('data', (chunk) => {
         stdout += chunk;
       });
+      // Drain stderr so an erroring daemon does not leave an unconsumed stream.
+      child.stderr?.resume();
       child.on('error', () => finish(undefined));
       child.on('close', () => {
         const mode = stdout.trim().toLowerCase();

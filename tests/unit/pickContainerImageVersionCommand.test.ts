@@ -66,6 +66,12 @@ describe('resolveEffectiveContainerPlatform (VHS-REQ-649)', () => {
     expect(await resolveEffectiveContainerPlatform(async () => undefined, 'win32')).toBe('windows');
     expect(await resolveEffectiveContainerPlatform(async () => undefined, 'darwin')).toBe('linux');
   });
+
+  it('falls back to the host default when the probe rejects, never blocking selection', async () => {
+    const rejectingProbe = vi.fn().mockRejectedValue(new Error('docker info failed'));
+    expect(await resolveEffectiveContainerPlatform(rejectingProbe, 'win32')).toBe('windows');
+    expect(await resolveEffectiveContainerPlatform(rejectingProbe, 'linux')).toBe('linux');
+  });
 });
 
 describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
