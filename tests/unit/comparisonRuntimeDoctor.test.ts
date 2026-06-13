@@ -272,6 +272,24 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('currently x64');
   });
 
+  it('gives an actionable next step for concurrent LabVIEW version conflict (VHS-REQ-653)', () => {
+    const summary = blockedSummary('windows-host-version-conflict', {
+      bitness: 'x64',
+      requestedLabviewVersion: '2026',
+      hostObservedLabviewBitness: 'x64',
+      hostObservedLabviewVersion: '2025',
+      hostObservedLabviewExecutablePath:
+        'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+    });
+
+    const action = summary.at(-1) ?? '';
+    expect(action).toContain('close the running LabVIEW 2025 session');
+    expect(action).toContain('viHistorySuite.labviewVersion');
+    expect(action).toContain('currently 2026');
+    expect(action).toContain('Docker-backed x64 compare');
+    expect(action).toContain('rerun comparison report generation');
+  });
+
   it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621)', () => {
     const runtimeSelection: ComparisonRuntimeSelection = {
       platform: 'win32',
