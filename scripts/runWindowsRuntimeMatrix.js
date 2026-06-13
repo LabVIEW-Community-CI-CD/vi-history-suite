@@ -37,10 +37,40 @@ const DEFAULT_EVIDENCE_OUT = path.join(
   'assurance-closeout-evidence',
   'manual-vhs-req-621.json'
 );
-const KNOWN_SCENARIOS = Object.freeze(['steady-A', 'steady-B']);
+const KNOWN_SCENARIOS = Object.freeze([
+  'steady-A',
+  'steady-B',
+  'version-A',
+  'version-B'
+]);
 const SCENARIO_PARAMETERS = Object.freeze({
-  'steady-A': { hostBitness: 'x64', selectedBitness: 'x86' },
-  'steady-B': { hostBitness: 'x86', selectedBitness: 'x64' }
+  // VHS-REQ-622: bitness-conflict directions (same year, different bitness).
+  'steady-A': {
+    hostBitness: 'x64',
+    selectedBitness: 'x86',
+    expectedBlockedReason: 'windows-host-bitness-conflict'
+  },
+  'steady-B': {
+    hostBitness: 'x86',
+    selectedBitness: 'x64',
+    expectedBlockedReason: 'windows-host-bitness-conflict'
+  },
+  // VHS-REQ-653: version-conflict directions (same bitness, different year).
+  // Require LabVIEW 2025 and 2026 both installed at the scenario bitness.
+  'version-A': {
+    hostBitness: 'x64',
+    selectedBitness: 'x64',
+    hostVersion: '2025',
+    selectedVersion: '2026',
+    expectedBlockedReason: 'windows-host-version-conflict'
+  },
+  'version-B': {
+    hostBitness: 'x64',
+    selectedBitness: 'x64',
+    hostVersion: '2026',
+    selectedVersion: '2025',
+    expectedBlockedReason: 'windows-host-version-conflict'
+  }
 });
 
 function parseArgs(argv) {
@@ -94,8 +124,11 @@ function getUsage() {
     'against a real running LabVIEW 2026 + real vihs --validate CLI.',
     '',
     'Options:',
-    '  --scenario <id>         steady-A | steady-B | all (default: all)',
-    '  --labview-version <yr>  LabVIEW major version (default: 2026)',
+    '  --scenario <id>         steady-A | steady-B | version-A | version-B | all',
+    '                          (default: all; steady-* assert bitness conflict,',
+    '                          version-* assert version conflict)',
+    '  --labview-version <yr>  LabVIEW major version for steady-* scenarios',
+    '                          (default: 2026; version-* carry their own years)',
     `  --out <path>            Evidence output (default: ${DEFAULT_EVIDENCE_OUT})`,
     '  --proof-dir <path>      Directory for per-scenario proof JSON files',
     '                          (default: alongside --out)',
@@ -146,6 +179,8 @@ function buildScenarioPlan(options) {
 }
 
 function buildPowershellArgs(scenario, options) {
+  const selectedVersion = scenario.parameters.selectedVersion ?? options.labviewVersion;
+  const hostVersion = scenario.parameters.hostVersion ?? options.labviewVersion;
   return [
     '-NoLogo',
     '-NoProfile',
@@ -163,8 +198,12 @@ function buildPowershellArgs(scenario, options) {
     scenario.parameters.hostBitness,
     '-SelectedBitness',
     scenario.parameters.selectedBitness,
+    '-HostVersion',
+    hostVersion,
     '-LabviewVersion',
-    options.labviewVersion,
+    selectedVersion,
+    '-ExpectedBlockedReason',
+    scenario.parameters.expectedBlockedReason,
     '-ProofOutPath',
     scenario.proofPath,
     '-ScenarioLogPath',
@@ -193,7 +232,7 @@ function readScenarioLog(scenario, deps) {
 
 function summarizeScenario(scenario, spawnResult, scenarioLog) {
   const expected = {
-    runtimeBlockedReason: 'windows-host-bitness-conflict',
+    runtimeBlockedReason: scenario.parameters.expectedBlockedReason,
     hostBitness: scenario.parameters.hostBitness,
     selectedBitness: scenario.parameters.selectedBitness
   };
