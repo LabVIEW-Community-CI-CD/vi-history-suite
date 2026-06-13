@@ -12,6 +12,18 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.27.0] - 2026-06-13
+
+### Changed
+
+- The Marketplace listing now documents the extension **Requirements** (VS Code
+  1.90+, a trusted Git repository with at least two retained revisions, and
+  host-native LabVIEW 2025+ with the LabVIEW CLI or a validated Docker image)
+  and a **Runtime providers and safety checks** section covering the compare
+  preflight plus the proactive runtime-conflict diagnostics (bitness, version,
+  container-image-platform, and VI Server TCP), so the safety guardrails are
+  clear before install.
+
 ## [1.26.0] - 2026-06-13
 
 ### Fixed
