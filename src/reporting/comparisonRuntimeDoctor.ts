@@ -264,6 +264,15 @@ function deriveRuntimeDoctorNextAction(options: {
 
     if (
       options.runtimeSelection.platform === 'win32' &&
+      blockedReason === 'windows-host-version-conflict'
+    ) {
+      const observedYear = options.runtimeSelection.hostObservedLabviewVersion ?? 'another';
+      const selectedYear = options.runtimeSelection.requestedLabviewVersion ?? 'the selected version';
+      return `Next action: close the running LabVIEW ${observedYear} session, set viHistorySuite.labviewVersion to ${observedYear === 'another' ? 'match the running session' : observedYear} (currently ${selectedYear}), or use a Docker-backed x64 compare, then rerun comparison report generation.`;
+    }
+
+    if (
+      options.runtimeSelection.platform === 'win32' &&
       blockedReason === 'windows-host-runtime-surface-contaminated'
     ) {
       if (providerRequest === 'host') {

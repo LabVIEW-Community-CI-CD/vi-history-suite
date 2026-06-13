@@ -12,6 +12,18 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Fixed
+
+- On a Windows host with multiple LabVIEW installs of the **same bitness but
+  different years** (for example LabVIEW 2025 and 2026, each x64 with its own VI
+  Server TCP port), a host-native compare no longer silently attaches to an
+  already-running wrong-year LabVIEW. The compare-time runtime locator now blocks
+  with an actionable `windows-host-version-conflict` reason when a running
+  same-bitness LabVIEW has a known year that differs from the selected
+  `viHistorySuite.labviewVersion`, and the warning toast offers a `Pick Runtime
+  Provider` action. Year inference is best-effort, so a matching-year or
+  unknown-year session is still admitted. (VHS-REQ-653)
+
 ## [1.25.0] - 2026-06-13
 
 ### Added

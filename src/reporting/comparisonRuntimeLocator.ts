@@ -6,6 +6,7 @@ import {
   observeWindowsTcpListeners,
   ObserveWindowsProcessesOptions,
   ObserveWindowsTcpListenersOptions,
+  inferLabviewYearFromExecutablePath,
   resolveWindowsLabviewTcpSettingsForLabviewPath,
   RuntimeProcessObservation,
   WindowsTcpListenerObservation
@@ -125,6 +126,12 @@ export interface ComparisonRuntimeSelection {
   hostObservedLabviewBitness?: RuntimeBitness | 'unknown';
   /** VHS-REQ-621: executable path of the offending LabVIEW.exe, when known. */
   hostObservedLabviewExecutablePath?: string;
+  /**
+   * VHS-REQ-653: best-effort major version (year) of a running LabVIEW.exe
+   * observed during host preflight, when its executable path could be parsed.
+   * Drives the compare-time version-conflict guard and doctor messaging.
+   */
+  hostObservedLabviewVersion?: string;
   allowExistingWindowsHostRuntime?: boolean;
   dockerCliAvailable?: boolean;
   dockerDaemonReachable?: boolean;
@@ -1121,6 +1128,12 @@ export async function locateComparisonRuntime(
   const hostObservedLabviewBitness = hostRuntimeSurfaceFacts?.hostObservedLabviewBitness;
   const hostObservedLabviewExecutablePath =
     hostRuntimeSurfaceFacts?.hostObservedLabviewExecutablePath;
+  // VHS-REQ-653: best-effort year of the already-running LabVIEW.exe, recovered
+  // from its executable path. Stays `undefined` when the path is unknown or
+  // unparseable so the version guard below never blocks on a guess.
+  const hostObservedLabviewVersion = inferLabviewYearFromExecutablePath(
+    hostObservedLabviewExecutablePath
+  );
   // VHS-REQ-621: a running LabVIEW.exe at a bitness different from the
   // requested execution bitness is always blocking, even when the user has
   // opted into `allowExistingWindowsHostRuntime` (which exists to admit
@@ -1131,11 +1144,27 @@ export async function locateComparisonRuntime(
     hostObservedLabviewBitness !== undefined &&
     hostObservedLabviewBitness !== 'unknown' &&
     hostObservedLabviewBitness !== bitness;
+  // VHS-REQ-653: a running LabVIEW.exe whose major version (year) differs from
+  // the requested version while the bitness matches is also blocking, even
+  // under `allowExistingWindowsHostRuntime`. LabVIEW is singleton per bitness,
+  // so the requested version cannot start its own instance and LabVIEWCLI would
+  // attach to the already-running wrong-year session (which also listens on
+  // that install's own VI Server port). Year inference is best-effort: an
+  // unknown running year is never treated as a conflict, and this defers to the
+  // bitness conflict so the two never double-fire.
+  const hostVersionConflictDetected =
+    platform === 'win32' &&
+    !hostBitnessConflictDetected &&
+    requireVersionAndBitness &&
+    requestedLabviewVersion !== undefined &&
+    hostObservedLabviewVersion !== undefined &&
+    hostObservedLabviewVersion !== requestedLabviewVersion;
   const hostRuntimeConflictAdmitted =
     platform === 'win32' &&
     hostRuntimeConflictDetected === true &&
     allowExistingWindowsHostRuntime &&
-    !hostBitnessConflictDetected;
+    !hostBitnessConflictDetected &&
+    !hostVersionConflictDetected;
 
   if (platform === 'win32' && hostBitnessConflictDetected) {
     notes.push(
@@ -1176,6 +1205,53 @@ export async function locateComparisonRuntime(
       hostRuntimeConflictDetected,
       hostObservedLabviewBitness,
       hostObservedLabviewExecutablePath,
+      hostObservedLabviewVersion,
+      notes,
+      registryQueryPlans,
+      candidates
+    };
+  }
+
+  if (platform === 'win32' && hostVersionConflictDetected) {
+    notes.push(
+      `Validated Windows host runtime surface observed LabVIEW ${hostObservedLabviewVersion} (${hostObservedLabviewBitness ?? 'matching'} bitness) already running while comparison-report execution requested LabVIEW ${requestedLabviewVersion ?? 'unknown'} ${bitness}; LabVIEW refuses to start a second same-bitness instance at a different version, so the compare would connect to the already-running LabVIEW ${hostObservedLabviewVersion} (on its own VI Server port) instead of LabVIEW ${requestedLabviewVersion ?? 'unknown'}.`
+    );
+    return {
+      platform,
+      executionMode,
+      requestedProvider: settings.requestedProvider,
+      requestedLabviewVersion,
+      bitness,
+      provider: 'unavailable',
+      blockedReason: 'windows-host-version-conflict',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        containerRuntimePlatform: containerFacts?.runtimePlatform,
+        executionMode,
+        requestedProvider: settings.requestedProvider,
+        bitness,
+        configuredWindowsContainerImage: windowsContainerImage,
+        configuredLinuxContainerImage: linuxContainerImage,
+        containerImage: containerFacts?.image,
+        containerAvailable,
+        containerEvaluated,
+        ...buildContainerDecisionFacts(),
+        hostRuntimeConflictDetected,
+        blockedReason: 'windows-host-version-conflict',
+        labviewExeFound: true,
+        labviewCliFound: Boolean(labviewCli),
+        lvCompareFound: Boolean(lvCompare)
+      }),
+      ...buildContainerSelectionFactsForReturn(),
+      labviewExe,
+      labviewCli,
+      lvCompare,
+      hostLabviewIniPath,
+      hostLabviewTcpPort,
+      hostRuntimeConflictDetected,
+      hostObservedLabviewBitness,
+      hostObservedLabviewExecutablePath,
+      hostObservedLabviewVersion,
       notes,
       registryQueryPlans,
       candidates

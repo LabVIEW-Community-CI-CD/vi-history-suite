@@ -2637,7 +2637,71 @@ Missing numeric IDs are intentional.
     reuse the `Pick Runtime Provider` action rather than introducing a
     new bespoke command.
 
+### VHS-REQ-653: Concurrent LabVIEW Version Conflict Diagnostic
 
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When the comparison-report runtime detects a running LabVIEW
+  process whose major version (year) differs from the selected
+  `viHistorySuite.labviewVersion` while its bitness matches (a differing bitness
+  is already handled by VHS-REQ-621), the extension shall block the host-native
+  compare with a new `windows-host-version-conflict` runtime locator blocked
+  reason instead of admitting the running session under
+  `allowExistingWindowsHostRuntime`, because LabVIEW is singleton per bitness:
+  the selected version cannot start its own instance, so LabVIEWCLI would attach
+  to the already-running wrong-year session (which also listens on that install's
+  own VI Server port). This is the compare-time peer of the open-time
+  VHS-REQ-637 version gate and a sibling of the compare-time VHS-REQ-621 bitness
+  block. The resulting warning toast offers a `Pick Runtime Provider` action that
+  invokes `labviewViHistory.pickRuntimeProvider`.
+- Acceptance Criteria:
+  - `comparisonRuntimeLocator.locate()` infers the running LabVIEW year from the
+    observed `LabVIEW.exe` path with the best-effort
+    `inferLabviewYearFromExecutablePath` helper and short-circuits to
+    `blockedReason='windows-host-version-conflict'` when that year is known,
+    differs from the requested `viHistorySuite.labviewVersion`, the bitness is
+    not a VHS-REQ-621 conflict, and strict version+bitness selection is required.
+  - Year inference is best-effort: an unknown or unparseable running year is
+    never treated as a conflict, so a matching-year session and an
+    unknown-year session remain admitted under `allowExistingWindowsHostRuntime`
+    with no regression of VHS-REQ-621 or VHS-REQ-155.
+  - The block defers to the VHS-REQ-621 bitness conflict so the two never
+    double-fire, and it is evaluated ahead of the generic
+    `windows-host-runtime-surface-contaminated` arm.
+  - The locator retains `hostObservedLabviewVersion` (alongside
+    `hostObservedLabviewBitness` and `hostObservedLabviewExecutablePath`) on the
+    resulting `ComparisonRuntimeSelection` so the doctor can name the running
+    year.
+  - `comparisonRuntimeDoctor` emits a next-action line that names the observed
+    year and the selected year, references `viHistorySuite.labviewVersion`, and
+    offers a Docker-backed x64 compare as one recovery option.
+  - The VS Code comparison-report command shows a warning toast with a
+    `Pick Runtime Provider` action button whenever the action result carries
+    `blockedReason='windows-host-version-conflict'`; selecting the action invokes
+    `labviewViHistory.pickRuntimeProvider`.
+- Agent Work Scope:
+  - Reuse the existing `inferLabviewYearFromExecutablePath` seam, the
+    `hostRuntimeConflictDetected` / `allowExistingWindowsHostRuntime` flow, the
+    doctor blocked-reason switch, and the `Pick Runtime Provider` quick-pick. Do
+    not add a new command or setting, do not mandate Docker, do not auto-switch
+    `viHistorySuite.labviewVersion`, and do not change VHS-REQ-621 or VHS-REQ-637
+    behavior. Scope is Windows host-native LabVIEW CLI only.
+- Implementation References:
+  - `src/reporting/comparisonRuntimeLocator.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/commands/openViHistoryCommand.ts`
+- Verification References:
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep year inference best-effort and never block on an unknown running year.
+    Thread `hostObservedLabviewVersion` through any new `locate()` return site
+    that carries the other observed-session facts, keep the block deferred to the
+    VHS-REQ-621 bitness conflict, and reuse the `Pick Runtime Provider` action
+    rather than introducing a new bespoke command.
 
 
 ### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open
@@ -3445,7 +3509,9 @@ Missing numeric IDs are intentional.
     command) when the observation throws.
   - A running LabVIEW whose year and bitness both match the selection remains
     admitted with no regression of `allowExistingWindowsHostRuntime`; the
-    compare-time VHS-REQ-621 and VHS-REQ-155 paths are unchanged.
+    compare-time VHS-REQ-155 path is unchanged, and the compare-time version
+    conflict is handled by VHS-REQ-653 (the open gate and the compare-time gate
+    never double-fire because the open gate runs first).
 - Agent Work Scope:
   - Add the best-effort year-inference seam next to the VHS-REQ-621 bitness
     inference in `src/reporting/comparisonReportRuntimeExecution.ts`, add the

@@ -512,6 +512,46 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
+  it('offers a Pick Runtime Provider action when the runtime is blocked by a concurrent LabVIEW version conflict (VHS-REQ-653)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-retained-comparison-report',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'windows-host-version-conflict',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
+        'Provider request=host.',
+        'Runtime blocked reason: windows-host-version-conflict.',
+        'Next action: close the running LabVIEW 2025 session, set viHistorySuite.labviewVersion to 2025 (currently 2026), or use a Docker-backed x64 compare, then rerun comparison report generation.'
+      ]
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('windows-host-version-conflict'),
+      'Pick Runtime Provider'
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'labviewViHistory.pickRuntimeProvider'
+    );
+  });
+
   it('offers a Pick Runtime Provider action when comparison runtime reclassifies failure as labview-host-bitness-conflict (VHS-REQ-621)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
