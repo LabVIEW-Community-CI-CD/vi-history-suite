@@ -129,7 +129,12 @@ jobs:
           } else {
             'VSIX evidence path: missing'
           }
-          $vsixLine | Tee-Object -LiteralPath $summaryPath -Append
+          # Append the VSIX line to the summary and echo it. Tee-Object's
+          # -Append switch only exists in its -FilePath parameter set, not the
+          # -LiteralPath set, so `Tee-Object -LiteralPath ... -Append` is an
+          # unresolvable parameter combination that hard-fails the step.
+          Add-Content -LiteralPath $summaryPath -Value $vsixLine
+          Write-Output $vsixLine
 
       - name: Windows Integration Host
         run: npm.cmd run test:integration:windows

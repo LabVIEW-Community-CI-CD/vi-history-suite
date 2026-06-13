@@ -73,6 +73,18 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('runner-evidence/**');
   });
 
+  it('appends the VSIX evidence line with a valid Tee-Object parameter combination (regression)', () => {
+    const workflow = readWorkflow();
+
+    // Tee-Object's -Append switch only exists in its -FilePath parameter set,
+    // not the -LiteralPath set, so `Tee-Object -LiteralPath ... -Append` is an
+    // unresolvable parameter combination ("AmbiguousParameterSet") that hard-
+    // fails the Record VSIX Evidence Path step on every run. Guard against
+    // reintroducing it; the step must append via Add-Content instead.
+    expect(workflow).not.toMatch(/Tee-Object\s+-LiteralPath\s+\$summaryPath\s+-Append/);
+    expect(workflow).toContain('Add-Content -LiteralPath $summaryPath -Value $vsixLine');
+  });
+
   it('recreates the runner-evidence directory inside the post-checkout evidence steps (regression)', () => {
     const workflow = readWorkflow();
 
