@@ -65,4 +65,37 @@ describe('Windows runtime matrix workflow', () => {
     expect(workflow).toContain('runner-evidence/**');
     expect(workflow).toContain('retention-days: 90');
   });
+
+  it('recreates the runner-evidence directory in a post-checkout step so the guard summary survives checkout (regression)', () => {
+    const workflow = readWorkflow();
+
+    // actions/checkout cleans the workspace, removing the runner-evidence
+    // directory the pre-checkout Guard step created. Unlike the maintainer
+    // workflows this one never wrote to runner-evidence post-checkout, so the
+    // trusted-ref guard summary was silently dropped from the uploaded
+    // evidence bundle. Assert the New-Item recreate lives *inside* the
+    // post-checkout summary step block (not merely somewhere after checkout)
+    // so the evidence cannot regress to relying on the pre-checkout directory.
+    const stepBlock = (stepName: string): string => {
+      const start = workflow.indexOf(`- name: ${stepName}`);
+      if (start < 0) {
+        return '';
+      }
+      const rest = workflow.slice(start);
+      const nextStep = rest.indexOf('\n      - name:');
+      return nextStep < 0 ? rest : rest.slice(0, nextStep);
+    };
+
+    const newItem = 'New-Item -ItemType Directory -Force -Path runner-evidence';
+    const checkoutIndex = workflow.indexOf('actions/checkout@');
+    const recordIndex = workflow.indexOf('- name: Record Guard Summary');
+    expect(checkoutIndex).toBeGreaterThanOrEqual(0);
+    expect(recordIndex).toBeGreaterThan(checkoutIndex);
+
+    const block = stepBlock('Record Guard Summary');
+    expect(block).toContain(newItem);
+    expect(block).toContain("Join-Path 'runner-evidence' 'windows-runtime-matrix-summary.txt'");
+    expect(block).toContain('Trusted ref decision:');
+    expect(block).toContain('Evidence summary path: runner-evidence/windows-runtime-matrix-summary.txt');
+  });
 });

@@ -4,8 +4,12 @@
     -HostVersion/-HostBitness, invoking `vihs --validate --proof-out` for the
     selected -LabviewVersion/-SelectedBitness, and asserting that the proof JSON
     carries -ExpectedBlockedReason. Covers the VHS-REQ-622 bitness-conflict
-    directions (steady-*, same year / different bitness) and the VHS-REQ-653
-    version-conflict directions (version-*, same bitness / different year).
+    directions (steady-*, same year / different bitness), the VHS-REQ-653
+    version-conflict directions (version-*, same bitness / different year), and
+    the VHS-REQ-623 non-default VI Server port admit direction (port-*, where
+    -ExpectedBlockedReason is 'none' and -ExpectedHostTcpPort asserts the
+    observed proof port; the selected install must be configured on that
+    non-default server.tcp.port).
 
 .DESCRIPTION
     Called by `scripts/runWindowsRuntimeMatrix.js`. Emits a per-scenario log
@@ -16,7 +20,7 @@
           durationMs: int,
           observed: {
             runtimeBlockedReason, hostBitness, selectedBitness,
-            labviewExecutablePath, labviewProcessId
+            labviewExecutablePath, labviewProcessId, hostLabviewTcpPort
           },
           spawn: { exitCode, stdoutTail, stderrTail },
           proofPath: string
@@ -50,6 +54,8 @@ param(
     [string]$HostVersion,
 
     [string]$ExpectedBlockedReason = 'windows-host-bitness-conflict',
+
+    [int]$ExpectedHostTcpPort = 0,
 
     [Parameter(Mandatory = $true)]
     [string]$ProofOutPath,
@@ -151,6 +157,7 @@ $payload = @{
         selectedVersion          = $LabviewVersion
         labviewExecutablePath    = $null
         labviewProcessId         = $null
+        hostLabviewTcpPort       = $null
     }
     spawn         = @{
         exitCode   = $null
@@ -258,17 +265,42 @@ try {
     $proofJson = Get-Content -LiteralPath $ProofOutPath -Raw | ConvertFrom-Json
     # The runtime-validation-proof@v1 schema nests the blocked reason under
     # `runtime.blockedReason`; the flat `runtimeBlockedReason` token only exists
-    # in the CLI stdout, not in the proof JSON.
+    # in the CLI stdout, not in the proof JSON. VHS-REQ-623: the observed host
+    # VI Server port is nested under `runtime.hostLabviewTcpPort`.
     $blockedReason = $null
+    $hostTcpPort = $null
     if ($proofJson.PSObject.Properties.Match('runtime').Count -gt 0 -and
-        $null -ne $proofJson.runtime -and
-        $proofJson.runtime.PSObject.Properties.Match('blockedReason').Count -gt 0) {
-        $blockedReason = $proofJson.runtime.blockedReason
+        $null -ne $proofJson.runtime) {
+        if ($proofJson.runtime.PSObject.Properties.Match('blockedReason').Count -gt 0) {
+            $blockedReason = $proofJson.runtime.blockedReason
+        }
+        if ($proofJson.runtime.PSObject.Properties.Match('hostLabviewTcpPort').Count -gt 0) {
+            $hostTcpPort = $proofJson.runtime.hostLabviewTcpPort
+        }
     }
-    $payload.observed.runtimeBlockedReason = $blockedReason
 
-    if ($blockedReason -ne $ExpectedBlockedReason) {
-        $payload.failureReason = "expected runtimeBlockedReason='$ExpectedBlockedReason', observed='$blockedReason'"
+    # The admit/success direction (-ExpectedBlockedReason 'none') expects no
+    # block; normalize a null/empty proof blockedReason to the 'none' token the
+    # Node driver asserts against.
+    $observedBlockedReason =
+        if ($null -eq $blockedReason -or $blockedReason -eq '') { 'none' } else { $blockedReason }
+    $expectedBlockedReasonNormalized =
+        if ([string]::IsNullOrEmpty($ExpectedBlockedReason)) { 'none' } else { $ExpectedBlockedReason }
+    $payload.observed.runtimeBlockedReason = $observedBlockedReason
+    $payload.observed.hostLabviewTcpPort = $hostTcpPort
+
+    $failures = @()
+    if ($observedBlockedReason -ne $expectedBlockedReasonNormalized) {
+        $failures += "expected runtimeBlockedReason='$expectedBlockedReasonNormalized', observed='$observedBlockedReason'"
+    }
+    # VHS-REQ-623: when an expected non-default VI Server port is supplied, the
+    # observed proof port must match it (the port-admit scenario).
+    if ($ExpectedHostTcpPort -gt 0 -and [int]$hostTcpPort -ne $ExpectedHostTcpPort) {
+        $failures += "expected hostLabviewTcpPort=$ExpectedHostTcpPort, observed='$hostTcpPort'"
+    }
+
+    if ($failures.Count -gt 0) {
+        $payload.failureReason = ($failures -join '; ')
     }
     else {
         $payload.pass = $true
