@@ -2007,7 +2007,6 @@ function buildContainerImagePlatformMismatchSelection(options: {
   );
   return {
     platform: options.hostPlatform,
-    containerRuntimePlatform: resolveContainerRuntimePlatform(options.selectedContainerFacts),
     executionMode: options.executionMode,
     requestedProvider: options.requestedProvider,
     requestedLabviewVersion: options.requestedLabviewVersion,
@@ -2015,6 +2014,9 @@ function buildContainerImagePlatformMismatchSelection(options: {
     provider: 'unavailable',
     blockedReason: 'container-image-platform-mismatch',
     providerDecisions,
+    // `selectedContainerFacts` is always present here, so the spread supplies
+    // `containerRuntimePlatform` (and the rest of the container facts); no
+    // explicit assignment is needed.
     ...buildContainerSelectionFacts(options.selectedContainerFacts),
     containerImage: conflict.selectedReference,
     hostLabviewIniPath: options.hostLabviewIniPath,
