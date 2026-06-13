@@ -7,7 +7,6 @@ export interface HistoryPanelMessage {
   hash?: string;
   selectedHashes?: string[];
   pageId?: string;
-  warningMessage?: string;
   reviewOutcome?: string;
   reviewConfidence?: string;
   reviewNote?: string;

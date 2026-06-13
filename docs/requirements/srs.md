@@ -1062,6 +1062,18 @@ Missing numeric IDs are intentional.
     explicit override or a successful daemon probe); when the daemon mode is
     unknown (Docker stopped or the probe times out) no stale warning is shown, so
     a valid selection is never flagged against a host-OS guess.
+  - The history-panel compare preflight surfaces the same remediation before the
+    user runs Compare: when the runtime-backed preflight is blocked with
+    `container-image-platform-mismatch` (the runtime locator runs in the panel
+    preflight on Windows), the panel renders a `Pick Image Version`
+    call-to-action button whose click opens
+    `labviewViHistory.pickContainerImageVersion`. The classified block reason is
+    threaded onto the panel preflight state as a typed field so the gating is
+    deterministic; the button is shown only for that block reason, not for other
+    blocked reasons or a ready/unavailable preflight. After the picker completes,
+    the panel re-resolves the compare preflight and re-renders in place, so a
+    selection that clears the mismatch removes the block (and its
+    call-to-action) without requiring the panel to be reopened.
 - Agent Work Scope:
   - Thread `containerImageVersion` from settings into the locator's per-provider
     image resolution and bypass the legacy year pin when a version is selected;
@@ -1075,11 +1087,13 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportAction.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/commands/pickContainerImageVersionCommand.ts`
+  - `src/ui/historyPanel.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/pickContainerImageVersionCommand.test.ts`
+  - `tests/unit/historyPanelRendering.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Preserve the fail-closed runtime contract (VHS-SYS-REQ-007): a
