@@ -28,6 +28,7 @@ import {
   STATUS_BAR_PICK_COMMAND_ID,
   type RuntimeAvailabilityWatcher
 } from '../ui/runtimeAvailabilityNotice';
+import { PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID } from './pickContainerImageVersionCommand';
 
 export const PICK_RUNTIME_PROVIDER_COMMAND_ID = STATUS_BAR_PICK_COMMAND_ID;
 
@@ -150,6 +151,12 @@ export async function applyPickRuntimeProviderSelection(
 
 export interface RegisterPickRuntimeProviderCommandDeps {
   isTrusted?: () => boolean;
+  /**
+   * VHS-REQ-651: command dispatcher used to chain into the container image
+   * version picker after a docker provider selection. Injected for tests;
+   * defaults to `vscode.commands.executeCommand`.
+   */
+  executeCommand?: (command: string) => Thenable<unknown>;
 }
 
 export function registerPickRuntimeProviderCommand(
@@ -158,6 +165,8 @@ export function registerPickRuntimeProviderCommand(
   deps: RegisterPickRuntimeProviderCommandDeps = {}
 ): void {
   const isTrusted = deps.isTrusted ?? (() => vscode.workspace.isTrusted);
+  const executeCommand =
+    deps.executeCommand ?? ((command: string) => vscode.commands.executeCommand(command));
 
   context.subscriptions.push(
     vscode.commands.registerCommand(PICK_RUNTIME_PROVIDER_COMMAND_ID, async () => {
@@ -207,6 +216,29 @@ export function registerPickRuntimeProviderCommand(
       void vscode.window.showInformationMessage(
         `${PICK_RUNTIME_PROVIDER_TOAST_PREFIX} ${picked.option.runtimeProvider} ${picked.option.labviewVersion} ${picked.option.labviewBitness}.`
       );
+
+      // VHS-REQ-651: the docker provider always runs the comparison inside a
+      // LabVIEW container image, so chain directly into the container image
+      // version picker (VHS-REQ-649) as a follow-on step. Host picks need no
+      // image and return without chaining. The chain is best-effort: the docker
+      // selection is already persisted, so a cancelled or failing image pick
+      // never undoes it and never throws out of this command.
+      if (picked.option.kind === 'docker') {
+        let chainedContainerImageVersionPick = true;
+        try {
+          await executeCommand(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID);
+        } catch {
+          chainedContainerImageVersionPick = false;
+        }
+        return {
+          outcome: 'persisted-selection' as const,
+          runtimeProvider: picked.option.runtimeProvider,
+          labviewVersion: picked.option.labviewVersion,
+          labviewBitness: picked.option.labviewBitness,
+          chainedContainerImageVersionPick
+        };
+      }
+
       return {
         outcome: 'persisted-selection' as const,
         runtimeProvider: picked.option.runtimeProvider,

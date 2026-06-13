@@ -25,6 +25,7 @@ import {
   PICK_RUNTIME_PROVIDER_NO_RUNTIMES_MESSAGE,
   registerPickRuntimeProviderCommand
 } from '../../src/commands/pickRuntimeProviderCommand';
+import { PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID } from '../../src/commands/pickContainerImageVersionCommand';
 import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
 
 const detectionBoth: DetectedRuntimes = {
@@ -263,5 +264,84 @@ describe('registerPickRuntimeProviderCommand (VHS-REQ-620)', () => {
     expect(result).toEqual({ outcome: 'cleared-selection' });
     expect(update).toHaveBeenCalledTimes(3);
     expect(info).toHaveBeenCalledWith(PICK_RUNTIME_PROVIDER_CLEAR_TOAST_MESSAGE);
+  });
+
+  it('chains into the container image version pick after a docker selection (VHS-REQ-651)', async () => {
+    const update = vi.fn(async () => undefined);
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(),
+      update,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    vi.spyOn(vscode.window, 'showQuickPick').mockImplementation((async (
+      items: ReadonlyArray<{ option: { kind: string } }>
+    ) => items.find((item) => item.option.kind === 'docker')) as never);
+    const executeCommand = vi.fn(async () => undefined);
+
+    registerPickRuntimeProviderCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth) as never,
+      { isTrusted: () => true, executeCommand }
+    );
+    const result = await vscode.commands.executeCommand(PICK_RUNTIME_PROVIDER_COMMAND_ID);
+
+    expect(result).toMatchObject({
+      outcome: 'persisted-selection',
+      runtimeProvider: 'docker',
+      chainedContainerImageVersionPick: true
+    });
+    expect(executeCommand).toHaveBeenCalledWith(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID);
+  });
+
+  it('reports a failed chain without throwing after a docker selection (VHS-REQ-651)', async () => {
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(),
+      update: vi.fn(async () => undefined),
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    vi.spyOn(vscode.window, 'showQuickPick').mockImplementation((async (
+      items: ReadonlyArray<{ option: { kind: string } }>
+    ) => items.find((item) => item.option.kind === 'docker')) as never);
+    const executeCommand = vi.fn(async () => {
+      throw new Error('command not registered');
+    });
+
+    registerPickRuntimeProviderCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth) as never,
+      { isTrusted: () => true, executeCommand }
+    );
+    const result = await vscode.commands.executeCommand(PICK_RUNTIME_PROVIDER_COMMAND_ID);
+
+    expect(result).toMatchObject({
+      outcome: 'persisted-selection',
+      runtimeProvider: 'docker',
+      chainedContainerImageVersionPick: false
+    });
+  });
+
+  it('does not chain after a host selection (VHS-REQ-651)', async () => {
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(),
+      update: vi.fn(async () => undefined),
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    vi.spyOn(vscode.window, 'showQuickPick').mockImplementation((async (
+      items: ReadonlyArray<{ option: { kind: string } }>
+    ) => items.find((item) => item.option.kind === 'host')) as never);
+    const executeCommand = vi.fn(async () => undefined);
+
+    registerPickRuntimeProviderCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth) as never,
+      { isTrusted: () => true, executeCommand }
+    );
+    const result = await vscode.commands.executeCommand(PICK_RUNTIME_PROVIDER_COMMAND_ID);
+
+    expect(executeCommand).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty('chainedContainerImageVersionPick');
   });
 });
