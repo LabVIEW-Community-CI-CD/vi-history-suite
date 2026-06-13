@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-06-13
+
 ### Changed
 
 - The **Pick LabVIEW Container Image Version** command now probes the active
