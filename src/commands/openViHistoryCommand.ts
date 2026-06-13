@@ -544,7 +544,7 @@ export function createOpenViHistoryCommand(
             ? undefined
             : buildComparisonRuntimeWarningMessage(actionCommand, result);
         if (runtimeWarningMessage) {
-          if (isBitnessConflictComparisonRuntimeResult(result)) {
+          if (isHostRuntimeConflictRequiringProviderPick(result)) {
             const PICK_RUNTIME_PROVIDER_ACTION = 'Pick Runtime Provider';
             void vscode.window
               .showWarningMessage(runtimeWarningMessage, PICK_RUNTIME_PROVIDER_ACTION)
@@ -1328,11 +1328,12 @@ function buildComparisonRuntimeProgressPanelUpdate(
   };
 }
 
-function isBitnessConflictComparisonRuntimeResult(
+function isHostRuntimeConflictRequiringProviderPick(
   result: ComparisonReportActionResult
 ): boolean {
   return (
     result.blockedReason === 'windows-host-bitness-conflict' ||
+    result.blockedReason === 'windows-host-version-conflict' ||
     result.runtimeFailureReason === 'labview-host-bitness-conflict'
   );
 }
