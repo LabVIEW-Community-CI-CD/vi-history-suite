@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-06-13
+
 ### Added
 
 - Comparison report flags are now configurable through native VS Code settings
@@ -23,6 +25,22 @@ Burned exact-version releases now include `v1.0.2`.
   `ignoreFrontPanelObjectPosition` (`-nofppos`), `ignoreBlockDiagram` (`-nobd`),
   and `ignoreBlockDiagramCosmetic` (`-nobdcosm`). With nothing configured, report
   generation is unchanged. (VHS-REQ-645)
+- LabVIEW Docker container image versions are now selectable instead of pinned to
+  a single hardcoded tag. The new `viHistorySuite.container.imageVersion` setting
+  and the **Pick LabVIEW Container Image Version** command
+  (`labviewViHistory.pickContainerImageVersion`) list the versions discovered
+  from the published Docker Hub `nationalinstruments/labview` tags and from images
+  already pulled locally — newest first, annotated as pulled-locally or
+  available-to-pull. The comparison runtime drives both the Windows-container and
+  Linux-container providers from the selection, so new National Instruments
+  patch releases (for example `2026q1patch1`, `2026q1patch2`) and future release
+  years become selectable without updating the extension. With nothing selected,
+  the prior default image is used unchanged. (VHS-SYS-REQ-019, VHS-REQ-646,
+  VHS-REQ-647, VHS-REQ-648, VHS-REQ-649, VHS-REQ-650)
+- Selecting the **docker** runtime provider through **Pick Runtime Provider** now
+  chains directly into the container image version picker as a follow-on step, so
+  the matching image version is offered at the moment it is relevant. Host
+  selections are unchanged. (VHS-REQ-651)
 
 ## [1.21.1] - 2026-06-12
 
