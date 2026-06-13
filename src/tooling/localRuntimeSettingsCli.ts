@@ -1057,6 +1057,14 @@ function buildValidationProof(
       provider: input.runtimeSelection.provider,
       engine: input.runtimeSelection.engine ?? null,
       blockedReason: input.runtimeSelection.blockedReason ?? null,
+      // VHS-REQ-623: the observed host-native VI Server TCP port (and the
+      // LabVIEW.ini it was read from) the locator resolved for the selected
+      // install. Serializing it lets real-hardware validation evidence prove a
+      // non-default VI Server port was observed without a false conflict block.
+      // `null` when the runtime is not Windows host-native or the ini was not
+      // readable.
+      hostLabviewTcpPort: input.runtimeSelection.hostLabviewTcpPort ?? null,
+      hostLabviewIniPath: input.runtimeSelection.hostLabviewIniPath ?? null,
       platform: input.runtimeSelection.platform,
       containerRuntimePlatform: input.runtimeSelection.containerRuntimePlatform ?? null,
       containerHostMode: input.runtimeSelection.containerHostMode ?? null,

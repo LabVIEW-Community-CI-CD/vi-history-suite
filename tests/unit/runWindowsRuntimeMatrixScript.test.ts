@@ -15,6 +15,7 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
         hostVersion?: string;
         selectedVersion?: string;
         expectedBlockedReason: string;
+        expectedHostTcpPort?: number;
       }
     >
   >;
@@ -44,14 +45,14 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     options: { labviewVersion: string; keepRunning: boolean }
   ) => string[];
   summarizeScenario: (
-    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string }; proofPath: string; logPath: string },
+    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string; expectedHostTcpPort?: number }; proofPath: string; logPath: string },
     spawnResult: { status: number },
     scenarioLog: unknown
   ) => {
     id: string;
     pass: boolean;
     failureReason?: string;
-    expected: Record<string, string>;
+    expected: Record<string, string | number>;
     observed: Record<string, unknown>;
     artifacts: { proofPath: string; scenarioLogPath: string };
     durationMs: number;
@@ -231,6 +232,48 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args).toContain('-KeepRunning');
   });
 
+  it('passes the expected non-default VI Server port for the port-admit scenario (VHS-REQ-623)', () => {
+    const scenario = {
+      id: 'port-A',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        expectedBlockedReason: 'none',
+        expectedHostTcpPort: 3380
+      },
+      proofPath: 'proofs/port-A.proof.json',
+      logPath: 'proofs/port-A.scenario.json'
+    };
+    const args = harness.buildPowershellArgs(scenario, {
+      labviewVersion: '2026',
+      keepRunning: false
+    });
+
+    expect(args[args.indexOf('-HostBitness') + 1]).toBe('x64');
+    expect(args[args.indexOf('-SelectedBitness') + 1]).toBe('x64');
+    expect(args[args.indexOf('-ExpectedBlockedReason') + 1]).toBe('none');
+    expect(args).toContain('-ExpectedHostTcpPort');
+    expect(args[args.indexOf('-ExpectedHostTcpPort') + 1]).toBe('3380');
+  });
+
+  it('omits -ExpectedHostTcpPort for non-port scenarios', () => {
+    const scenario = {
+      id: 'steady-A',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x86',
+        expectedBlockedReason: 'windows-host-bitness-conflict'
+      },
+      proofPath: 'p.json',
+      logPath: 'l.json'
+    };
+    const args = harness.buildPowershellArgs(scenario, {
+      labviewVersion: '2026',
+      keepRunning: false
+    });
+    expect(args).not.toContain('-ExpectedHostTcpPort');
+  });
+
   it('never emits an empty-string argument', () => {
     const scenario = {
       id: 'steady-A',
@@ -365,6 +408,76 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     );
     expect(summary.pass).toBe(false);
   });
+
+  const portScenario = {
+    id: 'port-A',
+    parameters: {
+      hostBitness: 'x64',
+      selectedBitness: 'x64',
+      expectedBlockedReason: 'none',
+      expectedHostTcpPort: 3380
+    },
+    proofPath: 'port-A.proof.json',
+    logPath: 'port-A.scenario.json'
+  };
+
+  it('passes the port-admit scenario when the host is admitted and the non-default port is observed (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      {
+        pass: true,
+        durationMs: 1600,
+        observed: {
+          runtimeBlockedReason: 'none',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostLabviewTcpPort: 3380,
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      }
+    );
+    expect(summary.pass).toBe(true);
+    expect(summary.expected.hostTcpPort).toBe(3380);
+    expect(summary.observed.hostLabviewTcpPort).toBe(3380);
+    expect(summary.failureReason).toBeUndefined();
+  });
+
+  it('fails the port-admit scenario when the observed port is the default rather than the non-default port (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      {
+        pass: true,
+        observed: {
+          runtimeBlockedReason: 'none',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostLabviewTcpPort: 3363
+        }
+      }
+    );
+    expect(summary.pass).toBe(false);
+    expect(summary.failureReason).toContain('expected hostLabviewTcpPort=3380');
+    expect(summary.failureReason).toContain('observed=3363');
+  });
+
+  it('fails the port-admit scenario when no VI Server port was observed (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      {
+        pass: true,
+        observed: {
+          runtimeBlockedReason: 'none',
+          hostBitness: 'x64',
+          selectedBitness: 'x64'
+        }
+      }
+    );
+    expect(summary.pass).toBe(false);
+    expect(summary.failureReason).toContain('observed=<none>');
+  });
 });
 
 describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
@@ -445,6 +558,17 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
           selectedVersion: '2025',
           labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
         }
+      },
+      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}port-A.scenario.json`]: {
+        pass: true,
+        durationMs: 140,
+        observed: {
+          runtimeBlockedReason: 'none',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostLabviewTcpPort: 3380,
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
       }
     };
     const fake = buildFakeFs(scenarioLogPayloads);
@@ -518,6 +642,17 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
           selectedBitness: 'x64',
           hostVersion: '2026',
           selectedVersion: '2025',
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      },
+      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}port-A.scenario.json`]: {
+        pass: true,
+        durationMs: 140,
+        observed: {
+          runtimeBlockedReason: 'none',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostLabviewTcpPort: 3380,
           labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
         }
       }

@@ -1,17 +1,18 @@
 name: Windows Runtime Conflict Matrix
 
-# VHS-REQ-622 / VHS-REQ-653 — Automated End-to-End Windows Runtime Conflict
-# Verification Harness. Drives `vihs --validate --proof-out` against a real
-# running LabVIEW in the two steady-state bitness directions (steady-*,
-# VHS-REQ-622) and the two version directions (version-*, same bitness /
-# different year, VHS-REQ-653), and uploads the resulting matrix evidence as a
-# build artifact.
+# VHS-REQ-622 / VHS-REQ-653 / VHS-REQ-623 — Automated End-to-End Windows Runtime
+# Conflict Verification Harness. Drives `vihs --validate --proof-out` against a
+# real running LabVIEW in the two steady-state bitness directions (steady-*,
+# VHS-REQ-622), the two version directions (version-*, same bitness / different
+# year, VHS-REQ-653), and the non-default VI Server port admit direction
+# (port-*, same year/bitness on a non-default server.tcp.port, VHS-REQ-623), and
+# uploads the resulting matrix evidence as a build artifact.
 
 on:
   workflow_dispatch:
     inputs:
       scenario:
-        description: 'Scenario (steady-A/B = bitness, version-A/B = version, or all)'
+        description: 'Scenario (steady-A/B = bitness, version-A/B = version, port-A = non-default VI Server port, or all)'
         required: false
         default: 'all'
         type: choice
@@ -21,6 +22,7 @@ on:
           - steady-B
           - version-A
           - version-B
+          - port-A
       labview_version:
         description: 'LabVIEW major version for steady-* scenarios (default 2026)'
         required: false
