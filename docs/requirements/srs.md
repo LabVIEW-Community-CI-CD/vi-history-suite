@@ -2959,6 +2959,14 @@ Missing numeric IDs are intentional.
     contaminated-surface arm covered by VHS-REQ-621.
   - The `lvcompare` engine remains exempt from this preflight because
     it does not connect to LabVIEW VI Server.
+  - The `vihs --validate` runtime-validation proof serializes the
+    observed host VI Server port (`runtime.hostLabviewTcpPort`) and the
+    `LabVIEW.ini` it was read from (`runtime.hostLabviewIniPath`), as
+    explicit `null` when the runtime is not Windows host-native, so
+    real-hardware validation evidence proves a non-default
+    `server.tcp.port` was admitted without a false conflict block. The
+    Windows runtime matrix harness `port-A` scenario asserts the
+    observed non-default port through this proof field.
 - Agent Work Scope:
   - Reuse the existing `resolveWindowsLabviewTcpSettingsForLabviewPath`
     parser; do not introduce a second ini reader. Add a small
@@ -2972,8 +2980,11 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportPacket.ts`
+  - `src/tooling/localRuntimeSettingsCli.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/localRuntimeSettingsCli.test.ts`
+  - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Treat absent `server.tcp.enabled` on Windows as enabled; do not

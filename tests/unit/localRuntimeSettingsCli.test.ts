@@ -402,6 +402,110 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     );
   });
 
+  it('serializes the observed non-default host VI Server port into the validation proof (VHS-REQ-623)', async () => {
+    // A maintainer host runs LabVIEW installs on non-default VI Server ports.
+    // The locator observes the selected install's server.tcp.port; the proof
+    // must carry it (and the LabVIEW.ini it was read from) so real-hardware
+    // validation evidence proves a non-default port was admitted without a
+    // false conflict block, rather than dropping it from the runtime block.
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    const settingsFilePath = path.resolve('/workspace', 'runtime-settings.json');
+    const proofDirectory = path.resolve('/workspace', 'proof');
+    memoryFs.seed(
+      settingsFilePath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'host',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue({
+      ...readyRuntimeSelection(),
+      hostLabviewTcpPort: 3380,
+      hostLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
+    });
+
+    const result = await runLocalRuntimeSettingsCli(
+      ['--validate', '--settings-file', 'runtime-settings.json', '--proof-out', 'proof'],
+      {
+        cwd: () => '/workspace',
+        env: { PATH: '/usr/bin' },
+        fs: memoryFs as never,
+        stdout: stdout.stream,
+        platform: 'win32',
+        locateRuntime,
+        buildInfoDeps: {
+          fs: memoryFs as never,
+          buildInfoPath: '/build/buildInfo.json',
+          packageJsonPath: '/package.json'
+        }
+      }
+    );
+
+    expect(result).toMatchObject({ runtimeValidationOutcome: 'ready' });
+    const proof = JSON.parse(memoryFs.text(path.join(proofDirectory, 'vihs-validation-proof.json'))) as {
+      runtime: { hostLabviewTcpPort: number | null; hostLabviewIniPath: string | null; blockedReason: string | null };
+    };
+    expect(proof.runtime.hostLabviewTcpPort).toBe(3380);
+    expect(proof.runtime.hostLabviewIniPath).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
+    );
+    expect(proof.runtime.blockedReason).toBeNull();
+  });
+
+  it('records a null host VI Server port in the proof when the runtime is not host-native (VHS-REQ-623)', async () => {
+    // The port fields are optional on non-Windows / container runtimes; the
+    // proof records them as explicit null rather than omitting them, so the
+    // schema stays stable for public-intake consumers.
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    const settingsFilePath = path.resolve('/workspace', 'runtime-settings.json');
+    const proofDirectory = path.resolve('/workspace', 'proof');
+    memoryFs.seed(
+      settingsFilePath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'docker',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue(
+      blockedRuntimeSelection('docker-provider-unavailable')
+    );
+
+    await runLocalRuntimeSettingsCli(
+      ['--validate', '--settings-file', 'runtime-settings.json', '--proof-out', 'proof'],
+      {
+        cwd: () => '/workspace',
+        env: { PATH: '/usr/bin' },
+        fs: memoryFs as never,
+        stdout: stdout.stream,
+        platform: 'linux',
+        locateRuntime,
+        buildInfoDeps: {
+          fs: memoryFs as never,
+          buildInfoPath: '/build/buildInfo.json',
+          packageJsonPath: '/package.json'
+        }
+      }
+    );
+
+    const proof = JSON.parse(memoryFs.text(path.join(proofDirectory, 'vihs-validation-proof.json'))) as {
+      runtime: { hostLabviewTcpPort: number | null; hostLabviewIniPath: string | null };
+    };
+    expect(proof.runtime.hostLabviewTcpPort).toBeNull();
+    expect(proof.runtime.hostLabviewIniPath).toBeNull();
+  });
+
   it('reports malformed settings through the CLI main error path', async () => {
     const memoryFs = new MemoryFs();
     const stderr = createWritable();
