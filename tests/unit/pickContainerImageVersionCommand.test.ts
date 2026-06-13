@@ -112,6 +112,46 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ kind: 'clear' });
   });
+
+  it('flags a stale cross-platform selection with a leading warning clear row (VHS-REQ-650)', () => {
+    // Windows tag persisted, but the active Docker engine is in linux mode, so
+    // the windows tag is absent from the (linux) available list and would
+    // otherwise be invisible. It must surface as a leading warning Clear row.
+    const items = buildContainerImageVersionItems(
+      [available('2026q1-linux', { local: false, registry: true })],
+      '2026q1-windows',
+      'linux'
+    );
+    expect(items).toHaveLength(2);
+    expect(items[0].kind).toBe('clear');
+    expect(items[0].label).toContain('$(warning)');
+    expect(items[0].label).toContain('2026q1-windows');
+    expect(items[0].detail).toContain('linux');
+    // The active-platform version still appears below, and there is no second
+    // (duplicate) clear row.
+    expect(items[1]).toMatchObject({ kind: 'version', tag: '2026q1-linux' });
+    expect(items.filter((item) => item.kind === 'clear')).toHaveLength(1);
+  });
+
+  it('surfaces the stale warning clear row even when nothing is discovered (VHS-REQ-650)', () => {
+    const items = buildContainerImageVersionItems([], '2026q1-windows', 'linux');
+    expect(items).toHaveLength(1);
+    expect(items[0].kind).toBe('clear');
+    expect(items[0].label).toContain('$(warning)');
+    expect(items[0].label).toContain('2026q1-windows');
+  });
+
+  it('does not flag a selection that matches the active platform (VHS-REQ-650)', () => {
+    const items = buildContainerImageVersionItems(
+      [available('2026q1-linux', { local: true, registry: true })],
+      '2026q1-linux',
+      'linux'
+    );
+    expect(items[0]).toMatchObject({ kind: 'version', tag: '2026q1-linux' });
+    expect(items[0].label).toContain('$(check)');
+    expect(items.filter((item) => item.kind === 'clear')).toHaveLength(1);
+    expect(items.every((item) => !item.label.includes('$(warning)'))).toBe(true);
+  });
 });
 
 describe('applyContainerImageVersionSelection (VHS-REQ-649)', () => {
