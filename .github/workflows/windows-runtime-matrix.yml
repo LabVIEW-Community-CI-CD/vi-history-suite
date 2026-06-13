@@ -67,6 +67,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Record Guard Summary
+        shell: powershell
+        run: |
+          # actions/checkout cleans the workspace, removing the runner-evidence
+          # directory created by the pre-checkout Guard step; recreate it before
+          # re-recording the trusted-ref guard decision so the matrix evidence
+          # bundle retains it instead of silently losing the guard summary to
+          # checkout.
+          New-Item -ItemType Directory -Force -Path runner-evidence | Out-Null
+          $summaryPath = Join-Path 'runner-evidence' 'windows-runtime-matrix-summary.txt'
+          $isMain = $env:GITHUB_REF -eq 'refs/heads/main'
+          $isReleaseBranch = $env:GITHUB_REF -match '^refs/heads/release/v\d+\.\d+\.\d+$'
+          $isExactVersionTag = $env:GITHUB_REF -match '^refs/tags/v\d+\.\d+\.\d+$'
+          $isTrustedRef = $isMain -or $isReleaseBranch -or $isExactVersionTag
+          $decision = if ($isTrustedRef) { 'allowed' } else { 'blocked' }
+          $lines = @(
+            "Workflow: $env:GITHUB_WORKFLOW",
+            "Run: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID",
+            "Repository: $env:GITHUB_REPOSITORY",
+            "Ref: $env:GITHUB_REF",
+            "SHA: $env:GITHUB_SHA",
+            "Runner: $env:RUNNER_NAME",
+            "Evidence summary path: runner-evidence/windows-runtime-matrix-summary.txt",
+            "Trusted ref decision: $decision (main=$isMain, releaseBranch=$isReleaseBranch, exactVersionTag=$isExactVersionTag, ref=$env:GITHUB_REF)"
+          )
+          $lines | Set-Content -LiteralPath $summaryPath -Encoding UTF8
+          Get-Content -LiteralPath $summaryPath
+
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
