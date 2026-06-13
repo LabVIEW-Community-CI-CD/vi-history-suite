@@ -22,7 +22,7 @@ import {
   PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID,
   PICK_CONTAINER_IMAGE_VERSION_NONE_MESSAGE,
   registerPickContainerImageVersionCommand,
-  resolveEffectiveContainerPlatform,
+  resolveConfirmedContainerPlatform,
   resolveHostContainerPlatform
 } from '../../src/commands/pickContainerImageVersionCommand';
 import {
@@ -54,23 +54,27 @@ describe('resolveHostContainerPlatform (VHS-REQ-649)', () => {
   });
 });
 
-describe('resolveEffectiveContainerPlatform (VHS-REQ-649)', () => {
-  it('prefers the probed Docker daemon mode over the host OS default', async () => {
-    // Windows host, but Docker Desktop is running Linux containers.
-    expect(await resolveEffectiveContainerPlatform(async () => 'linux', 'win32')).toBe('linux');
-    // Linux host, but Docker is in Windows-container mode.
-    expect(await resolveEffectiveContainerPlatform(async () => 'windows', 'linux')).toBe('windows');
+describe('resolveConfirmedContainerPlatform (VHS-REQ-649/650)', () => {
+  it('returns the probed Docker daemon mode when the probe succeeds', async () => {
+    expect(await resolveConfirmedContainerPlatform(async () => 'linux')).toBe('linux');
+    expect(await resolveConfirmedContainerPlatform(async () => 'windows')).toBe('windows');
   });
 
-  it('falls back to the host default when the probe is inconclusive', async () => {
-    expect(await resolveEffectiveContainerPlatform(async () => undefined, 'win32')).toBe('windows');
-    expect(await resolveEffectiveContainerPlatform(async () => undefined, 'darwin')).toBe('linux');
+  it('returns undefined (unknown) when the probe is inconclusive, not a host guess', async () => {
+    // Docker stopped/timing out: the mode is unknown. It must NOT be reported as
+    // the host OS, so stale cross-platform detection cannot fire on a guess.
+    expect(await resolveConfirmedContainerPlatform(async () => undefined)).toBeUndefined();
   });
 
-  it('falls back to the host default when the probe rejects, never blocking selection', async () => {
+  it('returns undefined when the probe rejects, never blocking selection', async () => {
     const rejectingProbe = vi.fn().mockRejectedValue(new Error('docker info failed'));
-    expect(await resolveEffectiveContainerPlatform(rejectingProbe, 'win32')).toBe('windows');
-    expect(await resolveEffectiveContainerPlatform(rejectingProbe, 'linux')).toBe('linux');
+    expect(await resolveConfirmedContainerPlatform(rejectingProbe)).toBeUndefined();
+  });
+
+  it('returns the explicit override without probing the daemon', async () => {
+    const probe = vi.fn();
+    expect(await resolveConfirmedContainerPlatform(probe as never, 'windows')).toBe('windows');
+    expect(probe).not.toHaveBeenCalled();
   });
 });
 
@@ -151,6 +155,20 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items[0].label).toContain('$(check)');
     expect(items.filter((item) => item.kind === 'clear')).toHaveLength(1);
     expect(items.every((item) => !item.label.includes('$(warning)'))).toBe(true);
+  });
+
+  it('does not flag any selection when the active platform is unknown (VHS-REQ-650)', () => {
+    // Daemon mode could not be confirmed (probe inconclusive). A cross-platform
+    // selection must NOT be flagged as incompatible against a guess.
+    const items = buildContainerImageVersionItems(
+      [available('2026q1-linux', { local: false, registry: true })],
+      '2026q1-windows',
+      undefined
+    );
+    expect(items.every((item) => !item.label.includes('$(warning)'))).toBe(true);
+    // Falls back to the ordinary trailing Clear row (current selection exists).
+    expect(items.at(-1)).toMatchObject({ kind: 'clear' });
+    expect(items.at(-1)?.label).not.toContain('$(warning)');
   });
 });
 
@@ -328,6 +346,38 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
 
     expect(probeDaemonPlatform).not.toHaveBeenCalled();
     expect(result).toMatchObject({ outcome: 'persisted-selection', tag: '2026q1-windows' });
+  });
+
+  it('does not flag a persisted selection when the daemon probe is inconclusive (VHS-REQ-650)', async () => {
+    // Docker stopped/timing out: probe resolves undefined. Even with a
+    // cross-platform-looking persisted selection, the picker must not show the
+    // incompatible-selection warning row, because the engine mode is unknown.
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(() => '2026q1-windows'),
+      update: vi.fn(async () => undefined),
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    let capturedLabels: string[] = [];
+    vi.spyOn(vscode.window, 'showQuickPick').mockImplementation((async (
+      items: ReadonlyArray<{ label: string }>
+    ) => {
+      capturedLabels = items.map((item) => item.label);
+      return items[0];
+    }) as never);
+
+    registerPickContainerImageVersionCommand(createFakeContext() as never, {
+      isTrusted: () => true,
+      probeDaemonPlatform: vi.fn().mockResolvedValue(undefined),
+      // Both platforms published so at least one survives host-default listing
+      // regardless of the test host OS.
+      fetchPublishedTags: vi.fn().mockResolvedValue(['2026q1-windows', '2026q1-linux']),
+      listLocalImages: vi.fn().mockResolvedValue([])
+    });
+    await vscode.commands.executeCommand(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID);
+
+    expect(capturedLabels.length).toBeGreaterThan(0);
+    expect(capturedLabels.every((label) => !label.includes('$(warning)'))).toBe(true);
   });
 
   it('clears the selection and surfaces the clear toast', async () => {

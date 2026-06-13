@@ -87,27 +87,34 @@ export function resolveHostContainerPlatform(
 export type DockerDaemonPlatformProber = () => Promise<ContainerImagePlatform | undefined>;
 
 /**
- * VHS-REQ-649: Resolve the container platform the picker should list, preferring
- * the *real* Docker daemon container mode over the host OS default. Docker
- * Desktop on Windows can run Linux containers (its default), so
- * `process.platform` alone is not authoritative about which image platform a
- * compare would actually launch. Returns the probed mode when known, otherwise
- * falls back to the host default so an unavailable or inconclusive probe never
- * blocks selection.
+ * VHS-REQ-649/650: Resolve the *confirmed* active container platform — an
+ * explicit override or a successfully probed Docker daemon mode — or undefined
+ * when the daemon mode cannot be determined (Docker stopped, unreachable, or the
+ * probe times out / rejects).
+ *
+ * Callers MUST treat undefined as "unknown" and MUST NOT assume the host OS is
+ * the engine mode: Docker Desktop on a Windows host commonly runs Linux
+ * containers once started, so a stopped/timing-out probe does not mean
+ * Windows-container mode. Display surfaces (image listing) may fall back to the
+ * host default so selection still works, but correctness-sensitive decisions —
+ * notably flagging a stale cross-platform selection (VHS-REQ-650) — must use
+ * only this confirmed value so a valid selection is never falsely flagged
+ * against a guess.
  */
-export async function resolveEffectiveContainerPlatform(
+export async function resolveConfirmedContainerPlatform(
   probeDaemonPlatform: DockerDaemonPlatformProber,
-  hostPlatform: NodeJS.Platform = process.platform
-): Promise<ContainerImagePlatform> {
-  let probed: ContainerImagePlatform | undefined;
-  try {
-    probed = await probeDaemonPlatform();
-  } catch {
-    // VHS-REQ-649: a throwing/rejecting probe must never block selection.
-    // Degrade to the host default exactly like an inconclusive probe.
-    probed = undefined;
+  explicitPlatform?: ContainerImagePlatform
+): Promise<ContainerImagePlatform | undefined> {
+  if (explicitPlatform) {
+    return explicitPlatform;
   }
-  return probed ?? resolveHostContainerPlatform(hostPlatform);
+  try {
+    return await probeDaemonPlatform();
+  } catch {
+    // VHS-REQ-649: a throwing/rejecting probe must never block selection; treat
+    // it as an inconclusive (unknown) mode, not a host-OS assumption.
+    return undefined;
+  }
 }
 
 
@@ -442,14 +449,18 @@ export function registerPickContainerImageVersionCommand(
         return { outcome: 'blocked-untrusted-workspace' as const };
       }
 
-      // VHS-REQ-649: resolve the platform lazily at picker open. An explicit
-      // override wins; otherwise probe the real Docker daemon mode so the right
-      // images are offered up front (Docker Desktop on Windows defaults to Linux
-      // containers), falling back to the host default when the probe is
-      // inconclusive. Resolved before discovery so the same platform also drives
-      // stale cross-platform selection detection (VHS-REQ-650).
-      const platform =
-        explicitPlatform ?? (await resolveEffectiveContainerPlatform(probeDaemonPlatform));
+      // VHS-REQ-649/650: resolve the active container platform once at picker
+      // open. `confirmedPlatform` is an explicit override or a successfully
+      // probed daemon mode, or undefined when the mode is unknown (Docker
+      // stopped/timing out). Listing falls back to the host default so images
+      // are still offered, but stale cross-platform detection is driven only by
+      // the confirmed value so a valid selection is never flagged against a
+      // guessed engine mode.
+      const confirmedPlatform = await resolveConfirmedContainerPlatform(
+        probeDaemonPlatform,
+        explicitPlatform
+      );
+      const listingPlatform = confirmedPlatform ?? resolveHostContainerPlatform();
 
       const { available } = await vscode.window.withProgress(
         {
@@ -458,7 +469,7 @@ export function registerPickContainerImageVersionCommand(
         },
         () =>
           discoverAvailableContainerImageVersions({
-            platform,
+            platform: listingPlatform,
             fetchPublishedTags,
             listLocalImages
           })
@@ -466,7 +477,11 @@ export function registerPickContainerImageVersionCommand(
 
       const configuration = vscode.workspace.getConfiguration('viHistorySuite');
       const currentSelection = configuration.get<string>('container.imageVersion');
-      const items = buildContainerImageVersionItems(available, currentSelection, platform);
+      const items = buildContainerImageVersionItems(
+        available,
+        currentSelection,
+        confirmedPlatform
+      );
       if (items.length === 0) {
         void vscode.window.showWarningMessage(PICK_CONTAINER_IMAGE_VERSION_NONE_MESSAGE);
         return { outcome: 'no-versions-discovered' as const };
