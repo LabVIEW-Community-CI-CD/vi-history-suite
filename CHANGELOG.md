@@ -12,6 +12,27 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.27.1] - 2026-06-13
+
+### Fixed
+
+- The self-hosted maintainer validation workflows now reliably produce their
+  evidence bundles. The `runner-evidence/` summary directory is recreated after
+  checkout in the Windows and Linux LabVIEW maintainer workflows (it was wiped
+  by `actions/checkout`), the Windows runtime-conflict matrix re-records its
+  trusted-ref guard summary after checkout instead of silently dropping it, and
+  the Windows maintainer workflow's VSIX-evidence step no longer hard-fails on
+  an invalid `Tee-Object` parameter combination.
+
+### Changed
+
+- The `vihs --validate` runtime-validation proof now records the observed
+  host VI Server TCP port (`runtime.hostLabviewTcpPort`) and the `LabVIEW.ini`
+  it was read from (`runtime.hostLabviewIniPath`), so maintainer validation
+  evidence can prove a non-default VI Server port was admitted without a false
+  conflict block. A new dispatch-only Windows runtime-matrix `port-A` scenario
+  exercises this on real hardware (VHS-REQ-623).
+
 ## [1.27.0] - 2026-06-13
 
 ### Changed
