@@ -212,7 +212,9 @@ tests/unit/gitPrerequisiteDetect.test.ts,mapped,Yes,Git --version probe unit tes
 tests/unit/gitPrerequisiteNotice.test.ts,mapped,Yes,Git prerequisite UX helper unit tests mapped to VHS-REQ-619.
 src/commands/pickRuntimeProviderCommand.ts,mapped,Yes,Runtime provider quick-pick command mapped to VHS-REQ-620.
 src/commands/pickContainerImageVersionCommand.ts,mapped,Yes,LabVIEW container image version quick-pick command with injected registry/local discovery boundaries mapped to VHS-REQ-647 VHS-REQ-648 and VHS-REQ-649.
+src/tooling/dockerDaemonPlatform.ts,mapped,Yes,Docker daemon container-mode prober and confirmed-platform resolver shared by the image-version picker and the runtime status bar mapped to VHS-REQ-649 and VHS-REQ-650.
 tests/unit/pickContainerImageVersionCommand.test.ts,mapped,Yes,Container image version quick-pick and discovery combiner unit tests mapped to VHS-REQ-647 VHS-REQ-648 and VHS-REQ-649.
+tests/unit/dockerDaemonPlatform.test.ts,mapped,Yes,Docker daemon container-mode prober and confirmed-platform resolver unit tests mapped to VHS-REQ-649 and VHS-REQ-650.
 tests/unit/containerImageCatalog.test.ts,mapped,Yes,Container image tag model and discovery unit tests mapped to VHS-REQ-646 VHS-REQ-647 and VHS-REQ-648.
 tests/unit/pickRuntimeProviderCommand.test.ts,mapped,Yes,Runtime provider quick-pick unit tests mapped to VHS-REQ-620.
 tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-620.

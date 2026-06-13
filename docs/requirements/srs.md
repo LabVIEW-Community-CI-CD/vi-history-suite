@@ -2421,6 +2421,10 @@ Missing numeric IDs are intentional.
   name the active LabVIEW container image (`Docker @ <tag>`), sourced from
   `viHistorySuite.container.imageVersion` when selected and a built-in default
   tag otherwise, and refresh it on the same `onDidChangeConfiguration` event.
+  When the selected docker image platform conflicts with the confirmed active
+  Docker daemon container mode, the label shall render a warning state
+  (`$(warning) …`) with a conflict tooltip so the misconfiguration is visible
+  before a comparison is attempted (VHS-REQ-650).
 - Acceptance Criteria:
   - `selectActiveRuntime(detection, persisted)` honors a persisted selection
     only when `runtimeProvider`, `labviewVersion`, and `labviewBitness` are
@@ -2461,6 +2465,18 @@ Missing numeric IDs are intentional.
     recommendation=…` when persisted is satisfiable but diverges, and
     `selection unsatisfiable on this host; falling back to recommendation`
     when the persisted combination cannot be served on this host.
+  - VHS-REQ-650: `buildStatusBarPresentation` renders the docker label in a
+    warning state (`STATUS_BAR_TEXT_WARNING` prefix) with a conflict tooltip
+    when the selected `container.imageVersion` platform differs from the
+    confirmed active Docker daemon mode. The mode must be CONFIRMED — an
+    explicit override or a successful `docker info` probe; an unknown mode
+    (Docker stopped, unreachable, or the probe times out / rejects) never
+    warns, so a valid selection is never flagged against a host-OS guess. The
+    watcher probes the daemon mode out-of-band on the async detection path
+    only when the active provider is docker, caches the confirmed mode, and
+    reuses it for the synchronous config-change re-render so a settings flip
+    never triggers a `docker info` call. An unset image selection is never
+    flagged because the compare-time default adapts to the active platform.
 - Agent Work Scope:
   - Keep the persisted-selection arbitration in
     `src/ui/runtimeAvailabilityNotice.ts::selectActiveRuntime` reusing
@@ -2474,11 +2490,15 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/extension.ts`
   - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/tooling/dockerDaemonPlatform.ts`
+  - `src/tooling/containerImageCatalog.ts`
   - `src/commands/pickRuntimeProviderCommand.ts`
   - `src/commands/runtimeCommands.ts`
 - Verification References:
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/runtimeAvailabilityWatcher.test.ts`
+  - `tests/unit/dockerDaemonPlatform.test.ts`
+  - `tests/unit/containerImageCatalog.test.ts`
   - `tests/unit/pickRuntimeProviderCommand.test.ts`
   - `tests/unit/runtimeCommands.test.ts`
   - `tests/unit/requirementsDocs.test.ts`

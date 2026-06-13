@@ -34,6 +34,11 @@ const persistedKeys = {
   'container.imageVersion': undefined as string | undefined
 };
 
+// VHS-REQ-650: controllable Docker daemon-mode probe injected into the watcher
+// so tests never spawn a real `docker info`. Defaults to undefined (unknown).
+let dockerDaemonMode: 'windows' | 'linux' | undefined;
+const probeDaemonPlatform = vi.fn(async () => dockerDaemonMode);
+
 const configListeners: ConfigListener[] = [];
 
 vi.mock('vscode', () => {
@@ -60,7 +65,8 @@ import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
 import {
   createRuntimeAvailabilityWatcher,
   STATUS_BAR_PICK_COMMAND_ID,
-  STATUS_BAR_TEXT_AVAILABLE
+  STATUS_BAR_TEXT_AVAILABLE,
+  STATUS_BAR_TEXT_WARNING
 } from '../../src/ui/runtimeAvailabilityNotice';
 
 const detectionWithBoth: DetectedRuntimes = {
@@ -110,6 +116,8 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     persistedKeys.labviewVersion = undefined;
     persistedKeys.labviewBitness = undefined;
     persistedKeys['container.imageVersion'] = undefined;
+    dockerDaemonMode = undefined;
+    probeDaemonPlatform.mockClear();
     configListeners.length = 0;
     fakeStatusBarItem.text = '';
     fakeStatusBarItem.tooltip = '';
@@ -119,7 +127,8 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
   it('renders the auto-detection recommendation when no persisted selection is set', async () => {
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {
-      detect: async () => detectionWithBoth
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
     });
     await flushAsync();
 
@@ -135,7 +144,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
   it('re-renders the label from cached detection when persisted keys flip via onDidChangeConfiguration', async () => {
     const detect = vi.fn(async () => detectionWithBoth);
     const { context } = createFakeContext();
-    const watcher = createRuntimeAvailabilityWatcher(context as never, { detect });
+    const watcher = createRuntimeAvailabilityWatcher(context as never, { detect, probeDaemonPlatform });
     await flushAsync();
 
     expect(detect).toHaveBeenCalledTimes(1);
@@ -164,7 +173,8 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
 
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {
-      detect: async () => detectionWithBoth
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
     });
     await flushAsync();
 
@@ -177,7 +187,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
   it('re-renders the docker label with the selected container image version when it flips via onDidChangeConfiguration (VHS-REQ-620)', async () => {
     const detect = vi.fn(async () => detectionWithBoth);
     const { context } = createFakeContext();
-    const watcher = createRuntimeAvailabilityWatcher(context as never, { detect });
+    const watcher = createRuntimeAvailabilityWatcher(context as never, { detect, probeDaemonPlatform });
     await flushAsync();
 
     // Persist a satisfiable docker selection plus an explicit image version, as
@@ -203,7 +213,8 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
   it('ignores configuration changes that do not affect viHistorySuite', async () => {
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {
-      detect: async () => detectionWithBoth
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
     });
     await flushAsync();
 
@@ -214,6 +225,73 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
 
     // Label should remain on the recommendation because the listener early-returned.
     expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: LabVIEW 2026 x64`);
+
+    watcher.dispose();
+  });
+
+  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650)', async () => {
+    // Persisted docker selection with a -windows image, but the probed daemon
+    // is in linux-container mode → confirmed conflict → warning state.
+    persistedKeys.runtimeProvider = 'docker';
+    persistedKeys.labviewVersion = '2026';
+    persistedKeys.labviewBitness = 'x64';
+    persistedKeys['container.imageVersion'] = '2026q1-windows';
+    dockerDaemonMode = 'linux';
+
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+    // Allow the out-of-band daemon-mode reconcile + re-render to settle.
+    await flushAsync();
+
+    expect(probeDaemonPlatform).toHaveBeenCalled();
+    expect(fakeStatusBarItem.text).toBe(
+      `${STATUS_BAR_TEXT_WARNING}: Docker @ 2026q1-windows`
+    );
+    expect(fakeStatusBarItem.tooltip).toContain('linux-container mode');
+
+    watcher.dispose();
+  });
+
+  it('does not warn when the daemon mode is unknown (probe inconclusive) (VHS-REQ-650)', async () => {
+    // Same -windows selection, but Docker is stopped/unknown (probe undefined).
+    // A valid selection must never be flagged against a guess.
+    persistedKeys.runtimeProvider = 'docker';
+    persistedKeys.labviewVersion = '2026';
+    persistedKeys.labviewBitness = 'x64';
+    persistedKeys['container.imageVersion'] = '2026q1-windows';
+    dockerDaemonMode = undefined;
+
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+    await flushAsync();
+
+    expect(fakeStatusBarItem.text).toBe(
+      `${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-windows`
+    );
+    expect(fakeStatusBarItem.text).not.toContain('$(warning)');
+
+    watcher.dispose();
+  });
+
+  it('does not probe the daemon when the active provider is host (VHS-REQ-650)', async () => {
+    // Host recommendation → no docker image relevant → no `docker info` call.
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+    await flushAsync();
+
+    expect(probeDaemonPlatform).not.toHaveBeenCalled();
 
     watcher.dispose();
   });

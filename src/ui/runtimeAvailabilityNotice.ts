@@ -32,6 +32,15 @@ import {
   type RuntimeProcessObservation
 } from '../reporting/comparisonReportRuntimeExecution';
 import { isPersistedSelectionSatisfiable } from '../tooling/runtimeSettingsSeed';
+import {
+  type ContainerImagePlatform,
+  detectContainerImageVersionPlatformConflict
+} from '../tooling/containerImageCatalog';
+import {
+  type DockerDaemonPlatformProber,
+  defaultProbeDockerDaemonPlatform,
+  resolveConfirmedContainerPlatform
+} from '../tooling/dockerDaemonPlatform';
 
 export const FIRST_RUN_NO_RUNTIME_NOTICE_KEY =
   'vihs.firstRunNoRuntimeNoticeShown';
@@ -56,6 +65,13 @@ export const MISSING_RUNTIME_MODAL_BUTTONS = {
 
 export const STATUS_BAR_TEXT_AVAILABLE = '$(check) VI History runtime';
 export const STATUS_BAR_TEXT_MISSING = '$(warning) VI History runtime: missing';
+
+/**
+ * VHS-REQ-650: Warning-state prefix used when the selected docker container
+ * image platform conflicts with the confirmed Docker daemon mode, so the label
+ * flags the misconfiguration before the user attempts a comparison.
+ */
+export const STATUS_BAR_TEXT_WARNING = '$(warning) VI History runtime';
 
 /**
  * VHS-REQ-620: Image tag shown in the `Docker @ <tag>` status-bar suffix when
@@ -282,8 +298,36 @@ export interface StatusBarPresentation {
   tooltip: string;
 }
 
+/**
+ * VHS-REQ-650: Build the tooltip for a docker container-image platform mismatch,
+ * naming the selected tag, both platforms, and the two fixes.
+ */
+export function buildContainerImagePlatformMismatchTooltip(conflict: {
+  selectedTag: string;
+  selectedPlatform: ContainerImagePlatform;
+  activePlatform: ContainerImagePlatform;
+}): string {
+  return (
+    `Selected container image ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, ` +
+    `but the active Docker engine is in ${conflict.activePlatform}-container mode, so VI comparisons will fail. ` +
+    `Switch Docker to ${conflict.selectedPlatform} containers, or select a ${conflict.activePlatform} image version.`
+  );
+}
+
+/**
+ * Build the status bar text + tooltip from a runtime snapshot.
+ *
+ * VHS-REQ-650: When `confirmedContainerPlatform` is provided and the active
+ * docker label's selected image targets a different platform, the label renders
+ * a warning state (`$(warning) …`) with a conflict tooltip. The platform must be
+ * CONFIRMED (an explicit override or a successful daemon probe) — a `undefined`
+ * platform (Docker stopped/unknown) never warns, so a valid selection is never
+ * flagged against a host-OS guess. An unset image version is never flagged: the
+ * compare-time default adapts to the active platform.
+ */
 export function buildStatusBarPresentation(
-  snapshot: RuntimeAvailabilitySnapshot
+  snapshot: RuntimeAvailabilitySnapshot,
+  confirmedContainerPlatform?: ContainerImagePlatform
 ): StatusBarPresentation {
   if (snapshot.kind === 'available') {
     const suffix = buildAvailableStatusBarSuffix(snapshot.label);
@@ -291,6 +335,22 @@ export function buildStatusBarPresentation(
       snapshot.source === 'persisted'
         ? '\nSelected via settings.json. Click to change.'
         : '\nAuto-detected. Click to override.';
+
+    const conflict =
+      snapshot.label.provider === 'docker'
+        ? detectContainerImageVersionPlatformConflict(
+            snapshot.label.containerImageVersion,
+            confirmedContainerPlatform
+          )
+        : undefined;
+
+    if (conflict) {
+      return {
+        text: `${STATUS_BAR_TEXT_WARNING}: ${suffix}`,
+        tooltip: `${buildContainerImagePlatformMismatchTooltip(conflict)}${sourceLine}`
+      };
+    }
+
     return {
       text: suffix
         ? `${STATUS_BAR_TEXT_AVAILABLE}: ${suffix}`
@@ -1006,6 +1066,13 @@ export interface MissingRuntimeNoticeWatcherDeps {
    * through the real VS Code configuration API.
    */
   readPersistedSelection?: () => PersistedRuntimeSelectionInput;
+  /**
+   * VHS-REQ-650: Probes the active Docker daemon container mode so the status
+   * bar can warn when the selected docker image platform conflicts with it.
+   * Injected for tests; defaults to `defaultProbeDockerDaemonPlatform`. Only
+   * invoked when the active provider is docker.
+   */
+  probeDaemonPlatform?: DockerDaemonPlatformProber;
 }
 
 /**
@@ -1046,6 +1113,7 @@ export function createRuntimeAvailabilityWatcher(
   const now = deps.now ?? Date.now;
   const readPersistedSelection =
     deps.readPersistedSelection ?? readPersistedFromConfiguration;
+  const probeDaemonPlatform = deps.probeDaemonPlatform ?? defaultProbeDockerDaemonPlatform;
 
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
@@ -1058,6 +1126,11 @@ export function createRuntimeAvailabilityWatcher(
   let inFlight = false;
   let lastDetection: DetectedRuntimes | undefined;
   let lastSnapshot: RuntimeAvailabilitySnapshot | undefined;
+  // VHS-REQ-650: last CONFIRMED Docker daemon container mode (undefined when
+  // unknown/non-docker). Refreshed out-of-band on the async detection path and
+  // reused by the synchronous config-change re-render, so a config flip never
+  // forces a `docker info` call.
+  let cachedConfirmedDaemonPlatform: ContainerImagePlatform | undefined;
 
   const renderFromCachedDetection = (): void => {
     if (!lastDetection) {
@@ -1065,10 +1138,25 @@ export function createRuntimeAvailabilityWatcher(
     }
     const snapshot = selectActiveRuntime(lastDetection, readPersistedSelection());
     lastSnapshot = snapshot;
-    const presentation = buildStatusBarPresentation(snapshot);
+    const presentation = buildStatusBarPresentation(snapshot, cachedConfirmedDaemonPlatform);
     statusBarItem.text = presentation.text;
     statusBarItem.tooltip = presentation.tooltip;
     statusBarItem.show();
+  };
+
+  // VHS-REQ-650: After a detection render, reconcile the confirmed Docker daemon
+  // mode. Probe only when the active provider is docker (host/none users never
+  // pay a `docker info` call), and re-render only when the confirmed mode
+  // changed, so a wedged daemon never blocks the already-rendered label.
+  const reconcileConfirmedDaemonPlatform = async (): Promise<void> => {
+    const nextPlatform =
+      lastSnapshot?.label.provider === 'docker'
+        ? await resolveConfirmedContainerPlatform(probeDaemonPlatform)
+        : undefined;
+    if (nextPlatform !== cachedConfirmedDaemonPlatform) {
+      cachedConfirmedDaemonPlatform = nextPlatform;
+      renderFromCachedDetection();
+    }
   };
 
   const refresh = async (): Promise<void> => {
@@ -1079,12 +1167,8 @@ export function createRuntimeAvailabilityWatcher(
     try {
       const detection = await detect();
       lastDetection = detection;
-      const snapshot = selectActiveRuntime(detection, readPersistedSelection());
-      lastSnapshot = snapshot;
-      const presentation = buildStatusBarPresentation(snapshot);
-      statusBarItem.text = presentation.text;
-      statusBarItem.tooltip = presentation.tooltip;
-      statusBarItem.show();
+      renderFromCachedDetection();
+      const snapshot = lastSnapshot!;
 
       const hasShown =
         context.globalState.get<boolean>(FIRST_RUN_NO_RUNTIME_NOTICE_KEY) === true;
@@ -1096,6 +1180,7 @@ export function createRuntimeAvailabilityWatcher(
         void vscode.window.showInformationMessage(FIRST_RUN_NOTICE_MESSAGE);
       }
       lastRunAtMs = now();
+      await reconcileConfirmedDaemonPlatform();
     } catch (error) {
       console.error(
         '[vi-history-suite] Runtime availability watcher detection failed.',

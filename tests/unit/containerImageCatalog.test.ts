@@ -4,6 +4,7 @@ import {
   AvailableContainerImageVersion,
   LABVIEW_CONTAINER_IMAGE_REPOSITORY,
   compareLabviewContainerImageVersionsNewestFirst,
+  detectContainerImageVersionPlatformConflict,
   discoverLocalContainerImageVersions,
   discoverPublishedContainerImageVersions,
   formatLabviewContainerImageReference,
@@ -261,5 +262,41 @@ describe('selection resolution (VHS-REQ-649/650)', () => {
     if (result.outcome === 'invalid-selection') {
       expect(result.detail).toContain('linux');
     }
+  });
+});
+
+describe('detectContainerImageVersionPlatformConflict (VHS-REQ-650)', () => {
+  it('flags a selection whose platform differs from the confirmed active platform', () => {
+    expect(
+      detectContainerImageVersionPlatformConflict('2026q1-windows', 'linux')
+    ).toEqual({
+      selectedTag: '2026q1-windows',
+      selectedReference: 'nationalinstruments/labview:2026q1-windows',
+      selectedPlatform: 'windows',
+      activePlatform: 'linux'
+    });
+  });
+
+  it('returns undefined when the selection matches the active platform', () => {
+    expect(
+      detectContainerImageVersionPlatformConflict('2026q1-linux', 'linux')
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the active platform is not confirmed', () => {
+    // Unknown / undefined active platform must never flag a conflict (a valid
+    // selection is never flagged against a host-OS guess).
+    expect(
+      detectContainerImageVersionPlatformConflict('2026q1-windows', undefined)
+    ).toBeUndefined();
+    expect(
+      detectContainerImageVersionPlatformConflict('2026q1-windows', 'unknown')
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for an empty or unparseable selection', () => {
+    expect(detectContainerImageVersionPlatformConflict(undefined, 'linux')).toBeUndefined();
+    expect(detectContainerImageVersionPlatformConflict('  ', 'linux')).toBeUndefined();
+    expect(detectContainerImageVersionPlatformConflict('banana', 'linux')).toBeUndefined();
   });
 });
