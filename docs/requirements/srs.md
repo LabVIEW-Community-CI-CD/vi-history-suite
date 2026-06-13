@@ -2474,9 +2474,14 @@ Missing numeric IDs are intentional.
     warns, so a valid selection is never flagged against a host-OS guess. The
     watcher probes the daemon mode out-of-band on the async detection path
     only when the active provider is docker, caches the confirmed mode, and
-    reuses it for the synchronous config-change re-render so a settings flip
-    never triggers a `docker info` call. An unset image selection is never
-    flagged because the compare-time default adapts to the active platform.
+    reuses it for the synchronous re-render. Because the engine mode can be
+    switched externally between probes, a change to
+    `viHistorySuite.runtimeProvider` or `viHistorySuite.container.imageVersion`
+    invalidates the cached mode (so the immediate render never shows a warning
+    from a stale mode) and re-probes out-of-band to restore an accurate
+    warning; other `viHistorySuite` changes re-render from the cached mode
+    without a probe. An unset image selection is never flagged because the
+    compare-time default adapts to the active platform.
 - Agent Work Scope:
   - Keep the persisted-selection arbitration in
     `src/ui/runtimeAvailabilityNotice.ts::selectActiveRuntime` reusing

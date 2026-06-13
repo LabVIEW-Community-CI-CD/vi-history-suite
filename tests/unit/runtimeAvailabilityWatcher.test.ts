@@ -210,6 +210,91 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
+  it('warns when the docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650)', async () => {
+    persistedKeys.runtimeProvider = 'docker';
+    persistedKeys.labviewVersion = '2026';
+    persistedKeys.labviewBitness = 'x64';
+    persistedKeys['container.imageVersion'] = '2026q1-windows';
+    dockerDaemonMode = 'linux';
+
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+
+    // Windows image selected, but the probed daemon runs Linux containers.
+    expect(probeDaemonPlatform).toHaveBeenCalled();
+    expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_WARNING}: Docker @ 2026q1-windows`);
+
+    watcher.dispose();
+  });
+
+  it('re-probes the daemon mode on an image-version change instead of trusting a stale cache (VHS-REQ-650)', async () => {
+    // Codex review (PR #490): a cached daemon mode could be stale if the engine
+    // is switched externally, then a settings change rendered a false warning
+    // from the stale cache. The image-version change must re-probe.
+    persistedKeys.runtimeProvider = 'docker';
+    persistedKeys.labviewVersion = '2026';
+    persistedKeys.labviewBitness = 'x64';
+    persistedKeys['container.imageVersion'] = '2026q1-linux';
+    dockerDaemonMode = 'linux';
+
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+    // Linux image + Linux daemon: no warning, cache = linux.
+    expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-linux`);
+
+    // The user switches Docker Desktop to Windows containers (external), then
+    // sets a -windows image. A stale linux cache would falsely flag a conflict.
+    dockerDaemonMode = 'windows';
+    persistedKeys['container.imageVersion'] = '2026q1-windows';
+    configListeners[0]!({
+      affectsConfiguration: (section) =>
+        section === 'viHistorySuite' || section === 'viHistorySuite.container.imageVersion'
+    });
+    await flushAsync();
+
+    // Re-probe sees Windows mode: Windows image + Windows daemon = no warning.
+    expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-windows`);
+    expect(fakeStatusBarItem.text).not.toContain('$(warning)');
+
+    watcher.dispose();
+  });
+
+  it('surfaces a true mismatch warning after an image-version change once the re-probe resolves (VHS-REQ-650)', async () => {
+    persistedKeys.runtimeProvider = 'docker';
+    persistedKeys.labviewVersion = '2026';
+    persistedKeys.labviewBitness = 'x64';
+    persistedKeys['container.imageVersion'] = '2026q1-linux';
+    dockerDaemonMode = 'linux';
+
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+    expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-linux`);
+
+    // Daemon stays Linux; the user selects a -windows image -> genuine conflict.
+    persistedKeys['container.imageVersion'] = '2026q1-windows';
+    configListeners[0]!({
+      affectsConfiguration: (section) =>
+        section === 'viHistorySuite' || section === 'viHistorySuite.container.imageVersion'
+    });
+    await flushAsync();
+
+    expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_WARNING}: Docker @ 2026q1-windows`);
+
+    watcher.dispose();
+  });
+
   it('ignores configuration changes that do not affect viHistorySuite', async () => {
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {

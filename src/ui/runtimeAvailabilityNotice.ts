@@ -1131,6 +1131,9 @@ export function createRuntimeAvailabilityWatcher(
   // reused by the synchronous config-change re-render, so a config flip never
   // forces a `docker info` call.
   let cachedConfirmedDaemonPlatform: ContainerImagePlatform | undefined;
+  // VHS-REQ-650: monotonic token so overlapping daemon-mode probes apply
+  // last-write-wins; a slow earlier probe never clobbers a newer result.
+  let daemonProbeToken = 0;
 
   const renderFromCachedDetection = (): void => {
     if (!lastDetection) {
@@ -1147,12 +1150,18 @@ export function createRuntimeAvailabilityWatcher(
   // VHS-REQ-650: After a detection render, reconcile the confirmed Docker daemon
   // mode. Probe only when the active provider is docker (host/none users never
   // pay a `docker info` call), and re-render only when the confirmed mode
-  // changed, so a wedged daemon never blocks the already-rendered label.
+  // changed, so a wedged daemon never blocks the already-rendered label. A
+  // monotonic token discards a stale probe result if a newer reconcile started
+  // meanwhile (e.g. rapid config changes).
   const reconcileConfirmedDaemonPlatform = async (): Promise<void> => {
+    const token = ++daemonProbeToken;
     const nextPlatform =
       lastSnapshot?.label.provider === 'docker'
         ? await resolveConfirmedContainerPlatform(probeDaemonPlatform)
         : undefined;
+    if (token !== daemonProbeToken) {
+      return;
+    }
     if (nextPlatform !== cachedConfirmedDaemonPlatform) {
       cachedConfirmedDaemonPlatform = nextPlatform;
       renderFromCachedDetection();
@@ -1212,7 +1221,24 @@ export function createRuntimeAvailabilityWatcher(
     if (!event.affectsConfiguration(RUNTIME_CONFIGURATION_SECTION)) {
       return;
     }
+    // VHS-REQ-650: A change to the runtime provider or the selected container
+    // image can change whether the docker label should warn, and the cached
+    // daemon mode may be stale (the engine can be switched externally between
+    // probes — see the Codex review on PR #490). For those keys, clear the
+    // cache first so the immediate render never surfaces a warning derived from
+    // a stale mode, then re-probe out-of-band to restore an accurate warning if
+    // one still applies. Other `viHistorySuite` changes keep re-rendering from
+    // the cached mode (no probe, no flicker).
+    const mayAffectDaemonWarning =
+      event.affectsConfiguration(`${RUNTIME_CONFIGURATION_SECTION}.container.imageVersion`) ||
+      event.affectsConfiguration(`${RUNTIME_CONFIGURATION_SECTION}.runtimeProvider`);
+    if (mayAffectDaemonWarning) {
+      cachedConfirmedDaemonPlatform = undefined;
+    }
     renderFromCachedDetection();
+    if (mayAffectDaemonWarning) {
+      void reconcileConfirmedDaemonPlatform();
+    }
   });
 
   return {
