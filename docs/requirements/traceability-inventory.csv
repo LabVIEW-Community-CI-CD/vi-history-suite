@@ -133,6 +133,7 @@ tests/unit/viHistoryModel.test.ts,mapped,Yes,VI history model direct eligibility
 tests/unit/viHistoryService.test.ts,mapped,Yes,VI history service tests; mapped through RTM.
 tests/unit/viMagic.test.ts,mapped,Yes,VI magic tests; mapped through RTM.
 tests/unit/viMagicWrapper.test.ts,mapped,Yes,VI magic wrapper tests; mapped through RTM.
+tests/unit/linuxLabviewMaintainerWorkflow.test.ts,mapped,Yes,Linux LabVIEW maintainer workflow tests; mapped through RTM.
 tests/unit/windowsLabviewMaintainerWorkflow.test.ts,mapped,Yes,Windows LabVIEW maintainer workflow tests; mapped through RTM.
 tests/integration/suite/extensionHost.test.ts,mapped,Yes,Extension host integration tests; mapped through RTM.
 tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testing infrastructure.
@@ -142,6 +143,7 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
 .github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow with retained evidence naming validation surfaces and artifacts; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
+.github/workflows/linux-labview-maintainer.yml,release-ci,Yes,Linux LabVIEW maintainer workflow; mapped through RTM.
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
 .github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
 .github/ISSUE_TEMPLATE/bug_report.yml,asset-doc,Yes,Bug report template; mapped through RTM.

@@ -668,3 +668,4 @@ VHS-REQ-648,Software,Active,srs.md#vhs-req-648-local-container-image-tag-discove
 VHS-REQ-649,Software,Active,srs.md#vhs-req-649-container-image-version-selection-setting-and-quick-pick,,,docs/requirements/srs.md
 VHS-REQ-650,Software,Active,srs.md#vhs-req-650-selected-container-version-drives-both-providers-with-fail-closed-resolution,,,docs/requirements/srs.md
 VHS-REQ-651,Software,Active,srs.md#vhs-req-651-chain-container-image-version-pick-after-docker-provider-selection,,,docs/requirements/srs.md
+VHS-REQ-652,Software,Active,srs.md#vhs-req-652-trusted-linuxlabview-maintainer-workflow,,,docs/requirements/srs.md

@@ -189,6 +189,7 @@ Operational guidance:
 | Codespaces/devcontainer | Primary source-evaluation path | Human/source confidence |
 | Diagnostic test VSIX workflow | Reporter retest package from a trusted ref | Diagnostic evidence only |
 | Maintainer Windows/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
+| Maintainer Linux/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
 | Vagrant | Optional isolated local helper | Not a release gate |
 
 ## Activation-Time Runtime Auto-Detect
@@ -286,6 +287,65 @@ cd C:\dev\github-actions-runners\vi-history-suite
 ```
 
 Stop it after validation by closing the runner terminal or pressing `Ctrl+C`.
+
+## Linux/LabVIEW Runner
+
+The Linux maintainer runner is the sibling of the Windows runner above: a
+repository-level, trusted-refs-only self-hosted runner that must not run
+arbitrary pull request code. It exists so the Linux comparison-runtime matrix
+(host-native LabVIEW for Linux plus the linux-container path, issue #259) can be
+re-validated on real hardware on demand, in parallel with the Windows runner
+(issue #378).
+
+Runner settings:
+
+- Runner name: `vihs-linux-labview-<host>`
+- Custom label: `vihs-linux-labview-maintainer`
+- Mode: interactive `run.sh`, not a systemd service
+- Scope: `LabVIEW-Community-CI-CD/vi-history-suite`
+
+Expected host prerequisites:
+
+- Node.js and npm
+- VS Code plus `xvfb` for a headless integration-host display
+- LabVIEW for Linux 2026, including quarterly install dirs such as
+  `LabVIEW-2026Q1-64` / `LabVIEW-2026Q3-64`
+- the Linux LabVIEW CLI launcher (`labviewcli` or the shared `nilvcli`)
+- Git
+- Docker, for the linux-container comparison path
+- GitHub Actions runner application
+
+Register the runner once (the previously-missing infrastructure for issue #378).
+Use the registration token from the repository's
+`Settings > Actions > Runners > New self-hosted runner` page:
+
+```bash
+mkdir -p ~/actions-runners/vi-history-suite
+cd ~/actions-runners/vi-history-suite
+# Download the latest Linux x64 runner package shown on the runner page, extract it here, then:
+./config.sh \
+  --url https://github.com/LabVIEW-Community-CI-CD/vi-history-suite \
+  --token <REGISTRATION_TOKEN> \
+  --name "vihs-linux-labview-$(hostname)" \
+  --labels vihs-linux-labview-maintainer \
+  --unattended
+```
+
+The runner workflow must be `workflow_dispatch` only, use read-only repository
+permissions, and hard-fail unless the ref is `main`, `release/vX.Y.Z`, or an
+exact `vX.Y.Z` tag. The workflow file is
+`.github/workflows/linux-labview-maintainer.yml`.
+
+Start the runner only when needed:
+
+```bash
+cd ~/actions-runners/vi-history-suite
+./run.sh
+```
+
+Stop it after validation by closing the runner terminal or pressing `Ctrl+C`.
+The run records the same evidence shape as the Windows runner in
+`runner-evidence/linux-labview-maintainer-summary.txt`.
 
 ## Evidence
 

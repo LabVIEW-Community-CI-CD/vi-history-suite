@@ -1652,6 +1652,37 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Do not run self-hosted validation on arbitrary pull request code.
 
+### VHS-REQ-652: Trusted Linux/LabVIEW Maintainer Workflow
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The Linux/LabVIEW maintainer workflow shall be manual-only,
+  read-only, trusted-ref-only, and run on a runner labeled
+  `vihs-linux-labview-maintainer`.
+- Acceptance Criteria:
+  - The workflow triggers only through `workflow_dispatch`.
+  - The workflow grants read-only repository contents permission.
+  - The workflow fails closed unless the ref is `main`, `release/vX.Y.Z`, or an
+    exact `vX.Y.Z` tag.
+  - The environment evidence summary includes ref, SHA, runner context, Node/npm
+    versions, VSIX evidence path, and whether the Linux LabVIEW CLI was detected.
+  - The trusted-ref decision is visible in workflow output or artifact text.
+  - The workflow runs the Linux integration host and uploads a VSIX and
+    environment evidence summary artifact.
+- Agent Work Scope:
+  - Change workflow YAML, maintainer operations docs, and static workflow tests
+    together. Keep the Linux workflow a faithful twin of the Windows maintainer
+    workflow (VHS-REQ-598) on a separate self-hosted runner label.
+- Implementation References:
+  - `.github/workflows/linux-labview-maintainer.yml`
+  - `docs/maintainer-operations.md`
+- Verification References:
+  - `tests/unit/linuxLabviewMaintainerWorkflow.test.ts`
+  - `manual:trusted-linux-labview-runner-dispatch`
+- Change Guidance:
+  - Do not run self-hosted validation on arbitrary pull request code.
+
 ### VHS-REQ-599: Optional Vagrant Helper
 
 - Status: Active
