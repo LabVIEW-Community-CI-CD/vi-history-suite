@@ -37,6 +37,7 @@ import {
   shouldThrottleReDetect,
   STATUS_BAR_TEXT_AVAILABLE,
   STATUS_BAR_TEXT_MISSING,
+  STATUS_BAR_TEXT_WARNING,
   VI_SERVER_OPEN_BLOCKED_MESSAGE
 } from '../../src/ui/runtimeAvailabilityNotice';
 
@@ -155,6 +156,54 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
       })
     ).toBe('Docker @ 2026q1patch1-windows');
     expect(buildAvailableStatusBarSuffix({ provider: 'none' })).toBe('');
+  });
+
+  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      containerImageVersion: '2026q1-windows'
+    });
+    const presentation = buildStatusBarPresentation(snapshot, 'linux');
+    expect(presentation.text).toBe(`${STATUS_BAR_TEXT_WARNING}: Docker @ 2026q1-windows`);
+    expect(presentation.tooltip).toContain('2026q1-windows');
+    expect(presentation.tooltip).toContain('linux-container mode');
+  });
+
+  it('does not warn when the confirmed platform matches the selected image (VHS-REQ-650)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      containerImageVersion: '2026q1-linux'
+    });
+    const presentation = buildStatusBarPresentation(snapshot, 'linux');
+    expect(presentation.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-linux`);
+    expect(presentation.text).not.toContain('$(warning)');
+  });
+
+  it('does not warn when the daemon platform is unknown, even with a cross-platform selection (VHS-REQ-650)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      containerImageVersion: '2026q1-windows'
+    });
+    // No confirmed platform passed (Docker stopped/unknown): never flag a guess.
+    const presentation = buildStatusBarPresentation(snapshot, undefined);
+    expect(presentation.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-windows`);
+    expect(presentation.text).not.toContain('$(warning)');
+  });
+
+  it('does not warn for an unset docker image selection (default adapts to platform) (VHS-REQ-650)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64'
+    });
+    const presentation = buildStatusBarPresentation(snapshot, 'windows');
+    expect(presentation.text).not.toContain('$(warning)');
   });
 
   it('throttles re-detect within the configured window and allows it after', () => {

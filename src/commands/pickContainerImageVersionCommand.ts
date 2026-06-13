@@ -28,10 +28,17 @@ import {
   LABVIEW_CONTAINER_IMAGE_REPOSITORY,
   LocalImageLister,
   RegistryTagFetcher,
+  detectContainerImageVersionPlatformConflict,
   discoverLocalContainerImageVersions,
   discoverPublishedContainerImageVersions,
   mergeAvailableContainerImageVersions
 } from '../tooling/containerImageCatalog';
+import {
+  DockerDaemonPlatformProber,
+  defaultProbeDockerDaemonPlatform,
+  resolveConfirmedContainerPlatform,
+  resolveHostContainerPlatform
+} from '../tooling/dockerDaemonPlatform';
 
 export const PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID =
   'labviewViHistory.pickContainerImageVersion';
@@ -58,8 +65,6 @@ export const PICK_CONTAINER_IMAGE_VERSION_CLEAR_TOAST_MESSAGE =
 const REGISTRY_MAX_PAGES = 5;
 /** Per-request registry timeout. */
 const REGISTRY_REQUEST_TIMEOUT_MS = 10_000;
-/** Bounded wait for the `docker info` daemon-mode probe before giving up. */
-const DOCKER_DAEMON_PROBE_TIMEOUT_MS = 5_000;
 
 export interface ContainerImageVersionQuickPickOption {
   readonly kind: 'version' | 'clear';
@@ -70,57 +75,28 @@ export interface ContainerImageVersionQuickPickOption {
   readonly tag?: string;
 }
 
-/** Resolve the container platform a comparison would target on this host. */
-export function resolveHostContainerPlatform(
-  platform: NodeJS.Platform = process.platform
-): ContainerImagePlatform {
-  return platform === 'win32' ? 'windows' : 'linux';
-}
-
 /**
- * VHS-REQ-649: Injected boundary returning the active Docker daemon container
- * mode (`windows` | `linux`), or undefined when Docker is unavailable, the
- * daemon is unreachable, or the mode cannot be determined. The default
- * implementation runs `docker info --format {{.OSType}}`.
- */
-export type DockerDaemonPlatformProber = () => Promise<ContainerImagePlatform | undefined>;
-
-/**
- * VHS-REQ-649: Resolve the container platform the picker should list, preferring
- * the *real* Docker daemon container mode over the host OS default. Docker
- * Desktop on Windows can run Linux containers (its default), so
- * `process.platform` alone is not authoritative about which image platform a
- * compare would actually launch. Returns the probed mode when known, otherwise
- * falls back to the host default so an unavailable or inconclusive probe never
- * blocks selection.
- */
-export async function resolveEffectiveContainerPlatform(
-  probeDaemonPlatform: DockerDaemonPlatformProber,
-  hostPlatform: NodeJS.Platform = process.platform
-): Promise<ContainerImagePlatform> {
-  let probed: ContainerImagePlatform | undefined;
-  try {
-    probed = await probeDaemonPlatform();
-  } catch {
-    // VHS-REQ-649: a throwing/rejecting probe must never block selection.
-    // Degrade to the host default exactly like an inconclusive probe.
-    probed = undefined;
-  }
-  return probed ?? resolveHostContainerPlatform(hostPlatform);
-}
-
-
-/**
- * VHS-REQ-649: Build newest-first quick-pick items from the discovered
+ * VHS-REQ-649/650: Build newest-first quick-pick items from the discovered
  * availability catalog, annotating local presence and marking the current
  * selection, plus a trailing Clear option.
+ *
+ * VHS-REQ-650: When the persisted selection targets a platform other than the
+ * active Docker container mode (`activePlatform`), it cannot launch and is not
+ * present in the platform-filtered `available` list, so it would otherwise be
+ * invisible here. In that case a prominent warning Clear row is surfaced at the
+ * top that names the stale tag and the active platform, so the incompatible
+ * selection is explained and one-click fixable instead of silently hidden.
  */
 export function buildContainerImageVersionItems(
   available: readonly AvailableContainerImageVersion[],
-  currentSelection?: string
+  currentSelection?: string,
+  activePlatform?: ContainerImagePlatform
 ): readonly ContainerImageVersionQuickPickOption[] {
   const current = currentSelection?.trim();
-  const items: ContainerImageVersionQuickPickOption[] = available.map((version) => {
+  const staleConflict = detectContainerImageVersionPlatformConflict(current, activePlatform);
+  const staleCurrentTag = staleConflict?.selectedTag;
+
+  const versionItems: ContainerImageVersionQuickPickOption[] = available.map((version) => {
     const presence = version.locallyPresent
       ? 'Pulled locally'
       : version.publishedToRegistry
@@ -136,7 +112,22 @@ export function buildContainerImageVersionItems(
     };
   });
 
-  if (available.length > 0 || current) {
+  const items: ContainerImageVersionQuickPickOption[] = [];
+
+  if (staleCurrentTag) {
+    // The stale selection is not in the active-platform list, so lead with a
+    // warning Clear row that explains the mismatch and unblocks in one click.
+    items.push({
+      kind: 'clear',
+      label: `$(warning) Clear incompatible selection (${staleCurrentTag})`,
+      description: `Active Docker engine: ${activePlatform}`,
+      detail: `'${staleCurrentTag}' targets a different platform than the active ${activePlatform} Docker engine and cannot launch. Clearing uses the newest supported default, or pick a ${activePlatform} version below.`
+    });
+  }
+
+  items.push(...versionItems);
+
+  if (!staleCurrentTag && (available.length > 0 || current)) {
     items.push({
       kind: 'clear',
       label: PICK_CONTAINER_IMAGE_VERSION_CLEAR_LABEL,
@@ -314,53 +305,6 @@ export const defaultListLocalImages: LocalImageLister = () =>
     }
   });
 
-/**
- * VHS-REQ-649: Default Docker daemon container-mode prober. Runs
- * `docker info --format {{.OSType}}` with discrete arguments (no shell) and maps
- * the result to `windows`/`linux`. Any failure — missing Docker CLI, unreachable
- * daemon, unrecognized output, or a wedged daemon that does not respond within
- * `DOCKER_DAEMON_PROBE_TIMEOUT_MS` — resolves to undefined so the caller falls
- * back to the host default rather than erroring or hanging the picker.
- */
-export const defaultProbeDockerDaemonPlatform: DockerDaemonPlatformProber = () =>
-  new Promise((resolve) => {
-    let stdout = '';
-    let settled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    let child: ReturnType<typeof spawn> | undefined;
-    const finish = (value: ContainerImagePlatform | undefined): void => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      if (timer) {
-        clearTimeout(timer);
-      }
-      resolve(value);
-    };
-    try {
-      child = spawn('docker', ['info', '--format', '{{.OSType}}'], { windowsHide: true });
-      timer = setTimeout(() => {
-        child?.kill();
-        finish(undefined);
-      }, DOCKER_DAEMON_PROBE_TIMEOUT_MS);
-      timer.unref?.();
-      child.stdout?.setEncoding('utf8');
-      child.stdout?.on('data', (chunk) => {
-        stdout += chunk;
-      });
-      // Drain stderr so an erroring daemon does not leave an unconsumed stream.
-      child.stderr?.resume();
-      child.on('error', () => finish(undefined));
-      child.on('close', () => {
-        const mode = stdout.trim().toLowerCase();
-        finish(mode === 'windows' || mode === 'linux' ? mode : undefined);
-      });
-    } catch {
-      finish(undefined);
-    }
-  });
-
 export interface RegisterPickContainerImageVersionCommandDeps {
   readonly isTrusted?: () => boolean;
   /**
@@ -396,30 +340,39 @@ export function registerPickContainerImageVersionCommand(
         return { outcome: 'blocked-untrusted-workspace' as const };
       }
 
+      // VHS-REQ-649/650: resolve the active container platform once at picker
+      // open. `confirmedPlatform` is an explicit override or a successfully
+      // probed daemon mode, or undefined when the mode is unknown (Docker
+      // stopped/timing out). Listing falls back to the host default so images
+      // are still offered, but stale cross-platform detection is driven only by
+      // the confirmed value so a valid selection is never flagged against a
+      // guessed engine mode.
+      const confirmedPlatform = await resolveConfirmedContainerPlatform(
+        probeDaemonPlatform,
+        explicitPlatform
+      );
+      const listingPlatform = confirmedPlatform ?? resolveHostContainerPlatform();
+
       const { available } = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
           title: 'Discovering LabVIEW container image versions…'
         },
-        async () => {
-          // VHS-REQ-649: resolve the platform lazily at picker open. An explicit
-          // override wins; otherwise probe the real Docker daemon mode so the
-          // right images are offered up front (Docker Desktop on Windows
-          // defaults to Linux containers), falling back to the host default when
-          // the probe is inconclusive.
-          const platform =
-            explicitPlatform ?? (await resolveEffectiveContainerPlatform(probeDaemonPlatform));
-          return discoverAvailableContainerImageVersions({
-            platform,
+        () =>
+          discoverAvailableContainerImageVersions({
+            platform: listingPlatform,
             fetchPublishedTags,
             listLocalImages
-          });
-        }
+          })
       );
 
       const configuration = vscode.workspace.getConfiguration('viHistorySuite');
       const currentSelection = configuration.get<string>('container.imageVersion');
-      const items = buildContainerImageVersionItems(available, currentSelection);
+      const items = buildContainerImageVersionItems(
+        available,
+        currentSelection,
+        confirmedPlatform
+      );
       if (items.length === 0) {
         void vscode.window.showWarningMessage(PICK_CONTAINER_IMAGE_VERSION_NONE_MESSAGE);
         return { outcome: 'no-versions-discovered' as const };

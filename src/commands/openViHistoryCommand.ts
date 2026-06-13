@@ -553,6 +553,23 @@ export function createOpenViHistoryCommand(
                   void vscode.commands.executeCommand('labviewViHistory.pickRuntimeProvider');
                 }
               });
+          } else if (isContainerImagePlatformMismatchComparisonRuntimeResult(result)) {
+            // VHS-REQ-650: the selected container image targets a platform the
+            // active Docker engine cannot launch. Offer the image picker as a
+            // one-click fix instead of text-only guidance, mirroring the
+            // bitness-conflict Pick Runtime Provider action above. The picker
+            // probes the daemon mode and lists the right platform's images (and
+            // a Clear option), so a single button reaches every remediation.
+            const PICK_IMAGE_VERSION_ACTION = 'Pick Image Version';
+            void vscode.window
+              .showWarningMessage(runtimeWarningMessage, PICK_IMAGE_VERSION_ACTION)
+              .then((selection) => {
+                if (selection === PICK_IMAGE_VERSION_ACTION) {
+                  void vscode.commands.executeCommand(
+                    'labviewViHistory.pickContainerImageVersion'
+                  );
+                }
+              });
           } else {
             void vscode.window.showWarningMessage(runtimeWarningMessage);
           }
@@ -1303,6 +1320,19 @@ function isBitnessConflictComparisonRuntimeResult(
     result.blockedReason === 'windows-host-bitness-conflict' ||
     result.runtimeFailureReason === 'labview-host-bitness-conflict'
   );
+}
+
+/**
+ * VHS-REQ-650: True when the compare was blocked because the selected container
+ * image version targets a platform the active Docker container mode cannot
+ * launch. The mismatch warning toast offers a `Pick Image Version` action so the
+ * user can switch to a compatible image (or clear the selection) without hunting
+ * for the command, mirroring the bitness-conflict `Pick Runtime Provider` action.
+ */
+function isContainerImagePlatformMismatchComparisonRuntimeResult(
+  result: ComparisonReportActionResult
+): boolean {
+  return result.blockedReason === 'container-image-platform-mismatch';
 }
 
 function buildComparisonRuntimeWarningMessage(
