@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.26.0] - 2026-06-13
+
 ### Fixed
 
 - On a Windows host with multiple LabVIEW installs of the **same bitness but
