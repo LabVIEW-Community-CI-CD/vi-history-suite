@@ -1051,6 +1051,44 @@ Missing numeric IDs are intentional.
     substitution that would make report evidence ambiguous about which LabVIEW
     produced it.
 
+### VHS-REQ-651: Chain Container Image Version Pick After Docker Provider Selection
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Menu Gating
+- Statement: After the Pick Runtime Provider quick-pick persists a docker
+  provider selection, the extension shall chain directly into the container
+  image version picker as a follow-on step, so a user who selects the
+  container-based provider is offered the matching image version (VHS-REQ-649)
+  at the moment it is relevant instead of only through the Command Palette or the
+  raw setting.
+- Acceptance Criteria:
+  - When the Pick Runtime Provider command persists a `docker` selection, it
+    dispatches `labviewViHistory.pickContainerImageVersion` as a follow-on step
+    and reports that the chain was attempted.
+  - A `host` selection and the Clear option do not chain (host comparisons use no
+    container image); their existing outcomes are unchanged.
+  - The chain is best-effort: the docker selection is persisted before the chain,
+    so a cancelled or failing image pick leaves it intact and the runtime-provider
+    command never throws because of the chain.
+  - The command-dispatch boundary is injected so the chaining is unit-tested
+    without a real registered command.
+- Agent Work Scope:
+  - Thread an injected command dispatcher into the Pick Runtime Provider
+    registration and chain the container image version command from the docker
+    branch only; update its unit tests. Do not change the image picker itself or
+    the locator.
+- Implementation References:
+  - `src/commands/pickRuntimeProviderCommand.ts`
+  - `src/commands/pickContainerImageVersionCommand.ts`
+- Verification References:
+  - `tests/unit/pickRuntimeProviderCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the chain scoped to the docker provider and best-effort; never let a
+    cancelled or failed image pick undo the persisted provider selection or throw
+    out of the runtime-provider command.
+
 ### VHS-REQ-641: Working-Tree (Uncommitted) Comparison Against a Prior Revision
 
 
