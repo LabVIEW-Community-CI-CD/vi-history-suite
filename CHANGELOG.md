@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.24.0] - 2026-06-13
+
 ### Added
 
 - The `VI History runtime` status bar now warns proactively when the selected
