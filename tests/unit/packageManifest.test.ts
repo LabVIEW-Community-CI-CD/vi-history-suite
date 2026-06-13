@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.21.1');
+    expect(manifest.version).toBe('1.22.0');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -146,6 +146,10 @@ describe('extension manifest public metadata', () => {
       title: 'Pick Runtime Provider',
       category: 'VI History'
     });
+    expect(titles.get('labviewViHistory.pickContainerImageVersion')).toMatchObject({
+      title: 'Pick LabVIEW Container Image Version',
+      category: 'VI History'
+    });
   });
 
   it('contributes the visibility gate in explorer and editor title menus', () => {
@@ -199,7 +203,8 @@ describe('extension manifest public metadata', () => {
         'viHistorySuite.labviewVersion',
         'viHistorySuite.labviewBitness',
         'viHistorySuite.labviewExePath',
-        'viHistorySuite.labviewCliPath'
+        'viHistorySuite.labviewCliPath',
+        'viHistorySuite.container.imageVersion'
       ]
     });
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
@@ -216,6 +221,9 @@ describe('extension manifest public metadata', () => {
     );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.labviewCliPath'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.container.imageVersion'
     );
   });
 

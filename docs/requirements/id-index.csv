@@ -660,3 +660,11 @@ VHS-REQ-641,Software,Active,srs.md#vhs-req-641-working-tree-uncommitted-comparis
 VHS-REQ-642,Software,Active,srs.md#vhs-req-642-docker-daemon-not-running-comparison-toast,,,docs/requirements/srs.md
 VHS-REQ-643,Software,Active,srs.md#vhs-req-643-docker-not-installed-comparison-toast,,,docs/requirements/srs.md
 VHS-REQ-644,Software,Active,srs.md#vhs-req-644-commit-body-in-comparison-report,,,docs/requirements/srs.md
+VHS-REQ-645,Software,Active,srs.md#vhs-req-645-configurable-comparison-report-flags,,,docs/requirements/srs.md
+VHS-SYS-REQ-019,System,Active,syrs.md#vhs-sys-req-019-selectable-labview-container-runtime-versions,,,docs/requirements/syrs.md
+VHS-REQ-646,Software,Active,srs.md#vhs-req-646-labview-container-image-tag-model,,,docs/requirements/srs.md
+VHS-REQ-647,Software,Active,srs.md#vhs-req-647-published-container-image-tag-discovery,,,docs/requirements/srs.md
+VHS-REQ-648,Software,Active,srs.md#vhs-req-648-local-container-image-tag-discovery,,,docs/requirements/srs.md
+VHS-REQ-649,Software,Active,srs.md#vhs-req-649-container-image-version-selection-setting-and-quick-pick,,,docs/requirements/srs.md
+VHS-REQ-650,Software,Active,srs.md#vhs-req-650-selected-container-version-drives-both-providers-with-fail-closed-resolution,,,docs/requirements/srs.md
+VHS-REQ-651,Software,Active,srs.md#vhs-req-651-chain-container-image-version-pick-after-docker-provider-selection,,,docs/requirements/srs.md

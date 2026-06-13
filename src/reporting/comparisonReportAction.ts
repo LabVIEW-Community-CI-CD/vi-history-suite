@@ -21,6 +21,7 @@ import {
 } from './comparisonReportPacket';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
+import { ComparisonReportFormat, ComparisonReportOptions } from './comparisonReportPlan';
 import { renderComparisonReportPanelContextMarkup } from './comparisonReportContextMarkup';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 import { isWorktreeRevision } from '../git/gitCli';
@@ -115,6 +116,11 @@ export interface ComparisonReportActionDeps {
    * `viHistorySuite.runtime.cliConnectTimeoutSeconds`.
    */
   getCliConnectTimeoutSeconds?: () => number;
+  /**
+   * VHS-REQ-645: optional override for the user-configurable comparison report
+   * flags. When omitted, `readComparisonReportOptions` reads `viHistorySuite.report.*`.
+   */
+  getReportOptions?: () => ComparisonReportOptions;
   archiveComparisonReportSource?: typeof archiveComparisonReportSource;
   exportRegistry?: ComparisonReportExportRegistry;
 }
@@ -582,7 +588,8 @@ async function ensureComparisonReportEvidence(
       cancellationToken: request.cancellationToken
     }, {
       cliConnectTimeoutSeconds: (deps.getCliConnectTimeoutSeconds ?? readCliConnectTimeoutSeconds)(),
-      materializeSelectedRevisionTree: materializeSelectedRevisionTreeWithGit
+      materializeSelectedRevisionTree: materializeSelectedRevisionTreeWithGit,
+      reportOptions: (deps.getReportOptions ?? readComparisonReportOptions)()
     });
     if (request.cancellationToken?.isCancellationRequested) {
       return buildCancelledComparisonReportResult('after-runtime-execution', packet);
@@ -1398,6 +1405,9 @@ export function readComparisonRuntimeSettings(
     // reports configured-labview-(cli|exe)-path-missing when the path is wrong.
     labviewCliPath: readTrimmedStringSetting(configuration, 'labviewCliPath'),
     labviewExePath: readTrimmedStringSetting(configuration, 'labviewExePath'),
+    // VHS-REQ-650: optional selected LabVIEW container image version that drives
+    // the container provider's image; unset preserves the platform default.
+    containerImageVersion: readTrimmedStringSetting(configuration, 'container.imageVersion'),
     allowExistingWindowsHostRuntime: configuredProvider.provider !== 'docker'
   };
 }
@@ -1441,6 +1451,49 @@ function readConfiguredRuntimeProvider(
   }
 
   return { invalidProvider: value };
+}
+
+const ALLOWED_REPORT_FORMATS: ComparisonReportFormat[] = ['HTMLSingleFile', 'HTML'];
+
+/**
+ * VHS-REQ-645: reads the user-configurable comparison report flags from
+ * `viHistorySuite.report.*`. The format is constrained to the HTML variants the
+ * in-panel webview, dashboard, and export pipeline can render; any other value
+ * (or an absent setting) falls back to the shipped single-file default. The
+ * difference-suppression booleans default to false (compare everything), so an
+ * unconfigured workspace reproduces today's exact `CreateComparisonReport` args.
+ */
+export function readComparisonReportOptions(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'> = vscode.workspace.getConfiguration(
+    'viHistorySuite'
+  )
+): ComparisonReportOptions {
+  const configuredFormat = readTrimmedStringSetting(configuration, 'report.format');
+  const reportFormat = ALLOWED_REPORT_FORMATS.find((format) => format === configuredFormat);
+  return {
+    reportFormat: reportFormat ?? 'HTMLSingleFile',
+    ignoreViAttributes: readBooleanSetting(configuration, 'report.ignoreViAttributes'),
+    ignoreFrontPanel: readBooleanSetting(configuration, 'report.ignoreFrontPanel'),
+    ignoreFrontPanelObjectPosition: readBooleanSetting(
+      configuration,
+      'report.ignoreFrontPanelObjectPosition'
+    ),
+    ignoreBlockDiagram: readBooleanSetting(configuration, 'report.ignoreBlockDiagram'),
+    ignoreBlockDiagramCosmetic: readBooleanSetting(
+      configuration,
+      'report.ignoreBlockDiagramCosmetic'
+    )
+  };
+}
+
+function readBooleanSetting(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>,
+  key: string
+): boolean {
+  // Defend the system boundary: a misconfigured settings.json can return a
+  // non-boolean for a boolean-typed setting; treat anything but `true` as the
+  // default (false = include this difference class).
+  return configuration.get<unknown>(key) === true;
 }
 
 export const DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS = 180;

@@ -20,6 +20,10 @@ import {
   windowsLabviewExeCandidates,
   windowsLvComparePath
 } from '../tooling/labviewInstallCatalog';
+import {
+  ContainerImagePlatform,
+  resolveContainerImageSelection
+} from '../tooling/containerImageCatalog';
 
 const execFileAsync = promisify(execFile);
 
@@ -53,6 +57,14 @@ export interface ComparisonRuntimeSettings {
   bitness?: RuntimeBitness;
   windowsContainerImage?: string;
   linuxContainerImage?: string;
+  /**
+   * VHS-REQ-650: `viHistorySuite.container.imageVersion` — a selected LabVIEW
+   * container image version token (canonical tag, e.g. `2026q1patch2-windows`).
+   * When set it drives the container image for the active provider; when unset
+   * the platform default reference is used, preserving prior behavior. The full
+   * `windowsContainerImage` / `linuxContainerImage` string overrides still win.
+   */
+  containerImageVersion?: string;
   allowExistingWindowsHostRuntime?: boolean;
 }
 
@@ -376,8 +388,14 @@ export async function locateComparisonRuntime(
   const registryQueryPlans = platform === 'win32' ? buildWindowsRegistryQueryPlans() : [];
   const pathExists = deps.pathExists ?? defaultPathExists;
   const hostPlatform = deps.hostPlatform ?? process.platform;
-  const windowsContainerImage = resolveWindowsContainerImage(settings.windowsContainerImage);
-  const linuxContainerImage = resolveLinuxContainerImage(settings.linuxContainerImage);
+  const windowsContainerImage = resolveWindowsContainerImage(
+    settings.windowsContainerImage,
+    settings.containerImageVersion
+  );
+  const linuxContainerImage = resolveLinuxContainerImage(
+    settings.linuxContainerImage,
+    settings.containerImageVersion
+  );
 
   if (settings.invalidRequestedProvider) {
     const containerProvider: RuntimeSelectableProvider =
@@ -723,7 +741,14 @@ export async function locateComparisonRuntime(
       settings.requestedProvider === 'docker'
         ? 'docker-provider-unavailable'
         : 'docker-only-provider-unavailable';
-    if (requestedLabviewVersion && requestedLabviewVersion !== '2026') {
+    if (
+      requestedLabviewVersion &&
+      requestedLabviewVersion !== '2026' &&
+      // VHS-REQ-650: an explicit container image version selection governs the
+      // image directly, so the legacy host-LabVIEW-year -> image pin no longer
+      // applies; the selected image is acquired or fails closed downstream.
+      !settings.containerImageVersion?.trim()
+    ) {
       return {
         platform,
         executionMode,
@@ -2332,14 +2357,56 @@ function describeWindowsTcpListeners(listeners: WindowsTcpListenerObservation[])
     .join(' | ');
 }
 
-function resolveWindowsContainerImage(rawImage: string | undefined): string {
-  const trimmed = rawImage?.trim();
-  return trimmed || DEFAULT_WINDOWS_CONTAINER_IMAGE;
+function resolveWindowsContainerImage(
+  rawImage: string | undefined,
+  versionSelection?: string
+): string {
+  return resolveConfiguredContainerImageReference({
+    fullOverride: rawImage,
+    versionSelection,
+    platform: 'windows',
+    defaultReference: DEFAULT_WINDOWS_CONTAINER_IMAGE
+  });
 }
 
-function resolveLinuxContainerImage(rawImage: string | undefined): string {
-  const trimmed = rawImage?.trim();
-  return trimmed || DEFAULT_LINUX_CONTAINER_IMAGE;
+function resolveLinuxContainerImage(
+  rawImage: string | undefined,
+  versionSelection?: string
+): string {
+  return resolveConfiguredContainerImageReference({
+    fullOverride: rawImage,
+    versionSelection,
+    platform: 'linux',
+    defaultReference: DEFAULT_LINUX_CONTAINER_IMAGE
+  });
+}
+
+/**
+ * VHS-REQ-650: Resolve the container image reference for a provider platform.
+ * Precedence: an explicit full-string override wins (back-compat); else a
+ * selected container image version is resolved through the catalog; else the
+ * platform default (preserving prior behavior). An unparseable version setting
+ * falls back to the default here so the locator stays robust — the picker
+ * (VHS-REQ-649) is the boundary that rejects an invalid selection before it is
+ * persisted, and an unavailable-but-valid selection fails closed downstream
+ * through container-image acquisition.
+ */
+function resolveConfiguredContainerImageReference(options: {
+  fullOverride: string | undefined;
+  versionSelection: string | undefined;
+  platform: ContainerImagePlatform;
+  defaultReference: string;
+}): string {
+  const override = options.fullOverride?.trim();
+  if (override) {
+    return override;
+  }
+  const resolved = resolveContainerImageSelection({
+    platform: options.platform,
+    selection: options.versionSelection,
+    defaultReference: options.defaultReference
+  });
+  return resolved.outcome === 'resolved' ? resolved.reference : options.defaultReference;
 }
 
 function normalizeRequestedLabviewVersion(rawVersion: string | undefined): string | undefined {

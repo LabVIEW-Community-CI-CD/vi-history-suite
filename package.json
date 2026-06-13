@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.21.1",
+  "version": "1.22.0",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -26,7 +26,8 @@
         "viHistorySuite.labviewVersion",
         "viHistorySuite.labviewBitness",
         "viHistorySuite.labviewExePath",
-        "viHistorySuite.labviewCliPath"
+        "viHistorySuite.labviewCliPath",
+        "viHistorySuite.container.imageVersion"
       ]
     }
   },
@@ -82,6 +83,11 @@
       {
         "command": "labviewViHistory.pickRuntimeProvider",
         "title": "Pick Runtime Provider",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.pickContainerImageVersion",
+        "title": "Pick LabVIEW Container Image Version",
         "category": "VI History"
       },
       {
@@ -187,12 +193,54 @@
           "type": "string",
           "description": "Optional override for the LabVIEWCLI executable used for comparison reports. Set this to the exact LabVIEWCLI(.exe) when your install is at a location auto-detection does not cover; this also lets VI History open when the LabVIEW CLI prerequisite gate would otherwise block. The comparison runtime validates the path and reports a missing-path error if it does not exist. Restricted in untrusted workspaces because it names an executable the comparison launches."
         },
+        "viHistorySuite.container.imageVersion": {
+          "type": "string",
+          "description": "VHS-REQ-650: selected LabVIEW Docker image version for the container comparison providers, as a canonical tag such as 2026q1-windows, 2026q1patch2-windows, or 2026q1-linux. Leave empty to use the newest supported default. Use the 'Pick LabVIEW Container Image Version' command to choose from versions discovered on Docker Hub and already pulled locally; new National Instruments patches and release years become selectable without updating the extension. Restricted in untrusted workspaces because it names the image the comparison launches."
+        },
         "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
           "type": "integer",
           "default": 180,
           "minimum": 30,
           "maximum": 600,
           "description": "VHS-REQ-148: LabVIEW CLI connect-window timeout (in seconds) written into LabVIEWCLI.ini before each Windows host-native compare. Sets OpenAppReferenceTimeoutInSecond and AfterLaunchOpenAppReferenceTimeoutInSecond. Default 180 matches the shipped Windows-container value; lower it only on hosts with confirmed sub-30s LabVIEW cold launches."
+        },
+        "viHistorySuite.report.format": {
+          "type": "string",
+          "enum": [
+            "HTMLSingleFile",
+            "HTML"
+          ],
+          "enumDescriptions": [
+            "Self-contained single HTML file with images embedded as data URIs (no sibling _files folder). Recommended: avoids the per-image load limit that can leave large multi-file reports showing image paths instead of pictures.",
+            "Multi-file HTML with a sibling <report>_files folder of PNG images. Produces smaller individual files but requests many images at once for large reports."
+          ],
+          "default": "HTMLSingleFile",
+          "description": "VHS-REQ-645: format of the generated LabVIEW comparison report. Only HTML variants are supported by the in-panel viewer, dashboard, and export."
+        },
+        "viHistorySuite.report.ignoreViAttributes": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude VI attribute differences from comparison reports (LabVIEWCLI CreateComparisonReport -noattr)."
+        },
+        "viHistorySuite.report.ignoreFrontPanel": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude all front panel differences from comparison reports (LabVIEWCLI CreateComparisonReport -nofp)."
+        },
+        "viHistorySuite.report.ignoreFrontPanelObjectPosition": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude front panel object size and position differences from comparison reports (LabVIEWCLI CreateComparisonReport -nofppos)."
+        },
+        "viHistorySuite.report.ignoreBlockDiagram": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude all block diagram differences from comparison reports (LabVIEWCLI CreateComparisonReport -nobd)."
+        },
+        "viHistorySuite.report.ignoreBlockDiagramCosmetic": {
+          "type": "boolean",
+          "default": false,
+          "description": "VHS-REQ-645: exclude block diagram cosmetic differences, including object position and size, from comparison reports (LabVIEWCLI CreateComparisonReport -nobdcosm)."
         }
       }
     }

@@ -10,14 +10,20 @@ vi.mock('vscode', async () => {
   return defaultVsCodeTestHarness.vscode;
 });
 
+import * as vscode from 'vscode';
+
 import type { GitPrerequisiteDetection } from '../../src/tooling/gitPrerequisiteDetect';
 import {
   buildGitStatusBarPresentation,
+  createGitPrerequisiteWatcher,
   decideGitFirstRunPresentation,
   decideOpenGate,
+  FIRST_RUN_GIT_NOTICE_KEY,
   GIT_STATUS_BAR_TEXT_MISSING,
   GIT_STATUS_BAR_TOOLTIP_MISSING,
-  OPEN_BLOCKED_MESSAGE
+  NOTICE_BUTTON_INSTALL,
+  OPEN_BLOCKED_MESSAGE,
+  presentOpenBlockedToast
 } from '../../src/ui/gitPrerequisiteNotice';
 
 const detectionAvailable: GitPrerequisiteDetection = {
@@ -80,5 +86,147 @@ describe('decideOpenGate', () => {
     expect(decision.kind).toBe('block');
     expect(decision.toastMessage).toBe(OPEN_BLOCKED_MESSAGE);
     expect(decision.toastMessage).toContain('https://git-scm.com/downloads');
+  });
+});
+
+const flushMicrotasks = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+interface FakeGlobalState {
+  store: Map<string, unknown>;
+  get: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+}
+
+function makeContext(firstRunNoticeShown = false): {
+  context: vscode.ExtensionContext;
+  globalState: FakeGlobalState;
+} {
+  const store = new Map<string, unknown>();
+  if (firstRunNoticeShown) {
+    store.set(FIRST_RUN_GIT_NOTICE_KEY, true);
+  }
+  const globalState: FakeGlobalState = {
+    store,
+    get: vi.fn((key: string) => store.get(key)),
+    update: vi.fn(async (key: string, value: unknown) => {
+      store.set(key, value);
+    })
+  };
+  const context = { globalState } as unknown as vscode.ExtensionContext;
+  return { context, globalState };
+}
+
+describe('createGitPrerequisiteWatcher', () => {
+  it('caches an available detection and never marks or surfaces the first-run notice', async () => {
+    const { context, globalState } = makeContext();
+    const showInfo = vi.spyOn(vscode.window, 'showInformationMessage');
+    showInfo.mockClear();
+
+    const watcher = createGitPrerequisiteWatcher(context, {
+      detect: async () => detectionAvailable
+    });
+    await flushMicrotasks();
+
+    expect(watcher.getDetection()).toEqual(detectionAvailable);
+    expect(globalState.update).not.toHaveBeenCalled();
+    expect(showInfo).not.toHaveBeenCalled();
+    watcher.dispose();
+  });
+
+  it('caches a missing detection, marks the first-run notice once, and offers Install Git', async () => {
+    const { context, globalState } = makeContext();
+    const showInfo = vi.spyOn(vscode.window, 'showInformationMessage');
+    const openExternal = vi.spyOn(vscode.env, 'openExternal');
+    showInfo.mockClear();
+    openExternal.mockClear();
+
+    const watcher = createGitPrerequisiteWatcher(context, {
+      detect: async () => detectionMissing
+    });
+    await flushMicrotasks();
+
+    expect(watcher.getDetection()).toEqual(detectionMissing);
+    expect(globalState.update).toHaveBeenCalledWith(FIRST_RUN_GIT_NOTICE_KEY, true);
+    expect(showInfo).toHaveBeenCalledWith(
+      expect.stringContaining('Git'),
+      NOTICE_BUTTON_INSTALL,
+      expect.anything()
+    );
+    // The harness returns the first action (Install Git), so the notice opens
+    // the install URL. (The fake Uri drops the host, so assert the path.)
+    expect(openExternal).toHaveBeenCalled();
+    expect(openExternal.mock.calls[0]?.[0]?.toString()).toContain('downloads');
+    watcher.dispose();
+  });
+
+  it('does not re-mark the first-run notice when it was already shown', async () => {
+    const { context, globalState } = makeContext(true);
+
+    const watcher = createGitPrerequisiteWatcher(context, {
+      detect: async () => detectionMissing
+    });
+    await flushMicrotasks();
+
+    expect(globalState.update).not.toHaveBeenCalled();
+    watcher.dispose();
+  });
+
+  it('guards against concurrent refreshes with the in-flight flag', async () => {
+    const { context } = makeContext();
+    const detect = vi.fn(async () => detectionAvailable);
+
+    const watcher = createGitPrerequisiteWatcher(context, { detect });
+    // The constructor kicks off one refresh; a concurrent pair while it is in
+    // flight must not spawn additional probes.
+    await Promise.all([watcher.forceRefresh(), watcher.forceRefresh()]);
+    await flushMicrotasks();
+
+    expect(detect.mock.calls.length).toBeGreaterThanOrEqual(1);
+    expect(detect.mock.calls.length).toBeLessThanOrEqual(2);
+    watcher.dispose();
+  });
+
+  it('swallows detection errors so activation never throws', async () => {
+    const { context } = makeContext();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const watcher = createGitPrerequisiteWatcher(context, {
+      detect: async () => {
+        throw new Error('probe exploded');
+      }
+    });
+    await flushMicrotasks();
+
+    expect(watcher.getDetection()).toBeUndefined();
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+    watcher.dispose();
+  });
+});
+
+describe('presentOpenBlockedToast', () => {
+  it('opens the install URL when the user chooses Install Git', async () => {
+    const showWarning = vi.spyOn(vscode.window, 'showWarningMessage');
+    const openExternal = vi.spyOn(vscode.env, 'openExternal');
+    showWarning.mockClear();
+    openExternal.mockClear();
+
+    await presentOpenBlockedToast();
+
+    expect(showWarning).toHaveBeenCalledWith(OPEN_BLOCKED_MESSAGE, NOTICE_BUTTON_INSTALL);
+    expect(openExternal).toHaveBeenCalled();
+    expect(openExternal.mock.calls[0]?.[0]?.toString()).toContain('downloads');
+  });
+
+  it('does not open a URL when the toast is dismissed', async () => {
+    const showWarning = vi.spyOn(vscode.window, 'showWarningMessage');
+    const openExternal = vi.spyOn(vscode.env, 'openExternal');
+    showWarning.mockResolvedValueOnce(undefined as never);
+    openExternal.mockClear();
+
+    await presentOpenBlockedToast();
+
+    expect(openExternal).not.toHaveBeenCalled();
+    showWarning.mockReset();
   });
 });

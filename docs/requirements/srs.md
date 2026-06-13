@@ -815,7 +815,282 @@ Missing numeric IDs are intentional.
     fallback pattern established for the history panel (VHS-REQ-639); do not
     introduce new Git reads or alter comparison runtime behavior.
 
+### VHS-REQ-645: Configurable Comparison Report Flags
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall expose the LabVIEW comparison report flags —
+  the report output format and the difference-suppression filters honored by the
+  LabVIEWCLI CreateComparisonReport operation — as native VS Code settings, so a
+  user can tailor what each generated report contains without code changes while
+  an unconfigured workspace reproduces the shipped defaults exactly.
+- Acceptance Criteria:
+  - The extension contributes user- and workspace-scoped settings under
+    `viHistorySuite.report.*`: a report `format` constrained to the HTML variants
+    the in-panel viewer, dashboard, and export support (`HTMLSingleFile` default
+    and `HTML`), and boolean difference-suppression filters `ignoreViAttributes`,
+    `ignoreFrontPanel`, `ignoreFrontPanelObjectPosition`, `ignoreBlockDiagram`,
+    and `ignoreBlockDiagramCosmetic`.
+  - Each enabled boolean adds exactly its verified CreateComparisonReport flag
+    (`-noattr`, `-nofp`, `-nofppos`, `-nobd`, `-nobdcosm` respectively) to the
+    generated command, and the report format selects the corresponding
+    `-ReportType` value.
+  - With no settings configured, the generated CreateComparisonReport invocation
+    is identical to the prior hardcoded behavior: single-file HTML output and no
+    suppression filters (no regression of VHS-REQ-640).
+  - An invalid or unsupported `report.format` value falls back to the single-file
+    HTML default rather than emitting an unsupported report type.
+  - The settings render in the native VS Code Settings editor; no scripted
+    webview is introduced and the comparison-report panel keeps scripts disabled
+    (no regression of VHS-REQ-626).
+- Agent Work Scope:
+  - Contribute the settings, read them at the comparison-report action boundary,
+    and thread them through the execution plan and CLI plan builder together with
+    their unit tests.
+- Implementation References:
+  - `package.json`
+  - `src/reporting/comparisonReportPlan.ts`
+  - `src/reporting/comparisonReportExecutionPlan.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportAction.ts`
+- Verification References:
+  - `tests/unit/comparisonReportExecutionPlan.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+- Change Guidance:
+  - Keep the difference-suppression flag names aligned with the LabVIEWCLI
+    CreateComparisonReport operation help; do not expose flags the CLI operation
+    does not honor, and do not surface report formats the in-panel viewer,
+    dashboard, or export cannot render.
+
+### VHS-REQ-646: LabVIEW Container Image Tag Model
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: The extension shall provide a pure model that parses, formats, and
+  orders `nationalinstruments/labview` container image tags of the form
+  `<year>q<quarter>[patch<n>]-<windows|linux>` into structured
+  `{ year, quarter, patch, platform }` data, so available image versions are
+  derived data rather than hardcoded strings.
+- Acceptance Criteria:
+  - A strict parser decomposes `2026q1-windows`, `2026q1patch2-windows`, and
+    `2026q1-linux` into year (4-digit), quarter (1–4), optional patch (>=1), and
+    platform (`windows` | `linux`).
+  - Any string that does not match the grammar (including a `patch0` tag), and
+    any full reference whose repository is not the official
+    `nationalinstruments/labview` namespace, is rejected and never produces an
+    image reference.
+  - Ordering is newest-first by year, then quarter, then patch, where a higher
+    patch is newer and the base (no-patch) release is the oldest within its
+    year/quarter group.
+  - A formatter reconstructs the canonical tag and full reference; parsing then
+    formatting is the identity for every valid tag.
+  - The model performs no I/O (no VS Code, filesystem, child process, or
+    network) and is unit-tested.
+- Agent Work Scope:
+  - Add the `containerImageCatalog` model (parser, formatter, comparator). No
+    locator, settings, or command wiring belongs in this requirement.
+- Implementation References:
+  - `src/tooling/containerImageCatalog.ts`
+- Verification References:
+  - `tests/unit/containerImageCatalog.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the tag grammar and namespace pin strict; widening either is a security
+    decision (untrusted registry input), not a cosmetic change.
+
+### VHS-REQ-647: Published Container Image Tag Discovery
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: The extension shall discover available LabVIEW container versions by
+  querying the Docker Hub `nationalinstruments/labview` tag list with an
+  anonymous, read-only, bounded request, filtering the result to the active
+  platform and the supported year floor through the VHS-REQ-646 model.
+- Acceptance Criteria:
+  - Discovery uses an anonymous read-only HTTPS request with a bounded timeout
+    and bounded paging, performed lazily (on picker open), never on activation.
+  - Returned tags are parsed and namespace-pinned through VHS-REQ-646; tags that
+    do not parse, target a different platform, or fall below the supported year
+    floor are excluded, and results are ordered newest-first.
+  - Network failure, timeout, or a non-success response degrades gracefully to an
+    empty result plus a non-fatal note rather than throwing, so selection falls
+    back to local images and the default.
+  - The fetch boundary is injected so discovery is unit-tested without real
+    network access.
+- Agent Work Scope:
+  - Add the registry tag-discovery function behind an injected fetch boundary and
+    the default bounded HTTPS fetcher; return parsed, ordered, platform-filtered
+    versions plus a fail-soft note.
+- Implementation References:
+  - `src/tooling/containerImageCatalog.ts`
+  - `src/commands/pickContainerImageVersionCommand.ts`
+- Verification References:
+  - `tests/unit/containerImageCatalog.test.ts`
+  - `tests/unit/pickContainerImageVersionCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the request anonymous, read-only, and bounded; never add credentials or
+    unbounded retries, and keep registry unavailability non-fatal.
+
+### VHS-REQ-648: Local Container Image Tag Discovery
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: The extension shall discover available LabVIEW container versions
+  from images already present on the local Docker host, so already-pulled images
+  are selectable offline and are not needlessly re-pulled, and shall merge them
+  with published results into one availability catalog.
+- Acceptance Criteria:
+  - Local discovery enumerates `nationalinstruments/labview` images on the host
+    and parses each reference through VHS-REQ-646.
+  - The merged catalog marks each version's local presence and registry
+    publication so selection surfaces can distinguish already-pulled from
+    available-to-pull, and a locally present version is retained even when the
+    registry list omitted it.
+  - Local discovery requires no network and succeeds in an air-gapped
+    environment; absence of the Docker CLI yields an empty result, not an error.
+  - The Docker enumeration boundary is injected and unit-tested without invoking
+    real Docker.
+- Agent Work Scope:
+  - Add the local enumeration function behind an injected command boundary, the
+    default `docker images` lister, and the merge function (de-duplicated by
+    canonical tag, newest-first).
+- Implementation References:
+  - `src/tooling/containerImageCatalog.ts`
+  - `src/commands/pickContainerImageVersionCommand.ts`
+- Verification References:
+  - `tests/unit/containerImageCatalog.test.ts`
+  - `tests/unit/pickContainerImageVersionCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Treat the local list as authoritative for the offline/already-pulled case;
+    merging with registry results must not drop a locally present version.
+
+### VHS-REQ-649: Container Image Version Selection Setting And Quick-Pick
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Menu Gating
+- Statement: The extension shall expose a container image version setting and a
+  quick-pick command that lists discovered versions newest-first, marks
+  locally-present versions, and persists the user's choice (or clears it to the
+  newest-supported default) for the comparison runtime to consume.
+- Acceptance Criteria:
+  - The extension contributes a `viHistorySuite.container.imageVersion` string
+    setting that is empty by default and restricted in untrusted workspaces
+    because it names the image the comparison launches.
+  - A `labviewViHistory.pickContainerImageVersion` command lists discovered
+    versions newest-first, labels each with its canonical tag, annotates whether
+    each is pulled locally or available to pull, and marks the current selection.
+  - Choosing a version persists its canonical tag to the setting at the Global
+    target; a Clear option removes the setting; the command is blocked outside
+    trusted workspaces.
+  - When discovery yields nothing (offline and nothing pulled) and no selection
+    is set, the command surfaces an actionable message naming the
+    `docker pull nationalinstruments/labview:<tag>` recovery rather than failing.
+- Agent Work Scope:
+  - Contribute the setting and command, register the command, and implement the
+    window-free helpers (`buildContainerImageVersionItems`,
+    `applyContainerImageVersionSelection`,
+    `discoverAvailableContainerImageVersions`) with their unit tests; keep the
+    command surface thin.
+- Implementation References:
+  - `package.json`
+  - `src/commands/pickContainerImageVersionCommand.ts`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/pickContainerImageVersionCommand.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the default resolution backward-compatible: an unset setting must
+    preserve the prior pinned image for the current release.
+
+### VHS-REQ-650: Selected Container Version Drives Both Providers With Fail-Closed Resolution
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: The comparison runtime locator shall consume the selected container
+  image version for both the Windows-container and Linux-container providers, and
+  shall fail closed when a selected version cannot be launched rather than
+  silently substituting a different version.
+- Acceptance Criteria:
+  - When `viHistorySuite.container.imageVersion` is set to a valid version for
+    the active container platform, the locator resolves it to the concrete
+    `nationalinstruments/labview:<tag>` reference and uses it for both the
+    Windows-container and Linux-container providers; an explicit full-string
+    `windowsContainerImage`/`linuxContainerImage` override still takes precedence.
+  - With the setting unset, the locator resolves the prior platform default
+    reference, preserving current behavior, and existing locator tests pass
+    unchanged.
+  - When a container image version is explicitly selected, a docker request for a
+    host LabVIEW year other than the legacy default no longer resolves to
+    `docker-provider-labview-version-not-implemented`; the selected image governs
+    instead.
+  - A selected version that cannot be acquired fails closed through the existing
+    classified container-image acquisition path; an unparseable or wrong-platform
+    setting value is rejected at the picker boundary before it is persisted.
+- Agent Work Scope:
+  - Thread `containerImageVersion` from settings into the locator's per-provider
+    image resolution and bypass the legacy year pin when a version is selected;
+    keep resolution pure and unit-tested. Do not change host-native selection.
+- Implementation References:
+  - `src/reporting/comparisonRuntimeLocator.ts`
+  - `src/reporting/comparisonReportAction.ts`
+- Verification References:
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Preserve the fail-closed runtime contract (VHS-SYS-REQ-007): a
+    requested-but-missing runtime is always a classified block, never a silent
+    substitution that would make report evidence ambiguous about which LabVIEW
+    produced it.
+
+### VHS-REQ-651: Chain Container Image Version Pick After Docker Provider Selection
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Menu Gating
+- Statement: After the Pick Runtime Provider quick-pick persists a docker
+  provider selection, the extension shall chain directly into the container
+  image version picker as a follow-on step, so a user who selects the
+  container-based provider is offered the matching image version (VHS-REQ-649)
+  at the moment it is relevant instead of only through the Command Palette or the
+  raw setting.
+- Acceptance Criteria:
+  - When the Pick Runtime Provider command persists a `docker` selection, it
+    dispatches `labviewViHistory.pickContainerImageVersion` as a follow-on step
+    and reports that the chain was attempted.
+  - A `host` selection and the Clear option do not chain (host comparisons use no
+    container image); their existing outcomes are unchanged.
+  - The chain is best-effort: the docker selection is persisted before the chain,
+    so a cancelled or failing image pick leaves it intact and the runtime-provider
+    command never throws because of the chain.
+  - The command-dispatch boundary is injected so the chaining is unit-tested
+    without a real registered command.
+- Agent Work Scope:
+  - Thread an injected command dispatcher into the Pick Runtime Provider
+    registration and chain the container image version command from the docker
+    branch only; update its unit tests. Do not change the image picker itself or
+    the locator.
+- Implementation References:
+  - `src/commands/pickRuntimeProviderCommand.ts`
+  - `src/commands/pickContainerImageVersionCommand.ts`
+- Verification References:
+  - `tests/unit/pickRuntimeProviderCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the chain scoped to the docker provider and best-effort; never let a
+    cancelled or failed image pick undo the persisted provider selection or throw
+    out of the runtime-provider command.
+
 ### VHS-REQ-641: Working-Tree (Uncommitted) Comparison Against a Prior Revision
+
 
 - Status: Active
 - Parent: VHS-SYS-REQ-008

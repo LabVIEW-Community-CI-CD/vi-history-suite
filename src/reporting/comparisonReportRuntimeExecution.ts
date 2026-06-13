@@ -3,7 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { ComparisonCommandPlan } from './comparisonReportPlan';
+import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
 import {
   ComparisonReportPacketRecord,
@@ -91,6 +91,13 @@ export interface ComparisonReportRuntimeExecutionDeps {
    * and the existing NI default applies.
    */
   cliConnectTimeoutSeconds?: number;
+  /**
+   * VHS-REQ-645: user-configurable comparison report flags (format + difference-
+   * suppression filters) read from `viHistorySuite.report.*`. When omitted, the
+   * execution plan keeps the shipped defaults (single-file HTML, compare
+   * everything).
+   */
+  reportOptions?: ComparisonReportOptions;
 }
 
 export interface ComparisonRuntimeCancellationToken {
@@ -277,7 +284,7 @@ export async function executeComparisonReport(
   options: ExecuteComparisonReportOptions,
   deps: ComparisonReportRuntimeExecutionDeps = {}
 ): Promise<ExecuteComparisonReportResult> {
-  const plan = buildComparisonReportExecutionPlan(options.record);
+  const plan = buildComparisonReportExecutionPlan(options.record, deps.reportOptions);
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;

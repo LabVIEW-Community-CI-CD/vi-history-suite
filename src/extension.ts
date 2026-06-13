@@ -65,6 +65,7 @@ import {
 } from './ui/gitPrerequisiteNotice';
 import { registerRuntimeRuntimeCommands } from './commands/runtimeCommands';
 import { registerPickRuntimeProviderCommand } from './commands/pickRuntimeProviderCommand';
+import { registerPickContainerImageVersionCommand } from './commands/pickContainerImageVersionCommand';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
 import {
@@ -282,6 +283,11 @@ export async function activate(
   // item created by the watcher targets this command, so a click flips the
   // persisted runtime selection just like a `vihs --provider …` invocation.
   registerPickRuntimeProviderCommand(context, runtimeAvailabilityWatcher);
+
+  // VHS-REQ-649: Pick LabVIEW Container Image Version command. Discovers the
+  // container image versions published on Docker Hub and already pulled locally
+  // and persists the chosen tag to viHistorySuite.container.imageVersion.
+  registerPickContainerImageVersionCommand(context);
 
   // VHS-REQ-619: Detect Git on PATH once per activation, surface a status
   // bar warning plus a one-time first-run information notice when Git is
