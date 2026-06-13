@@ -12,6 +12,17 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Added
+
+- The `VI History runtime` status bar now warns proactively when the selected
+  `viHistorySuite.container.imageVersion` targets a platform the active Docker
+  daemon cannot launch (for example a `-windows` image while Docker runs Linux
+  containers): the label switches to a warning state (`$(warning) VI History
+  runtime: Docker @ <tag>`) with a tooltip naming the conflict and the fix, so
+  the mismatch is visible before a comparison is attempted. The warning fires
+  only against a confirmed Docker daemon mode — when Docker is stopped or the
+  mode cannot be determined, no warning is shown. (VHS-REQ-620, VHS-REQ-650)
+
 ### Changed
 
 - When a comparison is blocked because the selected

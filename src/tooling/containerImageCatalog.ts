@@ -349,3 +349,53 @@ export function resolveContainerImageSelection(
     publishedToRegistry: match?.publishedToRegistry
   };
 }
+
+/**
+ * VHS-REQ-650: A detected conflict between a selected container image version
+ * token and the active container platform (Docker daemon container mode).
+ */
+export interface ContainerImageVersionPlatformConflict {
+  readonly selectedTag: string;
+  readonly selectedReference: string;
+  readonly selectedPlatform: ContainerImagePlatform;
+  readonly activePlatform: ContainerImagePlatform;
+}
+
+/**
+ * VHS-REQ-650: Pure detector for a selected container image version whose
+ * platform cannot run under the active container platform. The picker
+ * (VHS-REQ-649) only validates a token against `process.platform`, but Docker's
+ * actual engine mode (e.g. Docker Desktop defaulting to Linux containers on a
+ * Windows host) is only known by probing the daemon, so this guard closes the
+ * gap for the compare-time locator (VHS-REQ-650), the image-version picker, and
+ * the runtime status bar.
+ *
+ * No conflict is reported when no token is selected, the token does not parse,
+ * the active platform is not confirmed (`undefined`/`unknown`), or the token's
+ * platform already matches the active platform. Requiring a confirmed active
+ * platform is the guardrail that prevents flagging a valid selection against a
+ * host-OS guess when the daemon mode cannot be determined.
+ */
+export function detectContainerImageVersionPlatformConflict(
+  versionSelection: string | undefined,
+  activePlatform: ContainerImagePlatform | 'unknown' | undefined
+): ContainerImageVersionPlatformConflict | undefined {
+  const selection = versionSelection?.trim();
+  if (!selection) {
+    return undefined;
+  }
+  if (activePlatform !== 'windows' && activePlatform !== 'linux') {
+    return undefined;
+  }
+  const parsed = parseLabviewContainerImageReference(selection);
+  if (!parsed || parsed.platform === activePlatform) {
+    return undefined;
+  }
+  return {
+    selectedTag: parsed.tag,
+    selectedReference: parsed.reference,
+    selectedPlatform: parsed.platform,
+    activePlatform
+  };
+}
+
