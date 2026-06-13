@@ -1050,17 +1050,32 @@ Missing numeric IDs are intentional.
     Docker engine, or pick/clear the version) — instead of silently substituting
     the platform default. A full per-platform image override governs the active
     platform and suppresses the conflict.
+  - The compare path makes the mismatch one-click recoverable rather than
+    text-only: when a comparison is blocked with
+    `container-image-platform-mismatch`, the warning toast offers a
+    `Pick Image Version` action that opens
+    `labviewViHistory.pickContainerImageVersion` (mirroring the bitness-conflict
+    `Pick Runtime Provider` action), and the image-version picker surfaces a
+    stale cross-platform persisted selection as a leading warning Clear row that
+    names the stale tag and the active Docker platform instead of hiding it.
 - Agent Work Scope:
   - Thread `containerImageVersion` from settings into the locator's per-provider
     image resolution and bypass the legacy year pin when a version is selected;
     keep resolution pure and unit-tested. Do not change host-native selection.
+  - Keep the remediation surfaces thin and pattern-consistent: the toast action
+    reuses the existing blocked-runtime warning path, and the picker's stale-row
+    detection stays in the pure `buildContainerImageVersionItems` helper.
 - Implementation References:
   - `src/reporting/comparisonRuntimeLocator.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/commands/pickContainerImageVersionCommand.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/pickContainerImageVersionCommand.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Preserve the fail-closed runtime contract (VHS-SYS-REQ-007): a
