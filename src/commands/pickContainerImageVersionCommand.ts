@@ -76,6 +76,32 @@ export function resolveHostContainerPlatform(
 }
 
 /**
+ * VHS-REQ-649: Injected boundary returning the active Docker daemon container
+ * mode (`windows` | `linux`), or undefined when Docker is unavailable, the
+ * daemon is unreachable, or the mode cannot be determined. The default
+ * implementation runs `docker info --format {{.OSType}}`.
+ */
+export type DockerDaemonPlatformProber = () => Promise<ContainerImagePlatform | undefined>;
+
+/**
+ * VHS-REQ-649: Resolve the container platform the picker should list, preferring
+ * the *real* Docker daemon container mode over the host OS default. Docker
+ * Desktop on Windows can run Linux containers (its default), so
+ * `process.platform` alone is not authoritative about which image platform a
+ * compare would actually launch. Returns the probed mode when known, otherwise
+ * falls back to the host default so an unavailable or inconclusive probe never
+ * blocks selection.
+ */
+export async function resolveEffectiveContainerPlatform(
+  probeDaemonPlatform: DockerDaemonPlatformProber,
+  hostPlatform: NodeJS.Platform = process.platform
+): Promise<ContainerImagePlatform> {
+  const probed = await probeDaemonPlatform();
+  return probed ?? resolveHostContainerPlatform(hostPlatform);
+}
+
+
+/**
  * VHS-REQ-649: Build newest-first quick-pick items from the discovered
  * availability catalog, annotating local presence and marking the current
  * selection, plus a trailing Clear option.
@@ -279,11 +305,55 @@ export const defaultListLocalImages: LocalImageLister = () =>
     }
   });
 
+/**
+ * VHS-REQ-649: Default Docker daemon container-mode prober. Runs
+ * `docker info --format {{.OSType}}` with discrete arguments (no shell) and maps
+ * the result to `windows`/`linux`. Any failure — missing Docker CLI, unreachable
+ * daemon, or unrecognized output — resolves to undefined so the caller falls
+ * back to the host default rather than erroring.
+ */
+export const defaultProbeDockerDaemonPlatform: DockerDaemonPlatformProber = () =>
+  new Promise((resolve) => {
+    let stdout = '';
+    let settled = false;
+    const finish = (value: ContainerImagePlatform | undefined): void => {
+      if (!settled) {
+        settled = true;
+        resolve(value);
+      }
+    };
+    try {
+      const child = spawn('docker', ['info', '--format', '{{.OSType}}'], { windowsHide: true });
+      child.stdout?.setEncoding('utf8');
+      child.stdout?.on('data', (chunk) => {
+        stdout += chunk;
+      });
+      child.on('error', () => finish(undefined));
+      child.on('close', () => {
+        const mode = stdout.trim().toLowerCase();
+        finish(mode === 'windows' || mode === 'linux' ? mode : undefined);
+      });
+    } catch {
+      finish(undefined);
+    }
+  });
+
 export interface RegisterPickContainerImageVersionCommandDeps {
   readonly isTrusted?: () => boolean;
+  /**
+   * Explicit container platform override. When set, the daemon-mode probe is
+   * skipped and this platform is listed directly (used by tests and any caller
+   * that already knows the target platform).
+   */
   readonly platform?: ContainerImagePlatform;
   readonly fetchPublishedTags?: RegistryTagFetcher;
   readonly listLocalImages?: LocalImageLister;
+  /**
+   * VHS-REQ-649: Docker daemon container-mode probe used to list the platform a
+   * compare would actually launch. Injected for tests; defaults to
+   * `defaultProbeDockerDaemonPlatform`. Ignored when `platform` is set.
+   */
+  readonly probeDaemonPlatform?: DockerDaemonPlatformProber;
 }
 
 export function registerPickContainerImageVersionCommand(
@@ -291,9 +361,10 @@ export function registerPickContainerImageVersionCommand(
   deps: RegisterPickContainerImageVersionCommandDeps = {}
 ): void {
   const isTrusted = deps.isTrusted ?? (() => vscode.workspace.isTrusted);
-  const platform = deps.platform ?? resolveHostContainerPlatform();
+  const explicitPlatform = deps.platform;
   const fetchPublishedTags = deps.fetchPublishedTags ?? defaultFetchPublishedTags;
   const listLocalImages = deps.listLocalImages ?? defaultListLocalImages;
+  const probeDaemonPlatform = deps.probeDaemonPlatform ?? defaultProbeDockerDaemonPlatform;
 
   context.subscriptions.push(
     vscode.commands.registerCommand(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID, async () => {
@@ -307,12 +378,20 @@ export function registerPickContainerImageVersionCommand(
           location: vscode.ProgressLocation.Notification,
           title: 'Discovering LabVIEW container image versions…'
         },
-        () =>
-          discoverAvailableContainerImageVersions({
+        async () => {
+          // VHS-REQ-649: resolve the platform lazily at picker open. An explicit
+          // override wins; otherwise probe the real Docker daemon mode so the
+          // right images are offered up front (Docker Desktop on Windows
+          // defaults to Linux containers), falling back to the host default when
+          // the probe is inconclusive.
+          const platform =
+            explicitPlatform ?? (await resolveEffectiveContainerPlatform(probeDaemonPlatform));
+          return discoverAvailableContainerImageVersions({
             platform,
             fetchPublishedTags,
             listLocalImages
-          })
+          });
+        }
       );
 
       const configuration = vscode.workspace.getConfiguration('viHistorySuite');

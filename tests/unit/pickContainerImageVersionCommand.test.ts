@@ -22,6 +22,7 @@ import {
   PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID,
   PICK_CONTAINER_IMAGE_VERSION_NONE_MESSAGE,
   registerPickContainerImageVersionCommand,
+  resolveEffectiveContainerPlatform,
   resolveHostContainerPlatform
 } from '../../src/commands/pickContainerImageVersionCommand';
 import {
@@ -50,6 +51,20 @@ describe('resolveHostContainerPlatform (VHS-REQ-649)', () => {
     expect(resolveHostContainerPlatform('win32')).toBe('windows');
     expect(resolveHostContainerPlatform('linux')).toBe('linux');
     expect(resolveHostContainerPlatform('darwin')).toBe('linux');
+  });
+});
+
+describe('resolveEffectiveContainerPlatform (VHS-REQ-649)', () => {
+  it('prefers the probed Docker daemon mode over the host OS default', async () => {
+    // Windows host, but Docker Desktop is running Linux containers.
+    expect(await resolveEffectiveContainerPlatform(async () => 'linux', 'win32')).toBe('linux');
+    // Linux host, but Docker is in Windows-container mode.
+    expect(await resolveEffectiveContainerPlatform(async () => 'windows', 'linux')).toBe('windows');
+  });
+
+  it('falls back to the host default when the probe is inconclusive', async () => {
+    expect(await resolveEffectiveContainerPlatform(async () => undefined, 'win32')).toBe('windows');
+    expect(await resolveEffectiveContainerPlatform(async () => undefined, 'darwin')).toBe('linux');
   });
 });
 
@@ -210,6 +225,63 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
       vscode.ConfigurationTarget.Global
     );
     expect(info).toHaveBeenCalledWith(expect.stringContaining('2026q1patch2-windows'));
+  });
+
+  it('lists images for the probed Docker daemon mode, not just the host OS (VHS-REQ-649)', async () => {
+    const update = vi.fn(async () => undefined);
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(() => undefined),
+      update,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    let capturedTags: Array<string | undefined> = [];
+    vi.spyOn(vscode.window, 'showQuickPick').mockImplementation((async (
+      items: ReadonlyArray<{ option: { tag?: string } }>
+    ) => {
+      capturedTags = items.map((item) => item.option.tag);
+      return items[0];
+    }) as never);
+
+    // No explicit platform: the daemon probe decides. Docker is in Linux mode
+    // even though (conceptually) the host is Windows. The published list mixes
+    // both platforms; only the linux tag must survive platform filtering.
+    registerPickContainerImageVersionCommand(createFakeContext() as never, {
+      isTrusted: () => true,
+      probeDaemonPlatform: vi.fn().mockResolvedValue('linux'),
+      fetchPublishedTags: vi.fn().mockResolvedValue(['2026q1-windows', '2026q1-linux']),
+      listLocalImages: vi.fn().mockResolvedValue([])
+    });
+    const result = await vscode.commands.executeCommand(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID);
+
+    expect(capturedTags).toContain('2026q1-linux');
+    expect(capturedTags).not.toContain('2026q1-windows');
+    expect(result).toMatchObject({ outcome: 'persisted-selection', tag: '2026q1-linux' });
+  });
+
+  it('skips the daemon probe when an explicit platform override is provided (VHS-REQ-649)', async () => {
+    const probeDaemonPlatform = vi.fn().mockResolvedValue('linux');
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(() => undefined),
+      update: vi.fn(async () => undefined),
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    vi.spyOn(vscode.window, 'showQuickPick').mockImplementation((async (
+      items: ReadonlyArray<{ option: { tag?: string } }>
+    ) => items[0]) as never);
+
+    registerPickContainerImageVersionCommand(createFakeContext() as never, {
+      isTrusted: () => true,
+      platform: 'windows',
+      probeDaemonPlatform,
+      fetchPublishedTags: vi.fn().mockResolvedValue(['2026q1-windows']),
+      listLocalImages: vi.fn().mockResolvedValue([])
+    });
+    const result = await vscode.commands.executeCommand(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID);
+
+    expect(probeDaemonPlatform).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ outcome: 'persisted-selection', tag: '2026q1-windows' });
   });
 
   it('clears the selection and surfaces the clear toast', async () => {
