@@ -30,7 +30,8 @@ const fakeStatusBarItem: FakeStatusBarItem = {
 const persistedKeys = {
   runtimeProvider: undefined as string | undefined,
   labviewVersion: undefined as string | undefined,
-  labviewBitness: undefined as string | undefined
+  labviewBitness: undefined as string | undefined,
+  'container.imageVersion': undefined as string | undefined
 };
 
 const configListeners: ConfigListener[] = [];
@@ -108,6 +109,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     persistedKeys.runtimeProvider = undefined;
     persistedKeys.labviewVersion = undefined;
     persistedKeys.labviewBitness = undefined;
+    persistedKeys['container.imageVersion'] = undefined;
     configListeners.length = 0;
     fakeStatusBarItem.text = '';
     fakeStatusBarItem.tooltip = '';
@@ -168,6 +170,32 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
 
     expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: LabVIEW 2026 x64`);
     expect(watcher.getLastSnapshot()?.source).toBe('auto-detected');
+
+    watcher.dispose();
+  });
+
+  it('re-renders the docker label with the selected container image version when it flips via onDidChangeConfiguration (VHS-REQ-620)', async () => {
+    const detect = vi.fn(async () => detectionWithBoth);
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, { detect });
+    await flushAsync();
+
+    // Persist a satisfiable docker selection plus an explicit image version, as
+    // `vihs --provider docker` followed by Pick Container Image Version would
+    // write to settings.json.
+    persistedKeys.runtimeProvider = 'docker';
+    persistedKeys.labviewVersion = '2026';
+    persistedKeys.labviewBitness = 'x64';
+    persistedKeys['container.imageVersion'] = '2026q1patch1-windows';
+    configListeners[0]!({ affectsConfiguration: (section) => section === 'viHistorySuite' });
+
+    expect(detect).toHaveBeenCalledTimes(1); // No re-detection
+    expect(fakeStatusBarItem.text).toBe(
+      `${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1patch1-windows`
+    );
+    expect(watcher.getLastSnapshot()?.label.containerImageVersion).toBe(
+      '2026q1patch1-windows'
+    );
 
     watcher.dispose();
   });

@@ -20,6 +20,7 @@ import {
   decideLabviewCliOpenGateWithRegistryFallback,
   decideVersionOpenGate,
   decideViServerOpenGate,
+  DEFAULT_DOCKER_IMAGE_LABEL_TAG,
   evaluateRuntimeAvailability,
   INSTALL_LABVIEW_CLI_URL,
   isLabviewCliInstalled,
@@ -122,7 +123,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
       `${STATUS_BAR_TEXT_AVAILABLE}: LabVIEW 2026 x64`
     );
     expect(buildStatusBarPresentation(evaluateRuntimeAvailability(detectionAvailable)).text).toBe(
-      `${STATUS_BAR_TEXT_AVAILABLE}: Docker`
+      `${STATUS_BAR_TEXT_AVAILABLE}: Docker @ ${DEFAULT_DOCKER_IMAGE_LABEL_TAG}`
     );
     expect(buildStatusBarPresentation(evaluateRuntimeAvailability(detectionMissing)).text).toBe(
       STATUS_BAR_TEXT_MISSING
@@ -144,7 +145,15 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
         labviewVersion: '2026',
         labviewBitness: 'x64'
       })
-    ).toBe('Docker');
+    ).toBe(`Docker @ ${DEFAULT_DOCKER_IMAGE_LABEL_TAG}`);
+    expect(
+      buildAvailableStatusBarSuffix({
+        provider: 'docker',
+        labviewVersion: '2026',
+        labviewBitness: 'x64',
+        containerImageVersion: '2026q1patch1-windows'
+      })
+    ).toBe('Docker @ 2026q1patch1-windows');
     expect(buildAvailableStatusBarSuffix({ provider: 'none' })).toBe('');
   });
 
@@ -187,6 +196,32 @@ describe('selectActiveRuntime (VHS-REQ-620)', () => {
     });
     expect(snapshot.source).toBe('persisted');
     expect(snapshot.label.provider).toBe('docker');
+  });
+
+  it('carries the selected container image version onto a persisted docker label (VHS-REQ-620)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      containerImageVersion: '2026q1patch1-windows'
+    });
+    expect(snapshot.label.provider).toBe('docker');
+    expect(snapshot.label.containerImageVersion).toBe('2026q1patch1-windows');
+    expect(buildAvailableStatusBarSuffix(snapshot.label)).toBe(
+      'Docker @ 2026q1patch1-windows'
+    );
+  });
+
+  it('annotates an auto-detected docker label with the selected container image version (VHS-REQ-620)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      containerImageVersion: '2026q1patch2-linux'
+    });
+    expect(snapshot.source).toBe('auto-detected');
+    expect(snapshot.label.provider).toBe('docker');
+    expect(snapshot.label.containerImageVersion).toBe('2026q1patch2-linux');
+    expect(buildAvailableStatusBarSuffix(snapshot.label)).toBe(
+      'Docker @ 2026q1patch2-linux'
+    );
   });
 
   it('silently falls back to the recommendation when the persisted selection is unsatisfiable', () => {
