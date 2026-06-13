@@ -610,6 +610,66 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
+  it('recomputes and re-renders the preflight after the Pick Image Version picker runs (VHS-REQ-650)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const panel = createMockPanel();
+    createWebviewPanelMock.mockReturnValue(panel);
+
+    // Blocked-by-mismatch on first resolve (panel open), remediated to ready on
+    // the second resolve (after the picker writes a compatible image setting).
+    const comparePreflightResolver = vi
+      .fn()
+      .mockResolvedValueOnce({
+        status: 'blocked',
+        provider: 'docker',
+        labviewVersion: '2026',
+        labviewBitness: 'x64',
+        nextAction: 'Next action: pick a matching image version.',
+        cliHint: 'Use settings CLI',
+        blockedReason: 'container-image-platform-mismatch'
+      })
+      .mockResolvedValueOnce({
+        status: 'ready',
+        provider: 'docker',
+        labviewVersion: '2026',
+        labviewBitness: 'x64',
+        nextAction: 'Next action: choose Compare.',
+        cliHint: 'Use settings CLI'
+      });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      // A comparison action must be injected for comparison generation (and thus
+      // the compare preflight) to be available; it is never invoked here.
+      vi.fn() as never,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      comparePreflightResolver
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    // Panel opens blocked: the CTA is present.
+    expect(panel.webview.html).toContain('data-testid="history-action-pick-image-version"');
+
+    await panelTracker.dispatchLastPanelMessage({ command: 'pickContainerImageVersion' });
+
+    // The picker ran, the preflight was recomputed (second resolver call), and
+    // the panel re-rendered to the now-ready state with the CTA gone.
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'labviewViHistory.pickContainerImageVersion'
+    );
+    expect(comparePreflightResolver).toHaveBeenCalledTimes(2);
+    expect(panel.webview.html).not.toContain('data-testid="history-action-pick-image-version"');
+  });
+
   it('records missing Git URI instead of opening stale revision content', async () => {    const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();

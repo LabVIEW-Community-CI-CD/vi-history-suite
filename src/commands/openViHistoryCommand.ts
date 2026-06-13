@@ -181,7 +181,7 @@ export function createOpenViHistoryCommand(
       },
       hasRetainedComparisonReport
     );
-    const comparePreflightState = await resolveHistoryPanelComparePreflightState(
+    let comparePreflightState = await resolveHistoryPanelComparePreflightState(
       comparePreflightResolver,
       runtimePlatform,
       runtimeLocator
@@ -962,8 +962,23 @@ export function createOpenViHistoryCommand(
         // VHS-REQ-650: the compare-preflight Pick Image Version CTA (shown when
         // the runtime is blocked by a container-image-platform-mismatch) opens
         // the image-version picker so the user can switch to a compatible image
-        // before running Compare.
-        void vscode.commands.executeCommand('labviewViHistory.pickContainerImageVersion');
+        // before running Compare. Await the picker, then recompute the preflight
+        // and re-render so the panel reflects the remediation — the block clears
+        // and the CTA disappears once a compatible image is selected — instead of
+        // showing a stale block until the panel is reopened.
+        await vscode.commands.executeCommand('labviewViHistory.pickContainerImageVersion');
+        comparePreflightState = await resolveHistoryPanelComparePreflightState(
+          comparePreflightResolver,
+          runtimePlatform,
+          runtimeLocator
+        );
+        safeUpdatePanelHtml(
+          renderHistoryPanelHtml(
+            model,
+            panelTracker?.getLastActionSummary(),
+            comparePreflightState
+          )
+        );
         return;
       }
 

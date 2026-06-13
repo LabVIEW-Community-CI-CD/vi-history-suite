@@ -1070,7 +1070,10 @@ Missing numeric IDs are intentional.
     `labviewViHistory.pickContainerImageVersion`. The classified block reason is
     threaded onto the panel preflight state as a typed field so the gating is
     deterministic; the button is shown only for that block reason, not for other
-    blocked reasons or a ready/unavailable preflight.
+    blocked reasons or a ready/unavailable preflight. After the picker completes,
+    the panel re-resolves the compare preflight and re-renders in place, so a
+    selection that clears the mismatch removes the block (and its
+    call-to-action) without requiring the panel to be reopened.
 - Agent Work Scope:
   - Thread `containerImageVersion` from settings into the locator's per-provider
     image resolution and bypass the legacy year pin when a version is selected;
