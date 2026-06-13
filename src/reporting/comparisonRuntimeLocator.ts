@@ -22,6 +22,8 @@ import {
 } from '../tooling/labviewInstallCatalog';
 import {
   ContainerImagePlatform,
+  ContainerImageVersionPlatformConflict,
+  detectContainerImageVersionPlatformConflict,
   parseLabviewContainerImageReference,
   resolveContainerImageSelection
 } from '../tooling/containerImageCatalog';
@@ -1729,54 +1731,6 @@ function resolveContainerImageForHostMode(options: {
     : options.windowsContainerImage;
 }
 
-/**
- * VHS-REQ-650: A detected conflict between the user's selected container image
- * version token and the active Docker container host mode. When present, the
- * locator fails closed (`container-image-platform-mismatch`) instead of silently
- * substituting the platform default reference for a token whose platform the
- * running Docker engine cannot launch.
- */
-interface ContainerImageVersionPlatformConflict {
-  selectedTag: string;
-  selectedReference: string;
-  selectedPlatform: ContainerImagePlatform;
-  hostMode: Extract<DockerContainerHostMode, 'windows' | 'linux'>;
-}
-
-/**
- * VHS-REQ-650: Pure detector for a selected container image version whose
- * platform cannot run under the active Docker container host mode. The picker
- * (VHS-REQ-649) only validates a token against `process.platform`, but Docker's
- * actual engine mode (e.g. Docker Desktop defaulting to Linux containers on a
- * Windows host) is only known at compare time, so this guard closes the gap.
- *
- * No conflict is reported when no token is selected, the token does not parse,
- * the host mode is not yet determined (`unknown`/undefined), or the token's
- * platform already matches the host mode.
- */
-function detectContainerImageVersionPlatformConflict(
-  versionSelection: string | undefined,
-  hostMode: DockerContainerHostMode | undefined
-): ContainerImageVersionPlatformConflict | undefined {
-  const selection = versionSelection?.trim();
-  if (!selection) {
-    return undefined;
-  }
-  if (hostMode !== 'windows' && hostMode !== 'linux') {
-    return undefined;
-  }
-  const parsed = parseLabviewContainerImageReference(selection);
-  if (!parsed || parsed.platform === hostMode) {
-    return undefined;
-  }
-  return {
-    selectedTag: parsed.tag,
-    selectedReference: parsed.reference,
-    selectedPlatform: parsed.platform,
-    hostMode
-  };
-}
-
 function describeContainerProviderLabel(
   provider: Extract<ComparisonRuntimeProvider, 'windows-container' | 'linux-container'>
 ): string {
@@ -1993,7 +1947,7 @@ function buildContainerImagePlatformMismatchSelection(options: {
   containerImageVersionConflict?: ContainerImageVersionPlatformConflict;
 }): ComparisonRuntimeSelection {
   const conflict = options.containerImageVersionConflict!;
-  const rejectionDetail = `selected container image version ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, but the active Docker engine is in ${conflict.hostMode}-container mode`;
+  const rejectionDetail = `selected container image version ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, but the active Docker engine is in ${conflict.activePlatform}-container mode`;
   const providerDecisions = options.providerDecisions.map((decision) =>
     decision.outcome === 'selected' &&
     (decision.provider === 'windows-container' || decision.provider === 'linux-container')
@@ -2024,7 +1978,7 @@ function buildContainerImagePlatformMismatchSelection(options: {
     hostRuntimeConflictDetected: options.hostRuntimeConflictDetected,
     notes: [
       ...(options.notes ?? []),
-      `Selected container image version ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, but the active Docker engine is in ${conflict.hostMode}-container mode, so the selection cannot be launched. Switch Docker to ${conflict.selectedPlatform} containers or select a ${conflict.hostMode} image version.`
+      `Selected container image version ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, but the active Docker engine is in ${conflict.activePlatform}-container mode, so the selection cannot be launched. Switch Docker to ${conflict.selectedPlatform} containers or select a ${conflict.activePlatform} image version.`
     ],
     registryQueryPlans: options.registryQueryPlans,
     candidates: options.candidates
