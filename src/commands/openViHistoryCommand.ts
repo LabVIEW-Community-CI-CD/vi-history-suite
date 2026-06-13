@@ -958,12 +958,12 @@ export function createOpenViHistoryCommand(
         return;
       }
 
-      if (command === 'notifyComparePreflightBlocked') {
-        void vscode.window.showWarningMessage(
-          typeof message.warningMessage === 'string' && message.warningMessage.length > 0
-            ? message.warningMessage
-            : comparePreflightState.warningMessage ?? comparePreflightState.nextAction
-        );
+      if (command === 'pickContainerImageVersion') {
+        // VHS-REQ-650: the compare-preflight Pick Image Version CTA (shown when
+        // the runtime is blocked by a container-image-platform-mismatch) opens
+        // the image-version picker so the user can switch to a compatible image
+        // before running Compare.
+        void vscode.commands.executeCommand('labviewViHistory.pickContainerImageVersion');
         return;
       }
 
@@ -1738,7 +1738,8 @@ function buildRuntimeBackedBlockedComparePreflightState(options: {
     labviewBitness: options.labviewBitness,
     nextAction,
     cliHint: options.cliHint,
-    warningMessage: warningSegments.join(' ')
+    warningMessage: warningSegments.join(' '),
+    blockedReason: options.runtimeSelection.blockedReason
   };
 }
 

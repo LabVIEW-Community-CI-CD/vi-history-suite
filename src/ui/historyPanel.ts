@@ -19,6 +19,13 @@ export interface HistoryPanelComparePreflightState {
   nextAction: string;
   cliHint: string;
   warningMessage?: string;
+  /**
+   * VHS-REQ-650: the runtime locator's classified block reason when
+   * `status === 'blocked'`. Drives the proactive Pick Image Version CTA for a
+   * `container-image-platform-mismatch` so the panel can offer one-click
+   * remediation before the user selects revisions and runs Compare.
+   */
+  blockedReason?: string;
 }
 
 /**
@@ -130,6 +137,15 @@ export function renderHistoryPanelHtml(
   const initialComparePreflightSummary = deriveInitialComparePreflightSummary(
     effectiveComparePreflightState
   );
+  // VHS-REQ-650: when the compare preflight is blocked because the selected
+  // container image platform conflicts with the active Docker mode, offer a
+  // one-click Pick Image Version CTA. The generic click delegation posts the
+  // command to the extension, which opens the image-version picker.
+  const comparePreflightPickImageVersionCta =
+    effectiveComparePreflightState.status === 'blocked' &&
+    effectiveComparePreflightState.blockedReason === 'container-image-platform-mismatch'
+      ? '<button data-testid="history-action-pick-image-version" data-command="pickContainerImageVersion">Pick Image Version</button>'
+      : '';
   const documentationButton =
     capabilities.documentationAvailable !== false
       ? '<button data-testid="history-action-documentation" data-command="openDocumentation" data-page-id="user-workflow">Open docs</button>'
@@ -345,6 +361,7 @@ export function renderHistoryPanelHtml(
       </details>
       <div data-testid="history-compare-preflight-cli-hint" id="compare-preflight-cli-hint">${escapeHtml(effectiveComparePreflightState.cliHint)}</div>
       <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" disabled>Compare</button>
+      ${comparePreflightPickImageVersionCta}
     </div>
     <table data-testid="history-table">
       <thead>

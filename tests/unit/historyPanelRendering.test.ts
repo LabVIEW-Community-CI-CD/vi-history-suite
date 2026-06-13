@@ -407,6 +407,52 @@ describe('historyPanelRendering', () => {
     });
   });
 
+  describe('compare preflight Pick Image Version CTA (VHS-REQ-650)', () => {
+    const mismatchPreflight = {
+      status: 'blocked' as const,
+      provider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      nextAction: 'Next action: switch Docker or pick a matching image version.',
+      cliHint: 'Use settings CLI',
+      blockedReason: 'container-image-platform-mismatch'
+    };
+
+    it('renders the CTA when preflight is blocked by a container image platform mismatch', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel(), undefined, mismatchPreflight);
+      expect(html).toContain('data-testid="history-action-pick-image-version"');
+      expect(html).toContain('data-command="pickContainerImageVersion"');
+      expect(html).toContain('>Pick Image Version</button>');
+    });
+
+    it('does not render the CTA for a different blocked reason', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel(), undefined, {
+        ...mismatchPreflight,
+        blockedReason: 'labview-version-required'
+      });
+      expect(html).not.toContain('data-testid="history-action-pick-image-version"');
+    });
+
+    it('does not render the CTA when the blocked state carries no blockedReason', () => {
+      const { blockedReason: _omit, ...withoutReason } = mismatchPreflight;
+      const html = renderHistoryPanelHtml(createTestViewModel(), undefined, withoutReason);
+      expect(html).not.toContain('data-testid="history-action-pick-image-version"');
+    });
+
+    it('does not render the CTA when the preflight is ready', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel(), undefined, {
+        status: 'ready',
+        provider: 'docker',
+        labviewVersion: '2026',
+        labviewBitness: 'x64',
+        nextAction: 'Next action: choose Compare.',
+        cliHint: 'Use settings CLI',
+        blockedReason: 'container-image-platform-mismatch'
+      });
+      expect(html).not.toContain('data-testid="history-action-pick-image-version"');
+    });
+  });
+
   describe('eligibility rendering', () => {
     it('renders eligible status when model is eligible', () => {
       const model = createTestViewModel({

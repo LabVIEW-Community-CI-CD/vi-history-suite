@@ -592,6 +592,24 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
+  it('opens the image-version picker when the preflight Pick Image Version CTA posts its command (VHS-REQ-650)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({ command: 'pickContainerImageVersion' });
+
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'labviewViHistory.pickContainerImageVersion'
+    );
+  });
+
   it('records missing Git URI instead of opening stale revision content', async () => {    const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
