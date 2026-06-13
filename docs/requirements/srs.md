@@ -992,12 +992,19 @@ Missing numeric IDs are intentional.
   - When discovery yields nothing (offline and nothing pulled) and no selection
     is set, the command surfaces an actionable message naming the
     `docker pull nationalinstruments/labview:<tag>` recovery rather than failing.
+  - The command lists versions for the *active Docker daemon container mode*
+    rather than the host OS alone: at picker open it probes the daemon
+    (`docker info` OSType) through an injected boundary and lists that platform's
+    images, so a Windows host running Docker in Linux-container mode is offered
+    Linux images. An unavailable or inconclusive probe falls back to the host
+    default, and an explicit platform override skips the probe.
 - Agent Work Scope:
   - Contribute the setting and command, register the command, and implement the
     window-free helpers (`buildContainerImageVersionItems`,
     `applyContainerImageVersionSelection`,
-    `discoverAvailableContainerImageVersions`) with their unit tests; keep the
-    command surface thin.
+    `discoverAvailableContainerImageVersions`,
+    `resolveEffectiveContainerPlatform`) with their unit tests; keep the
+    command surface thin and the daemon probe behind an injected boundary.
 - Implementation References:
   - `package.json`
   - `src/commands/pickContainerImageVersionCommand.ts`
@@ -1035,15 +1042,25 @@ Missing numeric IDs are intentional.
   - A selected version that cannot be acquired fails closed through the existing
     classified container-image acquisition path; an unparseable or wrong-platform
     setting value is rejected at the picker boundary before it is persisted.
+  - When a selected version's platform conflicts with the active Docker container
+    host mode (for example a `-linux` token while the engine runs Windows
+    containers), the locator fails closed with the classified
+    `container-image-platform-mismatch` blocked reason — reporting the selected
+    image and naming both the active host mode and the two fixes (switch the
+    Docker engine, or pick/clear the version) — instead of silently substituting
+    the platform default. A full per-platform image override governs the active
+    platform and suppresses the conflict.
 - Agent Work Scope:
   - Thread `containerImageVersion` from settings into the locator's per-provider
     image resolution and bypass the legacy year pin when a version is selected;
     keep resolution pure and unit-tested. Do not change host-native selection.
 - Implementation References:
   - `src/reporting/comparisonRuntimeLocator.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
   - `src/reporting/comparisonReportAction.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Preserve the fail-closed runtime contract (VHS-SYS-REQ-007): a
@@ -2380,7 +2397,11 @@ Missing numeric IDs are intentional.
   invocation or a manual `settings.json` edit is reflected without waiting
   for the focus-event throttle, and provide a status-bar-targeted
   `Pick Runtime Provider` quick-pick command that writes the same three
-  settings keys to `ConfigurationTarget.Global` (or clears them).
+  settings keys to `ConfigurationTarget.Global` (or clears them). For the
+  docker provider the `VI History runtime` status bar label shall additionally
+  name the active LabVIEW container image (`Docker @ <tag>`), sourced from
+  `viHistorySuite.container.imageVersion` when selected and a built-in default
+  tag otherwise, and refresh it on the same `onDidChangeConfiguration` event.
 - Acceptance Criteria:
   - `selectActiveRuntime(detection, persisted)` honors a persisted selection
     only when `runtimeProvider`, `labviewVersion`, and `labviewBitness` are
@@ -2388,6 +2409,15 @@ Missing numeric IDs are intentional.
     `isPersistedSelectionSatisfiable`; otherwise it returns the
     auto-detection recommendation. There is no `mismatch` snapshot kind —
     unsatisfiable persisted selections cause a silent fallback.
+  - `buildAvailableStatusBarSuffix` renders the docker label as
+    `Docker @ <tag>`: it uses the selected
+    `viHistorySuite.container.imageVersion` tag when set and the built-in
+    `DEFAULT_DOCKER_IMAGE_LABEL_TAG` (`2026q1-linux`) when unset, so the status
+    bar names the LabVIEW container image symmetrically with the host label's
+    version and bitness. `selectActiveRuntime` carries
+    `container.imageVersion` onto the docker label independently of the
+    runtime-provider triple, so the image is named whether the docker provider
+    was persisted or auto-detected.
   - `createRuntimeAvailabilityWatcher` caches the most recent detection,
     subscribes to `vscode.workspace.onDidChangeConfiguration` filtered to
     the `viHistorySuite` section, and re-renders the status bar from the

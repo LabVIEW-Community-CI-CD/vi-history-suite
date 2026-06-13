@@ -135,6 +135,30 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(summary.at(-1)).toContain('nationalinstruments/labview:2026q1-windows');
   });
 
+  it('guides a container image platform mismatch toward the engine or version fix (VHS-REQ-650)', () => {
+    const summary = blockedSummary(
+      'container-image-platform-mismatch',
+      {
+        executionMode: 'docker-only',
+        requestedProvider: 'docker',
+        provider: 'unavailable',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        dockerCliAvailable: true,
+        dockerDaemonReachable: true,
+        containerCapabilityAvailable: true,
+        containerHostMode: 'windows'
+      },
+      {
+        blockedReason: 'container-image-platform-mismatch'
+      }
+    );
+
+    expect(summary).toContain('Runtime blocked reason: container-image-platform-mismatch.');
+    expect(summary.at(-1)).toContain('viHistorySuite.container.imageVersion');
+    expect(summary.at(-1)).toContain('windows-container mode');
+    expect(summary.at(-1)).toContain('switch Docker to the matching container engine');
+  });
+
   it('retains settings freshness guidance for blocked requested providers', () => {
     const summary = blockedSummary('labview-runtime-selection-required', {
       requestedProvider: 'host'
