@@ -12,6 +12,33 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-06-13
+
+### Changed
+
+- The **Pick LabVIEW Container Image Version** command now probes the active
+  Docker daemon container mode (`docker info`) when it opens and lists the image
+  versions for that platform, so a Windows host running Docker in Linux-container
+  mode is offered Linux images up front instead of Windows-only tags. If Docker
+  is unavailable or the mode cannot be determined, it falls back to the host OS
+  default as before. (VHS-REQ-649)
+- The `VI History runtime` status bar label now names the active LabVIEW
+  container image for the docker provider (for example
+  `VI History runtime: Docker @ 2026q1patch1-windows`), mirroring the host label
+  that already shows version and bitness. It reflects the
+  `viHistorySuite.container.imageVersion` selection live and falls back to a
+  default tag when nothing is selected. (VHS-REQ-620)
+
+### Fixed
+
+- A selected `viHistorySuite.container.imageVersion` whose platform conflicts
+  with the active Docker container mode (for example a `-linux` image while
+  Docker is running Windows containers) now fails closed at compare time with a
+  classified `container-image-platform-mismatch` reason that names the active
+  mode and the fix, instead of silently falling back to the default image. A
+  full per-platform image override still governs and suppresses the check.
+  (VHS-REQ-650)
+
 ## [1.22.0] - 2026-06-13
 
 ### Added

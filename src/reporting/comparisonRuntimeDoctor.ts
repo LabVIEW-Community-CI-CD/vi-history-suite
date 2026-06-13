@@ -324,6 +324,18 @@ function deriveRuntimeDoctorNextAction(options: {
       return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }
 
+    // VHS-REQ-650: a selected container.imageVersion whose platform the active
+    // Docker engine cannot launch fails closed here. Name the active host mode
+    // and the two fixes (flip the Docker engine, or pick/clear the version) so
+    // the user is never left guessing why their explicit selection was rejected.
+    if (blockedReason === 'container-image-platform-mismatch') {
+      const hostMode =
+        options.runtimeSelection.containerHostMode ??
+        options.runtimeSelection.windowsContainerHostMode ??
+        'the active';
+      return `Next action: the selected viHistorySuite.container.imageVersion targets a different platform than the active Docker engine (${hostMode}-container mode); switch Docker to the matching container engine or select a ${hostMode} image version (or clear viHistorySuite.container.imageVersion to use the default), then rerun comparison report generation.`;
+    }
+
     if (providerRequest === 'host') {
       return 'Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.';
     }

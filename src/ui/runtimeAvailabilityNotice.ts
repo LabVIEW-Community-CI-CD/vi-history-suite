@@ -56,6 +56,16 @@ export const MISSING_RUNTIME_MODAL_BUTTONS = {
 
 export const STATUS_BAR_TEXT_AVAILABLE = '$(check) VI History runtime';
 export const STATUS_BAR_TEXT_MISSING = '$(warning) VI History runtime: missing';
+
+/**
+ * VHS-REQ-620: Image tag shown in the `Docker @ <tag>` status-bar suffix when
+ * no `viHistorySuite.container.imageVersion` is selected. The comparison runtime
+ * resolves the concrete platform-specific default later (see
+ * `comparisonRuntimeLocator`); this constant is only the label's stand-in so the
+ * status bar always names an image instead of a bare `Docker`.
+ */
+export const DEFAULT_DOCKER_IMAGE_LABEL_TAG = '2026q1-linux';
+
 export const STATUS_BAR_TOOLTIP_AVAILABLE =
   'A LabVIEW or Docker comparison runtime is available.';
 export const STATUS_BAR_TOOLTIP_MISSING =
@@ -80,9 +90,16 @@ export const RUNTIME_CONFIGURATION_SECTION = 'viHistorySuite';
 /**
  * Builds the provider-specific suffix that follows the
  * `VI History runtime:` prefix in the status bar (e.g.,
- * `LabVIEW 2026 x64`, `Docker`). Accepts either an auto-detection
- * recommendation or a persisted active-runtime label so callers do not need
- * to convert one shape into the other.
+ * `LabVIEW 2026 x64`, `Docker @ 2026q1patch1-windows`). Accepts either an
+ * auto-detection recommendation or a persisted active-runtime label so callers
+ * do not need to convert one shape into the other.
+ *
+ * VHS-REQ-620: the docker suffix names the LabVIEW container image so the label
+ * is symmetric with the host case (which already shows version + bitness). It
+ * uses the selected `viHistorySuite.container.imageVersion` tag when set and
+ * falls back to `DEFAULT_DOCKER_IMAGE_LABEL_TAG` otherwise. The recommendation
+ * shape does not carry a container image selection, so it always renders the
+ * default.
  */
 export function buildAvailableStatusBarSuffix(
   source: RuntimeRecommendation | ActiveRuntimeLabel
@@ -94,7 +111,9 @@ export function buildAvailableStatusBarSuffix(
     return `LabVIEW ${source.labviewVersion} ${source.labviewBitness}`;
   }
   if (source.provider === 'docker') {
-    return 'Docker';
+    const selectedTag =
+      'containerImageVersion' in source ? source.containerImageVersion?.trim() : undefined;
+    return `Docker @ ${selectedTag && selectedTag.length > 0 ? selectedTag : DEFAULT_DOCKER_IMAGE_LABEL_TAG}`;
   }
   return '';
 }
@@ -110,6 +129,13 @@ export interface ActiveRuntimeLabel {
   labviewVersion?: string;
   labviewBitness?: 'x86' | 'x64';
   installation?: DetectedHostInstallation;
+  /**
+   * VHS-REQ-620: the selected `viHistorySuite.container.imageVersion` tag for a
+   * docker label (e.g. `2026q1patch1-windows`). Undefined when nothing is
+   * selected, in which case the suffix falls back to
+   * `DEFAULT_DOCKER_IMAGE_LABEL_TAG`. Meaningless for host/none labels.
+   */
+  containerImageVersion?: string;
 }
 
 /**
@@ -120,6 +146,13 @@ export interface PersistedRuntimeSelectionInput {
   runtimeProvider?: string;
   labviewVersion?: string;
   labviewBitness?: string;
+  /**
+   * VHS-REQ-620: `viHistorySuite.container.imageVersion` — the selected LabVIEW
+   * container image tag. Independent of the runtime-provider triple, so it
+   * annotates the docker label whether the provider was persisted or
+   * auto-detected.
+   */
+  containerImageVersion?: string;
 }
 
 export const FIRST_RUN_NOTICE_MESSAGE =
@@ -182,7 +215,9 @@ export function selectActiveRuntime(
         provider,
         labviewVersion: version,
         labviewBitness: bitness,
-        installation
+        installation,
+        containerImageVersion:
+          provider === 'docker' ? persisted.containerImageVersion : undefined
       },
       recommendation
     };
@@ -215,7 +250,8 @@ export function selectActiveRuntime(
     label: {
       provider: 'docker',
       labviewVersion: recommendation.labviewVersion,
-      labviewBitness: recommendation.labviewBitness
+      labviewBitness: recommendation.labviewBitness,
+      containerImageVersion: persisted.containerImageVersion
     },
     recommendation
   };
@@ -993,7 +1029,8 @@ function readPersistedFromConfiguration(): PersistedRuntimeSelectionInput {
   return {
     runtimeProvider: configuration.get<string>('runtimeProvider'),
     labviewVersion: configuration.get<string>('labviewVersion'),
-    labviewBitness: configuration.get<string>('labviewBitness')
+    labviewBitness: configuration.get<string>('labviewBitness'),
+    containerImageVersion: configuration.get<string>('container.imageVersion')
   };
 }
 

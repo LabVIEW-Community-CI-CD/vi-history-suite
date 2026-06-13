@@ -22,6 +22,7 @@ import {
 } from '../tooling/labviewInstallCatalog';
 import {
   ContainerImagePlatform,
+  parseLabviewContainerImageReference,
   resolveContainerImageSelection
 } from '../tooling/containerImageCatalog';
 
@@ -651,6 +652,30 @@ export async function locateComparisonRuntime(
   const buildContainerSelectionFactsForReturn = () =>
     buildContainerSelectionFacts(containerFacts);
 
+  // VHS-REQ-650: A selected `container.imageVersion` whose platform conflicts
+  // with the active Docker host mode must fail closed, not silently fall back to
+  // the platform default. A full per-platform image override governs the active
+  // platform, so it suppresses the version-token conflict (the token is moot
+  // there). The host mode is only known after the container facts are probed.
+  const resolveSelectedContainerImageVersionConflict = ():
+    | ContainerImageVersionPlatformConflict
+    | undefined => {
+    if (!containerFacts) {
+      return undefined;
+    }
+    const activePlatformOverride =
+      containerFacts.windowsContainerHostMode === 'linux'
+        ? settings.linuxContainerImage?.trim()
+        : settings.windowsContainerImage?.trim();
+    if (activePlatformOverride) {
+      return undefined;
+    }
+    return detectContainerImageVersionPlatformConflict(
+      settings.containerImageVersion,
+      containerFacts.windowsContainerHostMode
+    );
+  };
+
   if (platform === 'win32' && executionMode === 'auto') {
     containerAvailable = await ensureContainerAvailability();
     if (containerFacts?.dockerCliAvailable === true) {
@@ -664,6 +689,7 @@ export async function locateComparisonRuntime(
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
           selectedContainerFacts: containerFacts,
+          containerImageVersionConflict: resolveSelectedContainerImageVersionConflict(),
           selectionReason: 'docker-installed',
           providerDecisions: buildProviderDecisions({
             platform,
@@ -894,6 +920,7 @@ export async function locateComparisonRuntime(
       configuredWindowsContainerImage: windowsContainerImage,
       configuredLinuxContainerImage: linuxContainerImage,
       selectedContainerFacts: containerFacts!,
+      containerImageVersionConflict: resolveSelectedContainerImageVersionConflict(),
       providerDecisions: buildProviderDecisions({
         platform,
         containerRuntimePlatform: containerFacts
@@ -999,6 +1026,7 @@ export async function locateComparisonRuntime(
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
           selectedContainerFacts: containerFacts,
+          containerImageVersionConflict: resolveSelectedContainerImageVersionConflict(),
           selectionReason: 'host-runtime-unavailable',
           prefixNote: 'No compatible host-native LabVIEW 2025 or newer runtime was located;',
           providerDecisions: buildProviderDecisions({
@@ -1165,6 +1193,7 @@ export async function locateComparisonRuntime(
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
           selectedContainerFacts: containerFacts,
+          containerImageVersionConflict: resolveSelectedContainerImageVersionConflict(),
           selectionReason: 'host-runtime-conflict',
           notes,
           hostLabviewIniPath,
@@ -1283,6 +1312,7 @@ export async function locateComparisonRuntime(
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
         selectedContainerFacts: containerFacts,
+        containerImageVersionConflict: resolveSelectedContainerImageVersionConflict(),
         selectionReason: 'host-comparison-tool-missing',
         prefixNote: 'Host-native LabVIEW 2025 or newer was available, but no host comparison tool was located;',
         notes,
@@ -1699,6 +1729,54 @@ function resolveContainerImageForHostMode(options: {
     : options.windowsContainerImage;
 }
 
+/**
+ * VHS-REQ-650: A detected conflict between the user's selected container image
+ * version token and the active Docker container host mode. When present, the
+ * locator fails closed (`container-image-platform-mismatch`) instead of silently
+ * substituting the platform default reference for a token whose platform the
+ * running Docker engine cannot launch.
+ */
+interface ContainerImageVersionPlatformConflict {
+  selectedTag: string;
+  selectedReference: string;
+  selectedPlatform: ContainerImagePlatform;
+  hostMode: Extract<DockerContainerHostMode, 'windows' | 'linux'>;
+}
+
+/**
+ * VHS-REQ-650: Pure detector for a selected container image version whose
+ * platform cannot run under the active Docker container host mode. The picker
+ * (VHS-REQ-649) only validates a token against `process.platform`, but Docker's
+ * actual engine mode (e.g. Docker Desktop defaulting to Linux containers on a
+ * Windows host) is only known at compare time, so this guard closes the gap.
+ *
+ * No conflict is reported when no token is selected, the token does not parse,
+ * the host mode is not yet determined (`unknown`/undefined), or the token's
+ * platform already matches the host mode.
+ */
+function detectContainerImageVersionPlatformConflict(
+  versionSelection: string | undefined,
+  hostMode: DockerContainerHostMode | undefined
+): ContainerImageVersionPlatformConflict | undefined {
+  const selection = versionSelection?.trim();
+  if (!selection) {
+    return undefined;
+  }
+  if (hostMode !== 'windows' && hostMode !== 'linux') {
+    return undefined;
+  }
+  const parsed = parseLabviewContainerImageReference(selection);
+  if (!parsed || parsed.platform === hostMode) {
+    return undefined;
+  }
+  return {
+    selectedTag: parsed.tag,
+    selectedReference: parsed.reference,
+    selectedPlatform: parsed.platform,
+    hostMode
+  };
+}
+
 function describeContainerProviderLabel(
   provider: Extract<ComparisonRuntimeProvider, 'windows-container' | 'linux-container'>
 ): string {
@@ -1830,7 +1908,16 @@ function buildSelectedContainerRuntimeSelection(options: {
   hostLabviewIniPath?: string;
   hostLabviewTcpPort?: number;
   hostRuntimeConflictDetected?: boolean;
+  /**
+   * VHS-REQ-650: when set, the selected `container.imageVersion` token targets a
+   * platform the active Docker host mode cannot launch. The selection fails
+   * closed (`container-image-platform-mismatch`) instead of being built.
+   */
+  containerImageVersionConflict?: ContainerImageVersionPlatformConflict;
 }): ComparisonRuntimeSelection {
+  if (options.containerImageVersionConflict) {
+    return buildContainerImagePlatformMismatchSelection(options);
+  }
   const toolCandidates = buildContainerToolCandidates(options.selectedContainerFacts);
   const provider = resolveContainerProvider(options.selectedContainerFacts);
   const runtimePlatform = resolveContainerRuntimePlatform(options.selectedContainerFacts);
@@ -1875,6 +1962,69 @@ function buildSelectedContainerRuntimeSelection(options: {
     notes: [
       ...(options.notes ?? []),
       options.prefixNote ? `${options.prefixNote} ${selectionNote}` : selectionNote
+    ],
+    registryQueryPlans: options.registryQueryPlans,
+    candidates: options.candidates
+  };
+}
+
+/**
+ * VHS-REQ-650: Build the fail-closed selection for a selected container image
+ * version whose platform the active Docker host mode cannot launch. Reuses the
+ * probed container facts (so the doctor still renders host mode, CLI/daemon
+ * reachability, etc.), reports the user's *selected* image so the guidance names
+ * what they picked, and rewrites the would-be-selected container provider
+ * decision to a classified rejection rather than re-deriving decisions.
+ */
+function buildContainerImagePlatformMismatchSelection(options: {
+  hostPlatform: RuntimePlatform;
+  executionMode: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
+  requestedLabviewVersion?: string;
+  bitness: RuntimeBitness;
+  selectedContainerFacts: WindowsContainerProviderFacts;
+  providerDecisions: RuntimeProviderDecision[];
+  registryQueryPlans: WindowsRegistryQueryPlan[];
+  candidates: RuntimeToolCandidate[];
+  notes?: string[];
+  hostLabviewIniPath?: string;
+  hostLabviewTcpPort?: number;
+  hostRuntimeConflictDetected?: boolean;
+  containerImageVersionConflict?: ContainerImageVersionPlatformConflict;
+}): ComparisonRuntimeSelection {
+  const conflict = options.containerImageVersionConflict!;
+  const rejectionDetail = `selected container image version ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, but the active Docker engine is in ${conflict.hostMode}-container mode`;
+  const providerDecisions = options.providerDecisions.map((decision) =>
+    decision.outcome === 'selected' &&
+    (decision.provider === 'windows-container' || decision.provider === 'linux-container')
+      ? {
+          ...decision,
+          outcome: 'rejected' as const,
+          reason: 'container-image-platform-mismatch',
+          detail: rejectionDetail
+        }
+      : decision
+  );
+  return {
+    platform: options.hostPlatform,
+    executionMode: options.executionMode,
+    requestedProvider: options.requestedProvider,
+    requestedLabviewVersion: options.requestedLabviewVersion,
+    bitness: options.bitness,
+    provider: 'unavailable',
+    blockedReason: 'container-image-platform-mismatch',
+    providerDecisions,
+    // `selectedContainerFacts` is always present here, so the spread supplies
+    // `containerRuntimePlatform` (and the rest of the container facts); no
+    // explicit assignment is needed.
+    ...buildContainerSelectionFacts(options.selectedContainerFacts),
+    containerImage: conflict.selectedReference,
+    hostLabviewIniPath: options.hostLabviewIniPath,
+    hostLabviewTcpPort: options.hostLabviewTcpPort,
+    hostRuntimeConflictDetected: options.hostRuntimeConflictDetected,
+    notes: [
+      ...(options.notes ?? []),
+      `Selected container image version ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, but the active Docker engine is in ${conflict.hostMode}-container mode, so the selection cannot be launched. Switch Docker to ${conflict.selectedPlatform} containers or select a ${conflict.hostMode} image version.`
     ],
     registryQueryPlans: options.registryQueryPlans,
     candidates: options.candidates

@@ -1051,6 +1051,66 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
+  it('fails closed when the selected container image version platform conflicts with the Docker host mode (VHS-REQ-650)', async () => {
+    // Linux image token selected, but the active Docker engine is in
+    // windows-container mode. Previously the linux selection was silently
+    // dropped and the default windows image ran; now it must fail closed.
+    const query = vi.fn().mockResolvedValue(
+      windowsContainerFacts({ windowsContainerHostMode: 'windows' })
+    );
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2026',
+        bitness: 'x64',
+        containerImageVersion: '2026q1-linux'
+      },
+      { queryWindowsContainerProviderFacts: query }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'container-image-platform-mismatch'
+    });
+    expect(selection.containerImage).toBe('nationalinstruments/labview:2026q1-linux');
+    expect(selection.notes.join('\n')).toContain('windows-container mode');
+    expect(selection.notes.join('\n')).toContain('Switch Docker to linux containers');
+    expect(selection.providerDecisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          outcome: 'rejected',
+          reason: 'container-image-platform-mismatch'
+        })
+      ])
+    );
+  });
+
+  it('does not flag a platform mismatch when a full image override governs the active platform (VHS-REQ-650)', async () => {
+    // A raw windowsContainerImage override governs the windows host mode, so the
+    // conflicting linux version token is moot and must not block.
+    const query = vi
+      .fn()
+      .mockImplementation((windowsImage: string) =>
+        Promise.resolve(windowsContainerFacts({ image: windowsImage }))
+      );
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2026',
+        bitness: 'x64',
+        containerImageVersion: '2026q1-linux',
+        windowsContainerImage: 'nationalinstruments/labview:2026q1patch9-windows'
+      },
+      { queryWindowsContainerProviderFacts: query }
+    );
+
+    expect(selection.blockedReason).not.toBe('container-image-platform-mismatch');
+    expect(selection.provider).toBe('windows-container');
+    expect(selection.containerImage).toBe('nationalinstruments/labview:2026q1patch9-windows');
+  });
+
   it('blocks docker-only execution that requests x86 instead of the supported x64 container', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
