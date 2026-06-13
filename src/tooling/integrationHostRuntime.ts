@@ -247,6 +247,37 @@ export function assertLinuxVsCodeRuntimeReady(
   );
 }
 
+export interface AssertWindowsVsCodeRuntimeReadyDeps {
+  existsSync?: (filePath: string) => boolean;
+}
+
+/**
+ * Fail fast with an actionable message when the native-Windows integration host
+ * is selected but the resolved VS Code CLI does not exist. Without this guard
+ * `resolveStandardWindowsCodeCliPath` returns its fallback default path and the
+ * launcher dies with an opaque `CommandNotFoundException` deep in the run. A
+ * service-account self-hosted runner cannot see a user-scoped VS Code install,
+ * so the remediation points at a system-wide install and the runner doctor.
+ */
+export function assertWindowsVsCodeRuntimeReady(
+  vscodeExecutablePath: string,
+  deps: AssertWindowsVsCodeRuntimeReadyDeps = {}
+): void {
+  const existsSync = deps.existsSync ?? fsSync.existsSync;
+  if (existsSync(vscodeExecutablePath)) {
+    return;
+  }
+
+  throw new Error(
+    [
+      `The Windows VS Code CLI was not found at ${vscodeExecutablePath}.`,
+      'The native-Windows integration host requires a system-wide VS Code install',
+      '(a service-account self-hosted runner cannot see a user-scoped install).',
+      'Run `node scripts/checkMaintainerRunnerPrerequisites.js` on the runner to validate every prerequisite at once.'
+    ].join(' ')
+  );
+}
+
 function shouldCheckLinuxRuntimeDependency(fileName: string): boolean {
   return (
     fileName === 'code' ||

@@ -85,6 +85,23 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('Add-Content -LiteralPath $summaryPath -Value $vsixLine');
   });
 
+  it('gates on a runner prerequisite doctor after checkout and before install (fail-fast)', () => {
+    const workflow = readWorkflow();
+
+    // The prerequisite doctor must run as a fail-fast gate so a missing host
+    // prerequisite (e.g. VS Code) aborts in seconds with a consolidated report
+    // instead of dying deep in the Windows Integration Host step. Assert it
+    // lives after checkout and before the install step.
+    expect(workflow).toContain('- name: Validate Runner Prerequisites');
+    expect(workflow).toContain('node scripts/checkMaintainerRunnerPrerequisites.js');
+    const checkoutIndex = workflow.indexOf('actions/checkout@');
+    const gateIndex = workflow.indexOf('- name: Validate Runner Prerequisites');
+    const installIndex = workflow.indexOf('- name: Install');
+    expect(checkoutIndex).toBeGreaterThanOrEqual(0);
+    expect(gateIndex).toBeGreaterThan(checkoutIndex);
+    expect(installIndex).toBeGreaterThan(gateIndex);
+  });
+
   it('recreates the runner-evidence directory inside the post-checkout evidence steps (regression)', () => {
     const workflow = readWorkflow();
 
