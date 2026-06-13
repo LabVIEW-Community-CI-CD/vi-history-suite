@@ -1,8 +1,11 @@
 <#
 .SYNOPSIS
-    Drives one VHS-REQ-622 steady-state Windows bitness-conflict scenario by
-    starting a real LabVIEW at -HostBitness, invoking `vihs --validate
-    --proof-out`, and asserting `runtimeBlockedReason=windows-host-bitness-conflict`.
+    Drives one Windows runtime-conflict scenario by starting a real LabVIEW at
+    -HostVersion/-HostBitness, invoking `vihs --validate --proof-out` for the
+    selected -LabviewVersion/-SelectedBitness, and asserting that the proof JSON
+    carries -ExpectedBlockedReason. Covers the VHS-REQ-622 bitness-conflict
+    directions (steady-*, same year / different bitness) and the VHS-REQ-653
+    version-conflict directions (version-*, same bitness / different year).
 
 .DESCRIPTION
     Called by `scripts/runWindowsRuntimeMatrix.js`. Emits a per-scenario log
@@ -44,6 +47,10 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$LabviewVersion,
 
+    [string]$HostVersion,
+
+    [string]$ExpectedBlockedReason = 'windows-host-bitness-conflict',
+
     [Parameter(Mandatory = $true)]
     [string]$ProofOutPath,
 
@@ -58,6 +65,13 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+# The selected LabVIEW version drives the scoped settings; the host version is
+# the LabVIEW that is actually launched. They match for bitness scenarios and
+# differ for version scenarios (VHS-REQ-653).
+if (-not $HostVersion) {
+    $HostVersion = $LabviewVersion
+}
 
 function Get-LabviewExecutablePath {
     param(
@@ -133,6 +147,8 @@ $payload = @{
         runtimeBlockedReason     = $null
         hostBitness              = $null
         selectedBitness          = $SelectedBitness
+        hostVersion              = $HostVersion
+        selectedVersion          = $LabviewVersion
         labviewExecutablePath    = $null
         labviewProcessId         = $null
     }
@@ -147,14 +163,17 @@ $payload = @{
 try {
     Write-Output "[$ScenarioId] closing any pre-existing LabVIEW.exe"
     & $closeScript -Bitness 'any' -LabviewVersion $LabviewVersion | Out-Null
-
-    $labviewExe = Get-LabviewExecutablePath -Bitness $HostBitness -Version $LabviewVersion
-    $labviewRoot = Get-LabviewInstallRoot -Bitness $HostBitness -Version $LabviewVersion
-    if (-not (Test-Path -LiteralPath $labviewExe)) {
-        throw "LabVIEW $LabviewVersion $HostBitness not found at $labviewExe"
+    if ($HostVersion -ne $LabviewVersion) {
+        & $closeScript -Bitness 'any' -LabviewVersion $HostVersion | Out-Null
     }
 
-    Write-Output "[$ScenarioId] starting LabVIEW $HostBitness at $labviewExe"
+    $labviewExe = Get-LabviewExecutablePath -Bitness $HostBitness -Version $HostVersion
+    $labviewRoot = Get-LabviewInstallRoot -Bitness $HostBitness -Version $HostVersion
+    if (-not (Test-Path -LiteralPath $labviewExe)) {
+        throw "LabVIEW $HostVersion $HostBitness not found at $labviewExe"
+    }
+
+    Write-Output "[$ScenarioId] starting LabVIEW $HostVersion $HostBitness at $labviewExe"
     $labviewProcess = Start-Process -FilePath $labviewExe -PassThru
     $payload.observed.labviewProcessId = $labviewProcess.Id
 
@@ -197,7 +216,7 @@ try {
     }
     ($scopedSettings | ConvertTo-Json -Depth 4) | Set-Content -LiteralPath $scopedSettingsPath -Encoding UTF8
 
-    Write-Output "[$ScenarioId] invoking vihs --validate (selected=$SelectedBitness)"
+    Write-Output "[$ScenarioId] invoking vihs --validate (selected=$LabviewVersion $SelectedBitness)"
     $repoRoot = Resolve-Path (Join-Path $scriptDirectory '..\..')
     $vihsInvocation = Resolve-VihsInvocation -RepoRoot $repoRoot.Path
     $vihsArgs = @(
@@ -248,8 +267,8 @@ try {
     }
     $payload.observed.runtimeBlockedReason = $blockedReason
 
-    if ($blockedReason -ne 'windows-host-bitness-conflict') {
-        $payload.failureReason = "expected runtimeBlockedReason='windows-host-bitness-conflict', observed='$blockedReason'"
+    if ($blockedReason -ne $ExpectedBlockedReason) {
+        $payload.failureReason = "expected runtimeBlockedReason='$ExpectedBlockedReason', observed='$blockedReason'"
     }
     else {
         $payload.pass = $true
@@ -261,6 +280,9 @@ catch {
 finally {
     if (-not $KeepRunning) {
         try { & $closeScript -Bitness 'any' -LabviewVersion $LabviewVersion | Out-Null } catch {}
+        if ($HostVersion -ne $LabviewVersion) {
+            try { & $closeScript -Bitness 'any' -LabviewVersion $HostVersion | Out-Null } catch {}
+        }
     }
     $stopwatch.Stop()
     $payload.durationMs = [int]$stopwatch.ElapsedMilliseconds

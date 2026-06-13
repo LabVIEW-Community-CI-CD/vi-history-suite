@@ -15,6 +15,20 @@ The published Marketplace extension ID remains:
 svelderrainruiz.vi-history-suite
 ```
 
+## Requirements
+
+- Visual Studio Code 1.90 or newer.
+- A trusted Git repository containing the tracked `.vi`, `.ctl`, or `.vit` file
+  you want to review, with at least two retained revisions to compare.
+- A LabVIEW comparison runtime, either:
+  - **Host-native** LabVIEW 2025 or newer with the LabVIEW CLI installed
+    (Windows defaults to this provider), or
+  - **Docker**, using an NI LabVIEW container image that you select and
+    validate.
+
+The extension reads runtime state only — it never installs LabVIEW, Docker, or
+any runtime for you.
+
 ## Install
 
 Install from the VS Code Extensions view, or run:
@@ -52,6 +66,30 @@ unclear.
 
 Windows defaults to local `LabVIEWCLI` when the provider has not been chosen.
 Docker remains available for users who intentionally select and validate it.
+
+## Runtime providers and safety checks
+
+Before launching a comparison, VI History runs a compare preflight that checks
+both selected revisions and the resolved runtime, then reports a clear,
+actionable status instead of failing midway. When the runtime cannot safely
+produce a correct report, the compare is blocked up front with guidance rather
+than silently running against the wrong environment. Detected conditions
+include:
+
+- A running LabVIEW whose **bitness** differs from the selected bitness
+  (LabVIEW cannot start a second instance at a different bitness).
+- A running LabVIEW whose **version (year)** differs from the selected
+  `viHistorySuite.labviewVersion` at the same bitness — so a compare never
+  attaches to the wrong already-running LabVIEW on a multi-install host.
+- A selected Docker **container image** that targets a platform the active
+  Docker engine cannot launch, surfaced at the status bar and the panel
+  preflight with a one-click **Pick Image Version** fix.
+- **VI Server (TCP)** disabled in the selected LabVIEW, which would otherwise
+  block the LabVIEW CLI from connecting.
+
+Each block offers a next action (for example **Pick Runtime Provider** or
+**Pick Image Version**) so the runtime can be aligned without leaving the
+panel.
 
 ## Source Evaluation
 

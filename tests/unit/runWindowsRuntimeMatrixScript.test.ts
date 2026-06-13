@@ -7,7 +7,16 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
   DEFAULT_EVIDENCE_OUT: string;
   KNOWN_SCENARIOS: readonly string[];
   SCENARIO_PARAMETERS: Readonly<
-    Record<string, { hostBitness: 'x64' | 'x86'; selectedBitness: 'x64' | 'x86' }>
+    Record<
+      string,
+      {
+        hostBitness: 'x64' | 'x86';
+        selectedBitness: 'x64' | 'x86';
+        hostVersion?: string;
+        selectedVersion?: string;
+        expectedBlockedReason: string;
+      }
+    >
   >;
   parseArgs: (argv: string[]) => {
     scenario: string;
@@ -144,7 +153,11 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
   it('passes scenario, bitness, paths, and labview version to the helper', () => {
     const scenario = {
       id: 'steady-A',
-      parameters: { hostBitness: 'x64', selectedBitness: 'x86' },
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x86',
+        expectedBlockedReason: 'windows-host-bitness-conflict'
+      },
       proofPath: 'proofs/steady-A.proof.json',
       logPath: 'proofs/steady-A.scenario.json'
     };
@@ -160,16 +173,54 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args[args.indexOf('-ScenarioId') + 1]).toBe('steady-A');
     expect(args[args.indexOf('-HostBitness') + 1]).toBe('x64');
     expect(args[args.indexOf('-SelectedBitness') + 1]).toBe('x86');
+    expect(args[args.indexOf('-HostVersion') + 1]).toBe('2026');
     expect(args[args.indexOf('-LabviewVersion') + 1]).toBe('2026');
+    expect(args[args.indexOf('-ExpectedBlockedReason') + 1]).toBe(
+      'windows-host-bitness-conflict'
+    );
     expect(args[args.indexOf('-ProofOutPath') + 1]).toBe('proofs/steady-A.proof.json');
     expect(args[args.indexOf('-ScenarioLogPath') + 1]).toBe('proofs/steady-A.scenario.json');
     expect(args).not.toContain('-KeepRunning');
   });
 
+  it('passes the scenario-specific host/selected years and version-conflict reason (VHS-REQ-653)', () => {
+    const scenario = {
+      id: 'version-A',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        hostVersion: '2025',
+        selectedVersion: '2026',
+        expectedBlockedReason: 'windows-host-version-conflict'
+      },
+      proofPath: 'proofs/version-A.proof.json',
+      logPath: 'proofs/version-A.scenario.json'
+    };
+    const args = harness.buildPowershellArgs(scenario, {
+      labviewVersion: '2026',
+      keepRunning: false
+    });
+
+    // The launched (host) year and the selected year differ, the bitness is
+    // shared, and the scenario carries its own years independent of the
+    // --labview-version default.
+    expect(args[args.indexOf('-HostBitness') + 1]).toBe('x64');
+    expect(args[args.indexOf('-SelectedBitness') + 1]).toBe('x64');
+    expect(args[args.indexOf('-HostVersion') + 1]).toBe('2025');
+    expect(args[args.indexOf('-LabviewVersion') + 1]).toBe('2026');
+    expect(args[args.indexOf('-ExpectedBlockedReason') + 1]).toBe(
+      'windows-host-version-conflict'
+    );
+  });
+
   it('adds -KeepRunning when requested', () => {
     const scenario = {
       id: 'steady-B',
-      parameters: { hostBitness: 'x86', selectedBitness: 'x64' },
+      parameters: {
+        hostBitness: 'x86',
+        selectedBitness: 'x64',
+        expectedBlockedReason: 'windows-host-bitness-conflict'
+      },
       proofPath: 'p.json',
       logPath: 'l.json'
     };
@@ -183,7 +234,11 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
   it('never emits an empty-string argument', () => {
     const scenario = {
       id: 'steady-A',
-      parameters: { hostBitness: 'x64', selectedBitness: 'x86' },
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x86',
+        expectedBlockedReason: 'windows-host-bitness-conflict'
+      },
       proofPath: 'p',
       logPath: 'l'
     };
@@ -198,7 +253,11 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
 describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
   const scenario = {
     id: 'steady-A',
-    parameters: { hostBitness: 'x64', selectedBitness: 'x86' },
+    parameters: {
+      hostBitness: 'x64',
+      selectedBitness: 'x86',
+      expectedBlockedReason: 'windows-host-bitness-conflict'
+    },
     proofPath: 'p.proof.json',
     logPath: 'p.scenario.json'
   };
@@ -243,6 +302,68 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     const summary = harness.summarizeScenario(scenario, { status: 7 }, undefined);
     expect(summary.pass).toBe(false);
     expect(summary.failureReason).toBe('powershell-exit-7');
+  });
+
+  it('passes a version scenario when the proof reports windows-host-version-conflict (VHS-REQ-653)', () => {
+    const versionScenario = {
+      id: 'version-A',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        hostVersion: '2025',
+        selectedVersion: '2026',
+        expectedBlockedReason: 'windows-host-version-conflict'
+      },
+      proofPath: 'v.proof.json',
+      logPath: 'v.scenario.json'
+    };
+    const summary = harness.summarizeScenario(
+      versionScenario,
+      { status: 0 },
+      {
+        pass: true,
+        durationMs: 1500,
+        observed: {
+          runtimeBlockedReason: 'windows-host-version-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostVersion: '2025',
+          selectedVersion: '2026',
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+        }
+      }
+    );
+    expect(summary.pass).toBe(true);
+    expect(summary.expected.runtimeBlockedReason).toBe('windows-host-version-conflict');
+    expect(summary.failureReason).toBeUndefined();
+  });
+
+  it('fails a version scenario when the proof still reports a bitness conflict (VHS-REQ-653)', () => {
+    const versionScenario = {
+      id: 'version-A',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        hostVersion: '2025',
+        selectedVersion: '2026',
+        expectedBlockedReason: 'windows-host-version-conflict'
+      },
+      proofPath: 'v.proof.json',
+      logPath: 'v.scenario.json'
+    };
+    const summary = harness.summarizeScenario(
+      versionScenario,
+      { status: 0 },
+      {
+        pass: false,
+        observed: {
+          runtimeBlockedReason: 'windows-host-bitness-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64'
+        }
+      }
+    );
+    expect(summary.pass).toBe(false);
   });
 });
 
@@ -300,6 +421,30 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
           selectedBitness: 'x64',
           labviewExecutablePath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
         }
+      },
+      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}version-A.scenario.json`]: {
+        pass: true,
+        durationMs: 120,
+        observed: {
+          runtimeBlockedReason: 'windows-host-version-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostVersion: '2025',
+          selectedVersion: '2026',
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+        }
+      },
+      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}version-B.scenario.json`]: {
+        pass: true,
+        durationMs: 130,
+        observed: {
+          runtimeBlockedReason: 'windows-host-version-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostVersion: '2026',
+          selectedVersion: '2025',
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
       }
     };
     const fake = buildFakeFs(scenarioLogPayloads);
@@ -350,6 +495,30 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
           hostBitness: 'x86',
           selectedBitness: 'x64',
           labviewExecutablePath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      },
+      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}version-A.scenario.json`]: {
+        pass: true,
+        durationMs: 120,
+        observed: {
+          runtimeBlockedReason: 'windows-host-version-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostVersion: '2025',
+          selectedVersion: '2026',
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+        }
+      },
+      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}version-B.scenario.json`]: {
+        pass: true,
+        durationMs: 130,
+        observed: {
+          runtimeBlockedReason: 'windows-host-version-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostVersion: '2026',
+          selectedVersion: '2025',
+          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
         }
       }
     };
