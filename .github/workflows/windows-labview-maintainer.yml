@@ -103,6 +103,16 @@ jobs:
           $lines | Set-Content -LiteralPath $summaryPath -Encoding UTF8
           Get-Content -LiteralPath $summaryPath
 
+      - name: Validate Runner Prerequisites
+        shell: powershell
+        run: |
+          # Fail fast with a consolidated, actionable report of every missing
+          # host prerequisite (VS Code, LabVIEW, LabVIEW CLI, Node, npm, Git)
+          # before the heavyweight validation, instead of dying one step at a
+          # time deep in the run. Self-service equivalent for maintainers:
+          # `node scripts/checkMaintainerRunnerPrerequisites.js` on the runner.
+          node scripts/checkMaintainerRunnerPrerequisites.js
+
       - name: Install
         run: npm.cmd ci
 

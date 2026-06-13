@@ -274,6 +274,25 @@ Expected host prerequisites:
 - a PowerShell execution policy for the runner user that allows GitHub's
   temporary `.ps1` scripts, such as `CurrentUser RemoteSigned`
 
+Validate every prerequisite at once before dispatching the workflow by running
+the runner prerequisite doctor directly on the runner:
+
+```powershell
+node scripts/checkMaintainerRunnerPrerequisites.js
+```
+
+It reports each prerequisite as present or missing with remediation and exits
+non-zero when any required one is absent (the same fail-fast gate the workflow
+runs after checkout). Because this runs on the runner itself, you can confirm
+readiness without dispatching the trusted-ref-gated workflow or cutting a
+release.
+
+> **Install VS Code system-wide.** If the runner is registered as a service
+> (running as `NetworkService` or another service account), install VS Code with
+> the **System** installer at `C:\Program Files\Microsoft VS Code`. A user-scoped
+> VS Code install under `%LOCALAPPDATA%` is not visible to a service account, so
+> the integration host cannot find `code.cmd`. The runner doctor flags this case.
+
 The runner workflow must be `workflow_dispatch` only, use read-only repository
 permissions, and hard-fail unless the ref is `main`, `release/vX.Y.Z`, or an
 exact `vX.Y.Z` tag. The workflow file is
@@ -314,6 +333,18 @@ Expected host prerequisites:
 - Git
 - Docker, for the linux-container comparison path
 - GitHub Actions runner application
+
+Validate every prerequisite at once before dispatching the workflow by running
+the runner prerequisite doctor directly on the runner:
+
+```bash
+node scripts/checkMaintainerRunnerPrerequisites.js
+```
+
+It reports each prerequisite as present or missing with remediation and exits
+non-zero when any required one is absent (the same fail-fast gate the workflow
+runs after checkout), so you can confirm readiness without dispatching the
+trusted-ref-gated workflow.
 
 Register the runner once (the previously-missing infrastructure for issue #378).
 Use the registration token from the repository's
