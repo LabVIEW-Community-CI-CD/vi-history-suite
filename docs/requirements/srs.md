@@ -2680,6 +2680,13 @@ Missing numeric IDs are intentional.
     `Pick Runtime Provider` action button whenever the action result carries
     `blockedReason='windows-host-version-conflict'`; selecting the action invokes
     `labviewViHistory.pickRuntimeProvider`.
+  - The shared Windows runtime-conflict harness (VHS-REQ-622) exercises this
+    block on real hardware through the `version-A` (host LabVIEW 2025 / selected
+    2026) and `version-B` (host 2026 / selected 2025) scenarios at a shared
+    bitness, asserting `runtimeBlockedReason='windows-host-version-conflict'` in
+    the emitted proof JSON. The scenarios run only on the dispatch-only
+    self-hosted maintainer runner and require both LabVIEW years installed at
+    the scenario bitness.
 - Agent Work Scope:
   - Reuse the existing `inferLabviewYearFromExecutablePath` seam, the
     `hostRuntimeConflictDetected` / `allowExistingWindowsHostRuntime` flow, the
@@ -2691,10 +2698,15 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonRuntimeLocator.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
   - `src/commands/openViHistoryCommand.ts`
+  - `scripts/runWindowsRuntimeMatrix.js`
+  - `scripts/windows-runtime-matrix/Invoke-RuntimeMatrixSteadyState.ps1`
+  - `.github/workflows/windows-runtime-matrix.yml`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
+  - `manual:windows-runtime-matrix-version-conflict-dispatch`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep year inference best-effort and never block on an unknown running year.
@@ -2899,6 +2911,12 @@ Missing numeric IDs are intentional.
     `VIHS_E_WINDOWS_HOST_BITNESS_CONFLICT` code), extend the harness
     to also assert on `runtimeErrorCode` in addition to the
     blocked-reason string — never replace the string assertion.
+  - The harness is shared: VHS-REQ-653 adds parallel `version-A` /
+    `version-B` scenarios (same bitness, different year) that assert
+    `windows-host-version-conflict`. Keep the steady-* bitness contract
+    above unchanged when extending the scenario set, and keep the
+    per-scenario expected blocked reason parameterized rather than
+    hard-coded.
 
 ### VHS-REQ-623: Windows Host-Native VI Server TCP Preflight Parity
 
