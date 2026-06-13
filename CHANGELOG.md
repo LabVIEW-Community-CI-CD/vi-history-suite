@@ -12,6 +12,16 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Added
+
+- The `VI History` compare preflight now offers a **Pick Image Version**
+  call-to-action button when the runtime is blocked because the selected
+  `viHistorySuite.container.imageVersion` targets a platform the active Docker
+  mode cannot launch (`container-image-platform-mismatch`). Clicking it opens the
+  image-version picker, so the mismatch can be fixed from the panel before
+  selecting revisions and running Compare. The button appears only for that
+  classified block reason. (VHS-REQ-650)
+
 ## [1.24.0] - 2026-06-13
 
 ### Added
