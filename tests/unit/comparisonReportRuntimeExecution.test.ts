@@ -1030,6 +1030,83 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
   });
 
+  it('passes a resolved non-default VI Server port to the LabVIEW CLI on a successful host-native compare (VHS-REQ-623)', async () => {
+    // Real-hardware peer: the maintainer Windows runner hosts LabVIEW installs on
+    // non-default VI Server ports. This asserts the resolved server.tcp.port flows
+    // all the way into the launched CreateComparisonReport invocation (-PortNumber)
+    // on the SUCCESS path, not only into the settings parser (VHS-REQ-623).
+    const record = createReadyRecord();
+    record.runtimeSelection.allowExistingWindowsHostRuntime = true;
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.',
+      stderr: ''
+    });
+    const observeWindowsProcesses = vi.fn().mockResolvedValue({
+      capturedAt: '2026-05-16T18:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger: 'preflight',
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false
+    });
+    const observeWindowsTcpListeners = vi.fn().mockResolvedValue([]);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi
+          .fn()
+          .mockResolvedValue('server.tcp.enabled=True\nserver.tcp.port=3380\n') as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-05-16T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses,
+        observeWindowsTcpListeners,
+        disableDiagnostics: true
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
+    expect(observeWindowsProcesses).not.toHaveBeenCalled();
+
+    const launchedArgs = result.record.runtimeExecution.args ?? [];
+    const portFlagIndex = launchedArgs.findIndex(
+      (argument) => argument.toLowerCase() === '-portnumber'
+    );
+    expect(portFlagIndex).toBeGreaterThanOrEqual(0);
+    expect(launchedArgs[portFlagIndex + 1]).toBe('3380');
+
+    // The resolved non-default port reached the actual launched command plan.
+    const launchedPlan = runCommand.mock.calls[0]?.[0] as { args: string[] } | undefined;
+    expect(launchedPlan?.args).toContain('-PortNumber');
+    expect(launchedPlan?.args).toContain('3380');
+  });
+
   it('retains a bounded host timeout diagnostic when LabVIEWCLI is observed without LabVIEW through exit', async () => {
     const record = createReadyRecord();
     const result = await executeComparisonReport(

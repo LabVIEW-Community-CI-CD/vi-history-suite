@@ -55,6 +55,10 @@ jobs:
             throw "Marketplace publishing tokens must not be present on this maintainer validation runner."
           }
 
+          # actions/checkout cleans the workspace, removing the runner-evidence
+          # directory created by the pre-checkout Guard step; recreate it before
+          # writing the environment summary.
+          New-Item -ItemType Directory -Force -Path runner-evidence | Out-Null
           $summaryPath = Join-Path 'runner-evidence' 'windows-labview-maintainer-summary.txt'
           $candidatePaths = @(
             'C:\Program Files\Microsoft VS Code\bin\code.cmd',
@@ -115,6 +119,7 @@ jobs:
         if: always()
         shell: powershell
         run: |
+          New-Item -ItemType Directory -Force -Path runner-evidence | Out-Null
           $summaryPath = Join-Path 'runner-evidence' 'windows-labview-maintainer-summary.txt'
           $vsix = Get-ChildItem -LiteralPath . -Filter 'vi-history-suite-*.vsix' -File |
             Sort-Object LastWriteTime -Descending |

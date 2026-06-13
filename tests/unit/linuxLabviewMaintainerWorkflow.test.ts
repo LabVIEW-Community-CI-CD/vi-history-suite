@@ -73,6 +73,22 @@ describe('Linux LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('runner-evidence/**');
   });
 
+  it('recreates the runner-evidence directory after checkout cleans the workspace (regression)', () => {
+    const workflow = readWorkflow();
+
+    // actions/checkout cleans the workspace, removing the runner-evidence
+    // directory the pre-checkout Guard step created. A post-checkout step that
+    // writes the summary must recreate it, or the run hard-fails with
+    // "runner-evidence/...summary.txt: No such file or directory".
+    const checkoutIndex = workflow.indexOf('actions/checkout@');
+    const captureIndex = workflow.indexOf('Capture Environment Summary');
+    expect(checkoutIndex).toBeGreaterThanOrEqual(0);
+    expect(captureIndex).toBeGreaterThan(checkoutIndex);
+
+    const postCheckout = workflow.slice(checkoutIndex);
+    expect(postCheckout).toContain('mkdir -p runner-evidence');
+  });
+
   it('does not depend on npm cache tooling on the self-hosted runner', () => {
     const workflow = readWorkflow();
 

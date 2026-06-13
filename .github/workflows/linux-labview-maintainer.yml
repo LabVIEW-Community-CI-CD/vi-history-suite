@@ -59,6 +59,10 @@ jobs:
             exit 1
           fi
 
+          # actions/checkout cleans the workspace, removing the runner-evidence
+          # directory created by the pre-checkout Guard step; recreate it before
+          # writing the environment summary.
+          mkdir -p runner-evidence
           summary_path="runner-evidence/linux-labview-maintainer-summary.txt"
           candidate_paths=(
             "/usr/bin/code"
@@ -137,6 +141,7 @@ jobs:
       - name: Record VSIX Evidence Path
         if: always()
         run: |
+          mkdir -p runner-evidence
           summary_path="runner-evidence/linux-labview-maintainer-summary.txt"
           vsix="$(ls -1t vi-history-suite-*.vsix 2>/dev/null | head -n 1 || true)"
           if [ -n "$vsix" ]; then
