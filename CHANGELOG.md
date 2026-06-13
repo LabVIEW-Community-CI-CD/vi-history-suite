@@ -12,6 +12,17 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Changed
+
+- When a comparison is blocked because the selected
+  `viHistorySuite.container.imageVersion` targets a different platform than the
+  active Docker container mode (`container-image-platform-mismatch`), the warning
+  now offers a **Pick Image Version** button that opens the image-version picker,
+  and the picker surfaces a stale cross-platform selection as a leading warning
+  **Clear** row that names the stale tag and the active Docker platform — so the
+  mismatch is recoverable in one click instead of requiring a manual settings
+  edit. (VHS-REQ-650)
+
 ## [1.23.0] - 2026-06-13
 
 ### Changed

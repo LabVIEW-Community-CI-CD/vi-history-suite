@@ -552,6 +552,46 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
+  it('offers a Pick Image Version action when the runtime is blocked by a container image platform mismatch (VHS-REQ-650)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-retained-comparison-report',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'container-image-platform-mismatch',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
+        'Provider request=docker.',
+        'Runtime blocked reason: container-image-platform-mismatch.',
+        'Next action: the selected viHistorySuite.container.imageVersion targets a different platform than the active Docker engine (linux-container mode); switch Docker to the matching container engine or select a linux image version (or clear viHistorySuite.container.imageVersion to use the default), then rerun comparison report generation.'
+      ]
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('container-image-platform-mismatch'),
+      'Pick Image Version'
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'labviewViHistory.pickContainerImageVersion'
+    );
+  });
+
   it('records missing Git URI instead of opening stale revision content', async () => {    const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();

@@ -997,13 +997,13 @@ Missing numeric IDs are intentional.
     (`docker info` OSType) through an injected boundary and lists that platform's
     images, so a Windows host running Docker in Linux-container mode is offered
     Linux images. An unavailable or inconclusive probe falls back to the host
-    default, and an explicit platform override skips the probe.
+    default for image listing, and an explicit platform override skips the probe.
 - Agent Work Scope:
   - Contribute the setting and command, register the command, and implement the
     window-free helpers (`buildContainerImageVersionItems`,
     `applyContainerImageVersionSelection`,
     `discoverAvailableContainerImageVersions`,
-    `resolveEffectiveContainerPlatform`) with their unit tests; keep the
+    `resolveConfirmedContainerPlatform`) with their unit tests; keep the
     command surface thin and the daemon probe behind an injected boundary.
 - Implementation References:
   - `package.json`
@@ -1050,17 +1050,36 @@ Missing numeric IDs are intentional.
     Docker engine, or pick/clear the version) — instead of silently substituting
     the platform default. A full per-platform image override governs the active
     platform and suppresses the conflict.
+  - The compare path makes the mismatch one-click recoverable rather than
+    text-only: when a comparison is blocked with
+    `container-image-platform-mismatch`, the warning toast offers a
+    `Pick Image Version` action that opens
+    `labviewViHistory.pickContainerImageVersion` (mirroring the bitness-conflict
+    `Pick Runtime Provider` action), and the image-version picker surfaces a
+    stale cross-platform persisted selection as a leading warning Clear row that
+    names the stale tag and the active Docker platform instead of hiding it. The
+    stale-selection flag fires only when the active platform is confirmed (an
+    explicit override or a successful daemon probe); when the daemon mode is
+    unknown (Docker stopped or the probe times out) no stale warning is shown, so
+    a valid selection is never flagged against a host-OS guess.
 - Agent Work Scope:
   - Thread `containerImageVersion` from settings into the locator's per-provider
     image resolution and bypass the legacy year pin when a version is selected;
     keep resolution pure and unit-tested. Do not change host-native selection.
+  - Keep the remediation surfaces thin and pattern-consistent: the toast action
+    reuses the existing blocked-runtime warning path, and the picker's stale-row
+    detection stays in the pure `buildContainerImageVersionItems` helper.
 - Implementation References:
   - `src/reporting/comparisonRuntimeLocator.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/commands/pickContainerImageVersionCommand.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/pickContainerImageVersionCommand.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Preserve the fail-closed runtime contract (VHS-SYS-REQ-007): a
