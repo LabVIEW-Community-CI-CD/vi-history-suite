@@ -73,6 +73,38 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('runner-evidence/**');
   });
 
+  it('recreates the runner-evidence directory inside the post-checkout evidence steps (regression)', () => {
+    const workflow = readWorkflow();
+
+    // actions/checkout cleans the workspace, removing the runner-evidence
+    // directory the pre-checkout Guard step created. Each post-checkout step
+    // that writes the summary must recreate it itself, or the run hard-fails
+    // when Set-Content targets a missing runner-evidence directory. Assert the
+    // New-Item lives *inside* each evidence step block (not merely somewhere
+    // after checkout) so the guard cannot regress to relying on a later step's
+    // directory creation.
+    const stepBlock = (stepName: string): string => {
+      const start = workflow.indexOf(`- name: ${stepName}`);
+      if (start < 0) {
+        return '';
+      }
+      const rest = workflow.slice(start);
+      const nextStep = rest.indexOf('\n      - name:');
+      return nextStep < 0 ? rest : rest.slice(0, nextStep);
+    };
+
+    const newItem = 'New-Item -ItemType Directory -Force -Path runner-evidence';
+    const checkoutIndex = workflow.indexOf('actions/checkout@');
+    const captureIndex = workflow.indexOf('- name: Capture Environment Summary');
+    const recordIndex = workflow.indexOf('- name: Record VSIX Evidence Path');
+    expect(checkoutIndex).toBeGreaterThanOrEqual(0);
+    expect(captureIndex).toBeGreaterThan(checkoutIndex);
+    expect(recordIndex).toBeGreaterThan(checkoutIndex);
+
+    expect(stepBlock('Capture Environment Summary')).toContain(newItem);
+    expect(stepBlock('Record VSIX Evidence Path')).toContain(newItem);
+  });
+
   it('does not depend on npm cache tooling on the self-hosted runner', () => {
     const workflow = readWorkflow();
 

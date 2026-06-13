@@ -73,6 +73,37 @@ describe('Linux LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('runner-evidence/**');
   });
 
+  it('recreates the runner-evidence directory inside the post-checkout evidence steps (regression)', () => {
+    const workflow = readWorkflow();
+
+    // actions/checkout cleans the workspace, removing the runner-evidence
+    // directory the pre-checkout Guard step created. Each post-checkout step
+    // that writes the summary must recreate it itself, or the run hard-fails
+    // with "runner-evidence/...summary.txt: No such file or directory".
+    // Assert the mkdir lives *inside* each evidence step block (not merely
+    // somewhere after checkout) so the guard cannot regress to relying on a
+    // later step's directory creation.
+    const stepBlock = (stepName: string): string => {
+      const start = workflow.indexOf(`- name: ${stepName}`);
+      if (start < 0) {
+        return '';
+      }
+      const rest = workflow.slice(start);
+      const nextStep = rest.indexOf('\n      - name:');
+      return nextStep < 0 ? rest : rest.slice(0, nextStep);
+    };
+
+    const checkoutIndex = workflow.indexOf('actions/checkout@');
+    const captureIndex = workflow.indexOf('- name: Capture Environment Summary');
+    const recordIndex = workflow.indexOf('- name: Record VSIX Evidence Path');
+    expect(checkoutIndex).toBeGreaterThanOrEqual(0);
+    expect(captureIndex).toBeGreaterThan(checkoutIndex);
+    expect(recordIndex).toBeGreaterThan(checkoutIndex);
+
+    expect(stepBlock('Capture Environment Summary')).toContain('mkdir -p runner-evidence');
+    expect(stepBlock('Record VSIX Evidence Path')).toContain('mkdir -p runner-evidence');
+  });
+
   it('does not depend on npm cache tooling on the self-hosted runner', () => {
     const workflow = readWorkflow();
 
