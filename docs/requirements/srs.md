@@ -1668,7 +1668,13 @@ Missing numeric IDs are intentional.
     (`scripts/checkMaintainerRunnerPrerequisites.js`) as a fail-fast gate after
     checkout and before install, which reports every missing host prerequisite
     (VS Code, LabVIEW, LabVIEW CLI, Node, npm, Git) at once with remediation and
-    exits non-zero when any required prerequisite is absent. The same script is
+    exits non-zero when any required prerequisite is absent. The doctor also runs
+    an advisory system-clock-skew preflight that warns (without failing unless
+    `--fail-on-clock-skew` is passed) when the host clock differs from an
+    authoritative network time source beyond a tolerance, and degrades to an
+    advisory `unknown` when that source is unreachable, so the dual-boot
+    clock-skew trap that silently knocks the runner offline with a misleading
+    GitHub "registration has been deleted" error is surfaced. The same script is
     runnable directly on the runner for self-service readiness validation
     without dispatching the trusted-ref-gated workflow. The native-Windows
     integration host additionally fails fast with actionable remediation when
@@ -1712,7 +1718,11 @@ Missing numeric IDs are intentional.
     (`scripts/checkMaintainerRunnerPrerequisites.js`) as a fail-fast gate after
     checkout and before install, which reports every missing host prerequisite
     (VS Code, LabVIEW, LabVIEW CLI, Node, npm, Git) at once with remediation and
-    exits non-zero when any required prerequisite is absent. The same script is
+    exits non-zero when any required prerequisite is absent. The doctor also runs
+    an advisory system-clock-skew preflight that warns (without failing unless
+    `--fail-on-clock-skew` is passed) when the host clock differs from an
+    authoritative network time source beyond a tolerance, and degrades to an
+    advisory `unknown` when that source is unreachable. The same script is
     runnable directly on the runner for self-service readiness validation
     without dispatching the trusted-ref-gated workflow.
 - Agent Work Scope:
