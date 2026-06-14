@@ -213,7 +213,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('persists the selected report format', async () => {
+  it('ignores an unknown setReportFormat message (format option removed, #545)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -223,10 +223,10 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
     await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
     await panel.dispatchMessage({ command: 'setReportFormat', format: 'HTML' });
-    expect(sharedUpdate).toHaveBeenCalledWith(
+    expect(sharedUpdate).not.toHaveBeenCalledWith(
       'report.format',
-      'HTML',
-      vscode.ConfigurationTarget.Global
+      expect.anything(),
+      expect.anything()
     );
   });
 

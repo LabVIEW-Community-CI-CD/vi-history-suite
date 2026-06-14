@@ -12,6 +12,68 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.29.0] - 2026-06-14
+
+### Added
+
+- The Docker container-image cold-pull now shows **live, steadily-advancing
+  progress**. When the comparison runtime pulls the LabVIEW image (the Windows
+  image is multiple gigabytes and can take several minutes), the acquisition
+  notification reads e.g. `Pulling container image: <image> — 31% (4/13 layers,
+  1.4 GB)`, driven by the Docker Engine API image-pull progress stream instead
+  of opaque per-line status text. Progress is layer-weighted (Docker reveals
+  layers and their sizes progressively, so a byte-percentage against the
+  partially-known total is unreliable early and can stick at a false 100%); the
+  toast updates whenever its visible text changes and never freezes. Hosts where
+  the Docker daemon socket is not directly reachable (and any failure) fall back
+  to the previous `docker pull` behavior, so acquisition is never worse than
+  before (VHS-REQ-654, #547).
+- The cold-pull toast now shows a **true byte-percentage** when the image's total
+  download size can be resolved from the Docker Hub registry manifest up front —
+  e.g. `Pulling container image: <image> — 42% (8.1 GB / 19.3 GB)`. Dividing
+  downloaded bytes by the stable manifest total (rather than the
+  progressively-revealed live-stream totals) gives a smooth fraction of the real
+  download size; cached layers are credited so a partial cache still reaches the
+  total. Resolution is anonymous, bounded, and pinned to the Docker Hub hosts (no
+  SSRF surface); any failure (non-Hub registry, auth/network/parse error, timeout)
+  transparently falls back to the layer-weighted progress above (VHS-REQ-655,
+  #549).
+- The cold-pull toast now **signals the pull phase** so it no longer freezes once
+  the multi-gigabyte download finishes. A Docker pull does not end when bytes
+  arrive — each layer then **extracts** (unpacks), which is itself multi-minute
+  for the Windows image. The notification now names the phase: a pulling message
+  with the download percentage while downloading, then `Extracting container
+  image: <image> — 60% (8/13 layers)` while unpacking (the bar keeps advancing),
+  then a brief finalizing message before `Container image ready`. Extraction
+  progress still advances on `Pull complete` steps even when the daemon omits
+  per-layer `Extracting` byte detail (VHS-REQ-656, #551).
+
+### Changed
+
+- The **VI History panel is minimized** to what reviewers actually use: a slim
+  title, the retained commit table (with selection checkboxes, the working-tree
+  row, and per-row Open@commit / Copy hash actions and commit body), and a single
+  **Compare** button enabled when exactly two revisions are selected. The
+  procedural sections — review facts, repository facts, binary review limits,
+  reviewer guidance, confidence and scope, the latest-compare-runtime block, the
+  verbose compare-preflight block, and the maintainer host-review form — are
+  removed from the panel. Compare runtime feedback (provider, acquisition,
+  blocked-runtime remediation) is surfaced through notifications instead of an
+  in-panel section. The factual review packet moves from an in-panel button to
+  the **Copy Review Packet** Command Palette command
+  (`labviewViHistory.copyReviewPacket`) (VHS-REQ-017/039/133/650, #553).
+
+### Removed
+
+- The comparison **report format** choice is gone: the `viHistorySuite.report.format`
+  setting and the Runtime & Report Settings panel's format selector are removed,
+  and reports are now always generated as a single self-contained HTML file
+  (`-ReportType htmlsinglefile`). The alternate multi-file `HTML` format could
+  leave large reports showing image paths instead of pictures (the failure mode
+  VHS-REQ-640 was created to eliminate), so offering it was a footgun. The five
+  difference-suppression Include options are unchanged, and previously retained
+  multi-file reports still open, render, and export (#545).
+
 ## [1.28.0] - 2026-06-14
 
 ### Added

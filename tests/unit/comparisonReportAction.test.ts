@@ -801,11 +801,10 @@ describe('readComparisonReportOptions (VHS-REQ-645)', () => {
     } as never;
   }
 
-  it('defaults to single-file HTML and no suppression filters when nothing is configured', () => {
+  it('defaults to no suppression filters when nothing is configured', () => {
     const options = readComparisonReportOptions(fakeConfiguration({}));
 
     expect(options).toEqual({
-      reportFormat: 'HTMLSingleFile',
       ignoreViAttributes: false,
       ignoreFrontPanel: false,
       ignoreFrontPanelObjectPosition: false,
@@ -814,7 +813,7 @@ describe('readComparisonReportOptions (VHS-REQ-645)', () => {
     });
   });
 
-  it('reads the configured format and each enabled difference-suppression filter', () => {
+  it('reads each enabled difference-suppression filter and ignores any report.format value (#545)', () => {
     const options = readComparisonReportOptions(
       fakeConfiguration({
         'report.format': 'HTML',
@@ -826,23 +825,15 @@ describe('readComparisonReportOptions (VHS-REQ-645)', () => {
       })
     );
 
+    // The report format is fixed to single-file HTML (VHS-REQ-640) and is no
+    // longer read from settings, so report.format is not reflected here.
     expect(options).toEqual({
-      reportFormat: 'HTML',
       ignoreViAttributes: true,
       ignoreFrontPanel: true,
       ignoreFrontPanelObjectPosition: true,
       ignoreBlockDiagram: true,
       ignoreBlockDiagramCosmetic: true
     });
-  });
-
-  it('falls back to single-file HTML for an unsupported or invalid format value', () => {
-    expect(readComparisonReportOptions(fakeConfiguration({ 'report.format': 'MicrosoftWord' })).reportFormat).toBe(
-      'HTMLSingleFile'
-    );
-    expect(readComparisonReportOptions(fakeConfiguration({ 'report.format': 42 })).reportFormat).toBe(
-      'HTMLSingleFile'
-    );
   });
 
   it('treats non-boolean filter values as false (misconfigured settings.json)', () => {

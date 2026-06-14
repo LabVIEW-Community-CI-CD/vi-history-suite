@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.28.0",
+  "version": "1.29.0",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -58,6 +58,11 @@
       {
         "command": "labviewViHistory.openDocumentation",
         "title": "Open Documentation",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.copyReviewPacket",
+        "title": "Copy Review Packet",
         "category": "VI History"
       },
       {
@@ -198,19 +203,6 @@
           "minimum": 30,
           "maximum": 600,
           "description": "VHS-REQ-148: LabVIEW CLI connect-window timeout (in seconds) written into LabVIEWCLI.ini before each Windows host-native compare. Sets OpenAppReferenceTimeoutInSecond and AfterLaunchOpenAppReferenceTimeoutInSecond. Default 180 matches the shipped Windows-container value; lower it only on hosts with confirmed sub-30s LabVIEW cold launches."
-        },
-        "viHistorySuite.report.format": {
-          "type": "string",
-          "enum": [
-            "HTMLSingleFile",
-            "HTML"
-          ],
-          "enumDescriptions": [
-            "Self-contained single HTML file with images embedded as data URIs (no sibling _files folder). Recommended: avoids the per-image load limit that can leave large multi-file reports showing image paths instead of pictures.",
-            "Multi-file HTML with a sibling <report>_files folder of PNG images. Produces smaller individual files but requests many images at once for large reports."
-          ],
-          "default": "HTMLSingleFile",
-          "description": "VHS-REQ-645: format of the generated LabVIEW comparison report. Only HTML variants are supported by the in-panel viewer, dashboard, and export."
         },
         "viHistorySuite.report.ignoreViAttributes": {
           "type": "boolean",

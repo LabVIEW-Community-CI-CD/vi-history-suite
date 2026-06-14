@@ -231,3 +231,7 @@ tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conf
 tests/unit/checkMaintainerRunnerPrerequisites.test.ts,mapped,Yes,Maintainer runner prerequisite doctor tests; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/windowsRuntimeMatrixWorkflow.test.ts,mapped,Yes,Windows runtime matrix workflow contract tests; mapped to VHS-REQ-622.
 .github/workflows/windows-runtime-matrix.yml,release-ci,Yes,Windows runtime matrix workflow; mapped to VHS-REQ-622.
+src/tooling/dockerImagePullProgress.ts,mapped,Yes,Docker Engine API image-pull progress parser aggregator and injectable stream; mapped to VHS-REQ-654.
+tests/unit/dockerImagePullProgress.test.ts,mapped,Yes,Docker image pull progress module unit tests; mapped to VHS-REQ-654.
+src/tooling/dockerImageDownloadSize.ts,mapped,Yes,Docker Hub registry manifest download-size resolver for the stable byte-percentage; mapped to VHS-REQ-655.
+tests/unit/dockerImageDownloadSize.test.ts,mapped,Yes,Registry manifest download-size resolver unit tests; mapped to VHS-REQ-655.

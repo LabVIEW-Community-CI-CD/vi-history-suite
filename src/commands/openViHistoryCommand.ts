@@ -14,23 +14,13 @@ import {
   isDockerNotInstalledBlock,
   isHostBitnessConflictBlock,
   isHostVersionConflictBlock,
-  readComparisonRuntimeSettings,
-  resolveRuntimePlatform,
 } from '../reporting/comparisonReportAction';
-import {
-  ComparisonRuntimeSelection,
-  ComparisonRuntimeSettings,
-  locateComparisonRuntime,
-  RuntimePlatform
-} from '../reporting/comparisonRuntimeLocator';
-import { buildComparisonRuntimeDoctorSummaryFromFacts } from '../reporting/comparisonRuntimeDoctor';
 import {
   MultiReportDashboardActionResult,
 } from '../dashboard/multiReportDashboardAction';
 import {
   DocumentationActionResult
 } from '../docs/bundledDocumentationAction';
-import type { ComparisonReportRuntimeExecution } from '../reporting/comparisonReportPacket';
 import {
   ReviewDecisionRecordActionResult,
 } from '../scenarios/reviewDecisionRecordAction';
@@ -39,7 +29,6 @@ import {
 } from '../review/humanReviewSubmissionAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
-  HistoryPanelComparePreflightState,
   renderHistoryPanelHtml,
   renderHistoryReviewPacketText
 } from '../ui/historyPanel';
@@ -68,6 +57,55 @@ const UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX =
  */
 function formatUntrustedWorkspaceWarning(featurePrefix: string): string {
   return `${featurePrefix} in untrusted workspaces ${UNTRUSTED_WORKSPACE_TRUST_RATIONALE}. ${UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX}`;
+}
+
+/**
+ * VHS-REQ-039/040: copy the factual VI History review packet for the selected VI
+ * to the clipboard. This is the Command Palette entry point (the in-panel button
+ * was removed when the panel was reduced to commit selection + Compare). It
+ * applies the same workspace-trust and eligibility gates as opening the panel,
+ * then renders the same plain-text packet the panel model would produce.
+ */
+export function createCopyReviewPacketCommand(
+  historyService: ViHistoryService
+): (uri?: vscode.Uri) => Promise<void> {
+  return async (uri?: vscode.Uri) => {
+    if (!vscode.workspace.isTrusted) {
+      void vscode.window.showWarningMessage(
+        formatUntrustedWorkspaceWarning('VI History review packet copy is disabled')
+      );
+      return;
+    }
+
+    const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
+    if (!targetUri) {
+      void vscode.window.showInformationMessage(
+        'Select a tracked LabVIEW VI to copy its VI History review packet.'
+      );
+      return;
+    }
+
+    let model: Awaited<ReturnType<ViHistoryService['load']>>;
+    try {
+      model = await historyService.load(targetUri);
+    } catch (error) {
+      void vscode.window.showErrorMessage(
+        buildHistoryLoadFailureMessage(targetUri.fsPath, error)
+      );
+      return;
+    }
+
+    if (!model.eligible) {
+      void vscode.window.showInformationMessage(buildIneligibilityMessage(model));
+      return;
+    }
+
+    const reviewPacket = renderHistoryReviewPacketText(model);
+    await vscode.env.clipboard.writeText(reviewPacket);
+    void vscode.window.showInformationMessage(
+      'VI History review packet copied to the clipboard.'
+    );
+  };
 }
 
 export function createOpenViHistoryCommand(
@@ -112,13 +150,7 @@ export function createOpenViHistoryCommand(
     draftOutcome?: string;
     draftConfidence?: string;
     draftNote?: string;
-  }) => Promise<HumanReviewSubmissionActionResult>,
-  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>,
-  runtimePlatform?: RuntimePlatform,
-  runtimeLocator?: (
-    platform: RuntimePlatform,
-    settings: ComparisonRuntimeSettings
-  ) => Promise<ComparisonRuntimeSelection>
+  }) => Promise<HumanReviewSubmissionActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -187,19 +219,10 @@ export function createOpenViHistoryCommand(
       },
       hasRetainedComparisonReport
     );
-    let comparePreflightState = await resolveHistoryPanelComparePreflightState(
-      comparePreflightResolver,
-      runtimePlatform,
-      runtimeLocator
-    );
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
-    const renderedHtml = renderHistoryPanelHtml(
-      model,
-      panelTracker?.getLastActionSummary(),
-      comparePreflightState
-    );
+    const renderedHtml = renderHistoryPanelHtml(model);
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
       `VI History: ${path.basename(targetUri.fsPath)}`,
@@ -642,17 +665,13 @@ export function createOpenViHistoryCommand(
         ) {
           if (result.retainedArchiveAvailable === false) {
             void vscode.window.showInformationMessage(
-              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the compare preflight section to rebuild retained evidence for this pair if it is not yet reviewable.'
+              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Re-run Compare for this pair to rebuild retained evidence if it is not yet reviewable.'
             );
           } else {
             const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
             if (selectedCommit && (!baseHash || selectedCommit.previousHash === baseHash)) {
               selectedCommit.retainedComparisonEvidenceAvailable = true;
-              safeUpdatePanelHtml(renderHistoryPanelHtml(
-                model,
-                panelTracker?.getLastActionSummary(),
-                comparePreflightState
-              ));
+              safeUpdatePanelHtml(renderHistoryPanelHtml(model));
             }
           }
         }
@@ -807,11 +826,7 @@ export function createOpenViHistoryCommand(
             model,
             hasRetainedComparisonReport
           );
-          panel.webview.html = renderHistoryPanelHtml(
-            model,
-            panelTracker?.getLastActionSummary(),
-            comparePreflightState
-          );
+          panel.webview.html = renderHistoryPanelHtml(model);
         }
         return;
       }
@@ -1008,30 +1023,6 @@ export function createOpenViHistoryCommand(
             result.canonicalMachineFingerprintId,
           humanReviewValidationMessage: result.validationMessage
         });
-        return;
-      }
-
-      if (command === 'pickContainerImageVersion') {
-        // VHS-REQ-650: the compare-preflight Pick Image Version CTA (shown when
-        // the runtime is blocked by a container-image-platform-mismatch) opens
-        // the image-version picker so the user can switch to a compatible image
-        // before running Compare. Await the picker, then recompute the preflight
-        // and re-render so the panel reflects the remediation — the block clears
-        // and the CTA disappears once a compatible image is selected — instead of
-        // showing a stale block until the panel is reopened.
-        await vscode.commands.executeCommand('labviewViHistory.pickContainerImageVersion');
-        comparePreflightState = await resolveHistoryPanelComparePreflightState(
-          comparePreflightResolver,
-          runtimePlatform,
-          runtimeLocator
-        );
-        safeUpdatePanelHtml(
-          renderHistoryPanelHtml(
-            model,
-            panelTracker?.getLastActionSummary(),
-            comparePreflightState
-          )
-        );
         return;
       }
 
@@ -1677,213 +1668,10 @@ function resolveExplicitComparisonPair(
   };
 }
 
-async function resolveHistoryPanelComparePreflightState(
-  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>,
-  runtimePlatform?: RuntimePlatform,
-  runtimeLocator?: (
-    platform: RuntimePlatform,
-    settings: ComparisonRuntimeSettings
-  ) => Promise<ComparisonRuntimeSelection>
-): Promise<HistoryPanelComparePreflightState> {
-  if (comparePreflightResolver) {
-    return comparePreflightResolver();
-  }
-
-  const settings = readComparisonRuntimeSettings();
-  const provider = settings.invalidRequestedProvider
-    ? `Invalid (${settings.invalidRequestedProvider})`
-    : settings.requestedProvider === 'docker'
-      ? 'docker'
-      : 'host';
-  const labviewVersion = settings.labviewVersion ?? 'Unset';
-  const labviewBitness = settings.bitness ?? 'Unset';
-  const cliHint =
-    'Use the generated settings CLI to change provider, LabVIEW version, or bitness.';
-
-  if (settings.invalidRequestedProvider) {
-    return {
-      status: 'blocked',
-      provider,
-      labviewVersion,
-      labviewBitness,
-      nextAction: buildComparePreflightSettingsAction(
-        'set viHistorySuite.runtimeProvider to host or docker'
-      ),
-      cliHint,
-      warningMessage: buildComparePreflightWarningMessage(
-        'Set viHistorySuite.runtimeProvider to host or docker'
-      )
-    };
-  }
-
-  if (!settings.labviewVersion && !settings.bitness) {
-    return {
-      status: 'blocked',
-      provider,
-      labviewVersion,
-      labviewBitness,
-      nextAction: buildComparePreflightSettingsAction(
-        'set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness'
-      ),
-      cliHint,
-      warningMessage: buildComparePreflightWarningMessage(
-        'Set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness'
-      )
-    };
-  }
-
-  if (!settings.labviewVersion) {
-    return {
-      status: 'blocked',
-      provider,
-      labviewVersion,
-      labviewBitness,
-      nextAction: buildComparePreflightSettingsAction(
-        'set viHistorySuite.labviewVersion'
-      ),
-      cliHint,
-      warningMessage: buildComparePreflightWarningMessage(
-        'Set viHistorySuite.labviewVersion'
-      )
-    };
-  }
-
-  if (!settings.bitness) {
-    return {
-      status: 'blocked',
-      provider,
-      labviewVersion,
-      labviewBitness,
-      nextAction: buildComparePreflightSettingsAction(
-        'set viHistorySuite.labviewBitness'
-      ),
-      cliHint,
-      warningMessage: buildComparePreflightWarningMessage(
-        'Set viHistorySuite.labviewBitness'
-      )
-    };
-  }
-
-  if (settings.requestedProvider === 'docker' && settings.bitness === 'x86') {
-    return {
-      status: 'blocked',
-      provider,
-      labviewVersion,
-      labviewBitness,
-      nextAction: buildComparePreflightSettingsAction(
-        'use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host'
-      ),
-      cliHint,
-      warningMessage:
-        'Runtime settings need attention. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host. Try Compare to capture the exact failure, or update settings with the generated CLI.'
-    };
-  }
-
-  const effectiveRuntimePlatform = runtimePlatform ?? resolveRuntimePlatform(process.platform);
-  if (effectiveRuntimePlatform === 'win32') {
-    const runtimeSelection = await (runtimeLocator ?? locateComparisonRuntime)(
-      effectiveRuntimePlatform,
-      settings
-    );
-    if (runtimeSelection.provider === 'unavailable' || runtimeSelection.blockedReason) {
-      return buildRuntimeBackedBlockedComparePreflightState({
-        provider,
-        labviewVersion,
-        labviewBitness,
-        cliHint,
-        runtimeSelection
-      });
-    }
-  }
-
-  return {
-    status: 'ready',
-    provider,
-    labviewVersion,
-    labviewBitness,
-    nextAction:
-      'Next action: select two retained revisions, review the explicit selected/base pair, then choose Compare.',
-    cliHint
-  };
-}
-
 function deriveComparisonRuntimeNextAction(
   summaryLines: string[] | undefined
 ): string | undefined {
   return summaryLines?.find((line) => line.startsWith('Next action:'));
-}
-
-function buildComparePreflightSettingsAction(settingsAction: string): string {
-  return `Next action: ${settingsAction} with the generated settings CLI. Compare can still be tried to retain the exact runtime failure.`;
-}
-
-function buildComparePreflightWarningMessage(settingsAction: string): string {
-  return `Runtime settings need attention. ${settingsAction} with the generated settings CLI, or try Compare to capture the exact failure.`;
-}
-
-function buildRuntimeBackedBlockedComparePreflightState(options: {
-  provider: string;
-  labviewVersion: string;
-  labviewBitness: string;
-  cliHint: string;
-  runtimeSelection: ComparisonRuntimeSelection;
-}): HistoryPanelComparePreflightState {
-  const runtimeDoctorSummaryLines = buildComparisonRuntimeDoctorSummaryFromFacts({
-    reportStatus: 'blocked-runtime',
-    runtimeSelection: options.runtimeSelection,
-    runtimeExecution: buildComparePreflightRuntimeExecution(options.runtimeSelection)
-  });
-  const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(runtimeDoctorSummaryLines);
-  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(runtimeDoctorSummaryLines);
-  const rejectedProviderSummary = deriveRejectedProviderSummaryFromDoctorSummary(
-    runtimeDoctorSummaryLines
-  );
-  const nextAction =
-    deriveComparisonRuntimeNextAction(runtimeDoctorSummaryLines) ??
-    'Next action: make the selected runtime provider available or adjust runtime settings, then rerun compare preflight.';
-  const warningSegments = ['Runtime settings need attention.'];
-
-  if (runtimeProvider) {
-    warningSegments.push(`Provider: ${runtimeProvider}.`);
-  }
-  if (providerRequest) {
-    warningSegments.push(`Provider request: ${providerRequest}.`);
-  }
-  if (rejectedProviderSummary) {
-    warningSegments.push(`Rejected providers: ${rejectedProviderSummary}.`);
-  }
-  if (options.runtimeSelection.blockedReason) {
-    warningSegments.push(`Blocked reason: ${options.runtimeSelection.blockedReason}.`);
-  }
-  warningSegments.push(
-    'Use the generated settings CLI to change provider, LabVIEW version, or bitness; Compare can still be tried to capture the exact failure.'
-  );
-  warningSegments.push(nextAction);
-
-  return {
-    status: 'blocked',
-    provider: options.provider,
-    labviewVersion: options.labviewVersion,
-    labviewBitness: options.labviewBitness,
-    nextAction,
-    cliHint: options.cliHint,
-    warningMessage: warningSegments.join(' '),
-    blockedReason: options.runtimeSelection.blockedReason
-  };
-}
-
-function buildComparePreflightRuntimeExecution(
-  runtimeSelection: ComparisonRuntimeSelection
-): ComparisonReportRuntimeExecution {
-  return {
-    state: 'not-available',
-    attempted: false,
-    reportExists: false,
-    acquisitionState:
-      runtimeSelection.containerAcquisitionState ?? runtimeSelection.windowsContainerAcquisitionState,
-    blockedReason: runtimeSelection.blockedReason,
-    diagnosticNotes: []
-  };
 }
 
 function deriveRuntimeProviderFromDoctorSummary(

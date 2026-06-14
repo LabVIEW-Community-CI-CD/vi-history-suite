@@ -387,18 +387,22 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: History Panel
-- Statement: The history panel shall show repository, relative path, VI
-  signature, and commit facts for the selected file.
+- Statement: The history panel shall show the selected file's relative path and a
+  selectable table of retained commit facts so the user can review the commits
+  and choose a pair to compare.
 - Acceptance Criteria:
-  - Rendered content includes repository name, repository root, and origin URL
-    or unavailable state.
-  - Rendered content includes the relative path and detected VI signature.
-  - Rendered content includes retained commit count, newest commit, oldest
-    commit, and chronology order.
-  - Rendered content includes the commit subject and full commit body for each
-    retained revision.
-  - Binary review limitation text stays factual and does not claim semantic VI
-    differences from Git-only history.
+  - The panel renders a slim orientation title carrying the selected file's
+    relative path and the retained commit count.
+  - The panel renders a commit table with one row per retained revision, each row
+    carrying the abbreviated commit hash, author date, author name, commit
+    subject, and the full commit body.
+  - Revisions with an empty commit body render a factual fallback rather than a
+    blank cell.
+  - The panel does not render the prior procedural sections (review-facts,
+    repository-facts, binary-review-limitation, reviewer-guidance,
+    confidence-and-scope, latest-compare-runtime, or host-review-submission); the
+    factual review packet remains available through the
+    `labviewViHistory.copyReviewPacket` command (VHS-REQ-039).
   - User-controlled or path-derived panel values are escaped in rendered HTML
     text and attribute contexts. Inline script contexts (e.g., JSON-serialized
     data in `<script>` blocks) must neutralize script-tag boundaries in
@@ -414,33 +418,40 @@ Missing numeric IDs are intentional.
   - `tests/unit/historyPanelRendering.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
-  - Do not replace factual Git content with inferred summaries.
+  - Do not replace factual Git content with inferred summaries. Keep the panel
+    focused on the commit table and the explicit Compare action; route additional
+    factual evidence to the review-packet command rather than re-adding panel
+    sections.
 
 ### VHS-REQ-039: Copy Review Packet
 
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: History Panel
-- Statement: The history panel shall expose a panel-level action that copies a
-  factual review packet.
+- Statement: The extension shall expose a command that copies a factual review
+  packet for the selected VI.
 - Acceptance Criteria:
-  - The panel exposes a copy review packet action.
-  - The action writes plain text to the VS Code clipboard.
-  - The action result is retained by the panel tracker.
+  - The extension contributes a `labviewViHistory.copyReviewPacket` Command
+    Palette command that copies the review packet for the selected VI.
+  - The command writes plain text to the VS Code clipboard.
+  - The command applies the same workspace-trust and eligibility gates as opening
+    the panel, surfacing a factual message when the selection is untrusted,
+    unresolvable, or ineligible.
 - Agent Work Scope:
-  - Change panel message handling, review packet rendering, and tracker tests
+  - Change command registration, review packet rendering, and their tests
     together.
 - Implementation References:
   - `src/ui/historyPanel.ts`
   - `src/commands/openViHistoryCommand.ts`
-  - `src/ui/historyPanelTracker.ts`
+  - `src/extension.ts`
 - Verification References:
-  - `tests/unit/historyPanelRendering.test.ts`
+  - `tests/unit/historyReviewPacket.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/historyPanelTracker.test.ts`
+  - `tests/unit/packageManifest.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
-  - Keep copied review packets grounded in the same model shown in the panel.
+  - Keep copied review packets grounded in the same model the panel renders.
 
 ### VHS-REQ-040: Factual Review Packet Text
 
@@ -517,13 +528,17 @@ Missing numeric IDs are intentional.
   initiate comparison through an explicit selected/base pair action.
 - Acceptance Criteria:
   - Exactly two distinct retained revisions resolve to one selected/base pair.
-  - Selected/base ordering is explained consistently in panel preflight text.
   - The newer of the two selected revisions becomes selected and the older
-    becomes base.
+    becomes base, derived from the row commit-index ordering.
+  - Selecting a third revision is prevented so at most two revisions are ever
+    selected.
   - Compare controls remain explicit user actions with no auto-compare or
-    auto-generate behavior when the second checkbox is selected.
-  - Runtime preflight state is visible without silently blocking all compare
-    attempts.
+    auto-generate behavior when the second checkbox is selected; selecting the
+    second revision only enables the Compare button.
+  - Compare runtime feedback (provider, acquisition, and blocked-runtime
+    remediation) is surfaced through notifications rather than an in-panel
+    preflight section, and a blocked runtime never silently prevents the user
+    from invoking Compare.
 - Agent Work Scope:
   - Change panel rendering, command message handling, and runtime preflight
     together when changing compare workflow.
@@ -820,35 +835,32 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-008
 - Area: Comparison Reports
-- Statement: The extension shall expose the LabVIEW comparison report flags —
-  the report output format and the difference-suppression filters honored by the
-  LabVIEWCLI CreateComparisonReport operation — as native VS Code settings, so a
-  user can tailor what each generated report contains without code changes while
-  an unconfigured workspace reproduces the shipped defaults exactly.
+- Statement: The extension shall expose the LabVIEW comparison report
+  difference-suppression filters honored by the LabVIEWCLI CreateComparisonReport
+  operation as native VS Code settings, so a user can tailor what each generated
+  report contains without code changes while an unconfigured workspace
+  reproduces the shipped defaults exactly. The report output format is fixed to
+  single-file HTML (VHS-REQ-640) and is not configurable.
 - Acceptance Criteria:
-  - The extension contributes user- and workspace-scoped settings under
-    `viHistorySuite.report.*`: a report `format` constrained to the HTML variants
-    the in-panel viewer, dashboard, and export support (`HTMLSingleFile` default
-    and `HTML`), and boolean difference-suppression filters `ignoreViAttributes`,
-    `ignoreFrontPanel`, `ignoreFrontPanelObjectPosition`, `ignoreBlockDiagram`,
-    and `ignoreBlockDiagramCosmetic`.
+  - The extension contributes user- and workspace-scoped boolean
+    difference-suppression settings under `viHistorySuite.report.*`:
+    `ignoreViAttributes`, `ignoreFrontPanel`, `ignoreFrontPanelObjectPosition`,
+    `ignoreBlockDiagram`, and `ignoreBlockDiagramCosmetic`. No report-format
+    setting is contributed; the format is hardcoded to single-file HTML.
   - Each enabled boolean adds exactly its verified CreateComparisonReport flag
     (`-noattr`, `-nofp`, `-nofppos`, `-nobd`, `-nobdcosm` respectively) to the
-    generated command, and the report format selects the corresponding
-    `-ReportType` value.
+    generated command. The report is always invoked with
+    `-ReportType htmlsinglefile`, independent of any setting (VHS-REQ-640).
   - With no settings configured, the generated CreateComparisonReport invocation
     is identical to the prior hardcoded behavior: single-file HTML output and no
     suppression filters (no regression of VHS-REQ-640).
-  - An invalid or unsupported `report.format` value falls back to the single-file
-    HTML default rather than emitting an unsupported report type.
   - The settings render in the native VS Code Settings editor; no scripted
     webview is introduced and the comparison-report panel keeps scripts disabled
     (no regression of VHS-REQ-626).
-  - The Runtime & Report Settings panel surfaces the same flags as Include
-    checkboxes (checked includes the difference class) plus the report format and
-    persists each edit to `viHistorySuite.report.*` with the Include-to-ignore
-    inversion (unchecking a class writes `ignore=true`); an unsupported format
-    selection is ignored.
+  - The Runtime & Report Settings panel surfaces these flags as Include
+    checkboxes (checked includes the difference class) and persists each edit to
+    `viHistorySuite.report.*` with the Include-to-ignore inversion (unchecking a
+    class writes `ignore=true`). The panel exposes no report-format control.
 - Agent Work Scope:
   - Contribute the settings, read them at the comparison-report action boundary,
     and thread them through the execution plan and CLI plan builder together with
@@ -870,8 +882,8 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep the difference-suppression flag names aligned with the LabVIEWCLI
     CreateComparisonReport operation help; do not expose flags the CLI operation
-    does not honor, and do not surface report formats the in-panel viewer,
-    dashboard, or export cannot render.
+    does not honor. Do not reintroduce a report-format setting or a multi-file
+    report type for newly generated reports (VHS-REQ-640).
 
 ### VHS-REQ-646: LabVIEW Container Image Tag Model
 
@@ -1070,29 +1082,21 @@ Missing numeric IDs are intentional.
     `Pick Image Version` action that opens
     `labviewViHistory.pickContainerImageVersion`. The blocked-evidence report is
     not auto-opened for this reason (the packet is still persisted and explicit
-    `Export Comparison Report` still works), and the History panel runtime update
-    matches the concise toast rather than re-deriving the verbose doctor-summary
-    content, mirroring the concise Docker block toasts (VHS-REQ-642/643) and the
-    host-conflict toasts (VHS-REQ-621/653, #532). The image-version picker
-    surfaces a
+    `Export Comparison Report` still works), mirroring the concise Docker block
+    toasts (VHS-REQ-642/643) and the host-conflict toasts (VHS-REQ-621/653,
+    #532). The image-version picker surfaces a
     stale cross-platform persisted selection as a leading warning Clear row that
     names the stale tag and the active Docker platform instead of hiding it. The
     stale-selection flag fires only when the active platform is confirmed (an
     explicit override or a successful daemon probe); when the daemon mode is
     unknown (Docker stopped or the probe times out) no stale warning is shown, so
     a valid selection is never flagged against a host-OS guess.
-  - The history-panel compare preflight surfaces the same remediation before the
-    user runs Compare: when the runtime-backed preflight is blocked with
-    `container-image-platform-mismatch` (the runtime locator runs in the panel
-    preflight on Windows), the panel renders a `Pick Image Version`
-    call-to-action button whose click opens
-    `labviewViHistory.pickContainerImageVersion`. The classified block reason is
-    threaded onto the panel preflight state as a typed field so the gating is
-    deterministic; the button is shown only for that block reason, not for other
-    blocked reasons or a ready/unavailable preflight. After the picker completes,
-    the panel re-resolves the compare preflight and re-renders in place, so a
-    selection that clears the mismatch removes the block (and its
-    call-to-action) without requiring the panel to be reopened.
+  - The mismatch remediation is delivered through the concise warning toast and
+    the `labviewViHistory.pickContainerImageVersion` command (palette and toast
+    action); the minimized History panel does not render an in-panel
+    Pick Image Version call-to-action or a compare-preflight section. After the
+    picker completes, a subsequent Compare re-resolves the runtime, so a selection
+    that clears the mismatch is honored without an in-panel preflight re-render.
 - Agent Work Scope:
   - Thread `containerImageVersion` from settings into the locator's per-provider
     image resolution and bypass the legacy year pin when a version is selected;
@@ -1106,14 +1110,12 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportAction.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/commands/pickContainerImageVersionCommand.ts`
-  - `src/ui/historyPanel.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/pickContainerImageVersionCommand.test.ts`
-  - `tests/unit/historyPanelRendering.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Preserve the fail-closed runtime contract (VHS-SYS-REQ-007): a
@@ -2800,6 +2802,176 @@ Missing numeric IDs are intentional.
     that carries the other observed-session facts, keep the block deferred to the
     VHS-REQ-621 bitness conflict, and reuse the `Pick Runtime Provider` action
     rather than introducing a new bespoke command.
+
+### VHS-REQ-654: Live Container Image Pull Progress
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: When the comparison runtime cold-pulls a LabVIEW Docker image, the
+  extension shall report live, steadily-advancing pull progress in the
+  acquisition progress notification, sourced from the Docker Engine API
+  image-pull progress stream, so a user pulling the multi-gigabyte Windows image
+  sees real, forward-moving progress instead of opaque status text with a faked
+  increment.
+- Acceptance Criteria:
+  - `acquireWindowsContainerImage` drives the pull through the Docker Engine API
+    `POST /images/create` stream over the local daemon socket (the Windows named
+    pipe `\\.\pipe\docker_engine` or the Linux `/var/run/docker.sock`) and
+    aggregates the per-layer stream events into a **layer-weighted** progress
+    figure — each enumerated layer contributes an equal slice, smoothed by the
+    in-flight layer's byte fraction — surfaced with the completed/total layer
+    count and absolute downloaded bytes in the progress message (for example
+    `Pulling container image: <image> — 31% (4/13 layers, 1.4 GB)`).
+  - Because Docker reveals layers and their sizes progressively, the percentage
+    shall not be byte-weighted against the running sum of known layer totals (a
+    tiny, unstable early denominator that pins a small first layer at 100%); the
+    reported percentage is monotonic, capped below 100% in progress (overall
+    completion is signalled by the explicit "ready" message), and the toast is
+    re-emitted whenever its visible text changes so it can never freeze at a
+    premature 100%.
+  - The Engine API path is attempted only on hosts where the daemon socket is
+    directly reachable (a native Windows host or a Linux-native host); the
+    Linux→Windows-docker WSL bridge and any other host fall back to the prior
+    `docker pull` CLI acquisition with its coarse per-line progress, so behavior
+    is never worse than before.
+  - When the daemon socket is unreachable the acquisition transparently falls
+    back to the CLI pull (no error surfaced for the unreachable socket); an
+    in-band pull error or a non-2xx daemon response yields a failed acquisition
+    whose notes carry the error.
+  - The pull is a read-only anonymous pull of the namespace-pinned
+    `nationalinstruments/labview` repository; no registry credential header is
+    sent, and no new third-party dependency is introduced (Node `http.request`
+    over the socket).
+  - The stream parser, the percentage aggregator, and the daemon-socket request
+    are separated so the parser/aggregator are pure and the request is behind an
+    injected boundary, keeping the feature unit-testable on Linux without a real
+    Docker daemon.
+- Agent Work Scope:
+  - Add the pull-progress module (parser, aggregator, injectable stream) and wire
+    it into `acquireWindowsContainerImage` with the CLI fallback, together with
+    the unit tests. Do not change which image is selected (VHS-REQ-650) or the
+    comparison behavior after acquisition.
+- Implementation References:
+  - `src/tooling/dockerImagePullProgress.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+- Verification References:
+  - `tests/unit/dockerImagePullProgress.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:windows-container-image-cold-pull-progress`
+- Change Guidance:
+  - Keep the Engine API call read-only, anonymous, and bounded, and keep the CLI
+    fallback so an unreachable or older daemon never blocks acquisition. Keep the
+    percentage monotonic and clamped, and keep the parser/aggregator pure so the
+    daemon-socket surface stays the only impure boundary.
+
+
+### VHS-REQ-655: Stable Byte-Percentage Pull Progress
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: When the comparison runtime cold-pulls a LabVIEW Docker image from
+  Docker Hub, the extension shall resolve the image's total compressed download
+  size up front from the registry manifest and report a true byte-percentage in
+  the acquisition progress notification (for example `Pulling container image:
+  <image> — 42% (8.1 GB / 19.3 GB)`), so the user sees a smooth fraction of the
+  real download size rather than the layer-weighted approximation of VHS-REQ-654.
+- Acceptance Criteria:
+  - Before starting the pull, the extension resolves a stable total download size
+    by fetching the registry manifest (Docker Hub anonymous pull token from
+    `auth.docker.io`, then the manifest from `registry-1.docker.io`; a manifest
+    list / OCI image index is resolved to the `windows/amd64` manifest) and
+    summing the per-layer compressed `size` fields.
+  - The aggregator divides downloaded bytes by that stable total (not the
+    partially-known live-stream totals), crediting cached (`Already exists`)
+    layers from a per-layer size map so a partial cache still reaches the total;
+    the percentage stays monotonic and capped below 100% (100% remains the
+    explicit "ready" signal), and the toast shows `<downloaded> / <total>` bytes.
+  - When the stable total is unavailable for any reason — a non-Docker-Hub
+    registry, an auth/network/parse error, a timeout, or a missing platform —
+    progress falls back to the layer-weighted figure of VHS-REQ-654, so behavior
+    is never worse than that baseline.
+  - The manifest resolution is anonymous (no credentials are sent), bounded by a
+    short per-request timeout and a response-size cap, and contacts only the fixed
+    Docker Hub registry and token hosts derived from the image reference (never an
+    arbitrary host), so it introduces no SSRF surface.
+  - The registry reference/challenge/manifest helpers are pure and the HTTP
+    request is behind an injected boundary, keeping the resolver unit-testable on
+    Linux without network access.
+- Agent Work Scope:
+  - Add the registry manifest size resolver and feed its stable total (and
+    per-layer size map) into the pull-progress aggregator, with the layer-weighted
+    fallback preserved, together with the unit tests. Do not change which image is
+    selected (VHS-REQ-650), the comparison behavior after acquisition, or the
+    daemon-socket pull stream itself (VHS-REQ-654).
+- Implementation References:
+  - `src/tooling/dockerImageDownloadSize.ts`
+  - `src/tooling/dockerImagePullProgress.ts`
+- Verification References:
+  - `tests/unit/dockerImageDownloadSize.test.ts`
+  - `tests/unit/dockerImagePullProgress.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:windows-container-image-cold-pull-progress`
+- Change Guidance:
+  - Keep the manifest resolution anonymous, bounded, and pinned to the Docker Hub
+    hosts; any new registry support must keep the outbound host set fixed and
+    derived from the reference. Keep the resolver returning `undefined` (never
+    throwing) on every failure so the layer-weighted fallback (VHS-REQ-654) always
+    remains available.
+
+
+### VHS-REQ-656: Container Image Pull Phase Signaling
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: When the comparison runtime cold-pulls a LabVIEW Docker image, the
+  extension shall signal the pull lifecycle phase in the acquisition progress
+  notification — distinguishing the download phase from the post-download
+  extraction (unpack) phase — so that once the multi-gigabyte download completes
+  the user sees the extraction progress rather than a frozen percentage.
+- Acceptance Criteria:
+  - The stream parser distinguishes the per-layer lifecycle states `Downloading`,
+    `Download complete`, `Extracting`, `Pull complete`, and `Already exists`, and
+    the aggregator derives an overall phase
+    (`preparing` → `downloading` → `extracting` → `complete`) plus a layer-weighted
+    extraction percentage.
+  - The acquisition message names the current phase: a pulling message with the
+    download percentage while downloading (VHS-REQ-654/655), an extracting message
+    with its own percentage and completed/total layer count while extracting (for
+    example `Extracting container image: <image> — 60% (8/13 layers)`), and a
+    finalizing message once every layer is pulled, before the existing
+    `Container image ready` signal.
+  - The progress bar advances monotonically through both phases (the download
+    phase owns the larger share and the extraction phase the remainder) so it does
+    not sit frozen at the download ceiling during the multi-minute unpack.
+  - Extraction signaling is robust when the daemon omits `Extracting` byte
+    details: the extraction percentage still advances as layers reach
+    `Pull complete`.
+  - The download-phase behavior of VHS-REQ-654/655 (live byte-percentage, stable
+    registry total, monotonic and capped figures, CLI fallback) is unchanged.
+- Agent Work Scope:
+  - Extend the pull-progress parser and aggregator with the lifecycle phases and
+    extraction progress, name the phase in the acquisition message, and advance
+    the progress bar on the blended overall percentage, together with the unit
+    tests. Do not change which image is selected (VHS-REQ-650), the comparison
+    behavior after acquisition, or the registry size resolver (VHS-REQ-655).
+- Implementation References:
+  - `src/tooling/dockerImagePullProgress.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+- Verification References:
+  - `tests/unit/dockerImagePullProgress.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:windows-container-image-cold-pull-progress`
+- Change Guidance:
+  - Keep the phase figures monotonic and capped below 100% so the toast never
+    shows a premature or frozen 100%, and keep extraction advancing on
+    `Pull complete` steps so the signal survives daemons that omit `Extracting`
+    byte detail. Preserve the download-phase contract of VHS-REQ-654/655 when
+    adjusting the phase model.
 
 
 ### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open

@@ -21,7 +21,7 @@ import {
 } from './comparisonReportPacket';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
-import { ComparisonReportFormat, ComparisonReportOptions } from './comparisonReportPlan';
+import { ComparisonReportOptions } from './comparisonReportPlan';
 import { renderComparisonReportPanelContextMarkup } from './comparisonReportContextMarkup';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 import { isWorktreeRevision } from '../git/gitCli';
@@ -1691,25 +1691,19 @@ function readConfiguredRuntimeProvider(
   return { invalidProvider: value };
 }
 
-const ALLOWED_REPORT_FORMATS: ComparisonReportFormat[] = ['HTMLSingleFile', 'HTML'];
-
 /**
  * VHS-REQ-645: reads the user-configurable comparison report flags from
- * `viHistorySuite.report.*`. The format is constrained to the HTML variants the
- * in-panel webview, dashboard, and export pipeline can render; any other value
- * (or an absent setting) falls back to the shipped single-file default. The
- * difference-suppression booleans default to false (compare everything), so an
- * unconfigured workspace reproduces today's exact `CreateComparisonReport` args.
+ * `viHistorySuite.report.*`. The difference-suppression booleans default to
+ * false (compare everything), so an unconfigured workspace reproduces today's
+ * exact `CreateComparisonReport` args. The report output format is fixed to
+ * single-file HTML (VHS-REQ-640) and is not read from settings.
  */
 export function readComparisonReportOptions(
   configuration: Pick<vscode.WorkspaceConfiguration, 'get'> = vscode.workspace.getConfiguration(
     'viHistorySuite'
   )
 ): ComparisonReportOptions {
-  const configuredFormat = readTrimmedStringSetting(configuration, 'report.format');
-  const reportFormat = ALLOWED_REPORT_FORMATS.find((format) => format === configuredFormat);
   return {
-    reportFormat: reportFormat ?? 'HTMLSingleFile',
     ignoreViAttributes: readBooleanSetting(configuration, 'report.ignoreViAttributes'),
     ignoreFrontPanel: readBooleanSetting(configuration, 'report.ignoreFrontPanel'),
     ignoreFrontPanelObjectPosition: readBooleanSetting(
@@ -1744,34 +1738,27 @@ export interface ApplyComparisonReportOptionSelectionDeps {
 
 /**
  * VHS-REQ-645: a single edit posted by the Runtime &amp; Report Settings panel.
- * `format` selects the report container format; `include` toggles one
- * difference class by its section-relative `report.ignore*` setting key, where
- * the panel's Include checkbox uses the inverse polarity of the stored flag.
+ * `include` toggles one difference class by its section-relative `report.ignore*`
+ * setting key, where the panel's Include checkbox uses the inverse polarity of
+ * the stored flag.
  */
-export type ComparisonReportOptionSelection =
-  | { readonly kind: 'format'; readonly format: ComparisonReportFormat }
-  | { readonly kind: 'include'; readonly settingKey: string; readonly include: boolean };
+export type ComparisonReportOptionSelection = {
+  readonly kind: 'include';
+  readonly settingKey: string;
+  readonly include: boolean;
+};
 
 /**
  * VHS-REQ-645: persist one Runtime &amp; Report Settings panel edit to the
  * `viHistorySuite.report.*` user settings the comparison pipeline reads back via
  * {@link readComparisonReportOptions}. The Include checkbox is the user-facing
  * inverse of the stored suppression flag, so `include === false` writes
- * `ignore* = true` (exclude that difference class from the report). An
- * unsupported format value is ignored so a malformed message can never write a
- * format the in-panel viewer, dashboard, and export cannot render.
+ * `ignore* = true` (exclude that difference class from the report).
  */
 export async function applyComparisonReportOptionSelection(
   selection: ComparisonReportOptionSelection,
   deps: ApplyComparisonReportOptionSelectionDeps
 ): Promise<void> {
-  if (selection.kind === 'format') {
-    if (!ALLOWED_REPORT_FORMATS.includes(selection.format)) {
-      return;
-    }
-    await deps.update('report.format', selection.format, vscode.ConfigurationTarget.Global);
-    return;
-  }
   await deps.update(
     selection.settingKey,
     selection.include !== true,

@@ -4,17 +4,16 @@ import * as path from 'node:path';
 import { normalizeRelativeGitPath } from '../git/gitCli';
 
 export type ComparisonReportType = 'diff' | 'print';
-export type ComparisonReportFormat = 'HTMLSingleFile' | 'HTML' | 'XML' | 'PlainText' | 'MicrosoftWord';
 
 /**
  * VHS-REQ-645: user-configurable comparison report flags surfaced through native
  * VS Code settings (`viHistorySuite.report.*`). The booleans map 1:1 to the
  * LabVIEWCLI `CreateComparisonReport` difference-suppression filters (verified
  * against the operation's own `-Help`). All fields are optional; an omitted field
- * preserves the shipped default (single-file HTML, compare everything).
+ * preserves the shipped default (compare everything). The report output format
+ * is fixed to single-file HTML (VHS-REQ-640) and is not configurable.
  */
 export interface ComparisonReportOptions {
-  reportFormat?: ComparisonReportFormat;
   /** `-noattr`: do not compare VI attributes. */
   ignoreViAttributes?: boolean;
   /** `-nofp`: do not compare front panels. */
@@ -101,7 +100,6 @@ export interface LabviewCliComparisonReportPlanOptions {
   reportFilePath: string;
   labviewPath?: string;
   portNumber?: number;
-  reportFormat?: ComparisonReportFormat;
   overwrite?: boolean;
   createOutputDirectory?: boolean;
   headless?: boolean;
@@ -224,8 +222,14 @@ export function buildLabviewCliCreateComparisonReportPlan(
     requireNonEmpty(options.leftViPath, 'leftViPath'),
     '-VI2',
     requireNonEmpty(options.rightViPath, 'rightViPath'),
+    // VHS-REQ-640: comparison reports are always generated as a self-contained
+    // single-file HTML document (images embedded as data URIs, no sibling
+    // `<report>_files/` directory). The multi-file `html` report type made the
+    // webview request hundreds of per-object images at once, exhausting the
+    // resource loader so later images rendered as path text; single-file emits
+    // zero sub-requests. This is fixed, not configurable.
     '-ReportType',
-    mapReportFormatToCliValue(options.reportFormat ?? 'HTML'),
+    'htmlsinglefile',
     '-ReportPath',
     requireNonEmpty(options.reportFilePath, 'reportFilePath')
   ];
@@ -342,19 +346,4 @@ function requireNonEmpty(value: string, field: string): string {
   }
 
   return trimmed;
-}
-
-function mapReportFormatToCliValue(reportFormat: ComparisonReportFormat): string {
-  switch (reportFormat) {
-    case 'HTMLSingleFile':
-      return 'htmlsinglefile';
-    case 'HTML':
-      return 'html';
-    case 'XML':
-      return 'xml';
-    case 'PlainText':
-      return 'plaintext';
-    case 'MicrosoftWord':
-      return 'microsoftword';
-  }
 }

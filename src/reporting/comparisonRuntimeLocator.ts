@@ -2,6 +2,12 @@ import * as fs from 'node:fs/promises';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
+  formatPullProgressMessage,
+  streamDockerImagePull,
+  type StreamDockerImagePullOptions,
+  type StreamDockerImagePullResult
+} from '../tooling/dockerImagePullProgress';
+import {
   observeWindowsRuntimeProcesses,
   observeWindowsTcpListeners,
   ObserveWindowsProcessesOptions,
@@ -3098,6 +3104,100 @@ export async function queryWindowsContainerProviderFacts(
 }
 
 export async function acquireWindowsContainerImage(
+  image: string,
+  hostPlatform: NodeJS.Platform,
+  options: {
+    reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    spawnImpl?: typeof spawn;
+    /**
+     * VHS-REQ-654: injectable Docker Engine API pull-stream boundary. Defaults to
+     * the real daemon-socket stream; overridden in unit tests.
+     */
+    streamPull?: (options: StreamDockerImagePullOptions) => Promise<StreamDockerImagePullResult>;
+  } = {}
+): Promise<AcquireWindowsContainerImageResult> {
+  // VHS-REQ-654: prefer the Docker Engine API streaming pull so the acquisition
+  // toast shows a live byte-percentage for the multi-GB Windows LabVIEW image.
+  // The daemon socket is reachable on a native Windows host (npipe) and a
+  // Linux-native host (unix socket); the Linux->Windows-docker WSL bridge has no
+  // straightforward socket, so it (and any other host) falls through to the CLI
+  // pull, which is never worse than the prior behavior.
+  const streamPull = options.streamPull ?? streamDockerImagePull;
+  const daemonApiEligible =
+    hostPlatform === 'win32' || (hostPlatform === 'linux' && !process.env.WSL_DISTRO_NAME);
+
+  if (daemonApiEligible) {
+    let lastMessage = '';
+    let lastScaled = 0;
+    const streamResult = await streamPull({
+      image,
+      hostPlatform,
+      onProgress: async (snapshot) => {
+        // The caller adds +10 ("Acquiring") before and +5 ("ready") after, so the
+        // pull owns ~85 progress-bar points. Re-emit whenever the visible message
+        // changes (download percent ticks up, the phase flips to extracting, a
+        // layer completes, or the byte figure changes) rather than on whole-percent
+        // advances — a percent-only gate froze the toast once it reached its ceiling.
+        // The bar tracks overallPercent so it keeps advancing through the
+        // post-download extraction phase instead of sitting at the download ceiling.
+        const barPercent = snapshot.overallPercent ?? snapshot.percent;
+        if (barPercent === undefined) {
+          return;
+        }
+        const message = formatPullProgressMessage(image, snapshot);
+        if (message === lastMessage) {
+          return;
+        }
+        lastMessage = message;
+        const scaled = Math.min(85, (barPercent / 100) * 85);
+        const increment = scaled > lastScaled ? scaled - lastScaled : undefined;
+        if (increment) {
+          lastScaled = scaled;
+        }
+        await options.reportProgress?.({
+          message,
+          increment
+        });
+      }
+    });
+
+    if (streamResult.attempted) {
+      if (streamResult.succeeded) {
+        await options.reportProgress?.({
+          message: `Container image ready: ${image}`,
+          increment: 5
+        });
+        return {
+          image,
+          acquisitionState: 'acquired',
+          notes:
+            streamResult.statusLines.length > 0
+              ? streamResult.statusLines
+              : [`Container image ${image} was acquired for Docker execution.`]
+        };
+      }
+      const errorNote =
+        streamResult.errorMessage ??
+        streamResult.statusLines.at(-1) ??
+        `Docker image acquisition failed for ${image}.`;
+      return {
+        image,
+        acquisitionState: 'failed',
+        notes: [...streamResult.statusLines, errorNote]
+      };
+    }
+    // attempted === false: daemon socket unreachable -> fall back to the CLI pull.
+  }
+
+  return acquireWindowsContainerImageViaCli(image, hostPlatform, options);
+}
+
+/**
+ * VHS-REQ-654 fallback: the prior `docker pull` CLI acquisition. A non-TTY pipe
+ * emits no byte counts, so progress is coarse per-line status text. Used when the
+ * Docker Engine API stream is unavailable (e.g. the WSL docker bridge).
+ */
+async function acquireWindowsContainerImageViaCli(
   image: string,
   hostPlatform: NodeJS.Platform,
   options: {

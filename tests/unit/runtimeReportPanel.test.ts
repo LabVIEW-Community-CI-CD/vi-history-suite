@@ -36,7 +36,6 @@ function baseModel(
       notes: []
     },
     report: {
-      format: 'HTMLSingleFile',
       includeFlags: {
         viAttributes: true,
         frontPanel: true,
@@ -56,17 +55,6 @@ function includeCheckboxChecked(html: string, key: ReportIncludeKey): boolean {
   const match = html.match(pattern);
   if (!match) {
     throw new Error(`no include checkbox rendered for ${key}`);
-  }
-  return match[1] === 'checked';
-}
-
-function formatRadioChecked(html: string, format: 'HTMLSingleFile' | 'HTML'): boolean {
-  const pattern = new RegExp(
-    `value="${format}"\\s+data-command="setReportFormat"\\s*(checked)?\\s*/>`
-  );
-  const match = html.match(pattern);
-  if (!match) {
-    throw new Error(`no format radio rendered for ${format}`);
   }
   return match[1] === 'checked';
 }
@@ -190,15 +178,13 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     expect(includeCheckboxChecked(html, 'blockDiagram')).toBe(false);
   });
 
-  it('reflects the selected report format', () => {
-    const single = renderRuntimeReportPanelHtml(baseModel());
-    expect(formatRadioChecked(single, 'HTMLSingleFile')).toBe(true);
-    expect(formatRadioChecked(single, 'HTML')).toBe(false);
-
-    const multi = renderRuntimeReportPanelHtml(
-      baseModel({ report: { format: 'HTML', includeFlags: deriveReportIncludeFlags({}) } })
-    );
-    expect(formatRadioChecked(multi, 'HTML')).toBe(true);
+  it('renders the fixed single-file format note and no format selector (#545)', () => {
+    const html = renderRuntimeReportPanelHtml(baseModel());
+    expect(html).toContain('data-testid="runtime-report-format-note"');
+    expect(html).toContain('single self-contained HTML file');
+    // The removed multi-file format selector must not reappear.
+    expect(html).not.toContain('data-command="setReportFormat"');
+    expect(html).not.toContain('data-testid="runtime-report-format-group"');
   });
 
   it('renders only an untrusted banner without interactive sections when untrusted', () => {

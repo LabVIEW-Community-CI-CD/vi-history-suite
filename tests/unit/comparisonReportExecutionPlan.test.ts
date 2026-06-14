@@ -183,11 +183,10 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('VHS-REQ-645: applies the configured format and all difference-suppression filters', () => {
+  it('VHS-REQ-645: applies all difference-suppression filters and keeps the fixed single-file format', () => {
     const record = createBaseRecord();
 
     const plan = buildComparisonReportExecutionPlan(record, {
-      reportFormat: 'HTML',
       ignoreViAttributes: true,
       ignoreFrontPanel: true,
       ignoreFrontPanelObjectPosition: true,
@@ -196,7 +195,9 @@ describe('buildComparisonReportExecutionPlan', () => {
     });
     const args = plan.commandPlan?.args ?? [];
     const reportTypeIndex = args.indexOf('-ReportType');
-    expect(args[reportTypeIndex + 1]).toBe('html');
+    // VHS-REQ-640/#545: the report format is fixed to single-file HTML and is
+    // not configurable, so suppression filters never change the -ReportType.
+    expect(args[reportTypeIndex + 1]).toBe('htmlsinglefile');
     expect(args).toContain('-noattr');
     expect(args).toContain('-nofp');
     expect(args).toContain('-nofppos');
