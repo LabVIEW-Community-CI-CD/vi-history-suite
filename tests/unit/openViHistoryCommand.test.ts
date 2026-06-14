@@ -627,6 +627,48 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(comparisonReportAction).toHaveBeenCalledTimes(2);
   });
 
+  it('keeps the success runtime toast concise without provider-selection internals (#538)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      retainedArchiveAvailable: true,
+      runtimeDoctorSummaryLines: [
+        'Selected provider=host-native; engine=labviewcli; platform=win32; bitness=x64.',
+        'Provider request=host.',
+        'Provider decision: rejected windows-container because Docker container execution was not selected because the host provider was requested.'
+      ]
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    const runtimeToast = showInformationMessageMock.mock.calls
+      .map((call: unknown[]) => call[0] as string)
+      .find((message) => typeof message === 'string' && message.includes('completed.'));
+    expect(runtimeToast).toBeDefined();
+    // The toast confirms success and which runtime ran.
+    expect(runtimeToast).toContain('Provider: host-native');
+    // Concise: a successful compare must not surface provider-selection internals
+    // (the "Rejected providers ... because ... because" tautology that reads like
+    // a problem). Those facts stay in the panel Runtime details and the packet.
+    expect(runtimeToast).not.toContain('Rejected providers');
+    expect(runtimeToast).not.toContain('Provider request');
+    expect(runtimeToast).not.toContain('because');
+  });
+
   it('offers a Pick Runtime Provider action when comparison runtime reclassifies failure as labview-host-bitness-conflict (VHS-REQ-621)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
