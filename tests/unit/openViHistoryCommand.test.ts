@@ -476,6 +476,8 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
+    const panel = createMockPanel();
+    createWebviewPanelMock.mockReturnValue(panel);
     const comparisonReportAction = vi.fn().mockResolvedValue({
       outcome: 'blocked-host-bitness-conflict',
       reportStatus: 'blocked-runtime',
@@ -487,7 +489,9 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       selectedLabviewVersion: '2025',
       runtimeDoctorSummaryLines: [
         'Selected provider=unavailable; engine=none; platform=win32; bitness=x86.',
-        'Runtime blocked reason: windows-host-bitness-conflict.'
+        'Provider decision: rejected host-native because A supported LabVIEW 2025 or newer executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.',
+        'Runtime blocked reason: windows-host-bitness-conflict.',
+        'Next action: close the running LabVIEW x64 session, or set viHistorySuite.labviewBitness to x64 (currently x86), then rerun comparison report generation.'
       ]
     });
     // The harness resolves a warning toast to its first action; suppress so the
@@ -523,6 +527,20 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       expect.anything(),
       'Pick Runtime Provider'
     );
+
+    // Codex P2 (#531): the History panel runtime update must match the concise
+    // toast, not re-derive the verbose setting-switch / rejected-provider content
+    // from the doctor summary (which would contradict the toast).
+    const runtimeUpdate = panel.webview.postMessage.mock.calls
+      .map((call: unknown[]) => call[0] as { type?: string; summary?: string; nextAction?: string })
+      .find((posted) => posted?.type === 'comparisonRuntimeResult');
+    expect(runtimeUpdate).toBeDefined();
+    expect(runtimeUpdate?.nextAction).toContain('Retry Compare');
+    expect(runtimeUpdate?.nextAction).not.toContain('viHistorySuite.labviewBitness');
+    const serializedUpdate = JSON.stringify(runtimeUpdate);
+    expect(serializedUpdate).not.toContain('Rejected providers');
+    expect(serializedUpdate).not.toContain('viHistorySuite.labviewBitness');
+    expect(serializedUpdate).not.toContain('LabVIEWCLI');
   });
 
   it('shows a concise close + Retry Compare toast when blocked by a concurrent LabVIEW version conflict (VHS-REQ-653, #530)', async () => {

@@ -559,19 +559,8 @@ export function createOpenViHistoryCommand(
         });
         if (hostBitnessConflict || hostVersionConflict) {
           const RETRY_COMPARISON_ACTION = 'Retry Compare';
-          const conflictMessage = hostBitnessConflict
-            ? buildHostBitnessConflictMessage({
-                observedBitness: result.hostObservedLabviewBitness,
-                observedYear: result.hostObservedLabviewVersion,
-                selectedBitness: result.selectedLabviewBitness,
-                selectedYear: result.selectedLabviewVersion
-              })
-            : buildHostVersionConflictMessage({
-                observedBitness: result.hostObservedLabviewBitness,
-                observedYear: result.hostObservedLabviewVersion,
-                selectedBitness: result.selectedLabviewBitness,
-                selectedYear: result.selectedLabviewVersion
-              });
+          const conflictMessage =
+            buildConciseHostConflictMessage(result) ?? '';
           void vscode.window
             .showWarningMessage(conflictMessage, RETRY_COMPARISON_ACTION)
             .then((selection) => {
@@ -1287,6 +1276,27 @@ function buildComparisonRuntimePanelUpdate(
     ? `${selectedHash.slice(0, 8)} vs ${effectiveBaseHash.slice(0, 8)}`
     : selectedHash.slice(0, 8);
   const commandLabel = deriveComparisonCommandLabel(actionCommand);
+  // Issue #530 (Codex P2 on #531): For the pre-launch host bitness/version
+  // conflict blocks, the History panel must match the concise close + Retry
+  // Compare toast instead of re-deriving the verbose
+  // provider/rejected-provider/setting-switch content from the doctor summary
+  // (which would contradict the toast). Build a concise panel update from the
+  // same shared message and structured facts.
+  const conciseHostConflictMessage = buildConciseHostConflictMessage(result);
+  if (conciseHostConflictMessage) {
+    return {
+      type: 'comparisonRuntimeResult',
+      status: deriveComparisonRuntimePanelStatus(result),
+      summary: `${commandLabel} for ${pairLabel} blocked. ${conciseHostConflictMessage}`,
+      nextAction:
+        'Next action: close the running LabVIEW, then click Retry Compare so the selected LabVIEW can start.',
+      details: [
+        { label: 'Report status', value: result.reportStatus ?? 'none' },
+        { label: 'Runtime state', value: result.runtimeExecutionState ?? 'none' },
+        { label: 'Blocked reason', value: result.blockedReason ?? 'none' }
+      ]
+    };
+  }
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
@@ -1387,6 +1397,41 @@ function isHostRuntimeConflictRequiringProviderPick(
   // reclassified `labview-host-bitness-conflict` failure still routes to the
   // verbose warning with a Pick Runtime Provider action.
   return result.runtimeFailureReason === 'labview-host-bitness-conflict';
+}
+
+/**
+ * Issue #530: Build the concise host bitness/version conflict message from the
+ * structured running-vs-selected facts on the result, or `undefined` when the
+ * result is not one of the two pre-launch host conflicts. Shared by the warning
+ * toast and the History panel update so they never diverge (a divergence would
+ * let the panel contradict the toast with the old setting-switch guidance).
+ */
+function buildConciseHostConflictMessage(
+  result: ComparisonReportActionResult
+): string | undefined {
+  const facts = {
+    observedBitness: result.hostObservedLabviewBitness,
+    observedYear: result.hostObservedLabviewVersion,
+    selectedBitness: result.selectedLabviewBitness,
+    selectedYear: result.selectedLabviewVersion
+  };
+  if (
+    isHostBitnessConflictBlock({
+      reportStatus: result.reportStatus,
+      blockedReason: result.blockedReason
+    })
+  ) {
+    return buildHostBitnessConflictMessage(facts);
+  }
+  if (
+    isHostVersionConflictBlock({
+      reportStatus: result.reportStatus,
+      blockedReason: result.blockedReason
+    })
+  ) {
+    return buildHostVersionConflictMessage(facts);
+  }
+  return undefined;
 }
 
 /**
