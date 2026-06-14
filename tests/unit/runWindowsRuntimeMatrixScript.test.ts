@@ -25,6 +25,7 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     out: string;
     proofDir?: string;
     keepRunning: boolean;
+    hostTcpPort?: number;
     help: boolean;
   };
   selectScenarios: (scenarioArg: string) => string[];
@@ -34,9 +35,10 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     scenario: string;
     out: string;
     proofDir?: string;
+    hostTcpPort?: number;
   }) => Array<{
     id: string;
-    parameters: { hostBitness: string; selectedBitness: string };
+    parameters: { hostBitness: string; selectedBitness: string; expectedHostTcpPort?: number };
     proofPath: string;
     logPath: string;
   }>;
@@ -96,6 +98,23 @@ describe('runWindowsRuntimeMatrix.parseArgs', () => {
   it('requires a value after a flag', () => {
     expect(() => harness.parseArgs(['--scenario'])).toThrow(/requires a value/);
   });
+
+  it('defaults the port-A expected port to undefined (driver keeps the scenario default)', () => {
+    expect(harness.parseArgs([]).hostTcpPort).toBeUndefined();
+  });
+
+  it('accepts a positive integer --host-tcp-port for the port-A scenario', () => {
+    expect(harness.parseArgs(['--host-tcp-port', '3366']).hostTcpPort).toBe(3366);
+  });
+
+  it('rejects a non-integer --host-tcp-port', () => {
+    expect(() => harness.parseArgs(['--host-tcp-port', '33xx'])).toThrow(
+      /--host-tcp-port must be a positive integer/
+    );
+    expect(() => harness.parseArgs(['--host-tcp-port', '0'])).toThrow(
+      /--host-tcp-port must be a positive integer/
+    );
+  });
 });
 
 describe('runWindowsRuntimeMatrix.selectScenarios', () => {
@@ -147,6 +166,29 @@ describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
       proofDir: 'custom-proof-dir'
     });
     expect(plan[0].proofPath.startsWith('custom-proof-dir')).toBe(true);
+  });
+
+  it('overrides the port-A expected VI Server port from hostTcpPort (VHS-REQ-623)', () => {
+    const plan = harness.buildScenarioPlan({
+      scenario: 'port-A',
+      out: 'evidence.json',
+      hostTcpPort: 3366
+    });
+    expect(plan[0].parameters.expectedHostTcpPort).toBe(3366);
+  });
+
+  it('keeps the default port-A expected port (3380) when hostTcpPort is not supplied', () => {
+    const plan = harness.buildScenarioPlan({ scenario: 'port-A', out: 'evidence.json' });
+    expect(plan[0].parameters.expectedHostTcpPort).toBe(3380);
+  });
+
+  it('does not attach an expected port to non-port scenarios when hostTcpPort is set', () => {
+    const plan = harness.buildScenarioPlan({
+      scenario: 'steady-A',
+      out: 'evidence.json',
+      hostTcpPort: 3366
+    });
+    expect(plan[0].parameters.expectedHostTcpPort).toBeUndefined();
   });
 });
 

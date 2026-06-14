@@ -28,6 +28,11 @@ on:
         required: false
         default: '2026'
         type: string
+      host_tcp_port:
+        description: 'Expected non-default VI Server port for port-A (default 3380; set to the selected install''s server.tcp.port, e.g. 3366)'
+        required: false
+        default: '3380'
+        type: string
 
 permissions:
   contents: read
@@ -122,9 +127,12 @@ jobs:
           if (-not $scenario) { $scenario = 'all' }
           $labviewVersion = '${{ inputs.labview_version }}'
           if (-not $labviewVersion) { $labviewVersion = '2026' }
+          $hostTcpPort = '${{ inputs.host_tcp_port }}'
+          if (-not $hostTcpPort) { $hostTcpPort = '3380' }
           node scripts/runWindowsRuntimeMatrix.js `
             --scenario $scenario `
             --labview-version $labviewVersion `
+            --host-tcp-port $hostTcpPort `
             --out assurance-closeout-evidence/manual-vhs-req-621.json `
             --proof-dir assurance-closeout-evidence/runtime-matrix-proofs
 

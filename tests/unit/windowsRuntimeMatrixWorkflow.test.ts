@@ -66,6 +66,17 @@ describe('Windows runtime matrix workflow', () => {
     expect(workflow).toContain('retention-days: 90');
   });
 
+  it('exposes a host_tcp_port dispatch input and threads it into the port-A assertion (VHS-REQ-623)', () => {
+    const workflow = readWorkflow();
+
+    // The port-A expected VI Server port must be dispatch-configurable so a
+    // maintainer host whose selected install runs on a non-default port other
+    // than the 3380 default (e.g. 3366) can assert an exact observed-port match.
+    expect(workflow).toContain('host_tcp_port:');
+    expect(workflow).toContain("$hostTcpPort = '${{ inputs.host_tcp_port }}'");
+    expect(workflow).toContain('--host-tcp-port $hostTcpPort');
+  });
+
   it('recreates the runner-evidence directory in a post-checkout step so the guard summary survives checkout (regression)', () => {
     const workflow = readWorkflow();
 
