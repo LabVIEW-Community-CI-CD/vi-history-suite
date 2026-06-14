@@ -26,6 +26,16 @@ Burned exact-version releases now include `v1.0.2`.
   the Docker daemon socket is not directly reachable (and any failure) fall back
   to the previous `docker pull` behavior, so acquisition is never worse than
   before (VHS-REQ-654, #547).
+- The cold-pull toast now shows a **true byte-percentage** when the image's total
+  download size can be resolved from the Docker Hub registry manifest up front —
+  e.g. `Pulling container image: <image> — 42% (8.1 GB / 19.3 GB)`. Dividing
+  downloaded bytes by the stable manifest total (rather than the
+  progressively-revealed live-stream totals) gives a smooth fraction of the real
+  download size; cached layers are credited so a partial cache still reaches the
+  total. Resolution is anonymous, bounded, and pinned to the Docker Hub hosts (no
+  SSRF surface); any failure (non-Hub registry, auth/network/parse error, timeout)
+  transparently falls back to the layer-weighted progress above (VHS-REQ-655,
+  #549).
 
 ### Removed
 

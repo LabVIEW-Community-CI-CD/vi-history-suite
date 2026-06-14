@@ -190,6 +190,51 @@ describe('DockerPullProgressAggregator', () => {
   });
 });
 
+describe('DockerPullProgressAggregator byte-% mode (VHS-REQ-655)', () => {
+  it('divides downloaded bytes by the stable known total, not the live layer total', () => {
+    const agg = new DockerPullProgressAggregator({ knownTotalBytes: 1000 });
+    agg.apply({ kind: 'layer-seen', layerId: 'a' });
+    let snap = agg.apply({ kind: 'layer-progress', layerId: 'a', current: 250, total: 800 });
+    // 250 / 1000 = 25% against the STABLE total (the live 800 is ignored).
+    expect(snap.knownTotalBytes).toBe(1000);
+    expect(snap.percent).toBe(25);
+    snap = agg.apply({ kind: 'layer-progress', layerId: 'a', current: 500, total: 800 });
+    expect(snap.percent).toBe(50);
+  });
+
+  it('does NOT spike to 100% when a tiny first layer completes (the stable total holds it down)', () => {
+    const agg = new DockerPullProgressAggregator({
+      knownTotalBytes: 1_000_000,
+      layerSizesByShortId: new Map([['w', 1300]])
+    });
+    agg.apply({ kind: 'layer-seen', layerId: 'w' });
+    agg.apply({ kind: 'layer-progress', layerId: 'w', current: 1300, total: 1300 });
+    const snap = agg.apply({ kind: 'layer-complete', layerId: 'w' });
+    // 1300 / 1,000,000 = ~0.13%, never the false 100% the live-total math produced.
+    expect(snap.percent).toBeCloseTo(0.13, 1);
+    expect(snap.knownTotalBytes).toBe(1_000_000);
+  });
+
+  it('credits a cached (Already exists) layer via the registry size map so it reaches the total', () => {
+    const agg = new DockerPullProgressAggregator({
+      knownTotalBytes: 1000,
+      layerSizesByShortId: new Map([
+        ['a', 400],
+        ['b', 600]
+      ])
+    });
+    agg.apply({ kind: 'layer-seen', layerId: 'a' });
+    agg.apply({ kind: 'layer-seen', layerId: 'b' });
+    agg.apply({ kind: 'layer-progress', layerId: 'a', current: 400, total: 400 });
+    agg.apply({ kind: 'layer-complete', layerId: 'a' });
+    // b was cached: no live bytes, credited 600 from the registry map.
+    const snap = agg.apply({ kind: 'layer-complete', layerId: 'b' });
+    expect(snap.downloadedBytes).toBe(1000);
+    // 1000 / 1000 -> raw 100, capped at 99 (100% is the caller's "ready").
+    expect(snap.percent).toBe(99);
+  });
+});
+
 describe('formatBytes', () => {
   it('formats byte magnitudes with one decimal above KB', () => {
     expect(formatBytes(512)).toBe('512 B');
@@ -209,6 +254,20 @@ describe('formatPullProgressMessage', () => {
     });
     expect(message).toBe(
       'Pulling container image: nationalinstruments/labview:2026q1-windows — 31% (4/13 layers, 1.4 GB)'
+    );
+  });
+
+  it('renders a true byte-% (downloaded / known total) when the stable total is known', () => {
+    const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
+      percent: 42,
+      downloadedBytes: Math.round(8.1 * GB),
+      totalBytes: Math.round(8.1 * GB),
+      knownTotalBytes: Math.round(19.3 * GB),
+      completedLayers: 3,
+      totalLayers: 13
+    });
+    expect(message).toBe(
+      'Pulling container image: nationalinstruments/labview:2026q1-windows — 42% (8.1 GB / 19.3 GB)'
     );
   });
 
@@ -240,7 +299,8 @@ describe('streamDockerImagePull', () => {
     await streamDockerImagePull({
       image: 'nationalinstruments/labview:2026q1-windows',
       hostPlatform: 'linux',
-      requestStream: requestStream as never
+      requestStream: requestStream as never,
+      resolveDownloadSize: async () => undefined
     });
     const call = requestStream.mock.calls[0]?.[0] as { socketPath: string; path: string };
     expect(call.socketPath).toBe('/var/run/docker.sock');
@@ -269,6 +329,7 @@ describe('streamDockerImagePull', () => {
         JSON.stringify({ status: 'Already exists', id: 'b' }),
         JSON.stringify({ status: 'Status: Downloaded newer image for repo/img:tag' })
       ]),
+      resolveDownloadSize: async () => undefined,
       onProgress: (snapshot) => {
         progress.push(snapshot);
       }
@@ -288,7 +349,8 @@ describe('streamDockerImagePull', () => {
       hostPlatform: 'linux',
       requestStream: fakeStream([
         JSON.stringify({ errorDetail: { message: 'manifest unknown' }, error: 'manifest unknown' })
-      ])
+      ]),
+      resolveDownloadSize: async () => undefined
     });
     expect(result).toMatchObject({ attempted: true, succeeded: false, errorMessage: 'manifest unknown' });
   });
@@ -297,7 +359,8 @@ describe('streamDockerImagePull', () => {
     const result = await streamDockerImagePull({
       image: 'repo/img:tag',
       hostPlatform: 'linux',
-      requestStream: fakeStream([], 500)
+      requestStream: fakeStream([], 500),
+      resolveDownloadSize: async () => undefined
     });
     expect(result).toMatchObject({ attempted: true, succeeded: false });
     expect(result.errorMessage).toContain('HTTP 500');
@@ -309,8 +372,35 @@ describe('streamDockerImagePull', () => {
       hostPlatform: 'linux',
       requestStream: vi.fn(async () => {
         throw Object.assign(new Error('connect ENOENT'), { code: 'ENOENT' });
-      }) as never
+      }) as never,
+      resolveDownloadSize: async () => undefined
     });
     expect(result).toEqual({ attempted: false, succeeded: false, statusLines: [] });
+  });
+
+  it('reports a true byte-% when the registry total resolves (VHS-REQ-655)', async () => {
+    const GiB = 1024 * 1024 * 1024;
+    const snapshots: Array<{ percent?: number; knownTotalBytes?: number; downloadedBytes: number }> = [];
+    const result = await streamDockerImagePull({
+      image: 'nationalinstruments/labview:2026q1-windows',
+      hostPlatform: 'win32',
+      resolveDownloadSize: async () => ({
+        totalBytes: 2 * GiB,
+        layerSizesByShortId: new Map([['a', 2 * GiB]])
+      }),
+      requestStream: fakeStream([
+        JSON.stringify({ status: 'Pulling fs layer', id: 'a' }),
+        JSON.stringify({ status: 'Downloading', id: 'a', progressDetail: { current: GiB, total: 2 * GiB } }),
+        JSON.stringify({ status: 'Downloading', id: 'a', progressDetail: { current: 2 * GiB, total: 2 * GiB } }),
+        JSON.stringify({ status: 'Pull complete', id: 'a' })
+      ]),
+      onProgress: (snapshot) => {
+        snapshots.push(snapshot);
+      }
+    });
+    expect(result.succeeded).toBe(true);
+    expect(snapshots.at(-1)?.knownTotalBytes).toBe(2 * GiB);
+    // The halfway snapshot is a real byte-% against the stable total.
+    expect(snapshots.some((s) => s.percent === 50)).toBe(true);
   });
 });

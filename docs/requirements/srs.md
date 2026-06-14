@@ -2862,6 +2862,61 @@ Missing numeric IDs are intentional.
     daemon-socket surface stays the only impure boundary.
 
 
+### VHS-REQ-655: Stable Byte-Percentage Pull Progress
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: When the comparison runtime cold-pulls a LabVIEW Docker image from
+  Docker Hub, the extension shall resolve the image's total compressed download
+  size up front from the registry manifest and report a true byte-percentage in
+  the acquisition progress notification (for example `Pulling container image:
+  <image> — 42% (8.1 GB / 19.3 GB)`), so the user sees a smooth fraction of the
+  real download size rather than the layer-weighted approximation of VHS-REQ-654.
+- Acceptance Criteria:
+  - Before starting the pull, the extension resolves a stable total download size
+    by fetching the registry manifest (Docker Hub anonymous pull token from
+    `auth.docker.io`, then the manifest from `registry-1.docker.io`; a manifest
+    list / OCI image index is resolved to the `windows/amd64` manifest) and
+    summing the per-layer compressed `size` fields.
+  - The aggregator divides downloaded bytes by that stable total (not the
+    partially-known live-stream totals), crediting cached (`Already exists`)
+    layers from a per-layer size map so a partial cache still reaches the total;
+    the percentage stays monotonic and capped below 100% (100% remains the
+    explicit "ready" signal), and the toast shows `<downloaded> / <total>` bytes.
+  - When the stable total is unavailable for any reason — a non-Docker-Hub
+    registry, an auth/network/parse error, a timeout, or a missing platform —
+    progress falls back to the layer-weighted figure of VHS-REQ-654, so behavior
+    is never worse than that baseline.
+  - The manifest resolution is anonymous (no credentials are sent), bounded by a
+    short per-request timeout and a response-size cap, and contacts only the fixed
+    Docker Hub registry and token hosts derived from the image reference (never an
+    arbitrary host), so it introduces no SSRF surface.
+  - The registry reference/challenge/manifest helpers are pure and the HTTP
+    request is behind an injected boundary, keeping the resolver unit-testable on
+    Linux without network access.
+- Agent Work Scope:
+  - Add the registry manifest size resolver and feed its stable total (and
+    per-layer size map) into the pull-progress aggregator, with the layer-weighted
+    fallback preserved, together with the unit tests. Do not change which image is
+    selected (VHS-REQ-650), the comparison behavior after acquisition, or the
+    daemon-socket pull stream itself (VHS-REQ-654).
+- Implementation References:
+  - `src/tooling/dockerImageDownloadSize.ts`
+  - `src/tooling/dockerImagePullProgress.ts`
+- Verification References:
+  - `tests/unit/dockerImageDownloadSize.test.ts`
+  - `tests/unit/dockerImagePullProgress.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:windows-container-image-cold-pull-progress`
+- Change Guidance:
+  - Keep the manifest resolution anonymous, bounded, and pinned to the Docker Hub
+    hosts; any new registry support must keep the outbound host set fixed and
+    derived from the reference. Keep the resolver returning `undefined` (never
+    throwing) on every failure so the layer-weighted fallback (VHS-REQ-654) always
+    remains available.
+
+
 ### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open
 
 - Status: Active
