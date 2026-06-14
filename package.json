@@ -82,12 +82,7 @@
       },
       {
         "command": "labviewViHistory.pickRuntimeProvider",
-        "title": "Pick Runtime Provider",
-        "category": "VI History"
-      },
-      {
-        "command": "labviewViHistory.pickContainerImageVersion",
-        "title": "Pick LabVIEW Container Image Version",
+        "title": "Runtime & Report Settings",
         "category": "VI History"
       },
       {
