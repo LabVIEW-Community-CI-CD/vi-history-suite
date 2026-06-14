@@ -539,6 +539,11 @@ Missing numeric IDs are intentional.
     remediation) is surfaced through notifications rather than an in-panel
     preflight section, and a blocked runtime never silently prevents the user
     from invoking Compare.
+  - The explicit revision selection persists across a panel reload: the panel is
+    retained when hidden, and the selected commit hashes are persisted to webview
+    state and restored on load, so switching to another panel (for example
+    Runtime & Report Settings) or an in-place re-render does not clear the user's
+    selection.
 - Agent Work Scope:
   - Change panel rendering, command message handling, and runtime preflight
     together when changing compare workflow.

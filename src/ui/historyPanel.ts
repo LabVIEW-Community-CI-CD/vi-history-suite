@@ -281,6 +281,40 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         }
         updateCompareButtonState(resolveSelectedPair() !== undefined);
       }
+      // VHS-REQ-133 (#561): persist the explicit checkbox selection to webview
+      // state so it survives a panel reload. Switching to another panel (e.g.
+      // Runtime & Report Settings) hides this webview, and an in-place re-render
+      // reassigns the HTML; either reloads the script, which would otherwise drop
+      // the in-DOM selection.
+      function readSavedSelectedHashes() {
+        const state = vscode.getState();
+        const saved = state && Array.isArray(state.selectedHashes) ? state.selectedHashes : [];
+        return saved.filter((value) => typeof value === 'string' && value.length > 0);
+      }
+      function persistSelectedHashes() {
+        const selectedHashes = getCommitSelectionInputs()
+          .filter((candidate) => candidate.checked)
+          .map((candidate) => candidate.dataset.hash ?? '')
+          .filter((hash) => hash.length > 0);
+        vscode.setState({ ...(vscode.getState() ?? {}), selectedHashes });
+      }
+      function restoreSelectedHashes() {
+        if (!compareSelectionEnabled) {
+          return;
+        }
+        const saved = readSavedSelectedHashes();
+        if (saved.length === 0) {
+          return;
+        }
+        let restored = 0;
+        for (const input of getCommitSelectionInputs()) {
+          const hash = input.dataset.hash ?? '';
+          if (hash.length > 0 && saved.indexOf(hash) !== -1 && restored < 2) {
+            input.checked = true;
+            restored += 1;
+          }
+        }
+      }
       function handleCommitSelectionChange(target) {
         if (!(target instanceof HTMLInputElement) || target.dataset.hash === undefined) {
           return;
@@ -291,8 +325,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           target.checked = false;
         }
         updateCompareSelectionState();
+        persistSelectedHashes();
       }
 
+      restoreSelectedHashes();
       updateCompareSelectionState();
 
       document.addEventListener('change', (event) => {
