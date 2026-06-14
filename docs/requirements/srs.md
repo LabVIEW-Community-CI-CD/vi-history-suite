@@ -2917,6 +2917,58 @@ Missing numeric IDs are intentional.
     remains available.
 
 
+### VHS-REQ-656: Container Image Pull Phase Signaling
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: When the comparison runtime cold-pulls a LabVIEW Docker image, the
+  extension shall signal the pull lifecycle phase in the acquisition progress
+  notification — distinguishing the download phase from the post-download
+  extraction (unpack) phase — so that once the multi-gigabyte download completes
+  the user sees the extraction progress rather than a frozen percentage.
+- Acceptance Criteria:
+  - The stream parser distinguishes the per-layer lifecycle states `Downloading`,
+    `Download complete`, `Extracting`, `Pull complete`, and `Already exists`, and
+    the aggregator derives an overall phase
+    (`preparing` → `downloading` → `extracting` → `complete`) plus a layer-weighted
+    extraction percentage.
+  - The acquisition message names the current phase: a pulling message with the
+    download percentage while downloading (VHS-REQ-654/655), an extracting message
+    with its own percentage and completed/total layer count while extracting (for
+    example `Extracting container image: <image> — 60% (8/13 layers)`), and a
+    finalizing message once every layer is pulled, before the existing
+    `Container image ready` signal.
+  - The progress bar advances monotonically through both phases (the download
+    phase owns the larger share and the extraction phase the remainder) so it does
+    not sit frozen at the download ceiling during the multi-minute unpack.
+  - Extraction signaling is robust when the daemon omits `Extracting` byte
+    details: the extraction percentage still advances as layers reach
+    `Pull complete`.
+  - The download-phase behavior of VHS-REQ-654/655 (live byte-percentage, stable
+    registry total, monotonic and capped figures, CLI fallback) is unchanged.
+- Agent Work Scope:
+  - Extend the pull-progress parser and aggregator with the lifecycle phases and
+    extraction progress, name the phase in the acquisition message, and advance
+    the progress bar on the blended overall percentage, together with the unit
+    tests. Do not change which image is selected (VHS-REQ-650), the comparison
+    behavior after acquisition, or the registry size resolver (VHS-REQ-655).
+- Implementation References:
+  - `src/tooling/dockerImagePullProgress.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+- Verification References:
+  - `tests/unit/dockerImagePullProgress.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:windows-container-image-cold-pull-progress`
+- Change Guidance:
+  - Keep the phase figures monotonic and capped below 100% so the toast never
+    shows a premature or frozen 100%, and keep extraction advancing on
+    `Pull complete` steps so the signal survives daemons that omit `Extracting`
+    byte detail. Preserve the download-phase contract of VHS-REQ-654/655 when
+    adjusting the phase model.
+
+
 ### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open
 
 - Status: Active
