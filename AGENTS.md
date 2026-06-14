@@ -99,6 +99,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 ### Agent Prompts (Workspace)
 - `.github/prompts/pr-handoff-evidence.prompt.md`: one-shot PR evidence block generation with required field labels
 - `.github/prompts/requirement-target-execution.prompt.md`: requirement-targeted execution workflow with SRS and RTM checkpoints
+- `.github/prompts/windows-maintainer-validation.prompt.md`: self-contained runbook for running the Windows maintainer validation and runtime-conflict matrix on the self-hosted runner (readiness, dispatch, monitor, triage)
 
 ### Custom Agents (Workspace)
 - `.github/agents/workflow-governor.agent.md`: task execution with branch policy, requirement traceability, test gates, and PR evidence compliance
