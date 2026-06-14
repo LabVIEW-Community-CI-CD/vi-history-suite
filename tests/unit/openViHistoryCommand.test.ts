@@ -1137,5 +1137,20 @@ describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/627/631)
 
     expect(createWebviewPanelMock).toHaveBeenCalledTimes(1);
   });
+
+  it('retains the panel context when hidden so the commit selection is not cleared (VHS-REQ-133, #561)', async () => {
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
+
+    await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
+
+    expect(createWebviewPanelMock).toHaveBeenCalledWith(
+      'viHistorySuite.history',
+      expect.any(String),
+      expect.anything(),
+      expect.objectContaining({ enableScripts: true, retainContextWhenHidden: true })
+    );
+  });
 });
 

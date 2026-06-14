@@ -228,7 +228,12 @@ export function createOpenViHistoryCommand(
       `VI History: ${path.basename(targetUri.fsPath)}`,
       vscode.ViewColumn.Active,
       {
-        enableScripts: true
+        enableScripts: true,
+        // VHS-REQ-133 (#561): keep the webview DOM alive when the user switches to
+        // another panel (e.g. Runtime & Report Settings) so the explicit commit
+        // selection is not cleared by a hide/show reload. The selection is also
+        // persisted to webview state so a genuine reload restores it.
+        retainContextWhenHidden: true
       }
     );
 

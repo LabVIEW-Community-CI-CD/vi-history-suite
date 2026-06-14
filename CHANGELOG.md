@@ -20,6 +20,14 @@ Burned exact-version releases now include `v1.0.2`.
   scrolling to the bottom; on a short history the bar simply sits at its natural
   position below the table (#559).
 
+### Fixed
+
+- The VI History panel no longer **clears your commit selection** when you switch
+  to another panel (e.g. Runtime & Report Settings) and back. The webview is now
+  retained when hidden, and the selected commit hashes are persisted to webview
+  state and restored on load, so a hide/show reload or an in-place re-render keeps
+  the two revisions you picked (#561).
+
 ## [1.29.0] - 2026-06-14
 
 ### Added
