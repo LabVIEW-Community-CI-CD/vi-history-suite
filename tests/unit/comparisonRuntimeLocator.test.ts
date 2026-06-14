@@ -1129,6 +1129,14 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
       blockedReason: 'container-image-platform-mismatch'
     });
     expect(selection.containerImage).toBe('nationalinstruments/labview:2026q1-linux');
+    // #532: the structured conflict is retained so the concise toast can name
+    // the selected image platform vs. the active engine mode without parsing
+    // doctor-summary strings.
+    expect(selection.containerImageVersionConflict).toMatchObject({
+      selectedTag: '2026q1-linux',
+      selectedPlatform: 'linux',
+      activePlatform: 'windows'
+    });
     expect(selection.notes.join('\n')).toContain('windows-container mode');
     expect(selection.notes.join('\n')).toContain('Switch Docker to linux containers');
     expect(selection.providerDecisions).toEqual(

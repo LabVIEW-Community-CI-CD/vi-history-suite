@@ -146,6 +146,14 @@ export interface ComparisonRuntimeSelection {
   windowsContainerHostMode?: DockerContainerHostMode;
   windowsContainerImageAvailable?: boolean;
   windowsContainerAcquisitionState?: DockerContainerAcquisitionState;
+  /**
+   * Issue #532: when the selected container image version's platform cannot run
+   * under the active Docker engine mode, the structured conflict (selected vs.
+   * active container platform) is retained so the concise
+   * `container-image-platform-mismatch` toast can name both platforms without
+   * parsing doctor-summary strings.
+   */
+  containerImageVersionConflict?: ContainerImageVersionPlatformConflict;
   blockedReason?: string;
   providerDecisions?: RuntimeProviderDecision[];
   notes: string[];
@@ -2049,6 +2057,8 @@ function buildContainerImagePlatformMismatchSelection(options: {
     // explicit assignment is needed.
     ...buildContainerSelectionFacts(options.selectedContainerFacts),
     containerImage: conflict.selectedReference,
+    // Issue #532: retain the structured conflict for the concise toast.
+    containerImageVersionConflict: conflict,
     hostLabviewIniPath: options.hostLabviewIniPath,
     hostLabviewTcpPort: options.hostLabviewTcpPort,
     hostRuntimeConflictDetected: options.hostRuntimeConflictDetected,

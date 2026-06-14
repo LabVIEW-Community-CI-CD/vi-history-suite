@@ -24,6 +24,15 @@ Burned exact-version releases now include `v1.0.2`.
   instead of an incorrect "LabVIEWCLI was not located" message. The mid-run
   reclassified bitness-conflict failure keeps its existing **Pick Runtime
   Provider** notification (VHS-REQ-621/653, #530).
+- A comparison blocked because the selected Docker image's container platform
+  cannot run under the active Docker engine mode (for example a Windows-container
+  image while Docker is in Linux-container mode) now shows a concise notification
+  that names the selected image's platform and the active engine mode and steers
+  to the two fixes — switch Docker's container mode, or **Pick Image Version** —
+  without provider internals or the misleading host-native clause. The
+  blocked-evidence report no longer opens automatically (the packet is still
+  saved and can be exported), and the History panel matches the concise
+  notification (VHS-REQ-650, #532).
 
 ## [1.27.2] - 2026-06-14
 
