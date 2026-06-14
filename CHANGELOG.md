@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.27.2] - 2026-06-14
+
 ### Changed
 
 - The Windows runtime-matrix `port-A` scenario now derives its expected VI
