@@ -67,7 +67,7 @@ describe('extension manifest public metadata', () => {
 
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.27.3');
+    expect(manifest.version).toBe('1.28.0');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -143,11 +143,7 @@ describe('extension manifest public metadata', () => {
       category: 'VI History'
     });
     expect(titles.get('labviewViHistory.pickRuntimeProvider')).toMatchObject({
-      title: 'Pick Runtime Provider',
-      category: 'VI History'
-    });
-    expect(titles.get('labviewViHistory.pickContainerImageVersion')).toMatchObject({
-      title: 'Pick LabVIEW Container Image Version',
+      title: 'Runtime & Report Settings',
       category: 'VI History'
     });
   });

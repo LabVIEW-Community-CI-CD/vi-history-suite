@@ -844,6 +844,11 @@ Missing numeric IDs are intentional.
   - The settings render in the native VS Code Settings editor; no scripted
     webview is introduced and the comparison-report panel keeps scripts disabled
     (no regression of VHS-REQ-626).
+  - The Runtime & Report Settings panel surfaces the same flags as Include
+    checkboxes (checked includes the difference class) plus the report format and
+    persists each edit to `viHistorySuite.report.*` with the Include-to-ignore
+    inversion (unchecking a class writes `ignore=true`); an unsupported format
+    selection is ignored.
 - Agent Work Scope:
   - Contribute the settings, read them at the comparison-report action boundary,
     and thread them through the execution plan and CLI plan builder together with
@@ -854,9 +859,14 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportExecutionPlan.ts`
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/ui/runtimeReportPanel.ts`
+  - `src/commands/openRuntimeReportPanelCommand.ts`
 - Verification References:
   - `tests/unit/comparisonReportExecutionPlan.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/runtimeReportPanel.test.ts`
+  - `tests/unit/openRuntimeReportPanelCommand.test.ts`
+  - `tests/unit/comparisonReportOptionSelection.test.ts`
 - Change Guidance:
   - Keep the difference-suppression flag names aligned with the LabVIEWCLI
     CreateComparisonReport operation help; do not expose flags the CLI operation
@@ -1116,38 +1126,42 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-019
 - Area: Menu Gating
-- Statement: After the Pick Runtime Provider quick-pick persists a docker
-  provider selection, the extension shall chain directly into the container
-  image version picker as a follow-on step, so a user who selects the
-  container-based provider is offered the matching image version (VHS-REQ-649)
-  at the moment it is relevant instead of only through the Command Palette or the
-  raw setting.
+- Statement: The Runtime & Report Settings panel shall co-locate the LabVIEW
+  container image version selector with the runtime provider selection, so a user
+  who selects the container-based provider is offered the matching image version
+  (VHS-REQ-649) inline in the same panel instead of through a chained quick-pick,
+  the Command Palette, or the raw setting.
 - Acceptance Criteria:
-  - When the Pick Runtime Provider command persists a `docker` selection, it
-    dispatches `labviewViHistory.pickContainerImageVersion` as a follow-on step
-    and reports that the chain was attempted.
-  - A `host` selection and the Clear option do not chain (host comparisons use no
-    container image); their existing outcomes are unchanged.
-  - The chain is best-effort: the docker selection is persisted before the chain,
-    so a cancelled or failing image pick leaves it intact and the runtime-provider
-    command never throws because of the chain.
-  - The command-dispatch boundary is injected so the chaining is unit-tested
-    without a real registered command.
+  - The panel renders a container image section when Docker is the selected or
+    available provider, showing the current `viHistorySuite.container.imageVersion`
+    selection (or the newest supported default when unset).
+  - Selecting a discovered version persists it, and the Clear/default choice
+    removes the setting, through `applyContainerImageVersionSelection` writing to
+    `ConfigurationTarget.Global`.
+  - Version discovery reuses the published and local image catalog behind injected
+    fetch and list boundaries and degrades to the current selection without
+    throwing when discovery is unavailable.
+  - A `host` selection and the Clear option present no container section (host
+    comparisons use no container image).
+  - The standalone `labviewViHistory.pickContainerImageVersion` command remains
+    registered for the compare-preflight remediation CTAs but is removed from the
+    Command Palette.
 - Agent Work Scope:
-  - Thread an injected command dispatcher into the Pick Runtime Provider
-    registration and chain the container image version command from the docker
-    branch only; update its unit tests. Do not change the image picker itself or
-    the locator.
+  - Render and persist the container image selection inside the Runtime & Report
+    Settings panel reusing the discovery and apply helpers; keep the standalone
+    image picker for the in-app remediation CTAs. Do not change the image picker's
+    discovery model or the locator.
 - Implementation References:
-  - `src/commands/pickRuntimeProviderCommand.ts`
+  - `src/commands/openRuntimeReportPanelCommand.ts`
+  - `src/ui/runtimeReportPanel.ts`
   - `src/commands/pickContainerImageVersionCommand.ts`
 - Verification References:
-  - `tests/unit/pickRuntimeProviderCommand.test.ts`
+  - `tests/unit/openRuntimeReportPanelCommand.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
-  - Keep the chain scoped to the docker provider and best-effort; never let a
-    cancelled or failed image pick undo the persisted provider selection or throw
-    out of the runtime-provider command.
+  - Keep the container image selection co-located with the docker provider choice
+    and discovery best-effort and bounded; never let an unavailable discovery or a
+    cancelled selection throw out of the panel or clobber the persisted selection.
 
 ### VHS-REQ-641: Working-Tree (Uncommitted) Comparison Against a Prior Revision
 
@@ -1654,7 +1668,13 @@ Missing numeric IDs are intentional.
     (`scripts/checkMaintainerRunnerPrerequisites.js`) as a fail-fast gate after
     checkout and before install, which reports every missing host prerequisite
     (VS Code, LabVIEW, LabVIEW CLI, Node, npm, Git) at once with remediation and
-    exits non-zero when any required prerequisite is absent. The same script is
+    exits non-zero when any required prerequisite is absent. The doctor also runs
+    an advisory system-clock-skew preflight that warns (without failing unless
+    `--fail-on-clock-skew` is passed) when the host clock differs from an
+    authoritative network time source beyond a tolerance, and degrades to an
+    advisory `unknown` when that source is unreachable, so the dual-boot
+    clock-skew trap that silently knocks the runner offline with a misleading
+    GitHub "registration has been deleted" error is surfaced. The same script is
     runnable directly on the runner for self-service readiness validation
     without dispatching the trusted-ref-gated workflow. The native-Windows
     integration host additionally fails fast with actionable remediation when
@@ -1698,7 +1718,11 @@ Missing numeric IDs are intentional.
     (`scripts/checkMaintainerRunnerPrerequisites.js`) as a fail-fast gate after
     checkout and before install, which reports every missing host prerequisite
     (VS Code, LabVIEW, LabVIEW CLI, Node, npm, Git) at once with remediation and
-    exits non-zero when any required prerequisite is absent. The same script is
+    exits non-zero when any required prerequisite is absent. The doctor also runs
+    an advisory system-clock-skew preflight that warns (without failing unless
+    `--fail-on-clock-skew` is passed) when the host clock differs from an
+    authoritative network time source beyond a tolerance, and degrades to an
+    advisory `unknown` when that source is unreachable. The same script is
     runnable directly on the runner for self-service readiness validation
     without dispatching the trusted-ref-gated workflow.
 - Agent Work Scope:
@@ -2492,9 +2516,10 @@ Missing numeric IDs are intentional.
   auto-detection recommendation otherwise, refresh the label immediately on
   `vscode.workspace.onDidChangeConfiguration` so a `vihs --provider …` CLI
   invocation or a manual `settings.json` edit is reflected without waiting
-  for the focus-event throttle, and provide a status-bar-targeted
-  `Pick Runtime Provider` quick-pick command that writes the same three
-  settings keys to `ConfigurationTarget.Global` (or clears them). For the
+  for the focus-event throttle, and open a status-bar-targeted Runtime &
+  Report Settings panel (`labviewViHistory.pickRuntimeProvider`) whose runtime
+  provider section writes the same three settings keys to
+  `ConfigurationTarget.Global` (or clears them). For the
   docker provider the `VI History runtime` status bar label shall additionally
   name the active LabVIEW container image (`Docker @ <tag>`), sourced from
   `viHistorySuite.container.imageVersion` when selected and a built-in default
@@ -2530,13 +2555,16 @@ Missing numeric IDs are intentional.
     `Selected via settings.json. Click to change.` when the label sources
     from a persisted selection and `Auto-detected. Click to override.`
     when it sources from the recommendation.
-  - The `Pick Runtime Provider` command builds quick-pick items from the
-    cached detection: one entry per detected host LabVIEW installation,
-    one entry for Docker when `cliAvailable` is true, plus a Clear option
-    that removes the three persisted keys. The handler refuses execution
-    in untrusted workspaces with a warning, surfaces a clear warning when
-    detection has not completed or no runtimes are detected, and writes
-    selections to `ConfigurationTarget.Global`.
+  - The `labviewViHistory.pickRuntimeProvider` command opens the Runtime &
+    Report Settings panel, whose runtime provider section is built from the
+    cached detection: one option per detected host LabVIEW installation, one
+    option for Docker when `cliAvailable` is true, plus a Clear option that
+    removes the three persisted keys. Selecting an option writes to
+    `ConfigurationTarget.Global` via `applyPickRuntimeProviderSelection`; the
+    command refuses to open in untrusted workspaces with a warning, and the
+    panel surfaces an empty/no-detection state when detection has not completed
+    or no runtimes are detected. The bitness/version open-gate toasts open the
+    same panel through the same command id.
   - The `Show Runtime Summary` report appends a `Drift:` line that reads
     `none` when no persisted selection is set or it matches the
     recommendation, `selection differs from recommendation: persisted=…,
@@ -2564,15 +2592,18 @@ Missing numeric IDs are intentional.
   - Keep the persisted-selection arbitration in
     `src/ui/runtimeAvailabilityNotice.ts::selectActiveRuntime` reusing
     `isPersistedSelectionSatisfiable` from
-    `src/tooling/runtimeSettingsSeed.ts`. The quick-pick handler lives in
-    `src/commands/pickRuntimeProviderCommand.ts` and exports pure helpers
+    `src/tooling/runtimeSettingsSeed.ts`. The panel command lives in
+    `src/commands/openRuntimeReportPanelCommand.ts` with the pure renderer in
+    `src/ui/runtimeReportPanel.ts`; it reuses the pure helpers
     (`buildPickRuntimeProviderItems`, `applyPickRuntimeProviderSelection`)
-    so the routing logic is unit testable without a window. Drift
-    classification lives in
+    exported from `src/commands/pickRuntimeProviderCommand.ts` so the routing
+    logic is unit testable without a window. Drift classification lives in
     `src/commands/runtimeCommands.ts::buildDriftSummaryLine`.
 - Implementation References:
   - `src/extension.ts`
   - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/ui/runtimeReportPanel.ts`
+  - `src/commands/openRuntimeReportPanelCommand.ts`
   - `src/tooling/dockerDaemonPlatform.ts`
   - `src/tooling/containerImageCatalog.ts`
   - `src/commands/pickRuntimeProviderCommand.ts`
@@ -2580,6 +2611,8 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/runtimeAvailabilityWatcher.test.ts`
+  - `tests/unit/runtimeReportPanel.test.ts`
+  - `tests/unit/openRuntimeReportPanelCommand.test.ts`
   - `tests/unit/dockerDaemonPlatform.test.ts`
   - `tests/unit/containerImageCatalog.test.ts`
   - `tests/unit/pickRuntimeProviderCommand.test.ts`
@@ -2659,7 +2692,7 @@ Missing numeric IDs are intentional.
     `hostRuntimeConflictDetected` / `allowExistingWindowsHostRuntime`
     flow, and the doctor blocked-reason switch. Do not introduce a
     separate auto-correction path — VHS-REQ-621 surfaces the conflict
-    and hands off to VHS-REQ-620's quick-pick.
+    and hands off to VHS-REQ-620's Runtime & Report Settings panel.
 - Implementation References:
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonRuntimeLocator.ts`

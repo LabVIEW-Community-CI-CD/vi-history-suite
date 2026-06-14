@@ -38,18 +38,43 @@ const doctor = require('../../scripts/checkMaintainerRunnerPrerequisites.js') as
     satisfied: boolean;
   };
   formatPrerequisiteReport: (report: unknown) => string;
+  DEFAULT_CLOCK_SKEW_THRESHOLD_MS: number;
+  CLOCK_SKEW_TIME_SOURCE_URL: string;
+  classifyClockSkew: (input: {
+    localNowMs: number;
+    authoritativeNowMs?: number;
+    thresholdMs?: number;
+  }) => { status: string; skewMs?: number; thresholdMs: number; authoritativeNowMs?: number };
+  fetchAuthoritativeNowMsViaGithub: (deps?: {
+    https?: unknown;
+    timeSourceUrl?: string;
+    requestTimeoutMs?: number;
+  }) => Promise<number | undefined>;
+  inspectClockSkew: (deps?: {
+    now?: () => number;
+    fetchAuthoritativeNowMs?: (deps?: unknown) => Promise<number | undefined>;
+    clockSkewThresholdMs?: number;
+  }) => Promise<{ status: string; skewMs?: number; thresholdMs: number }>;
+  formatClockSkewReport: (skew: {
+    status: string;
+    skewMs?: number;
+    thresholdMs: number;
+  }) => string;
   getUsage: () => string;
-  parseArgs: (argv: string[]) => { platform?: string; help: boolean };
+  parseArgs: (argv: string[]) => { platform?: string; help: boolean; failOnClockSkew: boolean };
   main: (
     argv?: string[],
     deps?: {
       existsSync?: (p: string) => boolean;
       env?: Record<string, string | undefined>;
       platform?: string;
+      now?: () => number;
+      fetchAuthoritativeNowMs?: (deps?: unknown) => Promise<number | undefined>;
+      clockSkewThresholdMs?: number;
       stdout?: { write: (chunk: string) => void };
       stderr?: { write: (chunk: string) => void };
     }
-  ) => number;
+  ) => Promise<number>;
 };
 
 function createWritable(): { stream: { write: (chunk: string) => void }; text: () => string } {
@@ -237,19 +262,21 @@ describe('checkMaintainerRunnerPrerequisites.formatPrerequisiteReport', () => {
 });
 
 describe('checkMaintainerRunnerPrerequisites.main', () => {
-  it('exits non-zero and prints the report when prerequisites are missing', () => {
+  it('exits non-zero and prints the report when prerequisites are missing', async () => {
     const stdout = createWritable();
-    const code = doctor.main([], {
+    const code = await doctor.main([], {
       platform: 'linux',
       env: { PATH: '' },
       existsSync: () => false,
+      // Deterministic, no-network clock-skew source for the unit run.
+      fetchAuthoritativeNowMs: async () => undefined,
       stdout: stdout.stream
     });
     expect(code).toBe(1);
     expect(stdout.text()).toContain('[runner-doctor]');
   });
 
-  it('exits zero when all required prerequisites are satisfied', () => {
+  it('exits zero when all required prerequisites are satisfied and the clock is within tolerance', async () => {
     const stdout = createWritable();
     const present = new Set([
       '/usr/bin/code',
@@ -259,24 +286,222 @@ describe('checkMaintainerRunnerPrerequisites.main', () => {
       '/usr/bin/npm',
       '/usr/bin/git'
     ]);
-    const code = doctor.main([], {
+    const code = await doctor.main([], {
       platform: 'linux',
       env: { PATH: '/usr/bin' },
       existsSync: (candidate) => present.has(candidate),
+      now: () => 1_000_000,
+      fetchAuthoritativeNowMs: async () => 1_000_000,
       stdout: stdout.stream
     });
     expect(code).toBe(0);
     expect(stdout.text()).toContain('All required prerequisites satisfied');
+    // The advisory clock-skew line is always surfaced.
+    expect(stdout.text()).toContain('System clock skew: 0.0s');
   });
 
-  it('prints usage for --help and rejects unknown args', () => {
+  it('keeps a known clock skew advisory by default (exit code unaffected)', async () => {
     const stdout = createWritable();
-    expect(doctor.main(['--help'], { stdout: stdout.stream })).toBe(0);
+    const present = new Set([
+      '/usr/bin/code',
+      '/usr/local/natinst/LabVIEW-2026-64/labview',
+      '/usr/local/bin/labviewcli',
+      '/usr/bin/node',
+      '/usr/bin/npm',
+      '/usr/bin/git'
+    ]);
+    const code = await doctor.main([], {
+      platform: 'linux',
+      env: { PATH: '/usr/bin' },
+      existsSync: (candidate) => present.has(candidate),
+      now: () => 1_000_000,
+      // 2h behind authoritative time, like the dual-boot trap in #527.
+      fetchAuthoritativeNowMs: async () => 1_000_000 + 7_200_000,
+      stdout: stdout.stream
+    });
+    // Advisory by default: a skewed clock alone does not fail the doctor.
+    expect(code).toBe(0);
+    expect(stdout.text()).toContain('exceeds the 60s tolerance');
+    expect(stdout.text()).toContain('registration has been deleted');
+  });
+
+  it('fails on a known over-tolerance skew only with --fail-on-clock-skew', async () => {
+    const stdout = createWritable();
+    const present = new Set([
+      '/usr/bin/code',
+      '/usr/local/natinst/LabVIEW-2026-64/labview',
+      '/usr/local/bin/labviewcli',
+      '/usr/bin/node',
+      '/usr/bin/npm',
+      '/usr/bin/git'
+    ]);
+    const code = await doctor.main(['--fail-on-clock-skew'], {
+      platform: 'linux',
+      env: { PATH: '/usr/bin' },
+      existsSync: (candidate) => present.has(candidate),
+      now: () => 1_000_000,
+      fetchAuthoritativeNowMs: async () => 1_000_000 + 7_200_000,
+      stdout: stdout.stream
+    });
+    expect(code).toBe(1);
+    expect(stdout.text()).toContain('exceeds the 60s tolerance');
+  });
+
+  it('never fails on an unreachable time source even with --fail-on-clock-skew', async () => {
+    const stdout = createWritable();
+    const present = new Set([
+      '/usr/bin/code',
+      '/usr/local/natinst/LabVIEW-2026-64/labview',
+      '/usr/local/bin/labviewcli',
+      '/usr/bin/node',
+      '/usr/bin/npm',
+      '/usr/bin/git'
+    ]);
+    const code = await doctor.main(['--fail-on-clock-skew'], {
+      platform: 'linux',
+      env: { PATH: '/usr/bin' },
+      existsSync: (candidate) => present.has(candidate),
+      fetchAuthoritativeNowMs: async () => undefined,
+      stdout: stdout.stream
+    });
+    expect(code).toBe(0);
+    expect(stdout.text()).toContain('authoritative time source unreachable');
+  });
+
+  it('prints usage for --help and rejects unknown args', async () => {
+    const stdout = createWritable();
+    expect(await doctor.main(['--help'], { stdout: stdout.stream })).toBe(0);
     expect(stdout.text()).toContain('Usage: node scripts/checkMaintainerRunnerPrerequisites.js');
 
     const stderr = createWritable();
-    expect(doctor.main(['--bogus'], { stderr: stderr.stream })).toBe(1);
+    expect(await doctor.main(['--bogus'], { stderr: stderr.stream })).toBe(1);
     expect(stderr.text()).toContain('Unknown argument: --bogus');
+  });
+});
+
+describe('checkMaintainerRunnerPrerequisites clock-skew preflight (#527)', () => {
+  it('classifies skew within tolerance as ok', () => {
+    const skew = doctor.classifyClockSkew({
+      localNowMs: 1_000_000,
+      authoritativeNowMs: 1_030_000,
+      thresholdMs: 60_000
+    });
+    expect(skew.status).toBe('ok');
+    expect(skew.skewMs).toBe(-30_000);
+  });
+
+  it('classifies skew over tolerance as skewed', () => {
+    const skew = doctor.classifyClockSkew({
+      localNowMs: 1_000_000,
+      authoritativeNowMs: 1_000_000 - 120_000,
+      thresholdMs: 60_000
+    });
+    expect(skew.status).toBe('skewed');
+    expect(skew.skewMs).toBe(120_000);
+  });
+
+  it('classifies a missing authoritative time as unknown (advisory)', () => {
+    const skew = doctor.classifyClockSkew({ localNowMs: 1_000_000, thresholdMs: 60_000 });
+    expect(skew.status).toBe('unknown');
+    expect(skew.skewMs).toBeUndefined();
+  });
+
+  it('defaults the tolerance to the exported threshold', () => {
+    const skew = doctor.classifyClockSkew({
+      localNowMs: 0,
+      authoritativeNowMs: doctor.DEFAULT_CLOCK_SKEW_THRESHOLD_MS + 1
+    });
+    expect(skew.status).toBe('skewed');
+  });
+
+  it('inspectClockSkew degrades to unknown when the source rejects', async () => {
+    const skew = await doctor.inspectClockSkew({
+      now: () => 5_000,
+      fetchAuthoritativeNowMs: async () => {
+        throw new Error('offline');
+      }
+    });
+    expect(skew.status).toBe('unknown');
+  });
+
+  it('inspectClockSkew resolves a real skew through injected collaborators', async () => {
+    const skew = await doctor.inspectClockSkew({
+      now: () => 200_000,
+      clockSkewThresholdMs: 60_000,
+      fetchAuthoritativeNowMs: async () => 50_000
+    });
+    expect(skew.status).toBe('skewed');
+    expect(skew.skewMs).toBe(150_000);
+  });
+
+  it('fetchAuthoritativeNowMsViaGithub parses the Date header via an injected https client', async () => {
+    const fixedIso = 'Sun, 14 Jun 2026 12:00:00 GMT';
+    const fakeHttps = {
+      request(
+        _url: string,
+        _options: unknown,
+        callback: (response: {
+          headers: { date: string };
+          resume: () => void;
+        }) => void
+      ) {
+        const handlers: Record<string, () => void> = {};
+        queueMicrotask(() => callback({ headers: { date: fixedIso }, resume: () => undefined }));
+        return {
+          on(event: string, handler: () => void) {
+            handlers[event] = handler;
+            return this;
+          },
+          end() {
+            return this;
+          },
+          destroy() {
+            return this;
+          }
+        };
+      }
+    };
+    const ms = await doctor.fetchAuthoritativeNowMsViaGithub({ https: fakeHttps });
+    expect(ms).toBe(Date.parse(fixedIso));
+  });
+
+  it('fetchAuthoritativeNowMsViaGithub resolves undefined when the request errors', async () => {
+    const fakeHttps = {
+      request(_url: string, _options: unknown, _callback: unknown) {
+        const handlers: Record<string, (error?: Error) => void> = {};
+        queueMicrotask(() => handlers.error?.(new Error('ECONNREFUSED')));
+        return {
+          on(event: string, handler: (error?: Error) => void) {
+            handlers[event] = handler;
+            return this;
+          },
+          end() {
+            return this;
+          },
+          destroy() {
+            return this;
+          }
+        };
+      }
+    };
+    const ms = await doctor.fetchAuthoritativeNowMsViaGithub({ https: fakeHttps });
+    expect(ms).toBeUndefined();
+  });
+
+  it('formats each advisory state with actionable text', () => {
+    expect(doctor.formatClockSkewReport({ status: 'unknown', thresholdMs: 60_000 })).toContain(
+      'unknown'
+    );
+    expect(
+      doctor.formatClockSkewReport({ status: 'ok', skewMs: 2_000, thresholdMs: 60_000 })
+    ).toContain('within 60s tolerance');
+    const skewed = doctor.formatClockSkewReport({
+      status: 'skewed',
+      skewMs: -7_200_000,
+      thresholdMs: 60_000
+    });
+    expect(skewed).toContain('exceeds the 60s tolerance');
+    expect(skewed).toContain('remediation:');
   });
 });
 

@@ -3317,7 +3317,13 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
         nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
-        processPlatform: 'win32'
+        processPlatform: 'win32',
+        // #540: this test exercises the staging/prune path through runCommand, not
+        // the Windows host preflight (which has its own tests). The preflight
+        // defaults to the real process.platform and process observer, so on a
+        // Windows maintainer host with LabVIEW running it would block before
+        // runCommand and fail this test. Disable it to keep the test hermetic.
+        enforceWindowsHostPreflight: false
       }
     );
 
@@ -3462,7 +3468,13 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
         nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
-        processPlatform: 'win32'
+        processPlatform: 'win32',
+        // #540: this test exercises the staging path through runCommand, not the
+        // Windows host preflight (which has its own tests). The preflight defaults
+        // to the real process.platform and process observer, so on a Windows
+        // maintainer host with LabVIEW running it would block before runCommand
+        // and fail this test. Disable it to keep the test hermetic.
+        enforceWindowsHostPreflight: false
       }
     );
 

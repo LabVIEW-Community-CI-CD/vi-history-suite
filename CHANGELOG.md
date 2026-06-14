@@ -12,6 +12,48 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.28.0] - 2026-06-14
+
+### Added
+
+- A new **Runtime & Report Settings** panel replaces the runtime status-bar
+  quick-pick. Click the **VI History runtime** status bar item to open a panel
+  where you can choose the comparison runtime (host LabVIEW, Docker, or
+  auto-detect), pick the LabVIEW container image version when using Docker, and
+  tune which differences the LabVIEW comparison report includes — Include
+  checkboxes let you deselect VI attributes, the front panel, front-panel object
+  position/size, the block diagram, or block-diagram cosmetic differences, plus
+  the report format. Choices save to your user settings immediately
+  (VHS-REQ-620/645/651, #536).
+- The maintainer-runner prerequisite doctor
+  (`scripts/checkMaintainerRunnerPrerequisites.js`) now runs an **advisory
+  system-clock-skew preflight**. A skewed host clock makes the runner's session
+  token look expired to GitHub and silently knocks the runner offline with a
+  misleading "registration has been deleted" error; the doctor now compares the
+  host clock to an authoritative network time source and warns past a tolerance,
+  with remediation for the dual-boot RTC trap. It degrades to an advisory
+  `unknown` when the source is unreachable (never blocking an offline host), and
+  `--fail-on-clock-skew` opts into treating an over-tolerance skew as a hard
+  failure (#527).
+
+### Changed
+
+- The runtime status bar item and the bitness/version mismatch notifications now
+  open the Runtime & Report Settings panel instead of a quick-pick. The **Pick
+  LabVIEW Container Image Version** command is no longer in the Command Palette;
+  its selection now lives in the panel, and it remains available from the
+  in-report **Pick Image Version** remediation action (VHS-REQ-620/651, #536).
+
+### Fixed
+
+- A successful comparison no longer shows a verbose runtime notification that
+  surfaced provider-selection internals — most notably a `Rejected providers: …
+  because … because …` line that read like a problem on a run that actually
+  succeeded. The success toast is now concise (for example `Selected compare
+  completed. Provider: host-native.`); the full provider-selection diagnostics
+  remain available in the History panel Runtime details and the retained
+  comparison packet (#538).
+
 ## [1.27.3] - 2026-06-14
 
 ### Changed

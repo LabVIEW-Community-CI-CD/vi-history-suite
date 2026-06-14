@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.27.3",
+  "version": "1.28.0",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -82,12 +82,7 @@
       },
       {
         "command": "labviewViHistory.pickRuntimeProvider",
-        "title": "Pick Runtime Provider",
-        "category": "VI History"
-      },
-      {
-        "command": "labviewViHistory.pickContainerImageVersion",
-        "title": "Pick LabVIEW Container Image Version",
+        "title": "Runtime & Report Settings",
         "category": "VI History"
       },
       {
