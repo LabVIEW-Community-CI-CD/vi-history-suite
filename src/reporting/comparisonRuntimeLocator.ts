@@ -146,6 +146,14 @@ export interface ComparisonRuntimeSelection {
   windowsContainerHostMode?: DockerContainerHostMode;
   windowsContainerImageAvailable?: boolean;
   windowsContainerAcquisitionState?: DockerContainerAcquisitionState;
+  /**
+   * Issue #532: when the selected container image version's platform cannot run
+   * under the active Docker engine mode, the structured conflict (selected vs.
+   * active container platform) is retained so the concise
+   * `container-image-platform-mismatch` toast can name both platforms without
+   * parsing doctor-summary strings.
+   */
+  containerImageVersionConflict?: ContainerImageVersionPlatformConflict;
   blockedReason?: string;
   providerDecisions?: RuntimeProviderDecision[];
   notes: string[];
@@ -2049,6 +2057,8 @@ function buildContainerImagePlatformMismatchSelection(options: {
     // explicit assignment is needed.
     ...buildContainerSelectionFacts(options.selectedContainerFacts),
     containerImage: conflict.selectedReference,
+    // Issue #532: retain the structured conflict for the concise toast.
+    containerImageVersionConflict: conflict,
     hostLabviewIniPath: options.hostLabviewIniPath,
     hostLabviewTcpPort: options.hostLabviewTcpPort,
     hostRuntimeConflictDetected: options.hostRuntimeConflictDetected,
@@ -2473,6 +2483,12 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
   if (options.blockedReason === 'labview-2026q1-unsupported-on-macos') {
     return 'host-native-unsupported-on-macos';
   }
+  if (options.blockedReason === 'windows-host-bitness-conflict') {
+    return 'host-native-windows-host-bitness-conflict';
+  }
+  if (options.blockedReason === 'windows-host-version-conflict') {
+    return 'host-native-windows-host-version-conflict';
+  }
   if (options.configuredFailure) {
     return `host-native-configured-${options.configuredFailure.kind}-path-missing`;
   }
@@ -2518,6 +2534,12 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
   }
   if (options.blockedReason === 'labview-2026q1-unsupported-on-macos') {
     return 'LabVIEW 2026 Q1 comparison-report execution is unsupported on macOS.';
+  }
+  if (options.blockedReason === 'windows-host-bitness-conflict') {
+    return 'Host-native execution was not selected because a different LabVIEW bitness is already running; LabVIEW cannot run two bitnesses at the same time.';
+  }
+  if (options.blockedReason === 'windows-host-version-conflict') {
+    return 'Host-native execution was not selected because a different LabVIEW version is already running; LabVIEW would attach to the running version instead of the selected one.';
   }
   if (options.configuredFailure) {
     return `Configured ${options.configuredFailure.kind} path does not exist: ${options.configuredFailure.path}`;

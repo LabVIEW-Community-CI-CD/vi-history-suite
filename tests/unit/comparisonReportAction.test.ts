@@ -7,13 +7,19 @@ vi.mock('vscode', async () => {
 });
 
 import {
+  buildContainerImagePlatformMismatchMessage,
   buildDockerDaemonNotRunningMessage,
   buildDockerNotInstalledMessage,
+  buildHostBitnessConflictMessage,
+  buildHostVersionConflictMessage,
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction,
+  isContainerImagePlatformMismatchBlock,
   isDockerDaemonNotRunningBlock,
   isDockerNotInstalledBlock,
+  isHostBitnessConflictBlock,
+  isHostVersionConflictBlock,
   readComparisonReportOptions,
   readComparisonRuntimeSettings
 } from '../../src/reporting/comparisonReportAction';
@@ -849,6 +855,290 @@ describe('readComparisonReportOptions (VHS-REQ-645)', () => {
 
     expect(options.ignoreViAttributes).toBe(false);
     expect(options.ignoreBlockDiagram).toBe(false);
+  });
+});
+
+describe('isHostBitnessConflictBlock / isHostVersionConflictBlock (#530)', () => {
+  it('isHostBitnessConflictBlock is true only for a blocked-runtime windows-host-bitness-conflict', () => {
+    expect(
+      isHostBitnessConflictBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'windows-host-bitness-conflict'
+      })
+    ).toBe(true);
+    expect(
+      isHostBitnessConflictBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'windows-host-version-conflict'
+      })
+    ).toBe(false);
+    expect(
+      isHostBitnessConflictBlock({
+        reportStatus: 'blocked-preflight',
+        blockedReason: 'windows-host-bitness-conflict'
+      })
+    ).toBe(false);
+    expect(
+      isHostBitnessConflictBlock({ reportStatus: 'ready-for-runtime', blockedReason: undefined })
+    ).toBe(false);
+  });
+
+  it('isHostVersionConflictBlock is true only for a blocked-runtime windows-host-version-conflict', () => {
+    expect(
+      isHostVersionConflictBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'windows-host-version-conflict'
+      })
+    ).toBe(true);
+    expect(
+      isHostVersionConflictBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'windows-host-bitness-conflict'
+      })
+    ).toBe(false);
+    expect(
+      isHostVersionConflictBlock({
+        reportStatus: 'blocked-preflight',
+        blockedReason: 'windows-host-version-conflict'
+      })
+    ).toBe(false);
+  });
+});
+
+describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#530)', () => {
+  it('names running vs selected LabVIEW and steers to close + Retry Compare (bitness)', () => {
+    const message = buildHostBitnessConflictMessage({
+      observedBitness: 'x64',
+      observedYear: '2025',
+      selectedBitness: 'x86',
+      selectedYear: '2025'
+    });
+    expect(message).toBe(
+      "LabVIEW 2025 (64-bit) is already running, so the selected LabVIEW 2025 (32-bit) can't start. " +
+        'LabVIEW cannot run two bitnesses at the same time. ' +
+        'Close the running LabVIEW, then click Retry Compare.'
+    );
+    // Concise: no provider internals, no setting-switch text, no false CLI clause.
+    expect(message).not.toContain('viHistorySuite');
+    expect(message).not.toContain('Provider');
+    expect(message).not.toContain('LabVIEWCLI');
+  });
+
+  it('names running vs selected LabVIEW and steers to close + Retry Compare (version)', () => {
+    const message = buildHostVersionConflictMessage({
+      observedBitness: 'x64',
+      observedYear: '2026',
+      selectedBitness: 'x64',
+      selectedYear: '2025'
+    });
+    expect(message).toContain('LabVIEW 2026 (64-bit) is already running');
+    expect(message).toContain('LabVIEW 2025 (64-bit)');
+    expect(message).toContain('Close the running LabVIEW, then click Retry Compare');
+    expect(message).not.toContain('viHistorySuite');
+  });
+
+  it('degrades gracefully when running/selected facts are missing', () => {
+    const message = buildHostBitnessConflictMessage({});
+    expect(message).toContain('LabVIEW is already running');
+    expect(message).toContain('Close the running LabVIEW, then click Retry Compare');
+  });
+});
+
+describe('Host bitness/version conflict comparison gate (#530)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('suppresses the report webview, surfaces structured facts, and returns the bitness-conflict outcome', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'windows-host-bitness-conflict',
+      bitness: 'x86',
+      requestedLabviewVersion: '2025',
+      hostObservedLabviewBitness: 'x64',
+      hostObservedLabviewVersion: '2025'
+    });
+    const blockedRecord = createPacketRecord({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'windows-host-bitness-conflict'
+      }
+    });
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      createWebviewPanel
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result).toMatchObject({
+      outcome: 'blocked-host-bitness-conflict',
+      reportStatus: 'blocked-runtime',
+      blockedReason: 'windows-host-bitness-conflict',
+      hostObservedLabviewBitness: 'x64',
+      hostObservedLabviewVersion: '2025',
+      selectedLabviewBitness: 'x86',
+      selectedLabviewVersion: '2025'
+    });
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
+  });
+
+  it('suppresses the report webview even when archiving is unavailable (no archive guard, unlike Docker)', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'windows-host-version-conflict',
+      bitness: 'x64',
+      requestedLabviewVersion: '2025',
+      hostObservedLabviewBitness: 'x64',
+      hostObservedLabviewVersion: '2026'
+    });
+    const blockedRecord = createPacketRecord({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'windows-host-version-conflict'
+      }
+    });
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      // Archive failure → retainedArchiveAvailable false. The Docker gate falls
+      // through to open the webview in this case; the host-conflict gate must
+      // NOT (the user wants no auto-opened report, including worktree compares).
+      archiveComparisonReportSource: vi.fn().mockRejectedValue(new Error('archive failed')),
+      createWebviewPanel
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result).toMatchObject({ outcome: 'blocked-host-version-conflict' });
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
+  });
+});
+
+describe('isContainerImagePlatformMismatchBlock / buildContainerImagePlatformMismatchMessage (#532)', () => {
+  it('predicate is true only for a blocked-runtime container-image-platform-mismatch', () => {
+    expect(
+      isContainerImagePlatformMismatchBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'container-image-platform-mismatch'
+      })
+    ).toBe(true);
+    expect(
+      isContainerImagePlatformMismatchBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'docker-provider-unavailable'
+      })
+    ).toBe(false);
+    expect(
+      isContainerImagePlatformMismatchBlock({
+        reportStatus: 'blocked-preflight',
+        blockedReason: 'container-image-platform-mismatch'
+      })
+    ).toBe(false);
+  });
+
+  it('names the selected image platform and the active engine mode with the two fixes (windows image / linux engine)', () => {
+    const message = buildContainerImagePlatformMismatchMessage({
+      selectedImagePlatform: 'windows',
+      activeEnginePlatform: 'linux'
+    });
+    expect(message).toBe(
+      'The selected Docker image is a Windows-container image, but Docker is currently in ' +
+        "Linux-container mode, so the comparison can't start. " +
+        'Switch Docker to Windows containers, or pick a Linux image version.'
+    );
+    // Concise: no provider internals, no host-native noise, no setting key.
+    expect(message).not.toContain('Provider');
+    expect(message).not.toContain('host-native');
+    expect(message).not.toContain('viHistorySuite');
+  });
+
+  it('reverses the framing for a linux image under a windows engine', () => {
+    const message = buildContainerImagePlatformMismatchMessage({
+      selectedImagePlatform: 'linux',
+      activeEnginePlatform: 'windows'
+    });
+    expect(message).toContain('The selected Docker image is a Linux-container image');
+    expect(message).toContain('Docker is currently in Windows-container mode');
+    expect(message).toContain('Switch Docker to Linux containers');
+    expect(message).toContain('pick a Windows image version');
+  });
+});
+
+describe('Container image platform mismatch comparison gate (#532)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('suppresses the report webview, surfaces structured platform facts, and returns the mismatch outcome', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'container-image-platform-mismatch',
+      containerImageVersionConflict: {
+        selectedTag: '2026q1patch2-windows',
+        selectedReference: 'nationalinstruments/labview:2026q1patch2-windows',
+        selectedPlatform: 'windows',
+        activePlatform: 'linux'
+      }
+    });
+    const blockedRecord = createPacketRecord({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'container-image-platform-mismatch'
+      }
+    });
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      createWebviewPanel
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result).toMatchObject({
+      outcome: 'blocked-container-image-platform-mismatch',
+      reportStatus: 'blocked-runtime',
+      blockedReason: 'container-image-platform-mismatch',
+      containerSelectedImagePlatform: 'windows',
+      containerActiveEnginePlatform: 'linux',
+      containerSelectedImageTag: '2026q1patch2-windows'
+    });
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
   });
 });
 

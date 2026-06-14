@@ -4,10 +4,16 @@ import * as vscode from 'vscode';
 import { GitApi } from '../git/gitApi';
 import {
   ComparisonReportActionResult,
+  buildContainerImagePlatformMismatchMessage,
   buildDockerDaemonNotRunningMessage,
   buildDockerNotInstalledMessage,
+  buildHostBitnessConflictMessage,
+  buildHostVersionConflictMessage,
+  isContainerImagePlatformMismatchBlock,
   isDockerDaemonNotRunningBlock,
   isDockerNotInstalledBlock,
+  isHostBitnessConflictBlock,
+  isHostVersionConflictBlock,
   readComparisonRuntimeSettings,
   resolveRuntimePlatform,
 } from '../reporting/comparisonReportAction';
@@ -539,8 +545,72 @@ export function createOpenViHistoryCommand(
               }
             });
         }
+        // Issue #530: Host bitness/version pre-launch conflicts get a single
+        // concise toast — name the running vs. selected LabVIEW and steer to
+        // close the running LabVIEW then Retry Compare — instead of the verbose
+        // blocked-runtime message, and no auto-opened report (suppressed in the
+        // action). Retry re-runs the same compare; it simply re-blocks until the
+        // conflicting LabVIEW is closed (no second LabVIEW is ever launched).
+        const hostBitnessConflict = isHostBitnessConflictBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason
+        });
+        const hostVersionConflict = isHostVersionConflictBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason
+        });
+        if (hostBitnessConflict || hostVersionConflict) {
+          const RETRY_COMPARISON_ACTION = 'Retry Compare';
+          const conflictMessage =
+            buildConciseHostConflictMessage(result) ?? '';
+          void vscode.window
+            .showWarningMessage(conflictMessage, RETRY_COMPARISON_ACTION)
+            .then((selection) => {
+              if (selection === RETRY_COMPARISON_ACTION) {
+                void runComparisonReportCommand(
+                  actionCommand,
+                  title,
+                  cancelledMessage,
+                  action,
+                  { selectedHash, baseHash }
+                );
+              }
+            });
+        }
+        // Issue #532: a container-image-platform-mismatch block (selected image's
+        // container platform can't run under the active Docker engine mode) gets
+        // a single concise toast framing the platform constraint, with the
+        // existing Pick Image Version action, instead of the verbose
+        // provider/rejected-provider message; the report is not auto-opened
+        // (suppressed in the action).
+        const containerImagePlatformMismatch = isContainerImagePlatformMismatchBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason
+        });
+        if (containerImagePlatformMismatch) {
+          const PICK_IMAGE_VERSION_ACTION = 'Pick Image Version';
+          void vscode.window
+            .showWarningMessage(
+              buildContainerImagePlatformMismatchMessage({
+                selectedImagePlatform: result.containerSelectedImagePlatform,
+                activeEnginePlatform: result.containerActiveEnginePlatform
+              }),
+              PICK_IMAGE_VERSION_ACTION
+            )
+            .then((selection) => {
+              if (selection === PICK_IMAGE_VERSION_ACTION) {
+                void vscode.commands.executeCommand(
+                  'labviewViHistory.pickContainerImageVersion'
+                );
+              }
+            });
+        }
         const runtimeWarningMessage =
-          dockerDaemonNotRunning || dockerNotInstalled
+          dockerDaemonNotRunning ||
+          dockerNotInstalled ||
+          hostBitnessConflict ||
+          hostVersionConflict ||
+          containerImagePlatformMismatch
             ? undefined
             : buildComparisonRuntimeWarningMessage(actionCommand, result);
         if (runtimeWarningMessage) {
@@ -551,23 +621,6 @@ export function createOpenViHistoryCommand(
               .then((selection) => {
                 if (selection === PICK_RUNTIME_PROVIDER_ACTION) {
                   void vscode.commands.executeCommand('labviewViHistory.pickRuntimeProvider');
-                }
-              });
-          } else if (isContainerImagePlatformMismatchComparisonRuntimeResult(result)) {
-            // VHS-REQ-650: the selected container image targets a platform the
-            // active Docker engine cannot launch. Offer the image picker as a
-            // one-click fix instead of text-only guidance, mirroring the
-            // bitness-conflict Pick Runtime Provider action above. The picker
-            // probes the daemon mode and lists the right platform's images (and
-            // a Clear option), so a single button reaches every remediation.
-            const PICK_IMAGE_VERSION_ACTION = 'Pick Image Version';
-            void vscode.window
-              .showWarningMessage(runtimeWarningMessage, PICK_IMAGE_VERSION_ACTION)
-              .then((selection) => {
-                if (selection === PICK_IMAGE_VERSION_ACTION) {
-                  void vscode.commands.executeCommand(
-                    'labviewViHistory.pickContainerImageVersion'
-                  );
                 }
               });
           } else {
@@ -1237,6 +1290,54 @@ function buildComparisonRuntimePanelUpdate(
     ? `${selectedHash.slice(0, 8)} vs ${effectiveBaseHash.slice(0, 8)}`
     : selectedHash.slice(0, 8);
   const commandLabel = deriveComparisonCommandLabel(actionCommand);
+  // Issue #530 (Codex P2 on #531): For the pre-launch host bitness/version
+  // conflict blocks, the History panel must match the concise close + Retry
+  // Compare toast instead of re-deriving the verbose
+  // provider/rejected-provider/setting-switch content from the doctor summary
+  // (which would contradict the toast). Build a concise panel update from the
+  // same shared message and structured facts.
+  const conciseHostConflictMessage = buildConciseHostConflictMessage(result);
+  if (conciseHostConflictMessage) {
+    return {
+      type: 'comparisonRuntimeResult',
+      status: deriveComparisonRuntimePanelStatus(result),
+      summary: `${commandLabel} for ${pairLabel} blocked. ${conciseHostConflictMessage}`,
+      nextAction:
+        'Next action: close the running LabVIEW, then click Retry Compare so the selected LabVIEW can start.',
+      details: [
+        { label: 'Report status', value: result.reportStatus ?? 'none' },
+        { label: 'Runtime state', value: result.runtimeExecutionState ?? 'none' },
+        { label: 'Blocked reason', value: result.blockedReason ?? 'none' }
+      ]
+    };
+  }
+  // Issue #532: the History panel must match the concise container-image
+  // platform-mismatch toast, not re-derive the verbose provider/rejected-provider
+  // content from the doctor summary (which would contradict the toast).
+  if (
+    isContainerImagePlatformMismatchBlock({
+      reportStatus: result.reportStatus,
+      blockedReason: result.blockedReason
+    })
+  ) {
+    return {
+      type: 'comparisonRuntimeResult',
+      status: deriveComparisonRuntimePanelStatus(result),
+      summary: `${commandLabel} for ${pairLabel} blocked. ${buildContainerImagePlatformMismatchMessage(
+        {
+          selectedImagePlatform: result.containerSelectedImagePlatform,
+          activeEnginePlatform: result.containerActiveEnginePlatform
+        }
+      )}`,
+      nextAction:
+        'Next action: switch Docker to the matching container mode, or click Pick Image Version to select a compatible image, then rerun the comparison.',
+      details: [
+        { label: 'Report status', value: result.reportStatus ?? 'none' },
+        { label: 'Runtime state', value: result.runtimeExecutionState ?? 'none' },
+        { label: 'Blocked reason', value: result.blockedReason ?? 'none' }
+      ]
+    };
+  }
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
@@ -1331,24 +1432,47 @@ function buildComparisonRuntimeProgressPanelUpdate(
 function isHostRuntimeConflictRequiringProviderPick(
   result: ComparisonReportActionResult
 ): boolean {
-  return (
-    result.blockedReason === 'windows-host-bitness-conflict' ||
-    result.blockedReason === 'windows-host-version-conflict' ||
-    result.runtimeFailureReason === 'labview-host-bitness-conflict'
-  );
+  // Issue #530: the pre-launch blocks `windows-host-bitness-conflict` and
+  // `windows-host-version-conflict` now get the concise close + Retry Compare
+  // toast (their verbose message is suppressed), so only the mid-run
+  // reclassified `labview-host-bitness-conflict` failure still routes to the
+  // verbose warning with a Pick Runtime Provider action.
+  return result.runtimeFailureReason === 'labview-host-bitness-conflict';
 }
 
 /**
- * VHS-REQ-650: True when the compare was blocked because the selected container
- * image version targets a platform the active Docker container mode cannot
- * launch. The mismatch warning toast offers a `Pick Image Version` action so the
- * user can switch to a compatible image (or clear the selection) without hunting
- * for the command, mirroring the bitness-conflict `Pick Runtime Provider` action.
+ * Issue #530: Build the concise host bitness/version conflict message from the
+ * structured running-vs-selected facts on the result, or `undefined` when the
+ * result is not one of the two pre-launch host conflicts. Shared by the warning
+ * toast and the History panel update so they never diverge (a divergence would
+ * let the panel contradict the toast with the old setting-switch guidance).
  */
-function isContainerImagePlatformMismatchComparisonRuntimeResult(
+function buildConciseHostConflictMessage(
   result: ComparisonReportActionResult
-): boolean {
-  return result.blockedReason === 'container-image-platform-mismatch';
+): string | undefined {
+  const facts = {
+    observedBitness: result.hostObservedLabviewBitness,
+    observedYear: result.hostObservedLabviewVersion,
+    selectedBitness: result.selectedLabviewBitness,
+    selectedYear: result.selectedLabviewVersion
+  };
+  if (
+    isHostBitnessConflictBlock({
+      reportStatus: result.reportStatus,
+      blockedReason: result.blockedReason
+    })
+  ) {
+    return buildHostBitnessConflictMessage(facts);
+  }
+  if (
+    isHostVersionConflictBlock({
+      reportStatus: result.reportStatus,
+      blockedReason: result.blockedReason
+    })
+  ) {
+    return buildHostVersionConflictMessage(facts);
+  }
+  return undefined;
 }
 
 function buildComparisonRuntimeWarningMessage(

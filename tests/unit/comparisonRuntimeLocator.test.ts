@@ -767,6 +767,16 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
 
     expect(selection.blockedReason).toBe('windows-host-bitness-conflict');
     expect(selection.hostObservedLabviewBitness).toBe('x86');
+    // #530: the host-native rejection reason must state the bitness conflict,
+    // not the false 'LabVIEWCLI was not located' fallback (CLI was located).
+    const hostNativeBitnessDecision = selection.providerDecisions?.find(
+      (decision) => decision.provider === 'host-native' && decision.outcome === 'rejected'
+    );
+    expect(hostNativeBitnessDecision?.reason).toBe('host-native-windows-host-bitness-conflict');
+    expect(hostNativeBitnessDecision?.detail).toContain(
+      'a different LabVIEW bitness is already running'
+    );
+    expect(hostNativeBitnessDecision?.detail).not.toContain('LabVIEWCLI was not located');
   });
 
   it('admits a matching-bitness running LabVIEW session under allowExistingWindowsHostRuntime', async () => {
@@ -832,6 +842,16 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     expect(selection.requestedLabviewVersion).toBe('2026');
     expect(selection.notes.join('\n')).toContain('already running');
     expect(selection.notes.join('\n')).toContain('LabVIEW 2025');
+    // #530: the host-native rejection reason must state the version conflict,
+    // not the false 'LabVIEWCLI was not located' fallback (CLI was located).
+    const hostNativeVersionDecision = selection.providerDecisions?.find(
+      (decision) => decision.provider === 'host-native' && decision.outcome === 'rejected'
+    );
+    expect(hostNativeVersionDecision?.reason).toBe('host-native-windows-host-version-conflict');
+    expect(hostNativeVersionDecision?.detail).toContain(
+      'a different LabVIEW version is already running'
+    );
+    expect(hostNativeVersionDecision?.detail).not.toContain('LabVIEWCLI was not located');
   });
 
   it('treats an unknown-bitness running LabVIEW session as advisory only (no block)', async () => {
@@ -1109,6 +1129,14 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
       blockedReason: 'container-image-platform-mismatch'
     });
     expect(selection.containerImage).toBe('nationalinstruments/labview:2026q1-linux');
+    // #532: the structured conflict is retained so the concise toast can name
+    // the selected image platform vs. the active engine mode without parsing
+    // doctor-summary strings.
+    expect(selection.containerImageVersionConflict).toMatchObject({
+      selectedTag: '2026q1-linux',
+      selectedPlatform: 'linux',
+      activePlatform: 'windows'
+    });
     expect(selection.notes.join('\n')).toContain('windows-container mode');
     expect(selection.notes.join('\n')).toContain('Switch Docker to linux containers');
     expect(selection.providerDecisions).toEqual(
