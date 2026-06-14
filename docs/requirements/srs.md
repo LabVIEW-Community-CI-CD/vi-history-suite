@@ -2626,11 +2626,21 @@ Missing numeric IDs are intentional.
     guidance for both the preflight `windows-host-bitness-conflict`
     blocked reason and the post-failure
     `labview-host-bitness-conflict` failure reason.
-  - The VS Code comparison-report command shows a warning toast with a
-    `Pick Runtime Provider` action button whenever the action result
-    carries `blockedReason='windows-host-bitness-conflict'` or
-    `runtimeFailureReason='labview-host-bitness-conflict'`; selecting
-    the action invokes `labviewViHistory.pickRuntimeProvider`.
+  - The VS Code comparison-report command surfaces the pre-launch block
+    (`blockedReason='windows-host-bitness-conflict'`) as a concise
+    warning toast that names the running vs. selected LabVIEW (year when
+    known plus bitness) and steers to a single path — close the running
+    LabVIEW, then click `Retry Compare` — with a `Retry Compare` action
+    that re-runs the same compare (it re-blocks until the running LabVIEW
+    is closed; no second LabVIEW is ever launched). The verbose
+    provider/rejected-provider message is suppressed for this reason and
+    no comparison report webview is auto-opened (the blocked-evidence
+    packet is still persisted; explicit `Export Comparison Report` still
+    works), mirroring the concise Docker block toasts (VHS-REQ-642/643).
+    The mid-run reclassified
+    `runtimeFailureReason='labview-host-bitness-conflict'` is unchanged:
+    it keeps the verbose warning toast with a `Pick Runtime Provider`
+    action that invokes `labviewViHistory.pickRuntimeProvider` (#530).
 - Agent Work Scope:
   - Keep bitness inference path-based (no PE-header probe) and resolve the
     executable through `Get-Process -Id <pid>` so the diagnostic does not
@@ -2644,11 +2654,13 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonRuntimeLocator.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/reporting/comparisonReportAction.ts`
   - `src/commands/openViHistoryCommand.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
@@ -2699,10 +2711,16 @@ Missing numeric IDs are intentional.
   - `comparisonRuntimeDoctor` emits a next-action line that names the observed
     year and the selected year, references `viHistorySuite.labviewVersion`, and
     offers a Docker-backed x64 compare as one recovery option.
-  - The VS Code comparison-report command shows a warning toast with a
-    `Pick Runtime Provider` action button whenever the action result carries
-    `blockedReason='windows-host-version-conflict'`; selecting the action invokes
-    `labviewViHistory.pickRuntimeProvider`.
+  - The VS Code comparison-report command surfaces the
+    `blockedReason='windows-host-version-conflict'` pre-launch block as a
+    concise warning toast that names the running vs. selected LabVIEW year
+    and steers to a single path — close the running LabVIEW, then click
+    `Retry Compare` — with a `Retry Compare` action that re-runs the
+    compare. The verbose provider message is suppressed for this reason
+    and no comparison report webview is auto-opened (the blocked-evidence
+    packet is still persisted; explicit `Export Comparison Report` still
+    works), mirroring VHS-REQ-621 and the concise Docker block toasts
+    (VHS-REQ-642/643) (#530).
   - The shared Windows runtime-conflict harness (VHS-REQ-622) exercises this
     block on real hardware through the `version-A` (host LabVIEW 2025 / selected
     2026) and `version-B` (host 2026 / selected 2025) scenarios at a shared
@@ -2720,6 +2738,7 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonRuntimeLocator.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/reporting/comparisonReportAction.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `scripts/runWindowsRuntimeMatrix.js`
   - `scripts/windows-runtime-matrix/Invoke-RuntimeMatrixSteadyState.ps1`
@@ -2727,6 +2746,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
   - `manual:windows-runtime-matrix-version-conflict-dispatch`

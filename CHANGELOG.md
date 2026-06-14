@@ -12,6 +12,19 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Changed
+
+- A comparison blocked because a different LabVIEW bitness or version is already
+  running now shows a concise, actionable notification — it names the running
+  vs. selected LabVIEW and steers to a single path: close the running LabVIEW,
+  then click **Retry Compare**. The verbose provider/rejected-provider text is
+  gone, no setting-switch instruction is shown, and the blocked-evidence report
+  no longer opens automatically (the packet is still saved and can be exported).
+  The host-native rejection rationale now states the bitness/version conflict
+  instead of an incorrect "LabVIEWCLI was not located" message. The mid-run
+  reclassified bitness-conflict failure keeps its existing **Pick Runtime
+  Provider** notification (VHS-REQ-621/653, #530).
+
 ## [1.27.2] - 2026-06-14
 
 ### Changed

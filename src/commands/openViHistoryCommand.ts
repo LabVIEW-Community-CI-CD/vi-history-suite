@@ -6,8 +6,12 @@ import {
   ComparisonReportActionResult,
   buildDockerDaemonNotRunningMessage,
   buildDockerNotInstalledMessage,
+  buildHostBitnessConflictMessage,
+  buildHostVersionConflictMessage,
   isDockerDaemonNotRunningBlock,
   isDockerNotInstalledBlock,
+  isHostBitnessConflictBlock,
+  isHostVersionConflictBlock,
   readComparisonRuntimeSettings,
   resolveRuntimePlatform,
 } from '../reporting/comparisonReportAction';
@@ -539,8 +543,54 @@ export function createOpenViHistoryCommand(
               }
             });
         }
+        // Issue #530: Host bitness/version pre-launch conflicts get a single
+        // concise toast — name the running vs. selected LabVIEW and steer to
+        // close the running LabVIEW then Retry Compare — instead of the verbose
+        // blocked-runtime message, and no auto-opened report (suppressed in the
+        // action). Retry re-runs the same compare; it simply re-blocks until the
+        // conflicting LabVIEW is closed (no second LabVIEW is ever launched).
+        const hostBitnessConflict = isHostBitnessConflictBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason
+        });
+        const hostVersionConflict = isHostVersionConflictBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason
+        });
+        if (hostBitnessConflict || hostVersionConflict) {
+          const RETRY_COMPARISON_ACTION = 'Retry Compare';
+          const conflictMessage = hostBitnessConflict
+            ? buildHostBitnessConflictMessage({
+                observedBitness: result.hostObservedLabviewBitness,
+                observedYear: result.hostObservedLabviewVersion,
+                selectedBitness: result.selectedLabviewBitness,
+                selectedYear: result.selectedLabviewVersion
+              })
+            : buildHostVersionConflictMessage({
+                observedBitness: result.hostObservedLabviewBitness,
+                observedYear: result.hostObservedLabviewVersion,
+                selectedBitness: result.selectedLabviewBitness,
+                selectedYear: result.selectedLabviewVersion
+              });
+          void vscode.window
+            .showWarningMessage(conflictMessage, RETRY_COMPARISON_ACTION)
+            .then((selection) => {
+              if (selection === RETRY_COMPARISON_ACTION) {
+                void runComparisonReportCommand(
+                  actionCommand,
+                  title,
+                  cancelledMessage,
+                  action,
+                  { selectedHash, baseHash }
+                );
+              }
+            });
+        }
         const runtimeWarningMessage =
-          dockerDaemonNotRunning || dockerNotInstalled
+          dockerDaemonNotRunning ||
+          dockerNotInstalled ||
+          hostBitnessConflict ||
+          hostVersionConflict
             ? undefined
             : buildComparisonRuntimeWarningMessage(actionCommand, result);
         if (runtimeWarningMessage) {
@@ -1331,11 +1381,12 @@ function buildComparisonRuntimeProgressPanelUpdate(
 function isHostRuntimeConflictRequiringProviderPick(
   result: ComparisonReportActionResult
 ): boolean {
-  return (
-    result.blockedReason === 'windows-host-bitness-conflict' ||
-    result.blockedReason === 'windows-host-version-conflict' ||
-    result.runtimeFailureReason === 'labview-host-bitness-conflict'
-  );
+  // Issue #530: the pre-launch blocks `windows-host-bitness-conflict` and
+  // `windows-host-version-conflict` now get the concise close + Retry Compare
+  // toast (their verbose message is suppressed), so only the mid-run
+  // reclassified `labview-host-bitness-conflict` failure still routes to the
+  // verbose warning with a Pick Runtime Provider action.
+  return result.runtimeFailureReason === 'labview-host-bitness-conflict';
 }
 
 /**

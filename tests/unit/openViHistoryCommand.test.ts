@@ -472,22 +472,27 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('offers a Pick Runtime Provider action when the runtime is blocked by a concurrent LabVIEW bitness conflict (VHS-REQ-621)', async () => {
+  it('shows a concise close + Retry Compare toast when blocked by a concurrent LabVIEW bitness conflict (VHS-REQ-621, #530)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
     const comparisonReportAction = vi.fn().mockResolvedValue({
-      outcome: 'missing-retained-comparison-report',
+      outcome: 'blocked-host-bitness-conflict',
       reportStatus: 'blocked-runtime',
       runtimeExecutionState: 'not-available',
       blockedReason: 'windows-host-bitness-conflict',
+      hostObservedLabviewBitness: 'x64',
+      hostObservedLabviewVersion: '2025',
+      selectedLabviewBitness: 'x86',
+      selectedLabviewVersion: '2025',
       runtimeDoctorSummaryLines: [
         'Selected provider=unavailable; engine=none; platform=win32; bitness=x86.',
-        'Provider request=host.',
-        'Runtime blocked reason: windows-host-bitness-conflict.',
-        'Next action: close the running LabVIEW x64 session, or set viHistorySuite.labviewBitness to x64 (currently x86), then rerun comparison report generation.'
+        'Runtime blocked reason: windows-host-bitness-conflict.'
       ]
     });
+    // The harness resolves a warning toast to its first action; suppress so the
+    // Retry Compare action does not recurse in this assertion-only test.
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
     const command = createOpenViHistoryCommand(
       historyService as never,
       undefined,
@@ -502,32 +507,43 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
 
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      expect.stringContaining('windows-host-bitness-conflict'),
-      'Pick Runtime Provider'
+      expect.stringContaining('LabVIEW 2025 (64-bit) is already running'),
+      'Retry Compare'
     );
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
-      'labviewViHistory.pickRuntimeProvider'
+    const [message] = showWarningMessageMock.mock.calls.at(-1)!;
+    expect(message).toContain('LabVIEW 2025 (32-bit)');
+    expect(message).toContain('Close the running LabVIEW, then click Retry Compare');
+    // Concise: no provider internals, no setting-switch text, no false CLI clause.
+    expect(message).not.toContain('Provider:');
+    expect(message).not.toContain('Rejected providers');
+    expect(message).not.toContain('viHistorySuite.labviewBitness');
+    expect(message).not.toContain('LabVIEWCLI');
+    // The verbose Pick Runtime Provider path is not used for this pre-launch block.
+    expect(showWarningMessageMock).not.toHaveBeenCalledWith(
+      expect.anything(),
+      'Pick Runtime Provider'
     );
   });
 
-  it('offers a Pick Runtime Provider action when the runtime is blocked by a concurrent LabVIEW version conflict (VHS-REQ-653)', async () => {
+  it('shows a concise close + Retry Compare toast when blocked by a concurrent LabVIEW version conflict (VHS-REQ-653, #530)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
     const comparisonReportAction = vi.fn().mockResolvedValue({
-      outcome: 'missing-retained-comparison-report',
+      outcome: 'blocked-host-version-conflict',
       reportStatus: 'blocked-runtime',
       runtimeExecutionState: 'not-available',
       blockedReason: 'windows-host-version-conflict',
+      hostObservedLabviewBitness: 'x64',
+      hostObservedLabviewVersion: '2026',
+      selectedLabviewBitness: 'x64',
+      selectedLabviewVersion: '2025',
       runtimeDoctorSummaryLines: [
         'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
-        'Provider request=host.',
-        'Runtime blocked reason: windows-host-version-conflict.',
-        'Next action: close the running LabVIEW 2025 session, set viHistorySuite.labviewVersion to 2025 (currently 2026), or use a Docker-backed x64 compare, then rerun comparison report generation.'
+        'Runtime blocked reason: windows-host-version-conflict.'
       ]
     });
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
     const command = createOpenViHistoryCommand(
       historyService as never,
       undefined,
@@ -542,14 +558,55 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
 
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      expect.stringContaining('windows-host-version-conflict'),
+      expect.stringContaining('LabVIEW 2026 (64-bit) is already running'),
+      'Retry Compare'
+    );
+    const [message] = showWarningMessageMock.mock.calls.at(-1)!;
+    expect(message).toContain('LabVIEW 2025 (64-bit)');
+    expect(message).toContain('Close the running LabVIEW, then click Retry Compare');
+    expect(message).not.toContain('Provider:');
+    expect(message).not.toContain('viHistorySuite.labviewVersion');
+    expect(message).not.toContain('LabVIEWCLI');
+    expect(showWarningMessageMock).not.toHaveBeenCalledWith(
+      expect.anything(),
       'Pick Runtime Provider'
     );
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
-      'labviewViHistory.pickRuntimeProvider'
+  });
+
+  it('re-runs the compare when Retry Compare is clicked on a pre-launch conflict from the panel Compare button (#530)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-host-bitness-conflict',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'windows-host-bitness-conflict',
+      hostObservedLabviewBitness: 'x64',
+      selectedLabviewBitness: 'x86'
+    });
+    // First toast: click Retry Compare; second toast (after re-block): dismiss.
+    showWarningMessageMock.mockResolvedValueOnce('Retry Compare');
+    showWarningMessageMock.mockResolvedValueOnce(undefined);
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
     );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReportFromSelection',
+      selectedHashes: ['WORKTREE', 'def1234567890abcdef1234567890abcdef12345']
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Retry re-invokes the same compare; it re-blocks (no second LabVIEW is
+    // ever launched), confirming the close + Retry Compare loop.
+    expect(comparisonReportAction).toHaveBeenCalledTimes(2);
   });
 
   it('offers a Pick Runtime Provider action when comparison runtime reclassifies failure as labview-host-bitness-conflict (VHS-REQ-621)', async () => {
