@@ -774,84 +774,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(serializedUpdate).not.toContain('host-native');
   });
 
-  it('opens the image-version picker when the preflight Pick Image Version CTA posts its command (VHS-REQ-650)', async () => {
-    const model = createEligibleModel();
-    const historyService = { load: vi.fn().mockResolvedValue(model) };
-    const panelTracker = new HistoryPanelTracker();
-    const command = createOpenViHistoryCommand(
-      historyService as never,
-      undefined,
-      panelTracker
-    );
-
-    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
-    await panelTracker.dispatchLastPanelMessage({ command: 'pickContainerImageVersion' });
-
-    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
-      'labviewViHistory.pickContainerImageVersion'
-    );
-  });
-
-  it('recomputes and re-renders the preflight after the Pick Image Version picker runs (VHS-REQ-650)', async () => {
-    const model = createEligibleModel();
-    const historyService = { load: vi.fn().mockResolvedValue(model) };
-    const panelTracker = new HistoryPanelTracker();
-    const panel = createMockPanel();
-    createWebviewPanelMock.mockReturnValue(panel);
-
-    // Blocked-by-mismatch on first resolve (panel open), remediated to ready on
-    // the second resolve (after the picker writes a compatible image setting).
-    const comparePreflightResolver = vi
-      .fn()
-      .mockResolvedValueOnce({
-        status: 'blocked',
-        provider: 'docker',
-        labviewVersion: '2026',
-        labviewBitness: 'x64',
-        nextAction: 'Next action: pick a matching image version.',
-        cliHint: 'Use settings CLI',
-        blockedReason: 'container-image-platform-mismatch'
-      })
-      .mockResolvedValueOnce({
-        status: 'ready',
-        provider: 'docker',
-        labviewVersion: '2026',
-        labviewBitness: 'x64',
-        nextAction: 'Next action: choose Compare.',
-        cliHint: 'Use settings CLI'
-      });
-
-    const command = createOpenViHistoryCommand(
-      historyService as never,
-      undefined,
-      panelTracker,
-      // A comparison action must be injected for comparison generation (and thus
-      // the compare preflight) to be available; it is never invoked here.
-      vi.fn() as never,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      comparePreflightResolver
-    );
-
-    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
-    // Panel opens blocked: the CTA is present.
-    expect(panel.webview.html).toContain('data-testid="history-action-pick-image-version"');
-
-    await panelTracker.dispatchLastPanelMessage({ command: 'pickContainerImageVersion' });
-
-    // The picker ran, the preflight was recomputed (second resolver call), and
-    // the panel re-rendered to the now-ready state with the CTA gone.
-    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
-      'labviewViHistory.pickContainerImageVersion'
-    );
-    expect(comparePreflightResolver).toHaveBeenCalledTimes(2);
-    expect(panel.webview.html).not.toContain('data-testid="history-action-pick-image-version"');
-  });
-
   it('records missing Git URI instead of opening stale revision content', async () => {    const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -1206,32 +1128,13 @@ describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/627/631)
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
-  it('routes eligible models through an injected compare preflight resolver (VHS-REQ-627/631)', async () => {
+  it('opens the history panel for an eligible model (VHS-REQ-627/631)', async () => {
     const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
-    const comparePreflightResolver = vi.fn().mockResolvedValue({
-      status: 'ready',
-      provider: 'host',
-      labviewVersion: '2025',
-      labviewBitness: '64'
-    });
 
-    const command = createOpenViHistoryCommand(
-      historyService as never,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      comparePreflightResolver
-    );
+    const command = createOpenViHistoryCommand(historyService as never, undefined);
 
     await command({ fsPath: '/workspace/test-repo/src/Sample.vi' } as never);
 
-    expect(comparePreflightResolver).toHaveBeenCalledTimes(1);
     expect(createWebviewPanelMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,7 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
+import { createCopyReviewPacketCommand, createOpenViHistoryCommand } from './commands/openViHistoryCommand';
 import { buildComparisonReportArchivePlanFromSelection } from './dashboard/comparisonReportArchive';
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
@@ -504,6 +504,16 @@ export async function activate(
       );
       return { outcome: 'reopened-vi-history' as const, sourceViFsPath };
     })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'labviewViHistory.copyReviewPacket',
+      async (uri?: vscode.Uri) => {
+        const runtime = await ensureWorkspaceRuntime();
+        await createCopyReviewPacketCommand(runtime.historyService)(uri);
+      }
+    )
   );
 
   context.subscriptions.push(

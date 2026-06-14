@@ -387,18 +387,22 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: History Panel
-- Statement: The history panel shall show repository, relative path, VI
-  signature, and commit facts for the selected file.
+- Statement: The history panel shall show the selected file's relative path and a
+  selectable table of retained commit facts so the user can review the commits
+  and choose a pair to compare.
 - Acceptance Criteria:
-  - Rendered content includes repository name, repository root, and origin URL
-    or unavailable state.
-  - Rendered content includes the relative path and detected VI signature.
-  - Rendered content includes retained commit count, newest commit, oldest
-    commit, and chronology order.
-  - Rendered content includes the commit subject and full commit body for each
-    retained revision.
-  - Binary review limitation text stays factual and does not claim semantic VI
-    differences from Git-only history.
+  - The panel renders a slim orientation title carrying the selected file's
+    relative path and the retained commit count.
+  - The panel renders a commit table with one row per retained revision, each row
+    carrying the abbreviated commit hash, author date, author name, commit
+    subject, and the full commit body.
+  - Revisions with an empty commit body render a factual fallback rather than a
+    blank cell.
+  - The panel does not render the prior procedural sections (review-facts,
+    repository-facts, binary-review-limitation, reviewer-guidance,
+    confidence-and-scope, latest-compare-runtime, or host-review-submission); the
+    factual review packet remains available through the
+    `labviewViHistory.copyReviewPacket` command (VHS-REQ-039).
   - User-controlled or path-derived panel values are escaped in rendered HTML
     text and attribute contexts. Inline script contexts (e.g., JSON-serialized
     data in `<script>` blocks) must neutralize script-tag boundaries in
@@ -414,33 +418,40 @@ Missing numeric IDs are intentional.
   - `tests/unit/historyPanelRendering.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
-  - Do not replace factual Git content with inferred summaries.
+  - Do not replace factual Git content with inferred summaries. Keep the panel
+    focused on the commit table and the explicit Compare action; route additional
+    factual evidence to the review-packet command rather than re-adding panel
+    sections.
 
 ### VHS-REQ-039: Copy Review Packet
 
 - Status: Active
 - Parent: VHS-SYS-REQ-001
 - Area: History Panel
-- Statement: The history panel shall expose a panel-level action that copies a
-  factual review packet.
+- Statement: The extension shall expose a command that copies a factual review
+  packet for the selected VI.
 - Acceptance Criteria:
-  - The panel exposes a copy review packet action.
-  - The action writes plain text to the VS Code clipboard.
-  - The action result is retained by the panel tracker.
+  - The extension contributes a `labviewViHistory.copyReviewPacket` Command
+    Palette command that copies the review packet for the selected VI.
+  - The command writes plain text to the VS Code clipboard.
+  - The command applies the same workspace-trust and eligibility gates as opening
+    the panel, surfacing a factual message when the selection is untrusted,
+    unresolvable, or ineligible.
 - Agent Work Scope:
-  - Change panel message handling, review packet rendering, and tracker tests
+  - Change command registration, review packet rendering, and their tests
     together.
 - Implementation References:
   - `src/ui/historyPanel.ts`
   - `src/commands/openViHistoryCommand.ts`
-  - `src/ui/historyPanelTracker.ts`
+  - `src/extension.ts`
 - Verification References:
-  - `tests/unit/historyPanelRendering.test.ts`
+  - `tests/unit/historyReviewPacket.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/historyPanelTracker.test.ts`
+  - `tests/unit/packageManifest.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
-  - Keep copied review packets grounded in the same model shown in the panel.
+  - Keep copied review packets grounded in the same model the panel renders.
 
 ### VHS-REQ-040: Factual Review Packet Text
 
@@ -517,13 +528,17 @@ Missing numeric IDs are intentional.
   initiate comparison through an explicit selected/base pair action.
 - Acceptance Criteria:
   - Exactly two distinct retained revisions resolve to one selected/base pair.
-  - Selected/base ordering is explained consistently in panel preflight text.
   - The newer of the two selected revisions becomes selected and the older
-    becomes base.
+    becomes base, derived from the row commit-index ordering.
+  - Selecting a third revision is prevented so at most two revisions are ever
+    selected.
   - Compare controls remain explicit user actions with no auto-compare or
-    auto-generate behavior when the second checkbox is selected.
-  - Runtime preflight state is visible without silently blocking all compare
-    attempts.
+    auto-generate behavior when the second checkbox is selected; selecting the
+    second revision only enables the Compare button.
+  - Compare runtime feedback (provider, acquisition, and blocked-runtime
+    remediation) is surfaced through notifications rather than an in-panel
+    preflight section, and a blocked runtime never silently prevents the user
+    from invoking Compare.
 - Agent Work Scope:
   - Change panel rendering, command message handling, and runtime preflight
     together when changing compare workflow.
@@ -1067,29 +1082,21 @@ Missing numeric IDs are intentional.
     `Pick Image Version` action that opens
     `labviewViHistory.pickContainerImageVersion`. The blocked-evidence report is
     not auto-opened for this reason (the packet is still persisted and explicit
-    `Export Comparison Report` still works), and the History panel runtime update
-    matches the concise toast rather than re-deriving the verbose doctor-summary
-    content, mirroring the concise Docker block toasts (VHS-REQ-642/643) and the
-    host-conflict toasts (VHS-REQ-621/653, #532). The image-version picker
-    surfaces a
+    `Export Comparison Report` still works), mirroring the concise Docker block
+    toasts (VHS-REQ-642/643) and the host-conflict toasts (VHS-REQ-621/653,
+    #532). The image-version picker surfaces a
     stale cross-platform persisted selection as a leading warning Clear row that
     names the stale tag and the active Docker platform instead of hiding it. The
     stale-selection flag fires only when the active platform is confirmed (an
     explicit override or a successful daemon probe); when the daemon mode is
     unknown (Docker stopped or the probe times out) no stale warning is shown, so
     a valid selection is never flagged against a host-OS guess.
-  - The history-panel compare preflight surfaces the same remediation before the
-    user runs Compare: when the runtime-backed preflight is blocked with
-    `container-image-platform-mismatch` (the runtime locator runs in the panel
-    preflight on Windows), the panel renders a `Pick Image Version`
-    call-to-action button whose click opens
-    `labviewViHistory.pickContainerImageVersion`. The classified block reason is
-    threaded onto the panel preflight state as a typed field so the gating is
-    deterministic; the button is shown only for that block reason, not for other
-    blocked reasons or a ready/unavailable preflight. After the picker completes,
-    the panel re-resolves the compare preflight and re-renders in place, so a
-    selection that clears the mismatch removes the block (and its
-    call-to-action) without requiring the panel to be reopened.
+  - The mismatch remediation is delivered through the concise warning toast and
+    the `labviewViHistory.pickContainerImageVersion` command (palette and toast
+    action); the minimized History panel does not render an in-panel
+    Pick Image Version call-to-action or a compare-preflight section. After the
+    picker completes, a subsequent Compare re-resolves the runtime, so a selection
+    that clears the mismatch is honored without an in-panel preflight re-render.
 - Agent Work Scope:
   - Thread `containerImageVersion` from settings into the locator's per-provider
     image resolution and bypass the legacy year pin when a version is selected;
@@ -1103,14 +1110,12 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportAction.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/commands/pickContainerImageVersionCommand.ts`
-  - `src/ui/historyPanel.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/pickContainerImageVersionCommand.test.ts`
-  - `tests/unit/historyPanelRendering.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Preserve the fail-closed runtime contract (VHS-SYS-REQ-007): a
