@@ -12,18 +12,7 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
-### Added
-
-- The maintainer-runner prerequisite doctor
-  (`scripts/checkMaintainerRunnerPrerequisites.js`) now runs an **advisory
-  system-clock-skew preflight**. A skewed host clock makes the runner's session
-  token look expired to GitHub and silently knocks the runner offline with a
-  misleading "registration has been deleted" error; the doctor now compares the
-  host clock to an authoritative network time source and warns past a tolerance,
-  with remediation for the dual-boot RTC trap. It degrades to an advisory
-  `unknown` when the source is unreachable (never blocking an offline host), and
-  `--fail-on-clock-skew` opts into treating an over-tolerance skew as a hard
-  failure (#527).
+## [1.28.0] - 2026-06-14
 
 ### Added
 
@@ -36,6 +25,16 @@ Burned exact-version releases now include `v1.0.2`.
   position/size, the block diagram, or block-diagram cosmetic differences, plus
   the report format. Choices save to your user settings immediately
   (VHS-REQ-620/645/651, #536).
+- The maintainer-runner prerequisite doctor
+  (`scripts/checkMaintainerRunnerPrerequisites.js`) now runs an **advisory
+  system-clock-skew preflight**. A skewed host clock makes the runner's session
+  token look expired to GitHub and silently knocks the runner offline with a
+  misleading "registration has been deleted" error; the doctor now compares the
+  host clock to an authoritative network time source and warns past a tolerance,
+  with remediation for the dual-boot RTC trap. It degrades to an advisory
+  `unknown` when the source is unreachable (never blocking an offline host), and
+  `--fail-on-clock-skew` opts into treating an over-tolerance skew as a hard
+  failure (#527).
 
 ### Changed
 
