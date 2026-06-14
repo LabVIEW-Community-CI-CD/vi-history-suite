@@ -47,7 +47,9 @@ export interface ComparisonReportActionResult {
     | 'missing-selected-commit'
     | 'missing-previous-hash'
     | 'blocked-docker-daemon-not-running'
-    | 'blocked-docker-not-installed';
+    | 'blocked-docker-not-installed'
+    | 'blocked-host-bitness-conflict'
+    | 'blocked-host-version-conflict';
   cancellationStage?: string;
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
@@ -66,6 +68,17 @@ export interface ComparisonReportActionResult {
    * Windows vs the "Docker daemon" elsewhere) without parsing doctor strings.
    */
   platform?: RuntimePlatform;
+  /**
+   * Issue #530: structured running-vs-selected LabVIEW facts for the concise
+   * host bitness/version pre-launch conflict toast, so the command layer can
+   * build user-facing copy without parsing doctor-summary strings. Sourced from
+   * the runtime selection (`hostObservedLabview*` for the running session,
+   * `bitness`/`requestedLabviewVersion` for the selection).
+   */
+  hostObservedLabviewBitness?: 'x86' | 'x64' | 'unknown';
+  hostObservedLabviewVersion?: string;
+  selectedLabviewBitness?: 'x86' | 'x64';
+  selectedLabviewVersion?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
@@ -207,6 +220,102 @@ export function buildDockerNotInstalledMessage(platform?: RuntimePlatform): stri
   return 'Docker is not installed, so the VI comparison could not start. Install Docker to compare with the Docker runtime.';
 }
 
+/**
+ * Issue #530: Pure predicate that is true only when a comparison was blocked
+ * before launch because a different-bitness LabVIEW is already running
+ * (`windows-host-bitness-conflict`). The host-native pre-launch conflicts get a
+ * concise close + Retry Compare toast and no auto-opened report, mirroring the
+ * Docker concise-toast gates (VHS-REQ-642/643). Window-free so it is unit-tested
+ * directly.
+ */
+export function isHostBitnessConflictBlock(facts: {
+  reportStatus?: string;
+  blockedReason?: string;
+}): boolean {
+  return (
+    facts.reportStatus === 'blocked-runtime' &&
+    facts.blockedReason === 'windows-host-bitness-conflict'
+  );
+}
+
+/**
+ * Issue #530: Sibling of `isHostBitnessConflictBlock` for the version conflict
+ * (`windows-host-version-conflict`) — a different LabVIEW year is already
+ * running at the selected bitness.
+ */
+export function isHostVersionConflictBlock(facts: {
+  reportStatus?: string;
+  blockedReason?: string;
+}): boolean {
+  return (
+    facts.reportStatus === 'blocked-runtime' &&
+    facts.blockedReason === 'windows-host-version-conflict'
+  );
+}
+
+/**
+ * Issue #530: Describe a LabVIEW runtime by year (when known) and bitness for
+ * the concise conflict toast, e.g. `LabVIEW 2025 (64-bit)`. Pure helper shared
+ * by the bitness and version conflict message builders.
+ */
+function describeConflictLabview(
+  year: string | undefined,
+  bitness: 'x86' | 'x64' | 'unknown' | undefined
+): string {
+  const bits = bitness === 'x86' ? '32-bit' : bitness === 'x64' ? '64-bit' : undefined;
+  if (year && bits) {
+    return `LabVIEW ${year} (${bits})`;
+  }
+  if (year) {
+    return `LabVIEW ${year}`;
+  }
+  if (bits) {
+    return `LabVIEW (${bits})`;
+  }
+  return 'LabVIEW';
+}
+
+/**
+ * Issue #530: Build the concise bitness-conflict toast. Names the running vs.
+ * selected LabVIEW and steers to a single path — close the running LabVIEW, then
+ * Retry Compare — without provider internals or a setting-switch alternative.
+ * Pure and window-free so the copy is unit-tested directly.
+ */
+export function buildHostBitnessConflictMessage(facts: {
+  observedBitness?: 'x86' | 'x64' | 'unknown';
+  observedYear?: string;
+  selectedBitness?: 'x86' | 'x64';
+  selectedYear?: string;
+}): string {
+  const running = describeConflictLabview(facts.observedYear, facts.observedBitness);
+  const selected = describeConflictLabview(facts.selectedYear, facts.selectedBitness);
+  return (
+    `${running} is already running, so the selected ${selected} can't start. ` +
+    'LabVIEW cannot run two bitnesses at the same time. ' +
+    'Close the running LabVIEW, then click Retry Compare.'
+  );
+}
+
+/**
+ * Issue #530: Build the concise version-conflict toast. Same single-path steer
+ * as the bitness builder (close + Retry Compare); the running and selected
+ * LabVIEW share a bitness but differ in year.
+ */
+export function buildHostVersionConflictMessage(facts: {
+  observedBitness?: 'x86' | 'x64' | 'unknown';
+  observedYear?: string;
+  selectedBitness?: 'x86' | 'x64';
+  selectedYear?: string;
+}): string {
+  const running = describeConflictLabview(facts.observedYear, facts.observedBitness);
+  const selected = describeConflictLabview(facts.selectedYear, facts.selectedBitness);
+  return (
+    `${running} is already running, so the selected ${selected} can't start. ` +
+    'LabVIEW would attach to the running session instead. ' +
+    'Close the running LabVIEW, then click Retry Compare.'
+  );
+}
+
 export function createComparisonReportAction(
   context: vscode.ExtensionContext,
   deps: ComparisonReportActionDeps = {}
@@ -253,6 +362,35 @@ export function createComparisonReportAction(
       return {
         ...ensured.result,
         outcome: 'blocked-docker-not-installed'
+      };
+    }
+
+    // Issue #530: Host bitness/version pre-launch conflicts get a concise close
+    // + Retry Compare toast in the command layer; do not open the blocked
+    // evidence report webview. Unlike the Docker gates there is no
+    // `retainedArchiveAvailable` guard: the user wants no auto-opened report for
+    // these conflicts regardless, including working-tree comparisons where
+    // archiving is intentionally skipped. The packet is still persisted on disk.
+    if (
+      isHostBitnessConflictBlock({
+        reportStatus: ensured.result.reportStatus,
+        blockedReason: ensured.result.blockedReason
+      })
+    ) {
+      return {
+        ...ensured.result,
+        outcome: 'blocked-host-bitness-conflict'
+      };
+    }
+    if (
+      isHostVersionConflictBlock({
+        reportStatus: ensured.result.reportStatus,
+        blockedReason: ensured.result.blockedReason
+      })
+    ) {
+      return {
+        ...ensured.result,
+        outcome: 'blocked-host-version-conflict'
       };
     }
 
@@ -742,6 +880,12 @@ function buildRetainedComparisonReportEvidenceResult(
       packet.record.runtimeSelection?.dockerDaemonReachable ??
       packet.record.runtimeSelection?.windowsContainerDaemonReachable,
     platform: packet.record.runtimeSelection?.platform,
+    // Issue #530: structured running-vs-selected facts for the concise host
+    // bitness/version conflict toast.
+    hostObservedLabviewBitness: packet.record.runtimeSelection?.hostObservedLabviewBitness,
+    hostObservedLabviewVersion: packet.record.runtimeSelection?.hostObservedLabviewVersion,
+    selectedLabviewBitness: packet.record.runtimeSelection?.bitness,
+    selectedLabviewVersion: packet.record.runtimeSelection?.requestedLabviewVersion,
     runtimeFailureReason: packet.record.runtimeExecution.failureReason,
     runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
     runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
