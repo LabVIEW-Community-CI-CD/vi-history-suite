@@ -143,11 +143,7 @@ describe('extension manifest public metadata', () => {
       category: 'VI History'
     });
     expect(titles.get('labviewViHistory.pickRuntimeProvider')).toMatchObject({
-      title: 'Pick Runtime Provider',
-      category: 'VI History'
-    });
-    expect(titles.get('labviewViHistory.pickContainerImageVersion')).toMatchObject({
-      title: 'Pick LabVIEW Container Image Version',
+      title: 'Runtime & Report Settings',
       category: 'VI History'
     });
   });

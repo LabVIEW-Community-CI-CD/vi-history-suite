@@ -174,8 +174,8 @@ vi.mock('../../src/commands/runtimeCommands', () => ({
   registerRuntimeRuntimeCommands: vi.fn()
 }));
 
-vi.mock('../../src/commands/pickRuntimeProviderCommand', () => ({
-  registerPickRuntimeProviderCommand: vi.fn()
+vi.mock('../../src/commands/openRuntimeReportPanelCommand', () => ({
+  registerOpenRuntimeReportPanelCommand: vi.fn()
 }));
 
 vi.mock('../../src/services/viHistoryService', () => ({
