@@ -27,6 +27,8 @@
 
 import * as http from 'node:http';
 
+import { resolveImageDownloadSize, type ImageDownloadSize } from './dockerImageDownloadSize';
+
 /** Default Engine API version to pin in the request path. Conservative floor. */
 export const DOCKER_ENGINE_API_VERSION = 'v1.45';
 
@@ -152,42 +154,66 @@ export function parseDockerPullProgressLine(rawLine: string): DockerPullStreamEv
 /** A computed snapshot of overall pull progress. */
 export interface DockerPullProgressSnapshot {
   /**
-   * Layer-weighted, monotonic overall download progress in [0,99]; `undefined`
-   * until at least one layer has reported bytes or completed. Capped below 100 so
-   * a premature/false 100% is impossible — overall completion is signalled by the
-   * caller's "ready" message, not by this figure.
+   * Monotonic overall download progress in [0,99]; `undefined` until at least one
+   * layer has been enumerated. Capped below 100 so a premature/false 100% is
+   * impossible — overall completion is signalled by the caller's "ready" message,
+   * not by this figure. Byte-weighted against {@link knownTotalBytes} when a
+   * stable registry total is available, otherwise layer-weighted.
    */
   readonly percent?: number;
   /** Sum of downloaded bytes across all layers. Monotonic. */
   readonly downloadedBytes: number;
   /**
-   * Sum of total bytes across layers that have reported a total. A lower bound on
-   * the image size (un-started layers are excluded), kept for diagnostics — not a
-   * trustworthy denominator and intentionally not shown in the toast.
+   * Sum of total bytes across layers that have reported a live total. A lower
+   * bound on the image size (un-started layers are excluded), kept for
+   * diagnostics — not a trustworthy denominator and not shown in the toast.
    */
   readonly totalBytes: number;
+  /**
+   * VHS-REQ-655: the stable total compressed download size resolved up front from
+   * the registry manifest, when available. When set, drives a true byte-% and is
+   * shown in the toast (`8.1 GB / 19.3 GB`).
+   */
+  readonly knownTotalBytes?: number;
   /** Layers that have finished (downloaded or already cached). */
   readonly completedLayers: number;
   /** Layers enumerated so far. */
   readonly totalLayers: number;
 }
 
+/** Optional stable-total inputs that switch the aggregator to a true byte-%. */
+export interface DockerPullProgressAggregatorOptions {
+  /** VHS-REQ-655: stable total compressed download size from the registry manifest. */
+  readonly knownTotalBytes?: number;
+  /** Short-id → compressed size, to credit cached (`Already exists`) layers. */
+  readonly layerSizesByShortId?: ReadonlyMap<string, number>;
+}
+
 /**
  * Stateful accumulator that turns a sequence of {@link DockerPullStreamEvent}s
- * into a layer-weighted overall download percentage.
+ * into an overall download percentage.
  *
- * Each enumerated layer contributes an equal `1 / totalLayers` slice; an
- * in-flight layer contributes its byte fraction (`current / total`) of that
- * slice, and a completed layer contributes the whole slice. Because Docker
- * enumerates every layer (via `Pulling fs layer`) before completing any of them,
- * the denominator is stable early, so the percentage climbs steadily instead of
- * spiking to 100% on the first small layer the way a byte-weighted sum does. The
- * result is monotonic and capped at 99 (100% is reserved for the explicit "ready"
- * signal).
+ * When a stable {@link DockerPullProgressAggregatorOptions.knownTotalBytes} total
+ * is provided (VHS-REQ-655), progress is a true **byte-%**: downloaded bytes
+ * (crediting cached layers via the size map) over the stable total. Otherwise it
+ * is **layer-weighted** (VHS-REQ-654): each enumerated layer contributes an equal
+ * `1 / totalLayers` slice, smoothed by the in-flight layer's byte fraction —
+ * because Docker enumerates every layer (via `Pulling fs layer`) before
+ * completing any of them, the layer count is a stable denominator even though the
+ * live byte totals are revealed progressively. Either way the result is monotonic
+ * and capped at 99 (100% is reserved for the explicit "ready" signal).
  */
 export class DockerPullProgressAggregator {
   private readonly layers = new Map<string, { current: number; total: number; complete: boolean }>();
   private lastPercent = 0;
+  private readonly knownTotalBytes?: number;
+  private readonly layerSizesByShortId?: ReadonlyMap<string, number>;
+
+  constructor(options: DockerPullProgressAggregatorOptions = {}) {
+    this.knownTotalBytes =
+      options.knownTotalBytes && options.knownTotalBytes > 0 ? options.knownTotalBytes : undefined;
+    this.layerSizesByShortId = options.layerSizesByShortId;
+  }
 
   private ensureLayer(layerId: string): { current: number; total: number; complete: boolean } {
     let layer = this.layers.get(layerId);
@@ -210,7 +236,8 @@ export class DockerPullProgressAggregator {
       const layer = this.ensureLayer(event.layerId);
       layer.complete = true;
       // A layer that streamed bytes pins to its known total; a cached
-      // ("Already exists") layer has no total and contributes no bytes.
+      // ("Already exists") layer has no live total and is credited from the
+      // registry size map (when available) in the snapshot.
       if (layer.total > 0) {
         layer.current = layer.total;
       }
@@ -224,8 +251,17 @@ export class DockerPullProgressAggregator {
     let totalBytes = 0;
     let completedLayers = 0;
     let fractionSum = 0;
-    for (const layer of this.layers.values()) {
-      const current = layer.total > 0 ? Math.min(layer.current, layer.total) : layer.current;
+    for (const [layerId, layer] of this.layers) {
+      // A completed layer with no live byte total (cached) is credited its known
+      // compressed size from the registry map, so a partial cache still reaches
+      // the stable total.
+      const knownSize = this.layerSizesByShortId?.get(layerId) ?? 0;
+      let current: number;
+      if (layer.complete) {
+        current = layer.total > 0 ? layer.total : knownSize;
+      } else {
+        current = layer.total > 0 ? Math.min(layer.current, layer.total) : layer.current;
+      }
       downloadedBytes += current;
       totalBytes += layer.total;
       if (layer.complete) {
@@ -237,16 +273,39 @@ export class DockerPullProgressAggregator {
     }
 
     const totalLayers = this.layers.size;
-    if (totalLayers === 0 || fractionSum <= 0) {
-      return { percent: undefined, downloadedBytes, totalBytes, completedLayers, totalLayers };
+
+    let rawPercent: number | undefined;
+    if (this.knownTotalBytes !== undefined) {
+      // Byte-% mode: show progress as soon as layers are enumerated (even at 0%),
+      // since the stable total makes "0% (0 B / 19.3 GB)" meaningful.
+      rawPercent = totalLayers > 0 ? (downloadedBytes / this.knownTotalBytes) * 100 : undefined;
+    } else if (totalLayers > 0 && fractionSum > 0) {
+      rawPercent = (fractionSum / totalLayers) * 100;
     }
 
-    const rawPercent = (fractionSum / totalLayers) * 100;
+    if (rawPercent === undefined) {
+      return {
+        percent: undefined,
+        downloadedBytes,
+        totalBytes,
+        knownTotalBytes: this.knownTotalBytes,
+        completedLayers,
+        totalLayers
+      };
+    }
+
     const monotonic = Math.max(this.lastPercent, rawPercent);
     // Reserve 100 for the explicit completion signal so the toast can never show a
     // premature or frozen 100%.
     this.lastPercent = Math.min(99, monotonic);
-    return { percent: this.lastPercent, downloadedBytes, totalBytes, completedLayers, totalLayers };
+    return {
+      percent: this.lastPercent,
+      downloadedBytes,
+      totalBytes,
+      knownTotalBytes: this.knownTotalBytes,
+      completedLayers,
+      totalLayers
+    };
   }
 }
 
@@ -267,21 +326,31 @@ export function formatBytes(bytes: number): string {
 }
 
 /**
- * Build the toast message for a progress snapshot, e.g.
- * `Pulling container image: <image> — 31% (4/13 layers, 1.4 GB)`. The percentage
- * is layer-weighted; the layer count and absolute downloaded bytes give the
- * byte-level truth alongside it. Before any progress is known, falls back to a
- * plain pulling message so the toast still reads sensibly during the brief
- * layer-enumeration phase.
+ * Build the toast message for a progress snapshot.
+ *
+ * With a stable registry total (VHS-REQ-655) it shows a true byte-% —
+ * `Pulling container image: <image> — 42% (8.1 GB / 19.3 GB)`. Without one it
+ * shows the layer-weighted figure (VHS-REQ-654) —
+ * `Pulling container image: <image> — 31% (4/13 layers, 1.4 GB)`. Before any
+ * progress is known it falls back to a plain pulling message so the toast still
+ * reads sensibly during the brief layer-enumeration phase.
  */
 export function formatPullProgressMessage(
   image: string,
   snapshot: DockerPullProgressSnapshot
 ): string {
-  if (snapshot.percent === undefined || snapshot.totalLayers <= 0) {
+  if (snapshot.percent === undefined) {
     return `Pulling container image: ${image}`;
   }
   const percent = Math.round(snapshot.percent);
+  if (snapshot.knownTotalBytes !== undefined && snapshot.knownTotalBytes > 0) {
+    return `Pulling container image: ${image} — ${percent}% (${formatBytes(
+      snapshot.downloadedBytes
+    )} / ${formatBytes(snapshot.knownTotalBytes)})`;
+  }
+  if (snapshot.totalLayers <= 0) {
+    return `Pulling container image: ${image}`;
+  }
   return `Pulling container image: ${image} — ${percent}% (${snapshot.completedLayers}/${snapshot.totalLayers} layers, ${formatBytes(
     snapshot.downloadedBytes
   )})`;
@@ -302,6 +371,12 @@ export interface StreamDockerImagePullOptions {
   readonly onProgress?: (snapshot: DockerPullProgressSnapshot, lastStatus?: string) => void | Promise<void>;
   /** Injectable request boundary; defaults to a daemon-socket HTTP stream. */
   readonly requestStream?: DockerPullStreamRequest;
+  /**
+   * VHS-REQ-655: injectable resolver for the stable total download size from the
+   * registry manifest. Defaults to the real Docker Hub resolver; resolves to
+   * `undefined` on any failure, in which case progress stays layer-weighted.
+   */
+  readonly resolveDownloadSize?: (image: string) => Promise<ImageDownloadSize | undefined>;
 }
 
 export interface StreamDockerImagePullResult {
@@ -371,7 +446,21 @@ export async function streamDockerImagePull(
     fromImage
   )}&tag=${encodeURIComponent(tag)}`;
 
-  const aggregator = new DockerPullProgressAggregator();
+  // VHS-REQ-655: resolve a stable total download size up front so progress is a
+  // true byte-%. Any failure resolves to undefined -> layer-weighted fallback.
+  const resolveDownloadSize =
+    options.resolveDownloadSize ?? ((image: string) => resolveImageDownloadSize({ image }));
+  let downloadSize: ImageDownloadSize | undefined;
+  try {
+    downloadSize = await resolveDownloadSize(options.image);
+  } catch {
+    downloadSize = undefined;
+  }
+
+  const aggregator = new DockerPullProgressAggregator({
+    knownTotalBytes: downloadSize?.totalBytes,
+    layerSizesByShortId: downloadSize?.layerSizesByShortId
+  });
   const statusLines: string[] = [];
   let lastStatus: string | undefined;
   let streamErrorMessage: string | undefined;
