@@ -56,26 +56,30 @@ visible to the runner account. A service-account runner (e.g. `NetworkService`)
 The runtime-matrix track does **not** need VS Code, so it can run even while this
 is unresolved.
 
-## Step 2 — Determine the VI Server ports (for the matrix `port-A` scenario)
+## Step 2 — VI Server port for the matrix `port-A` scenario (self-derived)
 
-`port-A` asserts that the selected install's **non-default** VI Server port is
-admitted and observed. This only proves the contract when the port is genuinely
-non-default: the matrix harness
+`port-A` asserts that the selected install's configured VI Server port is
+admitted (`blockedReason=none`) and observed in the proof. The matrix harness
 ([scripts/runWindowsRuntimeMatrix.js](../../scripts/runWindowsRuntimeMatrix.js))
-only checks the observed port for **equality** with the expected value you
-supply, so passing the LabVIEW default (`3363`) makes the scenario expect and
-observe `3363` — a false pass that never exercises the non-default-port contract.
+**self-derives** the expected port from the selected install's own `LabVIEW.ini`
+(`server.tcp.port`; unset means the `3363` default) — the same parse the product
+uses — and additionally asserts the proof's `hostLabviewIniPath` matches that
+selected install. You no longer pass a port, so there is nothing to false-pass
+against, and the assertion stays correct for whatever port the operator has
+configured (and proves the product read the selected install, not the
+latest-used one).
 
-Read the configured port from the selected install's `LabVIEW.ini`
-(`server.tcp.port`; unset means the `3363` default):
+You do not need to supply or reconfigure anything for `port-A` to run. Optionally
+confirm the install is on a **non-default** port if you want the run to exercise
+the non-default direction specifically (the evidence records an
+`isNonDefaultPort` flag): read `server.tcp.port` from the selected install's
+`LabVIEW.ini`. As of the last check this host's LabVIEW 2026 x64 was on **3366**
+(non-default).
 
-- If it is a **non-default** port, pass it via `-f host_tcp_port=<port>`.
-- If it is unset or the `3363` default, either reconfigure the install's
-  `LabVIEW.ini` to a non-default `server.tcp.port` or **skip `port-A`**. Never
-  pass `3363` — it cannot exercise this scenario.
-
-The harness's built-in expected port is `3380`. As of the last check this host's
-LabVIEW 2026 x64 was on **3366**. Verify before relying on it.
+> Note: the self-derivation reaches the maintainer runner with the release that
+> carries #525. Until then the runner still runs the previous harness (built-in
+> expected `3380`), so a `port-A` dispatch on `main` before that release expects
+> `3380` and the legacy `host_tcp_port` input still applies.
 
 ## Step 3 — Dispatch
 
@@ -85,13 +89,13 @@ Pick the track from the user's argument (`matrix`, `maintainer`, or `all`).
 
 ```
 gh workflow run windows-runtime-matrix.yml --ref main -f scenario=version-A
-gh workflow run windows-runtime-matrix.yml --ref main -f scenario=port-A -f host_tcp_port=3366
-gh workflow run windows-runtime-matrix.yml --ref main -f scenario=all -f host_tcp_port=3366
+gh workflow run windows-runtime-matrix.yml --ref main -f scenario=port-A
+gh workflow run windows-runtime-matrix.yml --ref main -f scenario=all
 ```
 
 - `steady-A`/`steady-B` assert `windows-host-bitness-conflict`.
 - `version-A`/`version-B` assert `windows-host-version-conflict` (need LabVIEW 2025 and 2026 at the scenario bitness).
-- `port-A` asserts admit (`blockedReason=none`) + the observed non-default port.
+- `port-A` asserts admit (`blockedReason=none`) + the port derived from the selected install's `LabVIEW.ini` (and that the product read that ini).
 
 **Maintainer validation** (needs VS Code per Step 1):
 

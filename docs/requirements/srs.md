@@ -2988,8 +2988,15 @@ Missing numeric IDs are intentional.
     explicit `null` when the runtime is not Windows host-native, so
     real-hardware validation evidence proves a non-default
     `server.tcp.port` was admitted without a false conflict block. The
-    Windows runtime matrix harness `port-A` scenario asserts the
-    observed non-default port through this proof field.
+    Windows runtime matrix harness `port-A` scenario derives its
+    expected VI Server port from the selected install's own
+    `LabVIEW.ini` (the same parse the product uses) rather than a
+    hardcoded or operator-supplied constant, then asserts the admitted
+    (`blockedReason=none`) run's proof reports `hostLabviewIniPath`
+    equal to that selected install's ini and `hostLabviewTcpPort` equal
+    to the port parsed from it. This keeps the contract correct for
+    whatever port the operator configures and proves the product read
+    the selected install rather than the latest-used one.
 - Agent Work Scope:
   - Reuse the existing `resolveWindowsLabviewTcpSettingsForLabviewPath`
     parser; do not introduce a second ini reader. Add a small

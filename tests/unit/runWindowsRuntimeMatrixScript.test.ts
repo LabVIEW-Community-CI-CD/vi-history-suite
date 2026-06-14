@@ -15,7 +15,7 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
         hostVersion?: string;
         selectedVersion?: string;
         expectedBlockedReason: string;
-        expectedHostTcpPort?: number;
+        derivePortFromSelectedIni?: boolean;
       }
     >
   >;
@@ -25,7 +25,6 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     out: string;
     proofDir?: string;
     keepRunning: boolean;
-    hostTcpPort?: number;
     help: boolean;
   };
   selectScenarios: (scenarioArg: string) => string[];
@@ -35,10 +34,9 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     scenario: string;
     out: string;
     proofDir?: string;
-    hostTcpPort?: number;
   }) => Array<{
     id: string;
-    parameters: { hostBitness: string; selectedBitness: string; expectedHostTcpPort?: number };
+    parameters: { hostBitness: string; selectedBitness: string; derivePortFromSelectedIni?: boolean };
     proofPath: string;
     logPath: string;
   }>;
@@ -46,8 +44,9 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string }; proofPath: string; logPath: string },
     options: { labviewVersion: string; keepRunning: boolean }
   ) => string[];
+  normalizeWindowsPath: (value: unknown) => string | undefined;
   summarizeScenario: (
-    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string; expectedHostTcpPort?: number }; proofPath: string; logPath: string },
+    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string; derivePortFromSelectedIni?: boolean }; proofPath: string; logPath: string },
     spawnResult: { status: number },
     scenarioLog: unknown
   ) => {
@@ -56,6 +55,7 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     failureReason?: string;
     expected: Record<string, string | number>;
     observed: Record<string, unknown>;
+    portOracle?: Record<string, unknown>;
     artifacts: { proofPath: string; scenarioLogPath: string };
     durationMs: number;
   };
@@ -99,20 +99,9 @@ describe('runWindowsRuntimeMatrix.parseArgs', () => {
     expect(() => harness.parseArgs(['--scenario'])).toThrow(/requires a value/);
   });
 
-  it('defaults the port-A expected port to undefined (driver keeps the scenario default)', () => {
-    expect(harness.parseArgs([]).hostTcpPort).toBeUndefined();
-  });
-
-  it('accepts a positive integer --host-tcp-port for the port-A scenario', () => {
-    expect(harness.parseArgs(['--host-tcp-port', '3366']).hostTcpPort).toBe(3366);
-  });
-
-  it('rejects a non-integer --host-tcp-port', () => {
-    expect(() => harness.parseArgs(['--host-tcp-port', '33xx'])).toThrow(
-      /--host-tcp-port must be a positive integer/
-    );
-    expect(() => harness.parseArgs(['--host-tcp-port', '0'])).toThrow(
-      /--host-tcp-port must be a positive integer/
+  it('no longer accepts --host-tcp-port (port-A self-derives from the selected ini)', () => {
+    expect(() => harness.parseArgs(['--host-tcp-port', '3366'])).toThrow(
+      /Unknown argument: --host-tcp-port/
     );
   });
 });
@@ -168,27 +157,17 @@ describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
     expect(plan[0].proofPath.startsWith('custom-proof-dir')).toBe(true);
   });
 
-  it('overrides the port-A expected VI Server port from hostTcpPort (VHS-REQ-623)', () => {
-    const plan = harness.buildScenarioPlan({
-      scenario: 'port-A',
-      out: 'evidence.json',
-      hostTcpPort: 3366
-    });
-    expect(plan[0].parameters.expectedHostTcpPort).toBe(3366);
-  });
-
-  it('keeps the default port-A expected port (3380) when hostTcpPort is not supplied', () => {
+  it('marks port-A to derive its expected port from the selected install ini (VHS-REQ-623)', () => {
     const plan = harness.buildScenarioPlan({ scenario: 'port-A', out: 'evidence.json' });
-    expect(plan[0].parameters.expectedHostTcpPort).toBe(3380);
+    expect(plan[0].parameters.derivePortFromSelectedIni).toBe(true);
+    expect(
+      (plan[0].parameters as { expectedHostTcpPort?: number }).expectedHostTcpPort
+    ).toBeUndefined();
   });
 
-  it('does not attach an expected port to non-port scenarios when hostTcpPort is set', () => {
-    const plan = harness.buildScenarioPlan({
-      scenario: 'steady-A',
-      out: 'evidence.json',
-      hostTcpPort: 3366
-    });
-    expect(plan[0].parameters.expectedHostTcpPort).toBeUndefined();
+  it('does not mark non-port scenarios for ini-derived port assertion', () => {
+    const plan = harness.buildScenarioPlan({ scenario: 'steady-A', out: 'evidence.json' });
+    expect(plan[0].parameters.derivePortFromSelectedIni).toBeUndefined();
   });
 });
 
@@ -274,14 +253,14 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args).toContain('-KeepRunning');
   });
 
-  it('passes the expected non-default VI Server port for the port-admit scenario (VHS-REQ-623)', () => {
+  it('signals -DerivePortFromSelectedIni (no port number) for the port-admit scenario (VHS-REQ-623)', () => {
     const scenario = {
       id: 'port-A',
       parameters: {
         hostBitness: 'x64',
         selectedBitness: 'x64',
         expectedBlockedReason: 'none',
-        expectedHostTcpPort: 3380
+        derivePortFromSelectedIni: true
       },
       proofPath: 'proofs/port-A.proof.json',
       logPath: 'proofs/port-A.scenario.json'
@@ -294,11 +273,13 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args[args.indexOf('-HostBitness') + 1]).toBe('x64');
     expect(args[args.indexOf('-SelectedBitness') + 1]).toBe('x64');
     expect(args[args.indexOf('-ExpectedBlockedReason') + 1]).toBe('none');
-    expect(args).toContain('-ExpectedHostTcpPort');
-    expect(args[args.indexOf('-ExpectedHostTcpPort') + 1]).toBe('3380');
+    // The expected port is derived from the selected install's ini inside the
+    // helper; the driver passes a switch and never a port number.
+    expect(args).toContain('-DerivePortFromSelectedIni');
+    expect(args).not.toContain('-ExpectedHostTcpPort');
   });
 
-  it('omits -ExpectedHostTcpPort for non-port scenarios', () => {
+  it('omits port-admit flags for non-port scenarios', () => {
     const scenario = {
       id: 'steady-A',
       parameters: {
@@ -313,6 +294,7 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
       labviewVersion: '2026',
       keepRunning: false
     });
+    expect(args).not.toContain('-DerivePortFromSelectedIni');
     expect(args).not.toContain('-ExpectedHostTcpPort');
   });
 
@@ -451,74 +433,135 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.pass).toBe(false);
   });
 
+  const SELECTED_PORT_A_INI =
+    'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini';
   const portScenario = {
     id: 'port-A',
     parameters: {
       hostBitness: 'x64',
       selectedBitness: 'x64',
       expectedBlockedReason: 'none',
-      expectedHostTcpPort: 3380
+      derivePortFromSelectedIni: true
     },
     proofPath: 'port-A.proof.json',
     logPath: 'port-A.scenario.json'
   };
 
-  it('passes the port-admit scenario when the host is admitted and the non-default port is observed (VHS-REQ-623)', () => {
-    const summary = harness.summarizeScenario(
-      portScenario,
-      { status: 0 },
-      {
-        pass: true,
-        durationMs: 1600,
-        observed: {
-          runtimeBlockedReason: 'none',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostLabviewTcpPort: 3380,
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        }
+  // The helper derives the expected port from the selected install's own ini and
+  // surfaces it as portOracle; the summary recomputes pass from it.
+  function portLog(overrides: {
+    observedPort?: number | undefined;
+    observedIniPath?: string | undefined;
+    derivedExpectedTcpPort?: number;
+    selectedLabviewIniPath?: string;
+    isNonDefaultPort?: boolean;
+    pass?: boolean;
+    omitPortOracle?: boolean;
+  }) {
+    const derived = overrides.derivedExpectedTcpPort ?? 3366;
+    const selectedIni = overrides.selectedLabviewIniPath ?? SELECTED_PORT_A_INI;
+    const observedIni =
+      'observedIniPath' in overrides ? overrides.observedIniPath : selectedIni;
+    const observedPort =
+      'observedPort' in overrides ? overrides.observedPort : derived;
+    const log: Record<string, unknown> = {
+      pass: overrides.pass ?? true,
+      durationMs: 1600,
+      observed: {
+        runtimeBlockedReason: 'none',
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        hostLabviewTcpPort: observedPort,
+        hostLabviewIniPath: observedIni,
+        labviewExecutablePath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
       }
-    );
+    };
+    if (!overrides.omitPortOracle) {
+      log.portOracle = {
+        selectedLabviewIniPath: selectedIni,
+        derivedExpectedTcpPort: derived,
+        isNonDefaultPort: overrides.isNonDefaultPort ?? derived !== 3363,
+        observedLabviewIniPath: observedIni,
+        observedTcpPort: observedPort
+      };
+    }
+    return log;
+  }
+
+  it('passes when the host is admitted and the product observed the selected install ini port (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(portScenario, { status: 0 }, portLog({}));
     expect(summary.pass).toBe(true);
-    expect(summary.expected.hostTcpPort).toBe(3380);
-    expect(summary.observed.hostLabviewTcpPort).toBe(3380);
+    expect(summary.expected.hostTcpPort).toBe(3366);
+    expect(summary.expected.hostLabviewIniPath).toBe(SELECTED_PORT_A_INI);
+    expect(summary.observed.hostLabviewTcpPort).toBe(3366);
     expect(summary.failureReason).toBeUndefined();
   });
 
-  it('fails the port-admit scenario when the observed port is the default rather than the non-default port (VHS-REQ-623)', () => {
+  it('self-configures to whatever non-default port the selected ini declares (VHS-REQ-623)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
-      {
-        pass: true,
-        observed: {
-          runtimeBlockedReason: 'none',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostLabviewTcpPort: 3363
-        }
-      }
+      portLog({ derivedExpectedTcpPort: 3399, observedPort: 3399 })
+    );
+    expect(summary.pass).toBe(true);
+    expect(summary.expected.hostTcpPort).toBe(3399);
+  });
+
+  it('fails when the observed port does not match the port derived from the selected ini (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      portLog({ derivedExpectedTcpPort: 3366, observedPort: 3363 })
     );
     expect(summary.pass).toBe(false);
-    expect(summary.failureReason).toContain('expected hostLabviewTcpPort=3380');
+    expect(summary.failureReason).toContain('expected hostLabviewTcpPort=3366');
     expect(summary.failureReason).toContain('observed=3363');
   });
 
-  it('fails the port-admit scenario when no VI Server port was observed (VHS-REQ-623)', () => {
+  it('fails when the product read a DIFFERENT ini than the selected install (latest-used regression guard, VHS-REQ-623)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
-      {
-        pass: true,
-        observed: {
-          runtimeBlockedReason: 'none',
-          hostBitness: 'x64',
-          selectedBitness: 'x64'
-        }
-      }
+      portLog({
+        observedIniPath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.ini'
+      })
+    );
+    expect(summary.pass).toBe(false);
+    expect(summary.failureReason).toContain('expected hostLabviewIniPath=');
+    expect(summary.failureReason).toContain('LabVIEW 2026');
+  });
+
+  it('matches the selected ini path case- and separator-insensitively (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      portLog({
+        observedIniPath:
+          'c:/program files/national instruments/labview 2026/labview.ini'
+      })
+    );
+    expect(summary.pass).toBe(true);
+  });
+
+  it('fails when no VI Server port was observed (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      portLog({ observedPort: undefined })
     );
     expect(summary.pass).toBe(false);
     expect(summary.failureReason).toContain('observed=<none>');
+  });
+
+  it('fails when the helper surfaced no port oracle at all (VHS-REQ-623)', () => {
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      portLog({ omitPortOracle: true })
+    );
+    expect(summary.pass).toBe(false);
   });
 });
 
@@ -608,8 +651,16 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
           runtimeBlockedReason: 'none',
           hostBitness: 'x64',
           selectedBitness: 'x64',
-          hostLabviewTcpPort: 3380,
+          hostLabviewTcpPort: 3366,
+          hostLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
           labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        },
+        portOracle: {
+          selectedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+          derivedExpectedTcpPort: 3366,
+          isNonDefaultPort: true,
+          observedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+          observedTcpPort: 3366
         }
       }
     };
@@ -694,8 +745,16 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
           runtimeBlockedReason: 'none',
           hostBitness: 'x64',
           selectedBitness: 'x64',
-          hostLabviewTcpPort: 3380,
+          hostLabviewTcpPort: 3366,
+          hostLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
           labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        },
+        portOracle: {
+          selectedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+          derivedExpectedTcpPort: 3366,
+          isNonDefaultPort: true,
+          observedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+          observedTcpPort: 3366
         }
       }
     };
