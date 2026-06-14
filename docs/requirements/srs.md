@@ -2804,18 +2804,27 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-019
 - Area: Runtime Discovery
 - Statement: When the comparison runtime cold-pulls a LabVIEW Docker image, the
-  extension shall report a live byte-percentage in the acquisition progress
-  notification, sourced from the Docker Engine API image-pull progress stream, so
-  a user pulling the multi-gigabyte Windows image sees how much has downloaded
-  instead of opaque status text with a faked increment.
+  extension shall report live, steadily-advancing pull progress in the
+  acquisition progress notification, sourced from the Docker Engine API
+  image-pull progress stream, so a user pulling the multi-gigabyte Windows image
+  sees real, forward-moving progress instead of opaque status text with a faked
+  increment.
 - Acceptance Criteria:
   - `acquireWindowsContainerImage` drives the pull through the Docker Engine API
     `POST /images/create` stream over the local daemon socket (the Windows named
     pipe `\\.\pipe\docker_engine` or the Linux `/var/run/docker.sock`) and
-    aggregates the per-layer `progressDetail.current/total` byte counts into a
-    monotonic, clamped 0–100% with downloaded/total byte figures surfaced in the
-    progress message (for example `Pulling container image: <image> — 42%
-    (8.1 GB / 19.3 GB)`).
+    aggregates the per-layer stream events into a **layer-weighted** progress
+    figure — each enumerated layer contributes an equal slice, smoothed by the
+    in-flight layer's byte fraction — surfaced with the completed/total layer
+    count and absolute downloaded bytes in the progress message (for example
+    `Pulling container image: <image> — 31% (4/13 layers, 1.4 GB)`).
+  - Because Docker reveals layers and their sizes progressively, the percentage
+    shall not be byte-weighted against the running sum of known layer totals (a
+    tiny, unstable early denominator that pins a small first layer at 100%); the
+    reported percentage is monotonic, capped below 100% in progress (overall
+    completion is signalled by the explicit "ready" message), and the toast is
+    re-emitted whenever its visible text changes so it can never freeze at a
+    premature 100%.
   - The Engine API path is attempted only on hosts where the daemon socket is
     directly reachable (a native Windows host or a Linux-native host); the
     Linux→Windows-docker WSL bridge and any other host fall back to the prior

@@ -1505,13 +1505,25 @@ describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-6
 describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => {
   const image = 'nationalinstruments/labview:2026q1-windows';
 
-  it('drives the Docker Engine API stream and reports a live byte-percentage', async () => {
+  it('drives the Docker Engine API stream and reports live layer-weighted progress', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
-      // Two layers, 1 GB each; advance to 50% then 100%.
+      // Two 1 GB layers: one done at 50%, both done near the 99% ceiling.
       const gb = 1024 * 1024 * 1024;
-      await options.onProgress?.({ percent: 50, downloadedBytes: gb, totalBytes: 2 * gb });
-      await options.onProgress?.({ percent: 100, downloadedBytes: 2 * gb, totalBytes: 2 * gb });
+      await options.onProgress?.({
+        percent: 50,
+        downloadedBytes: gb,
+        totalBytes: 2 * gb,
+        completedLayers: 1,
+        totalLayers: 2
+      });
+      await options.onProgress?.({
+        percent: 99,
+        downloadedBytes: 2 * gb,
+        totalBytes: 2 * gb,
+        completedLayers: 2,
+        totalLayers: 2
+      });
       return { attempted: true, succeeded: true, statusLines: ['Pulling from nationalinstruments/labview'] };
     });
 
@@ -1524,11 +1536,46 @@ describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => 
 
     expect(streamPull).toHaveBeenCalledOnce();
     expect(result.acquisitionState).toBe('acquired');
-    // A percentage and the byte figures reach the toast message.
-    expect(updates.some((u) => /50% \(1 GB \/ 2 GB\)/.test(u.message))).toBe(true);
-    expect(updates.some((u) => /100% \(2 GB \/ 2 GB\)/.test(u.message))).toBe(true);
+    // The layer-weighted percentage, layer count, and downloaded bytes reach the toast.
+    expect(updates.some((u) => /50% \(1\/2 layers, 1 GB\)/.test(u.message))).toBe(true);
+    expect(updates.some((u) => /99% \(2\/2 layers, 2 GB\)/.test(u.message))).toBe(true);
     // The final "ready" update lands.
     expect(updates.at(-1)?.message).toBe(`Container image ready: ${image}`);
+  });
+
+  it('re-emits the toast when only the downloaded bytes change at the same whole percent', async () => {
+    const updates: Array<{ message: string; increment?: number }> = [];
+    const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
+      const gb = 1024 * 1024 * 1024;
+      // Same rounded percent, growing bytes/layers: the old percent-only throttle
+      // froze here; the message-change throttle must still update the toast.
+      await options.onProgress?.({
+        percent: 30,
+        downloadedBytes: gb,
+        totalBytes: 5 * gb,
+        completedLayers: 1,
+        totalLayers: 3
+      });
+      await options.onProgress?.({
+        percent: 30,
+        downloadedBytes: 2 * gb,
+        totalBytes: 5 * gb,
+        completedLayers: 1,
+        totalLayers: 3
+      });
+      return { attempted: true, succeeded: true, statusLines: [] };
+    });
+
+    await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    const pullMessages = updates.filter((u) => u.message.includes('Pulling container image'));
+    expect(pullMessages.some((u) => /30% \(1\/3 layers, 1 GB\)/.test(u.message))).toBe(true);
+    expect(pullMessages.some((u) => /30% \(1\/3 layers, 2 GB\)/.test(u.message))).toBe(true);
   });
 
   it('reports a failed acquisition when the daemon stream errors in-band', async () => {

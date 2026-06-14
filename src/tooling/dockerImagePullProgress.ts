@@ -8,8 +8,16 @@
  * The Docker Engine API `POST /images/create` performs the pull and streams
  * newline-delimited JSON objects carrying per-layer `progressDetail.current/total`
  * byte counts (the same data Docker Desktop renders its progress bar from). This
- * module parses that stream and aggregates the per-layer download bytes into a
- * single monotonic, clamped 0–100% with downloaded/total byte figures.
+ * module parses that stream and aggregates it into a single progress figure.
+ *
+ * Progress is **layer-weighted**, not byte-weighted: Docker reveals layers (and
+ * their sizes) progressively, so the running sum of known layer totals is a tiny,
+ * unstable denominator early in the pull — a single small layer that completes
+ * first would otherwise read 100% while the multi-GB layers are still streaming.
+ * Instead each enumerated layer contributes an equal slice of the total, smoothed
+ * by the in-flight layer's byte fraction, so the percentage climbs steadily and
+ * only approaches 100% as the real layers complete. Absolute downloaded bytes and
+ * a completed/total layer count are reported alongside for byte-level truth.
  *
  * Everything here is platform-pure except the optional default stream
  * implementation: the parser and aggregator perform no I/O, and the daemon-socket
@@ -49,6 +57,7 @@ export function splitImageReference(reference: string): { fromImage: string; tag
 /** One parsed event from a `/images/create` JSON-stream line. */
 export type DockerPullStreamEvent =
   | { readonly kind: 'layer-progress'; readonly layerId: string; readonly current: number; readonly total: number }
+  | { readonly kind: 'layer-seen'; readonly layerId: string }
   | { readonly kind: 'layer-complete'; readonly layerId: string }
   | { readonly kind: 'status'; readonly status: string }
   | { readonly kind: 'error'; readonly message: string };
@@ -98,7 +107,7 @@ export function parseDockerPullProgressLine(rawLine: string): DockerPullStreamEv
   // The download phase ("Downloading") carries per-layer byte counts. Extracting
   // also carries current/total but is the post-download unpack phase; the
   // multi-minute network cost the user cares about is the download, so only
-  // download events drive the byte percentage.
+  // download events drive the byte fraction.
   if (status === 'Downloading' && layerId && parsed.progressDetail) {
     const current = parsed.progressDetail.current;
     const total = parsed.progressDetail.total;
@@ -107,10 +116,30 @@ export function parseDockerPullProgressLine(rawLine: string): DockerPullStreamEv
     }
   }
 
-  // A layer finishing its download — mark it fully accounted regardless of the
-  // last byte sample we saw.
-  if (layerId && (status === 'Download complete' || status === 'Pull complete')) {
+  // A layer finishing — `Download complete`/`Pull complete` for a layer that
+  // streamed bytes, or `Already exists` for a cached layer that never downloads.
+  // All three mean "this layer is done" and count as a completed slice; the
+  // cached case contributes no downloaded bytes, which is correct.
+  if (
+    layerId &&
+    (status === 'Download complete' || status === 'Pull complete' || status === 'Already exists')
+  ) {
     return { kind: 'layer-complete', layerId };
+  }
+
+  // The stream's opening line is `{status:"Pulling from <repo>", id:"<tag>"}` —
+  // its `id` is the image tag, not a layer, so it must not be enumerated as one
+  // (a phantom layer would permanently inflate the denominator).
+  if (status && status.startsWith('Pulling from')) {
+    return { kind: 'status', status };
+  }
+
+  // Any other id-bearing line ("Pulling fs layer", "Waiting", "Verifying
+  // Checksum", "Extracting", "Retrying"...) enumerates the layer so it is counted
+  // in the denominator early — before it has reported a byte total — which keeps
+  // the layer-weighted percentage from spiking when the first small layer lands.
+  if (layerId) {
+    return { kind: 'layer-seen', layerId };
   }
 
   if (status) {
@@ -122,44 +151,69 @@ export function parseDockerPullProgressLine(rawLine: string): DockerPullStreamEv
 
 /** A computed snapshot of overall pull progress. */
 export interface DockerPullProgressSnapshot {
-  /** Monotonic, clamped 0–100 overall download percentage; undefined until known. */
+  /**
+   * Layer-weighted, monotonic overall download progress in [0,99]; `undefined`
+   * until at least one layer has reported bytes or completed. Capped below 100 so
+   * a premature/false 100% is impossible — overall completion is signalled by the
+   * caller's "ready" message, not by this figure.
+   */
   readonly percent?: number;
-  /** Sum of downloaded bytes across layers with a known total. */
+  /** Sum of downloaded bytes across all layers. Monotonic. */
   readonly downloadedBytes: number;
-  /** Sum of total bytes across layers that have reported a total. */
+  /**
+   * Sum of total bytes across layers that have reported a total. A lower bound on
+   * the image size (un-started layers are excluded), kept for diagnostics — not a
+   * trustworthy denominator and intentionally not shown in the toast.
+   */
   readonly totalBytes: number;
+  /** Layers that have finished (downloaded or already cached). */
+  readonly completedLayers: number;
+  /** Layers enumerated so far. */
+  readonly totalLayers: number;
 }
 
 /**
  * Stateful accumulator that turns a sequence of {@link DockerPullStreamEvent}s
- * into a monotonic overall download percentage. Per-layer `{current,total}` are
- * summed; a completed layer is pinned to its known total. The percentage never
- * decreases (Docker can re-report a slightly lower `current` mid-stream) and is
- * clamped to [0,100].
+ * into a layer-weighted overall download percentage.
+ *
+ * Each enumerated layer contributes an equal `1 / totalLayers` slice; an
+ * in-flight layer contributes its byte fraction (`current / total`) of that
+ * slice, and a completed layer contributes the whole slice. Because Docker
+ * enumerates every layer (via `Pulling fs layer`) before completing any of them,
+ * the denominator is stable early, so the percentage climbs steadily instead of
+ * spiking to 100% on the first small layer the way a byte-weighted sum does. The
+ * result is monotonic and capped at 99 (100% is reserved for the explicit "ready"
+ * signal).
  */
 export class DockerPullProgressAggregator {
   private readonly layers = new Map<string, { current: number; total: number; complete: boolean }>();
   private lastPercent = 0;
 
+  private ensureLayer(layerId: string): { current: number; total: number; complete: boolean } {
+    let layer = this.layers.get(layerId);
+    if (!layer) {
+      layer = { current: 0, total: 0, complete: false };
+      this.layers.set(layerId, layer);
+    }
+    return layer;
+  }
+
   /** Apply one event and return the updated snapshot. */
   apply(event: DockerPullStreamEvent): DockerPullProgressSnapshot {
-    if (event.kind === 'layer-progress') {
-      const existing = this.layers.get(event.layerId);
-      if (existing) {
-        existing.current = Math.max(existing.current, event.current);
-        existing.total = Math.max(existing.total, event.total);
-      } else {
-        this.layers.set(event.layerId, { current: event.current, total: event.total, complete: false });
-      }
+    if (event.kind === 'layer-seen') {
+      this.ensureLayer(event.layerId);
+    } else if (event.kind === 'layer-progress') {
+      const layer = this.ensureLayer(event.layerId);
+      layer.current = Math.max(layer.current, event.current);
+      layer.total = Math.max(layer.total, event.total);
     } else if (event.kind === 'layer-complete') {
-      const existing = this.layers.get(event.layerId);
-      if (existing) {
-        existing.current = existing.total;
-        existing.complete = true;
+      const layer = this.ensureLayer(event.layerId);
+      layer.complete = true;
+      // A layer that streamed bytes pins to its known total; a cached
+      // ("Already exists") layer has no total and contributes no bytes.
+      if (layer.total > 0) {
+        layer.current = layer.total;
       }
-      // A complete event for a layer we never saw downloading (e.g. a tiny layer
-      // that reported no byte samples) contributes no known total, so it is not
-      // tracked — that is correct: it adds nothing measurable to the denominator.
     }
     return this.snapshot();
   }
@@ -168,19 +222,31 @@ export class DockerPullProgressAggregator {
   snapshot(): DockerPullProgressSnapshot {
     let downloadedBytes = 0;
     let totalBytes = 0;
+    let completedLayers = 0;
+    let fractionSum = 0;
     for (const layer of this.layers.values()) {
-      downloadedBytes += Math.min(layer.current, layer.total);
+      const current = layer.total > 0 ? Math.min(layer.current, layer.total) : layer.current;
+      downloadedBytes += current;
       totalBytes += layer.total;
+      if (layer.complete) {
+        completedLayers += 1;
+        fractionSum += 1;
+      } else if (layer.total > 0) {
+        fractionSum += Math.min(current / layer.total, 1);
+      }
     }
 
-    if (totalBytes <= 0) {
-      return { percent: undefined, downloadedBytes: 0, totalBytes: 0 };
+    const totalLayers = this.layers.size;
+    if (totalLayers === 0 || fractionSum <= 0) {
+      return { percent: undefined, downloadedBytes, totalBytes, completedLayers, totalLayers };
     }
 
-    const rawPercent = (downloadedBytes / totalBytes) * 100;
+    const rawPercent = (fractionSum / totalLayers) * 100;
     const monotonic = Math.max(this.lastPercent, rawPercent);
-    this.lastPercent = Math.min(100, monotonic);
-    return { percent: this.lastPercent, downloadedBytes, totalBytes };
+    // Reserve 100 for the explicit completion signal so the toast can never show a
+    // premature or frozen 100%.
+    this.lastPercent = Math.min(99, monotonic);
+    return { percent: this.lastPercent, downloadedBytes, totalBytes, completedLayers, totalLayers };
   }
 }
 
@@ -202,21 +268,23 @@ export function formatBytes(bytes: number): string {
 
 /**
  * Build the toast message for a progress snapshot, e.g.
- * `Pulling container image: 42% (8.1 GB / 19.3 GB)`. Before any byte total is
- * known, falls back to a plain pulling message so the toast still reads
- * sensibly during the brief layer-enumeration phase.
+ * `Pulling container image: <image> — 31% (4/13 layers, 1.4 GB)`. The percentage
+ * is layer-weighted; the layer count and absolute downloaded bytes give the
+ * byte-level truth alongside it. Before any progress is known, falls back to a
+ * plain pulling message so the toast still reads sensibly during the brief
+ * layer-enumeration phase.
  */
 export function formatPullProgressMessage(
   image: string,
   snapshot: DockerPullProgressSnapshot
 ): string {
-  if (snapshot.percent === undefined || snapshot.totalBytes <= 0) {
+  if (snapshot.percent === undefined || snapshot.totalLayers <= 0) {
     return `Pulling container image: ${image}`;
   }
   const percent = Math.round(snapshot.percent);
-  return `Pulling container image: ${image} — ${percent}% (${formatBytes(
+  return `Pulling container image: ${image} — ${percent}% (${snapshot.completedLayers}/${snapshot.totalLayers} layers, ${formatBytes(
     snapshot.downloadedBytes
-  )} / ${formatBytes(snapshot.totalBytes)})`;
+  )})`;
 }
 
 /** Injectable line-stream boundary for {@link streamDockerImagePull}. */

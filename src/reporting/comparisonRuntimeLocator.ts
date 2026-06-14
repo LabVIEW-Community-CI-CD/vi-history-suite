@@ -3127,30 +3127,32 @@ export async function acquireWindowsContainerImage(
     hostPlatform === 'win32' || (hostPlatform === 'linux' && !process.env.WSL_DISTRO_NAME);
 
   if (daemonApiEligible) {
-    let lastWholePercent = -1;
+    let lastMessage = '';
     let lastScaled = 0;
     const streamResult = await streamPull({
       image,
       hostPlatform,
       onProgress: async (snapshot) => {
         // The caller adds +10 ("Acquiring") before and +5 ("ready") after, so the
-        // pull owns ~85 progress-bar points. Throttle to whole-percent advances
-        // so a fast layer never floods the progress channel.
+        // pull owns ~85 progress-bar points. Re-emit whenever the visible message
+        // changes (layer-weighted percent ticks up, a layer completes, or the
+        // downloaded-byte figure changes) rather than on whole-percent advances —
+        // a percent-only gate froze the toast once it reached its ceiling.
         if (snapshot.percent === undefined) {
           return;
         }
-        const whole = Math.round(snapshot.percent);
-        if (whole <= lastWholePercent) {
+        const message = formatPullProgressMessage(image, snapshot);
+        if (message === lastMessage) {
           return;
         }
-        lastWholePercent = whole;
+        lastMessage = message;
         const scaled = Math.min(85, (snapshot.percent / 100) * 85);
         const increment = scaled > lastScaled ? scaled - lastScaled : undefined;
         if (increment) {
           lastScaled = scaled;
         }
         await options.reportProgress?.({
-          message: formatPullProgressMessage(image, snapshot),
+          message,
           increment
         });
       }
