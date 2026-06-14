@@ -61,6 +61,11 @@
         "category": "VI History"
       },
       {
+        "command": "labviewViHistory.copyReviewPacket",
+        "title": "Copy Review Packet",
+        "category": "VI History"
+      },
+      {
         "command": "labviewViHistory.prepareLocalRuntimeSettingsCli",
         "title": "Prepare Local Runtime Settings CLI",
         "category": "VI History"

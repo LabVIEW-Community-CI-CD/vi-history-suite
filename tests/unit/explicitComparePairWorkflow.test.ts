@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  HistoryPanelComparePreflightState,
-  renderHistoryPanelHtml
-} from '../../src/ui/historyPanel';
+import { renderHistoryPanelHtml } from '../../src/ui/historyPanel';
 import { ViHistoryViewModel } from '../../src/services/viHistoryModel';
 
 function createTestViewModel(
@@ -31,7 +28,7 @@ function createTestViewModel(
   };
 }
 
-describe('explicitComparePairWorkflow HTML rendering', () => {
+describe('explicitComparePairWorkflow HTML rendering (VHS-REQ-133)', () => {
   describe('compare button starts disabled until user selects exactly two revisions', () => {
     it('renders compare button with disabled attribute by default (no initial selection)', () => {
       const model = createTestViewModel([
@@ -43,7 +40,7 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
       expect(html).toContain('data-testid="history-action-compare-selected"');
       expect(html).toContain('id="history-action-compare-selected"');
       expect(html).toMatch(
-        /<button[^>]*data-testid="history-action-compare-selected"[^>]*disabled[^>]*>Compare<\/button>/
+        /<button[^>]*id="history-action-compare-selected"[^>]*disabled[^>]*>Compare<\/button>/
       );
     });
 
@@ -94,27 +91,17 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
       expect(html).toContain('data-command="generateComparisonReportFromSelection"');
     });
 
-    it('renders guidance for explicit selection workflow', () => {
+    it('does not auto-trigger compare when the selection state changes', () => {
       const model = createTestViewModel([
         { hash: 'abc123', previousHash: 'def456' },
         { hash: 'def456' }
       ]);
       const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('Select exactly two retained revisions');
-    });
-
-    it('does not auto-trigger compare when selection state changes via updateComparePreflightSelectionState', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const html = renderHistoryPanelHtml(model);
-
-      const fnStart = html.indexOf('function updateComparePreflightSelectionState()');
+      const fnStart = html.indexOf('function updateCompareSelectionState()');
       expect(fnStart).toBeGreaterThan(-1);
 
-      // Extract the function body by tracking brace depth (handles multiline content correctly)
+      // Extract the function body by tracking brace depth.
       const fragment = html.slice(fnStart);
       let depth = 0;
       let fnEnd = -1;
@@ -130,163 +117,53 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
       }
       const fnBody = fragment.slice(0, fnEnd);
 
+      // Selecting the second revision only enables the button; it never posts a
+      // message or generates a report on its own.
       expect(fnBody).not.toContain('vscode.postMessage');
       expect(fnBody).not.toContain('generateComparisonReportFromSelection');
-      expect(fnBody).toContain('updateCompareButtonState(true)');
-      expect(fnBody).toContain('updateCompareButtonState(false)');
+      expect(fnBody).toContain('updateCompareButtonState');
     });
   });
 
-  describe('runtime preflight status remains visible even when compare generation is blocked', () => {
-    it('renders compare preflight section with status when preflight is ready', () => {
+  describe('two distinct revisions resolve to a newer=selected / older=base pair', () => {
+    it('resolves the lower-commit-index revision as selected and the higher as base', () => {
       const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
+        { hash: 'newer123', previousHash: 'older456' },
+        { hash: 'older456' }
       ]);
-      const preflightState: HistoryPanelComparePreflightState = {
-        status: 'ready',
-        provider: 'host',
-        labviewVersion: 'LabVIEW 2025',
-        labviewBitness: 'x64',
-        nextAction: 'Select two revisions, then choose Compare.',
-        cliHint: 'Runtime is ready.'
-      };
-      const html = renderHistoryPanelHtml(model, undefined, preflightState);
+      const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('data-testid="history-compare-preflight"');
-      expect(html).toContain('data-state="ready"');
-      expect(html).toContain('data-testid="history-compare-preflight-provider"');
-      expect(html).toContain('host');
-      expect(html).toContain('LabVIEW 2025');
-      expect(html).toContain('x64');
+      // The selection helper sorts checked rows by commit index ascending, so the
+      // newer commit (index 0) becomes selectedHash and the older becomes baseHash.
+      expect(html).toContain('function resolveSelectedPair()');
+      expect(html).toContain('selectedHash: ranked[0].hash');
+      expect(html).toContain('baseHash: ranked[1].hash');
     });
 
-    it('renders compare preflight section with blocked state but still visible status', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const preflightState: HistoryPanelComparePreflightState = {
-        status: 'blocked',
-        provider: 'host',
-        labviewVersion: 'Unset',
-        labviewBitness: 'Unset',
-        nextAction: 'Use the generated settings CLI to configure runtime.',
-        cliHint: 'Use the generated settings CLI to update provider settings.',
-        warningMessage: 'Runtime settings need attention.'
-      };
-      const html = renderHistoryPanelHtml(model, undefined, preflightState);
-
-      expect(html).toContain('data-testid="history-compare-preflight"');
-      expect(html).toContain('data-state="blocked"');
-      expect(html).toContain('data-testid="history-compare-preflight-provider"');
-      expect(html).toContain('data-testid="history-compare-preflight-version"');
-      expect(html).toContain('data-testid="history-compare-preflight-bitness"');
-      expect(html).toContain('host');
-      expect(html).toContain('Unset');
-    });
-
-    it('renders compare preflight CLI hint even when runtime is blocked', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const preflightState: HistoryPanelComparePreflightState = {
-        status: 'blocked',
-        provider: 'host',
-        labviewVersion: 'Unset',
-        labviewBitness: 'Unset',
-        nextAction: 'Use the generated settings CLI to configure runtime.',
-        cliHint: 'Use the generated settings CLI to update provider settings.'
-      };
-      const html = renderHistoryPanelHtml(model, undefined, preflightState);
-
-      expect(html).toContain('data-testid="history-compare-preflight-cli-hint"');
-      expect(html).toContain('Use the generated settings CLI');
-    });
-
-    it('renders compare preflight details section for selected/base pair visibility', () => {
+    it('includes the selection JavaScript helpers', () => {
       const model = createTestViewModel([
         { hash: 'abc123', previousHash: 'def456' },
         { hash: 'def456' }
       ]);
       const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('data-testid="history-compare-preflight-selected"');
-      expect(html).toContain('data-testid="history-compare-preflight-base"');
-      expect(html).toContain('Selected commit:');
-      expect(html).toContain('Base commit:');
-    });
-
-    it('renders selected/base ordering explanation in preflight details', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const html = renderHistoryPanelHtml(model);
-
-      expect(html).toContain('data-testid="history-compare-preflight-ordering"');
-      expect(html).toContain('The newer of the two selected revisions becomes <code>selected</code>');
-      expect(html).toContain('the older becomes <code>base</code>');
-    });
-  });
-
-  describe('two distinct revisions produce a reviewable selected/base pair before Compare is enabled', () => {
-    it('renders compare preflight summary placeholder before user selection', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const html = renderHistoryPanelHtml(model);
-
-      expect(html).toContain('data-testid="history-compare-preflight-summary"');
-      expect(html).toContain('id="compare-preflight-summary"');
-    });
-
-    it('renders compare preflight next-action guidance', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const html = renderHistoryPanelHtml(model);
-
-      expect(html).toContain('data-testid="history-compare-preflight-next-action"');
-      expect(html).toContain('id="compare-preflight-next-action"');
-    });
-
-    it('renders primary instruction for explicit pair selection', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const html = renderHistoryPanelHtml(model);
-
-      expect(html).toContain('data-testid="history-primary-instruction"');
-      expect(html).toContain('Select exactly two retained revisions');
-      expect(html).toContain('then choose <code>Compare</code>');
-    });
-
-    it('includes JavaScript for updateComparePreflightSelectionState function', () => {
-      const model = createTestViewModel([
-        { hash: 'abc123', previousHash: 'def456' },
-        { hash: 'def456' }
-      ]);
-      const html = renderHistoryPanelHtml(model);
-
-      expect(html).toContain('function updateComparePreflightSelectionState()');
+      expect(html).toContain('function updateCompareSelectionState()');
       expect(html).toContain('function resolveSelectedPair()');
       expect(html).toContain('function updateCompareButtonState(enabled)');
+      expect(html).toContain('function handleCommitSelectionChange(target)');
+      expect(html).toContain("addEventListener('change'");
     });
 
-    it('includes JavaScript handling for checkbox change events', () => {
+    it('caps the selection at two revisions', () => {
       const model = createTestViewModel([
         { hash: 'abc123', previousHash: 'def456' },
         { hash: 'def456' }
       ]);
       const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('function handleCommitSelectionChange(target)');
-      expect(html).toContain('addEventListener(\'change\'');
+      // A third checkbox is unchecked so only two revisions can ever be selected.
+      expect(html).toContain('if (checked.length > 2)');
+      expect(html).toContain('target.checked = false');
     });
   });
 
@@ -306,7 +183,7 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
       expect(html).toMatch(/<input[^>]*data-testid="history-commit-select"[^>]*disabled[^>]*\/>/);
     });
 
-    it('renders unavailable preflight state when comparison generation is disabled', () => {
+    it('keeps the compare button disabled when comparison generation is unavailable', () => {
       const model: ViHistoryViewModel = {
         ...createTestViewModel([
           { hash: 'abc123', previousHash: 'def456' },
@@ -318,8 +195,8 @@ describe('explicitComparePairWorkflow HTML rendering', () => {
       };
       const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('data-state="unavailable"');
-      expect(html).toContain('unavailable in this build');
+      expect(html).toContain('const compareSelectionEnabled = false');
+      expect(html).toMatch(/id="history-action-compare-selected"[^>]*disabled/);
     });
   });
 });

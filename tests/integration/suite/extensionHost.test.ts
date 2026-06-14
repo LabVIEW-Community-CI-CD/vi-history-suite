@@ -178,54 +178,34 @@ async function testPanelOpenFlow(
   assert.equal(panel.eligible, true);
   assert.match(panel.title, /^VI History:/);
   assert.equal(api.getOpenHistoryPanelCount(), 1);
-  assert.match(panel.renderedHtml, /data-testid="history-status"/);
-  assert.match(panel.renderedHtml, /data-testid="history-review-packet"/);
-  assert.match(panel.renderedHtml, /data-testid="history-chronology-order"/);
-  assert.match(panel.renderedHtml, /data-testid="history-newest-commit"/);
-  assert.match(panel.renderedHtml, /data-testid="history-oldest-commit"/);
-  assert.match(panel.renderedHtml, /data-testid="history-meta-repository"/);
-  assert.match(panel.renderedHtml, /data-testid="history-meta-path"/);
-  assert.match(panel.renderedHtml, /data-testid="history-binary-limitations"/);
-  assert.match(panel.renderedHtml, /data-testid="history-review-guidance"/);
-  assert.match(panel.renderedHtml, /data-testid="history-guidance-step"/);
-  assert.match(panel.renderedHtml, /data-testid="history-confidence-scope"/);
-  assert.match(panel.renderedHtml, /data-testid="history-confidence-basis"/);
-  assert.match(panel.renderedHtml, /data-testid="history-confidence-rating"/);
-  assert.match(panel.renderedHtml, /data-testid="history-scope-included"/);
-  assert.match(panel.renderedHtml, /data-testid="history-scope-excluded"/);
+  assert.match(panel.renderedHtml, /data-testid="history-title"/);
   assert.match(panel.renderedHtml, /data-testid="history-table"/);
   assert.match(panel.renderedHtml, /data-testid="history-row"/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-select"/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-body"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
-  assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
-  assert.match(panel.renderedHtml, /data-testid="history-action-documentation"/);
-  assert.match(panel.renderedHtml, /Eligible/);
-  assert.match(panel.renderedHtml, /LVIN/);
-  assert.match(panel.renderedHtml, /Newest commit first/);
-  assert.match(panel.renderedHtml, /Binary review limits:/);
-  assert.match(panel.renderedHtml, /Reviewer guidance:/);
-  assert.match(panel.renderedHtml, /Confidence and scope:/);
-  assert.match(panel.renderedHtml, /Local Git history, tracked-file status, and content-detected VI signature checks\./);
-  assert.match(
-    panel.renderedHtml,
-    /Direct local evidence for chronology, path provenance, retained hashes, and explicit selected\/base compare preflight facts\./
-  );
-  assert.match(
-    panel.renderedHtml,
-    /pairwise compare actions use retained LabVIEW comparison-report evidence and installed tooling instead of plain text diff\./
-  );
-  assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
-  assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output\./);
+  assert.match(panel.renderedHtml, /data-testid="history-action-compare-selected"/);
   assert.match(panel.renderedHtml, /<td data-testid="history-commit-body" class="commit-body">/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-body-empty" class="commit-body-empty">No commit body<\/span>/);
   assert.match(panel.renderedHtml, /Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
   assert.match(panel.renderedHtml, /Add third eligible fixture revision/);
-  assert.match(panel.renderedHtml, /select exactly two retained revisions, then review the compare preflight section before choosing/);
-  assert.match(panel.renderedHtml, /Open docs/);
+  // The minimized panel drops the procedural facts/guidance/confidence sections,
+  // the status header, the runtime/preflight blocks, and the in-panel
+  // copy/docs/dashboard/decision buttons. Compare runtime feedback is surfaced
+  // through notifications instead of an in-panel section.
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-status"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-review-packet"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-meta"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-binary-limitations"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-review-guidance"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-confidence-scope"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-compare-preflight"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-compare-runtime-status"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
+  assert.doesNotMatch(panel.renderedHtml, /Open docs/);
   assert.doesNotMatch(panel.renderedHtml, /Open dashboard/);
   assert.doesNotMatch(panel.renderedHtml, /Create decision record/);
 

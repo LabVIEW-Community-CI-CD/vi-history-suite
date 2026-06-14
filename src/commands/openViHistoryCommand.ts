@@ -70,6 +70,55 @@ function formatUntrustedWorkspaceWarning(featurePrefix: string): string {
   return `${featurePrefix} in untrusted workspaces ${UNTRUSTED_WORKSPACE_TRUST_RATIONALE}. ${UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX}`;
 }
 
+/**
+ * VHS-REQ-039/040: copy the factual VI History review packet for the selected VI
+ * to the clipboard. This is the Command Palette entry point (the in-panel button
+ * was removed when the panel was reduced to commit selection + Compare). It
+ * applies the same workspace-trust and eligibility gates as opening the panel,
+ * then renders the same plain-text packet the panel model would produce.
+ */
+export function createCopyReviewPacketCommand(
+  historyService: ViHistoryService
+): (uri?: vscode.Uri) => Promise<void> {
+  return async (uri?: vscode.Uri) => {
+    if (!vscode.workspace.isTrusted) {
+      void vscode.window.showWarningMessage(
+        formatUntrustedWorkspaceWarning('VI History review packet copy is disabled')
+      );
+      return;
+    }
+
+    const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
+    if (!targetUri) {
+      void vscode.window.showInformationMessage(
+        'Select a tracked LabVIEW VI to copy its VI History review packet.'
+      );
+      return;
+    }
+
+    let model: Awaited<ReturnType<ViHistoryService['load']>>;
+    try {
+      model = await historyService.load(targetUri);
+    } catch (error) {
+      void vscode.window.showErrorMessage(
+        buildHistoryLoadFailureMessage(targetUri.fsPath, error)
+      );
+      return;
+    }
+
+    if (!model.eligible) {
+      void vscode.window.showInformationMessage(buildIneligibilityMessage(model));
+      return;
+    }
+
+    const reviewPacket = renderHistoryReviewPacketText(model);
+    await vscode.env.clipboard.writeText(reviewPacket);
+    void vscode.window.showInformationMessage(
+      'VI History review packet copied to the clipboard.'
+    );
+  };
+}
+
 export function createOpenViHistoryCommand(
   historyService: ViHistoryService,
   gitApi: GitApi | undefined,
@@ -187,19 +236,10 @@ export function createOpenViHistoryCommand(
       },
       hasRetainedComparisonReport
     );
-    let comparePreflightState = await resolveHistoryPanelComparePreflightState(
-      comparePreflightResolver,
-      runtimePlatform,
-      runtimeLocator
-    );
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
-    const renderedHtml = renderHistoryPanelHtml(
-      model,
-      panelTracker?.getLastActionSummary(),
-      comparePreflightState
-    );
+    const renderedHtml = renderHistoryPanelHtml(model);
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
       `VI History: ${path.basename(targetUri.fsPath)}`,
@@ -642,17 +682,13 @@ export function createOpenViHistoryCommand(
         ) {
           if (result.retainedArchiveAvailable === false) {
             void vscode.window.showInformationMessage(
-              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the compare preflight section to rebuild retained evidence for this pair if it is not yet reviewable.'
+              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Re-run Compare for this pair to rebuild retained evidence if it is not yet reviewable.'
             );
           } else {
             const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
             if (selectedCommit && (!baseHash || selectedCommit.previousHash === baseHash)) {
               selectedCommit.retainedComparisonEvidenceAvailable = true;
-              safeUpdatePanelHtml(renderHistoryPanelHtml(
-                model,
-                panelTracker?.getLastActionSummary(),
-                comparePreflightState
-              ));
+              safeUpdatePanelHtml(renderHistoryPanelHtml(model));
             }
           }
         }
@@ -807,11 +843,7 @@ export function createOpenViHistoryCommand(
             model,
             hasRetainedComparisonReport
           );
-          panel.webview.html = renderHistoryPanelHtml(
-            model,
-            panelTracker?.getLastActionSummary(),
-            comparePreflightState
-          );
+          panel.webview.html = renderHistoryPanelHtml(model);
         }
         return;
       }
@@ -1008,30 +1040,6 @@ export function createOpenViHistoryCommand(
             result.canonicalMachineFingerprintId,
           humanReviewValidationMessage: result.validationMessage
         });
-        return;
-      }
-
-      if (command === 'pickContainerImageVersion') {
-        // VHS-REQ-650: the compare-preflight Pick Image Version CTA (shown when
-        // the runtime is blocked by a container-image-platform-mismatch) opens
-        // the image-version picker so the user can switch to a compatible image
-        // before running Compare. Await the picker, then recompute the preflight
-        // and re-render so the panel reflects the remediation — the block clears
-        // and the CTA disappears once a compatible image is selected — instead of
-        // showing a stale block until the panel is reopened.
-        await vscode.commands.executeCommand('labviewViHistory.pickContainerImageVersion');
-        comparePreflightState = await resolveHistoryPanelComparePreflightState(
-          comparePreflightResolver,
-          runtimePlatform,
-          runtimeLocator
-        );
-        safeUpdatePanelHtml(
-          renderHistoryPanelHtml(
-            model,
-            panelTracker?.getLastActionSummary(),
-            comparePreflightState
-          )
-        );
         return;
       }
 

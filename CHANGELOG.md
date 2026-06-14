@@ -46,6 +46,21 @@ Burned exact-version releases now include `v1.0.2`.
   progress still advances on `Pull complete` steps even when the daemon omits
   per-layer `Extracting` byte detail (VHS-REQ-656, #551).
 
+### Changed
+
+- The **VI History panel is minimized** to what reviewers actually use: a slim
+  title, the retained commit table (with selection checkboxes, the working-tree
+  row, and per-row Open@commit / Copy hash actions and commit body), and a single
+  **Compare** button enabled when exactly two revisions are selected. The
+  procedural sections — review facts, repository facts, binary review limits,
+  reviewer guidance, confidence and scope, the latest-compare-runtime block, the
+  verbose compare-preflight block, and the maintainer host-review form — are
+  removed from the panel. Compare runtime feedback (provider, acquisition,
+  blocked-runtime remediation) is surfaced through notifications instead of an
+  in-panel section. The factual review packet moves from an in-panel button to
+  the **Copy Review Packet** Command Palette command
+  (`labviewViHistory.copyReviewPacket`) (VHS-REQ-017/039/133/650, #553).
+
 ### Removed
 
 - The comparison **report format** choice is gone: the `viHistorySuite.report.format`
