@@ -106,9 +106,6 @@ export const REPORT_OPTION_DESCRIPTOR_BY_KEY: Readonly<
   )
 );
 
-/** Report formats the in-panel viewer, dashboard, and export pipeline support. */
-export type PanelReportFormat = 'HTMLSingleFile' | 'HTML';
-
 /**
  * Derive the Include-checkbox state from the persisted (ignore-polarity)
  * comparison report options. `include = !ignore`; an omitted/false ignore flag
@@ -151,9 +148,8 @@ export interface ContainerSectionViewModel {
   readonly notes: readonly string[];
 }
 
-/** Report section state: format plus the five include flags. */
+/** Report section state: the five include flags. */
 export interface ReportSectionViewModel {
-  readonly format: PanelReportFormat;
   readonly includeFlags: Record<ReportIncludeKey, boolean>;
 }
 
@@ -300,26 +296,6 @@ function renderProviderSection(model: RuntimeReportPanelViewModel): string {
 }
 
 function renderReportSection(report: ReportSectionViewModel): string {
-  const formatOptions = (['HTMLSingleFile', 'HTML'] as const)
-    .map((format) => {
-      const label =
-        format === 'HTMLSingleFile'
-          ? 'Single self-contained HTML file (recommended)'
-          : 'Multi-file HTML with a sibling images folder';
-      return `
-          <label class="radio-row" data-testid="runtime-report-format-row">
-            <input
-              type="radio"
-              name="runtime-report-format"
-              value="${format}"
-              data-command="setReportFormat"
-              ${report.format === format ? 'checked' : ''}
-            />
-            <span>${escapeHtml(label)}</span>
-          </label>`;
-    })
-    .join('\n');
-
   const includeRows = REPORT_OPTION_DESCRIPTORS.map((descriptor) => {
     const checked = report.includeFlags[descriptor.includeKey];
     return `
@@ -341,10 +317,7 @@ function renderReportSection(report: ReportSectionViewModel): string {
   return `
     <section class="card" data-testid="runtime-report-report-section">
       <h2>Comparison report</h2>
-      <div class="subhead">Report format</div>
-      <div class="radio-group" data-testid="runtime-report-format-group">
-        ${formatOptions}
-      </div>
+      <p class="hint" data-testid="runtime-report-format-note">Reports are generated as a single self-contained HTML file.</p>
       <div class="subhead">Include in report</div>
       <p class="hint" data-testid="runtime-report-include-hint">Uncheck a difference class to deselect it from the LabVIEW comparison report.</p>
       <div class="checkbox-group" data-testid="runtime-report-include-group">
@@ -537,10 +510,6 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
           return;
         }
         const command = target.dataset.command;
-        if (command === 'setReportFormat' && target instanceof HTMLInputElement && target.checked) {
-          vscode.postMessage({ command, format: target.value });
-          return;
-        }
         if (command === 'setReportInclude' && target instanceof HTMLInputElement) {
           vscode.postMessage({
             command,

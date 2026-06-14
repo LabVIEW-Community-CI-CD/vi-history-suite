@@ -12,6 +12,17 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Removed
+
+- The comparison **report format** choice is gone: the `viHistorySuite.report.format`
+  setting and the Runtime & Report Settings panel's format selector are removed,
+  and reports are now always generated as a single self-contained HTML file
+  (`-ReportType htmlsinglefile`). The alternate multi-file `HTML` format could
+  leave large reports showing image paths instead of pictures (the failure mode
+  VHS-REQ-640 was created to eliminate), so offering it was a footgun. The five
+  difference-suppression Include options are unchanged, and previously retained
+  multi-file reports still open, render, and export (#545).
+
 ## [1.28.0] - 2026-06-14
 
 ### Added
