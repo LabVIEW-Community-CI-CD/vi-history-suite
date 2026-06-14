@@ -16,25 +16,6 @@ import * as vscode from 'vscode';
 import { applyComparisonReportOptionSelection } from '../../src/reporting/comparisonReportAction';
 
 describe('applyComparisonReportOptionSelection (VHS-REQ-645)', () => {
-  it('persists a supported report format to the Global target', async () => {
-    const update = vi.fn(async () => undefined);
-    await applyComparisonReportOptionSelection({ kind: 'format', format: 'HTML' }, { update });
-    expect(update).toHaveBeenCalledWith(
-      'report.format',
-      'HTML',
-      vscode.ConfigurationTarget.Global
-    );
-  });
-
-  it('ignores an unsupported report format so the viewer can always render', async () => {
-    const update = vi.fn(async () => undefined);
-    await applyComparisonReportOptionSelection(
-      { kind: 'format', format: 'XML' as never },
-      { update }
-    );
-    expect(update).not.toHaveBeenCalled();
-  });
-
   it('writes ignore=true when an include checkbox is deselected', async () => {
     const update = vi.fn(async () => undefined);
     await applyComparisonReportOptionSelection(

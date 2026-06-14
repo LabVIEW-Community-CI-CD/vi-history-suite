@@ -60,7 +60,6 @@ import {
   RUNTIME_REPORT_PANEL_TITLE,
   RUNTIME_REPORT_PANEL_VIEW_TYPE,
   type ContainerVersionPanelOption,
-  type PanelReportFormat,
   type ReportIncludeKey,
   type RuntimeProviderPanelOption,
   type RuntimeReportPanelViewModel,
@@ -87,7 +86,6 @@ interface ContainerDiscoveryCache {
 interface RuntimeReportPanelMessage {
   readonly command?: string;
   readonly index?: number;
-  readonly format?: string;
   readonly includeKey?: string;
   readonly include?: boolean;
   readonly tag?: string;
@@ -199,8 +197,6 @@ export function registerOpenRuntimeReportPanelCommand(
     );
 
     const reportOptions = readReportOptions(configuration);
-    const format: PanelReportFormat =
-      reportOptions.reportFormat === 'HTML' ? 'HTML' : 'HTMLSingleFile';
 
     return {
       trusted: true,
@@ -218,7 +214,6 @@ export function registerOpenRuntimeReportPanelCommand(
         notes: containerCache.notes
       },
       report: {
-        format,
         includeFlags: deriveReportIncludeFlags(reportOptions)
       }
     };
@@ -279,15 +274,6 @@ export function registerOpenRuntimeReportPanelCommand(
           { update }
         );
         rerender();
-        return;
-      }
-      case 'setReportFormat': {
-        if (message.format === 'HTMLSingleFile' || message.format === 'HTML') {
-          await applyComparisonReportOptionSelection(
-            { kind: 'format', format: message.format },
-            { update }
-          );
-        }
         return;
       }
       case 'setReportInclude': {

@@ -820,35 +820,32 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-008
 - Area: Comparison Reports
-- Statement: The extension shall expose the LabVIEW comparison report flags —
-  the report output format and the difference-suppression filters honored by the
-  LabVIEWCLI CreateComparisonReport operation — as native VS Code settings, so a
-  user can tailor what each generated report contains without code changes while
-  an unconfigured workspace reproduces the shipped defaults exactly.
+- Statement: The extension shall expose the LabVIEW comparison report
+  difference-suppression filters honored by the LabVIEWCLI CreateComparisonReport
+  operation as native VS Code settings, so a user can tailor what each generated
+  report contains without code changes while an unconfigured workspace
+  reproduces the shipped defaults exactly. The report output format is fixed to
+  single-file HTML (VHS-REQ-640) and is not configurable.
 - Acceptance Criteria:
-  - The extension contributes user- and workspace-scoped settings under
-    `viHistorySuite.report.*`: a report `format` constrained to the HTML variants
-    the in-panel viewer, dashboard, and export support (`HTMLSingleFile` default
-    and `HTML`), and boolean difference-suppression filters `ignoreViAttributes`,
-    `ignoreFrontPanel`, `ignoreFrontPanelObjectPosition`, `ignoreBlockDiagram`,
-    and `ignoreBlockDiagramCosmetic`.
+  - The extension contributes user- and workspace-scoped boolean
+    difference-suppression settings under `viHistorySuite.report.*`:
+    `ignoreViAttributes`, `ignoreFrontPanel`, `ignoreFrontPanelObjectPosition`,
+    `ignoreBlockDiagram`, and `ignoreBlockDiagramCosmetic`. No report-format
+    setting is contributed; the format is hardcoded to single-file HTML.
   - Each enabled boolean adds exactly its verified CreateComparisonReport flag
     (`-noattr`, `-nofp`, `-nofppos`, `-nobd`, `-nobdcosm` respectively) to the
-    generated command, and the report format selects the corresponding
-    `-ReportType` value.
+    generated command. The report is always invoked with
+    `-ReportType htmlsinglefile`, independent of any setting (VHS-REQ-640).
   - With no settings configured, the generated CreateComparisonReport invocation
     is identical to the prior hardcoded behavior: single-file HTML output and no
     suppression filters (no regression of VHS-REQ-640).
-  - An invalid or unsupported `report.format` value falls back to the single-file
-    HTML default rather than emitting an unsupported report type.
   - The settings render in the native VS Code Settings editor; no scripted
     webview is introduced and the comparison-report panel keeps scripts disabled
     (no regression of VHS-REQ-626).
-  - The Runtime & Report Settings panel surfaces the same flags as Include
-    checkboxes (checked includes the difference class) plus the report format and
-    persists each edit to `viHistorySuite.report.*` with the Include-to-ignore
-    inversion (unchecking a class writes `ignore=true`); an unsupported format
-    selection is ignored.
+  - The Runtime & Report Settings panel surfaces these flags as Include
+    checkboxes (checked includes the difference class) and persists each edit to
+    `viHistorySuite.report.*` with the Include-to-ignore inversion (unchecking a
+    class writes `ignore=true`). The panel exposes no report-format control.
 - Agent Work Scope:
   - Contribute the settings, read them at the comparison-report action boundary,
     and thread them through the execution plan and CLI plan builder together with
@@ -870,8 +867,8 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep the difference-suppression flag names aligned with the LabVIEWCLI
     CreateComparisonReport operation help; do not expose flags the CLI operation
-    does not honor, and do not surface report formats the in-panel viewer,
-    dashboard, or export cannot render.
+    does not honor. Do not reintroduce a report-format setting or a multi-file
+    report type for newly generated reports (VHS-REQ-640).
 
 ### VHS-REQ-646: LabVIEW Container Image Tag Model
 

@@ -82,16 +82,12 @@ export function buildComparisonReportExecutionPlan(
       rightViPath: record.stagedRevisionPlan.rightFilePath,
       reportFilePath: record.artifactPlan.reportFilePath,
       labviewPath: labviewExePath,
-      // VHS-REQ-640: default to a self-contained single-file report (images
-      // embedded as base64 data URIs, no sibling `<report>_files/` directory).
-      // The previous multi-file `HTML` format made the webview request hundreds
-      // of per-object difference images at once, exhausting the resource loader
-      // so later images rendered as their path text. A single file produces zero
-      // sub-requests.
-      // VHS-REQ-645: the user may override the format and add difference-
-      // suppression filters via `viHistorySuite.report.*`; an omitted option
-      // preserves this default behavior.
-      reportFormat: reportOptions?.reportFormat ?? 'HTMLSingleFile',
+      // VHS-REQ-640: the report is always generated as a self-contained
+      // single-file HTML document (hardcoded in the CLI plan), so there is no
+      // format option to thread through here.
+      // VHS-REQ-645: the user may add difference-suppression filters via
+      // `viHistorySuite.report.*`; an omitted option preserves the default
+      // (compare everything).
       overwrite: true,
       createOutputDirectory: true,
       headless: headlessRequested,
