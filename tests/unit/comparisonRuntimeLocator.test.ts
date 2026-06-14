@@ -1578,6 +1578,64 @@ describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => 
     expect(pullMessages.some((u) => /30% \(1\/3 layers, 2 GB\)/.test(u.message))).toBe(true);
   });
 
+  it('signals the extraction phase and keeps the bar advancing after download (VHS-REQ-656)', async () => {
+    const updates: Array<{ message: string; increment?: number }> = [];
+    const gb = 1024 * 1024 * 1024;
+    const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
+      // Download finishes: bar near the download ceiling.
+      await options.onProgress?.({
+        phase: 'downloading',
+        percent: 99,
+        overallPercent: 84,
+        downloadedBytes: 2 * gb,
+        totalBytes: 2 * gb,
+        completedLayers: 0,
+        totalLayers: 2
+      });
+      // Extraction begins, then progresses: message names the phase and the bar
+      // advances past where the download left it.
+      await options.onProgress?.({
+        phase: 'extracting',
+        percent: 99,
+        overallPercent: 88,
+        extractPercent: 25,
+        downloadedBytes: 2 * gb,
+        totalBytes: 2 * gb,
+        completedLayers: 0,
+        totalLayers: 2
+      });
+      await options.onProgress?.({
+        phase: 'extracting',
+        percent: 99,
+        overallPercent: 92,
+        extractPercent: 50,
+        downloadedBytes: 2 * gb,
+        totalBytes: 2 * gb,
+        completedLayers: 1,
+        totalLayers: 2
+      });
+      return { attempted: true, succeeded: true, statusLines: [] };
+    });
+
+    const result = await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    expect(result.acquisitionState).toBe('acquired');
+    // The download phase was shown...
+    expect(updates.some((u) => /Pulling container image: .* — 99%/.test(u.message))).toBe(true);
+    // ...then extraction took over with its own climbing percent (no frozen 99%).
+    expect(updates.some((u) => u.message === `Extracting container image: ${image} — 25% (0/2 layers)`)).toBe(true);
+    expect(updates.some((u) => u.message === `Extracting container image: ${image} — 50% (1/2 layers)`)).toBe(true);
+    // The bar advanced during extraction (an increment was emitted after download).
+    const extractUpdates = updates.filter((u) => u.message.startsWith('Extracting'));
+    expect(extractUpdates.some((u) => (u.increment ?? 0) > 0)).toBe(true);
+    expect(updates.at(-1)?.message).toBe(`Container image ready: ${image}`);
+  });
+
   it('reports a failed acquisition when the daemon stream errors in-band', async () => {
     const streamPull = vi.fn(async () => ({
       attempted: true,

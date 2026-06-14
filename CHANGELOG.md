@@ -36,6 +36,15 @@ Burned exact-version releases now include `v1.0.2`.
   SSRF surface); any failure (non-Hub registry, auth/network/parse error, timeout)
   transparently falls back to the layer-weighted progress above (VHS-REQ-655,
   #549).
+- The cold-pull toast now **signals the pull phase** so it no longer freezes once
+  the multi-gigabyte download finishes. A Docker pull does not end when bytes
+  arrive — each layer then **extracts** (unpacks), which is itself multi-minute
+  for the Windows image. The notification now names the phase: a pulling message
+  with the download percentage while downloading, then `Extracting container
+  image: <image> — 60% (8/13 layers)` while unpacking (the bar keeps advancing),
+  then a brief finalizing message before `Container image ready`. Extraction
+  progress still advances on `Pull complete` steps even when the daemon omits
+  per-layer `Extracting` byte detail (VHS-REQ-656, #551).
 
 ### Removed
 

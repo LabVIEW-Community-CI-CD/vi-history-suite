@@ -64,9 +64,9 @@ describe('parseDockerPullProgressLine', () => {
     ).toEqual({ kind: 'layer-seen', layerId: 'abc' });
   });
 
-  it('treats Download complete, Pull complete, and Already exists as layer-complete', () => {
+  it('distinguishes Download complete, Pull complete, and Already exists', () => {
     expect(parseDockerPullProgressLine(JSON.stringify({ status: 'Download complete', id: 'abc' }))).toEqual({
-      kind: 'layer-complete',
+      kind: 'layer-download-complete',
       layerId: 'abc'
     });
     expect(parseDockerPullProgressLine(JSON.stringify({ status: 'Pull complete', id: 'abc' }))).toEqual({
@@ -74,7 +74,25 @@ describe('parseDockerPullProgressLine', () => {
       layerId: 'abc'
     });
     expect(parseDockerPullProgressLine(JSON.stringify({ status: 'Already exists', id: 'abc' }))).toEqual({
-      kind: 'layer-complete',
+      kind: 'layer-cached',
+      layerId: 'abc'
+    });
+  });
+
+  it('parses an Extracting line with byte detail into a layer-extract-progress event', () => {
+    expect(
+      parseDockerPullProgressLine(
+        JSON.stringify({ status: 'Extracting', id: 'abc', progressDetail: { current: 30, total: 120 } })
+      )
+    ).toEqual({ kind: 'layer-extract-progress', layerId: 'abc', current: 30, total: 120 });
+  });
+
+  it('parses an Extracting line without usable byte detail into a layer-extracting marker', () => {
+    expect(
+      parseDockerPullProgressLine(JSON.stringify({ status: 'Extracting', id: 'abc', progressDetail: { current: 1, total: 0 } }))
+    ).toEqual({ kind: 'layer-extracting', layerId: 'abc' });
+    expect(parseDockerPullProgressLine(JSON.stringify({ status: 'Extracting', id: 'abc' }))).toEqual({
+      kind: 'layer-extracting',
       layerId: 'abc'
     });
   });
@@ -160,8 +178,8 @@ describe('DockerPullProgressAggregator', () => {
     agg.apply({ kind: 'layer-seen', layerId: 'a' });
     agg.apply({ kind: 'layer-seen', layerId: 'b' });
     agg.apply({ kind: 'layer-progress', layerId: 'a', current: 50, total: 100 });
-    // b was cached -> layer-complete with no byte total.
-    const snap = agg.apply({ kind: 'layer-complete', layerId: 'b' });
+    // b was cached -> layer-cached with no byte total.
+    const snap = agg.apply({ kind: 'layer-cached', layerId: 'b' });
 
     // a half (0.5) + b complete (1) over 2 layers = 75%.
     expect(snap.percent).toBe(75);
@@ -228,10 +246,73 @@ describe('DockerPullProgressAggregator byte-% mode (VHS-REQ-655)', () => {
     agg.apply({ kind: 'layer-progress', layerId: 'a', current: 400, total: 400 });
     agg.apply({ kind: 'layer-complete', layerId: 'a' });
     // b was cached: no live bytes, credited 600 from the registry map.
-    const snap = agg.apply({ kind: 'layer-complete', layerId: 'b' });
+    const snap = agg.apply({ kind: 'layer-cached', layerId: 'b' });
     expect(snap.downloadedBytes).toBe(1000);
     // 1000 / 1000 -> raw 100, capped at 99 (100% is the caller's "ready").
     expect(snap.percent).toBe(99);
+  });
+});
+
+describe('DockerPullProgressAggregator pull-phase signaling (VHS-REQ-656)', () => {
+  it('reports preparing then downloading then extracting then complete', () => {
+    const agg = new DockerPullProgressAggregator();
+    expect(agg.snapshot().phase).toBe('preparing');
+
+    agg.apply({ kind: 'layer-seen', layerId: 'a' });
+    agg.apply({ kind: 'layer-seen', layerId: 'b' });
+    // Layers enumerated but nothing downloaded yet -> still preparing.
+    expect(agg.snapshot().phase).toBe('preparing');
+
+    expect(agg.apply({ kind: 'layer-progress', layerId: 'a', current: 10, total: 100 }).phase).toBe('downloading');
+
+    // Both layers finish DOWNLOADING (bytes in) but not yet unpacked -> extracting.
+    agg.apply({ kind: 'layer-download-complete', layerId: 'a' });
+    const downloaded = agg.apply({ kind: 'layer-download-complete', layerId: 'b' });
+    expect(downloaded.phase).toBe('extracting');
+
+    // Both layers unpack to Pull complete -> complete.
+    agg.apply({ kind: 'layer-complete', layerId: 'a' });
+    expect(agg.apply({ kind: 'layer-complete', layerId: 'b' }).phase).toBe('complete');
+  });
+
+  it('keeps advancing extract progress after the download finishes (no frozen 99%)', () => {
+    const agg = new DockerPullProgressAggregator();
+    agg.apply({ kind: 'layer-seen', layerId: 'a' });
+    agg.apply({ kind: 'layer-seen', layerId: 'b' });
+    // Download both layers fully.
+    agg.apply({ kind: 'layer-progress', layerId: 'a', current: 100, total: 100 });
+    agg.apply({ kind: 'layer-progress', layerId: 'b', current: 100, total: 100 });
+    agg.apply({ kind: 'layer-download-complete', layerId: 'a' });
+    const atExtractStart = agg.apply({ kind: 'layer-download-complete', layerId: 'b' });
+    expect(atExtractStart.phase).toBe('extracting');
+    expect(atExtractStart.extractPercent).toBe(0);
+    const overallAtExtractStart = atExtractStart.overallPercent ?? 0;
+
+    // One layer unpacks halfway: extract climbs and the overall bar advances past
+    // where it sat when the download finished.
+    const mid = agg.apply({ kind: 'layer-extract-progress', layerId: 'a', current: 50, total: 100 });
+    expect(mid.extractPercent).toBe(25); // a half (0.5) over 2 layers
+    expect(mid.overallPercent).toBeGreaterThan(overallAtExtractStart);
+
+    // First layer finishes extracting.
+    const oneDone = agg.apply({ kind: 'layer-complete', layerId: 'a' });
+    expect(oneDone.extractPercent).toBe(50); // 1 of 2 layers unpacked
+    expect(oneDone.completedLayers).toBe(1);
+    expect(oneDone.phase).toBe('extracting');
+  });
+
+  it('advances extraction on Pull complete steps even without Extracting byte detail', () => {
+    const agg = new DockerPullProgressAggregator();
+    for (const id of ['a', 'b', 'c', 'd']) {
+      agg.apply({ kind: 'layer-seen', layerId: id });
+      agg.apply({ kind: 'layer-download-complete', layerId: id });
+    }
+    // All downloaded, none unpacked -> extracting at 0%.
+    expect(agg.snapshot().phase).toBe('extracting');
+    expect(agg.snapshot().extractPercent).toBe(0);
+    // Layers reach Pull complete one by one with no Extracting progressDetail.
+    expect(agg.apply({ kind: 'layer-complete', layerId: 'a' }).extractPercent).toBe(25);
+    expect(agg.apply({ kind: 'layer-complete', layerId: 'b' }).extractPercent).toBe(50);
   });
 });
 
@@ -246,6 +327,7 @@ describe('formatBytes', () => {
 describe('formatPullProgressMessage', () => {
   it('renders a layer-weighted percentage with layer count and downloaded bytes', () => {
     const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
+      phase: 'downloading',
       percent: 31,
       downloadedBytes: Math.round(1.4 * GB),
       totalBytes: Math.round(2 * GB),
@@ -259,6 +341,7 @@ describe('formatPullProgressMessage', () => {
 
   it('renders a true byte-% (downloaded / known total) when the stable total is known', () => {
     const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
+      phase: 'downloading',
       percent: 42,
       downloadedBytes: Math.round(8.1 * GB),
       totalBytes: Math.round(8.1 * GB),
@@ -271,9 +354,38 @@ describe('formatPullProgressMessage', () => {
     );
   });
 
+  it('names the extracting phase with its own percent and layer count (VHS-REQ-656)', () => {
+    const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
+      phase: 'extracting',
+      percent: 99,
+      extractPercent: 60,
+      downloadedBytes: Math.round(19.3 * GB),
+      totalBytes: Math.round(19.3 * GB),
+      completedLayers: 8,
+      totalLayers: 13
+    });
+    expect(message).toBe(
+      'Extracting container image: nationalinstruments/labview:2026q1-windows — 60% (8/13 layers)'
+    );
+  });
+
+  it('shows a finalizing message once every layer is pulled (VHS-REQ-656)', () => {
+    const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
+      phase: 'complete',
+      percent: 99,
+      extractPercent: 99,
+      downloadedBytes: Math.round(19.3 * GB),
+      totalBytes: Math.round(19.3 * GB),
+      completedLayers: 13,
+      totalLayers: 13
+    });
+    expect(message).toBe('Finalizing container image: nationalinstruments/labview:2026q1-windows');
+  });
+
   it('falls back to a plain message before any progress is known', () => {
     expect(
       formatPullProgressMessage('img:tag', {
+        phase: 'preparing',
         percent: undefined,
         downloadedBytes: 0,
         totalBytes: 0,
@@ -402,5 +514,42 @@ describe('streamDockerImagePull', () => {
     expect(snapshots.at(-1)?.knownTotalBytes).toBe(2 * GiB);
     // The halfway snapshot is a real byte-% against the stable total.
     expect(snapshots.some((s) => s.percent === 50)).toBe(true);
+  });
+
+  it('signals the extraction phase after the download completes (VHS-REQ-656)', async () => {
+    const messages: string[] = [];
+    const image = 'nationalinstruments/labview:2026q1-windows';
+    const result = await streamDockerImagePull({
+      image,
+      hostPlatform: 'win32',
+      resolveDownloadSize: async () => undefined,
+      requestStream: fakeStream([
+        JSON.stringify({ status: 'Pulling from nationalinstruments/labview', id: '2026q1-windows' }),
+        JSON.stringify({ status: 'Pulling fs layer', id: 'a' }),
+        JSON.stringify({ status: 'Pulling fs layer', id: 'b' }),
+        // Download both layers fully.
+        JSON.stringify({ status: 'Downloading', id: 'a', progressDetail: { current: 100, total: 100 } }),
+        JSON.stringify({ status: 'Downloading', id: 'b', progressDetail: { current: 100, total: 100 } }),
+        JSON.stringify({ status: 'Download complete', id: 'a' }),
+        JSON.stringify({ status: 'Download complete', id: 'b' }),
+        // Then the long unpack phase.
+        JSON.stringify({ status: 'Extracting', id: 'a', progressDetail: { current: 50, total: 100 } }),
+        JSON.stringify({ status: 'Pull complete', id: 'a' }),
+        JSON.stringify({ status: 'Extracting', id: 'b', progressDetail: { current: 50, total: 100 } }),
+        JSON.stringify({ status: 'Pull complete', id: 'b' }),
+        JSON.stringify({ status: 'Status: Downloaded newer image for nationalinstruments/labview:2026q1-windows' })
+      ]),
+      onProgress: (snapshot) => {
+        messages.push(formatPullProgressMessage(image, snapshot));
+      }
+    });
+
+    expect(result.succeeded).toBe(true);
+    // The download phase was signalled...
+    expect(messages.some((m) => m.startsWith('Pulling container image:'))).toBe(true);
+    // ...then the extraction phase took over with its own climbing percent...
+    expect(messages.some((m) => /^Extracting container image: .* — \d+% \(\d+\/2 layers\)$/.test(m))).toBe(true);
+    // ...and the toast finalized instead of freezing at 99%.
+    expect(messages.at(-1)).toBe(`Finalizing container image: ${image}`);
   });
 });

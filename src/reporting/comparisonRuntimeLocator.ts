@@ -3135,10 +3135,13 @@ export async function acquireWindowsContainerImage(
       onProgress: async (snapshot) => {
         // The caller adds +10 ("Acquiring") before and +5 ("ready") after, so the
         // pull owns ~85 progress-bar points. Re-emit whenever the visible message
-        // changes (layer-weighted percent ticks up, a layer completes, or the
-        // downloaded-byte figure changes) rather than on whole-percent advances —
-        // a percent-only gate froze the toast once it reached its ceiling.
-        if (snapshot.percent === undefined) {
+        // changes (download percent ticks up, the phase flips to extracting, a
+        // layer completes, or the byte figure changes) rather than on whole-percent
+        // advances — a percent-only gate froze the toast once it reached its ceiling.
+        // The bar tracks overallPercent so it keeps advancing through the
+        // post-download extraction phase instead of sitting at the download ceiling.
+        const barPercent = snapshot.overallPercent ?? snapshot.percent;
+        if (barPercent === undefined) {
           return;
         }
         const message = formatPullProgressMessage(image, snapshot);
@@ -3146,7 +3149,7 @@ export async function acquireWindowsContainerImage(
           return;
         }
         lastMessage = message;
-        const scaled = Math.min(85, (snapshot.percent / 100) * 85);
+        const scaled = Math.min(85, (barPercent / 100) * 85);
         const increment = scaled > lastScaled ? scaled - lastScaled : undefined;
         if (increment) {
           lastScaled = scaled;
