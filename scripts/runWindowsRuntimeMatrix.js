@@ -105,6 +105,7 @@ function parseArgs(argv) {
     out: DEFAULT_EVIDENCE_OUT,
     proofDir: undefined,
     keepRunning: false,
+    hostTcpPort: undefined,
     help: false
   };
 
@@ -124,7 +125,14 @@ function parseArgs(argv) {
     else if (arg === '--out') options.out = next();
     else if (arg === '--proof-dir') options.proofDir = next();
     else if (arg === '--keep-running') options.keepRunning = true;
-    else if (arg === '--help' || arg === '-h') options.help = true;
+    else if (arg === '--host-tcp-port') {
+      const raw = next();
+      const parsed = Number.parseInt(raw, 10);
+      if (!Number.isInteger(parsed) || parsed <= 0 || String(parsed) !== raw.trim()) {
+        throw new Error(`--host-tcp-port must be a positive integer (got: ${raw})`);
+      }
+      options.hostTcpPort = parsed;
+    } else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
@@ -160,6 +168,9 @@ function getUsage() {
     '  --proof-dir <path>      Directory for per-scenario proof JSON files',
     '                          (default: alongside --out)',
     '  --keep-running          Do not close LabVIEW between scenarios',
+    `  --host-tcp-port <n>     Expected non-default VI Server port for port-A`,
+    `                          (default: ${NON_DEFAULT_VI_SERVER_TCP_PORT}; set to the selected`,
+    "                          install's configured server.tcp.port, e.g. 3366)",
     '  --help                  Show this help text'
   ].join('\n');
 }
@@ -195,7 +206,14 @@ function buildScenarioPlan(options) {
   const scenarios = selectScenarios(options.scenario);
   const proofDir = resolveProofDir(options);
   return scenarios.map((id) => {
-    const parameters = SCENARIO_PARAMETERS[id];
+    let parameters = SCENARIO_PARAMETERS[id];
+    // VHS-REQ-623: the port-admit scenario's expected non-default VI Server
+    // port is host-configurable, so a maintainer host whose selected install
+    // runs on a different non-default port (e.g. 3366) can still assert an
+    // exact observed-port match without editing the install's LabVIEW.ini.
+    if (id === 'port-A' && options.hostTcpPort !== undefined) {
+      parameters = { ...parameters, expectedHostTcpPort: options.hostTcpPort };
+    }
     return {
       id,
       parameters,
