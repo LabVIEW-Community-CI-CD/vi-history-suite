@@ -12,6 +12,26 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Added
+
+- A new **Runtime & Report Settings** panel replaces the runtime status-bar
+  quick-pick. Click the **VI History runtime** status bar item to open a panel
+  where you can choose the comparison runtime (host LabVIEW, Docker, or
+  auto-detect), pick the LabVIEW container image version when using Docker, and
+  tune which differences the LabVIEW comparison report includes — Include
+  checkboxes let you deselect VI attributes, the front panel, front-panel object
+  position/size, the block diagram, or block-diagram cosmetic differences, plus
+  the report format. Choices save to your user settings immediately
+  (VHS-REQ-620/645/651, #536).
+
+### Changed
+
+- The runtime status bar item and the bitness/version mismatch notifications now
+  open the Runtime & Report Settings panel instead of a quick-pick. The **Pick
+  LabVIEW Container Image Version** command is no longer in the Command Palette;
+  its selection now lives in the panel, and it remains available from the
+  in-report **Pick Image Version** remediation action (VHS-REQ-620/651, #536).
+
 ### Fixed
 
 - A successful comparison no longer shows a verbose runtime notification that

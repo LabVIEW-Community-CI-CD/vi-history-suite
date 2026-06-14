@@ -1734,6 +1734,51 @@ function readBooleanSetting(
   return configuration.get<unknown>(key) === true;
 }
 
+export interface ApplyComparisonReportOptionSelectionDeps {
+  readonly update: (
+    key: string,
+    value: unknown,
+    target: vscode.ConfigurationTarget
+  ) => Thenable<void>;
+}
+
+/**
+ * VHS-REQ-645: a single edit posted by the Runtime &amp; Report Settings panel.
+ * `format` selects the report container format; `include` toggles one
+ * difference class by its section-relative `report.ignore*` setting key, where
+ * the panel's Include checkbox uses the inverse polarity of the stored flag.
+ */
+export type ComparisonReportOptionSelection =
+  | { readonly kind: 'format'; readonly format: ComparisonReportFormat }
+  | { readonly kind: 'include'; readonly settingKey: string; readonly include: boolean };
+
+/**
+ * VHS-REQ-645: persist one Runtime &amp; Report Settings panel edit to the
+ * `viHistorySuite.report.*` user settings the comparison pipeline reads back via
+ * {@link readComparisonReportOptions}. The Include checkbox is the user-facing
+ * inverse of the stored suppression flag, so `include === false` writes
+ * `ignore* = true` (exclude that difference class from the report). An
+ * unsupported format value is ignored so a malformed message can never write a
+ * format the in-panel viewer, dashboard, and export cannot render.
+ */
+export async function applyComparisonReportOptionSelection(
+  selection: ComparisonReportOptionSelection,
+  deps: ApplyComparisonReportOptionSelectionDeps
+): Promise<void> {
+  if (selection.kind === 'format') {
+    if (!ALLOWED_REPORT_FORMATS.includes(selection.format)) {
+      return;
+    }
+    await deps.update('report.format', selection.format, vscode.ConfigurationTarget.Global);
+    return;
+  }
+  await deps.update(
+    selection.settingKey,
+    selection.include !== true,
+    vscode.ConfigurationTarget.Global
+  );
+}
+
 export const DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS = 180;
 const MIN_CLI_CONNECT_TIMEOUT_SECONDS = 30;
 const MAX_CLI_CONNECT_TIMEOUT_SECONDS = 600;

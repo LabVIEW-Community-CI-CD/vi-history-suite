@@ -64,7 +64,7 @@ import {
   presentOpenBlockedToast
 } from './ui/gitPrerequisiteNotice';
 import { registerRuntimeRuntimeCommands } from './commands/runtimeCommands';
-import { registerPickRuntimeProviderCommand } from './commands/pickRuntimeProviderCommand';
+import { registerOpenRuntimeReportPanelCommand } from './commands/openRuntimeReportPanelCommand';
 import { registerPickContainerImageVersionCommand } from './commands/pickContainerImageVersionCommand';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
@@ -279,10 +279,13 @@ export async function activate(
   const runtimeAvailabilityWatcher = createRuntimeAvailabilityWatcher(context);
   context.subscriptions.push(runtimeAvailabilityWatcher);
   registerRuntimeRuntimeCommands(context, runtimeAvailabilityWatcher);
-  // VHS-REQ-620: Register the runtime provider quick-pick. The status bar
-  // item created by the watcher targets this command, so a click flips the
-  // persisted runtime selection just like a `vihs --provider …` invocation.
-  registerPickRuntimeProviderCommand(context, runtimeAvailabilityWatcher);
+  // VHS-REQ-620 / VHS-REQ-645: Register the Runtime & Report Settings panel
+  // under the historical runtime-provider command id. The status bar item
+  // created by the watcher (and the bitness/version open-gate toasts) target
+  // this command, so a click now opens the panel where the user selects the
+  // runtime provider, the container image version, and the report difference
+  // filters — replacing the former quick-pick chain.
+  registerOpenRuntimeReportPanelCommand(context, runtimeAvailabilityWatcher);
 
   // VHS-REQ-649: Pick LabVIEW Container Image Version command. Discovers the
   // container image versions published on Docker Hub and already pulled locally

@@ -1,0 +1,343 @@
+/**
+ * VHS-REQ-620 / VHS-REQ-645: Runtime & Report Settings panel command.
+ *
+ * Opens the secondary webview that replaces the status-bar runtime quick-pick.
+ * The panel selects the comparison runtime provider, the LabVIEW container image
+ * version (when Docker is in play), and toggles the LabVIEW comparison-report
+ * difference filters. It is registered under the historical
+ * `labviewViHistory.pickRuntimeProvider` id so the status-bar item and the
+ * bitness/version open-gate toasts that already target that id now open this
+ * panel without any rewiring.
+ *
+ * Trust posture: identical to the prior quick-pick — blocked outside trusted
+ * workspaces because the persisted runtime selection feeds external-process
+ * invocation and surfacing host paths in an untrusted folder leaks filesystem
+ * layout.
+ *
+ * Selection persistence reuses the pure helpers extracted from the former
+ * quick-pick commands (`applyPickRuntimeProviderSelection`,
+ * `applyContainerImageVersionSelection`) plus the report-options writer
+ * (`applyComparisonReportOptionSelection`), so every choice lands in the same
+ * `viHistorySuite.*` user settings the comparison pipeline already reads.
+ */
+
+import * as vscode from 'vscode';
+
+import {
+  applyPickRuntimeProviderSelection,
+  buildPickRuntimeProviderItems,
+  type PickRuntimeProviderOption
+} from './pickRuntimeProviderCommand';
+import {
+  applyContainerImageVersionSelection,
+  defaultFetchPublishedTags,
+  defaultListLocalImages,
+  discoverAvailableContainerImageVersions
+} from './pickContainerImageVersionCommand';
+import {
+  type AvailableContainerImageVersion,
+  type ContainerImagePlatform,
+  type LocalImageLister,
+  type RegistryTagFetcher
+} from '../tooling/containerImageCatalog';
+import {
+  type DockerDaemonPlatformProber,
+  defaultProbeDockerDaemonPlatform,
+  resolveConfirmedContainerPlatform,
+  resolveHostContainerPlatform
+} from '../tooling/dockerDaemonPlatform';
+import {
+  applyComparisonReportOptionSelection,
+  readComparisonReportOptions
+} from '../reporting/comparisonReportAction';
+import {
+  buildAvailableStatusBarSuffix,
+  STATUS_BAR_PICK_COMMAND_ID,
+  type RuntimeAvailabilityWatcher
+} from '../ui/runtimeAvailabilityNotice';
+import {
+  REPORT_OPTION_DESCRIPTOR_BY_KEY,
+  RUNTIME_REPORT_PANEL_TITLE,
+  RUNTIME_REPORT_PANEL_VIEW_TYPE,
+  type ContainerVersionPanelOption,
+  type PanelReportFormat,
+  type ReportIncludeKey,
+  type RuntimeProviderPanelOption,
+  type RuntimeReportPanelViewModel,
+  deriveReportIncludeFlags,
+  renderRuntimeReportPanelHtml
+} from '../ui/runtimeReportPanel';
+
+/**
+ * The panel opens under the historical runtime quick-pick id so the status bar
+ * and open-gate toasts that target it require no rewiring.
+ */
+export const OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID = STATUS_BAR_PICK_COMMAND_ID;
+
+export const RUNTIME_REPORT_PANEL_UNTRUSTED_MESSAGE =
+  'VI History runtime commands require workspace trust.';
+
+interface ContainerDiscoveryCache {
+  discovering: boolean;
+  discovered: boolean;
+  versions: AvailableContainerImageVersion[];
+  notes: string[];
+}
+
+interface RuntimeReportPanelMessage {
+  readonly command?: string;
+  readonly index?: number;
+  readonly format?: string;
+  readonly includeKey?: string;
+  readonly include?: boolean;
+  readonly tag?: string;
+}
+
+export interface RegisterOpenRuntimeReportPanelCommandDeps {
+  readonly isTrusted?: () => boolean;
+  readonly readReportOptions?: typeof readComparisonReportOptions;
+  readonly fetchPublishedTags?: RegistryTagFetcher;
+  readonly listLocalImages?: LocalImageLister;
+  readonly probeDaemonPlatform?: DockerDaemonPlatformProber;
+  /** Explicit container platform override (tests skip the daemon-mode probe). */
+  readonly containerPlatform?: ContainerImagePlatform;
+}
+
+function presenceLabel(version: AvailableContainerImageVersion): string {
+  if (version.locallyPresent) {
+    return 'Pulled locally';
+  }
+  return version.publishedToRegistry ? 'Available to pull' : 'Available';
+}
+
+function toPanelProviderOption(
+  option: PickRuntimeProviderOption
+): RuntimeProviderPanelOption {
+  if (option.kind === 'host') {
+    return {
+      kind: 'host',
+      label: `Host LabVIEW ${option.labviewVersion} ${option.labviewBitness}`,
+      description: option.description,
+      detail: option.detail
+    };
+  }
+  if (option.kind === 'docker') {
+    return {
+      kind: 'docker',
+      label: `Docker \u2014 LabVIEW ${option.labviewVersion} ${option.labviewBitness}`,
+      description: option.description,
+      detail: option.detail
+    };
+  }
+  return {
+    kind: 'clear',
+    label: 'Clear (auto-detect each session)',
+    detail: option.detail
+  };
+}
+
+function buildActiveProviderSummary(
+  watcher: RuntimeAvailabilityWatcher
+): { summary: string; source?: 'persisted' | 'auto-detected' } {
+  const snapshot = watcher.getLastSnapshot();
+  if (!snapshot || snapshot.label.provider === 'none') {
+    return { summary: 'None detected' };
+  }
+  const suffix = buildAvailableStatusBarSuffix(snapshot.label);
+  if (suffix.length === 0) {
+    return { summary: 'None detected', source: snapshot.source };
+  }
+  const summary = snapshot.label.provider === 'host' ? `Host ${suffix}` : suffix;
+  return { summary, source: snapshot.source };
+}
+
+export function registerOpenRuntimeReportPanelCommand(
+  context: vscode.ExtensionContext,
+  watcher: RuntimeAvailabilityWatcher,
+  deps: RegisterOpenRuntimeReportPanelCommandDeps = {}
+): void {
+  const isTrusted = deps.isTrusted ?? (() => vscode.workspace.isTrusted);
+  const readReportOptions = deps.readReportOptions ?? readComparisonReportOptions;
+  const fetchPublishedTags = deps.fetchPublishedTags ?? defaultFetchPublishedTags;
+  const listLocalImages = deps.listLocalImages ?? defaultListLocalImages;
+  const probeDaemonPlatform = deps.probeDaemonPlatform ?? defaultProbeDockerDaemonPlatform;
+  const explicitPlatform = deps.containerPlatform;
+
+  let panel: vscode.WebviewPanel | undefined;
+  let containerCache: ContainerDiscoveryCache = {
+    discovering: false,
+    discovered: false,
+    versions: [],
+    notes: []
+  };
+
+  const buildViewModel = (): RuntimeReportPanelViewModel => {
+    const configuration = vscode.workspace.getConfiguration('viHistorySuite');
+    const detection = watcher.getLastDetection();
+    const providerItems = detection ? buildPickRuntimeProviderItems(detection) : [];
+    const providerOptions = providerItems.map(toPanelProviderOption);
+
+    const persistedProvider = configuration.get<string>('runtimeProvider');
+    const persistedVersion = configuration.get<string>('labviewVersion');
+    const persistedBitness = configuration.get<string>('labviewBitness');
+    const selectedProviderIndex = providerItems.findIndex(
+      (item) =>
+        item.kind !== 'clear' &&
+        item.runtimeProvider === persistedProvider &&
+        item.labviewVersion === persistedVersion &&
+        item.labviewBitness === persistedBitness
+    );
+
+    const { summary, source } = buildActiveProviderSummary(watcher);
+
+    const dockerAvailable =
+      providerItems.some((item) => item.kind === 'docker') ||
+      persistedProvider === 'docker';
+    const currentTag = (configuration.get<string>('container.imageVersion') ?? '').trim();
+    const versions: ContainerVersionPanelOption[] = containerCache.versions.map(
+      (version) => ({ tag: version.tag, presence: presenceLabel(version) })
+    );
+
+    const reportOptions = readReportOptions(configuration);
+    const format: PanelReportFormat =
+      reportOptions.reportFormat === 'HTML' ? 'HTML' : 'HTMLSingleFile';
+
+    return {
+      trusted: true,
+      detectionAvailable: detection !== undefined,
+      activeProviderSummary: summary,
+      activeProviderSource: source,
+      providerOptions,
+      selectedProviderIndex,
+      container: {
+        visible: dockerAvailable,
+        currentTag,
+        discovering: containerCache.discovering,
+        discovered: containerCache.discovered,
+        versions,
+        notes: containerCache.notes
+      },
+      report: {
+        format,
+        includeFlags: deriveReportIncludeFlags(reportOptions)
+      }
+    };
+  };
+
+  const rerender = (): void => {
+    if (panel) {
+      panel.webview.html = renderRuntimeReportPanelHtml(buildViewModel());
+    }
+  };
+
+  const handleMessage = async (raw: unknown): Promise<void> => {
+    const message = (raw ?? {}) as RuntimeReportPanelMessage;
+    const configuration = vscode.workspace.getConfiguration('viHistorySuite');
+    const update = configuration.update.bind(configuration);
+
+    switch (message.command) {
+      case 'selectRuntimeProvider': {
+        const detection = watcher.getLastDetection();
+        if (!detection || typeof message.index !== 'number') {
+          return;
+        }
+        const option = buildPickRuntimeProviderItems(detection)[message.index];
+        if (!option) {
+          return;
+        }
+        await applyPickRuntimeProviderSelection(option, { update });
+        rerender();
+        return;
+      }
+      case 'discoverContainerVersions': {
+        containerCache = { ...containerCache, discovering: true };
+        rerender();
+        const platform =
+          explicitPlatform ??
+          (await resolveConfirmedContainerPlatform(probeDaemonPlatform)) ??
+          resolveHostContainerPlatform();
+        const { available, notes } = await discoverAvailableContainerImageVersions({
+          platform,
+          fetchPublishedTags,
+          listLocalImages
+        });
+        containerCache = {
+          discovering: false,
+          discovered: true,
+          versions: [...available],
+          notes: [...notes]
+        };
+        rerender();
+        return;
+      }
+      case 'selectContainerVersion': {
+        const tag = (message.tag ?? '').trim();
+        await applyContainerImageVersionSelection(
+          tag.length > 0
+            ? { kind: 'version', label: '', tag }
+            : { kind: 'clear', label: '' },
+          { update }
+        );
+        rerender();
+        return;
+      }
+      case 'setReportFormat': {
+        if (message.format === 'HTMLSingleFile' || message.format === 'HTML') {
+          await applyComparisonReportOptionSelection(
+            { kind: 'format', format: message.format },
+            { update }
+          );
+        }
+        return;
+      }
+      case 'setReportInclude': {
+        const descriptor = message.includeKey
+          ? REPORT_OPTION_DESCRIPTOR_BY_KEY[message.includeKey as ReportIncludeKey]
+          : undefined;
+        if (!descriptor) {
+          return;
+        }
+        await applyComparisonReportOptionSelection(
+          {
+            kind: 'include',
+            settingKey: descriptor.settingKey,
+            include: message.include === true
+          },
+          { update }
+        );
+        return;
+      }
+      default:
+        return;
+    }
+  };
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID, async () => {
+      if (!isTrusted()) {
+        void vscode.window.showWarningMessage(RUNTIME_REPORT_PANEL_UNTRUSTED_MESSAGE);
+        return { outcome: 'blocked-untrusted-workspace' as const };
+      }
+
+      if (panel) {
+        panel.reveal();
+        rerender();
+        return { outcome: 'revealed-panel' as const };
+      }
+
+      containerCache = { discovering: false, discovered: false, versions: [], notes: [] };
+      panel = vscode.window.createWebviewPanel(
+        RUNTIME_REPORT_PANEL_VIEW_TYPE,
+        RUNTIME_REPORT_PANEL_TITLE,
+        vscode.ViewColumn.Active,
+        { enableScripts: true }
+      );
+      panel.onDidDispose(() => {
+        panel = undefined;
+      });
+      panel.webview.onDidReceiveMessage((message) => handleMessage(message));
+      rerender();
+      return { outcome: 'opened-panel' as const };
+    })
+  );
+}
