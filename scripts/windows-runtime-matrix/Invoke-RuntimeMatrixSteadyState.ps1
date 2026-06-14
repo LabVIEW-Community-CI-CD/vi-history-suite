@@ -7,9 +7,10 @@
     directions (steady-*, same year / different bitness), the VHS-REQ-653
     version-conflict directions (version-*, same bitness / different year), and
     the VHS-REQ-623 non-default VI Server port admit direction (port-*, where
-    -ExpectedBlockedReason is 'none' and -ExpectedHostTcpPort asserts the
-    observed proof port; the selected install must be configured on that
-    non-default server.tcp.port).
+    -ExpectedBlockedReason is 'none' and -DerivePortFromSelectedIni asserts the
+    observed proof port equals the VI Server port read from the SELECTED
+    install's own LabVIEW.ini, and that the product read that exact ini -- never
+    a hardcoded or operator-supplied constant).
 
 .DESCRIPTION
     Called by `scripts/runWindowsRuntimeMatrix.js`. Emits a per-scenario log
@@ -55,7 +56,7 @@ param(
 
     [string]$ExpectedBlockedReason = 'windows-host-bitness-conflict',
 
-    [int]$ExpectedHostTcpPort = 0,
+    [switch]$DerivePortFromSelectedIni,
 
     [Parameter(Mandatory = $true)]
     [string]$ProofOutPath,
@@ -99,6 +100,66 @@ function Get-LabviewInstallRoot {
         return "C:\Program Files\National Instruments\LabVIEW $Version\"
     }
     return "C:\Program Files (x86)\National Instruments\LabVIEW $Version\"
+}
+
+# VHS-REQ-623: the documented Windows VI Server default when server.tcp.port is
+# absent from LabVIEW.ini (mirrors DEFAULT_WINDOWS_LABVIEW_TCP_PORT in the
+# product's comparisonReportRuntimeExecution.ts).
+$DefaultWindowsLabviewTcpPort = 3363
+
+function Get-LabviewIniViServerPort {
+    # Mirror the product's LabVIEW.ini VI Server parse semantics
+    # (resolveWindowsLabviewTcpSettingsForLabviewPath): quoted or unquoted,
+    # case-insensitive, line-anchored; an absent server.tcp.port means the
+    # documented Windows default. Deriving the expected port from the SELECTED
+    # install's own ini is what makes port-A robust to the operator changing the
+    # port at any time without editing the harness.
+    param(
+        [string]$IniPath
+    )
+    $facts = @{
+        iniReadable             = $false
+        serverTcpPortConfigured = $false
+        serverTcpEnabled        = 'unknown'
+        port                    = $DefaultWindowsLabviewTcpPort
+    }
+    if ([string]::IsNullOrWhiteSpace($IniPath) -or -not (Test-Path -LiteralPath $IniPath)) {
+        return $facts
+    }
+    try {
+        $iniText = Get-Content -LiteralPath $IniPath -Raw -ErrorAction Stop
+    }
+    catch {
+        return $facts
+    }
+    $facts.iniReadable = $true
+    # Windows LabVIEW defaults VI Server TCP on when the key is absent.
+    $facts.serverTcpEnabled = $true
+    $enabledMatch = [regex]::Match($iniText, '(?im)^\s*server\.tcp\.enabled\s*=\s*"?(true|false)"?\s*$')
+    if ($enabledMatch.Success) {
+        $facts.serverTcpEnabled = ($enabledMatch.Groups[1].Value.ToLowerInvariant() -eq 'true')
+    }
+    $portMatch = [regex]::Match($iniText, '(?im)^\s*server\.tcp\.port\s*=\s*"?(\d+)"?\s*$')
+    if ($portMatch.Success) {
+        $facts.serverTcpPortConfigured = $true
+        $facts.port = [int]$portMatch.Groups[1].Value
+    }
+    return $facts
+}
+
+function Test-WindowsPathsEqual {
+    param(
+        [string]$First,
+        [string]$Second
+    )
+    if ([string]::IsNullOrWhiteSpace($First) -or [string]::IsNullOrWhiteSpace($Second)) {
+        return $false
+    }
+    $normalize = {
+        param($value)
+        $value.Trim().Replace('/', '\').TrimEnd('\').ToLowerInvariant()
+    }
+    return ((& $normalize $First) -eq (& $normalize $Second))
 }
 
 function Get-StringTail {
@@ -158,7 +219,9 @@ $payload = @{
         labviewExecutablePath    = $null
         labviewProcessId         = $null
         hostLabviewTcpPort       = $null
+        hostLabviewIniPath       = $null
     }
+    portOracle    = $null
     spawn         = @{
         exitCode   = $null
         stdoutTail = $null
@@ -269,6 +332,7 @@ try {
     # VI Server port is nested under `runtime.hostLabviewTcpPort`.
     $blockedReason = $null
     $hostTcpPort = $null
+    $hostIniPath = $null
     if ($proofJson.PSObject.Properties.Match('runtime').Count -gt 0 -and
         $null -ne $proofJson.runtime) {
         if ($proofJson.runtime.PSObject.Properties.Match('blockedReason').Count -gt 0) {
@@ -276,6 +340,9 @@ try {
         }
         if ($proofJson.runtime.PSObject.Properties.Match('hostLabviewTcpPort').Count -gt 0) {
             $hostTcpPort = $proofJson.runtime.hostLabviewTcpPort
+        }
+        if ($proofJson.runtime.PSObject.Properties.Match('hostLabviewIniPath').Count -gt 0) {
+            $hostIniPath = $proofJson.runtime.hostLabviewIniPath
         }
     }
 
@@ -288,15 +355,43 @@ try {
         if ([string]::IsNullOrEmpty($ExpectedBlockedReason)) { 'none' } else { $ExpectedBlockedReason }
     $payload.observed.runtimeBlockedReason = $observedBlockedReason
     $payload.observed.hostLabviewTcpPort = $hostTcpPort
+    $payload.observed.hostLabviewIniPath = $hostIniPath
 
     $failures = @()
     if ($observedBlockedReason -ne $expectedBlockedReasonNormalized) {
         $failures += "expected runtimeBlockedReason='$expectedBlockedReasonNormalized', observed='$observedBlockedReason'"
     }
-    # VHS-REQ-623: when an expected non-default VI Server port is supplied, the
-    # observed proof port must match it (the port-admit scenario).
-    if ($ExpectedHostTcpPort -gt 0 -and [int]$hostTcpPort -ne $ExpectedHostTcpPort) {
-        $failures += "expected hostLabviewTcpPort=$ExpectedHostTcpPort, observed='$hostTcpPort'"
+    # VHS-REQ-623: the port-admit scenario derives its expected VI Server port
+    # from the SELECTED install's own LabVIEW.ini (the same source of truth the
+    # product reads) instead of a hardcoded or operator-supplied constant, then
+    # proves the product (a) read that exact selected ini and (b) plumbed its
+    # configured port through to the validation proof. This stays correct no
+    # matter what port the operator configures, or which install they select.
+    if ($DerivePortFromSelectedIni) {
+        $selectedExe = Get-LabviewExecutablePath -Bitness $SelectedBitness -Version $LabviewVersion
+        $selectedIni = Join-Path (Split-Path -Parent $selectedExe) 'LabVIEW.ini'
+        $iniFacts = Get-LabviewIniViServerPort -IniPath $selectedIni
+        $derivedExpectedPort = [int]$iniFacts.port
+        $iniPathMatches = Test-WindowsPathsEqual -First $hostIniPath -Second $selectedIni
+        $portMatches = ($null -ne $hostTcpPort -and [int]$hostTcpPort -eq $derivedExpectedPort)
+        $payload.portOracle = @{
+            selectedLabviewIniPath  = $selectedIni
+            derivedExpectedTcpPort  = $derivedExpectedPort
+            serverTcpPortConfigured = [bool]$iniFacts.serverTcpPortConfigured
+            serverTcpEnabled        = $iniFacts.serverTcpEnabled
+            isNonDefaultPort        = ($derivedExpectedPort -ne $DefaultWindowsLabviewTcpPort)
+            iniReadable             = [bool]$iniFacts.iniReadable
+            observedLabviewIniPath  = $hostIniPath
+            observedTcpPort         = $hostTcpPort
+            iniPathMatches          = [bool]$iniPathMatches
+            portMatches             = [bool]$portMatches
+        }
+        if (-not $iniPathMatches) {
+            $failures += "expected hostLabviewIniPath='$selectedIni', observed='$hostIniPath'"
+        }
+        if (-not $portMatches) {
+            $failures += "expected hostLabviewTcpPort=$derivedExpectedPort (derived from $selectedIni), observed='$hostTcpPort'"
+        }
     }
 
     if ($failures.Count -gt 0) {
