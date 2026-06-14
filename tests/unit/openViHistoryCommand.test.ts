@@ -667,18 +667,23 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('offers a Pick Image Version action when the runtime is blocked by a container image platform mismatch (VHS-REQ-650)', async () => {
+  it('shows a concise Pick Image Version toast when blocked by a container image platform mismatch (VHS-REQ-650, #532)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
+    const panel = createMockPanel();
+    createWebviewPanelMock.mockReturnValue(panel);
     const comparisonReportAction = vi.fn().mockResolvedValue({
-      outcome: 'missing-retained-comparison-report',
+      outcome: 'blocked-container-image-platform-mismatch',
       reportStatus: 'blocked-runtime',
       runtimeExecutionState: 'not-available',
       blockedReason: 'container-image-platform-mismatch',
+      containerSelectedImagePlatform: 'windows',
+      containerActiveEnginePlatform: 'linux',
+      containerSelectedImageTag: '2026q1patch2-windows',
       runtimeDoctorSummaryLines: [
         'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
-        'Provider request=docker.',
+        'Provider decision: rejected host-native because Host-native execution was not selected because the Docker provider was requested.',
         'Runtime blocked reason: container-image-platform-mismatch.',
         'Next action: the selected viHistorySuite.container.imageVersion targets a different platform than the active Docker engine (linux-container mode); switch Docker to the matching container engine or select a linux image version (or clear viHistorySuite.container.imageVersion to use the default), then rerun comparison report generation.'
       ]
@@ -697,14 +702,34 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
 
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      expect.stringContaining('container-image-platform-mismatch'),
+      expect.stringContaining('The selected Docker image is a Windows-container image'),
       'Pick Image Version'
     );
+    const [message] = showWarningMessageMock.mock.calls.at(-1)!;
+    expect(message).toContain('Docker is currently in Linux-container mode');
+    expect(message).toContain('pick a Linux image version');
+    // Concise: no provider internals and no host-native noise.
+    expect(message).not.toContain('Provider:');
+    expect(message).not.toContain('Rejected providers');
+    expect(message).not.toContain('host-native');
+    expect(message).not.toContain('viHistorySuite.container.imageVersion');
+
     await Promise.resolve();
     await Promise.resolve();
     expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
       'labviewViHistory.pickContainerImageVersion'
     );
+
+    // The History panel runtime update must match the concise toast, not the
+    // verbose doctor-summary content.
+    const runtimeUpdate = panel.webview.postMessage.mock.calls
+      .map((call: unknown[]) => call[0] as { type?: string; nextAction?: string })
+      .find((posted) => posted?.type === 'comparisonRuntimeResult');
+    expect(runtimeUpdate).toBeDefined();
+    expect(runtimeUpdate?.nextAction).toContain('Pick Image Version');
+    const serializedUpdate = JSON.stringify(runtimeUpdate);
+    expect(serializedUpdate).not.toContain('Rejected providers');
+    expect(serializedUpdate).not.toContain('host-native');
   });
 
   it('opens the image-version picker when the preflight Pick Image Version CTA posts its command (VHS-REQ-650)', async () => {

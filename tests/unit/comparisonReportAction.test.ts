@@ -7,6 +7,7 @@ vi.mock('vscode', async () => {
 });
 
 import {
+  buildContainerImagePlatformMismatchMessage,
   buildDockerDaemonNotRunningMessage,
   buildDockerNotInstalledMessage,
   buildHostBitnessConflictMessage,
@@ -14,6 +15,7 @@ import {
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction,
+  isContainerImagePlatformMismatchBlock,
   isDockerDaemonNotRunningBlock,
   isDockerNotInstalledBlock,
   isHostBitnessConflictBlock,
@@ -1030,6 +1032,111 @@ describe('Host bitness/version conflict comparison gate (#530)', () => {
     const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
 
     expect(result).toMatchObject({ outcome: 'blocked-host-version-conflict' });
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
+  });
+});
+
+describe('isContainerImagePlatformMismatchBlock / buildContainerImagePlatformMismatchMessage (#532)', () => {
+  it('predicate is true only for a blocked-runtime container-image-platform-mismatch', () => {
+    expect(
+      isContainerImagePlatformMismatchBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'container-image-platform-mismatch'
+      })
+    ).toBe(true);
+    expect(
+      isContainerImagePlatformMismatchBlock({
+        reportStatus: 'blocked-runtime',
+        blockedReason: 'docker-provider-unavailable'
+      })
+    ).toBe(false);
+    expect(
+      isContainerImagePlatformMismatchBlock({
+        reportStatus: 'blocked-preflight',
+        blockedReason: 'container-image-platform-mismatch'
+      })
+    ).toBe(false);
+  });
+
+  it('names the selected image platform and the active engine mode with the two fixes (windows image / linux engine)', () => {
+    const message = buildContainerImagePlatformMismatchMessage({
+      selectedImagePlatform: 'windows',
+      activeEnginePlatform: 'linux'
+    });
+    expect(message).toBe(
+      'The selected Docker image is a Windows-container image, but Docker is currently in ' +
+        "Linux-container mode, so the comparison can't start. " +
+        'Switch Docker to Windows containers, or pick a Linux image version.'
+    );
+    // Concise: no provider internals, no host-native noise, no setting key.
+    expect(message).not.toContain('Provider');
+    expect(message).not.toContain('host-native');
+    expect(message).not.toContain('viHistorySuite');
+  });
+
+  it('reverses the framing for a linux image under a windows engine', () => {
+    const message = buildContainerImagePlatformMismatchMessage({
+      selectedImagePlatform: 'linux',
+      activeEnginePlatform: 'windows'
+    });
+    expect(message).toContain('The selected Docker image is a Linux-container image');
+    expect(message).toContain('Docker is currently in Windows-container mode');
+    expect(message).toContain('Switch Docker to Linux containers');
+    expect(message).toContain('pick a Windows image version');
+  });
+});
+
+describe('Container image platform mismatch comparison gate (#532)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('suppresses the report webview, surfaces structured platform facts, and returns the mismatch outcome', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'container-image-platform-mismatch',
+      containerImageVersionConflict: {
+        selectedTag: '2026q1patch2-windows',
+        selectedReference: 'nationalinstruments/labview:2026q1patch2-windows',
+        selectedPlatform: 'windows',
+        activePlatform: 'linux'
+      }
+    });
+    const blockedRecord = createPacketRecord({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'container-image-platform-mismatch'
+      }
+    });
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      createWebviewPanel
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result).toMatchObject({
+      outcome: 'blocked-container-image-platform-mismatch',
+      reportStatus: 'blocked-runtime',
+      blockedReason: 'container-image-platform-mismatch',
+      containerSelectedImagePlatform: 'windows',
+      containerActiveEnginePlatform: 'linux',
+      containerSelectedImageTag: '2026q1patch2-windows'
+    });
     expect(createWebviewPanel).not.toHaveBeenCalled();
     expect(harness.panels).toHaveLength(0);
   });

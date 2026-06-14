@@ -49,7 +49,8 @@ export interface ComparisonReportActionResult {
     | 'blocked-docker-daemon-not-running'
     | 'blocked-docker-not-installed'
     | 'blocked-host-bitness-conflict'
-    | 'blocked-host-version-conflict';
+    | 'blocked-host-version-conflict'
+    | 'blocked-container-image-platform-mismatch';
   cancellationStage?: string;
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
@@ -79,6 +80,16 @@ export interface ComparisonReportActionResult {
   hostObservedLabviewVersion?: string;
   selectedLabviewBitness?: 'x86' | 'x64';
   selectedLabviewVersion?: string;
+  /**
+   * Issue #532: structured selected-vs-active container platform facts for the
+   * concise `container-image-platform-mismatch` toast, so the command layer can
+   * name the selected image's platform and the active Docker engine mode without
+   * parsing doctor-summary strings. Sourced from the runtime selection's
+   * `containerImageVersionConflict`.
+   */
+  containerSelectedImagePlatform?: 'windows' | 'linux';
+  containerActiveEnginePlatform?: 'windows' | 'linux';
+  containerSelectedImageTag?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
@@ -316,6 +327,64 @@ export function buildHostVersionConflictMessage(facts: {
   );
 }
 
+/**
+ * Issue #532: Pure predicate that is true only when a comparison was blocked
+ * because the selected container image's platform cannot run under the active
+ * Docker engine mode (`container-image-platform-mismatch`). Gets the concise
+ * Pick Image Version toast and no auto-opened report, mirroring the #530 host
+ * conflict gates and the Docker daemon/install gates (VHS-REQ-642/643).
+ */
+export function isContainerImagePlatformMismatchBlock(facts: {
+  reportStatus?: string;
+  blockedReason?: string;
+}): boolean {
+  return (
+    facts.reportStatus === 'blocked-runtime' &&
+    facts.blockedReason === 'container-image-platform-mismatch'
+  );
+}
+
+/**
+ * Issue #532: Describe a container platform token for the concise mismatch
+ * toast: `windows` -> `Windows-container`, `linux` -> `Linux-container`.
+ */
+function describeContainerPlatform(platform: 'windows' | 'linux' | undefined): string {
+  if (platform === 'windows') {
+    return 'Windows-container';
+  }
+  if (platform === 'linux') {
+    return 'Linux-container';
+  }
+  return 'a different-platform';
+}
+
+/**
+ * Issue #532: Build the concise container-image-platform-mismatch toast. Frames
+ * the real constraint — the selected image's container platform vs. the active
+ * Docker engine mode — without provider internals or the misleading host-native
+ * clause, and steers to the two real fixes (switch Docker container mode, or
+ * pick a matching image version). Pure and window-free for direct unit testing.
+ */
+export function buildContainerImagePlatformMismatchMessage(facts: {
+  selectedImagePlatform?: 'windows' | 'linux';
+  activeEnginePlatform?: 'windows' | 'linux';
+}): string {
+  const selectedKind = describeContainerPlatform(facts.selectedImagePlatform);
+  const activeMode =
+    facts.activeEnginePlatform === 'windows'
+      ? 'Windows-container'
+      : facts.activeEnginePlatform === 'linux'
+        ? 'Linux-container'
+        : 'a different';
+  const switchTarget = facts.selectedImagePlatform === 'linux' ? 'Linux' : 'Windows';
+  const pickTarget = facts.activeEnginePlatform === 'windows' ? 'Windows' : 'Linux';
+  return (
+    `The selected Docker image is a ${selectedKind} image, but Docker is currently in ` +
+    `${activeMode} mode, so the comparison can't start. ` +
+    `Switch Docker to ${switchTarget} containers, or pick a ${pickTarget} image version.`
+  );
+}
+
 export function createComparisonReportAction(
   context: vscode.ExtensionContext,
   deps: ComparisonReportActionDeps = {}
@@ -391,6 +460,23 @@ export function createComparisonReportAction(
       return {
         ...ensured.result,
         outcome: 'blocked-host-version-conflict'
+      };
+    }
+
+    // Issue #532: a container-image-platform-mismatch block (selected image's
+    // container platform can't run under the active Docker engine mode) gets a
+    // concise Pick Image Version toast in the command layer; do not auto-open
+    // the blocked-evidence report. No archive guard, mirroring the #530 host
+    // conflicts; the packet is still persisted on disk.
+    if (
+      isContainerImagePlatformMismatchBlock({
+        reportStatus: ensured.result.reportStatus,
+        blockedReason: ensured.result.blockedReason
+      })
+    ) {
+      return {
+        ...ensured.result,
+        outcome: 'blocked-container-image-platform-mismatch'
       };
     }
 
@@ -886,6 +972,14 @@ function buildRetainedComparisonReportEvidenceResult(
     hostObservedLabviewVersion: packet.record.runtimeSelection?.hostObservedLabviewVersion,
     selectedLabviewBitness: packet.record.runtimeSelection?.bitness,
     selectedLabviewVersion: packet.record.runtimeSelection?.requestedLabviewVersion,
+    // Issue #532: structured selected-vs-active container platform facts for the
+    // concise container-image-platform-mismatch toast.
+    containerSelectedImagePlatform:
+      packet.record.runtimeSelection?.containerImageVersionConflict?.selectedPlatform,
+    containerActiveEnginePlatform:
+      packet.record.runtimeSelection?.containerImageVersionConflict?.activePlatform,
+    containerSelectedImageTag:
+      packet.record.runtimeSelection?.containerImageVersionConflict?.selectedTag,
     runtimeFailureReason: packet.record.runtimeExecution.failureReason,
     runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
     runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,

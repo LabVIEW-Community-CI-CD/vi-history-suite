@@ -1052,10 +1052,19 @@ Missing numeric IDs are intentional.
     platform and suppresses the conflict.
   - The compare path makes the mismatch one-click recoverable rather than
     text-only: when a comparison is blocked with
-    `container-image-platform-mismatch`, the warning toast offers a
+    `container-image-platform-mismatch`, a concise warning toast frames the
+    constraint — naming the selected image's container platform and the active
+    Docker engine mode and steering to the two fixes (switch Docker's container
+    mode, or pick a matching image version) without provider/rejected-provider
+    internals or the misleading host-native clause — and offers a
     `Pick Image Version` action that opens
-    `labviewViHistory.pickContainerImageVersion` (mirroring the bitness-conflict
-    `Pick Runtime Provider` action), and the image-version picker surfaces a
+    `labviewViHistory.pickContainerImageVersion`. The blocked-evidence report is
+    not auto-opened for this reason (the packet is still persisted and explicit
+    `Export Comparison Report` still works), and the History panel runtime update
+    matches the concise toast rather than re-deriving the verbose doctor-summary
+    content, mirroring the concise Docker block toasts (VHS-REQ-642/643) and the
+    host-conflict toasts (VHS-REQ-621/653, #532). The image-version picker
+    surfaces a
     stale cross-platform persisted selection as a leading warning Clear row that
     names the stale tag and the active Docker platform instead of hiding it. The
     stale-selection flag fires only when the active platform is confirmed (an
@@ -1091,6 +1100,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/pickContainerImageVersionCommand.test.ts`
   - `tests/unit/historyPanelRendering.test.ts`

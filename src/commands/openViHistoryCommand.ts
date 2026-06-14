@@ -4,10 +4,12 @@ import * as vscode from 'vscode';
 import { GitApi } from '../git/gitApi';
 import {
   ComparisonReportActionResult,
+  buildContainerImagePlatformMismatchMessage,
   buildDockerDaemonNotRunningMessage,
   buildDockerNotInstalledMessage,
   buildHostBitnessConflictMessage,
   buildHostVersionConflictMessage,
+  isContainerImagePlatformMismatchBlock,
   isDockerDaemonNotRunningBlock,
   isDockerNotInstalledBlock,
   isHostBitnessConflictBlock,
@@ -575,11 +577,40 @@ export function createOpenViHistoryCommand(
               }
             });
         }
+        // Issue #532: a container-image-platform-mismatch block (selected image's
+        // container platform can't run under the active Docker engine mode) gets
+        // a single concise toast framing the platform constraint, with the
+        // existing Pick Image Version action, instead of the verbose
+        // provider/rejected-provider message; the report is not auto-opened
+        // (suppressed in the action).
+        const containerImagePlatformMismatch = isContainerImagePlatformMismatchBlock({
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason
+        });
+        if (containerImagePlatformMismatch) {
+          const PICK_IMAGE_VERSION_ACTION = 'Pick Image Version';
+          void vscode.window
+            .showWarningMessage(
+              buildContainerImagePlatformMismatchMessage({
+                selectedImagePlatform: result.containerSelectedImagePlatform,
+                activeEnginePlatform: result.containerActiveEnginePlatform
+              }),
+              PICK_IMAGE_VERSION_ACTION
+            )
+            .then((selection) => {
+              if (selection === PICK_IMAGE_VERSION_ACTION) {
+                void vscode.commands.executeCommand(
+                  'labviewViHistory.pickContainerImageVersion'
+                );
+              }
+            });
+        }
         const runtimeWarningMessage =
           dockerDaemonNotRunning ||
           dockerNotInstalled ||
           hostBitnessConflict ||
-          hostVersionConflict
+          hostVersionConflict ||
+          containerImagePlatformMismatch
             ? undefined
             : buildComparisonRuntimeWarningMessage(actionCommand, result);
         if (runtimeWarningMessage) {
@@ -590,23 +621,6 @@ export function createOpenViHistoryCommand(
               .then((selection) => {
                 if (selection === PICK_RUNTIME_PROVIDER_ACTION) {
                   void vscode.commands.executeCommand('labviewViHistory.pickRuntimeProvider');
-                }
-              });
-          } else if (isContainerImagePlatformMismatchComparisonRuntimeResult(result)) {
-            // VHS-REQ-650: the selected container image targets a platform the
-            // active Docker engine cannot launch. Offer the image picker as a
-            // one-click fix instead of text-only guidance, mirroring the
-            // bitness-conflict Pick Runtime Provider action above. The picker
-            // probes the daemon mode and lists the right platform's images (and
-            // a Clear option), so a single button reaches every remediation.
-            const PICK_IMAGE_VERSION_ACTION = 'Pick Image Version';
-            void vscode.window
-              .showWarningMessage(runtimeWarningMessage, PICK_IMAGE_VERSION_ACTION)
-              .then((selection) => {
-                if (selection === PICK_IMAGE_VERSION_ACTION) {
-                  void vscode.commands.executeCommand(
-                    'labviewViHistory.pickContainerImageVersion'
-                  );
                 }
               });
           } else {
@@ -1297,6 +1311,33 @@ function buildComparisonRuntimePanelUpdate(
       ]
     };
   }
+  // Issue #532: the History panel must match the concise container-image
+  // platform-mismatch toast, not re-derive the verbose provider/rejected-provider
+  // content from the doctor summary (which would contradict the toast).
+  if (
+    isContainerImagePlatformMismatchBlock({
+      reportStatus: result.reportStatus,
+      blockedReason: result.blockedReason
+    })
+  ) {
+    return {
+      type: 'comparisonRuntimeResult',
+      status: deriveComparisonRuntimePanelStatus(result),
+      summary: `${commandLabel} for ${pairLabel} blocked. ${buildContainerImagePlatformMismatchMessage(
+        {
+          selectedImagePlatform: result.containerSelectedImagePlatform,
+          activeEnginePlatform: result.containerActiveEnginePlatform
+        }
+      )}`,
+      nextAction:
+        'Next action: switch Docker to the matching container mode, or click Pick Image Version to select a compatible image, then rerun the comparison.',
+      details: [
+        { label: 'Report status', value: result.reportStatus ?? 'none' },
+        { label: 'Runtime state', value: result.runtimeExecutionState ?? 'none' },
+        { label: 'Blocked reason', value: result.blockedReason ?? 'none' }
+      ]
+    };
+  }
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
@@ -1432,19 +1473,6 @@ function buildConciseHostConflictMessage(
     return buildHostVersionConflictMessage(facts);
   }
   return undefined;
-}
-
-/**
- * VHS-REQ-650: True when the compare was blocked because the selected container
- * image version targets a platform the active Docker container mode cannot
- * launch. The mismatch warning toast offers a `Pick Image Version` action so the
- * user can switch to a compatible image (or clear the selection) without hunting
- * for the command, mirroring the bitness-conflict `Pick Runtime Provider` action.
- */
-function isContainerImagePlatformMismatchComparisonRuntimeResult(
-  result: ComparisonReportActionResult
-): boolean {
-  return result.blockedReason === 'container-image-platform-mismatch';
 }
 
 function buildComparisonRuntimeWarningMessage(
