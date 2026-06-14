@@ -59,10 +59,23 @@ is unresolved.
 ## Step 2 — Determine the VI Server ports (for the matrix `port-A` scenario)
 
 `port-A` asserts that the selected install's **non-default** VI Server port is
-admitted and observed. Read the configured port from the selected install's
-`LabVIEW.ini` (`server.tcp.port`; unset means the 3363 default) and pass it via
-`-f host_tcp_port=<port>`. As of the last check this host's LabVIEW 2026 x64 was
-on **3366**. Verify before relying on it.
+admitted and observed. This only proves the contract when the port is genuinely
+non-default: the matrix harness
+([scripts/runWindowsRuntimeMatrix.js](../../scripts/runWindowsRuntimeMatrix.js))
+only checks the observed port for **equality** with the expected value you
+supply, so passing the LabVIEW default (`3363`) makes the scenario expect and
+observe `3363` — a false pass that never exercises the non-default-port contract.
+
+Read the configured port from the selected install's `LabVIEW.ini`
+(`server.tcp.port`; unset means the `3363` default):
+
+- If it is a **non-default** port, pass it via `-f host_tcp_port=<port>`.
+- If it is unset or the `3363` default, either reconfigure the install's
+  `LabVIEW.ini` to a non-default `server.tcp.port` or **skip `port-A`**. Never
+  pass `3363` — it cannot exercise this scenario.
+
+The harness's built-in expected port is `3380`. As of the last check this host's
+LabVIEW 2026 x64 was on **3366**. Verify before relying on it.
 
 ## Step 3 — Dispatch
 
@@ -88,8 +101,20 @@ gh workflow run windows-labview-maintainer.yml --ref main
 
 ## Step 4 — Monitor and collect evidence
 
+List runs for the **workflow you dispatched in Step 3** — the `matrix` and
+`maintainer` tracks use different workflows, so filtering on the wrong one shows
+no matching run (or the wrong one). Use `windows-runtime-matrix.yml` for the
+`matrix` track, `windows-labview-maintainer.yml` for the `maintainer` track, and
+both for `all`:
+
 ```
 gh run list --workflow=windows-runtime-matrix.yml --limit 3
+gh run list --workflow=windows-labview-maintainer.yml --limit 3
+```
+
+Then watch and download the specific run you dispatched:
+
+```
 gh run watch <run-id> --exit-status
 gh run download <run-id> -D ./run-evidence
 ```
