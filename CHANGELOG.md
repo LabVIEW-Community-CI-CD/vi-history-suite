@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.29.0] - 2026-06-14
+
 ### Added
 
 - The Docker container-image cold-pull now shows **live, steadily-advancing
