@@ -1559,28 +1559,17 @@ function buildComparisonRuntimeInformationMessage(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
-    result.runtimeDoctorSummaryLines
-  );
-  const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
-    result.runtimeDoctorSummaryLines
-  );
-  const rejectedProviderSummary = deriveRejectedProviderSummaryFromDoctorSummary(
-    result.runtimeDoctorSummaryLines
-  );
+  // Issue #538: a successful compare confirms completion and which runtime ran;
+  // it must not surface provider-selection internals. The `Provider request`,
+  // `Container image acquisition`, and especially the `Rejected providers ...
+  // because ... because ...` segments read like a problem on a run that
+  // actually succeeded, so they are dropped from this toast. Those facts remain
+  // in the History panel Runtime details and the retained packet for
+  // diagnostics, mirroring the blocked-path toast cleanup (#530/#531/#532).
   const segments = [`${commandLabel} completed.`];
 
   if (runtimeProvider) {
     segments.push(`Provider: ${runtimeProvider}.`);
-  }
-  if (providerRequest) {
-    segments.push(`Provider request: ${providerRequest}.`);
-  }
-  if (acquisitionState) {
-    segments.push(`Container image acquisition: ${acquisitionState}.`);
-  }
-  if (rejectedProviderSummary) {
-    segments.push(`Rejected providers: ${rejectedProviderSummary}.`);
   }
 
   return segments.join(' ');

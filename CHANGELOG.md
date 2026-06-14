@@ -12,6 +12,16 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Fixed
+
+- A successful comparison no longer shows a verbose runtime notification that
+  surfaced provider-selection internals — most notably a `Rejected providers: …
+  because … because …` line that read like a problem on a run that actually
+  succeeded. The success toast is now concise (for example `Selected compare
+  completed. Provider: host-native.`); the full provider-selection diagnostics
+  remain available in the History panel Runtime details and the retained
+  comparison packet (#538).
+
 ## [1.27.3] - 2026-06-14
 
 ### Changed
