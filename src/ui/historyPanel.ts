@@ -4,23 +4,6 @@ import {
 } from '../services/viHistoryModel';
 import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
-export interface HistoryPanelComparePreflightState {
-  status: 'ready' | 'blocked' | 'unavailable';
-  provider: string;
-  labviewVersion: string;
-  labviewBitness: string;
-  nextAction: string;
-  cliHint: string;
-  warningMessage?: string;
-  /**
-   * VHS-REQ-650: the runtime locator's classified block reason when
-   * `status === 'blocked'`. Drives the proactive Pick Image Version CTA for a
-   * `container-image-platform-mismatch` so the panel can offer one-click
-   * remediation before the user selects revisions and runs Compare.
-   */
-  blockedReason?: string;
-}
-
 /**
  * Represents a candidate revision for explicit compare pair selection.
  */
