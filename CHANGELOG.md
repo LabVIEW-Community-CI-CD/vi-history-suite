@@ -12,6 +12,14 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Changed
+
+- The VI History panel's **Compare** button is now pinned in a **sticky footer**
+  so it stays reachable without scrolling. On a large history (e.g. `lv_icon.vi`),
+  you can select two commits near the top of the table and click Compare without
+  scrolling to the bottom; on a short history the bar simply sits at its natural
+  position below the table (#559).
+
 ## [1.29.0] - 2026-06-14
 
 ### Added
