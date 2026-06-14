@@ -186,8 +186,23 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         color: var(--vscode-descriptionForeground);
         font-style: italic;
       }
+      /*
+       * VHS-REQ-133 (#559): pin the primary Compare action in a sticky footer so
+       * it stays reachable without scrolling on large histories (e.g. lv_icon.vi).
+       * The opaque background + top border keep table rows covered as they scroll
+       * underneath; on short histories the bar simply sits at its natural position.
+       */
       .compare-bar {
+        position: sticky;
+        bottom: 0;
         margin-top: 16px;
+        padding: 12px 0;
+        background: var(--vscode-editor-background);
+        border-top: 1px solid var(--vscode-panel-border);
+        z-index: 1;
+      }
+      .compare-bar button {
+        margin-bottom: 0;
       }
     </style>
   </head>
@@ -210,7 +225,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         ${rows}
       </tbody>
     </table>
-    <div class="compare-bar">
+    <div class="compare-bar" data-testid="history-compare-bar">
       <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" disabled>Compare</button>
     </div>
     <script>

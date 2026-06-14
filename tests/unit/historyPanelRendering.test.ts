@@ -249,6 +249,21 @@ describe('historyPanelRendering', () => {
       expect(html).toMatch(/id="history-action-compare-selected"[^>]*disabled/);
     });
 
+    it('pins the Compare button in a sticky footer bar (#559)', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel());
+
+      // The Compare button lives in a dedicated bar...
+      expect(html).toContain('data-testid="history-compare-bar"');
+      // ...that is a sticky footer so it stays reachable on large histories.
+      expect(html).toMatch(/\.compare-bar\s*\{[^}]*position:\s*sticky/);
+      expect(html).toMatch(/\.compare-bar\s*\{[^}]*bottom:\s*0/);
+      // The bar still renders after the commit table (natural position on short
+      // histories), keeping the explicit selection-then-Compare flow.
+      expect(html.indexOf('data-testid="history-table"')).toBeLessThan(
+        html.indexOf('data-testid="history-compare-bar"')
+      );
+    });
+
     it('renders a selection checkbox for each commit row', () => {
       const model = createTestViewModel({
         commits: [
