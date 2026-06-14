@@ -1,6 +1,9 @@
+import { EventEmitter } from 'node:events';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  acquireWindowsContainerImage,
   buildDocumentedRuntimeCandidates,
   locateComparisonRuntime,
   parseWindowsRegistryLabviewCandidates,
@@ -1496,5 +1499,123 @@ describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-6
       blockedReason: 'labview-exe-not-found'
     });
     expect(selection.labviewExe).toBeUndefined();
+  });
+});
+
+describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => {
+  const image = 'nationalinstruments/labview:2026q1-windows';
+
+  it('drives the Docker Engine API stream and reports live layer-weighted progress', async () => {
+    const updates: Array<{ message: string; increment?: number }> = [];
+    const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
+      // Two 1 GB layers: one done at 50%, both done near the 99% ceiling.
+      const gb = 1024 * 1024 * 1024;
+      await options.onProgress?.({
+        percent: 50,
+        downloadedBytes: gb,
+        totalBytes: 2 * gb,
+        completedLayers: 1,
+        totalLayers: 2
+      });
+      await options.onProgress?.({
+        percent: 99,
+        downloadedBytes: 2 * gb,
+        totalBytes: 2 * gb,
+        completedLayers: 2,
+        totalLayers: 2
+      });
+      return { attempted: true, succeeded: true, statusLines: ['Pulling from nationalinstruments/labview'] };
+    });
+
+    const result = await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    expect(streamPull).toHaveBeenCalledOnce();
+    expect(result.acquisitionState).toBe('acquired');
+    // The layer-weighted percentage, layer count, and downloaded bytes reach the toast.
+    expect(updates.some((u) => /50% \(1\/2 layers, 1 GB\)/.test(u.message))).toBe(true);
+    expect(updates.some((u) => /99% \(2\/2 layers, 2 GB\)/.test(u.message))).toBe(true);
+    // The final "ready" update lands.
+    expect(updates.at(-1)?.message).toBe(`Container image ready: ${image}`);
+  });
+
+  it('re-emits the toast when only the downloaded bytes change at the same whole percent', async () => {
+    const updates: Array<{ message: string; increment?: number }> = [];
+    const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
+      const gb = 1024 * 1024 * 1024;
+      // Same rounded percent, growing bytes/layers: the old percent-only throttle
+      // froze here; the message-change throttle must still update the toast.
+      await options.onProgress?.({
+        percent: 30,
+        downloadedBytes: gb,
+        totalBytes: 5 * gb,
+        completedLayers: 1,
+        totalLayers: 3
+      });
+      await options.onProgress?.({
+        percent: 30,
+        downloadedBytes: 2 * gb,
+        totalBytes: 5 * gb,
+        completedLayers: 1,
+        totalLayers: 3
+      });
+      return { attempted: true, succeeded: true, statusLines: [] };
+    });
+
+    await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    const pullMessages = updates.filter((u) => u.message.includes('Pulling container image'));
+    expect(pullMessages.some((u) => /30% \(1\/3 layers, 1 GB\)/.test(u.message))).toBe(true);
+    expect(pullMessages.some((u) => /30% \(1\/3 layers, 2 GB\)/.test(u.message))).toBe(true);
+  });
+
+  it('reports a failed acquisition when the daemon stream errors in-band', async () => {
+    const streamPull = vi.fn(async () => ({
+      attempted: true,
+      succeeded: false,
+      statusLines: ['Pulling from nationalinstruments/labview'],
+      errorMessage: 'manifest unknown'
+    }));
+
+    const result = await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never
+    });
+
+    expect(result.acquisitionState).toBe('failed');
+    expect(result.notes.at(-1)).toBe('manifest unknown');
+  });
+
+  it('falls back to the CLI spawn pull when the daemon socket is unreachable', async () => {
+    const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
+
+    const stdout = Object.assign(new EventEmitter(), { setEncoding: vi.fn() });
+    const stderr = Object.assign(new EventEmitter(), { setEncoding: vi.fn() });
+    const child = Object.assign(new EventEmitter(), { stdout, stderr });
+    const spawnImpl = vi.fn(() => child);
+
+    const resultPromise = acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      spawnImpl: spawnImpl as never
+    });
+
+    // Let the async stream attempt settle, then drive the fallback spawn to success.
+    await Promise.resolve();
+    await Promise.resolve();
+    stdout.emit('data', 'Status: Downloaded newer image\n');
+    child.emit('close', 0);
+
+    const result = await resultPromise;
+    expect(streamPull).toHaveBeenCalledOnce();
+    expect(spawnImpl).toHaveBeenCalledOnce();
+    expect(result.acquisitionState).toBe('acquired');
   });
 });

@@ -2798,6 +2798,69 @@ Missing numeric IDs are intentional.
     VHS-REQ-621 bitness conflict, and reuse the `Pick Runtime Provider` action
     rather than introducing a new bespoke command.
 
+### VHS-REQ-654: Live Container Image Pull Progress
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: When the comparison runtime cold-pulls a LabVIEW Docker image, the
+  extension shall report live, steadily-advancing pull progress in the
+  acquisition progress notification, sourced from the Docker Engine API
+  image-pull progress stream, so a user pulling the multi-gigabyte Windows image
+  sees real, forward-moving progress instead of opaque status text with a faked
+  increment.
+- Acceptance Criteria:
+  - `acquireWindowsContainerImage` drives the pull through the Docker Engine API
+    `POST /images/create` stream over the local daemon socket (the Windows named
+    pipe `\\.\pipe\docker_engine` or the Linux `/var/run/docker.sock`) and
+    aggregates the per-layer stream events into a **layer-weighted** progress
+    figure — each enumerated layer contributes an equal slice, smoothed by the
+    in-flight layer's byte fraction — surfaced with the completed/total layer
+    count and absolute downloaded bytes in the progress message (for example
+    `Pulling container image: <image> — 31% (4/13 layers, 1.4 GB)`).
+  - Because Docker reveals layers and their sizes progressively, the percentage
+    shall not be byte-weighted against the running sum of known layer totals (a
+    tiny, unstable early denominator that pins a small first layer at 100%); the
+    reported percentage is monotonic, capped below 100% in progress (overall
+    completion is signalled by the explicit "ready" message), and the toast is
+    re-emitted whenever its visible text changes so it can never freeze at a
+    premature 100%.
+  - The Engine API path is attempted only on hosts where the daemon socket is
+    directly reachable (a native Windows host or a Linux-native host); the
+    Linux→Windows-docker WSL bridge and any other host fall back to the prior
+    `docker pull` CLI acquisition with its coarse per-line progress, so behavior
+    is never worse than before.
+  - When the daemon socket is unreachable the acquisition transparently falls
+    back to the CLI pull (no error surfaced for the unreachable socket); an
+    in-band pull error or a non-2xx daemon response yields a failed acquisition
+    whose notes carry the error.
+  - The pull is a read-only anonymous pull of the namespace-pinned
+    `nationalinstruments/labview` repository; no registry credential header is
+    sent, and no new third-party dependency is introduced (Node `http.request`
+    over the socket).
+  - The stream parser, the percentage aggregator, and the daemon-socket request
+    are separated so the parser/aggregator are pure and the request is behind an
+    injected boundary, keeping the feature unit-testable on Linux without a real
+    Docker daemon.
+- Agent Work Scope:
+  - Add the pull-progress module (parser, aggregator, injectable stream) and wire
+    it into `acquireWindowsContainerImage` with the CLI fallback, together with
+    the unit tests. Do not change which image is selected (VHS-REQ-650) or the
+    comparison behavior after acquisition.
+- Implementation References:
+  - `src/tooling/dockerImagePullProgress.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+- Verification References:
+  - `tests/unit/dockerImagePullProgress.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:windows-container-image-cold-pull-progress`
+- Change Guidance:
+  - Keep the Engine API call read-only, anonymous, and bounded, and keep the CLI
+    fallback so an unreachable or older daemon never blocks acquisition. Keep the
+    percentage monotonic and clamped, and keep the parser/aggregator pure so the
+    daemon-socket surface stays the only impure boundary.
+
 
 ### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open
 

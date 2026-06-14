@@ -12,6 +12,21 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Added
+
+- The Docker container-image cold-pull now shows **live, steadily-advancing
+  progress**. When the comparison runtime pulls the LabVIEW image (the Windows
+  image is multiple gigabytes and can take several minutes), the acquisition
+  notification reads e.g. `Pulling container image: <image> — 31% (4/13 layers,
+  1.4 GB)`, driven by the Docker Engine API image-pull progress stream instead
+  of opaque per-line status text. Progress is layer-weighted (Docker reveals
+  layers and their sizes progressively, so a byte-percentage against the
+  partially-known total is unreliable early and can stick at a false 100%); the
+  toast updates whenever its visible text changes and never freezes. Hosts where
+  the Docker daemon socket is not directly reachable (and any failure) fall back
+  to the previous `docker pull` behavior, so acquisition is never worse than
+  before (VHS-REQ-654, #547).
+
 ### Removed
 
 - The comparison **report format** choice is gone: the `viHistorySuite.report.format`
