@@ -29,9 +29,23 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const https = require('node:https');
 
 const DEFAULT_WINDOWS_LOCAL_APP_DATA = 'C:\\Users\\sveld\\AppData\\Local';
 const SUPPORTED_PLATFORMS = Object.freeze(['win32', 'linux']);
+
+/**
+ * #527: advisory system-clock-skew preflight. A runner whose system clock is
+ * skewed past this tolerance makes its session OAuth token look already-expired
+ * to GitHub, so the runner silently goes offline with a misleading
+ * "registration has been deleted" error even though it was never deregistered
+ * (observed on the dual-boot maintainer host where Linux writes the RTC as UTC
+ * and Windows reads it as local time). Default 60s matches the practical window
+ * before GitHub rejects the session.
+ */
+const DEFAULT_CLOCK_SKEW_THRESHOLD_MS = 60_000;
+const CLOCK_SKEW_TIME_SOURCE_URL = 'https://api.github.com';
+const CLOCK_SKEW_REQUEST_TIMEOUT_MS = 5_000;
 
 /**
  * Build the ordered prerequisite contract for a platform. Each entry resolves
@@ -266,28 +280,156 @@ function formatPrerequisiteReport(report) {
   return lines.join('\n');
 }
 
+/**
+ * #527: Pure clock-skew classifier. Returns `unknown` (advisory, never a
+ * failure) when no authoritative time was obtained — e.g. the host has no
+ * outbound network during the check. Otherwise `skewMs` is local minus
+ * authoritative (positive = local clock ahead) and the status crosses to
+ * `skewed` once the absolute skew exceeds `thresholdMs`.
+ */
+function classifyClockSkew({
+  localNowMs,
+  authoritativeNowMs,
+  thresholdMs = DEFAULT_CLOCK_SKEW_THRESHOLD_MS
+} = {}) {
+  if (typeof authoritativeNowMs !== 'number' || !Number.isFinite(authoritativeNowMs)) {
+    return {
+      status: 'unknown',
+      skewMs: undefined,
+      thresholdMs,
+      localNowMs,
+      authoritativeNowMs: undefined
+    };
+  }
+  const skewMs = localNowMs - authoritativeNowMs;
+  return {
+    status: Math.abs(skewMs) > thresholdMs ? 'skewed' : 'ok',
+    skewMs,
+    thresholdMs,
+    localNowMs,
+    authoritativeNowMs
+  };
+}
+
+/**
+ * #527: Default authoritative-time source. Dependency-free bounded HTTPS HEAD
+ * against the GitHub API, reading the `Date` response header. Never throws and
+ * resolves `undefined` on any error/timeout so an offline host degrades to an
+ * advisory `unknown` instead of failing the doctor. Injectable for tests.
+ */
+function fetchAuthoritativeNowMsViaGithub(deps = {}) {
+  const httpsModule = deps.https ?? https;
+  const url = deps.timeSourceUrl ?? CLOCK_SKEW_TIME_SOURCE_URL;
+  const timeoutMs = deps.requestTimeoutMs ?? CLOCK_SKEW_REQUEST_TIMEOUT_MS;
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => {
+      if (!settled) {
+        settled = true;
+        resolve(value);
+      }
+    };
+    try {
+      const request = httpsModule.request(
+        url,
+        {
+          method: 'HEAD',
+          timeout: timeoutMs,
+          // The GitHub API rejects requests without a User-Agent; send one so the
+          // happy path resolves a real Date header on a runner.
+          headers: { 'user-agent': 'vi-history-suite-runner-doctor' }
+        },
+        (response) => {
+          const dateHeader = response.headers ? response.headers.date : undefined;
+          response.resume();
+          const parsed = typeof dateHeader === 'string' ? Date.parse(dateHeader) : NaN;
+          finish(Number.isFinite(parsed) ? parsed : undefined);
+        }
+      );
+      request.on('timeout', () => {
+        request.destroy();
+        finish(undefined);
+      });
+      request.on('error', () => finish(undefined));
+      request.end();
+    } catch {
+      finish(undefined);
+    }
+  });
+}
+
+/**
+ * #527: Resolve the advisory clock-skew classification using injectable `now`
+ * and authoritative-time collaborators (deterministic in unit tests; real
+ * `Date.now()` + GitHub HEAD on a runner).
+ */
+async function inspectClockSkew(deps = {}) {
+  const now = deps.now ?? Date.now;
+  const fetchAuthoritativeNowMs = deps.fetchAuthoritativeNowMs ?? fetchAuthoritativeNowMsViaGithub;
+  const thresholdMs = deps.clockSkewThresholdMs ?? DEFAULT_CLOCK_SKEW_THRESHOLD_MS;
+  const localNowMs = now();
+  let authoritativeNowMs;
+  try {
+    authoritativeNowMs = await fetchAuthoritativeNowMs(deps);
+  } catch {
+    authoritativeNowMs = undefined;
+  }
+  return classifyClockSkew({ localNowMs, authoritativeNowMs, thresholdMs });
+}
+
+function formatClockSkewReport(skew) {
+  const toleranceSeconds = Math.round(skew.thresholdMs / 1000);
+  if (skew.status === 'unknown') {
+    return '[runner-doctor] ADVISORY System clock skew: unknown (authoritative time source unreachable; skipped, not a failure).';
+  }
+  const absSeconds = (Math.abs(skew.skewMs) / 1000).toFixed(1);
+  const direction = skew.skewMs >= 0 ? 'ahead of' : 'behind';
+  if (skew.status === 'ok') {
+    return `[runner-doctor] OK       System clock skew: ${absSeconds}s ${direction} authoritative time (within ${toleranceSeconds}s tolerance).`;
+  }
+  const lines = [];
+  lines.push(
+    `[runner-doctor] ADVISORY System clock skew: ${absSeconds}s ${direction} authoritative time exceeds the ${toleranceSeconds}s tolerance.`
+  );
+  lines.push(
+    '[runner-doctor]         A skewed clock makes the runner session OAuth token look expired to GitHub, so the runner can go offline with a misleading "registration has been deleted" error even though it was never deregistered.'
+  );
+  lines.push(
+    '[runner-doctor]         remediation: resync the clock (Windows: Start-Service w32time then w32tm /resync, or Set-Date), then on a dual-boot host set Linux to treat the RTC as local time (timedatectl set-local-rtc 1) or Windows to use UTC so future boots stop skewing it.'
+  );
+  return lines.join('\n');
+}
+
 function getUsage() {
   return [
-    'Usage: node scripts/checkMaintainerRunnerPrerequisites.js [--platform <win32|linux>]',
+    'Usage: node scripts/checkMaintainerRunnerPrerequisites.js [--platform <win32|linux>] [--fail-on-clock-skew]',
     '',
     'Validates the trusted LabVIEW maintainer runner host contract (VS Code,',
     'LabVIEW, LabVIEW CLI, Node, npm, Git) and reports every gap with',
-    'remediation. Exit code 0 when all required prerequisites are satisfied,',
-    '1 otherwise. Run directly on the runner to validate readiness without',
-    'dispatching the (trusted-ref-gated) maintainer workflow.',
+    'remediation. Also runs an advisory system-clock-skew preflight (a skewed',
+    'clock silently knocks the runner offline with a misleading GitHub',
+    '"registration has been deleted" error). Exit code 0 when all required',
+    'prerequisites are satisfied, 1 otherwise. Run directly on the runner to',
+    'validate readiness without dispatching the (trusted-ref-gated) maintainer',
+    'workflow.',
     '',
     'Options:',
-    '  --platform <id>   Override the detected platform (win32 | linux).',
-    '  --help, -h        Show this help text.'
+    '  --platform <id>        Override the detected platform (win32 | linux).',
+    '  --fail-on-clock-skew   Also exit non-zero when the clock skew exceeds the',
+    '                         tolerance (advisory by default; an unreachable time',
+    '                         source never fails).',
+    '  --help, -h             Show this help text.'
   ].join('\n');
 }
 
 function parseArgs(argv) {
-  const options = { platform: undefined, help: false };
+  const options = { platform: undefined, help: false, failOnClockSkew: false };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--help' || arg === '-h') {
       options.help = true;
+    } else if (arg === '--fail-on-clock-skew') {
+      options.failOnClockSkew = true;
     } else if (arg === '--platform') {
       const value = argv[index + 1];
       if (value === undefined || value.startsWith('--')) {
@@ -310,12 +452,12 @@ function main(argv = process.argv.slice(2), deps = {}) {
     options = parseArgs(argv);
   } catch (error) {
     stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    return 1;
+    return Promise.resolve(1);
   }
 
   if (options.help) {
     stdout.write(`${getUsage()}\n`);
-    return 0;
+    return Promise.resolve(0);
   }
 
   const platform = options.platform ?? deps.platform ?? process.platform;
@@ -324,25 +466,42 @@ function main(argv = process.argv.slice(2), deps = {}) {
     report = inspectMaintainerRunnerPrerequisites(platform, deps);
   } catch (error) {
     stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    return 1;
+    return Promise.resolve(1);
   }
 
   stdout.write(`${formatPrerequisiteReport(report)}\n`);
-  return report.satisfied ? 0 : 1;
+
+  // #527: advisory clock-skew preflight. Always surfaced so a maintainer gets a
+  // fast signal even when every path/command prerequisite is present; it only
+  // affects the exit code when --fail-on-clock-skew is set AND the skew is
+  // known and over tolerance (an unreachable time source stays advisory).
+  return inspectClockSkew(deps).then((skew) => {
+    stdout.write(`${formatClockSkewReport(skew)}\n`);
+    const clockSkewFails = options.failOnClockSkew && skew.status === 'skewed';
+    return report.satisfied && !clockSkewFails ? 0 : 1;
+  });
 }
 
 if (require.main === module) {
-  process.exitCode = main();
+  main().then((code) => {
+    process.exitCode = code;
+  });
 }
 
 module.exports = {
   DEFAULT_WINDOWS_LOCAL_APP_DATA,
   SUPPORTED_PLATFORMS,
+  DEFAULT_CLOCK_SKEW_THRESHOLD_MS,
+  CLOCK_SKEW_TIME_SOURCE_URL,
   buildPrerequisiteContract,
   resolveCommandOnPath,
   inspectPrerequisite,
   inspectMaintainerRunnerPrerequisites,
   formatPrerequisiteReport,
+  classifyClockSkew,
+  fetchAuthoritativeNowMsViaGithub,
+  inspectClockSkew,
+  formatClockSkewReport,
   getUsage,
   parseArgs,
   main

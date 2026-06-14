@@ -287,6 +287,17 @@ runs after checkout). Because this runs on the runner itself, you can confirm
 readiness without dispatching the trusted-ref-gated workflow or cutting a
 release.
 
+The doctor also runs an **advisory** system-clock-skew preflight: it compares the
+host clock to an authoritative network time source and warns when the skew
+exceeds a tolerance (and degrades to an advisory `unknown` when the source is
+unreachable, so it never blocks an offline host). A skewed clock makes the
+runner's session token look expired to GitHub and silently knocks the runner
+offline with a misleading "registration has been deleted" error, so resync the
+clock (`Start-Service w32time` then `w32tm /resync`, or `Set-Date`) and, on a
+dual-boot host, set Linux to treat the RTC as local time — or Windows to use UTC
+— so future boots stop skewing it. Pass `--fail-on-clock-skew` to make an
+over-tolerance skew a hard failure.
+
 > **Install VS Code system-wide.** If the runner is registered as a service
 > (running as `NetworkService` or another service account), install VS Code with
 > the **System** installer at `C:\Program Files\Microsoft VS Code`. A user-scoped
@@ -345,6 +356,14 @@ It reports each prerequisite as present or missing with remediation and exits
 non-zero when any required one is absent (the same fail-fast gate the workflow
 runs after checkout), so you can confirm readiness without dispatching the
 trusted-ref-gated workflow.
+
+The doctor also runs an **advisory** system-clock-skew preflight that warns when
+the host clock drifts past a tolerance from an authoritative network time source
+(advisory `unknown` when the source is unreachable, so it never blocks an offline
+host). A skewed clock silently knocks the runner offline with a misleading
+GitHub "registration has been deleted" error; resync the clock and, on a
+dual-boot host, fix the RTC interpretation (`timedatectl set-local-rtc 1` on
+Linux, or set Windows to UTC) so future boots stop skewing it.
 
 Register the runner once (the previously-missing infrastructure for issue #378).
 Use the registration token from the repository's
