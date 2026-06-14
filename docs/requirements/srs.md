@@ -1640,14 +1640,28 @@ Missing numeric IDs are intentional.
     versions, VSIX evidence path, and whether LabVIEWCLI was detected.
   - The trusted-ref decision is visible in workflow output or artifact text.
   - The workflow uploads a VSIX and environment evidence summary artifact.
+  - The workflow runs a prerequisite doctor
+    (`scripts/checkMaintainerRunnerPrerequisites.js`) as a fail-fast gate after
+    checkout and before install, which reports every missing host prerequisite
+    (VS Code, LabVIEW, LabVIEW CLI, Node, npm, Git) at once with remediation and
+    exits non-zero when any required prerequisite is absent. The same script is
+    runnable directly on the runner for self-service readiness validation
+    without dispatching the trusted-ref-gated workflow. The native-Windows
+    integration host additionally fails fast with actionable remediation when
+    VS Code is not installed, rather than dying with an opaque
+    `CommandNotFoundException`.
 - Agent Work Scope:
   - Change workflow YAML, maintainer operations docs, and static workflow tests
     together.
 - Implementation References:
   - `.github/workflows/windows-labview-maintainer.yml`
+  - `scripts/checkMaintainerRunnerPrerequisites.js`
+  - `src/tooling/integrationHostRuntime.ts`
   - `docs/maintainer-operations.md`
 - Verification References:
   - `tests/unit/windowsLabviewMaintainerWorkflow.test.ts`
+  - `tests/unit/checkMaintainerRunnerPrerequisites.test.ts`
+  - `tests/unit/integrationHostRuntime.test.ts`
   - `manual:trusted-windows-labview-runner-dispatch`
 - Change Guidance:
   - Do not run self-hosted validation on arbitrary pull request code.
@@ -1670,15 +1684,24 @@ Missing numeric IDs are intentional.
   - The trusted-ref decision is visible in workflow output or artifact text.
   - The workflow runs the Linux integration host and uploads a VSIX and
     environment evidence summary artifact.
+  - The workflow runs a prerequisite doctor
+    (`scripts/checkMaintainerRunnerPrerequisites.js`) as a fail-fast gate after
+    checkout and before install, which reports every missing host prerequisite
+    (VS Code, LabVIEW, LabVIEW CLI, Node, npm, Git) at once with remediation and
+    exits non-zero when any required prerequisite is absent. The same script is
+    runnable directly on the runner for self-service readiness validation
+    without dispatching the trusted-ref-gated workflow.
 - Agent Work Scope:
   - Change workflow YAML, maintainer operations docs, and static workflow tests
     together. Keep the Linux workflow a faithful twin of the Windows maintainer
     workflow (VHS-REQ-598) on a separate self-hosted runner label.
 - Implementation References:
   - `.github/workflows/linux-labview-maintainer.yml`
+  - `scripts/checkMaintainerRunnerPrerequisites.js`
   - `docs/maintainer-operations.md`
 - Verification References:
   - `tests/unit/linuxLabviewMaintainerWorkflow.test.ts`
+  - `tests/unit/checkMaintainerRunnerPrerequisites.test.ts`
   - `manual:trusted-linux-labview-runner-dispatch`
 - Change Guidance:
   - Do not run self-hosted validation on arbitrary pull request code.
@@ -2965,8 +2988,15 @@ Missing numeric IDs are intentional.
     explicit `null` when the runtime is not Windows host-native, so
     real-hardware validation evidence proves a non-default
     `server.tcp.port` was admitted without a false conflict block. The
-    Windows runtime matrix harness `port-A` scenario asserts the
-    observed non-default port through this proof field.
+    Windows runtime matrix harness `port-A` scenario derives its
+    expected VI Server port from the selected install's own
+    `LabVIEW.ini` (the same parse the product uses) rather than a
+    hardcoded or operator-supplied constant, then asserts the admitted
+    (`blockedReason=none`) run's proof reports `hostLabviewIniPath`
+    equal to that selected install's ini and `hostLabviewTcpPort` equal
+    to the port parsed from it. This keeps the contract correct for
+    whatever port the operator configures and proves the product read
+    the selected install rather than the latest-used one.
 - Agent Work Scope:
   - Reuse the existing `resolveWindowsLabviewTcpSettingsForLabviewPath`
     parser; do not introduce a second ini reader. Add a small

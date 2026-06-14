@@ -12,6 +12,20 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.27.2] - 2026-06-14
+
+### Changed
+
+- The Windows runtime-matrix `port-A` scenario now derives its expected VI
+  Server port from the selected install's own `LabVIEW.ini` instead of a
+  hardcoded `3380` or an operator-supplied `host_tcp_port` / `--host-tcp-port`
+  value, and additionally asserts the validation proof's `hostLabviewIniPath`
+  matches the selected install. This removes a false-pass path (passing the
+  `3363` default), self-configures to whatever port the operator sets, and
+  proves the product read the selected install rather than the latest-used one.
+  The `host_tcp_port` workflow input and `--host-tcp-port` driver flag are
+  removed (VHS-REQ-623, #525).
+
 ## [1.27.1] - 2026-06-13
 
 ### Fixed

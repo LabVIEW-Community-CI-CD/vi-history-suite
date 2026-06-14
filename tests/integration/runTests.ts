@@ -7,6 +7,7 @@ import { downloadAndUnzipVSCode, runTests } from '@vscode/test-electron';
 
 import {
   assertLinuxVsCodeRuntimeReady,
+  assertWindowsVsCodeRuntimeReady,
   inspectIntegrationHostStrategy,
   resolveStandardWindowsCodeCliPath
 } from '../../src/tooling/integrationHostRuntime';
@@ -34,6 +35,12 @@ async function main(): Promise<void> {
     windowsCodeAlreadyRunning: isWindowsCodeAlreadyRunning
   });
   const useWindowsHost = hostStrategy.mode === 'windows';
+  if (useWindowsHost) {
+    // Fail fast with actionable remediation before staging work if the native
+    // Windows host was selected but VS Code is not installed (otherwise the
+    // launcher dies with an opaque CommandNotFoundException). VHS-REQ-598.
+    assertWindowsVsCodeRuntimeReady(windowsCodePath);
+  }
   const integrationRuntimeRoot = await selectIntegrationRuntimeRoot(repoRoot, useWindowsHost);
   const windowsProfile = useWindowsHost
     ? buildWindowsIntegrationProfile(integrationRuntimeRoot)

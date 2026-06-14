@@ -46,7 +46,7 @@ src/services/viHistoryService.ts,mapped,Yes,VI history service; mapped through R
 src/support/repositorySupportPolicy.ts,supporting,No,Repository support tier classification enabling dashboard/review capability scoping; supporting VHS-REQ-610 dashboard aggregate review.
 src/tooling/buildInfo.ts,dev-only,No,Build info generation for development.
 src/tooling/devHostLoop.ts,dev-only,No,Development host loop; development tooling.
-src/tooling/integrationHostRuntime.ts,dev-only,No,Integration host runtime; testing infrastructure.
+src/tooling/integrationHostRuntime.ts,mapped,Yes,Integration host runtime incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
 src/tooling/integrationHostStage.ts,dev-only,No,Integration host stage; testing infrastructure.
 src/tooling/localRuntimeSettingsCli.ts,mapped,Yes,Installed runtime settings CLI preparation surface mapped to VHS-REQ-612 through the contributed labviewViHistory.prepareLocalRuntimeSettingsCli command.
 src/tooling/runtimeSettingsLiveSessionProbe.ts,dev-only,No,Live-session probe command is not contributed in package.json; maintainer diagnostics only and not installed command surface.
@@ -98,7 +98,7 @@ tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering test
 tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
 tests/unit/humanReviewSubmission.test.ts,mapped,Yes,Human review submission boundary tests; mapped to VHS-REQ-610.
-tests/unit/integrationHostRuntime.test.ts,dev-only,No,Integration host runtime tests; testing infrastructure.
+tests/unit/integrationHostRuntime.test.ts,mapped,Yes,Integration host runtime tests incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
 tests/unit/localRuntimeSettingsCli.test.ts,mapped,Yes,Installed runtime settings CLI direct tests; mapped to VHS-REQ-612.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
 tests/unit/marketplaceListingVerification.test.ts,mapped,Yes,Marketplace listing verification retry tests; mapped to VHS-REQ-609.
@@ -221,6 +221,8 @@ tests/unit/containerImageCatalog.test.ts,mapped,Yes,Container image tag model an
 tests/unit/pickRuntimeProviderCommand.test.ts,mapped,Yes,Runtime provider quick-pick unit tests mapped to VHS-REQ-620.
 tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-620.
 scripts/runWindowsRuntimeMatrix.js,mapped,Yes,Windows runtime conflict verification harness driver; mapped to VHS-REQ-622.
+scripts/checkMaintainerRunnerPrerequisites.js,mapped,Yes,Maintainer runner prerequisite doctor; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conflict verification harness driver tests; mapped to VHS-REQ-622.
+tests/unit/checkMaintainerRunnerPrerequisites.test.ts,mapped,Yes,Maintainer runner prerequisite doctor tests; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/windowsRuntimeMatrixWorkflow.test.ts,mapped,Yes,Windows runtime matrix workflow contract tests; mapped to VHS-REQ-622.
 .github/workflows/windows-runtime-matrix.yml,release-ci,Yes,Windows runtime matrix workflow; mapped to VHS-REQ-622.

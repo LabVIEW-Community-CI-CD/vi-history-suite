@@ -104,6 +104,23 @@ describe('Linux LabVIEW maintainer workflow', () => {
     expect(stepBlock('Record VSIX Evidence Path')).toContain('mkdir -p runner-evidence');
   });
 
+  it('gates on a runner prerequisite doctor after checkout and before install (fail-fast)', () => {
+    const workflow = readWorkflow();
+
+    // The prerequisite doctor must run as a fail-fast gate so a missing host
+    // prerequisite (e.g. VS Code) aborts in seconds with a consolidated report
+    // instead of dying deep in the Integration Host step. Assert it lives after
+    // checkout and before the install step.
+    expect(workflow).toContain('- name: Validate Runner Prerequisites');
+    expect(workflow).toContain('node scripts/checkMaintainerRunnerPrerequisites.js');
+    const checkoutIndex = workflow.indexOf('actions/checkout@');
+    const gateIndex = workflow.indexOf('- name: Validate Runner Prerequisites');
+    const installIndex = workflow.indexOf('- name: Install');
+    expect(checkoutIndex).toBeGreaterThanOrEqual(0);
+    expect(gateIndex).toBeGreaterThan(checkoutIndex);
+    expect(installIndex).toBeGreaterThan(gateIndex);
+  });
+
   it('does not depend on npm cache tooling on the self-hosted runner', () => {
     const workflow = readWorkflow();
 

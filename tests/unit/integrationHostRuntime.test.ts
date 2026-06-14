@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   assertLinuxVsCodeRuntimeReady,
+  assertWindowsVsCodeRuntimeReady,
   collectMissingLinuxSharedLibraries,
   inspectIntegrationHostStrategy,
   normalizeIntegrationHostOverride,
@@ -65,6 +66,30 @@ describe('integrationHostRuntime', () => {
     ).toEqual({
       mode: 'windows'
     });
+  });
+
+  it('fails fast with actionable remediation when the native Windows VS Code host is missing', () => {
+    // Reproduces run 27477253718: native-Windows host selected but VS Code is
+    // not installed. The guard must throw a clear, doctor-pointing message
+    // instead of letting the launcher die with CommandNotFoundException.
+    expect(() =>
+      assertWindowsVsCodeRuntimeReady('C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd', {
+        existsSync: () => false
+      })
+    ).toThrow(/system-wide VS Code install/);
+    expect(() =>
+      assertWindowsVsCodeRuntimeReady('C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd', {
+        existsSync: () => false
+      })
+    ).toThrow(/checkMaintainerRunnerPrerequisites\.js/);
+  });
+
+  it('passes the Windows VS Code readiness guard when the CLI exists', () => {
+    expect(() =>
+      assertWindowsVsCodeRuntimeReady('C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd', {
+        existsSync: (candidate) => candidate === 'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd'
+      })
+    ).not.toThrow();
   });
 
   it('resolves only the standard stable Windows VS Code CLI install locations', () => {

@@ -54,10 +54,6 @@ const KNOWN_SCENARIOS = Object.freeze([
   'version-B',
   'port-A'
 ]);
-// VHS-REQ-623: canonical non-default VI Server TCP port (the LabVIEW default is
-// 3363) used by the port-admit scenario; mirrors the unit-test port at
-// tests/unit/comparisonReportRuntimeExecution.test.ts.
-const NON_DEFAULT_VI_SERVER_TCP_PORT = 3380;
 const SCENARIO_PARAMETERS = Object.freeze({
   // VHS-REQ-622: bitness-conflict directions (same year, different bitness).
   'steady-A': {
@@ -87,14 +83,16 @@ const SCENARIO_PARAMETERS = Object.freeze({
     expectedBlockedReason: 'windows-host-version-conflict'
   },
   // VHS-REQ-623: non-default VI Server port admit direction (same year/bitness).
-  // The selected install must be configured on the non-default VI Server port
-  // (server.tcp.port=3380). Asserts the locator admits the host (no false
-  // conflict) AND observes the non-default port in the validation proof.
+  // The expected VI Server port is DERIVED from the selected install's own
+  // LabVIEW.ini at runtime (derivePortFromSelectedIni) -- never a hardcoded or
+  // operator-supplied constant -- so the scenario admits the host (no false
+  // conflict) AND proves the product read that exact ini and observed its
+  // configured port, whatever the operator set it to.
   'port-A': {
     hostBitness: 'x64',
     selectedBitness: 'x64',
     expectedBlockedReason: 'none',
-    expectedHostTcpPort: NON_DEFAULT_VI_SERVER_TCP_PORT
+    derivePortFromSelectedIni: true
   }
 });
 
@@ -153,7 +151,8 @@ function getUsage() {
     '                          port-A | all',
     '                          (default: all; steady-* assert bitness conflict,',
     '                          version-* assert version conflict, port-A asserts',
-    '                          a non-default VI Server port is admitted + observed)',
+    "                          the selected install's configured VI Server port",
+    '                          is admitted + observed)',
     '  --labview-version <yr>  LabVIEW major version for steady-* scenarios',
     '                          (default: 2026; version-* carry their own years)',
     `  --out <path>            Evidence output (default: ${DEFAULT_EVIDENCE_OUT})`,
@@ -194,15 +193,12 @@ function resolveProofDir(options) {
 function buildScenarioPlan(options) {
   const scenarios = selectScenarios(options.scenario);
   const proofDir = resolveProofDir(options);
-  return scenarios.map((id) => {
-    const parameters = SCENARIO_PARAMETERS[id];
-    return {
-      id,
-      parameters,
-      proofPath: path.join(proofDir, `${id}.proof.json`),
-      logPath: path.join(proofDir, `${id}.scenario.json`)
-    };
-  });
+  return scenarios.map((id) => ({
+    id,
+    parameters: SCENARIO_PARAMETERS[id],
+    proofPath: path.join(proofDir, `${id}.proof.json`),
+    logPath: path.join(proofDir, `${id}.scenario.json`)
+  }));
 }
 
 function buildPowershellArgs(scenario, options) {
@@ -236,10 +232,11 @@ function buildPowershellArgs(scenario, options) {
     '-ScenarioLogPath',
     scenario.logPath
   ];
-  // VHS-REQ-623: the port-admit scenario asserts the observed non-default VI
-  // Server port from the validation proof.
-  if (scenario.parameters.expectedHostTcpPort !== undefined) {
-    args.push('-ExpectedHostTcpPort', String(scenario.parameters.expectedHostTcpPort));
+  // VHS-REQ-623: the port-admit scenario derives its expected VI Server port
+  // from the selected install's own LabVIEW.ini inside the helper, so the
+  // driver only signals intent -- it never passes a port number.
+  if (scenario.parameters.derivePortFromSelectedIni) {
+    args.push('-DerivePortFromSelectedIni');
   }
   if (options.keepRunning) {
     args.push('-KeepRunning');
@@ -265,44 +262,75 @@ function readScenarioLog(scenario, deps) {
   }
 }
 
+function normalizeWindowsPath(value) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return undefined;
+  }
+  return value.trim().replace(/\//g, '\\').replace(/\\+$/, '').toLowerCase();
+}
+
 function summarizeScenario(scenario, spawnResult, scenarioLog) {
   const expected = {
     runtimeBlockedReason: scenario.parameters.expectedBlockedReason,
     hostBitness: scenario.parameters.hostBitness,
     selectedBitness: scenario.parameters.selectedBitness
   };
-  if (scenario.parameters.expectedHostTcpPort !== undefined) {
-    expected.hostTcpPort = scenario.parameters.expectedHostTcpPort;
-  }
   const observed = scenarioLog?.observed ?? {
     runtimeBlockedReason: undefined,
     hostBitness: undefined,
     selectedBitness: undefined,
     labviewExecutablePath: undefined,
-    hostLabviewTcpPort: undefined
+    hostLabviewTcpPort: undefined,
+    hostLabviewIniPath: undefined
   };
-  // VHS-REQ-623: the port-admit scenario additionally requires the observed
-  // non-default VI Server port to match the expected port; non-port scenarios
-  // leave expectedHostTcpPort undefined and skip this assertion.
-  const portMatches =
-    scenario.parameters.expectedHostTcpPort === undefined ||
-    observed.hostLabviewTcpPort === scenario.parameters.expectedHostTcpPort;
+
+  // VHS-REQ-623: the port-admit scenario derives its expected VI Server port
+  // from the SELECTED install's own LabVIEW.ini (surfaced by the helper as
+  // scenarioLog.portOracle), never a hardcoded/operator-supplied constant. The
+  // scenario passes only when the product (a) read that exact selected ini and
+  // (b) observed its configured port in the proof. Non-port scenarios skip this.
+  const portOracle = scenario.parameters.derivePortFromSelectedIni
+    ? scenarioLog?.portOracle ?? null
+    : undefined;
+  let portMatches = true;
+  let iniPathMatches = true;
+  if (scenario.parameters.derivePortFromSelectedIni) {
+    expected.hostTcpPort = portOracle?.derivedExpectedTcpPort;
+    expected.hostLabviewIniPath = portOracle?.selectedLabviewIniPath;
+    portMatches =
+      portOracle != null &&
+      Number.isInteger(portOracle.derivedExpectedTcpPort) &&
+      observed.hostLabviewTcpPort === portOracle.derivedExpectedTcpPort;
+    const expectedIni = normalizeWindowsPath(portOracle?.selectedLabviewIniPath);
+    iniPathMatches =
+      portOracle != null &&
+      expectedIni !== undefined &&
+      expectedIni === normalizeWindowsPath(observed.hostLabviewIniPath);
+  }
+
   const pass = Boolean(
     scenarioLog?.pass === true &&
       observed.runtimeBlockedReason === expected.runtimeBlockedReason &&
       observed.hostBitness === expected.hostBitness &&
       observed.selectedBitness === expected.selectedBitness &&
-      portMatches
+      portMatches &&
+      iniPathMatches
   );
   let failureReason = scenarioLog?.failureReason
     ?? (spawnResult.status === 0 ? undefined : `powershell-exit-${spawnResult.status}`);
-  if (!pass && failureReason === undefined && !portMatches) {
-    failureReason =
-      `expected hostLabviewTcpPort=${scenario.parameters.expectedHostTcpPort}, ` +
-      `observed=${observed.hostLabviewTcpPort ?? '<none>'}`;
+  if (!pass && failureReason === undefined) {
+    if (!portMatches) {
+      failureReason =
+        `expected hostLabviewTcpPort=${expected.hostTcpPort ?? '<derive-failed>'}, ` +
+        `observed=${observed.hostLabviewTcpPort ?? '<none>'}`;
+    } else if (!iniPathMatches) {
+      failureReason =
+        `expected hostLabviewIniPath=${expected.hostLabviewIniPath ?? '<derive-failed>'}, ` +
+        `observed=${observed.hostLabviewIniPath ?? '<none>'}`;
+    }
   }
 
-  return {
+  const summary = {
     id: scenario.id,
     expected,
     observed,
@@ -314,6 +342,10 @@ function summarizeScenario(scenario, spawnResult, scenarioLog) {
       scenarioLogPath: scenario.logPath
     }
   };
+  if (portOracle !== undefined) {
+    summary.portOracle = portOracle;
+  }
+  return summary;
 }
 
 function buildEvidence(scenarioResults, options, deps) {
@@ -427,6 +459,7 @@ module.exports = {
   resolveProofDir,
   buildScenarioPlan,
   buildPowershellArgs,
+  normalizeWindowsPath,
   summarizeScenario,
   buildEvidence,
   runRuntimeMatrix,
