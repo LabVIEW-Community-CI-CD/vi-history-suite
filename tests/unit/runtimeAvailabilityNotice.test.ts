@@ -247,6 +247,25 @@ describe('selectActiveRuntime (VHS-REQ-620)', () => {
     expect(snapshot.label.provider).toBe('docker');
   });
 
+  it('honours a LabVIEW-agnostic persisted docker selection with the provider key alone (VHS-REQ-657)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker'
+    });
+    expect(snapshot.source).toBe('persisted');
+    expect(snapshot.label.provider).toBe('docker');
+    expect(snapshot.label.labviewVersion).toBeUndefined();
+    expect(snapshot.label.labviewBitness).toBeUndefined();
+  });
+
+  it('keeps the provider-only docker label image-based (VHS-REQ-657)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      containerImageVersion: '2025q3-linux'
+    });
+    expect(snapshot.source).toBe('persisted');
+    expect(buildAvailableStatusBarSuffix(snapshot.label)).toBe('Docker @ 2025q3-linux');
+  });
+
   it('carries the selected container image version onto a persisted docker label (VHS-REQ-620)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',

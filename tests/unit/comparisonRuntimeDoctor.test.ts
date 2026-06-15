@@ -111,6 +111,20 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(summary.at(-1)).toContain('or switch viHistorySuite.runtimeProvider to host');
   });
 
+  it('reports the image-derived LabVIEW year for a container provider (VHS-REQ-657)', () => {
+    const summary = blockedSummary('container-image-acquisition-failed', {
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      requestedLabviewVersion: undefined,
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2025q3-linux'
+    });
+
+    // Docker is LabVIEW-agnostic; the selected image governs the version, so the
+    // requested-runtime line names 2025 (from the image) rather than a stale 2026.
+    expect(summary).toContain('Requested runtime: provider=docker; LabVIEW=2025; bitness=x64.');
+  });
+
   it('points failed container image acquisition at image recovery', () => {
     const summary = blockedSummary(
       'container-image-acquisition-failed',

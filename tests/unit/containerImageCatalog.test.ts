@@ -12,8 +12,55 @@ import {
   mergeAvailableContainerImageVersions,
   parseLabviewContainerImageReference,
   parseLabviewContainerImageTag,
-  resolveContainerImageSelection
+  resolveContainerImageSelection,
+  resolveLinuxContainerLabviewProfile
 } from '../../src/tooling/containerImageCatalog';
+
+describe('resolveLinuxContainerLabviewProfile (VHS-REQ-657)', () => {
+  it('derives the 2026 Q1 profile: labviewprofull + cli-headless', () => {
+    expect(
+      resolveLinuxContainerLabviewProfile('nationalinstruments/labview:2026q1-linux')
+    ).toEqual({
+      year: 2026,
+      installDirectory: '/usr/local/natinst/LabVIEW-2026-64',
+      labviewCliPath: '/usr/local/natinst/LabVIEW-2026-64/labviewprofull',
+      lvcomparePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      headlessMode: 'cli-headless'
+    });
+  });
+
+  it('derives the 2025 Q3 profile: plain labview + enable-cicd-env', () => {
+    expect(
+      resolveLinuxContainerLabviewProfile('nationalinstruments/labview:2025q3-linux')
+    ).toEqual({
+      year: 2025,
+      installDirectory: '/usr/local/natinst/LabVIEW-2025-64',
+      labviewCliPath: '/usr/local/natinst/LabVIEW-2025-64/labview',
+      lvcomparePath: '/usr/local/natinst/LabVIEW-2025-64/labview',
+      headlessMode: 'enable-cicd-env'
+    });
+  });
+
+  it('treats a future year as headless-flag based (2027)', () => {
+    const profile = resolveLinuxContainerLabviewProfile(
+      'nationalinstruments/labview:2027q1-linux'
+    );
+    expect(profile.year).toBe(2027);
+    expect(profile.labviewCliPath).toBe('/usr/local/natinst/LabVIEW-2027-64/labviewprofull');
+    expect(profile.headlessMode).toBe('cli-headless');
+  });
+
+  it('falls back to the LabVIEW 2026 profile when the reference is unparseable', () => {
+    for (const unparseable of [undefined, '', 'not-a-labview-image', 'ubuntu:24.04']) {
+      const profile = resolveLinuxContainerLabviewProfile(unparseable);
+      expect(profile.year).toBeUndefined();
+      expect(profile.labviewCliPath).toBe(
+        '/usr/local/natinst/LabVIEW-2026-64/labviewprofull'
+      );
+      expect(profile.headlessMode).toBe('cli-headless');
+    }
+  });
+});
 
 describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
   it('parses a base quarterly tag', () => {

@@ -149,6 +149,76 @@ export function parseLabviewContainerImageReference(
   return parseLabviewContainerImageTag(reference);
 }
 
+/** Headless engagement mechanism for a Linux LabVIEW container image. */
+export type LinuxContainerHeadlessMode = 'cli-headless' | 'enable-cicd-env';
+
+/**
+ * VHS-REQ-657: In-container LabVIEW invocation profile derived from a Linux
+ * `nationalinstruments/labview` image reference. The NI container images install
+ * LabVIEW under a year-versioned directory and change their headless contract by
+ * release: LabVIEW 2026 Q1 and later engage headless mode through the LabVIEWCLI
+ * `-Headless` flag and ship the comparison-capable `labviewprofull` binary as the
+ * canonical entry, while 2025 Q3 and earlier use the `EnableCICDFeaturesForLabVIEW`
+ * environment toggle and the plain `labview` binary (see ni/labview-for-containers
+ * docs/headless-labview.md and docs/linux-prebuilt.md). Pure data: no I/O.
+ */
+export interface LinuxContainerLabviewProfile {
+  /** Image-derived release year, or undefined when the reference is unparseable. */
+  readonly year: number | undefined;
+  /** Versioned install directory, e.g. `/usr/local/natinst/LabVIEW-2026-64`. */
+  readonly installDirectory: string;
+  /** LabVIEWCLI `-LabVIEWPath` target (`labviewprofull` for 2026 Q1+, `labview` earlier). */
+  readonly labviewCliPath: string;
+  /** LVCompare `-lvpath` target (the plain `labview` binary regardless of year). */
+  readonly lvcomparePath: string;
+  /** Headless mechanism the image requires. */
+  readonly headlessMode: LinuxContainerHeadlessMode;
+}
+
+/**
+ * VHS-REQ-657: First LabVIEW release year that engages headless mode through the
+ * LabVIEWCLI `-Headless` flag and ships `labviewprofull` as NI's canonical
+ * container compare entry. Earlier images (2025 Q3 and prior) use the
+ * `EnableCICDFeaturesForLabVIEW=TRUE` environment toggle and the plain `labview`
+ * binary.
+ */
+export const LINUX_CONTAINER_HEADLESS_MIN_YEAR = 2026;
+
+/** Parent directory NI uses for versioned LabVIEW installs inside the image. */
+const LINUX_CONTAINER_LABVIEW_INSTALL_PARENT = '/usr/local/natinst';
+
+/**
+ * Year assumed when an image reference cannot be parsed, preserving the prior
+ * hardcoded LabVIEW 2026 `labviewprofull` + `-Headless` container behavior so an
+ * unrecognized override never silently changes the invocation contract.
+ */
+const DEFAULT_LINUX_CONTAINER_LABVIEW_YEAR = 2026;
+
+/**
+ * VHS-REQ-657: Derive the in-container LabVIEW invocation profile for a Linux
+ * comparison run from the selected image reference. The year drives the install
+ * directory, executable selection, and headless mechanism; an unparseable
+ * reference falls back to the LabVIEW 2026 profile (back-compat). No supported-year
+ * floor is enforced here — the comparison runtime locator validates the resolved
+ * year and fails closed for unsupported selections.
+ */
+export function resolveLinuxContainerLabviewProfile(
+  rawReference: string | undefined
+): LinuxContainerLabviewProfile {
+  const parsed = rawReference ? parseLabviewContainerImageReference(rawReference) : undefined;
+  const year = parsed?.year;
+  const effectiveYear = year ?? DEFAULT_LINUX_CONTAINER_LABVIEW_YEAR;
+  const installDirectory = `${LINUX_CONTAINER_LABVIEW_INSTALL_PARENT}/LabVIEW-${effectiveYear}-64`;
+  const usesHeadlessFlag = effectiveYear >= LINUX_CONTAINER_HEADLESS_MIN_YEAR;
+  return {
+    year,
+    installDirectory,
+    labviewCliPath: `${installDirectory}/${usesHeadlessFlag ? 'labviewprofull' : 'labview'}`,
+    lvcomparePath: `${installDirectory}/labview`,
+    headlessMode: usesHeadlessFlag ? 'cli-headless' : 'enable-cicd-env'
+  };
+}
+
 /**
  * VHS-REQ-646: Newest-first comparator. Orders by year, then quarter, then patch
  * (a higher patch is newer; the base release is oldest within its group).

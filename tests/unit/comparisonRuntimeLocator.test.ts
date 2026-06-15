@@ -989,7 +989,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('blocks docker-only execution for a not-yet-implemented LabVIEW version', async () => {
+  it('no longer blocks docker-only execution for a non-2026 LabVIEW version (VHS-REQ-657)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -1002,12 +1002,10 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
       }
     );
 
-    expect(selection).toMatchObject({
-      provider: 'unavailable',
-      blockedReason: 'docker-provider-labview-version-not-implemented',
-      requestedLabviewVersion: '2025'
-    });
-    expect(selection.notes.join('\n')).toContain('not implemented yet');
+    // VHS-REQ-657: the Docker provider is LabVIEW-agnostic; the selected image
+    // governs the version, so a non-2026 requested year is no longer pinned out.
+    expect(selection.blockedReason).not.toBe('docker-provider-labview-version-not-implemented');
+    expect(selection.provider).toBe('windows-container');
   });
 
   it('drives the windows-container image from the selected container image version (VHS-REQ-650)', async () => {

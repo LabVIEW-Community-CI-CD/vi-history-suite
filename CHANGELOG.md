@@ -12,6 +12,28 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Changed
+
+- The **Docker** comparison runtime provider is now LabVIEW-version-agnostic. The
+  runtime provider picker and the Runtime & Report Settings panel both show
+  **Docker** instead of *Docker — LabVIEW 2026 x64*, and selecting it no longer
+  stores a LabVIEW version or bitness — the **LabVIEW container image** setting
+  alone determines the LabVIEW version. The panel only shows the **LabVIEW
+  container image** controls when Docker is the comparison runtime (hidden for a
+  host runtime). The runtime doctor now reports the LabVIEW year of the selected
+  container image (#565).
+
+### Fixed
+
+- The **Docker** comparison runtime now works with older LabVIEW container images
+  such as `nationalinstruments/labview:2025q3-linux`. The Linux container run
+  derives the in-container LabVIEW executable and headless mechanism from the
+  selected image: LabVIEW 2026 Q1 and later use `labviewprofull` with `-Headless`,
+  while 2025 Q3 and earlier use `labview` with `EnableCICDFeaturesForLabVIEW=TRUE`
+  (matching National Instruments' container guidance). Previously a 2025 image
+  failed with a recursive-load error because the run was pinned to the LabVIEW
+  2026 path and `-Headless` (#565).
+
 ## [1.29.1] - 2026-06-15
 
 ### Changed

@@ -2,6 +2,29 @@ import type {
   ComparisonReportPacketRecord,
   ComparisonReportRuntimeExecution
 } from './comparisonReportPacket';
+import { parseLabviewContainerImageReference } from '../tooling/containerImageCatalog';
+
+/**
+ * VHS-REQ-657: For a container provider the selected image governs the LabVIEW
+ * version, so report the image-derived release year instead of the (now cleared
+ * or stale) persisted `labviewVersion`. Host selections keep using the requested
+ * version; an unparseable/absent image falls back to the requested version then
+ * `unset`.
+ */
+function deriveRequestedLabviewVersionLabel(
+  selection: ComparisonReportPacketRecord['runtimeSelection']
+): string {
+  if (selection.provider === 'windows-container' || selection.provider === 'linux-container') {
+    const containerImage = selection.containerImage ?? selection.windowsContainerImage;
+    const parsed = containerImage
+      ? parseLabviewContainerImageReference(containerImage)
+      : undefined;
+    if (parsed) {
+      return String(parsed.year);
+    }
+  }
+  return selection.requestedLabviewVersion ?? 'unset';
+}
 
 export function buildComparisonRuntimeDoctorSummary(
   record: ComparisonReportPacketRecord
@@ -30,7 +53,9 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
   );
   lines.push(`Provider request=${providerRequest}.`);
   lines.push(
-    `Requested runtime: provider=${providerRequest}; LabVIEW=${selection.requestedLabviewVersion ?? 'unset'}; bitness=${selection.bitness}.`
+    `Requested runtime: provider=${providerRequest}; LabVIEW=${deriveRequestedLabviewVersionLabel(
+      selection
+    )}; bitness=${selection.bitness}.`
   );
 
   if (selection.providerDecisions?.length) {
