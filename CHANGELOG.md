@@ -12,6 +12,25 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.30.1] - 2026-06-15
+
+### Fixed
+
+- On Windows, selecting the **Docker** comparison runtime no longer fails with
+  *"the Docker provider facts could not be derived on the current host"* /
+  `labview-runtime-selection-required` when no host LabVIEW version or bitness is
+  set. Because selecting Docker intentionally clears the LabVIEW version and
+  bitness, the host-native version/bitness pre-check was wrongly blocking the
+  Docker request before the container provider was probed. The pre-check now
+  applies only to the host runtime, so a Docker request proceeds and the selected
+  **LabVIEW container image** governs the version (#571).
+
+### Changed
+
+- Updated development dependencies, including bumping `@vscode/test-electron`
+  from 2.5.2 to 3.0.0 (#569) and the grouped npm development minor/patch updates
+  (#568).
+
 ## [1.30.0] - 2026-06-15
 
 ### Changed
