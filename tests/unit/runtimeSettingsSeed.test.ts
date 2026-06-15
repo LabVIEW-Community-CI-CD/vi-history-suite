@@ -117,6 +117,27 @@ describe('runtime settings seed-or-repair (VHS-REQ-616)', () => {
     expect(fs.writeCalls).toHaveLength(0);
   });
 
+  it('preserves a LabVIEW-agnostic docker selection persisted with the provider key alone (VHS-REQ-657)', async () => {
+    const fs = createFakeFs({
+      [settingsFilePath]: JSON.stringify(
+        { 'viHistorySuite.runtimeProvider': 'docker' },
+        null,
+        2
+      )
+    });
+
+    const result = await applyRuntimeSettingsSeed(
+      detectionDockerOnly,
+      settingsFilePath,
+      { fs }
+    );
+
+    // A docker pick clears version/bitness; the next activation must NOT treat the
+    // provider-only selection as incomplete and clobber it with the recommendation.
+    expect(result.outcome).toBe('preserved');
+    expect(fs.writeCalls).toHaveLength(0);
+  });
+
   it('repairs a stale persisted selection that no current installation can satisfy', async () => {
     const fs = createFakeFs({
       [settingsFilePath]: JSON.stringify(
@@ -261,6 +282,16 @@ describe('isPersistedSelectionSatisfiable', () => {
         },
         detectionNothing
       )
+    ).toBe(false);
+  });
+
+  it('treats docker as satisfiable with the provider key alone (VHS-REQ-657)', () => {
+    // The Docker provider is LabVIEW-agnostic: no version/bitness required.
+    expect(
+      isPersistedSelectionSatisfiable({ runtimeProvider: 'docker' }, detectionDockerOnly)
+    ).toBe(true);
+    expect(
+      isPersistedSelectionSatisfiable({ runtimeProvider: 'docker' }, detectionNothing)
     ).toBe(false);
   });
 

@@ -85,14 +85,22 @@ function createMockPanel(): MockPanel {
   };
 }
 
-function createFakeWatcher(detection: DetectedRuntimes | undefined) {
+function createFakeWatcher(
+  detection: DetectedRuntimes | undefined,
+  snapshot: { label: { provider: 'host' | 'docker' | 'none' } } | undefined = undefined
+) {
   return {
     dispose: vi.fn(),
     forceRefresh: vi.fn(async () => undefined),
     getLastDetection: vi.fn(() => detection),
-    getLastSnapshot: vi.fn(() => undefined)
+    getLastSnapshot: vi.fn(() => snapshot)
   };
 }
+
+const dockerActiveSnapshot = {
+  source: 'persisted' as const,
+  label: { provider: 'docker' as const }
+};
 
 function createFakeContext() {
   return { subscriptions: [] as Array<{ dispose: () => void }> };
@@ -235,7 +243,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
       createFakeContext() as never,
-      createFakeWatcher(detectionBoth) as never,
+      createFakeWatcher(detectionBoth, dockerActiveSnapshot) as never,
       { isTrusted: () => true, containerPlatform: 'linux' }
     );
     await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
@@ -262,7 +270,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     const listLocalImages = vi.fn(async () => [] as string[]);
     registerOpenRuntimeReportPanelCommand(
       createFakeContext() as never,
-      createFakeWatcher(detectionBoth) as never,
+      createFakeWatcher(detectionBoth, dockerActiveSnapshot) as never,
       {
         isTrusted: () => true,
         containerPlatform: 'linux',
@@ -276,5 +284,41 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(fetchPublishedTags).toHaveBeenCalled();
     expect(panel.webview.html).toContain('data-testid="runtime-report-container-select"');
     expect(panel.webview.html).toContain('2026q1-linux');
+  });
+
+  it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657)', async () => {
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    registerOpenRuntimeReportPanelCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth) as never,
+      { isTrusted: () => true, containerPlatform: 'linux' }
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+
+    expect(panel.webview.html).toContain('>Docker<');
+    expect(panel.webview.html).not.toContain('Docker \u2014 LabVIEW');
+    expect(panel.webview.html).not.toContain('undefined');
+  });
+
+  it('hides the container image section when the comparison runtime is host (VHS-REQ-657/651)', async () => {
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn((key: string) => (key === 'runtimeProvider' ? 'host' : undefined)),
+      update: sharedUpdate,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    registerOpenRuntimeReportPanelCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth, dockerActiveSnapshot) as never,
+      { isTrusted: () => true, containerPlatform: 'linux' }
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+
+    // Even though Docker is available/active, an explicit host selection presents
+    // no container section.
+    expect(panel.webview.html).not.toContain('data-testid="runtime-report-container-section"');
   });
 });

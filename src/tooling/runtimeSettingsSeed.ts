@@ -74,7 +74,12 @@ export async function applyRuntimeSettingsSeed(
     (previous.runtimeProvider ? 1 : 0) +
     (previous.labviewVersion ? 1 : 0) +
     (previous.labviewBitness ? 1 : 0);
-  const allKeysPersisted = persistedKeyCount === 3;
+  // VHS-REQ-657: a persisted Docker selection is LabVIEW-agnostic, so the
+  // provider key alone is a complete selection (version/bitness are not required
+  // and may legitimately be absent after a Docker pick clears them). Host still
+  // requires the full triple.
+  const persistedSelectionComplete =
+    previous.runtimeProvider === 'docker' ? true : persistedKeyCount === 3;
   const noKeysPersisted = persistedKeyCount === 0;
 
   if (recommendation.provider === 'none') {
@@ -88,7 +93,7 @@ export async function applyRuntimeSettingsSeed(
     };
   }
 
-  if (allKeysPersisted && isPersistedSelectionSatisfiable(previous, detection)) {
+  if (persistedSelectionComplete && isPersistedSelectionSatisfiable(previous, detection)) {
     return {
       outcome: 'preserved',
       settingsFilePath,
@@ -123,23 +128,25 @@ export function isPersistedSelectionSatisfiable(
   detection: DetectedRuntimes
 ): boolean {
   const provider = selection.runtimeProvider;
-  const version = selection.labviewVersion;
-  const bitness = selection.labviewBitness;
-  if (!provider || !version || !bitness) {
-    return false;
-  }
   if (provider !== 'host' && provider !== 'docker') {
     return false;
   }
-  if (bitness !== 'x86' && bitness !== 'x64') {
-    return false;
-  }
   if (provider === 'docker') {
+    // VHS-REQ-657: the Docker provider is LabVIEW-agnostic — the selected
+    // container image governs the version, so only the provider key is required.
     // Daemon reachability is *not* checked here (too slow for activation); CLI
     // presence is the activation-time satisfiability bar.
     return detection.docker.cliAvailable;
   }
   // Host provider: an installation must match the persisted year+bitness.
+  const version = selection.labviewVersion;
+  const bitness = selection.labviewBitness;
+  if (!version || !bitness) {
+    return false;
+  }
+  if (bitness !== 'x86' && bitness !== 'x64') {
+    return false;
+  }
   return detection.host.installations.some(
     (installation) => installation.year === version && installation.bitness === bitness
   );

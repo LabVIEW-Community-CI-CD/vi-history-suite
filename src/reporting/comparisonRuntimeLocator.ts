@@ -32,7 +32,8 @@ import {
   ContainerImageVersionPlatformConflict,
   detectContainerImageVersionPlatformConflict,
   parseLabviewContainerImageReference,
-  resolveContainerImageSelection
+  resolveContainerImageSelection,
+  resolveLinuxContainerLabviewProfile
 } from '../tooling/containerImageCatalog';
 
 const execFileAsync = promisify(execFile);
@@ -225,7 +226,10 @@ const WINDOWS_CONTAINER_LABVIEW_EXE =
 const WINDOWS_CONTAINER_LABVIEW_CLI = WINDOWS_SHARED_LABVIEW_CLI;
 const WINDOWS_CONTAINER_LVCOMPARE =
   'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
-const LINUX_CONTAINER_LABVIEW_EXE = '/usr/local/natinst/LabVIEW-2026-64/labview';
+// VHS-REQ-657: the displayed in-container LabVIEW executable is derived per image
+// from `resolveLinuxContainerLabviewProfile` (e.g. LabVIEW-2025-64/labview vs
+// LabVIEW-2026-64/labview); only the shared CLI and LVCompare launchers are
+// version-independent symlinks on PATH.
 const LINUX_CONTAINER_LABVIEW_CLI = '/usr/local/bin/LabVIEWCLI';
 const LINUX_CONTAINER_LVCOMPARE = '/usr/local/bin/LVCompare';
 
@@ -790,43 +794,12 @@ export async function locateComparisonRuntime(
       settings.requestedProvider === 'docker'
         ? 'docker-provider-unavailable'
         : 'docker-only-provider-unavailable';
-    if (
-      requestedLabviewVersion &&
-      requestedLabviewVersion !== '2026' &&
-      // VHS-REQ-650: an explicit container image version selection governs the
-      // image directly, so the legacy host-LabVIEW-year -> image pin no longer
-      // applies; the selected image is acquired or fails closed downstream.
-      !settings.containerImageVersion?.trim()
-    ) {
-      return {
-        platform,
-        executionMode,
-        requestedProvider: settings.requestedProvider,
-        requestedLabviewVersion,
-        bitness,
-        provider: 'unavailable',
-        blockedReason: 'docker-provider-labview-version-not-implemented',
-        providerDecisions: buildProviderDecisions({
-          platform,
-          containerRuntimePlatform: containerFacts?.runtimePlatform,
-          executionMode,
-          requestedProvider: settings.requestedProvider,
-          bitness,
-          configuredWindowsContainerImage: windowsContainerImage,
-          configuredLinuxContainerImage: linuxContainerImage,
-          containerImage: containerFacts?.image,
-          containerAvailable,
-          containerEvaluated,
-          ...buildContainerDecisionFacts(),
-          blockedReason: 'docker-provider-labview-version-not-implemented'
-        }),
-        notes: [
-          `Docker provider validation accepted the request for evidence capture, but LabVIEW ${requestedLabviewVersion} Docker execution is not implemented yet. Current Docker image support remains LabVIEW 2026 x64.`
-        ],
-        registryQueryPlans,
-        candidates
-      };
-    }
+    // VHS-REQ-657: the Docker provider is LabVIEW-agnostic — the selected
+    // container image governs the LabVIEW version (resolved and validated through
+    // the image catalog/picker and enforced by the supported-floor check above),
+    // so there is no longer a legacy host-year -> 2026 image pin here. The
+    // in-container executable and headless mechanism are derived per image at
+    // execution time (see resolveLinuxContainerLabviewProfile).
 
     if (platform !== 'win32' && platform !== 'linux') {
       return {
@@ -1763,10 +1736,14 @@ function buildContainerToolCandidates(
   facts: WindowsContainerProviderFacts
 ): Pick<ComparisonRuntimeSelection, 'labviewExe' | 'labviewCli' | 'lvCompare'> {
   if (resolveContainerProvider(facts) === 'linux-container') {
+    // VHS-REQ-657: report the image-derived plain `labview` binary so the doctor
+    // "Selected runtime tools" line names the LabVIEW the selected image ships
+    // (e.g. LabVIEW-2025-64) instead of a fixed 2026 path.
+    const linuxProfile = resolveLinuxContainerLabviewProfile(facts.image);
     return {
       labviewExe: {
         kind: 'labview-exe',
-        path: LINUX_CONTAINER_LABVIEW_EXE,
+        path: linuxProfile.lvcomparePath,
         source: 'scan',
         exists: true,
         bitness: 'x64'

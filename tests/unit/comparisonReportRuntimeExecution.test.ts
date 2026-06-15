@@ -26,6 +26,7 @@ import {
   buildLinuxHostNativeShortPathCommandPlan,
   shouldUseLinuxHostNativeShortPathStaging,
   rewriteLabviewCliArgsForLinuxContainerWorkspace,
+  buildLinuxContainerCommandPlan,
   runComparisonCommandPlanWithObservation,
   prepareWindowsContainerExecutionContext,
   prepareLinuxContainerExecutionContext,
@@ -3076,6 +3077,129 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     );
     expect(rewritten).toContain('-Headless');
     expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labview');
+  });
+
+  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets the image labview without -Headless for 2025 Q3 (VHS-REQ-657)', () => {
+    const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
+      [
+        '-OperationName',
+        'CreateComparisonReport',
+        '-VI1',
+        '/host/staging/left-111111112222-foo.vi',
+        '-VI2',
+        '/host/staging/right-abcdef123456-foo.vi',
+        '-ReportType',
+        'HTML',
+        '-ReportPath',
+        '/host/diff-report-foo.vi.html',
+        '-LabVIEWPath',
+        '/usr/local/natinst/LabVIEW-2026-64/labview'
+      ],
+      {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'left-111111112222-foo.vi',
+        rightFilename: 'right-abcdef123456-foo.vi',
+        reportFilename: 'diff-report-foo.vi.html',
+        containerLabviewPath: '/usr/local/natinst/LabVIEW-2025-64/labview',
+        headlessMode: 'enable-cicd-env'
+      }
+    );
+
+    expect(rewritten).toBeDefined();
+    const labviewPathIndex = rewritten?.indexOf('-LabVIEWPath') ?? -1;
+    expect(labviewPathIndex).toBeGreaterThanOrEqual(0);
+    expect(rewritten?.[labviewPathIndex + 1]).toBe('/usr/local/natinst/LabVIEW-2025-64/labview');
+    // LabVIEW 2025 Q3 engages CI/CD headless via the env toggle, never -Headless.
+    expect(rewritten).not.toContain('-Headless');
+    expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labviewprofull');
+  });
+
+  it('buildLinuxContainerCommandPlan derives the 2025 Q3 invocation from the image (VHS-REQ-657)', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      engine: 'labview-cli'
+    };
+
+    const plan = buildLinuxContainerCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/host/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/host/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'htmlsinglefile',
+          '-ReportPath',
+          '/host/diff-report-foo.vi.html'
+        ]
+      },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2025q3-linux',
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(plan).toBeDefined();
+    expect(plan?.args).toContain('nationalinstruments/labview:2025q3-linux');
+    const script = plan?.args[plan.args.length - 1] ?? '';
+    expect(script).toContain('export EnableCICDFeaturesForLabVIEW=TRUE');
+    expect(script).toContain('/usr/local/natinst/LabVIEW-2025-64/labview');
+    expect(script).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labviewprofull');
+    expect(script).not.toContain('-Headless');
+  });
+
+  it('buildLinuxContainerCommandPlan keeps 2026 labviewprofull + -Headless without the CI/CD env (VHS-REQ-657)', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      engine: 'labview-cli'
+    };
+
+    const plan = buildLinuxContainerCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/host/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/host/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'htmlsinglefile',
+          '-ReportPath',
+          '/host/diff-report-foo.vi.html'
+        ]
+      },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(plan).toBeDefined();
+    const script = plan?.args[plan.args.length - 1] ?? '';
+    expect(script).toContain('/usr/local/natinst/LabVIEW-2026-64/labviewprofull');
+    expect(script).toContain('-Headless');
+    expect(script).not.toContain('EnableCICDFeaturesForLabVIEW');
   });
 
   it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {

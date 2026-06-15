@@ -46,12 +46,11 @@ export function buildPickRuntimeProviderItems(
   if (detection.docker.cliAvailable) {
     items.push({
       kind: 'docker',
-      label: '$(server) Docker — LabVIEW 2026 x64',
+      label: '$(server) Docker',
       description: detection.docker.cliPath,
-      detail: 'Bounded expert path. Requires a configured LabVIEW Docker image.',
-      runtimeProvider: 'docker',
-      labviewVersion: '2026',
-      labviewBitness: 'x64'
+      detail:
+        'Bounded expert path. The selected LabVIEW container image determines the LabVIEW version.',
+      runtimeProvider: 'docker'
     });
   }
 
