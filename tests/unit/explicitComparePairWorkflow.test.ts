@@ -167,6 +167,50 @@ describe('explicitComparePairWorkflow HTML rendering (VHS-REQ-133)', () => {
     });
   });
 
+  describe('selection persists across a panel reload (#561)', () => {
+    it('persists the selected hashes to webview state on change and restores them on load', () => {
+      const model = createTestViewModel([
+        { hash: 'abc123', previousHash: 'def456' },
+        { hash: 'def456' }
+      ]);
+      const html = renderHistoryPanelHtml(model);
+
+      // The selection is written to webview state when it changes...
+      expect(html).toContain('function persistSelectedHashes()');
+      expect(html).toContain('vscode.setState(');
+      expect(html).toContain('selectedHashes');
+      // ...and restored from webview state on script load, before the button
+      // state is computed, so a reload does not clear the selection.
+      expect(html).toContain('function restoreSelectedHashes()');
+      expect(html).toContain('vscode.getState()');
+      expect(html).toMatch(/restoreSelectedHashes\(\);\s*updateCompareSelectionState\(\);/);
+    });
+
+    it('restores at most two revisions, honoring the selection cap', () => {
+      const html = renderHistoryPanelHtml(
+        createTestViewModel([
+          { hash: 'abc123', previousHash: 'def456' },
+          { hash: 'def456' }
+        ])
+      );
+
+      expect(html).toContain('restored < 2');
+    });
+
+    it('does not restore selection when comparison generation is unavailable', () => {
+      const html = renderHistoryPanelHtml({
+        ...createTestViewModel([
+          { hash: 'abc123', previousHash: 'def456' },
+          { hash: 'def456' }
+        ]),
+        surfaceCapabilities: { comparisonGenerationAvailable: false }
+      });
+
+      // restoreSelectedHashes early-returns when selection is disabled.
+      expect(html).toMatch(/function restoreSelectedHashes\(\)\s*\{\s*if \(!compareSelectionEnabled\)/);
+    });
+  });
+
   describe('disabled selection when comparison generation is not available', () => {
     it('renders disabled checkboxes when comparisonGenerationAvailable is false', () => {
       const model: ViHistoryViewModel = {

@@ -186,8 +186,23 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         color: var(--vscode-descriptionForeground);
         font-style: italic;
       }
+      /*
+       * VHS-REQ-133 (#559): pin the primary Compare action in a sticky footer so
+       * it stays reachable without scrolling on large histories (e.g. lv_icon.vi).
+       * The opaque background + top border keep table rows covered as they scroll
+       * underneath; on short histories the bar simply sits at its natural position.
+       */
       .compare-bar {
+        position: sticky;
+        bottom: 0;
         margin-top: 16px;
+        padding: 12px 0;
+        background: var(--vscode-editor-background);
+        border-top: 1px solid var(--vscode-panel-border);
+        z-index: 1;
+      }
+      .compare-bar button {
+        margin-bottom: 0;
       }
     </style>
   </head>
@@ -210,7 +225,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         ${rows}
       </tbody>
     </table>
-    <div class="compare-bar">
+    <div class="compare-bar" data-testid="history-compare-bar">
       <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" disabled>Compare</button>
     </div>
     <script>
@@ -266,6 +281,40 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         }
         updateCompareButtonState(resolveSelectedPair() !== undefined);
       }
+      // VHS-REQ-133 (#561): persist the explicit checkbox selection to webview
+      // state so it survives a panel reload. Switching to another panel (e.g.
+      // Runtime & Report Settings) hides this webview, and an in-place re-render
+      // reassigns the HTML; either reloads the script, which would otherwise drop
+      // the in-DOM selection.
+      function readSavedSelectedHashes() {
+        const state = vscode.getState();
+        const saved = state && Array.isArray(state.selectedHashes) ? state.selectedHashes : [];
+        return saved.filter((value) => typeof value === 'string' && value.length > 0);
+      }
+      function persistSelectedHashes() {
+        const selectedHashes = getCommitSelectionInputs()
+          .filter((candidate) => candidate.checked)
+          .map((candidate) => candidate.dataset.hash ?? '')
+          .filter((hash) => hash.length > 0);
+        vscode.setState({ ...(vscode.getState() ?? {}), selectedHashes });
+      }
+      function restoreSelectedHashes() {
+        if (!compareSelectionEnabled) {
+          return;
+        }
+        const saved = readSavedSelectedHashes();
+        if (saved.length === 0) {
+          return;
+        }
+        let restored = 0;
+        for (const input of getCommitSelectionInputs()) {
+          const hash = input.dataset.hash ?? '';
+          if (hash.length > 0 && saved.indexOf(hash) !== -1 && restored < 2) {
+            input.checked = true;
+            restored += 1;
+          }
+        }
+      }
       function handleCommitSelectionChange(target) {
         if (!(target instanceof HTMLInputElement) || target.dataset.hash === undefined) {
           return;
@@ -276,8 +325,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           target.checked = false;
         }
         updateCompareSelectionState();
+        persistSelectedHashes();
       }
 
+      restoreSelectedHashes();
       updateCompareSelectionState();
 
       document.addEventListener('change', (event) => {
