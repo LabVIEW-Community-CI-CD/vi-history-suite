@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.29.1] - 2026-06-15
+
 ### Changed
 
 - The VI History panel's **Compare** button is now pinned in a **sticky footer**
