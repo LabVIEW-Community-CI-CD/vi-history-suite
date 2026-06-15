@@ -265,7 +265,7 @@
     "@types/node": "^24.13.1",
     "@types/vscode": "^1.90.0",
     "@vitest/coverage-v8": "^4.1.8",
-    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "3.9.2",
     "marked": "^18.0.5",
     "rimraf": "^6.0.1",
