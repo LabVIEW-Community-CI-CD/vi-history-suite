@@ -3028,6 +3028,14 @@ Missing numeric IDs are intentional.
     selection is satisfiable, complete (preserved across activation rather than
     repaired), and labeled from the selected container image with the provider key
     alone.
+  - On Windows the installed-compare version+bitness preflight gate
+    (`labview-runtime-selection-required`/`labview-version-required`/
+    `labview-bitness-required`) applies only to the host-native lane; a Docker
+    request (`requestedProvider=docker`, derived `docker-only` execution) is not
+    blocked by that gate even when `requireVersionAndBitness` is set and
+    `viHistorySuite.labviewVersion`/`labviewBitness` are unset, so the locator
+    proceeds to probe the container provider and the selected image governs the
+    LabVIEW version.
   - In the Runtime & Report Settings panel the Docker provider option label is
     `Docker` (no version/bitness text), and the LabVIEW container image section is
     shown only when Docker is the comparison runtime (persisted

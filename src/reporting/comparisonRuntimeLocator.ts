@@ -460,7 +460,17 @@ export async function locateComparisonRuntime(
     };
   }
 
-  if (platform === 'win32' && requireVersionAndBitness) {
+  // VHS-REQ-657: the Docker provider is LabVIEW-version/bitness-agnostic — the
+  // selected container image governs the LabVIEW version, and selecting Docker
+  // clears viHistorySuite.labviewVersion/labviewBitness. The installed-compare
+  // version+bitness gate only applies to the host-native lane, so it must not
+  // block a Docker request (executionMode 'docker-only') before the container
+  // provider is even probed.
+  if (
+    platform === 'win32' &&
+    requireVersionAndBitness &&
+    executionMode !== 'docker-only'
+  ) {
     const missingVersion = !requestedLabviewVersion;
     const missingBitness = settings.bitness === undefined;
     if (missingVersion || missingBitness) {

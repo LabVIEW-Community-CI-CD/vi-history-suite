@@ -335,6 +335,45 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
+  it('probes Docker on Windows even when version/bitness are unset because the gate is required (VHS-REQ-657)', async () => {
+    // Real-world production shape: readComparisonRuntimeSettings always sets
+    // requireVersionAndBitness=true, and selecting Docker clears
+    // labviewVersion/labviewBitness. The host-native version/bitness gate must
+    // not pre-empt the Docker provider before it is probed.
+    const queryFacts = vi.fn().mockResolvedValue(windowsContainerFacts());
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        containerImageVersion: '2026q1patch1-windows'
+      },
+      { queryWindowsContainerProviderFacts: queryFacts }
+    );
+
+    expect(queryFacts).toHaveBeenCalled();
+    expect(selection.blockedReason).not.toBe('labview-runtime-selection-required');
+    expect(selection).toMatchObject({
+      provider: 'windows-container',
+      requestedProvider: 'docker'
+    });
+  });
+
+  it('still blocks the host-native lane when version/bitness are unset and the gate is required (VHS-REQ-657)', async () => {
+    // Guard rail: bypassing the gate for Docker must not weaken it for the
+    // host-native provider.
+    const selection = await locateComparisonRuntime('win32', {
+      requestedProvider: 'host',
+      requireVersionAndBitness: true
+    });
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-runtime-selection-required',
+      requestedProvider: 'host'
+    });
+  });
+
   it('blocks Docker x86 requests without falling back silently', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
