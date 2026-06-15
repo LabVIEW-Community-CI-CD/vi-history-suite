@@ -1062,17 +1062,6 @@ export function createOpenViHistoryCommand(
         return;
       }
 
-      if (command === 'copyHash') {
-        await vscode.env.clipboard.writeText(hash);
-        panelTracker?.recordAction({
-          command,
-          hash,
-          outcome: 'copied-hash',
-          copiedHash: hash
-        });
-        return;
-      }
-
       if (command === 'generateComparisonReport') {
         await runComparisonReportCommand(
           command,
@@ -1134,19 +1123,6 @@ export function createOpenViHistoryCommand(
           command,
           hash,
           outcome: 'missing-git-uri'
-        });
-        return;
-      }
-
-      if (command === 'openCommit') {
-        await vscode.commands.executeCommand('vscode.open', gitUri, {
-          preview: false
-        });
-        panelTracker?.recordAction({
-          command,
-          hash,
-          outcome: 'opened-commit',
-          openedUri: gitUri.toString()
         });
         return;
       }

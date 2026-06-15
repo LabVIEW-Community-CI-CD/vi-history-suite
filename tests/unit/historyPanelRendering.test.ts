@@ -226,17 +226,18 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('No commit body');
     });
 
-    it('renders commit actions including open and copy buttons', () => {
+    it('does not render per-row commit action buttons (VHS-REQ-017)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'actioncommit1234567890123456789012345678' })]
       });
       const html = renderHistoryPanelHtml(model);
 
-      expect(html).toContain('data-testid="history-commit-actions"');
-      expect(html).toContain('data-testid="history-action-open"');
-      expect(html).toContain('data-testid="history-action-copy"');
-      expect(html).toContain('data-command="openCommit"');
-      expect(html).toContain('data-command="copyHash"');
+      expect(html).not.toContain('data-testid="history-commit-actions"');
+      expect(html).not.toContain('data-testid="history-action-open"');
+      expect(html).not.toContain('data-testid="history-action-copy"');
+      expect(html).not.toContain('data-command="openCommit"');
+      expect(html).not.toContain('data-command="copyHash"');
+      expect(html).not.toContain('<th>Actions</th>');
     });
   });
 

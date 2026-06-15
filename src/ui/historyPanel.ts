@@ -113,7 +113,6 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           <td data-testid="history-commit-author">Working tree</td>
           <td data-testid="history-commit-subject">Uncommitted changes (not retained)</td>
           <td data-testid="history-commit-body" class="commit-body"><span class="commit-body-empty">On-disk changes not yet committed.</span></td>
-          <td data-testid="history-commit-actions"></td>
         </tr>
       `
       : '';
@@ -131,10 +130,6 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           <td data-testid="history-commit-author">${escapeHtml(commit.authorName)}</td>
           <td data-testid="history-commit-subject">${escapeHtml(commit.subject)}</td>
           <td data-testid="history-commit-body" class="commit-body">${renderCommitBodyCell(commit)}</td>
-          <td data-testid="history-commit-actions">
-            <button data-testid="history-action-open" data-command="openCommit" data-hash="${escapeHtml(commit.hash)}">Open@commit</button>
-            <button data-testid="history-action-copy" data-command="copyHash" data-hash="${escapeHtml(commit.hash)}">Copy hash</button>
-          </td>
         </tr>
       `;
     })
@@ -217,7 +212,6 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           <th>Author</th>
           <th>Subject</th>
           <th>Commit body</th>
-          <th>Actions</th>
         </tr>
       </thead>
       <tbody>

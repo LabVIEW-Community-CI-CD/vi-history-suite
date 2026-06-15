@@ -398,6 +398,9 @@ Missing numeric IDs are intentional.
     subject, and the full commit body.
   - Revisions with an empty commit body render a factual fallback rather than a
     blank cell.
+  - The commit table does not render a per-row action column; the panel exposes
+    no per-row Open@commit or Copy hash buttons. The Select checkboxes and the
+    explicit Compare action remain the panel's interactive controls.
   - The panel does not render the prior procedural sections (review-facts,
     repository-facts, binary-review-limitation, reviewer-guidance,
     confidence-and-scope, latest-compare-runtime, or host-review-submission); the
