@@ -12,6 +12,8 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+## [1.30.0] - 2026-06-15
+
 ### Changed
 
 - The **Docker** comparison runtime provider is now LabVIEW-version-agnostic. The
