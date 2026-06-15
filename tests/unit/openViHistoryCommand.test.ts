@@ -774,33 +774,6 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(serializedUpdate).not.toContain('host-native');
   });
 
-  it('records missing Git URI instead of opening stale revision content', async () => {    const model = createEligibleModel();
-    const historyService = { load: vi.fn().mockResolvedValue(model) };
-    const panelTracker = new HistoryPanelTracker();
-    const gitApi = { toGitUri: vi.fn().mockReturnValue(undefined) };
-    const command = createOpenViHistoryCommand(
-      historyService as never,
-      gitApi as never,
-      panelTracker
-    );
-
-    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
-    await panelTracker.dispatchLastPanelMessage({
-      command: 'openCommit',
-      hash: 'abc1234567890abcdef1234567890abcdef12345'
-    });
-
-    expect(vscodeHarness.vscode.commands.executeCommand).not.toHaveBeenCalled();
-    expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'VI History could not resolve the selected Git revision.'
-    );
-    expect(panelTracker.getLastActionSummary()).toMatchObject({
-      command: 'openCommit',
-      hash: 'abc1234567890abcdef1234567890abcdef12345',
-      outcome: 'missing-git-uri'
-    });
-  });
-
   it('shows a concise Docker Desktop toast and suppresses the verbose runtime warning when the Docker daemon is not running (VHS-REQ-642)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };

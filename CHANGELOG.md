@@ -12,6 +12,13 @@ Burned exact-version releases now include `v1.0.2`.
 
 ## [Unreleased]
 
+### Removed
+
+- The VI History panel no longer shows the per-row **Actions** column. The
+  `Open@commit` and `Copy hash` buttons have been removed; pair selection (the
+  Select checkboxes) and the explicit **Compare** action remain the panel's
+  interactive controls (#575).
+
 ## [1.30.1] - 2026-06-15
 
 ### Fixed

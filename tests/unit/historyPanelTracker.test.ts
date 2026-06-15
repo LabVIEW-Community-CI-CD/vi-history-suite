@@ -56,24 +56,27 @@ describe('HistoryPanelTracker', () => {
     const tracker = new HistoryPanelTracker();
 
     tracker.recordAction({
-      command: 'copyHash',
-      hash: 'abcdef1234567890',
-      outcome: 'copied-hash',
-      copiedHash: 'abcdef1234567890'
+      command: 'copyReviewPacket',
+      outcome: 'copied-review-packet',
+      copiedTextLength: 16
     });
     tracker.recordAction({
-      command: 'openCommit',
+      command: 'diffPrevious',
       hash: 'abcdef1234567890',
-      outcome: 'opened-commit',
-      openedUri: 'git:/workspace/sample.vi?abcdef'
+      outcome: 'diffed-previous',
+      leftUri: 'git:/workspace/sample.vi?def123',
+      rightUri: 'git:/workspace/sample.vi?abcdef',
+      title: 'sample.vi (def123..abcdef)'
     });
 
     expect(tracker.getActionCount()).toBe(2);
     expect(tracker.getLastActionSummary()).toEqual({
-      command: 'openCommit',
+      command: 'diffPrevious',
       hash: 'abcdef1234567890',
-      outcome: 'opened-commit',
-      openedUri: 'git:/workspace/sample.vi?abcdef'
+      outcome: 'diffed-previous',
+      leftUri: 'git:/workspace/sample.vi?def123',
+      rightUri: 'git:/workspace/sample.vi?abcdef',
+      title: 'sample.vi (def123..abcdef)'
     });
   });
 
@@ -83,7 +86,7 @@ describe('HistoryPanelTracker', () => {
 
     await expect(
       tracker.dispatchLastPanelMessage({
-        command: 'copyHash',
+        command: 'copyReviewPacket',
         hash: 'abcdef1234567890'
       })
     ).resolves.toBeUndefined();
@@ -105,12 +108,12 @@ describe('HistoryPanelTracker', () => {
     );
 
     await tracker.dispatchLastPanelMessage({
-      command: 'copyHash',
+      command: 'copyReviewPacket',
       hash: 'abcdef1234567890'
     });
 
     expect(dispatchMessage).toHaveBeenCalledWith({
-      command: 'copyHash',
+      command: 'copyReviewPacket',
       hash: 'abcdef1234567890'
     });
   });
@@ -220,10 +223,9 @@ describe('HistoryPanelTracker', () => {
       dispatchMessage
     );
     tracker.recordAction({
-      command: 'copyHash',
-      hash: 'abcdef1234567890',
-      outcome: 'copied-hash',
-      copiedHash: 'abcdef1234567890'
+      command: 'copyReviewPacket',
+      outcome: 'copied-review-packet',
+      copiedTextLength: 16
     });
     tracker.recordDashboard(
       {
@@ -259,7 +261,7 @@ describe('HistoryPanelTracker', () => {
     expect(tracker.getLastDashboardArtifactActionSummary()).toBeUndefined();
 
     await tracker.dispatchLastPanelMessage({
-      command: 'copyHash',
+      command: 'copyReviewPacket',
       hash: 'abcdef1234567890'
     });
     await tracker.dispatchLastDashboardPanelMessage({
