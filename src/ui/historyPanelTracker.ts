@@ -30,11 +30,9 @@ export interface HistoryPanelActionSummary {
   hash?: string;
   baseHash?: string;
   outcome:
-    | 'copied-hash'
     | 'copied-review-packet'
     | 'created-decision-record'
     | 'opened-review-dashboard'
-    | 'opened-commit'
     | 'diffed-previous'
     | 'opened-comparison-report'
     | 'retained-comparison-report-evidence'
@@ -74,7 +72,6 @@ export interface HistoryPanelActionSummary {
   leftUri?: string;
   rightUri?: string;
   title?: string;
-  copiedHash?: string;
   copiedTextLength?: number;
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';

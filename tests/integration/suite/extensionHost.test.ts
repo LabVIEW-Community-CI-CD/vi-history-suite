@@ -183,8 +183,6 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-row"/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-select"/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-body"/);
-  assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
-  assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-compare-selected"/);
   assert.match(panel.renderedHtml, /<td data-testid="history-commit-body" class="commit-body">/);
   assert.match(panel.renderedHtml, /data-testid="history-commit-body-empty" class="commit-body-empty">No commit body<\/span>/);
@@ -193,9 +191,13 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
   assert.match(panel.renderedHtml, /Add third eligible fixture revision/);
   // The minimized panel drops the procedural facts/guidance/confidence sections,
-  // the status header, the runtime/preflight blocks, and the in-panel
+  // the status header, the runtime/preflight blocks, the per-row Open@commit /
+  // Copy hash action column (VHS-REQ-017), and the in-panel
   // copy/docs/dashboard/decision buttons. Compare runtime feedback is surfaced
   // through notifications instead of an in-panel section.
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-commit-actions"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-action-open"/);
+  assert.doesNotMatch(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.doesNotMatch(panel.renderedHtml, /data-testid="history-status"/);
   assert.doesNotMatch(panel.renderedHtml, /data-testid="history-review-packet"/);
   assert.doesNotMatch(panel.renderedHtml, /data-testid="history-meta"/);
@@ -246,33 +248,6 @@ async function testPanelOpenFlow(
   }
 
   await api.dispatchLastPanelMessage({
-    command: 'copyHash',
-    hash: selectedCommit.hash
-  });
-  const copiedHashAction = api.getLastPanelActionSummary();
-  assert.deepEqual(copiedHashAction, {
-    command: 'copyHash',
-    hash: selectedCommit.hash,
-    outcome: 'copied-hash',
-    copiedHash: selectedCommit.hash
-  });
-  const copiedHash = await readClipboardBestEffort();
-  if (copiedHash) {
-    assert.equal(copiedHash, selectedCommit.hash);
-  }
-
-  await api.dispatchLastPanelMessage({
-    command: 'openCommit',
-    hash: selectedCommit.hash
-  });
-  const openedAction = api.getLastPanelActionSummary();
-  assert.ok(openedAction);
-  assert.equal(openedAction.command, 'openCommit');
-  assert.equal(openedAction.hash, selectedCommit.hash);
-  assert.equal(openedAction.outcome, 'opened-commit');
-  assert.match(openedAction.openedUri ?? '', /^git:/);
-
-  await api.dispatchLastPanelMessage({
     command: 'diffPrevious',
     hash: selectedCommit.hash
   });
@@ -281,7 +256,7 @@ async function testPanelOpenFlow(
   assert.equal(diffAction.command, 'diffPrevious');
   assert.equal(diffAction.hash, selectedCommit.hash);
   assert.equal(diffAction.outcome, 'missing-retained-comparison-report');
-  assert.equal(api.getPanelActionCount(), 4);
+  assert.equal(api.getPanelActionCount(), 2);
 
   await api.dispatchLastPanelMessage({
     command: 'openDocumentation',
@@ -346,7 +321,7 @@ async function testPanelOpenFlow(
     assert.ok(reportMetadata.runtimeExecution?.failureReason);
   }
   assert.equal(reportMetadata.runtimeExecution?.reportExists, false);
-  assert.equal(api.getPanelActionCount(), 6);
+  assert.equal(api.getPanelActionCount(), 4);
 
   await api.dispatchLastPanelMessage({
     command: 'diffPrevious',
@@ -361,7 +336,7 @@ async function testPanelOpenFlow(
   assert.match(retainedDiffAction.packetFilePath ?? '', /report-packet\.html$/);
   assert.match(retainedDiffAction.metadataFilePath ?? '', /report-metadata\.json$/);
   assert.ok(retainedDiffAction.reportWebviewUri);
-  assert.equal(api.getPanelActionCount(), 7);
+  assert.equal(api.getPanelActionCount(), 5);
 
   await api.dispatchLastPanelMessage({
     command: 'createDecisionRecord'
@@ -387,7 +362,7 @@ async function testPanelOpenFlow(
     decisionRecordMarkdown,
     /VI path: Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/
   );
-  assert.equal(api.getPanelActionCount(), 8);
+  assert.equal(api.getPanelActionCount(), 6);
 
   await api.dispatchLastPanelMessage({
     command: 'openDashboard'
@@ -471,7 +446,7 @@ async function testPanelOpenFlow(
   assert.equal(refreshedDashboardAction.command, 'openDashboard');
   assert.equal(refreshedDashboardAction.outcome, 'opened-review-dashboard');
   assert.equal(api.getOpenDashboardPanelCount(), 2);
-  assert.equal(api.getPanelActionCount(), 10);
+  assert.equal(api.getPanelActionCount(), 8);
 }
 
 async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
