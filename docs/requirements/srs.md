@@ -2518,8 +2518,10 @@ Missing numeric IDs are intentional.
 - Statement: The extension shall source the `VI History runtime` status bar
   label from the user's persisted runtime selection
   (`viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`,
-  `viHistorySuite.labviewBitness`) when all three keys are populated and the
-  combination is satisfiable on this host, fall back silently to the
+  `viHistorySuite.labviewBitness`) when the selection is complete and the
+  combination is satisfiable on this host — a host selection requires all three
+  keys, while a docker selection is LabVIEW-agnostic and complete with
+  `runtimeProvider` alone (VHS-REQ-657) — fall back silently to the
   auto-detection recommendation otherwise, refresh the label immediately on
   `vscode.workspace.onDidChangeConfiguration` so a `vihs --provider …` CLI
   invocation or a manual `settings.json` edit is reflected without waiting
@@ -2537,11 +2539,13 @@ Missing numeric IDs are intentional.
   before a comparison is attempted (VHS-REQ-650).
 - Acceptance Criteria:
   - `selectActiveRuntime(detection, persisted)` honors a persisted selection
-    only when `runtimeProvider`, `labviewVersion`, and `labviewBitness` are
-    all populated and the combination is satisfiable per
-    `isPersistedSelectionSatisfiable`; otherwise it returns the
-    auto-detection recommendation. There is no `mismatch` snapshot kind —
-    unsatisfiable persisted selections cause a silent fallback.
+    only when it is complete and satisfiable per
+    `isPersistedSelectionSatisfiable`: a host selection requires
+    `runtimeProvider`, `labviewVersion`, and `labviewBitness`, while a docker
+    selection is LabVIEW-agnostic and complete with `runtimeProvider` alone
+    (VHS-REQ-657); otherwise it returns the auto-detection recommendation. There
+    is no `mismatch` snapshot kind — unsatisfiable persisted selections cause a
+    silent fallback.
   - `buildAvailableStatusBarSuffix` renders the docker label as
     `Docker @ <tag>`: it uses the selected
     `viHistorySuite.container.imageVersion` tag when set and the built-in
@@ -2568,6 +2572,9 @@ Missing numeric IDs are intentional.
     option for Docker when `cliAvailable` is true, plus a Clear option that
     removes the three persisted keys. Selecting an option writes to
     `ConfigurationTarget.Global` via `applyPickRuntimeProviderSelection`; the
+    Docker option is labeled `Docker` and persists `runtimeProvider=docker`
+    while clearing `labviewVersion`/`labviewBitness` because Docker is
+    LabVIEW-agnostic (VHS-REQ-657); the
     command refuses to open in untrusted workspaces with a warning, and the
     panel surfaces an empty/no-detection state when detection has not completed
     or no runtimes are detected. The bitness/version open-gate toasts open the
@@ -2977,6 +2984,82 @@ Missing numeric IDs are intentional.
     `Pull complete` steps so the signal survives daemons that omit `Extracting`
     byte detail. Preserve the download-phase contract of VHS-REQ-654/655 when
     adjusting the phase model.
+
+
+### VHS-REQ-657: Version-Aware LabVIEW Container Execution
+
+- Status: Active
+- Parent: VHS-SYS-REQ-019
+- Area: Runtime Discovery
+- Statement: The Linux-container comparison provider shall derive the
+  in-container LabVIEW executable and headless-engagement mechanism from the
+  selected container image's LabVIEW release year, and the Docker runtime
+  provider shall be LabVIEW-version-agnostic in its settings and labels because
+  the selected container image already determines the LabVIEW version.
+- Acceptance Criteria:
+  - For a Linux container image of LabVIEW 2026 Q1 or later, the LabVIEWCLI
+    `CreateComparisonReport` invocation targets
+    `/usr/local/natinst/LabVIEW-<year>-64/labviewprofull` and engages headless
+    mode with the `-Headless` flag.
+  - For a Linux container image of LabVIEW 2025 Q3 or earlier, the invocation
+    targets `/usr/local/natinst/LabVIEW-<year>-64/labview`, engages CI/CD headless
+    behavior by exporting `EnableCICDFeaturesForLabVIEW=TRUE` inside the container
+    script, and does not pass `-Headless` (which is not valid for those images per
+    NI's ni/labview-for-containers guidance).
+  - An unparseable or absent image reference falls back to the prior LabVIEW 2026
+    `labviewprofull` + `-Headless` behavior so existing selections are unaffected.
+  - The Linux headless recursive-load recovery (LabVIEWCLI `CloseLabVIEW` reset
+    and single retry) runs only for images that use the `-Headless` mechanism; an
+    image using the environment toggle never issued `-Headless`, so the reset is
+    skipped instead of failing.
+  - The comparison runtime locator no longer rejects a non-2026 Docker request
+    with `docker-provider-labview-version-not-implemented`; the resolved image
+    governs the version and the supported-floor check
+    (`labview-version-unsupported-for-comparison-report`) still rejects versions
+    below the minimum.
+  - The runtime doctor "Requested runtime" line reports the image-derived LabVIEW
+    release year for a container provider instead of a persisted or stale year.
+  - The Docker runtime-provider option is labeled `Docker` (no LabVIEW version or
+    bitness); selecting it persists `viHistorySuite.runtimeProvider=docker` and
+    clears `viHistorySuite.labviewVersion`/`labviewBitness`. A persisted Docker
+    selection is satisfiable, complete (preserved across activation rather than
+    repaired), and labeled from the selected container image with the provider key
+    alone.
+- Agent Work Scope:
+  - Add the pure image→profile resolver and thread it through the Linux-container
+    command, script, and LVCompare builders; gate the headless recovery; remove
+    the legacy 2026 Docker year pin; derive the doctor's requested year from the
+    image; make the Docker provider option, satisfiability, seed completeness,
+    status-bar/panel label, and panel selection LabVIEW-agnostic; update the unit
+    tests. Do not change Windows-container execution (it remains LabVIEW 2026
+    pinned), host-provider behavior, image discovery/selection (VHS-REQ-646–650),
+    or the `vihs` terminal CLI's docker prompt.
+- Implementation References:
+  - `src/tooling/containerImageCatalog.ts`
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonRuntimeLocator.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/commands/pickRuntimeProviderCommand.ts`
+  - `src/tooling/runtimeSettingsSeed.ts`
+  - `src/ui/runtimeAvailabilityNotice.ts`
+  - `src/commands/openRuntimeReportPanelCommand.ts`
+- Verification References:
+  - `tests/unit/containerImageCatalog.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/runtimeSettingsSeed.test.ts`
+  - `tests/unit/runtimeAvailabilityNotice.test.ts`
+  - `tests/unit/pickRuntimeProviderCommand.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the headless mechanism tied to the image year (`-Headless` for 2026 Q1+,
+    `EnableCICDFeaturesForLabVIEW=TRUE` for 2025 Q3 and earlier) per NI's
+    ni/labview-for-containers guidance, and keep the unparseable-image fallback on
+    the LabVIEW 2026 profile. Preserve the Docker provider's LabVIEW-agnostic
+    settings shape (the provider key alone is complete and satisfiable) so a
+    Docker pick is never clobbered by activation seed/repair. Windows-container
+    execution stays LabVIEW 2026 pinned; widen it only under a new requirement.
 
 
 ### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open

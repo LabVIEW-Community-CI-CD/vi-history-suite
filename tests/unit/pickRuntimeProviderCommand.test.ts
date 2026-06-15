@@ -65,9 +65,11 @@ describe('buildPickRuntimeProviderItems (VHS-REQ-620)', () => {
     expect(items[2]).toMatchObject({
       kind: 'docker',
       runtimeProvider: 'docker',
-      labviewVersion: '2026',
-      labviewBitness: 'x64'
+      label: '$(server) Docker'
     });
+    // VHS-REQ-657: the Docker provider is LabVIEW-agnostic — no version/bitness.
+    expect(items[2].labviewVersion).toBeUndefined();
+    expect(items[2].labviewBitness).toBeUndefined();
     expect(items[3]).toMatchObject({ kind: 'clear' });
   });
 
@@ -132,5 +134,32 @@ describe('applyPickRuntimeProviderSelection (VHS-REQ-620)', () => {
       undefined,
       undefined
     ]);
+  });
+
+  it('writes the provider and clears version/bitness for a docker pick (VHS-REQ-657)', async () => {
+    const update = vi.fn(async () => undefined);
+    await applyPickRuntimeProviderSelection(
+      { kind: 'docker', label: '$(server) Docker', runtimeProvider: 'docker' },
+      { update }
+    );
+    expect(update).toHaveBeenCalledTimes(3);
+    expect(update).toHaveBeenNthCalledWith(
+      1,
+      'runtimeProvider',
+      'docker',
+      vscode.ConfigurationTarget.Global
+    );
+    expect(update).toHaveBeenNthCalledWith(
+      2,
+      'labviewVersion',
+      undefined,
+      vscode.ConfigurationTarget.Global
+    );
+    expect(update).toHaveBeenNthCalledWith(
+      3,
+      'labviewBitness',
+      undefined,
+      vscode.ConfigurationTarget.Global
+    );
   });
 });

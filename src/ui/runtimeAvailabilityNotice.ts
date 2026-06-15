@@ -199,9 +199,11 @@ export function evaluateRuntimeAvailability(
 
 /**
  * Decide which provider the status bar should advertise. Per VHS-REQ-620 the
- * persisted selection wins when all three keys are populated *and* the
- * combination is satisfiable on this host; otherwise the auto-detection
- * recommendation is used (silent fallback, no `mismatch` state).
+ * persisted selection wins when it is complete *and* satisfiable on this host;
+ * otherwise the auto-detection recommendation is used (silent fallback, no
+ * `mismatch` state). VHS-REQ-657: a Docker selection is complete with the
+ * provider key alone (LabVIEW-agnostic); a host selection still requires the
+ * full version + bitness triple.
  */
 export function selectActiveRuntime(
   detection: DetectedRuntimes,
@@ -209,15 +211,28 @@ export function selectActiveRuntime(
 ): RuntimeAvailabilitySnapshot {
   const recommendation = recommendRuntimeFromDetection(detection);
 
-  const hasAllPersistedKeys =
-    typeof persisted.runtimeProvider === 'string' && persisted.runtimeProvider.length > 0 &&
-    typeof persisted.labviewVersion === 'string' && persisted.labviewVersion.length > 0 &&
-    typeof persisted.labviewBitness === 'string' && persisted.labviewBitness.length > 0;
+  const persistedProvider =
+    typeof persisted.runtimeProvider === 'string' ? persisted.runtimeProvider : '';
+  // VHS-REQ-657: a persisted Docker selection is LabVIEW-agnostic, so the
+  // provider key alone is a complete selection; host still needs the full
+  // version + bitness triple.
+  const hasCompletePersistedSelection =
+    persistedProvider === 'docker'
+      ? true
+      : persistedProvider.length > 0 &&
+        typeof persisted.labviewVersion === 'string' && persisted.labviewVersion.length > 0 &&
+        typeof persisted.labviewBitness === 'string' && persisted.labviewBitness.length > 0;
 
-  if (hasAllPersistedKeys && isPersistedSelectionSatisfiable(persisted, detection)) {
+  if (hasCompletePersistedSelection && isPersistedSelectionSatisfiable(persisted, detection)) {
     const provider = persisted.runtimeProvider as 'host' | 'docker';
-    const bitness = persisted.labviewBitness as 'x86' | 'x64';
-    const version = persisted.labviewVersion!;
+    const bitness =
+      persisted.labviewBitness === 'x86' || persisted.labviewBitness === 'x64'
+        ? persisted.labviewBitness
+        : undefined;
+    const version =
+      typeof persisted.labviewVersion === 'string' && persisted.labviewVersion.length > 0
+        ? persisted.labviewVersion
+        : undefined;
     let installation: DetectedHostInstallation | undefined;
     if (provider === 'host') {
       installation = detection.host.installations.find(

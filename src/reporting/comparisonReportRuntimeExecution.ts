@@ -24,6 +24,10 @@ import {
   LABVIEW_CLI_INI_OPEN_APP_KEY,
   LabVIEWCliIniHardeningResult
 } from './runtime/labviewCliIni';
+import {
+  resolveLinuxContainerLabviewProfile,
+  type LinuxContainerHeadlessMode
+} from '../tooling/containerImageCatalog';
 
 export interface ExecuteComparisonReportOptions {
   record: ComparisonReportPacketRecord;
@@ -1688,8 +1692,10 @@ const LINUX_CONTAINER_OUTPUT_DIRNAME = 'container-out';
 // `labviewprofull`. NI's own canonical CreateComparisonReport script
 // (`vidiff.sh` in ni/labview-for-containers) invokes `-LabVIEWPath .../labviewprofull`
 // with `-Headless`; the plain `labview` binary fails to fully engage headless mode
-// inside the container (recursive GSW LEIF load). Use the Professional binary so the
-// container provider can complete a comparison report.
+// inside the container (recursive GSW LEIF load). This LabVIEW 2026 constant is the
+// fallback used only when the selected image reference is unparseable; the concrete
+// per-image executable and headless mechanism are derived by
+// `resolveLinuxContainerLabviewProfile` (VHS-REQ-657).
 const LINUX_CONTAINER_LABVIEW_EXECUTABLE = '/usr/local/natinst/LabVIEW-2026-64/labviewprofull';
 const WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
@@ -2283,12 +2289,26 @@ function shouldAttemptLinuxHeadlessRecovery(
   record: ComparisonReportPacketRecord,
   execution: ComparisonReportRuntimeExecution
 ): boolean {
-  return (
-    resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'linux' &&
-    record.runtimeSelection.engine === 'labview-cli' &&
-    execution.state === 'failed' &&
-    execution.diagnosticReason === 'linux-headless-recursive-load'
-  );
+  if (
+    resolveEffectiveRuntimePlatform(record.runtimeSelection) !== 'linux' ||
+    record.runtimeSelection.engine !== 'labview-cli' ||
+    execution.state !== 'failed' ||
+    execution.diagnosticReason !== 'linux-headless-recursive-load'
+  ) {
+    return false;
+  }
+  // VHS-REQ-657: the recursive-load recovery resets a `-Headless` (cli-headless)
+  // session via LabVIEWCLI CloseLabVIEW. A linux container whose image uses the
+  // EnableCICDFeaturesForLabVIEW env path (LabVIEW 2025 Q3 and earlier) never
+  // issued `-Headless`, so a `-Headless` CloseLabVIEW reset would itself fail;
+  // skip recovery for that mode.
+  if (record.runtimeSelection.provider === 'linux-container') {
+    return (
+      resolveLinuxContainerLabviewProfile(record.runtimeSelection.containerImage).headlessMode ===
+      'cli-headless'
+    );
+  }
+  return true;
 }
 
 function shouldAttemptWindowsHeadlessRecovery(
@@ -3835,6 +3855,12 @@ export function buildLinuxContainerCommandPlan(
     ? `${relativeDirectory}/${baseRightFilename}`
     : baseRightFilename;
 
+  // VHS-REQ-657: derive the in-container LabVIEW executable and headless mechanism
+  // from the selected image so older images (2025 Q3 and earlier) invoke the
+  // plain `labview` binary with the EnableCICDFeaturesForLabVIEW env toggle instead
+  // of `labviewprofull` + `-Headless` (which is valid only for 2026 Q1 and later).
+  const labviewProfile = resolveLinuxContainerLabviewProfile(options.containerImage);
+
   const containerArgs =
     record.runtimeSelection.engine === 'labview-cli'
       ? rewriteLabviewCliArgsForLinuxContainerWorkspace(commandPlan.args, {
@@ -3842,13 +3868,16 @@ export function buildLinuxContainerCommandPlan(
           leftFilename: containerLeftFilename,
           rightFilename: containerRightFilename,
           reportFilename: options.reportFilename ?? record.artifactPlan.reportFilename,
-          labviewPath: record.runtimeSelection.labviewExe?.path
+          labviewPath: record.runtimeSelection.labviewExe?.path,
+          containerLabviewPath: labviewProfile.labviewCliPath,
+          headlessMode: labviewProfile.headlessMode
         })
       : rewriteLvcompareArgsForLinuxContainerWorkspace(commandPlan.args, {
           containerWorkspaceRoot: options.containerWorkspaceRoot,
           leftFilename: containerLeftFilename,
           rightFilename: containerRightFilename,
-          labviewPath: record.runtimeSelection.labviewExe?.path
+          labviewPath: record.runtimeSelection.labviewExe?.path,
+          containerLabviewPath: labviewProfile.lvcomparePath
         });
   if (!containerArgs) {
     return undefined;
@@ -3856,8 +3885,16 @@ export function buildLinuxContainerCommandPlan(
 
   const containerScript =
     record.runtimeSelection.engine === 'labview-cli'
-      ? buildLinuxContainerLabviewCliScript(commandPlan.executable, containerArgs)
-      : buildLinuxContainerDirectCommandScript(commandPlan.executable, containerArgs);
+      ? buildLinuxContainerLabviewCliScript(
+          commandPlan.executable,
+          containerArgs,
+          labviewProfile.headlessMode
+        )
+      : buildLinuxContainerDirectCommandScript(
+          commandPlan.executable,
+          containerArgs,
+          labviewProfile.headlessMode
+        );
 
   if (options.processPlatform === 'linux' || options.processPlatform === 'darwin') {
     return {
@@ -3973,6 +4010,8 @@ export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
     rightFilename: string;
     reportFilename: string;
     labviewPath?: string;
+    containerLabviewPath?: string;
+    headlessMode?: LinuxContainerHeadlessMode;
   }
 ): string[] | undefined {
   const rewritten: string[] = [];
@@ -4017,8 +4056,15 @@ export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
     rewritten.push(current);
   }
 
-  rewritten.push('-LabVIEWPath', LINUX_CONTAINER_LABVIEW_EXECUTABLE);
-  rewritten.push('-Headless');
+  // VHS-REQ-657: target the image-derived LabVIEW executable, defaulting to the
+  // LabVIEW 2026 `labviewprofull` fallback when no profile was supplied. Append
+  // `-Headless` only for images that engage headless mode through the flag; 2025
+  // Q3 and earlier instead receive `EnableCICDFeaturesForLabVIEW=TRUE` in the
+  // container script, so passing `-Headless` there is invalid.
+  rewritten.push('-LabVIEWPath', options.containerLabviewPath ?? LINUX_CONTAINER_LABVIEW_EXECUTABLE);
+  if ((options.headlessMode ?? 'cli-headless') === 'cli-headless') {
+    rewritten.push('-Headless');
+  }
 
   return rewritten.length > 0 ? rewritten : undefined;
 }
@@ -4138,28 +4184,43 @@ function buildWindowsContainerDirectCommandScript(executable: string, args: stri
   ].join('\n');
 }
 
-function buildLinuxContainerLabviewCliScript(executable: string, args: string[]): string {
-  return [
+function buildLinuxContainerScriptPrelude(headlessMode: LinuxContainerHeadlessMode): string[] {
+  const prelude = [
     'set -euo pipefail',
     `mkdir -p ${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)} /tmp/natinst`,
     `printf '1\\n' > ${quoteBashLiteral('/tmp/natinst/LVContainer.txt')}`,
     `export TEMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
     `export TMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
-    `export TMPDIR=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    `export TMPDIR=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`
+  ];
+  if (headlessMode === 'enable-cicd-env') {
+    // VHS-REQ-657: LabVIEW 2025 Q3 and earlier engage CI/CD headless behavior
+    // through this environment toggle instead of the LabVIEWCLI `-Headless` flag.
+    prelude.push('export EnableCICDFeaturesForLabVIEW=TRUE');
+  }
+  return prelude;
+}
+
+function buildLinuxContainerLabviewCliScript(
+  executable: string,
+  args: string[],
+  headlessMode: LinuxContainerHeadlessMode
+): string {
+  return [
+    ...buildLinuxContainerScriptPrelude(headlessMode),
     `cli_path=${quoteBashLiteral(executable)}`,
     `args=${buildBashArrayLiteral(args)}`,
     '"$cli_path" "${args[@]}"'
   ].join('\n');
 }
 
-function buildLinuxContainerDirectCommandScript(executable: string, args: string[]): string {
+function buildLinuxContainerDirectCommandScript(
+  executable: string,
+  args: string[],
+  headlessMode: LinuxContainerHeadlessMode
+): string {
   return [
-    'set -euo pipefail',
-    `mkdir -p ${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)} /tmp/natinst`,
-    `printf '1\\n' > ${quoteBashLiteral('/tmp/natinst/LVContainer.txt')}`,
-    `export TEMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
-    `export TMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
-    `export TMPDIR=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    ...buildLinuxContainerScriptPrelude(headlessMode),
     `target=${quoteBashLiteral(executable)}`,
     `args=${buildBashArrayLiteral(args)}`,
     '"$target" "${args[@]}"'
@@ -4205,6 +4266,7 @@ export function rewriteLvcompareArgsForLinuxContainerWorkspace(
     leftFilename: string;
     rightFilename: string;
     labviewPath?: string;
+    containerLabviewPath?: string;
   }
 ): string[] | undefined {
   if (args.length < 2) {
@@ -4219,7 +4281,11 @@ export function rewriteLvcompareArgsForLinuxContainerWorkspace(
   for (let index = 2; index < args.length; index += 1) {
     const current = args[index];
     if (current === '-lvpath') {
-      rewritten.push(current, '/usr/local/natinst/LabVIEW-2026-64/labview');
+      // VHS-REQ-657: image-derived plain `labview` binary; LabVIEW 2026 fallback.
+      rewritten.push(
+        current,
+        options.containerLabviewPath ?? '/usr/local/natinst/LabVIEW-2026-64/labview'
+      );
       index += 1;
       continue;
     }

@@ -178,13 +178,18 @@ export function registerOpenRuntimeReportPanelCommand(
     const persistedProvider = configuration.get<string>('runtimeProvider');
     const persistedVersion = configuration.get<string>('labviewVersion');
     const persistedBitness = configuration.get<string>('labviewBitness');
-    const selectedProviderIndex = providerItems.findIndex(
-      (item) =>
-        item.kind !== 'clear' &&
-        item.runtimeProvider === persistedProvider &&
-        item.labviewVersion === persistedVersion &&
-        item.labviewBitness === persistedBitness
-    );
+    const selectedProviderIndex = providerItems.findIndex((item) => {
+      if (item.kind === 'clear' || item.runtimeProvider !== persistedProvider) {
+        return false;
+      }
+      // VHS-REQ-657: the Docker provider is LabVIEW-agnostic; match on the
+      // provider alone so a selection persisted without (or with stale)
+      // version/bitness still resolves to the Docker option.
+      if (item.runtimeProvider === 'docker') {
+        return true;
+      }
+      return item.labviewVersion === persistedVersion && item.labviewBitness === persistedBitness;
+    });
 
     const { summary, source } = buildActiveProviderSummary(watcher);
 
