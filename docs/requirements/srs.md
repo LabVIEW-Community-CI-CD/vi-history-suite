@@ -1139,17 +1139,20 @@ Missing numeric IDs are intentional.
   (VHS-REQ-649) inline in the same panel instead of through a chained quick-pick,
   the Command Palette, or the raw setting.
 - Acceptance Criteria:
-  - The panel renders a container image section when Docker is the selected or
-    available provider, showing the current `viHistorySuite.container.imageVersion`
-    selection (or the newest supported default when unset).
+  - The panel renders a container image section only when Docker is the
+    comparison runtime — the persisted `viHistorySuite.runtimeProvider` is
+    `docker`, or it is unset and the active auto-detected provider is Docker —
+    showing the current `viHistorySuite.container.imageVersion` selection (or the
+    newest supported default when unset). The Docker provider option is labeled
+    `Docker` with no LabVIEW version or bitness (VHS-REQ-657).
   - Selecting a discovered version persists it, and the Clear/default choice
     removes the setting, through `applyContainerImageVersionSelection` writing to
     `ConfigurationTarget.Global`.
   - Version discovery reuses the published and local image catalog behind injected
     fetch and list boundaries and degrades to the current selection without
     throwing when discovery is unavailable.
-  - A `host` selection and the Clear option present no container section (host
-    comparisons use no container image).
+  - A `host` selection (including an auto-detected host runtime) and the Clear
+    option present no container section (host comparisons use no container image).
   - The standalone `labviewViHistory.pickContainerImageVersion` command remains
     registered for the compare-preflight remediation CTAs but is removed from the
     Command Palette.
@@ -3025,6 +3028,11 @@ Missing numeric IDs are intentional.
     selection is satisfiable, complete (preserved across activation rather than
     repaired), and labeled from the selected container image with the provider key
     alone.
+  - In the Runtime & Report Settings panel the Docker provider option label is
+    `Docker` (no version/bitness text), and the LabVIEW container image section is
+    shown only when Docker is the comparison runtime (persisted
+    `runtimeProvider=docker`, or unset with an auto-detected Docker active
+    provider) and hidden for a host selection, coordinating with VHS-REQ-651.
 - Agent Work Scope:
   - Add the pure image→profile resolver and thread it through the Linux-container
     command, script, and LVCompare builders; gate the headless recovery; remove
@@ -3043,6 +3051,7 @@ Missing numeric IDs are intentional.
   - `src/tooling/runtimeSettingsSeed.ts`
   - `src/ui/runtimeAvailabilityNotice.ts`
   - `src/commands/openRuntimeReportPanelCommand.ts`
+  - `src/ui/runtimeReportPanel.ts`
 - Verification References:
   - `tests/unit/containerImageCatalog.test.ts`
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
@@ -3051,6 +3060,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/runtimeSettingsSeed.test.ts`
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/pickRuntimeProviderCommand.test.ts`
+  - `tests/unit/openRuntimeReportPanelCommand.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the headless mechanism tied to the image year (`-Headless` for 2026 Q1+,

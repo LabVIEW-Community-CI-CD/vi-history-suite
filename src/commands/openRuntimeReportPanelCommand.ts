@@ -122,7 +122,10 @@ function toPanelProviderOption(
   if (option.kind === 'docker') {
     return {
       kind: 'docker',
-      label: `Docker \u2014 LabVIEW ${option.labviewVersion} ${option.labviewBitness}`,
+      // VHS-REQ-657: the Docker provider is LabVIEW-agnostic — the selected
+      // container image determines the LabVIEW version, so the option carries no
+      // version/bitness and the label is just "Docker".
+      label: 'Docker',
       description: option.description,
       detail: option.detail
     };
@@ -193,9 +196,15 @@ export function registerOpenRuntimeReportPanelCommand(
 
     const { summary, source } = buildActiveProviderSummary(watcher);
 
+    // VHS-REQ-657/651: surface the LabVIEW container image controls only when the
+    // comparison runtime is Docker. An explicit persisted provider wins (read
+    // synchronously so switching providers in this panel updates immediately);
+    // otherwise fall back to the active auto-detected provider. A host selection
+    // (or auto-detected host) presents no container section (VHS-REQ-651).
+    const activeProvider = watcher.getLastSnapshot()?.label.provider;
     const dockerAvailable =
-      providerItems.some((item) => item.kind === 'docker') ||
-      persistedProvider === 'docker';
+      persistedProvider === 'docker' ||
+      (persistedProvider !== 'host' && activeProvider === 'docker');
     const currentTag = (configuration.get<string>('container.imageVersion') ?? '').trim();
     const versions: ContainerVersionPanelOption[] = containerCache.versions.map(
       (version) => ({ tag: version.tag, presence: presenceLabel(version) })

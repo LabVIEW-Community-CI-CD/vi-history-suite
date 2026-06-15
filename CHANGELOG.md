@@ -15,10 +15,13 @@ Burned exact-version releases now include `v1.0.2`.
 ### Changed
 
 - The **Docker** comparison runtime provider is now LabVIEW-version-agnostic. The
-  runtime provider picker shows **Docker** instead of *Docker — LabVIEW 2026 x64*,
-  and selecting it no longer stores a LabVIEW version or bitness — the **LabVIEW
-  container image** setting alone determines the LabVIEW version. The runtime
-  doctor now reports the LabVIEW year of the selected container image (#565).
+  runtime provider picker and the Runtime & Report Settings panel both show
+  **Docker** instead of *Docker — LabVIEW 2026 x64*, and selecting it no longer
+  stores a LabVIEW version or bitness — the **LabVIEW container image** setting
+  alone determines the LabVIEW version. The panel only shows the **LabVIEW
+  container image** controls when Docker is the comparison runtime (hidden for a
+  host runtime). The runtime doctor now reports the LabVIEW year of the selected
+  container image (#565).
 
 ### Fixed
 
