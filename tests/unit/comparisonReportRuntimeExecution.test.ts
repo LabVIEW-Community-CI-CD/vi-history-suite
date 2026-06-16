@@ -3202,6 +3202,100 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(script).not.toContain('EnableCICDFeaturesForLabVIEW');
   });
 
+  it('buildLinuxContainerCommandPlan retries once on -350000 and hardens the LabVIEW .conf (VHS-REQ-148)', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      engine: 'labview-cli'
+    };
+
+    const plan = buildLinuxContainerCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/host/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/host/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'htmlsinglefile',
+          '-ReportPath',
+          '/host/diff-report-foo.vi.html'
+        ]
+      },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(plan).toBeDefined();
+    const script = plan?.args[plan.args.length - 1] ?? '';
+    // Retry loop guards against the cold-launch VI Server connect failure.
+    expect(script).toContain('max_attempts=2');
+    expect(script).toContain('-350000');
+    expect(script).toContain('failed to establish a connection with LabVIEW');
+    expect(script).toContain('"$cli_path" "${args[@]}" 2>"$err_file"');
+    // Connect-window hardening targets the per-version LabVIEW .conf the launched
+    // headless LabVIEW reads.
+    expect(script).toContain('harden_conf');
+    expect(script).toContain('${HOME:-/root}/natinst/.config/LabVIEW-${lv_year}');
+    expect(script).toContain('OpenAppReferenceTimeoutInSecond');
+    expect(script).toContain('AfterLaunchOpenAppReferenceTimeoutInSecond');
+    expect(script).toContain('open_app_timeout=180');
+  });
+
+  it('buildLinuxContainerCommandPlan honors a configured cliConnectTimeoutSeconds (VHS-REQ-148)', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      engine: 'labview-cli'
+    };
+
+    const plan = buildLinuxContainerCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/host/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/host/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'htmlsinglefile',
+          '-ReportPath',
+          '/host/diff-report-foo.vi.html'
+        ]
+      },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'linux',
+        cliConnectTimeoutSeconds: 300
+      }
+    );
+
+    const script = plan?.args[plan.args.length - 1] ?? '';
+    expect(script).toContain('open_app_timeout=300');
+    expect(script).toContain('after_launch_timeout=300');
+  });
+
   it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {
     const record = makeLinuxHostNativeRecord();
     const writeFile = vi.fn().mockResolvedValue(undefined);

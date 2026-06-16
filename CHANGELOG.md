@@ -10,6 +10,21 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.32.0] - 2026-06-16
+
+### Fixed
+
+- On Linux hosts using the Docker (LabVIEW container) comparison runtime, the
+  first comparison after VS Code starts no longer fails with
+  `labview-cli-connection-failed` / LabVIEWCLI error `-350000` ("failed to
+  establish a connection with LabVIEW") on a slow cold LabVIEW launch. The Linux
+  container LabVIEW CLI script now widens the connect window in the per-version
+  LabVIEW `.conf` the launched headless LabVIEW reads
+  (`OpenAppReferenceTimeoutInSecond` / `AfterLaunchOpenAppReferenceTimeoutInSecond`,
+  default 180s, configurable via `viHistorySuite.runtime.cliConnectTimeoutSeconds`)
+  and retries the compare once on the cold-launch connectivity failure, matching
+  the existing Windows host-native and Windows-container hardening (VHS-REQ-148).
+
 ## [1.31.0] - 2026-06-15
 
 ### Removed
