@@ -10,6 +10,21 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [Unreleased]
+
+### Fixed
+
+- On a **Windows host** with the **Docker** comparison runtime selected and
+  Docker running in **Linux-container mode** (an NI LabVIEW **Linux** image), VI
+  comparison reports no longer fail almost instantly with a bash parse error
+  (`unexpected EOF while looking for matching ')'`) and exit code 2. The Linux
+  container invocation now spawns `docker` directly on Windows, the same way it
+  already does on Linux and macOS hosts, instead of wrapping the command in a
+  host `powershell.exe` call that stripped the inline container script's quotes
+  and corrupted it before LabVIEW could launch. The identical compare already
+  worked on Linux hosts (for example a Codespace); it now works on Windows hosts
+  as well (#583).
+
 ## [1.32.0] - 2026-06-16
 
 ### Fixed

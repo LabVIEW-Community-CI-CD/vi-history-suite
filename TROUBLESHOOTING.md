@@ -67,6 +67,45 @@ docker info --format "{{.OSType}}"
 
 The first Docker compare can pull a large LabVIEW runtime image.
 
+## Windows + Docker (Linux container) compare fails instantly with a bash parse error
+
+### Symptom
+
+On a **Windows host** with the **Docker** runtime selected and Docker running in
+**Linux-container mode** (an NI LabVIEW **Linux** image such as
+`nationalinstruments/labview:2026q1-linux`), the compare fails in well under a
+second. The retained diagnostics show:
+
+- `diagnostics/attempt-1/failure-classification.json` with
+  `failureReason: "command-exited-nonzero"` and `exitCode: 2`, and
+- `diagnostics/attempt-1/runtime-stderr.txt` containing a bash parse error whose
+  quotes have been stripped from the in-container script, ending in:
+
+  ```text
+  lv_dir=$(dirname: -c: line 17: unexpected EOF while looking for matching `)'
+  ```
+
+LabVIEW never launches; the failure is in shell parsing. The same compare
+succeeds on a Linux host (for example a Codespace) with the same provider and
+image.
+
+### Fix
+
+This is fixed in `vi-history-suite` after 1.32.0: the Linux container provider
+now spawns `docker` directly on a Windows host instead of routing the command
+through `powershell.exe`, so the container bash script keeps its quoting.
+
+### Workaround on 1.32.0 and earlier
+
+Until you can update to a build that contains the fix, use any one of:
+
+- Run the extension through **Remote-WSL** (open the repository in WSL) so the
+  host platform is Linux and the working direct-`docker` path is used, or
+- Switch to the **host-native** Windows LabVIEW provider (LabVIEW 2025 or newer
+  with the LabVIEW CLI installed), or
+- Switch to the **Windows-container** provider (Docker in Windows-container mode
+  with a Windows LabVIEW image), which is unaffected.
+
 ## Cold-launch comparison failures (-350000 / `labview-cli-connection-failed`)
 
 ### Symptom
