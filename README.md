@@ -1,33 +1,24 @@
 # VI History Suite
 
-VI History Suite is a Visual Studio Code extension for reviewing LabVIEW VI
-history in Git repositories. It helps you pick two retained revisions of a
-`.vi`, `.ctl`, or `.vit` file, review the compare preflight, and generate a
-LabVIEW comparison report.
+Review the history of your LabVIEW VIs without leaving Visual Studio Code. VI
+History Suite lets you pick two saved versions of a `.vi`, `.ctl`, or `.vit`
+file from Git, confirms your comparison runtime is ready, and generates a
+visual LabVIEW comparison report you can read and share.
 
-The active public source home is:
-
-https://github.com/LabVIEW-Community-CI-CD/vi-history-suite
-
-The published Marketplace extension ID remains:
-
-```bash
-svelderrainruiz.vi-history-suite
-```
+<!-- GIF SLOT (hero / compare overview): add docs/media/compare-flow.gif here as a Markdown image using an absolute https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/media/<file>.gif URL. Tracked in issue #591. -->
 
 ## Requirements
 
 - Visual Studio Code 1.90 or newer.
 - A trusted Git repository containing the tracked `.vi`, `.ctl`, or `.vit` file
-  you want to review, with at least two retained revisions to compare.
+  you want to review, with at least two saved versions to compare.
 - A LabVIEW comparison runtime, either:
-  - **Host-native** LabVIEW 2025 or newer with the LabVIEW CLI installed
-    (Windows defaults to this provider), or
-  - **Docker**, using an NI LabVIEW container image that you select and
-    validate.
+  - **Host** — LabVIEW 2025 or newer installed on your machine with the LabVIEW
+    CLI (Windows uses this by default), or
+  - **Docker** — an NI LabVIEW container image that you select.
 
-The extension reads runtime state only — it never installs LabVIEW, Docker, or
-any runtime for you.
+The extension only reads your runtime — it never installs LabVIEW, Docker, or
+any other tool for you.
 
 ## Install
 
@@ -37,93 +28,84 @@ Install from the VS Code Extensions view, or run:
 code --install-extension svelderrainruiz.vi-history-suite
 ```
 
-Then run `VI History: Prepare Local Runtime Settings CLI` from the Command
-Palette and validate the local runtime:
+## Set up your comparison runtime
+
+Run **VI History: Set Up Comparison Runtime** from the Command Palette, then in
+a terminal run:
 
 ```bash
 vihs
 vihs --validate
 ```
 
-For first-time installed-user feedback, use the onboarding tracker:
+`vihs` lets you choose where comparisons run and confirms the runtime is ready:
 
-https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
+- **Host** uses the LabVIEW already installed on your machine (the default on
+  Windows). Most people use this.
+- **Docker** uses an NI LabVIEW container image instead — choose this if you
+  prefer an isolated runtime.
 
-Include the install surface, extension version, VS Code version, first command
-or action attempted, and any Marketplace/source/support link that felt stale or
-unclear.
+You can change the provider any time with **VI History: Runtime & Report
+Settings**.
 
-## Use
+<!-- GIF SLOT (runtime setup): add docs/media/runtime-settings.gif here as a Markdown image using an absolute raw.githubusercontent.com URL. Tracked in issue #591. -->
 
-1. Open a trusted Git repository that contains the tracked `.vi`, `.ctl`, or
-   `.vit` file you want to review.
-2. Right-click that file and choose `VI History`, or use the editor title
-   action. The extension evaluates the selected file directly instead of
-   scanning every VI in the repository first.
-3. Select exactly two retained revisions with the checkbox column.
+## Compare two revisions
+
+1. Open a trusted Git repository that contains the `.vi`, `.ctl`, or `.vit`
+   file you want to review.
+2. Right-click that file and choose **Review VI History** (or use the editor
+   title action). VI History looks at just that file instead of scanning every
+   VI in the repository.
+3. Select exactly two saved versions using the checkboxes.
 4. Review the compare preflight.
-5. Choose `Compare`.
+5. Choose **Compare**.
 
-Windows defaults to local `LabVIEWCLI` when the provider has not been chosen.
-Docker remains available for users who intentionally select and validate it.
+<!-- GIF SLOT (compare steps): add docs/media/compare-steps.gif here as a Markdown image using an absolute raw.githubusercontent.com URL. Tracked in issue #591. -->
 
-## Runtime providers and safety checks
+## Read and export the report
 
-Before launching a comparison, VI History runs a compare preflight that checks
-both selected revisions and the resolved runtime, then reports a clear,
-actionable status instead of failing midway. When the runtime cannot safely
-produce a correct report, the compare is blocked up front with guidance rather
-than silently running against the wrong environment. Detected conditions
-include:
+The report opens as a single self-contained page showing the differences
+between the two versions, with the difference images embedded inline. Use
+**Export Comparison Report (HTML)** to save a copy you can share.
 
-- A running LabVIEW whose **bitness** differs from the selected bitness
-  (LabVIEW cannot start a second instance at a different bitness).
-- A running LabVIEW whose **version (year)** differs from the selected
-  `viHistorySuite.labviewVersion` at the same bitness — so a compare never
-  attaches to the wrong already-running LabVIEW on a multi-install host.
-- A selected Docker **container image** that targets a platform the active
-  Docker engine cannot launch, surfaced at the status bar and the panel
-  preflight with a one-click **Pick Image Version** fix.
-- **VI Server (TCP)** disabled in the selected LabVIEW, which would otherwise
-  block the LabVIEW CLI from connecting.
+<!-- GIF SLOT (report and export): add docs/media/report-export.gif here as a Markdown image using an absolute raw.githubusercontent.com URL. Tracked in issue #591. -->
 
-Each block offers a next action (for example **Pick Runtime Provider** or
-**Pick Image Version**) so the runtime can be aligned without leaving the
-panel.
+## Runtime safety checks
 
-## Source Evaluation
+Before each comparison, VI History checks both selected versions and your
+runtime, then shows a clear status instead of failing partway through. When the
+runtime cannot safely produce a correct report, the comparison is blocked up
+front with guidance. Checks include:
 
-The normal source-evaluation path is a devcontainer or Codespace:
+- A running LabVIEW whose **bitness** (32- or 64-bit) does not match your
+  selection — LabVIEW cannot start a second copy at a different bitness.
+- A running LabVIEW whose **year** does not match your selection, so a
+  comparison never attaches to the wrong LabVIEW on a machine with several
+  installed.
+- A selected Docker **image** your Docker engine cannot run, with a one-click
+  **Pick Image Version** fix.
+- **VI Server (TCP)** turned off in the selected LabVIEW, which would stop the
+  LabVIEW CLI from connecting.
 
-```bash
-npm run check
-npm test
-npm run package
-```
+Each block offers a next step (such as **Pick Runtime Provider** or **Pick
+Image Version**) so you can fix the runtime without leaving the panel.
 
-After `postStartCommand` completes (runs `npm run compile`), select the
-`Run VI History Suite` launch configuration from the Run and Debug view and
-press `F5`. A successful first launch opens an Extension Development Host
-window after the compile/preLaunch step completes.
+## Help and feedback
 
-Source-evaluation feedback should identify whether the path was Codespaces,
-Dev Containers in VS Code, or a local clone, and should include the first
-command that failed or the first instruction that was unclear.
-
-Optional fixture helpers:
-
-```bash
-npm run public:fixture:icon-editor
-npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
-```
-
-Vagrant is retained only as an optional local helper for humans who already have
-a Windows/LabVIEW box. It is not a release gate. See [docs/vagrant.md](./docs/vagrant.md).
+- Trouble getting started? See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) and
+  [FIRST-RUN.md](./FIRST-RUN.md).
+- Questions or support: [SUPPORT.md](./SUPPORT.md).
+- Reporting a security issue: [SECURITY.md](./SECURITY.md).
+- First-time feedback (install surface, VS Code version, first action, and any
+  stale link): the
+  [onboarding tracker](https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12).
 
 ## Contribute
 
-This repository is licensed under BSD0 / `0BSD`. Pull requests are welcome under
-the same license. See [CONTRIBUTING.md](./CONTRIBUTING.md).
+VI History Suite is open source under BSD0 / `0BSD`, and contributions are
+welcome. See [CONTRIBUTING.md](./CONTRIBUTING.md) to set up the source and
+[docs/development.md](./docs/development.md) for the development loop.
 
-For help, use [SUPPORT.md](./SUPPORT.md). For vulnerability reporting, use
-[SECURITY.md](./SECURITY.md).
+Source: https://github.com/LabVIEW-Community-CI-CD/vi-history-suite (Marketplace
+ID `svelderrainruiz.vi-history-suite`).
