@@ -56,7 +56,7 @@ body:
       label: First Command Or Action
       description: What was the first command, menu action, or doc step you tried?
       placeholder: |
-        Example: ran `VI History: Prepare Local Runtime Settings CLI`, then `vihs --validate`.
+        Example: ran `VI History: Set Up Comparison Runtime`, then `vihs --validate`.
     validations:
       required: true
   - type: textarea

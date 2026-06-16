@@ -122,7 +122,7 @@ describe('bundled documentation', () => {
       '<code>code --install-extension svelderrainruiz.vi-history-suite</code>'
     );
     expect(installLoaded?.pageBodyHtml).toContain(
-      'run <code>VI History: Prepare Local Runtime Settings CLI</code> from the Command Palette'
+      'run <code>VI History: Set Up Comparison Runtime</code> from the Command Palette'
     );
     expect(installLoaded?.pageBodyHtml).toContain(
       'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12'

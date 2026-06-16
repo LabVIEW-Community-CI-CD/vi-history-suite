@@ -2,13 +2,19 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
-Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
-`v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`,
-`v1.3.5`, `v1.3.6`, `v1.3.7`, `v1.3.8`, `v1.3.9`, `v1.3.14`,
-`v1.3.15`, `v1.3.16`, `v1.4.0`, `v1.4.1`, and `v1.4.2`.
+## [1.32.2] - 2026-06-16
 
-Burned exact-version releases now include `v1.0.2`.
+### Changed
+
+- Rewrote the extension's user-facing documentation so the Marketplace page and
+  the in-product command names read clearly for users. The **Settings** now use
+  plain language instead of internal requirement IDs and LabVIEW CLI flags, the
+  **README** is a step-by-step user guide (set up the comparison runtime,
+  compare two revisions, read and export the report), and three commands were
+  renamed for clarity: **Review VI History** (was "VI History"), **Set Up
+  Comparison Runtime** (was "Prepare Local Runtime Settings CLI"), and **Copy
+  Review Details** (was "Copy Review Packet"). Developer/source-evaluation notes
+  moved into the contributor docs.
 
 ## [1.32.1] - 2026-06-16
 
