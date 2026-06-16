@@ -2,6 +2,20 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
+## [1.32.2] - 2026-06-16
+
+### Changed
+
+- Rewrote the extension's user-facing documentation so the Marketplace page and
+  the in-product command names read clearly for users. The **Settings** now use
+  plain language instead of internal requirement IDs and LabVIEW CLI flags, the
+  **README** is a step-by-step user guide (set up the comparison runtime,
+  compare two revisions, read and export the report), and three commands were
+  renamed for clarity: **Review VI History** (was "VI History"), **Set Up
+  Comparison Runtime** (was "Prepare Local Runtime Settings CLI"), and **Copy
+  Review Details** (was "Copy Review Packet"). Developer/source-evaluation notes
+  moved into the contributor docs.
+
 ## [1.32.1] - 2026-06-16
 
 ### Fixed
