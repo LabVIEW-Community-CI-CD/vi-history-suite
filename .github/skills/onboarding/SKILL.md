@@ -27,7 +27,7 @@ If you are in a devcontainer or Codespace, run `F5` with `Run VI History Suite` 
 - Use `.github/prompts/pr-handoff-evidence.prompt.md` to keep the PR evidence block labels aligned.
 
 ## Installed Extension First-Run
-1. Run `VI History: Prepare Local Runtime Settings CLI`.
+1. Run `VI History: Set Up Comparison Runtime`.
 2. Run `vihs`.
 3. Choose provider, LabVIEW year, and bitness.
 4. Run `vihs --validate`.

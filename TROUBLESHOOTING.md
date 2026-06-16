@@ -2,7 +2,7 @@
 
 ## `vihs` Is Not Found
 
-Run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette,
+Run `VI History: Set Up Comparison Runtime` from the Command Palette,
 then open a new integrated terminal and run:
 
 ```bash

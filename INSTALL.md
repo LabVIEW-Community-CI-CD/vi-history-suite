@@ -19,7 +19,7 @@ https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
 ## First Run
 
 1. Open or restart VS Code after installing the extension.
-2. Run `VI History: Prepare Local Runtime Settings CLI` from the Command Palette.
+2. Run `VI History: Set Up Comparison Runtime` from the Command Palette.
 3. Open an integrated terminal and run `vihs`.
 4. Choose the provider, LabVIEW year, and bitness for this machine.
 5. Run `vihs --validate`.

@@ -133,7 +133,7 @@ const VALIDATION_PROOF_SCHEMA = 'vi-history-suite/runtime-validation-proof@v1';
 const VALIDATION_PROOF_JSON_FILE_NAME = 'vihs-validation-proof.json';
 const VALIDATION_PROOF_ISSUE_FILE_NAME = 'vihs-validation-issue.md';
 const MISSING_NODE_RUNTIME_MESSAGE =
-  'VI History runtime-settings CLI requires the standard VS Code runtime or a usable Node.js runtime. Install or repair VS Code, set VI_HISTORY_SUITE_NODE_EXE, or install Node.js, then rerun \"VI History: Prepare Local Runtime Settings CLI\" to refresh the launcher if this dependency changed.';
+  'VI History runtime-settings CLI requires the standard VS Code runtime or a usable Node.js runtime. Install or repair VS Code, set VI_HISTORY_SUITE_NODE_EXE, or install Node.js, then rerun \"VI History: Set Up Comparison Runtime\" to refresh the launcher if this dependency changed.';
 const STALE_LAUNCHER_MESSAGE =
   'VI History runtime-settings CLI launcher could not locate any installed extension build. Open VS Code once to let the extension refresh the launcher, or reinstall the VI History Suite extension.';
 

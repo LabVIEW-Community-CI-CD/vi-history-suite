@@ -52,7 +52,7 @@
     "commands": [
       {
         "command": "labviewViHistory.open",
-        "title": "VI History",
+        "title": "Review VI History",
         "category": "VI History"
       },
       {
@@ -62,12 +62,12 @@
       },
       {
         "command": "labviewViHistory.copyReviewPacket",
-        "title": "Copy Review Packet",
+        "title": "Copy Review Details",
         "category": "VI History"
       },
       {
         "command": "labviewViHistory.prepareLocalRuntimeSettingsCli",
-        "title": "Prepare Local Runtime Settings CLI",
+        "title": "Set Up Comparison Runtime",
         "category": "VI History"
       },
       {
@@ -147,7 +147,7 @@
         "viHistorySuite.strictRsrcHeader": {
           "type": "boolean",
           "default": false,
-          "description": "When enabled, require the leading RSRC CRLF bytes in addition to LVIN/LVCC at offset 8."
+          "description": "Use stricter checks when deciding whether a file is a real LabVIEW VI. Leave this off unless files are being wrongly accepted or rejected."
         },
         "viHistorySuite.historyWindowMode": {
           "type": "string",
@@ -156,14 +156,14 @@
             "capped"
           ],
           "default": "auto",
-          "description": "How the VI History panel chooses its retained commit window. Auto loads the full file history when it fits within the automatic safety ceiling; capped uses the explicit maxHistoryEntries limit."
+          "description": "How many past versions to load. Auto shows the full history when it is a manageable size; capped limits it to the number set in Max History Entries."
         },
         "viHistorySuite.maxHistoryEntries": {
           "type": "number",
           "default": 100,
           "minimum": 2,
           "maximum": 5000,
-          "description": "Explicit retained-commit ceiling when historyWindowMode is capped."
+          "description": "The most past versions to show when History Window Mode is set to capped."
         },
         "viHistorySuite.runtimeProvider": {
           "type": "string",
@@ -171,11 +171,11 @@
             "host",
             "docker"
           ],
-          "description": "Installed-user compare provider request. Host is the default local LabVIEWCLI path; docker is a bounded expert path selected through the generated settings CLI."
+          "description": "Where comparisons run: Host uses the LabVIEW installed on your machine (default); Docker uses an NI LabVIEW container image. Most people leave this on Host."
         },
         "viHistorySuite.labviewVersion": {
           "type": "string",
-          "description": "Installed-user LabVIEW major version for comparison reports. Use LabVIEW 2025, 2026, or a newer local version; LabVIEW 2025 and newer can open older VIs without migrating them before generating the report."
+          "description": "Which LabVIEW year to use for comparisons (for example 2025 or 2026). LabVIEW 2025 and newer can open older VIs without converting them first."
         },
         "viHistorySuite.labviewBitness": {
           "type": "string",
@@ -183,51 +183,51 @@
             "x86",
             "x64"
           ],
-          "description": "Installed-user LabVIEW bitness for comparison reports."
+          "description": "Whether to use 32-bit (x86) or 64-bit (x64) LabVIEW for comparisons. Match this to the LabVIEW you have installed."
         },
         "viHistorySuite.labviewExePath": {
           "type": "string",
-          "description": "Optional override for the host LabVIEW executable used for comparison reports. Set this to the exact LabVIEW.exe (Windows) or labview (Linux) when your install is at a location auto-detection does not cover. The comparison runtime validates the path and reports a missing-path error if it does not exist. Restricted in untrusted workspaces because it names an executable the comparison launches."
+          "description": "Optional: the full path to your LabVIEW program (LabVIEW.exe on Windows, labview on Linux). Set this only if VI History cannot find LabVIEW automatically."
         },
         "viHistorySuite.labviewCliPath": {
           "type": "string",
-          "description": "Optional override for the LabVIEWCLI executable used for comparison reports. Set this to the exact LabVIEWCLI(.exe) when your install is at a location auto-detection does not cover; this also lets VI History open when the LabVIEW CLI prerequisite gate would otherwise block. The comparison runtime validates the path and reports a missing-path error if it does not exist. Restricted in untrusted workspaces because it names an executable the comparison launches."
+          "description": "Optional: the full path to the LabVIEW CLI (LabVIEWCLI). Set this only if VI History cannot find it automatically; this also lets VI History open when the LabVIEW CLI cannot be detected."
         },
         "viHistorySuite.container.imageVersion": {
           "type": "string",
-          "description": "VHS-REQ-650: selected LabVIEW Docker image version for the container comparison providers, as a canonical tag such as 2026q1-windows, 2026q1patch2-windows, or 2026q1-linux. Leave empty to use the newest supported default. Use the 'Pick LabVIEW Container Image Version' command to choose from versions discovered on Docker Hub and already pulled locally; new National Instruments patches and release years become selectable without updating the extension. Restricted in untrusted workspaces because it names the image the comparison launches."
+          "description": "Which LabVIEW Docker image to use for Docker comparisons (for example 2026q1-windows). Leave empty to use the newest supported image. Run the VI History: Runtime & Report Settings command to pick from images available on Docker Hub or already downloaded; new National Instruments patches and years appear automatically."
         },
         "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
           "type": "integer",
           "default": 180,
           "minimum": 30,
           "maximum": 600,
-          "description": "VHS-REQ-148: LabVIEW CLI connect-window timeout (in seconds) written into LabVIEWCLI.ini before each Windows host-native compare. Sets OpenAppReferenceTimeoutInSecond and AfterLaunchOpenAppReferenceTimeoutInSecond. Default 180 matches the shipped Windows-container value; lower it only on hosts with confirmed sub-30s LabVIEW cold launches."
+          "description": "How long (in seconds) to wait for LabVIEW to start before a comparison gives up. Increase this if the first comparison after opening VS Code times out on a slow machine. Default is 180."
         },
         "viHistorySuite.report.ignoreViAttributes": {
           "type": "boolean",
           "default": false,
-          "description": "VHS-REQ-645: exclude VI attribute differences from comparison reports (LabVIEWCLI CreateComparisonReport -noattr)."
+          "description": "Leave VI attribute changes out of the comparison report."
         },
         "viHistorySuite.report.ignoreFrontPanel": {
           "type": "boolean",
           "default": false,
-          "description": "VHS-REQ-645: exclude all front panel differences from comparison reports (LabVIEWCLI CreateComparisonReport -nofp)."
+          "description": "Leave all front-panel changes out of the comparison report."
         },
         "viHistorySuite.report.ignoreFrontPanelObjectPosition": {
           "type": "boolean",
           "default": false,
-          "description": "VHS-REQ-645: exclude front panel object size and position differences from comparison reports (LabVIEWCLI CreateComparisonReport -nofppos)."
+          "description": "Leave front-panel changes that are only moves or resizes out of the comparison report."
         },
         "viHistorySuite.report.ignoreBlockDiagram": {
           "type": "boolean",
           "default": false,
-          "description": "VHS-REQ-645: exclude all block diagram differences from comparison reports (LabVIEWCLI CreateComparisonReport -nobd)."
+          "description": "Leave all block-diagram changes out of the comparison report."
         },
         "viHistorySuite.report.ignoreBlockDiagramCosmetic": {
           "type": "boolean",
           "default": false,
-          "description": "VHS-REQ-645: exclude block diagram cosmetic differences, including object position and size, from comparison reports (LabVIEWCLI CreateComparisonReport -nobdcosm)."
+          "description": "Ignore cosmetic block-diagram changes (such as moving or resizing items) so the report shows only changes that affect behavior."
         }
       }
     }

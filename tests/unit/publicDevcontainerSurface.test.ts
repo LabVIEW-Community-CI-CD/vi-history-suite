@@ -89,7 +89,11 @@ describe('public devcontainer surface', () => {
     );
     expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
-    expect(readme).toMatch(/## Source Evaluation/);
+    // Issue #589: the README is user-facing only. Source-evaluation and dev-loop
+    // guidance moved to the contributor docs, which the README links to instead
+    // of carrying inline.
+    expect(readme).toContain('CONTRIBUTING.md');
+    expect(readme).toContain('docs/development.md');
     expect(readme).toMatch(/### Contribute|## Contribute/);
     expect(readme).toMatch(
       /https:\/\/github\.com\/LabVIEW-Community-CI-CD\/vi-history-suite/
@@ -107,7 +111,6 @@ describe('public devcontainer surface', () => {
     const launch = readJson<{
       configurations?: Array<{ name?: string; type?: string; preLaunchTask?: string }>;
     }>('.vscode/launch.json');
-    const readme = readText('README.md');
     const install = readText('INSTALL.md');
     const firstRun = readText('FIRST-RUN.md');
     const development = readText('docs/development.md');
@@ -120,8 +123,9 @@ describe('public devcontainer surface', () => {
     expect(launchConfig?.type).toBe('extensionHost');
     expect(launchConfig?.preLaunchTask).toBe(EXPECTED_PRELAUNCH_TASK);
 
+    // Issue #589: README is user-only; launch/F5/Extension Development Host
+    // guidance is verified in the contributor and onboarding docs instead.
     for (const [docName, docContent] of [
-      ['README.md', readme],
       ['INSTALL.md', install],
       ['FIRST-RUN.md', firstRun],
       ['docs/development.md', development],
@@ -168,14 +172,14 @@ describe('public devcontainer surface', () => {
     const devcontainer = readJson<{
       postStartCommand?: string;
     }>('.devcontainer/devcontainer.json');
-    const readme = readText('README.md');
     const install = readText('INSTALL.md');
     const development = readText('docs/development.md');
 
     expect(devcontainer.postStartCommand).toBe('npm run compile');
 
+    // Issue #589: README is user-only and no longer documents postStartCommand;
+    // the devcontainer detail stays in the contributor/onboarding docs.
     for (const [docName, docContent] of [
-      ['README.md', readme],
       ['INSTALL.md', install],
       ['docs/development.md', development]
     ] as const) {

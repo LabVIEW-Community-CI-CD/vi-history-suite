@@ -68,8 +68,8 @@ This file provides concise, actionable guidance for AI coding agents working in 
 ### Common Pitfalls / Environment Issues
 - Requires Node.js and npm (see [INSTALL.md](./INSTALL.md))
 - On Windows, if `npm` is missing but `winget` is available, install Node.js LTS with `winget install --id OpenJS.NodeJS.LTS --exact --source winget`.
-- Some scripts/tools expect a Linux environment (see [scripts/](./scripts/) and [docs/vagrant.md](./docs/vagrant.md))
-- Integration tests may require specific Git setup or Vagrant (see [docs/vagrant.md](./docs/vagrant.md))
+- Some scripts/tools expect a Linux environment (see [scripts/](./scripts/))
+- Integration tests may require specific Git setup; Vagrant is an optional local helper, not a release gate (see [docs/vagrant.md](./docs/vagrant.md))
 - Workflow contract tests can become brittle if they assert exact single-line `run:` snippets; prefer step-name ordering checks when CI steps use multiline `run: |` blocks.
 - Merging multiple PRs into `develop` is serial, not parallel: `develop` requires branches to be up to date, so after one merge every other open PR goes `BEHIND` and `gh pr merge` fails with "N of N required status checks are expected". Run `gh pr update-branch <N>` and wait for the full CI re-run before merging the next. See [Branch and PR Flow](./CONTRIBUTING.md#branch-and-pr-flow).
 - Avoid stacking PRs (child PR based on another PR's head) when you intend to `gh pr merge --delete-branch` the base: deleting the base head branch on merge auto-closes the child PR (GitHub does not retarget it), and a closed PR whose base branch is gone cannot be reopened or retargeted — you must recreate it from the still-existing head branch against `develop`. Prefer branching each separable change off `develop` independently.
@@ -125,7 +125,7 @@ At the end of substantial tasks, improve the agent guidance in the same PR when 
 - [Development Guide](./docs/development.md)
 - [Branch and PR Flow](./CONTRIBUTING.md#branch-and-pr-flow)
 - [Maintainer Operations](./docs/maintainer-operations.md)
-- [Vagrant Guide](./docs/vagrant.md)
+- [Optional Vagrant Helper](./docs/vagrant.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Security Policy](./SECURITY.md)
 
