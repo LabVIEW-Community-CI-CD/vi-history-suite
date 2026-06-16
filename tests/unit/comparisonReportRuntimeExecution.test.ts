@@ -3296,6 +3296,71 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(script).toContain('after_launch_timeout=300');
   });
 
+  it('buildLinuxContainerCommandPlan invokes docker directly on a Windows host and preserves bash script quoting (#583)', () => {
+    const record = createReadyRecord();
+    // Real-world shape from the failing run: a Windows host running Docker in
+    // Linux-container mode (host platform win32, container runtime linux).
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'win32',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      engine: 'labview-cli'
+    };
+
+    const plan = buildLinuxContainerCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/host/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/host/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'htmlsinglefile',
+          '-ReportPath',
+          '/host/diff-report-foo.vi.html'
+        ]
+      },
+      {
+        hostReportDirectory: 'C:\\host\\report',
+        hostTempDirectory: 'C:\\host\\report\\container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(plan).toBeDefined();
+    // The plan must spawn `docker` directly, NOT wrap the command in a host
+    // `powershell.exe -EncodedCommand` string (which strips the inline bash
+    // script's quotes and produced an unparseable script in #583).
+    expect(plan?.executable).toBe('docker');
+    expect(plan?.executable).not.toBe('powershell.exe');
+    expect(plan?.args).not.toContain('-EncodedCommand');
+    expect(plan?.args).not.toContain('-NoProfile');
+
+    // The Windows bind mount and the `bash -lc <script>` tail are passed as
+    // discrete argv elements, so the script survives as one argument.
+    expect(plan?.args).toContain('run');
+    expect(plan?.args).toContain('--rm');
+    expect(plan?.args).toContain('-v');
+    expect(plan?.args).toContain('C:\\host\\report:/workspace');
+    expect(plan?.args).toContain('nationalinstruments/labview:2026q1-linux');
+    expect(plan?.args[plan.args.length - 2]).toBe('-lc');
+
+    // The single trailing script argument keeps every quote that PowerShell had
+    // stripped: the .conf hardening helpers and the CLI invocation are intact.
+    const script = plan?.args[plan.args.length - 1] ?? '';
+    expect(script).toContain('grep -qE "^[[:space:]]*${conf_key}=" "$conf_file"');
+    expect(script).toContain('"$(dirname "$conf_file")"');
+    expect(script).toContain('"$cli_path" "${args[@]}" 2>"$err_file"');
+    expect(script).toContain('harden_conf');
+  });
+
   it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {
     const record = makeLinuxHostNativeRecord();
     const writeFile = vi.fn().mockResolvedValue(undefined);

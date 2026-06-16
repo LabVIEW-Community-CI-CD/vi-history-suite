@@ -3914,49 +3914,35 @@ export function buildLinuxContainerCommandPlan(
           labviewProfile.headlessMode
         );
 
-  if (options.processPlatform === 'linux' || options.processPlatform === 'darwin') {
-    return {
-      executable: 'docker',
-      args: [
-        'run',
-        '--rm',
-        '-v',
-        `${options.hostReportDirectory}:${options.containerWorkspaceRoot}`,
-        '-e',
-        `TEMP=${LINUX_CONTAINER_TEMP_ROOT}`,
-        '-e',
-        `TMP=${LINUX_CONTAINER_TEMP_ROOT}`,
-        '-e',
-        `TMPDIR=${LINUX_CONTAINER_TEMP_ROOT}`,
-        options.containerImage,
-        'bash',
-        '-lc',
-        containerScript
-      ]
-    };
-  }
-
-  const hostExecutable = resolveWindowsPowerShellHostExecutable(options.processPlatform);
-  if (!hostExecutable) {
-    return undefined;
-  }
-
-  const script = [
-    "$ErrorActionPreference = 'Stop'",
-    "$ProgressPreference = 'SilentlyContinue'",
-    `docker run --rm -v ${quotePowerShellLiteral(
-      `${options.hostReportDirectory}:${options.containerWorkspaceRoot}`
-    )} -e TEMP=${quotePowerShellLiteral(LINUX_CONTAINER_TEMP_ROOT)} -e TMP=${quotePowerShellLiteral(
-      LINUX_CONTAINER_TEMP_ROOT
-    )} -e TMPDIR=${quotePowerShellLiteral(LINUX_CONTAINER_TEMP_ROOT)} ${quotePowerShellLiteral(
-      options.containerImage
-    )} bash -lc ${quotePowerShellLiteral(containerScript)}`,
-    'exit $LASTEXITCODE'
-  ].join('; ');
-
+  // The Linux-container invocation is identical on every host platform, including
+  // Windows: Node spawns `docker` shell-lessly (execFile/spawn with shell:false),
+  // so the bash `-lc` script is delivered as a single argv element with its
+  // quoting intact. On a Windows host this MUST NOT be wrapped in
+  // `powershell.exe -EncodedCommand`: Windows PowerShell strips the embedded
+  // quotes of the inline `-lc` argument when invoking the native `docker`
+  // command, splitting the single script argument and corrupting it into an
+  // unparseable bash script (#583). The `-e TEMP/TMP/TMPDIR` values are docker
+  // flags consumed by the container, not host environment, so no host shell
+  // context is required. The Windows-container provider keeps its own PowerShell
+  // transport because it base64-encodes its inner command and is unaffected.
   return {
-    executable: hostExecutable,
-    args: ['-NoProfile', '-EncodedCommand', encodeWindowsPowerShellScript(script)]
+    executable: 'docker',
+    args: [
+      'run',
+      '--rm',
+      '-v',
+      `${options.hostReportDirectory}:${options.containerWorkspaceRoot}`,
+      '-e',
+      `TEMP=${LINUX_CONTAINER_TEMP_ROOT}`,
+      '-e',
+      `TMP=${LINUX_CONTAINER_TEMP_ROOT}`,
+      '-e',
+      `TMPDIR=${LINUX_CONTAINER_TEMP_ROOT}`,
+      options.containerImage,
+      'bash',
+      '-lc',
+      containerScript
+    ]
   };
 }
 
