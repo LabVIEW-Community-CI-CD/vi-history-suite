@@ -213,11 +213,22 @@ describe('local image discovery (VHS-REQ-648)', () => {
     ]);
   });
 
-  it('returns empty (not error) when the lister throws (no Docker CLI)', async () => {
-    const listLocalImages = vi.fn().mockRejectedValue(new Error('docker not found'));
+  it('returns empty with localPresenceUnknown when the lister rejects (Docker engine offline)', async () => {
+    // VHS-REQ-649: a rejected lister means the Docker CLI was present but the
+    // host's pulled images could not be enumerated (daemon unreachable), so
+    // local presence is unknown — not "no images pulled".
+    const listLocalImages = vi.fn().mockRejectedValue(new Error('docker images exited with code 1'));
     const result = await discoverLocalContainerImageVersions('windows', { listLocalImages });
     expect(result.versions).toEqual([]);
-    expect(result.note).toContain('local image query failed');
+    expect(result.localPresenceUnknown).toBe(true);
+    expect(result.note).toContain('Docker engine may be offline');
+  });
+
+  it('does not flag localPresenceUnknown when the lister resolves an empty list (no images pulled)', async () => {
+    const listLocalImages = vi.fn().mockResolvedValue([]);
+    const result = await discoverLocalContainerImageVersions('windows', { listLocalImages });
+    expect(result.versions).toEqual([]);
+    expect(result.localPresenceUnknown).toBeUndefined();
   });
 });
 

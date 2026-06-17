@@ -6,6 +6,13 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Fixed
 
+- The runtime settings and the **Pick Container Image Version** list no longer
+  claim a LabVIEW container image is **"available to pull"** when the Docker
+  engine is simply stopped. While the engine is offline the extension cannot see
+  which images are already pulled, so such images are now labeled **"Local
+  presence unknown (Docker engine offline)"** instead of misreporting them as
+  not present. Start the engine and reopen the list to see the accurate
+  pulled-locally state (VHS-REQ-648, VHS-REQ-649).
 - Comparing **uncommitted working-tree changes** with the Docker runtime
   selected while the Docker engine is stopped no longer auto-opens a diagnostics
   report tab. The concise **"Docker Desktop is not running"** notification (with
