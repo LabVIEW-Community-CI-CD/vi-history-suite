@@ -81,6 +81,8 @@ interface ContainerDiscoveryCache {
   discovered: boolean;
   versions: AvailableContainerImageVersion[];
   notes: string[];
+  /** VHS-REQ-649: local presence could not be determined (Docker engine offline). */
+  localPresenceUnknown: boolean;
 }
 
 interface RuntimeReportPanelMessage {
@@ -101,9 +103,17 @@ export interface RegisterOpenRuntimeReportPanelCommandDeps {
   readonly containerPlatform?: ContainerImagePlatform;
 }
 
-function presenceLabel(version: AvailableContainerImageVersion): string {
+function presenceLabel(
+  version: AvailableContainerImageVersion,
+  localPresenceUnknown = false
+): string {
   if (version.locallyPresent) {
     return 'Pulled locally';
+  }
+  // VHS-REQ-649: the Docker engine was offline, so pulled images could not be
+  // enumerated — report local presence as unknown rather than implying absence.
+  if (localPresenceUnknown) {
+    return 'Local presence unknown (Docker engine offline)';
   }
   return version.publishedToRegistry ? 'Available to pull' : 'Available';
 }
@@ -169,7 +179,8 @@ export function registerOpenRuntimeReportPanelCommand(
     discovering: false,
     discovered: false,
     versions: [],
-    notes: []
+    notes: [],
+    localPresenceUnknown: false
   };
 
   const buildViewModel = (): RuntimeReportPanelViewModel => {
@@ -207,7 +218,10 @@ export function registerOpenRuntimeReportPanelCommand(
       (persistedProvider !== 'host' && activeProvider === 'docker');
     const currentTag = (configuration.get<string>('container.imageVersion') ?? '').trim();
     const versions: ContainerVersionPanelOption[] = containerCache.versions.map(
-      (version) => ({ tag: version.tag, presence: presenceLabel(version) })
+      (version) => ({
+        tag: version.tag,
+        presence: presenceLabel(version, containerCache.localPresenceUnknown)
+      })
     );
 
     const reportOptions = readReportOptions(configuration);
@@ -265,16 +279,18 @@ export function registerOpenRuntimeReportPanelCommand(
           explicitPlatform ??
           (await resolveConfirmedContainerPlatform(probeDaemonPlatform)) ??
           resolveHostContainerPlatform();
-        const { available, notes } = await discoverAvailableContainerImageVersions({
-          platform,
-          fetchPublishedTags,
-          listLocalImages
-        });
+        const { available, notes, localPresenceUnknown } =
+          await discoverAvailableContainerImageVersions({
+            platform,
+            fetchPublishedTags,
+            listLocalImages
+          });
         containerCache = {
           discovering: false,
           discovered: true,
           versions: [...available],
-          notes: [...notes]
+          notes: [...notes],
+          localPresenceUnknown
         };
         rerender();
         return;
@@ -325,7 +341,13 @@ export function registerOpenRuntimeReportPanelCommand(
         return { outcome: 'revealed-panel' as const };
       }
 
-      containerCache = { discovering: false, discovered: false, versions: [], notes: [] };
+      containerCache = {
+        discovering: false,
+        discovered: false,
+        versions: [],
+        notes: [],
+        localPresenceUnknown: false
+      };
       panel = vscode.window.createWebviewPanel(
         RUNTIME_REPORT_PANEL_VIEW_TYPE,
         RUNTIME_REPORT_PANEL_TITLE,

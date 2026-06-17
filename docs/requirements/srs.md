@@ -983,6 +983,13 @@ Missing numeric IDs are intentional.
     registry list omitted it.
   - Local discovery requires no network and succeeds in an air-gapped
     environment; absence of the Docker CLI yields an empty result, not an error.
+  - The default `docker images` lister distinguishes three Docker states so a
+    present image is never mislabeled: the CLI absent (spawn error) resolves to
+    an empty list (nothing pulled), the CLI present but the daemon unreachable
+    (non-zero exit) rejects, and success (exit 0) resolves the parsed list. On a
+    lister rejection, local discovery sets `localPresenceUnknown` and returns an
+    empty version list with a note, so consumers can report local presence as
+    *unknown* rather than empty; a resolved empty list does not set the flag.
   - The Docker enumeration boundary is injected and unit-tested without invoking
     real Docker.
 - Agent Work Scope:
@@ -1016,6 +1023,13 @@ Missing numeric IDs are intentional.
   - A `labviewViHistory.pickContainerImageVersion` command lists discovered
     versions newest-first, labels each with its canonical tag, annotates whether
     each is pulled locally or available to pull, and marks the current selection.
+  - When local presence could not be determined because the Docker engine was
+    offline (`localPresenceUnknown`, surfaced by VHS-REQ-648), non-local versions
+    are annotated `Local presence unknown (Docker engine offline)` instead of
+    `Available to pull`, so a genuinely-pulled image is never misreported as
+    needing a pull while the daemon is down. The same annotation is used by both
+    the quick-pick (`buildContainerImageVersionItems`) and the runtime settings
+    panel (`presenceLabel`).
   - Choosing a version persists its canonical tag to the setting at the Global
     target; a Clear option removes the setting; the command is blocked outside
     trusted workspaces.
@@ -1038,9 +1052,11 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `package.json`
   - `src/commands/pickContainerImageVersionCommand.ts`
+  - `src/commands/openRuntimeReportPanelCommand.ts`
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/pickContainerImageVersionCommand.test.ts`
+  - `tests/unit/openRuntimeReportPanelCommand.test.ts`
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:

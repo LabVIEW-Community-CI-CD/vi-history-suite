@@ -55,6 +55,13 @@ export interface ContainerImageDiscoveryResult {
   readonly versions: LabviewContainerImageVersion[];
   /** Present only when discovery degraded (network/timeout/CLI absence); never thrown. */
   readonly note?: string;
+  /**
+   * VHS-REQ-649: True only for local discovery when the local image query failed
+   * with the Docker CLI present but the daemon unreachable, so the host's pulled
+   * images could not be enumerated. Local presence is therefore *unknown*, not
+   * empty, and the UI must not label registry images as "available to pull".
+   */
+  readonly localPresenceUnknown?: boolean;
 }
 
 const TAG_PATTERN = /^(\d{4})q([1-4])(?:patch(\d+))?-(windows|linux)$/u;
@@ -309,9 +316,13 @@ export async function discoverLocalContainerImageVersions(
   try {
     rawReferences = await options.listLocalImages();
   } catch (error) {
+    // VHS-REQ-649: a rejected local lister means the Docker CLI is present but
+    // the host's pulled images could not be enumerated (daemon unreachable), so
+    // local presence is unknown — distinct from "no images pulled".
     return {
       versions: [],
-      note: `Local LabVIEW container image discovery was skipped because the local image query failed: ${String(error)}.`
+      note: `Local LabVIEW container image discovery could not enumerate pulled images (the Docker engine may be offline): ${String(error)}.`,
+      localPresenceUnknown: true
     };
   }
 

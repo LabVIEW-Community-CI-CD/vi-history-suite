@@ -86,11 +86,17 @@ export interface ContainerImageVersionQuickPickOption {
  * invisible here. In that case a prominent warning Clear row is surfaced at the
  * top that names the stale tag and the active platform, so the incompatible
  * selection is explained and one-click fixable instead of silently hidden.
+ *
+ * VHS-REQ-649: When `localPresenceUnknown` is set, the Docker engine was offline
+ * so the host's pulled images could not be enumerated; non-local images are
+ * labeled "Local presence unknown (Docker engine offline)" rather than the
+ * misleading "Available to pull".
  */
 export function buildContainerImageVersionItems(
   available: readonly AvailableContainerImageVersion[],
   currentSelection?: string,
-  activePlatform?: ContainerImagePlatform
+  activePlatform?: ContainerImagePlatform,
+  localPresenceUnknown = false
 ): readonly ContainerImageVersionQuickPickOption[] {
   const current = currentSelection?.trim();
   const staleConflict = detectContainerImageVersionPlatformConflict(current, activePlatform);
@@ -99,9 +105,11 @@ export function buildContainerImageVersionItems(
   const versionItems: ContainerImageVersionQuickPickOption[] = available.map((version) => {
     const presence = version.locallyPresent
       ? 'Pulled locally'
-      : version.publishedToRegistry
-        ? 'Available to pull'
-        : 'Available';
+      : localPresenceUnknown
+        ? 'Local presence unknown (Docker engine offline)'
+        : version.publishedToRegistry
+          ? 'Available to pull'
+          : 'Available';
     const isCurrent = current === version.tag;
     return {
       kind: 'version',
@@ -168,6 +176,12 @@ export interface DiscoverAvailableContainerImageVersionsDeps {
 export interface DiscoverAvailableContainerImageVersionsResult {
   readonly available: AvailableContainerImageVersion[];
   readonly notes: string[];
+  /**
+   * VHS-REQ-649: True when local presence could not be determined because the
+   * Docker engine was offline (CLI present, daemon unreachable). Consumers use
+   * it to label images "local presence unknown" rather than "available to pull".
+   */
+  readonly localPresenceUnknown: boolean;
 }
 
 /**
@@ -199,7 +213,8 @@ export async function discoverAvailableContainerImageVersions(
 
   return {
     available: mergeAvailableContainerImageVersions(published.versions, local.versions),
-    notes
+    notes,
+    localPresenceUnknown: local.localPresenceUnknown === true
   };
 }
 
@@ -267,18 +282,29 @@ function httpsGetJson(url: string): Promise<{ results?: Array<{ name?: unknown }
 }
 
 /**
- * VHS-REQ-648: Default local image lister. Enumerates pulled
+ * VHS-REQ-648/649: Default local image lister. Enumerates pulled
  * `nationalinstruments/labview` images via `docker images` with discrete
- * arguments (no shell). Absence of Docker resolves to an empty list.
+ * arguments (no shell).
+ *
+ * The three Docker states are kept distinct so the UI never mislabels a
+ * genuinely-present image as "available to pull":
+ * - Docker CLI absent (spawn `error`, e.g. ENOENT) resolves to an empty list —
+ *   nothing is pulled, so "available to pull" is honest.
+ * - Docker CLI present but the daemon unreachable (`docker images` exits
+ *   non-zero) REJECTS, so local presence is reported as unknown rather than
+ *   silently empty (the engine-offline bug: present images showed as
+ *   available-to-pull).
+ * - Success (exit 0) resolves the parsed reference list.
  */
 export const defaultListLocalImages: LocalImageLister = () =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     let stdout = '';
+    let stderr = '';
     let settled = false;
-    const finish = (value: string[]): void => {
+    const settle = (action: () => void): void => {
       if (!settled) {
         settled = true;
-        resolve(value);
+        action();
       }
     };
     try {
@@ -291,17 +317,40 @@ export const defaultListLocalImages: LocalImageLister = () =>
       child.stdout?.on('data', (chunk) => {
         stdout += chunk;
       });
-      child.on('error', () => finish([]));
-      child.on('close', () => {
-        finish(
-          stdout
-            .split(/\r?\n/u)
-            .map((line) => line.trim())
-            .filter((line) => line.length > 0)
+      child.stderr?.setEncoding('utf8');
+      child.stderr?.on('data', (chunk) => {
+        stderr += chunk;
+      });
+      // CLI absent (Docker not installed): treat as "no local images" so the
+      // caller still shows registry versions as available to pull.
+      child.on('error', () => settle(() => resolve([])));
+      child.on('close', (code) => {
+        if (code === 0) {
+          settle(() =>
+            resolve(
+              stdout
+                .split(/\r?\n/u)
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0)
+            )
+          );
+          return;
+        }
+        // Non-zero exit with the CLI present means the daemon is unreachable (or
+        // another docker error). Reject so local presence is reported unknown,
+        // never silently empty.
+        settle(() =>
+          reject(
+            new Error(
+              `docker images exited with code ${code ?? 'null'}${
+                stderr.trim().length > 0 ? `: ${stderr.trim()}` : ''
+              }`
+            )
+          )
         );
       });
-    } catch {
-      finish([]);
+    } catch (error) {
+      settle(() => reject(error instanceof Error ? error : new Error(String(error))));
     }
   });
 
@@ -353,7 +402,7 @@ export function registerPickContainerImageVersionCommand(
       );
       const listingPlatform = confirmedPlatform ?? resolveHostContainerPlatform();
 
-      const { available } = await vscode.window.withProgress(
+      const { available, localPresenceUnknown } = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
           title: 'Discovering LabVIEW container image versions…'
@@ -371,7 +420,8 @@ export function registerPickContainerImageVersionCommand(
       const items = buildContainerImageVersionItems(
         available,
         currentSelection,
-        confirmedPlatform
+        confirmedPlatform,
+        localPresenceUnknown
       );
       if (items.length === 0) {
         void vscode.window.showWarningMessage(PICK_CONTAINER_IMAGE_VERSION_NONE_MESSAGE);

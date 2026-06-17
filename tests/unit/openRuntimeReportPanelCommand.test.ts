@@ -286,6 +286,31 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).toContain('2026q1-linux');
   });
 
+  it('labels image versions "local presence unknown" when the Docker engine is offline (VHS-REQ-649)', async () => {
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    const fetchPublishedTags = vi.fn(async () => ['2026q1-linux']);
+    // Daemon-down: the local lister rejects, so local presence is unknown.
+    const listLocalImages = vi.fn(async () => {
+      throw new Error('docker images exited with code 1');
+    });
+    registerOpenRuntimeReportPanelCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth, dockerActiveSnapshot) as never,
+      {
+        isTrusted: () => true,
+        containerPlatform: 'linux',
+        fetchPublishedTags,
+        listLocalImages
+      }
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    await panel.dispatchMessage({ command: 'discoverContainerVersions' });
+
+    expect(panel.webview.html).toContain('Local presence unknown (Docker engine offline)');
+    expect(panel.webview.html).not.toContain('Available to pull');
+  });
+
   it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
