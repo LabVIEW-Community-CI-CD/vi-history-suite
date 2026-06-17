@@ -73,6 +73,28 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items[0].tag).toBe('2026q1-windows');
   });
 
+  it('labels non-local images "local presence unknown" when the Docker engine is offline (VHS-REQ-649)', () => {
+    // Daemon-down: pulled images could not be enumerated, so locallyPresent is
+    // false for every version. The label must say presence is unknown rather
+    // than the misleading "Available to pull".
+    const items = buildContainerImageVersionItems(
+      [
+        available('2026q1patch2-windows', { local: false, registry: true }),
+        available('2026q1-windows', { local: false, registry: true })
+      ],
+      undefined,
+      undefined,
+      true
+    );
+    expect(items[0]).toMatchObject({
+      kind: 'version',
+      tag: '2026q1patch2-windows',
+      description: 'Local presence unknown (Docker engine offline)'
+    });
+    expect(items[1].description).toBe('Local presence unknown (Docker engine offline)');
+    expect(items.some((item) => item.description === 'Available to pull')).toBe(false);
+  });
+
   it('returns no items when nothing is discovered and there is no current selection', () => {
     expect(buildContainerImageVersionItems([])).toHaveLength(0);
   });
@@ -190,6 +212,28 @@ describe('discoverAvailableContainerImageVersions (VHS-REQ-647/648)', () => {
     });
     expect(result.available.map((version) => version.tag)).toEqual(['2026q1-windows']);
     expect(result.notes.join('\n')).toContain('registry query failed');
+  });
+
+  it('flags localPresenceUnknown when the local lister rejects (Docker engine offline)', async () => {
+    // VHS-REQ-649: registry tags still resolve, but local presence is unknown,
+    // so the combiner propagates the flag for the offline-aware label.
+    const result = await discoverAvailableContainerImageVersions({
+      platform: 'windows',
+      fetchPublishedTags: vi.fn().mockResolvedValue(['2026q1-windows']),
+      listLocalImages: vi.fn().mockRejectedValue(new Error('docker images exited with code 1'))
+    });
+    expect(result.available.map((version) => version.tag)).toEqual(['2026q1-windows']);
+    expect(result.localPresenceUnknown).toBe(true);
+    expect(result.notes.join('\n')).toContain('Docker engine may be offline');
+  });
+
+  it('does not flag localPresenceUnknown when local discovery succeeds', async () => {
+    const result = await discoverAvailableContainerImageVersions({
+      platform: 'windows',
+      fetchPublishedTags: vi.fn().mockResolvedValue(['2026q1-windows']),
+      listLocalImages: vi.fn().mockResolvedValue([])
+    });
+    expect(result.localPresenceUnknown).toBe(false);
   });
 });
 

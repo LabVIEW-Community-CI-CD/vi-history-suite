@@ -983,6 +983,13 @@ Missing numeric IDs are intentional.
     registry list omitted it.
   - Local discovery requires no network and succeeds in an air-gapped
     environment; absence of the Docker CLI yields an empty result, not an error.
+  - The default `docker images` lister distinguishes three Docker states so a
+    present image is never mislabeled: the CLI absent (spawn error) resolves to
+    an empty list (nothing pulled), the CLI present but the daemon unreachable
+    (non-zero exit) rejects, and success (exit 0) resolves the parsed list. On a
+    lister rejection, local discovery sets `localPresenceUnknown` and returns an
+    empty version list with a note, so consumers can report local presence as
+    *unknown* rather than empty; a resolved empty list does not set the flag.
   - The Docker enumeration boundary is injected and unit-tested without invoking
     real Docker.
 - Agent Work Scope:
@@ -1016,6 +1023,13 @@ Missing numeric IDs are intentional.
   - A `labviewViHistory.pickContainerImageVersion` command lists discovered
     versions newest-first, labels each with its canonical tag, annotates whether
     each is pulled locally or available to pull, and marks the current selection.
+  - When local presence could not be determined because the Docker engine was
+    offline (`localPresenceUnknown`, surfaced by VHS-REQ-648), non-local versions
+    are annotated `Local presence unknown (Docker engine offline)` instead of
+    `Available to pull`, so a genuinely-pulled image is never misreported as
+    needing a pull while the daemon is down. The same annotation is used by both
+    the quick-pick (`buildContainerImageVersionItems`) and the runtime settings
+    panel (`presenceLabel`).
   - Choosing a version persists its canonical tag to the setting at the Global
     target; a Clear option removes the setting; the command is blocked outside
     trusted workspaces.
@@ -1038,9 +1052,11 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `package.json`
   - `src/commands/pickContainerImageVersionCommand.ts`
+  - `src/commands/openRuntimeReportPanelCommand.ts`
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/pickContainerImageVersionCommand.test.ts`
+  - `tests/unit/openRuntimeReportPanelCommand.test.ts`
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
@@ -1262,31 +1278,45 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
-- Statement: When a comparison is blocked solely because the Docker daemon is
-  not running (Docker CLI present but unreachable), the extension shall suppress
-  the full diagnostics report webview and instead show a concise, actionable
-  notification offering Retry and Show diagnostics, so users can start the
-  platform's Docker surface and rerun without parsing the diagnostics packet.
+- Statement: When a comparison is blocked because the Docker daemon is not
+  reachable (the daemon is explicitly unreachable and the Docker CLI is not
+  confirmed absent), the extension shall suppress the full diagnostics report
+  webview and instead show a concise, actionable notification offering Retry and
+  Show diagnostics, so users can start the platform's Docker surface and rerun
+  without parsing the diagnostics packet.
 - Acceptance Criteria:
   - `isDockerDaemonNotRunningBlock(facts)` returns true only when
     `reportStatus === 'blocked-runtime'`, `blockedReason` is one of
     `docker-provider-unavailable`, `docker-only-provider-unavailable`, or
-    `auto-docker-installed-provider-unavailable`, `dockerCliAvailable === true`,
-    and `dockerDaemonReachable === false`. Docker-not-installed
-    (`dockerCliAvailable === false`), a reachable daemon, image-acquisition
-    failures, bitness or VI-Server blocks, preflight blocks, and absent facts
-    all return false.
+    `auto-docker-installed-provider-unavailable`, `dockerDaemonReachable ===
+    false`, and `dockerCliAvailable !== false` (i.e. the CLI is not confirmed
+    absent — `true` or `undefined`). The `!== false` CLI check mirrors the
+    doctor next-action partition in `deriveContainerRecoveryAction`
+    (`dockerCliAvailable === false` steers to "install Docker"; any other state
+    with an unreachable daemon steers to "start Docker Desktop"), so the concise
+    toast fires in exactly the cases the diagnostics classify as daemon-down,
+    including the real-world `dockerCliAvailable === undefined` shape. The daemon
+    side stays strict: a `dockerDaemonReachable === undefined` (unknown daemon
+    state) returns false. Docker-not-installed (`dockerCliAvailable === false`),
+    a reachable daemon, image-acquisition failures, bitness or VI-Server blocks,
+    and preflight blocks all return false.
   - `ComparisonReportActionResult` carries `dockerCliAvailable`,
     `dockerDaemonReachable`, and the selected runtime `platform` (sourced from
     the runtime selection with the `windowsContainer*` fallback for the Docker
     facts) and, on a daemon-down block, the outcome
     `blocked-docker-daemon-not-running`.
   - On that outcome the comparison-report action does not create the report
-    webview panel; the blocked packet is still persisted and archived so the
-    full diagnostics remain reachable on demand. The webview is suppressed only
-    when archiving succeeded (`retainedArchiveAvailable !== false`); if
-    archiving failed, the action falls through to open the webview directly so
-    the user is never left without a diagnostics surface.
+    webview panel; the blocked packet is still persisted (and archived for
+    committed pairs) so the full diagnostics remain reachable on demand. The
+    webview is suppressed unless archiving genuinely FAILED
+    (`archiveFailureReason === 'retained-archive-write-failed'`); on a real
+    archive write failure the action falls through to open the webview directly
+    so the user is never left without a diagnostics surface. A working-tree
+    comparison that is intentionally not archived (VHS-REQ-641,
+    `archiveFailureReason === 'retained-archive-unavailable'`,
+    `retainedArchiveAvailable === false`) is still suppressed — the guard keys on
+    the genuine write-failure reason, not on `retainedArchiveAvailable`, so a
+    daemon-down working-tree compare no longer leaks an auto-opened report tab.
   - The comparison-report command shows a single warning notification whose copy
     is built by `buildDockerDaemonNotRunningMessage(platform)` and names the
     platform-appropriate recovery surface (Docker Desktop on `win32`, the Docker
@@ -1335,7 +1365,7 @@ Missing numeric IDs are intentional.
     `docker-provider-unavailable`, `docker-only-provider-unavailable`, or
     `auto-docker-installed-provider-unavailable`, and
     `dockerCliAvailable === false`. The daemon-down case
-    (`dockerCliAvailable === true`), other blocks, preflight blocks, and absent
+    (`dockerCliAvailable !== false`), other blocks, preflight blocks, and absent
     facts all return false. The predicate is mutually exclusive with
     `isDockerDaemonNotRunningBlock` on `dockerCliAvailable`.
   - `ComparisonReportActionResult` gains the outcome
@@ -1343,10 +1373,12 @@ Missing numeric IDs are intentional.
     `dockerCliAvailable` / `dockerDaemonReachable` / `platform` facts authored
     for VHS-REQ-642 are reused.
   - On that outcome the comparison-report action does not create the report
-    webview panel when the blocked packet archived
-    (`retainedArchiveAvailable !== false`); if archiving failed, it falls through
-    to open the webview directly so diagnostics are never lost (parity with the
-    VHS-REQ-642 archive-failure fallback).
+    webview panel; the webview is suppressed unless archiving genuinely FAILED
+    (`archiveFailureReason === 'retained-archive-write-failed'`), in which case
+    it falls through to open the webview directly so diagnostics are never lost
+    (parity with the VHS-REQ-642 archive-failure fallback). A working-tree
+    comparison intentionally not archived (VHS-REQ-641,
+    `retained-archive-unavailable`) is still suppressed.
   - The comparison-report command shows a single warning notification whose copy
     is built by `buildDockerNotInstalledMessage(platform)` and names the
     platform-appropriate target (Docker Desktop on `win32`, Docker otherwise),

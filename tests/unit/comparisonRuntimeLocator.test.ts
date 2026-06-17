@@ -335,6 +335,50 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
+  it('carries CLI-present + daemon-unreachable facts when the Docker daemon is stopped (VHS-REQ-642)', async () => {
+    // Regression guard: the daemon-down shape (Docker CLI present, daemon
+    // unreachable) must reach the unavailable selection with concrete docker
+    // facts so the command/action layers can show the concise "start Docker
+    // Desktop" toast and suppress the diagnostics report. The action and command
+    // unit tests inject a runtime selection directly, so without this the real
+    // locator chain for this case is otherwise unasserted.
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            image: 'nationalinstruments/labview:2026q1patch2-windows',
+            dockerCliAvailable: true,
+            dockerDaemonReachable: false,
+            windowsContainerCapabilityAvailable: false,
+            windowsContainerHostMode: undefined,
+            imageAvailable: false,
+            notes: [
+              'Docker CLI is present, but the Docker daemon was not reachable for Docker container validation.'
+            ]
+          })
+        )
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-provider-unavailable',
+      requestedProvider: 'docker',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false
+    });
+    // Both the generic and windowsContainer* fallbacks must be populated so the
+    // result-builder `?? windowsContainer*` chain never collapses to undefined.
+    expect(selection.windowsContainerDockerCliAvailable).toBe(true);
+    expect(selection.windowsContainerDaemonReachable).toBe(false);
+  });
+
   it('probes Docker on Windows even when version/bitness are unset because the gate is required (VHS-REQ-657)', async () => {
     // Real-world production shape: readComparisonRuntimeSettings always sets
     // requireVersionAndBitness=true, and selecting Docker clears

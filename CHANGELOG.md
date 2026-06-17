@@ -2,6 +2,34 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
+## [1.33.1] - 2026-06-17
+
+### Fixed
+
+- The runtime settings and the **Pick Container Image Version** list no longer
+  claim a LabVIEW container image is **"available to pull"** when the Docker
+  engine is simply stopped. While the engine is offline the extension cannot see
+  which images are already pulled, so such images are now labeled **"Local
+  presence unknown (Docker engine offline)"** instead of misreporting them as
+  not present. Start the engine and reopen the list to see the accurate
+  pulled-locally state (VHS-REQ-648, VHS-REQ-649).
+- Comparing **uncommitted working-tree changes** with the Docker runtime
+  selected while the Docker engine is stopped no longer auto-opens a diagnostics
+  report tab. The concise **"Docker Desktop is not running"** notification (with
+  **Retry** and **Show diagnostics**) is now the only surface, matching how
+  committed-revision comparisons already behaved. Previously, because working-
+  tree comparisons are intentionally not archived, the report tab opened anyway
+  and had to be closed by hand (VHS-REQ-642, VHS-REQ-643).
+- The concise **"Docker Desktop is not running"** notification now appears (and
+  the full diagnostics report tab stays closed) whenever a comparison is blocked
+  because the Docker daemon is unreachable — including when the extension cannot
+  positively confirm the Docker CLI is present. Previously, if the Docker CLI
+  presence was unconfirmed, the comparison fell back to the verbose
+  provider/rejected-provider warning and auto-opened a diagnostics report tab
+  you had to close, even though the diagnostics next step already said "start
+  Docker Desktop". The concise toast (with **Retry** and **Show diagnostics**)
+  now matches that guidance (VHS-REQ-642).
+
 ## [1.33.0] - 2026-06-17
 
 ### Added

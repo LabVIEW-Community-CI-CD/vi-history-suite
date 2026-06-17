@@ -165,9 +165,21 @@ const DOCKER_PROVIDER_UNAVAILABLE_BLOCKED_REASONS: ReadonlySet<string> = new Set
 ]);
 
 /**
- * VHS-REQ-642: Pure predicate that is true only when a comparison is blocked
- * solely because the Docker daemon is not running (Docker CLI present but the
- * daemon unreachable). Window-free so it gates both the report-panel open and
+ * VHS-REQ-642: Pure predicate that is true when a comparison is blocked because
+ * the Docker daemon is not reachable: the daemon is explicitly unreachable
+ * (`dockerDaemonReachable === false`) and the Docker CLI is not explicitly
+ * absent (`dockerCliAvailable !== false`).
+ *
+ * The `!== false` (rather than `=== true`) CLI check mirrors the doctor's own
+ * next-action partition in `deriveContainerRecoveryAction`: `dockerCliAvailable
+ * === false` steers to "install Docker", and any other state with an
+ * unreachable daemon steers to "start Docker Desktop". The prior `=== true` form
+ * left the `dockerCliAvailable === undefined` shape (daemon proven unreachable,
+ * CLI presence unconfirmed) falling through to the verbose runtime warning and
+ * the auto-opened diagnostics report even though the diagnostics next action
+ * already said "start Docker Desktop". Keeping the daemon side strict
+ * (`=== false`, never `undefined`) preserves the verbose surface for a genuinely
+ * unknown daemon state. Window-free so it gates both the report-panel open and
  * the command-layer toast from one source of truth.
  */
 export function isDockerDaemonNotRunningBlock(facts: {
@@ -180,8 +192,8 @@ export function isDockerDaemonNotRunningBlock(facts: {
     facts.reportStatus === 'blocked-runtime' &&
     typeof facts.blockedReason === 'string' &&
     DOCKER_PROVIDER_UNAVAILABLE_BLOCKED_REASONS.has(facts.blockedReason) &&
-    facts.dockerCliAvailable === true &&
-    facts.dockerDaemonReachable === false
+    facts.dockerDaemonReachable === false &&
+    facts.dockerCliAvailable !== false
   );
 }
 
@@ -430,12 +442,16 @@ export function createComparisonReportAction(
 
     // VHS-REQ-642: When the sole blocker is that the Docker daemon is not
     // running (Docker CLI present but unreachable), do not open the full
-    // diagnostics report webview. Suppress only when the blocked packet was
-    // archived, so the command layer's on-demand "Show diagnostics" path is
-    // guaranteed; if archiving failed, fall through to open the webview
-    // directly so the user is never left without a diagnostics surface.
+    // diagnostics report webview. Fall through to open the webview only when
+    // archiving genuinely FAILED (`retained-archive-write-failed`), so a real
+    // archive write error never leaves the user without a diagnostics surface.
+    // A working-tree comparison whose evidence is intentionally not archived
+    // (VHS-REQ-641, `retained-archive-unavailable`) must still be suppressed,
+    // matching the #530 host-conflict gates below; the prior
+    // `retainedArchiveAvailable !== false` guard conflated the two and leaked an
+    // auto-opened report for every working-tree daemon-down compare.
     if (
-      ensured.result.retainedArchiveAvailable !== false &&
+      ensured.result.archiveFailureReason !== 'retained-archive-write-failed' &&
       isDockerDaemonNotRunningBlock({
         reportStatus: ensured.result.reportStatus,
         blockedReason: ensured.result.blockedReason,
@@ -450,11 +466,13 @@ export function createComparisonReportAction(
     }
 
     // VHS-REQ-643: Sibling of the daemon-down gate for when Docker is not
-    // installed at all (CLI absent). Same archive-success guard so the
-    // command layer's on-demand "Show diagnostics" path is guaranteed; if
-    // archiving failed, fall through to open the webview directly.
+    // installed at all (CLI absent). Same fall-through-only-on-genuine-archive-
+    // failure guard: a working-tree comparison intentionally not archived
+    // (`retained-archive-unavailable`) still suppresses the webview, while a real
+    // archive write failure (`retained-archive-write-failed`) falls through to
+    // open it directly so diagnostics are never lost.
     if (
-      ensured.result.retainedArchiveAvailable !== false &&
+      ensured.result.archiveFailureReason !== 'retained-archive-write-failed' &&
       isDockerNotInstalledBlock({
         reportStatus: ensured.result.reportStatus,
         blockedReason: ensured.result.blockedReason,

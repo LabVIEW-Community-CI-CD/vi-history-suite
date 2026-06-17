@@ -1283,6 +1283,25 @@ describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
     }
   );
 
+  // VHS-REQ-642: the daemon-unreachable block must also fire when the Docker CLI
+  // presence fact is unconfirmed (`undefined`). This is the real-world shape
+  // that previously leaked the verbose toast + auto-opened report: the doctor
+  // next action already said "start Docker Desktop" (CLI not explicitly absent),
+  // so the concise toast must match.
+  it.each(DAEMON_DOWN_REASONS)(
+    'is true for a blocked-runtime %s block when the daemon is unreachable and the CLI fact is unconfirmed',
+    (blockedReason) => {
+      expect(
+        isDockerDaemonNotRunningBlock({
+          reportStatus: 'blocked-runtime',
+          blockedReason,
+          dockerCliAvailable: undefined,
+          dockerDaemonReachable: false
+        })
+      ).toBe(true);
+    }
+  );
+
   it.each([
     ['Docker not installed (CLI absent)', 'blocked-runtime', 'docker-provider-unavailable', false, false],
     ['daemon reachable, blocked for another reason', 'blocked-runtime', 'docker-provider-unavailable', true, true],
@@ -1292,7 +1311,6 @@ describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
     ['blocked at preflight, not runtime', 'blocked-preflight', 'docker-provider-unavailable', true, false],
     ['ready for runtime', 'ready-for-runtime', undefined, true, false],
     ['no blocked reason', 'blocked-runtime', undefined, true, false],
-    ['docker CLI fact absent', 'blocked-runtime', 'docker-provider-unavailable', undefined, false],
     ['docker daemon fact absent', 'blocked-runtime', 'docker-provider-unavailable', true, undefined]
   ] as const)(
     'is false: %s',
@@ -1398,6 +1416,70 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
   });
 
+  it('suppresses the diagnostics webview for a working-tree daemon-down compare even though it is intentionally not archived (VHS-REQ-641/642)', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      notes: ['Docker CLI is present, but the Docker daemon was not reachable.']
+    });
+    // VHS-REQ-641: working-tree comparisons are never archived, so the action
+    // sees retainedArchiveAvailable=false with archiveFailureReason
+    // 'retained-archive-unavailable'. That intentional non-archival must NOT
+    // defeat the daemon-down suppression — the regression that auto-opened a
+    // report tab for every working-tree daemon-down compare.
+    const blockedRecord: ComparisonReportPacketRecord = {
+      ...createPacketRecord({
+        reportStatus: 'blocked-runtime',
+        runtimeSelection,
+        runtimeExecutionState: 'not-available',
+        runtimeExecution: {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          blockedReason: 'docker-provider-unavailable'
+        }
+      }),
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3'
+    };
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource,
+      createWebviewPanel
+    });
+
+    const result = await action({
+      model: { ...createModel(), workingTree: { hasUncommittedChanges: true, headHash: 'c3' } },
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3'
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'blocked-docker-daemon-not-running',
+      reportStatus: 'blocked-runtime',
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      retainedArchiveAvailable: false,
+      archiveFailureReason: 'retained-archive-unavailable'
+    });
+    // Worktree evidence is intentionally not archived, but the report webview is
+    // still suppressed — the user gets only the concise toast, no report tab.
+    expect(archiveComparisonReportSource).not.toHaveBeenCalled();
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
+  });
+
   it('still opens the diagnostics webview when Docker is installed but the daemon is reachable (different block)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
@@ -1485,8 +1567,9 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
       baseHash: 'a1'
     });
 
-    // The daemon-down suppression is skipped because the on-demand diagnostics
-    // path (retained archive) is unavailable; the webview opens directly.
+    // The daemon-down suppression is skipped because archiving genuinely failed
+    // (`retained-archive-write-failed`), so the retained on-demand diagnostics
+    // path is lost; the webview opens directly instead.
     expect(result.outcome).toBe('opened-comparison-report');
     expect(result.retainedArchiveAvailable).toBe(false);
     expect(harness.panels).toHaveLength(1);
@@ -1629,6 +1712,66 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     expect(createWebviewPanel).not.toHaveBeenCalled();
     expect(harness.panels).toHaveLength(0);
     expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
+  });
+
+  it('suppresses the diagnostics webview for a working-tree not-installed compare even though it is intentionally not archived (VHS-REQ-641/643)', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      notes: ['Docker CLI is not available on the current host.']
+    });
+    // VHS-REQ-641: working-tree comparisons are never archived, so the not-
+    // installed gate must also suppress the webview on the intentional
+    // 'retained-archive-unavailable' non-archival, not just on a successful
+    // archive.
+    const blockedRecord: ComparisonReportPacketRecord = {
+      ...createPacketRecord({
+        reportStatus: 'blocked-runtime',
+        runtimeSelection,
+        runtimeExecutionState: 'not-available',
+        runtimeExecution: {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          blockedReason: 'docker-provider-unavailable'
+        }
+      }),
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3'
+    };
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource,
+      createWebviewPanel
+    });
+
+    const result = await action({
+      model: { ...createModel(), workingTree: { hasUncommittedChanges: true, headHash: 'c3' } },
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3'
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'blocked-docker-not-installed',
+      reportStatus: 'blocked-runtime',
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: false,
+      retainedArchiveAvailable: false,
+      archiveFailureReason: 'retained-archive-unavailable'
+    });
+    expect(archiveComparisonReportSource).not.toHaveBeenCalled();
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
   });
 
   it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost', async () => {
