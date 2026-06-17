@@ -328,6 +328,38 @@ export function buildHostVersionConflictMessage(facts: {
 }
 
 /**
+ * Issue #595 / VHS-REQ-658: Pure predicate that is true only when a comparison
+ * runtime FAILED (not a pre-launch block) because the VI was saved in a newer
+ * LabVIEW than the selected engine — the classifier reason
+ * `labview-vi-version-too-new` (LabVIEW error 0x465). Unlike the #530 host
+ * conflict predicates this keys on `runtimeFailureReason`, because the run
+ * reaches `ready-for-runtime` and fails mid-execution rather than being blocked
+ * before launch. Window-free so the command-layer toast is unit-tested directly.
+ */
+export function isViVersionTooNewFailure(facts: { runtimeFailureReason?: string }): boolean {
+  return facts.runtimeFailureReason === 'labview-vi-version-too-new';
+}
+
+/**
+ * Issue #595 / VHS-REQ-658: Build the concise toast shown when a compare failed
+ * because the VI was saved in a newer LabVIEW than the selected engine. Names
+ * the selected LabVIEW (year + bitness when known) and steers to a single path —
+ * pick a newer installed LabVIEW via the runtime provider quick-pick, then run
+ * Compare again. Pure and window-free so the copy is unit-tested directly.
+ */
+export function buildViVersionTooNewMessage(facts: {
+  selectedBitness?: 'x86' | 'x64';
+  selectedYear?: string;
+}): string {
+  const selected = describeConflictLabview(facts.selectedYear, facts.selectedBitness);
+  return (
+    `This VI was saved in a newer LabVIEW than the selected ${selected}, so the comparison could not be generated. ` +
+    'LabVIEW cannot open a VI saved in a newer version. ' +
+    'Pick a newer installed LabVIEW, then run Compare again.'
+  );
+}
+
+/**
  * Issue #532: Pure predicate that is true only when a comparison was blocked
  * because the selected container image's platform cannot run under the active
  * Docker engine mode (`container-image-platform-mismatch`). Gets the concise
@@ -1169,6 +1201,10 @@ async function openPersistedComparisonReportPanel(
           ? options.record.preflight?.blockedReason
           : undefined,
     runtimeFailureReason: options.record.runtimeExecution.failureReason,
+    // Issue #595 / VHS-REQ-658: carry the selected LabVIEW year+bitness so the
+    // command layer can name it in the concise version-too-new failure toast.
+    selectedLabviewVersion: options.record.runtimeSelection?.requestedLabviewVersion,
+    selectedLabviewBitness: options.record.runtimeSelection?.bitness,
     packetFilePath: options.packetFilePath,
     reportFilePath: options.reportFilePath,
     metadataFilePath: options.metadataFilePath,

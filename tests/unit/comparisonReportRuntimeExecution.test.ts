@@ -4130,6 +4130,38 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('labview-cli-connection-failed');
   });
 
+  it('reclassifies a 0x465 "File version is later" LabVIEW CLI exit as labview-vi-version-too-new (VHS-REQ-658)', async () => {
+    const record = createReadyRecord();
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1125,
+          stdout: '',
+          stderr:
+            'Operation output: \nLabVIEW: (Hex 0x465) File version is later than the current LabVIEW version.\nCreateComparisonReport operation failed.'
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('labview-vi-version-too-new');
+  });
+
   it('classifies an LVCompare exit-zero-without-report as lvcompare-exited-zero-without-report', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.engine = 'lvcompare';
