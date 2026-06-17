@@ -1290,11 +1290,17 @@ Missing numeric IDs are intentional.
     facts) and, on a daemon-down block, the outcome
     `blocked-docker-daemon-not-running`.
   - On that outcome the comparison-report action does not create the report
-    webview panel; the blocked packet is still persisted and archived so the
-    full diagnostics remain reachable on demand. The webview is suppressed only
-    when archiving succeeded (`retainedArchiveAvailable !== false`); if
-    archiving failed, the action falls through to open the webview directly so
-    the user is never left without a diagnostics surface.
+    webview panel; the blocked packet is still persisted (and archived for
+    committed pairs) so the full diagnostics remain reachable on demand. The
+    webview is suppressed unless archiving genuinely FAILED
+    (`archiveFailureReason === 'retained-archive-write-failed'`); on a real
+    archive write failure the action falls through to open the webview directly
+    so the user is never left without a diagnostics surface. A working-tree
+    comparison that is intentionally not archived (VHS-REQ-641,
+    `archiveFailureReason === 'retained-archive-unavailable'`,
+    `retainedArchiveAvailable === false`) is still suppressed — the guard keys on
+    the genuine write-failure reason, not on `retainedArchiveAvailable`, so a
+    daemon-down working-tree compare no longer leaks an auto-opened report tab.
   - The comparison-report command shows a single warning notification whose copy
     is built by `buildDockerDaemonNotRunningMessage(platform)` and names the
     platform-appropriate recovery surface (Docker Desktop on `win32`, the Docker
@@ -1351,10 +1357,12 @@ Missing numeric IDs are intentional.
     `dockerCliAvailable` / `dockerDaemonReachable` / `platform` facts authored
     for VHS-REQ-642 are reused.
   - On that outcome the comparison-report action does not create the report
-    webview panel when the blocked packet archived
-    (`retainedArchiveAvailable !== false`); if archiving failed, it falls through
-    to open the webview directly so diagnostics are never lost (parity with the
-    VHS-REQ-642 archive-failure fallback).
+    webview panel; the webview is suppressed unless archiving genuinely FAILED
+    (`archiveFailureReason === 'retained-archive-write-failed'`), in which case
+    it falls through to open the webview directly so diagnostics are never lost
+    (parity with the VHS-REQ-642 archive-failure fallback). A working-tree
+    comparison intentionally not archived (VHS-REQ-641,
+    `retained-archive-unavailable`) is still suppressed.
   - The comparison-report command shows a single warning notification whose copy
     is built by `buildDockerNotInstalledMessage(platform)` and names the
     platform-appropriate target (Docker Desktop on `win32`, Docker otherwise),
