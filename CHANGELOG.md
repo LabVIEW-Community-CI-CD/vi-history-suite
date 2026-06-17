@@ -2,7 +2,7 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
-## [Unreleased]
+## [1.33.1] - 2026-06-17
 
 ### Fixed
 
