@@ -12,6 +12,7 @@ import {
   buildDockerNotInstalledMessage,
   buildHostBitnessConflictMessage,
   buildHostVersionConflictMessage,
+  buildViVersionTooNewMessage,
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction,
@@ -20,6 +21,7 @@ import {
   isDockerNotInstalledBlock,
   isHostBitnessConflictBlock,
   isHostVersionConflictBlock,
+  isViVersionTooNewFailure,
   readComparisonReportOptions,
   readComparisonRuntimeSettings
 } from '../../src/reporting/comparisonReportAction';
@@ -932,6 +934,41 @@ describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#53
     const message = buildHostBitnessConflictMessage({});
     expect(message).toContain('LabVIEW is already running');
     expect(message).toContain('Close the running LabVIEW, then click Retry Compare');
+  });
+});
+
+describe('isViVersionTooNewFailure / buildViVersionTooNewMessage (#595, VHS-REQ-658)', () => {
+  it('isViVersionTooNewFailure is true only for the labview-vi-version-too-new failure reason', () => {
+    expect(
+      isViVersionTooNewFailure({ runtimeFailureReason: 'labview-vi-version-too-new' })
+    ).toBe(true);
+    expect(
+      isViVersionTooNewFailure({ runtimeFailureReason: 'command-exited-nonzero' })
+    ).toBe(false);
+    expect(isViVersionTooNewFailure({ runtimeFailureReason: undefined })).toBe(false);
+  });
+
+  it('names the selected LabVIEW and steers to pick a newer installed LabVIEW', () => {
+    const message = buildViVersionTooNewMessage({
+      selectedYear: '2025',
+      selectedBitness: 'x64'
+    });
+    expect(message).toBe(
+      'This VI was saved in a newer LabVIEW than the selected LabVIEW 2025 (64-bit), ' +
+        'so the comparison could not be generated. ' +
+        'LabVIEW cannot open a VI saved in a newer version. ' +
+        'Pick a newer installed LabVIEW, then run Compare again.'
+    );
+    // Concise: no provider internals, no setting-switch text, no false CLI clause.
+    expect(message).not.toContain('viHistorySuite');
+    expect(message).not.toContain('Provider');
+    expect(message).not.toContain('LabVIEWCLI');
+  });
+
+  it('degrades gracefully when the selected LabVIEW facts are missing', () => {
+    const message = buildViVersionTooNewMessage({});
+    expect(message).toContain('newer LabVIEW than the selected LabVIEW');
+    expect(message).toContain('Pick a newer installed LabVIEW, then run Compare again');
   });
 });
 

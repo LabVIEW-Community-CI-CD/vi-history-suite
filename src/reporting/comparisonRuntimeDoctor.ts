@@ -386,6 +386,17 @@ function deriveRuntimeDoctorNextAction(options: {
       return 'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.';
     }
 
+    // VHS-REQ-658: A LabVIEW 0x465 "File version is later than the current
+    // LabVIEW version" failure means the VI was saved in a newer LabVIEW than
+    // the selected engine. LabVIEW is not forward-compatible, so name the
+    // condition and the single recovery path (pick a newer installed LabVIEW)
+    // instead of falling back to the generic runtime-notes guidance.
+    if (options.runtimeExecution.failureReason === 'labview-vi-version-too-new') {
+      const selectedVersion = deriveRequestedLabviewVersionLabel(options.runtimeSelection);
+      const selectedBitness = options.runtimeSelection.bitness;
+      return `Next action: this VI was saved in a newer LabVIEW than the selected LabVIEW ${selectedVersion} (${selectedBitness}), which cannot open a forward-version VI. Pick a newer installed LabVIEW (for example through the Pick Runtime Provider quick-pick or viHistorySuite.labviewVersion), then rerun comparison report generation.`;
+    }
+
     // VHS-REQ-621: post-failure bitness conflict reclassification.
     if (
       options.runtimeSelection.platform === 'win32' &&

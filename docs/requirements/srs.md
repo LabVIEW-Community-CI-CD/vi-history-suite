@@ -2821,6 +2821,83 @@ Missing numeric IDs are intentional.
     VHS-REQ-621 bitness conflict, and reuse the `Pick Runtime Provider` action
     rather than introducing a new bespoke command.
 
+### VHS-REQ-658: LabVIEW VI Version Too New Compare Failure Diagnostic
+
+- Status: Active
+- Parent: VHS-SYS-REQ-004
+- Area: Runtime Settings
+- Statement: When a host-native comparison-report run reaches
+  `ready-for-runtime` and then fails because LabVIEW reports error 0x465 ("File
+  version is later than the current LabVIEW version") — meaning a staged
+  revision of the VI was saved in a newer LabVIEW than the selected engine, which
+  LabVIEW cannot open because it is not forward-compatible — the extension shall
+  classify the failure as a dedicated `labview-vi-version-too-new` runtime
+  failure reason instead of the generic `command-exited-nonzero`, and surface a
+  single concise warning toast that names the selected LabVIEW and steers the
+  user to pick a newer installed LabVIEW. This is the compare-time peer of the
+  running-session conflict diagnostics VHS-REQ-621 (bitness) and VHS-REQ-653
+  (version): those guard a running LabVIEW whose bitness/year differs from the
+  selection, whereas this reason fires when the running and selected engine
+  agree but the VI file itself is newer than the engine.
+- Acceptance Criteria:
+  - `classifyRuntimeFailure` reclassifies a nonzero-exit runtime failure whose
+    retained stderr contains the engine-agnostic LabVIEW signature `File version
+    is later than the current LabVIEW version` to
+    `reason='labview-vi-version-too-new'` with a diagnostic note naming error
+    0x465 and the forward-version cause, ahead of the generic
+    `command-exited-nonzero` fallback. A nonzero exit without that stderr
+    signature is unchanged (still `command-exited-nonzero`), and the existing
+    `-350000` and bitness-conflict reclassifications are not regressed.
+  - The `opened-comparison-report` action result carries the selected
+    `requestedLabviewVersion` and `bitness` (as `selectedLabviewVersion` /
+    `selectedLabviewBitness`) so the command layer can name the selected LabVIEW
+    in the toast without re-reading settings.
+  - `comparisonReportAction` exposes a window-free `isViVersionTooNewFailure`
+    predicate (true only for `runtimeFailureReason='labview-vi-version-too-new'`)
+    and a pure `buildViVersionTooNewMessage` builder that names the selected
+    LabVIEW (year + bitness when known), states that LabVIEW cannot open a VI
+    saved in a newer version, and steers to pick a newer installed LabVIEW, with
+    no provider internals, no `viHistorySuite` setting keys, and no LabVIEWCLI
+    clause.
+  - The VS Code comparison-report command surfaces the
+    `labview-vi-version-too-new` failure as a single concise warning toast built
+    from `buildViVersionTooNewMessage` with a `Pick Runtime Provider` action that
+    invokes `labviewViHistory.pickRuntimeProvider`; the verbose runtime-failure
+    message is suppressed for this reason (added to the same suppression gate as
+    the Docker and host-conflict concise toasts). The retained packet still
+    auto-opens, mirroring the compare-time VHS-REQ-621 failure path.
+  - `comparisonRuntimeDoctor` emits a failed-state next-action line for
+    `labview-vi-version-too-new` that names the selected LabVIEW year and
+    bitness, states the forward-version cause, and instructs the user to pick a
+    newer installed LabVIEW (through the `Pick Runtime Provider` quick-pick or
+    `viHistorySuite.labviewVersion`) before rerunning comparison report
+    generation.
+- Agent Work Scope:
+  - Reuse the existing `classifyRuntimeFailure` stderr-signature branching, the
+    concise-toast suppression gate and `describeConflictLabview` helper in
+    `comparisonReportAction`, the `Pick Runtime Provider` quick-pick, and the
+    doctor failed-state next-action switch. Do not add a new command or setting,
+    do not auto-switch `viHistorySuite.labviewVersion`, and do not change the
+    VHS-REQ-621 or VHS-REQ-653 running-session conflict behavior. Scope is the
+    host-native compare-time failure classification and its concise toast.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/commands/openViHistoryCommand.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the classifier keyed on the stable LabVIEW stderr text rather than the
+    propagated exit code (1125), so the reason survives CLI exit-code changes and
+    covers both the LabVIEW CLI and LVCompare engines. Keep the toast concise and
+    free of provider internals, and keep the verbose-message suppression entry in
+    lockstep with the toast branch so the two never diverge.
+
 ### VHS-REQ-654: Live Container Image Pull Progress
 
 - Status: Active
