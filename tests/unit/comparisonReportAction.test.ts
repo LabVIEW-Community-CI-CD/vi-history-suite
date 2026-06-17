@@ -972,6 +972,98 @@ describe('isViVersionTooNewFailure / buildViVersionTooNewMessage (#595, VHS-REQ-
   });
 });
 
+describe('VI version-too-new failure comparison gate (#597, VHS-REQ-658)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('suppresses the report webview and returns the failed-vi-version-too-new outcome', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      requestedLabviewVersion: '2025',
+      bitness: 'x64'
+    });
+    const readyRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-run'
+    });
+    const failedRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'labview-vi-version-too-new'
+      }
+    });
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(readyRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(failedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      createWebviewPanel
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result).toMatchObject({
+      outcome: 'failed-vi-version-too-new',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'labview-vi-version-too-new',
+      selectedLabviewVersion: '2025',
+      selectedLabviewBitness: 'x64'
+    });
+    // The concise toast is the only surface: no auto-opened report webview.
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
+  });
+
+  it('still opens the report for a generic command-exited-nonzero failure (no over-suppression)', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      requestedLabviewVersion: '2025',
+      bitness: 'x64'
+    });
+    const readyRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-run'
+    });
+    const failedRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-exited-nonzero'
+      }
+    });
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(readyRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(failedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: vi
+        .fn()
+        .mockResolvedValue('<html><head></head><body>packet</body></html>') as never
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    expect(harness.panels).toHaveLength(1);
+  });
+});
+
 describe('Host bitness/version conflict comparison gate (#530)', () => {
   beforeEach(() => {
     harness.reset();

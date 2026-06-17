@@ -714,7 +714,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
     const comparisonReportAction = vi.fn().mockResolvedValue({
-      outcome: 'opened-comparison-report',
+      outcome: 'failed-vi-version-too-new',
       reportStatus: 'ready-for-runtime',
       runtimeExecutionState: 'failed',
       runtimeFailureReason: 'labview-vi-version-too-new',
@@ -753,6 +753,12 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(message).not.toContain('Runtime failure reason');
     expect(message).not.toContain('Next action:');
     expect(message).not.toContain('Provider request');
+    // The toast is the only surface: the action suppressed the report webview
+    // (#597), so no "VI Comparison Report opened" information message fires.
+    const reportOpenedInfo = showInformationMessageMock.mock.calls
+      .map((call: unknown[]) => call[0] as string)
+      .find((text) => typeof text === 'string' && text.includes('VI Comparison Report opened'));
+    expect(reportOpenedInfo).toBeUndefined();
 
     await Promise.resolve();
     await Promise.resolve();

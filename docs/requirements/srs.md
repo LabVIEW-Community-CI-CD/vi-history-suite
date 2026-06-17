@@ -2864,8 +2864,14 @@ Missing numeric IDs are intentional.
     from `buildViVersionTooNewMessage` with a `Pick Runtime Provider` action that
     invokes `labviewViHistory.pickRuntimeProvider`; the verbose runtime-failure
     message is suppressed for this reason (added to the same suppression gate as
-    the Docker and host-conflict concise toasts). The retained packet still
-    auto-opens, mirroring the compare-time VHS-REQ-621 failure path.
+    the Docker and host-conflict concise toasts). The comparison-report action
+    does not auto-open the report webview for this failure (it returns the
+    dedicated `failed-vi-version-too-new` outcome before
+    `openPersistedComparisonReportPanel`), so the concise toast is the only
+    surface and the user is not forced to close an extra tab; the packet is still
+    persisted on disk and explicit Export still works, mirroring the #530 host
+    bitness/version conflict gates rather than auto-opening the failed evidence
+    (#597).
   - `comparisonRuntimeDoctor` emits a failed-state next-action line for
     `labview-vi-version-too-new` that names the selected LabVIEW year and
     bitness, states the forward-version cause, and instructs the user to pick a
