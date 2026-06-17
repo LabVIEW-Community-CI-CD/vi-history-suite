@@ -41,6 +41,7 @@ export interface HistoryPanelActionSummary {
     | 'blocked-host-bitness-conflict'
     | 'blocked-host-version-conflict'
     | 'blocked-container-image-platform-mismatch'
+    | 'failed-vi-version-too-new'
     | 'cancelled'
     | 'workspace-untrusted'
     | 'ignored-missing-hash'

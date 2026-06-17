@@ -2,6 +2,25 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
+## [1.33.0] - 2026-06-17
+
+### Added
+
+- When a VI comparison fails because the selected VI was saved in a **newer
+  version of LabVIEW than the one you are comparing with**, VI History now shows
+  a clear, concise notification that explains the problem ("This VI was saved in
+  a newer LabVIEW than the selected LabVIEW …") and offers a **Pick Runtime
+  Provider** button so you can switch to a newer installed LabVIEW and run the
+  comparison again. Previously this surfaced only as a generic failed run with
+  no explanation of the cause or the fix (#595).
+
+### Changed
+
+- For that same newer-LabVIEW failure, VI History no longer also opens the
+  comparison report tab on top of the notification, so you are not left with an
+  extra report tab to close — the notification alone explains the problem and
+  the recovery step (#597).
+
 ## [1.32.2] - 2026-06-16
 
 ### Changed

@@ -337,6 +337,39 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
+  it('gives an actionable next step for post-failure labview-vi-version-too-new (VHS-REQ-658)', () => {
+    const runtimeSelection: ComparisonRuntimeSelection = {
+      platform: 'win32',
+      executionMode: 'host-only',
+      requestedProvider: 'host',
+      requestedLabviewVersion: '2025',
+      bitness: 'x64',
+      provider: 'host-native',
+      providerDecisions: [],
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    };
+    const runtimeExecution: ComparisonReportRuntimeExecution = {
+      state: 'failed',
+      attempted: true,
+      reportExists: false,
+      failureReason: 'labview-vi-version-too-new'
+    };
+
+    const summary = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'failed',
+      runtimeSelection,
+      runtimeExecution
+    });
+
+    const action = summary.at(-1) ?? '';
+    expect(action).toContain('newer LabVIEW than the selected LabVIEW 2025 (x64)');
+    expect(action).toContain('Pick a newer installed LabVIEW');
+    expect(action).toContain('viHistorySuite.labviewVersion');
+    expect(action).toContain('rerun comparison report generation');
+  });
+
   it('names VI Server and the enable path for a Windows VI-Server-disabled block (VHS-REQ-628)', () => {
     const summary = blockedSummary(
       'windows-vi-server-tcp-disabled',

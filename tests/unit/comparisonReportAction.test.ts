@@ -12,6 +12,7 @@ import {
   buildDockerNotInstalledMessage,
   buildHostBitnessConflictMessage,
   buildHostVersionConflictMessage,
+  buildViVersionTooNewMessage,
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction,
@@ -20,6 +21,7 @@ import {
   isDockerNotInstalledBlock,
   isHostBitnessConflictBlock,
   isHostVersionConflictBlock,
+  isViVersionTooNewFailure,
   readComparisonReportOptions,
   readComparisonRuntimeSettings
 } from '../../src/reporting/comparisonReportAction';
@@ -932,6 +934,133 @@ describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#53
     const message = buildHostBitnessConflictMessage({});
     expect(message).toContain('LabVIEW is already running');
     expect(message).toContain('Close the running LabVIEW, then click Retry Compare');
+  });
+});
+
+describe('isViVersionTooNewFailure / buildViVersionTooNewMessage (#595, VHS-REQ-658)', () => {
+  it('isViVersionTooNewFailure is true only for the labview-vi-version-too-new failure reason', () => {
+    expect(
+      isViVersionTooNewFailure({ runtimeFailureReason: 'labview-vi-version-too-new' })
+    ).toBe(true);
+    expect(
+      isViVersionTooNewFailure({ runtimeFailureReason: 'command-exited-nonzero' })
+    ).toBe(false);
+    expect(isViVersionTooNewFailure({ runtimeFailureReason: undefined })).toBe(false);
+  });
+
+  it('names the selected LabVIEW and steers to pick a newer installed LabVIEW', () => {
+    const message = buildViVersionTooNewMessage({
+      selectedYear: '2025',
+      selectedBitness: 'x64'
+    });
+    expect(message).toBe(
+      'This VI was saved in a newer LabVIEW than the selected LabVIEW 2025 (64-bit), ' +
+        'so the comparison could not be generated. ' +
+        'LabVIEW cannot open a VI saved in a newer version. ' +
+        'Pick a newer installed LabVIEW, then run Compare again.'
+    );
+    // Concise: no provider internals, no setting-switch text, no false CLI clause.
+    expect(message).not.toContain('viHistorySuite');
+    expect(message).not.toContain('Provider');
+    expect(message).not.toContain('LabVIEWCLI');
+  });
+
+  it('degrades gracefully when the selected LabVIEW facts are missing', () => {
+    const message = buildViVersionTooNewMessage({});
+    expect(message).toContain('newer LabVIEW than the selected LabVIEW');
+    expect(message).toContain('Pick a newer installed LabVIEW, then run Compare again');
+  });
+});
+
+describe('VI version-too-new failure comparison gate (#597, VHS-REQ-658)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('suppresses the report webview and returns the failed-vi-version-too-new outcome', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      requestedLabviewVersion: '2025',
+      bitness: 'x64'
+    });
+    const readyRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-run'
+    });
+    const failedRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'labview-vi-version-too-new'
+      }
+    });
+    const createWebviewPanel = vi.fn();
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(readyRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(failedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      createWebviewPanel
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result).toMatchObject({
+      outcome: 'failed-vi-version-too-new',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'labview-vi-version-too-new',
+      selectedLabviewVersion: '2025',
+      selectedLabviewBitness: 'x64'
+    });
+    // The concise toast is the only surface: no auto-opened report webview.
+    expect(createWebviewPanel).not.toHaveBeenCalled();
+    expect(harness.panels).toHaveLength(0);
+  });
+
+  it('still opens the report for a generic command-exited-nonzero failure (no over-suppression)', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection({
+      requestedLabviewVersion: '2025',
+      bitness: 'x64'
+    });
+    const readyRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'not-run'
+    });
+    const failedRecord = createPacketRecord({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-exited-nonzero'
+      }
+    });
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(readyRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(failedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: vi
+        .fn()
+        .mockResolvedValue('<html><head></head><body>packet</body></html>') as never
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    expect(harness.panels).toHaveLength(1);
   });
 });
 

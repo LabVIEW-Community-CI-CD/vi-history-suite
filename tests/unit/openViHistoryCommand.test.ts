@@ -709,6 +709,64 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
+  it('shows a concise Pick Runtime Provider toast when a compare fails as labview-vi-version-too-new (#595, VHS-REQ-658)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'failed-vi-version-too-new',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'labview-vi-version-too-new',
+      selectedLabviewVersion: '2025',
+      selectedLabviewBitness: 'x64',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x64.',
+        'Provider request=host.',
+        'Runtime failure reason: labview-vi-version-too-new.',
+        'Next action: this VI was saved in a newer LabVIEW than the selected LabVIEW 2025 (x64), which cannot open a forward-version VI. Pick a newer installed LabVIEW (for example through the Pick Runtime Provider quick-pick or viHistorySuite.labviewVersion), then rerun comparison report generation.'
+      ]
+    });
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    // Exactly one warning toast: the concise version-too-new message, with the
+    // verbose runtime-failure message suppressed for this reason.
+    expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('newer LabVIEW than the selected LabVIEW 2025 (64-bit)'),
+      'Pick Runtime Provider'
+    );
+    const [message] = showWarningMessageMock.mock.calls.at(-1)!;
+    expect(message).toContain('Pick a newer installed LabVIEW, then run Compare again');
+    // Concise: no doctor summary internals leak into the toast.
+    expect(message).not.toContain('Runtime failure reason');
+    expect(message).not.toContain('Next action:');
+    expect(message).not.toContain('Provider request');
+    // The toast is the only surface: the action suppressed the report webview
+    // (#597), so no "VI Comparison Report opened" information message fires.
+    const reportOpenedInfo = showInformationMessageMock.mock.calls
+      .map((call: unknown[]) => call[0] as string)
+      .find((text) => typeof text === 'string' && text.includes('VI Comparison Report opened'));
+    expect(reportOpenedInfo).toBeUndefined();
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'labviewViHistory.pickRuntimeProvider'
+    );
+  });
+
   it('shows a concise Pick Image Version toast when blocked by a container image platform mismatch (VHS-REQ-650, #532)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };

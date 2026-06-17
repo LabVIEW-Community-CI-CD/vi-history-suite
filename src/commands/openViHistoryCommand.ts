@@ -9,11 +9,13 @@ import {
   buildDockerNotInstalledMessage,
   buildHostBitnessConflictMessage,
   buildHostVersionConflictMessage,
+  buildViVersionTooNewMessage,
   isContainerImagePlatformMismatchBlock,
   isDockerDaemonNotRunningBlock,
   isDockerNotInstalledBlock,
   isHostBitnessConflictBlock,
   isHostVersionConflictBlock,
+  isViVersionTooNewFailure,
 } from '../reporting/comparisonReportAction';
 import {
   MultiReportDashboardActionResult,
@@ -633,12 +635,40 @@ export function createOpenViHistoryCommand(
               }
             });
         }
+        // Issue #595 / VHS-REQ-658: A compare that FAILED mid-run because the VI
+        // was saved in a newer LabVIEW than the selected engine (classifier
+        // reason `labview-vi-version-too-new`, LabVIEW error 0x465) gets a single
+        // concise toast naming the selected LabVIEW and steering to pick a newer
+        // installed LabVIEW, instead of the verbose runtime-failure message. The
+        // auto-opened report is suppressed in the action layer (#597) so the
+        // toast is the only surface; only the duplicate verbose warning is
+        // suppressed here.
+        const viVersionTooNew = isViVersionTooNewFailure({
+          runtimeFailureReason: result.runtimeFailureReason
+        });
+        if (viVersionTooNew) {
+          const PICK_RUNTIME_PROVIDER_ACTION = 'Pick Runtime Provider';
+          void vscode.window
+            .showWarningMessage(
+              buildViVersionTooNewMessage({
+                selectedYear: result.selectedLabviewVersion,
+                selectedBitness: result.selectedLabviewBitness
+              }),
+              PICK_RUNTIME_PROVIDER_ACTION
+            )
+            .then((selection) => {
+              if (selection === PICK_RUNTIME_PROVIDER_ACTION) {
+                void vscode.commands.executeCommand('labviewViHistory.pickRuntimeProvider');
+              }
+            });
+        }
         const runtimeWarningMessage =
           dockerDaemonNotRunning ||
           dockerNotInstalled ||
           hostBitnessConflict ||
           hostVersionConflict ||
-          containerImagePlatformMismatch
+          containerImagePlatformMismatch ||
+          viVersionTooNew
             ? undefined
             : buildComparisonRuntimeWarningMessage(actionCommand, result);
         if (runtimeWarningMessage) {

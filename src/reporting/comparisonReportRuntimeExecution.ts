@@ -4925,6 +4925,23 @@ function classifyRuntimeFailure(options: {
   }
 
   if (options.exitCode !== 0) {
+    // VHS-REQ-658: LabVIEW error 0x465 ("File version is later than the current
+    // LabVIEW version") means a staged revision of the VI was saved in a newer
+    // LabVIEW than the selected engine. LabVIEW is not forward-compatible, so it
+    // refuses to open the VI and the compare fails before any diff is produced.
+    // Surface a specific, actionable reason instead of the generic nonzero exit
+    // so the user is steered to pick a newer installed LabVIEW. Keyed on the
+    // engine-agnostic stderr signature (the CLI propagates the LabVIEW error
+    // code as exit code 1125 = 0x465, but the stderr text is the stable signal).
+    if (/File version is later than the current LabVIEW version/i.test(options.stderr)) {
+      return {
+        reason: 'labview-vi-version-too-new',
+        notes: [
+          'LabVIEW reported that the VI file version is later than the selected LabVIEW version (error 0x465); the VI was saved in a newer LabVIEW than the selected engine, which cannot open a forward-version VI.'
+        ]
+      };
+    }
+
     if (options.engine === 'labview-cli' && /Error code\s*:\s*-350000\b/i.test(options.stderr)) {
       return {
         reason: 'labview-cli-connection-failed',
