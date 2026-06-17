@@ -6,6 +6,13 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Fixed
 
+- Comparing **uncommitted working-tree changes** with the Docker runtime
+  selected while the Docker engine is stopped no longer auto-opens a diagnostics
+  report tab. The concise **"Docker Desktop is not running"** notification (with
+  **Retry** and **Show diagnostics**) is now the only surface, matching how
+  committed-revision comparisons already behaved. Previously, because working-
+  tree comparisons are intentionally not archived, the report tab opened anyway
+  and had to be closed by hand (VHS-REQ-642, VHS-REQ-643).
 - The concise **"Docker Desktop is not running"** notification now appears (and
   the full diagnostics report tab stays closed) whenever a comparison is blocked
   because the Docker daemon is unreachable — including when the extension cannot

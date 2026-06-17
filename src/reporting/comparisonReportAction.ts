@@ -442,12 +442,16 @@ export function createComparisonReportAction(
 
     // VHS-REQ-642: When the sole blocker is that the Docker daemon is not
     // running (Docker CLI present but unreachable), do not open the full
-    // diagnostics report webview. Suppress only when the blocked packet was
-    // archived, so the command layer's on-demand "Show diagnostics" path is
-    // guaranteed; if archiving failed, fall through to open the webview
-    // directly so the user is never left without a diagnostics surface.
+    // diagnostics report webview. Fall through to open the webview only when
+    // archiving genuinely FAILED (`retained-archive-write-failed`), so a real
+    // archive write error never leaves the user without a diagnostics surface.
+    // A working-tree comparison whose evidence is intentionally not archived
+    // (VHS-REQ-641, `retained-archive-unavailable`) must still be suppressed,
+    // matching the #530 host-conflict gates below; the prior
+    // `retainedArchiveAvailable !== false` guard conflated the two and leaked an
+    // auto-opened report for every working-tree daemon-down compare.
     if (
-      ensured.result.retainedArchiveAvailable !== false &&
+      ensured.result.archiveFailureReason !== 'retained-archive-write-failed' &&
       isDockerDaemonNotRunningBlock({
         reportStatus: ensured.result.reportStatus,
         blockedReason: ensured.result.blockedReason,
@@ -462,11 +466,13 @@ export function createComparisonReportAction(
     }
 
     // VHS-REQ-643: Sibling of the daemon-down gate for when Docker is not
-    // installed at all (CLI absent). Same archive-success guard so the
-    // command layer's on-demand "Show diagnostics" path is guaranteed; if
-    // archiving failed, fall through to open the webview directly.
+    // installed at all (CLI absent). Same fall-through-only-on-genuine-archive-
+    // failure guard: a working-tree comparison intentionally not archived
+    // (`retained-archive-unavailable`) still suppresses the webview, while a real
+    // archive write failure (`retained-archive-write-failed`) falls through to
+    // open it directly so diagnostics are never lost.
     if (
-      ensured.result.retainedArchiveAvailable !== false &&
+      ensured.result.archiveFailureReason !== 'retained-archive-write-failed' &&
       isDockerNotInstalledBlock({
         reportStatus: ensured.result.reportStatus,
         blockedReason: ensured.result.blockedReason,
