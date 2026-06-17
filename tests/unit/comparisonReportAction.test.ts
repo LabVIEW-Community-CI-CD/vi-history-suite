@@ -1283,6 +1283,25 @@ describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
     }
   );
 
+  // VHS-REQ-642: the daemon-unreachable block must also fire when the Docker CLI
+  // presence fact is unconfirmed (`undefined`). This is the real-world shape
+  // that previously leaked the verbose toast + auto-opened report: the doctor
+  // next action already said "start Docker Desktop" (CLI not explicitly absent),
+  // so the concise toast must match.
+  it.each(DAEMON_DOWN_REASONS)(
+    'is true for a blocked-runtime %s block when the daemon is unreachable and the CLI fact is unconfirmed',
+    (blockedReason) => {
+      expect(
+        isDockerDaemonNotRunningBlock({
+          reportStatus: 'blocked-runtime',
+          blockedReason,
+          dockerCliAvailable: undefined,
+          dockerDaemonReachable: false
+        })
+      ).toBe(true);
+    }
+  );
+
   it.each([
     ['Docker not installed (CLI absent)', 'blocked-runtime', 'docker-provider-unavailable', false, false],
     ['daemon reachable, blocked for another reason', 'blocked-runtime', 'docker-provider-unavailable', true, true],
@@ -1292,7 +1311,6 @@ describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
     ['blocked at preflight, not runtime', 'blocked-preflight', 'docker-provider-unavailable', true, false],
     ['ready for runtime', 'ready-for-runtime', undefined, true, false],
     ['no blocked reason', 'blocked-runtime', undefined, true, false],
-    ['docker CLI fact absent', 'blocked-runtime', 'docker-provider-unavailable', undefined, false],
     ['docker daemon fact absent', 'blocked-runtime', 'docker-provider-unavailable', true, undefined]
   ] as const)(
     'is false: %s',

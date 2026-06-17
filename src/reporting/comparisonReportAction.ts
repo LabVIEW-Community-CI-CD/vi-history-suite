@@ -165,9 +165,21 @@ const DOCKER_PROVIDER_UNAVAILABLE_BLOCKED_REASONS: ReadonlySet<string> = new Set
 ]);
 
 /**
- * VHS-REQ-642: Pure predicate that is true only when a comparison is blocked
- * solely because the Docker daemon is not running (Docker CLI present but the
- * daemon unreachable). Window-free so it gates both the report-panel open and
+ * VHS-REQ-642: Pure predicate that is true when a comparison is blocked because
+ * the Docker daemon is not reachable: the daemon is explicitly unreachable
+ * (`dockerDaemonReachable === false`) and the Docker CLI is not explicitly
+ * absent (`dockerCliAvailable !== false`).
+ *
+ * The `!== false` (rather than `=== true`) CLI check mirrors the doctor's own
+ * next-action partition in `deriveContainerRecoveryAction`: `dockerCliAvailable
+ * === false` steers to "install Docker", and any other state with an
+ * unreachable daemon steers to "start Docker Desktop". The prior `=== true` form
+ * left the `dockerCliAvailable === undefined` shape (daemon proven unreachable,
+ * CLI presence unconfirmed) falling through to the verbose runtime warning and
+ * the auto-opened diagnostics report even though the diagnostics next action
+ * already said "start Docker Desktop". Keeping the daemon side strict
+ * (`=== false`, never `undefined`) preserves the verbose surface for a genuinely
+ * unknown daemon state. Window-free so it gates both the report-panel open and
  * the command-layer toast from one source of truth.
  */
 export function isDockerDaemonNotRunningBlock(facts: {
@@ -180,8 +192,8 @@ export function isDockerDaemonNotRunningBlock(facts: {
     facts.reportStatus === 'blocked-runtime' &&
     typeof facts.blockedReason === 'string' &&
     DOCKER_PROVIDER_UNAVAILABLE_BLOCKED_REASONS.has(facts.blockedReason) &&
-    facts.dockerCliAvailable === true &&
-    facts.dockerDaemonReachable === false
+    facts.dockerDaemonReachable === false &&
+    facts.dockerCliAvailable !== false
   );
 }
 

@@ -2,6 +2,20 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
+## [Unreleased]
+
+### Fixed
+
+- The concise **"Docker Desktop is not running"** notification now appears (and
+  the full diagnostics report tab stays closed) whenever a comparison is blocked
+  because the Docker daemon is unreachable — including when the extension cannot
+  positively confirm the Docker CLI is present. Previously, if the Docker CLI
+  presence was unconfirmed, the comparison fell back to the verbose
+  provider/rejected-provider warning and auto-opened a diagnostics report tab
+  you had to close, even though the diagnostics next step already said "start
+  Docker Desktop". The concise toast (with **Retry** and **Show diagnostics**)
+  now matches that guidance (VHS-REQ-642).
+
 ## [1.33.0] - 2026-06-17
 
 ### Added

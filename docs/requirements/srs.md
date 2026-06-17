@@ -1262,20 +1262,28 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
-- Statement: When a comparison is blocked solely because the Docker daemon is
-  not running (Docker CLI present but unreachable), the extension shall suppress
-  the full diagnostics report webview and instead show a concise, actionable
-  notification offering Retry and Show diagnostics, so users can start the
-  platform's Docker surface and rerun without parsing the diagnostics packet.
+- Statement: When a comparison is blocked because the Docker daemon is not
+  reachable (the daemon is explicitly unreachable and the Docker CLI is not
+  confirmed absent), the extension shall suppress the full diagnostics report
+  webview and instead show a concise, actionable notification offering Retry and
+  Show diagnostics, so users can start the platform's Docker surface and rerun
+  without parsing the diagnostics packet.
 - Acceptance Criteria:
   - `isDockerDaemonNotRunningBlock(facts)` returns true only when
     `reportStatus === 'blocked-runtime'`, `blockedReason` is one of
     `docker-provider-unavailable`, `docker-only-provider-unavailable`, or
-    `auto-docker-installed-provider-unavailable`, `dockerCliAvailable === true`,
-    and `dockerDaemonReachable === false`. Docker-not-installed
-    (`dockerCliAvailable === false`), a reachable daemon, image-acquisition
-    failures, bitness or VI-Server blocks, preflight blocks, and absent facts
-    all return false.
+    `auto-docker-installed-provider-unavailable`, `dockerDaemonReachable ===
+    false`, and `dockerCliAvailable !== false` (i.e. the CLI is not confirmed
+    absent — `true` or `undefined`). The `!== false` CLI check mirrors the
+    doctor next-action partition in `deriveContainerRecoveryAction`
+    (`dockerCliAvailable === false` steers to "install Docker"; any other state
+    with an unreachable daemon steers to "start Docker Desktop"), so the concise
+    toast fires in exactly the cases the diagnostics classify as daemon-down,
+    including the real-world `dockerCliAvailable === undefined` shape. The daemon
+    side stays strict: a `dockerDaemonReachable === undefined` (unknown daemon
+    state) returns false. Docker-not-installed (`dockerCliAvailable === false`),
+    a reachable daemon, image-acquisition failures, bitness or VI-Server blocks,
+    and preflight blocks all return false.
   - `ComparisonReportActionResult` carries `dockerCliAvailable`,
     `dockerDaemonReachable`, and the selected runtime `platform` (sourced from
     the runtime selection with the `windowsContainer*` fallback for the Docker
@@ -1335,7 +1343,7 @@ Missing numeric IDs are intentional.
     `docker-provider-unavailable`, `docker-only-provider-unavailable`, or
     `auto-docker-installed-provider-unavailable`, and
     `dockerCliAvailable === false`. The daemon-down case
-    (`dockerCliAvailable === true`), other blocks, preflight blocks, and absent
+    (`dockerCliAvailable !== false`), other blocks, preflight blocks, and absent
     facts all return false. The predicate is mutually exclusive with
     `isDockerDaemonNotRunningBlock` on `dockerCliAvailable`.
   - `ComparisonReportActionResult` gains the outcome
