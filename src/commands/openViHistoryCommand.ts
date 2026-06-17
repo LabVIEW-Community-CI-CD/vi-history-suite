@@ -640,8 +640,9 @@ export function createOpenViHistoryCommand(
         // reason `labview-vi-version-too-new`, LabVIEW error 0x465) gets a single
         // concise toast naming the selected LabVIEW and steering to pick a newer
         // installed LabVIEW, instead of the verbose runtime-failure message. The
-        // packet still auto-opens (parity with the labview-host-bitness-conflict
-        // failure); only the duplicate verbose warning is suppressed.
+        // auto-opened report is suppressed in the action layer (#597) so the
+        // toast is the only surface; only the duplicate verbose warning is
+        // suppressed here.
         const viVersionTooNew = isViVersionTooNewFailure({
           runtimeFailureReason: result.runtimeFailureReason
         });
