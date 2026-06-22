@@ -30,10 +30,14 @@ describe('bootstrapLinuxVsCodeHost', () => {
     expect(debianPlan.packages).toContain('xvfb');
     expect(debianPlan.packages).toContain('xauth');
     expect(debianPlan.packages).toContain('libasound2');
+    expect(debianPlan.packages).toContain('libei1');
+    expect(debianPlan.packages).toContain('libpipewire-0.3-0');
     expect(ubuntuPlan.packageFamily).toBe('ubuntu');
     expect(ubuntuPlan.packages).toContain('xvfb');
     expect(ubuntuPlan.packages).toContain('xauth');
     expect(ubuntuPlan.packages).toContain('libasound2t64');
+    expect(ubuntuPlan.packages).toContain('libei1');
+    expect(ubuntuPlan.packages).toContain('libpipewire-0.3-0');
     expect(debianPlan.commands).toEqual([
       ['sudo', 'apt-get', 'update'],
       ['sudo', 'apt-get', 'install', '-y', '--no-install-recommends', ...bootstrap.DISTRO_PACKAGES.debian]
