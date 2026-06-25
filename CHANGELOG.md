@@ -2,6 +2,14 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
+## [1.33.2] - 2026-06-25
+
+### Changed
+
+- The extension **Details** tab now shows animated demo GIFs in its four
+  walkthrough slots (compare overview, runtime setup, compare steps, and report
+  export), giving a "show, don't tell" overview of the compare flow (#591).
+
 ## [1.33.1] - 2026-06-17
 
 ### Fixed
