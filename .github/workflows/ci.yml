@@ -73,7 +73,7 @@ jobs:
           fi
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -165,7 +165,7 @@ jobs:
       # governance gates, and it does not exercise the heavier Windows/LabVIEW
       # integration path, which stays maintainer-dispatch.
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node
         uses: actions/setup-node@v6
@@ -196,7 +196,7 @@ jobs:
       # requiring the maintainer-dispatch Windows/LabVIEW runner. Coverage is
       # not collected here; it runs in Electron, outside the vitest run.
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Node
         uses: actions/setup-node@v6

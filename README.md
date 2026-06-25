@@ -5,7 +5,7 @@ History Suite lets you pick two saved versions of a `.vi`, `.ctl`, or `.vit`
 file from Git, confirms your comparison runtime is ready, and generates a
 visual LabVIEW comparison report you can read and share.
 
-<!-- GIF SLOT (hero / compare overview): add docs/media/compare-flow.gif here as a Markdown image using an absolute https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/media/<file>.gif URL. Tracked in issue #591. -->
+![Right-clicking a VI, selecting two revisions, and generating a comparison report.](https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/media/compare-flow.gif)
 
 ## Requirements
 
@@ -48,7 +48,7 @@ vihs --validate
 You can change the provider any time with **VI History: Runtime & Report
 Settings**.
 
-<!-- GIF SLOT (runtime setup): add docs/media/runtime-settings.gif here as a Markdown image using an absolute raw.githubusercontent.com URL. Tracked in issue #591. -->
+![Choosing the comparison runtime provider and LabVIEW image version.](https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/media/runtime-settings.gif)
 
 ## Compare two revisions
 
@@ -61,7 +61,7 @@ Settings**.
 4. Review the compare preflight.
 5. Choose **Compare**.
 
-<!-- GIF SLOT (compare steps): add docs/media/compare-steps.gif here as a Markdown image using an absolute raw.githubusercontent.com URL. Tracked in issue #591. -->
+![Right-clicking a VI, picking two revisions, reviewing the preflight, and clicking Compare.](https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/media/compare-steps.gif)
 
 ## Read and export the report
 
@@ -69,7 +69,7 @@ The report opens as a single self-contained page showing the differences
 between the two versions, with the difference images embedded inline. Use
 **Export Comparison Report (HTML)** to save a copy you can share.
 
-<!-- GIF SLOT (report and export): add docs/media/report-export.gif here as a Markdown image using an absolute raw.githubusercontent.com URL. Tracked in issue #591. -->
+![Viewing the comparison report and exporting it to HTML.](https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/media/report-export.gif)
 
 ## Runtime safety checks
 
