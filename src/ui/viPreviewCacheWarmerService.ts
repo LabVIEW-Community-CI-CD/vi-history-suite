@@ -5,7 +5,9 @@ import * as vscode from 'vscode';
 import {
   formatWarmStatusLabel,
   formatWarmStatusTooltip,
-  warmViPreviewCache
+  shouldWarmViPreviewProvider,
+  warmViPreviewCache,
+  type ViPreviewBackgroundWarmingMode
 } from '../reporting/viPreview/viPreviewCacheWarmer';
 import { toViPreviewSessionRuntime } from '../reporting/viPreview/viPreviewSessionRuntime';
 import { resolvePreviewRuntime } from './viPreviewRenderHost';
@@ -14,15 +16,19 @@ import type { ViPreviewSessionManager } from './viPreviewSessionManager';
 /**
  * VHS-REQ-659: background preview cache warmer service.
  *
- * After the first VI preview opens under the Docker (Linux container) runtime,
- * this service silently pre-renders the remaining workspace VIs through the
- * shared warm session (LabVIEW stays resident, so only the first render is
- * slow), populating the render cache so later opens are instant. Warm renders
- * are issued at background priority so a concurrent interactive open jumps
- * ahead. Progress is shown only as a quietly-increasing status-bar percentage.
- * Warming is gated to the container runtime, runs at most once per session, and
- * is cancelled on disposal. The session lifecycle is owned by the shared
- * session manager, not this service.
+ * After the first VI preview opens, this service silently pre-renders the
+ * remaining workspace VIs through the shared warm session (LabVIEW stays
+ * resident, so only the first render is slow), populating the render cache so
+ * later opens are instant. Warm renders are issued at background priority so a
+ * concurrent interactive open jumps ahead. Progress is shown only as a
+ * quietly-increasing status-bar percentage.
+ *
+ * Whether warming runs is governed by the `viHistorySuite.preview.backgroundWarming`
+ * setting (`shouldWarmViPreviewProvider`): `docker-only` (default) warms only the
+ * container providers so a host-native run never occupies the user's host
+ * LabVIEW; `always` also warms host-native; `off` disables it. Warming runs at
+ * most once per session and is cancelled on disposal. The session lifecycle is
+ * owned by the shared session manager, not this service.
  */
 
 const VI_PREVIEW_WARM_GLOB = '**/*.{vi,vit,vim,ctl}';
@@ -33,6 +39,17 @@ const MAX_WARM_FILES = 200;
 const WARM_START_DELAY_MS = 5000;
 /** How long the completed indicator lingers before it is retired. */
 const WARM_DONE_LINGER_MS = 5000;
+
+/**
+ * Reads the `viHistorySuite.preview.backgroundWarming` mode, falling back to the
+ * safe `docker-only` default for an unset or unexpected value.
+ */
+function readBackgroundWarmingMode(): ViPreviewBackgroundWarmingMode {
+  const value = vscode.workspace
+    .getConfiguration('viHistorySuite')
+    .get<string>('preview.backgroundWarming', 'docker-only');
+  return value === 'always' || value === 'off' ? value : 'docker-only';
+}
 
 export interface ViPreviewCacheWarmerService {
   /** Signals that a preview opened; starts warming once (idempotent per session). */
@@ -51,17 +68,27 @@ export function createViPreviewCacheWarmerService(
   let statusItem: vscode.StatusBarItem | undefined;
 
   async function run(excludeFsPath: string): Promise<void> {
+    const mode = readBackgroundWarmingMode();
+    if (cancelled || mode === 'off') {
+      return;
+    }
     const runtime = await resolvePreviewRuntime();
-    // Background warming keeps a warm container session busy pre-rendering the
-    // workspace so later opens are instant. It is limited to the container
-    // providers that can host a warm session on this platform; host-native is
-    // intentionally excluded so background warming never occupies the user's host
-    // LabVIEW (interactive opens still warm the host session on demand).
+    // Background warming pre-renders the workspace through a warm session so
+    // later opens are instant. Whether it runs for the resolved provider is
+    // governed by the `viHistorySuite.preview.backgroundWarming` setting:
+    // `docker-only` (default) limits it to the container providers so it never
+    // occupies the user's host LabVIEW, `always` also warms host-native, and
+    // `off` disables it (handled above). Interactive opens still warm the host
+    // session on demand regardless of this setting.
     const sessionRuntime =
       runtime.outcome === 'ready'
         ? toViPreviewSessionRuntime(runtime.runtime, process.platform)
         : undefined;
-    if (cancelled || !sessionRuntime || sessionRuntime.provider === 'host-native') {
+    if (
+      cancelled ||
+      !sessionRuntime ||
+      !shouldWarmViPreviewProvider(sessionRuntime.provider, mode)
+    ) {
       return;
     }
 

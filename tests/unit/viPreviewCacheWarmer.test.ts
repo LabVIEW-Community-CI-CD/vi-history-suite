@@ -4,6 +4,7 @@ import {
   computeWarmPercent,
   formatWarmStatusLabel,
   formatWarmStatusTooltip,
+  shouldWarmViPreviewProvider,
   warmViPreviewCache,
   type ViPreviewWarmProgress
 } from '../../src/reporting/viPreview/viPreviewCacheWarmer';
@@ -16,6 +17,26 @@ describe('computeWarmPercent', () => {
     expect(computeWarmPercent(1, 3)).toBe(33);
     expect(computeWarmPercent(3, 3)).toBe(100);
     expect(computeWarmPercent(5, 3)).toBe(100);
+  });
+});
+
+describe('shouldWarmViPreviewProvider (VHS-REQ-659)', () => {
+  it('docker-only warms the container providers but not host-native', () => {
+    expect(shouldWarmViPreviewProvider('linux-container', 'docker-only')).toBe(true);
+    expect(shouldWarmViPreviewProvider('windows-container', 'docker-only')).toBe(true);
+    expect(shouldWarmViPreviewProvider('host-native', 'docker-only')).toBe(false);
+  });
+
+  it('always warms every provider including host-native', () => {
+    expect(shouldWarmViPreviewProvider('host-native', 'always')).toBe(true);
+    expect(shouldWarmViPreviewProvider('linux-container', 'always')).toBe(true);
+    expect(shouldWarmViPreviewProvider('windows-container', 'always')).toBe(true);
+  });
+
+  it('off disables warming for every provider', () => {
+    expect(shouldWarmViPreviewProvider('host-native', 'off')).toBe(false);
+    expect(shouldWarmViPreviewProvider('linux-container', 'off')).toBe(false);
+    expect(shouldWarmViPreviewProvider('windows-container', 'off')).toBe(false);
   });
 });
 
