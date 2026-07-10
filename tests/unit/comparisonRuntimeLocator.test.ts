@@ -1506,6 +1506,23 @@ describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634)', () => {
 
     expect(candidates).toEqual([]);
   });
+
+  it('drops registry candidates below the supported minimum year, keeping 2025+ (#644)', () => {
+    const output = [
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\20.0',
+      '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2020\\',
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
+      '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2026\\',
+      ''
+    ].join('\r\n');
+
+    const candidates = parseWindowsRegistryLabviewCandidates(output);
+
+    // The unsupported 2020 install is excluded; only the 2025+ install remains.
+    expect(candidates.map((candidate) => candidate.path)).toEqual([
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    ]);
+  });
 });
 
 describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-634, #381)', () => {
