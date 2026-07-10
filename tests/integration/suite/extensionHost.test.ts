@@ -7,6 +7,8 @@ import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 
 import type { ViHistorySuiteApi } from '../../../src/extension';
+import { createFileViPreviewCache } from '../../../src/reporting/viPreview/viPreviewCache';
+import { renderViPreviewForFile } from '../../../src/reporting/viPreview/viPreviewFileRender';
 import {
   isViPreviewVerificationPassing,
   verifyViPreviewRender
@@ -116,6 +118,7 @@ export async function runIntegrationSuite(): Promise<void> {
   await testRuntimeConvenienceCommandsRegistered();
   await testPanelOpenFlow(api, metadata);
   await testViPreviewRenderWhenRuntimeAvailable();
+  await testViPreviewCacheDistinguishesProjectVIs();
 }
 
 async function loadMetadata(): Promise<IntegrationWorkspaceMetadata> {
@@ -212,6 +215,100 @@ async function testViPreviewRenderWhenRuntimeAvailable(): Promise<void> {
     isViPreviewVerificationPassing(proof),
     `expected the sample VI to render with inline images (proof: ${JSON.stringify(proof)})`
   );
+}
+
+/**
+ * VHS-REQ-659 (#646): end-to-end proof that the render cache distinguishes VIs.
+ * Rendering two different VIs from the same project through the real file-backed
+ * cache must return distinct documents, and re-rendering the first VI must be
+ * served from cache and return the first VI's document (not the second's) — the
+ * regression that made every VI in a project show the first-opened preview.
+ * Skips when no runtime is available (same as the render test above).
+ */
+async function testViPreviewCacheDistinguishesProjectVIs(): Promise<void> {
+  const runtime = await resolvePreviewRuntime();
+  if (runtime.outcome !== 'ready') {
+    console.log('[integration] VI preview cache distinctness: SKIPPED (runtime not ready)');
+    return;
+  }
+
+  const extension = vscode.extensions.getExtension('svelderrainruiz.vi-history-suite');
+  assert.ok(extension, 'extension must be installed in the test host');
+  const operationDirectory = path.join(
+    extension.extensionPath,
+    'resources',
+    'labview-cli-operations'
+  );
+  const projectDirectory = path.join(operationDirectory, 'PrintToSingleFileHtml');
+  const viAPath = path.join(projectDirectory, 'Make path absolute.vi');
+  const viBPath = path.join(projectDirectory, 'Parse inputs.vi');
+
+  // Real (production) file-backed cache in an isolated temp directory, bound to
+  // the shared render deps exactly as the extension wires it.
+  const cacheDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-preview-cache-it-'));
+  const cache = createFileViPreviewCache(
+    {
+      cacheDirectory,
+      joinPath: (directory, name) => path.join(directory, name)
+    },
+    {
+      ensureDirectory: async (directory) => {
+        await fs.mkdir(directory, { recursive: true });
+      },
+      readFile: (filePath) => fs.readFile(filePath, 'utf8'),
+      writeFile: (filePath, data) => fs.writeFile(filePath, data, 'utf8'),
+      listFiles: (directory) => fs.readdir(directory),
+      fileModifiedMs: async (filePath) => (await fs.stat(filePath)).mtimeMs,
+      removeFile: (filePath) => fs.rm(filePath, { force: true })
+    }
+  );
+  const deps = buildViPreviewRenderDeps(cache);
+  const renderRuntime = { ...runtime.runtime, headless: true };
+
+  try {
+    const renderA = await renderViPreviewForFile(
+      { runtime: renderRuntime, viFilePath: viAPath, operationDirectory },
+      deps
+    );
+    const renderB = await renderViPreviewForFile(
+      { runtime: renderRuntime, viFilePath: viBPath, operationDirectory },
+      deps
+    );
+    const renderAAgain = await renderViPreviewForFile(
+      { runtime: renderRuntime, viFilePath: viAPath, operationDirectory },
+      deps
+    );
+
+    console.log(
+      `[integration] VI preview cache distinctness: A(outcome=${renderA.outcome}, cached=${
+        renderA.cached
+      }, bytes=${renderA.html?.length ?? 0}) B(outcome=${renderB.outcome}, cached=${
+        renderB.cached
+      }, bytes=${renderB.html?.length ?? 0}) A2(outcome=${renderAAgain.outcome}, cached=${
+        renderAAgain.cached
+      })`
+    );
+
+    assert.equal(renderA.outcome, 'rendered', `VI A must render (got ${JSON.stringify(renderA)})`);
+    assert.equal(renderB.outcome, 'rendered', `VI B must render (got ${JSON.stringify(renderB)})`);
+    // #646: two VIs in one project stage the same tree; they must NOT collide on
+    // one cache entry, so their rendered documents differ.
+    assert.notEqual(
+      renderA.html,
+      renderB.html,
+      'different project VIs must render to different documents (cache-key collision regression)'
+    );
+    // The cache is actually exercised: re-rendering VI A is served from cache and
+    // returns VI A's document, not the later-rendered VI B.
+    assert.equal(renderAAgain.cached, true, 'the second render of VI A should be served from cache');
+    assert.equal(
+      renderAAgain.html,
+      renderA.html,
+      'cached VI A must return VI A, not the later-rendered VI B'
+    );
+  } finally {
+    await fs.rm(cacheDirectory, { recursive: true, force: true }).catch(() => undefined);
+  }
 }
 
 async function testPanelOpenFlow(
