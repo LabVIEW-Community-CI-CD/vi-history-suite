@@ -32,6 +32,8 @@ export interface ViPreviewVerificationProof {
   cached: boolean;
   /** Failure/blocked reason, when the outcome was not `rendered`. */
   failureReason?: string;
+  /** Truncated render stderr, when the outcome was not `rendered` (for triage). */
+  stderr?: string;
 }
 
 /**
@@ -59,7 +61,8 @@ export function summarizeViPreviewRender(
     htmlBytes: result.html?.length ?? 0,
     inlineImageCount: countInlinePreviewImages(result.html),
     cached: result.cached ?? false,
-    failureReason: result.failureReason
+    failureReason: result.failureReason,
+    stderr: result.stderr ? result.stderr.slice(-4000) : undefined
   };
 }
 

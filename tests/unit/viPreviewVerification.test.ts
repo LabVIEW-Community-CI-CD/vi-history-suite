@@ -34,7 +34,8 @@ describe('summarizeViPreviewRender', () => {
       htmlBytes: htmlWith(10).length,
       inlineImageCount: 10,
       cached: false,
-      failureReason: undefined
+      failureReason: undefined,
+      stderr: undefined
     });
   });
 
