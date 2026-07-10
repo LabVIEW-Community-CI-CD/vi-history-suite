@@ -198,9 +198,13 @@ interface ParsedVerifyArgs {
   requestedProvider?: 'host' | 'docker';
   containerImage?: string;
   portNumber?: number;
+  /** `--labview-path`: exact host LabVIEW executable to render with (host-native). */
+  labviewExePath?: string;
+  /** `--labview-version`: host LabVIEW year to select (e.g. `2026`) (host-native). */
+  labviewVersion?: string;
 }
 
-function parseArgs(argv: readonly string[]): ParsedVerifyArgs {
+export function parseArgs(argv: readonly string[]): ParsedVerifyArgs {
   const parsed: ParsedVerifyArgs = {};
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -218,6 +222,10 @@ function parseArgs(argv: readonly string[]): ParsedVerifyArgs {
       }
     } else if (arg === '--container-image') {
       parsed.containerImage = next();
+    } else if (arg === '--labview-path') {
+      parsed.labviewExePath = next();
+    } else if (arg === '--labview-version') {
+      parsed.labviewVersion = next();
     } else if (arg === '--port') {
       const value = Number.parseInt(next(), 10);
       if (Number.isInteger(value) && value > 0) {
@@ -251,6 +259,15 @@ export async function main(argv: readonly string[]): Promise<number> {
   const settings: ComparisonRuntimeSettings = {};
   if (parsed.requestedProvider) {
     settings.requestedProvider = parsed.requestedProvider;
+  }
+  // Target a specific host LabVIEW so a multi-version host verifies against a
+  // supported install instead of LabVIEWCLI's system default (which may be too
+  // old to load the vendored operation class).
+  if (parsed.labviewExePath) {
+    settings.labviewExePath = parsed.labviewExePath;
+  }
+  if (parsed.labviewVersion) {
+    settings.labviewVersion = parsed.labviewVersion;
   }
   if (parsed.containerImage) {
     // The locator picks the image matching the active Docker mode; set both so
