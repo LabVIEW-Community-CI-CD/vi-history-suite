@@ -6,6 +6,7 @@ import {
   formatWarmStatusLabel,
   warmViPreviewCache
 } from '../reporting/viPreview/viPreviewCacheWarmer';
+import { toViPreviewSessionRuntime } from '../reporting/viPreview/viPreviewSessionRuntime';
 import { resolvePreviewRuntime } from './viPreviewRenderHost';
 import type { ViPreviewSessionManager } from './viPreviewSessionManager';
 
@@ -50,20 +51,16 @@ export function createViPreviewCacheWarmerService(
 
   async function run(excludeFsPath: string): Promise<void> {
     const runtime = await resolvePreviewRuntime();
-    // Docker-only: warming is limited to the LabVIEW container runtimes, which
-    // share a warm LabVIEW session; the host-native runtime renders on demand
-    // only. The windows-container warm session drives Docker directly, so it is
-    // limited to a Windows host — a non-Windows host bridges Docker through
-    // Windows PowerShell and cannot host a persistent session, so warming is
-    // skipped there (interactive opens still render per-invocation).
-    if (
-      cancelled ||
-      runtime.outcome !== 'ready' ||
-      (runtime.runtime.provider !== 'linux-container' &&
-        runtime.runtime.provider !== 'windows-container') ||
-      (runtime.runtime.provider === 'windows-container' && process.platform !== 'win32') ||
-      !runtime.runtime.containerImage
-    ) {
+    // Background warming keeps a warm container session busy pre-rendering the
+    // workspace so later opens are instant. It is limited to the container
+    // providers that can host a warm session on this platform; host-native is
+    // intentionally excluded so background warming never occupies the user's host
+    // LabVIEW (interactive opens still warm the host session on demand).
+    const sessionRuntime =
+      runtime.outcome === 'ready'
+        ? toViPreviewSessionRuntime(runtime.runtime, process.platform)
+        : undefined;
+    if (cancelled || !sessionRuntime || sessionRuntime.provider === 'host-native') {
       return;
     }
 
@@ -80,13 +77,6 @@ export function createViPreviewCacheWarmerService(
     if (cancelled || viFilePaths.length === 0) {
       return;
     }
-
-    const sessionRuntime = {
-      provider: runtime.runtime.provider,
-      containerImage: runtime.runtime.containerImage,
-      containerLabviewPath: runtime.runtime.containerLabviewPath,
-      connectTimeoutSeconds: runtime.runtime.connectTimeoutSeconds
-    };
 
     statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusItem.tooltip = 'VI History is caching VI previews in the background so they open instantly.';

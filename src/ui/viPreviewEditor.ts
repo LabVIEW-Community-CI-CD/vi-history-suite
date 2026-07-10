@@ -8,6 +8,7 @@ import {
   type RenderViPreviewForFileResult
 } from '../reporting/viPreview/viPreviewFileRender';
 import { buildViPreviewWebviewHtml } from '../reporting/viPreview/viPreviewWebview';
+import { toViPreviewSessionRuntime } from '../reporting/viPreview/viPreviewSessionRuntime';
 import {
   buildViPreviewRenderDeps,
   createViPreviewCache,
@@ -110,29 +111,18 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         return;
       }
 
-      // The warm session drives Docker directly, which works for linux-container
-      // everywhere and for windows-container only on a Windows host. A non-Windows
-      // host driving Windows containers bridges Docker through Windows PowerShell
-      // (see resolveWindowsPowerShellHostExecutable), so route those through the
-      // per-invocation plan (which bridges or blocks cleanly) instead of failing
-      // at session start.
-      const sessionProvider =
-        runtime.runtime.provider === 'linux-container'
-          ? ('linux-container' as const)
-          : runtime.runtime.provider === 'windows-container' && process.platform === 'win32'
-            ? ('windows-container' as const)
-            : undefined;
+      // Reuse a warm LabVIEW session when the resolved runtime can host one on
+      // this platform (container providers, or host-native on Windows); otherwise
+      // render per-invocation. `toViPreviewSessionRuntime` encodes the gating.
+      const sessionRuntime = this.sessionManager
+        ? toViPreviewSessionRuntime(runtime.runtime, process.platform)
+        : undefined;
       let result: RenderViPreviewForFileResult;
-      if (sessionProvider && runtime.runtime.containerImage && this.sessionManager) {
+      if (sessionRuntime && this.sessionManager) {
         // Reuse the shared warm session so an un-cached open renders in seconds
         // once the session is warm; interactive priority jumps the warm queue.
         result = await this.sessionManager.renderVi(
-          {
-            provider: sessionProvider,
-            containerImage: runtime.runtime.containerImage,
-            containerLabviewPath: runtime.runtime.containerLabviewPath,
-            connectTimeoutSeconds: runtime.runtime.connectTimeoutSeconds
-          },
+          sessionRuntime,
           document.uri.fsPath,
           'interactive'
         );

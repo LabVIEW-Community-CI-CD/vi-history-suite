@@ -19,6 +19,7 @@ import {
   type RenderViPreviewForFileResult
 } from '../reporting/viPreview/viPreviewFileRender';
 import type { ViPreviewExecutionResult } from '../reporting/viPreview/viPreviewExecution';
+import type { ViPreviewSessionProvider } from '../reporting/viPreview/viPreviewSessionRuntime';
 import { buildViPreviewRenderDeps } from './viPreviewRenderHost';
 
 /**
@@ -45,17 +46,22 @@ export interface ViPreviewSession {
   dispose(): Promise<void>;
 }
 
-/** Container runtime that can host a warm preview session. */
-export type ViPreviewSessionProvider = 'linux-container' | 'windows-container';
-
 export interface StartViPreviewSessionOptions {
-  containerImage: string;
-  containerLabviewPath?: string;
+  /** Session provider. Defaults to linux-container. */
+  provider?: ViPreviewSessionProvider;
   operationDirectory: string;
   cache?: ViPreviewCache;
   connectTimeoutSeconds?: number;
-  /** Container runtime provider for the session. Defaults to linux-container. */
-  provider?: ViPreviewSessionProvider;
+  /** Container image (container providers). */
+  containerImage?: string;
+  /** In-container LabVIEW executable (container providers). */
+  containerLabviewPath?: string;
+  /** Host LabVIEWCLI executable (host-native). */
+  labviewCliPath?: string;
+  /** Host `-LabVIEWPath` value (host-native). */
+  labviewExePath?: string;
+  /** VI Server port (host-native). */
+  portNumber?: number;
 }
 
 async function docker(
@@ -81,21 +87,28 @@ async function docker(
 export async function startViPreviewSession(
   options: StartViPreviewSessionOptions
 ): Promise<ViPreviewSession> {
+  const provider: ViPreviewSessionProvider = options.provider ?? 'linux-container';
+  if (provider === 'host-native') {
+    return startHostViPreviewSession(options);
+  }
+  const containerImage = options.containerImage;
+  if (!containerImage) {
+    throw new Error('startViPreviewSession requires a containerImage for container providers');
+  }
   const sessionRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-vi-preview-session-'));
   const containerName = `vihs-vi-preview-${randomBytes(6).toString('hex')}`;
-  const provider: ViPreviewSessionProvider = options.provider ?? 'linux-container';
 
   const started = await docker(
     provider === 'windows-container'
       ? buildWindowsContainerSessionStartArgs({
           containerName,
-          containerImage: options.containerImage,
+          containerImage,
           hostSessionRoot: sessionRoot,
           hostOperationDirectory: options.operationDirectory
         })
       : buildLinuxContainerSessionStartArgs({
           containerName,
-          containerImage: options.containerImage,
+          containerImage,
           hostSessionRoot: sessionRoot,
           hostOperationDirectory: options.operationDirectory
         })
@@ -194,7 +207,7 @@ export async function startViPreviewSession(
         {
           runtime: {
             provider,
-            containerImage: options.containerImage,
+            containerImage,
             containerLabviewPath: options.containerLabviewPath,
             connectTimeoutSeconds: options.connectTimeoutSeconds
           },
@@ -217,6 +230,104 @@ export async function startViPreviewSession(
       disposed = true;
       await docker(['rm', '-f', containerName]).catch(() => undefined);
       await fs.rm(sessionRoot, { recursive: true, force: true }).catch(() => undefined);
+    }
+  };
+}
+
+// --- Host-native warm session (VHS-REQ-659) ------------------------------------
+// A resident host LabVIEW warm session. LabVIEWCLI launches LabVIEW headless on
+// the first render; that LabVIEW stays resident and every later render reuses it
+// via VI Server (~7x faster than a cold launch). No container/keep-alive is
+// needed. On dispose only the LabVIEW instances that appeared during this session
+// are force-killed — a pre-existing user LabVIEW is never touched. PID tracking
+// uses PowerShell, so this session is used on Windows hosts (see
+// `toViPreviewSessionRuntime`); other hosts render per-invocation.
+
+const HOST_PID_QUERY_TIMEOUT_MS = 30 * 1000;
+
+/** Lists running host `LabVIEW.exe` PIDs (Windows). Returns `[]` on any failure. */
+async function listHostLabviewPids(): Promise<number[]> {
+  try {
+    const { stdout } = await execFileAsync(
+      'powershell',
+      [
+        '-NoProfile',
+        '-Command',
+        '@(Get-Process LabVIEW -ErrorAction SilentlyContinue | ForEach-Object { $_.Id }) -join ","'
+      ],
+      { timeout: HOST_PID_QUERY_TIMEOUT_MS, maxBuffer: MAX_BUFFER_BYTES }
+    );
+    return stdout
+      .trim()
+      .split(',')
+      .map((value) => Number.parseInt(value.trim(), 10))
+      .filter((value) => Number.isInteger(value) && value > 0);
+  } catch {
+    return [];
+  }
+}
+
+/** Force-kills the given PIDs (Windows). Best-effort. */
+async function killHostPids(pids: readonly number[]): Promise<void> {
+  if (pids.length === 0) {
+    return;
+  }
+  await execFileAsync(
+    'powershell',
+    [
+      '-NoProfile',
+      '-Command',
+      `Stop-Process -Id ${pids.join(',')} -Force -ErrorAction SilentlyContinue`
+    ],
+    { timeout: HOST_PID_QUERY_TIMEOUT_MS, maxBuffer: MAX_BUFFER_BYTES }
+  ).catch(() => undefined);
+}
+
+async function startHostViPreviewSession(
+  options: StartViPreviewSessionOptions
+): Promise<ViPreviewSession> {
+  const labviewCliPath = options.labviewCliPath?.trim();
+  if (!labviewCliPath) {
+    throw new Error('startViPreviewSession requires a labviewCliPath for the host-native provider');
+  }
+  // LabVIEW instances present before we start are the user's; never reclaim them.
+  const basePids = new Set(await listHostLabviewPids());
+  const ownedPids = new Set<number>();
+  const baseDeps = buildViPreviewRenderDeps(options.cache);
+  let disposed = false;
+
+  const runtime = {
+    provider: 'host-native' as const,
+    labviewCliPath,
+    labviewExePath: options.labviewExePath,
+    portNumber: options.portNumber,
+    // A warm session renders headless so repeated interactive/background renders
+    // never pop a LabVIEW GUI on the user's desktop.
+    headless: true
+  };
+
+  return {
+    async renderVi(viFilePath: string): Promise<RenderViPreviewForFileResult> {
+      const result = await renderViPreviewForFile(
+        { runtime, viFilePath, operationDirectory: options.operationDirectory },
+        baseDeps
+      );
+      // Any LabVIEW that appeared since start was launched by our LabVIEWCLI; claim
+      // it so dispose can reclaim it without touching a pre-existing user session.
+      for (const pid of await listHostLabviewPids()) {
+        if (!basePids.has(pid)) {
+          ownedPids.add(pid);
+        }
+      }
+      return result;
+    },
+    async dispose(): Promise<void> {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      const running = new Set(await listHostLabviewPids());
+      await killHostPids([...ownedPids].filter((pid) => running.has(pid)));
     }
   };
 }
