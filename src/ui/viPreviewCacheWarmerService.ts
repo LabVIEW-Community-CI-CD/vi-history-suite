@@ -33,8 +33,13 @@ import type { ViPreviewSessionManager } from './viPreviewSessionManager';
 
 const VI_PREVIEW_WARM_GLOB = '**/*.{vi,vit,vim,ctl}';
 const VI_PREVIEW_WARM_EXCLUDE = '**/{node_modules,.git,out,dist,.vscode-test}/**';
-/** Upper bound on VIs warmed per session; keeps background work bounded. */
-const MAX_WARM_FILES = 200;
+/**
+ * Upper bound on VIs warmed per session. Generous so the warmer silently caches
+ * an entire repo's previews (VHS-REQ-659, #649); bounded only to avoid runaway
+ * background work on a pathological tree. The render cache (`createViPreviewCache`)
+ * retains at least this many entries so full-repo warming never self-evicts.
+ */
+const MAX_WARM_FILES = 5000;
 /** Delay before warming so the just-opened preview finishes first. */
 const WARM_START_DELAY_MS = 5000;
 /** How long the completed indicator lingers before it is retired. */
