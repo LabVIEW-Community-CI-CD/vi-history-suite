@@ -34,6 +34,8 @@ export interface HistoryPanelActionSummary {
     | 'created-decision-record'
     | 'opened-review-dashboard'
     | 'diffed-previous'
+    | 'opened-revision-preview'
+    | 'revision-preview-failed'
     | 'opened-comparison-report'
     | 'retained-comparison-report-evidence'
     | 'blocked-docker-daemon-not-running'

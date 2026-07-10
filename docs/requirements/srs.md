@@ -4058,3 +4058,180 @@ Missing numeric IDs are intentional.
     host years. Offer Docker as one recovery option rather than a requirement,
     and reuse the `Pick Runtime Provider` quick-pick rather than auto-switching
     `viHistorySuite.labviewVersion`.
+
+### VHS-REQ-659: Single-VI Interactive Preview Rendering
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall let a reviewer preview a single LabVIEW VI ("G
+  code") as a self-contained HTML document rendered by NI's
+  `PrintToSingleFileHtml` custom LabVIEWCLI operation (vendored under
+  `resources/labview-cli-operations/PrintToSingleFileHtml`, sourced from
+  ni/labview-for-containers), so a selected VI revision can be inspected without
+  a second revision to compare against. The preview reuses the configured
+  comparison runtime (host-native or LabVIEW container); the command-plan layer
+  specified here builds the host and Linux-container invocations and is the
+  first landed slice of the preview capability.
+- Acceptance Criteria:
+  - `buildLabviewCliPrintToSingleFileHtmlPlan` produces a `LabVIEWCLI`
+    `-OperationName PrintToSingleFileHtml` command that passes the input VI via
+    `-VI`, the output document via `-OutputPath`, and the vendored operation
+    root via `-AdditionalOperationDirectory`, defaulting to `-LogToConsole
+    TRUE`, `-c`, and `-o`; it emits `-LabVIEWPath`, `-PortNumber`, and
+    `-Headless` only when those inputs are provided, and never emits the two-VI
+    `CreateComparisonReport` flags (`-VI1`/`-VI2`/`-ReportPath`).
+  - `rewriteViPreviewArgsForLinuxContainerWorkspace` maps `-VI` and
+    `-OutputPath` to workspace-relative container paths, repoints
+    `-AdditionalOperationDirectory` at the mounted operation root, replaces the
+    host `-LabVIEWPath` with the in-container executable exactly once, and keeps
+    `-Headless` present exactly once.
+  - `buildLinuxContainerViPreviewCommandPlan` assembles a shell-less
+    `docker run --rm` plan that bind-mounts the host workspace directory at the
+    container workspace root and the vendored operation directory read-only at
+    the operation root, and delivers the LabVIEWCLI invocation as a single
+    `bash -lc` script.
+  - `buildWindowsContainerViPreviewCommandPlan` assembles the Windows-container
+    plan: the host PowerShell (`resolveWindowsPowerShellHostExecutable`) runs
+    `docker run ... powershell -EncodedCommand <inner>`, bind-mounting the host
+    workspace and the vendored operation directory at the Windows container
+    roots. The inner PowerShell hardens the `LabVIEWCLI.ini` connect timeouts,
+    optionally pre-launches LabVIEW, and retries once on the cold-launch
+    `-350000`/`-350051` VI Server failure, mirroring the Windows-container
+    comparison recipe. `mapComparisonRuntimeSelectionToViPreview` resolves the
+    Windows runtime (image, in-container LabVIEW path, and host PowerShell from
+    the injected process platform), and `executeViPreview` blocks with
+    `windows-powershell-host-unavailable` when no host PowerShell resolves.
+  - The container script enables VI Server in the per-version LabVIEW config
+    with a widened connect window and retries once on the cold-launch `-350000`
+    VI Server connectivity failure, with fail-soft config mutation, matching the
+    comparison runtime recipe (VHS-REQ-148 / VHS-REQ-156 / VHS-REQ-657).
+  - `executeViPreview` selects the host-native or Linux-container plan from the
+    resolved runtime selection (blocking with `labview-cli-selection-incomplete`
+    or `container-image-unavailable` when the selection is incomplete), runs it
+    through an injected command runner, and classifies the result as `rendered`
+    (zero exit with the output document present), `failed`
+    (`command-exited-nonzero` on a nonzero exit or `preview-output-not-produced`
+    when a zero exit leaves no document), or `blocked`.
+  - Opening a `.vi`, `.vit`, `.vim`, or `.ctl` file activates the
+    `viHistorySuite.viPreview` read-only custom editor (registered at `default`
+    priority), which renders the file through the configured comparison runtime
+    (mapped by `mapComparisonRuntimeSelectionToViPreview`, which supports
+    host-native, Linux-container, and Windows-container runtimes and blocks only
+    unavailable runtimes) and displays the produced document. In an untrusted
+    workspace the editor shows a disabled-preview message and never launches an
+    external process.
+  - `buildViPreviewWebviewHtml` injects a strict Content-Security-Policy
+    (`script-src 'none'`, `img-src data:`, inline styles only) into the rendered
+    LabVIEW document, and renders themed loading and error states carrying the
+    same policy with all interpolated text escaped.
+  - `renderViPreviewForFile` stages the opened VI together with its LabVIEW
+    source dependencies (covering
+    `.vi`/`.vit`/`.vim`/`.ctl`/`.lvlib`/`.lvclass`/`.lvproj`/`.llb`) so subVI and
+    type-definition references resolve at load time. It prefers the enclosing
+    LabVIEW project (`.lvproj`) tree (`planViPreviewStagingWithProjectRoot` /
+    `selectViPreviewStagingRoot`, resolved from the on-disk VI by walking up to
+    the nearest project directory) so dependencies in sibling directories
+    resolve, stepping the staging root down to the VI's containing-directory tree
+    and then to single-file staging when a tree exceeds the file-count or
+    total-size guard.
+  - When a render cache is available, `renderViPreviewForFile` serves an
+    unchanged VI (same staged file set by path/size/mtime, keyed by
+    `computeViPreviewCacheKey`) from the cache without staging or launching
+    LabVIEW, and populates the cache after a fresh render; cache read and write
+    failures are non-fatal.
+  - Under the Docker (Linux container) runtime, the first successful preview
+    starts a background warmer that renders the remaining workspace VIs serially
+    through a single warm container session, populating the render cache.
+    Progress is surfaced only as a monotonically increasing status-bar
+    percentage (`formatWarmStatusLabel` over `warmViPreviewCache`); warming runs
+    at most once per session, is cancelled on disposal, and the host-native
+    runtime does not warm.
+  - The warm container session (`buildLinuxContainerSessionStartArgs` /
+    `buildLinuxContainerSessionHardenScript` /
+    `buildLinuxContainerExecViPreviewCommandPlan`, orchestrated by
+    `startViPreviewSession`) keeps LabVIEW resident across renders: it starts one
+    detached container with the workspace bind-mounted once, hardens VI Server on
+    start, and renders each VI in a per-render subdirectory via `docker exec`, so
+    only the first render pays the cold launch and later renders connect in
+    seconds. The session container and scratch are removed on disposal.
+  - A single shared session manager (`createViPreviewSessionManager`) owns one
+    warm session used by both the interactive editor and the background warmer:
+    renders are serialized (one resident LabVIEW), interactive renders are
+    prioritized over background warm renders (`selectNextRender`), and the
+    session is disposed after an idle window (and re-created lazily on the next
+    render).
+  - The history panel exposes a per-revision **Preview** button (shown when the
+    comparison/runtime surface is available) whose `previewRevision` message
+    materializes that revision's VI together with its project source tree
+    (`materializeRevisionViTree` lists the whole tree via `git ls-tree -r -l` and
+    reuses `planViPreviewStagingWithProjectRoot`, so cross-directory dependencies
+    in the enclosing project resolve, stepping down to the containing-directory
+    tree and then single-file staging when the guard trips or the listing fails)
+    into a scratch directory, then
+    opens it in the `viHistorySuite.viPreview` editor via `vscode.openWith` so
+    the revision preview reuses the same warm session and render cache. The VI
+    blob is fatal if unreadable, missing sibling blobs are skipped, and the
+    scratch directory is retired after a delay.
+- Agent Work Scope:
+  - Keep the command-plan builders pure and dependency-free so they stay
+    deterministically unit-testable without a LabVIEW runtime. Reuse the
+    `ComparisonCommandPlan` shape and the existing container runtime conventions
+    (workspace mount, temp roots, `-350000` retry) rather than introducing a new
+    execution transport. Do not change `CreateComparisonReport` behavior. The
+    on-disk render stages the VI's dependency source tree, caches renders by
+    staged-file identity, and reuses a warm container session so only the first
+    render is slow. A history-panel per-revision preview
+    (`materializeRevisionViTree`) stages any revision's VI tree from git and
+    reuses the same editor, warm session, and cache. Dependency staging prefers
+    the enclosing LabVIEW project (`.lvproj`) tree so dependencies outside the
+    VI's containing directory resolve, with a guarded step-down to the
+    containing-directory tree and then single-file staging. The Windows
+    container renders per invocation through `renderViPreviewForFile` (the warm
+    session and background cache warmer stay Linux-container-only); keep the
+    Windows transport mirroring the comparison Windows-container recipe rather
+    than introducing a new one.
+- Implementation References:
+  - `src/reporting/viPreview/viPreviewCommandPlan.ts`
+  - `src/reporting/viPreview/viPreviewExecution.ts`
+  - `src/reporting/viPreview/viPreviewFileRender.ts`
+  - `src/reporting/viPreview/viPreviewStaging.ts`
+  - `src/reporting/viPreview/viPreviewCache.ts`
+  - `src/reporting/viPreview/viPreviewCacheWarmer.ts`
+  - `src/reporting/viPreview/viPreviewRuntimeAdapter.ts`
+  - `src/reporting/viPreview/viPreviewWebview.ts`
+  - `src/ui/viPreviewEditor.ts`
+  - `src/ui/viPreviewRenderHost.ts`
+  - `src/ui/viPreviewCacheWarmerService.ts`
+  - `src/ui/viPreviewContainerSession.ts`
+  - `src/ui/viPreviewSessionManager.ts`
+  - `src/git/revisionViTree.ts`
+  - `resources/labview-cli-operations/PrintToSingleFileHtml/PrintToSingleFileHtml.lvclass`
+- Verification References:
+  - `tests/unit/viPreviewCommandPlan.test.ts`
+  - `tests/unit/viPreviewExecution.test.ts`
+  - `tests/unit/viPreviewFileRender.test.ts`
+  - `tests/unit/viPreviewStaging.test.ts`
+  - `tests/unit/viPreviewCache.test.ts`
+  - `tests/unit/viPreviewCacheWarmer.test.ts`
+  - `tests/unit/viPreviewRuntimeAdapter.test.ts`
+  - `tests/unit/viPreviewWebview.test.ts`
+  - `tests/unit/viPreviewSessionManager.test.ts`
+  - `tests/unit/revisionViTree.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - The renderer is NI's `PrintToSingleFileHtml` operation (from
+    ni/labview-for-containers); it renders headless on the LabVIEW Linux
+    container without the Web Services (`wsapi`) image-to-PNG dependency that
+    blocks the alternative gpreview renderer. Keep the vendored operation folder
+    intact and pointed at by `-AdditionalOperationDirectory` (the parent of the
+    `PrintToSingleFileHtml/` class folder). Keep the container `-VI` /
+    `-OutputPath` rewriting and the `-350000` retry in lockstep with the
+    comparison runtime so the two share cold-launch behavior.
+  - The Windows-container transport mirrors the comparison Windows recipe
+    (host PowerShell -> `docker run ... powershell -EncodedCommand`, INI connect-
+    timeout hardening, optional LabVIEW pre-launch, one-shot `-350000` retry).
+    Keep `buildWindowsContainerViPreviewCommandPlan` aligned with
+    `buildWindowsContainerLabviewCliScript`/`buildWindowsContainerCommandPlan`
+    so both Windows paths share cold-launch behavior; the Windows LabVIEW
+    container uses backslash workspace paths and `-Headless`.

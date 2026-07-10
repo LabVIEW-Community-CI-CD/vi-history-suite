@@ -1,0 +1,19 @@
+Vendored third-party LabVIEW CLI operation
+==========================================
+
+Directory: PrintToSingleFileHtml/
+Purpose:   NI custom LabVIEWCLI operation that renders a single LabVIEW VI to a
+           self-contained HTML document (connector pane, front panel, block
+           diagram, subVI list, hierarchy; images inlined as base64 PNG). Used
+           by the VI History Suite single-VI preview (VHS-REQ-659) via
+           "LabVIEWCLI -OperationName PrintToSingleFileHtml
+           -AdditionalOperationDirectory <this directory>".
+
+Upstream:  https://github.com/ni/labview-for-containers
+Path:      examples/cicd-examples/helper-scripts/vidiff/PrintToSingleFileHtml
+Commit:    2387572c4f5b61e24aa457d7662d9b41166f045c (2026-05-18)
+
+Notes:     Binary LabVIEW VIs (.vi) plus a LabVIEW class (.lvclass). Do not edit;
+           refresh by re-copying from upstream. Renders headless on the NI
+           LabVIEW Linux container images without the Web Services (wsapi)
+           image-to-PNG dependency that breaks other single-VI HTML renderers.

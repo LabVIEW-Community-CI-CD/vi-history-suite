@@ -12,7 +12,20 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'cobertura'],
       reportsDirectory: 'coverage',
       include: ['src/**/*.ts', 'scripts/mapCoverageToTraceability.js'],
-      exclude: ['src/extension.ts', 'src/benchmark/hostLinuxBenchmarkRunner.ts'],
+      exclude: [
+        'src/extension.ts',
+        'src/benchmark/hostLinuxBenchmarkRunner.ts',
+        // VHS-REQ-659: VS Code host bindings for the VI preview (custom editor,
+        // shared render host, and background cache-warmer service) require the
+        // running extension host to exercise; their substantive logic lives in
+        // the covered src/reporting/viPreview/* modules. Excluded on the same
+        // rationale as src/extension.ts.
+        'src/ui/viPreviewEditor.ts',
+        'src/ui/viPreviewRenderHost.ts',
+        'src/ui/viPreviewCacheWarmerService.ts',
+        'src/ui/viPreviewContainerSession.ts',
+        'src/ui/viPreviewSessionManager.ts'
+      ],
       thresholds: {
         // Evidence-backed global regression floors hold a conservative margin
         // below measured develop actuals (statements 74.97, branches 64.60,

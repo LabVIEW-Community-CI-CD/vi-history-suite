@@ -236,3 +236,27 @@ src/tooling/dockerImagePullProgress.ts,mapped,Yes,Docker Engine API image-pull p
 tests/unit/dockerImagePullProgress.test.ts,mapped,Yes,Docker image pull progress module unit tests; mapped to VHS-REQ-654.
 src/tooling/dockerImageDownloadSize.ts,mapped,Yes,Docker Hub registry manifest download-size resolver for the stable byte-percentage; mapped to VHS-REQ-655.
 tests/unit/dockerImageDownloadSize.test.ts,mapped,Yes,Registry manifest download-size resolver unit tests; mapped to VHS-REQ-655.
+src/reporting/viPreview/viPreviewCommandPlan.ts,mapped,Yes,Single-VI preview LabVIEWCLI PrintToSingleFileHtml command-plan builders (host + Linux container); mapped to VHS-REQ-659.
+tests/unit/viPreviewCommandPlan.test.ts,mapped,Yes,Single-VI preview command-plan builder unit tests; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewExecution.ts,mapped,Yes,Single-VI preview execution orchestrator (host-native + Linux-container plan selection, run, outcome classification); mapped to VHS-REQ-659.
+tests/unit/viPreviewExecution.test.ts,mapped,Yes,Single-VI preview execution orchestrator unit tests; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewFileRender.ts,mapped,Yes,Single-VI preview on-disk file render orchestration (temp workspace staging + cleanup); mapped to VHS-REQ-659.
+tests/unit/viPreviewFileRender.test.ts,mapped,Yes,Single-VI preview file render orchestration unit tests; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewRuntimeAdapter.ts,mapped,Yes,Adapts the comparison runtime selection to the preview runtime selection; mapped to VHS-REQ-659.
+tests/unit/viPreviewRuntimeAdapter.test.ts,mapped,Yes,Single-VI preview runtime adapter unit tests; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewWebview.ts,mapped,Yes,Single-VI preview webview document assembly with strict CSP; mapped to VHS-REQ-659.
+tests/unit/viPreviewWebview.test.ts,mapped,Yes,Single-VI preview webview document unit tests; mapped to VHS-REQ-659.
+src/ui/viPreviewEditor.ts,mapped,Yes,VI preview read-only custom editor provider (host binding for the single-VI preview); mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewStaging.ts,mapped,Yes,Dependency-aware staging planner for single-VI preview (LabVIEW source-tree selection with size/count guard); mapped to VHS-REQ-659.
+tests/unit/viPreviewStaging.test.ts,mapped,Yes,Single-VI preview staging planner unit tests; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewCache.ts,mapped,Yes,Single-VI preview render cache (staged-file-identity key + file-backed store with eviction); mapped to VHS-REQ-659.
+tests/unit/viPreviewCache.test.ts,mapped,Yes,Single-VI preview render cache unit tests; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewCacheWarmer.ts,mapped,Yes,Background preview cache warmer progress math and serial warm loop; mapped to VHS-REQ-659.
+tests/unit/viPreviewCacheWarmer.test.ts,mapped,Yes,Preview cache warmer progress and loop unit tests; mapped to VHS-REQ-659.
+src/ui/viPreviewRenderHost.ts,mapped,Yes,Shared VS Code host bindings for preview rendering (cache, render deps, runtime resolution) reused by the editor and warmer; mapped to VHS-REQ-659.
+src/ui/viPreviewCacheWarmerService.ts,mapped,Yes,Docker-gated background preview cache warmer service with status-bar progress; mapped to VHS-REQ-659.
+src/ui/viPreviewContainerSession.ts,mapped,Yes,Warm LabVIEW container session for fast preview rendering (docker exec against a resident LabVIEW); mapped to VHS-REQ-659.
+src/ui/viPreviewSessionManager.ts,mapped,Yes,Shared warm-session manager (serialized interactive-prioritized renders + idle disposal) used by the editor and warmer; mapped to VHS-REQ-659.
+tests/unit/viPreviewSessionManager.test.ts,mapped,Yes,Shared warm-session manager render-priority selector unit tests; mapped to VHS-REQ-659.
+src/git/revisionViTree.ts,mapped,Yes,Revision VI-tree materializer (parses git ls-tree output and stages a revision's VI plus sibling source tree for preview); mapped to VHS-REQ-659.
+tests/unit/revisionViTree.test.ts,mapped,Yes,Revision VI-tree materializer and ls-tree parser unit tests; mapped to VHS-REQ-659.
