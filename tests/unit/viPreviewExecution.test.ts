@@ -239,4 +239,24 @@ describe('executeViPreview', () => {
     expect(runCommand).toHaveBeenCalledOnce();
     expect(sleep).not.toHaveBeenCalled();
   });
+
+  it('classifies the operation-class load failure (error 1125) as labview-preview-operation-load-failed and does not retry (VHS-REQ-659)', async () => {
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: '',
+      stderr:
+        'Error code : 1125\nError message : Get LV Class Default Value.vi\nLabVIEW attempted to load the class at this path:\nC:\\ops\\PrintToSingleFileHtml\\PrintToSingleFileHtml.lvclass'
+    });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const result = await executeViPreview(baseOptions(), {
+      runCommand,
+      pathExists: vi.fn().mockResolvedValue(false),
+      sleep
+    });
+
+    expect(result.outcome).toBe('failed');
+    expect(result.failureReason).toBe('labview-preview-operation-load-failed');
+    expect(runCommand).toHaveBeenCalledOnce();
+    expect(sleep).not.toHaveBeenCalled();
+  });
 });
