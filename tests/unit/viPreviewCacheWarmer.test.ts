@@ -26,10 +26,16 @@ describe('formatWarmStatusLabel', () => {
     ).toBe('$(sync~spin) Caching VI previews 42% (85/200)');
   });
 
-  it('shows a check with the total when done', () => {
+  it('shows a check with the succeeded count when done', () => {
     expect(
       formatWarmStatusLabel({ total: 4, completed: 4, succeeded: 4, failed: 0, percent: 100, done: true })
     ).toBe('$(check) VI previews cached (4)');
+  });
+
+  it('shows succeeded/total when done with partial failures (never overstates cached)', () => {
+    expect(
+      formatWarmStatusLabel({ total: 200, completed: 200, succeeded: 198, failed: 2, percent: 100, done: true })
+    ).toBe('$(check) VI previews cached (198/200)');
   });
 
   it('omits the count when done with no VIs', () => {
