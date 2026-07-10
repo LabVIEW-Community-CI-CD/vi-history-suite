@@ -4143,8 +4143,11 @@ Missing numeric IDs are intentional.
   - After the first successful preview, a background warmer renders the
     remaining workspace VIs serially through a single warm session, populating
     the render cache. Progress is surfaced only as a monotonically increasing
-    status-bar percentage (`formatWarmStatusLabel` over `warmViPreviewCache`);
-    warming runs at most once per session and is cancelled on disposal. The
+    status-bar percentage (`formatWarmStatusLabel` over `warmViPreviewCache`); if
+    every render fails the indicator becomes a warning (`VI previews could not be
+    cached (0/N)`, warn-colored and lingering longer) instead of a misleading
+    success check. Warming runs at most once per session and is cancelled on
+    disposal. The
     `viHistorySuite.preview.backgroundWarming` setting governs when it runs
     (`shouldWarmViPreviewProvider`): `docker-only` (default) warms only the
     container providers, so a host-native runtime does not warm and never

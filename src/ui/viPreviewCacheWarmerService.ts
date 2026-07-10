@@ -39,6 +39,8 @@ const MAX_WARM_FILES = 200;
 const WARM_START_DELAY_MS = 5000;
 /** How long the completed indicator lingers before it is retired. */
 const WARM_DONE_LINGER_MS = 5000;
+/** Longer linger for the all-failed outcome so the warning is not missed. */
+const WARM_FAILED_LINGER_MS = 15000;
 
 /**
  * Reads the `viHistorySuite.preview.backgroundWarming` mode, falling back to the
@@ -109,7 +111,7 @@ export function createViPreviewCacheWarmerService(
     statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusItem.show();
 
-    await warmViPreviewCache(viFilePaths, {
+    const finalProgress = await warmViPreviewCache(viFilePaths, {
       renderOne: async (viFilePath) => {
         const result = await sessionManager.renderVi(sessionRuntime, viFilePath, 'warm');
         return result.outcome === 'rendered' ? 'succeeded' : 'failed';
@@ -124,7 +126,17 @@ export function createViPreviewCacheWarmerService(
     });
 
     if (statusItem && !cancelled) {
-      doneTimer = setTimeout(() => statusItem?.dispose(), WARM_DONE_LINGER_MS);
+      // When nothing could be cached (every render failed), make the indicator
+      // noticeable — warn-colored and lingering longer — instead of a silent
+      // success, so the user can react (e.g. check the runtime).
+      const cachingFailed = finalProgress.succeeded === 0 && finalProgress.failed > 0;
+      if (cachingFailed) {
+        statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      }
+      doneTimer = setTimeout(
+        () => statusItem?.dispose(),
+        cachingFailed ? WARM_FAILED_LINGER_MS : WARM_DONE_LINGER_MS
+      );
     } else {
       statusItem?.dispose();
     }
