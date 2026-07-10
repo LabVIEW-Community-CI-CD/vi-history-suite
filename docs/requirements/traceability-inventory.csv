@@ -260,5 +260,7 @@ src/ui/viPreviewSessionManager.ts,mapped,Yes,Shared warm-session manager (serial
 tests/unit/viPreviewSessionManager.test.ts,mapped,Yes,Shared warm-session manager render-priority selector unit tests; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewSessionRuntime.ts,mapped,Yes,Pure warm-session runtime mapping and platform gating (container providers plus host-native on Windows) and session identity key; mapped to VHS-REQ-659.
 tests/unit/viPreviewSessionRuntime.test.ts,mapped,Yes,Warm-session runtime mapping/gating and session key unit tests; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewVerification.ts,mapped,Yes,Pure single-VI preview render verification core (renders a sample VI and summarizes a proof: outcome plus inline image count); mapped to VHS-REQ-659.
+tests/unit/viPreviewVerification.test.ts,mapped,Yes,Single-VI preview render verification core unit tests; mapped to VHS-REQ-659.
 src/git/revisionViTree.ts,mapped,Yes,Revision VI-tree materializer (parses git ls-tree output and stages a revision's VI plus sibling source tree for preview); mapped to VHS-REQ-659.
 tests/unit/revisionViTree.test.ts,mapped,Yes,Revision VI-tree materializer and ls-tree parser unit tests; mapped to VHS-REQ-659.
