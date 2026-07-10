@@ -17,3 +17,15 @@ Notes:     Binary LabVIEW VIs (.vi) plus a LabVIEW class (.lvclass). Do not edit
            refresh by re-copying from upstream. Renders headless on the NI
            LabVIEW Linux container images without the Web Services (wsapi)
            image-to-PNG dependency that breaks other single-VI HTML renderers.
+
+Layout:    The member VIs live IN the class folder and there is deliberately no
+           PrintToSingleFileHtml.ctl on disk. This matches upstream byte-for-byte
+           (verify with `git hash-object` against the upstream blobs). The
+           .lvclass records its member VIs at `../<name>.vi` and a same-folder
+           `PrintToSingleFileHtml.ctl`; LabVIEW resolves these at load time (the
+           member VIs relink from the class directory, and the parent
+           `CoreOperation.lvclass` binds to the copy shipped in the LabVIEW CLI
+           install, e.g. `.../Shared/LabVIEW CLI/Operations/CoreOperation/`).
+           It renders correctly headless on the NI Linux and Windows container
+           images. Do NOT "fix" the layout or add a `.ctl` to match the .lvclass
+           URLs; that would diverge from upstream and break the re-copy contract.
