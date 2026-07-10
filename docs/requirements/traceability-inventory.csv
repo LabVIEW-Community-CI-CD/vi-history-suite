@@ -238,7 +238,7 @@ src/tooling/dockerImageDownloadSize.ts,mapped,Yes,Docker Hub registry manifest d
 tests/unit/dockerImageDownloadSize.test.ts,mapped,Yes,Registry manifest download-size resolver unit tests; mapped to VHS-REQ-655.
 src/reporting/viPreview/viPreviewCommandPlan.ts,mapped,Yes,Single-VI preview LabVIEWCLI PrintToSingleFileHtml command-plan builders (host + Linux container); mapped to VHS-REQ-659.
 tests/unit/viPreviewCommandPlan.test.ts,mapped,Yes,Single-VI preview command-plan builder unit tests; mapped to VHS-REQ-659.
-src/reporting/viPreview/viPreviewExecution.ts,mapped,Yes,Single-VI preview execution orchestrator (host-native + Linux-container plan selection, run, outcome classification); mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewExecution.ts,mapped,Yes,Single-VI preview execution orchestrator (host-native + Linux/Windows-container plan selection, run, outcome classification with a host-native cold-launch -350000 VI Server retry mirroring the container in-script retry); mapped to VHS-REQ-659.
 tests/unit/viPreviewExecution.test.ts,mapped,Yes,Single-VI preview execution orchestrator unit tests; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewFileRender.ts,mapped,Yes,Single-VI preview on-disk file render orchestration (temp workspace staging + cleanup); mapped to VHS-REQ-659.
 tests/unit/viPreviewFileRender.test.ts,mapped,Yes,Single-VI preview file render orchestration unit tests; mapped to VHS-REQ-659.

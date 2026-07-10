@@ -164,4 +164,79 @@ describe('executeViPreview', () => {
     expect(result.outcome).toBe('blocked');
     expect(dependencies.runCommand).not.toHaveBeenCalled();
   });
+
+  it('retries host-native on a cold-launch -350000 and renders on the warm retry (VHS-REQ-659)', async () => {
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({ exitCode: 1, stdout: '', stderr: 'Error code : -350000' })
+      .mockResolvedValueOnce({ exitCode: 0, stdout: 'ok', stderr: '' });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const result = await executeViPreview(baseOptions(), {
+      runCommand,
+      pathExists: vi.fn().mockResolvedValue(true),
+      sleep
+    });
+
+    expect(result.outcome).toBe('rendered');
+    expect(runCommand).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledOnce();
+  });
+
+  it('classifies host-native as labview-cli-connection-failed after exhausting -350000 retries (VHS-REQ-659)', async () => {
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: '',
+      stderr: 'failed to establish a connection with LabVIEW (-350000)'
+    });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const result = await executeViPreview(baseOptions(), {
+      runCommand,
+      pathExists: vi.fn().mockResolvedValue(false),
+      sleep
+    });
+
+    expect(result.outcome).toBe('failed');
+    expect(result.failureReason).toBe('labview-cli-connection-failed');
+    // 1 initial attempt + VI_PREVIEW_STARTUP_RETRY_COUNT (2) retries = 3 runs.
+    expect(runCommand).toHaveBeenCalledTimes(3);
+    expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not orchestrator-retry a container connectivity failure (retry is in-script) (VHS-REQ-659)', async () => {
+    const runCommand = vi
+      .fn()
+      .mockResolvedValue({ exitCode: 1, stdout: '', stderr: 'Error code : -350000' });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const result = await executeViPreview(
+      baseOptions({
+        runtime: {
+          provider: 'linux-container',
+          containerImage: 'nationalinstruments/labview:2026q1patch2-linux'
+        }
+      }),
+      { runCommand, pathExists: vi.fn().mockResolvedValue(false), sleep }
+    );
+
+    expect(result.outcome).toBe('failed');
+    expect(result.failureReason).toBe('labview-cli-connection-failed');
+    expect(runCommand).toHaveBeenCalledOnce();
+    expect(sleep).not.toHaveBeenCalled();
+  });
+
+  it('does not retry a host-native non-connectivity failure (VHS-REQ-659)', async () => {
+    const runCommand = vi
+      .fn()
+      .mockResolvedValue({ exitCode: 2, stdout: '', stderr: 'some other error' });
+    const sleep = vi.fn().mockResolvedValue(undefined);
+    const result = await executeViPreview(baseOptions(), {
+      runCommand,
+      pathExists: vi.fn().mockResolvedValue(false),
+      sleep
+    });
+
+    expect(result.outcome).toBe('failed');
+    expect(result.failureReason).toBe('command-exited-nonzero');
+    expect(runCommand).toHaveBeenCalledOnce();
+    expect(sleep).not.toHaveBeenCalled();
+  });
 });
