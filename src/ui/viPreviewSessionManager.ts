@@ -1,6 +1,6 @@
 import type { ViPreviewCache } from '../reporting/viPreview/viPreviewCache';
 import type { RenderViPreviewForFileResult } from '../reporting/viPreview/viPreviewFileRender';
-import { startViPreviewSession, type ViPreviewSession } from './viPreviewContainerSession';
+import { startViPreviewSession, type ViPreviewSession, type ViPreviewSessionProvider } from './viPreviewContainerSession';
 
 /**
  * VHS-REQ-659: shared warm-session manager.
@@ -18,6 +18,7 @@ import { startViPreviewSession, type ViPreviewSession } from './viPreviewContain
 export type ViPreviewRenderPriority = 'interactive' | 'warm';
 
 export interface ViPreviewSessionRuntime {
+  provider: ViPreviewSessionProvider;
   containerImage: string;
   containerLabviewPath?: string;
   connectTimeoutSeconds?: number;
@@ -65,7 +66,7 @@ export function createViPreviewSessionManager(
   const idleDisposeMs = options.idleDisposeMs ?? DEFAULT_IDLE_DISPOSE_MS;
 
   let session: ViPreviewSession | undefined;
-  let sessionImage: string | undefined;
+  let sessionKey: string | undefined;
   let startPromise: Promise<ViPreviewSession> | undefined;
   let disposed = false;
   let running = false;
@@ -82,7 +83,7 @@ export function createViPreviewSessionManager(
   async function disposeSessionOnly(): Promise<void> {
     const current = session;
     session = undefined;
-    sessionImage = undefined;
+    sessionKey = undefined;
     if (current) {
       await current.dispose().catch(() => undefined);
     }
@@ -96,7 +97,8 @@ export function createViPreviewSessionManager(
   }
 
   async function ensureSession(runtime: ViPreviewSessionRuntime): Promise<ViPreviewSession> {
-    if (session && sessionImage !== runtime.containerImage) {
+    const runtimeKey = `${runtime.provider}::${runtime.containerImage}`;
+    if (session && sessionKey !== runtimeKey) {
       await disposeSessionOnly();
     }
     if (session) {
@@ -104,6 +106,7 @@ export function createViPreviewSessionManager(
     }
     if (!startPromise) {
       startPromise = startViPreviewSession({
+        provider: runtime.provider,
         containerImage: runtime.containerImage,
         containerLabviewPath: runtime.containerLabviewPath,
         operationDirectory: options.operationDirectory,
@@ -112,7 +115,7 @@ export function createViPreviewSessionManager(
       })
         .then((started) => {
           session = started;
-          sessionImage = runtime.containerImage;
+          sessionKey = runtimeKey;
           startPromise = undefined;
           return started;
         })

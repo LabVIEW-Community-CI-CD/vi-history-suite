@@ -110,16 +110,25 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         return;
       }
 
+      // The warm session drives Docker directly, which works for linux-container
+      // everywhere and for windows-container only on a Windows host. A non-Windows
+      // host driving Windows containers bridges Docker through Windows PowerShell
+      // (see resolveWindowsPowerShellHostExecutable), so route those through the
+      // per-invocation plan (which bridges or blocks cleanly) instead of failing
+      // at session start.
+      const sessionProvider =
+        runtime.runtime.provider === 'linux-container'
+          ? ('linux-container' as const)
+          : runtime.runtime.provider === 'windows-container' && process.platform === 'win32'
+            ? ('windows-container' as const)
+            : undefined;
       let result: RenderViPreviewForFileResult;
-      if (
-        runtime.runtime.provider === 'linux-container' &&
-        runtime.runtime.containerImage &&
-        this.sessionManager
-      ) {
+      if (sessionProvider && runtime.runtime.containerImage && this.sessionManager) {
         // Reuse the shared warm session so an un-cached open renders in seconds
         // once the session is warm; interactive priority jumps the warm queue.
         result = await this.sessionManager.renderVi(
           {
+            provider: sessionProvider,
             containerImage: runtime.runtime.containerImage,
             containerLabviewPath: runtime.runtime.containerLabviewPath,
             connectTimeoutSeconds: runtime.runtime.connectTimeoutSeconds

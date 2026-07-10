@@ -7,6 +7,10 @@ import {
   buildLinuxContainerSessionStartArgs,
   buildLinuxContainerViPreviewCommandPlan,
   buildLinuxContainerViPreviewScript,
+  buildWindowsContainerExecViPreviewCommandPlan,
+  buildWindowsContainerSessionHardenCommandPlan,
+  buildWindowsContainerSessionHardenScript,
+  buildWindowsContainerSessionStartArgs,
   buildWindowsContainerViPreviewCommandPlan,
   buildWindowsContainerViPreviewScript,
   DEFAULT_VI_PREVIEW_VI_SERVER_PORT,
@@ -353,5 +357,89 @@ describe('buildWindowsContainerViPreviewCommandPlan', () => {
         hostPowerShellExecutable: '   '
       })
     ).toThrow(/hostPowerShellExecutable/);
+  });
+});
+
+describe('buildWindowsContainerSessionStartArgs', () => {
+  it('starts a detached, named, long-lived container with workspace + ops mounts', () => {
+    const args = buildWindowsContainerSessionStartArgs({
+      containerName: 'vihs-vi-preview-abc',
+      containerImage: 'ni/labview:2026-windows',
+      hostSessionRoot: 'C:\\host\\session',
+      hostOperationDirectory: 'C:\\host\\ops'
+    });
+    expect(args.slice(0, 4)).toEqual(['run', '-d', '--name', 'vihs-vi-preview-abc']);
+    expect(args).toContain(`C:\\host\\session:${WINDOWS_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}`);
+    expect(args).toContain(`C:\\host\\ops:${WINDOWS_CONTAINER_VI_PREVIEW_OPERATION_ROOT}`);
+    expect(args).toContain('ni/labview:2026-windows');
+    expect(args.slice(-4, -1)).toEqual(['powershell', '-NoProfile', '-EncodedCommand']);
+    const keepAlive = Buffer.from(String(args.at(-1)), 'base64').toString('utf16le');
+    expect(keepAlive).toContain('Start-Sleep');
+  });
+});
+
+describe('buildWindowsContainerSessionHardenScript', () => {
+  it('creates the temp root and hardens the CLI ini connect timeouts (no prelaunch)', () => {
+    const script = buildWindowsContainerSessionHardenScript({ connectTimeoutSeconds: 200 });
+    expect(script).toContain('New-Item -ItemType Directory -Force');
+    expect(script).toContain(`-Path '${WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT}'`);
+    expect(script).toContain('Set-IniToken');
+    expect(script).toContain("-Value '200'");
+    // Harden runs once at session start; LabVIEW is launched by the first render,
+    // not pre-launched here.
+    expect(script).not.toContain('Start-Process');
+  });
+
+  it('falls back to the default connect timeout for invalid values', () => {
+    const script = buildWindowsContainerSessionHardenScript({ connectTimeoutSeconds: 0 });
+    expect(script).toContain("-Value '180'");
+  });
+});
+
+describe('buildWindowsContainerSessionHardenCommandPlan', () => {
+  it('wraps the harden script in a docker exec EncodedCommand plan', () => {
+    const plan = buildWindowsContainerSessionHardenCommandPlan({
+      containerName: 'vihs-vi-preview-abc',
+      connectTimeoutSeconds: 180
+    });
+    expect(plan.executable).toBe('docker');
+    expect(plan.args.slice(0, 5)).toEqual([
+      'exec',
+      'vihs-vi-preview-abc',
+      'powershell',
+      '-NoProfile',
+      '-EncodedCommand'
+    ]);
+    const script = Buffer.from(String(plan.args.at(-1)), 'base64').toString('utf16le');
+    expect(script).toContain('Set-IniToken');
+  });
+});
+
+describe('buildWindowsContainerExecViPreviewCommandPlan', () => {
+  it('builds a docker exec render plan targeting the per-render subdirectory', () => {
+    const plan = buildWindowsContainerExecViPreviewCommandPlan({
+      containerName: 'vihs-vi-preview-abc',
+      workspaceSubdirectory: 'render-xyz',
+      viFilename: 'vi/Foo.vi',
+      outputFilename: 'preview.html',
+      containerLabviewPath: 'C:\\LV\\LabVIEW.exe'
+    });
+    expect(plan.executable).toBe('docker');
+    expect(plan.args.slice(0, 5)).toEqual([
+      'exec',
+      'vihs-vi-preview-abc',
+      'powershell',
+      '-NoProfile',
+      '-EncodedCommand'
+    ]);
+    const script = Buffer.from(String(plan.args.at(-1)), 'base64').toString('utf16le');
+    expect(script).toContain(`${WINDOWS_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}\\render-xyz\\vi\\Foo.vi`);
+    expect(script).toContain(`${WINDOWS_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}\\render-xyz\\preview.html`);
+    expect(script).toContain(VI_PREVIEW_OPERATION_NAME);
+    expect(script).toContain('-350000');
+    expect(script).toContain('retryAttempts');
+    // Each render recreates the scratch temp root (harden is fail-soft).
+    expect(script).toContain('New-Item -ItemType Directory -Force');
+    expect(script).toContain(`-Path '${WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT}'`);
   });
 });
