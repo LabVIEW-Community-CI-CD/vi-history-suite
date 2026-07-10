@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   computeWarmPercent,
   formatWarmStatusLabel,
+  formatWarmStatusTooltip,
   warmViPreviewCache,
   type ViPreviewWarmProgress
 } from '../../src/reporting/viPreview/viPreviewCacheWarmer';
@@ -19,13 +20,46 @@ describe('computeWarmPercent', () => {
 });
 
 describe('formatWarmStatusLabel', () => {
-  it('shows a spinning percentage while warming and a check when done', () => {
+  it('shows a spinning percentage with the running count while warming', () => {
     expect(
-      formatWarmStatusLabel({ total: 4, completed: 1, succeeded: 1, failed: 0, percent: 25, done: false })
-    ).toBe('$(sync~spin) Caching VI previews 25%');
+      formatWarmStatusLabel({ total: 200, completed: 85, succeeded: 85, failed: 0, percent: 42, done: false })
+    ).toBe('$(sync~spin) Caching VI previews 42% (85/200)');
+  });
+
+  it('shows a check with the succeeded count when done', () => {
     expect(
       formatWarmStatusLabel({ total: 4, completed: 4, succeeded: 4, failed: 0, percent: 100, done: true })
+    ).toBe('$(check) VI previews cached (4)');
+  });
+
+  it('shows succeeded/total when done with partial failures (never overstates cached)', () => {
+    expect(
+      formatWarmStatusLabel({ total: 200, completed: 200, succeeded: 198, failed: 2, percent: 100, done: true })
+    ).toBe('$(check) VI previews cached (198/200)');
+  });
+
+  it('omits the count when done with no VIs', () => {
+    expect(
+      formatWarmStatusLabel({ total: 0, completed: 0, succeeded: 0, failed: 0, percent: 100, done: true })
     ).toBe('$(check) VI previews cached');
+  });
+});
+
+describe('formatWarmStatusTooltip', () => {
+  it('reports the running count while warming', () => {
+    expect(
+      formatWarmStatusTooltip({ total: 200, completed: 85, succeeded: 85, failed: 0, percent: 42, done: false })
+    ).toBe(
+      'VI History Suite: caching VI previews in the background so they open instantly \u2014 85 of 200 done.'
+    );
+  });
+
+  it('notes failures and the final count when done', () => {
+    expect(
+      formatWarmStatusTooltip({ total: 200, completed: 200, succeeded: 198, failed: 2, percent: 100, done: true })
+    ).toBe(
+      'VI History Suite: cached 198 of 200 VI previews so they open instantly (2 could not be rendered).'
+    );
   });
 });
 
