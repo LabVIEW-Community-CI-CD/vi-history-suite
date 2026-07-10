@@ -4,7 +4,7 @@ import type {
   ComparisonRuntimeSelection,
   locateComparisonRuntime
 } from '../../src/reporting/comparisonRuntimeLocator';
-import { resolveAndVerifyViPreview } from '../../src/tooling/viPreviewVerifyCli';
+import { parseArgs, resolveAndVerifyViPreview } from '../../src/tooling/viPreviewVerifyCli';
 
 const htmlWith = (images: number): string =>
   `<html>${'<img src="data:image/png;base64,AAAA"/>'.repeat(images)}</html>`;
@@ -59,5 +59,65 @@ describe('resolveAndVerifyViPreview', () => {
     );
     expect(proof.outcome).toBe('blocked');
     expect(proof.inlineImageCount).toBe(0);
+  });
+});
+
+describe('parseArgs (VHS-REQ-659)', () => {
+  it('maps --labview-path and --labview-version for host targeting', () => {
+    const parsed = parseArgs([
+      '--provider',
+      'host',
+      '--labview-path',
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      '--labview-version',
+      '2026'
+    ]);
+    expect(parsed.requestedProvider).toBe('host');
+    expect(parsed.labviewExePath).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+    expect(parsed.labviewVersion).toBe('2026');
+  });
+});
+
+describe('resolveAndVerifyViPreview LabVIEW targeting (VHS-REQ-659)', () => {
+  it('forwards labviewExePath/labviewVersion settings to the runtime locator', async () => {
+    const locate = vi.fn(
+      async () =>
+        ({
+          provider: 'host-native',
+          labviewCli: { path: 'C:\\LabVIEWCLI.exe', source: 'scan', exists: true, kind: 'labview-cli' },
+          labviewExe: {
+            path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+            source: 'scan',
+            exists: true,
+            kind: 'labview'
+          },
+          hostLabviewTcpPort: 3364
+        }) as ComparisonRuntimeSelection
+    );
+    const proof = await resolveAndVerifyViPreview(
+      {
+        operationDirectory: '/ops',
+        sampleViPath: '/repo/Sample.vi',
+        settings: {
+          labviewExePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+          labviewVersion: '2026'
+        }
+      },
+      {
+        processPlatform: 'win32',
+        locateRuntime: locate as unknown as typeof locateComparisonRuntime,
+        renderDeps: makeRenderDeps(htmlWith(10))
+      }
+    );
+    expect(proof.outcome).toBe('rendered');
+    expect(locate).toHaveBeenCalledWith(
+      'win32',
+      expect.objectContaining({
+        labviewExePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        labviewVersion: '2026'
+      })
+    );
   });
 });
