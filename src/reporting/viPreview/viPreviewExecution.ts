@@ -4,7 +4,9 @@ import { ComparisonCommandPlan } from '../comparisonReportPlan';
 import {
   buildLabviewCliPrintToSingleFileHtmlPlan,
   buildLinuxContainerViPreviewCommandPlan,
-  buildWindowsContainerViPreviewCommandPlan
+  buildWindowsContainerViPreviewCommandPlan,
+  VI_PREVIEW_RETRY_DELAY_SECONDS,
+  VI_PREVIEW_STARTUP_RETRY_COUNT
 } from './viPreviewCommandPlan';
 
 /**
@@ -68,6 +70,7 @@ export type ViPreviewFailureReason =
   | 'labview-cli-selection-incomplete'
   | 'container-image-unavailable'
   | 'windows-powershell-host-unavailable'
+  | 'labview-cli-connection-failed'
   | 'command-exited-nonzero'
   | 'preview-output-not-produced';
 
@@ -90,7 +93,38 @@ export interface RunViPreviewCommandResult {
 export interface ViPreviewExecutionDeps {
   runCommand: (plan: ComparisonCommandPlan) => Promise<RunViPreviewCommandResult>;
   pathExists: (filePath: string) => Promise<boolean>;
+  /**
+   * Optional delay between host-native cold-launch retries (milliseconds).
+   * Injected in tests so retries do not actually wait; defaults to a real timer.
+   */
+  sleep?: (milliseconds: number) => Promise<void>;
 }
+
+/**
+ * Cold-launch VI Server connectivity failure signature, shared with the
+ * container retry scripts (`buildLinuxContainerViPreviewScript` /
+ * `buildWindowsContainerViPreviewScript`) and the comparison-runtime classifier:
+ * LabVIEWCLI exits nonzero because it could not connect to the just-launched
+ * headless LabVIEW's VI Server (`-350000`/`-350051`). An immediate warm retry
+ * usually succeeds once LabVIEW finishes coming up.
+ */
+const VI_PREVIEW_CONNECTIVITY_FAILURE_PATTERN =
+  /-350000|-350051|failed to establish a connection with LabVIEW/i;
+
+function isViPreviewConnectivityFailure(run: RunViPreviewCommandResult): boolean {
+  if (run.exitCode === 0) {
+    return false;
+  }
+  return (
+    VI_PREVIEW_CONNECTIVITY_FAILURE_PATTERN.test(run.stderr) ||
+    VI_PREVIEW_CONNECTIVITY_FAILURE_PATTERN.test(run.stdout)
+  );
+}
+
+const defaultViPreviewSleep = (milliseconds: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
 
 function blocked(
   failureReason: ViPreviewFailureReason,
@@ -181,10 +215,14 @@ export function buildViPreviewCommandPlan(
 }
 
 /**
- * Executes a single-VI preview render and classifies the outcome. A nonzero
- * exit is `failed` with `command-exited-nonzero`; a zero exit that leaves no
- * output document is `failed` with `preview-output-not-produced`; otherwise the
- * produced HTML path is returned as `rendered`.
+ * Executes a single-VI preview render and classifies the outcome. For the
+ * host-native provider a cold-launch VI Server connectivity failure
+ * (`-350000`/`-350051`) is retried up to `VI_PREVIEW_STARTUP_RETRY_COUNT` times
+ * (the container providers retry in-script). A nonzero exit that still carries
+ * the connectivity signature is `failed` with `labview-cli-connection-failed`;
+ * any other nonzero exit is `command-exited-nonzero`; a zero exit that leaves no
+ * output document is `preview-output-not-produced`; otherwise the produced HTML
+ * path is returned as `rendered`.
  */
 export async function executeViPreview(
   options: ExecuteViPreviewOptions,
@@ -197,12 +235,38 @@ export async function executeViPreview(
 
   const { commandPlan } = planResult;
   const reportFilePath = path.join(options.workspaceDirectory, options.outputFilename);
-  const run = await deps.runCommand(commandPlan);
+
+  // The container providers retry the cold-launch `-350000` VI Server race
+  // inside their bash/PowerShell scripts, so a single `runCommand` already
+  // covers them. Host-native runs LabVIEWCLI directly with no shell wrapper, so
+  // the orchestrator applies the same retry budget here: rerun on the
+  // connectivity signature until the just-launched LabVIEW's VI Server is
+  // reachable (a warm retry after a slow cold launch).
+  const maxAttempts =
+    options.runtime.provider === 'host-native'
+      ? Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT)
+      : 1;
+  const sleep = deps.sleep ?? defaultViPreviewSleep;
+
+  let run: RunViPreviewCommandResult = { exitCode: 0, stdout: '', stderr: '' };
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    run = await deps.runCommand(commandPlan);
+    if (run.exitCode === 0) {
+      break;
+    }
+    if (attempt < maxAttempts && isViPreviewConnectivityFailure(run)) {
+      await sleep(VI_PREVIEW_RETRY_DELAY_SECONDS * 1000);
+      continue;
+    }
+    break;
+  }
 
   if (run.exitCode !== 0) {
     return {
       outcome: 'failed',
-      failureReason: 'command-exited-nonzero',
+      failureReason: isViPreviewConnectivityFailure(run)
+        ? 'labview-cli-connection-failed'
+        : 'command-exited-nonzero',
       commandPlan,
       exitCode: run.exitCode,
       stdout: run.stdout,
