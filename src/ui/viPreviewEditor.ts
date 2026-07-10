@@ -112,7 +112,8 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
 
       let result: RenderViPreviewForFileResult;
       if (
-        runtime.runtime.provider === 'linux-container' &&
+        (runtime.runtime.provider === 'linux-container' ||
+          runtime.runtime.provider === 'windows-container') &&
         runtime.runtime.containerImage &&
         this.sessionManager
       ) {
@@ -120,6 +121,7 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         // once the session is warm; interactive priority jumps the warm queue.
         result = await this.sessionManager.renderVi(
           {
+            provider: runtime.runtime.provider,
             containerImage: runtime.runtime.containerImage,
             containerLabviewPath: runtime.runtime.containerLabviewPath,
             connectTimeoutSeconds: runtime.runtime.connectTimeoutSeconds

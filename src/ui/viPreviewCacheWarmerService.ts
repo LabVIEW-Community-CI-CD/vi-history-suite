@@ -50,12 +50,14 @@ export function createViPreviewCacheWarmerService(
 
   async function run(excludeFsPath: string): Promise<void> {
     const runtime = await resolvePreviewRuntime();
-    // Docker-only: warming is limited to the LabVIEW container runtime; the
-    // host-native runtime renders on demand only.
+    // Docker-only: warming is limited to the LabVIEW container runtimes (Linux or
+    // Windows), which share a warm LabVIEW session; the host-native runtime
+    // renders on demand only.
     if (
       cancelled ||
       runtime.outcome !== 'ready' ||
-      runtime.runtime.provider !== 'linux-container' ||
+      (runtime.runtime.provider !== 'linux-container' &&
+        runtime.runtime.provider !== 'windows-container') ||
       !runtime.runtime.containerImage
     ) {
       return;
@@ -76,6 +78,7 @@ export function createViPreviewCacheWarmerService(
     }
 
     const sessionRuntime = {
+      provider: runtime.runtime.provider,
       containerImage: runtime.runtime.containerImage,
       containerLabviewPath: runtime.runtime.containerLabviewPath,
       connectTimeoutSeconds: runtime.runtime.connectTimeoutSeconds

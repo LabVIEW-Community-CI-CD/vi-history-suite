@@ -693,6 +693,35 @@ export function rewriteViPreviewArgsForWindowsContainerWorkspace(
   return rewritten;
 }
 
+/**
+ * `LabVIEWCLI.ini` locations probed inside the Windows container (first existing
+ * wins). Shared by the per-invocation script and the warm-session harden.
+ */
+export const WINDOWS_CONTAINER_CLI_INI_CANDIDATES = [
+  'C:\\ProgramData\\National Instruments\\LabVIEW CLI\\LabVIEWCLI.ini',
+  'C:\\ProgramData\\National Instruments\\LabVIEWCLI\\LabVIEWCLI.ini',
+  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini',
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini'
+] as const;
+
+/** PowerShell `Set-IniToken` helper lines (fail-soft in-place INI key upsert). */
+function windowsSetIniTokenFunctionLines(): string[] {
+  return [
+    'function Set-IniToken {',
+    '  param([string]$Path, [string]$Key, [string]$Value)',
+    '  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }',
+    '  $content = Get-Content -LiteralPath $Path -Raw -ErrorAction SilentlyContinue',
+    "  if ($null -eq $content) { $content = '' }",
+    '  if ($content -match ("(?m)^\\s*{0}\\s*=" -f [regex]::Escape($Key))) {',
+    '    $updated = [regex]::Replace($content, ("(?m)^\\s*{0}\\s*=.*$" -f [regex]::Escape($Key)), ("{0}={1}" -f $Key, $Value))',
+    '  } else {',
+    '    $updated = ($content.TrimEnd() + [Environment]::NewLine + ("{0}={1}" -f $Key, $Value) + [Environment]::NewLine)',
+    '  }',
+    '  Set-Content -LiteralPath $Path -Value $updated -Encoding utf8',
+    '}'
+  ];
+}
+
 export interface BuildWindowsContainerViPreviewScriptOptions {
   /** In-container LabVIEW executable (Windows path), used for pre-launch. */
   containerLabviewPath?: string;
@@ -714,28 +743,12 @@ export function buildWindowsContainerViPreviewScript(
 ): string {
   const connectTimeout = resolveViPreviewConnectTimeoutSeconds(options?.connectTimeoutSeconds);
   const labviewPath = options?.containerLabviewPath?.trim();
-  const cliIniCandidates = [
-    'C:\\ProgramData\\National Instruments\\LabVIEW CLI\\LabVIEWCLI.ini',
-    'C:\\ProgramData\\National Instruments\\LabVIEWCLI\\LabVIEWCLI.ini',
-    'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini',
-    'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini'
-  ];
+  const cliIniCandidates = [...WINDOWS_CONTAINER_CLI_INI_CANDIDATES];
 
   return [
     "$ErrorActionPreference = 'Stop'",
     "$ProgressPreference = 'SilentlyContinue'",
-    'function Set-IniToken {',
-    '  param([string]$Path, [string]$Key, [string]$Value)',
-    '  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }',
-    '  $content = Get-Content -LiteralPath $Path -Raw -ErrorAction SilentlyContinue',
-    "  if ($null -eq $content) { $content = '' }",
-    '  if ($content -match ("(?m)^\\s*{0}\\s*=" -f [regex]::Escape($Key))) {',
-    '    $updated = [regex]::Replace($content, ("(?m)^\\s*{0}\\s*=.*$" -f [regex]::Escape($Key)), ("{0}={1}" -f $Key, $Value))',
-    '  } else {',
-    '    $updated = ($content.TrimEnd() + [Environment]::NewLine + ("{0}={1}" -f $Key, $Value) + [Environment]::NewLine)',
-    '  }',
-    '  Set-Content -LiteralPath $Path -Value $updated -Encoding utf8',
-    '}',
+    ...windowsSetIniTokenFunctionLines(),
     // Create the scratch/temp root before pointing TEMP/TMP at it. LabVIEWCLI and
     // the vendored renderer write scratch output here, and (unlike the Linux
     // container script's `mkdir -p`) Windows does not auto-create a TEMP that does
@@ -863,5 +876,194 @@ export function buildWindowsContainerViPreviewCommandPlan(
   return {
     executable: hostPowerShellExecutable,
     args: ['-NoProfile', '-EncodedCommand', encodeWindowsPowerShellScript(outerScript)]
+  };
+}
+
+// --- Windows container warm session (VHS-REQ-659) ------------------------------
+// Reuses one long-lived Windows LabVIEW container across renders. Validated: a
+// LabVIEW launched by the first `docker exec` LabVIEWCLI render stays resident
+// across the exec boundary and the next exec render reuses it via VI Server
+// (~7.5x faster than a cold render). Mirrors the Linux warm session; the docker
+// commands are spawned directly (no host-PowerShell wrapper needed for a session
+// because the render host invokes `docker` itself, not via `powershell.exe`).
+
+/** Keep-alive command for the detached Windows preview session container. */
+export const WINDOWS_CONTAINER_VI_PREVIEW_SESSION_KEEPALIVE =
+  'while ($true) { Start-Sleep -Seconds 3600 }';
+
+export interface WindowsContainerSessionStartOptions {
+  containerName: string;
+  containerImage: string;
+  /** Host directory mounted at the container workspace root; per-render subdirs live under it. */
+  hostSessionRoot: string;
+  /** Host directory mounted at the operation root; contains `PrintToSingleFileHtml/`. */
+  hostOperationDirectory: string;
+}
+
+/**
+ * `docker run -d` args that start a detached, long-lived Windows LabVIEW
+ * container for warm preview rendering. The workspace root is bind-mounted once;
+ * each render uses a fresh subdirectory under it. The container idles on a
+ * PowerShell keep-alive loop until `docker exec` renders arrive, and is removed
+ * on disposal.
+ */
+export function buildWindowsContainerSessionStartArgs(
+  options: WindowsContainerSessionStartOptions
+): string[] {
+  return [
+    'run',
+    '-d',
+    '--name',
+    options.containerName,
+    '-v',
+    `${options.hostSessionRoot}:${WINDOWS_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}`,
+    '-v',
+    `${options.hostOperationDirectory}:${WINDOWS_CONTAINER_VI_PREVIEW_OPERATION_ROOT}`,
+    options.containerImage,
+    'powershell',
+    '-NoProfile',
+    '-EncodedCommand',
+    encodeWindowsPowerShellScript(WINDOWS_CONTAINER_VI_PREVIEW_SESSION_KEEPALIVE)
+  ];
+}
+
+/**
+ * Inner PowerShell (run once at session start) that creates the container temp
+ * root and hardens the `LabVIEWCLI.ini` connect timeouts, so the first (cold)
+ * exec render's VI Server connect window is widened. Every mutation is fail-soft
+ * so an unexpected layout never blocks the session.
+ */
+export function buildWindowsContainerSessionHardenScript(options?: {
+  connectTimeoutSeconds?: number;
+}): string {
+  const connectTimeout = resolveViPreviewConnectTimeoutSeconds(options?.connectTimeoutSeconds);
+  return [
+    "$ErrorActionPreference = 'Continue'",
+    "$ProgressPreference = 'SilentlyContinue'",
+    ...windowsSetIniTokenFunctionLines(),
+    `New-Item -ItemType Directory -Force -Path ${quotePowerShellLiteral(
+      WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT
+    )} -ErrorAction SilentlyContinue | Out-Null`,
+    `$cliIniCandidates = ${buildWindowsPowerShellArrayLiteral([
+      ...WINDOWS_CONTAINER_CLI_INI_CANDIDATES
+    ])}`,
+    '$cliIni = $cliIniCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1',
+    'if ($cliIni) {',
+    `  Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '${connectTimeout}'`,
+    `  Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '${connectTimeout}'`,
+    '}'
+  ].join('\n');
+}
+
+/** `docker exec` command plan that hardens the warm session once at start. */
+export function buildWindowsContainerSessionHardenCommandPlan(options: {
+  containerName: string;
+  connectTimeoutSeconds?: number;
+}): ComparisonCommandPlan {
+  const script = buildWindowsContainerSessionHardenScript({
+    connectTimeoutSeconds: options.connectTimeoutSeconds
+  });
+  return {
+    executable: 'docker',
+    args: [
+      'exec',
+      options.containerName,
+      'powershell',
+      '-NoProfile',
+      '-EncodedCommand',
+      encodeWindowsPowerShellScript(script)
+    ]
+  };
+}
+
+/**
+ * Inner PowerShell for a warm-session `docker exec` render. No INI hardening
+ * (done once at session start) and no pre-launch (LabVIEW is resident after the
+ * first render); keeps only the one-shot `-350000`/`-350051` retry covering the
+ * first (cold) render's VI Server race.
+ */
+function buildWindowsContainerSessionRenderScript(executable: string, args: string[]): string {
+  const maxAttempts = Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT);
+  return [
+    "$ErrorActionPreference = 'Continue'",
+    "$ProgressPreference = 'SilentlyContinue'",
+    `$env:TEMP = ${quotePowerShellLiteral(WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT)}`,
+    '$env:TMP = $env:TEMP',
+    `$cliPath = ${quotePowerShellLiteral(executable)}`,
+    `$cliArgs = ${buildWindowsPowerShellArrayLiteral(args)}`,
+    '$attempt = 0',
+    `$maxAttempts = ${maxAttempts}`,
+    '$lastExit = 1',
+    "$lastOutputText = ''",
+    'while ($attempt -lt $maxAttempts) {',
+    '  $attempt++',
+    '  $previousErrorActionPreference = $ErrorActionPreference',
+    "  $ErrorActionPreference = 'Continue'",
+    '  try {',
+    '    $output = @(& $cliPath @cliArgs 2>&1)',
+    '    $lastExit = [int]$LASTEXITCODE',
+    '  } finally {',
+    '    $ErrorActionPreference = $previousErrorActionPreference',
+    '  }',
+    '  $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
+    '  $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine',
+    '  if ($lastExit -eq 0) { break }',
+    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')",
+    '  if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {',
+    `    Start-Sleep -Seconds ${VI_PREVIEW_RETRY_DELAY_SECONDS}`,
+    '    continue',
+    '  }',
+    '  break',
+    '}',
+    "Write-Output ('[vi-history-suite-vi-preview-meta]retryAttempts={0}' -f $attempt)",
+    'exit $lastExit'
+  ].join('\n');
+}
+
+export interface WindowsContainerExecViPreviewOptions {
+  containerName: string;
+  /** Per-render subdirectory name under the container workspace root. */
+  workspaceSubdirectory: string;
+  /** VI filename relative to the per-render subdirectory. */
+  viFilename: string;
+  /** Output HTML filename relative to the per-render subdirectory. */
+  outputFilename: string;
+  containerLabviewPath?: string;
+  portNumber?: number;
+}
+
+/**
+ * `docker exec` command plan that renders a preview inside an already-running
+ * warm Windows session container. Paths resolve under the per-render
+ * subdirectory of the shared workspace mount; the fixed VI Server port lets the
+ * exec reuse the resident LabVIEW started by the first render.
+ */
+export function buildWindowsContainerExecViPreviewCommandPlan(
+  options: WindowsContainerExecViPreviewOptions
+): ComparisonCommandPlan {
+  const subdirectory = options.workspaceSubdirectory.replace(/^[\\/]+|[\\/]+$/g, '');
+  const hostPlan = buildLabviewCliPrintToSingleFileHtmlPlan({
+    viPath: 'placeholder.vi',
+    outputHtmlPath: 'placeholder.html',
+    additionalOperationDirectory: 'placeholder',
+    portNumber: options.portNumber ?? DEFAULT_VI_PREVIEW_VI_SERVER_PORT,
+    headless: true
+  });
+  const containerArgs = rewriteViPreviewArgsForWindowsContainerWorkspace(hostPlan.args, {
+    viFilename: `${subdirectory}/${options.viFilename}`,
+    outputFilename: `${subdirectory}/${options.outputFilename}`,
+    containerLabviewPath: options.containerLabviewPath
+  });
+  const script = buildWindowsContainerSessionRenderScript(hostPlan.executable, containerArgs);
+  return {
+    executable: 'docker',
+    args: [
+      'exec',
+      options.containerName,
+      'powershell',
+      '-NoProfile',
+      '-EncodedCommand',
+      encodeWindowsPowerShellScript(script)
+    ]
   };
 }

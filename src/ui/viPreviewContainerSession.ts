@@ -9,7 +9,10 @@ import type { ViPreviewCache } from '../reporting/viPreview/viPreviewCache';
 import {
   buildLinuxContainerExecViPreviewCommandPlan,
   buildLinuxContainerSessionHardenScript,
-  buildLinuxContainerSessionStartArgs
+  buildLinuxContainerSessionStartArgs,
+  buildWindowsContainerExecViPreviewCommandPlan,
+  buildWindowsContainerSessionHardenCommandPlan,
+  buildWindowsContainerSessionStartArgs
 } from '../reporting/viPreview/viPreviewCommandPlan';
 import {
   renderViPreviewForFile,
@@ -42,12 +45,17 @@ export interface ViPreviewSession {
   dispose(): Promise<void>;
 }
 
+/** Container runtime that can host a warm preview session. */
+export type ViPreviewSessionProvider = 'linux-container' | 'windows-container';
+
 export interface StartViPreviewSessionOptions {
   containerImage: string;
   containerLabviewPath?: string;
   operationDirectory: string;
   cache?: ViPreviewCache;
   connectTimeoutSeconds?: number;
+  /** Container runtime provider for the session. Defaults to linux-container. */
+  provider?: ViPreviewSessionProvider;
 }
 
 async function docker(
@@ -75,14 +83,22 @@ export async function startViPreviewSession(
 ): Promise<ViPreviewSession> {
   const sessionRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-vi-preview-session-'));
   const containerName = `vihs-vi-preview-${randomBytes(6).toString('hex')}`;
+  const provider: ViPreviewSessionProvider = options.provider ?? 'linux-container';
 
   const started = await docker(
-    buildLinuxContainerSessionStartArgs({
-      containerName,
-      containerImage: options.containerImage,
-      hostSessionRoot: sessionRoot,
-      hostOperationDirectory: options.operationDirectory
-    })
+    provider === 'windows-container'
+      ? buildWindowsContainerSessionStartArgs({
+          containerName,
+          containerImage: options.containerImage,
+          hostSessionRoot: sessionRoot,
+          hostOperationDirectory: options.operationDirectory
+        })
+      : buildLinuxContainerSessionStartArgs({
+          containerName,
+          containerImage: options.containerImage,
+          hostSessionRoot: sessionRoot,
+          hostOperationDirectory: options.operationDirectory
+        })
   );
   if (started.exitCode !== 0) {
     await fs.rm(sessionRoot, { recursive: true, force: true }).catch(() => undefined);
@@ -90,16 +106,23 @@ export async function startViPreviewSession(
   }
 
   // Harden the VI Server config once for the whole session.
-  await docker([
-    'exec',
-    containerName,
-    'bash',
-    '-lc',
-    buildLinuxContainerSessionHardenScript({
-      containerLabviewPath: options.containerLabviewPath,
-      connectTimeoutSeconds: options.connectTimeoutSeconds
-    })
-  ]).catch(() => undefined);
+  await docker(
+    provider === 'windows-container'
+      ? buildWindowsContainerSessionHardenCommandPlan({
+          containerName,
+          connectTimeoutSeconds: options.connectTimeoutSeconds
+        }).args
+      : [
+          'exec',
+          containerName,
+          'bash',
+          '-lc',
+          buildLinuxContainerSessionHardenScript({
+            containerLabviewPath: options.containerLabviewPath,
+            connectTimeoutSeconds: options.connectTimeoutSeconds
+          })
+        ]
+  ).catch(() => undefined);
 
   const baseDeps = buildViPreviewRenderDeps(options.cache);
   let disposed = false;
@@ -109,14 +132,23 @@ export async function startViPreviewSession(
     viFilename: string,
     outputFilename: string
   ): Promise<ViPreviewExecutionResult> => {
-    const commandPlan = buildLinuxContainerExecViPreviewCommandPlan({
-      containerName,
-      workspaceSubdirectory: path.basename(workspaceDirectory),
-      viFilename,
-      outputFilename,
-      containerLabviewPath: options.containerLabviewPath,
-      connectTimeoutSeconds: options.connectTimeoutSeconds
-    });
+    const commandPlan =
+      provider === 'windows-container'
+        ? buildWindowsContainerExecViPreviewCommandPlan({
+            containerName,
+            workspaceSubdirectory: path.basename(workspaceDirectory),
+            viFilename,
+            outputFilename,
+            containerLabviewPath: options.containerLabviewPath
+          })
+        : buildLinuxContainerExecViPreviewCommandPlan({
+            containerName,
+            workspaceSubdirectory: path.basename(workspaceDirectory),
+            viFilename,
+            outputFilename,
+            containerLabviewPath: options.containerLabviewPath,
+            connectTimeoutSeconds: options.connectTimeoutSeconds
+          });
     const run = await docker(commandPlan.args);
     const reportFilePath = path.join(workspaceDirectory, outputFilename);
     if (run.exitCode !== 0) {
@@ -161,7 +193,7 @@ export async function startViPreviewSession(
       return renderViPreviewForFile(
         {
           runtime: {
-            provider: 'linux-container',
+            provider,
             containerImage: options.containerImage,
             containerLabviewPath: options.containerLabviewPath,
             connectTimeoutSeconds: options.connectTimeoutSeconds
