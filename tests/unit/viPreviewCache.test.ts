@@ -8,11 +8,11 @@ import {
 
 describe('computeViPreviewCacheKey', () => {
   it('is a 64-char hex digest that is order-independent', () => {
-    const a = computeViPreviewCacheKey([
+    const a = computeViPreviewCacheKey('Foo.vi', [
       { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 100 },
       { relativePath: 'support/Sub.vi', sizeBytes: 20, mtimeMs: 200 }
     ]);
-    const b = computeViPreviewCacheKey([
+    const b = computeViPreviewCacheKey('Foo.vi', [
       { relativePath: 'support/Sub.vi', sizeBytes: 20, mtimeMs: 200 },
       { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 100 }
     ]);
@@ -21,11 +21,23 @@ describe('computeViPreviewCacheKey', () => {
   });
 
   it('changes when a file size or mtime changes and normalizes separators', () => {
-    const base = computeViPreviewCacheKey([{ relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 100 }]);
-    expect(computeViPreviewCacheKey([{ relativePath: 'a/Foo.vi', sizeBytes: 11, mtimeMs: 100 }])).not.toBe(base);
-    expect(computeViPreviewCacheKey([{ relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 101 }])).not.toBe(base);
-    // Backslash and forward slash hash identically.
-    expect(computeViPreviewCacheKey([{ relativePath: 'a\\Foo.vi', sizeBytes: 10, mtimeMs: 100 }])).toBe(base);
+    const base = computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 100 }]);
+    expect(computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', sizeBytes: 11, mtimeMs: 100 }])).not.toBe(base);
+    expect(computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 101 }])).not.toBe(base);
+    // Backslash and forward slash hash identically (target and entries).
+    expect(computeViPreviewCacheKey('a\\Foo.vi', [{ relativePath: 'a\\Foo.vi', sizeBytes: 10, mtimeMs: 100 }])).toBe(base);
+  });
+
+  it('distinguishes different target VIs that share the same staged file set (#646)', () => {
+    const entries = [
+      { relativePath: 'left/A.vi', sizeBytes: 10, mtimeMs: 100 },
+      { relativePath: 'left/B.vi', sizeBytes: 20, mtimeMs: 200 }
+    ];
+    // Same staged tree, different render target -> distinct keys, so selecting a
+    // second VI in one project never returns the first VI's cached document.
+    expect(computeViPreviewCacheKey('left/A.vi', entries)).not.toBe(
+      computeViPreviewCacheKey('left/B.vi', entries)
+    );
   });
 });
 

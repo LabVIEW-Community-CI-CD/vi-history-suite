@@ -4139,10 +4139,10 @@ Missing numeric IDs are intentional.
     and then to single-file staging when a tree exceeds the file-count or
     total-size guard.
   - When a render cache is available, `renderViPreviewForFile` serves an
-    unchanged VI (same staged file set by path/size/mtime, keyed by
-    `computeViPreviewCacheKey`) from the cache without staging or launching
-    LabVIEW, and populates the cache after a fresh render; cache read and write
-    failures are non-fatal.
+    unchanged VI (keyed by `computeViPreviewCacheKey` over the target VI plus the
+    staged file set by path/size/mtime, so VIs sharing a staged tree never
+    collide) from the cache without staging or launching LabVIEW, and populates
+    the cache after a fresh render; cache read and write failures are non-fatal.
   - After the first successful preview, a background warmer renders the
     remaining workspace VIs serially through a single warm session, populating
     the render cache. Progress is surfaced only as a monotonically increasing

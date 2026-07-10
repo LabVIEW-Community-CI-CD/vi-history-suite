@@ -18,16 +18,25 @@ export interface ViPreviewCacheKeyEntry {
 }
 
 /**
- * Deterministic SHA-256 key over the staged file set. Order-independent (the
- * entries are sorted), so it is stable regardless of enumeration order. A
- * change to any staged file's size or mtime yields a different key, so the
- * cache never returns a stale render for edited inputs.
+ * Deterministic SHA-256 key over the render TARGET VI plus the staged file set.
+ * The target VI's staging-relative path is folded in first so two VIs that share
+ * the same staged dependency tree (e.g. two VIs in one project) get DISTINCT
+ * keys — otherwise the second VI would incorrectly hit the first VI's cached
+ * document (#646). The file-set portion is order-independent (entries are
+ * sorted) and a change to any staged file's size or mtime yields a different
+ * key, so the cache never returns a stale render for edited inputs.
  */
-export function computeViPreviewCacheKey(entries: ViPreviewCacheKeyEntry[]): string {
+export function computeViPreviewCacheKey(
+  targetViRelativePath: string,
+  entries: ViPreviewCacheKeyEntry[]
+): string {
   const normalized = entries
     .map((entry) => `${entry.relativePath.replace(/\\/g, '/')}|${entry.sizeBytes}|${entry.mtimeMs ?? 0}`)
     .sort();
-  return createHash('sha256').update(normalized.join('\n')).digest('hex');
+  const target = targetViRelativePath.replace(/\\/g, '/');
+  return createHash('sha256')
+    .update(`target:${target}\n${normalized.join('\n')}`)
+    .digest('hex');
 }
 
 export interface ViPreviewCache {
