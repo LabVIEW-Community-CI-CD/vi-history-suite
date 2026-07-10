@@ -48,6 +48,11 @@ export function createViPreviewCache(context: vscode.ExtensionContext): ViPrevie
   return createFileViPreviewCache(
     {
       cacheDirectory: vscode.Uri.joinPath(context.globalStorageUri, 'vi-preview-cache').fsPath,
+      // Hold an entire warmed repo without eviction: must stay >= MAX_WARM_FILES
+      // in viPreviewCacheWarmerService so silent full-repo background warming
+      // (#649) never evicts what it just cached, plus headroom for interactive
+      // and per-revision previews (VHS-REQ-659).
+      maxEntries: 6000,
       joinPath: (directory, name) => path.join(directory, name)
     },
     {
