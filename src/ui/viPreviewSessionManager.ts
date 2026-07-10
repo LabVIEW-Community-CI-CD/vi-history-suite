@@ -1,6 +1,10 @@
 import type { ViPreviewCache } from '../reporting/viPreview/viPreviewCache';
 import type { RenderViPreviewForFileResult } from '../reporting/viPreview/viPreviewFileRender';
-import { startViPreviewSession, type ViPreviewSession, type ViPreviewSessionProvider } from './viPreviewContainerSession';
+import {
+  viPreviewSessionKey,
+  type ViPreviewSessionRuntime
+} from '../reporting/viPreview/viPreviewSessionRuntime';
+import { startViPreviewSession, type ViPreviewSession } from './viPreviewContainerSession';
 
 /**
  * VHS-REQ-659: shared warm-session manager.
@@ -17,12 +21,7 @@ import { startViPreviewSession, type ViPreviewSession, type ViPreviewSessionProv
 
 export type ViPreviewRenderPriority = 'interactive' | 'warm';
 
-export interface ViPreviewSessionRuntime {
-  provider: ViPreviewSessionProvider;
-  containerImage: string;
-  containerLabviewPath?: string;
-  connectTimeoutSeconds?: number;
-}
+export type { ViPreviewSessionRuntime } from '../reporting/viPreview/viPreviewSessionRuntime';
 
 export interface ViPreviewSessionManager {
   renderVi(
@@ -97,7 +96,7 @@ export function createViPreviewSessionManager(
   }
 
   async function ensureSession(runtime: ViPreviewSessionRuntime): Promise<ViPreviewSession> {
-    const runtimeKey = `${runtime.provider}::${runtime.containerImage}`;
+    const runtimeKey = viPreviewSessionKey(runtime);
     if (session && sessionKey !== runtimeKey) {
       await disposeSessionOnly();
     }
@@ -111,7 +110,10 @@ export function createViPreviewSessionManager(
         containerLabviewPath: runtime.containerLabviewPath,
         operationDirectory: options.operationDirectory,
         cache: options.cache,
-        connectTimeoutSeconds: runtime.connectTimeoutSeconds
+        connectTimeoutSeconds: runtime.connectTimeoutSeconds,
+        labviewCliPath: runtime.labviewCliPath,
+        labviewExePath: runtime.labviewExePath,
+        portNumber: runtime.portNumber
       })
         .then((started) => {
           session = started;
