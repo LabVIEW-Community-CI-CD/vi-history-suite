@@ -71,6 +71,7 @@ export type ViPreviewFailureReason =
   | 'container-image-unavailable'
   | 'windows-powershell-host-unavailable'
   | 'labview-cli-connection-failed'
+  | 'labview-preview-operation-load-failed'
   | 'command-exited-nonzero'
   | 'preview-output-not-produced';
 
@@ -119,6 +120,44 @@ function isViPreviewConnectivityFailure(run: RunViPreviewCommandResult): boolean
     VI_PREVIEW_CONNECTIVITY_FAILURE_PATTERN.test(run.stderr) ||
     VI_PREVIEW_CONNECTIVITY_FAILURE_PATTERN.test(run.stdout)
   );
+}
+
+/**
+ * Operation-class load failure signature: LabVIEWCLI exits nonzero with LabVIEW
+ * error 1125 while loading the vendored `PrintToSingleFileHtml` operation class
+ * (`Get LV Class Default Value.vi` / "attempted to load the class"). On the
+ * preview path this almost always means the selected LabVIEW is too old to load
+ * the (newer) operation class. Not transient, so it is never retried.
+ */
+const VI_PREVIEW_OPERATION_LOAD_ERROR_PATTERN = /error code\s*:\s*1125\b/i;
+const VI_PREVIEW_OPERATION_LOAD_CONTEXT_PATTERN =
+  /load the class|Get LV Class Default Value|PrintToSingleFileHtml\.lvclass/i;
+
+function isViPreviewOperationLoadFailure(run: RunViPreviewCommandResult): boolean {
+  if (run.exitCode === 0) {
+    return false;
+  }
+  const text = `${run.stderr}\n${run.stdout}`;
+  return (
+    VI_PREVIEW_OPERATION_LOAD_ERROR_PATTERN.test(text) &&
+    VI_PREVIEW_OPERATION_LOAD_CONTEXT_PATTERN.test(text)
+  );
+}
+
+/**
+ * Classifies a nonzero LabVIEWCLI preview exit: the cold-launch connectivity
+ * signature (`-350000`) -> `labview-cli-connection-failed`; the operation-class
+ * load signature (error 1125) -> `labview-preview-operation-load-failed` (the
+ * selected LabVIEW is likely too old); otherwise `command-exited-nonzero`.
+ */
+function classifyViPreviewFailureReason(run: RunViPreviewCommandResult): ViPreviewFailureReason {
+  if (isViPreviewConnectivityFailure(run)) {
+    return 'labview-cli-connection-failed';
+  }
+  if (isViPreviewOperationLoadFailure(run)) {
+    return 'labview-preview-operation-load-failed';
+  }
+  return 'command-exited-nonzero';
 }
 
 const defaultViPreviewSleep = (milliseconds: number): Promise<void> =>
@@ -220,9 +259,11 @@ export function buildViPreviewCommandPlan(
  * (`-350000`/`-350051`) is retried up to `VI_PREVIEW_STARTUP_RETRY_COUNT` times
  * (the container providers retry in-script). A nonzero exit that still carries
  * the connectivity signature is `failed` with `labview-cli-connection-failed`;
- * any other nonzero exit is `command-exited-nonzero`; a zero exit that leaves no
- * output document is `preview-output-not-produced`; otherwise the produced HTML
- * path is returned as `rendered`.
+ * a nonzero exit carrying the operation-class load signature (LabVIEW error
+ * 1125) is `labview-preview-operation-load-failed` (the selected LabVIEW is
+ * likely too old); any other nonzero exit is `command-exited-nonzero`; a zero
+ * exit that leaves no output document is `preview-output-not-produced`;
+ * otherwise the produced HTML path is returned as `rendered`.
  */
 export async function executeViPreview(
   options: ExecuteViPreviewOptions,
@@ -264,9 +305,7 @@ export async function executeViPreview(
   if (run.exitCode !== 0) {
     return {
       outcome: 'failed',
-      failureReason: isViPreviewConnectivityFailure(run)
-        ? 'labview-cli-connection-failed'
-        : 'command-exited-nonzero',
+      failureReason: classifyViPreviewFailureReason(run),
       commandPlan,
       exitCode: run.exitCode,
       stdout: run.stdout,

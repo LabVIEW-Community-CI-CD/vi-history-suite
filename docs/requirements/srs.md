@@ -4110,9 +4110,12 @@ Missing numeric IDs are intentional.
     resolved runtime selection (blocking with `labview-cli-selection-incomplete`
     or `container-image-unavailable` when the selection is incomplete), runs it
     through an injected command runner, and classifies the result as `rendered`
-    (zero exit with the output document present), `failed`
-    (`command-exited-nonzero` on a nonzero exit or `preview-output-not-produced`
-    when a zero exit leaves no document), or `blocked`.
+    (zero exit with the output document present), `failed` (a nonzero exit is
+    `labview-cli-connection-failed` for the cold-launch `-350000` signature,
+    `labview-preview-operation-load-failed` for the operation-class load
+    error 1125 — the selected LabVIEW is likely too old — otherwise
+    `command-exited-nonzero`; a zero exit that leaves no document is
+    `preview-output-not-produced`), or `blocked`.
   - Opening a `.vi`, `.vit`, `.vim`, or `.ctl` file activates the
     `viHistorySuite.viPreview` read-only custom editor (registered at `default`
     priority), which renders the file through the configured comparison runtime

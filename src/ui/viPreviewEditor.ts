@@ -50,6 +50,9 @@ function describeUnavailable(reason: string): string {
 
 function describeFailure(reason: string | undefined, stderr: string | undefined): string {
   const detail = stderr?.trim() ? `\n\n${stderr.trim()}` : '';
+  if (reason === 'labview-preview-operation-load-failed') {
+    return `LabVIEW could not load the preview operation (error 1125). This usually means the selected LabVIEW is too old to render previews — select LabVIEW 2025 or newer with the "VI History: Runtime & Report Settings" command, then reopen the VI.${detail}`;
+  }
   if (reason === 'preview-output-not-produced') {
     return `LabVIEW ran but produced no preview document. The VI may be broken or depend on subVIs that are not available alongside it.${detail}`;
   }
