@@ -64,6 +64,12 @@ describe('formatWarmStatusLabel', () => {
       formatWarmStatusLabel({ total: 0, completed: 0, succeeded: 0, failed: 0, percent: 100, done: true })
     ).toBe('$(check) VI previews cached');
   });
+
+  it('warns when done and nothing could be cached (all renders failed)', () => {
+    expect(
+      formatWarmStatusLabel({ total: 200, completed: 200, succeeded: 0, failed: 200, percent: 100, done: true })
+    ).toBe('$(warning) VI previews could not be cached (0/200)');
+  });
 });
 
 describe('formatWarmStatusTooltip', () => {
@@ -80,6 +86,14 @@ describe('formatWarmStatusTooltip', () => {
       formatWarmStatusTooltip({ total: 200, completed: 200, succeeded: 198, failed: 2, percent: 100, done: true })
     ).toBe(
       'VI History Suite: cached 198 of 200 VI previews so they open instantly (2 could not be rendered).'
+    );
+  });
+
+  it('reports that nothing could be cached when all renders fail', () => {
+    expect(
+      formatWarmStatusTooltip({ total: 200, completed: 200, succeeded: 0, failed: 200, percent: 100, done: true })
+    ).toBe(
+      'VI History Suite: could not cache any of the 200 VI previews — the background renders failed, so opens will render on demand.'
     );
   });
 });

@@ -37,6 +37,12 @@ export function formatWarmStatusLabel(progress: ViPreviewWarmProgress): string {
     if (progress.total <= 0) {
       return '$(check) VI previews cached';
     }
+    // Nothing populated the cache — every render failed. Surface a warning
+    // instead of a check so the failure is visible rather than a misleading
+    // "cached (0/N)".
+    if (progress.succeeded === 0) {
+      return `$(warning) VI previews could not be cached (0/${progress.total})`;
+    }
     // Only successful renders populate the cache, so the done count reflects
     // `succeeded` — and after partial failures show "succeeded/total" so the
     // cached count is never overstated.
@@ -54,6 +60,9 @@ export function formatWarmStatusLabel(progress: ViPreviewWarmProgress): string {
 export function formatWarmStatusTooltip(progress: ViPreviewWarmProgress): string {
   const failedNote = progress.failed > 0 ? ` (${progress.failed} could not be rendered)` : '';
   if (progress.done) {
+    if (progress.total > 0 && progress.succeeded === 0) {
+      return `VI History Suite: could not cache any of the ${progress.total} VI previews — the background renders failed, so opens will render on demand.`;
+    }
     return `VI History Suite: cached ${progress.succeeded} of ${progress.total} VI previews so they open instantly${failedNote}.`;
   }
   return `VI History Suite: caching VI previews in the background so they open instantly — ${progress.completed} of ${progress.total} done${failedNote}.`;
