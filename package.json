@@ -141,6 +141,19 @@
         }
       ]
     },
+    "customEditors": [
+      {
+        "viewType": "viHistorySuite.viPreview",
+        "displayName": "VI History Preview",
+        "selector": [
+          { "filenamePattern": "*.vi" },
+          { "filenamePattern": "*.vit" },
+          { "filenamePattern": "*.vim" },
+          { "filenamePattern": "*.ctl" }
+        ],
+        "priority": "default"
+      }
+    ],
     "configuration": {
       "title": "VI History Suite",
       "properties": {

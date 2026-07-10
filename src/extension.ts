@@ -66,6 +66,10 @@ import {
 import { registerRuntimeRuntimeCommands } from './commands/runtimeCommands';
 import { registerOpenRuntimeReportPanelCommand } from './commands/openRuntimeReportPanelCommand';
 import { registerPickContainerImageVersionCommand } from './commands/pickContainerImageVersionCommand';
+import { registerViPreviewCustomEditor } from './ui/viPreviewEditor';
+import { createViPreviewCacheWarmerService } from './ui/viPreviewCacheWarmerService';
+import { createViPreviewSessionManager } from './ui/viPreviewSessionManager';
+import { createViPreviewCache, getViPreviewOperationDirectory } from './ui/viPreviewRenderHost';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
 import {
@@ -291,6 +295,30 @@ export async function activate(
   // container image versions published on Docker Hub and already pulled locally
   // and persists the chosen tag to viHistorySuite.container.imageVersion.
   registerPickContainerImageVersionCommand(context);
+
+  // VHS-REQ-659: single-VI interactive preview. Opening a LabVIEW source file
+  // (.vi/.vit/.vim/.ctl) renders it to a self-contained HTML document via NI's
+  // PrintToSingleFileHtml operation through the configured comparison runtime
+  // (Host or Docker) and shows it in a read-only custom editor. Under the Docker
+  // runtime, the editor and a silent background warmer share one warm LabVIEW
+  // container session so opens are fast once warm; the first successful preview
+  // starts the warmer, which caches the remaining workspace VIs with a status-
+  // bar progress percentage.
+  const viPreviewSessionManager = createViPreviewSessionManager({
+    operationDirectory: getViPreviewOperationDirectory(context),
+    cache: createViPreviewCache(context)
+  });
+  context.subscriptions.push({
+    dispose: () => {
+      void viPreviewSessionManager.dispose();
+    }
+  });
+  const viPreviewCacheWarmer = createViPreviewCacheWarmerService(context, viPreviewSessionManager);
+  context.subscriptions.push(viPreviewCacheWarmer);
+  registerViPreviewCustomEditor(context, {
+    sessionManager: viPreviewSessionManager,
+    onPreviewOpened: (viFsPath) => viPreviewCacheWarmer.notePreviewOpened(viFsPath)
+  });
 
   // VHS-REQ-619: Detect Git on PATH once per activation, surface a status
   // bar warning plus a one-time first-run information notice when Git is

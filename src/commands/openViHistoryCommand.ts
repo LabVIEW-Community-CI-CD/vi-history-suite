@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
@@ -40,7 +42,10 @@ import {
 } from '../ui/historyPanelTracker';
 import { INSTALL_DOCKER_URL } from '../ui/runtimeAvailabilityNotice';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
-import { isWorktreeRevision, WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
+import { isWorktreeRevision, runGit, WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
+import { materializeRevisionViTree, parseLsTreeOutput } from '../git/revisionViTree';
+import { readRevisionBlob } from '../reporting/comparisonReportPreflight';
+import { VI_PREVIEW_VIEW_TYPE } from '../ui/viPreviewEditor';
 
 interface ComparisonRuntimePanelDetail {
   label: string;
@@ -1154,6 +1159,82 @@ export function createOpenViHistoryCommand(
           hash,
           outcome: 'missing-git-uri'
         });
+        return;
+      }
+
+      if (command === 'previewRevision') {
+        if (!hash) {
+          void vscode.window.showInformationMessage(
+            'VI History could not determine which revision to preview.'
+          );
+          panelTracker?.recordAction({ command, hash, outcome: 'ignored-missing-hash' });
+          return;
+        }
+
+        try {
+          // VHS-REQ-659: materialize the selected revision's VI (plus sibling
+          // source dependencies) into a scratch directory, then hand it to the
+          // shared read-only preview editor via openWith so it reuses the warm
+          // container session and content cache.
+          const destinationDirectory = await fs.mkdtemp(
+            path.join(os.tmpdir(), 'vihs-vi-revision-')
+          );
+          const materialized = await materializeRevisionViTree(
+            {
+              revisionId: hash,
+              relativePath: model.relativePath,
+              destinationDirectory
+            },
+            {
+              listTreeFiles: async (revisionId, repoRelativeDirectory) =>
+                parseLsTreeOutput(
+                  String(
+                    await runGit(
+                      [
+                        'ls-tree',
+                        '-r',
+                        '-l',
+                        revisionId,
+                        ...(repoRelativeDirectory ? ['--', repoRelativeDirectory] : [])
+                      ],
+                      model.repositoryRoot,
+                      'utf8'
+                    )
+                  )
+                ),
+              readBlob: (revisionId, repoRelativePath) =>
+                readRevisionBlob(model.repositoryRoot, revisionId, repoRelativePath),
+              ensureDirectory: async (directory) => {
+                await fs.mkdir(directory, { recursive: true });
+              },
+              writeFile: (filePath, data) => fs.writeFile(filePath, data)
+            }
+          );
+
+          await vscode.commands.executeCommand(
+            'vscode.openWith',
+            vscode.Uri.file(materialized.viFilePath),
+            VI_PREVIEW_VIEW_TYPE
+          );
+          panelTracker?.recordAction({ command, hash, outcome: 'opened-revision-preview' });
+
+          // The preview editor stages the materialized tree during resolve; retire
+          // the scratch directory after a generous delay so cleanup never races the
+          // render. Best-effort: failures here are non-fatal temp-dir leftovers.
+          setTimeout(
+            () => {
+              void fs.rm(destinationDirectory, { recursive: true, force: true }).catch(() => undefined);
+            },
+            5 * 60 * 1000
+          );
+        } catch (error) {
+          void vscode.window.showWarningMessage(
+            `VI History could not preview this revision: ${
+              (error as Error)?.message ?? String(error)
+            }`
+          );
+          panelTracker?.recordAction({ command, hash, outcome: 'revision-preview-failed' });
+        }
         return;
       }
 

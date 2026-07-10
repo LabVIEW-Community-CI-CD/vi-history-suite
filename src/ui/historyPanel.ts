@@ -121,10 +121,19 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       const selectCheckbox = `<input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(commit.hash)}" ${
         comparisonSelectionEnabled ? '' : 'disabled'
       } />`;
+      // VHS-REQ-659: per-revision preview opens that commit's VI in the read-only
+      // preview editor. Shown only when comparison/runtime surfaces are available
+      // (same gate as compare); the shared webview click handler posts
+      // { command: 'previewRevision', hash }.
+      const previewButton = comparisonSelectionEnabled
+        ? `<button data-testid="history-action-preview" class="row-preview" data-command="previewRevision" data-hash="${escapeHtml(
+            commit.hash
+          )}" title="Preview this revision">Preview</button>`
+        : '';
 
       return `
         <tr data-testid="history-row" data-commit-index="${index}">
-          <td data-testid="history-commit-select-cell">${selectCheckbox}</td>
+          <td data-testid="history-commit-select-cell">${selectCheckbox}${previewButton}</td>
           <td data-testid="history-commit-hash"><code>${escapeHtml(commit.hash.slice(0, 8))}</code></td>
           <td data-testid="history-commit-date">${escapeHtml(commit.authorDate)}</td>
           <td data-testid="history-commit-author">${escapeHtml(commit.authorName)}</td>
@@ -173,6 +182,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       button {
         margin-right: 8px;
         margin-bottom: 6px;
+      }
+      .row-preview {
+        margin-left: 6px;
+        margin-bottom: 0;
+        font-size: 0.85em;
       }
       .commit-body {
         white-space: pre-wrap;

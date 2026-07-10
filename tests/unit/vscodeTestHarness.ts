@@ -257,6 +257,9 @@ export function createVsCodeTestHarness() {
         dispose: vi.fn()
       })),
       createWebviewPanel: vi.fn(createWebviewPanel),
+      registerCustomEditorProvider: vi.fn((_viewType: string, _provider: unknown, _options?: unknown) =>
+        disposable(vi.fn())
+      ),
       showInformationMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
       showWarningMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
       showErrorMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),

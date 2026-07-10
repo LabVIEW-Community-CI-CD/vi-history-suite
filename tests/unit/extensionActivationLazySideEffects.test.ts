@@ -90,11 +90,16 @@ vi.mock('vscode', () => ({
     executeCommand: executeCommandMock
   },
   Uri: {
-    file: (fsPath: string) => ({ fsPath, scheme: 'file' })
+    file: (fsPath: string) => ({ fsPath, scheme: 'file' }),
+    joinPath: (base: { fsPath?: string } | undefined, ...segments: string[]) => ({
+      fsPath: [base?.fsPath ?? '', ...segments].join('/'),
+      scheme: 'file'
+    })
   },
   window: {
     showInformationMessage: showInformationMessageMock,
-    showWarningMessage: showWarningMessageMock
+    showWarningMessage: showWarningMessageMock,
+    registerCustomEditorProvider: vi.fn(() => ({ dispose: vi.fn() }))
   },
   workspace: {
     get isTrusted() {
