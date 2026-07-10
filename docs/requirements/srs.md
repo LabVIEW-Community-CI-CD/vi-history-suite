@@ -4140,13 +4140,16 @@ Missing numeric IDs are intentional.
     `computeViPreviewCacheKey`) from the cache without staging or launching
     LabVIEW, and populates the cache after a fresh render; cache read and write
     failures are non-fatal.
-  - Under the Docker (Linux container) runtime, the first successful preview
-    starts a background warmer that renders the remaining workspace VIs serially
-    through a single warm container session, populating the render cache.
-    Progress is surfaced only as a monotonically increasing status-bar
-    percentage (`formatWarmStatusLabel` over `warmViPreviewCache`); warming runs
-    at most once per session, is cancelled on disposal, and the host-native
-    runtime does not warm.
+  - After the first successful preview, a background warmer renders the
+    remaining workspace VIs serially through a single warm session, populating
+    the render cache. Progress is surfaced only as a monotonically increasing
+    status-bar percentage (`formatWarmStatusLabel` over `warmViPreviewCache`);
+    warming runs at most once per session and is cancelled on disposal. The
+    `viHistorySuite.preview.backgroundWarming` setting governs when it runs
+    (`shouldWarmViPreviewProvider`): `docker-only` (default) warms only the
+    container providers, so a host-native runtime does not warm and never
+    occupies the user's host LabVIEW; `always` also warms the host-native
+    runtime; `off` disables background warming entirely.
   - The warm container session (`buildLinuxContainerSessionStartArgs` /
     `buildLinuxContainerSessionHardenScript` /
     `buildLinuxContainerExecViPreviewCommandPlan`, orchestrated by

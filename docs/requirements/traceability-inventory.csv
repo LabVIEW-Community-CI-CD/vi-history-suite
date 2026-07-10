@@ -254,7 +254,7 @@ tests/unit/viPreviewCache.test.ts,mapped,Yes,Single-VI preview render cache unit
 src/reporting/viPreview/viPreviewCacheWarmer.ts,mapped,Yes,Background preview cache warmer progress math and serial warm loop; mapped to VHS-REQ-659.
 tests/unit/viPreviewCacheWarmer.test.ts,mapped,Yes,Preview cache warmer progress and loop unit tests; mapped to VHS-REQ-659.
 src/ui/viPreviewRenderHost.ts,mapped,Yes,Shared VS Code host bindings for preview rendering (cache, render deps, runtime resolution) reused by the editor and warmer; mapped to VHS-REQ-659.
-src/ui/viPreviewCacheWarmerService.ts,mapped,Yes,Docker-gated background preview cache warmer service with status-bar progress; mapped to VHS-REQ-659.
+src/ui/viPreviewCacheWarmerService.ts,mapped,Yes,Background preview cache warmer service with status-bar progress; warming is governed by viHistorySuite.preview.backgroundWarming (docker-only default | always | off) via shouldWarmViPreviewProvider; mapped to VHS-REQ-659.
 src/ui/viPreviewContainerSession.ts,mapped,Yes,Warm LabVIEW container session for fast preview rendering (docker exec against a resident LabVIEW); mapped to VHS-REQ-659.
 src/ui/viPreviewSessionManager.ts,mapped,Yes,Shared warm-session manager (serialized interactive-prioritized renders + idle disposal) used by the editor and warmer; mapped to VHS-REQ-659.
 tests/unit/viPreviewSessionManager.test.ts,mapped,Yes,Shared warm-session manager render-priority selector unit tests; mapped to VHS-REQ-659.

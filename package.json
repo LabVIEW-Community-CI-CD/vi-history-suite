@@ -210,6 +210,21 @@
           "type": "string",
           "description": "Which LabVIEW Docker image to use for Docker comparisons (for example 2026q1-windows). Leave empty to use the newest supported image. Run the VI History: Runtime & Report Settings command to pick from images available on Docker Hub or already downloaded; new National Instruments patches and years appear automatically."
         },
+        "viHistorySuite.preview.backgroundWarming": {
+          "type": "string",
+          "enum": [
+            "docker-only",
+            "always",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Only pre-render in the background when comparisons run in Docker, so your installed LabVIEW is never tied up. Recommended default.",
+            "Also pre-render in the background when using your installed (Host) LabVIEW, so you see caching progress on Host too. This keeps LabVIEW busy while it caches a large workspace.",
+            "Never pre-render previews in the background."
+          ],
+          "default": "docker-only",
+          "description": "After you open a VI preview, whether VI History quietly pre-renders the other VIs in the workspace so they open instantly, shown as a caching percentage in the status bar. Docker-only (default) skips this when using Host so your LabVIEW stays free; choose Always to see caching progress on Host too."
+        },
         "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
           "type": "integer",
           "default": 180,

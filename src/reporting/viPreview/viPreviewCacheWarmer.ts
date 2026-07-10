@@ -1,3 +1,5 @@
+import type { ViPreviewSessionProvider } from './viPreviewSessionRuntime';
+
 /**
  * VHS-REQ-659: background preview cache warmer (progress + serial loop).
  *
@@ -55,6 +57,32 @@ export function formatWarmStatusTooltip(progress: ViPreviewWarmProgress): string
     return `VI History Suite: cached ${progress.succeeded} of ${progress.total} VI previews so they open instantly${failedNote}.`;
   }
   return `VI History Suite: caching VI previews in the background so they open instantly — ${progress.completed} of ${progress.total} done${failedNote}.`;
+}
+
+/**
+ * Background-warming mode from the `viHistorySuite.preview.backgroundWarming`
+ * setting: `docker-only` (default) warms only the container providers, `always`
+ * also warms host-native, and `off` disables background warming.
+ */
+export type ViPreviewBackgroundWarmingMode = 'docker-only' | 'always' | 'off';
+
+/**
+ * Decides whether background cache warming should run for a resolved warm-session
+ * provider under the configured mode. `docker-only` warms only the container
+ * providers so a host-native runtime never occupies the user's single host
+ * LabVIEW; `always` also warms host-native; `off` disables warming entirely.
+ */
+export function shouldWarmViPreviewProvider(
+  provider: ViPreviewSessionProvider,
+  mode: ViPreviewBackgroundWarmingMode
+): boolean {
+  if (mode === 'off') {
+    return false;
+  }
+  if (mode === 'always') {
+    return true;
+  }
+  return provider !== 'host-native';
 }
 
 export type WarmRenderOutcome = 'succeeded' | 'failed';
