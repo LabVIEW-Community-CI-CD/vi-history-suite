@@ -987,6 +987,13 @@ function buildWindowsContainerSessionRenderScript(executable: string, args: stri
   return [
     "$ErrorActionPreference = 'Continue'",
     "$ProgressPreference = 'SilentlyContinue'",
+    // Create the scratch/temp root before pointing TEMP/TMP at it. The one-time
+    // session harden also creates it, but that exec is fail-soft (its failure is
+    // swallowed by the session), so each render recreates it too — Windows does
+    // not auto-create a missing TEMP. `-Force` is a no-op when it already exists.
+    `New-Item -ItemType Directory -Force -Path ${quotePowerShellLiteral(
+      WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT
+    )} -ErrorAction SilentlyContinue | Out-Null`,
     `$env:TEMP = ${quotePowerShellLiteral(WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT)}`,
     '$env:TMP = $env:TEMP',
     `$cliPath = ${quotePowerShellLiteral(executable)}`,

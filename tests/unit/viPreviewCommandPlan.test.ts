@@ -438,5 +438,8 @@ describe('buildWindowsContainerExecViPreviewCommandPlan', () => {
     expect(script).toContain(VI_PREVIEW_OPERATION_NAME);
     expect(script).toContain('-350000');
     expect(script).toContain('retryAttempts');
+    // Each render recreates the scratch temp root (harden is fail-soft).
+    expect(script).toContain('New-Item -ItemType Directory -Force');
+    expect(script).toContain(`-Path '${WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT}'`);
   });
 });
