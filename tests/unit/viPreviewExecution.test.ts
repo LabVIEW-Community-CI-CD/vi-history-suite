@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -31,8 +33,12 @@ describe('buildViPreviewCommandPlan', () => {
       return;
     }
     expect(result.commandPlan.executable).toBe('/usr/local/bin/LabVIEWCLI');
-    expect(argValue(result.commandPlan.args, '-VI')).toBe('/host/report/input.vi');
-    expect(argValue(result.commandPlan.args, '-OutputPath')).toBe('/host/report/preview.html');
+    // Production joins workspace + filename with path.join, so the expected path
+    // must be built the same way to stay separator-agnostic across win32/posix.
+    expect(argValue(result.commandPlan.args, '-VI')).toBe(path.join('/host/report', 'input.vi'));
+    expect(argValue(result.commandPlan.args, '-OutputPath')).toBe(
+      path.join('/host/report', 'preview.html')
+    );
     expect(result.commandPlan.args).not.toContain('-Headless');
   });
 
@@ -126,7 +132,7 @@ describe('executeViPreview', () => {
     const result = await executeViPreview(baseOptions(), dependencies);
 
     expect(result.outcome).toBe('rendered');
-    expect(result.reportFilePath).toBe('/host/report/preview.html');
+    expect(result.reportFilePath).toBe(path.join('/host/report', 'preview.html'));
     expect(dependencies.runCommand).toHaveBeenCalledOnce();
   });
 

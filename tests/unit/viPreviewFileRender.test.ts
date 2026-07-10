@@ -37,8 +37,12 @@ describe('renderViPreviewForFile', () => {
 
     expect(result.outcome).toBe('rendered');
     expect(result.html).toBe('<HTML>doc</HTML>');
-    // VI staged under the workspace "vi/" root with its original basename.
-    expect(deps.copyFile).toHaveBeenCalledWith('/repo/My VI.vi', path.join('/tmp/ws', 'vi', 'My VI.vi'));
+    // VI staged under the workspace "vi/" root with its original basename. The
+    // source path is path.join-derived so the assertion holds on win32 and posix.
+    expect(deps.copyFile).toHaveBeenCalledWith(
+      path.join('/repo', 'My VI.vi'),
+      path.join('/tmp/ws', 'vi', 'My VI.vi')
+    );
     expect(deps.readFile).toHaveBeenCalledWith(path.join('/tmp/ws', 'preview.html'));
     expect(deps.removeDirectory).toHaveBeenCalledWith('/tmp/ws');
   });
@@ -55,7 +59,10 @@ describe('renderViPreviewForFile', () => {
     );
 
     expect(result.outcome).toBe('rendered');
-    expect(deps.copyFile).toHaveBeenCalledWith('/repo/Foo.vi', path.join('/tmp/ws', 'vi', 'Foo.vi'));
+    expect(deps.copyFile).toHaveBeenCalledWith(
+      path.join('/repo', 'Foo.vi'),
+      path.join('/tmp/ws', 'vi', 'Foo.vi')
+    );
     expect(deps.copyFile).toHaveBeenCalledWith(
       path.join('/repo', 'support', 'Sub.vi'),
       path.join('/tmp/ws', 'vi', 'support', 'Sub.vi')
