@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import {
   formatWarmStatusLabel,
+  formatWarmStatusTooltip,
   warmViPreviewCache
 } from '../reporting/viPreview/viPreviewCacheWarmer';
 import { toViPreviewSessionRuntime } from '../reporting/viPreview/viPreviewSessionRuntime';
@@ -79,7 +80,6 @@ export function createViPreviewCacheWarmerService(
     }
 
     statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusItem.tooltip = 'VI History is caching VI previews in the background so they open instantly.';
     statusItem.show();
 
     await warmViPreviewCache(viFilePaths, {
@@ -90,6 +90,7 @@ export function createViPreviewCacheWarmerService(
       onProgress: (progress) => {
         if (statusItem) {
           statusItem.text = formatWarmStatusLabel(progress);
+          statusItem.tooltip = formatWarmStatusTooltip(progress);
         }
       },
       isCancelled: () => cancelled

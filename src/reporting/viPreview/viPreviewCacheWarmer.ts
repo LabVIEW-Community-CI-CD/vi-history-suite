@@ -32,9 +32,23 @@ export function computeWarmPercent(completed: number, total: number): number {
 /** Status-bar label for a warm progress snapshot (uses VS Code codicon markup). */
 export function formatWarmStatusLabel(progress: ViPreviewWarmProgress): string {
   if (progress.done) {
-    return '$(check) VI previews cached';
+    return progress.total > 0
+      ? `$(check) VI previews cached (${progress.total})`
+      : '$(check) VI previews cached';
   }
-  return `$(sync~spin) Caching VI previews ${progress.percent}%`;
+  // Surface the running count alongside the percentage; on a large repo (many
+  // VIs) the "N/total" is more meaningful than a bare percent for gauging how
+  // much caching remains.
+  return `$(sync~spin) Caching VI previews ${progress.percent}% (${progress.completed}/${progress.total})`;
+}
+
+/** Live status-bar tooltip for a warm progress snapshot. */
+export function formatWarmStatusTooltip(progress: ViPreviewWarmProgress): string {
+  const failedNote = progress.failed > 0 ? ` (${progress.failed} could not be rendered)` : '';
+  if (progress.done) {
+    return `VI History Suite: cached ${progress.succeeded} of ${progress.total} VI previews so they open instantly${failedNote}.`;
+  }
+  return `VI History Suite: caching VI previews in the background so they open instantly — ${progress.completed} of ${progress.total} done${failedNote}.`;
 }
 
 export type WarmRenderOutcome = 'succeeded' | 'failed';
