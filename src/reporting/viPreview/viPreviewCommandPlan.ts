@@ -736,6 +736,14 @@ export function buildWindowsContainerViPreviewScript(
     '  }',
     '  Set-Content -LiteralPath $Path -Value $updated -Encoding utf8',
     '}',
+    // Create the scratch/temp root before pointing TEMP/TMP at it. LabVIEWCLI and
+    // the vendored renderer write scratch output here, and (unlike the Linux
+    // container script's `mkdir -p`) Windows does not auto-create a TEMP that does
+    // not exist, so an uncreated directory could fail the render before it writes
+    // preview.html. `-Force` is a no-op when the directory already exists.
+    `New-Item -ItemType Directory -Force -Path ${quotePowerShellLiteral(
+      WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT
+    )} -ErrorAction SilentlyContinue | Out-Null`,
     `$env:TEMP = ${quotePowerShellLiteral(WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT)}`,
     '$env:TMP = $env:TEMP',
     `$cliPath = ${quotePowerShellLiteral(executable)}`,

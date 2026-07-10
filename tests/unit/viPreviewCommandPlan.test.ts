@@ -17,6 +17,7 @@ import {
   rewriteViPreviewArgsForWindowsContainerWorkspace,
   VI_PREVIEW_OPERATION_NAME,
   WINDOWS_CONTAINER_VI_PREVIEW_OPERATION_ROOT,
+  WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT,
   WINDOWS_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT
 } from '../../src/reporting/viPreview/viPreviewCommandPlan';
 
@@ -299,6 +300,9 @@ describe('buildWindowsContainerViPreviewScript', () => {
     expect(script).toContain('-350000');
     expect(script).toContain('Set-IniToken');
     expect(script).toContain('exit $lastExit');
+    // Creates the scratch/temp root before use (Windows does not auto-create TEMP).
+    expect(script).toContain('New-Item -ItemType Directory -Force');
+    expect(script).toContain(`-Path '${WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT}'`);
   });
 
   it('falls back to the default connect timeout for invalid values', () => {
