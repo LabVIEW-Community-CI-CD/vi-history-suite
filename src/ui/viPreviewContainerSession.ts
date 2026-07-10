@@ -19,7 +19,10 @@ import {
   type RenderViPreviewForFileResult
 } from '../reporting/viPreview/viPreviewFileRender';
 import type { ViPreviewExecutionResult } from '../reporting/viPreview/viPreviewExecution';
-import type { ViPreviewSessionProvider } from '../reporting/viPreview/viPreviewSessionRuntime';
+import {
+  selectLaunchedLabviewPid,
+  type ViPreviewSessionProvider
+} from '../reporting/viPreview/viPreviewSessionRuntime';
 import { buildViPreviewRenderDeps } from './viPreviewRenderHost';
 
 /**
@@ -291,8 +294,9 @@ async function startHostViPreviewSession(
     throw new Error('startViPreviewSession requires a labviewCliPath for the host-native provider');
   }
   // LabVIEW instances present before we start are the user's; never reclaim them.
-  const basePids = new Set(await listHostLabviewPids());
-  const ownedPids = new Set<number>();
+  const basePids = await listHostLabviewPids();
+  let firstRenderComplete = false;
+  let launchedPid: number | undefined;
   const baseDeps = buildViPreviewRenderDeps(options.cache);
   let disposed = false;
 
@@ -312,12 +316,15 @@ async function startHostViPreviewSession(
         { runtime, viFilePath, operationDirectory: options.operationDirectory },
         baseDeps
       );
-      // Any LabVIEW that appeared since start was launched by our LabVIEWCLI; claim
-      // it so dispose can reclaim it without touching a pre-existing user session.
-      for (const pid of await listHostLabviewPids()) {
-        if (!basePids.has(pid)) {
-          ownedPids.add(pid);
-        }
+      // Decide ownership exactly once, from the first render, and only reclaim a
+      // LabVIEW we are certain LabVIEWCLI launched (see selectLaunchedLabviewPid):
+      // none was running at session start AND exactly one new instance appeared.
+      // Reusing a user's LabVIEW or any ambiguity (e.g. the user launched LabVIEW
+      // concurrently or between renders) owns nothing, so dispose never
+      // force-kills a process the user may have started.
+      if (!firstRenderComplete) {
+        firstRenderComplete = true;
+        launchedPid = selectLaunchedLabviewPid(basePids, await listHostLabviewPids());
       }
       return result;
     },
@@ -326,8 +333,13 @@ async function startHostViPreviewSession(
         return;
       }
       disposed = true;
+      if (launchedPid === undefined) {
+        return;
+      }
       const running = new Set(await listHostLabviewPids());
-      await killHostPids([...ownedPids].filter((pid) => running.has(pid)));
+      if (running.has(launchedPid)) {
+        await killHostPids([launchedPid]);
+      }
     }
   };
 }

@@ -90,6 +90,30 @@ export function toViPreviewSessionRuntime(
  */
 export function viPreviewSessionKey(runtime: ViPreviewSessionRuntime): string {
   return runtime.provider === 'host-native'
-    ? `host-native::${runtime.labviewCliPath ?? ''}`
+    ? `host-native::${runtime.labviewCliPath ?? ''}::${runtime.labviewExePath ?? ''}::${runtime.portNumber ?? ''}`
     : `${runtime.provider}::${runtime.containerImage ?? ''}`;
+}
+
+/**
+ * Selects the single host `LabVIEW.exe` PID a warm host session may reclaim on
+ * dispose, given the PIDs present when the session started (`basePids`) and those
+ * present right after its first render (`postFirstRenderPids`).
+ *
+ * Fail-safe: returns a PID only when we are certain LabVIEWCLI launched it — no
+ * LabVIEW was running at session start AND exactly one new instance appeared. If
+ * the session reused a pre-existing user LabVIEW (`basePids` non-empty) or the
+ * result is ambiguous (zero or several new instances, e.g. the user launched
+ * LabVIEW concurrently), it returns `undefined` so dispose force-kills nothing —
+ * a resident instance is leaked rather than risk closing the user's LabVIEW and
+ * losing unsaved work.
+ */
+export function selectLaunchedLabviewPid(
+  basePids: readonly number[],
+  postFirstRenderPids: readonly number[]
+): number | undefined {
+  if (basePids.length !== 0) {
+    return undefined;
+  }
+  const appeared = postFirstRenderPids.filter((pid) => !basePids.includes(pid));
+  return appeared.length === 1 ? appeared[0] : undefined;
 }

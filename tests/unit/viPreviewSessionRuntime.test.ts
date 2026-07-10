@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ViPreviewRuntimeSelection } from '../../src/reporting/viPreview/viPreviewExecution';
 import {
+  selectLaunchedLabviewPid,
   toViPreviewSessionRuntime,
   viPreviewSessionKey
 } from '../../src/reporting/viPreview/viPreviewSessionRuntime';
@@ -78,9 +79,42 @@ describe('viPreviewSessionKey', () => {
     );
   });
 
-  it('keys host-native sessions by the LabVIEWCLI path', () => {
-    expect(viPreviewSessionKey({ provider: 'host-native', labviewCliPath: 'C:\\cli.exe' })).toBe(
-      'host-native::C:\\cli.exe'
-    );
+  it('keys host-native sessions by the LabVIEWCLI path, resolved install, and port', () => {
+    expect(
+      viPreviewSessionKey({
+        provider: 'host-native',
+        labviewCliPath: 'C:\\cli.exe',
+        labviewExePath: 'C:\\LabVIEW 2026\\LabVIEW.exe',
+        portNumber: 3364
+      })
+    ).toBe('host-native::C:\\cli.exe::C:\\LabVIEW 2026\\LabVIEW.exe::3364');
+  });
+
+  it('changes the host key when the resolved install or port changes', () => {
+    const base = { provider: 'host-native' as const, labviewCliPath: 'C:\\cli.exe' };
+    const a = viPreviewSessionKey({ ...base, labviewExePath: 'C:\\LabVIEW 2026\\LabVIEW.exe', portNumber: 3364 });
+    const differentInstall = viPreviewSessionKey({ ...base, labviewExePath: 'C:\\LabVIEW 2024\\LabVIEW.exe', portNumber: 3364 });
+    const differentPort = viPreviewSessionKey({ ...base, labviewExePath: 'C:\\LabVIEW 2026\\LabVIEW.exe', portNumber: 3363 });
+    expect(a).not.toBe(differentInstall);
+    expect(a).not.toBe(differentPort);
+  });
+});
+
+describe('selectLaunchedLabviewPid', () => {
+  it('claims the single new instance when none was running at start', () => {
+    expect(selectLaunchedLabviewPid([], [42])).toBe(42);
+  });
+
+  it('owns nothing when a LabVIEW was already running at start (reused)', () => {
+    // Pre-existing user LabVIEW; a render reused it (no new instance) or the user
+    // has one open — never reclaim it.
+    expect(selectLaunchedLabviewPid([7], [7])).toBeUndefined();
+    expect(selectLaunchedLabviewPid([7], [7, 42])).toBeUndefined();
+  });
+
+  it('owns nothing when the launch is ambiguous (zero or several new instances)', () => {
+    expect(selectLaunchedLabviewPid([], [])).toBeUndefined();
+    // Two new instances (e.g. the user launched LabVIEW concurrently) => bail safe.
+    expect(selectLaunchedLabviewPid([], [42, 43])).toBeUndefined();
   });
 });
