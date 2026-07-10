@@ -7,6 +7,15 @@ import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 
 import type { ViHistorySuiteApi } from '../../../src/extension';
+import {
+  isViPreviewVerificationPassing,
+  verifyViPreviewRender
+} from '../../../src/reporting/viPreview/viPreviewVerification';
+import { VI_PREVIEW_VIEW_TYPE } from '../../../src/ui/viPreviewEditor';
+import {
+  buildViPreviewRenderDeps,
+  resolvePreviewRuntime
+} from '../../../src/ui/viPreviewRenderHost';
 
 interface IntegrationWorkspaceMetadata {
   workspacePath: string;
@@ -106,6 +115,7 @@ export async function runIntegrationSuite(): Promise<void> {
   await testProbeRuntimeSettingsLiveSession();
   await testRuntimeConvenienceCommandsRegistered();
   await testPanelOpenFlow(api, metadata);
+  await testViPreviewRenderWhenRuntimeAvailable();
 }
 
 async function loadMetadata(): Promise<IntegrationWorkspaceMetadata> {
@@ -154,6 +164,54 @@ async function testRuntimeConvenienceCommandsRegistered(): Promise<void> {
       `expected runtime convenience command to be registered: ${commandId}`
     );
   }
+}
+
+/**
+ * VHS-REQ-659: real verification that the single-VI preview renders end-to-end
+ * through the VS Code host bindings (custom editor + shared render deps) using
+ * the configured runtime. Skips (rather than fails) when no LabVIEW/Docker
+ * runtime is available (e.g. hosted CI), so it runs for real on the maintainer
+ * runner and any dev host with a runtime while staying green in CI.
+ */
+async function testViPreviewRenderWhenRuntimeAvailable(): Promise<void> {
+  const runtime = await resolvePreviewRuntime();
+  if (runtime.outcome !== 'ready') {
+    console.log(
+      `[integration] VI preview render: SKIPPED (runtime not ready: ${
+        (runtime as { reason?: string }).reason ?? 'unavailable'
+      })`
+    );
+    return;
+  }
+
+  const extension = vscode.extensions.getExtension('svelderrainruiz.vi-history-suite');
+  assert.ok(extension, 'extension must be installed in the test host');
+  const operationDirectory = path.join(
+    extension.extensionPath,
+    'resources',
+    'labview-cli-operations'
+  );
+  const sampleViPath = path.join(operationDirectory, 'PrintToSingleFileHtml', 'Make path absolute.vi');
+
+  // Exercise the real custom editor host binding (opens + renders in a webview).
+  await vscode.commands.executeCommand(
+    'vscode.openWith',
+    vscode.Uri.file(sampleViPath),
+    VI_PREVIEW_VIEW_TYPE
+  );
+
+  // Assert the render pipeline produced a self-contained document with embedded
+  // images, through the same host render deps the editor uses (headless forced
+  // so no LabVIEW GUI appears during the run).
+  const proof = await verifyViPreviewRender(
+    { runtime: { ...runtime.runtime, headless: true }, sampleViPath, operationDirectory },
+    buildViPreviewRenderDeps()
+  );
+  console.log(`[integration] VI preview render proof: ${JSON.stringify(proof)}`);
+  assert.ok(
+    isViPreviewVerificationPassing(proof),
+    `expected the sample VI to render with inline images (proof: ${JSON.stringify(proof)})`
+  );
 }
 
 async function testPanelOpenFlow(
