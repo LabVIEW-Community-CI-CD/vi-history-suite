@@ -125,7 +125,11 @@ export async function renderViPreviewForFile(
     ? path.join(stagingBaseDirectory, ...selection.stagingRoot.split('/'))
     : stagingBaseDirectory;
   const cacheKey = deps.cache
-    ? computeStagedCacheKey(selection.plan.filesToStage, selection.stagedEntries)
+    ? computeStagedCacheKey(
+        selection.plan.viRelativePath,
+        selection.plan.filesToStage,
+        selection.stagedEntries
+      )
     : undefined;
 
   if (deps.cache && cacheKey) {
@@ -200,11 +204,13 @@ export async function renderViPreviewForFile(
 }
 
 /**
- * Computes the cache key from the staged files' size/mtime. Returns undefined
- * when a staged file is missing from the enumeration, so the render proceeds
- * uncached rather than keying on incomplete data.
+ * Computes the cache key from the target VI plus the staged files' size/mtime.
+ * Returns undefined when a staged file is missing from the enumeration, so the
+ * render proceeds uncached rather than keying on incomplete data. The target VI
+ * path is included so VIs sharing a staged tree never collide (#646).
  */
 function computeStagedCacheKey(
+  viRelativePath: string,
   filesToStage: string[],
   entries: ViPreviewStagingEntry[]
 ): string | undefined {
@@ -217,5 +223,5 @@ function computeStagedCacheKey(
     }
     keyEntries.push(entry);
   }
-  return computeViPreviewCacheKey(keyEntries);
+  return computeViPreviewCacheKey(viRelativePath, keyEntries);
 }
