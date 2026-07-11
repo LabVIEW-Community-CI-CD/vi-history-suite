@@ -68,7 +68,7 @@ describe('viHistoryModel direct history facts', () => {
     isFileDirtyInWorkingTreeMock.mockResolvedValue(false);
   });
 
-  it('evaluates tracked VI eligibility with bounded commit proof', async () => {
+  it('evaluates tracked VI eligibility with bounded commit proof (VHS-REQ-008)', async () => {
     const result = await evaluateViEligibilityForFsPath('/workspace/repo/src/Sample.vi', {
       strictRsrcHeader: true
     });

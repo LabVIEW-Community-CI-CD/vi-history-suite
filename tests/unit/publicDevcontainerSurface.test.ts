@@ -19,7 +19,7 @@ const ONBOARDING_FEEDBACK_URL =
   'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12';
 
 describe('public devcontainer surface', () => {
-  it('retains a Docker-capable devcontainer and VS Code launch surface for the public GitHub repo', () => {
+  it('retains a Docker-capable devcontainer and VS Code launch surface for the public GitHub repo (VHS-REQ-596)', () => {
     const devcontainer = readJson<{
       name?: string;
       image?: string;
@@ -107,7 +107,7 @@ describe('public devcontainer surface', () => {
     expect(firstRun).toContain('Extension Development Host');
   });
 
-  it('documents the expected devcontainer first-run path with the named launch configuration', () => {
+  it('documents the expected devcontainer first-run path with the named launch configuration (VHS-REQ-596)', () => {
     const launch = readJson<{
       configurations?: Array<{ name?: string; type?: string; preLaunchTask?: string }>;
     }>('.vscode/launch.json');
@@ -139,7 +139,7 @@ describe('public devcontainer surface', () => {
     }
   });
 
-  it('documents structured source-evaluation onboarding feedback', () => {
+  it('documents structured source-evaluation onboarding feedback (VHS-REQ-596)', () => {
     const feedbackTemplate = readText(
       '.github/ISSUE_TEMPLATE/first_time_onboarding_feedback.yml'
     );

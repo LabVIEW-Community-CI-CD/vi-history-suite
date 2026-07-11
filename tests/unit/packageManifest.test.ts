@@ -150,7 +150,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('contributes the visibility gate in explorer and editor title menus', () => {
+  it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004)', () => {
     const manifest = readManifest();
     const expectedMenuEntry = {
       command: 'labviewViHistory.open',
@@ -186,7 +186,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084)', () => {
+  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084, VHS-REQ-012)', () => {
     const manifest = readManifest();
 
     expect(manifest.main).toBe('./out/extension.js');

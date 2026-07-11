@@ -334,7 +334,7 @@ describe('gitCli parsing', () => {
     expect(reachableProofs).toEqual(new Set([head]));
   });
 
-  it('returns bounded commit hashes and structured history entries from a real temporary Git repo', async () => {
+  it('returns bounded commit hashes and structured history entries from a real temporary Git repo (VHS-REQ-008)', async () => {
     const repoRoot = await createTempGitRepo();
     const trackedPath = path.join(repoRoot, 'nested', 'history.vi');
 
@@ -401,7 +401,7 @@ describe('gitCli parsing', () => {
 });
 
 describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
-  it('follows renamed file history and returns commit hashes from before the rename', async () => {
+  it('follows renamed file history and returns commit hashes from before the rename (VHS-REQ-008)', async () => {
     const repoRoot = await createTempGitRepo();
     const originalPath = path.join(repoRoot, 'original.vi');
     const renamedPath = path.join(repoRoot, 'renamed.vi');
