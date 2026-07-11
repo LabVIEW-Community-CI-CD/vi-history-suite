@@ -179,6 +179,40 @@ Operational guidance:
 - If Docker emits `manifest unknown` or repository-not-found errors, verify the
   published image exists before rerunning closeout evidence.
 
+## Non-Interactive Terminal Sessions (Windows `gh`/`git`)
+
+On Windows, the VS Code integrated PowerShell terminal can hang after `gh` or
+`git` commands that open a pager or the alternate screen buffer. The prompt
+shows a bare `^C` and subsequent commands produce no output until a new
+terminal is opened; the stuck session does not recover on its own. This is
+developer-environment friction, not a product defect, but it interrupts
+otherwise clean maintainer and agent release workflows.
+
+Preflight for non-interactive maintainer/agent sessions:
+
+```powershell
+$env:GH_PAGER = 'cat'
+git config core.pager cat
+```
+
+Operational guidance:
+
+- Set `GH_PAGER=cat` (and `git config core.pager cat`) before `gh`/`git`
+  calls; this eliminates most pager-driven hangs.
+- Avoid `gh ... --watch` in the integrated terminal — its alternate-screen
+  rendering is a frequent trigger. Poll a single
+  `gh run view <id> --json status,conclusion` (or `gh pr checks <id> --json`)
+  read instead.
+- Keep `jq` filters free of `[...]` array constructors when passed through
+  PowerShell single-quoted arguments: PowerShell parses the brackets and
+  throws `Missing type name after '['`, and bracket-heavy one-liners correlate
+  with the subsequent hangs. Prefer simple `tostring` string concatenation.
+- If a session still gets stuck behind a `^C`, open a fresh terminal rather
+  than trying to recover the current one, and re-verify any in-flight step
+  (`git log`, `gh pr view`, `gh issue list`) independently — irreversible
+  steps (merges, tag pushes, Marketplace approval) must be confirmed after the
+  fact regardless.
+
 ## Validation Surfaces
 
 | Surface | Role | Release Claim |
