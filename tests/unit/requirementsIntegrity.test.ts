@@ -10,6 +10,8 @@ const {
   checkReplacementResolution,
   extractSrsReferenceSections,
   checkReferenceAgreement,
+  extractSyrsVerificationReferences,
+  checkSystemRequirementReferences,
   checkRequirementsIntegrity,
   renderStepSummary,
   main
@@ -38,6 +40,12 @@ const {
   checkReferenceAgreement: (
     rtmRows: Array<Record<string, string>>,
     srsReferenceSections: Map<string, { implementation: string[]; verification: string[] }>
+  ) => Array<{ subject: string; detail: string }>;
+  extractSyrsVerificationReferences: (syrsText: string) => Map<string, string[]>;
+  checkSystemRequirementReferences: (
+    syrsVerificationReferences: Map<string, string[]>,
+    cwd: string,
+    fileExists: (absolutePath: string) => boolean
   ) => Array<{ subject: string; detail: string }>;
   checkRequirementsIntegrity: (
     cwd: string,
@@ -70,7 +78,10 @@ const SRS_FIXTURE =
   '- Implementation References:\n  - `src/a.ts`\n' +
   '- Verification References:\n  - `tests/a.test.ts`\n\n' +
   '### VHS-REQ-002: Beta Requirement\n';
-const SYRS_FIXTURE = '### VHS-SYS-REQ-001: System One\n';
+const SYRS_FIXTURE =
+  '### VHS-SYS-REQ-001: System One\n\n' +
+  '- Status: Active\n' +
+  '- Verification References:\n  - `src/a.ts`\n';
 
 function makeFixtureFiles(overrides: Record<string, string> = {}): Record<string, string> {
   return {
@@ -232,6 +243,48 @@ describe('requirements cross-reference integrity guard', () => {
         subject: 'VHS-REQ-001',
         detail: "Verification Reference 'tests/unit/phantom.test.ts' is in the SRS block but not tracked in the RTM"
       }
+    ]);
+  });
+
+  it('extracts Verification References only from Active system requirement blocks', () => {
+    const syrs = [
+      '### VHS-SYS-REQ-001: Active One',
+      '',
+      '- Status: Active',
+      '- Verification References:',
+      '  - `src/a.ts`',
+      '  - `manual:x`',
+      '',
+      '### VHS-SYS-REQ-002: Retired Two',
+      '',
+      '- Status: Superseded',
+      '- Verification References:',
+      '  - `src/old.ts`',
+      ''
+    ].join('\n');
+
+    const map = extractSyrsVerificationReferences(syrs);
+    expect([...map.keys()]).toEqual(['VHS-SYS-REQ-001']);
+    expect(map.get('VHS-SYS-REQ-001')).toEqual(['src/a.ts', 'manual:x']);
+  });
+
+  it('passes system-requirement references when they resolve (skipping manual/external)', () => {
+    const cwd = path.join(path.sep, 'repo');
+    const references = new Map([['VHS-SYS-REQ-001', ['src/a.ts', 'manual:x', 'external:y']]]);
+
+    expect(checkSystemRequirementReferences(references, cwd, makeFileExists(cwd, ['src/a.ts']))).toEqual([]);
+  });
+
+  it('flags a dangling system-requirement reference and an empty Active block', () => {
+    const cwd = path.join(path.sep, 'repo');
+    const references = new Map([
+      ['VHS-SYS-REQ-001', ['src/missing.ts']],
+      ['VHS-SYS-REQ-002', []]
+    ]);
+
+    expect(checkSystemRequirementReferences(references, cwd, makeFileExists(cwd, ['src/a.ts']))).toEqual([
+      { subject: 'VHS-SYS-REQ-001', detail: "Verification Reference 'src/missing.ts' does not exist on disk" },
+      { subject: 'VHS-SYS-REQ-002', detail: 'Active system requirement has no Verification References' }
     ]);
   });
 

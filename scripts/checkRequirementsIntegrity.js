@@ -233,6 +233,58 @@ function checkReferenceAgreement(rtmRows, srsReferenceSections) {
   return violations;
 }
 
+// System requirements (syrs.md) carry their own Verification References. The
+// software-requirement RTM references are resolved by requirementsDocs.test.ts,
+// but nothing validated the system-requirement references - this closes that
+// asymmetry so a renamed or deleted file referenced by an Active system
+// requirement fails closed like a software-requirement reference does.
+function extractSyrsVerificationReferences(syrsText) {
+  const references = new Map();
+  const headingPattern = /^### (VHS-SYS-REQ-\d+):/gm;
+  const headings = [...syrsText.matchAll(headingPattern)];
+  for (let index = 0; index < headings.length; index += 1) {
+    const id = headings[index][1];
+    const start = headings[index].index;
+    const end = index + 1 < headings.length ? headings[index + 1].index : syrsText.length;
+    const body = syrsText.slice(start, end);
+    if (!/^- Status: Active$/m.test(body)) {
+      continue;
+    }
+    references.set(id, extractSectionReferences(body, 'Verification References'));
+  }
+  return references;
+}
+
+function checkSystemRequirementReferences(syrsVerificationReferences, cwd, fileExists) {
+  const violations = [];
+  for (const [id, references] of syrsVerificationReferences) {
+    if (references.length === 0) {
+      violations.push({
+        subject: id,
+        detail: 'Active system requirement has no Verification References'
+      });
+      continue;
+    }
+    for (const reference of references) {
+      if (reference.startsWith('manual:') || reference.startsWith('external:')) {
+        continue;
+      }
+      const cleanReference = reference.split('#')[0].trim();
+      if (cleanReference.length === 0) {
+        continue;
+      }
+      const absolutePath = path.join(cwd, ...cleanReference.split('/'));
+      if (!fileExists(absolutePath)) {
+        violations.push({
+          subject: id,
+          detail: `Verification Reference '${reference}' does not exist on disk`
+        });
+      }
+    }
+  }
+  return violations;
+}
+
 function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
   const readFile =
     deps.readFile ||
@@ -247,6 +299,7 @@ function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
 
   const systemRequirementIds = extractSystemRequirementIds(syrsText);
   const srsReferenceSections = extractSrsReferenceSections(srsText);
+  const syrsVerificationReferences = extractSyrsVerificationReferences(syrsText);
 
   const checks = [
     {
@@ -273,6 +326,11 @@ function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
       key: 'referenceAgreement',
       title: 'SRS block references match the RTM evidence map',
       violations: checkReferenceAgreement(rtmRows, srsReferenceSections)
+    },
+    {
+      key: 'systemRequirementReferences',
+      title: 'Active system requirement Verification References resolve on disk',
+      violations: checkSystemRequirementReferences(syrsVerificationReferences, cwd, fileExists)
     }
   ];
 
@@ -373,6 +431,8 @@ module.exports = {
   extractSectionReferences,
   extractSrsReferenceSections,
   checkReferenceAgreement,
+  extractSyrsVerificationReferences,
+  checkSystemRequirementReferences,
   checkRequirementsIntegrity,
   renderSummary,
   renderStepSummary,
