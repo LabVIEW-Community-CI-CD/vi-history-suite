@@ -2,6 +2,16 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
+## [Unreleased]
+
+### Added
+
+- VI History Suite now registers a built-in **Model Context Protocol (MCP)**
+  server with VS Code, so Copilot **agent mode** can summarize VI comparisons,
+  compare and walk VI revisions, index a repository's VIs, and fetch or validate
+  the published VI-diff schemas. See [docs/mcp-server.md](./docs/mcp-server.md).
+  Requires VS Code 1.101 or later (#756, #757).
+
 ## [1.33.2] - 2026-06-25
 
 ### Changed

@@ -188,6 +188,7 @@ docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
+docs/mcp-server.md,asset-doc,No,Copilot agent-mode MCP server and semantic VI-diff tool reference; documents the seven MCP tools and the published vi-history-suite schemas; reference documentation not directly mapped in RTM.
 docs/cm/cm-plan.md,asset-doc,Yes,Configuration management proof map for baselines change control status accounting standards audit cadence user-information review triggers and documentation-workbench status; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
 docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.md,asset-doc,No,Architecture decision record reference documentation for GitHub-first release and traceability governance; not directly mapped in RTM.
