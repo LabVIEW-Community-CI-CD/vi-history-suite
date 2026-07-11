@@ -2,7 +2,7 @@ Path,Classification,RtmCoverage,Notes
 scripts/auditCustomizationGovernance.js,mapped,Yes,Customization governance audit script for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
 scripts/checkRequirementsCsvColumns.js,mapped,Yes,Requirements CSV column-integrity guard; fails closed on any row whose column count differs from its header and prints the contract plus validated requirement IDs to the CI run summary; mapped to VHS-REQ-601.
-scripts/checkRequirementsIntegrity.js,mapped,Yes,Requirements cross-reference integrity guard; fails closed on dangling id-index anchors non-Active RTM parents missing inventory paths or unresolved replacement IDs and prints the contract to the CI run summary; mapped to VHS-REQ-601.
+scripts/checkRequirementsIntegrity.js,mapped,Yes,Requirements cross-reference integrity guard; fails closed on dangling id-index anchors non-Active RTM parents missing inventory paths unresolved replacement IDs SRS/RTM evidence-reference disagreement missing or unresolved system-requirement references and Active requirements without a verification reference; prints the contract to the CI run summary; mapped to VHS-REQ-601.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command with generated validation/evidence root exclusions; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
 scripts/checkDocumentationWorkbench.js,dev-only,No,Documentation workbench gate verifying the docs-authoring image documentation-workbench guide and docs:gate script surfaces exist and stay coherent; CI and dev documentation infrastructure.
