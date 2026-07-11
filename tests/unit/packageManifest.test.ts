@@ -262,4 +262,15 @@ describe('extension manifest public metadata', () => {
       expect(content, `${name} must not invoke the optional Vagrant helper`).not.toMatch(/vagrant/i);
     }
   });
+
+  it('contributes the opt-in strict RSRC header detection setting (VHS-REQ-003)', () => {
+    const manifest = readManifest();
+    const strictSetting = manifest.contributes?.configuration?.properties?.[
+      'viHistorySuite.strictRsrcHeader'
+    ] as { type?: string; default?: unknown } | undefined;
+
+    expect(strictSetting?.type).toBe('boolean');
+    // VHS-REQ-003: strict mode must remain opt-in (default off).
+    expect(strictSetting?.default).toBe(false);
+  });
 });
