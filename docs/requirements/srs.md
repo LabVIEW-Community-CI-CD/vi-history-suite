@@ -1920,6 +1920,9 @@ Missing numeric IDs are intentional.
     requirement's criteria a positional `VHS-REQ-NNN.M` id and reports which are
     cited at the criterion level by a verification-reference test (advisory; the
     positional ids are derived from srs.md bullet order, not annotated in it).
+  - A unified requirement verification-health report aggregates structural
+    integrity, requirement linkage, criterion citation, coverage risk, and
+    mutation score into a single advisory per-requirement signal.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
@@ -1964,6 +1967,7 @@ Missing numeric IDs are intentional.
   - `scripts/generateCloseoutEvidence.js`
   - `scripts/auditRequirementVerificationLinkage.js`
   - `scripts/auditRequirementCriteriaInventory.js`
+  - `scripts/verifyRequirementsHealth.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
@@ -1973,6 +1977,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/closeoutEvidenceScript.test.ts`
   - `tests/unit/requirementVerificationLinkage.test.ts`
   - `tests/unit/requirementCriteriaInventory.test.ts`
+  - `tests/unit/verifyRequirementsHealth.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the

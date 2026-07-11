@@ -1,0 +1,209 @@
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const {
+  computeMutationScore,
+  aggregateRequirementHealth,
+  verifyRequirementsHealth,
+  renderSummary,
+  renderStepSummary,
+  main
+} = require('../../scripts/verifyRequirementsHealth.js') as {
+  computeMutationScore: (report: unknown) => {
+    killed: number;
+    timeout: number;
+    survived: number;
+    noCoverage: number;
+    score: number | null;
+  };
+  aggregateRequirementHealth: (
+    linkage: unknown,
+    criteria: unknown,
+    coverage: unknown
+  ) => Array<{
+    reqId: string;
+    linkState: string;
+    criteriaCited: number;
+    criteriaTotal: number;
+    coverageRiskFiles: string[];
+    attention: boolean;
+  }>;
+  verifyRequirementsHealth: (cwd?: string, deps?: Record<string, unknown>) => Record<string, unknown>;
+  renderSummary: (result: unknown) => string;
+  renderStepSummary: (result: unknown) => string;
+  main: (argv?: string[], deps?: Record<string, unknown>) => number;
+};
+
+const LINKAGE = {
+  total: 4,
+  linked: ['VHS-REQ-001', 'VHS-REQ-004'],
+  unlinked: [{ reqId: 'VHS-REQ-002', testReferences: ['tests/unit/b.test.ts'] }],
+  manualOnly: ['VHS-REQ-003']
+};
+
+const CRITERIA = {
+  totalRequirements: 4,
+  totalCriteria: 5,
+  citedCriteria: 2,
+  uncitedCriteria: 3,
+  requirements: [
+    {
+      reqId: 'VHS-REQ-001',
+      criteriaCount: 2,
+      criteria: [
+        { criterionId: 'VHS-REQ-001.1', ordinal: 1, text: 'a', cited: true },
+        { criterionId: 'VHS-REQ-001.2', ordinal: 2, text: 'b', cited: false }
+      ]
+    },
+    {
+      reqId: 'VHS-REQ-004',
+      criteriaCount: 1,
+      criteria: [{ criterionId: 'VHS-REQ-004.1', ordinal: 1, text: 'c', cited: true }]
+    }
+  ]
+};
+
+const INTEGRITY_PASS = { success: true, violationCount: 0, checks: [] };
+
+const COVERAGE_WITH_RISK = {
+  riskThreshold: 50,
+  mappedBelowThreshold: [{ path: 'src/a.ts', requirementIds: ['VHS-REQ-001'] }]
+};
+
+const MUTATION = { killed: 40, timeout: 0, survived: 9, noCoverage: 0, score: 81.63 };
+
+describe('requirement verification health (VHS-REQ-601)', () => {
+  it('computes the Stryker mutation score from detected over valid mutants', () => {
+    const report = {
+      files: {
+        'a.ts': {
+          mutants: [{ status: 'Killed' }, { status: 'Survived' }, { status: 'Timeout' }]
+        },
+        'b.ts': {
+          mutants: [{ status: 'NoCoverage' }, { status: 'Ignored' }, { status: 'CompileError' }]
+        }
+      }
+    };
+
+    const score = computeMutationScore(report);
+    expect(score).toMatchObject({ killed: 1, timeout: 1, survived: 1, noCoverage: 1 });
+    // detected = 2 (killed + timeout); valid = 4 (detected + survived + noCoverage) => 50%.
+    expect(score.score).toBe(50);
+  });
+
+  it('returns a null score when there are no valid mutants', () => {
+    expect(computeMutationScore({ files: {} }).score).toBeNull();
+  });
+
+  it('aggregates per-requirement link state, criterion citation, and coverage risk', () => {
+    const requirements = aggregateRequirementHealth(LINKAGE, CRITERIA, COVERAGE_WITH_RISK);
+
+    expect(requirements.map((entry) => entry.reqId)).toEqual([
+      'VHS-REQ-001',
+      'VHS-REQ-002',
+      'VHS-REQ-003',
+      'VHS-REQ-004'
+    ]);
+
+    const alpha = requirements.find((entry) => entry.reqId === 'VHS-REQ-001');
+    expect(alpha).toMatchObject({ linkState: 'linked', criteriaCited: 1, criteriaTotal: 2 });
+    expect(alpha?.coverageRiskFiles).toEqual(['src/a.ts']);
+    expect(alpha?.attention).toBe(true); // coverage risk
+
+    expect(requirements.find((entry) => entry.reqId === 'VHS-REQ-002')).toMatchObject({
+      linkState: 'unlinked',
+      attention: true
+    });
+    expect(requirements.find((entry) => entry.reqId === 'VHS-REQ-003')).toMatchObject({
+      linkState: 'manual',
+      attention: false
+    });
+    expect(requirements.find((entry) => entry.reqId === 'VHS-REQ-004')).toMatchObject({
+      attention: false
+    });
+  });
+
+  it('reports ATTENTION with unlinked and coverage-risk requirements', () => {
+    const result = verifyRequirementsHealth('/repo', {
+      linkage: LINKAGE,
+      criteria: CRITERIA,
+      integrity: INTEGRITY_PASS,
+      coverage: COVERAGE_WITH_RISK,
+      mutation: MUTATION
+    });
+
+    expect(result.activeRequirements).toBe(4);
+    expect(result.healthy).toBe(false);
+    expect((result.attention as unknown[]).length).toBe(2);
+    expect(result.coverage).toMatchObject({ available: true, requirementsWithRisk: 1 });
+    expect(result.mutation).toMatchObject({ available: true, score: 81.63 });
+  });
+
+  it('reports HEALTHY when linkage and coverage are clean', () => {
+    const result = verifyRequirementsHealth('/repo', {
+      linkage: { total: 2, linked: ['VHS-REQ-001', 'VHS-REQ-004'], unlinked: [], manualOnly: [] },
+      criteria: CRITERIA,
+      integrity: INTEGRITY_PASS,
+      coverage: { riskThreshold: 50, mappedBelowThreshold: [] },
+      mutation: MUTATION
+    });
+
+    expect(result.healthy).toBe(true);
+    expect((result.attention as unknown[]).length).toBe(0);
+    const summary = renderSummary(result);
+    expect(summary).toContain('Overall: HEALTHY');
+    expect(summary).toContain('does not fail CI');
+  });
+
+  it('marks coverage and mutation unavailable when their artifacts are absent', () => {
+    const result = verifyRequirementsHealth('/repo', {
+      linkage: { total: 1, linked: ['VHS-REQ-001'], unlinked: [], manualOnly: [] },
+      criteria: CRITERIA,
+      integrity: INTEGRITY_PASS,
+      coverage: null,
+      mutation: null
+    });
+
+    expect(result.coverage).toEqual({ available: false });
+    expect(result.mutation).toEqual({ available: false });
+    expect(result.healthy).toBe(true);
+    expect(renderSummary(result)).toContain('Coverage risk: not available');
+    expect(renderStepSummary(result)).toContain('Mutation (advisory): not available');
+  });
+
+  it('main writes the report and step summary and always returns 0 (advisory)', () => {
+    const stdoutChunks: string[] = [];
+    const summaryChunks: string[] = [];
+
+    const code = main([], {
+      linkage: LINKAGE,
+      criteria: CRITERIA,
+      integrity: INTEGRITY_PASS,
+      coverage: COVERAGE_WITH_RISK,
+      mutation: MUTATION,
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) },
+      stepSummaryPath: '/tmp/summary.md',
+      appendStepSummary: (_filePath: string, content: string) => summaryChunks.push(content)
+    });
+
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toContain('[requirements-verify] Overall: ATTENTION');
+    expect(summaryChunks.join('')).toContain('## Requirement Verification Health');
+  });
+
+  it('verifies the real repository aggregate is healthy', () => {
+    const repoRoot = path.resolve(__dirname, '..', '..');
+    const result = verifyRequirementsHealth(repoRoot) as {
+      activeRequirements: number;
+      integrity: { success: boolean };
+      linkage: { unlinked: number };
+      criteria: { total: number };
+    };
+
+    expect(result.activeRequirements).toBeGreaterThan(20);
+    expect(result.integrity.success).toBe(true);
+    expect(result.linkage.unlinked).toBe(0);
+    expect(result.criteria.total).toBeGreaterThan(100);
+  });
+});
