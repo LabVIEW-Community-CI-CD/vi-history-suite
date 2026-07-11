@@ -247,4 +247,19 @@ describe('extension manifest public metadata', () => {
     expect(manifest.scripts).not.toHaveProperty('acceptance:windows:private-release');
     expect(manifest.scripts).not.toHaveProperty('test:design-contract');
   });
+
+  it('keeps Vagrant out of hosted CI so it stays an optional human helper (VHS-REQ-599)', () => {
+    // VHS-REQ-599: Vagrant is an optional human-run validation helper, never a
+    // release gate — no hosted CI workflow may invoke it.
+    const workflowsDirectory = path.resolve(__dirname, '..', '..', '.github', 'workflows');
+    const workflowFiles = fs
+      .readdirSync(workflowsDirectory)
+      .filter((name) => name.endsWith('.yml') || name.endsWith('.yaml'));
+
+    expect(workflowFiles.length).toBeGreaterThan(0);
+    for (const name of workflowFiles) {
+      const content = fs.readFileSync(path.join(workflowsDirectory, name), 'utf8');
+      expect(content, `${name} must not invoke the optional Vagrant helper`).not.toMatch(/vagrant/i);
+    }
+  });
 });
