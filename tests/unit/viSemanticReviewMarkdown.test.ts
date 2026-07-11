@@ -98,4 +98,12 @@ describe('renderViSemanticHistoryMarkdown', () => {
     expect(md).toContain('`bbbb1111` blocked step');
     expect(md).toContain('blocked-selection | -');
   });
+
+  it('escapes backslashes before pipes in table cells', () => {
+    const history = sampleHistory();
+    history.steps[0].subject = 'path C:\\a | b';
+    const md = renderViSemanticHistoryMarkdown(history);
+    // Backslash is doubled first, then the pipe is escaped.
+    expect(md).toContain('path C:\\\\a \\| b');
+  });
 });

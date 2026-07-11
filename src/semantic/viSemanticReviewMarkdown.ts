@@ -20,7 +20,13 @@ function surfaceList(surfaces: readonly ViChangeSurface[]): string {
 }
 
 function escapeCell(text: string): string {
-  return text.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ').trim();
+  // Escape backslashes first, then table-breaking pipes, so a literal backslash
+  // in the input cannot corrupt the pipe escaping (js/incomplete-sanitization).
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|')
+    .replace(/\r?\n/g, ' ')
+    .trim();
 }
 
 /**
