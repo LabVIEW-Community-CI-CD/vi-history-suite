@@ -150,7 +150,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004)', () => {
+  it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004.1, VHS-REQ-004.2, VHS-REQ-004.3)', () => {
     const manifest = readManifest();
     const expectedMenuEntry = {
       command: 'labviewViHistory.open',
@@ -186,7 +186,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084, VHS-REQ-012)', () => {
+  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084, VHS-REQ-012.3)', () => {
     const manifest = readManifest();
 
     expect(manifest.main).toBe('./out/extension.js');
@@ -263,14 +263,14 @@ describe('extension manifest public metadata', () => {
     }
   });
 
-  it('contributes the opt-in strict RSRC header detection setting (VHS-REQ-003)', () => {
+  it('contributes the opt-in strict RSRC header detection setting (VHS-REQ-003.3)', () => {
     const manifest = readManifest();
     const strictSetting = manifest.contributes?.configuration?.properties?.[
       'viHistorySuite.strictRsrcHeader'
     ] as { type?: string; default?: unknown } | undefined;
 
     expect(strictSetting?.type).toBe('boolean');
-    // VHS-REQ-003: strict mode must remain opt-in (default off).
+    // VHS-REQ-003.3: strict mode must remain opt-in (default off).
     expect(strictSetting?.default).toBe(false);
   });
 });

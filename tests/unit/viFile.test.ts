@@ -26,7 +26,7 @@ afterEach(async () => {
 });
 
 describe('viFile', () => {
-  it('returns only the bytes actually read up to the minimum header length (VHS-REQ-010)', async () => {
+  it('returns only the bytes actually read up to the minimum header length (VHS-REQ-010.1)', async () => {
     const tempRoot = await createTempDirectory();
     const shortFile = path.join(tempRoot, 'short.bin');
     const longFile = path.join(tempRoot, 'long.vi');
@@ -46,7 +46,7 @@ describe('viFile', () => {
     expect(Buffer.from(longProbe)).toEqual(longBuffer.subarray(0, 12));
   });
 
-  it('fails closed to undefined when the filesystem signature probe cannot be completed (VHS-REQ-010)', async () => {
+  it('fails closed to undefined when the filesystem signature probe cannot be completed (VHS-REQ-010.2)', async () => {
     await expect(
       detectViSignatureFromFsPath('/tmp/vi-history-suite-missing-file.vi', {
         strictRsrcHeader: true
