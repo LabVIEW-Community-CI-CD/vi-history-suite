@@ -10,6 +10,7 @@ import {
 } from '../../src/semantic/viSemanticComparisonMcp';
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
 import type { ViSemanticHistory } from '../../src/semantic/viSemanticHistory';
+import type { ViRepositoryIndex } from '../../src/semantic/viRepositoryIndex';
 import {
   buildViSemanticComparisonModelFromHtml,
   VI_SEMANTIC_COMPARISON_SCHEMA
@@ -65,7 +66,8 @@ describe('viSemanticComparisonMcp', () => {
       'summarize_vi_comparison',
       'get_vi_semantic_comparison',
       'compare_vi_revisions',
-      'summarize_vi_history'
+      'summarize_vi_history',
+      'index_repository_vis'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -179,6 +181,19 @@ describe('viSemanticComparisonMcp', () => {
         id: 31,
         method: 'tools/call',
         params: { name: 'summarize_vi_history', arguments: {} }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('requires the async MCP server');
+  });
+
+  it('directs a synchronous index_repository_vis call to the async entrypoint', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 32,
+        method: 'tools/call',
+        params: { name: 'index_repository_vis', arguments: {} }
       })
     ) as { content: Array<{ text: string }>; isError: boolean };
     expect(result.isError).toBe(true);
@@ -409,6 +424,56 @@ describe('viSemanticComparisonMcp', () => {
       expect(response.isError).toBe(false);
       expect(response.content[0].text).toContain('### VI history: Widget.vi');
       expect(response.content[0].text).toContain('| Revision | Changed | Surfaces |');
+    });
+
+    const indexCall = (args: unknown, id = 50) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'tools/call' as const,
+      params: { name: 'index_repository_vis', arguments: args }
+    });
+
+    it('returns the repository index JSON for index_repository_vis', async () => {
+      const index = {
+        schema: 'vi-history-suite/vi-repository-index@v1',
+        repositoryRoot: '/repo',
+        viCount: 1,
+        indexedCount: 1,
+        vis: [{ relativePath: 'vis/A.vi', revisionCount: 3 }],
+        narrative: 'Repository tracks 1 VI.'
+      } as ViRepositoryIndex;
+      const buildViRepositoryIndex = vi.fn(async (): Promise<ViRepositoryIndex> => index);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(indexCall({ repositoryRoot: '/repo', maxVis: 10 }), {
+          buildViRepositoryIndex
+        })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(buildViRepositoryIndex).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryRoot: '/repo', maxVis: 10 })
+      );
+      const parsed = JSON.parse(response.content[0].text) as { schema: string };
+      expect(parsed.schema).toBe('vi-history-suite/vi-repository-index@v1');
+    });
+
+    it('reports a wired-up error when the index orchestrator is not injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(indexCall({ repositoryRoot: '/repo' }))
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
+    });
+
+    it('rejects invalid index arguments before invoking the orchestrator', async () => {
+      const buildViRepositoryIndex = vi.fn(
+        async (): Promise<ViRepositoryIndex> => ({}) as ViRepositoryIndex
+      );
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(indexCall({}), { buildViRepositoryIndex })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('repositoryRoot is required');
+      expect(buildViRepositoryIndex).not.toHaveBeenCalled();
     });
   });
 });

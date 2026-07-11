@@ -15,6 +15,7 @@ import {
   renderViSemanticComparisonMarkdown,
   renderViSemanticHistoryMarkdown
 } from './viSemanticReviewMarkdown';
+import type { ViRepositoryIndex, ViRepositoryIndexInput } from './viRepositoryIndex';
 
 /**
  * Minimal Model Context Protocol surface over the VI comparison engine. This is
@@ -188,6 +189,22 @@ const HISTORY_INPUT_SCHEMA = {
   required: ['repositoryRoot', 'relativePath']
 } as const;
 
+const REPOSITORY_INDEX_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    repositoryRoot: {
+      type: 'string',
+      description: 'Absolute path to the Git repository to survey.'
+    },
+    maxVis: {
+      type: 'number',
+      description:
+        'Cap on how many VIs to detail, activity-ranked. Defaults to 100; bounded to 500.'
+    }
+  },
+  required: ['repositoryRoot']
+} as const;
+
 export const VI_SEMANTIC_MCP_TOOLS = [
   {
     name: 'summarize_vi_comparison',
@@ -215,6 +232,14 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'returning a vi-history-suite/vi-semantic-history@v1 evolution timeline (per-transition ' +
       'narratives plus an aggregate story). Requires a comparison runtime; a run may take several minutes.',
     inputSchema: HISTORY_INPUT_SCHEMA
+  },
+  {
+    name: 'index_repository_vis',
+    description:
+      "Survey a Git repository's tracked VIs and return a vi-history-suite/vi-repository-index@v1 " +
+      'index (each VI with its revision count and latest change, activity-ranked). Pure Git; no ' +
+      'comparison runtime required.',
+    inputSchema: REPOSITORY_INDEX_INPUT_SCHEMA
   }
 ] as const;
 
@@ -305,7 +330,11 @@ export function handleViSemanticMcpMessage(
       if (typeof params.name !== 'string') {
         return failure(id, JSON_RPC_INVALID_PARAMS, 'tools/call requires a string "name"');
       }
-      if (params.name === 'compare_vi_revisions' || params.name === 'summarize_vi_history') {
+      if (
+        params.name === 'compare_vi_revisions' ||
+        params.name === 'summarize_vi_history' ||
+        params.name === 'index_repository_vis'
+      ) {
         // These invoking tools run real comparisons and are only available
         // through the async server entrypoint, which injects the orchestrators.
         return success(
@@ -412,6 +441,25 @@ function renderHistoryResult(
   return toolTextResult(JSON.stringify(history, null, 2));
 }
 
+function parseRepositoryIndexArguments(rawArguments: unknown): ViRepositoryIndexInput {
+  if (typeof rawArguments !== 'object' || rawArguments === null) {
+    throw new Error('tool arguments must be an object');
+  }
+  const args = rawArguments as Record<string, unknown>;
+  if (typeof args.repositoryRoot !== 'string' || args.repositoryRoot.length === 0) {
+    throw new Error('repositoryRoot is required and must be a non-empty string');
+  }
+  const input: ViRepositoryIndexInput = { repositoryRoot: args.repositoryRoot };
+  if (typeof args.maxVis === 'number') {
+    input.maxVis = args.maxVis;
+  }
+  return input;
+}
+
+function renderRepositoryIndexResult(index: ViRepositoryIndex): unknown {
+  return toolTextResult(JSON.stringify(index, null, 2));
+}
+
 export interface ViSemanticMcpAsyncDeps {
   /**
    * Runtime orchestrator that invokes a real comparison. Injected by the stdio
@@ -425,6 +473,12 @@ export interface ViSemanticMcpAsyncDeps {
    * reports a wired-up error.
    */
   buildViSemanticHistory?: (input: ViSemanticHistoryInput) => Promise<ViSemanticHistory>;
+  /**
+   * Repository-index orchestrator that surveys a repo's tracked VIs (pure Git).
+   * Injected by the stdio entrypoint; when absent, `index_repository_vis`
+   * reports a wired-up error.
+   */
+  buildViRepositoryIndex?: (input: ViRepositoryIndexInput) => Promise<ViRepositoryIndex>;
 }
 
 async function invokeInjectedTool<TInput, TResult>(
@@ -479,6 +533,15 @@ export async function handleViSemanticMcpMessageAsync(
         deps.buildViSemanticHistory,
         () => parseHistoryArguments(params.arguments),
         (history) => renderHistoryResult(history, format)
+      );
+    }
+    if (params.name === 'index_repository_vis') {
+      return invokeInjectedTool(
+        id,
+        'index_repository_vis',
+        deps.buildViRepositoryIndex,
+        () => parseRepositoryIndexArguments(params.arguments),
+        renderRepositoryIndexResult
       );
     }
   }
