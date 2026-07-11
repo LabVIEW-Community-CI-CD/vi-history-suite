@@ -35,7 +35,11 @@ argument-hint: 'Optional requirement ID, for example VHS-REQ-610'
 3. `npm test`
 4. `npm run docs:links` (when docs changed)
 5. `npm run coverage:map` (after `npm test` when risk mapping is needed)
-6. `bash .github/skills/testing-automation/scripts/run-pr-gates.sh --skip-install` (before PR handoff)
+6. `npm run requirements:linkage` (a verification test cites the requirement ID; enforced fail-closed in CI) and `npm run requirements:criteria` (acceptance-criteria inventory + criterion-level `VHS-REQ-NNN.M` citation)
+7. `npm run requirements:verify` for the unified requirement-health signal (add `:strict` as a local pre-push gate)
+8. `bash .github/skills/testing-automation/scripts/run-pr-gates.sh --skip-install` (before PR handoff)
+
+When adding a new requirement or coverage guard script, mirror the advisory-guard pattern in [scripts/auditRequirementVerificationLinkage.js](../../../scripts/auditRequirementVerificationLinkage.js): pure helper functions plus a thin `main(argv, deps)` CLI, `renderSummary`/`renderStepSummary` (GITHUB_STEP_SUMMARY), advisory by default with an opt-in `--enforce`/`--strict`, fixture-injected dependencies for unit tests, and a mapping under VHS-REQ-601 (requirements tooling) or VHS-REQ-613 (coverage/assertion-quality tooling).
 
 ## Output Contract
 Use the required PR evidence fields in [.github/pull_request_template.md](../../../.github/pull_request_template.md):
