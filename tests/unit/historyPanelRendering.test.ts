@@ -90,6 +90,18 @@ describe('historyPanelRendering', () => {
     });
   });
 
+  describe('per-revision preview button (VHS-REQ-659)', () => {
+    it('shows the Preview button when VI Preview is enabled and comparison is available', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel(), { previewEnabled: true });
+      expect(html).toContain('data-testid="history-action-preview"');
+    });
+
+    it('hides the Preview button when VI Preview is disabled (opt-in default)', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel(), { previewEnabled: false });
+      expect(html).not.toContain('data-testid="history-action-preview"');
+    });
+  });
+
   describe('working-tree comparison (VHS-REQ-641)', () => {
     it('renders a selectable working-tree row when uncommitted changes are present', () => {
       const model = createTestViewModel({

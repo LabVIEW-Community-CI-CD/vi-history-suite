@@ -92,7 +92,10 @@ export function deriveCompareSelectionState(
   return { count: validCandidates.length, status: 'too-many' };
 }
 
-export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
+export function renderHistoryPanelHtml(
+  model: ViHistoryViewModel,
+  options: { previewEnabled?: boolean } = {}
+): string {
   const capabilities = model.surfaceCapabilities ?? {};
   const comparisonSelectionEnabled = capabilities.comparisonGenerationAvailable !== false;
   const commitCount = model.commits.length;
@@ -123,13 +126,16 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       } />`;
       // VHS-REQ-659: per-revision preview opens that commit's VI in the read-only
       // preview editor. Shown only when comparison/runtime surfaces are available
-      // (same gate as compare); the shared webview click handler posts
-      // { command: 'previewRevision', hash }.
-      const previewButton = comparisonSelectionEnabled
-        ? `<button data-testid="history-action-preview" class="row-preview" data-command="previewRevision" data-hash="${escapeHtml(
-            commit.hash
-          )}" title="Preview this revision">Preview</button>`
-        : '';
+      // (same gate as compare) AND the opt-in VI Preview feature is enabled
+      // (`viHistorySuite.preview.enabled`; the pure renderer defaults to shown so
+      // existing callers/tests are unaffected — the extension passes the real
+      // state). The shared webview click handler posts { command: 'previewRevision', hash }.
+      const previewButton =
+        comparisonSelectionEnabled && options.previewEnabled !== false
+          ? `<button data-testid="history-action-preview" class="row-preview" data-command="previewRevision" data-hash="${escapeHtml(
+              commit.hash
+            )}" title="Preview this revision">Preview</button>`
+          : '';
 
       return `
         <tr data-testid="history-row" data-commit-index="${index}">

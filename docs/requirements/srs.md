@@ -4116,14 +4116,21 @@ Missing numeric IDs are intentional.
     error 1125 — the selected LabVIEW is likely too old — otherwise
     `command-exited-nonzero`; a zero exit that leaves no document is
     `preview-output-not-produced`), or `blocked`.
+  - VI Preview is opt-in: the `viHistorySuite.preview.enabled` setting defaults
+    to `false`, so a freshly installed extension renders nothing until the user
+    turns it on. When off, the custom editor shows an enable prompt (no render),
+    the history-panel per-revision **Preview** button is hidden, and the
+    `previewRevision` command reports that the feature is off (`isViPreviewEnabled`
+    reads the setting).
   - Opening a `.vi`, `.vit`, `.vim`, or `.ctl` file activates the
     `viHistorySuite.viPreview` read-only custom editor (registered at `default`
-    priority), which renders the file through the configured comparison runtime
-    (mapped by `mapComparisonRuntimeSelectionToViPreview`, which supports
-    host-native, Linux-container, and Windows-container runtimes and blocks only
-    unavailable runtimes) and displays the produced document. In an untrusted
-    workspace the editor shows a disabled-preview message and never launches an
-    external process.
+    priority); when VI Preview is enabled it renders the file through the
+    configured comparison runtime (mapped by
+    `mapComparisonRuntimeSelectionToViPreview`, which supports host-native,
+    Linux-container, and Windows-container runtimes and blocks only unavailable
+    runtimes) and displays the produced document. In an untrusted workspace the
+    editor shows a disabled-preview message and never launches an external
+    process.
   - `buildViPreviewWebviewHtml` injects a strict Content-Security-Policy
     (`script-src 'none'`, `img-src data:`, inline styles only) into the rendered
     LabVIEW document, and renders themed loading and error states carrying the

@@ -196,6 +196,11 @@ async function testViPreviewRenderWhenRuntimeAvailable(): Promise<void> {
   );
   const sampleViPath = path.join(operationDirectory, 'PrintToSingleFileHtml', 'Make path absolute.vi');
 
+  // VI Preview is opt-in; enable it so the custom editor renders (not the gate).
+  await vscode.workspace
+    .getConfiguration('viHistorySuite')
+    .update('preview.enabled', true, vscode.ConfigurationTarget.Global);
+
   // Exercise the real custom editor host binding (opens + renders in a webview).
   await vscode.commands.executeCommand(
     'vscode.openWith',

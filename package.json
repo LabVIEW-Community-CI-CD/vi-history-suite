@@ -210,6 +210,11 @@
           "type": "string",
           "description": "Which LabVIEW Docker image to use for Docker comparisons (for example 2026q1-windows). Leave empty to use the newest supported image. Run the VI History: Runtime & Report Settings command to pick from images available on Docker Hub or already downloaded; new National Instruments patches and years appear automatically."
         },
+        "viHistorySuite.preview.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Turn on VI Preview: opening a LabVIEW VI (.vi/.vit/.vim/.ctl) renders it as a read-only picture of its front panel and block diagram. Off by default — turn this on after installing to use previews. Previews run LabVIEW (Host or Docker), so the first open can be slow."
+        },
         "viHistorySuite.preview.backgroundWarming": {
           "type": "string",
           "enum": [

@@ -46,6 +46,7 @@ import { isWorktreeRevision, runGit, WORKTREE_REVISION_SENTINEL } from '../git/g
 import { materializeRevisionViTree, parseLsTreeOutput } from '../git/revisionViTree';
 import { readRevisionBlob } from '../reporting/comparisonReportPreflight';
 import { VI_PREVIEW_VIEW_TYPE } from '../ui/viPreviewEditor';
+import { isViPreviewEnabled } from '../ui/viPreviewRenderHost';
 
 interface ComparisonRuntimePanelDetail {
   label: string;
@@ -229,7 +230,7 @@ export function createOpenViHistoryCommand(
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
-    const renderedHtml = renderHistoryPanelHtml(model);
+    const renderedHtml = renderHistoryPanelHtml(model, { previewEnabled: isViPreviewEnabled() });
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
       `VI History: ${path.basename(targetUri.fsPath)}`,
@@ -711,7 +712,7 @@ export function createOpenViHistoryCommand(
             const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
             if (selectedCommit && (!baseHash || selectedCommit.previousHash === baseHash)) {
               selectedCommit.retainedComparisonEvidenceAvailable = true;
-              safeUpdatePanelHtml(renderHistoryPanelHtml(model));
+              safeUpdatePanelHtml(renderHistoryPanelHtml(model, { previewEnabled: isViPreviewEnabled() }));
             }
           }
         }
@@ -866,7 +867,7 @@ export function createOpenViHistoryCommand(
             model,
             hasRetainedComparisonReport
           );
-          panel.webview.html = renderHistoryPanelHtml(model);
+          panel.webview.html = renderHistoryPanelHtml(model, { previewEnabled: isViPreviewEnabled() });
         }
         return;
       }
@@ -1163,6 +1164,12 @@ export function createOpenViHistoryCommand(
       }
 
       if (command === 'previewRevision') {
+        if (!isViPreviewEnabled()) {
+          void vscode.window.showInformationMessage(
+            'VI Preview is off. Turn on the "VI History Suite › Preview: Enabled" setting (viHistorySuite.preview.enabled) to preview revisions.'
+          );
+          return;
+        }
         if (!hash) {
           void vscode.window.showInformationMessage(
             'VI History could not determine which revision to preview.'
