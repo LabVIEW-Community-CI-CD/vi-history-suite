@@ -465,6 +465,11 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     expect(html).toContain('Block Diagram Overview');
     expect(html).toContain('VI Version : changed from &quot;21.0&quot; to &quot;20.0&quot;');
     expect(html).toContain('archived-blocked');
+    // VHS-REQ-610: each pair with a parsed report leads with a concise semantic
+    // "what changed" narrative derived from the shared VI semantic model.
+    expect(html).toContain('data-testid="dashboard-entry-change-summary"');
+    expect(html).toContain('What changed:');
+    expect(html).toContain('The front panel and block diagram differ.');
     expect(reportProgress).toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.stringContaining('Concentrating retained comparison-report metadata')

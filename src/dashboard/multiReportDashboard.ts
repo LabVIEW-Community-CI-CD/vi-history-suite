@@ -14,6 +14,7 @@ import {
   ParsedNiComparisonReport,
   parseNiComparisonReportFile
 } from './niComparisonReportParser';
+import { buildViSemanticComparisonModel } from '../semantic/viSemanticModel';
 import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel';
 
 const DASHBOARDS_DIRECTORY = 'dashboards';
@@ -604,6 +605,18 @@ export function renderMultiReportDashboardHtml(
             .join('\n')
         : '<div class="note" data-testid="dashboard-entry-detail-metadata">No detailed-information metadata is currently retained for this pair.</div>';
 
+      // VHS-REQ-610: lead each reviewed pair with a concise, human-readable
+      // "what changed" narrative derived from the shared VI semantic model, so
+      // reviewers get the gist before scanning the attribute/detail ledgers.
+      const changeSummaryHtml = parsed
+        ? `<div class="entry-change-summary" data-testid="dashboard-entry-change-summary"><strong>What changed:</strong> ${escapeHtml(
+            buildViSemanticComparisonModel({
+              report: parsed,
+              revisions: { baseHash: entry.baseHash, selectedHash: entry.selectedHash }
+            }).narrative
+          )}</div>`
+        : '';
+
       return `<section class="entry" data-testid="dashboard-entry" data-entry-index="${index}">
 	        <div class="entry-header">
 	          <h2>Pair ${index + 1} of ${record.entries.length}: ${escapeHtml(
@@ -617,6 +630,7 @@ export function renderMultiReportDashboardHtml(
             <strong>Report:</strong> ${escapeHtml(entry.reportStatus ?? 'missing-packet')} ·
             <strong>Runtime:</strong> ${escapeHtml(entry.runtimeExecutionState ?? 'not-run')}
           </div>
+          ${changeSummaryHtml}
         </div>
         <div class="entry-grid" data-testid="dashboard-entry-provenance">
 	          <div><strong>Selected hash:</strong> <code>${escapeHtml(entry.selectedHash)}</code></div>
