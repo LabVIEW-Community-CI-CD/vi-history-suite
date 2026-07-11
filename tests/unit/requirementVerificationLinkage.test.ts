@@ -31,12 +31,13 @@ const {
       appendStepSummary?: (filePath: string, content: string) => void;
     }
   ) => LinkageResult;
-  renderSummary: (result: LinkageResult) => string;
-  renderStepSummary: (result: LinkageResult) => string;
+  renderSummary: (result: LinkageResult, options?: { enforce?: boolean }) => string;
+  renderStepSummary: (result: LinkageResult, options?: { enforce?: boolean }) => string;
   main: (
     argv?: string[],
     deps?: {
       cwd?: string;
+      enforce?: boolean;
       readFile?: (relativePath: string) => string | undefined;
       stdout?: { write: (chunk: string) => void };
       stepSummaryPath?: string;
@@ -138,6 +139,53 @@ describe('requirement verification-linkage report (VHS-REQ-601)', () => {
     expect(code).toBe(0);
     expect(stdoutChunks.join('')).toContain('[requirements-linkage] Unlinked');
     expect(summaryChunks.join('')).toContain('## Requirement Verification Linkage');
+  });
+
+  it('fails closed under --enforce when a requirement is unlinked (VHS-REQ-601)', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--enforce'], {
+      readFile: makeReadFile(FIXTURE_FILES),
+      stdout: { write: (chunk) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(1);
+    expect(stdoutChunks.join('')).toContain('Enforcing (--enforce): failing');
+  });
+
+  it('passes under --enforce when every requirement is linked and manual-only never fails (VHS-REQ-601)', () => {
+    const linkedFiles: Record<string, string> = {
+      'docs/requirements/rtm.csv':
+        'ReqID,ParentID,Status,Area,Title,ImplementationRefs,VerificationRefs,Notes\n' +
+        'VHS-REQ-001,VHS-SYS-REQ-001,Active,Area,Alpha,src/a.ts,tests/unit/a.test.ts,ok\n' +
+        'VHS-REQ-003,VHS-SYS-REQ-001,Active,Area,Gamma,src/c.ts,manual:something,ok\n',
+      'tests/unit/a.test.ts': "it('does alpha (VHS-REQ-001)', () => {});"
+    };
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--enforce'], {
+      readFile: makeReadFile(linkedFiles),
+      stdout: { write: (chunk) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toContain(
+      'Enforcing (--enforce): all Active requirements are linked.'
+    );
+  });
+
+  it('renders enforcement wording only when enforcing (VHS-REQ-601)', () => {
+    const result = auditRequirementVerificationLinkage('/repo', {
+      readFile: makeReadFile(FIXTURE_FILES)
+    });
+
+    expect(renderSummary(result, { enforce: true })).toContain('Enforcing (--enforce)');
+    expect(renderSummary(result, { enforce: true })).not.toContain('does not fail CI');
+    expect(renderSummary(result)).toContain('does not fail CI');
+    expect(renderStepSummary(result, { enforce: true })).toContain(
+      'this step fails when any Active requirement is unlinked'
+    );
+    expect(renderStepSummary(result)).toContain('does not fail CI');
   });
 
   it('reports VHS-REQ-601 itself as linked on the real repository', () => {

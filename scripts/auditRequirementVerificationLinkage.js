@@ -10,8 +10,10 @@
  * of its verification-reference test files cite the requirement ID in-file, so a
  * reader or agent grepping `VHS-REQ-NNN` finds the tests that verify it?
  *
- * It is ADVISORY and never fails closed (exit 0). Each Active requirement is
- * classified as:
+ * It is ADVISORY by default (exit 0). Passing --enforce makes it fail closed
+ * (exit 1) when any Active requirement is unlinked; CI runs it in --enforce mode
+ * now that the backlog is drained. Manual/external-only requirements never fail.
+ * Each Active requirement is classified as:
  *   - linked           - at least one citeable verification test file cites the ID;
  *   - unlinked         - it has citeable verification test files but none cite the ID;
  *   - manual/external  - it has no citeable test file (verification is manual: or
@@ -106,7 +108,7 @@ function auditRequirementVerificationLinkage(cwd = process.cwd(), deps = {}) {
   return { total: activeRows.length, ...linkage };
 }
 
-function renderSummary(result) {
+function renderSummary(result, options = {}) {
   const lines = [];
   lines.push(`[requirements-linkage] Active requirements: ${result.total}`);
   lines.push(`[requirements-linkage] Linked (a verification test cites the ID): ${result.linked.length}`);
@@ -122,19 +124,32 @@ function renderSummary(result) {
     );
     lines.push(`  - ${result.manualOnly.join(', ')}`);
   }
-  lines.push('[requirements-linkage] Advisory report; verification-linkage does not fail CI.');
+  if (options.enforce) {
+    lines.push(
+      result.unlinked.length > 0
+        ? '[requirements-linkage] Enforcing (--enforce): failing because at least one Active requirement is unlinked.'
+        : '[requirements-linkage] Enforcing (--enforce): all Active requirements are linked.'
+    );
+  } else {
+    lines.push('[requirements-linkage] Advisory report; verification-linkage does not fail CI.');
+  }
   return lines.join('\n');
 }
 
-function renderStepSummary(result) {
+function renderStepSummary(result, options = {}) {
   const lines = [];
   lines.push('## Requirement Verification Linkage');
   lines.push('');
   lines.push(
-    '**Advisory report.** For each Active requirement, at least one of its RTM ' +
-      'verification-reference test files should cite the requirement ID in-file so the verifying ' +
-      'tests are discoverable by grepping the ID. The RTM remains the authoritative ' +
-      'requirement-to-test linkage; this signal is discoverability polish and does not fail CI.'
+    options.enforce
+      ? '**Enforced check.** Each Active requirement must have at least one of its RTM ' +
+          'verification-reference test files cite the requirement ID in-file so the verifying ' +
+          'tests are discoverable by grepping the ID. The RTM remains the authoritative ' +
+          'requirement-to-test linkage; this step fails when any Active requirement is unlinked.'
+      : '**Advisory report.** For each Active requirement, at least one of its RTM ' +
+          'verification-reference test files should cite the requirement ID in-file so the verifying ' +
+          'tests are discoverable by grepping the ID. The RTM remains the authoritative ' +
+          'requirement-to-test linkage; this signal is discoverability polish and does not fail CI.'
   );
   lines.push('');
   lines.push(`- Active requirements: ${result.total}`);
@@ -158,21 +173,28 @@ function renderStepSummary(result) {
 }
 
 function main(argv = process.argv.slice(2), deps = {}) {
-  const cwd = deps.cwd || argv[0] || process.cwd();
+  const positionals = argv.filter((arg) => !arg.startsWith('--'));
+  const enforce = deps.enforce ?? argv.includes('--enforce');
+  const cwd = deps.cwd || positionals[0] || process.cwd();
   const result = auditRequirementVerificationLinkage(cwd, deps);
 
   const stepSummaryPath = deps.stepSummaryPath || process.env.GITHUB_STEP_SUMMARY;
   if (stepSummaryPath) {
     const appendStepSummary =
       deps.appendStepSummary || ((filePath, content) => fs.appendFileSync(filePath, content));
-    appendStepSummary(stepSummaryPath, `${renderStepSummary(result)}\n`);
+    appendStepSummary(stepSummaryPath, `${renderStepSummary(result, { enforce })}\n`);
   }
 
-  (deps.stdout || process.stdout).write(`${renderSummary(result)}\n`);
+  (deps.stdout || process.stdout).write(`${renderSummary(result, { enforce })}\n`);
 
-  // Advisory: verification-linkage never fails the build. The RTM remains the
-  // authoritative requirement-to-test linkage; this report is discoverability
+  // Advisory by default (exit 0). With --enforce the guard fails closed (exit 1)
+  // when any Active requirement is unlinked; CI runs it in --enforce mode now
+  // that the backlog is drained. The RTM remains the authoritative
+  // requirement-to-test linkage; the advisory report is discoverability
   // intelligence for closing citation gaps incrementally.
+  if (enforce && result.unlinked.length > 0) {
+    return 1;
+  }
   return 0;
 }
 

@@ -230,8 +230,11 @@ jobs:
       # Verification References are absent or do not resolve, or an Active
       # requirement that declares no Verification Reference. Both guards print
       # their enforced contract to the run summary so the requirements are
-      # front-facing on every pull request. They need no dependency install; both
-      # use only Node built-ins (plus the sibling audit and docs-link modules).
+      # front-facing on every pull request. The verification-linkage guard
+      # additionally fails closed (in --enforce mode) when an Active requirement's
+      # verification-reference tests do not cite its ID. They need no dependency
+      # install; all use only Node built-ins (plus the sibling audit and
+      # docs-link modules).
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -245,3 +248,6 @@ jobs:
 
       - name: Validate requirements cross-references
         run: node scripts/checkRequirementsIntegrity.js
+
+      - name: Enforce requirement verification linkage
+        run: node scripts/auditRequirementVerificationLinkage.js --enforce
