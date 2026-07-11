@@ -9,6 +9,7 @@ import {
   VI_SEMANTIC_MCP_TOOLS
 } from '../../src/semantic/viSemanticComparisonMcp';
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
+import type { ViSemanticHistory } from '../../src/semantic/viSemanticHistory';
 import {
   buildViSemanticComparisonModelFromHtml,
   VI_SEMANTIC_COMPARISON_SCHEMA
@@ -63,7 +64,8 @@ describe('viSemanticComparisonMcp', () => {
     expect(result.tools.map((tool) => tool.name)).toEqual([
       'summarize_vi_comparison',
       'get_vi_semantic_comparison',
-      'compare_vi_revisions'
+      'compare_vi_revisions',
+      'summarize_vi_history'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -147,6 +149,19 @@ describe('viSemanticComparisonMcp', () => {
         id: 30,
         method: 'tools/call',
         params: { name: 'compare_vi_revisions', arguments: {} }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('requires the async MCP server');
+  });
+
+  it('directs a synchronous summarize_vi_history call to the async entrypoint', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 31,
+        method: 'tools/call',
+        params: { name: 'summarize_vi_history', arguments: {} }
       })
     ) as { content: Array<{ text: string }>; isError: boolean };
     expect(result.isError).toBe(true);
@@ -239,6 +254,74 @@ describe('viSemanticComparisonMcp', () => {
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('relativePath is required');
       expect(compareViRevisions).not.toHaveBeenCalled();
+    });
+
+    const historyCall = (args: unknown, id = 40) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'tools/call' as const,
+      params: { name: 'summarize_vi_history', arguments: args }
+    });
+
+    it('returns the history model JSON for a completed walk', async () => {
+      const history = {
+        schema: 'vi-history-suite/vi-semantic-history@v1',
+        vi: { relativePath: 'vis/Widget.vi' },
+        repositoryRoot: '/repo',
+        revisionCount: 2,
+        comparedStepCount: 1,
+        steps: [],
+        totals: {
+          changingStepCount: 1,
+          frontPanelChangeCount: 1,
+          blockDiagramChangeCount: 0,
+          connectorPaneChangeCount: 0,
+          viAttributeChangeCount: 0,
+          blockedOrFailedStepCount: 0
+        },
+        narrative: 'Across 1 compared revision of vis/Widget.vi, 1 changed the VI.'
+      } as ViSemanticHistory;
+      const buildViSemanticHistory = vi.fn(async (): Promise<ViSemanticHistory> => history);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          historyCall({ repositoryRoot: '/repo', relativePath: 'vis/Widget.vi', maxRevisions: 2 }),
+          { buildViSemanticHistory }
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(buildViSemanticHistory).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repositoryRoot: '/repo',
+          relativePath: 'vis/Widget.vi',
+          maxRevisions: 2
+        })
+      );
+      const parsed = JSON.parse(response.content[0].text) as { schema: string };
+      expect(parsed.schema).toBe('vi-history-suite/vi-semantic-history@v1');
+    });
+
+    it('reports a wired-up error when the history orchestrator is not injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          historyCall({ repositoryRoot: '/repo', relativePath: 'vis/Widget.vi' })
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
+    });
+
+    it('rejects invalid history arguments before invoking the orchestrator', async () => {
+      const buildViSemanticHistory = vi.fn(
+        async (): Promise<ViSemanticHistory> => ({}) as ViSemanticHistory
+      );
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(historyCall({ repositoryRoot: '/repo' }), {
+          buildViSemanticHistory
+        })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('relativePath is required');
+      expect(buildViSemanticHistory).not.toHaveBeenCalled();
     });
   });
 });

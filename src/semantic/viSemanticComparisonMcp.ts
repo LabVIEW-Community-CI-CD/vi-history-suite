@@ -10,6 +10,7 @@ import type {
   CompareViRevisionsInput,
   CompareViRevisionsResult
 } from './compareViRevisions';
+import type { ViSemanticHistory, ViSemanticHistoryInput } from './viSemanticHistory';
 
 /**
  * Minimal Model Context Protocol surface over the VI comparison engine. This is
@@ -129,6 +130,38 @@ const COMPARE_REVISIONS_INPUT_SCHEMA = {
   required: ['repositoryRoot', 'relativePath', 'baseHash', 'selectedHash']
 } as const;
 
+const HISTORY_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    repositoryRoot: {
+      type: 'string',
+      description: 'Absolute path to the Git repository containing the VI.'
+    },
+    relativePath: {
+      type: 'string',
+      description: 'Repository-relative path of the .vi whose history to walk.'
+    },
+    maxRevisions: {
+      type: 'number',
+      description:
+        'How many recent revisions to walk (N revisions yields N-1 comparisons). Defaults to 3; bounded to 20.'
+    },
+    runtime: {
+      type: 'object',
+      description:
+        'Optional runtime preferences (provider, LabVIEW version/bitness, connect timeout).',
+      properties: {
+        provider: { type: 'string', enum: ['host', 'docker'] },
+        labviewVersion: { type: 'string' },
+        bitness: { type: 'string', enum: ['x86', 'x64'] },
+        containerImageVersion: { type: 'string' },
+        cliConnectTimeoutSeconds: { type: 'number' }
+      }
+    }
+  },
+  required: ['repositoryRoot', 'relativePath']
+} as const;
+
 export const VI_SEMANTIC_MCP_TOOLS = [
   {
     name: 'summarize_vi_comparison',
@@ -148,6 +181,14 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       `${VI_SEMANTIC_COMPARISON_SCHEMA} semantic model. Requires a comparison runtime ` +
       '(host LabVIEW or a Docker LabVIEW image) to be available; a run may take minutes.',
     inputSchema: COMPARE_REVISIONS_INPUT_SCHEMA
+  },
+  {
+    name: 'summarize_vi_history',
+    description:
+      "Walk a VI's recent Git revisions and invoke a comparison across each adjacent pair, " +
+      'returning a vi-history-suite/vi-semantic-history@v1 evolution timeline (per-transition ' +
+      'narratives plus an aggregate story). Requires a comparison runtime; a run may take several minutes.',
+    inputSchema: HISTORY_INPUT_SCHEMA
   }
 ] as const;
 
@@ -234,13 +275,13 @@ export function handleViSemanticMcpMessage(
       if (typeof params.name !== 'string') {
         return failure(id, JSON_RPC_INVALID_PARAMS, 'tools/call requires a string "name"');
       }
-      if (params.name === 'compare_vi_revisions') {
-        // The invoking tool runs a real comparison and is only available through
-        // the async server entrypoint, which injects the runtime orchestrator.
+      if (params.name === 'compare_vi_revisions' || params.name === 'summarize_vi_history') {
+        // These invoking tools run real comparisons and are only available
+        // through the async server entrypoint, which injects the orchestrators.
         return success(
           id,
           toolTextResult(
-            'Tool error: compare_vi_revisions requires the async MCP server entrypoint',
+            `Tool error: ${params.name} requires the async MCP server entrypoint`,
             true
           )
         );
@@ -300,6 +341,35 @@ function renderCompareResult(result: CompareViRevisionsResult): unknown {
   return toolTextResult(`Comparison ${result.status}: ${result.reason}`, true);
 }
 
+function parseHistoryArguments(rawArguments: unknown): ViSemanticHistoryInput {
+  if (typeof rawArguments !== 'object' || rawArguments === null) {
+    throw new Error('tool arguments must be an object');
+  }
+  const args = rawArguments as Record<string, unknown>;
+  const requireString = (key: string): string => {
+    const value = args[key];
+    if (typeof value !== 'string' || value.length === 0) {
+      throw new Error(`${key} is required and must be a non-empty string`);
+    }
+    return value;
+  };
+  const input: ViSemanticHistoryInput = {
+    repositoryRoot: requireString('repositoryRoot'),
+    relativePath: requireString('relativePath')
+  };
+  if (typeof args.maxRevisions === 'number') {
+    input.maxRevisions = args.maxRevisions;
+  }
+  if (typeof args.runtime === 'object' && args.runtime !== null) {
+    input.runtime = args.runtime as ViSemanticHistoryInput['runtime'];
+  }
+  return input;
+}
+
+function renderHistoryResult(history: ViSemanticHistory): unknown {
+  return toolTextResult(JSON.stringify(history, null, 2));
+}
+
 export interface ViSemanticMcpAsyncDeps {
   /**
    * Runtime orchestrator that invokes a real comparison. Injected by the stdio
@@ -307,12 +377,41 @@ export interface ViSemanticMcpAsyncDeps {
    * the pure handler never reaches the reporting engine on its own.
    */
   compareViRevisions?: (input: CompareViRevisionsInput) => Promise<CompareViRevisionsResult>;
+  /**
+   * History orchestrator that walks a VI's revisions and compares each adjacent
+   * pair. Injected by the stdio entrypoint; when absent, `summarize_vi_history`
+   * reports a wired-up error.
+   */
+  buildViSemanticHistory?: (input: ViSemanticHistoryInput) => Promise<ViSemanticHistory>;
+}
+
+async function invokeInjectedTool<TInput, TResult>(
+  id: JsonRpcSuccess['id'],
+  toolName: string,
+  orchestrator: ((input: TInput) => Promise<TResult>) | undefined,
+  parseArguments: () => TInput,
+  render: (result: TResult) => unknown
+): Promise<JsonRpcResponse> {
+  if (!orchestrator) {
+    return success(
+      id,
+      toolTextResult(`Tool error: ${toolName} is not wired (no orchestrator injected)`, true)
+    );
+  }
+  try {
+    const result = await orchestrator(parseArguments());
+    return success(id, render(result));
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return success(id, toolTextResult(`Tool error: ${detail}`, true));
+  }
 }
 
 /**
- * Async JSON-RPC dispatcher. Handles the side-effecting `compare_vi_revisions`
- * tool through the injected orchestrator and delegates every other method to the
- * pure, synchronous `handleViSemanticMcpMessage`.
+ * Async JSON-RPC dispatcher. Handles the side-effecting invoking tools
+ * (`compare_vi_revisions`, `summarize_vi_history`) through injected
+ * orchestrators and delegates every other method to the pure, synchronous
+ * `handleViSemanticMcpMessage`.
  */
 export async function handleViSemanticMcpMessageAsync(
   message: JsonRpcRequest,
@@ -320,25 +419,24 @@ export async function handleViSemanticMcpMessageAsync(
 ): Promise<JsonRpcResponse | null> {
   if (message.method === 'tools/call') {
     const params = (message.params ?? {}) as { name?: unknown; arguments?: unknown };
+    const id = message.id ?? null;
     if (params.name === 'compare_vi_revisions') {
-      const id = message.id ?? null;
-      if (!deps.compareViRevisions) {
-        return success(
-          id,
-          toolTextResult(
-            'Tool error: compare_vi_revisions is not wired (no runtime orchestrator injected)',
-            true
-          )
-        );
-      }
-      try {
-        const input = parseCompareRevisionsArguments(params.arguments);
-        const result = await deps.compareViRevisions(input);
-        return success(id, renderCompareResult(result));
-      } catch (error) {
-        const detail = error instanceof Error ? error.message : String(error);
-        return success(id, toolTextResult(`Tool error: ${detail}`, true));
-      }
+      return invokeInjectedTool(
+        id,
+        'compare_vi_revisions',
+        deps.compareViRevisions,
+        () => parseCompareRevisionsArguments(params.arguments),
+        renderCompareResult
+      );
+    }
+    if (params.name === 'summarize_vi_history') {
+      return invokeInjectedTool(
+        id,
+        'summarize_vi_history',
+        deps.buildViSemanticHistory,
+        () => parseHistoryArguments(params.arguments),
+        renderHistoryResult
+      );
     }
   }
   return handleViSemanticMcpMessage(message);
