@@ -280,3 +280,8 @@ src/tooling/viPreviewVerifyCli.ts,mapped,Yes,"Proof-emitting CLI preview verific
 tests/unit/viPreviewVerifyCli.test.ts,mapped,Yes,Preview verification CLI resolve-and-verify unit tests; mapped to VHS-REQ-659.
 src/git/revisionViTree.ts,mapped,Yes,Revision VI-tree materializer (parses git ls-tree output and stages a revision's VI plus sibling source tree for preview); mapped to VHS-REQ-659.
 tests/unit/revisionViTree.test.ts,mapped,Yes,Revision VI-tree materializer and ls-tree parser unit tests; mapped to VHS-REQ-659.
+src/semantic/viSemanticModel.ts,supporting,No,VI semantic comparison model projecting the parsed NI comparison report onto the versioned vi-history-suite/vi-semantic-comparison@v1 schema with a what-changed narrative; foundation infrastructure for future review and agent surfaces.
+src/semantic/viSemanticComparisonMcp.ts,supporting,No,Dependency-free JSON-RPC 2.0 MCP handler exposing the VI semantic comparison model (summarize and full-model tools) to agents; foundation infrastructure for future review and agent surfaces.
+src/cli/runViSemanticMcpServer.ts,dev-only,No,Stdio entrypoint wiring newline-delimited JSON-RPC to the VI semantic MCP handler; thin host binding excluded from coverage.
+tests/unit/viSemanticModel.test.ts,supporting,No,VI semantic comparison model and narrative unit tests; supporting infrastructure not yet requirement-mapped.
+tests/unit/viSemanticComparisonMcp.test.ts,supporting,No,VI semantic MCP handler protocol unit tests; supporting infrastructure not yet requirement-mapped.
