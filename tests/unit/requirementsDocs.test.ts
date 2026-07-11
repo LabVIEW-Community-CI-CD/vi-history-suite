@@ -369,8 +369,8 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('coverage/cobertura-coverage.xml');
     expect(srs).toContain('coverage/coverage-summary.json');
     expect(srs).toContain('baseline global coverage thresholds declared in');
-    expect(srs).toContain('72% statements, 61% branches, 79% functions');
-    expect(syrs).toContain('post-wave hosted floors are 72% statements');
+    expect(srs).toContain('77% statements, 66% branches, 82% functions');
+    expect(syrs).toContain('post-wave hosted floors are 77% statements');
     expect(testPlan).toContain('npm run traceability:audit');
     expect(testPlan).toContain('npm run docs:links');
     expect(testPlan).toContain('npm run dod:gate');
@@ -393,11 +393,11 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('PR Coverage Gate / coverage');
     expect(testPlan).toContain('coverage/cobertura-coverage.xml');
     expect(testPlan).toContain('coverage/coverage-summary.json');
-    expect(testPlan).toContain('72% statements');
-    expect(testPlan).toContain('61% branches');
-    expect(testPlan).toContain('79% functions');
-    expect(testPlan).toContain('72% lines');
-    expect(testPlan).toContain('74.97% statements, 64.60% branches');
+    expect(testPlan).toContain('77% statements');
+    expect(testPlan).toContain('66% branches');
+    expect(testPlan).toContain('82% functions');
+    expect(testPlan).toContain('77% lines');
+    expect(testPlan).toContain('81.06% statements, 70.81% branches');
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('| VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts');
@@ -437,10 +437,10 @@ describe('requirements documentation coherence', () => {
       'node scripts/auditCustomizationGovernance.js'
     );
     expect(packageJson.scripts['docs:links']).toBe('node scripts/checkDocsLinks.js');
-    expect(vitestConfig).toContain('statements: 72');
-    expect(vitestConfig).toContain('branches: 61');
-    expect(vitestConfig).toContain('functions: 79');
-    expect(vitestConfig).toContain('lines: 72');
+    expect(vitestConfig).toContain('statements: 77');
+    expect(vitestConfig).toContain('branches: 66');
+    expect(vitestConfig).toContain('functions: 82');
+    expect(vitestConfig).toContain('lines: 77');
     expect(vitestConfig).toContain('scripts/*.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
