@@ -1913,6 +1913,9 @@ Missing numeric IDs are intentional.
   - A requirement verification-linkage report lists Active requirements whose
     verification-reference tests do not cite the requirement ID (advisory; the
     RTM remains the authoritative requirement-to-test linkage).
+  - CI fails when an Active requirement's verification-reference tests do not
+    cite the requirement ID, enforced by running the verification-linkage guard
+    in `--enforce` mode; the default report remains advisory.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
