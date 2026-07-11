@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import {
-  handleViSemanticMcpMessage,
+  handleViSemanticMcpMessageAsync,
   JsonRpcRequest
 } from '../semantic/viSemanticComparisonMcp';
+import { compareViRevisions } from '../semantic/compareViRevisions';
 
 /**
  * Stdio transport for the VI semantic MCP server: newline-delimited JSON-RPC
@@ -15,7 +16,7 @@ function writeResponse(response: unknown): void {
   process.stdout.write(`${JSON.stringify(response)}\n`);
 }
 
-function dispatchLine(line: string): void {
+async function dispatchLine(line: string): Promise<void> {
   const trimmed = line.trim();
   if (trimmed.length === 0) {
     return;
@@ -33,10 +34,20 @@ function dispatchLine(line: string): void {
     return;
   }
 
-  const response = handleViSemanticMcpMessage(message);
+  // The runtime orchestrator is injected here (not imported by the pure handler)
+  // so `compare_vi_revisions` can invoke a real comparison from this entrypoint.
+  const response = await handleViSemanticMcpMessageAsync(message, { compareViRevisions });
   if (response !== null) {
     writeResponse(response);
   }
+}
+
+function dispatchLineSafely(line: string): void {
+  void dispatchLine(line).catch((error: unknown) => {
+    process.stderr.write(
+      `dispatch error: ${error instanceof Error ? error.message : String(error)}\n`
+    );
+  });
 }
 
 export function runViSemanticMcpServer(): void {
@@ -48,13 +59,15 @@ export function runViSemanticMcpServer(): void {
     while (newlineIndex >= 0) {
       const line = buffer.slice(0, newlineIndex);
       buffer = buffer.slice(newlineIndex + 1);
-      dispatchLine(line);
+      // Fire-and-forget: a multi-minute compare must not block pings or other
+      // tool calls; responses are matched by JSON-RPC id.
+      dispatchLineSafely(line);
       newlineIndex = buffer.indexOf('\n');
     }
   });
   process.stdin.on('end', () => {
     if (buffer.trim().length > 0) {
-      dispatchLine(buffer);
+      dispatchLineSafely(buffer);
     }
   });
   process.stderr.write(

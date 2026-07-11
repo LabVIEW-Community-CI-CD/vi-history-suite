@@ -1,13 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   handleViSemanticMcpMessage,
+  handleViSemanticMcpMessageAsync,
   JsonRpcSuccess,
   VI_SEMANTIC_MCP_PROTOCOL_VERSION,
   VI_SEMANTIC_MCP_SERVER_INFO,
   VI_SEMANTIC_MCP_TOOLS
 } from '../../src/semantic/viSemanticComparisonMcp';
-import { VI_SEMANTIC_COMPARISON_SCHEMA } from '../../src/semantic/viSemanticModel';
+import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
+import {
+  buildViSemanticComparisonModelFromHtml,
+  VI_SEMANTIC_COMPARISON_SCHEMA
+} from '../../src/semantic/viSemanticModel';
 
 const REPORT_HTML = `<!DOCTYPE html>
 <html><body>
@@ -57,7 +62,8 @@ describe('viSemanticComparisonMcp', () => {
     ) as { tools: Array<{ name: string }> };
     expect(result.tools.map((tool) => tool.name)).toEqual([
       'summarize_vi_comparison',
-      'get_vi_semantic_comparison'
+      'get_vi_semantic_comparison',
+      'compare_vi_revisions'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -132,5 +138,107 @@ describe('viSemanticComparisonMcp', () => {
     expect(
       handleViSemanticMcpMessage({ jsonrpc: '2.0', id: 9, method: 'resources/list' })
     ).toMatchObject({ error: { code: -32601, message: 'unknown method: resources/list' } });
+  });
+
+  it('directs a synchronous compare_vi_revisions call to the async entrypoint', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 30,
+        method: 'tools/call',
+        params: { name: 'compare_vi_revisions', arguments: {} }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('requires the async MCP server');
+  });
+
+  describe('handleViSemanticMcpMessageAsync', () => {
+    const validArgs = {
+      repositoryRoot: '/repo',
+      relativePath: 'vis/Widget.vi',
+      baseHash: 'aaaa',
+      selectedHash: 'bbbb'
+    };
+    const compareCall = (args: unknown, id = 20) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'tools/call' as const,
+      params: { name: 'compare_vi_revisions', arguments: args }
+    });
+
+    it('delegates non-compare methods to the synchronous handler', async () => {
+      const response = await handleViSemanticMcpMessageAsync({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize'
+      });
+      expect(response).toEqual(
+        handleViSemanticMcpMessage({ jsonrpc: '2.0', id: 1, method: 'initialize' })
+      );
+    });
+
+    it('returns the semantic model JSON for a completed comparison', async () => {
+      const model = buildViSemanticComparisonModelFromHtml(REPORT_HTML);
+      const compareViRevisions = vi.fn(
+        async (): Promise<CompareViRevisionsResult> => ({
+          status: 'completed',
+          hasDifferences: true,
+          model,
+          runtime: {
+            provider: 'linux-container',
+            engine: 'labview-cli',
+            state: 'succeeded',
+            reportFilePath: '/t/report.html'
+          }
+        })
+      );
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(compareCall(validArgs), { compareViRevisions })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(compareViRevisions).toHaveBeenCalledWith(
+        expect.objectContaining({ repositoryRoot: '/repo', baseHash: 'aaaa', selectedHash: 'bbbb' })
+      );
+      const parsed = JSON.parse(response.content[0].text) as { schema: string };
+      expect(parsed.schema).toBe(VI_SEMANTIC_COMPARISON_SCHEMA);
+    });
+
+    it('surfaces a blocked comparison through the error envelope', async () => {
+      const compareViRevisions = vi.fn(
+        async (): Promise<CompareViRevisionsResult> => ({
+          status: 'blocked-selection',
+          reason: 'docker-daemon-unreachable'
+        })
+      );
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(compareCall(validArgs), { compareViRevisions })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('blocked-selection');
+      expect(response.content[0].text).toContain('docker-daemon-unreachable');
+    });
+
+    it('reports a wired-up error when no orchestrator is injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(compareCall(validArgs))
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
+    });
+
+    it('rejects invalid compare arguments before invoking the orchestrator', async () => {
+      const compareViRevisions = vi.fn(
+        async (): Promise<CompareViRevisionsResult> => ({ status: 'failed', reason: 'unused' })
+      );
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(compareCall({ repositoryRoot: '/repo' }), {
+          compareViRevisions
+        })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('relativePath is required');
+      expect(compareViRevisions).not.toHaveBeenCalled();
+    });
   });
 });

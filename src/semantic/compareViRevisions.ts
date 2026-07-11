@@ -1,0 +1,312 @@
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
+import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportParser';
+import { ComparisonReportType } from '../reporting/comparisonReportPlan';
+import {
+  persistComparisonReportPacket
+} from '../reporting/comparisonReportPacket';
+import { preflightComparisonReportRevisions } from '../reporting/comparisonReportPreflight';
+import {
+  executeComparisonReport,
+  materializeSelectedRevisionTreeWithGit
+} from '../reporting/comparisonReportRuntimeExecution';
+import {
+  ComparisonRuntimeSettings,
+  RuntimePlatform,
+  locateComparisonRuntime
+} from '../reporting/comparisonRuntimeLocator';
+import {
+  ViSemanticComparisonModel,
+  buildViSemanticComparisonModel
+} from './viSemanticModel';
+
+/**
+ * Runtime preferences an agent can pass to `compareViRevisions`. All optional:
+ * when omitted, the locator auto-detects a provider and the shipped
+ * comparison-report defaults apply.
+ */
+export interface CompareViRevisionsRuntimeRequest {
+  platform?: RuntimePlatform;
+  provider?: 'host' | 'docker';
+  executionMode?: ComparisonRuntimeSettings['executionMode'];
+  labviewVersion?: string;
+  bitness?: 'x86' | 'x64';
+  containerImageVersion?: string;
+  cliConnectTimeoutSeconds?: number;
+}
+
+export interface CompareViRevisionsInput {
+  /** Absolute path to the Git repository containing the VI. */
+  repositoryRoot: string;
+  /** Repository-relative path of the `.vi` to compare. */
+  relativePath: string;
+  /** Base (older) revision identifier. */
+  baseHash: string;
+  /** Selected (newer) revision identifier. */
+  selectedHash: string;
+  reportType?: ComparisonReportType;
+  runtime?: CompareViRevisionsRuntimeRequest;
+  /** Where run artifacts are written. Defaults to a fresh OS temp directory. */
+  storageRoot?: string;
+}
+
+/**
+ * Dependency-injected boundary. Every collaborator defaults to the real,
+ * vscode-free reporting primitive (mirroring `comparisonReportAction.ts`), so
+ * the orchestration is exercised end-to-end in unit tests without a runtime.
+ */
+export interface CompareViRevisionsDeps {
+  locateRuntime?: typeof locateComparisonRuntime;
+  preflight?: typeof preflightComparisonReportRevisions;
+  persistPacket?: typeof persistComparisonReportPacket;
+  executeReport?: typeof executeComparisonReport;
+  materializeSelectedRevisionTree?: typeof materializeSelectedRevisionTreeWithGit;
+  parseReportFile?: typeof parseNiComparisonReportFile;
+  buildModel?: typeof buildViSemanticComparisonModel;
+  resolvePlatform?: () => RuntimePlatform;
+  createStorageRoot?: () => Promise<string>;
+}
+
+export interface CompareViRevisionsRuntimeEvidence {
+  provider: string;
+  engine?: string;
+  state: string;
+  reportFilePath: string;
+}
+
+/**
+ * Staged, explicit outcome of an invoked comparison. `completed` carries the
+ * semantic model; every other variant carries a machine-readable reason so an
+ * agent can act on the failure rather than guess.
+ */
+export type CompareViRevisionsResult =
+  | {
+      status: 'completed';
+      hasDifferences: boolean;
+      model: ViSemanticComparisonModel;
+      runtime: CompareViRevisionsRuntimeEvidence;
+    }
+  | { status: 'blocked-selection'; reason: string }
+  | { status: 'blocked-preflight'; reason: string }
+  | { status: 'blocked-runtime'; reason: string }
+  | { status: 'failed'; reason: string };
+
+const DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS = 180;
+
+// Permissive-but-bounded revision charset: covers SHAs, branch/tag names, and
+// relative specs (HEAD~1, refs/heads/x) while excluding whitespace, quotes, and
+// shell metacharacters. Command injection is already precluded because the
+// primitives spawn git/LabVIEW with execFile argument arrays (never a shell);
+// this is defense in depth at the agent-facing boundary.
+const REVISION_PATTERN = /^[A-Za-z0-9._/~^@{}-]{1,200}$/;
+
+interface ValidatedTarget {
+  repositoryRoot: string;
+  relativePath: string;
+}
+
+function validateInput(input: CompareViRevisionsInput): ValidatedTarget {
+  const repositoryRoot = (input.repositoryRoot ?? '').trim();
+  if (!repositoryRoot) {
+    throw new Error('repositoryRoot is required');
+  }
+  const relativePath = (input.relativePath ?? '').trim();
+  if (!relativePath) {
+    throw new Error('relativePath is required');
+  }
+  if (path.isAbsolute(relativePath)) {
+    throw new Error('relativePath must be repository-relative, not absolute');
+  }
+  const repoResolved = path.resolve(repositoryRoot);
+  const targetResolved = path.resolve(repoResolved, relativePath);
+  if (targetResolved !== repoResolved && !targetResolved.startsWith(repoResolved + path.sep)) {
+    throw new Error('relativePath escapes the repository root');
+  }
+  for (const [label, value] of [
+    ['baseHash', input.baseHash],
+    ['selectedHash', input.selectedHash]
+  ] as const) {
+    if (typeof value !== 'string' || !REVISION_PATTERN.test(value)) {
+      throw new Error(`${label} must be a valid revision identifier`);
+    }
+  }
+  if (
+    input.reportType !== undefined &&
+    input.reportType !== 'diff' &&
+    input.reportType !== 'print'
+  ) {
+    throw new Error('reportType must be "diff" or "print"');
+  }
+  return { repositoryRoot: repoResolved, relativePath };
+}
+
+function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
+  if (platform === 'win32') {
+    return 'win32';
+  }
+  if (platform === 'darwin') {
+    return 'darwin';
+  }
+  return 'linux';
+}
+
+function buildLocatorSettings(
+  runtime: CompareViRevisionsRuntimeRequest | undefined
+): ComparisonRuntimeSettings {
+  const settings: ComparisonRuntimeSettings = {
+    // Enforce an exact version+bitness match only when the caller pins both;
+    // otherwise let the locator auto-detect (containers are deterministic).
+    requireVersionAndBitness: Boolean(runtime?.labviewVersion && runtime?.bitness)
+  };
+  if (runtime?.provider) {
+    settings.requestedProvider = runtime.provider;
+  }
+  if (runtime?.executionMode) {
+    settings.executionMode = runtime.executionMode;
+  }
+  if (runtime?.labviewVersion) {
+    settings.labviewVersion = runtime.labviewVersion;
+  }
+  if (runtime?.bitness) {
+    settings.bitness = runtime.bitness;
+  }
+  if (runtime?.containerImageVersion) {
+    settings.containerImageVersion = runtime.containerImageVersion;
+  }
+  return settings;
+}
+
+/**
+ * Invokes a real LabVIEW comparison for two revisions of a VI through the
+ * vscode-free reporting primitives, then projects the produced report onto the
+ * shared semantic model. Pure orchestration with an injectable boundary: no
+ * process, filesystem, or runtime access happens except through the primitives.
+ */
+export async function compareViRevisions(
+  input: CompareViRevisionsInput,
+  deps: CompareViRevisionsDeps = {}
+): Promise<CompareViRevisionsResult> {
+  const target = validateInput(input);
+  const reportType: ComparisonReportType = input.reportType ?? 'diff';
+
+  const locateRuntime = deps.locateRuntime ?? locateComparisonRuntime;
+  const preflight = deps.preflight ?? preflightComparisonReportRevisions;
+  const persistPacket = deps.persistPacket ?? persistComparisonReportPacket;
+  const executeReport = deps.executeReport ?? executeComparisonReport;
+  const materializeSelectedRevisionTree =
+    deps.materializeSelectedRevisionTree ?? materializeSelectedRevisionTreeWithGit;
+  const parseReportFile = deps.parseReportFile ?? parseNiComparisonReportFile;
+  const buildModel = deps.buildModel ?? buildViSemanticComparisonModel;
+  const resolvePlatform =
+    deps.resolvePlatform ?? (() => resolveRuntimePlatform(process.platform));
+
+  try {
+    const platform = input.runtime?.platform ?? resolvePlatform();
+    const runtimeSelection = await locateRuntime(platform, buildLocatorSettings(input.runtime));
+    if (runtimeSelection.provider === 'unavailable' || runtimeSelection.blockedReason) {
+      return {
+        status: 'blocked-selection',
+        reason:
+          runtimeSelection.blockedReason ??
+          `no comparison runtime available for platform ${platform}`
+      };
+    }
+
+    const preflightResult = await preflight({
+      repoRoot: target.repositoryRoot,
+      relativePath: target.relativePath,
+      leftRevisionId: input.baseHash,
+      rightRevisionId: input.selectedHash
+    });
+    if (!preflightResult.ready) {
+      return {
+        status: 'blocked-preflight',
+        reason: preflightResult.blockedReason ?? 'preflight validation failed'
+      };
+    }
+
+    const storageRoot = input.storageRoot ?? (await createStorageRoot(deps));
+
+    const packet = await persistPacket({
+      storageRoot,
+      repositoryRoot: target.repositoryRoot,
+      relativePath: target.relativePath,
+      reportType,
+      selectedHash: input.selectedHash,
+      baseHash: input.baseHash,
+      preflight: preflightResult,
+      runtimeSelection
+    });
+
+    let record = packet.record;
+    if (record.reportStatus !== 'ready-for-runtime') {
+      return {
+        status: record.reportStatus === 'blocked-preflight' ? 'blocked-preflight' : 'blocked-runtime',
+        reason:
+          record.runtimeExecution.blockedReason ??
+          record.runtimeExecution.failureReason ??
+          `comparison packet not ready for runtime (${record.reportStatus})`
+      };
+    }
+
+    const execution = await executeReport(
+      { record, repositoryRoot: target.repositoryRoot },
+      {
+        materializeSelectedRevisionTree,
+        cliConnectTimeoutSeconds:
+          input.runtime?.cliConnectTimeoutSeconds ?? DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+      }
+    );
+    record = execution.record;
+    const runtimeExecution = record.runtimeExecution;
+
+    if (runtimeExecution.state !== 'succeeded' || !runtimeExecution.reportExists) {
+      return {
+        status: runtimeExecution.state === 'not-available' ? 'blocked-runtime' : 'failed',
+        reason:
+          runtimeExecution.failureReason ??
+          runtimeExecution.blockedReason ??
+          runtimeExecution.diagnosticReason ??
+          `comparison runtime did not produce a report (state=${runtimeExecution.state})`
+      };
+    }
+
+    const report = await parseReportFile(execution.reportFilePath);
+    const model = buildModel({
+      report,
+      revisions: { baseHash: input.baseHash, selectedHash: input.selectedHash },
+      runtime: {
+        provider: runtimeSelection.provider,
+        engine: runtimeSelection.engine,
+        labviewVersion: input.runtime?.labviewVersion,
+        bitness: input.runtime?.bitness
+      }
+    });
+
+    return {
+      status: 'completed',
+      hasDifferences: model.hasDifferences,
+      model,
+      runtime: {
+        provider: runtimeSelection.provider,
+        engine: runtimeSelection.engine,
+        state: runtimeExecution.state,
+        reportFilePath: execution.reportFilePath
+      }
+    };
+  } catch (error) {
+    return {
+      status: 'failed',
+      reason: error instanceof Error ? error.message : String(error)
+    };
+  }
+}
+
+async function createStorageRoot(deps: CompareViRevisionsDeps): Promise<string> {
+  if (deps.createStorageRoot) {
+    return deps.createStorageRoot();
+  }
+  return fs.mkdtemp(path.join(os.tmpdir(), 'vihs-compare-'));
+}
