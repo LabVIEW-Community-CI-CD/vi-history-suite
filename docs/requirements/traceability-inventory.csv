@@ -131,6 +131,7 @@ tests/unit/requirementsIntegrity.test.ts,mapped,Yes,Requirements cross-reference
 tests/unit/requirementVerificationLinkage.test.ts,mapped,Yes,Requirement verification-linkage report unit tests (linked/unlinked/manual-only classification fixtures and advisory rendering); mapped to VHS-REQ-601.
 tests/unit/requirementCriteriaInventory.test.ts,mapped,Yes,Requirement acceptance-criteria inventory unit tests (criterion parsing positional-id and criterion-citation fixtures and advisory rendering); mapped to VHS-REQ-601.
 tests/unit/verifyRequirementsHealth.test.ts,mapped,Yes,Unified requirement verification-health report unit tests (mutation-score aggregation per-requirement health and advisory rendering fixtures); mapped to VHS-REQ-601.
+tests/unit/mutationWorkflow.test.ts,mapped,Yes,Nightly mutation workflow contract unit tests (schedule dispatch advisory test:mutation invocation and report upload); mapped to VHS-REQ-613.
 tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
 tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
@@ -151,6 +152,7 @@ tests/integration/runTests.ts,dev-only,No,Integration test runner; testing infra
 tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace preparation; testing infrastructure.
 .github/workflows/ci.yml,release-ci,Yes,CI workflow with hosted DoD Gate / dod; mapped through RTM including VHS-REQ-597 and VHS-REQ-615.
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
+.github/workflows/mutation.yml,mapped,Yes,Nightly advisory mutation-testing workflow running Stryker on the pure detection core; mapped to VHS-REQ-613.
 .github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow with retained evidence naming validation surfaces and artifacts; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
 .github/workflows/linux-labview-maintainer.yml,release-ci,Yes,Linux LabVIEW maintainer workflow; mapped through RTM.
