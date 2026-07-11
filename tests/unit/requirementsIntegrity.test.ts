@@ -8,6 +8,8 @@ const {
   checkParentExistence,
   checkInventoryPaths,
   checkReplacementResolution,
+  extractSrsReferenceSections,
+  checkReferenceAgreement,
   checkRequirementsIntegrity,
   renderStepSummary,
   main
@@ -29,6 +31,13 @@ const {
   ) => Array<{ subject: string; detail: string }>;
   checkReplacementResolution: (
     idIndexRows: Array<Record<string, string>>
+  ) => Array<{ subject: string; detail: string }>;
+  extractSrsReferenceSections: (
+    srsText: string
+  ) => Map<string, { implementation: string[]; verification: string[] }>;
+  checkReferenceAgreement: (
+    rtmRows: Array<Record<string, string>>,
+    srsReferenceSections: Map<string, { implementation: string[]; verification: string[] }>
   ) => Array<{ subject: string; detail: string }>;
   checkRequirementsIntegrity: (
     cwd: string,
@@ -56,7 +65,11 @@ const {
   ) => number;
 };
 
-const SRS_FIXTURE = '### VHS-REQ-001: Alpha Requirement\n\n### VHS-REQ-002: Beta Requirement\n';
+const SRS_FIXTURE =
+  '### VHS-REQ-001: Alpha Requirement\n\n' +
+  '- Implementation References:\n  - `src/a.ts`\n' +
+  '- Verification References:\n  - `tests/a.test.ts`\n\n' +
+  '### VHS-REQ-002: Beta Requirement\n';
 const SYRS_FIXTURE = '### VHS-SYS-REQ-001: System One\n';
 
 function makeFixtureFiles(overrides: Record<string, string> = {}): Record<string, string> {
@@ -154,6 +167,71 @@ describe('requirements cross-reference integrity guard', () => {
 
     expect(checkReplacementResolution(rows)).toEqual([
       { subject: 'VHS-REQ-003', detail: "ReplacementID 'VHS-REQ-999' is not a defined id-index ID" }
+    ]);
+  });
+
+  it('extracts Implementation and Verification references from an SRS block', () => {
+    const srs = [
+      '### VHS-REQ-001: Alpha',
+      '',
+      '- Status: Active',
+      '- Implementation References:',
+      '  - `src/a.ts`',
+      '  - `src/b.ts`',
+      '- Verification References:',
+      '  - `tests/unit/a.test.ts`',
+      '- Change Guidance:',
+      '  - keep it factual',
+      ''
+    ].join('\n');
+
+    expect(extractSrsReferenceSections(srs).get('VHS-REQ-001')).toEqual({
+      implementation: ['src/a.ts', 'src/b.ts'],
+      verification: ['tests/unit/a.test.ts']
+    });
+  });
+
+  it('passes reference agreement when the SRS block matches the RTM row', () => {
+    const sections = new Map([
+      [
+        'VHS-REQ-001',
+        { implementation: ['src/a.ts'], verification: ['tests/unit/a.test.ts', 'manual:x'] }
+      ]
+    ]);
+    const rtmRows = [
+      { ReqID: 'VHS-REQ-001', ImplementationRefs: 'src/a.ts', VerificationRefs: 'tests/unit/a.test.ts;manual:x' }
+    ];
+
+    expect(checkReferenceAgreement(rtmRows, sections)).toEqual([]);
+  });
+
+  it('flags references that differ between the RTM row and the SRS block', () => {
+    const sections = new Map([
+      [
+        'VHS-REQ-001',
+        {
+          implementation: ['src/a.ts'],
+          verification: ['tests/unit/a.test.ts', 'tests/unit/phantom.test.ts']
+        }
+      ]
+    ]);
+    const rtmRows = [
+      {
+        ReqID: 'VHS-REQ-001',
+        ImplementationRefs: 'src/a.ts;src/b.ts',
+        VerificationRefs: 'tests/unit/a.test.ts'
+      }
+    ];
+
+    expect(checkReferenceAgreement(rtmRows, sections)).toEqual([
+      {
+        subject: 'VHS-REQ-001',
+        detail: "Implementation Reference 'src/b.ts' is tracked in the RTM but missing from the SRS block"
+      },
+      {
+        subject: 'VHS-REQ-001',
+        detail: "Verification Reference 'tests/unit/phantom.test.ts' is in the SRS block but not tracked in the RTM"
+      }
     ]);
   });
 

@@ -180,6 +180,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/viHistoryService.test.ts`
+  - `tests/unit/viHistoryModel.test.ts`
 - Change Guidance:
   - Keep minimum eligibility reads scoped to the requested file rather than
     introducing repository-wide VI scans.
@@ -376,6 +377,7 @@ Missing numeric IDs are intentional.
   - `src/ui/historyPanel.ts`
   - `src/services/viHistoryService.ts`
 - Verification References:
+  - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
   - `tests/unit/viHistoryService.test.ts`
 - Change Guidance:
@@ -418,6 +420,7 @@ Missing numeric IDs are intentional.
   - `src/ui/historyPanel.ts`
   - `src/services/viHistoryModel.ts`
 - Verification References:
+  - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/historyPanelRendering.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
@@ -554,9 +557,11 @@ Missing numeric IDs are intentional.
   - `src/ui/historyPanel.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/reporting/comparisonReportPreflight.ts`
+  - `src/reporting/comparisonReportAction.ts`
 - Verification References:
   - `tests/unit/explicitComparePairWorkflow.test.ts`
   - `tests/unit/comparisonReportPreflight.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Keep pair selection explicit and reviewable.
@@ -1233,6 +1238,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/comparisonReportPreflight.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
 - Change Guidance:
   - Keep the working-tree side read-only (never write to the user's working
     directory) and keep working-tree comparisons out of the reproducible
@@ -1446,6 +1452,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/comparisonReportPacket.test.ts`
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `manual:runtime-discovery-missing-tool-check`
 - Change Guidance:
   - Keep runtime diagnostics factual and provider-specific.
@@ -1495,9 +1502,18 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportPacket.ts`
   - `src/reporting/comparisonReportExecutionPlan.ts`
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/reporting/diagnostics/diagnosticsRecorder.ts`
+  - `src/reporting/runtime/labviewCliIni.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonReportPacket.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/diagnosticsRecorder.test.ts`
+  - `tests/unit/labviewCliIni.test.ts`
+  - `tests/unit/windowsContainerLabviewCliScript.test.ts`
 - Change Guidance:
   - Treat external tool execution as evidence-producing, not inherently
     trustworthy.
@@ -1737,6 +1753,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/windowsLabviewMaintainerWorkflow.test.ts`
   - `tests/unit/checkMaintainerRunnerPrerequisites.test.ts`
   - `tests/unit/integrationHostRuntime.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
   - `manual:trusted-windows-labview-runner-dispatch`
 - Change Guidance:
   - Do not run self-hosted validation on arbitrary pull request code.
@@ -1781,6 +1798,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/linuxLabviewMaintainerWorkflow.test.ts`
   - `tests/unit/checkMaintainerRunnerPrerequisites.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
   - `manual:trusted-linux-labview-runner-dispatch`
 - Change Guidance:
   - Do not run self-hosted validation on arbitrary pull request code.
@@ -2147,6 +2165,12 @@ Missing numeric IDs are intentional.
   - `tests/unit/niComparisonReportParser.test.ts`
   - `tests/unit/comparisonReportArchive.test.ts`
   - `tests/unit/dashboardLatestRun.test.ts`
+  - `tests/unit/multiReportDashboard.test.ts`
+  - `tests/unit/multiReportDashboardAction.test.ts`
+  - `tests/unit/retainedDashboardEvidence.test.ts`
+  - `tests/unit/humanReviewSubmission.test.ts`
+  - `tests/unit/reviewDecisionRecord.test.ts`
+  - `tests/unit/reviewScenarioSupportPolicy.test.ts`
 - Change Guidance:
   - Keep dashboard behavior concentrated on evidence aggregation and review, not
     comparison execution.
@@ -2232,6 +2256,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
   - `src/tooling/localRuntimeSettingsCli.ts`
 - Verification References:
+  - `tests/unit/localRuntimeSettingsCli.test.ts`
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
@@ -2373,6 +2398,7 @@ Missing numeric IDs are intentional.
   - `.github/workflows/ci.yml`
   - `package.json`
   - `scripts/checkDefinitionOfDone.js`
+  - `scripts/auditCustomizationGovernance.js`
   - `scripts/generateCloseoutEvidence.js`
   - `scripts/verifyMarketplaceListing.js`
   - `.github/pull_request_template.md`
@@ -2388,6 +2414,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/definitionOfDoneGate.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/customizationGovernanceAuditScript.test.ts`
   - `manual:definition-of-done-release-readiness-review`
 - Change Guidance:
   - Keep this requirement as the operating contract for Done and keep hosted
@@ -3397,6 +3424,7 @@ Missing numeric IDs are intentional.
   - `.github/workflows/windows-runtime-matrix.yml`
 - Verification References:
   - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
+  - `tests/unit/windowsRuntimeMatrixWorkflow.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the assertion key on `runtimeBlockedReason` string equality
@@ -4241,6 +4269,9 @@ Missing numeric IDs are intentional.
   - `src/ui/viPreviewContainerSession.ts`
   - `src/ui/viPreviewSessionManager.ts`
   - `src/git/revisionViTree.ts`
+  - `src/reporting/viPreview/viPreviewSessionRuntime.ts`
+  - `src/reporting/viPreview/viPreviewVerification.ts`
+  - `src/tooling/viPreviewVerifyCli.ts`
   - `resources/labview-cli-operations/PrintToSingleFileHtml/PrintToSingleFileHtml.lvclass`
 - Verification References:
   - `tests/unit/viPreviewCommandPlan.test.ts`
@@ -4252,6 +4283,9 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewRuntimeAdapter.test.ts`
   - `tests/unit/viPreviewWebview.test.ts`
   - `tests/unit/viPreviewSessionManager.test.ts`
+  - `tests/unit/viPreviewSessionRuntime.test.ts`
+  - `tests/unit/viPreviewVerification.test.ts`
+  - `tests/unit/viPreviewVerifyCli.test.ts`
   - `tests/unit/revisionViTree.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
