@@ -288,6 +288,7 @@
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",
     "traceability:audit": "node scripts/auditTraceabilitySteward.js",
     "requirements:csv-check": "node scripts/checkRequirementsCsvColumns.js",
+    "requirements:integrity": "node scripts/checkRequirementsIntegrity.js",
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
