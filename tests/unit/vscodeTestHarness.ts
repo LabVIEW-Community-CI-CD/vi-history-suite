@@ -102,6 +102,7 @@ export function createVsCodeTestHarness() {
   const progressReports: Array<{ options: unknown; update: unknown }> = [];
   const clipboardWrites: string[] = [];
   const openedExternalUris: string[] = [];
+  const registeredMcpProviders = new Map<string, unknown>();
   const workspaceState = {
     isTrusted: true,
     workspaceFolders: [] as Array<{ uri: FakeUri; name: string; index: number }>
@@ -351,6 +352,36 @@ export function createVsCodeTestHarness() {
           })
         )
     },
+    lm: {
+      registerMcpServerDefinitionProvider: vi.fn((id: string, provider: unknown) => {
+        registeredMcpProviders.set(id, provider);
+        return disposable(
+          vi.fn(() => {
+            registeredMcpProviders.delete(id);
+          })
+        );
+      })
+    },
+    McpStdioServerDefinition: class {
+      readonly label: string;
+      command: string;
+      args: string[];
+      env: Record<string, string | number | null>;
+      version?: string;
+      constructor(
+        label: string,
+        command: string,
+        args: string[] = [],
+        env: Record<string, string | number | null> = {},
+        version?: string
+      ) {
+        this.label = label;
+        this.command = command;
+        this.args = args;
+        this.env = env;
+        this.version = version;
+      }
+    },
     version: '1.90.0'
   };
 
@@ -429,6 +460,7 @@ export function createVsCodeTestHarness() {
     progressReports.length = 0;
     clipboardWrites.length = 0;
     openedExternalUris.length = 0;
+    registeredMcpProviders.clear();
     workspaceState.isTrusted = true;
     workspaceState.workspaceFolders = [];
     vi.clearAllMocks();
@@ -446,6 +478,7 @@ export function createVsCodeTestHarness() {
     progressReports,
     clipboardWrites,
     openedExternalUris,
+    registeredMcpProviders,
     workspaceState,
     createCancellationToken,
     createContext,

@@ -13,6 +13,9 @@ interface ExtensionManifest {
   icon?: string;
   main?: string;
   browser?: string;
+  engines?: {
+    vscode?: string;
+  };
   extensionKind?: string[];
   activationEvents?: string[];
   files?: string[];
@@ -36,6 +39,10 @@ interface ExtensionManifest {
     };
   };
   contributes?: {
+    mcpServerDefinitionProviders?: Array<{
+      id?: string;
+      label?: string;
+    }>;
     commands?: Array<{
       command?: string;
       title?: string;
@@ -80,6 +87,21 @@ describe('extension manifest public metadata', () => {
     );
     expect(manifest.bugs).toEqual({
       url: 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues'
+    });
+  });
+
+  it('bumps the engine floor to the stable MCP provider API and contributes the VI semantic MCP server', () => {
+    const manifest = readManifest();
+
+    // The MCP server definition provider API is stable as of VS Code 1.101, so
+    // the engine and @types/vscode floor must not regress below it.
+    expect(manifest.engines?.vscode).toBe('^1.101.0');
+    expect(manifest.devDependencies?.['@types/vscode']).toBe('^1.101.0');
+
+    const providers = manifest.contributes?.mcpServerDefinitionProviders ?? [];
+    expect(providers).toContainEqual({
+      id: 'viHistorySuiteSemantic',
+      label: 'VI History Suite: VI Semantic Comparison'
     });
   });
 

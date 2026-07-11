@@ -111,7 +111,11 @@ vi.mock('vscode', () => ({
     onDidChangeConfiguration: onDidChangeConfigurationMock,
     onDidChangeWorkspaceFolders: onDidChangeWorkspaceFoldersMock,
     onDidGrantWorkspaceTrust: onDidGrantWorkspaceTrustMock
-  }
+  },
+  // No `registerMcpServerDefinitionProvider`, so the semantic MCP registration
+  // guard short-circuits to a no-op here (the host-without-stable-MCP-API path);
+  // its full behavior is covered in viSemanticMcpServerProvider.test.ts.
+  lm: {}
 }));
 
 vi.mock('../../src/reporting/comparisonReportExport', () => ({
