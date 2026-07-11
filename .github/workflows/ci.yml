@@ -218,14 +218,17 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      # Requirements-contract integrity leg (VHS-REQ-601): the requirements CSVs
+      # Requirements-contract integrity leg (VHS-REQ-601). The requirements CSVs
       # are parsed by mapping fields onto their headers by index, so a row with
       # an unescaped comma in an unquoted field silently drops columns and shifts
       # later fields (for example, a truncated Notes value) without failing any
-      # other gate. This job fails closed on any such row and prints the enforced
-      # contract plus the validated requirement IDs to the run summary so the
-      # requirements are front-facing on every pull request. It needs no
-      # dependency install; the guard uses only Node built-ins.
+      # other gate. The cross-reference guard additionally fails closed on a
+      # dangling id-index anchor, an RTM ParentID that is not an Active system
+      # requirement, an inventory Path that no longer exists, or an id-index
+      # ReplacementID that does not resolve. Both guards print their enforced
+      # contract to the run summary so the requirements are front-facing on every
+      # pull request. They need no dependency install; both use only Node
+      # built-ins (plus the sibling audit and docs-link modules).
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -236,3 +239,6 @@ jobs:
 
       - name: Validate requirements CSV column integrity
         run: node scripts/checkRequirementsCsvColumns.js
+
+      - name: Validate requirements cross-references
+        run: node scripts/checkRequirementsIntegrity.js

@@ -243,6 +243,25 @@ describe('requirements documentation coherence', () => {
     expect(result.success).toBe(true);
   });
 
+  it('keeps requirements cross-references resolvable (VHS-REQ-601)', () => {
+    const {
+      checkRequirementsIntegrity
+    } = require('../../scripts/checkRequirementsIntegrity.js') as {
+      checkRequirementsIntegrity: (cwd: string) => {
+        success: boolean;
+        checks: Array<{ key: string; violations: Array<{ subject: string; detail: string }> }>;
+      };
+    };
+
+    const result = checkRequirementsIntegrity(repoRoot);
+    const violations = result.checks.flatMap((check) =>
+      check.violations.map((violation) => `[${check.key}] ${violation.subject}: ${violation.detail}`)
+    );
+
+    expect(violations, `requirements cross-reference violations:\n${violations.join('\n')}`).toEqual([]);
+    expect(result.success).toBe(true);
+  });
+
   it('keeps historical IDs discoverable through the ID index', () => {
     const indexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
     const indexById = new Map(indexRows.map((row) => [row.ID, row]));

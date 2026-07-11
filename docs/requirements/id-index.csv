@@ -5,7 +5,7 @@ VHS-REQ-003,Software,Active,srs.md#vhs-req-003-optional-strict-rsrc-header,,,pre
 VHS-REQ-004,Software,Active,srs.md#vhs-req-004-explorer-and-editor-menu-contributions,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-005,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
 VHS-REQ-006,Software,Active,srs.md#vhs-req-006-tracked-history-eligibility,,,pre-simplification docs/requirements/srs.md
-VHS-REQ-007,Software,Active,srs.md#vhs-req-007-nul-safe-tracked-file-enumeration,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-007,Software,Active,srs.md#vhs-req-007-nul-safe-git-path-parsing,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-008,Software,Active,srs.md#vhs-req-008-bounded-commit-queries,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-009,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
 VHS-REQ-010,Software,Active,srs.md#vhs-req-010-minimal-local-probe-reads,,,pre-simplification docs/requirements/srs.md

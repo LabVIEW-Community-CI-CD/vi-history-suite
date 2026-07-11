@@ -1,0 +1,284 @@
+#!/usr/bin/env node
+
+/**
+ * Requirements cross-reference integrity guard.
+ *
+ * The column-integrity guard (scripts/checkRequirementsCsvColumns.js) proves each
+ * requirements CSV row is well-formed. This guard proves the requirements
+ * artifacts cross-reference each other consistently - the structural invariants
+ * that no other gate enforces and that therefore rot silently:
+ *
+ *   1. anchorResolution  - every Active id-index CurrentAnchor resolves to a real
+ *                          heading in srs.md (a renamed heading leaves a dangling
+ *                          anchor that the `^srs\.md#` prefix check never catches).
+ *   2. parentExistence   - every RTM ParentID is an Active system requirement in
+ *                          syrs.md (the RTM test only checks the ID format).
+ *   3. inventoryPathExists - every traceability-inventory Path exists on disk (the
+ *                          traceability audit validates disk->inventory, never the
+ *                          reverse, so a row for a deleted file is never flagged).
+ *   4. replacementResolution - every id-index ReplacementID resolves to a defined
+ *                          id-index ID (no dangling supersede/retire pointer).
+ *
+ * The guard reuses the canonical implementations so it validates against exactly
+ * the logic the real consumers use: parseCsv (traceability audit) and
+ * markdownAnchors/slugHeading (documentation link checker). It uses only Node
+ * built-ins plus those sibling scripts, so the CI job needs no dependency install.
+ *
+ * Pure helpers stay separate from a thin CLI entrypoint so the behavior is
+ * unit-testable with injected fixtures.
+ */
+
+const fs = require('node:fs');
+const path = require('node:path');
+
+const { parseCsv } = require('./auditTraceabilitySteward.js');
+const { markdownAnchors } = require('./checkDocsLinks.js');
+
+const SRS_PATH = 'docs/requirements/srs.md';
+const SYRS_PATH = 'docs/requirements/syrs.md';
+const RTM_PATH = 'docs/requirements/rtm.csv';
+const ID_INDEX_PATH = 'docs/requirements/id-index.csv';
+const INVENTORY_PATH = 'docs/requirements/traceability-inventory.csv';
+
+function normalizeNewlines(text) {
+  return text.replace(/\r\n/g, '\n');
+}
+
+// The Active system requirements are the headings in syrs.md. A software
+// requirement must be parented to one of these (never to a superseded system
+// requirement or an ID that was never defined).
+function extractSystemRequirementIds(syrsText) {
+  const ids = new Set();
+  const pattern = /^#{1,6}[ \t]+(VHS-SYS-REQ-\d+):/gm;
+  for (const match of syrsText.matchAll(pattern)) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+// A System requirement (Kind=System) anchors into syrs.md; a Software
+// requirement anchors into srs.md. Resolve each Active anchor against the
+// document its Kind requires so a renamed heading in either specification is
+// caught, and a row pointing at the wrong document is caught too.
+function checkAnchorResolution(idIndexRows, srsText, syrsText) {
+  const anchorsByDocument = {
+    'srs.md': markdownAnchors(srsText),
+    'syrs.md': markdownAnchors(syrsText)
+  };
+  const violations = [];
+
+  for (const row of idIndexRows) {
+    if ((row.Status || '').trim() !== 'Active') {
+      continue;
+    }
+
+    const anchor = (row.CurrentAnchor || '').trim();
+    if (anchor.length === 0) {
+      violations.push({ subject: row.ID, detail: 'Active row has an empty CurrentAnchor' });
+      continue;
+    }
+
+    const expectedDocument = (row.Kind || '').trim() === 'System' ? 'syrs.md' : 'srs.md';
+    const hashIndex = anchor.indexOf('#');
+    const target = hashIndex >= 0 ? anchor.slice(0, hashIndex) : anchor;
+    const fragment = hashIndex >= 0 ? anchor.slice(hashIndex + 1) : '';
+
+    if (target !== expectedDocument) {
+      violations.push({
+        subject: row.ID,
+        detail: `CurrentAnchor target '${target}' should be ${expectedDocument}`
+      });
+      continue;
+    }
+
+    if (!anchorsByDocument[expectedDocument].has(fragment)) {
+      violations.push({
+        subject: row.ID,
+        detail: `CurrentAnchor '#${fragment}' has no matching heading in ${expectedDocument}`
+      });
+    }
+  }
+
+  return violations;
+}
+
+function checkParentExistence(rtmRows, systemRequirementIds) {
+  const violations = [];
+  for (const row of rtmRows) {
+    const parent = (row.ParentID || '').trim();
+    if (!systemRequirementIds.has(parent)) {
+      violations.push({
+        subject: row.ReqID,
+        detail: `ParentID '${parent}' is not an Active system requirement in syrs.md`
+      });
+    }
+  }
+  return violations;
+}
+
+function checkInventoryPaths(inventoryRows, cwd, fileExists) {
+  const violations = [];
+  for (const row of inventoryRows) {
+    const relativePath = (row.Path || '').trim();
+    if (relativePath.length === 0) {
+      continue;
+    }
+    const absolutePath = path.join(cwd, ...relativePath.split('/'));
+    if (!fileExists(absolutePath)) {
+      violations.push({ subject: relativePath, detail: 'inventory Path does not exist on disk' });
+    }
+  }
+  return violations;
+}
+
+function checkReplacementResolution(idIndexRows) {
+  const definedIds = new Set(idIndexRows.map((row) => (row.ID || '').trim()).filter((id) => id.length > 0));
+  const violations = [];
+  for (const row of idIndexRows) {
+    const replacement = (row.ReplacementID || '').trim();
+    if (replacement.length > 0 && !definedIds.has(replacement)) {
+      violations.push({
+        subject: row.ID,
+        detail: `ReplacementID '${replacement}' is not a defined id-index ID`
+      });
+    }
+  }
+  return violations;
+}
+
+function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
+  const readFile =
+    deps.readFile ||
+    ((relativePath) => fs.readFileSync(path.join(cwd, ...relativePath.split('/')), 'utf8'));
+  const fileExists = deps.fileExists || ((absolutePath) => fs.existsSync(absolutePath));
+
+  const srsText = normalizeNewlines(readFile(SRS_PATH));
+  const syrsText = normalizeNewlines(readFile(SYRS_PATH));
+  const rtmRows = parseCsv(normalizeNewlines(readFile(RTM_PATH)));
+  const idIndexRows = parseCsv(normalizeNewlines(readFile(ID_INDEX_PATH)));
+  const inventoryRows = parseCsv(normalizeNewlines(readFile(INVENTORY_PATH)));
+
+  const systemRequirementIds = extractSystemRequirementIds(syrsText);
+
+  const checks = [
+    {
+      key: 'anchorResolution',
+      title: 'Active id-index anchors resolve to their specification heading',
+      violations: checkAnchorResolution(idIndexRows, srsText, syrsText)
+    },
+    {
+      key: 'parentExistence',
+      title: 'RTM ParentID is an Active system requirement',
+      violations: checkParentExistence(rtmRows, systemRequirementIds)
+    },
+    {
+      key: 'inventoryPathExists',
+      title: 'traceability-inventory Path exists on disk',
+      violations: checkInventoryPaths(inventoryRows, cwd, fileExists)
+    },
+    {
+      key: 'replacementResolution',
+      title: 'id-index ReplacementID resolves to a defined ID',
+      violations: checkReplacementResolution(idIndexRows)
+    }
+  ];
+
+  const violationCount = checks.reduce((sum, check) => sum + check.violations.length, 0);
+  return { success: violationCount === 0, violationCount, checks };
+}
+
+function renderSummary(result) {
+  const lines = [];
+  for (const check of result.checks) {
+    const status = check.violations.length === 0 ? 'pass' : `FAIL (${check.violations.length})`;
+    lines.push(`[requirements-integrity] ${check.title}: ${status}`);
+    for (const violation of check.violations) {
+      lines.push(`  - ${violation.subject}: ${violation.detail}`);
+    }
+  }
+
+  if (result.success) {
+    lines.push('[requirements-integrity] Cross-reference integrity check passed.');
+  } else {
+    lines.push(
+      `[requirements-integrity] Cross-reference integrity check failed: ${result.violationCount} violation(s).`
+    );
+  }
+
+  return lines.join('\n');
+}
+
+function renderStepSummary(result) {
+  const lines = [];
+  lines.push('## Requirements Cross-Reference Integrity');
+  lines.push('');
+  lines.push(
+    '**Runtime contract enforced on every pull request:** the requirements artifacts must ' +
+      'cross-reference each other consistently. Every Active id-index anchor must resolve to a ' +
+      'real srs.md heading, every RTM ParentID must be an Active system requirement, every ' +
+      'traceability-inventory Path must exist on disk, and every id-index ReplacementID must ' +
+      'resolve to a defined ID.'
+  );
+  lines.push('');
+  lines.push(`**Result:** ${result.success ? 'PASS' : 'FAIL'} — ${result.violationCount} violation(s).`);
+  lines.push('');
+  lines.push('| Invariant | Status |');
+  lines.push('| --------- | ------ |');
+  for (const check of result.checks) {
+    const status = check.violations.length === 0 ? 'pass' : `FAIL (${check.violations.length})`;
+    lines.push(`| ${check.title} | ${status} |`);
+  }
+  lines.push('');
+
+  if (!result.success) {
+    lines.push('### Violations');
+    lines.push('');
+    lines.push('| Invariant | Subject | Detail |');
+    lines.push('| --------- | ------- | ------ |');
+    for (const check of result.checks) {
+      for (const violation of check.violations) {
+        lines.push(`| ${check.key} | \`${violation.subject}\` | ${violation.detail} |`);
+      }
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+function main(argv = process.argv.slice(2), deps = {}) {
+  const cwd = deps.cwd || argv[0] || process.cwd();
+  const result = checkRequirementsIntegrity(cwd, deps);
+  const output = `${renderSummary(result)}\n`;
+
+  const stepSummaryPath = deps.stepSummaryPath || process.env.GITHUB_STEP_SUMMARY;
+  if (stepSummaryPath) {
+    const appendStepSummary =
+      deps.appendStepSummary || ((filePath, content) => fs.appendFileSync(filePath, content));
+    appendStepSummary(stepSummaryPath, `${renderStepSummary(result)}\n`);
+  }
+
+  (result.success ? deps.stdout || process.stdout : deps.stderr || process.stderr).write(output);
+  return result.success ? 0 : 1;
+}
+
+if (require.main === module) {
+  process.exitCode = main();
+}
+
+module.exports = {
+  SRS_PATH,
+  SYRS_PATH,
+  RTM_PATH,
+  ID_INDEX_PATH,
+  INVENTORY_PATH,
+  extractSystemRequirementIds,
+  checkAnchorResolution,
+  checkParentExistence,
+  checkInventoryPaths,
+  checkReplacementResolution,
+  checkRequirementsIntegrity,
+  renderSummary,
+  renderStepSummary,
+  main
+};

@@ -1883,6 +1883,10 @@ Missing numeric IDs are intentional.
     traceability-inventory.csv) does not match its header column count, and the
     check prints the enforced contract and the validated requirement IDs to the
     run summary so they are front-facing on every pull request.
+  - CI fails when a requirements cross-reference is broken: an Active id-index
+    anchor that does not resolve to its specification heading, an RTM ParentID
+    that is not an Active system requirement, a traceability-inventory Path that
+    does not exist on disk, or an id-index ReplacementID that does not resolve.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
@@ -1923,12 +1927,14 @@ Missing numeric IDs are intentional.
   - `docs/requirements/traceability-inventory.csv`
   - `scripts/auditTraceabilitySteward.js`
   - `scripts/checkRequirementsCsvColumns.js`
+  - `scripts/checkRequirementsIntegrity.js`
   - `scripts/generateCloseoutEvidence.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
   - `tests/unit/requirementsCsvColumns.test.ts`
+  - `tests/unit/requirementsIntegrity.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
