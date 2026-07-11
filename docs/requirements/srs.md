@@ -1905,7 +1905,11 @@ Missing numeric IDs are intentional.
   - CI fails when a requirements cross-reference is broken: an Active id-index
     anchor that does not resolve to its specification heading, an RTM ParentID
     that is not an Active system requirement, a traceability-inventory Path that
-    does not exist on disk, or an id-index ReplacementID that does not resolve.
+    does not exist on disk, an id-index ReplacementID that does not resolve, an
+    SRS block whose Implementation or Verification References disagree with the
+    RTM evidence map, an Active system requirement whose Verification References
+    are absent or do not resolve on disk, or an Active requirement that declares
+    no Verification Reference.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,

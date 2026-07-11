@@ -224,11 +224,14 @@ jobs:
       # later fields (for example, a truncated Notes value) without failing any
       # other gate. The cross-reference guard additionally fails closed on a
       # dangling id-index anchor, an RTM ParentID that is not an Active system
-      # requirement, an inventory Path that no longer exists, or an id-index
-      # ReplacementID that does not resolve. Both guards print their enforced
-      # contract to the run summary so the requirements are front-facing on every
-      # pull request. They need no dependency install; both use only Node
-      # built-ins (plus the sibling audit and docs-link modules).
+      # requirement, an inventory Path that no longer exists, an id-index
+      # ReplacementID that does not resolve, an SRS block whose references
+      # disagree with the RTM evidence map, an Active system requirement whose
+      # Verification References are absent or do not resolve, or an Active
+      # requirement that declares no Verification Reference. Both guards print
+      # their enforced contract to the run summary so the requirements are
+      # front-facing on every pull request. They need no dependency install; both
+      # use only Node built-ins (plus the sibling audit and docs-link modules).
       - name: Checkout
         uses: actions/checkout@v7
 

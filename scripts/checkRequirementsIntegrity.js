@@ -18,6 +18,16 @@
  *                          reverse, so a row for a deleted file is never flagged).
  *   4. replacementResolution - every id-index ReplacementID resolves to a defined
  *                          id-index ID (no dangling supersede/retire pointer).
+ *   5. referenceAgreement - the Implementation and Verification References in
+ *                          each SRS requirement block match the RTM evidence map
+ *                          (the human-readable spec states exactly the evidence
+ *                          the machine traceability tracks).
+ *   6. systemRequirementReferences - every Active system requirement declares
+ *                          Verification References and each resolves on disk.
+ *   7. requirementVerificationEvidence - every Active RTM requirement declares at
+ *                          least one Verification Reference (symmetric with 6, so
+ *                          a software requirement can never lose its verification
+ *                          evidence to an empty cell).
  *
  * The guard reuses the canonical implementations so it validates against exactly
  * the logic the real consumers use: parseCsv (traceability audit) and
@@ -285,6 +295,27 @@ function checkSystemRequirementReferences(syrsVerificationReferences, cwd, fileE
   return violations;
 }
 
+// Symmetric with checkSystemRequirementReferences: an Active system requirement
+// must declare Verification References, so an Active software requirement (RTM
+// row) must too. An empty VerificationRefs cell otherwise passes both the
+// agreement check (empty equals empty) and the resolution test (nothing to
+// iterate), silently leaving the requirement unverified.
+function checkRequirementVerificationEvidence(rtmRows) {
+  const violations = [];
+  for (const row of rtmRows) {
+    if ((row.Status || '').trim() !== 'Active') {
+      continue;
+    }
+    if (splitReferences(row.VerificationRefs || '').length === 0) {
+      violations.push({
+        subject: row.ReqID,
+        detail: 'Active requirement declares no Verification References'
+      });
+    }
+  }
+  return violations;
+}
+
 function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
   const readFile =
     deps.readFile ||
@@ -331,6 +362,11 @@ function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
       key: 'systemRequirementReferences',
       title: 'Active system requirement Verification References resolve on disk',
       violations: checkSystemRequirementReferences(syrsVerificationReferences, cwd, fileExists)
+    },
+    {
+      key: 'requirementVerificationEvidence',
+      title: 'Active requirement declares a Verification Reference',
+      violations: checkRequirementVerificationEvidence(rtmRows)
     }
   ];
 
@@ -366,9 +402,12 @@ function renderStepSummary(result) {
   lines.push(
     '**Runtime contract enforced on every pull request:** the requirements artifacts must ' +
       'cross-reference each other consistently. Every Active id-index anchor must resolve to a ' +
-      'real srs.md heading, every RTM ParentID must be an Active system requirement, every ' +
-      'traceability-inventory Path must exist on disk, and every id-index ReplacementID must ' +
-      'resolve to a defined ID.'
+      'real specification heading, every RTM ParentID must be an Active system requirement, every ' +
+      'traceability-inventory Path must exist on disk, every id-index ReplacementID must resolve ' +
+      'to a defined ID, the Implementation and Verification References in every SRS block must ' +
+      'match the RTM evidence map, every Active system requirement must declare Verification ' +
+      'References that resolve on disk, and every Active requirement must declare a Verification ' +
+      'Reference.'
   );
   lines.push('');
   lines.push(`**Result:** ${result.success ? 'PASS' : 'FAIL'} — ${result.violationCount} violation(s).`);
@@ -433,6 +472,7 @@ module.exports = {
   checkReferenceAgreement,
   extractSyrsVerificationReferences,
   checkSystemRequirementReferences,
+  checkRequirementVerificationEvidence,
   checkRequirementsIntegrity,
   renderSummary,
   renderStepSummary,

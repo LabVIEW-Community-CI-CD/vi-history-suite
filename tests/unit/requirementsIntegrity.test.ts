@@ -12,6 +12,7 @@ const {
   checkReferenceAgreement,
   extractSyrsVerificationReferences,
   checkSystemRequirementReferences,
+  checkRequirementVerificationEvidence,
   checkRequirementsIntegrity,
   renderStepSummary,
   main
@@ -46,6 +47,9 @@ const {
     syrsVerificationReferences: Map<string, string[]>,
     cwd: string,
     fileExists: (absolutePath: string) => boolean
+  ) => Array<{ subject: string; detail: string }>;
+  checkRequirementVerificationEvidence: (
+    rtmRows: Array<Record<string, string>>
   ) => Array<{ subject: string; detail: string }>;
   checkRequirementsIntegrity: (
     cwd: string,
@@ -286,6 +290,54 @@ describe('requirements cross-reference integrity guard', () => {
       { subject: 'VHS-SYS-REQ-001', detail: "Verification Reference 'src/missing.ts' does not exist on disk" },
       { subject: 'VHS-SYS-REQ-002', detail: 'Active system requirement has no Verification References' }
     ]);
+  });
+
+  it('passes verification-evidence when every Active RTM requirement declares a Verification Reference', () => {
+    const rows = [
+      { ReqID: 'VHS-REQ-001', Status: 'Active', VerificationRefs: 'tests/a.test.ts' },
+      { ReqID: 'VHS-REQ-002', Status: 'Active', VerificationRefs: 'tests/b.test.ts;manual:x' }
+    ];
+
+    expect(checkRequirementVerificationEvidence(rows)).toEqual([]);
+  });
+
+  it('flags Active RTM requirements that declare no Verification Reference (empty or whitespace)', () => {
+    const rows = [
+      { ReqID: 'VHS-REQ-001', Status: 'Active', VerificationRefs: 'tests/a.test.ts' },
+      { ReqID: 'VHS-REQ-002', Status: 'Active', VerificationRefs: '' },
+      { ReqID: 'VHS-REQ-003', Status: 'Active', VerificationRefs: '   ' }
+    ];
+
+    expect(checkRequirementVerificationEvidence(rows)).toEqual([
+      { subject: 'VHS-REQ-002', detail: 'Active requirement declares no Verification References' },
+      { subject: 'VHS-REQ-003', detail: 'Active requirement declares no Verification References' }
+    ]);
+  });
+
+  it('ignores non-Active RTM rows for verification-evidence', () => {
+    const rows = [{ ReqID: 'VHS-REQ-000', Status: 'Superseded', VerificationRefs: '' }];
+
+    expect(checkRequirementVerificationEvidence(rows)).toEqual([]);
+  });
+
+  it('flags a missing Verification Reference through the full integrity check', () => {
+    const cwd = path.join(path.sep, 'repo');
+    const files = makeFixtureFiles({
+      'docs/requirements/rtm.csv':
+        'ReqID,ParentID,Status,Area,Title,ImplementationRefs,VerificationRefs,Notes\n' +
+        'VHS-REQ-001,VHS-SYS-REQ-001,Active,Area,Alpha Requirement,src/a.ts,,ok\n'
+    });
+
+    const result = checkRequirementsIntegrity(cwd, {
+      readFile: makeReadFile(files),
+      fileExists: makeFileExists(cwd, ['src/a.ts'])
+    });
+    const evidence = result.checks.find((check) => check.key === 'requirementVerificationEvidence');
+
+    expect(evidence?.violations).toEqual([
+      { subject: 'VHS-REQ-001', detail: 'Active requirement declares no Verification References' }
+    ]);
+    expect(result.success).toBe(false);
   });
 
   it('passes when every cross-reference resolves', () => {
