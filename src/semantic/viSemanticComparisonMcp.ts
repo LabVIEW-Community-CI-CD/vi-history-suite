@@ -11,6 +11,10 @@ import type {
   CompareViRevisionsResult
 } from './compareViRevisions';
 import type { ViSemanticHistory, ViSemanticHistoryInput } from './viSemanticHistory';
+import {
+  renderViSemanticComparisonMarkdown,
+  renderViSemanticHistoryMarkdown
+} from './viSemanticReviewMarkdown';
 
 /**
  * Minimal Model Context Protocol surface over the VI comparison engine. This is
@@ -50,11 +54,30 @@ export type JsonRpcResponse = JsonRpcSuccess | JsonRpcError;
 const JSON_RPC_METHOD_NOT_FOUND = -32601;
 const JSON_RPC_INVALID_PARAMS = -32602;
 
+type ViSemanticOutputFormat = 'json' | 'markdown';
+
+const OUTPUT_FORMAT_SCHEMA = {
+  type: 'string',
+  enum: ['json', 'markdown'],
+  description:
+    'Output format. "json" (default) returns the full model; "markdown" returns a review-ready block for a PR comment or CI summary.'
+} as const;
+
+function readOutputFormat(rawArguments: unknown): ViSemanticOutputFormat {
+  if (typeof rawArguments === 'object' && rawArguments !== null) {
+    if ((rawArguments as Record<string, unknown>).format === 'markdown') {
+      return 'markdown';
+    }
+  }
+  return 'json';
+}
+
 interface ViComparisonToolArguments {
   reportHtml: string;
   reportFilePath?: string;
   revisions?: ViSemanticRevisionFacts;
   runtime?: ViSemanticRuntimeFacts;
+  format: ViSemanticOutputFormat;
 }
 
 const COMPARISON_INPUT_SCHEMA = {
@@ -85,7 +108,8 @@ const COMPARISON_INPUT_SCHEMA = {
         labviewVersion: { type: 'string' },
         bitness: { type: 'string' }
       }
-    }
+    },
+    format: OUTPUT_FORMAT_SCHEMA
   },
   required: ['reportHtml']
 } as const;
@@ -125,7 +149,8 @@ const COMPARE_REVISIONS_INPUT_SCHEMA = {
         containerImageVersion: { type: 'string' },
         cliConnectTimeoutSeconds: { type: 'number' }
       }
-    }
+    },
+    format: OUTPUT_FORMAT_SCHEMA
   },
   required: ['repositoryRoot', 'relativePath', 'baseHash', 'selectedHash']
 } as const;
@@ -157,7 +182,8 @@ const HISTORY_INPUT_SCHEMA = {
         containerImageVersion: { type: 'string' },
         cliConnectTimeoutSeconds: { type: 'number' }
       }
-    }
+    },
+    format: OUTPUT_FORMAT_SCHEMA
   },
   required: ['repositoryRoot', 'relativePath']
 } as const;
@@ -221,7 +247,8 @@ function parseComparisonArguments(rawArguments: unknown): ViComparisonToolArgume
     reportFilePath:
       typeof args.reportFilePath === 'string' ? args.reportFilePath : undefined,
     revisions: (args.revisions as ViSemanticRevisionFacts | undefined) ?? undefined,
-    runtime: (args.runtime as ViSemanticRuntimeFacts | undefined) ?? undefined
+    runtime: (args.runtime as ViSemanticRuntimeFacts | undefined) ?? undefined,
+    format: readOutputFormat(rawArguments)
   };
 }
 
@@ -235,6 +262,9 @@ function callTool(name: string, rawArguments: unknown): unknown {
 
   if (name === 'summarize_vi_comparison') {
     return toolTextResult(model.narrative);
+  }
+  if (args.format === 'markdown') {
+    return toolTextResult(renderViSemanticComparisonMarkdown(model));
   }
   return toolTextResult(JSON.stringify(model, null, 2));
 }
@@ -334,11 +364,17 @@ function parseCompareRevisionsArguments(rawArguments: unknown): CompareViRevisio
   return input;
 }
 
-function renderCompareResult(result: CompareViRevisionsResult): unknown {
-  if (result.status === 'completed') {
-    return toolTextResult(JSON.stringify(result.model, null, 2));
+function renderCompareResult(
+  result: CompareViRevisionsResult,
+  format: ViSemanticOutputFormat
+): unknown {
+  if (result.status !== 'completed') {
+    return toolTextResult(`Comparison ${result.status}: ${result.reason}`, true);
   }
-  return toolTextResult(`Comparison ${result.status}: ${result.reason}`, true);
+  if (format === 'markdown') {
+    return toolTextResult(renderViSemanticComparisonMarkdown(result.model));
+  }
+  return toolTextResult(JSON.stringify(result.model, null, 2));
 }
 
 function parseHistoryArguments(rawArguments: unknown): ViSemanticHistoryInput {
@@ -366,7 +402,13 @@ function parseHistoryArguments(rawArguments: unknown): ViSemanticHistoryInput {
   return input;
 }
 
-function renderHistoryResult(history: ViSemanticHistory): unknown {
+function renderHistoryResult(
+  history: ViSemanticHistory,
+  format: ViSemanticOutputFormat
+): unknown {
+  if (format === 'markdown') {
+    return toolTextResult(renderViSemanticHistoryMarkdown(history));
+  }
   return toolTextResult(JSON.stringify(history, null, 2));
 }
 
@@ -420,13 +462,14 @@ export async function handleViSemanticMcpMessageAsync(
   if (message.method === 'tools/call') {
     const params = (message.params ?? {}) as { name?: unknown; arguments?: unknown };
     const id = message.id ?? null;
+    const format = readOutputFormat(params.arguments);
     if (params.name === 'compare_vi_revisions') {
       return invokeInjectedTool(
         id,
         'compare_vi_revisions',
         deps.compareViRevisions,
         () => parseCompareRevisionsArguments(params.arguments),
-        renderCompareResult
+        (result) => renderCompareResult(result, format)
       );
     }
     if (params.name === 'summarize_vi_history') {
@@ -435,7 +478,7 @@ export async function handleViSemanticMcpMessageAsync(
         'summarize_vi_history',
         deps.buildViSemanticHistory,
         () => parseHistoryArguments(params.arguments),
-        renderHistoryResult
+        (history) => renderHistoryResult(history, format)
       );
     }
   }
