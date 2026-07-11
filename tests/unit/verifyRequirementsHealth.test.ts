@@ -192,6 +192,38 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(summaryChunks.join('')).toContain('## Requirement Verification Health');
   });
 
+  it('exits non-zero under --strict when requirement health is not green', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--strict'], {
+      linkage: LINKAGE,
+      criteria: CRITERIA,
+      integrity: INTEGRITY_PASS,
+      coverage: COVERAGE_WITH_RISK,
+      mutation: MUTATION,
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(1);
+    expect(stdoutChunks.join('')).toContain('Strict mode: FAILING');
+  });
+
+  it('exits zero under --strict when requirement health is green', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--strict'], {
+      linkage: { total: 2, linked: ['VHS-REQ-001', 'VHS-REQ-004'], unlinked: [], manualOnly: [] },
+      criteria: CRITERIA,
+      integrity: INTEGRITY_PASS,
+      coverage: { riskThreshold: 50, mappedBelowThreshold: [] },
+      mutation: MUTATION,
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toContain('Strict mode: requirement health is green.');
+  });
+
   it('verifies the real repository aggregate is healthy', () => {
     const repoRoot = path.resolve(__dirname, '..', '..');
     const result = verifyRequirementsHealth(repoRoot) as {

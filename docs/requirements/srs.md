@@ -1923,6 +1923,9 @@ Missing numeric IDs are intentional.
   - A unified requirement verification-health report aggregates structural
     integrity, requirement linkage, criterion citation, coverage risk, and
     mutation score into a single advisory per-requirement signal.
+  - The unified report supports a strict mode that exits non-zero when a
+    requirement is unlinked, structural integrity fails, or a requirement-mapped
+    file is below the coverage risk threshold.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
