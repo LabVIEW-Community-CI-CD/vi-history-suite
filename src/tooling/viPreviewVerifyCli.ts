@@ -251,7 +251,15 @@ export function defaultSampleViPath(operationDirectory: string): string {
   return path.join(operationDirectory, 'PrintToSingleFileHtml', 'Make path absolute.vi');
 }
 
-export async function main(argv: readonly string[]): Promise<number> {
+export interface ViPreviewVerifyMainDeps {
+  /** Injected verifier (default `resolveAndVerifyViPreview`); overridden in tests. */
+  resolve?: typeof resolveAndVerifyViPreview;
+}
+
+export async function main(
+  argv: readonly string[],
+  deps: ViPreviewVerifyMainDeps = {}
+): Promise<number> {
   const parsed = parseArgs(argv);
   const operationDirectory = parsed.operationDirectory ?? defaultOperationDirectory();
   const sampleViPath = parsed.sampleViPath ?? defaultSampleViPath(operationDirectory);
@@ -276,7 +284,7 @@ export async function main(argv: readonly string[]): Promise<number> {
     settings.linuxContainerImage = parsed.containerImage;
   }
 
-  const proof = await resolveAndVerifyViPreview({
+  const proof = await (deps.resolve ?? resolveAndVerifyViPreview)({
     operationDirectory,
     sampleViPath,
     connectTimeoutSeconds: parsed.connectTimeoutSeconds,
