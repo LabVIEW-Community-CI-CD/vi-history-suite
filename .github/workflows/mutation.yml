@@ -1,0 +1,53 @@
+name: Mutation
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutation:
+    name: Mutation Testing (src/domain, advisory)
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Advisory assertion-quality signal (VHS-REQ-613). Mutation testing proves
+      # the tests catch regressions, not merely execute lines. It is scoped to the
+      # pure src/domain detection core and runs on a schedule (not per pull
+      # request) because mutation is too slow to gate PRs. stryker.config.mjs sets
+      # thresholds.break to null so the run never fails closed; this workflow
+      # retains the report and publishes the unified requirement-health summary.
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Mutation test (advisory)
+        run: npm run test:mutation
+
+      - name: Requirement verification health summary
+        if: ${{ always() }}
+        run: npm run requirements:verify
+
+      - name: Upload mutation report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report-${{ github.run_id }}
+          path: reports/mutation/
+          if-no-files-found: ignore
+          retention-days: 30

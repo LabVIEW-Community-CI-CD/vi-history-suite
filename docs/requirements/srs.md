@@ -2323,6 +2323,8 @@ Missing numeric IDs are intentional.
   - Standards closeout invokes the coverage map after `npm test` and before
     package validation so coverage-risk findings are retained with other
     release-readiness evidence.
+  - A scheduled advisory workflow runs Stryker mutation testing on the pure
+    detection core and retains the mutation report as run evidence.
 - Agent Work Scope:
   - Change the coverage mapping command, coverage floor configuration,
     requirements mapping, and verification references together.
@@ -2332,11 +2334,13 @@ Missing numeric IDs are intentional.
   - `package.json`
   - `vitest.config.ts`
   - `docs/testing/test-plan.md`
+  - `.github/workflows/mutation.yml`
 - Verification References:
   - `tests/unit/coverageMapScript.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/mutationWorkflow.test.ts`
 - Change Guidance:
   - Keep this requirement focused on coverage intelligence and risk
     prioritization; do not use it to hide dev-only sources or reduce coverage
