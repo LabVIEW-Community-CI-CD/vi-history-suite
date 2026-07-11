@@ -5,6 +5,7 @@ import {
 } from '../semantic/viSemanticComparisonMcp';
 import { compareViRevisions } from '../semantic/compareViRevisions';
 import { buildViSemanticHistory } from '../semantic/viSemanticHistory';
+import { buildViRepositoryIndex } from '../semantic/viRepositoryIndex';
 
 /**
  * Stdio transport for the VI semantic MCP server: newline-delimited JSON-RPC
@@ -39,7 +40,8 @@ async function dispatchLine(line: string): Promise<void> {
   // the invoking tools can run real comparisons from this entrypoint.
   const response = await handleViSemanticMcpMessageAsync(message, {
     compareViRevisions,
-    buildViSemanticHistory
+    buildViSemanticHistory,
+    buildViRepositoryIndex
   });
   if (response !== null) {
     writeResponse(response);
