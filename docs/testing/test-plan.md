@@ -80,6 +80,17 @@ drift on provider-selection and fail-closed paths. Raise the thresholds only in
 a PR that shows new coverage evidence and updates this test plan with the new
 baseline.
 
+## Mutation Testing (Advisory)
+
+Run `npm run test:mutation` (Stryker, `stryker.config.mjs`) to mutation-test the
+pure `src/domain` detection core. Coverage proves lines execute; mutation proves
+the tests catch regressions, so surviving mutants pinpoint weak or missing
+assertions behind requirement-mapped behavior. It is advisory
+(`thresholds.break` is null) and never fails the build; use the surviving-mutant
+report in `reports/mutation/mutation.json` to close assertion gaps. Widening the
+mutate scope beyond `src/domain` and adding a scheduled run are separate
+maintainer decisions.
+
 ## Coverage Traceability Map
 
 Run `npm run coverage:map` after `npm test` to join

@@ -4,6 +4,8 @@ out-tests/
 dist/
 coverage/
 .vscode-test/
+.stryker-tmp/
+reports/
 *.vsix
 *.log
 .cache/
