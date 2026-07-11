@@ -1675,8 +1675,8 @@ Missing numeric IDs are intentional.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
   - The workflow enforces the baseline global coverage thresholds declared in
-    `vitest.config.ts`: 79% statements, 70% branches, 84% functions, and
-    79% lines after the coverage-led assurance wave.
+    `vitest.config.ts`: 80% statements, 70% branches, 84% functions, and
+    80% lines after the coverage-led assurance wave.
   - The workflow runs `npm run package`.
   - The workflow runs `npm run dod:gate` through the `DoD Gate / dod` step
     after `npm run package`.
