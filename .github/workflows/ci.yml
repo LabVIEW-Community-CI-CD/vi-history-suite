@@ -212,3 +212,27 @@ jobs:
 
       - name: Integration Host (Linux)
         run: npm run test:integration:linux
+
+  requirements-csv-integrity:
+    name: Requirements CSV Integrity
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Requirements-contract integrity leg (VHS-REQ-601): the requirements CSVs
+      # are parsed by mapping fields onto their headers by index, so a row with
+      # an unescaped comma in an unquoted field silently drops columns and shifts
+      # later fields (for example, a truncated Notes value) without failing any
+      # other gate. This job fails closed on any such row and prints the enforced
+      # contract plus the validated requirement IDs to the run summary so the
+      # requirements are front-facing on every pull request. It needs no
+      # dependency install; the guard uses only Node built-ins.
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Validate requirements CSV column integrity
+        run: node scripts/checkRequirementsCsvColumns.js

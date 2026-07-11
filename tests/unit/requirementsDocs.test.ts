@@ -217,6 +217,32 @@ describe('requirements documentation coherence', () => {
     }
   });
 
+  it('keeps every requirements CSV row aligned to its header column count (VHS-REQ-601)', () => {
+    const {
+      checkRequirementsCsvColumns
+    } = require('../../scripts/checkRequirementsCsvColumns.js') as {
+      checkRequirementsCsvColumns: (cwd: string) => {
+        success: boolean;
+        files: Array<{
+          relativePath: string;
+          violations: Array<{ lineNumber: number; id: string; columns: number; expectedColumns: number }>;
+        }>;
+      };
+    };
+
+    const result = checkRequirementsCsvColumns(repoRoot);
+    const violations = result.files.flatMap((file) =>
+      file.violations.map(
+        (violation) =>
+          `${file.relativePath}:${violation.lineNumber} (${violation.id}) has ` +
+          `${violation.columns} columns, expected ${violation.expectedColumns}`
+      )
+    );
+
+    expect(violations, `malformed requirements CSV rows:\n${violations.join('\n')}`).toEqual([]);
+    expect(result.success).toBe(true);
+  });
+
   it('keeps historical IDs discoverable through the ID index', () => {
     const indexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
     const indexById = new Map(indexRows.map((row) => [row.ID, row]));

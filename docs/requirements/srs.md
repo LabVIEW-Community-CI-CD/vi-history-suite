@@ -1879,6 +1879,10 @@ Missing numeric IDs are intentional.
     remote agents from maintainer-local advisory checks that depend on local
     skills or read-only evidence checkouts.
   - CI fails when active requirement references drift from existing repo paths.
+  - CI fails when any requirements CSV row (rtm.csv, id-index.csv, or
+    traceability-inventory.csv) does not match its header column count, and the
+    check prints the enforced contract and the validated requirement IDs to the
+    run summary so they are front-facing on every pull request.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
@@ -1918,11 +1922,13 @@ Missing numeric IDs are intentional.
   - `docs/requirements/id-index.csv`
   - `docs/requirements/traceability-inventory.csv`
   - `scripts/auditTraceabilitySteward.js`
+  - `scripts/checkRequirementsCsvColumns.js`
   - `scripts/generateCloseoutEvidence.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/requirementsCsvColumns.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:

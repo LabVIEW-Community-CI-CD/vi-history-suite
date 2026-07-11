@@ -1,6 +1,7 @@
 Path,Classification,RtmCoverage,Notes
 scripts/auditCustomizationGovernance.js,mapped,Yes,Customization governance audit script for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
+scripts/checkRequirementsCsvColumns.js,mapped,Yes,Requirements CSV column-integrity guard; fails closed on any row whose column count differs from its header and prints the contract plus validated requirement IDs to the CI run summary; mapped to VHS-REQ-601.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command with generated validation/evidence root exclusions; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
 scripts/checkDocumentationWorkbench.js,dev-only,No,Documentation workbench gate verifying the docs-authoring image documentation-workbench guide and docs:gate script surfaces exist and stay coherent; CI and dev documentation infrastructure.
@@ -121,6 +122,7 @@ tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host te
 tests/unit/runDevHostCli.test.ts,dev-only,No,Development host CLI tests; development tooling.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
+tests/unit/requirementsCsvColumns.test.ts,mapped,Yes,Requirements CSV column-integrity guard unit tests (fixtures for parsing/column-count/step-summary rendering); mapped to VHS-REQ-601.
 tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
 tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
@@ -238,7 +240,7 @@ src/tooling/dockerImageDownloadSize.ts,mapped,Yes,Docker Hub registry manifest d
 tests/unit/dockerImageDownloadSize.test.ts,mapped,Yes,Registry manifest download-size resolver unit tests; mapped to VHS-REQ-655.
 src/reporting/viPreview/viPreviewCommandPlan.ts,mapped,Yes,Single-VI preview LabVIEWCLI PrintToSingleFileHtml command-plan builders (host + Linux container); mapped to VHS-REQ-659.
 tests/unit/viPreviewCommandPlan.test.ts,mapped,Yes,Single-VI preview command-plan builder unit tests; mapped to VHS-REQ-659.
-src/reporting/viPreview/viPreviewExecution.ts,mapped,Yes,Single-VI preview execution orchestrator (host-native + Linux/Windows-container plan selection, run, outcome classification with a host-native cold-launch -350000 VI Server retry mirroring the container in-script retry); mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewExecution.ts,mapped,Yes,"Single-VI preview execution orchestrator (host-native + Linux/Windows-container plan selection, run, outcome classification with a host-native cold-launch -350000 VI Server retry mirroring the container in-script retry); mapped to VHS-REQ-659."
 tests/unit/viPreviewExecution.test.ts,mapped,Yes,Single-VI preview execution orchestrator unit tests; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewFileRender.ts,mapped,Yes,Single-VI preview on-disk file render orchestration (temp workspace staging + cleanup); mapped to VHS-REQ-659.
 tests/unit/viPreviewFileRender.test.ts,mapped,Yes,Single-VI preview file render orchestration unit tests; mapped to VHS-REQ-659.
@@ -253,7 +255,7 @@ src/reporting/viPreview/viPreviewCache.ts,mapped,Yes,Single-VI preview render ca
 tests/unit/viPreviewCache.test.ts,mapped,Yes,Single-VI preview render cache unit tests; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewCacheWarmer.ts,mapped,Yes,Background preview cache warmer progress math and serial warm loop; mapped to VHS-REQ-659.
 tests/unit/viPreviewCacheWarmer.test.ts,mapped,Yes,Preview cache warmer progress and loop unit tests; mapped to VHS-REQ-659.
-src/ui/viPreviewRenderHost.ts,mapped,Yes,Shared VS Code host bindings for preview rendering (cache, render deps, runtime resolution) reused by the editor and warmer; mapped to VHS-REQ-659.
+src/ui/viPreviewRenderHost.ts,mapped,Yes,"Shared VS Code host bindings for preview rendering (cache, render deps, runtime resolution) reused by the editor and warmer; mapped to VHS-REQ-659."
 src/ui/viPreviewCacheWarmerService.ts,mapped,Yes,Background preview cache warmer service with status-bar progress; warming is governed by viHistorySuite.preview.backgroundWarming (docker-only default | always | off) via shouldWarmViPreviewProvider; mapped to VHS-REQ-659.
 src/ui/viPreviewContainerSession.ts,mapped,Yes,Warm LabVIEW container session for fast preview rendering (docker exec against a resident LabVIEW); mapped to VHS-REQ-659.
 src/ui/viPreviewSessionManager.ts,mapped,Yes,Shared warm-session manager (serialized interactive-prioritized renders + idle disposal) used by the editor and warmer; mapped to VHS-REQ-659.
@@ -262,7 +264,7 @@ src/reporting/viPreview/viPreviewSessionRuntime.ts,mapped,Yes,Pure warm-session 
 tests/unit/viPreviewSessionRuntime.test.ts,mapped,Yes,Warm-session runtime mapping/gating and session key unit tests; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewVerification.ts,mapped,Yes,Pure single-VI preview render verification core (renders a sample VI and summarizes a proof: outcome plus inline image count); mapped to VHS-REQ-659.
 tests/unit/viPreviewVerification.test.ts,mapped,Yes,Single-VI preview render verification core unit tests; mapped to VHS-REQ-659.
-src/tooling/viPreviewVerifyCli.ts,mapped,Yes,Proof-emitting CLI preview verification (resolves the runtime, renders a sample VI, emits proof JSON) for the maintainer runner; mapped to VHS-REQ-659.
+src/tooling/viPreviewVerifyCli.ts,mapped,Yes,"Proof-emitting CLI preview verification (resolves the runtime, renders a sample VI, emits proof JSON) for the maintainer runner; mapped to VHS-REQ-659."
 tests/unit/viPreviewVerifyCli.test.ts,mapped,Yes,Preview verification CLI resolve-and-verify unit tests; mapped to VHS-REQ-659.
 src/git/revisionViTree.ts,mapped,Yes,Revision VI-tree materializer (parses git ls-tree output and stages a revision's VI plus sibling source tree for preview); mapped to VHS-REQ-659.
 tests/unit/revisionViTree.test.ts,mapped,Yes,Revision VI-tree materializer and ls-tree parser unit tests; mapped to VHS-REQ-659.
