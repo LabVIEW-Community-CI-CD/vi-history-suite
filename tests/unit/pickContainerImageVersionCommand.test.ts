@@ -6,6 +6,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { EventEmitter } from 'node:events';
 
 vi.mock('vscode', async () => {
   const { defaultVsCodeTestHarness } = await import('./vscodeTestHarness');
@@ -17,6 +18,8 @@ import * as vscode from 'vscode';
 import {
   applyContainerImageVersionSelection,
   buildContainerImageVersionItems,
+  defaultFetchPublishedTags,
+  defaultListLocalImages,
   discoverAvailableContainerImageVersions,
   PICK_CONTAINER_IMAGE_VERSION_CLEAR_TOAST_MESSAGE,
   PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID,
@@ -25,6 +28,7 @@ import {
 } from '../../src/commands/pickContainerImageVersionCommand';
 import {
   AvailableContainerImageVersion,
+  LABVIEW_CONTAINER_IMAGE_REPOSITORY,
   parseLabviewContainerImageTag
 } from '../../src/tooling/containerImageCatalog';
 
@@ -418,5 +422,134 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
       vscode.ConfigurationTarget.Global
     );
     expect(info).toHaveBeenCalledWith(PICK_CONTAINER_IMAGE_VERSION_CLEAR_TOAST_MESSAGE);
+  });
+});
+
+/**
+ * Fake `docker` child following the repository's EventEmitter injection
+ * convention: `stdout`/`stderr` expose `setEncoding` (called by the production
+ * code) and emit `data`; the child emits `close`/`error`.
+ */
+function makeFakeDockerChild() {
+  const stdout = Object.assign(new EventEmitter(), { setEncoding: vi.fn() });
+  const stderr = Object.assign(new EventEmitter(), { setEncoding: vi.fn() });
+  const child = Object.assign(new EventEmitter(), { stdout, stderr });
+  return { child, stdout, stderr };
+}
+
+describe('defaultListLocalImages (VHS-REQ-648/649)', () => {
+  it('parses trimmed, newline-delimited image references on a successful run', async () => {
+    const { child, stdout } = makeFakeDockerChild();
+    const spawnImpl = vi.fn(() => child);
+    const promise = defaultListLocalImages(spawnImpl as never);
+    stdout.emit(
+      'data',
+      'nationalinstruments/labview:2026q1-linux\n  nationalinstruments/labview:2025q3-linux  \n\n'
+    );
+    child.emit('close', 0);
+    await expect(promise).resolves.toEqual([
+      'nationalinstruments/labview:2026q1-linux',
+      'nationalinstruments/labview:2025q3-linux'
+    ]);
+    expect(spawnImpl).toHaveBeenCalledWith(
+      'docker',
+      ['images', '--format', '{{.Repository}}:{{.Tag}}', LABVIEW_CONTAINER_IMAGE_REPOSITORY],
+      { windowsHide: true }
+    );
+  });
+
+  it('resolves an empty list when the Docker CLI is absent (spawn error)', async () => {
+    const { child } = makeFakeDockerChild();
+    const promise = defaultListLocalImages(vi.fn(() => child) as never);
+    child.emit('error', new Error('spawn docker ENOENT'));
+    await expect(promise).resolves.toEqual([]);
+  });
+
+  it('rejects on a non-zero exit so local presence is reported unknown, never empty', async () => {
+    const { child, stderr } = makeFakeDockerChild();
+    const promise = defaultListLocalImages(vi.fn(() => child) as never);
+    stderr.emit('data', 'Cannot connect to the Docker daemon');
+    child.emit('close', 125);
+    await expect(promise).rejects.toThrow(
+      /docker images exited with code 125: Cannot connect to the Docker daemon/u
+    );
+  });
+
+  it('rejects when spawn throws synchronously', async () => {
+    const spawnImpl = vi.fn(() => {
+      throw new Error('spawn boom');
+    });
+    await expect(defaultListLocalImages(spawnImpl as never)).rejects.toThrow('spawn boom');
+  });
+
+  it('settles once and ignores late events after resolving', async () => {
+    const { child, stdout } = makeFakeDockerChild();
+    const promise = defaultListLocalImages(vi.fn(() => child) as never);
+    stdout.emit('data', 'nationalinstruments/labview:2026q1-linux\n');
+    child.emit('close', 0);
+    // A late error must not flip the already-resolved promise.
+    child.emit('error', new Error('too late'));
+    await expect(promise).resolves.toEqual(['nationalinstruments/labview:2026q1-linux']);
+  });
+});
+
+describe('defaultFetchPublishedTags (VHS-REQ-647)', () => {
+  it('returns an empty list without any request for a non-pinned repository', async () => {
+    const httpGetJson = vi.fn();
+    await expect(defaultFetchPublishedTags('someone/else', httpGetJson as never)).resolves.toEqual([]);
+    expect(httpGetJson).not.toHaveBeenCalled();
+  });
+
+  it('collects string tag names across pages, following the next link', async () => {
+    const httpGetJson = vi
+      .fn()
+      .mockResolvedValueOnce({
+        results: [{ name: '2026q1-linux' }, { name: 42 }, { name: '2025q3-linux' }],
+        next: 'https://hub.docker.com/v2/repositories/x/tags?page=2'
+      })
+      .mockResolvedValueOnce({ results: [{ name: '2024q3-linux' }], next: null });
+    await expect(
+      defaultFetchPublishedTags(LABVIEW_CONTAINER_IMAGE_REPOSITORY, httpGetJson as never)
+    ).resolves.toEqual(['2026q1-linux', '2025q3-linux', '2024q3-linux']);
+    expect(httpGetJson).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops with the tags gathered so far when a page request fails', async () => {
+    const httpGetJson = vi
+      .fn()
+      .mockResolvedValueOnce({
+        results: [{ name: '2026q1-linux' }],
+        next: 'https://hub.docker.com/v2/repositories/x/tags?page=2'
+      })
+      .mockRejectedValueOnce(new Error('registry down'));
+    await expect(
+      defaultFetchPublishedTags(LABVIEW_CONTAINER_IMAGE_REPOSITORY, httpGetJson as never)
+    ).resolves.toEqual(['2026q1-linux']);
+    expect(httpGetJson).toHaveBeenCalledTimes(2);
+  });
+
+  it('tolerates a payload whose results field is not an array', async () => {
+    const httpGetJson = vi.fn().mockResolvedValueOnce({ results: undefined, next: null });
+    await expect(
+      defaultFetchPublishedTags(LABVIEW_CONTAINER_IMAGE_REPOSITORY, httpGetJson as never)
+    ).resolves.toEqual([]);
+    expect(httpGetJson).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops at the bounded page cap even if the registry keeps advertising more', async () => {
+    const httpGetJson = vi.fn().mockResolvedValue({
+      results: [{ name: '2026q1-linux' }],
+      next: 'https://hub.docker.com/v2/repositories/x/tags?page=more'
+    });
+    await expect(
+      defaultFetchPublishedTags(LABVIEW_CONTAINER_IMAGE_REPOSITORY, httpGetJson as never)
+    ).resolves.toEqual([
+      '2026q1-linux',
+      '2026q1-linux',
+      '2026q1-linux',
+      '2026q1-linux',
+      '2026q1-linux'
+    ]);
+    expect(httpGetJson).toHaveBeenCalledTimes(5);
   });
 });
