@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-24T00:00:00.000Z",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
   "sourceLedgerPath": "README.md",
   "sourceWikiRepoPath": "",
   "bundleAudience": "extension-users",
@@ -39,6 +39,15 @@
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "htmlFileName": "comparison-reports-and-dashboard-review.html",
       "publishedDate": "2026-05-24",
+      "wikiCommit": ""
+    },
+    {
+      "id": "copilot-agent-mode",
+      "title": "Copilot Agent Mode",
+      "wikiPath": "Copilot-Agent-Mode",
+      "wikiFileName": "Copilot-Agent-Mode.md",
+      "htmlFileName": "copilot-agent-mode.html",
+      "publishedDate": "2026-07-11",
       "wikiCommit": ""
     }
   ]

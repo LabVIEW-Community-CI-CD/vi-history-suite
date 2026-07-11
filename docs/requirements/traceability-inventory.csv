@@ -206,6 +206,7 @@ resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,mapped
 resources/bundled-docs/pages/install-and-release.html,mapped,Yes,Bundled install/release documentation page asset; mapped to VHS-REQ-611.
 resources/bundled-docs/pages/overview.html,mapped,Yes,Bundled overview documentation page asset; mapped to VHS-REQ-611.
 resources/bundled-docs/pages/user-workflow.html,mapped,Yes,Bundled user-workflow documentation page asset; mapped to VHS-REQ-611.
+resources/bundled-docs/pages/copilot-agent-mode.html,mapped,Yes,Bundled Copilot agent-mode documentation page asset; mapped to VHS-REQ-611.
 vagrant/Vagrantfile,supporting,Yes,Vagrant configuration; mapped through RTM.
 vagrant/provision/bootstrap.ps1,supporting,Yes,Vagrant bootstrap provisioner; mapped to VHS-REQ-599.
 vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW preparation; mapped to VHS-REQ-599.
