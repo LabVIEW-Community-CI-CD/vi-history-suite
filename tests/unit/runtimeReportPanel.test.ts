@@ -35,6 +35,10 @@ function baseModel(
       versions: [],
       notes: []
     },
+    preview: {
+      visible: false,
+      enabled: false
+    },
     report: {
       includeFlags: {
         viAttributes: true,
@@ -58,6 +62,26 @@ function includeCheckboxChecked(html: string, key: ReportIncludeKey): boolean {
   }
   return match[1] === 'checked';
 }
+
+describe('VI Preview toggle (VHS-REQ-659)', () => {
+  it('hides the VI Preview toggle when Docker is not the effective runtime', () => {
+    const html = renderRuntimeReportPanelHtml(baseModel({ preview: { visible: false, enabled: false } }));
+    expect(html).not.toContain('data-testid="runtime-report-preview-section"');
+    expect(html).not.toContain('data-command="setPreviewEnabled"');
+  });
+
+  it('renders the VI Preview toggle checked when enabled on Docker', () => {
+    const html = renderRuntimeReportPanelHtml(baseModel({ preview: { visible: true, enabled: true } }));
+    expect(html).toContain('data-testid="runtime-report-preview-section"');
+    expect(html).toMatch(/data-command="setPreviewEnabled"\s*checked/);
+  });
+
+  it('renders the VI Preview toggle unchecked when disabled on Docker', () => {
+    const html = renderRuntimeReportPanelHtml(baseModel({ preview: { visible: true, enabled: false } }));
+    expect(html).toContain('data-testid="runtime-report-preview-section"');
+    expect(html).not.toMatch(/data-command="setPreviewEnabled"\s*checked/);
+  });
+});
 
 describe('REPORT_OPTION_DESCRIPTORS (VHS-REQ-645)', () => {
   it('maps the five difference filters to their ignore settings and CLI flags', () => {

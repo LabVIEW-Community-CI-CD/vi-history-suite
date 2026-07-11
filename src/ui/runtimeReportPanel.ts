@@ -153,6 +153,16 @@ export interface ReportSectionViewModel {
   readonly includeFlags: Record<ReportIncludeKey, boolean>;
 }
 
+/**
+ * VI Preview section state. Hidden entirely when `visible` is false: the toggle
+ * is offered only when Docker is the effective comparison runtime (VHS-REQ-659),
+ * because preview rendering and its background caching run through Docker.
+ */
+export interface PreviewSectionViewModel {
+  readonly visible: boolean;
+  readonly enabled: boolean;
+}
+
 /** Full view model consumed by {@link renderRuntimeReportPanelHtml}. */
 export interface RuntimeReportPanelViewModel {
   readonly trusted: boolean;
@@ -163,6 +173,7 @@ export interface RuntimeReportPanelViewModel {
   /** Index into `providerOptions` matching the active selection, or -1. */
   readonly selectedProviderIndex: number;
   readonly container: ContainerSectionViewModel;
+  readonly preview: PreviewSectionViewModel;
   readonly report: ReportSectionViewModel;
 }
 
@@ -295,6 +306,31 @@ function renderProviderSection(model: RuntimeReportPanelViewModel): string {
     </section>`;
 }
 
+function renderPreviewSection(preview: PreviewSectionViewModel): string {
+  // Docker-only: the section is hidden unless Docker is the effective runtime
+  // (mirrors the container-image section visibility).
+  if (!preview.visible) {
+    return '';
+  }
+  return `
+    <section class="card" data-testid="runtime-report-preview-section">
+      <h2>VI Preview</h2>
+      <p class="hint" data-testid="runtime-report-preview-hint">Available with the Docker runtime. Opening a VI renders a read-only picture of its front panel and block diagram, and the extension silently caches every VI in the repository in the background so later opens are instant.</p>
+      <label class="checkbox-row" data-testid="runtime-report-preview-row">
+        <input
+          type="checkbox"
+          data-testid="runtime-report-preview-checkbox"
+          data-command="setPreviewEnabled"
+          ${preview.enabled ? 'checked' : ''}
+        />
+        <span class="checkbox-text">
+          <span class="checkbox-label">Enable VI preview</span>
+          <span class="checkbox-help">Turning this on starts background caching immediately; turning it off cancels it.</span>
+        </span>
+      </label>
+    </section>`;
+}
+
 function renderReportSection(report: ReportSectionViewModel): string {
   const includeRows = REPORT_OPTION_DESCRIPTORS.map((descriptor) => {
     const checked = report.includeFlags[descriptor.includeKey];
@@ -343,6 +379,7 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
   const interactiveSections = model.trusted
     ? `
     ${renderProviderSection(model)}
+    ${renderPreviewSection(model.preview)}
     ${renderContainerSection(model.container)}
     ${renderReportSection(model.report)}`
     : '';
@@ -516,6 +553,10 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
             includeKey: target.dataset.includeKey,
             include: target.checked
           });
+          return;
+        }
+        if (command === 'setPreviewEnabled' && target instanceof HTMLInputElement) {
+          vscode.postMessage({ command, enabled: target.checked });
           return;
         }
         if (command === 'selectContainerVersion' && target instanceof HTMLSelectElement) {

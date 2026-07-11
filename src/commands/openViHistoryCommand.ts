@@ -1166,7 +1166,7 @@ export function createOpenViHistoryCommand(
       if (command === 'previewRevision') {
         if (!isViPreviewEnabled()) {
           void vscode.window.showInformationMessage(
-            'VI Preview is off. Turn on the "VI History Suite › Preview: Enabled" setting (viHistorySuite.preview.enabled) to preview revisions.'
+            'VI Preview is off. Select the Docker runtime and enable VI preview in the "VI History: Runtime & Report Settings" command to preview revisions.'
           );
           return;
         }

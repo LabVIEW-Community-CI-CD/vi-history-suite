@@ -463,7 +463,11 @@ describe('extension activation lazy side effects', () => {
     await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
 
-    expect(eligibilityEventListeners.configuration).toHaveLength(1);
+    // Two filtered config listeners register at activation: the eligibility-cache
+    // invalidator and the VI Preview warming reconciler (VHS-REQ-659). Firing both
+    // with a viHistorySuite change invalidates eligibility; the preview listener is
+    // a no-op for this event (it filters to preview.enabled / runtimeProvider).
+    expect(eligibilityEventListeners.configuration).toHaveLength(2);
     eligibilityEventListeners.configuration.forEach((listener) =>
       listener({ affectsConfiguration: (section: string) => section === 'viHistorySuite' })
     );
@@ -480,7 +484,7 @@ describe('extension activation lazy side effects', () => {
     await api.loadHistory({ fsPath: '/repo/demo.vi' } as never);
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
 
-    expect(eligibilityEventListeners.configuration).toHaveLength(1);
+    expect(eligibilityEventListeners.configuration).toHaveLength(2);
     eligibilityEventListeners.configuration.forEach((listener) =>
       listener({ affectsConfiguration: () => false })
     );
