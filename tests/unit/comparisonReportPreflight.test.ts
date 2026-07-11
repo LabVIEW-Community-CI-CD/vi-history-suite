@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  buildRevisionBlobSpecifier,
   detectComparedViLibraryMembership,
   preflightComparisonReportRevisions,
   resolveRevisionRelativePaths
@@ -52,6 +53,20 @@ afterEach(async () => {
       fs.rm(directory, { recursive: true, force: true })
     )
   );
+});
+
+describe('buildRevisionBlobSpecifier (VHS-REQ-127)', () => {
+  it('derives <revision>:<normalized-relative-path>, normalizing Windows separators', () => {
+    expect(buildRevisionBlobSpecifier('abc123', 'Source\\Folder Name\\Example VI.vi')).toBe(
+      'abc123:Source/Folder Name/Example VI.vi'
+    );
+  });
+
+  it('fails closed when the revision identifier is missing', () => {
+    expect(() => buildRevisionBlobSpecifier('   ', 'Source/Example.vi')).toThrow(
+      'revisionId must be non-empty'
+    );
+  });
 });
 
 describe('comparisonReportPreflight', () => {
@@ -199,7 +214,7 @@ describe('comparisonReportPreflight', () => {
       expectedBlockedReason: 'right-revision-id-missing',
       expectedInspectedRevisionId: 'base456'
     }
-  ])('$name', async ({ leftRevisionId, rightRevisionId, expectedBlockedReason, expectedInspectedRevisionId }) => {
+  ])('$name (VHS-REQ-127)', async ({ leftRevisionId, rightRevisionId, expectedBlockedReason, expectedInspectedRevisionId }) => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -256,7 +271,7 @@ describe('comparisonReportPreflight', () => {
     });
   });
 
-  it('normalizes resolved repo-relative paths with spaces and Windows separators for both blob reads', async () => {
+  it('normalizes resolved repo-relative paths with spaces and Windows separators for both blob reads (VHS-REQ-127)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -305,7 +320,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('reports preflight blocked when left blob is not a VI', async () => {
+  it('reports preflight blocked when left blob is not a VI (VHS-REQ-128)', async () => {
     const repoRoot = await createTempRepoRoot();
     const relativePath = 'Examples/NotAVI.vi';
     const absolutePath = path.join(repoRoot, relativePath);
@@ -339,7 +354,7 @@ describe('comparisonReportPreflight', () => {
     expect(result.right.isVi).toBe(true);
   });
 
-  it('reports preflight blocked when right blob is not a VI', async () => {
+  it('reports preflight blocked when right blob is not a VI (VHS-REQ-128)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -381,7 +396,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('reports preflight blocked when right blob cannot be read', async () => {
+  it('reports preflight blocked when right blob cannot be read (VHS-REQ-128)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -427,7 +442,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('retains dual-side blocked details when left blob is not a VI and right blob cannot be read', async () => {
+  it('retains dual-side blocked details when left blob is not a VI and right blob cannot be read (VHS-REQ-128)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
