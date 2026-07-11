@@ -473,6 +473,61 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(removePath).toHaveBeenCalled();
   });
 
+  it('rejects a stale generated report on a timed-out execution with retained evidence (VHS-REQ-147 criterion 5)', async () => {
+    // Criterion 5 covers "timed-out OR failed" executions; the failed branch is
+    // asserted above. A timed-out run must also reject a pre-existing stale
+    // report so a regression dropping the timeout branch of the identity check
+    // fails closed.
+    const record = createReadyRecord();
+    const pathExists = vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath);
+    const readFile = vi.fn().mockResolvedValue(
+      '<html>Report for old-left.vi and old-right.vi</html>'
+    );
+    const removePath = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: removePath as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists,
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 124,
+          stdout: 'command stdout',
+          stderr: '',
+          timedOut: true,
+          timeoutMs: 120000
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        enforceWindowsHostPreflight: false,
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('command-timed-out');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      `Generated comparison report did not reference the current staged revisions (${record.stagedRevisionPlan.leftFilename}, ${record.stagedRevisionPlan.rightFilename}) and was discarded as stale output.`
+    );
+    expect(removePath).toHaveBeenCalled();
+  });
+
   it('copies Linux container reports back with canonical staged names and retained asset directories', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
