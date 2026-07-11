@@ -31,7 +31,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { parseCsv } = require('./auditTraceabilitySteward.js');
+const { parseCsv, splitReferences } = require('./auditTraceabilitySteward.js');
 const { markdownAnchors } = require('./checkDocsLinks.js');
 
 const SRS_PATH = 'docs/requirements/srs.md';
@@ -146,6 +146,93 @@ function checkReplacementResolution(idIndexRows) {
   return violations;
 }
 
+// Each SRS requirement block lists its Implementation and Verification
+// References; the RTM row is the authoritative evidence map. They must agree so
+// the human-readable specification states exactly the evidence the machine
+// traceability tracks (extending the existing SRS<->RTM ID parity to evidence).
+function extractSectionReferences(blockBody, label) {
+  const references = [];
+  let inSection = false;
+  for (const line of blockBody.split('\n')) {
+    if (/^- [A-Za-z]/.test(line)) {
+      inSection = line.trim() === `- ${label}:`;
+      continue;
+    }
+    if (inSection) {
+      const match = /^\s+- `([^`]+)`/.exec(line);
+      if (match) {
+        references.push(match[1].trim());
+      }
+    }
+  }
+  return references;
+}
+
+function extractSrsReferenceSections(srsText) {
+  const sections = new Map();
+  const headingPattern = /^### (VHS-REQ-\d+):/gm;
+  const headings = [...srsText.matchAll(headingPattern)];
+  for (let index = 0; index < headings.length; index += 1) {
+    const id = headings[index][1];
+    const start = headings[index].index;
+    const end = index + 1 < headings.length ? headings[index + 1].index : srsText.length;
+    const body = srsText.slice(start, end);
+    sections.set(id, {
+      implementation: extractSectionReferences(body, 'Implementation References'),
+      verification: extractSectionReferences(body, 'Verification References')
+    });
+  }
+  return sections;
+}
+
+function checkReferenceAgreement(rtmRows, srsReferenceSections) {
+  const violations = [];
+
+  const compareSection = (reqId, label, rtmReferences, srsReferences) => {
+    const rtmSet = new Set(rtmReferences);
+    const srsSet = new Set(srsReferences);
+    for (const reference of rtmSet) {
+      if (!srsSet.has(reference)) {
+        violations.push({
+          subject: reqId,
+          detail: `${label} '${reference}' is tracked in the RTM but missing from the SRS block`
+        });
+      }
+    }
+    for (const reference of srsSet) {
+      if (!rtmSet.has(reference)) {
+        violations.push({
+          subject: reqId,
+          detail: `${label} '${reference}' is in the SRS block but not tracked in the RTM`
+        });
+      }
+    }
+  };
+
+  for (const row of rtmRows) {
+    const section = srsReferenceSections.get(row.ReqID);
+    if (!section) {
+      // SRS<->RTM ID parity is enforced by requirementsDocs.test.ts; skip rows
+      // with no SRS block rather than double-reporting a missing block here.
+      continue;
+    }
+    compareSection(
+      row.ReqID,
+      'Implementation Reference',
+      splitReferences(row.ImplementationRefs || ''),
+      section.implementation
+    );
+    compareSection(
+      row.ReqID,
+      'Verification Reference',
+      splitReferences(row.VerificationRefs || ''),
+      section.verification
+    );
+  }
+
+  return violations;
+}
+
 function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
   const readFile =
     deps.readFile ||
@@ -159,6 +246,7 @@ function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
   const inventoryRows = parseCsv(normalizeNewlines(readFile(INVENTORY_PATH)));
 
   const systemRequirementIds = extractSystemRequirementIds(syrsText);
+  const srsReferenceSections = extractSrsReferenceSections(srsText);
 
   const checks = [
     {
@@ -180,6 +268,11 @@ function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
       key: 'replacementResolution',
       title: 'id-index ReplacementID resolves to a defined ID',
       violations: checkReplacementResolution(idIndexRows)
+    },
+    {
+      key: 'referenceAgreement',
+      title: 'SRS block references match the RTM evidence map',
+      violations: checkReferenceAgreement(rtmRows, srsReferenceSections)
     }
   ];
 
@@ -277,6 +370,9 @@ module.exports = {
   checkParentExistence,
   checkInventoryPaths,
   checkReplacementResolution,
+  extractSectionReferences,
+  extractSrsReferenceSections,
+  checkReferenceAgreement,
   checkRequirementsIntegrity,
   renderSummary,
   renderStepSummary,
