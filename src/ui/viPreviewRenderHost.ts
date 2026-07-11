@@ -68,6 +68,17 @@ export function createViPreviewCache(context: vscode.ExtensionContext): ViPrevie
   );
 }
 
+/**
+ * Whether the opt-in VI Preview feature is enabled. `viHistorySuite.preview.enabled`
+ * defaults to `false`, so a freshly installed extension does not render VIs until
+ * the user turns the setting on.
+ */
+export function isViPreviewEnabled(): boolean {
+  return (
+    vscode.workspace.getConfiguration('viHistorySuite').get<boolean>('preview.enabled', false) === true
+  );
+}
+
 /** Resolves the preview runtime from the configured comparison runtime settings. */
 export async function resolvePreviewRuntime(): Promise<ViPreviewRuntimeResolution> {
   const selection = await locateComparisonRuntime(

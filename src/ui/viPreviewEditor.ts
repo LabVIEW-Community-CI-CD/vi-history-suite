@@ -13,6 +13,7 @@ import {
   buildViPreviewRenderDeps,
   createViPreviewCache,
   getViPreviewOperationDirectory,
+  isViPreviewEnabled,
   resolvePreviewRuntime
 } from './viPreviewRenderHost';
 import type { ViPreviewSessionManager } from './viPreviewSessionManager';
@@ -87,6 +88,20 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
   ): Promise<void> {
     const fileName = path.basename(document.uri.fsPath);
     webviewPanel.webview.options = { enableScripts: false };
+
+    // VHS-REQ-659: VI Preview is opt-in. When the feature is off (the default),
+    // show an enable prompt instead of rendering, so a freshly installed
+    // extension never runs LabVIEW until the user turns the setting on.
+    if (!isViPreviewEnabled()) {
+      webviewPanel.webview.html = buildViPreviewWebviewHtml({
+        kind: 'error',
+        title: 'VI Preview is off',
+        message:
+          'VI Preview is disabled by default. Turn on the "VI History Suite › Preview: Enabled" setting (viHistorySuite.preview.enabled), then reopen this VI.'
+      });
+      return;
+    }
+
     webviewPanel.webview.html = buildViPreviewWebviewHtml({
       kind: 'loading',
       title: `Rendering ${fileName}…`,
