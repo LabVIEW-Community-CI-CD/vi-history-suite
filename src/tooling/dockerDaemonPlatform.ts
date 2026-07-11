@@ -74,9 +74,13 @@ export async function resolveConfirmedContainerPlatform(
  * the result to `windows`/`linux`. Any failure — missing Docker CLI, unreachable
  * daemon, unrecognized output, or a wedged daemon that does not respond within
  * `DOCKER_DAEMON_PROBE_TIMEOUT_MS` — resolves to undefined so the caller falls
- * back to the host default rather than erroring or hanging.
+ * back to the host default rather than erroring or hanging. The `spawnImpl`
+ * boundary is injected in tests (following the repository's spawn-injection
+ * convention); production uses the real `node:child_process.spawn`.
  */
-export const defaultProbeDockerDaemonPlatform: DockerDaemonPlatformProber = () =>
+export const defaultProbeDockerDaemonPlatform = (
+  spawnImpl: typeof spawn = spawn
+): Promise<ContainerImagePlatform | undefined> =>
   new Promise((resolve) => {
     let stdout = '';
     let settled = false;
@@ -93,7 +97,7 @@ export const defaultProbeDockerDaemonPlatform: DockerDaemonPlatformProber = () =
       resolve(value);
     };
     try {
-      child = spawn('docker', ['info', '--format', '{{.OSType}}'], { windowsHide: true });
+      child = spawnImpl('docker', ['info', '--format', '{{.OSType}}'], { windowsHide: true });
       timer = setTimeout(() => {
         child?.kill();
         finish(undefined);
