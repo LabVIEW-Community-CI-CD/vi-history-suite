@@ -2298,6 +2298,9 @@ Missing numeric IDs are intentional.
     functions.
   - The report highlights zero-coverage supporting files tied to active
     requirements.
+  - `npm run coverage:map:enforce` fails closed when a requirement-mapped file
+    is below the risk threshold or a supporting file tied to a requirement has
+    zero coverage; the hosted CI coverage-risk gate runs it after `npm test`.
   - Coverage measurement instruments the product `src` tree and the
     requirement-supporting `scripts/*.js` guard and tool scripts, excluding
     dev-only host and CI-infrastructure runner scripts that require a real host,

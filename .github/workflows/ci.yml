@@ -131,6 +131,9 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Coverage Risk Gate / coverage-risk
+        run: npm run coverage:map:enforce
+
       - name: Package
         run: npm run package
 
