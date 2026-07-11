@@ -105,6 +105,23 @@ describe('viSemanticComparisonMcp', () => {
     expect(model.changedSurfaces).toContain('block-diagram');
   });
 
+  it('returns a markdown review block for get_vi_semantic_comparison when requested', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 11,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_semantic_comparison',
+          arguments: { reportHtml: REPORT_HTML, format: 'markdown' }
+        }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain('### VI comparison:');
+    expect(result.content[0].text).toContain('The block diagram differs.');
+  });
+
   it('reports a tool error through the result envelope for invalid arguments', () => {
     const result = successResult(
       handleViSemanticMcpMessage({
@@ -322,6 +339,76 @@ describe('viSemanticComparisonMcp', () => {
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('relativePath is required');
       expect(buildViSemanticHistory).not.toHaveBeenCalled();
+    });
+
+    it('renders a markdown review block for a completed comparison', async () => {
+      const model = buildViSemanticComparisonModelFromHtml(REPORT_HTML);
+      const compareViRevisions = vi.fn(
+        async (): Promise<CompareViRevisionsResult> => ({
+          status: 'completed',
+          hasDifferences: true,
+          model,
+          runtime: {
+            provider: 'linux-container',
+            engine: 'labview-cli',
+            state: 'succeeded',
+            reportFilePath: '/t/report.html'
+          }
+        })
+      );
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(compareCall({ ...validArgs, format: 'markdown' }), {
+          compareViRevisions
+        })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(response.content[0].text).toContain('### VI comparison:');
+    });
+
+    it('renders a markdown timeline for summarize_vi_history', async () => {
+      const built = {
+        schema: 'vi-history-suite/vi-semantic-history@v1',
+        vi: { relativePath: 'vis/Widget.vi', title: 'Widget.vi' },
+        repositoryRoot: '/repo',
+        revisionCount: 2,
+        comparedStepCount: 1,
+        steps: [
+          {
+            baseHash: 'aaaa',
+            selectedHash: 'bbbb1111',
+            authorDate: '',
+            authorName: 'Dev',
+            subject: 'edit',
+            status: 'completed',
+            hasDifferences: true,
+            changedSurfaces: ['front-panel'],
+            narrative: 'The front panel differs.'
+          }
+        ],
+        totals: {
+          changingStepCount: 1,
+          frontPanelChangeCount: 1,
+          blockDiagramChangeCount: 0,
+          connectorPaneChangeCount: 0,
+          viAttributeChangeCount: 0,
+          blockedOrFailedStepCount: 0
+        },
+        narrative: 'Across 1 compared revision of vis/Widget.vi, 1 changed the VI.'
+      } as ViSemanticHistory;
+      const buildViSemanticHistory = vi.fn(async (): Promise<ViSemanticHistory> => built);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          historyCall({
+            repositoryRoot: '/repo',
+            relativePath: 'vis/Widget.vi',
+            format: 'markdown'
+          }),
+          { buildViSemanticHistory }
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(response.content[0].text).toContain('### VI history: Widget.vi');
+      expect(response.content[0].text).toContain('| Revision | Changed | Surfaces |');
     });
   });
 });
