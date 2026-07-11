@@ -1,5 +1,6 @@
 Path,Classification,RtmCoverage,Notes
 scripts/auditCustomizationGovernance.js,mapped,Yes,Customization governance audit script for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
+scripts/auditRequirementVerificationLinkage.js,mapped,Yes,Requirement verification-linkage report; advisory (exit 0); lists Active requirements whose verification-reference tests do not cite the requirement ID; mapped to VHS-REQ-601.
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
 scripts/checkRequirementsCsvColumns.js,mapped,Yes,Requirements CSV column-integrity guard; fails closed on any row whose column count differs from its header and prints the contract plus validated requirement IDs to the CI run summary; mapped to VHS-REQ-601.
 scripts/checkRequirementsIntegrity.js,mapped,Yes,Requirements cross-reference integrity guard; fails closed on dangling id-index anchors non-Active RTM parents missing inventory paths unresolved replacement IDs SRS/RTM evidence-reference disagreement missing or unresolved system-requirement references and Active requirements without a verification reference; prints the contract to the CI run summary; mapped to VHS-REQ-601.
@@ -125,6 +126,7 @@ tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packagi
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
 tests/unit/requirementsCsvColumns.test.ts,mapped,Yes,Requirements CSV column-integrity guard unit tests (fixtures for parsing/column-count/step-summary rendering); mapped to VHS-REQ-601.
 tests/unit/requirementsIntegrity.test.ts,mapped,Yes,Requirements cross-reference integrity guard unit tests (anchor/parent/path/replacement fixtures and step-summary rendering); mapped to VHS-REQ-601.
+tests/unit/requirementVerificationLinkage.test.ts,mapped,Yes,Requirement verification-linkage report unit tests (linked/unlinked/manual-only classification fixtures and advisory rendering); mapped to VHS-REQ-601.
 tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
 tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.

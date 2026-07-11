@@ -1910,6 +1910,9 @@ Missing numeric IDs are intentional.
     RTM evidence map, an Active system requirement whose Verification References
     are absent or do not resolve on disk, or an Active requirement that declares
     no Verification Reference.
+  - A requirement verification-linkage report lists Active requirements whose
+    verification-reference tests do not cite the requirement ID (advisory; the
+    RTM remains the authoritative requirement-to-test linkage).
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
@@ -1952,6 +1955,7 @@ Missing numeric IDs are intentional.
   - `scripts/checkRequirementsCsvColumns.js`
   - `scripts/checkRequirementsIntegrity.js`
   - `scripts/generateCloseoutEvidence.js`
+  - `scripts/auditRequirementVerificationLinkage.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
@@ -1959,6 +1963,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/requirementsCsvColumns.test.ts`
   - `tests/unit/requirementsIntegrity.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
+  - `tests/unit/requirementVerificationLinkage.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
