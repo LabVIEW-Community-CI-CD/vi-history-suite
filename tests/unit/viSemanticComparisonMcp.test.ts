@@ -67,7 +67,9 @@ describe('viSemanticComparisonMcp', () => {
       'get_vi_semantic_comparison',
       'compare_vi_revisions',
       'summarize_vi_history',
-      'index_repository_vis'
+      'index_repository_vis',
+      'get_vi_semantic_schema',
+      'validate_vi_semantic_document'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -159,6 +161,103 @@ describe('viSemanticComparisonMcp', () => {
     expect(
       handleViSemanticMcpMessage({ jsonrpc: '2.0', id: 9, method: 'resources/list' })
     ).toMatchObject({ error: { code: -32601, message: 'unknown method: resources/list' } });
+  });
+
+  it('returns all published schemas for get_vi_semantic_schema', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 60,
+        method: 'tools/call',
+        params: { name: 'get_vi_semantic_schema', arguments: {} }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(false);
+    const schemas = JSON.parse(result.content[0].text) as Record<string, unknown>;
+    expect(Object.keys(schemas)).toContain('vi-history-suite/vi-semantic-comparison@v1');
+    expect(Object.keys(schemas)).toContain('vi-history-suite/vi-repository-index@v1');
+  });
+
+  it('returns a single schema by id and errors on an unknown id', () => {
+    const one = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 61,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_semantic_schema',
+          arguments: { schema: 'vi-history-suite/vi-semantic-history@v1' }
+        }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(one.isError).toBe(false);
+    const schema = JSON.parse(one.content[0].text) as { $id: string };
+    expect(schema.$id).toBe('vi-history-suite/vi-semantic-history@v1');
+
+    const unknown = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 62,
+        method: 'tools/call',
+        params: { name: 'get_vi_semantic_schema', arguments: { schema: 'nope@v9' } }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(unknown.isError).toBe(true);
+    expect(unknown.content[0].text).toContain('unknown schema');
+  });
+
+  it('validates a document through validate_vi_semantic_document', () => {
+    const valid = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 63,
+        method: 'tools/call',
+        params: {
+          name: 'validate_vi_semantic_document',
+          arguments: {
+            document: {
+              schema: 'vi-history-suite/vi-repository-index@v1',
+              repositoryRoot: '/r',
+              viCount: 0,
+              indexedCount: 0,
+              vis: [],
+              narrative: 'x'
+            }
+          }
+        }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(valid.isError).toBe(false);
+    expect(JSON.parse(valid.content[0].text)).toEqual({ valid: true, errors: [] });
+
+    const invalid = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 64,
+        method: 'tools/call',
+        params: {
+          name: 'validate_vi_semantic_document',
+          arguments: { document: { schema: 'vi-history-suite/vi-repository-index@v1' } }
+        }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(invalid.isError).toBe(false);
+    const report = JSON.parse(invalid.content[0].text) as { valid: boolean; errors: string[] };
+    expect(report.valid).toBe(false);
+    expect(report.errors.length).toBeGreaterThan(0);
+  });
+
+  it('reports a tool error when validate_vi_semantic_document lacks a document', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 65,
+        method: 'tools/call',
+        params: { name: 'validate_vi_semantic_document', arguments: {} }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('document is required');
   });
 
   it('directs a synchronous compare_vi_revisions call to the async entrypoint', () => {
