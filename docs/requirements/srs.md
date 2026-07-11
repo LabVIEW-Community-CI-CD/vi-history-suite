@@ -2220,8 +2220,8 @@ Missing numeric IDs are intentional.
     `resources/bundled-docs` assets and renders an in-product documentation
     panel.
   - Packaged bundled documentation includes the manifest and shipped HTML pages
-    for overview, user workflow, install/release, and comparison/dashboard
-    review guidance.
+    for overview, user workflow, install/release, comparison/dashboard review,
+    and Copilot agent-mode guidance.
 - Agent Work Scope:
   - Change bundled documentation command routing, packaged docs assets,
     requirements mapping, and verification references together.
@@ -2233,6 +2233,7 @@ Missing numeric IDs are intentional.
   - `resources/bundled-docs/pages/user-workflow.html`
   - `resources/bundled-docs/pages/install-and-release.html`
   - `resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html`
+  - `resources/bundled-docs/pages/copilot-agent-mode.html`
   - `package.json`
   - `src/extension.ts`
 - Verification References:
