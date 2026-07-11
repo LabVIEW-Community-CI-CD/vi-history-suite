@@ -17,6 +17,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - Customization-surface edits (`AGENTS.md`, `.github/skills/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/agents/**`): run `npm run customization:audit` before PR handoff and include it in PR evidence validation commands.
 - General implementation and test work: start with `.github/skills/testing-automation/SKILL.md`, then run `npm run check` and `npm test`.
 - First-run/setup questions: start with `.github/skills/onboarding/SKILL.md`.
+- Requirement-verification health at a glance: run `npm run requirements:verify` for the single-pane signal (structural integrity, requirement linkage, criterion citation, coverage risk, mutation); use `npm run requirements:verify:strict` as a local pre-push gate.
 
 ### Build & Test Commands
 - **Build:** `npm run compile`
@@ -26,6 +27,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - **Dev Watch:** `npm run dev:watch`
 - **Check:** `npm run check`
 - **Package:** `npm run package`
+- **Verification health:** `npm run requirements:verify` (single-pane signal; add `:strict` for a local pre-push gate)
 
 ### Priority Area: Testing Automation
 - Start here for most code changes: `npm run check` then `npm test`
@@ -39,6 +41,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - If a task names `VHS-REQ-*`, start with `.github/skills/requirements-traceability/SKILL.md`
 - Read the requirement block and RTM row before editing implementation files
 - Run `npm run traceability:audit` before PR handoff when requirement surfaces changed
+- Gauge verification depth: `npm run requirements:linkage` (a test cites the requirement ID; enforced fail-closed in CI), `npm run requirements:criteria` (acceptance-criteria inventory + criterion-level `VHS-REQ-NNN.M` citation), and `npm run requirements:verify` (unified health). Stryker mutation testing (`npm run test:mutation`, `src/domain`) runs nightly/advisory via `.github/workflows/mutation.yml`; a ~100% score is not the goal (many domain survivors are equivalent mutants).
 
 ### Architecture & Key Directories
 - `src/extension.ts`: VS Code extension entry point
@@ -82,6 +85,9 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - `npm run validation:file-gap` (`scripts/fileLinuxValidationGap.js`) files a GitHub issue via `gh issue create` by default. When reproducing an already-filed #259-derived gap from a retained run directory (not a fresh maintainer run), pass `--dry-run` so it composes `linux-validation-gap-issue.md` without filing a duplicate.
 - The `vihs-test-harness-lvdependency` fixture (Section B of #259; [docs/testing/test-plan.md](./docs/testing/test-plan.md)) is not present or cloneable on the maintainer host (no org repo; commits `35b92bc`/`299c2a5` not resolvable locally). For Section B / VHS-REQ-624 staged-tree validation, substitute the icon-editor `lv_icon.vi` (a real tracked VI with real in-repo dependencies) — it exercises the same `materializedTree` plus renamed `left-*`/`right-*` staged-tree contract.
 - Validating a Windows-container feature via `docker run` in the integrated terminal shows the container's exit code but NOT its stdout (a terminal-integration artifact). Route container output to a bind-mounted file to inspect it, or drive the render through Node `child_process` (`execFileAsync`, which the extension itself uses) — that captures container stdout correctly, so a `tests/unit/**` throwaway driver sees the output the terminal hides.
+- A spurious `^C` sometimes interrupts `git push`, `gh issue create`, or `gh pr create` in the integrated PowerShell terminal even when the command is fine — just re-run it (the prior attempt has usually already succeeded or is safe to retry; confirm with `git log` / `gh issue list` if unsure).
+- Editing an SRS Implementation/Verification Reference list: the `- Change Guidance:` field header repeats in every requirement block, so anchor the edit on requirement-specific context, and always run `npm run requirements:integrity` afterward — the `referenceAgreement` check fails closed when an SRS block's refs and its RTM row's refs drift apart, catching a silently-unmatched edit that tests do not.
+- Adding a `.github/workflows/*.yml` is fail-closed on three fronts: it must be in `docs/requirements/traceability-inventory.csv` (`missingInventoryEntries`), it must be in the RTM when classified `mapped`/`RtmCoverage=Yes` (`missingRtmReferences`/`rtmCoverageMismatches`), and `packageManifest.test.ts` forbids any `vagrant` reference in workflows (VHS-REQ-599). Map a new workflow to a requirement as `codeql.yml` maps to VHS-REQ-602.
 - For troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) and [SUPPORT.md](./SUPPORT.md)
 
 ### Troubleshooting Route
