@@ -15,6 +15,7 @@ function parseArgs(argv) {
     rtm: DEFAULT_RTM,
     riskThreshold: DEFAULT_RISK_THRESHOLD,
     json: false,
+    enforce: false,
     help: false
   };
 
@@ -32,9 +33,11 @@ function parseArgs(argv) {
     if (arg === '--coverage-summary') options.coverageSummary = next();
     else if (arg === '--inventory') options.inventory = next();
     else if (arg === '--rtm') options.rtm = next();
+    else if (arg === '--repo-root') options.repoRoot = next();
     else if (arg === '--risk-threshold') {
       options.riskThreshold = Number(next());
     } else if (arg === '--json') options.json = true;
+    else if (arg === '--enforce') options.enforce = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -54,7 +57,9 @@ function usage() {
     '  --coverage-summary <path>   Default: coverage/coverage-summary.json',
     '  --inventory <path>          Default: docs/requirements/traceability-inventory.csv',
     '  --rtm <path>                Default: docs/requirements/rtm.csv',
+    '  --repo-root <path>          Default: current working directory',
     '  --risk-threshold <number>   Default: 50',
+    '  --enforce                   Fail closed on mapped-below-threshold or zero-coverage supporting risk',
     '  --json'
   ].join('\n');
 }
@@ -361,6 +366,12 @@ function renderCoverageMapMarkdown(map) {
   return lines.join('\n');
 }
 
+function summarizeEnforcement(map) {
+  const mappedBelow = map.mappedBelowThreshold.length;
+  const zeroCoverageSupporting = map.zeroCoverageSupportingRequirements.length;
+  return { mappedBelow, zeroCoverageSupporting, violations: mappedBelow + zeroCoverageSupporting };
+}
+
 function main(argv = process.argv.slice(2)) {
   try {
     const options = parseArgs(argv);
@@ -370,6 +381,18 @@ function main(argv = process.argv.slice(2)) {
     }
     const map = generateCoverageMap(options);
     process.stdout.write(options.json ? `${JSON.stringify(map, null, 2)}\n` : `${renderCoverageMapMarkdown(map)}\n`);
+    if (options.enforce) {
+      const enforcement = summarizeEnforcement(map);
+      if (enforcement.violations > 0) {
+        process.stderr.write(
+          `\n[coverage:map] Enforcing: ${enforcement.mappedBelow} requirement-mapped file(s) below the ${map.riskThreshold}% risk threshold and ${enforcement.zeroCoverageSupporting} zero-coverage supporting file(s) tied to requirements. Add tests or reclassify.\n`
+        );
+        return 1;
+      }
+      process.stdout.write(
+        `[coverage:map] Enforcing: no requirement-mapped file below the ${map.riskThreshold}% risk threshold and no zero-coverage supporting file tied to a requirement.\n`
+      );
+    }
     return 0;
   } catch (error) {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n\n${usage()}\n`);
@@ -391,5 +414,6 @@ module.exports = {
   main,
   parseArgs,
   parseCsv,
-  renderCoverageMapMarkdown
+  renderCoverageMapMarkdown,
+  summarizeEnforcement
 };

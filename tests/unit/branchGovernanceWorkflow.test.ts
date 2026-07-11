@@ -167,6 +167,19 @@ describe('CI branch governance workflow', () => {
     );
   });
 
+  it('enforces the coverage risk gate after coverage upload and before packaging', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Coverage Risk Gate / coverage-risk');
+    expect(workflow).toContain('npm run coverage:map:enforce');
+    expect(workflow.indexOf('name: PR Coverage Gate / coverage')).toBeLessThan(
+      workflow.indexOf('name: Coverage Risk Gate / coverage-risk')
+    );
+    expect(workflow.indexOf('name: Coverage Risk Gate / coverage-risk')).toBeLessThan(
+      workflow.indexOf('run: npm run package')
+    );
+  });
+
   it('keeps the hosted DoD gate in the required CI workflow', () => {
     const workflow = readWorkflow();
 

@@ -295,6 +295,7 @@
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
+    "coverage:map:enforce": "node scripts/mapCoverageToTraceability.js --enforce",
     "dod:gate": "node scripts/checkDefinitionOfDone.js",
     "closeout:evidence": "node scripts/generateCloseoutEvidence.js",
     "validation:file-gap": "node scripts/fileLinuxValidationGap.js"

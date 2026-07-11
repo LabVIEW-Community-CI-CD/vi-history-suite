@@ -28,7 +28,9 @@ type CoverageMap = {
 const {
   generateCoverageMap,
   parseArgs,
-  renderCoverageMapMarkdown
+  renderCoverageMapMarkdown,
+  summarizeEnforcement,
+  main
 } = require('../../scripts/mapCoverageToTraceability.js') as {
   parseArgs: (argv: string[]) => {
     coverageSummary: string;
@@ -36,6 +38,8 @@ const {
     rtm: string;
     riskThreshold: number;
     json: boolean;
+    enforce: boolean;
+    repoRoot?: string;
   };
   generateCoverageMap: (options: {
     repoRoot: string;
@@ -45,6 +49,12 @@ const {
     riskThreshold?: number;
   }) => CoverageMap;
   renderCoverageMapMarkdown: (map: CoverageMap) => string;
+  summarizeEnforcement: (map: CoverageMap) => {
+    mappedBelow: number;
+    zeroCoverageSupporting: number;
+    violations: number;
+  };
+  main: (argv?: string[]) => number;
 };
 
 function metric(total: number, covered: number) {
@@ -184,5 +194,37 @@ describe('coverage traceability map script', () => {
     );
 
     expect(() => generateCoverageMap({ repoRoot })).toThrow('Run npm test first');
+  });
+
+  it('parses the enforce flag with an advisory default', () => {
+    expect(parseArgs(['--enforce']).enforce).toBe(true);
+    expect(parseArgs([]).enforce).toBe(false);
+  });
+
+  it('summarizes enforcement risk from mapped-below-threshold and zero-coverage supporting files', () => {
+    const repoRoot = writeFixture();
+    const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });
+
+    expect(summarizeEnforcement(map)).toEqual({
+      mappedBelow: 1,
+      zeroCoverageSupporting: 1,
+      violations: 2
+    });
+
+    const cleanMap: CoverageMap = {
+      ...map,
+      mappedBelowThreshold: [],
+      zeroCoverageSupportingRequirements: []
+    };
+    expect(summarizeEnforcement(cleanMap)).toEqual({
+      mappedBelow: 0,
+      zeroCoverageSupporting: 0,
+      violations: 0
+    });
+  });
+
+  it('fails closed under --enforce when requirement-mapped or supporting risk exists', () => {
+    const repoRoot = writeFixture();
+    expect(main(['--enforce', '--repo-root', repoRoot])).toBe(1);
   });
 });
