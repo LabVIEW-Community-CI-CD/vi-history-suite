@@ -17,6 +17,7 @@ import * as vscode from 'vscode';
 
 import {
   applyPickRuntimeProviderSelection,
+  applyViPreviewEnabledSelection,
   buildPickRuntimeProviderItems
 } from '../../src/commands/pickRuntimeProviderCommand';
 import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
@@ -159,6 +160,29 @@ describe('applyPickRuntimeProviderSelection (VHS-REQ-620)', () => {
       3,
       'labviewBitness',
       undefined,
+      vscode.ConfigurationTarget.Global
+    );
+  });
+});
+
+describe('applyViPreviewEnabledSelection (VHS-REQ-659)', () => {
+  it('writes preview.enabled=true to the Global target', async () => {
+    const update = vi.fn(async () => undefined);
+    await applyViPreviewEnabledSelection(true, { update });
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith(
+      'preview.enabled',
+      true,
+      vscode.ConfigurationTarget.Global
+    );
+  });
+
+  it('writes preview.enabled=false to the Global target', async () => {
+    const update = vi.fn(async () => undefined);
+    await applyViPreviewEnabledSelection(false, { update });
+    expect(update).toHaveBeenCalledWith(
+      'preview.enabled',
+      false,
       vscode.ConfigurationTarget.Global
     );
   });

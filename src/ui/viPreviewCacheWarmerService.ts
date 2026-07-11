@@ -59,8 +59,12 @@ function readBackgroundWarmingMode(): ViPreviewBackgroundWarmingMode {
 }
 
 export interface ViPreviewCacheWarmerService {
-  /** Signals that a preview opened; starts warming once (idempotent per session). */
+  /** Signals that a preview opened; starts a warm cycle once (idempotent per cycle). */
   notePreviewOpened(viFsPath: string): void;
+  /** Starts background caching of the whole workspace (no VI excluded). */
+  startWarming(): void;
+  /** Cancels an in-progress/scheduled warm cycle and allows a later restart. */
+  cancelWarming(): void;
   dispose(): void;
 }
 
@@ -68,15 +72,20 @@ export function createViPreviewCacheWarmerService(
   _context: vscode.ExtensionContext,
   sessionManager: ViPreviewSessionManager
 ): ViPreviewCacheWarmerService {
-  let started = false;
-  let cancelled = false;
+  let disposed = false;
+  // Latched when a warm cycle starts so repeated triggers do not re-warm; reset
+  // by `cancelCurrentCycle` so a later restart (e.g. re-enabling) can run again.
+  let hasRunThisSession = false;
+  // Per-cycle cancellation token; `cancelCurrentCycle` flips `cancelled` so an
+  // in-flight warm loop stops after the current render.
+  let cycleToken: { cancelled: boolean } | undefined;
   let startTimer: ReturnType<typeof setTimeout> | undefined;
   let doneTimer: ReturnType<typeof setTimeout> | undefined;
   let statusItem: vscode.StatusBarItem | undefined;
 
-  async function run(excludeFsPath: string): Promise<void> {
+  async function run(excludeFsPath: string, token: { cancelled: boolean }): Promise<void> {
     const mode = readBackgroundWarmingMode();
-    if (cancelled || mode === 'off') {
+    if (disposed || token.cancelled || mode === 'off') {
       return;
     }
     const runtime = await resolvePreviewRuntime();
@@ -92,7 +101,8 @@ export function createViPreviewCacheWarmerService(
         ? toViPreviewSessionRuntime(runtime.runtime, process.platform)
         : undefined;
     if (
-      cancelled ||
+      disposed ||
+      token.cancelled ||
       !sessionRuntime ||
       !shouldWarmViPreviewProvider(sessionRuntime.provider, mode)
     ) {
@@ -109,7 +119,7 @@ export function createViPreviewCacheWarmerService(
       .map((uri) => uri.fsPath)
       .filter((fsPath) => path.normalize(fsPath) !== excludeNormalized);
 
-    if (cancelled || viFilePaths.length === 0) {
+    if (disposed || token.cancelled || viFilePaths.length === 0) {
       return;
     }
 
@@ -127,10 +137,10 @@ export function createViPreviewCacheWarmerService(
           statusItem.tooltip = formatWarmStatusTooltip(progress);
         }
       },
-      isCancelled: () => cancelled
+      isCancelled: () => disposed || token.cancelled
     });
 
-    if (statusItem && !cancelled) {
+    if (statusItem && !(disposed || token.cancelled)) {
       // When nothing could be cached (every render failed), make the indicator
       // noticeable — warn-colored and lingering longer — instead of a silent
       // success, so the user can react (e.g. check the runtime).
@@ -147,25 +157,56 @@ export function createViPreviewCacheWarmerService(
     }
   }
 
+  function begin(excludeFsPath: string): void {
+    if (disposed || hasRunThisSession) {
+      return;
+    }
+    hasRunThisSession = true;
+    const token = { cancelled: false };
+    cycleToken = token;
+    startTimer = setTimeout(() => {
+      void run(excludeFsPath, token)
+        .catch(() => undefined)
+        .finally(() => {
+          if (cycleToken === token) {
+            cycleToken = undefined;
+          }
+        });
+    }, WARM_START_DELAY_MS);
+  }
+
+  function cancelCurrentCycle(): void {
+    if (cycleToken) {
+      cycleToken.cancelled = true;
+      cycleToken = undefined;
+    }
+    // Allow a later restart (e.g. the user re-enables VI preview).
+    hasRunThisSession = false;
+    if (startTimer) {
+      clearTimeout(startTimer);
+      startTimer = undefined;
+    }
+    if (doneTimer) {
+      clearTimeout(doneTimer);
+      doneTimer = undefined;
+    }
+    statusItem?.dispose();
+    statusItem = undefined;
+  }
+
   return {
     notePreviewOpened(viFsPath: string): void {
-      if (started || cancelled) {
-        return;
-      }
-      started = true;
-      startTimer = setTimeout(() => {
-        void run(viFsPath).catch(() => undefined);
-      }, WARM_START_DELAY_MS);
+      begin(viFsPath);
+    },
+    startWarming(): void {
+      begin('');
+    },
+    cancelWarming(): void {
+      cancelCurrentCycle();
     },
     dispose(): void {
-      cancelled = true;
-      if (startTimer) {
-        clearTimeout(startTimer);
-      }
-      if (doneTimer) {
-        clearTimeout(doneTimer);
-      }
-      statusItem?.dispose();
+      disposed = true;
+      cancelCurrentCycle();
     }
   };
 }

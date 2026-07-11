@@ -69,7 +69,7 @@ import { registerPickContainerImageVersionCommand } from './commands/pickContain
 import { registerViPreviewCustomEditor } from './ui/viPreviewEditor';
 import { createViPreviewCacheWarmerService } from './ui/viPreviewCacheWarmerService';
 import { createViPreviewSessionManager } from './ui/viPreviewSessionManager';
-import { createViPreviewCache, getViPreviewOperationDirectory } from './ui/viPreviewRenderHost';
+import { createViPreviewCache, getViPreviewOperationDirectory, isViPreviewEnabled, resolvePreviewRuntime } from './ui/viPreviewRenderHost';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
 import {
@@ -319,6 +319,39 @@ export async function activate(
     sessionManager: viPreviewSessionManager,
     onPreviewOpened: (viFsPath) => viPreviewCacheWarmer.notePreviewOpened(viFsPath)
   });
+
+  // VHS-REQ-659: VI Preview is Docker-only + opt-in. Enabling it (via the
+  // Runtime & Report Settings panel or a settings edit) immediately kicks off
+  // background caching of the whole repo through the warm Docker session;
+  // disabling it, or switching off the Docker runtime, cancels in-progress
+  // caching. Reconcile on the settings that determine "enabled + Docker".
+  const reconcilePreviewWarming = async (): Promise<void> => {
+    if (!isViPreviewEnabled()) {
+      viPreviewCacheWarmer.cancelWarming();
+      return;
+    }
+    try {
+      const runtime = await resolvePreviewRuntime();
+      const isDocker = runtime.outcome === 'ready' && runtime.runtime.provider !== 'host-native';
+      if (isDocker) {
+        viPreviewCacheWarmer.startWarming();
+      } else {
+        viPreviewCacheWarmer.cancelWarming();
+      }
+    } catch {
+      // Runtime resolution failure must not disrupt activation; leave warming as-is.
+    }
+  };
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (
+        event.affectsConfiguration('viHistorySuite.preview.enabled') ||
+        event.affectsConfiguration('viHistorySuite.runtimeProvider')
+      ) {
+        void reconcilePreviewWarming();
+      }
+    })
+  );
 
   // VHS-REQ-619: Detect Git on PATH once per activation, surface a status
   // bar warning plus a one-time first-run information notice when Git is

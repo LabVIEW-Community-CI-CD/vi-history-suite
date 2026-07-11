@@ -4116,21 +4116,26 @@ Missing numeric IDs are intentional.
     error 1125 — the selected LabVIEW is likely too old — otherwise
     `command-exited-nonzero`; a zero exit that leaves no document is
     `preview-output-not-produced`), or `blocked`.
-  - VI Preview is opt-in: the `viHistorySuite.preview.enabled` setting defaults
-    to `false`, so a freshly installed extension renders nothing until the user
-    turns it on. When off, the custom editor shows an enable prompt (no render),
-    the history-panel per-revision **Preview** button is hidden, and the
-    `previewRevision` command reports that the feature is off (`isViPreviewEnabled`
-    reads the setting).
+  - VI Preview is opt-in and Docker-only: the `viHistorySuite.preview.enabled`
+    setting defaults to `false`, so a freshly installed extension renders nothing
+    until the user turns it on. The Runtime & Report Settings panel offers the
+    toggle only when Docker is the effective runtime (`applyViPreviewEnabledSelection`
+    writes the flag; `isViPreviewEnabled` reads it). When off, the custom editor
+    shows an enable prompt (no render), the history-panel per-revision **Preview**
+    button is hidden, and the `previewRevision` command reports that the feature
+    is off. Enabling it (via the panel or a settings edit) immediately starts
+    background caching through the warm Docker session; disabling it, or switching
+    off the Docker runtime, cancels in-progress caching (`reconcilePreviewWarming`
+    in `extension.ts` over the warmer's `startWarming`/`cancelWarming`).
   - Opening a `.vi`, `.vit`, `.vim`, or `.ctl` file activates the
     `viHistorySuite.viPreview` read-only custom editor (registered at `default`
-    priority); when VI Preview is enabled it renders the file through the
-    configured comparison runtime (mapped by
-    `mapComparisonRuntimeSelectionToViPreview`, which supports host-native,
-    Linux-container, and Windows-container runtimes and blocks only unavailable
-    runtimes) and displays the produced document. In an untrusted workspace the
-    editor shows a disabled-preview message and never launches an external
-    process.
+    priority). When VI Preview is enabled and the resolved runtime is a container
+    (Docker) provider it renders the file through
+    `mapComparisonRuntimeSelectionToViPreview` and displays the produced
+    document; when the resolved runtime is host-native it shows a "requires
+    Docker" prompt and does not render (Docker-only feature). In an untrusted
+    workspace the editor shows a disabled-preview message and never launches an
+    external process.
   - `buildViPreviewWebviewHtml` injects a strict Content-Security-Policy
     (`script-src 'none'`, `img-src data:`, inline styles only) into the rendered
     LabVIEW document, and renders themed loading and error states carrying the
@@ -4150,14 +4155,16 @@ Missing numeric IDs are intentional.
     staged file set by path/size/mtime, so VIs sharing a staged tree never
     collide) from the cache without staging or launching LabVIEW, and populates
     the cache after a fresh render; cache read and write failures are non-fatal.
-  - After the first successful preview, a background warmer renders the
+  - After VI Preview is enabled (or the first successful preview opens), a
+    background warmer renders the
     remaining workspace VIs serially through a single warm session, populating
     the render cache. Progress is surfaced only as a monotonically increasing
     status-bar percentage (`formatWarmStatusLabel` over `warmViPreviewCache`); if
     every render fails the indicator becomes a warning (`VI previews could not be
     cached (0/N)`, warn-colored and lingering longer) instead of a misleading
-    success check. Warming runs at most once per session and is cancelled on
-    disposal. The
+    success check. Warming runs at most once per cycle; `cancelWarming` stops an
+    in-progress cycle (on disable, a runtime switch off Docker, or disposal) and
+    allows a later restart. The
     `viHistorySuite.preview.backgroundWarming` setting governs when it runs
     (`shouldWarmViPreviewProvider`): `docker-only` (default) warms only the
     container providers, so a host-native runtime does not warm and never

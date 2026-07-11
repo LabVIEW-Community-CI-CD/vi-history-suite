@@ -213,7 +213,7 @@
         "viHistorySuite.preview.enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Turn on VI Preview: opening a LabVIEW VI (.vi/.vit/.vim/.ctl) renders it as a read-only picture of its front panel and block diagram. Off by default — turn this on after installing to use previews. Previews run LabVIEW (Host or Docker), so the first open can be slow."
+          "description": "Turn on VI Preview (Docker runtime only): opening a LabVIEW VI (.vi/.vit/.vim/.ctl) renders it as a read-only picture of its front panel and block diagram, and the extension silently caches every VI in the repository in the background. Off by default. Manage this from the VI History: Runtime & Report Settings command — the toggle appears there when Docker is selected."
         },
         "viHistorySuite.preview.backgroundWarming": {
           "type": "string",

@@ -89,15 +89,16 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
     const fileName = path.basename(document.uri.fsPath);
     webviewPanel.webview.options = { enableScripts: false };
 
-    // VHS-REQ-659: VI Preview is opt-in. When the feature is off (the default),
-    // show an enable prompt instead of rendering, so a freshly installed
-    // extension never runs LabVIEW until the user turns the setting on.
+    // VHS-REQ-659: VI Preview is opt-in and Docker-only. When the feature is off
+    // (the default), show an enable prompt instead of rendering, so a freshly
+    // installed extension never runs LabVIEW until the user turns it on from the
+    // Runtime & Report Settings panel (where the toggle appears under Docker).
     if (!isViPreviewEnabled()) {
       webviewPanel.webview.html = buildViPreviewWebviewHtml({
         kind: 'error',
         title: 'VI Preview is off',
         message:
-          'VI Preview is disabled by default. Turn on the "VI History Suite › Preview: Enabled" setting (viHistorySuite.preview.enabled), then reopen this VI.'
+          'VI Preview is off. Select the Docker runtime and enable VI preview in the "VI History: Runtime & Report Settings" command, then reopen this VI.'
       });
       return;
     }
@@ -125,6 +126,20 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
           kind: 'error',
           title: 'Preview unavailable',
           message: describeUnavailable(runtime.reason)
+        });
+        return;
+      }
+
+      // VHS-REQ-659: VI Preview is a Docker-only feature. When the resolved
+      // runtime is host-native, prompt the user to switch to Docker rather than
+      // render (the panel toggle only appears under Docker, but the setting can
+      // persist across a runtime switch).
+      if (runtime.runtime.provider === 'host-native') {
+        webviewPanel.webview.html = buildViPreviewWebviewHtml({
+          kind: 'error',
+          title: 'VI Preview requires Docker',
+          message:
+            'VI Preview runs on the Docker runtime. Select Docker in the "VI History: Runtime & Report Settings" command, then reopen this VI.'
         });
         return;
       }

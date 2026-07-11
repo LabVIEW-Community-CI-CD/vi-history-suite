@@ -25,6 +25,7 @@ import * as vscode from 'vscode';
 
 import {
   applyPickRuntimeProviderSelection,
+  applyViPreviewEnabledSelection,
   buildPickRuntimeProviderItems,
   type PickRuntimeProviderOption
 } from './pickRuntimeProviderCommand';
@@ -91,6 +92,7 @@ interface RuntimeReportPanelMessage {
   readonly includeKey?: string;
   readonly include?: boolean;
   readonly tag?: string;
+  readonly enabled?: boolean;
 }
 
 export interface RegisterOpenRuntimeReportPanelCommandDeps {
@@ -241,6 +243,12 @@ export function registerOpenRuntimeReportPanelCommand(
         versions,
         notes: containerCache.notes
       },
+      preview: {
+        // Docker-only: the VI Preview toggle appears only when Docker is the
+        // effective runtime (same gate as the container-image section).
+        visible: dockerAvailable,
+        enabled: configuration.get<boolean>('preview.enabled', false)
+      },
       report: {
         includeFlags: deriveReportIncludeFlags(reportOptions)
       }
@@ -321,6 +329,10 @@ export function registerOpenRuntimeReportPanelCommand(
           },
           { update }
         );
+        return;
+      }
+      case 'setPreviewEnabled': {
+        await applyViPreviewEnabledSelection(message.enabled === true, { update });
         return;
       }
       default:
