@@ -15,7 +15,7 @@
     "url": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues"
   },
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.101.0"
   },
   "capabilities": {
     "untrustedWorkspaces": {
@@ -49,6 +49,12 @@
     "onStartupFinished"
   ],
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "viHistorySuiteSemantic",
+        "label": "VI History Suite: VI Semantic Comparison"
+      }
+    ],
     "commands": [
       {
         "command": "labviewViHistory.open",
@@ -316,7 +322,7 @@
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^24.13.2",
-    "@types/vscode": "^1.90.0",
+    "@types/vscode": "^1.101.0",
     "@vitest/coverage-v8": "^4.1.10",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "3.9.2",

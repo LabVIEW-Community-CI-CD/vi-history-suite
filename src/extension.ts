@@ -9,6 +9,7 @@ import { createMultiReportDashboardAction } from './dashboard/multiReportDashboa
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
 import { type GitApi, getBuiltInGitApi } from './git/gitApi';
 import { getFileHistoryCount } from './git/gitCli';
+import { registerViSemanticMcpServerProvider } from './mcp/viSemanticMcpServerProvider';
 import {
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
@@ -750,6 +751,11 @@ export async function activate(
       return packetSummary;
     })
   );
+
+  // Expose the VI semantic comparison MCP server to VS Code so Copilot agent
+  // mode can discover and launch its tools. Guarded for hosts predating the
+  // stable MCP provider API (VS Code 1.101); a no-op on older hosts.
+  registerViSemanticMcpServerProvider(context);
 
   return {
     refreshEligibility: async () => undefined,
