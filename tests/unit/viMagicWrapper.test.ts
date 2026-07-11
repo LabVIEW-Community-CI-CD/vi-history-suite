@@ -38,7 +38,7 @@ describe('viMagic URI wrapper', () => {
     readViProbeBytesFromFsPathMock.mockReset();
   });
 
-  it('delegates file URIs to the file-system probe helper', async () => {
+  it('delegates file URIs to the file-system probe helper (VHS-REQ-011)', async () => {
     readViProbeBytesFromFsPathMock.mockResolvedValue(
       new Uint8Array(Buffer.from('RSRC\r\n\x00\x03LVIN', 'binary'))
     );
@@ -54,7 +54,7 @@ describe('viMagic URI wrapper', () => {
     expect(readFileMock).not.toHaveBeenCalled();
   });
 
-  it('truncates non-file workspace reads to the minimum detection header length', async () => {
+  it('truncates non-file workspace reads to the minimum detection header length (VHS-REQ-011)', async () => {
     readFileMock.mockResolvedValue(
       new Uint8Array(Buffer.from('RSRC\r\n\x00\x03LVINEXTRA-BYTES', 'binary'))
     );
@@ -85,5 +85,17 @@ describe('viMagic URI wrapper', () => {
         fsPath: '/workspace/sample.vi'
       } as never)
     ).resolves.toBe(false);
+  });
+
+  it('detects by content regardless of the URI path extension (VHS-REQ-001)', async () => {
+    // VHS-REQ-001: content detection must not depend on the file extension — a VI
+    // signature in a non-.vi path still classifies, guarding against extension-only detection.
+    readViProbeBytesFromFsPathMock.mockResolvedValue(
+      new Uint8Array(Buffer.from('RSRC\r\n\x00\x03LVIN', 'binary'))
+    );
+
+    await expect(
+      detectViSignatureFromUri({ scheme: 'file', fsPath: '/workspace/not-really-a-vi.txt' } as never)
+    ).resolves.toBe('LVIN');
   });
 });
