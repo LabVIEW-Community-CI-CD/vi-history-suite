@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
+  ComparisonReportPacketDeps,
   ComparisonReportPacketRecord,
   ComparisonReportRuntimeExecution,
-  renderComparisonReportPacketHtml
+  PersistComparisonReportPacketOptions,
+  persistComparisonReportPacket,
+  renderComparisonReportPacketHtml,
+  writeComparisonReportPacketRecord
 } from '../../src/reporting/comparisonReportPacket';
 
 /**
@@ -1125,5 +1129,129 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
 
     expect(html).toContain('<strong>Body:</strong> <span class="muted">not retained</span>');
     expect(html).not.toContain('<strong>Body:</strong> <span class="muted">No commit body</span>');
+  });
+});
+
+describe('comparisonReportPacket persistence (VHS-REQ-148)', () => {
+  function createPersistOptions(
+    overrides: {
+      preflightReady?: boolean;
+      provider?: ComparisonReportPacketRecord['runtimeSelection']['provider'];
+      blockedReason?: string;
+    } = {}
+  ): PersistComparisonReportPacketOptions {
+    return {
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      preflight: {
+        normalizedRelativePath: 'foo.vi',
+        ready: overrides.preflightReady ?? true,
+        left: {
+          revisionId: '1111111122222222',
+          blobSpecifier: '1111111122222222:foo.vi',
+          signature: 'LVIN',
+          isVi: true
+        },
+        right: {
+          revisionId: 'abcdef1234567890',
+          blobSpecifier: 'abcdef1234567890:foo.vi',
+          signature: 'LVCC',
+          isVi: true
+        }
+      },
+      runtimeSelection: {
+        platform: 'win32',
+        bitness: 'x86',
+        provider: overrides.provider ?? 'host-native',
+        engine: 'labview-cli',
+        blockedReason: overrides.blockedReason,
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      }
+    };
+  }
+
+  function createDeps() {
+    const mkdir = vi.fn(async (_path: string, _options?: unknown) => undefined);
+    const writeFile = vi.fn(async (_path: string, _content?: unknown) => undefined);
+    const deps = {
+      now: () => '2026-04-02T00:00:00.000Z',
+      mkdir,
+      writeFile
+    } as unknown as ComparisonReportPacketDeps;
+    return { deps, mkdir, writeFile };
+  }
+
+  it('persists a ready-for-runtime packet and writes metadata then packet artifacts', async () => {
+    const { deps, mkdir, writeFile } = createDeps();
+    const result = await persistComparisonReportPacket(createPersistOptions(), deps);
+
+    expect(result.record.reportStatus).toBe('ready-for-runtime');
+    expect(result.record.runtimeExecutionState).toBe('not-run');
+    expect(result.record.generatedAt).toBe('2026-04-02T00:00:00.000Z');
+    expect(mkdir).toHaveBeenCalledTimes(2);
+    expect(writeFile).toHaveBeenCalledTimes(2);
+    expect(writeFile.mock.calls[0][0]).toBe(result.metadataFilePath);
+    expect(writeFile.mock.calls[1][0]).toBe(result.packetFilePath);
+    expect(() => JSON.parse(writeFile.mock.calls[0][1] as string)).not.toThrow();
+    expect(writeFile.mock.calls[1][1] as string).toContain('Comparison Report');
+  });
+
+  it('marks an unavailable provider as blocked-runtime / not-available', async () => {
+    const { deps } = createDeps();
+    const result = await persistComparisonReportPacket(
+      createPersistOptions({ provider: 'unavailable', blockedReason: 'labview-exe-not-found' }),
+      deps
+    );
+    expect(result.record.reportStatus).toBe('blocked-runtime');
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+  });
+
+  it.each([
+    'container-image-acquisition-failed',
+    'windows-container-image-acquisition-failed'
+  ])('marks a %s container acquisition failure as blocked-runtime / not-available', async (blockedReason) => {
+    const { deps } = createDeps();
+    const result = await persistComparisonReportPacket(
+      createPersistOptions({ provider: 'windows-container', blockedReason }),
+      deps
+    );
+    expect(result.record.reportStatus).toBe('blocked-runtime');
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+  });
+
+  it('marks an unready preflight as blocked-preflight while keeping runtime not-run', async () => {
+    const { deps } = createDeps();
+    const result = await persistComparisonReportPacket(
+      createPersistOptions({ preflightReady: false }),
+      deps
+    );
+    expect(result.record.reportStatus).toBe('blocked-preflight');
+    expect(result.record.runtimeExecutionState).toBe('not-run');
+  });
+
+  it('writeComparisonReportPacketRecord creates directories and writes both artifacts', async () => {
+    const { deps, mkdir, writeFile } = createDeps();
+    const { record } = await persistComparisonReportPacket(createPersistOptions(), deps);
+    mkdir.mockClear();
+    writeFile.mockClear();
+
+    await writeComparisonReportPacketRecord(record, deps);
+
+    expect(mkdir).toHaveBeenCalledWith(record.artifactPlan.reportDirectory, { recursive: true });
+    expect(mkdir).toHaveBeenCalledWith(record.artifactPlan.stagingDirectory, { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith(
+      record.artifactPlan.metadataFilePath,
+      expect.any(String)
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      record.artifactPlan.packetFilePath,
+      expect.any(String)
+    );
   });
 });
