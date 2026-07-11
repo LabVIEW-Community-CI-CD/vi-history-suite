@@ -323,7 +323,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('honors workspace trust before loading history (VHS-REQ-012)', async () => {
+  it('honors workspace trust before loading history (VHS-REQ-012.1, VHS-REQ-012.2, VHS-REQ-012.4)', async () => {
     workspaceState.isTrusted = false;
     const historyService = { load: vi.fn() };
     const command = createOpenViHistoryCommand(

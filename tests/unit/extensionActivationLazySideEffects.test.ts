@@ -444,7 +444,7 @@ describe('extension activation lazy side effects', () => {
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(true);
   });
 
-  it('fails closed on loadHistory in untrusted workspaces without invoking Git (VHS-REQ-012)', async () => {
+  it('fails closed on loadHistory in untrusted workspaces without invoking Git (VHS-REQ-012.1)', async () => {
     workspaceState.isTrusted = false;
     const api = await activate(createContext() as never);
 
@@ -547,7 +547,7 @@ describe('extension activation lazy side effects', () => {
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
   });
 
-  it('admits documentation command in untrusted workspaces as a low-risk path (VHS-REQ-012)', async () => {
+  it('admits documentation command in untrusted workspaces as a low-risk path (VHS-REQ-012.4)', async () => {
     workspaceState.isTrusted = false;
     await activate(createContext() as never);
 
@@ -558,7 +558,7 @@ describe('extension activation lazy side effects', () => {
     expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
-  it('admits CLI preparation command in untrusted workspaces as a low-risk path (VHS-REQ-012)', async () => {
+  it('admits CLI preparation command in untrusted workspaces as a low-risk path (VHS-REQ-012.4)', async () => {
     workspaceState.isTrusted = false;
     await activate(createContext() as never);
 
