@@ -42,13 +42,17 @@ describe('security maintenance workflows', () => {
     );
   });
 
-  it('runs CodeQL on main, pull requests, schedule, and manual dispatch', () => {
+  it('runs CodeQL on main, pull requests, a weekly schedule, and manual dispatch', () => {
     const codeql = readRepoFile('.github', 'workflows', 'codeql.yml');
 
     expect(codeql).toContain('name: CodeQL');
     expect(codeql).toMatch(/push:\n\s+branches:\n\s+- main\n\s+- develop/);
     expect(codeql).toMatch(/pull_request:\n\s+branches:\n\s+- main\n\s+- develop/);
     expect(codeql).toContain('schedule:');
+    // VHS-REQ-602 criterion 5: the schedule must be weekly (a cron with a fixed
+    // day-of-week and wildcard day-of-month/month), not merely present, so a
+    // regression to a daily or other cadence fails closed.
+    expect(codeql).toMatch(/schedule:\n\s+- cron: "\d+ \d+ \* \* [0-6]"/);
     expect(codeql).toContain('workflow_dispatch:');
   });
 
