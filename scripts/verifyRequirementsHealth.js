@@ -15,7 +15,9 @@
  *
  * It is ADVISORY (exit 0): the individual gates already fail closed where the
  * repository has decided to enforce (integrity, requirement linkage, coverage
- * risk). This report never fails CI; it summarizes the enforced state plus the
+ * risk). It is advisory by default; with --strict it exits non-zero when
+ * requirement health is not green -- a one-command local pre-push check over
+ * those already-enforced signals. It summarizes the enforced state plus the
  * advisory signals so a reader or agent sees requirement health at a glance and
  * knows which requirements still need attention. Coverage and mutation are
  * optional inputs: when their artifacts are absent (no `npm test` / no
@@ -165,7 +167,7 @@ function verifyRequirementsHealth(cwd = process.cwd(), deps = {}) {
   };
 }
 
-function renderSummary(result) {
+function renderSummary(result, options = {}) {
   const lines = [];
   lines.push('[requirements-verify] Requirement verification health (advisory single-pane report).');
   lines.push(`[requirements-verify] Active requirements: ${result.activeRequirements}`);
@@ -203,7 +205,15 @@ function renderSummary(result) {
       lines.push(`  - ${entry.reqId}: ${reasons.join('; ')}`);
     }
   }
-  lines.push('[requirements-verify] Advisory report; does not fail CI.');
+  if (options.strict) {
+    lines.push(
+      result.healthy
+        ? '[requirements-verify] Strict mode: requirement health is green.'
+        : '[requirements-verify] Strict mode: FAILING because requirement health is not green.'
+    );
+  } else {
+    lines.push('[requirements-verify] Advisory report; does not fail CI.');
+  }
   return lines.join('\n');
 }
 
@@ -261,6 +271,7 @@ function renderStepSummary(result) {
 function main(argv = process.argv.slice(2), deps = {}) {
   const positionals = argv.filter((arg) => !arg.startsWith('--'));
   const asJson = deps.json ?? argv.includes('--json');
+  const strict = deps.strict ?? argv.includes('--strict');
   const cwd = deps.cwd || positionals[0] || process.cwd();
   const result = verifyRequirementsHealth(cwd, deps);
 
@@ -272,11 +283,16 @@ function main(argv = process.argv.slice(2), deps = {}) {
   }
 
   const stdout = deps.stdout || process.stdout;
-  stdout.write(asJson ? `${JSON.stringify(result, null, 2)}\n` : `${renderSummary(result)}\n`);
+  stdout.write(asJson ? `${JSON.stringify(result, null, 2)}\n` : `${renderSummary(result, { strict })}\n`);
 
-  // Advisory: the unified health report never fails the build. The individual
-  // guards enforce fail-closed where the repository has decided to; this report
-  // summarizes that enforced state alongside the advisory signals.
+  // Advisory by default (exit 0). With --strict the report exits non-zero when
+  // requirement health is not green (structural integrity, requirement linkage,
+  // or coverage risk) -- a one-command local pre-push check over the signals the
+  // individual guards already fail closed on in CI, so strict is deliberately
+  // not wired into CI where it would be redundant.
+  if (strict && !result.healthy) {
+    return 1;
+  }
   return 0;
 }
 
