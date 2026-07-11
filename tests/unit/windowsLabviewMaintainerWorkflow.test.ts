@@ -64,6 +64,13 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('Evidence summary path: runner-evidence/windows-labview-maintainer-summary.txt');
     expect(workflow).toContain('LabVIEWCLI detected:');
     expect(workflow).toContain('Runner labels: $env:RUNNER_LABELS');
+    // VHS-REQ-598 criterion 4: the evidence summary must also carry the ref,
+    // commit SHA, and Node/npm versions, not just runner context and the VSIX
+    // path, so a regression dropping them from the maintainer evidence fails.
+    expect(workflow).toContain('Ref: $env:GITHUB_REF');
+    expect(workflow).toContain('SHA: $env:GITHUB_SHA');
+    expect(workflow).toContain('Node: $(node --version)');
+    expect(workflow).toContain('npm: $(npm.cmd --version)');
     expect(workflow).toContain('VSIX evidence path: pending package step');
     expect(workflow).toContain('VSIX evidence path: $($vsix.FullName)');
     expect(workflow).toContain("Join-Path 'runner-evidence' 'windows-labview-maintainer-summary.txt'");
