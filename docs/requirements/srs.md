@@ -1916,6 +1916,10 @@ Missing numeric IDs are intentional.
   - CI fails when an Active requirement's verification-reference tests do not
     cite the requirement ID, enforced by running the verification-linkage guard
     in `--enforce` mode; the default report remains advisory.
+  - A requirement acceptance-criteria inventory assigns each Active
+    requirement's criteria a positional `VHS-REQ-NNN.M` id and reports which are
+    cited at the criterion level by a verification-reference test (advisory; the
+    positional ids are derived from srs.md bullet order, not annotated in it).
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
@@ -1959,6 +1963,7 @@ Missing numeric IDs are intentional.
   - `scripts/checkRequirementsIntegrity.js`
   - `scripts/generateCloseoutEvidence.js`
   - `scripts/auditRequirementVerificationLinkage.js`
+  - `scripts/auditRequirementCriteriaInventory.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
@@ -1967,6 +1972,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/requirementsIntegrity.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
   - `tests/unit/requirementVerificationLinkage.test.ts`
+  - `tests/unit/requirementCriteriaInventory.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
