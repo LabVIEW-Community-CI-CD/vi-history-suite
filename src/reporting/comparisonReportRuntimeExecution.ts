@@ -4213,7 +4213,7 @@ function resolveLinuxContainerConnectTimeoutSeconds(connectTimeoutSeconds?: numb
     : LINUX_CONTAINER_OPEN_APP_TIMEOUT_SECONDS;
 }
 
-function buildLinuxContainerLabviewCliScript(
+export function buildLinuxContainerLabviewCliScript(
   executable: string,
   args: string[],
   headlessMode: LinuxContainerHeadlessMode,
