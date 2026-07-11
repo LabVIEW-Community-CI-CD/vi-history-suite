@@ -66,10 +66,10 @@ the machine-readable coverage outputs from that run through the
 - `coverage/coverage-summary.json`
 
 The enforced coverage thresholds in `vitest.config.ts` are evidence-backed
-baseline regression floors: 72% statements, 61% branches, 79% functions, and
-72% lines. These floors were ratcheted toward the measured `develop` actuals at
-v1.21.0, which measured 74.97% statements, 64.60% branches, 80.54% functions,
-and 75.02% lines on the Linux run (the lower-running Ubuntu CI leg historically
+baseline regression floors: 77% statements, 66% branches, 82% functions, and
+77% lines. These floors were ratcheted toward the measured `develop` actuals at
+v1.33.2, which measured 81.06% statements, 70.81% branches, 86.01% functions,
+and 81.10% lines locally (the lower-running Ubuntu CI leg historically
 trails by ~1 point); they are not a claim that the repository has complete
 coverage. The two highest-risk
 comparison-runtime files
@@ -97,7 +97,7 @@ gate semantics.
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
 | --- | --- | --- | --- | --- |
-| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 72% statements, 61% branches, 79% functions, and 72% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 77% statements, 66% branches, 82% functions, and 77% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
 | VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts | tests/unit/openViHistoryCommand.test.ts | User-facing command stops cover missing URI, trust gate, ineligible file guidance, history-load failures, documentation routing, and explicit cancellation stages. |
 | VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/viHistoryModel.test.ts; tests/unit/historyPanelRendering.test.ts | History model facts cover repository/path/signature/history-window decisions and previous-hash links; the minimized panel renders a slim title and the selectable commit table (hash, date, author, subject, full body) with HTML escaping. |
 | VHS-REQ-639 | TEST-639 | src/git/gitCli.ts; src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/gitCli.test.ts; tests/unit/historyPanelRendering.test.ts | Commit body (git `%b`) is captured per retained revision and rendered as a dedicated commit body column replacing the adjacent-pair column, HTML-escaped with multi-line preserved and an empty-body fallback. |

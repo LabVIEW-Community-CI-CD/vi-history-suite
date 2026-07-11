@@ -40,16 +40,16 @@ export default defineConfig({
       ],
       thresholds: {
         // Evidence-backed global regression floors hold a conservative margin
-        // below measured develop actuals (statements 74.97, branches 64.60,
-        // functions 80.54, lines 75.02 on the Linux run at v1.21.0; the Ubuntu
+        // below measured develop actuals (statements 81.06, branches 70.81,
+        // functions 86.01, lines 81.10 on the local run at v1.33.2; the Ubuntu
         // CI leg historically runs ~1 point lower) so cross-runner variance
         // between the Ubuntu and Windows CI legs cannot redden the gate. Raised
         // toward those actuals to tighten regression protection against silent
         // coverage drift. (VHS-REQ-597.)
-        statements: 72,
-        branches: 61,
-        functions: 79,
-        lines: 72,
+        statements: 77,
+        branches: 66,
+        functions: 82,
+        lines: 77,
         // Per-file branch floors for the highest-risk comparison-runtime
         // files, pinned with margin below the lower-runner (Ubuntu) actuals so
         // silent drift on the fail-closed/provider-selection branches fails
