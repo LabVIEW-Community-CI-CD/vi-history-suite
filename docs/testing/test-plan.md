@@ -80,6 +80,35 @@ drift on provider-selection and fail-closed paths. Raise the thresholds only in
 a PR that shows new coverage evidence and updates this test plan with the new
 baseline.
 
+### Coverage Floor Policy
+
+The global floors intentionally sit roughly two points below the measured
+`develop` actuals. That gap is a cross-runner margin, not slack to be spent: the
+Ubuntu CI leg measures coverage about one point below the local/Windows figure,
+so a floor held ~1 point under the Ubuntu actual keeps ordinary cross-runner
+variance from reddening the gate on unrelated pull requests.
+
+Ratchet a floor only when it is durable, not merely reachable:
+
+- Raise a floor in a PR that first adds real coverage lifting the actual, so the
+  new floor still keeps ~2 points local (~1 point Ubuntu) margin. The Ubuntu
+  `Build, Test, Package` leg validates the floor before merge — if a floor is
+  set too high the PR reddens; lower it and repush.
+- Move the floor in lockstep across its five pinned locations: `vitest.config.ts`,
+  this test plan (floors plus the measured actuals), `docs/requirements/srs.md`
+  (VHS-REQ-597), `docs/requirements/syrs.md`, and
+  `tests/unit/requirementsDocs.test.ts`.
+- Spend the coverage that unlocks a ratchet on requirement-mapped product logic.
+  Do not chase coverage on excluded VS Code host bindings, network or socket
+  boundary callbacks, or fixture-heavy integration paths purely to move a floor —
+  that is low-value churn, and much of it is already excluded in
+  `vitest.config.ts`.
+
+The floors are a regression net, not a coverage-completeness claim. Once they sit
+within ~2 points of actuals, further ratcheting buys marginal protection for
+disproportionate effort; prefer targeted assurance (mutation testing, the
+coverage traceability map) over percentage chasing.
+
 ## Mutation Testing (Advisory)
 
 Run `npm run test:mutation` (Stryker, `stryker.config.mjs`) to mutation-test the
