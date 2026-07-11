@@ -158,12 +158,21 @@ export function buildViSemanticComparisonModel(
     .filter((attribute) => !attribute.included)
     .map((attribute) => attribute.label);
 
+  // NI always renders both a "Front Panel Overview" and a "Block Diagram
+  // Overview" caption whenever any difference exists: those captions are a
+  // fixed side-by-side snapshot view, not a per-surface change signal. The
+  // authoritative record of which surfaces actually changed is NI's itemized
+  // detail-section headings. Fall back to the overview captions only when the
+  // report has no detail sections, so a detail-less difference still surfaces
+  // something rather than nothing.
   const changedSurfaceSet = new Set<ViChangeSurface>();
-  for (const section of overviewSections) {
-    changedSurfaceSet.add(section.surface);
-  }
   for (const section of detailSections) {
     changedSurfaceSet.add(section.surface);
+  }
+  if (changedSurfaceSet.size === 0) {
+    for (const section of overviewSections) {
+      changedSurfaceSet.add(section.surface);
+    }
   }
   const changedSurfaces = orderSurfaces(changedSurfaceSet);
 
