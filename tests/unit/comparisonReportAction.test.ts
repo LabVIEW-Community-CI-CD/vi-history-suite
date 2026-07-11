@@ -735,6 +735,10 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       retainedArchiveAvailable: true
     });
     expect(harness.panels[0]?.viewType).toBe('viHistorySuite.comparisonReport');
+    // VHS-REQ-626 criterion 7: the comparison-report webview renders
+    // LabVIEW-authored HTML with scripts disabled; the export action is driven
+    // through the command surface, never in-webview script.
+    expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
     expect(harness.panels[0]?.webview.html).toContain('Generated report was missing');
   });
 
