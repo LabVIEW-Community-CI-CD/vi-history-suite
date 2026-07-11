@@ -306,7 +306,7 @@ describe('extension activation lazy side effects', () => {
     });
   });
 
-  it('auto-materializes the runtime CLI on activation without resolving Git or starting indexing', async () => {
+  it('auto-materializes the runtime CLI on activation without resolving Git or starting indexing (VHS-REQ-083)', async () => {
     const api = await activate(createContext() as never);
 
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledTimes(1);

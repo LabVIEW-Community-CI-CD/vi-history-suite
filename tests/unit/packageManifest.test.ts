@@ -83,7 +83,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('activates on startup without redundant per-command activation events or manifest-level Git activation', () => {
+  it('activates on startup without redundant per-command activation events or manifest-level Git activation (VHS-REQ-082, VHS-REQ-083)', () => {
     const manifest = readManifest();
 
     expect(manifest.files).toEqual([
@@ -95,7 +95,9 @@ describe('extension manifest public metadata', () => {
       'LICENSE'
     ]);
     expect(manifest.icon).toBe('resources/marketplace/vi-history-suite-icon.png');
-    expect(manifest.activationEvents).toContain('onStartupFinished');
+    // VHS-REQ-083: onStartupFinished is the *only* explicit activation event, so
+    // the eager `*` startup activation cannot be reintroduced without failing here.
+    expect(manifest.activationEvents).toEqual(['onStartupFinished']);
     // #369: VS Code auto-infers onCommand activation from contributes.commands,
     // so explicit onCommand:* activation events are redundant advisories and
     // must not be reintroduced into the manifest.
@@ -184,7 +186,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('keeps desktop extension boundaries and runtime settings configuration', () => {
+  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084)', () => {
     const manifest = readManifest();
 
     expect(manifest.main).toBe('./out/extension.js');
