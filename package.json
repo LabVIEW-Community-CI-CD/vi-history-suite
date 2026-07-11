@@ -146,10 +146,18 @@
         "viewType": "viHistorySuite.viPreview",
         "displayName": "VI History Preview",
         "selector": [
-          { "filenamePattern": "*.vi" },
-          { "filenamePattern": "*.vit" },
-          { "filenamePattern": "*.vim" },
-          { "filenamePattern": "*.ctl" }
+          {
+            "filenamePattern": "*.vi"
+          },
+          {
+            "filenamePattern": "*.vit"
+          },
+          {
+            "filenamePattern": "*.vim"
+          },
+          {
+            "filenamePattern": "*.ctl"
+          }
         ],
         "priority": "default"
       }
@@ -297,11 +305,14 @@
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
     "coverage:map:enforce": "node scripts/mapCoverageToTraceability.js --enforce",
+    "test:mutation": "stryker run",
     "dod:gate": "node scripts/checkDefinitionOfDone.js",
     "closeout:evidence": "node scripts/generateCloseoutEvidence.js",
     "validation:file-gap": "node scripts/fileLinuxValidationGap.js"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^24.13.2",
     "@types/vscode": "^1.90.0",
     "@vitest/coverage-v8": "^4.1.10",

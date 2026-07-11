@@ -161,6 +161,7 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/ISSUE_TEMPLATE/requirement_target.yml,asset-doc,Yes,Requirement target template; mapped through RTM.
 .github/pull_request_template.md,mapped,Yes,Lightweight requirement-targeted PR evidence contract template; mapped to VHS-REQ-615.
 vitest.config.ts,mapped,Yes,Vitest coverage reporter and evidence-backed threshold configuration; mapped to VHS-REQ-597 and VHS-REQ-613.
+stryker.config.mjs,dev-only,No,Stryker mutation-testing configuration scoped to src/domain; advisory assertion-quality signal (thresholds.break null); requires a local run.
 tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
 tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.
 package.json,mapped,Yes,Package manifest; mapped through RTM.
