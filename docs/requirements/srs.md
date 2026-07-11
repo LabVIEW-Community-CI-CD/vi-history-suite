@@ -1515,6 +1515,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/diagnosticsRecorder.test.ts`
   - `tests/unit/labviewCliIni.test.ts`
   - `tests/unit/windowsContainerLabviewCliScript.test.ts`
+  - `tests/unit/linuxContainerLabviewCliScript.test.ts`
 - Change Guidance:
   - Treat external tool execution as evidence-producing, not inherently
     trustworthy.
