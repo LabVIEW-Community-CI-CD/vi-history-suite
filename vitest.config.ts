@@ -11,7 +11,7 @@ export default defineConfig({
     coverage: {
       reporter: ['text', 'json-summary', 'cobertura'],
       reportsDirectory: 'coverage',
-      include: ['src/**/*.ts', 'scripts/mapCoverageToTraceability.js'],
+      include: ['src/**/*.ts', 'scripts/*.js'],
       exclude: [
         'src/extension.ts',
         'src/benchmark/hostLinuxBenchmarkRunner.ts',
@@ -24,7 +24,19 @@ export default defineConfig({
         'src/ui/viPreviewRenderHost.ts',
         'src/ui/viPreviewCacheWarmerService.ts',
         'src/ui/viPreviewContainerSession.ts',
-        'src/ui/viPreviewSessionManager.ts'
+        'src/ui/viPreviewSessionManager.ts',
+        // VHS-REQ-613: dev-only host/CI-infrastructure runner scripts require a
+        // real VS Code host, integration host, or git remote/network to
+        // exercise, so their thin CLI wrappers cannot be meaningfully unit
+        // covered. Excluded on the same rationale as src/extension.ts and the
+        // VS Code host bindings; the requirement guard and tool scripts beside
+        // them stay measured.
+        'scripts/bootstrapLinuxVsCodeHost.js',
+        'scripts/runLinuxIntegrationHost.js',
+        'scripts/runWindowsIntegrationHost.js',
+        'scripts/preparePublicRepoClone.js',
+        'scripts/preparePublicTestFixture.js',
+        'scripts/publicRepoCloneCore.js'
       ],
       thresholds: {
         // Evidence-backed global regression floors hold a conservative margin

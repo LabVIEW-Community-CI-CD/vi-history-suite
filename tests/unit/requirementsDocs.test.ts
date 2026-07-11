@@ -441,7 +441,7 @@ describe('requirements documentation coherence', () => {
     expect(vitestConfig).toContain('branches: 61');
     expect(vitestConfig).toContain('functions: 79');
     expect(vitestConfig).toContain('lines: 72');
-    expect(vitestConfig).toContain('scripts/mapCoverageToTraceability.js');
+    expect(vitestConfig).toContain('scripts/*.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/checkDocsLinks.js');
