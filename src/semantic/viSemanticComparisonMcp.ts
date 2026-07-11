@@ -16,6 +16,13 @@ import {
   renderViSemanticHistoryMarkdown
 } from './viSemanticReviewMarkdown';
 import type { ViRepositoryIndex, ViRepositoryIndexInput } from './viRepositoryIndex';
+import {
+  validateViSemanticDocument,
+  VI_SEMANTIC_SCHEMAS,
+  VI_SEMANTIC_COMPARISON_SCHEMA_ID,
+  VI_SEMANTIC_HISTORY_SCHEMA_ID,
+  VI_REPOSITORY_INDEX_SCHEMA_ID
+} from './viSemanticSchemas';
 
 /**
  * Minimal Model Context Protocol surface over the VI comparison engine. This is
@@ -205,6 +212,33 @@ const REPOSITORY_INDEX_INPUT_SCHEMA = {
   required: ['repositoryRoot']
 } as const;
 
+const SCHEMA_DISCOVERY_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    schema: {
+      type: 'string',
+      enum: [
+        VI_SEMANTIC_COMPARISON_SCHEMA_ID,
+        VI_SEMANTIC_HISTORY_SCHEMA_ID,
+        VI_REPOSITORY_INDEX_SCHEMA_ID
+      ],
+      description: 'Optional schema id to fetch; omit to receive all published schemas.'
+    }
+  }
+} as const;
+
+const DOCUMENT_VALIDATION_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    document: {
+      type: 'object',
+      description:
+        'A self-describing semantic document (carrying a "schema" field) to validate against its published JSON Schema.'
+    }
+  },
+  required: ['document']
+} as const;
+
 export const VI_SEMANTIC_MCP_TOOLS = [
   {
     name: 'summarize_vi_comparison',
@@ -240,6 +274,21 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'index (each VI with its revision count and latest change, activity-ranked). Pure Git; no ' +
       'comparison runtime required.',
     inputSchema: REPOSITORY_INDEX_INPUT_SCHEMA
+  },
+  {
+    name: 'get_vi_semantic_schema',
+    description:
+      'Return the published JSON Schema(s) for the vi-history-suite semantic models ' +
+      '(comparison, history, repository index) - the open, versioned VI-diff standard. ' +
+      'Omit "schema" to receive all.',
+    inputSchema: SCHEMA_DISCOVERY_INPUT_SCHEMA
+  },
+  {
+    name: 'validate_vi_semantic_document',
+    description:
+      'Validate a self-describing semantic document against its published JSON Schema; ' +
+      'returns { valid, errors }.',
+    inputSchema: DOCUMENT_VALIDATION_INPUT_SCHEMA
   }
 ] as const;
 
@@ -277,7 +326,36 @@ function parseComparisonArguments(rawArguments: unknown): ViComparisonToolArgume
   };
 }
 
+function callSchemaTool(rawArguments: unknown): unknown {
+  const args =
+    typeof rawArguments === 'object' && rawArguments !== null
+      ? (rawArguments as Record<string, unknown>)
+      : {};
+  if (typeof args.schema === 'string') {
+    const schema = VI_SEMANTIC_SCHEMAS[args.schema];
+    if (!schema) {
+      throw new Error(`unknown schema: ${args.schema}`);
+    }
+    return toolTextResult(JSON.stringify(schema, null, 2));
+  }
+  return toolTextResult(JSON.stringify(VI_SEMANTIC_SCHEMAS, null, 2));
+}
+
+function callValidateTool(rawArguments: unknown): unknown {
+  if (typeof rawArguments !== 'object' || rawArguments === null || !('document' in rawArguments)) {
+    throw new Error('document is required');
+  }
+  const result = validateViSemanticDocument((rawArguments as Record<string, unknown>).document);
+  return toolTextResult(JSON.stringify(result, null, 2));
+}
+
 function callTool(name: string, rawArguments: unknown): unknown {
+  if (name === 'get_vi_semantic_schema') {
+    return callSchemaTool(rawArguments);
+  }
+  if (name === 'validate_vi_semantic_document') {
+    return callValidateTool(rawArguments);
+  }
   const args = parseComparisonArguments(rawArguments);
   const model = buildViSemanticComparisonModelFromHtml(args.reportHtml, {
     reportFilePath: args.reportFilePath,
@@ -347,7 +425,9 @@ export function handleViSemanticMcpMessage(
       }
       if (
         params.name !== 'summarize_vi_comparison' &&
-        params.name !== 'get_vi_semantic_comparison'
+        params.name !== 'get_vi_semantic_comparison' &&
+        params.name !== 'get_vi_semantic_schema' &&
+        params.name !== 'validate_vi_semantic_document'
       ) {
         return failure(id, JSON_RPC_INVALID_PARAMS, `unknown tool: ${params.name}`);
       }
