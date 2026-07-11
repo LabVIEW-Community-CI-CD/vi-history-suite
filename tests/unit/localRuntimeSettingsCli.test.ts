@@ -586,3 +586,134 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     expect(stdout.text()).toContain('vihs --validate');
   });
 });
+
+describe('local runtime settings CLI validation taxonomy and argument guards (VHS-REQ-612)', () => {
+  async function runValidateWithSelection(selection: ComparisonRuntimeSelection): Promise<string> {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    const settingsFilePath = path.resolve('/workspace', 'runtime-settings.json');
+    memoryFs.seed(
+      settingsFilePath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'docker',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    await runLocalRuntimeSettingsCli(['--validate', '--settings-file', 'runtime-settings.json'], {
+      cwd: () => '/workspace',
+      env: { PATH: '/usr/bin' },
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      platform: 'linux',
+      locateRuntime: vi.fn().mockResolvedValue(selection),
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+    return stdout.text();
+  }
+
+  it.each([
+    ['installed-provider-invalid', 'VIHS_E_PROVIDER_INVALID'],
+    ['labview-runtime-selection-required', 'VIHS_E_RUNTIME_SELECTION_REQUIRED'],
+    ['labview-version-required', 'VIHS_E_LABVIEW_VERSION_REQUIRED'],
+    ['labview-version-unsupported-for-comparison-report', 'VIHS_E_LABVIEW_VERSION_UNSUPPORTED'],
+    ['labview-bitness-required', 'VIHS_E_LABVIEW_BITNESS_REQUIRED'],
+    ['labview-2026q1-unsupported-on-macos', 'VIHS_E_PLATFORM_UNSUPPORTED'],
+    ['docker-provider-not-supported-on-platform', 'VIHS_E_PLATFORM_UNSUPPORTED'],
+    ['configured-labview-exe-path-missing', 'VIHS_E_CONFIGURED_PATH_MISSING'],
+    [
+      'docker-provider-labview-version-not-implemented',
+      'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED'
+    ],
+    ['docker-provider-requires-windows-x64', 'VIHS_E_DOCKER_PROVIDER_UNSUPPORTED_BITNESS'],
+    ['docker-only-requires-windows-x64-provider', 'VIHS_E_DOCKER_PROVIDER_UNSUPPORTED_BITNESS'],
+    ['docker-provider-unavailable', 'VIHS_E_DOCKER_UNAVAILABLE'],
+    ['docker-only-provider-unavailable', 'VIHS_E_DOCKER_UNAVAILABLE'],
+    ['auto-docker-installed-provider-unavailable', 'VIHS_E_DOCKER_UNAVAILABLE'],
+    ['labview-exe-not-found', 'VIHS_E_LABVIEW_NOT_FOUND'],
+    ['labview-exe-ambiguous', 'VIHS_E_LABVIEW_AMBIGUOUS'],
+    ['labview-cli-not-found-for-bitness', 'VIHS_E_LABVIEW_CLI_BITNESS_NOT_FOUND'],
+    ['canonical-labview-cli-not-found', 'VIHS_E_COMPARISON_TOOL_NOT_FOUND'],
+    ['comparison-tool-not-found', 'VIHS_E_COMPARISON_TOOL_NOT_FOUND'],
+    ['windows-host-runtime-surface-contaminated', 'VIHS_E_RUNTIME_SURFACE_CONTAMINATED'],
+    ['an-unmapped-future-reason', 'VIHS_E_RUNTIME_VALIDATION_BLOCKED']
+  ])(
+    'maps blocked reason %s to stable runtime error code %s',
+    async (blockedReason, expectedCode) => {
+      const text = await runValidateWithSelection(blockedRuntimeSelection(blockedReason));
+      expect(text).toContain(`runtimeBlockedReason=${blockedReason}`);
+      expect(text).toContain(`runtimeErrorCode=${expectedCode}`);
+      expect(text).toContain('runtimeValidationOutcome=blocked');
+      expect(text).toContain('runtimeProofStatus=blocked-with-actionable-error');
+    }
+  );
+
+  it('reports VIHS_OK and implemented status for a ready runtime selection', async () => {
+    const text = await runValidateWithSelection(readyRuntimeSelection());
+    expect(text).toContain('runtimeValidationOutcome=ready');
+    expect(text).toContain('runtimeErrorCode=VIHS_OK');
+    expect(text).toContain('runtimeProofStatus=ready');
+    expect(text).toContain('runtimeImplementationStatus=implemented');
+  });
+
+  it.each([
+    'docker-provider-labview-version-not-implemented',
+    'docker-provider-requires-windows-x64',
+    'docker-only-requires-windows-x64-provider',
+    'docker-provider-not-supported-on-platform',
+    'labview-2026q1-unsupported-on-macos'
+  ])('classifies %s as a not-implemented runtime path', async (blockedReason) => {
+    const text = await runValidateWithSelection(blockedRuntimeSelection(blockedReason));
+    expect(text).toContain('runtimeImplementationStatus=not-implemented');
+  });
+
+  it('classifies a prerequisite gap as blocked-or-missing-prerequisite', async () => {
+    const text = await runValidateWithSelection(blockedRuntimeSelection('labview-exe-not-found'));
+    expect(text).toContain('runtimeImplementationStatus=blocked-or-missing-prerequisite');
+  });
+
+  it('rejects an unknown argument with a stable message', () => {
+    expect(() => parseLocalRuntimeSettingsCliArgs(['--bogus'])).toThrow('Unknown argument: --bogus');
+  });
+
+  it.each([
+    [['--labview-version', '2026', '--labview-bitness', 'x86'], 'Missing required --provider.'],
+    [['--provider', 'host', '--labview-bitness', 'x86'], 'Missing required --labview-version.'],
+    [['--provider', 'host', '--labview-version', '2026'], 'Missing required --labview-bitness.']
+  ])('rejects incomplete non-validate invocation %j', async (argv, expectedMessage) => {
+    await expect(runLocalRuntimeSettingsCli(argv, {})).rejects.toThrow(expectedMessage);
+  });
+
+  it('resolves default VS Code settings paths across supported platforms', () => {
+    expect(resolveDefaultVsCodeSettingsPath('win32', {}, () => 'C:\\Users\\Test')).toBe(
+      'C:\\Users\\Test\\AppData\\Roaming\\Code\\User\\settings.json'
+    );
+    expect(
+      resolveDefaultVsCodeSettingsPath(
+        'win32',
+        { APPDATA: '/mnt/c/Users/Test/AppData/Roaming' },
+        () => 'C:\\Users\\Test'
+      )
+    ).toBe('/mnt/c/Users/Test/AppData/Roaming/Code/User/settings.json');
+    expect(resolveDefaultVsCodeSettingsPath('linux', {}, () => '/home/test')).toBe(
+      '/home/test/.config/Code/User/settings.json'
+    );
+    expect(resolveDefaultVsCodeSettingsPath('darwin', {}, () => '/Users/test')).toBe(
+      '/Users/test/Library/Application Support/Code/User/settings.json'
+    );
+  });
+
+  it('throws for an unsupported settings platform', () => {
+    expect(() =>
+      resolveDefaultVsCodeSettingsPath('freebsd' as NodeJS.Platform, {}, () => '/home/test')
+    ).toThrow('Unsupported platform for VI History settings CLI: freebsd');
+  });
+});
