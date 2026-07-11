@@ -751,6 +751,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/comparisonReportExport.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
 - Change Guidance:
   - Keep the export limited to retained comparison evidence placed in an
     accessible location; the exported copy may embed retained revision context
