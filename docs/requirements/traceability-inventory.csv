@@ -1,6 +1,7 @@
 Path,Classification,RtmCoverage,Notes
 scripts/auditCustomizationGovernance.js,mapped,Yes,Customization governance audit script for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script; mapped through RTM.
+scripts/checkRequirementsCsvColumns.js,mapped,Yes,Requirements CSV column-integrity guard; fails closed on any row whose column count differs from its header and prints the contract plus validated requirement IDs to the CI run summary; mapped to VHS-REQ-601.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command with generated validation/evidence root exclusions; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
 scripts/checkDocumentationWorkbench.js,dev-only,No,Documentation workbench gate verifying the docs-authoring image documentation-workbench guide and docs:gate script surfaces exist and stay coherent; CI and dev documentation infrastructure.
@@ -121,6 +122,7 @@ tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host te
 tests/unit/runDevHostCli.test.ts,dev-only,No,Development host CLI tests; development tooling.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
+tests/unit/requirementsCsvColumns.test.ts,mapped,Yes,Requirements CSV column-integrity guard unit tests (fixtures for parsing/column-count/step-summary rendering); mapped to VHS-REQ-601.
 tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
 tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
