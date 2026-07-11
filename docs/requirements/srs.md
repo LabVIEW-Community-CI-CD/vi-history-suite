@@ -2290,6 +2290,10 @@ Missing numeric IDs are intentional.
     functions.
   - The report highlights zero-coverage supporting files tied to active
     requirements.
+  - Coverage measurement instruments the product `src` tree and the
+    requirement-supporting `scripts/*.js` guard and tool scripts, excluding
+    dev-only host and CI-infrastructure runner scripts that require a real host,
+    integration host, or git remote to exercise.
   - The initial coverage floor ratchet is statements 40%, branches 33%,
     functions 47%, and lines 40%.
   - The command fails closed with an actionable message when coverage evidence
