@@ -3,10 +3,15 @@ import {
   handleViSemanticMcpMessageAsync,
   JsonRpcRequest
 } from '../semantic/viSemanticComparisonMcp';
-import { compareViRevisions } from '../semantic/compareViRevisions';
-import { buildViSemanticHistory } from '../semantic/viSemanticHistory';
-import { buildViRepositoryIndex } from '../semantic/viRepositoryIndex';
-import { buildViSemanticPrReview } from '../semantic/viSemanticPrReview';
+import {
+  buildViSemanticMcpServerDeps,
+  createDefaultComparisonModelCache
+} from '../mcp/viSemanticMcpServerDeps';
+
+// The injected orchestrator set (including the cache-bound compare_vi_revisions)
+// is assembled by the requirement-mapped, unit-tested builder; this entrypoint
+// only wires stdin/stdout streams (VHS-REQ-662.7/662.8).
+const serverDeps = buildViSemanticMcpServerDeps(createDefaultComparisonModelCache());
 
 /**
  * Stdio transport for the VI semantic MCP server: newline-delimited JSON-RPC
@@ -37,14 +42,10 @@ async function dispatchLine(line: string): Promise<void> {
     return;
   }
 
-  // The orchestrators are injected here (not imported by the pure handler) so
-  // the invoking tools can run real comparisons from this entrypoint.
-  const response = await handleViSemanticMcpMessageAsync(message, {
-    compareViRevisions,
-    buildViSemanticHistory,
-    buildViRepositoryIndex,
-    buildViSemanticPrReview
-  });
+  // The orchestrator set (assembled by buildViSemanticMcpServerDeps) is injected
+  // here rather than imported by the pure handler, so the invoking tools can run
+  // real comparisons from this entrypoint.
+  const response = await handleViSemanticMcpMessageAsync(message, serverDeps);
   if (response !== null) {
     writeResponse(response);
   }

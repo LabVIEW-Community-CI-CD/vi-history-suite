@@ -3,6 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportParser';
+import { runGit } from '../git/gitCli';
 import { ComparisonReportType } from '../reporting/comparisonReportPlan';
 import {
   persistComparisonReportPacket
@@ -21,6 +22,10 @@ import {
   ViSemanticComparisonModel,
   buildViSemanticComparisonModel
 } from './viSemanticModel';
+import {
+  computeViComparisonModelCacheKey,
+  type ViComparisonModelCache
+} from './viComparisonModelCache';
 
 /**
  * Runtime preferences an agent can pass to `compareViRevisions`. All optional:
@@ -67,6 +72,23 @@ export interface CompareViRevisionsDeps {
   buildModel?: typeof buildViSemanticComparisonModel;
   resolvePlatform?: () => RuntimePlatform;
   createStorageRoot?: () => Promise<string>;
+  /**
+   * Optional content-addressed cache of produced comparison models
+   * (VHS-REQ-662.8). When supplied, a cache hit for the compared VI's blob
+   * signatures reuses the stored model and skips the container comparison; a
+   * fresh success is stored for the next run. Omitted -> no caching.
+   */
+  comparisonModelCache?: ViComparisonModelCache;
+  /**
+   * Resolves a stable content signature (the VI blob object id) for a revision.
+   * Defaults to `git rev-parse <revision>:<relativePath>`. Only invoked when a
+   * `comparisonModelCache` is supplied.
+   */
+  resolveContentSignature?: (
+    repositoryRoot: string,
+    relativePath: string,
+    revision: string
+  ) => Promise<string | undefined>;
 }
 
 export interface CompareViRevisionsRuntimeEvidence {
@@ -178,6 +200,37 @@ function buildLocatorSettings(
   return settings;
 }
 
+const GIT_OID_PATTERN = /^[0-9a-f]{40}$/i;
+
+/**
+ * Default content signature: the revision's Git commit id via
+ * `git rev-parse <revision>^{commit}`. The commit id (not the VI's own blob) is
+ * used because the comparison materializes the selected revision's full
+ * dependency tree, so two revisions that share the VI blob but differ in
+ * dependencies (or any other tree content) must not collide in the cache. The
+ * commit id is immutable, so a moving branch ref never yields a stale hit.
+ * Returns undefined when the revision does not resolve (an unknown ref), so the
+ * caller falls through to a full comparison rather than caching against a
+ * meaningless key.
+ */
+async function defaultResolveContentSignature(
+  repositoryRoot: string,
+  _relativePath: string,
+  revision: string
+): Promise<string | undefined> {
+  try {
+    const output = await runGit(
+      ['rev-parse', `${revision}^{commit}`],
+      repositoryRoot,
+      'utf8'
+    );
+    const signature = String(output).trim();
+    return GIT_OID_PATTERN.test(signature) ? signature : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Invokes a real LabVIEW comparison for two revisions of a VI through the
  * vscode-free reporting primitives, then projects the produced report onto the
@@ -201,8 +254,46 @@ export async function compareViRevisions(
   const buildModel = deps.buildModel ?? buildViSemanticComparisonModel;
   const resolvePlatform =
     deps.resolvePlatform ?? (() => resolveRuntimePlatform(process.platform));
+  const comparisonModelCache = deps.comparisonModelCache;
+  const resolveContentSignature =
+    deps.resolveContentSignature ?? defaultResolveContentSignature;
 
   try {
+    // VHS-REQ-662.8: content-addressed cache. Only engaged when a cache is
+    // injected. Resolve each side's revision commit signature (capturing the
+    // full tree/dependency context); on a hit, reuse the stored model and skip
+    // the (multi-minute) container comparison entirely.
+    let cacheKey: string | undefined;
+    if (comparisonModelCache) {
+      const [baseSignature, selectedSignature] = await Promise.all([
+        resolveContentSignature(target.repositoryRoot, target.relativePath, input.baseHash),
+        resolveContentSignature(target.repositoryRoot, target.relativePath, input.selectedHash)
+      ]);
+      if (baseSignature !== undefined && selectedSignature !== undefined) {
+        cacheKey = computeViComparisonModelCacheKey(
+          target.relativePath,
+          baseSignature,
+          selectedSignature,
+          reportType
+        );
+        const cachedModel = await comparisonModelCache.get(cacheKey);
+        if (cachedModel) {
+          return {
+            status: 'completed',
+            hasDifferences: cachedModel.hasDifferences,
+            // Rehydrate the caller's revision identifiers so the returned model
+            // reflects this request, not the run that populated the cache (the
+            // key already pins the resolved commit context of both sides).
+            model: {
+              ...cachedModel,
+              revisions: { baseHash: input.baseHash, selectedHash: input.selectedHash }
+            },
+            runtime: { provider: 'cache', state: 'cached', reportFilePath: '' }
+          };
+        }
+      }
+    }
+
     const platform = input.runtime?.platform ?? resolvePlatform();
     const runtimeSelection = await locateRuntime(platform, buildLocatorSettings(input.runtime));
     if (runtimeSelection.provider === 'unavailable' || runtimeSelection.blockedReason) {
@@ -284,6 +375,10 @@ export async function compareViRevisions(
         bitness: input.runtime?.bitness
       }
     });
+
+    if (cacheKey !== undefined && comparisonModelCache) {
+      await comparisonModelCache.set(cacheKey, model);
+    }
 
     return {
       status: 'completed',
