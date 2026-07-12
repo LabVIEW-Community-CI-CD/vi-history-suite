@@ -449,6 +449,18 @@ so it needs a **separate** self-hosted Linux runner labeled
 The workflow validates docker and the image as a fail-fast gate before doing any
 work, so a missing prerequisite aborts in seconds with an actionable message.
 
+### snap-packaged Docker
+
+If the runner's Docker is installed from the snap store (Canonical's `docker`
+snap), the daemon runs in a private mount namespace with its own `/tmp`. A
+staging directory created under the default `/tmp` is then invisible inside the
+LabVIEW container, and the comparison fails with `VI path invalid or does not
+exist` even though the staged VIs exist on the host. The workflow avoids this by
+pointing the CLI temp root at `$RUNNER_TEMP` (under the runner home), which snap
+Docker can bind-mount. When running the CLI by hand on a snap-Docker host, set
+`TMPDIR` to a directory under your home (e.g. `TMPDIR="$HOME/vihs-tmp"`) before
+invoking `runViSemanticPrReview.js`. Native (non-snap) Docker is unaffected.
+
 ### Cross-repository token
 
 `--post-comment` writes to the **target** repository (the `repository` input),
