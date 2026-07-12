@@ -93,14 +93,15 @@ Image Version**) so you can fix the runtime without leaving the panel.
 
 ## See what changed in Source Control
 
-After you compare a VI's uncommitted change against its latest committed
-version, VI History adds a small badge to that VI in the Source Control and
-Explorer views. Hover it to read a short "what changed" summary — the same
-narrative as the full report — without reopening the report.
+When a VI has uncommitted changes, VI History marks it with a small badge in the
+Source Control and Explorer views. Before you compare, the badge hints that you
+can run Compare for a summary; after you compare the VI against its latest
+committed version, hovering the badge shows a short "what changed" summary — the
+same narrative as the full report — without reopening the report.
 
-The summary appears only after you run that comparison, reflects the change
-against the latest committed revision, and clears once you revert or commit the
-change. It is shown only in trusted workspaces.
+The summary reflects the change against the latest committed revision and clears
+once you revert or commit the change. The decoration is shown only in trusted
+workspaces.
 
 ## Use with Copilot agent mode
 

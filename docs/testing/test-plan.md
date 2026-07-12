@@ -234,32 +234,36 @@ PR gate; the deterministic staging contract is covered by
 ## Source Control Semantic Change Hover Check
 
 `manual:source-control-semantic-change-hover` (VHS-REQ-660). The Source Control
-semantic change hover is cache-only: the badge and hover tooltip appear only
-after a working-tree comparison has produced a narrative for a VI's current
-change, so a freshly opened repository shows no decoration until one is
-generated. On a host with a LabVIEW comparison provider available (a local
-Docker engine with the `nationalinstruments/labview:<release>-linux` image is
-sufficient), verify the hover end to end:
+semantic change decoration has two states: a modified VI first shows a subtle
+pending badge prompting a comparison, and once a working-tree comparison has
+produced a narrative for the VI's current change the decoration upgrades to the
+semantic "what changed" tooltip (served from cache). On a host with a LabVIEW
+comparison provider available (a local Docker engine with the
+`nationalinstruments/labview:<release>-linux` image is sufficient), verify both
+states end to end:
 
 1. Launch the Extension Development Host (`F5`, `Run VI History Suite`) and open
    a trusted Git repository that contains a tracked LabVIEW VI (for example,
    `ni/actor-framework`). Confirm a comparison runtime is configured with
    `VI History: Set Up Comparison Runtime`.
 2. Make an uncommitted edit to a tracked `.vi` so it appears under Source
-   Control as a working-tree change.
+   Control as a working-tree change, and confirm the VI shows the pending badge
+   whose tooltip prompts you to run Compare.
 3. Open `VI History` on that VI, select the uncommitted working-tree entry
    paired with the most recent committed revision (HEAD), and choose `Compare`.
    Wait for the comparison to complete with differences.
 4. Hover the changed VI in the Source Control view (or the Explorer) and confirm
-   the decoration tooltip shows the `VI change: ...` narrative, matching the
+   the decoration has upgraded to the `VI change: ...` narrative, matching the
    report's what-changed summary.
 5. Confirm the decoration clears once it no longer applies: revert or commit the
-   edit and confirm the tooltip is gone after the Source Control view refreshes.
+   edit and confirm the badge is gone after the Source Control view refreshes.
 
 Expected scope: the decoration reflects the HEAD-versus-working-tree change
-only. Comparing the working tree against an older revision (not HEAD), or
-comparing two committed revisions, does not light the Source Control decoration
-by design, and an untrusted workspace shows no decoration.
+only. A modified VI shows the pending badge before any comparison; the narrative
+tooltip requires a completed working-tree comparison. Comparing the working tree
+against an older revision (not HEAD), or comparing two committed revisions, does
+not light the narrative decoration by design, and an untrusted workspace shows
+no decoration.
 
 This check requires a LabVIEW comparison runtime and is not a required public PR
 gate; the cache, recorder, and decoration-resolution logic are covered by

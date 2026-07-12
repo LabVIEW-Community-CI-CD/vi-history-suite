@@ -18,7 +18,9 @@ import type {
  * gated on workspace trust, so a hover never triggers or blocks on a LabVIEW
  * comparison. It surfaces the working-tree change (HEAD versus the uncommitted
  * VI): the provider matches a cached narrative only while its base and selected
- * signatures still equal the VI's current HEAD and working-tree signatures.
+ * signatures still equal the VI's current HEAD and working-tree signatures. A
+ * modified VI without a cached narrative shows a subtle pending badge that
+ * prompts a comparison, so the feature is discoverable before one is run.
  */
 
 /** Ref token asking the signature resolver for the current working-tree blob. */
@@ -28,6 +30,16 @@ export const VI_SEMANTIC_HEAD_REF = 'HEAD';
 
 /** Single-glyph badge marking a VI with an available semantic change summary. */
 export const VI_SEMANTIC_DECORATION_BADGE = 'Δ';
+
+/**
+ * Subtle badge marking a modified VI whose semantic summary has not been
+ * produced yet, prompting the reviewer to run a comparison.
+ */
+export const VI_SEMANTIC_PENDING_BADGE = '·';
+
+/** Hover text shown on a modified VI that has no cached semantic summary yet. */
+export const VI_SEMANTIC_PENDING_TOOLTIP =
+  'VI changed — run Compare in VI History to see a semantic change summary.';
 
 const VI_SOURCE_EXTENSIONS = new Set(['.vi', '.vit', '.vim', '.ctl']);
 
@@ -41,19 +53,29 @@ export interface ViSemanticFileDecorationFields {
 }
 
 /**
- * Pure decision function: given the stored narrative for a VI (or undefined),
- * returns the decoration fields, or undefined when there is nothing to show.
+ * Pure decision function. When a semantic narrative is cached for the VI's
+ * current change, returns the narrative badge and hover. Otherwise, when the VI
+ * is modified relative to HEAD (`isChanged`), returns the subtle pending badge
+ * that prompts a comparison. Returns undefined when there is nothing to show:
+ * an unchanged VI, or a modified VI carrying a blank narrative.
  */
 export function resolveViSemanticFileDecoration(
-  stored: StoredViSemanticNarrative | undefined
+  stored: StoredViSemanticNarrative | undefined,
+  isChanged = false
 ): ViSemanticFileDecorationFields | undefined {
-  if (!stored || stored.narrative.trim().length === 0) {
-    return undefined;
+  if (stored && stored.narrative.trim().length > 0) {
+    return {
+      badge: VI_SEMANTIC_DECORATION_BADGE,
+      tooltip: `VI change: ${stored.narrative}`
+    };
   }
-  return {
-    badge: VI_SEMANTIC_DECORATION_BADGE,
-    tooltip: `VI change: ${stored.narrative}`
-  };
+  if (isChanged) {
+    return {
+      badge: VI_SEMANTIC_PENDING_BADGE,
+      tooltip: VI_SEMANTIC_PENDING_TOOLTIP
+    };
+  }
+  return undefined;
 }
 
 export interface ViSemanticDecorationProviderDeps {
@@ -106,10 +128,11 @@ export class ViSemanticFileDecorationProvider implements vscode.FileDecorationPr
       return undefined;
     }
 
+    const isChanged = headSignature !== worktreeSignature;
     const stored = await this.deps.cache.get(
       computeViSemanticNarrativeCacheKey(relativePath, headSignature, worktreeSignature)
     );
-    const fields = resolveViSemanticFileDecoration(stored);
+    const fields = resolveViSemanticFileDecoration(stored, isChanged);
     if (!fields) {
       return undefined;
     }

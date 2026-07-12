@@ -52,10 +52,10 @@ Runtime-diagnostic and process-observation detail remain retained for diagnosis,
 <li>offers to open the exported file in your default browser or reveal it in the OS file manager</li>
 </ul>
 <h2>Source Control Change Summary</h2>
-<p>After you compare a VI's uncommitted working-tree change against its latest committed revision, VI History remembers the semantic what-changed summary for that change.</p>
-<p>The changed VI then carries a small badge in the Source Control and Explorer views; hovering it shows the same <code>what changed</code> narrative as a tooltip, so you can see what changed without reopening the full report.</p>
+<p>When a VI has uncommitted changes, VI History marks it with a small badge in the Source Control and Explorer views so you can see at a glance that it changed.</p>
+<p>Before you compare, hovering the badge prompts you to run Compare. After you compare the VI's working-tree change against its latest committed revision, the badge carries the semantic <code>what changed</code> narrative as a tooltip, so you can see what changed without reopening the full report.</p>
 <ul>
-<li>the summary is shown only after a working-tree comparison has produced it and only while the file still matches that comparison</li>
+<li>the narrative summary is shown after a working-tree comparison has produced it and only while the file still matches that comparison</li>
 <li>it reflects the change against the latest committed revision and clears once you revert or commit the change</li>
 <li>it is available only in trusted workspaces and never runs a comparison on its own</li>
 </ul>
