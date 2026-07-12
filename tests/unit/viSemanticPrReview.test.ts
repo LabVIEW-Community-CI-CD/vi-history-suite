@@ -185,4 +185,21 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).toContain('No changed VIs');
     expect(markdown).not.toContain('| VI |');
   });
+
+  it('surfaces the reason a VI was not compared in the table and a detail block', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/Broken.vi'],
+        compareVi: async () => ({ status: 'failed', reason: 'command-exited-nonzero' })
+      }
+    );
+
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    // The reason must appear in the summary table cell, not just an opaque
+    // "failed", so a reviewer has an actionable signal in the comment itself.
+    expect(markdown).toContain('| src/Broken.vi | failed (command-exited-nonzero) | — |');
+    // ...and in a per-VI detail block.
+    expect(markdown).toContain('Not compared (failed): command-exited-nonzero');
+  });
 });

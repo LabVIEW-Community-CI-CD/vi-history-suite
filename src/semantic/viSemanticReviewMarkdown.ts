@@ -130,7 +130,11 @@ export function renderViSemanticPrReviewMarkdown(review: ViSemanticPrReview): st
           : '—';
       lines.push(`| ${escapeCell(entry.relativePath)} | ${result} | ${escapeCell(surfaces)} |`);
     } else {
-      lines.push(`| ${escapeCell(entry.relativePath)} | ${entry.status} | — |`);
+      // Surface *why* a VI was not compared so a reviewer has an actionable
+      // signal in the comment itself, rather than an opaque "failed". The
+      // reason is carried on the model for every non-completed entry.
+      const result = `${entry.status} (${entry.reason})`;
+      lines.push(`| ${escapeCell(entry.relativePath)} | ${escapeCell(result)} | — |`);
     }
   }
   lines.push('');
@@ -138,6 +142,13 @@ export function renderViSemanticPrReviewMarkdown(review: ViSemanticPrReview): st
   for (const entry of review.entries) {
     if (entry.status === 'completed' && entry.hasDifferences) {
       lines.push(`#### ${escapeCell(entry.relativePath)}`, '', renderViSemanticComparisonMarkdown(entry.model), '');
+    } else if (entry.status !== 'completed') {
+      lines.push(
+        `#### ${escapeCell(entry.relativePath)}`,
+        '',
+        `Not compared (${escapeCell(entry.status)}): ${escapeCell(entry.reason)}`,
+        ''
+      );
     }
   }
 

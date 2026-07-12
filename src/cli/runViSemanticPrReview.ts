@@ -26,7 +26,7 @@ import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyP
  *   node out/cli/runViSemanticPrReview.js \
  *     --repository-root <path> --base <ref> --head <ref> \
  *     [--out <dir>] [--runtime-provider docker] [--container-image-version <v>] \
- *     [--post-comment --pr <number> --repo <owner/repo>]
+ *     [--post-comment --pr <number> --repo <owner/repo>] [--fail-on-incomplete]
  *
  * Posting requires a GitHub token in GH_TOKEN or GITHUB_TOKEN with permission to
  * comment on the target pull request.
@@ -42,6 +42,7 @@ export interface ParsedArgs {
   postComment: boolean;
   pr?: number;
   repo?: { owner: string; repo: string };
+  failOnIncomplete: boolean;
 }
 
 function parseRepo(value: string): { owner: string; repo: string } {
@@ -107,7 +108,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
     containerImageVersion: values.get('container-image-version'),
     postComment,
     pr,
-    repo
+    repo,
+    failOnIncomplete: values.get('fail-on-incomplete') === 'true'
   };
 }
 
@@ -251,6 +253,17 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
 
   if (!args.postComment && !args.outDir) {
     process.stdout.write(markdown);
+  }
+
+  // Opt-in non-zero exit when any VI could not be compared. The review comment
+  // and artifacts are still produced above; this only affects the exit code so
+  // CI can choose to fail a run with a partial review while keeping the default
+  // (exit 0) behavior for reviewers who just want the comment.
+  if (args.failOnIncomplete && review.totals.blockedOrFailed > 0) {
+    process.stderr.write(
+      `vi-semantic-pr-review: ${review.totals.blockedOrFailed} VI(s) not compared; failing due to --fail-on-incomplete\n`
+    );
+    return 1;
   }
 
   return 0;
