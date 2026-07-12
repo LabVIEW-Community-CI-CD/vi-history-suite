@@ -4477,6 +4477,12 @@ Missing numeric IDs are intentional.
     multi-minute run; the final review upserts over it by the shared marker
     (one comment), and a run that never completes leaves the pending state as an
     actionable signal.
+  - VHS-REQ-661.10: When writing artifacts to an output directory, the CLI
+    copies each completed VI's self-contained comparison report (which embeds
+    the rendered block-diagram/front-panel difference images) into a `reports/`
+    subdirectory, so the uploaded review artifact carries the full visual diff
+    and not only the narrative summary. A `--from-file` post skips this, since
+    its saved report paths are stale temp locations from the original run.
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped

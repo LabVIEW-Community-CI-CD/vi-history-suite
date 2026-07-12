@@ -12,8 +12,10 @@ import {
 import {
   buildViSemanticPrReview,
   isViSourcePath,
+  planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
+  reviewReportFileName,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
   VI_SEMANTIC_PR_REVIEW_SCHEMA,
   type ViSemanticPrReviewDeps
@@ -68,6 +70,45 @@ describe('isViSourcePath', () => {
     expect(isViSourcePath('a/B.ctl')).toBe(true);
     expect(isViSourcePath('a/B.txt')).toBe(false);
     expect(isViSourcePath('a/B.vi.md')).toBe(false);
+  });
+});
+
+describe('review report artifacts (VHS-REQ-661.10)', () => {
+  it('carries the comparison report path on completed entries', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      deps(['src/A.vi'], { 'src/A.vi': completed(makeModel({ vi: { title: 'A.vi' } })) })
+    );
+    const [entry] = review.entries;
+    expect(entry.status).toBe('completed');
+    if (entry.status === 'completed') {
+      expect(entry.reportFilePath).toBe('/tmp/report.html');
+    }
+  });
+
+  it('plans report copies only for completed entries with a report, with safe names', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      deps(['resource/plugins/lv icon.vi', 'src/B.vi'], {
+        'resource/plugins/lv icon.vi': completed(makeModel({ vi: { title: 'lv icon.vi' } })),
+        'src/B.vi': { status: 'failed', reason: 'boom' }
+      })
+    );
+    expect(planReviewReportCopies(review)).toEqual([
+      {
+        relativePath: 'resource/plugins/lv icon.vi',
+        reportFilePath: '/tmp/report.html',
+        fileName: 'resource_plugins_lv_icon.vi.html'
+      }
+    ]);
+  });
+
+  it('sanitizes path separators and unsafe characters in report file names', () => {
+    expect(reviewReportFileName('resource/plugins/lv_icon.vi')).toBe(
+      'resource_plugins_lv_icon.vi.html'
+    );
+    expect(reviewReportFileName('a b/c*d.vi')).toBe('a_b_c_d.vi.html');
+    expect(reviewReportFileName('///')).toBe('report.html');
   });
 });
 

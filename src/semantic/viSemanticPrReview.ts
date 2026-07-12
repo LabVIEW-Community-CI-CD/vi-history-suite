@@ -54,6 +54,12 @@ export type ViSemanticPrReviewEntry =
       status: 'completed';
       hasDifferences: boolean;
       model: ViSemanticComparisonModel;
+      /**
+       * Path to the self-contained comparison report HTML (with embedded
+       * difference images) the comparison produced, when available. Included so
+       * a caller can attach the full visual diff to the review artifact.
+       */
+      reportFilePath?: string;
     }
   | {
       relativePath: string;
@@ -89,6 +95,48 @@ export interface ViSemanticPrReviewDeps {
   compareVi?: typeof compareViRevisions;
 }
 
+/** A per-VI comparison report to copy alongside a review artifact. */
+export interface ReviewReportCopy {
+  relativePath: string;
+  reportFilePath: string;
+  /** Safe file name for the copied report. */
+  fileName: string;
+}
+
+/**
+ * Builds a filesystem-safe, `.html`-suffixed file name for a copied per-VI
+ * comparison report, derived from the VI's repository-relative path.
+ */
+export function reviewReportFileName(relativePath: string): string {
+  const safe = relativePath.replace(/[^a-zA-Z0-9._-]+/g, '_').replace(/^_+|_+$/g, '');
+  return `${safe.length > 0 ? safe : 'report'}.html`;
+}
+
+/**
+ * Plans the per-VI self-contained comparison reports to copy alongside a review.
+ * Each report embeds the rendered block-diagram/front-panel difference images,
+ * so copying them into the review artifact gives reviewers the full visual diff,
+ * not just the narrative. Only completed entries that produced a report file are
+ * included.
+ */
+export function planReviewReportCopies(review: ViSemanticPrReview): ReviewReportCopy[] {
+  const copies: ReviewReportCopy[] = [];
+  for (const entry of review.entries) {
+    if (
+      entry.status === 'completed' &&
+      typeof entry.reportFilePath === 'string' &&
+      entry.reportFilePath.length > 0
+    ) {
+      copies.push({
+        relativePath: entry.relativePath,
+        reportFilePath: entry.reportFilePath,
+        fileName: reviewReportFileName(entry.relativePath)
+      });
+    }
+  }
+  return copies;
+}
+
 const DEFAULT_MAX_VIS = 50;
 const MAX_VIS_CEILING = 200;
 
@@ -110,7 +158,8 @@ function toEntry(relativePath: string, result: CompareViRevisionsResult): ViSema
       relativePath,
       status: 'completed',
       hasDifferences: result.hasDifferences,
-      model: result.model
+      model: result.model,
+      reportFilePath: result.runtime.reportFilePath
     };
   }
   return { relativePath, status: result.status, reason: result.reason };

@@ -4,6 +4,7 @@ import * as path from 'node:path';
 
 import {
   buildViSemanticPrReview,
+  planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
@@ -358,8 +359,31 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
       `${JSON.stringify(review, null, 2)}\n`,
       'utf8'
     );
+    // Copy the per-VI self-contained comparison reports (which embed the
+    // rendered block-diagram/front-panel difference images) into reports/ so
+    // the uploaded review artifact carries the full visual diff, not just the
+    // narrative. Skipped on a --from-file post, whose saved report paths are
+    // stale temp locations from the original run. (VHS-REQ-661.10)
+    let copiedReports = 0;
+    if (args.fromFile === undefined) {
+      const reportCopies = planReviewReportCopies(review);
+      if (reportCopies.length > 0) {
+        const reportsDir = path.join(args.outDir, 'reports');
+        await fs.mkdir(reportsDir, { recursive: true });
+        for (const copy of reportCopies) {
+          try {
+            await fs.copyFile(copy.reportFilePath, path.join(reportsDir, copy.fileName));
+            copiedReports += 1;
+          } catch {
+            // The report file may have been cleaned up (temp); skip it rather
+            // than failing the whole run over a missing visual report.
+          }
+        }
+      }
+    }
     process.stderr.write(
-      `vi-semantic-pr-review: ${summary}; wrote artifacts to ${args.outDir}\n`
+      `vi-semantic-pr-review: ${summary}; wrote artifacts to ${args.outDir}` +
+        `${copiedReports > 0 ? ` (${copiedReports} visual report(s) in reports/)` : ''}\n`
     );
   }
 
