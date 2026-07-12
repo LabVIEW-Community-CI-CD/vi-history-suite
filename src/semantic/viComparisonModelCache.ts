@@ -10,19 +10,20 @@ import {
  *
  * Producing a `ViSemanticComparisonModel` for a revision pair requires a
  * LabVIEW comparison in a container and takes minutes, but the produced model
- * is fully determined by the two compared VI blob contents and the report type.
- * This cache stores the produced model keyed by each side's blob signature so a
- * re-run of the same comparison (a repeated agent query, a re-triggered CI
- * review) reuses the model and skips the container run. The on-disk report is
+ * is fully determined by the two compared revision trees and the report type.
+ * This cache stores the produced model keyed by each side's revision commit
+ * signature so a re-run of the same comparison (a repeated agent query, a
+ * re-triggered CI review) reuses the model and skips the container run. The
+ * on-disk report is
  * not cached, so a hit reuses the model and narrative but not the visual report
  * (mirroring the `--from-file` review tradeoff).
  */
 
 /**
- * Deterministic SHA-256 key over the repository-relative path, the two blob
- * signatures of the compared sides, and the report type. The path is folded in
- * first so two VIs never collide; a change to either side's signature or the
- * report type yields a different key, so the cache never returns a model
+ * Deterministic SHA-256 key over the repository-relative path, the two revision
+ * commit signatures of the compared sides, and the report type. The path is
+ * folded in first so two VIs never collide; a change to either side's signature
+ * or the report type yields a different key, so the cache never returns a model
  * produced for a different comparison.
  */
 export function computeViComparisonModelCacheKey(

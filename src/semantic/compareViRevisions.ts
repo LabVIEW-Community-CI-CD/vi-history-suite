@@ -200,28 +200,32 @@ function buildLocatorSettings(
   return settings;
 }
 
-const BLOB_OID_PATTERN = /^[0-9a-f]{40}$/i;
+const GIT_OID_PATTERN = /^[0-9a-f]{40}$/i;
 
 /**
- * Default content signature: the VI's Git blob object id at a revision via
- * `git rev-parse <revision>:<relativePath>`. Returns undefined when the
- * revision or path does not resolve (a missing VI, an unknown ref), so the
+ * Default content signature: the revision's Git commit id via
+ * `git rev-parse <revision>^{commit}`. The commit id (not the VI's own blob) is
+ * used because the comparison materializes the selected revision's full
+ * dependency tree, so two revisions that share the VI blob but differ in
+ * dependencies (or any other tree content) must not collide in the cache. The
+ * commit id is immutable, so a moving branch ref never yields a stale hit.
+ * Returns undefined when the revision does not resolve (an unknown ref), so the
  * caller falls through to a full comparison rather than caching against a
  * meaningless key.
  */
 async function defaultResolveContentSignature(
   repositoryRoot: string,
-  relativePath: string,
+  _relativePath: string,
   revision: string
 ): Promise<string | undefined> {
   try {
     const output = await runGit(
-      ['rev-parse', `${revision}:${relativePath}`],
+      ['rev-parse', `${revision}^{commit}`],
       repositoryRoot,
       'utf8'
     );
     const signature = String(output).trim();
-    return BLOB_OID_PATTERN.test(signature) ? signature : undefined;
+    return GIT_OID_PATTERN.test(signature) ? signature : undefined;
   } catch {
     return undefined;
   }
@@ -256,8 +260,9 @@ export async function compareViRevisions(
 
   try {
     // VHS-REQ-662.8: content-addressed cache. Only engaged when a cache is
-    // injected. Resolve each side's VI blob signature; on a hit, reuse the
-    // stored model and skip the (multi-minute) container comparison entirely.
+    // injected. Resolve each side's revision commit signature (capturing the
+    // full tree/dependency context); on a hit, reuse the stored model and skip
+    // the (multi-minute) container comparison entirely.
     let cacheKey: string | undefined;
     if (comparisonModelCache) {
       const [baseSignature, selectedSignature] = await Promise.all([
@@ -276,7 +281,13 @@ export async function compareViRevisions(
           return {
             status: 'completed',
             hasDifferences: cachedModel.hasDifferences,
-            model: cachedModel,
+            // Rehydrate the caller's revision identifiers so the returned model
+            // reflects this request, not the run that populated the cache (the
+            // key already pins the resolved commit context of both sides).
+            model: {
+              ...cachedModel,
+              revisions: { baseHash: input.baseHash, selectedHash: input.selectedHash }
+            },
             runtime: { provider: 'cache', state: 'cached', reportFilePath: '' }
           };
         }

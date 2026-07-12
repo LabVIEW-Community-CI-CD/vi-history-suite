@@ -349,6 +349,8 @@ describe('compareViRevisions', () => {
       throw new Error('expected a completed result');
     }
     expect(result.model.narrative).toBe('cached narrative');
+    // The caller's revisions are rehydrated onto the cached model.
+    expect(result.model.revisions).toEqual({ baseHash: 'aaaaaaa', selectedHash: 'bbbbbbb' });
     expect(result.runtime).toEqual({ provider: 'cache', state: 'cached', reportFilePath: '' });
     expect(get).toHaveBeenCalledTimes(1);
     expect(set).not.toHaveBeenCalled();
