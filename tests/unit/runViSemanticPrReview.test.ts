@@ -11,7 +11,7 @@ import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { buildReviewImageAssetPath, loadReviewFromFile, parseArgs, runViSemanticPrReviewCli } from '../../src/cli/runViSemanticPrReview';
+import { buildReviewImageAssetPath, loadReviewFromFile, parseArgs, reviewImageCacheBuster, runViSemanticPrReviewCli } from '../../src/cli/runViSemanticPrReview';
 import { VI_SEMANTIC_PR_REVIEW_SCHEMA } from '../../src/semantic/viSemanticPrReview';
 
 const BASE = ['--repository-root', '/repo', '--base', 'aaaa', '--head', 'bbbb'];
@@ -29,6 +29,18 @@ describe('buildReviewImageAssetPath', () => {
     expect(second.startsWith('vi-review/7/')).toBe(true);
     // No Date.now()-style run token: the same call is byte-for-byte stable.
     expect(buildReviewImageAssetPath(7, 'A_vi', 0, 'png')).toBe(first);
+  });
+});
+
+describe('reviewImageCacheBuster', () => {
+  it('is a stable 16-character hex token for identical image content', () => {
+    const token = reviewImageCacheBuster('AAAAdata');
+    expect(token).toMatch(/^[a-f0-9]{16}$/);
+    expect(reviewImageCacheBuster('AAAAdata')).toBe(token);
+  });
+
+  it('changes when the image content changes so an overwritten image busts caches', () => {
+    expect(reviewImageCacheBuster('AAAAdata')).not.toBe(reviewImageCacheBuster('BBBBdata'));
   });
 });
 
