@@ -30,6 +30,13 @@
 #     `author_association`, which reports CONTRIBUTOR for fork PRs even for org
 #     members and would silently skip trusted authors. Untrusted PRs are not
 #     auto-reviewed (a maintainer can still trigger the review manually).
+#
+# Inline diff images:
+#   * On a PUBLIC repository the review embeds the block-diagram/front-panel
+#     difference images inline in the sticky comment. On a PRIVATE repository
+#     GitHub does not render those hosted raw image URLs inline; the review
+#     still posts the textual "what changed" summary and the uploaded review
+#     artifact carries the full visual diff as the fallback.
 
 name: VI Semantic Review on PR
 

@@ -4490,7 +4490,9 @@ Missing numeric IDs are intentional.
     visual-diff gallery in the sticky comment, since GitHub strips `data:` image
     URIs from rendered comments. Image hosting requires a token with
     `contents: write`; a hosting failure is best-effort and never blocks the
-    textual review from posting.
+    textual review from posting. For a private target repository the hosted raw
+    image URLs do not render inline in the rendered comment; the uploaded
+    review artifact still carries the full visual diff as the fallback.
   - VHS-REQ-661.12: With the CLI `--commit-status` flag (exposed as the optional
     `create_commit_status` workflow input), the review posts a "VI Semantic
     Review" GitHub commit status on the PR head commit so the result is a

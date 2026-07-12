@@ -189,7 +189,7 @@ interface GithubIssueComment {
 
 async function githubRequest(
   token: string,
-  method: 'GET' | 'POST' | 'PATCH' | 'PUT',
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
   url: string,
   body?: unknown
 ): Promise<Response> {
@@ -343,6 +343,20 @@ export function reviewImageCacheBuster(base64Content: string): string {
   return createHash('sha256').update(base64Content).digest('hex').slice(0, 16);
 }
 
+/**
+ * Pure planner: given the review-image paths that already exist on the assets
+ * branch and the paths the current run just produced, returns the existing
+ * paths that are now stale (a VI no longer changed on this PR) and should be
+ * pruned, keeping the stable per-PR subtree bounded to the latest run.
+ */
+export function planStaleReviewAssetDeletions(
+  existingPaths: readonly string[],
+  producedPaths: Iterable<string>
+): string[] {
+  const produced = new Set(producedPaths);
+  return existingPaths.filter((path) => !produced.has(path));
+}
+
 async function uploadReviewImage(
   token: string,
   owner: string,
@@ -384,6 +398,68 @@ async function uploadReviewImage(
 }
 
 /**
+ * Best-effort prune of stale review images for a PR: lists the current
+ * `vi-review/<pr>/` tree on the assets branch and deletes any blob the current
+ * run did not produce (a VI that stopped changing on this PR), so the stable
+ * per-PR subtree stays bounded to the latest review. Never throws into the
+ * caller; a listing or deletion failure simply leaves the tree as-is.
+ */
+async function pruneStaleReviewAssets(
+  token: string,
+  owner: string,
+  repo: string,
+  ref: string,
+  pr: number,
+  producedPaths: ReadonlySet<string>
+): Promise<void> {
+  const prefix = `vi-review/${pr}/`;
+  let tree: { tree?: Array<{ path?: string; type?: string; sha?: string }> };
+  try {
+    tree = (await (
+      await githubRequest(
+        token,
+        'GET',
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/trees/${encodeURIComponent(ref)}?recursive=1`
+      )
+    ).json()) as { tree?: Array<{ path?: string; type?: string; sha?: string }> };
+  } catch {
+    return;
+  }
+  const existing = (tree.tree ?? []).filter(
+    (entry): entry is { path: string; type: string; sha: string } =>
+      entry.type === 'blob' &&
+      typeof entry.path === 'string' &&
+      entry.path.startsWith(prefix) &&
+      typeof entry.sha === 'string'
+  );
+  const stale = new Set(
+    planStaleReviewAssetDeletions(
+      existing.map((entry) => entry.path),
+      producedPaths
+    )
+  );
+  for (const entry of existing) {
+    if (!stale.has(entry.path)) {
+      continue;
+    }
+    try {
+      await githubRequest(
+        token,
+        'DELETE',
+        `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${encodeContentPath(entry.path)}`,
+        {
+          message: `vi-semantic-pr-review: prune stale ${entry.path}`,
+          sha: entry.sha,
+          branch: ref
+        }
+      );
+    } catch {
+      // Best-effort: a failed prune must never block the review.
+    }
+  }
+}
+
+/**
  * Uploads each changed VI's overview difference images to an assets branch in
  * the target repository and returns a map of VI -> hosted image refs for the
  * renderer to embed inline (GitHub strips `data:` image URIs from comments, so
@@ -403,6 +479,7 @@ async function publishReviewImages(
   const pr = args.pr as number;
   const ref = args.assetsRef;
   const byVi = new Map<string, ReviewImageRef[]>();
+  const producedPaths = new Set<string>();
   await ensureAssetsBranch(token, owner, repo, ref);
   for (const entry of review.entries) {
     if (
@@ -431,6 +508,7 @@ async function publishReviewImages(
       try {
         const url = await uploadReviewImage(token, owner, repo, ref, filePath, upload.base64);
         refs.push({ caption: upload.caption, url });
+        producedPaths.add(filePath);
       } catch {
         // Best-effort: skip an image that fails to upload rather than aborting.
       }
@@ -438,6 +516,11 @@ async function publishReviewImages(
     if (refs.length > 0) {
       byVi.set(entry.relativePath, refs);
     }
+  }
+  // Prune images from VIs no longer changed on this PR (best-effort), keeping
+  // the stable per-PR subtree bounded to the current run's produced images.
+  if (producedPaths.size > 0) {
+    await pruneStaleReviewAssets(token, owner, repo, ref, pr, producedPaths);
   }
   return byVi;
 }
