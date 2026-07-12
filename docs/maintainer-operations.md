@@ -502,6 +502,30 @@ with `pull-requests: write` on the target repository. The maintainer dispatch
 workflow above delegates to this same unit with `enforce_trusted_ref: true`, so
 both share one source of truth.
 
+### Automatic review on every PR (including fork PRs)
+
+To review PRs automatically — with no `/comment` or label — a consuming LabVIEW
+repository copies the template
+[docs/consumer-workflows/vi-semantic-review-on-pr.yml](./consumer-workflows/vi-semantic-review-on-pr.yml)
+into its own `.github/workflows/` and sets one secret,
+`VI_REVIEW_DISPATCH_TOKEN` (a least-privilege token with `actions: write` on
+`vi-history-suite`). On every PR open/synchronize/reopen the template dispatches
+the review here, which posts the sticky comment back to the PR using
+`vi-history-suite`'s own `VI_REVIEW_TARGET_TOKEN` — so the consuming repo never
+holds a target-write token.
+
+Key safety properties (asserted by `tests/unit/viSemanticReviewOnPrTemplate.test.ts`):
+
+- It runs on `pull_request_target` so it works for fork PRs (which get no
+  secrets on a plain `pull_request`), but it **never checks out or runs the
+  untrusted PR code** — it only dispatches; the VIs are compared in the isolated
+  LabVIEW container here.
+- The dispatch is gated on the PR author's **real repository permission**
+  (`admin`/`write`/`maintain`), resolved via the API. Do **not** gate on the
+  event payload's `author_association`: it reports `CONTRIBUTOR` for fork PRs
+  even for org members, which silently skips trusted authors. Untrusted PRs are
+  not auto-reviewed; a maintainer can still trigger the review manually.
+
 ## Evidence
 
 Maintainer evidence should be small and repeatable:
