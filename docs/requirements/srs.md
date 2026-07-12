@@ -4492,6 +4492,16 @@ Missing numeric IDs are intentional.
     URIs from rendered comments. Image hosting requires a token with
     `contents: write`; a hosting failure is best-effort and never blocks the
     textual review from posting.
+  - VHS-REQ-661.12: With the CLI `--commit-status` flag (exposed as the optional
+    `create_commit_status` workflow input), the review posts a "VI Semantic
+    Review" GitHub commit status on the PR head commit so the result is a
+    branch-protection-gateable status on the pull request: `success` when the
+    review completed (differences are informational, and a partial review is
+    still success) and `failure` only when `--fail-on-incomplete` is set and a
+    changed VI was not compared. A commit status (unlike a check run, which only
+    a GitHub App can create) works with a plain token that has `statuses: write`,
+    matching the PAT-based token model; a status failure is best-effort and
+    never blocks the textual review.
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped

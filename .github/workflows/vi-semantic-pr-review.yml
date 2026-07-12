@@ -18,6 +18,11 @@ on:
         required: false
         default: false
         type: boolean
+      create_commit_status:
+        description: 'Post a gateable VI Semantic Review commit status on the PR head (needs a statuses:write token on the target repo).'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -39,5 +44,6 @@ jobs:
       container_image_version: ${{ inputs.container_image_version }}
       enforce_trusted_ref: true
       publish_images: ${{ inputs.publish_images }}
+      create_commit_status: ${{ inputs.create_commit_status }}
     secrets:
       VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
