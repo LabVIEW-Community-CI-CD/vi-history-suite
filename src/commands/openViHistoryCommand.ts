@@ -28,9 +28,6 @@ import {
 import {
   ReviewDecisionRecordActionResult,
 } from '../scenarios/reviewDecisionRecordAction';
-import {
-  HumanReviewSubmissionActionResult
-} from '../review/humanReviewSubmissionAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
   renderHistoryPanelHtml,
@@ -151,14 +148,7 @@ export function createOpenViHistoryCommand(
   }) => Promise<ReviewDecisionRecordActionResult>,
   openDocumentationAction?: (request?: {
     pageId?: string;
-  }) => Promise<DocumentationActionResult>,
-  humanReviewSubmissionAction?: (request: {
-    model: Awaited<ReturnType<ViHistoryService['load']>>;
-    source: 'history-panel';
-    draftOutcome?: string;
-    draftConfidence?: string;
-    draftNote?: string;
-  }) => Promise<HumanReviewSubmissionActionResult>
+  }) => Promise<DocumentationActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -198,8 +188,6 @@ export function createOpenViHistoryCommand(
       repositorySupport?.allowCoreReviewActions ?? true;
     const decisionRecordActionsAllowed =
       repositorySupport?.allowDecisionRecordActions ?? true;
-    const humanReviewSubmissionAllowed =
-      repositorySupport?.allowHumanReviewSubmission ?? true;
     const surfaceCapabilities = {
       comparisonGenerationAvailable:
         coreReviewActionsAllowed &&
@@ -215,10 +203,7 @@ export function createOpenViHistoryCommand(
         decisionRecordActionsAllowed &&
         reviewDecisionRecordAction !== undefined,
       documentationAvailable: openDocumentationAction !== undefined,
-      benchmarkStatusAvailable: false,
-      humanReviewSubmissionAvailable:
-        humanReviewSubmissionAllowed &&
-        humanReviewSubmissionAction !== undefined
+      benchmarkStatusAvailable: false
     };
     let model = await hydrateRetainedComparisonEvidenceAvailability(
       {
@@ -950,119 +935,6 @@ export function createOpenViHistoryCommand(
           mismatchSummary: result.mismatchSummary,
           cancellationStage: result.cancellationStage,
           title: result.title
-        });
-        return;
-      }
-
-      if (command === 'submitHumanReview') {
-        if (!humanReviewSubmissionAction) {
-          void safePostPanelMessage({
-            type: 'humanReviewSubmissionResult',
-            status: 'blocked',
-            message:
-              'Blocked: host-machine review submission is not available in this extension build.'
-          });
-          void vscode.window.showInformationMessage(
-            'Host-machine human review submission is not available in this extension build.'
-          );
-          panelTracker?.recordAction({
-            command,
-            outcome: 'unsupported-command'
-          });
-          return;
-        }
-
-        let result;
-        try {
-          result = await humanReviewSubmissionAction({
-            model,
-            source: 'history-panel',
-            draftOutcome: message.reviewOutcome,
-            draftConfidence: message.reviewConfidence,
-            draftNote: message.reviewNote
-          });
-        } catch {
-          const humanReviewSubmissionStatusMessage =
-            'Host review submission failed before the retained artifact could be written. Retry after confirming the workspace is local and deterministic.';
-          void vscode.window.showErrorMessage(humanReviewSubmissionStatusMessage);
-          void safePostPanelMessage({
-            type: 'humanReviewSubmissionResult',
-            status: 'blocked',
-            message: humanReviewSubmissionStatusMessage
-          });
-          panelTracker?.recordAction({
-            command,
-            outcome: 'failed-human-review-submission'
-          });
-          return;
-        }
-        let humanReviewSubmissionStatusMessage =
-          'Host review submission did not complete.';
-        if (result.outcome === 'submitted-human-review') {
-          humanReviewSubmissionStatusMessage =
-            'Host review submitted and retained in latest-human-review-submission.json.';
-          void vscode.window.showInformationMessage(
-            'Host-machine review submitted and retained. Future sessions can consume the retained latest-review manifest automatically.'
-          );
-        } else if (result.outcome === 'workspace-untrusted') {
-          humanReviewSubmissionStatusMessage =
-            `Blocked: host-machine review submission is disabled in untrusted workspaces ${UNTRUSTED_WORKSPACE_TRUST_RATIONALE}.`;
-          void vscode.window.showWarningMessage(
-            formatUntrustedWorkspaceWarning('Host-machine review submission is disabled')
-          );
-        } else if (result.outcome === 'missing-storage-uri') {
-          humanReviewSubmissionStatusMessage =
-            'Blocked: open the repository as a workspace before submitting the host review.';
-          void vscode.window.showWarningMessage(
-            'Host-machine review submission requires an open workspace so review artifacts can be stored under workspace-scoped extension storage.'
-          );
-        } else if (result.outcome === 'canonical-machine-mismatch') {
-          humanReviewSubmissionStatusMessage =
-            'Blocked: this machine is not the canonical Windows 11 host allowed to submit the maintainer review.';
-          void vscode.window.showWarningMessage(
-            'This review submission was blocked because the current machine fingerprint does not match the canonical Windows 11 review host.'
-          );
-        } else if (result.outcome === 'nondeterministic-review-surface') {
-          humanReviewSubmissionStatusMessage =
-            result.validationMessage ??
-            'Blocked: host-machine review submission requires the deterministic local fixture workspace instead of a OneDrive-backed path.';
-          void vscode.window.showWarningMessage(humanReviewSubmissionStatusMessage);
-        } else if (result.validationMessage) {
-          humanReviewSubmissionStatusMessage = result.validationMessage;
-          void vscode.window.showInformationMessage(result.validationMessage);
-        }
-        void safePostPanelMessage({
-          type: 'humanReviewSubmissionResult',
-          status:
-            result.outcome === 'submitted-human-review'
-              ? 'success'
-              : result.outcome === 'invalid-human-review-submission'
-                ? 'validation'
-                : 'blocked',
-          message: humanReviewSubmissionStatusMessage
-        });
-
-        panelTracker?.recordAction({
-          command,
-          outcome:
-            result.outcome === 'submitted-human-review'
-              ? 'submitted-human-review'
-              : result.outcome === 'workspace-untrusted'
-                ? 'workspace-untrusted'
-              : result.outcome === 'missing-storage-uri'
-                ? 'missing-human-review-storage'
-              : result.outcome === 'canonical-machine-mismatch'
-                ? 'canonical-machine-mismatch'
-                : result.outcome === 'nondeterministic-review-surface'
-                  ? 'nondeterministic-human-review-surface'
-                : 'invalid-human-review-submission',
-          humanReviewSubmissionFilePath: result.submissionFilePath,
-          humanReviewLatestManifestPath: result.latestSubmissionFilePath,
-          humanReviewCanonicalMachineFilePath: result.canonicalHostMachineFilePath,
-          humanReviewMachineFingerprintId: result.machineFingerprintId,
-          humanReviewCanonicalMachineFingerprintId:
-            result.canonicalMachineFingerprintId,
-          humanReviewValidationMessage: result.validationMessage
         });
         return;
       }

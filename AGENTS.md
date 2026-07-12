@@ -51,7 +51,6 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - `src/domain/`: Core domain models
 - `src/git/`: Git integration
 - `src/reporting/`: Report generation and execution
-- `src/review/`: Human review and scenario registry
 - `src/scenarios/`: Decision records and scenario logic
 - `src/services/`: Service layer
 - `src/support/`: Support policies

@@ -27,8 +27,7 @@ function createModel(overrides: Partial<ViHistoryViewModel> = {}): ViHistoryView
       supportGuidance: 'Known evidence family.',
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
-      allowBenchmarkStatus: true,
-      allowHumanReviewSubmission: true
+      allowBenchmarkStatus: true
     },
     commits: [
       {

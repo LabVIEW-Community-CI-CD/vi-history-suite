@@ -17,7 +17,6 @@ export interface RepositorySupportPolicy {
   allowCoreReviewActions: boolean;
   allowDecisionRecordActions: boolean;
   allowBenchmarkStatus: boolean;
-  allowHumanReviewSubmission: boolean;
 }
 
 interface KnownRepositoryFamilyDefinition {
@@ -89,8 +88,7 @@ export function classifyRepositorySupportPolicy(
       supportGuidance: GENERIC_SUPPORT_GUIDANCE,
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
-      allowBenchmarkStatus: true,
-      allowHumanReviewSubmission: true
+      allowBenchmarkStatus: true
     };
   }
 
@@ -112,8 +110,7 @@ export function classifyRepositorySupportPolicy(
           : 'This upstream repo is part of the known evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence may be narrower.',
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
-      allowBenchmarkStatus: true,
-      allowHumanReviewSubmission: true
+      allowBenchmarkStatus: true
     };
   }
 
@@ -128,8 +125,7 @@ export function classifyRepositorySupportPolicy(
       'This same-name GitHub fork stays close to the known evidence family. VI History remains available here, while retained benchmark and human-review evidence may be narrower.',
     allowCoreReviewActions: true,
     allowDecisionRecordActions: true,
-    allowBenchmarkStatus: true,
-    allowHumanReviewSubmission: true
+    allowBenchmarkStatus: true
   };
 }
 
@@ -151,8 +147,7 @@ function buildKnownLocalFixturePolicy(
         : 'This retained local fixture clone stays aligned with the known evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence may be narrower.',
     allowCoreReviewActions: true,
     allowDecisionRecordActions: true,
-    allowBenchmarkStatus: true,
-    allowHumanReviewSubmission: true
+    allowBenchmarkStatus: true
   };
 }
 
@@ -168,8 +163,7 @@ function buildGenericRepositoryPolicy(
     supportGuidance: GENERIC_SUPPORT_GUIDANCE,
     allowCoreReviewActions: true,
     allowDecisionRecordActions: true,
-    allowBenchmarkStatus: true,
-    allowHumanReviewSubmission: true
+    allowBenchmarkStatus: true
   };
 }
 

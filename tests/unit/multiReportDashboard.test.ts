@@ -44,8 +44,7 @@ function createModel(): ViHistoryViewModel {
       supportGuidance: 'Known evidence family.',
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
-      allowBenchmarkStatus: true,
-      allowHumanReviewSubmission: true
+      allowBenchmarkStatus: true
     },
     commits: [
       {

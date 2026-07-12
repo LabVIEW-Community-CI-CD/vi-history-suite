@@ -41,8 +41,6 @@ src/reporting/comparisonRuntimeDoctor.ts,mapped,Yes,Comparison runtime doctor; m
 src/reporting/comparisonRuntimeLocator.ts,mapped,Yes,Comparison runtime locator; mapped through RTM.
 src/reporting/diagnostics/diagnosticsRecorder.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder; retained runtime evidence schema mapped through RTM (VHS-REQ-148).
 src/reporting/runtime/labviewCliIni.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper for Windows host-native compare; mapped through RTM (VHS-REQ-148).
-src/review/humanReviewSubmission.ts,supporting,No,Maintainer-only review submission persistence infrastructure; supporting VHS-REQ-610 dashboard aggregate review. Requires canonical host machine matching.
-src/review/humanReviewSubmissionAction.ts,supporting,No,Maintainer-only review submission action routing; supporting VHS-REQ-610 dashboard aggregate review. Requires canonical host machine matching.
 src/scenarios/decisionRecord.ts,supporting,No,Decision record persistence infrastructure; supporting VHS-REQ-610 dashboard aggregate review.
 src/scenarios/reviewDecisionRecordAction.ts,supporting,No,Decision record action routing; supporting VHS-REQ-610 dashboard aggregate review.
 src/scenarios/reviewScenarioRegistry.ts,supporting,No,Review scenario definitions enabling bounded dashboard evidence; supporting VHS-REQ-610 dashboard aggregate review.
@@ -103,7 +101,6 @@ tests/unit/gitCli.test.ts,mapped,Yes,Git CLI tests; mapped through RTM.
 tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering tests; mapped through RTM.
 tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
-tests/unit/humanReviewSubmission.test.ts,mapped,Yes,Human review submission boundary tests; mapped to VHS-REQ-610.
 tests/unit/integrationHostRuntime.test.ts,mapped,Yes,Integration host runtime tests incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
 tests/unit/localRuntimeSettingsCli.test.ts,mapped,Yes,Installed runtime settings CLI direct tests; mapped to VHS-REQ-612.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
