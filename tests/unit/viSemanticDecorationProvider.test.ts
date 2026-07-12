@@ -22,6 +22,7 @@ import {
   registerViSemanticDecorationProvider,
   resolveViSemanticFileDecoration,
   VI_SEMANTIC_DECORATION_BADGE,
+  VI_SEMANTIC_PENDING_BADGE,
   ViSemanticFileDecorationProvider,
   type ViSemanticDecorationProviderDeps
 } from '../../src/ui/viSemanticDecorationProvider';
@@ -31,21 +32,33 @@ beforeEach(() => {
   defaultVsCodeTestHarness.reset();
 });
 
-describe('resolveViSemanticFileDecoration (VHS-REQ-660.3)', () => {
-  it('returns the badge and the narrative tooltip when a narrative is stored', () => {
-    const fields = resolveViSemanticFileDecoration({
-      narrative: 'The block diagram differs.',
-      changedSurfaces: ['block-diagram']
-    });
+describe('resolveViSemanticFileDecoration (VHS-REQ-660.3, VHS-REQ-660.6)', () => {
+  it('returns the narrative badge and tooltip when a narrative is stored', () => {
+    const fields = resolveViSemanticFileDecoration(
+      {
+        narrative: 'The block diagram differs.',
+        changedSurfaces: ['block-diagram']
+      },
+      true
+    );
     expect(fields?.badge).toBe(VI_SEMANTIC_DECORATION_BADGE);
     expect(fields?.tooltip).toContain('The block diagram differs.');
   });
 
-  it('returns undefined when there is no narrative or the narrative is blank', () => {
+  it('returns the pending badge for a changed VI with no cached narrative (VHS-REQ-660.6)', () => {
+    const fields = resolveViSemanticFileDecoration(undefined, true);
+    expect(fields?.badge).toBe(VI_SEMANTIC_PENDING_BADGE);
+    expect(fields?.tooltip).toContain('run Compare');
+  });
+
+  it('prefers the pending badge over a blank stored narrative when the VI is changed', () => {
+    const fields = resolveViSemanticFileDecoration({ narrative: '   ', changedSurfaces: [] }, true);
+    expect(fields?.badge).toBe(VI_SEMANTIC_PENDING_BADGE);
+  });
+
+  it('returns undefined for an unchanged VI with no narrative', () => {
+    expect(resolveViSemanticFileDecoration(undefined, false)).toBeUndefined();
     expect(resolveViSemanticFileDecoration(undefined)).toBeUndefined();
-    expect(
-      resolveViSemanticFileDecoration({ narrative: '   ', changedSurfaces: [] })
-    ).toBeUndefined();
   });
 });
 
@@ -100,8 +113,19 @@ describe('ViSemanticFileDecorationProvider.provideFileDecoration (VHS-REQ-660.3,
     expect(String(decoration?.tooltip)).toContain('The block diagram differs.');
   });
 
-  it('returns no decoration when no cached narrative matches the current signatures', async () => {
+  it('shows the pending badge for a modified VI with no cached narrative (VHS-REQ-660.6)', async () => {
     const provider = new ViSemanticFileDecorationProvider(baseDeps());
+    const decoration = await provider.provideFileDecoration(vscode.Uri.file('/repo/Widget.vi'));
+    expect(decoration?.badge).toBe(VI_SEMANTIC_PENDING_BADGE);
+    expect(String(decoration?.tooltip)).toContain('run Compare');
+  });
+
+  it('returns no decoration for an unchanged VI (HEAD equals worktree)', async () => {
+    const provider = new ViSemanticFileDecorationProvider(
+      baseDeps({
+        resolveBlobId: vi.fn(async () => 'SAMESIG')
+      })
+    );
     expect(await provider.provideFileDecoration(vscode.Uri.file('/repo/Widget.vi'))).toBeUndefined();
   });
 

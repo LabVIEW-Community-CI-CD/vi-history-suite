@@ -4357,7 +4357,9 @@ Missing numeric IDs are intentional.
   gated on workspace trust, so a reviewer can see what changed in a VI without
   opening the full comparison report. The decoration reflects the working-tree
   change (HEAD versus the uncommitted VI); committed-pair comparisons are out of
-  scope for the Source Control surface.
+  scope for the Source Control surface. A modified VI that has no cached
+  narrative shows a subtle pending decoration prompting a comparison, so the
+  feature is discoverable before one is run.
 - Acceptance Criteria:
   - VHS-REQ-660.1: `computeViSemanticNarrativeCacheKey` derives a deterministic
     key from the separator-normalized repository-relative path plus the base and
@@ -4371,18 +4373,22 @@ Missing numeric IDs are intentional.
     LabVIEW runtime, and caches nothing when the report shows no differences.
   - VHS-REQ-660.3: `resolveViSemanticFileDecoration` returns a decoration whose
     badge is the semantic-change marker and whose tooltip is the cached
-    narrative when a narrative is present, and returns undefined for an absent or
-    blank narrative.
+    narrative when a narrative is present.
   - VHS-REQ-660.4: The file decoration provider returns no decoration in an
-    untrusted workspace and for non-VI files, and otherwise decorates a VI only
-    when its current HEAD and working-tree content signatures match a cached
-    narrative, so a stale badge clears once the VI changes again (VHS-REQ-012
-    fail-closed alignment).
+    untrusted workspace and for non-VI files, and matches a cached narrative
+    only while the VI's current HEAD and working-tree content signatures still
+    equal the compared signatures, so a stale narrative badge clears once the VI
+    changes again (VHS-REQ-012 fail-closed alignment).
   - VHS-REQ-660.5: The provider exposes a `refresh` method that raises its
     `onDidChangeFileDecorations` event (fired after a comparison completes so a
     newly cached narrative appears), and `registerViSemanticDecorationProvider`
     registers it through `window.registerFileDecorationProvider` with tracked
     disposables.
+  - VHS-REQ-660.6: For a modified tracked VI whose HEAD content differs from the
+    working tree and that has no cached narrative, `resolveViSemanticFileDecoration`
+    and the provider return a subtle pending badge with a tooltip prompting the
+    reviewer to run Compare; an unchanged VI, and a VI missing either content
+    signature, receive no decoration.
 - Agent Work Scope:
   - Keep the cache key, narrative recorder, and decoration-resolution logic pure
     and dependency-injected so they stay unit-testable without VS Code or a Git
