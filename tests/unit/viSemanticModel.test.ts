@@ -1,3 +1,6 @@
+// Requirement coverage: VHS-REQ-662 (VI semantic comparison model and agent MCP
+// surface). Verifies the versioned comparison model and the single shared
+// what-changed narrative (VHS-REQ-662.1).
 import { describe, expect, it } from 'vitest';
 
 import {

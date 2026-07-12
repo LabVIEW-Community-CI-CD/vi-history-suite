@@ -1,3 +1,6 @@
+// Requirement coverage: VHS-REQ-662 (VI semantic comparison model and agent MCP
+// surface). Verifies the vi-repository-index@v1 activity-ranked survey
+// orchestrator (VHS-REQ-662.6).
 import { describe, expect, it, vi } from 'vitest';
 
 import type { GitHistoryEntry } from '../../src/git/gitCli';

@@ -1,3 +1,6 @@
+// Requirement coverage: VHS-REQ-662 (VI semantic comparison model and agent MCP
+// surface). Verifies the dependency-free JSON-RPC handler (VHS-REQ-662.3) and
+// the exposed agent tool set (VHS-REQ-662.4).
 import { describe, expect, it, vi } from 'vitest';
 
 import {
