@@ -156,9 +156,22 @@ jobs:
           # the PR head commit, base is the merge-base with the PR base branch.
           rm -rf target-clone
           gh repo clone "$TARGET_REPOSITORY" target-clone -- --no-single-branch
-          head_sha="$(gh pr view "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" --json headRefOid --jq '.headRefOid')"
+          expected_head="$(gh pr view "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" --json headRefOid --jq '.headRefOid')"
           base_ref="$(gh pr view "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" --json baseRefName --jq '.baseRefName')"
-          git -C target-clone fetch --no-tags origin "$head_sha" "$base_ref"
+          # Fetch the head via the canonical refs/pull/<n>/head ref, which the
+          # BASE repo always serves — including for fork PRs whose head commit
+          # is not directly fetchable by bare SHA from origin on some server
+          # configs / older git. Resolve the head from that ref rather than
+          # trusting the SHA is directly reachable.
+          git -C target-clone fetch --no-tags origin "refs/pull/$TARGET_PR_NUMBER/head" "$base_ref"
+          head_sha="$(git -C target-clone rev-parse FETCH_HEAD)"
+          # Cross-check the fetched tip against the API's headRefOid; if they
+          # disagree (e.g. a force-push raced the dispatch), fail closed rather
+          # than reviewing an unexpected commit.
+          if [ "$head_sha" != "$expected_head" ]; then
+            echo "PR head mismatch: refs/pull/$TARGET_PR_NUMBER/head resolved to $head_sha but the API reported $expected_head (force-push race?); refusing to review an unexpected commit." >&2
+            exit 1
+          fi
           merge_base="$(git -C target-clone merge-base "origin/$base_ref" "$head_sha")"
           echo "Target PR head: $head_sha"
           echo "Target PR base ref: $base_ref"
