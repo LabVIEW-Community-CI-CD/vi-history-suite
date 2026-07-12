@@ -21,9 +21,9 @@ configure.
 
 ## Tools
 
-The server exposes seven tools. Five operate purely on Git or supplied data; two
-invoke a real LabVIEW comparison and therefore need a comparison runtime (host
-LabVIEW or a Docker LabVIEW image) and may take minutes.
+The server exposes eight tools. Five operate purely on Git or supplied data;
+three invoke a real LabVIEW comparison and therefore need a comparison runtime
+(host LabVIEW or a Docker LabVIEW image) and may take minutes.
 
 | Tool | What it does | Runtime | Required input |
 | --- | --- | --- | --- |
@@ -32,25 +32,56 @@ LabVIEW or a Docker LabVIEW image) and may take minutes.
 | `compare_vi_revisions` | Runs a LabVIEW comparison between two Git revisions and returns the comparison model. | Comparison runtime | `repositoryRoot`, `relativePath`, `baseHash`, `selectedHash` |
 | `summarize_vi_history` | Walks a VI's recent revisions, compares adjacent pairs, and returns a `vi-history-suite/vi-semantic-history@v1` evolution timeline. | Comparison runtime | `repositoryRoot`, `relativePath` |
 | `index_repository_vis` | Surveys tracked VIs and returns a `vi-history-suite/vi-repository-index@v1` index (revision count and latest change, activity-ranked). | None (pure Git) | `repositoryRoot` |
+| `build_vi_pr_review` | Reviews a pull request: compares every VI changed between two revisions and returns a `vi-history-suite/vi-semantic-pr-review@v1` review (per-VI summary plus an aggregate narrative). The Markdown form is a sticky PR-comment body. | Comparison runtime | `repositoryRoot`, `baseHash`, `selectedHash` |
 | `get_vi_semantic_schema` | Returns the published JSON Schema(s) for the semantic models — the open VI-diff standard. | None | none (`schema` optional) |
 | `validate_vi_semantic_document` | Validates a self-describing document against its published schema; returns `{ valid, errors }`. | None | `document` |
 
 ### Output format
 
 `summarize_vi_comparison`, `get_vi_semantic_comparison`, `compare_vi_revisions`,
-and `summarize_vi_history` accept an optional `format` of `json` (default) or
-`markdown`. The Markdown form produces review-ready blocks suitable for PR
-comments and CI summaries.
+`summarize_vi_history`, and `build_vi_pr_review` accept an optional `format` of
+`json` (default) or `markdown`. The Markdown form produces review-ready blocks
+suitable for PR comments and CI summaries.
 
 ### Runtime and revision inputs
 
-- `compare_vi_revisions` and `summarize_vi_history` accept an optional `runtime`
-  object (`provider` `host` or `docker`, `labviewVersion`, `bitness`,
-  `containerImageVersion`, `cliConnectTimeoutSeconds`) to steer provider
-  selection.
+- `compare_vi_revisions`, `summarize_vi_history`, and `build_vi_pr_review` accept
+  an optional `runtime` object (`provider` `host` or `docker`, `labviewVersion`,
+  `bitness`, `containerImageVersion`, `cliConnectTimeoutSeconds`) to steer
+  provider selection.
 - `summarize_vi_history` walks `maxRevisions` recent revisions (default 3,
   bounded to 20; N revisions yields N-1 comparisons).
 - `index_repository_vis` details up to `maxVis` VIs (default 100, bounded to 500).
+- `build_vi_pr_review` compares up to `maxVis` changed VIs (default 50, bounded
+  to 200), path-sorted.
+
+## Reviewing a pull request
+
+`build_vi_pr_review` turns the "Binary file not shown" of a LabVIEW pull request
+into a real "what changed" review. An AI reviewer (Copilot agent mode or any
+MCP-capable agent) can drive it end to end:
+
+1. Resolve the pull request's base (merge-base) and head commits.
+2. Call `build_vi_pr_review` with `repositoryRoot`, `baseHash`, `selectedHash`,
+   and `format: "markdown"` to get a sticky-ready review body. The body opens
+   with a hidden marker (`<!-- vi-history-suite:vi-semantic-pr-review -->`).
+3. Post the body as a pull-request comment. On later runs, update the comment
+   that already carries the marker instead of adding a new one, so the review
+   stays a single living summary.
+
+The bundled CLI runs the whole recipe — including the sticky upsert — in one
+command:
+
+```bash
+node out/cli/runViSemanticPrReview.js \
+  --repository-root . --base <mergeBase> --head <headSha> \
+  --runtime-provider docker \
+  --post-comment --pr <number> --repo <owner/repo>
+```
+
+Posting needs a GitHub token in `GH_TOKEN` (or `GITHUB_TOKEN`) with permission to
+comment on the pull request. Omit `--post-comment` to print the review or write
+it to `--out <dir>` (as `vi-semantic-pr-review.md` and `.json`).
 
 ## The open VI-diff standard
 
@@ -69,11 +100,12 @@ document (one carrying a `schema` field) with `validate_vi_semantic_document`.
 ## Implementation
 
 The server is dependency-free (no MCP SDK) and its request handler is pure; only
-the two comparison tools reach a LabVIEW runtime, through the same reporting
+the three comparison tools reach a LabVIEW runtime, through the same reporting
 primitives the extension's Compare command uses.
 
 - Request handler: `src/semantic/viSemanticComparisonMcp.ts`
-- Comparison, history, and index orchestrators: `src/semantic/compareViRevisions.ts`, `src/semantic/viSemanticHistory.ts`, `src/semantic/viRepositoryIndex.ts`
+- Comparison, history, index, and PR-review orchestrators: `src/semantic/compareViRevisions.ts`, `src/semantic/viSemanticHistory.ts`, `src/semantic/viRepositoryIndex.ts`, `src/semantic/viSemanticPrReview.ts`
+- PR-review CLI and sticky-comment planner: `src/cli/runViSemanticPrReview.ts`, `src/semantic/stickyPrComment.ts`
 - Published schemas and validator: `src/semantic/viSemanticSchemas.ts`
 - Stdio entrypoint: `src/cli/runViSemanticMcpServer.ts`
 - VS Code registration: `src/mcp/viSemanticMcpServerProvider.ts`

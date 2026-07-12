@@ -50,7 +50,7 @@ interacts with:
 | History command and panel | Orchestrates selected-file eligibility, factual blocked states, retained commit windows, compare actions, review packets, and dashboard actions. | `src/commands/`, `src/ui/` |
 | Reporting runtime | Plans comparison inputs, checks runtime provider facts, stages revision blobs, runs LabVIEW tooling, and retains comparison report packets. | `src/reporting/` |
 | Dashboard and review evidence | Concentrates retained comparison evidence, dashboard archive data, ETA facts, latest-run facts, decision records, and maintainer-only review submissions. | `src/dashboard/`, `src/scenarios/`, `src/review/` |
-| Semantic model and MCP surface | Projects comparison reports and Git history onto versioned VI-diff schemas and serves them to Copilot agent mode through a registered stdio MCP server (seven tools). | `src/semantic/`, `src/mcp/`, `src/cli/runViSemanticMcpServer.ts` |
+| Semantic model and MCP surface | Projects comparison reports and Git history onto versioned VI-diff schemas and serves them to Copilot agent mode through a registered stdio MCP server (eight tools). | `src/semantic/`, `src/mcp/`, `src/cli/runViSemanticMcpServer.ts` |
 | Bundled documentation | Loads the packaged documentation manifest and installed HTML pages through the open documentation command. | `src/docs/`, `resources/bundled-docs/` |
 | Tooling and CI | Generates build info, audits package/runtime surfaces, runs traceability checks, builds diagnostic VSIX artifacts, and publishes exact-tag Marketplace releases. | `scripts/`, `.github/workflows/` |
 | Requirements and standards evidence | Stores SyRS, SRS, RTM, ID index, traceability inventory, issue-wave guidance, and closeout runbook evidence. | `docs/requirements/` |

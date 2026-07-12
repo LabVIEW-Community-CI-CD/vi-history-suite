@@ -11,6 +11,7 @@ import {
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
 import type { ViSemanticHistory } from '../../src/semantic/viSemanticHistory';
 import type { ViRepositoryIndex } from '../../src/semantic/viRepositoryIndex';
+import type { ViSemanticPrReview } from '../../src/semantic/viSemanticPrReview';
 import {
   buildViSemanticComparisonModelFromHtml,
   VI_SEMANTIC_COMPARISON_SCHEMA
@@ -68,6 +69,7 @@ describe('viSemanticComparisonMcp', () => {
       'compare_vi_revisions',
       'summarize_vi_history',
       'index_repository_vis',
+      'build_vi_pr_review',
       'get_vi_semantic_schema',
       'validate_vi_semantic_document'
     ]);
@@ -293,6 +295,19 @@ describe('viSemanticComparisonMcp', () => {
         id: 32,
         method: 'tools/call',
         params: { name: 'index_repository_vis', arguments: {} }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('requires the async MCP server');
+  });
+
+  it('directs a synchronous build_vi_pr_review call to the async entrypoint', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 33,
+        method: 'tools/call',
+        params: { name: 'build_vi_pr_review', arguments: {} }
       })
     ) as { content: Array<{ text: string }>; isError: boolean };
     expect(result.isError).toBe(true);
@@ -573,6 +588,91 @@ describe('viSemanticComparisonMcp', () => {
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('repositoryRoot is required');
       expect(buildViRepositoryIndex).not.toHaveBeenCalled();
+    });
+
+    const prReview = {
+      schema: 'vi-history-suite/vi-semantic-pr-review@v1',
+      repositoryRoot: '/repo',
+      baseHash: 'aaaa',
+      selectedHash: 'bbbb',
+      changedViCount: 0,
+      reviewedCount: 0,
+      entries: [],
+      totals: { withDifferences: 0, withoutDifferences: 0, blockedOrFailed: 0 },
+      narrative: 'No changed VIs were found between the two revisions.'
+    } as ViSemanticPrReview;
+
+    const prReviewCall = (args: unknown, id = 60) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'tools/call' as const,
+      params: { name: 'build_vi_pr_review', arguments: args }
+    });
+
+    it('returns the PR-review JSON for build_vi_pr_review', async () => {
+      const buildViSemanticPrReview = vi.fn(async (): Promise<ViSemanticPrReview> => prReview);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          prReviewCall({
+            repositoryRoot: '/repo',
+            baseHash: 'aaaa',
+            selectedHash: 'bbbb',
+            maxVis: 10
+          }),
+          { buildViSemanticPrReview }
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(buildViSemanticPrReview).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repositoryRoot: '/repo',
+          baseHash: 'aaaa',
+          selectedHash: 'bbbb',
+          maxVis: 10
+        })
+      );
+      const parsed = JSON.parse(response.content[0].text) as { schema: string };
+      expect(parsed.schema).toBe('vi-history-suite/vi-semantic-pr-review@v1');
+    });
+
+    it('returns a sticky-ready markdown body for build_vi_pr_review when requested', async () => {
+      const buildViSemanticPrReview = vi.fn(async (): Promise<ViSemanticPrReview> => prReview);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          prReviewCall({
+            repositoryRoot: '/repo',
+            baseHash: 'aaaa',
+            selectedHash: 'bbbb',
+            format: 'markdown'
+          }),
+          { buildViSemanticPrReview }
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(response.content[0].text).toContain('<!-- vi-history-suite:vi-semantic-pr-review -->');
+      expect(response.content[0].text).toContain('## VI semantic review');
+    });
+
+    it('reports a wired-up error when the PR-review orchestrator is not injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          prReviewCall({ repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' })
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
+    });
+
+    it('rejects invalid PR-review arguments before invoking the orchestrator', async () => {
+      const buildViSemanticPrReview = vi.fn(async (): Promise<ViSemanticPrReview> => prReview);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(prReviewCall({ repositoryRoot: '/repo' }), {
+          buildViSemanticPrReview
+        })
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('baseHash is required');
+      expect(buildViSemanticPrReview).not.toHaveBeenCalled();
     });
   });
 });

@@ -5,10 +5,15 @@ import {
   type CompareViRevisionsRuntimeRequest
 } from './compareViRevisions';
 import type { ViSemanticComparisonModel } from './viSemanticModel';
-import {
-  escapeCell,
-  renderViSemanticComparisonMarkdown,
-  surfaceList
+
+// The PR-review Markdown renderer and its sticky-comment marker live in the
+// dependency-free renderer leaf so the MCP handler can render a review without
+// importing this orchestration module (which pulls in git + the comparison
+// engine). Re-exported here so the review's builder and renderer remain a
+// single import for CLI and test callers.
+export {
+  renderViSemanticPrReviewMarkdown,
+  VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER
 } from './viSemanticReviewMarkdown';
 
 /**
@@ -192,40 +197,4 @@ export async function buildViSemanticPrReview(
     totals: { withDifferences, withoutDifferences, blockedOrFailed }
   };
   return { ...review, narrative: renderPrReviewNarrative(review) };
-}
-
-/**
- * Renders a PR review as a review-ready Markdown comment: a summary line, a
- * per-VI result table, and detail blocks for the VIs that changed (reusing the
- * shared single-comparison renderer).
- */
-export function renderViSemanticPrReviewMarkdown(review: ViSemanticPrReview): string {
-  const lines: string[] = ['## VI semantic review', '', review.narrative, ''];
-
-  if (review.entries.length === 0) {
-    return `${lines.join('\n').trimEnd()}\n`;
-  }
-
-  lines.push('| VI | Result | Changed surfaces |', '| --- | --- | --- |');
-  for (const entry of review.entries) {
-    if (entry.status === 'completed') {
-      const result = entry.hasDifferences ? 'Changed' : 'No differences';
-      const surfaces =
-        entry.hasDifferences && entry.model.changedSurfaces.length > 0
-          ? surfaceList(entry.model.changedSurfaces)
-          : '—';
-      lines.push(`| ${escapeCell(entry.relativePath)} | ${result} | ${escapeCell(surfaces)} |`);
-    } else {
-      lines.push(`| ${escapeCell(entry.relativePath)} | ${entry.status} | — |`);
-    }
-  }
-  lines.push('');
-
-  for (const entry of review.entries) {
-    if (entry.status === 'completed' && entry.hasDifferences) {
-      lines.push(`#### ${escapeCell(entry.relativePath)}`, '', renderViSemanticComparisonMarkdown(entry.model), '');
-    }
-  }
-
-  return `${lines.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd()}\n`;
 }

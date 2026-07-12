@@ -116,12 +116,12 @@ Ask agent mode to work with your VIs in plain language, for example:
 - "Compare the last two revisions of `Main.vi` and tell me what changed."
 - "Index the LabVIEW VIs in this repository, ranked by recent activity."
 
-The server provides seven tools in total: comparison summaries and the full
+The server provides eight tools in total: comparison summaries and the full
 semantic model, on-demand comparison and history across Git revisions, a
-repository VI index, and the published VI-diff schemas plus a document
-validator. The two tools that compare revisions need a comparison runtime (the
-same host LabVIEW or Docker image you set up above) and may take a few minutes;
-the rest use Git only.
+repository VI index, a pull-request VI review, and the published VI-diff schemas
+plus a document validator. The three tools that run comparisons need a
+comparison runtime (the same host LabVIEW or Docker image you set up above) and
+may take a few minutes; the rest use Git only.
 
 For the full tool catalog, inputs, and the open VI-diff schemas, see
 [docs/mcp-server.md](./docs/mcp-server.md). Agent mode requires VS Code 1.101 or
