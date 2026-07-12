@@ -157,6 +157,7 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow with retained evidence naming validation surfaces and artifacts; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
 .github/workflows/linux-labview-maintainer.yml,release-ci,Yes,Linux LabVIEW maintainer workflow; mapped through RTM.
+.github/workflows/vi-semantic-pr-review.yml,release-ci,Yes,On-demand VI semantic PR review workflow; mapped through RTM (VHS-REQ-661).
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
 .github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
 .github/ISSUE_TEMPLATE/bug_report.yml,asset-doc,Yes,Bug report template; mapped through RTM.
@@ -289,10 +290,10 @@ src/semantic/viSemanticHistory.ts,supporting,No,Dependency-injected orchestrator
 src/semantic/viSemanticReviewMarkdown.ts,supporting,No,Pure renderers that turn the semantic comparison history and PR-review models into review-ready Markdown blocks for PR comments and CI summaries; back the markdown output format of the MCP tools and carry the sticky PR-review comment marker.
 src/semantic/viRepositoryIndex.ts,supporting,No,Dependency-injected orchestrator that surveys a repository's tracked VIs via Git (revision count and latest change per VI activity-ranked) to build a versioned vi-history-suite/vi-repository-index@v1 model; powers the index_repository_vis MCP tool with no LabVIEW runtime.
 src/semantic/viSemanticSchemas.ts,supporting,No,Open VI-diff standard - Draft-07 JSON Schemas for the comparison history and repository-index models plus a dependency-free subset validator; backs the get_vi_semantic_schema and validate_vi_semantic_document MCP tools.
-src/semantic/viSemanticPrReview.ts,supporting,No,VI semantic PR review aggregator comparing the VIs changed between two revisions into a versioned vi-semantic-pr-review@v1 model (Markdown renderer in viSemanticReviewMarkdown); headless foundation for CI LabVIEW PR review and the build_vi_pr_review MCP tool not yet requirement-mapped.
-src/semantic/stickyPrComment.ts,supporting,No,Pure dependency-free planner deciding whether to create or update a sticky pull-request comment identified by a hidden marker; backs the sticky upsert used by the PR-review CLI and AI reviewers.
+src/semantic/viSemanticPrReview.ts,mapped,Yes,VI semantic PR review aggregator comparing the VIs changed between two revisions into a versioned vi-semantic-pr-review@v1 model (Markdown renderer in viSemanticReviewMarkdown); headless foundation for CI LabVIEW PR review and the build_vi_pr_review MCP tool; mapped through RTM (VHS-REQ-661).
+src/semantic/stickyPrComment.ts,mapped,Yes,Pure dependency-free planner deciding whether to create or update a sticky pull-request comment identified by a hidden marker; backs the sticky upsert used by the PR-review CLI and AI reviewers.
 src/cli/runViSemanticMcpServer.ts,dev-only,No,Stdio entrypoint wiring newline-delimited JSON-RPC to the VI semantic MCP handler and injecting the comparison orchestrator; thin host binding excluded from coverage.
-src/cli/runViSemanticPrReview.ts,dev-only,No,Headless CLI entrypoint for the VI semantic PR review wiring the real comparison and writing Markdown plus JSON artifacts; thin host binding excluded from coverage.
+src/cli/runViSemanticPrReview.ts,mapped,Yes,Headless CLI entrypoint for the VI semantic PR review wiring the real comparison and writing Markdown plus JSON artifacts; thin host binding excluded from coverage.
 src/mcp/viSemanticMcpServerProvider.ts,supporting,No,VS Code MCP server definition provider registration exposing the VI semantic comparison stdio MCP server to the editor so Copilot agent mode can discover and launch its tools; supporting infrastructure not yet requirement-mapped.
 src/semantic/viSemanticNarrativeCache.ts,mapped,Yes,Source Control semantic change narrative cache (pure key plus file-backed store) and report-to-narrative recorder mapped to VHS-REQ-660.
 src/ui/viSemanticDecorationProvider.ts,mapped,Yes,Source Control semantic change file decoration provider mapped to VHS-REQ-660.
@@ -308,3 +309,4 @@ tests/unit/viRepositoryIndex.test.ts,supporting,No,Repository VI index orchestra
 tests/unit/viSemanticSchemas.test.ts,supporting,No,VI semantic JSON Schema standard unit tests covering the subset validator constructs schema-id drift and real-model conformance; supporting infrastructure not yet requirement-mapped.
 tests/unit/viSemanticPrReview.test.ts,supporting,No,VI semantic PR review aggregator and renderer unit tests; supporting infrastructure not yet requirement-mapped.
 tests/unit/stickyPrComment.test.ts,supporting,No,Sticky pull-request comment planner unit tests covering create-vs-update marker matching idempotent marker prepend and earliest-match selection; supporting infrastructure not yet requirement-mapped.
+tests/unit/viSemanticPrReviewWorkflow.test.ts,mapped,Yes,On-demand VI semantic PR review workflow contract test mapped to VHS-REQ-661.
