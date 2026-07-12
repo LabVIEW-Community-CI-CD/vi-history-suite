@@ -1161,7 +1161,7 @@ This changelog records user-facing release history for `vi-history-suite`.
   auto-detection returns no host installations and falls through to the
   Docker CLI check; Marketplace-published builds for macOS still require
   Docker Desktop until ≥2025 macOS builds of LabVIEW ship and the
-  `/Applications` scan is added (tracked as VHS-REQ-618).
+  `/Applications` scan is added (a deferred extension of VHS-REQ-616).
 
 ### Changed
 
