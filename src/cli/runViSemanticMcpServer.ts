@@ -1,12 +1,42 @@
 #!/usr/bin/env node
+import { promises as fsp } from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
 import {
   handleViSemanticMcpMessageAsync,
   JsonRpcRequest
 } from '../semantic/viSemanticComparisonMcp';
-import { compareViRevisions } from '../semantic/compareViRevisions';
+import { compareViRevisions, type CompareViRevisionsInput } from '../semantic/compareViRevisions';
+import { createFileViComparisonModelCache } from '../semantic/viComparisonModelCache';
 import { buildViSemanticHistory } from '../semantic/viSemanticHistory';
 import { buildViRepositoryIndex } from '../semantic/viRepositoryIndex';
 import { buildViSemanticPrReview } from '../semantic/viSemanticPrReview';
+
+/**
+ * VHS-REQ-662.8: a file-backed comparison-model cache shared across tool calls
+ * in this long-lived server process, so a repeated `compare_vi_revisions` query
+ * for an unchanged revision pair reuses the produced model and skips the
+ * (multi-minute) container comparison. Best-effort: a cache miss or write
+ * failure transparently falls back to a full comparison.
+ */
+const comparisonModelCache = createFileViComparisonModelCache(
+  {
+    cacheDirectory: path.join(os.tmpdir(), 'vihs-vi-comparison-cache'),
+    joinPath: path.join
+  },
+  {
+    ensureDirectory: async (directory) => {
+      await fsp.mkdir(directory, { recursive: true });
+    },
+    readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
+    writeFile: (filePath, data) => fsp.writeFile(filePath, data)
+  }
+);
+
+function compareViRevisionsWithCache(input: CompareViRevisionsInput) {
+  return compareViRevisions(input, { comparisonModelCache });
+}
 
 /**
  * Stdio transport for the VI semantic MCP server: newline-delimited JSON-RPC
@@ -40,7 +70,7 @@ async function dispatchLine(line: string): Promise<void> {
   // The orchestrators are injected here (not imported by the pure handler) so
   // the invoking tools can run real comparisons from this entrypoint.
   const response = await handleViSemanticMcpMessageAsync(message, {
-    compareViRevisions,
+    compareViRevisions: compareViRevisionsWithCache,
     buildViSemanticHistory,
     buildViRepositoryIndex,
     buildViSemanticPrReview
