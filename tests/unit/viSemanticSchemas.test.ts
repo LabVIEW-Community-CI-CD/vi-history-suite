@@ -1,3 +1,6 @@
+// Requirement coverage: VHS-REQ-662 (VI semantic comparison model and agent MCP
+// surface). Verifies the open Draft-07 JSON-Schema standard and the offline
+// subset validator (VHS-REQ-662.2).
 import { describe, expect, it } from 'vitest';
 
 import { VI_REPOSITORY_INDEX_SCHEMA } from '../../src/semantic/viRepositoryIndex';

@@ -1,3 +1,6 @@
+// Requirement coverage: VHS-REQ-662 (VI semantic comparison model and agent MCP
+// surface). Verifies the compare_vi_revisions orchestrator outcomes and
+// input-boundary validation (VHS-REQ-662.5).
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ParsedNiComparisonReport } from '../../src/dashboard/niComparisonReportParser';
