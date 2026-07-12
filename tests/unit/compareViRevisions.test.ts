@@ -16,6 +16,11 @@ import {
   CompareViRevisionsDeps,
   CompareViRevisionsInput
 } from '../../src/semantic/compareViRevisions';
+import type { ViComparisonModelCache } from '../../src/semantic/viComparisonModelCache';
+import {
+  VI_SEMANTIC_COMPARISON_SCHEMA,
+  type ViSemanticComparisonModel
+} from '../../src/semantic/viSemanticModel';
 
 function selection(overrides: Partial<ComparisonRuntimeSelection> = {}): ComparisonRuntimeSelection {
   return {
@@ -116,6 +121,25 @@ function input(overrides: Partial<CompareViRevisionsInput> = {}): CompareViRevis
     selectedHash: 'bbbbbbb',
     ...overrides
   };
+}
+
+function cacheDouble(stored?: ViSemanticComparisonModel): {
+  get: ReturnType<typeof vi.fn>;
+  set: ReturnType<typeof vi.fn>;
+  cache: ViComparisonModelCache;
+} {
+  const get = vi.fn(async (_key: string): Promise<ViSemanticComparisonModel | undefined> => stored);
+  const set = vi.fn(async (_key: string, _model: ViSemanticComparisonModel): Promise<void> => {});
+  return { get, set, cache: { get, set } };
+}
+
+function cachedModelFixture(narrative: string): ViSemanticComparisonModel {
+  return {
+    schema: VI_SEMANTIC_COMPARISON_SCHEMA,
+    hasDifferences: true,
+    narrative,
+    changedSurfaces: ['block-diagram']
+  } as unknown as ViSemanticComparisonModel;
 }
 
 describe('compareViRevisions', () => {
@@ -295,5 +319,59 @@ describe('compareViRevisions', () => {
     await expect(
       compareViRevisions(input({ selectedHash: 'bad hash;rm -rf' }), deps)
     ).rejects.toThrow('valid revision identifier');
+  });
+
+  it('stores the produced model in an injected cache after a fresh success (VHS-REQ-662.8)', async () => {
+    const { get, set, cache } = cacheDouble();
+    const resolveContentSignature = vi.fn(async (_root: string, _rel: string, rev: string) =>
+      rev === 'aaaaaaa' ? 'basesig' : 'selsig'
+    );
+    const harness = makeHarness({ comparisonModelCache: cache, resolveContentSignature });
+    const result = await compareViRevisions(input(), harness.deps);
+
+    expect(result.status).toBe('completed');
+    expect(resolveContentSignature).toHaveBeenCalledTimes(2);
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(harness.executeReport).toHaveBeenCalledTimes(1);
+    expect(set).toHaveBeenCalledTimes(1);
+    const [, storedModel] = set.mock.calls[0] as [string, ViSemanticComparisonModel];
+    expect(storedModel.narrative).toContain('The front panel differs.');
+  });
+
+  it('reuses a cached model and skips the container comparison on a hit (VHS-REQ-662.8)', async () => {
+    const { get, set, cache } = cacheDouble(cachedModelFixture('cached narrative'));
+    const resolveContentSignature = vi.fn(async () => 'sig');
+    const harness = makeHarness({ comparisonModelCache: cache, resolveContentSignature });
+    const result = await compareViRevisions(input(), harness.deps);
+
+    expect(result.status).toBe('completed');
+    if (result.status !== 'completed') {
+      throw new Error('expected a completed result');
+    }
+    expect(result.model.narrative).toBe('cached narrative');
+    // The caller's revisions are rehydrated onto the cached model.
+    expect(result.model.revisions).toEqual({ baseHash: 'aaaaaaa', selectedHash: 'bbbbbbb' });
+    expect(result.runtime).toEqual({ provider: 'cache', state: 'cached', reportFilePath: '' });
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(set).not.toHaveBeenCalled();
+    // The multi-minute pipeline is skipped entirely on a hit.
+    expect(harness.locateRuntime).not.toHaveBeenCalled();
+    expect(harness.preflightFn).not.toHaveBeenCalled();
+    expect(harness.executeReport).not.toHaveBeenCalled();
+  });
+
+  it('bypasses the cache when a VI content signature cannot be resolved', async () => {
+    const { get, set, cache } = cacheDouble();
+    const resolveContentSignature = vi.fn(async (_root: string, _rel: string, rev: string) =>
+      rev === 'aaaaaaa' ? undefined : 'selsig'
+    );
+    const harness = makeHarness({ comparisonModelCache: cache, resolveContentSignature });
+    const result = await compareViRevisions(input(), harness.deps);
+
+    expect(result.status).toBe('completed');
+    expect(resolveContentSignature).toHaveBeenCalledTimes(2);
+    expect(get).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+    expect(harness.executeReport).toHaveBeenCalledTimes(1);
   });
 });

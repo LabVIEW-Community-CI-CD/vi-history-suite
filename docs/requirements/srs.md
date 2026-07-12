@@ -4586,6 +4586,16 @@ Missing numeric IDs are intentional.
     built by `buildViSemanticMcpServerDefinitionFields` and the script path
     resolved by `resolveViSemanticMcpServerScriptPath`) with tracked
     disposables so Copilot agent mode can discover and launch the tools.
+  - VHS-REQ-662.8: `compareViRevisions` accepts an optional content-addressed
+    comparison-model cache: when supplied it resolves each side's revision
+    commit id (`git rev-parse <revision>^{commit}` by default) so the full tree
+    and dependency context is captured, and on a cache hit it returns the
+    stored model (with the caller's revision identifiers rehydrated and `cache`
+    runtime provenance) and skips the container comparison, while a fresh
+    success is written back. The cache is keyed by the repository-relative
+    path, both revision commit ids, and the report type; a hit reuses the model
+    and narrative but not the on-disk report (like a `--from-file` review). With
+    no cache injected the orchestrator behaves exactly as before.
 - Agent Work Scope:
   - Keep the model, schemas, MCP handler, and orchestrators pure and
     dependency-injected so they stay unit-testable without VS Code, a network,
@@ -4598,6 +4608,7 @@ Missing numeric IDs are intentional.
   - `src/semantic/viSemanticSchemas.ts`
   - `src/semantic/viSemanticComparisonMcp.ts`
   - `src/semantic/compareViRevisions.ts`
+  - `src/semantic/viComparisonModelCache.ts`
   - `src/semantic/viSemanticHistory.ts`
   - `src/semantic/viRepositoryIndex.ts`
   - `src/mcp/viSemanticMcpServerProvider.ts`
@@ -4606,6 +4617,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viSemanticSchemas.test.ts`
   - `tests/unit/viSemanticComparisonMcp.test.ts`
   - `tests/unit/compareViRevisions.test.ts`
+  - `tests/unit/viComparisonModelCache.test.ts`
   - `tests/unit/viSemanticHistory.test.ts`
   - `tests/unit/viRepositoryIndex.test.ts`
   - `tests/unit/viSemanticMcpServerProvider.test.ts`
