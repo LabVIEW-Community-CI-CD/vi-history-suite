@@ -4515,9 +4515,15 @@ Missing numeric IDs are intentional.
   - `src/cli/runViSemanticPrReview.ts`
   - `src/semantic/viSemanticPrReview.ts`
   - `src/semantic/stickyPrComment.ts`
+  - `src/semantic/viSemanticReviewMarkdown.ts`
+  - `src/semantic/viComparisonReportImages.ts`
+  - `src/semantic/viReviewCommitStatus.ts`
 - Verification References:
   - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
   - `tests/unit/viSemanticReviewOnPrTemplate.test.ts`
+  - `tests/unit/viSemanticReviewMarkdown.test.ts`
+  - `tests/unit/viComparisonReportImages.test.ts`
+  - `tests/unit/viReviewCommitStatus.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:vi-semantic-pr-review-workflow-dispatch`
 - Change Guidance:
@@ -4525,3 +4531,89 @@ Missing numeric IDs are intentional.
     untrusted target-repo VIs and must stay a deliberate maintainer dispatch.
     Keep the cross-repo token in a secret, never in the workflow's own
     `GITHUB_TOKEN`, and never reference `vagrant`.
+
+### VHS-REQ-662: VI Semantic Comparison Model And Agent MCP Surface
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The suite shall project a produced LabVIEW VI comparison onto a
+  versioned dependency-free semantic model with a plain-language what-changed
+  narrative, publish that model together with the VI history and
+  repository-index models as an open JSON-Schema standard with an offline
+  subset validator, and expose the model and its Git-driven orchestrators to
+  agents through a dependency-free JSON-RPC MCP server that VS Code registers
+  so Copilot agent mode can discover and launch the tools. The model, schemas,
+  and MCP handler stay free of VS Code and network dependencies so they are
+  unit-testable in isolation and reused by the Source Control hover
+  (VHS-REQ-660) and the on-demand PR-review workflow (VHS-REQ-661).
+- Acceptance Criteria:
+  - VHS-REQ-662.1: `buildViSemanticComparisonModel` and the HTML entrypoint
+    `buildViSemanticComparisonModelFromHtml` project a parsed NI comparison
+    report onto the versioned `vi-history-suite/vi-semantic-comparison@v1`
+    model, classifying each changed surface through `deriveViChangeSurface`,
+    and `renderViSemanticNarrative` renders the single shared plain-language
+    what-changed narrative reused by the hover and PR/CI comment surfaces.
+  - VHS-REQ-662.2: `viSemanticSchemas` publishes the Draft-07 JSON Schemas for
+    the comparison, history, and repository-index models under stable `@v1`
+    schema ids, and `validateViSemanticDocument` with
+    `validateAgainstJsonSchema` provide a dependency-free subset validator that
+    fails closed on schema-id drift and on non-conforming documents.
+  - VHS-REQ-662.3: `handleViSemanticMcpMessage` implements a dependency-free
+    JSON-RPC 2.0 handler that answers `initialize` (advertising the tools
+    capability and `VI_SEMANTIC_MCP_PROTOCOL_VERSION`), `tools/list`, and
+    `tools/call`, and returns a structured JSON-RPC error for an unknown method
+    or tool instead of throwing.
+  - VHS-REQ-662.4: `VI_SEMANTIC_MCP_TOOLS` exposes the agent tool set
+    (`summarize_vi_comparison`, `get_vi_semantic_comparison`,
+    `compare_vi_revisions`, `summarize_vi_history`, `index_repository_vis`,
+    `build_vi_pr_review`, `get_vi_semantic_schema`, and
+    `validate_vi_semantic_document`), each with a declared input schema.
+  - VHS-REQ-662.5: `compareViRevisions` is a dependency-injected orchestrator
+    that runs a real LabVIEW comparison for two VI revisions through the
+    vscode-free reporting primitives and projects the report onto the model,
+    reporting a completed, blocked, or failed outcome and validating its inputs
+    at the boundary; it powers the `compare_vi_revisions` tool.
+  - VHS-REQ-662.6: `buildViSemanticHistory` walks a VI Git revision history and
+    compares adjacent pairs to build the depth-bounded versioned
+    `vi-history-suite/vi-semantic-history@v1` timeline, and
+    `buildViRepositoryIndex` surveys the repository's tracked VIs through Git to
+    build the activity-ranked `vi-history-suite/vi-repository-index@v1` model
+    with no LabVIEW runtime; they power the `summarize_vi_history` and
+    `index_repository_vis` tools.
+  - VHS-REQ-662.7: `registerViSemanticMcpServerProvider` registers the stdio
+    MCP server with VS Code through `vscode.McpStdioServerDefinition` (fields
+    built by `buildViSemanticMcpServerDefinitionFields` and the script path
+    resolved by `resolveViSemanticMcpServerScriptPath`) with tracked
+    disposables so Copilot agent mode can discover and launch the tools.
+- Agent Work Scope:
+  - Keep the model, schemas, MCP handler, and orchestrators pure and
+    dependency-injected so they stay unit-testable without VS Code, a network,
+    or a LabVIEW runtime on the read-only paths. Route real comparisons only
+    through the injected reporting primitives. Do not fork the narrative text
+    or the versioned schema ids; the hover (VHS-REQ-660) and the PR review
+    (VHS-REQ-661) reuse them.
+- Implementation References:
+  - `src/semantic/viSemanticModel.ts`
+  - `src/semantic/viSemanticSchemas.ts`
+  - `src/semantic/viSemanticComparisonMcp.ts`
+  - `src/semantic/compareViRevisions.ts`
+  - `src/semantic/viSemanticHistory.ts`
+  - `src/semantic/viRepositoryIndex.ts`
+  - `src/mcp/viSemanticMcpServerProvider.ts`
+- Verification References:
+  - `tests/unit/viSemanticModel.test.ts`
+  - `tests/unit/viSemanticSchemas.test.ts`
+  - `tests/unit/viSemanticComparisonMcp.test.ts`
+  - `tests/unit/compareViRevisions.test.ts`
+  - `tests/unit/viSemanticHistory.test.ts`
+  - `tests/unit/viRepositoryIndex.test.ts`
+  - `tests/unit/viSemanticMcpServerProvider.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:vi-semantic-comparison-mcp-surface`
+- Change Guidance:
+  - Keep the MCP handler and model dependency-free and offline; never add VS
+    Code or network imports to the read-only tools. When adding a tool, extend
+    `VI_SEMANTIC_MCP_TOOLS` and the handler together, and keep the schema ids
+    versioned so external consumers of the open VI-diff standard are not
+    broken.

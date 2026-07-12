@@ -1,5 +1,8 @@
 /**
  * Unit tests for the VI semantic MCP server provider registration.
+ *
+ * Requirement coverage: VHS-REQ-662 (agent MCP surface). Verifies VS Code MCP
+ * server registration for Copilot agent-mode discovery (VHS-REQ-662.7).
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest';
