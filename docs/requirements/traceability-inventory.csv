@@ -299,11 +299,13 @@ src/semantic/stickyPrComment.ts,mapped,Yes,Pure dependency-free planner deciding
 src/cli/runViSemanticMcpServer.ts,dev-only,No,Stdio entrypoint wiring newline-delimited JSON-RPC to the VI semantic MCP handler and injecting the comparison orchestrator; thin host binding excluded from coverage.
 src/cli/runViSemanticPrReview.ts,mapped,Yes,Headless CLI entrypoint for the VI semantic PR review wiring the real comparison and writing Markdown plus JSON artifacts; thin host binding excluded from coverage.
 src/mcp/viSemanticMcpServerProvider.ts,mapped,Yes,VS Code MCP server definition provider registration exposing the VI semantic comparison stdio MCP server to the editor so Copilot agent mode can discover and launch its tools; mapped through RTM (VHS-REQ-662).
+src/mcp/viSemanticMcpServerDeps.ts,mapped,Yes,VI semantic MCP server dependency-wiring builder assembling the injected orchestrator set and binding compare_vi_revisions to the shared comparison-model cache for the stdio entrypoint; mapped through RTM (VHS-REQ-662).
 src/semantic/viSemanticNarrativeCache.ts,mapped,Yes,Source Control semantic change narrative cache (pure key plus file-backed store) and report-to-narrative recorder mapped to VHS-REQ-660.
 src/ui/viSemanticDecorationProvider.ts,mapped,Yes,Source Control semantic change file decoration provider mapped to VHS-REQ-660.
 tests/unit/viSemanticModel.test.ts,mapped,Yes,VI semantic comparison model and narrative unit tests mapped to VHS-REQ-662.
 tests/unit/viSemanticComparisonMcp.test.ts,mapped,Yes,VI semantic MCP handler protocol unit tests mapped to VHS-REQ-662.
 tests/unit/viSemanticMcpServerProvider.test.ts,mapped,Yes,VI semantic MCP server provider registration unit tests mapped to VHS-REQ-662.
+tests/unit/viSemanticMcpServerDeps.test.ts,mapped,Yes,VI semantic MCP server dependency-wiring unit tests covering the four injected tools and the compare_vi_revisions cache binding mapped to VHS-REQ-662.
 tests/unit/viSemanticNarrativeCache.test.ts,mapped,Yes,Source Control semantic narrative cache and recorder unit tests mapped to VHS-REQ-660.
 tests/unit/viSemanticDecorationProvider.test.ts,mapped,Yes,Source Control semantic change decoration provider unit tests mapped to VHS-REQ-660.
 tests/unit/compareViRevisions.test.ts,mapped,Yes,compare_vi_revisions orchestrator unit tests covering completed and blocked and failed outcomes plus input-boundary validation mapped to VHS-REQ-662.
