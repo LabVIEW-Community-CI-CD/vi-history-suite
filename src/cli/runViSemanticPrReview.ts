@@ -6,7 +6,8 @@ import {
   buildViSemanticPrReview,
   renderViSemanticPrReviewMarkdown,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
-  type ViSemanticPrReviewInput
+  VI_SEMANTIC_PR_REVIEW_SCHEMA,
+  type ViSemanticPrReview
 } from '../semantic/viSemanticPrReview';
 import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyPrComment';
 
@@ -28,14 +29,20 @@ import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyP
  *     [--out <dir>] [--runtime-provider docker] [--container-image-version <v>] \
  *     [--post-comment --pr <number> --repo <owner/repo>] [--fail-on-incomplete]
  *
+ * Alternatively, post a previously produced review artifact without recomputing
+ * the (expensive, container-backed) comparison:
+ *   node out/cli/runViSemanticPrReview.js \
+ *     --from-file <review.json> --post-comment --pr <number> --repo <owner/repo>
+ *
  * Posting requires a GitHub token in GH_TOKEN or GITHUB_TOKEN with permission to
  * comment on the target pull request.
  */
 
 export interface ParsedArgs {
-  repositoryRoot: string;
-  base: string;
-  head: string;
+  repositoryRoot?: string;
+  base?: string;
+  head?: string;
+  fromFile?: string;
   outDir?: string;
   provider?: 'host' | 'docker';
   containerImageVersion?: string;
@@ -72,8 +79,18 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const repositoryRoot = values.get('repository-root');
   const base = values.get('base');
   const head = values.get('head');
-  if (!repositoryRoot || !base || !head) {
-    throw new Error('--repository-root, --base, and --head are required');
+  const fromFile = values.has('from-file') ? values.get('from-file') : undefined;
+  if (fromFile === 'true') {
+    throw new Error('--from-file requires a path to a review JSON file');
+  }
+  if (fromFile !== undefined) {
+    // Post-from-artifact mode is mutually exclusive with the compute inputs so a
+    // caller cannot accidentally both recompute and post a stale file.
+    if (repositoryRoot !== undefined || base !== undefined || head !== undefined) {
+      throw new Error('--from-file cannot be combined with --repository-root, --base, or --head');
+    }
+  } else if (!repositoryRoot || !base || !head) {
+    throw new Error('--repository-root, --base, and --head are required (or use --from-file)');
   }
 
   const provider = values.get('runtime-provider');
@@ -103,6 +120,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
     repositoryRoot,
     base,
     head,
+    fromFile,
     outDir: values.get('out'),
     provider,
     containerImageVersion: values.get('container-image-version'),
@@ -212,19 +230,50 @@ async function postStickyReviewComment(
   return 'create';
 }
 
+/**
+ * Loads a previously produced `vi-history-suite/vi-semantic-pr-review@v1`
+ * artifact so the review can be posted without recomputing the (expensive,
+ * container-backed) comparison. Fails closed before any GitHub write if the
+ * file is missing, not valid JSON, or is not a v1 review, so a malformed file
+ * can never be posted as an empty or bogus review comment.
+ */
+export async function loadReviewFromFile(filePath: string): Promise<ViSemanticPrReview> {
+  let raw: string;
+  try {
+    raw = await fs.readFile(filePath, 'utf8');
+  } catch {
+    throw new Error(`--from-file could not read the review file: ${filePath}`);
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(`--from-file is not valid JSON: ${filePath}`);
+  }
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    (parsed as { schema?: unknown }).schema !== VI_SEMANTIC_PR_REVIEW_SCHEMA ||
+    !Array.isArray((parsed as { entries?: unknown }).entries)
+  ) {
+    throw new Error(`--from-file is not a ${VI_SEMANTIC_PR_REVIEW_SCHEMA} review: ${filePath}`);
+  }
+  return parsed as ViSemanticPrReview;
+}
+
 export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
 
-  const input: ViSemanticPrReviewInput = {
-    repositoryRoot: args.repositoryRoot,
-    baseHash: args.base,
-    selectedHash: args.head,
-    runtime: args.provider
-      ? { provider: args.provider, containerImageVersion: args.containerImageVersion }
-      : undefined
-  };
-
-  const review = await buildViSemanticPrReview(input);
+  const review = args.fromFile !== undefined
+    ? await loadReviewFromFile(args.fromFile)
+    : await buildViSemanticPrReview({
+        repositoryRoot: args.repositoryRoot as string,
+        baseHash: args.base as string,
+        selectedHash: args.head as string,
+        runtime: args.provider
+          ? { provider: args.provider, containerImageVersion: args.containerImageVersion }
+          : undefined
+      });
   const markdown = renderViSemanticPrReviewMarkdown(review);
   const summary = `reviewed ${review.reviewedCount} of ${review.changedViCount} changed VI(s)`;
 

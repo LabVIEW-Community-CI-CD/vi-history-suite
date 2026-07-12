@@ -90,6 +90,28 @@ block, so a reviewer sees an actionable signal in the comment itself. Add
 compared; the sticky comment and artifacts are still produced (the default
 stays exit 0 so a partial review still posts).
 
+You can also split compute from posting so the sticky comment is posted from a
+previously produced artifact without re-running the (expensive, container-backed)
+comparison. Compute on the runner with `--out`, then post the `.json` from
+anywhere with only a `GH_TOKEN`:
+
+```bash
+# 1. Compute (on the LabVIEW runner) — writes vi-semantic-pr-review.json
+node out/cli/runViSemanticPrReview.js \
+  --repository-root . --base <mergeBase> --head <headSha> \
+  --runtime-provider docker --out review-out
+
+# 2. Post (anywhere) — no LabVIEW/docker needed
+node out/cli/runViSemanticPrReview.js \
+  --from-file review-out/vi-semantic-pr-review.json \
+  --post-comment --pr <number> --repo <owner/repo>
+```
+
+`--from-file` is mutually exclusive with `--repository-root`/`--base`/`--head`,
+and a file that is missing, not JSON, or not a
+`vi-history-suite/vi-semantic-pr-review@v1` review is rejected before any GitHub
+write.
+
 ## The open VI-diff standard
 
 The three models are published as versioned Draft-07 JSON Schemas so that other
