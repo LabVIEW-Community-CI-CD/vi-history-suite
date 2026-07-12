@@ -207,6 +207,7 @@ jobs:
             --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA" \
             --runtime-provider docker --container-image-version "${CONTAINER_IMAGE_VERSION}-linux" \
             --out review-out \
+            --announce-start \
             --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY"
 
       - name: Upload Review Artifact

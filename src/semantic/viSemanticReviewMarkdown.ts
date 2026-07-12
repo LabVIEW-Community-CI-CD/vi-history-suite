@@ -154,3 +154,21 @@ export function renderViSemanticPrReviewMarkdown(review: ViSemanticPrReview): st
 
   return `${lines.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd()}\n`;
 }
+
+/**
+ * Renders the "review in progress" sticky comment body posted before the
+ * (multi-minute, container-backed) comparison runs, so a reviewer sees that a
+ * review was triggered and is computing instead of silence. It carries the same
+ * {@link VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER}, so the final review upserts over
+ * it in place (one comment); if the run never completes, the pending state
+ * remains visible as an actionable signal rather than nothing.
+ */
+export function renderViSemanticPrReviewPendingMarkdown(headSha?: string): string {
+  const scope = headSha && headSha.trim().length > 0 ? ` for \`${escapeCell(headSha.trim())}\`` : '';
+  return (
+    `${VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER}\n` +
+    '## VI semantic review\n' +
+    '\n' +
+    `🔄 VI semantic review in progress${scope}… This comment will be updated with the result.\n`
+  );
+}

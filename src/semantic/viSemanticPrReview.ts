@@ -13,6 +13,7 @@ import type { ViSemanticComparisonModel } from './viSemanticModel';
 // single import for CLI and test callers.
 export {
   renderViSemanticPrReviewMarkdown,
+  renderViSemanticPrReviewPendingMarkdown,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER
 } from './viSemanticReviewMarkdown';
 

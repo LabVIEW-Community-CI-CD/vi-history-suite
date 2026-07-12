@@ -4471,6 +4471,12 @@ Missing numeric IDs are intentional.
     `author_association`, which reports `CONTRIBUTOR` for fork PRs even for org
     members), grants read-only permissions, and uses a least-privilege
     `VI_REVIEW_DISPATCH_TOKEN` (never the target-write token).
+  - VHS-REQ-661.9: The reusable workflow announces a "review in progress" sticky
+    comment (via the CLI `--announce-start` flag) before the container-backed
+    comparison, so a reviewer sees the review was triggered during the
+    multi-minute run; the final review upserts over it by the shared marker
+    (one comment), and a run that never completes leaves the pending state as an
+    actionable signal.
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped

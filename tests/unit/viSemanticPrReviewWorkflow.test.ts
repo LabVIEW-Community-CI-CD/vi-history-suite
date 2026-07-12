@@ -109,6 +109,12 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('PR head mismatch');
   });
 
+  it('announces a review-in-progress comment before the comparison (VHS-REQ-661.9)', () => {
+    const workflow = readCallable();
+
+    expect(workflow).toContain('--announce-start');
+  });
+
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {
     const workflow = readCallable();
 

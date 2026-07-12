@@ -56,6 +56,24 @@ describe('runViSemanticPrReview parseArgs', () => {
     expect(parseArgs([...BASE, '--fail-on-incomplete']).failOnIncomplete).toBe(true);
   });
 
+  it('accepts --announce-start with --post-comment and defaults it off', () => {
+    expect(parseArgs([...BASE]).announceStart).toBe(false);
+    const args = parseArgs([...BASE, '--post-comment', '--pr', '7', '--repo', 'o/r', '--announce-start']);
+    expect(args.announceStart).toBe(true);
+  });
+
+  it('rejects --announce-start without --post-comment', () => {
+    expect(() => parseArgs([...BASE, '--announce-start'])).toThrow(
+      '--announce-start requires --post-comment'
+    );
+  });
+
+  it('rejects --announce-start combined with --from-file', () => {
+    expect(() =>
+      parseArgs(['--from-file', 'r.json', '--post-comment', '--pr', '7', '--repo', 'o/r', '--announce-start'])
+    ).toThrow('--announce-start cannot be combined with --from-file');
+  });
+
   it('accepts --from-file on its own and records the path', () => {
     const args = parseArgs(['--from-file', 'review.json', '--post-comment', '--pr', '7', '--repo', 'o/r']);
     expect(args.fromFile).toBe('review.json');
