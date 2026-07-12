@@ -15,11 +15,11 @@ const SURFACE_LABELS: Record<ViChangeSurface, string> = {
   other: 'other VI content'
 };
 
-function surfaceList(surfaces: readonly ViChangeSurface[]): string {
+export function surfaceList(surfaces: readonly ViChangeSurface[]): string {
   return surfaces.map((surface) => SURFACE_LABELS[surface]).join(', ');
 }
 
-function escapeCell(text: string): string {
+export function escapeCell(text: string): string {
   // Escape backslashes first, then table-breaking pipes, so a literal backslash
   // in the input cannot corrupt the pipe escaping (js/incomplete-sanitization).
   return text
