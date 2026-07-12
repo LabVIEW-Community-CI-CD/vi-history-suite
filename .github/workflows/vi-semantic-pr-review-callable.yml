@@ -88,15 +88,17 @@ jobs:
       - name: Resolve tool checkout ref
         id: toolref
         env:
-          # Pin the tool checkout to the exact commit of this reusable workflow
-          # so a cross-repo caller gets the CLI at the version it pinned, not
-          # vi-history-suite's default branch. Fail closed if the reusable-
-          # workflow SHA is unavailable rather than silently checking out the
-          # default branch and running a different CLI than the YAML invoked.
-          WORKFLOW_SHA: ${{ github.job_workflow_sha }}
+          # Pin the tool checkout to the commit SHA of the workflow file so a
+          # cross-repo caller gets the CLI at the version it pinned, not
+          # vi-history-suite's default branch. For the local maintainer dispatch
+          # (uses: ./... , caller and reusable workflow are both this repo) this
+          # is the dispatched commit. Fail closed if the SHA is unavailable
+          # rather than silently checking out the default branch and running a
+          # different CLI than the YAML invoked.
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
         run: |
           if [ -z "$WORKFLOW_SHA" ]; then
-            echo "Could not resolve the reusable-workflow commit SHA (github.job_workflow_sha was empty); refusing to fall back to the default branch." >&2
+            echo "Could not resolve the workflow commit SHA (github.workflow_sha was empty); refusing to fall back to the default branch." >&2
             exit 1
           fi
           echo "ref=$WORKFLOW_SHA" >> "$GITHUB_OUTPUT"
