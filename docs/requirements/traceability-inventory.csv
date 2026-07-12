@@ -119,6 +119,7 @@ tests/unit/publicDocSourceLinks.test.ts,mapped,Yes,Public doc source links tests
 tests/unit/requirementsDocs.test.ts,mapped,Yes,Requirements documentation tests; mapped through RTM.
 tests/unit/retainedDashboardEvidence.test.ts,mapped,Yes,Retained dashboard evidence seeding tests; mapped to VHS-REQ-610.
 tests/unit/reviewDecisionRecord.test.ts,mapped,Yes,Review decision record persistence and action tests; mapped to VHS-REQ-610.
+tests/unit/reviewDecisionRecordAction.test.ts,supporting,No,Decision record action orchestration unit tests covering outcome branches; supporting VHS-REQ-610 dashboard aggregate review.
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/runDevHostCli.test.ts,dev-only,No,Development host CLI tests; development tooling.
