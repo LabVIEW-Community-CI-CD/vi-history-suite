@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
@@ -332,6 +333,16 @@ export function buildReviewImageAssetPath(
   return `vi-review/${pr}/${safeVi}/${index}.${extension}`;
 }
 
+/**
+ * Content-hash cache-buster token for a review image's embedded URL. Derived
+ * from the image bytes so an unchanged image yields a stable (cacheable) URL
+ * while changed bytes yield a new URL, defeating GitHub's URL-keyed image
+ * proxy/browser cache when a stable per-PR storage path is overwritten.
+ */
+export function reviewImageCacheBuster(base64Content: string): string {
+  return createHash('sha256').update(base64Content).digest('hex').slice(0, 16);
+}
+
 async function uploadReviewImage(
   token: string,
   owner: string,
@@ -364,7 +375,12 @@ async function uploadReviewImage(
     body.sha = existingSha;
   }
   await githubRequest(token, 'PUT', contentsUrl, body);
-  return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${encoded}`;
+  // Stable per-PR paths mean an overwritten image keeps the same raw URL, and
+  // GitHub's image proxy/browsers cache by URL. Append a content-hash buster so
+  // a changed image forces a fresh fetch while an unchanged image keeps a
+  // stable (cacheable) URL.
+  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${encoded}`;
+  return `${rawUrl}?v=${reviewImageCacheBuster(base64)}`;
 }
 
 /**
