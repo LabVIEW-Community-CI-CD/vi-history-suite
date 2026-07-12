@@ -11,7 +11,7 @@ import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { buildReviewImageAssetPath, loadReviewFromFile, parseArgs, reviewImageCacheBuster, runViSemanticPrReviewCli } from '../../src/cli/runViSemanticPrReview';
+import { buildReviewImageAssetPath, loadReviewFromFile, parseArgs, planStaleReviewAssetDeletions, reviewImageCacheBuster, runViSemanticPrReviewCli } from '../../src/cli/runViSemanticPrReview';
 import { VI_SEMANTIC_PR_REVIEW_SCHEMA } from '../../src/semantic/viSemanticPrReview';
 
 const BASE = ['--repository-root', '/repo', '--base', 'aaaa', '--head', 'bbbb'];
@@ -41,6 +41,28 @@ describe('reviewImageCacheBuster', () => {
 
   it('changes when the image content changes so an overwritten image busts caches', () => {
     expect(reviewImageCacheBuster('AAAAdata')).not.toBe(reviewImageCacheBuster('BBBBdata'));
+  });
+});
+
+describe('planStaleReviewAssetDeletions', () => {
+  it('returns existing paths the current run did not produce', () => {
+    const existing = [
+      'vi-review/7/A_vi/0.png',
+      'vi-review/7/A_vi/1.png',
+      'vi-review/7/B_vi/0.png'
+    ];
+    const produced = ['vi-review/7/A_vi/0.png', 'vi-review/7/A_vi/1.png'];
+    expect(planStaleReviewAssetDeletions(existing, produced)).toEqual(['vi-review/7/B_vi/0.png']);
+  });
+
+  it('returns nothing when the run reproduced every existing path', () => {
+    const paths = ['vi-review/7/A_vi/0.png'];
+    expect(planStaleReviewAssetDeletions(paths, paths)).toEqual([]);
+  });
+
+  it('treats every existing path as stale when the run produced none', () => {
+    const existing = ['vi-review/7/A_vi/0.png', 'vi-review/7/B_vi/0.png'];
+    expect(planStaleReviewAssetDeletions(existing, [])).toEqual(existing);
   });
 });
 
