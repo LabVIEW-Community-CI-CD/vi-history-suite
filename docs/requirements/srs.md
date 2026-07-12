@@ -4612,6 +4612,7 @@ Missing numeric IDs are intentional.
   - `src/semantic/viSemanticHistory.ts`
   - `src/semantic/viRepositoryIndex.ts`
   - `src/mcp/viSemanticMcpServerProvider.ts`
+  - `src/mcp/viSemanticMcpServerDeps.ts`
 - Verification References:
   - `tests/unit/viSemanticModel.test.ts`
   - `tests/unit/viSemanticSchemas.test.ts`
@@ -4621,6 +4622,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viSemanticHistory.test.ts`
   - `tests/unit/viRepositoryIndex.test.ts`
   - `tests/unit/viSemanticMcpServerProvider.test.ts`
+  - `tests/unit/viSemanticMcpServerDeps.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:vi-semantic-comparison-mcp-surface`
 - Change Guidance:
