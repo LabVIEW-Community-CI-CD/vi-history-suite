@@ -677,3 +677,4 @@ VHS-REQ-657,Software,Active,srs.md#vhs-req-657-version-aware-labview-container-e
 VHS-REQ-658,Software,Active,srs.md#vhs-req-658-labview-vi-version-too-new-compare-failure-diagnostic,,,docs/requirements/srs.md
 VHS-REQ-659,Software,Active,srs.md#vhs-req-659-single-vi-interactive-preview-rendering,,,docs/requirements/srs.md
 VHS-REQ-660,Software,Active,srs.md#vhs-req-660-source-control-semantic-change-hover,,,docs/requirements/srs.md
+VHS-REQ-661,Software,Active,srs.md#vhs-req-661-on-demand-vi-semantic-pr-review-workflow,,,docs/requirements/srs.md

@@ -4410,3 +4410,57 @@ Missing numeric IDs are intentional.
     await a LabVIEW comparison from a hover. Keep the narrative text the single
     `renderViSemanticNarrative` output shared with the MCP tools and PR/CI
     comment surfaces rather than introducing a second narrative dialect.
+
+### VHS-REQ-661: On-Demand VI Semantic PR Review Workflow
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: A maintainer-dispatched GitHub Actions workflow shall run the VI
+  semantic PR review against any target repository and pull request on a
+  self-hosted Linux runner with docker and the NI LabVIEW container image, and
+  post the result as a sticky comment (created once, updated in place on
+  re-runs) on the target pull request using a cross-repository token supplied
+  through a secret.
+- Acceptance Criteria:
+  - VHS-REQ-661.1: The workflow triggers only through `workflow_dispatch` and
+    never through `pull_request` or `push`, so running untrusted target-repo VIs
+    in a LabVIEW container is always a deliberate maintainer action.
+  - VHS-REQ-661.2: The workflow exposes `repository`, `pr_number`, and
+    `container_image_version` dispatch inputs, grants read-only repository
+    contents permission, and fails closed to trusted `vi-history-suite` refs
+    before the privileged cross-repository token can be used.
+  - VHS-REQ-661.3: The workflow runs on a self-hosted Linux runner labeled
+    `vihs-linux-labview-docker` and validates, as a fail-fast gate, that docker
+    and the `nationalinstruments/labview:<version>-linux` image are present.
+  - VHS-REQ-661.4: The workflow clones the target repository, resolves the
+    review range as the merge-base of the PR base branch and the PR head commit,
+    and invokes `runViSemanticPrReview` over that range with the docker runtime
+    provider.
+  - VHS-REQ-661.5: Posting to the target pull request uses a cross-repository
+    token supplied through a secret (`VI_REVIEW_TARGET_TOKEN`) passed as
+    `GH_TOKEN`, and the sticky comment is upserted by the hidden marker so
+    re-runs update the existing comment in place rather than adding new ones.
+  - VHS-REQ-661.6: The workflow uploads the produced review artifact
+    (`review-out/**`) and contains no `vagrant` reference (VHS-REQ-599
+    alignment).
+- Agent Work Scope:
+  - Change the workflow YAML and its static contract test together. Keep the
+    workflow thin CI plumbing around the already-shipped
+    `runViSemanticPrReview` CLI; do not add a review engine to the workflow.
+    Keep the runner docker-based (not host LabVIEW) as the counterpart to the
+    host-LabVIEW maintainer workflow (VHS-REQ-652).
+- Implementation References:
+  - `.github/workflows/vi-semantic-pr-review.yml`
+  - `src/cli/runViSemanticPrReview.ts`
+  - `src/semantic/viSemanticPrReview.ts`
+  - `src/semantic/stickyPrComment.ts`
+- Verification References:
+  - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:vi-semantic-pr-review-workflow-dispatch`
+- Change Guidance:
+  - Never add a `pull_request` or `push` trigger; the LabVIEW container runs
+    untrusted target-repo VIs and must stay a deliberate maintainer dispatch.
+    Keep the cross-repo token in a secret, never in the workflow's own
+    `GITHUB_TOKEN`, and never reference `vagrant`.
