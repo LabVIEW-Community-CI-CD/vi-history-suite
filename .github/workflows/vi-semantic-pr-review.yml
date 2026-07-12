@@ -1,0 +1,149 @@
+name: VI Semantic PR Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'Target repository (owner/repo) whose pull request should be reviewed.'
+        required: true
+      pr_number:
+        description: 'Pull request number in the target repository to review.'
+        required: true
+      container_image_version:
+        description: 'NI LabVIEW container image version tag (e.g. 2026q1).'
+        required: false
+        default: '2026q1'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.repository }}-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  vi-semantic-pr-review:
+    name: VI Semantic PR Review
+    runs-on: [self-hosted, Linux, X64, vihs-linux-labview-docker]
+    timeout-minutes: 90
+
+    steps:
+      - name: Guard Trusted Ref
+        run: |
+          # Running untrusted target-repo VIs inside a privileged LabVIEW
+          # container and posting with a cross-repo token must only ever happen
+          # from a trusted vi-history-suite ref. Fail closed otherwise so the
+          # privileged VI_REVIEW_TARGET_TOKEN can never be exercised from an
+          # untrusted branch.
+          is_main=false
+          is_develop=false
+          is_release_branch=false
+          is_exact_version_tag=false
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then is_main=true; fi
+          if [ "$GITHUB_REF" = "refs/heads/develop" ]; then is_develop=true; fi
+          if printf '%s' "$GITHUB_REF" | grep -Eq '^refs/heads/release/v[0-9]+\.[0-9]+\.[0-9]+$'; then is_release_branch=true; fi
+          if printf '%s' "$GITHUB_REF" | grep -Eq '^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'; then is_exact_version_tag=true; fi
+          is_trusted_ref=false
+          if [ "$is_main" = true ] || [ "$is_develop" = true ] || [ "$is_release_branch" = true ] || [ "$is_exact_version_tag" = true ]; then
+            is_trusted_ref=true
+          fi
+          echo "Trusted ref decision: $is_trusted_ref (main=$is_main, develop=$is_develop, releaseBranch=$is_release_branch, exactVersionTag=$is_exact_version_tag, ref=$GITHUB_REF)"
+          if [ "$is_trusted_ref" != true ]; then
+            echo "This review workflow only accepts main, develop, release/v* branches, or exact v* release tags. Ref was: $GITHUB_REF" >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Validate Runner Prerequisites
+        env:
+          CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
+        run: |
+          # Fail fast with an actionable message if docker or the NI LabVIEW
+          # container image is missing, instead of dying deep in the review
+          # step. The comparison runs the nationalinstruments/labview image.
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "docker is required on this self-hosted runner but was not found on PATH." >&2
+            exit 1
+          fi
+          if ! docker info >/dev/null 2>&1; then
+            echo "docker is installed but the daemon is not reachable (is dockerd running and is the runner user in the docker group?)." >&2
+            exit 1
+          fi
+          image="nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux"
+          if ! docker image inspect "$image" >/dev/null 2>&1; then
+            echo "Required NI LabVIEW container image '$image' is not available locally. Pull it on the runner: docker pull $image" >&2
+            exit 1
+          fi
+          echo "docker and NI LabVIEW image '$image' are present."
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Clone Target Repository And Resolve Range
+        env:
+          GH_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
+          TARGET_REPOSITORY: ${{ inputs.repository }}
+          TARGET_PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          # Clone the target repository (never checked out into the trusted
+          # workspace tree) and resolve the review range from the PR: head is
+          # the PR head commit, base is the merge-base with the PR base branch.
+          rm -rf target-clone
+          gh repo clone "$TARGET_REPOSITORY" target-clone -- --no-single-branch
+          head_sha="$(gh pr view "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" --json headRefOid --jq '.headRefOid')"
+          base_ref="$(gh pr view "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" --json baseRefName --jq '.baseRefName')"
+          git -C target-clone fetch --no-tags origin "$head_sha" "$base_ref"
+          merge_base="$(git -C target-clone merge-base "origin/$base_ref" "$head_sha")"
+          echo "Target PR head: $head_sha"
+          echo "Target PR base ref: $base_ref"
+          echo "Resolved merge base: $merge_base"
+          echo "REVIEW_HEAD_SHA=$head_sha" >> "$GITHUB_ENV"
+          echo "REVIEW_MERGE_BASE=$merge_base" >> "$GITHUB_ENV"
+
+      - name: Run VI Semantic PR Review And Post Sticky Comment
+        env:
+          GH_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
+          TARGET_REPOSITORY: ${{ inputs.repository }}
+          TARGET_PR_NUMBER: ${{ inputs.pr_number }}
+          CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
+        run: |
+          # The docker comparison bind-mounts its staging directory into the
+          # LabVIEW container. snap-packaged Docker runs in a private mount
+          # namespace with its own /tmp, so a staging directory under the
+          # default /tmp is invisible inside the container and the compare fails
+          # with "VI path invalid or does not exist". Point the CLI's temp root
+          # at a directory under the runner workspace ($RUNNER_TEMP lives under
+          # the runner home), which snap Docker can bind-mount, so staging is
+          # visible in the container on both snap and native Docker hosts.
+          review_tmp="$RUNNER_TEMP/vi-semantic-pr-review-staging"
+          mkdir -p "$review_tmp"
+          export TMPDIR="$review_tmp"
+          node out/cli/runViSemanticPrReview.js \
+            --repository-root target-clone \
+            --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA" \
+            --runtime-provider docker --container-image-version "$CONTAINER_IMAGE_VERSION" \
+            --out review-out \
+            --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY"
+
+      - name: Upload Review Artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: vi-semantic-pr-review-${{ github.run_id }}
+          path: review-out/**
+          if-no-files-found: warn
+          retention-days: 14

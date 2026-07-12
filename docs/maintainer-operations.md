@@ -431,6 +431,51 @@ Stop it after validation by closing the runner terminal or pressing `Ctrl+C`.
 The run records the same evidence shape as the Windows runner in
 `runner-evidence/linux-labview-maintainer-summary.txt`.
 
+## VI Semantic PR Review Runner (docker)
+
+`.github/workflows/vi-semantic-pr-review.yml` (VHS-REQ-661) is a
+`workflow_dispatch`-only workflow that runs the VI semantic PR review against
+any target repository and pull request and posts the result as a sticky comment
+on the target PR. Unlike the host-LabVIEW maintainer runner above, it runs the
+comparison inside the `nationalinstruments/labview:<version>-linux` container,
+so it needs a **separate** self-hosted Linux runner labeled
+`vihs-linux-labview-docker` with:
+
+- Docker installed and running, with the runner user in the `docker` group.
+- The `nationalinstruments/labview:2026q1-linux` image pulled and available
+  (`docker pull nationalinstruments/labview:2026q1-linux`).
+- Node 24, `git`, and `gh` on `PATH`.
+
+The workflow validates docker and the image as a fail-fast gate before doing any
+work, so a missing prerequisite aborts in seconds with an actionable message.
+
+### snap-packaged Docker
+
+If the runner's Docker is installed from the snap store (Canonical's `docker`
+snap), the daemon runs in a private mount namespace with its own `/tmp`. A
+staging directory created under the default `/tmp` is then invisible inside the
+LabVIEW container, and the comparison fails with `VI path invalid or does not
+exist` even though the staged VIs exist on the host. The workflow avoids this by
+pointing the CLI temp root at `$RUNNER_TEMP` (under the runner home), which snap
+Docker can bind-mount. When running the CLI by hand on a snap-Docker host, set
+`TMPDIR` to a directory under your home (e.g. `TMPDIR="$HOME/vihs-tmp"`) before
+invoking `runViSemanticPrReview.js`. Native (non-snap) Docker is unaffected.
+
+### Cross-repository token
+
+`--post-comment` writes to the **target** repository (the `repository` input),
+not to `vi-history-suite`. The workflow's own `GITHUB_TOKEN` can only access its
+own repository, so the workflow passes a repository secret,
+`VI_REVIEW_TARGET_TOKEN`, as `GH_TOKEN` to the CLI. Provision this secret with a
+PAT or GitHub App token that has `pull-requests: write` / `issues: write` on the
+repositories you intend to review. The workflow is fail-closed to trusted
+`vi-history-suite` refs so the privileged token can never be exercised from an
+untrusted branch.
+
+Dispatch it with the target `repository` (`owner/repo`), `pr_number`, and
+optional `container_image_version` (default `2026q1`). It uploads the produced
+review Markdown and JSON as the `vi-semantic-pr-review-<run_id>` artifact.
+
 ## Evidence
 
 Maintainer evidence should be small and repeatable:
