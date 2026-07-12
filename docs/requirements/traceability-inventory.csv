@@ -89,6 +89,7 @@ tests/unit/comparisonRuntimeDoctor.test.ts,mapped,Yes,Comparison runtime doctor 
 tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locator tests; mapped through RTM.
 tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests; mapped to VHS-REQ-610.
 tests/unit/dashboardLatestRun.test.ts,mapped,Yes,Dashboard latest-run record tests; mapped to VHS-REQ-610.
+tests/unit/devHostLoop.test.ts,dev-only,No,Development host loop tests; development tooling.
 tests/unit/diagnosticsRecorder.test.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder tests; mapped to VHS-REQ-148 retained runtime evidence.
 tests/unit/labviewCliIni.test.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper tests; mapped to VHS-REQ-148.
 tests/unit/windowsContainerLabviewCliScript.test.ts,mapped,Yes,Windows-container LabVIEW CLI script builder cliConnectTimeoutSeconds parity tests; mapped to VHS-REQ-148.
@@ -102,6 +103,7 @@ tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering test
 tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
 tests/unit/integrationHostRuntime.test.ts,mapped,Yes,Integration host runtime tests incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
+tests/unit/integrationHostStage.test.ts,dev-only,No,Integration host stage tests; testing infrastructure.
 tests/unit/localRuntimeSettingsCli.test.ts,mapped,Yes,Installed runtime settings CLI direct tests; mapped to VHS-REQ-612.
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM.
 tests/unit/marketplaceListingVerification.test.ts,mapped,Yes,Marketplace listing verification retry tests; mapped to VHS-REQ-609.
