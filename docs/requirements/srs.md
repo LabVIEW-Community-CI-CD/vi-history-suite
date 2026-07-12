@@ -4483,6 +4483,15 @@ Missing numeric IDs are intentional.
     subdirectory, so the uploaded review artifact carries the full visual diff
     and not only the narrative summary. A `--from-file` post skips this, since
     its saved report paths are stale temp locations from the original run.
+  - VHS-REQ-661.11: With the CLI `--publish-images` flag (post mode only), the
+    review uploads each changed VI's overview difference images (the block-
+    diagram/front-panel comparison shots embedded as `data:` URIs in the
+    self-contained report) to an assets branch in the target repository via the
+    GitHub contents API and embeds the hosted image URLs as a collapsed
+    visual-diff gallery in the sticky comment, since GitHub strips `data:` image
+    URIs from rendered comments. Image hosting requires a token with
+    `contents: write`; a hosting failure is best-effort and never blocks the
+    textual review from posting.
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped

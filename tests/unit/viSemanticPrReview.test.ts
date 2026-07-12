@@ -215,6 +215,44 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).not.toContain('#### src/B.vi');
   });
 
+  it('embeds a collapsed visual-diff gallery for a changed VI when images are supplied (VHS-REQ-661.11)', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () =>
+          completed(
+            makeModel({
+              vi: { title: 'A.vi' },
+              hasDifferences: true,
+              changedSurfaces: ['block-diagram'],
+              narrative: 'The block diagram differs.'
+            })
+          )
+      }
+    );
+
+    const markdown = renderViSemanticPrReviewMarkdown(review, {
+      imagesByVi: new Map([
+        ['src/A.vi', [{ caption: 'Block Diagram — changed', url: 'https://example.test/img.png' }]]
+      ])
+    });
+    expect(markdown).toContain('<details>');
+    expect(markdown).toContain('<summary>Visual diff (1 image)</summary>');
+    expect(markdown).toContain('![Block Diagram — changed](https://example.test/img.png)');
+  });
+
+  it('omits the visual-diff gallery when no images are supplied', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () => completed(makeModel({ vi: { title: 'A.vi' } }))
+      }
+    );
+    expect(renderViSemanticPrReviewMarkdown(review)).not.toContain('<details>');
+  });
+
   it('renders a no-changes message when there are no VI entries', async () => {
     const review = await buildViSemanticPrReview(
       { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },

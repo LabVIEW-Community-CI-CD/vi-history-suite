@@ -14,7 +14,8 @@ import type { ViSemanticComparisonModel } from './viSemanticModel';
 export {
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
-  VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER
+  VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
+  type ReviewImageRef
 } from './viSemanticReviewMarkdown';
 
 /**
