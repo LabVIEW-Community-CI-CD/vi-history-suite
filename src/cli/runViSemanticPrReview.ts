@@ -32,7 +32,7 @@ import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyP
  * comment on the target pull request.
  */
 
-interface ParsedArgs {
+export interface ParsedArgs {
   repositoryRoot: string;
   base: string;
   head: string;
@@ -52,7 +52,7 @@ function parseRepo(value: string): { owner: string; repo: string } {
   return { owner: parts[0], repo: parts[1] };
 }
 
-function parseArgs(argv: string[]): ParsedArgs {
+export function parseArgs(argv: string[]): ParsedArgs {
   const values = new Map<string, string>();
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
@@ -85,10 +85,14 @@ function parseArgs(argv: string[]): ParsedArgs {
   let pr: number | undefined;
   const prRaw = values.get('pr');
   if (prRaw !== undefined && prRaw !== 'true') {
-    pr = Number.parseInt(prRaw, 10);
-    if (!Number.isInteger(pr) || pr <= 0) {
+    // Full-string integer check: Number.parseInt would silently accept a numeric
+    // prefix (e.g. "123abc" -> 123, "12.5" -> 12), which could post the sticky
+    // comment to the wrong pull request. Require an all-digits, positive value.
+    const parsed = /^\d+$/.test(prRaw) ? Number.parseInt(prRaw, 10) : Number.NaN;
+    if (!Number.isInteger(parsed) || parsed <= 0) {
       throw new Error('--pr must be a positive integer');
     }
+    pr = parsed;
   }
   if (postComment && (pr === undefined || repo === undefined)) {
     throw new Error('--post-comment requires --pr <number> and --repo <owner/repo>');
