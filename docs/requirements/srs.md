@@ -4458,6 +4458,16 @@ Missing numeric IDs are intentional.
     on an `enforce_trusted_ref` input; the maintainer `workflow_dispatch`
     workflow delegates to it with the guard enforced, and an external LabVIEW
     repository can call it directly with its own runner and token.
+  - VHS-REQ-661.8: A consumer auto-trigger template
+    (`docs/consumer-workflows/vi-semantic-review-on-pr.yml`) lets any LabVIEW
+    repository run the review automatically on every pull request (including
+    fork PRs) with no comment or label: it triggers on `pull_request_target`,
+    never checks out or runs the untrusted PR code (it only dispatches the
+    review in vi-history-suite), gates the dispatch on the PR author's real
+    repository permission resolved via the API (not the event payload's
+    `author_association`, which reports `CONTRIBUTOR` for fork PRs even for org
+    members), grants read-only permissions, and uses a least-privilege
+    `VI_REVIEW_DISPATCH_TOKEN` (never the target-write token).
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped
@@ -4467,11 +4477,13 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `.github/workflows/vi-semantic-pr-review.yml`
   - `.github/workflows/vi-semantic-pr-review-callable.yml`
+  - `docs/consumer-workflows/vi-semantic-review-on-pr.yml`
   - `src/cli/runViSemanticPrReview.ts`
   - `src/semantic/viSemanticPrReview.ts`
   - `src/semantic/stickyPrComment.ts`
 - Verification References:
   - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
+  - `tests/unit/viSemanticReviewOnPrTemplate.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:vi-semantic-pr-review-workflow-dispatch`
 - Change Guidance:
