@@ -56,6 +56,22 @@ describe('VI semantic review consumer auto-trigger template (VHS-REQ-661)', () =
     expect(readTemplateCode()).not.toContain('author_association');
   });
 
+  it('authenticates the permission gate with the consumer repo GITHUB_TOKEN, not the dispatch token (VHS-REQ-661.8)', () => {
+    const code = readTemplateCode();
+
+    // The collaborators/permission API needs metadata read on THIS repo. The
+    // least-privilege VI_REVIEW_DISPATCH_TOKEN only has actions:write on
+    // vi-history-suite, so the gate must use the repo's own github.token or it
+    // fails closed and skips even trusted authors. The dispatch token is
+    // reserved for `gh workflow run`.
+    const gateBlock = code.slice(
+      code.indexOf('Evaluate trust gate'),
+      code.indexOf('Dispatch the review')
+    );
+    expect(gateBlock).toContain('GH_TOKEN: ${{ github.token }}');
+    expect(gateBlock).not.toContain('VI_REVIEW_DISPATCH_TOKEN');
+  });
+
   it('reads read-only permissions and uses the least-privilege dispatch secret (VHS-REQ-661.8)', () => {
     const template = readTemplate();
 

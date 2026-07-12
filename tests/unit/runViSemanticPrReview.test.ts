@@ -168,6 +168,17 @@ describe('runViSemanticPrReview --fail-on-incomplete', () => {
     narrative: 'summary'
   };
 
+  // Build `count` completed, no-difference entries so entries.length matches
+  // reviewedCount (loadReviewFromFile now enforces that consistency) without
+  // needing a full comparison model in the fixture.
+  const completedEntries = (count: number): Array<Record<string, unknown>> =>
+    Array.from({ length: count }, (_unused, index) => ({
+      relativePath: `src/VI${index}.vi`,
+      status: 'completed',
+      hasDifferences: false,
+      model: { changedSurfaces: [], hasDifferences: false, narrative: 'no differences' }
+    }));
+
   it('exits non-zero when VIs were skipped by the cap even with zero blocked/failed', async () => {
     // reviewedCount < changedViCount with blockedOrFailed 0 is the cap-gap case
     // that must still fail closed under --fail-on-incomplete.
@@ -175,8 +186,9 @@ describe('runViSemanticPrReview --fail-on-incomplete', () => {
       {
         ...baseReview,
         changedViCount: 60,
-        reviewedCount: 50,
-        totals: { withDifferences: 50, withoutDifferences: 0, blockedOrFailed: 0 }
+        reviewedCount: 3,
+        entries: completedEntries(3),
+        totals: { withDifferences: 0, withoutDifferences: 3, blockedOrFailed: 0 }
       },
       async (filePath) => {
         const code = await runViSemanticPrReviewCli(['--from-file', filePath, '--fail-on-incomplete']);
@@ -191,11 +203,29 @@ describe('runViSemanticPrReview --fail-on-incomplete', () => {
         ...baseReview,
         changedViCount: 2,
         reviewedCount: 2,
-        totals: { withDifferences: 2, withoutDifferences: 0, blockedOrFailed: 0 }
+        entries: completedEntries(2),
+        totals: { withDifferences: 0, withoutDifferences: 2, blockedOrFailed: 0 }
       },
       async (filePath) => {
         const code = await runViSemanticPrReviewCli(['--from-file', filePath, '--fail-on-incomplete']);
         expect(code).toBe(0);
+      }
+    );
+  });
+
+  it('rejects an artifact whose entries length disagrees with reviewedCount', async () => {
+    await withReviewFile(
+      {
+        ...baseReview,
+        changedViCount: 2,
+        reviewedCount: 2,
+        entries: [],
+        totals: { withDifferences: 2, withoutDifferences: 0, blockedOrFailed: 0 }
+      },
+      async (filePath) => {
+        await expect(loadReviewFromFile(filePath)).rejects.toThrow(
+          `--from-file is not a valid ${VI_SEMANTIC_PR_REVIEW_SCHEMA} review`
+        );
       }
     );
   });
