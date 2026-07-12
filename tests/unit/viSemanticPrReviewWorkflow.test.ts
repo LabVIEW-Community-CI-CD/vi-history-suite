@@ -97,14 +97,19 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('--runtime-provider docker');
   });
 
-  it('pins the tool checkout to a real, populated workflow SHA context (VHS-REQ-661.7)', () => {
+  it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {
     const workflow = readCallable();
 
-    // github.job_workflow_sha is NOT a real context property (always empty), so
-    // the fail-closed guard would abort every run before checkout. The guard
-    // must read the real github.workflow_sha.
-    expect(workflow).toContain('WORKFLOW_SHA: ${{ github.workflow_sha }}');
-    expect(workflow).not.toContain('github.job_workflow_sha');
+    // In a reusable workflow the `github` context reflects the CALLER, so
+    // github.workflow_sha / github.job_workflow_sha are wrong (the latter is
+    // not even a real property). The checkout of vi-history-suite's own source
+    // must use the `job` context workflow identity.
+    expect(workflow).toContain('WORKFLOW_SHA: ${{ job.workflow_sha }}');
+    expect(workflow).toContain('repository: ${{ job.workflow_repository }}');
+    // Reject the incorrect context expressions (the header comment may name
+    // github.workflow_sha as a warning, so assert on the ${{ ... }} form).
+    expect(workflow).not.toContain('${{ github.job_workflow_sha }}');
+    expect(workflow).not.toContain('${{ github.workflow_sha }}');
     expect(workflow).toContain('ref: ${{ steps.toolref.outputs.ref }}');
   });
 
