@@ -317,6 +317,21 @@ function encodeContentPath(filePath: string): string {
   return filePath.split('/').map(encodeURIComponent).join('/');
 }
 
+/**
+ * Builds the stable, per-PR assets-branch path for a review diff image. The path
+ * intentionally omits any per-run token (no timestamp) so re-running the review
+ * on the same pull request overwrites the same objects instead of accumulating a
+ * new directory each run, bounding the assets branch to one subtree per PR.
+ */
+export function buildReviewImageAssetPath(
+  pr: number,
+  safeVi: string,
+  index: number,
+  extension: string
+): string {
+  return `vi-review/${pr}/${safeVi}/${index}.${extension}`;
+}
+
 async function uploadReviewImage(
   token: string,
   owner: string,
@@ -326,12 +341,29 @@ async function uploadReviewImage(
   base64: string
 ): Promise<string> {
   const encoded = encodeContentPath(filePath);
-  await githubRequest(
-    token,
-    'PUT',
-    `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${encoded}`,
-    { message: `vi-semantic-pr-review: add ${filePath}`, content: base64, branch: ref }
-  );
+  const contentsUrl = `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${encoded}`;
+  // A stable per-PR path is reused across re-runs, so the object may already
+  // exist. The contents API requires the current blob sha to overwrite a file
+  // (a create-only PUT fails 422 once it is present), so look it up first and
+  // fall through to a create when the file is absent (GET 404).
+  let existingSha: string | undefined;
+  try {
+    const existing = (await (
+      await githubRequest(token, 'GET', `${contentsUrl}?ref=${encodeURIComponent(ref)}`)
+    ).json()) as { sha?: string };
+    existingSha = typeof existing.sha === 'string' ? existing.sha : undefined;
+  } catch {
+    existingSha = undefined;
+  }
+  const body: Record<string, unknown> = {
+    message: `vi-semantic-pr-review: ${existingSha ? 'update' : 'add'} ${filePath}`,
+    content: base64,
+    branch: ref
+  };
+  if (existingSha !== undefined) {
+    body.sha = existingSha;
+  }
+  await githubRequest(token, 'PUT', contentsUrl, body);
   return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${encoded}`;
 }
 
@@ -352,10 +384,10 @@ async function publishReviewImages(
     throw new Error('--publish-images requires a GitHub token in GH_TOKEN or GITHUB_TOKEN');
   }
   const { owner, repo } = args.repo as { owner: string; repo: string };
+  const pr = args.pr as number;
   const ref = args.assetsRef;
   const byVi = new Map<string, ReviewImageRef[]>();
   await ensureAssetsBranch(token, owner, repo, ref);
-  const runKey = `${args.pr}-${Date.now()}`;
   for (const entry of review.entries) {
     if (
       entry.status !== 'completed' ||
@@ -379,7 +411,7 @@ async function publishReviewImages(
     for (let index = 0; index < uploads.length; index += 1) {
       const upload = uploads[index];
       const extension = upload.contentType.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'png';
-      const filePath = `vi-review/${runKey}/${safeVi}/${index}.${extension}`;
+      const filePath = buildReviewImageAssetPath(pr, safeVi, index, extension);
       try {
         const url = await uploadReviewImage(token, owner, repo, ref, filePath, upload.base64);
         refs.push({ caption: upload.caption, url });

@@ -11,10 +11,26 @@ import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { loadReviewFromFile, parseArgs, runViSemanticPrReviewCli } from '../../src/cli/runViSemanticPrReview';
+import { buildReviewImageAssetPath, loadReviewFromFile, parseArgs, runViSemanticPrReviewCli } from '../../src/cli/runViSemanticPrReview';
 import { VI_SEMANTIC_PR_REVIEW_SCHEMA } from '../../src/semantic/viSemanticPrReview';
 
 const BASE = ['--repository-root', '/repo', '--base', 'aaaa', '--head', 'bbbb'];
+
+describe('buildReviewImageAssetPath', () => {
+  it('builds a stable per-PR path with no per-run timestamp token', () => {
+    const assetPath = buildReviewImageAssetPath(42, 'Foo_vi', 0, 'png');
+    expect(assetPath).toBe('vi-review/42/Foo_vi/0.png');
+  });
+
+  it('keeps every image for a PR under one per-PR subtree so re-runs overwrite', () => {
+    const first = buildReviewImageAssetPath(7, 'A_vi', 0, 'png');
+    const second = buildReviewImageAssetPath(7, 'B_vi', 1, 'png');
+    expect(first.startsWith('vi-review/7/')).toBe(true);
+    expect(second.startsWith('vi-review/7/')).toBe(true);
+    // No Date.now()-style run token: the same call is byte-for-byte stable.
+    expect(buildReviewImageAssetPath(7, 'A_vi', 0, 'png')).toBe(first);
+  });
+});
 
 describe('runViSemanticPrReview parseArgs', () => {
   it('parses a valid positive --pr number and --repo', () => {
