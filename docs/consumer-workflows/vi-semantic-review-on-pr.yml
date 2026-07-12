@@ -7,10 +7,10 @@
 # with no `/comment` or label needed.
 #
 # Prerequisites:
-#   * A self-hosted Linux runner registered on vi-history-suite labeled
-#     `vihs-linux-labview-docker` (docker + the NI LabVIEW image), and the
-#     `VI_REVIEW_TARGET_TOKEN` secret configured there (this is the maintainer
-#     setup for VHS-REQ-661; nothing to do per consumer repo).
+#   * The maintainer setup on vi-history-suite (VHS-REQ-661): the review runs on
+#     a GitHub-hosted runner (which pulls the NI LabVIEW image) and the
+#     `VI_REVIEW_TARGET_TOKEN` secret is configured there. Nothing to do per
+#     consumer repo.
 #   * One secret in THIS repository: `VI_REVIEW_DISPATCH_TOKEN` — a
 #     least-privilege token (fine-grained PAT or GitHub App installation token)
 #     with `actions: write` on LabVIEW-Community-CI-CD/vi-history-suite. That is
@@ -24,7 +24,7 @@
 #   * This job NEVER checks out or executes the untrusted PR code. It only reads
 #     the PR number and starts the review workflow in vi-history-suite; the
 #     untrusted VIs are compared later inside the isolated LabVIEW container on
-#     vi-history-suite's self-hosted runner.
+#     vi-history-suite's GitHub-hosted runner.
 #   * The dispatch is gated on the PR author's REAL permission on this repo
 #     (admin/write/maintain), resolved via the API — not the event payload's
 #     `author_association`, which reports CONTRIBUTOR for fork PRs even for org

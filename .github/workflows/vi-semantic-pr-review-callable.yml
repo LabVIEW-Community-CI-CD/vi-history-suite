@@ -14,9 +14,9 @@ name: VI Semantic PR Review (callable)
 #       secrets:
 #         VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
 #
-# The caller must provide a self-hosted Linux runner labeled
-# `vihs-linux-labview-docker` with docker and the NI LabVIEW image, and a token
-# with `pull-requests: write` on the target repository.
+# The job runs on a GitHub-hosted `ubuntu-latest` runner and pulls the NI
+# LabVIEW image itself, so a caller only needs a token with
+# `pull-requests: write` on the target repository.
 
 on:
   workflow_call:
@@ -54,7 +54,7 @@ defaults:
 jobs:
   vi-semantic-pr-review:
     name: VI Semantic PR Review
-    runs-on: [self-hosted, Linux, X64, vihs-linux-labview-docker]
+    runs-on: ubuntu-latest
     timeout-minutes: 90
 
     steps:
@@ -121,23 +121,27 @@ jobs:
         env:
           CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
         run: |
-          # Fail fast with an actionable message if docker or the NI LabVIEW
-          # container image is missing, instead of dying deep in the review
-          # step. The comparison runs the nationalinstruments/labview image.
+          # GitHub-hosted ubuntu-latest ships Docker and a running daemon; the
+          # NI LabVIEW image is not pre-pulled, so pull it here. Fail fast with
+          # an actionable message if docker is unavailable, instead of dying
+          # deep in the review step. The comparison runs the
+          # nationalinstruments/labview image.
           if ! command -v docker >/dev/null 2>&1; then
-            echo "docker is required on this self-hosted runner but was not found on PATH." >&2
+            echo "docker is required but was not found on PATH." >&2
             exit 1
           fi
           if ! docker info >/dev/null 2>&1; then
-            echo "docker is installed but the daemon is not reachable (is dockerd running and is the runner user in the docker group?)." >&2
+            echo "docker is installed but the daemon is not reachable." >&2
             exit 1
           fi
           image="nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux"
-          if ! docker image inspect "$image" >/dev/null 2>&1; then
-            echo "Required NI LabVIEW container image '$image' is not available locally. Pull it on the runner: docker pull $image" >&2
-            exit 1
+          if docker image inspect "$image" >/dev/null 2>&1; then
+            echo "NI LabVIEW image '$image' already present."
+          else
+            echo "Pulling NI LabVIEW image '$image' ..."
+            docker pull "$image"
           fi
-          echo "docker and NI LabVIEW image '$image' are present."
+          echo "docker ready and NI LabVIEW image '$image' available."
 
       - name: Install
         run: npm ci

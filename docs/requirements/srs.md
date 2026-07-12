@@ -4418,8 +4418,8 @@ Missing numeric IDs are intentional.
 - Area: CI And Developer Environment
 - Statement: A maintainer-dispatched GitHub Actions workflow shall run the VI
   semantic PR review against any target repository and pull request on a
-  self-hosted Linux runner with docker and the NI LabVIEW container image, and
-  post the result as a sticky comment (created once, updated in place on
+  GitHub-hosted Linux runner (docker provided) that pulls the NI LabVIEW image,
+  and post the result as a sticky comment (created once, updated in place on
   re-runs) on the target pull request using a cross-repository token supplied
   through a secret. The review logic shall live in a reusable `workflow_call`
   unit so any LabVIEW repository can consume it and the maintainer dispatch and
@@ -4432,9 +4432,9 @@ Missing numeric IDs are intentional.
     `container_image_version` dispatch inputs, grants read-only repository
     contents permission, and fails closed to trusted `vi-history-suite` refs
     before the privileged cross-repository token can be used.
-  - VHS-REQ-661.3: The workflow runs on a self-hosted Linux runner labeled
-    `vihs-linux-labview-docker` and validates, as a fail-fast gate, that docker
-    and the `nationalinstruments/labview:<version>-linux` image are present.
+  - VHS-REQ-661.3: The workflow runs on a GitHub-hosted `ubuntu-latest` runner
+    and, as a fail-fast gate, verifies docker is available and pulls the
+    `nationalinstruments/labview:<version>-linux` image.
   - VHS-REQ-661.4: The workflow clones the target repository, resolves the
     review range as the merge-base of the PR base branch and the PR head commit,
     and invokes `runViSemanticPrReview` over that range with the docker runtime

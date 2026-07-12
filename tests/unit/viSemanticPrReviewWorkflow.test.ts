@@ -79,13 +79,14 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('Trusted ref decision:');
   });
 
-  it('runs on the self-hosted docker LabVIEW runner and validates docker + the image (VHS-REQ-661.3)', () => {
+  it('runs on a GitHub-hosted runner and pulls the LabVIEW image as a fail-fast gate (VHS-REQ-661.3)', () => {
     const workflow = readCallable();
 
-    expect(workflow).toContain('runs-on: [self-hosted, Linux, X64, vihs-linux-labview-docker]');
+    expect(workflow).toContain('runs-on: ubuntu-latest');
+    expect(workflow).not.toContain('vihs-linux-labview-docker');
     expect(workflow).toContain('- name: Validate Runner Prerequisites');
     expect(workflow).toContain('command -v docker');
-    expect(workflow).toContain('docker image inspect');
+    expect(workflow).toContain('docker pull');
     expect(workflow).toContain('nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux');
   });
 

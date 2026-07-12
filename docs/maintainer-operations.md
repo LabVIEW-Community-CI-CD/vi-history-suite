@@ -436,18 +436,16 @@ The run records the same evidence shape as the Windows runner in
 `.github/workflows/vi-semantic-pr-review.yml` (VHS-REQ-661) is a
 `workflow_dispatch`-only workflow that runs the VI semantic PR review against
 any target repository and pull request and posts the result as a sticky comment
-on the target PR. Unlike the host-LabVIEW maintainer runner above, it runs the
-comparison inside the `nationalinstruments/labview:<version>-linux` container,
-so it needs a **separate** self-hosted Linux runner labeled
-`vihs-linux-labview-docker` with:
+on the target PR. It runs the comparison inside the
+`nationalinstruments/labview:<version>-linux` container on a **GitHub-hosted
+`ubuntu-latest` runner** — no self-hosted runner is required. The hosted runner
+already provides Docker; the workflow pulls the NI LabVIEW image (~5 GB) itself
+as a fail-fast prerequisite step, so a missing Docker daemon aborts in seconds
+with an actionable message.
 
-- Docker installed and running, with the runner user in the `docker` group.
-- The `nationalinstruments/labview:2026q1-linux` image pulled and available
-  (`docker pull nationalinstruments/labview:2026q1-linux`).
-- Node 24, `git`, and `gh` on `PATH`.
-
-The workflow validates docker and the image as a fail-fast gate before doing any
-work, so a missing prerequisite aborts in seconds with an actionable message.
+The only maintainer setup is the `VI_REVIEW_TARGET_TOKEN` secret (a token with
+`pull-requests: write` on the target repositories), used to post the sticky
+comment cross-repo.
 
 ### snap-packaged Docker
 
@@ -496,11 +494,11 @@ jobs:
       VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
 ```
 
-The consumer must register a self-hosted Linux runner labeled
-`vihs-linux-labview-docker` (docker + the NI LabVIEW image) and provide a token
-with `pull-requests: write` on the target repository. The maintainer dispatch
-workflow above delegates to this same unit with `enforce_trusted_ref: true`, so
-both share one source of truth.
+The consumer needs no self-hosted runner: the reusable workflow runs on a
+GitHub-hosted `ubuntu-latest` runner and pulls the NI LabVIEW image itself. The
+consumer only provides a token with `pull-requests: write` on the target
+repository. The maintainer dispatch workflow above delegates to this same unit
+with `enforce_trusted_ref: true`, so both share one source of truth.
 
 ### Automatic review on every PR (including fork PRs)
 
