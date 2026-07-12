@@ -14,7 +14,25 @@ This changelog records user-facing release history for `vi-history-suite`.
 - The Source Control and Explorer views now show a badge and hover summary on a
   changed VI once you have compared its uncommitted change against the latest
   committed revision, so you can see what changed without reopening the full
-  comparison report (#762).
+  comparison report. The hover also prompts you to run a comparison when a
+  changed VI has no cached summary yet, so the feature is discoverable before
+  the first compare (#762, #768).
+- VI History Suite can now produce a **VI semantic pull-request review**: it
+  detects the LabVIEW VIs changed between two revisions, compares each, and
+  turns GitHub's "Binary file not shown" into a real "what changed" summary
+  (changed surfaces and itemized detail) posted as a single **sticky comment**
+  that updates in place on re-runs. It is available as the `build_vi_pr_review`
+  Copilot agent-mode MCP tool and as a headless CLI that can post the comment,
+  write the review artifact, or post a previously produced artifact without
+  recomputing. VIs that could not be compared list the reason instead of a bare
+  "failed" (#771, #772, #774, #779, #780).
+- A maintainer-dispatched **on-demand VI PR review GitHub Actions workflow**
+  runs that review against any target repository's pull request on a self-hosted
+  Linux docker LabVIEW runner and posts the sticky comment back to the target
+  PR. The review logic is packaged as a reusable `workflow_call` unit so any
+  LabVIEW repository can consume it with a thin caller workflow. See
+  [docs/maintainer-operations.md](./docs/maintainer-operations.md)
+  (VHS-REQ-661; #775, #777, #781, #786).
 
 ## [1.33.2] - 2026-06-25
 
