@@ -88,26 +88,28 @@ jobs:
       - name: Resolve tool checkout ref
         id: toolref
         env:
-          # Pin the tool checkout to the commit SHA of the workflow file so a
-          # cross-repo caller gets the CLI at the version it pinned, not
-          # vi-history-suite's default branch. For the local maintainer dispatch
-          # (uses: ./... , caller and reusable workflow are both this repo) this
-          # is the dispatched commit. Fail closed if the SHA is unavailable
-          # rather than silently checking out the default branch and running a
-          # different CLI than the YAML invoked.
-          WORKFLOW_SHA: ${{ github.workflow_sha }}
+          # Pin the tool checkout to the commit SHA of the reusable workflow
+          # file that defines this job, so a cross-repo caller gets the CLI at
+          # the version it pinned, not vi-history-suite's default branch. In a
+          # reusable workflow the `github` context reflects the CALLER, so
+          # github.workflow_sha would be the caller's SHA; the `job` context's
+          # workflow_* properties are the called (this) workflow's own identity.
+          # Fail closed if the SHA is unavailable (e.g. GitHub Enterprise Server,
+          # where job.workflow_* is not provided) rather than silently checking
+          # out the default branch and running a different CLI than invoked.
+          WORKFLOW_SHA: ${{ job.workflow_sha }}
         run: |
           if [ -z "$WORKFLOW_SHA" ]; then
-            echo "Could not resolve the workflow commit SHA (github.workflow_sha was empty); refusing to fall back to the default branch." >&2
+            echo "Could not resolve the reusable-workflow commit SHA (job.workflow_sha was empty); refusing to fall back to the default branch." >&2
             exit 1
           fi
           echo "ref=$WORKFLOW_SHA" >> "$GITHUB_OUTPUT"
-          echo "Pinning tool checkout to vi-history-suite@$WORKFLOW_SHA"
+          echo "Pinning tool checkout to ${{ job.workflow_repository }}@$WORKFLOW_SHA"
 
       - name: Checkout vi-history-suite
         uses: actions/checkout@v7
         with:
-          repository: LabVIEW-Community-CI-CD/vi-history-suite
+          repository: ${{ job.workflow_repository }}
           ref: ${{ steps.toolref.outputs.ref }}
 
       - name: Setup Node
