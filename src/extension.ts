@@ -8,8 +8,18 @@ import { buildComparisonReportArchivePlanFromSelection } from './dashboard/compa
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
 import { type GitApi, getBuiltInGitApi } from './git/gitApi';
-import { getFileHistoryCount } from './git/gitCli';
+import {
+  getFileHistoryCount,
+  isWorktreeRevision,
+  runGit,
+  WORKTREE_REVISION_SENTINEL
+} from './git/gitCli';
 import { registerViSemanticMcpServerProvider } from './mcp/viSemanticMcpServerProvider';
+import {
+  createFileViSemanticNarrativeCache,
+  recordViSemanticNarrativeFromReport
+} from './semantic/viSemanticNarrativeCache';
+import { registerViSemanticDecorationProvider } from './ui/viSemanticDecorationProvider';
 import {
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
@@ -190,7 +200,7 @@ export async function activate(
 ): Promise<ViHistorySuiteApi> {
   const panelTracker = new HistoryPanelTracker();
   const comparisonReportExportRegistry = new ComparisonReportExportRegistry();
-  const comparisonReportAction = createComparisonReportAction(context, {
+  const baseComparisonReportAction = createComparisonReportAction(context, {
     exportRegistry: comparisonReportExportRegistry
   });
   const ensureComparisonReportEvidenceAction =
@@ -198,6 +208,111 @@ export async function activate(
   const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context, {
     exportRegistry: comparisonReportExportRegistry
   });
+
+  // VHS-REQ-660: Source Control semantic change hover. A file-decoration
+  // provider surfaces the cached semantic "what changed" narrative for a changed
+  // VI as a badge plus hover tooltip across the Source Control, Explorer, and
+  // editor-tab surfaces. The cache is populated after a working-tree comparison
+  // completes (below), reusing the produced report HTML; the decoration path
+  // never runs LabVIEW and is workspace-trust gated, so an untrusted workspace
+  // (which never produces a comparison) simply shows no decorations.
+  const semanticNarrativeCacheRoot = (context.storageUri ?? context.globalStorageUri)?.fsPath;
+  const resolveGitToplevel = async (fsPath: string): Promise<string | undefined> => {
+    try {
+      const output = await runGit(['rev-parse', '--show-toplevel'], path.dirname(fsPath));
+      const root = String(output).trim();
+      return root.length > 0 ? root : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const resolveViContentBlobId = async (
+    repositoryRoot: string,
+    ref: string,
+    relativePath: string
+  ): Promise<string | undefined> => {
+    try {
+      const output = await runGit(
+        isWorktreeRevision(ref)
+          ? ['hash-object', '--', relativePath]
+          : ['rev-parse', `${ref}:${relativePath}`],
+        repositoryRoot
+      );
+      const blobId = String(output).trim();
+      return blobId.length > 0 ? blobId : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const semanticNarrativeCache = semanticNarrativeCacheRoot
+    ? createFileViSemanticNarrativeCache(
+        {
+          cacheDirectory: path.join(semanticNarrativeCacheRoot, 'semantic-narrative-cache'),
+          joinPath: path.join
+        },
+        {
+          ensureDirectory: async (directory) => {
+            await fs.mkdir(directory, { recursive: true });
+          },
+          readFile: (filePath) => fs.readFile(filePath, 'utf8'),
+          writeFile: (filePath, data) => fs.writeFile(filePath, data, 'utf8')
+        }
+      )
+    : undefined;
+  const semanticDecorationProvider =
+    semanticNarrativeCache && vscode.workspace.isTrusted
+      ? registerViSemanticDecorationProvider(context, {
+          isTrusted: () => vscode.workspace.isTrusted,
+          cache: semanticNarrativeCache,
+          resolveRepositoryRoot: resolveGitToplevel,
+          resolveBlobId: resolveViContentBlobId
+        })
+      : undefined;
+  const comparisonReportAction: typeof baseComparisonReportAction = async (request) => {
+    const result = await baseComparisonReportAction(request);
+    if (
+      semanticDecorationProvider &&
+      semanticNarrativeCache &&
+      typeof result.reportFilePath === 'string' &&
+      typeof request.baseHash === 'string' &&
+      isWorktreeRevision(request.selectedHash)
+    ) {
+      const reportFilePath = result.reportFilePath;
+      const baseHash = request.baseHash;
+      const repositoryRoot = request.model.repositoryRoot;
+      const relativePath = request.model.relativePath;
+      void (async () => {
+        try {
+          const [reportHtml, baseSignature, selectedSignature] = await Promise.all([
+            fs.readFile(reportFilePath, 'utf8'),
+            resolveViContentBlobId(repositoryRoot, baseHash, relativePath),
+            resolveViContentBlobId(repositoryRoot, WORKTREE_REVISION_SENTINEL, relativePath)
+          ]);
+          if (!baseSignature || !selectedSignature) {
+            return;
+          }
+          const stored = await recordViSemanticNarrativeFromReport(
+            {
+              relativePath,
+              reportHtml,
+              reportFilePath,
+              signatures: { baseSignature, selectedSignature }
+            },
+            semanticNarrativeCache
+          );
+          if (stored) {
+            semanticDecorationProvider.refresh(
+              vscode.Uri.file(path.join(repositoryRoot, relativePath))
+            );
+          }
+        } catch {
+          // Best-effort narrative caching; never affects the comparison result.
+        }
+      })();
+    }
+    return result;
+  };
+
   const reviewDecisionRecordAction = createReviewDecisionRecordAction(context);
   const humanReviewMachineCapability = resolveHumanReviewMachineCapability();
   const humanReviewSubmissionAction = humanReviewMachineCapability.isCanonicalHostMachine

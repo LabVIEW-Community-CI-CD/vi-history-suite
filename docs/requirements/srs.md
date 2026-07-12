@@ -4344,3 +4344,62 @@ Missing numeric IDs are intentional.
     `buildWindowsContainerLabviewCliScript`/`buildWindowsContainerCommandPlan`
     so both Windows paths share cold-launch behavior; the Windows LabVIEW
     container uses backslash workspace paths and `-Headless`.
+
+### VHS-REQ-660: Source Control Semantic Change Hover
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The extension shall surface the semantic "what changed" narrative
+  for a changed VI as a Source Control file decoration (a badge plus a hover
+  tooltip shown in the Source Control, Explorer, and editor-tab surfaces),
+  served only from a cache of previously produced comparison narratives and
+  gated on workspace trust, so a reviewer can see what changed in a VI without
+  opening the full comparison report. The decoration reflects the working-tree
+  change (HEAD versus the uncommitted VI); committed-pair comparisons are out of
+  scope for the Source Control surface.
+- Acceptance Criteria:
+  - VHS-REQ-660.1: `computeViSemanticNarrativeCacheKey` derives a deterministic
+    key from the separator-normalized repository-relative path plus the base and
+    selected content signatures, and the file-backed `ViSemanticNarrativeCache`
+    round-trips a stored narrative, returns undefined for a miss or an invalid
+    key, treats a read failure as a miss, and never throws on a write failure.
+  - VHS-REQ-660.2: `recordViSemanticNarrativeFromReport` projects a produced
+    comparison report onto the semantic model and writes the narrative and
+    changed surfaces to the cache keyed by the compared VI and its content
+    signatures, reusing the already-produced report HTML without invoking a
+    LabVIEW runtime, and caches nothing when the report shows no differences.
+  - VHS-REQ-660.3: `resolveViSemanticFileDecoration` returns a decoration whose
+    badge is the semantic-change marker and whose tooltip is the cached
+    narrative when a narrative is present, and returns undefined for an absent or
+    blank narrative.
+  - VHS-REQ-660.4: The file decoration provider returns no decoration in an
+    untrusted workspace and for non-VI files, and otherwise decorates a VI only
+    when its current HEAD and working-tree content signatures match a cached
+    narrative, so a stale badge clears once the VI changes again (VHS-REQ-012
+    fail-closed alignment).
+  - VHS-REQ-660.5: The provider exposes a `refresh` method that raises its
+    `onDidChangeFileDecorations` event (fired after a comparison completes so a
+    newly cached narrative appears), and `registerViSemanticDecorationProvider`
+    registers it through `window.registerFileDecorationProvider` with tracked
+    disposables.
+- Agent Work Scope:
+  - Keep the cache key, narrative recorder, and decoration-resolution logic pure
+    and dependency-injected so they stay unit-testable without VS Code or a Git
+    process. Do not change comparison execution, preflight, or packet behavior;
+    populate the cache at the comparison-action boundary in the extension
+    wiring. Serve decorations only from the cache and never trigger or block on a
+    LabVIEW comparison from the decoration path.
+- Implementation References:
+  - `src/semantic/viSemanticNarrativeCache.ts`
+  - `src/ui/viSemanticDecorationProvider.ts`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/viSemanticNarrativeCache.test.ts`
+  - `tests/unit/viSemanticDecorationProvider.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the decoration path cache-only and workspace-trust gated; never run or
+    await a LabVIEW comparison from a hover. Keep the narrative text the single
+    `renderViSemanticNarrative` output shared with the MCP tools and PR/CI
+    comment surfaces rather than introducing a second narrative dialect.

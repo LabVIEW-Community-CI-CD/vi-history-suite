@@ -261,6 +261,7 @@ export function createVsCodeTestHarness() {
       registerCustomEditorProvider: vi.fn((_viewType: string, _provider: unknown, _options?: unknown) =>
         disposable(vi.fn())
       ),
+      registerFileDecorationProvider: vi.fn((_provider: unknown) => disposable(vi.fn())),
       showInformationMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
       showWarningMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
       showErrorMessage: vi.fn(async (message: string, ...items: unknown[]) => items[0]),
@@ -380,6 +381,36 @@ export function createVsCodeTestHarness() {
         this.args = args;
         this.env = env;
         this.version = version;
+      }
+    },
+    EventEmitter: class {
+      private readonly listeners = new Set<(value: unknown) => void>();
+      readonly event = (listener: (value: unknown) => void) => {
+        this.listeners.add(listener);
+        return disposable(
+          vi.fn(() => {
+            this.listeners.delete(listener);
+          })
+        );
+      };
+      fire(value?: unknown): void {
+        for (const listener of this.listeners) {
+          listener(value);
+        }
+      }
+      dispose(): void {
+        this.listeners.clear();
+      }
+    },
+    FileDecoration: class {
+      badge?: string;
+      tooltip?: string;
+      color?: unknown;
+      propagate?: boolean;
+      constructor(badge?: string, tooltip?: string, color?: unknown) {
+        this.badge = badge;
+        this.tooltip = tooltip;
+        this.color = color;
       }
     },
     version: '1.90.0'
