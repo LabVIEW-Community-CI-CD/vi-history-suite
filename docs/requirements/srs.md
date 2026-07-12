@@ -4524,6 +4524,9 @@ Missing numeric IDs are intentional.
   - `tests/unit/viSemanticReviewMarkdown.test.ts`
   - `tests/unit/viComparisonReportImages.test.ts`
   - `tests/unit/viReviewCommitStatus.test.ts`
+  - `tests/unit/viSemanticPrReview.test.ts`
+  - `tests/unit/stickyPrComment.test.ts`
+  - `tests/unit/runViSemanticPrReview.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:vi-semantic-pr-review-workflow-dispatch`
 - Change Guidance:

@@ -88,9 +88,9 @@ async function detectHostInstallations(
     return detectLinuxHostInstallations(fs);
   }
   // macOS and other platforms: LabVIEW comparison host is not supported.
-  // TODO(VHS-REQ-618): Add macOS host LabVIEW detection under /Applications when
-  // ≥2025 macOS builds ship; until then, fall through so docker remains the only
-  // recommended provider on darwin.
+  // Deferred extension of VHS-REQ-616: add macOS host LabVIEW detection under
+  // /Applications when ≥2025 macOS builds ship; until then, fall through so
+  // docker remains the only recommended provider on darwin.
   return [];
 }
 

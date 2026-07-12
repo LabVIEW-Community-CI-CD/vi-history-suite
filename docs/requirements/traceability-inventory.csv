@@ -314,9 +314,9 @@ tests/unit/viSemanticHistory.test.ts,mapped,Yes,VI semantic history orchestrator
 tests/unit/viSemanticReviewMarkdown.test.ts,mapped,Yes,Semantic review Markdown renderer unit tests covering comparison facts and history table formatting with pipe escaping mapped to VHS-REQ-661.
 tests/unit/viRepositoryIndex.test.ts,mapped,Yes,Repository VI index orchestrator unit tests covering activity ranking cap and floor bounds empty-repo and history-less VI handling mapped to VHS-REQ-662.
 tests/unit/viSemanticSchemas.test.ts,mapped,Yes,VI semantic JSON Schema standard unit tests covering the subset validator constructs schema-id drift and real-model conformance mapped to VHS-REQ-662.
-tests/unit/viSemanticPrReview.test.ts,supporting,No,VI semantic PR review aggregator and renderer unit tests; supporting infrastructure not yet requirement-mapped.
-tests/unit/stickyPrComment.test.ts,supporting,No,Sticky pull-request comment planner unit tests covering create-vs-update marker matching idempotent marker prepend and earliest-match selection; supporting infrastructure not yet requirement-mapped.
-tests/unit/runViSemanticPrReview.test.ts,supporting,No,VI semantic PR-review CLI argument-parser unit tests locking full-string --pr integer validation and --repo/--post-comment guards before any GitHub write; supporting infrastructure not yet requirement-mapped.
+tests/unit/viSemanticPrReview.test.ts,mapped,Yes,VI semantic PR review aggregator and renderer unit tests mapped to VHS-REQ-661.
+tests/unit/stickyPrComment.test.ts,mapped,Yes,Sticky pull-request comment planner unit tests covering create-vs-update marker matching idempotent marker prepend and earliest-match selection mapped to VHS-REQ-661.
+tests/unit/runViSemanticPrReview.test.ts,mapped,Yes,VI semantic PR-review CLI argument-parser unit tests locking full-string --pr integer validation and --repo/--post-comment guards plus the stable image-path and content-hash cache-buster helpers mapped to VHS-REQ-661.
 tests/unit/viComparisonReportImages.test.ts,mapped,Yes,Overview difference-image data-URI extraction and selection unit tests backing inline visual diffs in the review comment mapped to VHS-REQ-661.
 tests/unit/viReviewCommitStatus.test.ts,mapped,Yes,GitHub commit-status planner unit tests covering success/failure states cap-gap and fail-on-incomplete handling mapped to VHS-REQ-661.
 tests/unit/viSemanticPrReviewWorkflow.test.ts,mapped,Yes,On-demand VI semantic PR review workflow contract test mapped to VHS-REQ-661.
