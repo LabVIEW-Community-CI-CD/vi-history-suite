@@ -4440,7 +4440,10 @@ Missing numeric IDs are intentional.
     and invokes `runViSemanticPrReview` over that range with the docker runtime
     provider, passing the canonical `<version>-linux` container tag (the runtime
     locator falls back to the default image for a bare version, so a non-default
-    `container_image_version` would otherwise run the wrong image). The docker
+    `container_image_version` would otherwise run the wrong image). The PR head
+    is fetched via the canonical `refs/pull/<n>/head` ref (which the base repo
+    serves even for fork PRs whose head is not directly fetchable by SHA) and
+    cross-checked against the API head, failing closed on a mismatch. The docker
     comparison stages under the runner workspace temp (`$RUNNER_TEMP`) rather
     than the default `/tmp`, so a snap-packaged Docker daemon (which uses a
     private `/tmp` mount namespace) can bind-mount the staging tree into the

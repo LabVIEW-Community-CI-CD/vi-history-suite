@@ -97,6 +97,18 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('--runtime-provider docker');
   });
 
+  it('fetches the PR head via refs/pull/<n>/head and cross-checks it against the API head (VHS-REQ-661.4)', () => {
+    const workflow = readCallable();
+
+    // The base repo always serves refs/pull/<n>/head even for fork PRs whose
+    // head commit is not directly fetchable by bare SHA, so the head must be
+    // resolved from that ref and cross-checked against the API headRefOid to
+    // fail closed on a force-push race.
+    expect(workflow).toContain('refs/pull/$TARGET_PR_NUMBER/head');
+    expect(workflow).toContain('rev-parse FETCH_HEAD');
+    expect(workflow).toContain('PR head mismatch');
+  });
+
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {
     const workflow = readCallable();
 
