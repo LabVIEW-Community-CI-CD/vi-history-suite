@@ -27,12 +27,21 @@ This changelog records user-facing release history for `vi-history-suite`.
   recomputing. VIs that could not be compared list the reason instead of a bare
   "failed" (#771, #772, #774, #779, #780).
 - A maintainer-dispatched **on-demand VI PR review GitHub Actions workflow**
-  runs that review against any target repository's pull request on a self-hosted
-  Linux docker LabVIEW runner and posts the sticky comment back to the target
-  PR. The review logic is packaged as a reusable `workflow_call` unit so any
+  runs that review against any target repository's pull request on a
+  GitHub-hosted Linux runner (which pulls the NI LabVIEW container image) and
+  posts the sticky comment back to the target PR. The review logic is packaged
+  as a reusable `workflow_call` unit so any
   LabVIEW repository can consume it with a thin caller workflow. See
   [docs/maintainer-operations.md](./docs/maintainer-operations.md)
-  (VHS-REQ-661; #775, #777, #781, #786).
+  (VHS-REQ-661; #775, #777, #781, #786, #803).
+- The VI PR review now also embeds the **rendered block-diagram/front-panel
+  difference images** inline in the comment (public target repos) and attaches
+  each changed VI's full self-contained comparison report to the run artifact,
+  and it can publish a branch-protection-gateable **`vi-semantic-review` commit
+  status** on the PR head. Inline images and the commit status are opt-in
+  workflow inputs (`publish_images`, `create_commit_status`) that need a token
+  with `contents: write` / `statuses: write` respectively (VHS-REQ-661; #805,
+  #806, #808).
 
 ## [1.33.2] - 2026-06-25
 
