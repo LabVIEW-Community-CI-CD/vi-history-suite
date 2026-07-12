@@ -97,6 +97,17 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('--runtime-provider docker');
   });
 
+  it('pins the tool checkout to a real, populated workflow SHA context (VHS-REQ-661.7)', () => {
+    const workflow = readCallable();
+
+    // github.job_workflow_sha is NOT a real context property (always empty), so
+    // the fail-closed guard would abort every run before checkout. The guard
+    // must read the real github.workflow_sha.
+    expect(workflow).toContain('WORKFLOW_SHA: ${{ github.workflow_sha }}');
+    expect(workflow).not.toContain('github.job_workflow_sha');
+    expect(workflow).toContain('ref: ${{ steps.toolref.outputs.ref }}');
+  });
+
   it('passes the canonical <version>-linux tag to the CLI so a non-default image is not silently defaulted (VHS-REQ-661.4)', () => {
     const workflow = readCallable();
 
