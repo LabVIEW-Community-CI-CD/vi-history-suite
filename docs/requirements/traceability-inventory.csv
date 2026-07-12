@@ -158,6 +158,7 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.
 .github/workflows/linux-labview-maintainer.yml,release-ci,Yes,Linux LabVIEW maintainer workflow; mapped through RTM.
 .github/workflows/vi-semantic-pr-review.yml,release-ci,Yes,On-demand VI semantic PR review workflow; mapped through RTM (VHS-REQ-661).
+.github/workflows/vi-semantic-pr-review-callable.yml,release-ci,Yes,Reusable (workflow_call) VI semantic PR review unit consumed by the dispatch workflow and external LabVIEW repos; mapped through RTM (VHS-REQ-661).
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
 .github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
 .github/ISSUE_TEMPLATE/bug_report.yml,asset-doc,Yes,Bug report template; mapped through RTM.

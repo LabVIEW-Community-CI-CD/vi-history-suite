@@ -4421,7 +4421,9 @@ Missing numeric IDs are intentional.
   self-hosted Linux runner with docker and the NI LabVIEW container image, and
   post the result as a sticky comment (created once, updated in place on
   re-runs) on the target pull request using a cross-repository token supplied
-  through a secret.
+  through a secret. The review logic shall live in a reusable `workflow_call`
+  unit so any LabVIEW repository can consume it and the maintainer dispatch and
+  external callers share a single source of truth.
 - Acceptance Criteria:
   - VHS-REQ-661.1: The workflow triggers only through `workflow_dispatch` and
     never through `pull_request` or `push`, so running untrusted target-repo VIs
@@ -4436,10 +4438,13 @@ Missing numeric IDs are intentional.
   - VHS-REQ-661.4: The workflow clones the target repository, resolves the
     review range as the merge-base of the PR base branch and the PR head commit,
     and invokes `runViSemanticPrReview` over that range with the docker runtime
-    provider. The docker comparison stages under the runner workspace temp
-    (`$RUNNER_TEMP`) rather than the default `/tmp`, so a snap-packaged Docker
-    daemon (which uses a private `/tmp` mount namespace) can bind-mount the
-    staging tree into the LabVIEW container.
+    provider, passing the canonical `<version>-linux` container tag (the runtime
+    locator falls back to the default image for a bare version, so a non-default
+    `container_image_version` would otherwise run the wrong image). The docker
+    comparison stages under the runner workspace temp (`$RUNNER_TEMP`) rather
+    than the default `/tmp`, so a snap-packaged Docker daemon (which uses a
+    private `/tmp` mount namespace) can bind-mount the staging tree into the
+    LabVIEW container.
   - VHS-REQ-661.5: Posting to the target pull request uses a cross-repository
     token supplied through a secret (`VI_REVIEW_TARGET_TOKEN`) passed as
     `GH_TOKEN`, and the sticky comment is upserted by the hidden marker so
@@ -4447,6 +4452,12 @@ Missing numeric IDs are intentional.
   - VHS-REQ-661.6: The workflow uploads the produced review artifact
     (`review-out/**`) and contains no `vagrant` reference (VHS-REQ-599
     alignment).
+  - VHS-REQ-661.7: The review steps live in a reusable `workflow_call` workflow
+    (`vi-semantic-pr-review-callable.yml`) that declares the review inputs and
+    the required `VI_REVIEW_TARGET_TOKEN` secret and gates the trusted-ref guard
+    on an `enforce_trusted_ref` input; the maintainer `workflow_dispatch`
+    workflow delegates to it with the guard enforced, and an external LabVIEW
+    repository can call it directly with its own runner and token.
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped
@@ -4455,6 +4466,7 @@ Missing numeric IDs are intentional.
     host-LabVIEW maintainer workflow (VHS-REQ-652).
 - Implementation References:
   - `.github/workflows/vi-semantic-pr-review.yml`
+  - `.github/workflows/vi-semantic-pr-review-callable.yml`
   - `src/cli/runViSemanticPrReview.ts`
   - `src/semantic/viSemanticPrReview.ts`
   - `src/semantic/stickyPrComment.ts`

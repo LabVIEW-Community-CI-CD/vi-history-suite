@@ -476,6 +476,32 @@ Dispatch it with the target `repository` (`owner/repo`), `pr_number`, and
 optional `container_image_version` (default `2026q1`). It uploads the produced
 review Markdown and JSON as the `vi-semantic-pr-review-<run_id>` artifact.
 
+### Reusing the review from another LabVIEW repository
+
+The review steps live in a reusable `workflow_call` workflow,
+`.github/workflows/vi-semantic-pr-review-callable.yml`, so any LabVIEW
+repository can run the review with a thin caller workflow instead of copying
+the YAML:
+
+```yaml
+jobs:
+  review:
+    uses: LabVIEW-Community-CI-CD/vi-history-suite/.github/workflows/vi-semantic-pr-review-callable.yml@<ref>
+    with:
+      repository: <owner/repo>
+      pr_number: '<n>'
+      container_image_version: '2026q1'
+      enforce_trusted_ref: false   # external callers rely on their own branch protections
+    secrets:
+      VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
+```
+
+The consumer must register a self-hosted Linux runner labeled
+`vihs-linux-labview-docker` (docker + the NI LabVIEW image) and provide a token
+with `pull-requests: write` on the target repository. The maintainer dispatch
+workflow above delegates to this same unit with `enforce_trusted_ref: true`, so
+both share one source of truth.
+
 ## Evidence
 
 Maintainer evidence should be small and repeatable:
