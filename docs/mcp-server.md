@@ -83,6 +83,13 @@ Posting needs a GitHub token in `GH_TOKEN` (or `GITHUB_TOKEN`) with permission t
 comment on the pull request. Omit `--post-comment` to print the review or write
 it to `--out <dir>` (as `vi-semantic-pr-review.md` and `.json`).
 
+When a changed VI cannot be compared, the review surfaces the reason (e.g.
+`failed (command-exited-nonzero)`) in the summary table and a per-VI detail
+block, so a reviewer sees an actionable signal in the comment itself. Add
+`--fail-on-incomplete` to make the CLI exit non-zero when any VI was not
+compared; the sticky comment and artifacts are still produced (the default
+stays exit 0 so a partial review still posts).
+
 ## The open VI-diff standard
 
 The three models are published as versioned Draft-07 JSON Schemas so that other

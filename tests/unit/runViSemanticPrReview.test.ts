@@ -45,4 +45,9 @@ describe('runViSemanticPrReview parseArgs', () => {
       '--repo must be in "owner/repo" form'
     );
   });
+
+  it('defaults --fail-on-incomplete off and enables it when the flag is present', () => {
+    expect(parseArgs([...BASE]).failOnIncomplete).toBe(false);
+    expect(parseArgs([...BASE, '--fail-on-incomplete']).failOnIncomplete).toBe(true);
+  });
 });
