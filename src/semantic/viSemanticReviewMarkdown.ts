@@ -100,14 +100,29 @@ export function renderViSemanticHistoryMarkdown(history: ViSemanticHistory): str
   return lines.join('\n');
 }
 
+/** A hosted image reference embedded in a review's per-VI detail block. */
+export interface ReviewImageRef {
+  caption: string;
+  url: string;
+}
+
+function imageAlt(text: string): string {
+  return text.replace(/[[\]]/g, '').replace(/\r?\n/g, ' ').trim();
+}
+
 /**
  * Renders a PR review as a review-ready, "sticky" Markdown comment: a hidden
  * upsert marker, a summary line, a per-VI result table, and detail blocks for
  * the VIs that changed (reusing the shared single-comparison renderer). The
  * leading {@link VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER} lets a poster update the
  * one review comment in place rather than adding a fresh comment each run.
+ * When `options.imagesByVi` supplies hosted image URLs for a VI, they are
+ * embedded as a collapsed visual-diff gallery in that VI's detail block.
  */
-export function renderViSemanticPrReviewMarkdown(review: ViSemanticPrReview): string {
+export function renderViSemanticPrReviewMarkdown(
+  review: ViSemanticPrReview,
+  options: { imagesByVi?: ReadonlyMap<string, readonly ReviewImageRef[]> } = {}
+): string {
   const lines: string[] = [
     VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
     '## VI semantic review',
@@ -142,6 +157,18 @@ export function renderViSemanticPrReviewMarkdown(review: ViSemanticPrReview): st
   for (const entry of review.entries) {
     if (entry.status === 'completed' && entry.hasDifferences) {
       lines.push(`#### ${escapeCell(entry.relativePath)}`, '', renderViSemanticComparisonMarkdown(entry.model), '');
+      const images = options.imagesByVi?.get(entry.relativePath) ?? [];
+      if (images.length > 0) {
+        lines.push(
+          '<details>',
+          `<summary>Visual diff (${images.length} image${images.length === 1 ? '' : 's'})</summary>`,
+          ''
+        );
+        for (const image of images) {
+          lines.push(`![${imageAlt(image.caption)}](${image.url})`, '');
+        }
+        lines.push('</details>', '');
+      }
     } else if (entry.status !== 'completed') {
       lines.push(
         `#### ${escapeCell(entry.relativePath)}`,

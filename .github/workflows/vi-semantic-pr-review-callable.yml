@@ -39,6 +39,11 @@ on:
         required: false
         default: true
         type: boolean
+      publish_images:
+        description: 'Upload each changed VI''s overview difference images to an assets branch and embed them inline in the review comment. Requires the token to also have contents: write on the target repository; a hosting failure is best-effort and never blocks the textual review.'
+        required: false
+        default: false
+        type: boolean
     secrets:
       VI_REVIEW_TARGET_TOKEN:
         description: 'Token with pull-requests: write on the target repository. Posted cross-repo, so the workflow GITHUB_TOKEN is insufficient.'
@@ -189,6 +194,7 @@ jobs:
           TARGET_REPOSITORY: ${{ inputs.repository }}
           TARGET_PR_NUMBER: ${{ inputs.pr_number }}
           CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
+          PUBLISH_IMAGES: ${{ inputs.publish_images }}
         run: |
           # The docker comparison bind-mounts its staging directory into the
           # LabVIEW container. snap-packaged Docker runs in a private mount
@@ -206,13 +212,18 @@ jobs:
           # bare version, which would run the wrong image for a non-default
           # container_image_version even though the prerequisite step validated
           # the requested one.
+          # Optionally publish inline diff images (needs a contents:write token);
+          # off by default so it does not force a token-scope change.
+          publish_flag=""
+          if [ "$PUBLISH_IMAGES" = "true" ]; then publish_flag="--publish-images"; fi
           node out/cli/runViSemanticPrReview.js \
             --repository-root target-clone \
             --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA" \
             --runtime-provider docker --container-image-version "${CONTAINER_IMAGE_VERSION}-linux" \
             --out review-out \
             --announce-start \
-            --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY"
+            --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" \
+            $publish_flag
 
       - name: Upload Review Artifact
         if: always()

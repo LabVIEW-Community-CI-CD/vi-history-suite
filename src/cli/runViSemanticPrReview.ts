@@ -7,11 +7,15 @@ import {
   planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
+  reviewReportFileName,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
   VI_SEMANTIC_PR_REVIEW_SCHEMA,
+  type ReviewImageRef,
   type ViSemanticPrReview
 } from '../semantic/viSemanticPrReview';
 import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyPrComment';
+import { collectOverviewImageUploads } from '../semantic/viComparisonReportImages';
+import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportParser';
 
 /**
  * Headless CLI for the VI semantic PR review: compares the VIs changed between
@@ -29,7 +33,7 @@ import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyP
  *   node out/cli/runViSemanticPrReview.js \
  *     --repository-root <path> --base <ref> --head <ref> \
  *     [--out <dir>] [--runtime-provider docker] [--container-image-version <v>] \
- *     [--post-comment --pr <number> --repo <owner/repo>] [--announce-start] [--fail-on-incomplete]
+ *     [--post-comment --pr <number> --repo <owner/repo>] [--announce-start] [--fail-on-incomplete] [--publish-images]
  *
  * Alternatively, post a previously produced review artifact without recomputing
  * the (expensive, container-backed) comparison:
@@ -53,6 +57,8 @@ export interface ParsedArgs {
   repo?: { owner: string; repo: string };
   failOnIncomplete: boolean;
   announceStart: boolean;
+  publishImages: boolean;
+  assetsRef: string;
 }
 
 function parseRepo(value: string): { owner: string; repo: string } {
@@ -131,6 +137,22 @@ export function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
+  const publishImages = values.get('publish-images') === 'true';
+  if (publishImages) {
+    // Publishing inline diff images uploads them to the target repo (an assets
+    // branch) and embeds their URLs in the posted comment, so it only makes
+    // sense when posting a freshly computed review to a known repo.
+    if (!postComment || repo === undefined) {
+      throw new Error('--publish-images requires --post-comment with --pr and --repo');
+    }
+    if (fromFile !== undefined) {
+      throw new Error('--publish-images cannot be combined with --from-file');
+    }
+  }
+  const assetsRefRaw = values.get('assets-ref');
+  const assetsRef =
+    assetsRefRaw !== undefined && assetsRefRaw !== 'true' ? assetsRefRaw : 'vi-review-assets';
+
   return {
     repositoryRoot,
     base,
@@ -143,7 +165,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
     pr,
     repo,
     failOnIncomplete: values.get('fail-on-incomplete') === 'true',
-    announceStart
+    announceStart,
+    publishImages,
+    assetsRef
   };
 }
 
@@ -156,7 +180,7 @@ interface GithubIssueComment {
 
 async function githubRequest(
   token: string,
-  method: 'GET' | 'POST' | 'PATCH',
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT',
   url: string,
   body?: unknown
 ): Promise<Response> {
@@ -244,6 +268,122 @@ async function postStickyReviewComment(
     { body: plan.body }
   );
   return 'create';
+}
+
+async function ensureAssetsBranch(
+  token: string,
+  owner: string,
+  repo: string,
+  ref: string
+): Promise<void> {
+  const repoInfo = (await (
+    await githubRequest(token, 'GET', `${GITHUB_API_BASE}/repos/${owner}/${repo}`)
+  ).json()) as { default_branch?: string };
+  const defaultBranch = repoInfo.default_branch ?? 'main';
+  const headRef = (await (
+    await githubRequest(
+      token,
+      'GET',
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/ref/heads/${encodeURIComponent(defaultBranch)}`
+    )
+  ).json()) as { object?: { sha?: string } };
+  const sha = headRef.object?.sha;
+  if (!sha) {
+    throw new Error(`could not resolve ${owner}/${repo} default branch head for the assets branch`);
+  }
+  try {
+    await githubRequest(token, 'POST', `${GITHUB_API_BASE}/repos/${owner}/${repo}/git/refs`, {
+      ref: `refs/heads/${ref}`,
+      sha
+    });
+  } catch (error) {
+    // 422 = the assets branch already exists, expected on re-runs; anything else
+    // is a real failure.
+    if (!(error instanceof Error && error.message.includes('422'))) {
+      throw error;
+    }
+  }
+}
+
+function encodeContentPath(filePath: string): string {
+  return filePath.split('/').map(encodeURIComponent).join('/');
+}
+
+async function uploadReviewImage(
+  token: string,
+  owner: string,
+  repo: string,
+  ref: string,
+  filePath: string,
+  base64: string
+): Promise<string> {
+  const encoded = encodeContentPath(filePath);
+  await githubRequest(
+    token,
+    'PUT',
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${encoded}`,
+    { message: `vi-semantic-pr-review: add ${filePath}`, content: base64, branch: ref }
+  );
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${encoded}`;
+}
+
+/**
+ * Uploads each changed VI's overview difference images to an assets branch in
+ * the target repository and returns a map of VI -> hosted image refs for the
+ * renderer to embed inline (GitHub strips `data:` image URIs from comments, so
+ * the images must be hosted at a fetchable URL). Requires a token with
+ * `contents: write`. Best-effort per image/VI: a hosting hiccup is skipped so it
+ * never blocks the textual review from posting.
+ */
+async function publishReviewImages(
+  args: ParsedArgs,
+  review: ViSemanticPrReview
+): Promise<Map<string, ReviewImageRef[]>> {
+  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error('--publish-images requires a GitHub token in GH_TOKEN or GITHUB_TOKEN');
+  }
+  const { owner, repo } = args.repo as { owner: string; repo: string };
+  const ref = args.assetsRef;
+  const byVi = new Map<string, ReviewImageRef[]>();
+  await ensureAssetsBranch(token, owner, repo, ref);
+  const runKey = `${args.pr}-${Date.now()}`;
+  for (const entry of review.entries) {
+    if (
+      entry.status !== 'completed' ||
+      !entry.hasDifferences ||
+      typeof entry.reportFilePath !== 'string'
+    ) {
+      continue;
+    }
+    let uploads;
+    try {
+      const parsed = await parseNiComparisonReportFile(entry.reportFilePath);
+      uploads = collectOverviewImageUploads(parsed.overviewSections);
+    } catch {
+      continue;
+    }
+    if (uploads.length === 0) {
+      continue;
+    }
+    const safeVi = reviewReportFileName(entry.relativePath).replace(/\.html$/, '');
+    const refs: ReviewImageRef[] = [];
+    for (let index = 0; index < uploads.length; index += 1) {
+      const upload = uploads[index];
+      const extension = upload.contentType.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'png';
+      const filePath = `vi-review/${runKey}/${safeVi}/${index}.${extension}`;
+      try {
+        const url = await uploadReviewImage(token, owner, repo, ref, filePath, upload.base64);
+        refs.push({ caption: upload.caption, url });
+      } catch {
+        // Best-effort: skip an image that fails to upload rather than aborting.
+      }
+    }
+    if (refs.length > 0) {
+      byVi.set(entry.relativePath, refs);
+    }
+  }
+  return byVi;
 }
 
 /**
@@ -338,7 +478,16 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
           ? { provider: args.provider, containerImageVersion: args.containerImageVersion }
           : undefined
       });
-  const markdown = renderViSemanticPrReviewMarkdown(review);
+  let imagesByVi: Map<string, ReviewImageRef[]> | undefined;
+  if (args.publishImages && args.fromFile === undefined) {
+    imagesByVi = await publishReviewImages(args, review);
+    const imageCount = [...imagesByVi.values()].reduce((total, refs) => total + refs.length, 0);
+    const { owner, repo } = args.repo as { owner: string; repo: string };
+    process.stderr.write(
+      `vi-semantic-pr-review: published ${imageCount} diff image(s) to ${owner}/${repo}@${args.assetsRef}\n`
+    );
+  }
+  const markdown = renderViSemanticPrReviewMarkdown(review, imagesByVi ? { imagesByVi } : {});
   const summary = `reviewed ${review.reviewedCount} of ${review.changedViCount} changed VI(s)`;
 
   if (args.postComment) {

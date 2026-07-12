@@ -445,7 +445,11 @@ with an actionable message.
 
 The only maintainer setup is the `VI_REVIEW_TARGET_TOKEN` secret (a token with
 `pull-requests: write` on the target repositories), used to post the sticky
-comment cross-repo.
+comment cross-repo. To also embed inline diff images (the optional
+`publish_images` input), that token additionally needs `contents: write` (the
+images are uploaded to a `vi-review-assets` branch in the target repository);
+without it, image publishing is skipped best-effort and the textual review still
+posts.
 
 ### snap-packaged Docker
 
