@@ -11,6 +11,10 @@ This changelog records user-facing release history for `vi-history-suite`.
   compare and walk VI revisions, index a repository's VIs, and fetch or validate
   the published VI-diff schemas. See [docs/mcp-server.md](./docs/mcp-server.md).
   Requires VS Code 1.101 or later (#756, #757).
+- The Source Control and Explorer views now show a badge and hover summary on a
+  changed VI once you have compared its uncommitted change against the latest
+  committed revision, so you can see what changed without reopening the full
+  comparison report (#762).
 
 ## [1.33.2] - 2026-06-25
 
