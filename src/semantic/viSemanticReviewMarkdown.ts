@@ -1,11 +1,20 @@
 import type { ViChangeSurface, ViSemanticComparisonModel } from './viSemanticModel';
 import type { ViSemanticHistory } from './viSemanticHistory';
+import type { ViSemanticPrReview } from './viSemanticPrReview';
 
 /**
- * Pure renderers that turn the semantic comparison / history models into
- * review-ready Markdown blocks (for PR comments, CI job summaries, or SCM
+ * Pure renderers that turn the semantic comparison / history / PR-review models
+ * into review-ready Markdown blocks (for PR comments, CI job summaries, or SCM
  * surfaces). Type-only imports keep this a dependency-free leaf module.
  */
+
+/**
+ * Hidden HTML-comment marker prepended to a rendered PR review so any poster can
+ * find and update the single "sticky" review comment instead of creating a new
+ * one on every run. Invisible in rendered Markdown; present in the raw body.
+ */
+export const VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER =
+  '<!-- vi-history-suite:vi-semantic-pr-review -->';
 
 const SURFACE_LABELS: Record<ViChangeSurface, string> = {
   'front-panel': 'front panel',
@@ -89,4 +98,48 @@ export function renderViSemanticHistoryMarkdown(history: ViSemanticHistory): str
     }
   }
   return lines.join('\n');
+}
+
+/**
+ * Renders a PR review as a review-ready, "sticky" Markdown comment: a hidden
+ * upsert marker, a summary line, a per-VI result table, and detail blocks for
+ * the VIs that changed (reusing the shared single-comparison renderer). The
+ * leading {@link VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER} lets a poster update the
+ * one review comment in place rather than adding a fresh comment each run.
+ */
+export function renderViSemanticPrReviewMarkdown(review: ViSemanticPrReview): string {
+  const lines: string[] = [
+    VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
+    '## VI semantic review',
+    '',
+    review.narrative,
+    ''
+  ];
+
+  if (review.entries.length === 0) {
+    return `${lines.join('\n').trimEnd()}\n`;
+  }
+
+  lines.push('| VI | Result | Changed surfaces |', '| --- | --- | --- |');
+  for (const entry of review.entries) {
+    if (entry.status === 'completed') {
+      const result = entry.hasDifferences ? 'Changed' : 'No differences';
+      const surfaces =
+        entry.hasDifferences && entry.model.changedSurfaces.length > 0
+          ? surfaceList(entry.model.changedSurfaces)
+          : '—';
+      lines.push(`| ${escapeCell(entry.relativePath)} | ${result} | ${escapeCell(surfaces)} |`);
+    } else {
+      lines.push(`| ${escapeCell(entry.relativePath)} | ${entry.status} | — |`);
+    }
+  }
+  lines.push('');
+
+  for (const entry of review.entries) {
+    if (entry.status === 'completed' && entry.hasDifferences) {
+      lines.push(`#### ${escapeCell(entry.relativePath)}`, '', renderViSemanticComparisonMarkdown(entry.model), '');
+    }
+  }
+
+  return `${lines.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd()}\n`;
 }

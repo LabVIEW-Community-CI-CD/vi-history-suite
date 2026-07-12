@@ -13,6 +13,7 @@ import {
   buildViSemanticPrReview,
   isViSourcePath,
   renderViSemanticPrReviewMarkdown,
+  VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
   VI_SEMANTIC_PR_REVIEW_SCHEMA,
   type ViSemanticPrReviewDeps
 } from '../../src/semantic/viSemanticPrReview';
@@ -162,6 +163,7 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     );
 
     const markdown = renderViSemanticPrReviewMarkdown(review);
+    expect(markdown.startsWith(VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER)).toBe(true);
     expect(markdown).toContain('## VI semantic review');
     expect(markdown).toContain('| VI | Result | Changed surfaces |');
     expect(markdown).toContain('| src/A.vi | Changed | block diagram |');
@@ -178,6 +180,7 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     );
 
     const markdown = renderViSemanticPrReviewMarkdown(review);
+    expect(markdown.startsWith(VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER)).toBe(true);
     expect(markdown).toContain('## VI semantic review');
     expect(markdown).toContain('No changed VIs');
     expect(markdown).not.toContain('| VI |');

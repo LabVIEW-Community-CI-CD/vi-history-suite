@@ -5,21 +5,31 @@ import * as path from 'node:path';
 import {
   buildViSemanticPrReview,
   renderViSemanticPrReviewMarkdown,
+  VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
   type ViSemanticPrReviewInput
 } from '../semantic/viSemanticPrReview';
+import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyPrComment';
 
 /**
  * Headless CLI for the VI semantic PR review: compares the VIs changed between
- * two revisions of a repository and writes a review-ready Markdown comment plus
- * the machine-readable `vi-history-suite/vi-semantic-pr-review@v1` artifact. It
- * wires the real container-backed comparison; all aggregation and rendering
- * logic lives in the pure, unit-tested `viSemanticPrReview` module, so this
- * entrypoint is thin and excluded from coverage like `runViSemanticMcpServer`.
+ * two revisions of a repository and produces a review-ready Markdown comment
+ * plus the machine-readable `vi-history-suite/vi-semantic-pr-review@v1`
+ * artifact. It can write the artifacts to disk, print them, and/or post the
+ * review as a "sticky" pull-request comment (created once, then updated in
+ * place on later runs) so an AI reviewer or CI job keeps a single living VI
+ * summary on the PR. It wires the real container-backed comparison; all
+ * aggregation, rendering, and sticky-comment planning live in pure, unit-tested
+ * modules, so this entrypoint stays thin and is excluded from coverage like
+ * `runViSemanticMcpServer`.
  *
  * Usage:
  *   node out/cli/runViSemanticPrReview.js \
  *     --repository-root <path> --base <ref> --head <ref> \
- *     [--out <dir>] [--runtime-provider docker] [--container-image-version <v>]
+ *     [--out <dir>] [--runtime-provider docker] [--container-image-version <v>] \
+ *     [--post-comment --pr <number> --repo <owner/repo>]
+ *
+ * Posting requires a GitHub token in GH_TOKEN or GITHUB_TOKEN with permission to
+ * comment on the target pull request.
  */
 
 interface ParsedArgs {
@@ -29,6 +39,17 @@ interface ParsedArgs {
   outDir?: string;
   provider?: 'host' | 'docker';
   containerImageVersion?: string;
+  postComment: boolean;
+  pr?: number;
+  repo?: { owner: string; repo: string };
+}
+
+function parseRepo(value: string): { owner: string; repo: string } {
+  const parts = value.split('/');
+  if (parts.length !== 2 || parts[0].length === 0 || parts[1].length === 0) {
+    throw new Error('--repo must be in "owner/repo" form');
+  }
+  return { owner: parts[0], repo: parts[1] };
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -59,14 +80,130 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error('--runtime-provider must be "host" or "docker"');
   }
 
+  const postComment = values.get('post-comment') === 'true';
+  const repo = values.has('repo') ? parseRepo(values.get('repo') as string) : undefined;
+  let pr: number | undefined;
+  const prRaw = values.get('pr');
+  if (prRaw !== undefined && prRaw !== 'true') {
+    pr = Number.parseInt(prRaw, 10);
+    if (!Number.isInteger(pr) || pr <= 0) {
+      throw new Error('--pr must be a positive integer');
+    }
+  }
+  if (postComment && (pr === undefined || repo === undefined)) {
+    throw new Error('--post-comment requires --pr <number> and --repo <owner/repo>');
+  }
+
   return {
     repositoryRoot,
     base,
     head,
     outDir: values.get('out'),
     provider,
-    containerImageVersion: values.get('container-image-version')
+    containerImageVersion: values.get('container-image-version'),
+    postComment,
+    pr,
+    repo
   };
+}
+
+const GITHUB_API_BASE = process.env.GITHUB_API_URL ?? 'https://api.github.com';
+
+interface GithubIssueComment {
+  id: number;
+  body?: string;
+}
+
+async function githubRequest(
+  token: string,
+  method: 'GET' | 'POST' | 'PATCH',
+  url: string,
+  body?: unknown
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'vi-history-suite-pr-review'
+  };
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const response = await fetch(url, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => '')).slice(0, 500);
+    throw new Error(
+      `GitHub API ${method} ${url} failed: ${response.status} ${response.statusText}${
+        detail ? ` - ${detail}` : ''
+      }`
+    );
+  }
+  return response;
+}
+
+async function listPullRequestComments(
+  token: string,
+  owner: string,
+  repo: string,
+  pr: number
+): Promise<ExistingPrComment[]> {
+  const comments: ExistingPrComment[] = [];
+  const perPage = 100;
+  for (let page = 1; page <= 20; page += 1) {
+    const url = `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${pr}/comments?per_page=${perPage}&page=${page}`;
+    const response = await githubRequest(token, 'GET', url);
+    const batch = (await response.json()) as GithubIssueComment[];
+    for (const comment of batch) {
+      comments.push({
+        id: comment.id,
+        body: typeof comment.body === 'string' ? comment.body : ''
+      });
+    }
+    if (batch.length < perPage) {
+      break;
+    }
+  }
+  return comments;
+}
+
+async function postStickyReviewComment(
+  args: ParsedArgs,
+  markdown: string
+): Promise<'create' | 'update'> {
+  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error('--post-comment requires a GitHub token in GH_TOKEN or GITHUB_TOKEN');
+  }
+  const { owner, repo } = args.repo as { owner: string; repo: string };
+  const pr = args.pr as number;
+
+  const existing = await listPullRequestComments(token, owner, repo, pr);
+  const plan = planStickyPrComment({
+    existingComments: existing,
+    marker: VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
+    body: markdown
+  });
+
+  if (plan.action === 'update') {
+    await githubRequest(
+      token,
+      'PATCH',
+      `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/comments/${plan.commentId}`,
+      { body: plan.body }
+    );
+    return 'update';
+  }
+  await githubRequest(
+    token,
+    'POST',
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/issues/${pr}/comments`,
+    { body: plan.body }
+  );
+  return 'create';
 }
 
 export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> {
@@ -83,6 +220,17 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
 
   const review = await buildViSemanticPrReview(input);
   const markdown = renderViSemanticPrReviewMarkdown(review);
+  const summary = `reviewed ${review.reviewedCount} of ${review.changedViCount} changed VI(s)`;
+
+  if (args.postComment) {
+    const action = await postStickyReviewComment(args, markdown);
+    const { owner, repo } = args.repo as { owner: string; repo: string };
+    process.stderr.write(
+      `vi-semantic-pr-review: ${
+        action === 'update' ? 'updated' : 'created'
+      } sticky comment on ${owner}/${repo}#${args.pr}; ${summary}\n`
+    );
+  }
 
   if (args.outDir) {
     await fs.mkdir(args.outDir, { recursive: true });
@@ -93,9 +241,11 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
       'utf8'
     );
     process.stderr.write(
-      `vi-semantic-pr-review: reviewed ${review.reviewedCount} of ${review.changedViCount} changed VI(s); wrote artifacts to ${args.outDir}\n`
+      `vi-semantic-pr-review: ${summary}; wrote artifacts to ${args.outDir}\n`
     );
-  } else {
+  }
+
+  if (!args.postComment && !args.outDir) {
     process.stdout.write(markdown);
   }
 
