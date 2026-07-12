@@ -4436,7 +4436,10 @@ Missing numeric IDs are intentional.
   - VHS-REQ-661.4: The workflow clones the target repository, resolves the
     review range as the merge-base of the PR base branch and the PR head commit,
     and invokes `runViSemanticPrReview` over that range with the docker runtime
-    provider.
+    provider. The docker comparison stages under the runner workspace temp
+    (`$RUNNER_TEMP`) rather than the default `/tmp`, so a snap-packaged Docker
+    daemon (which uses a private `/tmp` mount namespace) can bind-mount the
+    staging tree into the LabVIEW container.
   - VHS-REQ-661.5: Posting to the target pull request uses a cross-repository
     token supplied through a secret (`VI_REVIEW_TARGET_TOKEN`) passed as
     `GH_TOKEN`, and the sticky comment is upserted by the hidden marker so

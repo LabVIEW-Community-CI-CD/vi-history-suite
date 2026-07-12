@@ -121,6 +121,17 @@ jobs:
           TARGET_PR_NUMBER: ${{ inputs.pr_number }}
           CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
         run: |
+          # The docker comparison bind-mounts its staging directory into the
+          # LabVIEW container. snap-packaged Docker runs in a private mount
+          # namespace with its own /tmp, so a staging directory under the
+          # default /tmp is invisible inside the container and the compare fails
+          # with "VI path invalid or does not exist". Point the CLI's temp root
+          # at a directory under the runner workspace ($RUNNER_TEMP lives under
+          # the runner home), which snap Docker can bind-mount, so staging is
+          # visible in the container on both snap and native Docker hosts.
+          review_tmp="$RUNNER_TEMP/vi-semantic-pr-review-staging"
+          mkdir -p "$review_tmp"
+          export TMPDIR="$review_tmp"
           node out/cli/runViSemanticPrReview.js \
             --repository-root target-clone \
             --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA" \

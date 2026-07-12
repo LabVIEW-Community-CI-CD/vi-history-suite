@@ -58,6 +58,18 @@ describe('VI semantic PR review workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('--runtime-provider docker');
   });
 
+  it('stages the docker comparison under the runner temp so snap Docker can bind-mount it (VHS-REQ-661.4)', () => {
+    const workflow = readWorkflow();
+
+    // snap-packaged Docker uses a private /tmp mount namespace, so a staging
+    // directory under the default /tmp is invisible inside the LabVIEW
+    // container and the compare fails with "VI path invalid or does not
+    // exist". The review step must relocate the CLI temp root under
+    // $RUNNER_TEMP (which snap Docker can bind-mount) before invoking the CLI.
+    expect(workflow).toContain('export TMPDIR=');
+    expect(workflow).toContain('$RUNNER_TEMP/vi-semantic-pr-review-staging');
+  });
+
   it('posts with the cross-repo secret token as GH_TOKEN and upserts a sticky comment (VHS-REQ-661.5)', () => {
     const workflow = readWorkflow();
 
