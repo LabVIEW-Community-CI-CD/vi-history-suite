@@ -449,7 +449,9 @@ comment cross-repo. To also embed inline diff images (the optional
 `publish_images` input), that token additionally needs `contents: write` (the
 images are uploaded to a `vi-review-assets` branch in the target repository);
 without it, image publishing is skipped best-effort and the textual review still
-posts.
+posts. The optional `create_commit_status` input additionally posts a gateable
+"VI Semantic Review" commit status and needs `statuses: write`; it too degrades
+best-effort.
 
 ### snap-packaged Docker
 

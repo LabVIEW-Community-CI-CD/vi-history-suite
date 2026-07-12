@@ -15,6 +15,7 @@ import {
 } from '../semantic/viSemanticPrReview';
 import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyPrComment';
 import { collectOverviewImageUploads } from '../semantic/viComparisonReportImages';
+import { planReviewCommitStatus } from '../semantic/viReviewCommitStatus';
 import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportParser';
 
 /**
@@ -33,7 +34,7 @@ import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportPars
  *   node out/cli/runViSemanticPrReview.js \
  *     --repository-root <path> --base <ref> --head <ref> \
  *     [--out <dir>] [--runtime-provider docker] [--container-image-version <v>] \
- *     [--post-comment --pr <number> --repo <owner/repo>] [--announce-start] [--fail-on-incomplete] [--publish-images]
+ *     [--post-comment --pr <number> --repo <owner/repo>] [--announce-start] [--fail-on-incomplete] [--publish-images] [--commit-status]
  *
  * Alternatively, post a previously produced review artifact without recomputing
  * the (expensive, container-backed) comparison:
@@ -59,6 +60,7 @@ export interface ParsedArgs {
   announceStart: boolean;
   publishImages: boolean;
   assetsRef: string;
+  commitStatus: boolean;
 }
 
 function parseRepo(value: string): { owner: string; repo: string } {
@@ -153,6 +155,11 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const assetsRef =
     assetsRefRaw !== undefined && assetsRefRaw !== 'true' ? assetsRefRaw : 'vi-review-assets';
 
+  const commitStatus = values.get('commit-status') === 'true';
+  if (commitStatus && repo === undefined) {
+    throw new Error('--commit-status requires --repo <owner/repo>');
+  }
+
   return {
     repositoryRoot,
     base,
@@ -167,7 +174,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
     failOnIncomplete: values.get('fail-on-incomplete') === 'true',
     announceStart,
     publishImages,
-    assetsRef
+    assetsRef,
+    commitStatus
   };
 }
 
@@ -386,6 +394,42 @@ async function publishReviewImages(
   return byVi;
 }
 
+const COMMIT_SHA = /^[0-9a-f]{40}$/i;
+
+/**
+ * Posts a "VI Semantic Review" commit status on the reviewed PR's head commit,
+ * so the review is a branch-protection-gateable status on the pull request. A
+ * commit status (unlike a check run, which only a GitHub App can create) works
+ * with a plain token that has `statuses: write`, matching this project's
+ * PAT-based token model. Requires a full 40-character head commit SHA (the
+ * review model's selectedHash). Throws on misconfiguration; the caller treats it
+ * best-effort so a status failure never blocks the textual review.
+ */
+async function postReviewCommitStatus(
+  args: ParsedArgs,
+  review: ViSemanticPrReview
+): Promise<string> {
+  const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
+  if (!token) {
+    throw new Error('--commit-status requires a GitHub token in GH_TOKEN or GITHUB_TOKEN');
+  }
+  const { owner, repo } = args.repo as { owner: string; repo: string };
+  const headSha = review.selectedHash;
+  if (!COMMIT_SHA.test(headSha)) {
+    throw new Error(
+      `--commit-status requires a 40-character commit SHA as the head (got "${headSha}"); pass --head <sha>`
+    );
+  }
+  const plan = planReviewCommitStatus(review, { failOnIncomplete: args.failOnIncomplete });
+  await githubRequest(
+    token,
+    'POST',
+    `${GITHUB_API_BASE}/repos/${owner}/${repo}/statuses/${headSha}`,
+    { state: plan.state, context: plan.context, description: plan.description }
+  );
+  return plan.state;
+}
+
 /**
  * Loads a previously produced `vi-history-suite/vi-semantic-pr-review@v1`
  * artifact so the review can be posted without recomputing the (expensive,
@@ -498,6 +542,26 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
         action === 'update' ? 'updated' : 'created'
       } sticky comment on ${owner}/${repo}#${args.pr}; ${summary}\n`
     );
+  }
+
+  if (args.commitStatus) {
+    try {
+      const state = await postReviewCommitStatus(args, review);
+      const { owner, repo } = args.repo as { owner: string; repo: string };
+      process.stderr.write(
+        `vi-semantic-pr-review: posted "${state}" commit status on ${owner}/${repo}@${review.selectedHash.slice(
+          0,
+          8
+        )}\n`
+      );
+    } catch (error) {
+      // Best-effort: a status failure must not block the textual review.
+      process.stderr.write(
+        `vi-semantic-pr-review: commit status skipped: ${
+          error instanceof Error ? error.message : String(error)
+        }\n`
+      );
+    }
   }
 
   if (args.outDir) {

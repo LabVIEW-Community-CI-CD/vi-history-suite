@@ -44,6 +44,11 @@ on:
         required: false
         default: false
         type: boolean
+      create_commit_status:
+        description: 'Post a "VI Semantic Review" commit status on the PR head commit (a gateable status). Requires the token to also have statuses: write on the target repository; best-effort.'
+        required: false
+        default: false
+        type: boolean
     secrets:
       VI_REVIEW_TARGET_TOKEN:
         description: 'Token with pull-requests: write on the target repository. Posted cross-repo, so the workflow GITHUB_TOKEN is insufficient.'
@@ -195,6 +200,7 @@ jobs:
           TARGET_PR_NUMBER: ${{ inputs.pr_number }}
           CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
           PUBLISH_IMAGES: ${{ inputs.publish_images }}
+          CREATE_COMMIT_STATUS: ${{ inputs.create_commit_status }}
         run: |
           # The docker comparison bind-mounts its staging directory into the
           # LabVIEW container. snap-packaged Docker runs in a private mount
@@ -212,10 +218,13 @@ jobs:
           # bare version, which would run the wrong image for a non-default
           # container_image_version even though the prerequisite step validated
           # the requested one.
-          # Optionally publish inline diff images (needs a contents:write token);
-          # off by default so it does not force a token-scope change.
+          # Optionally publish inline diff images (needs a contents:write token)
+          # and/or post a gateable commit status (needs a statuses:write token);
+          # both off by default so they do not force a token-scope change.
           publish_flag=""
           if [ "$PUBLISH_IMAGES" = "true" ]; then publish_flag="--publish-images"; fi
+          status_flag=""
+          if [ "$CREATE_COMMIT_STATUS" = "true" ]; then status_flag="--commit-status"; fi
           node out/cli/runViSemanticPrReview.js \
             --repository-root target-clone \
             --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA" \
@@ -223,7 +232,7 @@ jobs:
             --out review-out \
             --announce-start \
             --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" \
-            $publish_flag
+            $publish_flag $status_flag
 
       - name: Upload Review Artifact
         if: always()
