@@ -11,7 +11,7 @@ import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { loadReviewFromFile, parseArgs } from '../../src/cli/runViSemanticPrReview';
+import { loadReviewFromFile, parseArgs, runViSemanticPrReviewCli } from '../../src/cli/runViSemanticPrReview';
 import { VI_SEMANTIC_PR_REVIEW_SCHEMA } from '../../src/semantic/viSemanticPrReview';
 
 const BASE = ['--repository-root', '/repo', '--base', 'aaaa', '--head', 'bbbb'];
@@ -127,8 +127,76 @@ describe('runViSemanticPrReview loadReviewFromFile', () => {
   it('rejects a JSON file that is not a v1 review', async () => {
     await withTempFile(JSON.stringify({ schema: 'something/else@v9', entries: [] }), async (filePath) => {
       await expect(loadReviewFromFile(filePath)).rejects.toThrow(
-        `--from-file is not a ${VI_SEMANTIC_PR_REVIEW_SCHEMA} review`
+        `--from-file is not a valid ${VI_SEMANTIC_PR_REVIEW_SCHEMA} review`
       );
     });
+  });
+
+  it('rejects a v1-tagged but incomplete artifact (missing narrative/totals/counts)', async () => {
+    await withTempFile(
+      JSON.stringify({ schema: VI_SEMANTIC_PR_REVIEW_SCHEMA, entries: [] }),
+      async (filePath) => {
+        await expect(loadReviewFromFile(filePath)).rejects.toThrow(
+          `--from-file is not a valid ${VI_SEMANTIC_PR_REVIEW_SCHEMA} review`
+        );
+      }
+    );
+  });
+});
+
+describe('runViSemanticPrReview --fail-on-incomplete', () => {
+  async function withReviewFile(
+    review: Record<string, unknown>,
+    run: (filePath: string) => Promise<void>
+  ): Promise<void> {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-incomplete-'));
+    const filePath = path.join(dir, 'review.json');
+    await fs.writeFile(filePath, JSON.stringify(review), 'utf8');
+    try {
+      await run(filePath);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  }
+
+  const baseReview = {
+    schema: VI_SEMANTIC_PR_REVIEW_SCHEMA,
+    repositoryRoot: '/repo',
+    baseHash: 'a',
+    selectedHash: 'b',
+    entries: [],
+    narrative: 'summary'
+  };
+
+  it('exits non-zero when VIs were skipped by the cap even with zero blocked/failed', async () => {
+    // reviewedCount < changedViCount with blockedOrFailed 0 is the cap-gap case
+    // that must still fail closed under --fail-on-incomplete.
+    await withReviewFile(
+      {
+        ...baseReview,
+        changedViCount: 60,
+        reviewedCount: 50,
+        totals: { withDifferences: 50, withoutDifferences: 0, blockedOrFailed: 0 }
+      },
+      async (filePath) => {
+        const code = await runViSemanticPrReviewCli(['--from-file', filePath, '--fail-on-incomplete']);
+        expect(code).toBe(1);
+      }
+    );
+  });
+
+  it('exits zero when every changed VI was reviewed', async () => {
+    await withReviewFile(
+      {
+        ...baseReview,
+        changedViCount: 2,
+        reviewedCount: 2,
+        totals: { withDifferences: 2, withoutDifferences: 0, blockedOrFailed: 0 }
+      },
+      async (filePath) => {
+        const code = await runViSemanticPrReviewCli(['--from-file', filePath, '--fail-on-incomplete']);
+        expect(code).toBe(0);
+      }
+    );
   });
 });
