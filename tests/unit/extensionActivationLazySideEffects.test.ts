@@ -235,11 +235,6 @@ vi.mock('../../src/scenarios/reviewDecisionRecordAction', () => ({
   createReviewDecisionRecordAction: vi.fn(() => vi.fn())
 }));
 
-vi.mock('../../src/review/humanReviewSubmissionAction', () => ({
-  resolveHumanReviewMachineCapability: vi.fn(() => ({ isCanonicalHostMachine: false })),
-  createHumanReviewSubmissionAction: vi.fn(() => vi.fn())
-}));
-
 vi.mock('../../src/git/gitCli', () => ({
   getFileHistoryCount: vi.fn()
 }));

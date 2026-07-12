@@ -31,10 +31,6 @@ import {
   runComparisonReportExport
 } from './reporting/comparisonReportExport';
 import { probeWindowsRegistryHostLabviewAvailable } from './reporting/comparisonRuntimeLocator';
-import {
-  createHumanReviewSubmissionAction,
-  resolveHumanReviewMachineCapability
-} from './review/humanReviewSubmissionAction';
 import { createReviewDecisionRecordAction } from './scenarios/reviewDecisionRecordAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { getViHistoryServiceSettings, ViHistoryService } from './services/viHistoryService';
@@ -314,10 +310,6 @@ export async function activate(
   };
 
   const reviewDecisionRecordAction = createReviewDecisionRecordAction(context);
-  const humanReviewMachineCapability = resolveHumanReviewMachineCapability();
-  const humanReviewSubmissionAction = humanReviewMachineCapability.isCanonicalHostMachine
-    ? createHumanReviewSubmissionAction(context)
-    : undefined;
   const bundledDocumentationAction = createBundledDocumentationAction(context, panelTracker);
   const multiReportDashboardAction = createMultiReportDashboardAction(
     context,
@@ -528,8 +520,7 @@ export async function activate(
           openRetainedComparisonReportAction,
           hasRetainedComparisonReport,
           reviewDecisionRecordAction,
-          bundledDocumentationAction,
-          humanReviewSubmissionAction
+          bundledDocumentationAction
         );
 
         workspaceRuntime = {

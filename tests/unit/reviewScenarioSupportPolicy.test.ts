@@ -24,8 +24,7 @@ describe('review scenario registry and repository support policy (VHS-REQ-610 su
       familyId: 'labview-icon-editor',
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
-      allowBenchmarkStatus: true,
-      allowHumanReviewSubmission: true
+      allowBenchmarkStatus: true
     });
     expect(
       classifyRepositorySupportPolicy('https://github.com/example/labview-icon-editor.git')
