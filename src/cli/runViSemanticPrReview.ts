@@ -250,13 +250,33 @@ export async function loadReviewFromFile(filePath: string): Promise<ViSemanticPr
   } catch {
     throw new Error(`--from-file is not valid JSON: ${filePath}`);
   }
-  if (
-    typeof parsed !== 'object' ||
-    parsed === null ||
-    (parsed as { schema?: unknown }).schema !== VI_SEMANTIC_PR_REVIEW_SCHEMA ||
-    !Array.isArray((parsed as { entries?: unknown }).entries)
-  ) {
-    throw new Error(`--from-file is not a ${VI_SEMANTIC_PR_REVIEW_SCHEMA} review: ${filePath}`);
+  const reject = (): never => {
+    throw new Error(`--from-file is not a valid ${VI_SEMANTIC_PR_REVIEW_SCHEMA} review: ${filePath}`);
+  };
+  if (typeof parsed !== 'object' || parsed === null) {
+    reject();
+  }
+  const candidate = parsed as Record<string, unknown>;
+  // Validate every field the renderer and post path read, not just the schema
+  // tag, so a truncated or hand-edited artifact can never be posted as a sticky
+  // comment with an `undefined` narrative or bogus counts.
+  const totals = candidate.totals as Record<string, unknown> | undefined;
+  const isValid =
+    candidate.schema === VI_SEMANTIC_PR_REVIEW_SCHEMA &&
+    typeof candidate.repositoryRoot === 'string' &&
+    typeof candidate.baseHash === 'string' &&
+    typeof candidate.selectedHash === 'string' &&
+    typeof candidate.changedViCount === 'number' &&
+    typeof candidate.reviewedCount === 'number' &&
+    typeof candidate.narrative === 'string' &&
+    Array.isArray(candidate.entries) &&
+    typeof totals === 'object' &&
+    totals !== null &&
+    typeof totals.withDifferences === 'number' &&
+    typeof totals.withoutDifferences === 'number' &&
+    typeof totals.blockedOrFailed === 'number';
+  if (!isValid) {
+    reject();
   }
   return parsed as ViSemanticPrReview;
 }
@@ -307,10 +327,17 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
   // Opt-in non-zero exit when any VI could not be compared. The review comment
   // and artifacts are still produced above; this only affects the exit code so
   // CI can choose to fail a run with a partial review while keeping the default
-  // (exit 0) behavior for reviewers who just want the comment.
-  if (args.failOnIncomplete && review.totals.blockedOrFailed > 0) {
+  // (exit 0) behavior for reviewers who just want the comment. "Incomplete"
+  // covers both blocked/failed VIs and VIs skipped by the maxVis cap
+  // (reviewedCount < changedViCount), so a capped run does not slip through as a
+  // success.
+  const capGap = Math.max(0, review.changedViCount - review.reviewedCount);
+  const incompleteCount = review.totals.blockedOrFailed + capGap;
+  if (args.failOnIncomplete && incompleteCount > 0) {
     process.stderr.write(
-      `vi-semantic-pr-review: ${review.totals.blockedOrFailed} VI(s) not compared; failing due to --fail-on-incomplete\n`
+      `vi-semantic-pr-review: ${incompleteCount} VI(s) not compared ` +
+        `(${review.totals.blockedOrFailed} blocked/failed, ${capGap} skipped by cap); ` +
+        `failing due to --fail-on-incomplete\n`
     );
     return 1;
   }
