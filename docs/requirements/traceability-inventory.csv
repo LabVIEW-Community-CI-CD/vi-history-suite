@@ -309,4 +309,5 @@ tests/unit/viRepositoryIndex.test.ts,supporting,No,Repository VI index orchestra
 tests/unit/viSemanticSchemas.test.ts,supporting,No,VI semantic JSON Schema standard unit tests covering the subset validator constructs schema-id drift and real-model conformance; supporting infrastructure not yet requirement-mapped.
 tests/unit/viSemanticPrReview.test.ts,supporting,No,VI semantic PR review aggregator and renderer unit tests; supporting infrastructure not yet requirement-mapped.
 tests/unit/stickyPrComment.test.ts,supporting,No,Sticky pull-request comment planner unit tests covering create-vs-update marker matching idempotent marker prepend and earliest-match selection; supporting infrastructure not yet requirement-mapped.
+tests/unit/runViSemanticPrReview.test.ts,supporting,No,VI semantic PR-review CLI argument-parser unit tests locking full-string --pr integer validation and --repo/--post-comment guards before any GitHub write; supporting infrastructure not yet requirement-mapped.
 tests/unit/viSemanticPrReviewWorkflow.test.ts,mapped,Yes,On-demand VI semantic PR review workflow contract test mapped to VHS-REQ-661.
