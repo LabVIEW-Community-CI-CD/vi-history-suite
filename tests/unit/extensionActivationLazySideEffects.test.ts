@@ -99,7 +99,8 @@ vi.mock('vscode', () => ({
   window: {
     showInformationMessage: showInformationMessageMock,
     showWarningMessage: showWarningMessageMock,
-    registerCustomEditorProvider: vi.fn(() => ({ dispose: vi.fn() }))
+    registerCustomEditorProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    registerFileDecorationProvider: vi.fn(() => ({ dispose: vi.fn() }))
   },
   workspace: {
     get isTrusted() {
@@ -111,6 +112,13 @@ vi.mock('vscode', () => ({
     onDidChangeConfiguration: onDidChangeConfigurationMock,
     onDidChangeWorkspaceFolders: onDidChangeWorkspaceFoldersMock,
     onDidGrantWorkspaceTrust: onDidGrantWorkspaceTrustMock
+  },
+  // The VHS-REQ-660 Source Control decoration provider constructs an
+  // EventEmitter and registers a file-decoration provider during activation.
+  EventEmitter: class {
+    event = vi.fn();
+    fire = vi.fn();
+    dispose = vi.fn();
   },
   // No `registerMcpServerDefinitionProvider`, so the semantic MCP registration
   // guard short-circuits to a no-op here (the host-without-stable-MCP-API path);
