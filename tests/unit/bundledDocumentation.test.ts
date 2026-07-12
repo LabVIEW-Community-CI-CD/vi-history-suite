@@ -143,6 +143,7 @@ describe('bundled documentation', () => {
     expect(comparisonLoaded?.pageBodyHtml).toContain('selected/base commit hash, date, author, and subject facts');
     expect(comparisonLoaded?.pageBodyHtml).toContain('do not lead the embedded compare view');
     expect(comparisonLoaded?.pageBodyHtml).toContain('<h2>Checkbox-Selected Pair Review</h2>');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('<h2>Source Control Change Summary</h2>');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Observed NI Metadata');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Exact-Pair Diagnosis');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Proof Surfaces');
