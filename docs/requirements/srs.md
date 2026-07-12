@@ -4398,6 +4398,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viSemanticNarrativeCache.test.ts`
   - `tests/unit/viSemanticDecorationProvider.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
+  - `manual:source-control-semantic-change-hover`
 - Change Guidance:
   - Keep the decoration path cache-only and workspace-trust gated; never run or
     await a LabVIEW comparison from a hover. Keep the narrative text the single
