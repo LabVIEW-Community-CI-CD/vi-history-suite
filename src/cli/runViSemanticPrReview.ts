@@ -519,9 +519,11 @@ async function publishReviewImages(
   }
   // Prune images from VIs no longer changed on this PR (best-effort), keeping
   // the stable per-PR subtree bounded to the current run's produced images.
-  if (producedPaths.size > 0) {
-    await pruneStaleReviewAssets(token, owner, repo, ref, pr, producedPaths);
-  }
+  // Runs unconditionally: an empty produced set means the rerun surfaced no VI
+  // differences, so every prior blob is stale and the subtree must be emptied
+  // (the planner and prune are safe for the empty case, and the tree listing
+  // short-circuits when nothing exists).
+  await pruneStaleReviewAssets(token, owner, repo, ref, pr, producedPaths);
   return byVi;
 }
 
