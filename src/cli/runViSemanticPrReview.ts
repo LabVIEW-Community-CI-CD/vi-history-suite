@@ -261,6 +261,7 @@ export async function loadReviewFromFile(filePath: string): Promise<ViSemanticPr
   // tag, so a truncated or hand-edited artifact can never be posted as a sticky
   // comment with an `undefined` narrative or bogus counts.
   const totals = candidate.totals as Record<string, unknown> | undefined;
+  const entries = candidate.entries;
   const isValid =
     candidate.schema === VI_SEMANTIC_PR_REVIEW_SCHEMA &&
     typeof candidate.repositoryRoot === 'string' &&
@@ -269,7 +270,22 @@ export async function loadReviewFromFile(filePath: string): Promise<ViSemanticPr
     typeof candidate.changedViCount === 'number' &&
     typeof candidate.reviewedCount === 'number' &&
     typeof candidate.narrative === 'string' &&
-    Array.isArray(candidate.entries) &&
+    Array.isArray(entries) &&
+    // The number of entries must match the reported reviewedCount, and every
+    // entry must have the minimal shape the renderer walks (a relativePath and
+    // a known status), so a truncated `entries` (e.g. reviewedCount 2 with an
+    // empty array) or a malformed entry is rejected before any GitHub write
+    // rather than posting a summary-only or render-breaking comment.
+    entries.length === candidate.reviewedCount &&
+    entries.every(
+      (entry) =>
+        typeof entry === 'object' &&
+        entry !== null &&
+        typeof (entry as { relativePath?: unknown }).relativePath === 'string' &&
+        ['completed', 'blocked-selection', 'blocked-preflight', 'blocked-runtime', 'failed'].includes(
+          (entry as { status?: unknown }).status as string
+        )
+    ) &&
     typeof totals === 'object' &&
     totals !== null &&
     typeof totals.withDifferences === 'number' &&

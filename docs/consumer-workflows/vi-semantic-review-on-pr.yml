@@ -53,7 +53,13 @@ jobs:
       - name: Evaluate trust gate
         id: gate
         env:
-          GH_TOKEN: ${{ secrets.VI_REVIEW_DISPATCH_TOKEN }}
+          # Resolve the PR author's real permission on THIS repo. Use this
+          # repo's own GITHUB_TOKEN (it has metadata read on the repo where the
+          # PR lives); the least-privilege VI_REVIEW_DISPATCH_TOKEN only has
+          # actions:write on vi-history-suite and cannot read this repo's
+          # collaborators, so using it here would fail closed and skip even
+          # trusted authors.
+          GH_TOKEN: ${{ github.token }}
           ACTOR: ${{ github.event.pull_request.user.login }}
           TARGET_REPOSITORY: ${{ github.repository }}
         run: |
