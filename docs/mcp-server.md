@@ -90,6 +90,11 @@ block, so a reviewer sees an actionable signal in the comment itself. Add
 compared; the sticky comment and artifacts are still produced (the default
 stays exit 0 so a partial review still posts).
 
+Add `--announce-start` (with `--post-comment`) to upsert a "review in progress"
+sticky comment before the comparison runs, so a reviewer sees the review was
+triggered during the multi-minute container run; the final review replaces it in
+place via the shared marker.
+
 You can also split compute from posting so the sticky comment is posted from a
 previously produced artifact without re-running the (expensive, container-backed)
 comparison. Compute on the runner with `--out`, then post the `.json` from

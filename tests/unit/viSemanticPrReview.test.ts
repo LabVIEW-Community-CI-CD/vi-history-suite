@@ -13,6 +13,7 @@ import {
   buildViSemanticPrReview,
   isViSourcePath,
   renderViSemanticPrReviewMarkdown,
+  renderViSemanticPrReviewPendingMarkdown,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
   VI_SEMANTIC_PR_REVIEW_SCHEMA,
   type ViSemanticPrReviewDeps
@@ -201,5 +202,22 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).toContain('| src/Broken.vi | failed (command-exited-nonzero) | — |');
     // ...and in a per-VI detail block.
     expect(markdown).toContain('Not compared (failed): command-exited-nonzero');
+  });
+});
+
+describe('renderViSemanticPrReviewPendingMarkdown', () => {
+  it('renders a sticky-marked in-progress body with the head sha', () => {
+    const markdown = renderViSemanticPrReviewPendingMarkdown('abc1234');
+    expect(markdown.startsWith(VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER)).toBe(true);
+    expect(markdown).toContain('## VI semantic review');
+    expect(markdown).toContain('in progress');
+    expect(markdown).toContain('`abc1234`');
+  });
+
+  it('omits the head scope when no sha is given', () => {
+    const markdown = renderViSemanticPrReviewPendingMarkdown();
+    expect(markdown.startsWith(VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER)).toBe(true);
+    expect(markdown).toContain('in progress');
+    expect(markdown).not.toContain('` `');
   });
 });

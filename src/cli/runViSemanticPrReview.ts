@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import {
   buildViSemanticPrReview,
   renderViSemanticPrReviewMarkdown,
+  renderViSemanticPrReviewPendingMarkdown,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
   VI_SEMANTIC_PR_REVIEW_SCHEMA,
   type ViSemanticPrReview
@@ -27,7 +28,7 @@ import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyP
  *   node out/cli/runViSemanticPrReview.js \
  *     --repository-root <path> --base <ref> --head <ref> \
  *     [--out <dir>] [--runtime-provider docker] [--container-image-version <v>] \
- *     [--post-comment --pr <number> --repo <owner/repo>] [--fail-on-incomplete]
+ *     [--post-comment --pr <number> --repo <owner/repo>] [--announce-start] [--fail-on-incomplete]
  *
  * Alternatively, post a previously produced review artifact without recomputing
  * the (expensive, container-backed) comparison:
@@ -50,6 +51,7 @@ export interface ParsedArgs {
   pr?: number;
   repo?: { owner: string; repo: string };
   failOnIncomplete: boolean;
+  announceStart: boolean;
 }
 
 function parseRepo(value: string): { owner: string; repo: string } {
@@ -115,6 +117,18 @@ export function parseArgs(argv: string[]): ParsedArgs {
   if (postComment && (pr === undefined || repo === undefined)) {
     throw new Error('--post-comment requires --pr <number> and --repo <owner/repo>');
   }
+  const announceStart = values.get('announce-start') === 'true';
+  if (announceStart) {
+    // Announcing a "review in progress" comment only makes sense when we post
+    // and when we are actually computing (a --from-file post is already the
+    // final result, so a pending state would be pointless and racey).
+    if (!postComment) {
+      throw new Error('--announce-start requires --post-comment');
+    }
+    if (fromFile !== undefined) {
+      throw new Error('--announce-start cannot be combined with --from-file');
+    }
+  }
 
   return {
     repositoryRoot,
@@ -127,7 +141,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
     postComment,
     pr,
     repo,
-    failOnIncomplete: values.get('fail-on-incomplete') === 'true'
+    failOnIncomplete: values.get('fail-on-incomplete') === 'true',
+    announceStart
   };
 }
 
@@ -299,6 +314,18 @@ export async function loadReviewFromFile(filePath: string): Promise<ViSemanticPr
 
 export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
+
+  // Post a "review in progress" sticky comment before the (multi-minute,
+  // container-backed) comparison so a reviewer sees the review was triggered.
+  // The final review upserts over it by the shared marker (one comment); if the
+  // run never completes, the pending state stays as an actionable signal.
+  if (args.announceStart) {
+    await postStickyReviewComment(args, renderViSemanticPrReviewPendingMarkdown(args.head));
+    const { owner, repo } = args.repo as { owner: string; repo: string };
+    process.stderr.write(
+      `vi-semantic-pr-review: announced review in progress on ${owner}/${repo}#${args.pr}\n`
+    );
+  }
 
   const review = args.fromFile !== undefined
     ? await loadReviewFromFile(args.fromFile)
