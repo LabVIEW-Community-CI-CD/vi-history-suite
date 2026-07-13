@@ -946,7 +946,7 @@ describe('requirements documentation coherence', () => {
     );
   });
 
-  it('keeps governed branch promotion and Marketplace release automation traceable', () => {
+  it('keeps governed branch promotion and Marketplace release automation traceable (VHS-REQ-609.11)', () => {
     const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const cmPlan = readRepoText('docs', 'cm', 'cm-plan.md');
@@ -977,9 +977,19 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('traceability audit, docs link check, tests');
     expect(srs).toContain('The CM plan records release baselines');
     expect(cmPlan).toContain('Controlled Baselines');
+    expect(cmPlan).toContain('Marketplace release');
+    expect(cmPlan).toContain('Exact `vX.Y.Z` tag reachable from `main`');
     expect(cmPlan).toContain('Change Control');
+    expect(cmPlan).toContain('Normal work flows from `feature/<issue#>-*` into `develop`');
+    expect(cmPlan).toContain('[Maintainer Operations](../maintainer-operations.md)');
     expect(cmPlan).toContain('Status Accounting');
+    expect(cmPlan).toContain('Closeout evidence is the status-accounting packet');
+    expect(cmPlan).toContain('User-Information Review Trigger');
+    expect(cmPlan).toContain('repo-standards-review --profile 26514-review');
     expect(cmPlan).toContain('Documentation Workbench Status');
+    expect(cmPlan).toMatch(/standards\s+detector should report `supported: true`/);
+    expect(cmPlan).toContain('docs/documentation-workbench.md');
+    expect(cmPlan).toContain('remain available for standards review');
 
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-016');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
