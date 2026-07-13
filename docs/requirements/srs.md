@@ -2464,6 +2464,7 @@ Missing numeric IDs are intentional.
   - `docs/requirements/traceability-inventory.csv`
 - Verification References:
   - `tests/unit/definitionOfDoneGate.test.ts`
+  - `tests/unit/closeoutEvidenceScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
   - `tests/unit/customizationGovernanceAuditScript.test.ts`
