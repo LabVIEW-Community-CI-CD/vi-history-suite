@@ -672,7 +672,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(harness.panels[0]?.webview.html).toContain('LabVIEW executable missing');
   });
 
-  it('opens retained archived comparison evidence only when the source record and packet match the requested pair', async () => {
+  it('opens retained archived comparison evidence only when the source record and packet match the requested pair (VHS-REQ-640.4)', async () => {
     const context = harness.createContext();
     const model = createModel();
     const archivePlan = buildComparisonReportArchivePlanFromSelection({
@@ -702,7 +702,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       ),
       readFile: vi.fn(async (targetPath: string) => {
         if (targetPath !== archivePlan.sourceRecordFilePath) {
-          return '<html><body>Generated report was missing</body></html>';
+          return '<html><body>Generated report was missing<img class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png"></body></html>';
         }
 
         return JSON.stringify({
@@ -741,6 +741,9 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     // through the command surface, never in-webview script.
     expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
     expect(harness.panels[0]?.webview.html).toContain('Generated report was missing');
+    expect(harness.panels[0]?.webview.html).toContain(
+      '<img loading="lazy" class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png"'
+    );
   });
 
   it('rejects malformed retained archive records before opening a panel', async () => {

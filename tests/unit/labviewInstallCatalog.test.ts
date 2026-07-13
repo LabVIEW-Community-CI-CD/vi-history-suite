@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -19,6 +20,15 @@ import {
 } from '../../src/tooling/labviewInstallCatalog';
 
 describe('labviewInstallCatalog (VHS-REQ-632)', () => {
+  it('keeps the catalog free of VS Code, filesystem, and child-process dependencies (VHS-REQ-632.5)', () => {
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../src/tooling/labviewInstallCatalog.ts'),
+      'utf8'
+    );
+
+    expect(source).not.toMatch(/from ['"]vscode['"]|node:fs|node:child_process|child_process|\bfetch\s*\(|https?/u);
+  });
+
   it('enumerates supported host LabVIEW years newest first within the bounded range (VHS-REQ-632.1)', () => {
     const years = supportedHostLabviewYearsDescending();
 

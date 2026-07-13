@@ -40,6 +40,7 @@ let dockerDaemonMode: 'windows' | 'linux' | undefined;
 const probeDaemonPlatform = vi.fn(async () => dockerDaemonMode);
 
 const configListeners: ConfigListener[] = [];
+const configDisposables: Array<ReturnType<typeof vi.fn>> = [];
 
 vi.mock('vscode', () => {
   return {
@@ -54,7 +55,9 @@ vi.mock('vscode', () => {
       })),
       onDidChangeConfiguration: vi.fn((listener: ConfigListener) => {
         configListeners.push(listener);
-        return { dispose: vi.fn() };
+        const dispose = vi.fn();
+        configDisposables.push(dispose);
+        return { dispose };
       })
     },
     StatusBarAlignment: { Left: 1, Right: 2 }
@@ -119,6 +122,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     dockerDaemonMode = undefined;
     probeDaemonPlatform.mockClear();
     configListeners.length = 0;
+    configDisposables.length = 0;
     fakeStatusBarItem.text = '';
     fakeStatusBarItem.tooltip = '';
     fakeStatusBarItem.command = '';
@@ -141,7 +145,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('re-renders the label from cached detection when persisted keys flip via onDidChangeConfiguration (VHS-REQ-620.4)', async () => {
+  it('re-renders the label from cached detection when persisted keys flip via onDidChangeConfiguration (VHS-REQ-620.3, VHS-REQ-620.4)', async () => {
     const detect = vi.fn(async () => detectionWithBoth);
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, { detect, probeDaemonPlatform });
@@ -164,6 +168,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     expect(watcher.getLastSnapshot()?.source).toBe('persisted');
 
     watcher.dispose();
+    expect(configDisposables[0]).toHaveBeenCalledTimes(1);
   });
 
   it('silently falls back to the recommendation when the persisted selection becomes unsatisfiable', async () => {
