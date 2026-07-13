@@ -32,6 +32,7 @@ import {
   LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
   presentLabviewCliOpenBlockedToast,
   presentBitnessOpenBlockedToast,
+  presentViServerOpenBlockedToast,
   presentVersionOpenBlockedToast,
   RUNTIME_RE_DETECT_THROTTLE_MS,
   selectActiveRuntime,
@@ -690,6 +691,34 @@ describe('decideViServerOpenGate (VHS-REQ-631)', () => {
     });
     expect(decision.kind).toBe('block');
     expect(decision.inspectedConfigPaths?.length).toBeGreaterThan(0);
+  });
+
+  it('keeps the VI Server decision helper window-free and leaves the toast to the presenter (VHS-REQ-631.5)', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const openExternal = vi.mocked(vscode.env.openExternal);
+    const executeCommand = vi.mocked(vscode.commands.executeCommand);
+    showWarning.mockClear();
+    openExternal.mockClear();
+    executeCommand.mockClear();
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const readFile = vi.fn(async () => 'server.tcp.enabled=False\n');
+
+    const decision = await decideViServerOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      readFile
+    });
+
+    expect(readFile).toHaveBeenCalledTimes(1);
+    expect(decision).toMatchObject({ kind: 'block', toastMessage: VI_SERVER_OPEN_BLOCKED_MESSAGE });
+    expect(showWarning).not.toHaveBeenCalled();
+    expect(openExternal).not.toHaveBeenCalled();
+    expect(executeCommand).not.toHaveBeenCalled();
+
+    await presentViServerOpenBlockedToast(decision);
+
+    expect(showWarning).toHaveBeenCalledWith(VI_SERVER_OPEN_BLOCKED_MESSAGE);
+    expect(openExternal).not.toHaveBeenCalled();
+    expect(executeCommand).not.toHaveBeenCalled();
   });
 });
 
