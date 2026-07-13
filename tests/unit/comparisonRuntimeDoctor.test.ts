@@ -149,7 +149,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(summary.at(-1)).toContain('nationalinstruments/labview:2026q1-windows');
   });
 
-  it('guides a container image platform mismatch toward the engine or version fix (VHS-REQ-650)', () => {
+  it('guides a container image platform mismatch toward the engine or version fix (VHS-REQ-650.5)', () => {
     const summary = blockedSummary(
       'container-image-platform-mismatch',
       {
@@ -599,7 +599,7 @@ describe('comparisonRuntimeDoctor next-action taxonomy and fact surfaces', () =>
     );
   });
 
-  it('names the container-image platform mismatch and both fixes (VHS-REQ-650)', () => {
+  it('names the container-image platform mismatch and both fixes (VHS-REQ-650.5)', () => {
     const summary = blockedSummary('container-image-platform-mismatch', {
       requestedProvider: 'docker',
       executionMode: 'docker-only',

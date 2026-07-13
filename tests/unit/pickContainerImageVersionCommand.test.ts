@@ -49,7 +49,7 @@ function createFakeContext(): FakeContext {
 }
 
 describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
-  it('emits newest-first version entries with presence annotations and a trailing clear option', () => {
+  it('emits newest-first version entries with presence annotations and a trailing clear option (VHS-REQ-649.2)', () => {
     const items = buildContainerImageVersionItems([
       available('2026q1patch2-windows', { local: true, registry: true }),
       available('2026q1-windows', { local: false, registry: true })
@@ -68,7 +68,7 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items[2]).toMatchObject({ kind: 'clear' });
   });
 
-  it('marks the current selection with a check glyph', () => {
+  it('marks the current selection with a check glyph (VHS-REQ-649.2)', () => {
     const items = buildContainerImageVersionItems(
       [available('2026q1-windows', { local: true, registry: true })],
       '2026q1-windows'
@@ -77,7 +77,7 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items[0].tag).toBe('2026q1-windows');
   });
 
-  it('labels non-local images "local presence unknown" when the Docker engine is offline (VHS-REQ-649)', () => {
+  it('labels non-local images "local presence unknown" when the Docker engine is offline (VHS-REQ-649.3)', () => {
     // Daemon-down: pulled images could not be enumerated, so locallyPresent is
     // false for every version. The label must say presence is unknown rather
     // than the misleading "Available to pull".
@@ -109,7 +109,7 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items[0]).toMatchObject({ kind: 'clear' });
   });
 
-  it('flags a stale cross-platform selection with a leading warning clear row (VHS-REQ-650)', () => {
+  it('flags a stale cross-platform selection with a leading warning clear row (VHS-REQ-650.6)', () => {
     // Windows tag persisted, but the active Docker engine is in linux mode, so
     // the windows tag is absent from the (linux) available list and would
     // otherwise be invisible. It must surface as a leading warning Clear row.
@@ -129,7 +129,7 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items.filter((item) => item.kind === 'clear')).toHaveLength(1);
   });
 
-  it('surfaces the stale warning clear row even when nothing is discovered (VHS-REQ-650)', () => {
+  it('surfaces the stale warning clear row even when nothing is discovered (VHS-REQ-650.6)', () => {
     const items = buildContainerImageVersionItems([], '2026q1-windows', 'linux');
     expect(items).toHaveLength(1);
     expect(items[0].kind).toBe('clear');
@@ -137,7 +137,7 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items[0].label).toContain('2026q1-windows');
   });
 
-  it('does not flag a selection that matches the active platform (VHS-REQ-650)', () => {
+  it('does not flag a selection that matches the active platform (VHS-REQ-650.6)', () => {
     const items = buildContainerImageVersionItems(
       [available('2026q1-linux', { local: true, registry: true })],
       '2026q1-linux',
@@ -149,7 +149,7 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
     expect(items.every((item) => !item.label.includes('$(warning)'))).toBe(true);
   });
 
-  it('does not flag any selection when the active platform is unknown (VHS-REQ-650)', () => {
+  it('does not flag any selection when the active platform is unknown (VHS-REQ-650.6)', () => {
     // Daemon mode could not be confirmed (probe inconclusive). A cross-platform
     // selection must NOT be flagged as incompatible against a guess.
     const items = buildContainerImageVersionItems(
@@ -165,7 +165,7 @@ describe('buildContainerImageVersionItems (VHS-REQ-649)', () => {
 });
 
 describe('applyContainerImageVersionSelection (VHS-REQ-649)', () => {
-  it('persists the chosen tag to the Global target', async () => {
+  it('persists the chosen tag to the Global target (VHS-REQ-649.4, VHS-REQ-651.2)', async () => {
     const update = vi.fn(async () => undefined);
     await applyContainerImageVersionSelection(
       { kind: 'version', label: 'x', tag: '2026q1patch2-windows' },
@@ -178,7 +178,7 @@ describe('applyContainerImageVersionSelection (VHS-REQ-649)', () => {
     );
   });
 
-  it('clears the setting (undefined) for a clear pick', async () => {
+  it('clears the setting (undefined) for a clear pick (VHS-REQ-649.4, VHS-REQ-651.2)', async () => {
     const update = vi.fn(async () => undefined);
     await applyContainerImageVersionSelection({ kind: 'clear', label: 'x' }, { update });
     expect(update).toHaveBeenCalledWith(
@@ -190,7 +190,7 @@ describe('applyContainerImageVersionSelection (VHS-REQ-649)', () => {
 });
 
 describe('discoverAvailableContainerImageVersions (VHS-REQ-647/648)', () => {
-  it('merges published and local discovery and collects degradation notes', async () => {
+  it('merges published and local discovery and collects degradation notes (VHS-REQ-648.2)', async () => {
     const result = await discoverAvailableContainerImageVersions({
       platform: 'windows',
       fetchPublishedTags: vi.fn().mockResolvedValue(['2027q1-windows', '2026q1-windows']),
@@ -206,7 +206,7 @@ describe('discoverAvailableContainerImageVersions (VHS-REQ-647/648)', () => {
     expect(result.notes).toEqual([]);
   });
 
-  it('degrades to local-only with a note when the registry fetch fails', async () => {
+  it('degrades to local-only with a note when the registry fetch fails (VHS-REQ-647.3, VHS-REQ-648.3)', async () => {
     const result = await discoverAvailableContainerImageVersions({
       platform: 'windows',
       fetchPublishedTags: vi.fn().mockRejectedValue(new Error('offline')),
@@ -218,7 +218,7 @@ describe('discoverAvailableContainerImageVersions (VHS-REQ-647/648)', () => {
     expect(result.notes.join('\n')).toContain('registry query failed');
   });
 
-  it('flags localPresenceUnknown when the local lister rejects (Docker engine offline)', async () => {
+  it('flags localPresenceUnknown when the local lister rejects (Docker engine offline) (VHS-REQ-648.4, VHS-REQ-649.3)', async () => {
     // VHS-REQ-649: registry tags still resolve, but local presence is unknown,
     // so the combiner propagates the flag for the offline-aware label.
     const result = await discoverAvailableContainerImageVersions({
@@ -231,7 +231,7 @@ describe('discoverAvailableContainerImageVersions (VHS-REQ-647/648)', () => {
     expect(result.notes.join('\n')).toContain('Docker engine may be offline');
   });
 
-  it('does not flag localPresenceUnknown when local discovery succeeds', async () => {
+  it('does not flag localPresenceUnknown when local discovery succeeds (VHS-REQ-648.4)', async () => {
     const result = await discoverAvailableContainerImageVersions({
       platform: 'windows',
       fetchPublishedTags: vi.fn().mockResolvedValue(['2026q1-windows']),
@@ -246,7 +246,7 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     vi.clearAllMocks();
   });
 
-  it('blocks execution outside trusted workspaces', async () => {
+  it('blocks execution outside trusted workspaces (VHS-REQ-649.4)', async () => {
     const warn = vi.spyOn(vscode.window, 'showWarningMessage');
     registerPickContainerImageVersionCommand(createFakeContext() as never, {
       isTrusted: () => false
@@ -256,7 +256,7 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     expect(warn).toHaveBeenCalledOnce();
   });
 
-  it('warns when no versions are discovered', async () => {
+  it('warns when no versions are discovered (VHS-REQ-649.5)', async () => {
     const warn = vi.spyOn(vscode.window, 'showWarningMessage');
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
       get: vi.fn(() => undefined),
@@ -275,7 +275,7 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     expect(warn).toHaveBeenCalledWith(PICK_CONTAINER_IMAGE_VERSION_NONE_MESSAGE);
   });
 
-  it('persists the picked version and surfaces a confirmation toast', async () => {
+  it('persists the picked version and surfaces a confirmation toast (VHS-REQ-649.4)', async () => {
     const update = vi.fn(async () => undefined);
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
       get: vi.fn(() => undefined),
@@ -305,7 +305,7 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     expect(info).toHaveBeenCalledWith(expect.stringContaining('2026q1patch2-windows'));
   });
 
-  it('lists images for the probed Docker daemon mode, not just the host OS (VHS-REQ-649)', async () => {
+  it('lists images for the probed Docker daemon mode, not just the host OS (VHS-REQ-649.6)', async () => {
     const update = vi.fn(async () => undefined);
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
       get: vi.fn(() => undefined),
@@ -337,7 +337,7 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     expect(result).toMatchObject({ outcome: 'persisted-selection', tag: '2026q1-linux' });
   });
 
-  it('skips the daemon probe when an explicit platform override is provided (VHS-REQ-649)', async () => {
+  it('skips the daemon probe when an explicit platform override is provided (VHS-REQ-649.6)', async () => {
     const probeDaemonPlatform = vi.fn().mockResolvedValue('linux');
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
       get: vi.fn(() => undefined),
@@ -362,7 +362,7 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     expect(result).toMatchObject({ outcome: 'persisted-selection', tag: '2026q1-windows' });
   });
 
-  it('does not flag a persisted selection when the daemon probe is inconclusive (VHS-REQ-650)', async () => {
+  it('does not flag a persisted selection when the daemon probe is inconclusive (VHS-REQ-650.6)', async () => {
     // Docker stopped/timing out: probe resolves undefined. Even with a
     // cross-platform-looking persisted selection, the picker must not show the
     // incompatible-selection warning row, because the engine mode is unknown.
@@ -394,7 +394,7 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     expect(capturedLabels.every((label) => !label.includes('$(warning)'))).toBe(true);
   });
 
-  it('clears the selection and surfaces the clear toast', async () => {
+  it('clears the selection and surfaces the clear toast (VHS-REQ-649.4)', async () => {
     const update = vi.fn(async () => undefined);
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
       get: vi.fn(() => '2026q1-windows'),
@@ -438,7 +438,7 @@ function makeFakeDockerChild() {
 }
 
 describe('defaultListLocalImages (VHS-REQ-648/649)', () => {
-  it('parses trimmed, newline-delimited image references on a successful run', async () => {
+  it('parses trimmed, newline-delimited image references on a successful run (VHS-REQ-648.1, VHS-REQ-648.5)', async () => {
     const { child, stdout } = makeFakeDockerChild();
     const spawnImpl = vi.fn(() => child);
     const promise = defaultListLocalImages(spawnImpl as never);
@@ -458,14 +458,14 @@ describe('defaultListLocalImages (VHS-REQ-648/649)', () => {
     );
   });
 
-  it('resolves an empty list when the Docker CLI is absent (spawn error)', async () => {
+  it('resolves an empty list when the Docker CLI is absent (spawn error) (VHS-REQ-648.3, VHS-REQ-648.4)', async () => {
     const { child } = makeFakeDockerChild();
     const promise = defaultListLocalImages(vi.fn(() => child) as never);
     child.emit('error', new Error('spawn docker ENOENT'));
     await expect(promise).resolves.toEqual([]);
   });
 
-  it('rejects on a non-zero exit so local presence is reported unknown, never empty', async () => {
+  it('rejects on a non-zero exit so local presence is reported unknown, never empty (VHS-REQ-648.4)', async () => {
     const { child, stderr } = makeFakeDockerChild();
     const promise = defaultListLocalImages(vi.fn(() => child) as never);
     stderr.emit('data', 'Cannot connect to the Docker daemon');
@@ -500,7 +500,7 @@ describe('defaultFetchPublishedTags (VHS-REQ-647)', () => {
     expect(httpGetJson).not.toHaveBeenCalled();
   });
 
-  it('collects string tag names across pages, following the next link', async () => {
+  it('collects string tag names across pages, following the next link (VHS-REQ-647.4)', async () => {
     const httpGetJson = vi
       .fn()
       .mockResolvedValueOnce({
@@ -514,7 +514,7 @@ describe('defaultFetchPublishedTags (VHS-REQ-647)', () => {
     expect(httpGetJson).toHaveBeenCalledTimes(2);
   });
 
-  it('stops with the tags gathered so far when a page request fails', async () => {
+  it('stops with the tags gathered so far when a page request fails (VHS-REQ-647.3)', async () => {
     const httpGetJson = vi
       .fn()
       .mockResolvedValueOnce({

@@ -1,5 +1,5 @@
 /**
- * VHS-REQ-620 / VHS-REQ-645: unit tests for the Runtime & Report Settings panel
+ * VHS-REQ-620 / VHS-REQ-645 / VHS-REQ-651: unit tests for the Runtime & Report Settings panel
  * renderer. The renderer is pure, so these assert the rendered HTML and the
  * include/ignore inversion directly without the VS Code harness.
  */
@@ -143,12 +143,12 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     expect(html).toMatch(/data-index="1"[\s\S]*?aria-pressed="false"/);
   });
 
-  it('hides the container section when it is not visible', () => {
+  it('hides the container section when it is not visible (VHS-REQ-651.4)', () => {
     const html = renderRuntimeReportPanelHtml(baseModel());
     expect(html).not.toContain('data-testid="runtime-report-container-section"');
   });
 
-  it('shows the container section with a discover affordance when visible', () => {
+  it('shows the container section with a discover affordance when visible (VHS-REQ-651.1)', () => {
     const html = renderRuntimeReportPanelHtml(
       baseModel({
         container: {
@@ -166,7 +166,7 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     expect(html).toContain('Newest supported default');
   });
 
-  it('renders discovered container versions as a select with the current tag selected', () => {
+  it('renders discovered container versions as a select with the current tag selected (VHS-REQ-651.1)', () => {
     const html = renderRuntimeReportPanelHtml(
       baseModel({
         container: {

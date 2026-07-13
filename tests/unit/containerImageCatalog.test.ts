@@ -63,7 +63,7 @@ describe('resolveLinuxContainerLabviewProfile (VHS-REQ-657)', () => {
 });
 
 describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
-  it('parses a base quarterly tag', () => {
+  it('parses a base quarterly tag (VHS-REQ-646.1)', () => {
     expect(parseLabviewContainerImageTag('2026q1-windows')).toEqual({
       year: 2026,
       quarter: 1,
@@ -74,7 +74,7 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
     });
   });
 
-  it('parses a patch tag and a linux tag', () => {
+  it('parses a patch tag and a linux tag (VHS-REQ-646.1)', () => {
     expect(parseLabviewContainerImageTag('2026q1patch2-windows')).toMatchObject({
       year: 2026,
       quarter: 1,
@@ -88,7 +88,7 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
     });
   });
 
-  it('rejects malformed, patch-0, and out-of-grammar tags', () => {
+  it('rejects malformed, patch-0, and out-of-grammar tags (VHS-REQ-646.2)', () => {
     for (const bad of [
       '',
       '   ',
@@ -105,7 +105,7 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
     }
   });
 
-  it('parses a full namespace-pinned reference and rejects foreign namespaces', () => {
+  it('parses a full namespace-pinned reference and rejects foreign namespaces (VHS-REQ-646.2)', () => {
     expect(
       parseLabviewContainerImageReference('nationalinstruments/labview:2026q1patch2-windows')
     ).toMatchObject({ year: 2026, patch: 2, platform: 'windows' });
@@ -120,7 +120,7 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
     }
   });
 
-  it('round-trips parse -> format for every valid tag', () => {
+  it('round-trips parse -> format for every valid tag (VHS-REQ-646.4)', () => {
     for (const tag of [
       '2025q1-windows',
       '2026q1-windows',
@@ -137,7 +137,7 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
     }
   });
 
-  it('orders newest-first: year, then quarter, then patch (base is oldest in its group)', () => {
+  it('orders newest-first: year, then quarter, then patch (base is oldest in its group) (VHS-REQ-646.3)', () => {
     const tags = [
       '2026q1-windows',
       '2026q1patch2-windows',
@@ -162,7 +162,7 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
 });
 
 describe('published registry discovery (VHS-REQ-647)', () => {
-  it('filters to platform and year floor, parses, and orders newest-first', async () => {
+  it('filters to platform and year floor, parses, and orders newest-first (VHS-REQ-647.2)', async () => {
     const fetchTags = vi.fn().mockResolvedValue([
       '2026q1-windows',
       '2026q1patch1-windows',
@@ -181,14 +181,14 @@ describe('published registry discovery (VHS-REQ-647)', () => {
     expect(result.note).toBeUndefined();
   });
 
-  it('degrades to an empty result with a non-fatal note when the fetch throws', async () => {
+  it('degrades to an empty result with a non-fatal note when the fetch throws (VHS-REQ-647.3, VHS-REQ-647.4)', async () => {
     const fetchTags = vi.fn().mockRejectedValue(new Error('ETIMEDOUT'));
     const result = await discoverPublishedContainerImageVersions('linux', { fetchTags });
     expect(result.versions).toEqual([]);
     expect(result.note).toContain('registry query failed');
   });
 
-  it('honors an explicit minimum year override', async () => {
+  it('honors an explicit minimum year override (VHS-REQ-647.2)', async () => {
     const fetchTags = vi.fn().mockResolvedValue(['2026q1-windows', '2027q1-windows']);
     const result = await discoverPublishedContainerImageVersions('windows', {
       fetchTags,
@@ -199,7 +199,7 @@ describe('published registry discovery (VHS-REQ-647)', () => {
 });
 
 describe('local image discovery (VHS-REQ-648)', () => {
-  it('parses local references for the platform and ignores the rest', async () => {
+  it('parses local references for the platform and ignores the rest (VHS-REQ-648.1, VHS-REQ-648.5)', async () => {
     const listLocalImages = vi.fn().mockResolvedValue([
       'nationalinstruments/labview:2026q1patch2-windows',
       'nationalinstruments/labview:2026q1-windows',
@@ -213,7 +213,7 @@ describe('local image discovery (VHS-REQ-648)', () => {
     ]);
   });
 
-  it('returns empty with localPresenceUnknown when the lister rejects (Docker engine offline)', async () => {
+  it('returns empty with localPresenceUnknown when the lister rejects (Docker engine offline) (VHS-REQ-648.4)', async () => {
     // VHS-REQ-649: a rejected lister means the Docker CLI was present but the
     // host's pulled images could not be enumerated (daemon unreachable), so
     // local presence is unknown — not "no images pulled".
@@ -224,7 +224,7 @@ describe('local image discovery (VHS-REQ-648)', () => {
     expect(result.note).toContain('Docker engine may be offline');
   });
 
-  it('does not flag localPresenceUnknown when the lister resolves an empty list (no images pulled)', async () => {
+  it('does not flag localPresenceUnknown when the lister resolves an empty list (no images pulled) (VHS-REQ-648.4)', async () => {
     const listLocalImages = vi.fn().mockResolvedValue([]);
     const result = await discoverLocalContainerImageVersions('windows', { listLocalImages });
     expect(result.versions).toEqual([]);
@@ -233,7 +233,7 @@ describe('local image discovery (VHS-REQ-648)', () => {
 });
 
 describe('merge availability (VHS-REQ-648)', () => {
-  it('marks local presence and registry publication and keeps local-only versions', () => {
+  it('marks local presence and registry publication and keeps local-only versions (VHS-REQ-648.2)', () => {
     const registry = [
       parseLabviewContainerImageTag('2027q1-windows')!,
       parseLabviewContainerImageTag('2026q1-windows')!
@@ -273,7 +273,7 @@ describe('selection resolution (VHS-REQ-649/650)', () => {
     }
   ];
 
-  it('resolves the default reference when no selection is set', () => {
+  it('resolves the default reference when no selection is set (VHS-REQ-650.2)', () => {
     const result = resolveContainerImageSelection({
       platform: 'windows',
       defaultReference: 'nationalinstruments/labview:2026q1-windows'
@@ -285,7 +285,7 @@ describe('selection resolution (VHS-REQ-649/650)', () => {
     });
   });
 
-  it('resolves a valid selection to its reference and annotates availability', () => {
+  it('resolves a valid selection to its reference and annotates availability (VHS-REQ-650.1)', () => {
     const result = resolveContainerImageSelection({
       platform: 'windows',
       selection: '2026q1patch2-windows',
@@ -324,7 +324,7 @@ describe('selection resolution (VHS-REQ-649/650)', () => {
 });
 
 describe('detectContainerImageVersionPlatformConflict (VHS-REQ-650)', () => {
-  it('flags a selection whose platform differs from the confirmed active platform', () => {
+  it('flags a selection whose platform differs from the confirmed active platform (VHS-REQ-650.5)', () => {
     expect(
       detectContainerImageVersionPlatformConflict('2026q1-windows', 'linux')
     ).toEqual({
@@ -341,7 +341,7 @@ describe('detectContainerImageVersionPlatformConflict (VHS-REQ-650)', () => {
     ).toBeUndefined();
   });
 
-  it('returns undefined when the active platform is not confirmed', () => {
+  it('returns undefined when the active platform is not confirmed (VHS-REQ-650.6)', () => {
     // Unknown / undefined active platform must never flag a conflict (a valid
     // selection is never flagged against a host-OS guess).
     expect(

@@ -1,5 +1,7 @@
 /**
  * VHS-REQ-654: unit tests for the Docker Engine API pull-progress module.
+ * VHS-REQ-654.6: parser, aggregator, and injected request boundary coverage
+ * keep pull-progress behavior unit-testable without a real Docker daemon.
  *
  * The parser and aggregator are pure; the stream is exercised through an
  * injected request boundary so the layer-weighted progress math is validated on
@@ -23,7 +25,7 @@ import {
 const GB = 1024 * 1024 * 1024;
 
 describe('resolveDockerEngineSocketPath', () => {
-  it('uses the named pipe on Windows and the unix socket on Linux', () => {
+  it('uses the named pipe on Windows and the unix socket on Linux (VHS-REQ-654.1)', () => {
     expect(resolveDockerEngineSocketPath('win32')).toBe('\\\\.\\pipe\\docker_engine');
     expect(resolveDockerEngineSocketPath('linux')).toBe('/var/run/docker.sock');
   });
@@ -46,7 +48,7 @@ describe('splitImageReference', () => {
 });
 
 describe('parseDockerPullProgressLine', () => {
-  it('parses a Downloading line into a layer-progress event', () => {
+  it('parses a Downloading line into a layer-progress event (VHS-REQ-656.1)', () => {
     const event = parseDockerPullProgressLine(
       JSON.stringify({ status: 'Downloading', id: 'abc', progressDetail: { current: 100, total: 1000 } })
     );
@@ -64,7 +66,7 @@ describe('parseDockerPullProgressLine', () => {
     ).toEqual({ kind: 'layer-seen', layerId: 'abc' });
   });
 
-  it('distinguishes Download complete, Pull complete, and Already exists', () => {
+  it('distinguishes Download complete, Pull complete, and Already exists (VHS-REQ-656.1)', () => {
     expect(parseDockerPullProgressLine(JSON.stringify({ status: 'Download complete', id: 'abc' }))).toEqual({
       kind: 'layer-download-complete',
       layerId: 'abc'
@@ -79,7 +81,7 @@ describe('parseDockerPullProgressLine', () => {
     });
   });
 
-  it('parses an Extracting line with byte detail into a layer-extract-progress event', () => {
+  it('parses an Extracting line with byte detail into a layer-extract-progress event (VHS-REQ-656.1)', () => {
     expect(
       parseDockerPullProgressLine(
         JSON.stringify({ status: 'Extracting', id: 'abc', progressDetail: { current: 30, total: 120 } })
@@ -87,7 +89,7 @@ describe('parseDockerPullProgressLine', () => {
     ).toEqual({ kind: 'layer-extract-progress', layerId: 'abc', current: 30, total: 120 });
   });
 
-  it('parses an Extracting line without usable byte detail into a layer-extracting marker', () => {
+  it('parses an Extracting line without usable byte detail into a layer-extracting marker (VHS-REQ-656.1, VHS-REQ-656.4)', () => {
     expect(
       parseDockerPullProgressLine(JSON.stringify({ status: 'Extracting', id: 'abc', progressDetail: { current: 1, total: 0 } }))
     ).toEqual({ kind: 'layer-extracting', layerId: 'abc' });
@@ -114,7 +116,7 @@ describe('parseDockerPullProgressLine', () => {
     ).toEqual({ kind: 'status', status: 'Pulling from nationalinstruments/labview' });
   });
 
-  it('surfaces an in-band pull error', () => {
+  it('surfaces an in-band pull error (VHS-REQ-654.4)', () => {
     expect(
       parseDockerPullProgressLine(JSON.stringify({ errorDetail: { message: 'no such image' }, error: 'no such image' }))
     ).toEqual({ kind: 'error', message: 'no such image' });
@@ -134,7 +136,7 @@ describe('parseDockerPullProgressLine', () => {
 });
 
 describe('DockerPullProgressAggregator', () => {
-  it('weights each enumerated layer equally, smoothed by the in-flight byte fraction', () => {
+  it('weights each enumerated layer equally, smoothed by the in-flight byte fraction (VHS-REQ-654.1)', () => {
     const agg = new DockerPullProgressAggregator();
     expect(agg.snapshot().percent).toBeUndefined();
 
@@ -155,7 +157,7 @@ describe('DockerPullProgressAggregator', () => {
     expect(snap.downloadedBytes).toBe(150);
   });
 
-  it('does NOT read 100% when a tiny first layer completes ahead of larger layers (regression: frozen 100%)', () => {
+  it('does NOT read 100% when a tiny first layer completes ahead of larger layers (regression: frozen 100%) (VHS-REQ-654.2)', () => {
     const agg = new DockerPullProgressAggregator();
     // All four layers are enumerated up front (Docker emits "Pulling fs layer"
     // for every layer before any of them download).
@@ -188,7 +190,7 @@ describe('DockerPullProgressAggregator', () => {
     expect(snap.totalBytes).toBe(100);
   });
 
-  it('never decreases the reported percentage', () => {
+  it('never decreases the reported percentage (VHS-REQ-654.2)', () => {
     const agg = new DockerPullProgressAggregator();
     agg.apply({ kind: 'layer-progress', layerId: 'a', current: 80, total: 100 });
     expect(agg.snapshot().percent).toBe(80);
@@ -197,7 +199,7 @@ describe('DockerPullProgressAggregator', () => {
     expect(snap.percent).toBe(80);
   });
 
-  it('caps in-progress percent at 99 so a premature 100% is impossible', () => {
+  it('caps in-progress percent at 99 so a premature 100% is impossible (VHS-REQ-654.2)', () => {
     const agg = new DockerPullProgressAggregator();
     agg.apply({ kind: 'layer-progress', layerId: 'a', current: 100, total: 100 });
     expect(agg.snapshot().percent).toBe(99);
@@ -209,7 +211,7 @@ describe('DockerPullProgressAggregator', () => {
 });
 
 describe('DockerPullProgressAggregator byte-% mode (VHS-REQ-655)', () => {
-  it('divides downloaded bytes by the stable known total, not the live layer total', () => {
+  it('divides downloaded bytes by the stable known total, not the live layer total (VHS-REQ-655.2)', () => {
     const agg = new DockerPullProgressAggregator({ knownTotalBytes: 1000 });
     agg.apply({ kind: 'layer-seen', layerId: 'a' });
     let snap = agg.apply({ kind: 'layer-progress', layerId: 'a', current: 250, total: 800 });
@@ -220,7 +222,7 @@ describe('DockerPullProgressAggregator byte-% mode (VHS-REQ-655)', () => {
     expect(snap.percent).toBe(50);
   });
 
-  it('does NOT spike to 100% when a tiny first layer completes (the stable total holds it down)', () => {
+  it('does NOT spike to 100% when a tiny first layer completes (the stable total holds it down) (VHS-REQ-655.2)', () => {
     const agg = new DockerPullProgressAggregator({
       knownTotalBytes: 1_000_000,
       layerSizesByShortId: new Map([['w', 1300]])
@@ -233,7 +235,7 @@ describe('DockerPullProgressAggregator byte-% mode (VHS-REQ-655)', () => {
     expect(snap.knownTotalBytes).toBe(1_000_000);
   });
 
-  it('credits a cached (Already exists) layer via the registry size map so it reaches the total', () => {
+  it('credits a cached (Already exists) layer via the registry size map so it reaches the total (VHS-REQ-655.2)', () => {
     const agg = new DockerPullProgressAggregator({
       knownTotalBytes: 1000,
       layerSizesByShortId: new Map([
@@ -254,7 +256,7 @@ describe('DockerPullProgressAggregator byte-% mode (VHS-REQ-655)', () => {
 });
 
 describe('DockerPullProgressAggregator pull-phase signaling (VHS-REQ-656)', () => {
-  it('reports preparing then downloading then extracting then complete', () => {
+  it('reports preparing then downloading then extracting then complete (VHS-REQ-656.1)', () => {
     const agg = new DockerPullProgressAggregator();
     expect(agg.snapshot().phase).toBe('preparing');
 
@@ -275,7 +277,7 @@ describe('DockerPullProgressAggregator pull-phase signaling (VHS-REQ-656)', () =
     expect(agg.apply({ kind: 'layer-complete', layerId: 'b' }).phase).toBe('complete');
   });
 
-  it('keeps advancing extract progress after the download finishes (no frozen 99%)', () => {
+  it('keeps advancing extract progress after the download finishes (no frozen 99%) (VHS-REQ-656.3)', () => {
     const agg = new DockerPullProgressAggregator();
     agg.apply({ kind: 'layer-seen', layerId: 'a' });
     agg.apply({ kind: 'layer-seen', layerId: 'b' });
@@ -301,7 +303,7 @@ describe('DockerPullProgressAggregator pull-phase signaling (VHS-REQ-656)', () =
     expect(oneDone.phase).toBe('extracting');
   });
 
-  it('advances extraction on Pull complete steps even without Extracting byte detail', () => {
+  it('advances extraction on Pull complete steps even without Extracting byte detail (VHS-REQ-656.4)', () => {
     const agg = new DockerPullProgressAggregator();
     for (const id of ['a', 'b', 'c', 'd']) {
       agg.apply({ kind: 'layer-seen', layerId: id });
@@ -325,7 +327,7 @@ describe('formatBytes', () => {
 });
 
 describe('formatPullProgressMessage', () => {
-  it('renders a layer-weighted percentage with layer count and downloaded bytes', () => {
+  it('renders a layer-weighted percentage with layer count and downloaded bytes (VHS-REQ-654.1)', () => {
     const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
       phase: 'downloading',
       percent: 31,
@@ -339,7 +341,7 @@ describe('formatPullProgressMessage', () => {
     );
   });
 
-  it('renders a true byte-% (downloaded / known total) when the stable total is known', () => {
+  it('renders a true byte-% (downloaded / known total) when the stable total is known (VHS-REQ-655.2)', () => {
     const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
       phase: 'downloading',
       percent: 42,
@@ -354,7 +356,7 @@ describe('formatPullProgressMessage', () => {
     );
   });
 
-  it('names the extracting phase with its own percent and layer count (VHS-REQ-656)', () => {
+  it('names the extracting phase with its own percent and layer count (VHS-REQ-656.2)', () => {
     const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
       phase: 'extracting',
       percent: 99,
@@ -369,7 +371,7 @@ describe('formatPullProgressMessage', () => {
     );
   });
 
-  it('shows a finalizing message once every layer is pulled (VHS-REQ-656)', () => {
+  it('shows a finalizing message once every layer is pulled (VHS-REQ-656.2)', () => {
     const message = formatPullProgressMessage('nationalinstruments/labview:2026q1-windows', {
       phase: 'complete',
       percent: 99,
@@ -406,7 +408,7 @@ describe('streamDockerImagePull', () => {
     });
   }
 
-  it('requests the pinned api version /images/create path for the split reference', async () => {
+  it('requests the pinned api version /images/create path for the split reference (VHS-REQ-654.1)', async () => {
     const requestStream = vi.fn(async (_params: unknown, _handlers: unknown) => ({ statusCode: 200 }));
     await streamDockerImagePull({
       image: 'nationalinstruments/labview:2026q1-windows',
@@ -421,7 +423,7 @@ describe('streamDockerImagePull', () => {
     );
   });
 
-  it('reports live layer-weighted snapshots and resolves succeeded', async () => {
+  it('reports live layer-weighted snapshots and resolves succeeded (VHS-REQ-654.1)', async () => {
     const progress: Array<{
       percent?: number;
       downloadedBytes: number;
@@ -455,7 +457,7 @@ describe('streamDockerImagePull', () => {
     expect(progress.at(-1)?.percent).toBe(99);
   });
 
-  it('marks the stream failed on an in-band error line', async () => {
+  it('marks the stream failed on an in-band error line (VHS-REQ-654.4)', async () => {
     const result = await streamDockerImagePull({
       image: 'repo/img:tag',
       hostPlatform: 'linux',
@@ -467,7 +469,7 @@ describe('streamDockerImagePull', () => {
     expect(result).toMatchObject({ attempted: true, succeeded: false, errorMessage: 'manifest unknown' });
   });
 
-  it('marks the stream failed on a non-2xx daemon response', async () => {
+  it('marks the stream failed on a non-2xx daemon response (VHS-REQ-654.4)', async () => {
     const result = await streamDockerImagePull({
       image: 'repo/img:tag',
       hostPlatform: 'linux',
@@ -478,7 +480,7 @@ describe('streamDockerImagePull', () => {
     expect(result.errorMessage).toContain('HTTP 500');
   });
 
-  it('returns attempted=false (for CLI fallback) when the daemon socket is unreachable', async () => {
+  it('returns attempted=false (for CLI fallback) when the daemon socket is unreachable (VHS-REQ-654.4)', async () => {
     const result = await streamDockerImagePull({
       image: 'repo/img:tag',
       hostPlatform: 'linux',
@@ -490,7 +492,7 @@ describe('streamDockerImagePull', () => {
     expect(result).toEqual({ attempted: false, succeeded: false, statusLines: [] });
   });
 
-  it('reports a true byte-% when the registry total resolves (VHS-REQ-655)', async () => {
+  it('reports a true byte-% when the registry total resolves (VHS-REQ-655.2)', async () => {
     const GiB = 1024 * 1024 * 1024;
     const snapshots: Array<{ percent?: number; knownTotalBytes?: number; downloadedBytes: number }> = [];
     const result = await streamDockerImagePull({
@@ -516,7 +518,7 @@ describe('streamDockerImagePull', () => {
     expect(snapshots.some((s) => s.percent === 50)).toBe(true);
   });
 
-  it('signals the extraction phase after the download completes (VHS-REQ-656)', async () => {
+  it('signals the extraction phase after the download completes (VHS-REQ-656.2, VHS-REQ-656.3)', async () => {
     const messages: string[] = [];
     const image = 'nationalinstruments/labview:2026q1-windows';
     const result = await streamDockerImagePull({
