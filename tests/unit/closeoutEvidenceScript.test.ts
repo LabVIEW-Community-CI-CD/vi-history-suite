@@ -810,7 +810,7 @@ describe('closeout evidence script', () => {
     expect(result.failure).toContain('docker build');
   });
 
-  it('renders a closable standards summary when mandatory standards and gates pass (VHS-REQ-601.24, VHS-REQ-613.8)', () => {
+  it('renders a closable standards summary when mandatory standards and gates pass (VHS-REQ-601.24, VHS-REQ-601.28, VHS-REQ-613.8)', () => {
     const spawnSync = hostSuccessSpawnSync();
     const result = generateCloseoutEvidence(
       ['--kind', 'standards', '--issue', '130', '--run-gates'],
@@ -840,12 +840,24 @@ describe('closeout evidence script', () => {
     expect(result.markdown).toContain('| docs:links | PASS | npm.cmd run docs:links |');
     expect(result.markdown).toContain('| coverage:map | PASS | npm.cmd run coverage:map |');
     expect(result.markdown).toContain('Definition-of-Done');
+    expect(result.markdown).toContain('dod=N/A (raw=N/A; source=none');
+    expect(result.markdown).toContain(
+      'Definition-of-Done evidence: local `dod:gate` and standards scorecard status are retained in closeout evidence.'
+    );
+    expect(result.markdown).toContain(
+      'Resolve any non-PASS Definition-of-Done evidence before umbrella closeout, or record the blocking follow-up issue.'
+    );
     expect(result.markdown).not.toContain('Defer docs link-check/lychee automation');
     expect(requirementsQualityCall?.[2].cwd).toContain('vi-history-suite-audit-snapshot-');
     expect(result.context.machineReadableSummary?.standards.auditTarget).toMatchObject({
       mode: 'tracked-worktree-snapshot',
       trackedFileCount: 2,
       generatedRootsExcluded: expect.arrayContaining(['win-validation/', '.cache/'])
+    });
+    expect(result.context.machineReadableSummary?.standards.summary.dodGateEvidence).toMatchObject({
+      status: 'N/A',
+      scorecardStatus: 'N/A',
+      source: 'none'
     });
   });
 
