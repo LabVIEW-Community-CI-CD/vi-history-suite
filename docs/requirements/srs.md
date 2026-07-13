@@ -3418,11 +3418,11 @@ Missing numeric IDs are intentional.
   out-of-scope for this harness.
 - Acceptance Criteria:
   - `scripts/runWindowsRuntimeMatrix.js` exposes a pure
-    `runRuntimeMatrix(deps)` module entry whose `spawnSync`,
-    `getCimProcesses`, `closeLabview`, `now`, and `cwd` collaborators
-    are injectable for deterministic unit tests; the default CLI
-    binding refuses to run on non-Windows hosts unless
-    `VIHS_FAKE_WINDOWS=1` is set for tests.
+    `runRuntimeMatrix(argv, deps)` module entry whose process execution,
+    filesystem, clock, host identity, environment, working directory,
+    and output-stream collaborators are injectable for deterministic unit
+    tests; the default CLI binding refuses to run on non-Windows hosts
+    unless `VIHS_FAKE_WINDOWS=1` is set for tests.
   - Two scenarios — `steady-A` (`HostBitness=x64,
     SelectedBitness=x86`) and `steady-B` (`HostBitness=x86,
     SelectedBitness=x64`) — are driven by per-scenario PowerShell
@@ -3443,10 +3443,9 @@ Missing numeric IDs are intentional.
   - A new `.github/workflows/windows-runtime-matrix.yml` GitHub Actions
     workflow is `workflow_dispatch`-only, runs on
     `[self-hosted, Windows, X64, vihs-windows-labview-maintainer]`,
-    enforces the trusted-ref allow-list (`main`, `release/v*`,
-    `v*.*.*` tags, and the `chore/phase6-windows-runtime-matrix-*`
-    branch for the introduction PR), and uploads the matrix evidence
-    plus captured proofs as a build artifact.
+    enforces the trusted-ref allow-list (`main`, `release/v*`, and
+    `v*.*.*` tags only), and uploads the matrix evidence plus captured
+    proofs as a build artifact.
 - Agent Work Scope:
   - Reuse the `vihs --validate --proof-out` channel as the assertion
     surface rather than parsing extension UI; do not extend the CLI
