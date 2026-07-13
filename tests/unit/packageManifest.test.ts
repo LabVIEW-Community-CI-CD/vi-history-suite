@@ -276,6 +276,19 @@ describe('extension manifest public metadata', () => {
     expect(properties).not.toHaveProperty('viHistorySuite.report.format');
   });
 
+  it('keeps the container image picker out of contributed command surfaces (VHS-REQ-651.5)', () => {
+    const manifest = readManifest();
+    const contributedCommands = (manifest.contributes?.commands ?? []).map(
+      (entry) => entry.command
+    );
+    const commandPaletteEntries = (manifest.contributes?.menus?.['commandPalette'] ?? []).map(
+      (entry) => entry.command
+    );
+
+    expect(contributedCommands).not.toContain('labviewViHistory.pickContainerImageVersion');
+    expect(commandPaletteEntries).not.toContain('labviewViHistory.pickContainerImageVersion');
+  });
+
   it('keeps the simplified development, CI, package, and optional Vagrant scripts (VHS-REQ-599.2)', () => {
     const manifest = readManifest();
 
