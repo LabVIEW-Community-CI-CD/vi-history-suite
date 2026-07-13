@@ -2565,6 +2565,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/runtimeCommands.test.ts`
   - `tests/unit/runtimeAvailabilityWatcher.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep first-run gating, throttling, and copy in this requirement; runtime
