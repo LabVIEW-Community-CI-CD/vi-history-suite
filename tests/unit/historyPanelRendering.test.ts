@@ -90,7 +90,7 @@ describe('historyPanelRendering', () => {
     });
   });
 
-  describe('per-revision preview button (VHS-REQ-659)', () => {
+  describe('per-revision preview button (VHS-REQ-659.7, VHS-REQ-659.15)', () => {
     it('shows the Preview button when VI Preview is enabled and comparison is available', () => {
       const html = renderHistoryPanelHtml(createTestViewModel(), { previewEnabled: true });
       expect(html).toContain('data-testid="history-action-preview"');

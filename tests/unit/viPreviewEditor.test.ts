@@ -127,7 +127,19 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
   });
 
-  it('requires Docker and does not render when the resolved runtime is host-native', async () => {
+  it('shows the opt-in enable prompt and never renders when VI Preview is off (VHS-REQ-659.7)', async () => {
+    isViPreviewEnabledMock.mockReturnValueOnce(false);
+    const provider = providerFromLastRegistrationAfterRegister();
+
+    const panel = await resolveEditor(provider);
+
+    expect(panel.webview.options).toEqual({ enableScripts: false });
+    expect(panel.webview.html).toContain('VI Preview is off');
+    expect(resolvePreviewRuntimeMock).not.toHaveBeenCalled();
+    expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
+  });
+
+  it('requires Docker and does not render when the resolved runtime is host-native (VHS-REQ-659.7)', async () => {
     resolvePreviewRuntimeMock.mockResolvedValueOnce({
       outcome: 'ready',
       runtime: { provider: 'host-native', labviewCliPath: 'C:\\LabVIEWCLI.exe' }
@@ -141,7 +153,7 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
   });
 
-  it('renders through the shared warm session for a Docker runtime and starts warming', async () => {
+  it('renders through the shared warm session for a Docker runtime and starts warming (VHS-REQ-659.12)', async () => {
     const onPreviewOpened = vi.fn();
     const sessionManager = {
       renderVi: vi.fn().mockResolvedValue({ outcome: 'rendered', html: '<html>docker preview</html>' }),

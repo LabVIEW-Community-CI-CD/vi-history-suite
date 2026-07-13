@@ -308,6 +308,20 @@ describe('extension manifest public metadata', () => {
     expect(commandPaletteEntries).not.toContain('labviewViHistory.pickContainerImageVersion');
   });
 
+  it('keeps VI Preview opt-in and background warming docker-only by default (VHS-REQ-659.7, VHS-REQ-659.12)', () => {
+    const manifest = readManifest();
+    const properties = manifest.contributes?.configuration?.properties ?? {};
+
+    expect(properties['viHistorySuite.preview.enabled']).toMatchObject({
+      type: 'boolean',
+      default: false
+    });
+    expect(properties['viHistorySuite.preview.backgroundWarming']).toMatchObject({
+      type: 'string',
+      default: 'docker-only'
+    });
+  });
+
   it('contributes the VI Preview custom editor at default priority (VHS-REQ-659.8)', () => {
     const manifest = readManifest();
     const editor = manifest.contributes?.customEditors?.find(

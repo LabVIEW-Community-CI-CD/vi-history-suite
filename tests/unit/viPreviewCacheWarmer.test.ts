@@ -20,7 +20,7 @@ describe('computeWarmPercent', () => {
   });
 });
 
-describe('shouldWarmViPreviewProvider (VHS-REQ-659)', () => {
+describe('shouldWarmViPreviewProvider (VHS-REQ-659.12)', () => {
   it('docker-only warms the container providers but not host-native', () => {
     expect(shouldWarmViPreviewProvider('linux-container', 'docker-only')).toBe(true);
     expect(shouldWarmViPreviewProvider('windows-container', 'docker-only')).toBe(true);
@@ -40,7 +40,7 @@ describe('shouldWarmViPreviewProvider (VHS-REQ-659)', () => {
   });
 });
 
-describe('formatWarmStatusLabel', () => {
+describe('formatWarmStatusLabel (VHS-REQ-659.12)', () => {
   it('shows a spinning percentage with the running count while warming', () => {
     expect(
       formatWarmStatusLabel({ total: 200, completed: 85, succeeded: 85, failed: 0, percent: 42, done: false })
@@ -98,7 +98,7 @@ describe('formatWarmStatusTooltip', () => {
   });
 });
 
-describe('warmViPreviewCache', () => {
+describe('warmViPreviewCache (VHS-REQ-659.12)', () => {
   it('renders serially and reports monotonic progress ending at 100% done', async () => {
     const order: string[] = [];
     const progress: ViPreviewWarmProgress[] = [];

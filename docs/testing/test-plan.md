@@ -140,8 +140,9 @@ acceptance criteria that lack a literal `VHS-REQ-N.M` citation in a verification
 reference test, but the remaining Phase-3b backlog should not be closed by
 adding citation text alone. As of 2026-07-13, after the LabVIEW CLI open-gate,
 Definition-of-Done governance, VI Server gate, registry-fallback, container
-image mismatch remediation, Linux container headless-recovery evidence, and staged-tree
-working-tree evidence branches, the baseline is 501/513 criterion-level citations with 12 uncited
+image mismatch remediation, Linux container headless-recovery evidence,
+staged-tree working-tree evidence, and VI Preview lifecycle branches, the
+baseline is 504/513 criterion-level citations with 9 uncited
 criteria.
 
 Classify each remaining uncited criterion before adding citations or proposing
@@ -159,7 +160,7 @@ Current closure docket:
 
 | Bucket | Criteria | Next action |
 | --- | --- | --- |
-| `exact-testable` | `VHS-REQ-659.7`, `VHS-REQ-659.12`, `VHS-REQ-659.15` | Close in a focused VI Preview lifecycle PR. |
+| `exact-testable` | None currently assigned after the 504/513 refresh. | Keep available for newly classified criteria backed by concrete assertions. |
 | `needs-new-behavior-test` | `VHS-REQ-615.2`, `VHS-REQ-656.5` | Decompose into concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
 | `manual/process` | None currently assigned after the 488/513 refresh. | Keep available for future closeout or release-review evidence that cannot be unit-tested. |
 | `broad-regression` | `VHS-REQ-614.3`, `VHS-REQ-614.4`, `VHS-REQ-631.6`, `VHS-REQ-636.9`, `VHS-REQ-642.5`, `VHS-REQ-644.6` | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
@@ -167,9 +168,7 @@ Current closure docket:
 
 Recommended implementation order:
 
-1. VI Preview lifecycle proofs for `VHS-REQ-659.7`, `VHS-REQ-659.12`, and
-   `VHS-REQ-659.15`.
-2. Docket-only follow-up for any remaining `needs-new-behavior-test`,
+1. Docket-only follow-up for any remaining `needs-new-behavior-test`,
    `broad-regression`, or `defer/product-decision` items.
 
 Do not add a `VHS-REQ-N.M` citation unless the cited verification test actually
