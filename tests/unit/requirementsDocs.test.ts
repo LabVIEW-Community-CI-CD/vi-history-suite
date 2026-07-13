@@ -1231,6 +1231,29 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps the LabVIEW CLI open gate traceable for VHS-REQ-627', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-627');
+    const activationTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+
+    expect(srs).toContain('### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open');
+    expect(srs).toContain('cached runtime detection');
+    expect(srs).toContain('tests/unit/extensionActivationLazySideEffects.test.ts');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-004');
+    expect(requirementRow?.ImplementationRefs).toContain('src/extension.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('src/ui/runtimeAvailabilityNotice.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/runtimeAvailabilityNotice.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    expect(activationTestRow?.Notes).toContain('VHS-REQ-627');
+  });
+
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const firstRun = readRepoText('FIRST-RUN.md');

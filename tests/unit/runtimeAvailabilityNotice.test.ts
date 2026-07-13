@@ -371,7 +371,11 @@ describe('decideLabviewCliOpenGate (VHS-REQ-627)', () => {
     expect(decision.installUrl).toBe(INSTALL_LABVIEW_CLI_URL);
   });
 
-  it('keeps the general Install LabVIEW action when no LabVIEW host is installed (VHS-REQ-629.3)', () => {
+  it('keeps the general Install LabVIEW action when no LabVIEW host is installed (VHS-REQ-627.5, VHS-REQ-629.3)', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const openExternal = vi.mocked(vscode.env.openExternal);
+    showWarning.mockClear();
+    openExternal.mockClear();
     const decision = decideLabviewCliOpenGate(
       detectionMissing,
       evaluateRuntimeAvailability(detectionMissing)
@@ -380,6 +384,14 @@ describe('decideLabviewCliOpenGate (VHS-REQ-627)', () => {
     expect(decision.toastMessage).toBe(LABVIEW_CLI_OPEN_BLOCKED_MESSAGE);
     expect(decision.actionLabel).toBe(LABVIEW_CLI_NOTICE_BUTTON_INSTALL);
     expect(decision.installUrl).toContain('download.labview.html');
+
+    showWarning.mockResolvedValueOnce(decision.actionLabel as never);
+    await presentLabviewCliOpenBlockedToast(decision);
+
+    expect(showWarning).toHaveBeenCalledWith(decision.toastMessage, decision.actionLabel);
+    expect(openExternal).toHaveBeenCalledTimes(1);
+    expect(openExternal.mock.calls[0]?.[0]).toMatchObject({ scheme: 'https' });
+    expect(openExternal.mock.calls[0]?.[0]?.toString()).toContain('download.labview.html');
   });
 });
 
