@@ -260,6 +260,22 @@ describe('extension manifest public metadata', () => {
     expect(containerImageVersionSetting).not.toHaveProperty('default');
   });
 
+  it('contributes comparison report suppression settings without a report format setting (VHS-REQ-645.1)', () => {
+    const manifest = readManifest();
+    const properties = manifest.contributes?.configuration?.properties ?? {};
+
+    for (const key of [
+      'viHistorySuite.report.ignoreViAttributes',
+      'viHistorySuite.report.ignoreFrontPanel',
+      'viHistorySuite.report.ignoreFrontPanelObjectPosition',
+      'viHistorySuite.report.ignoreBlockDiagram',
+      'viHistorySuite.report.ignoreBlockDiagramCosmetic'
+    ]) {
+      expect(properties[key]).toMatchObject({ type: 'boolean' });
+    }
+    expect(properties).not.toHaveProperty('viHistorySuite.report.format');
+  });
+
   it('keeps the simplified development, CI, package, and optional Vagrant scripts (VHS-REQ-599.2)', () => {
     const manifest = readManifest();
 
