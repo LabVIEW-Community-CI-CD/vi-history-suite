@@ -210,7 +210,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('warns when the docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650.6)', async () => {
+  it('warns when the docker image platform conflicts with the confirmed daemon mode (VHS-REQ-620.7)', async () => {
     persistedKeys.runtimeProvider = 'docker';
     persistedKeys.labviewVersion = '2026';
     persistedKeys.labviewBitness = 'x64';
@@ -231,7 +231,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('re-probes the daemon mode on an image-version change instead of trusting a stale cache (VHS-REQ-650.6)', async () => {
+  it('re-probes the daemon mode on an image-version change instead of trusting a stale cache (VHS-REQ-620.7)', async () => {
     // Codex review (PR #490): a cached daemon mode could be stale if the engine
     // is switched externally, then a settings change rendered a false warning
     // from the stale cache. The image-version change must re-probe.
@@ -267,7 +267,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('surfaces a true mismatch warning after an image-version change once the re-probe resolves (VHS-REQ-650.6)', async () => {
+  it('surfaces a true mismatch warning after an image-version change once the re-probe resolves (VHS-REQ-620.7)', async () => {
     persistedKeys.runtimeProvider = 'docker';
     persistedKeys.labviewVersion = '2026';
     persistedKeys.labviewBitness = 'x64';
@@ -314,7 +314,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650.6)', async () => {
+  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-620.7)', async () => {
     // Persisted docker selection with a -windows image, but the probed daemon
     // is in linux-container mode → confirmed conflict → warning state.
     persistedKeys.runtimeProvider = 'docker';
@@ -341,7 +341,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('does not warn when the daemon mode is unknown (probe inconclusive) (VHS-REQ-650.6)', async () => {
+  it('does not warn when the daemon mode is unknown (probe inconclusive) (VHS-REQ-620.7)', async () => {
     // Same -windows selection, but Docker is stopped/unknown (probe undefined).
     // A valid selection must never be flagged against a guess.
     persistedKeys.runtimeProvider = 'docker';
@@ -366,7 +366,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('does not probe the daemon when the active provider is host (VHS-REQ-650.6)', async () => {
+  it('does not probe the daemon when the active provider is host (VHS-REQ-620.7)', async () => {
     // Host recommendation → no docker image relevant → no `docker info` call.
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {

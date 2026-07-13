@@ -78,7 +78,7 @@ type MarketplaceDeps = {
     command: string,
     args: string[],
     options: { cwd?: string; encoding?: string; shell?: boolean }
-  ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error };
+  ) => { status?: number | null; stdout?: string; stderr?: string; error?: Error; signal?: string | null };
   sleepSync?: (ms: number) => void;
   vsceCliPath?: string;
 };
@@ -201,10 +201,10 @@ describe('Marketplace listing verification', () => {
     const spawnSync = vi
       .fn()
       .mockReturnValueOnce({ error: new Error('spawn failed') })
-      .mockReturnValueOnce({ status: null });
+      .mockReturnValueOnce({ status: null, signal: 'SIGTERM' });
 
     const failed = runVsceShow('publisher.extension', mockVsceDeps(spawnSync, { cwd }));
-    const succeeded = runVsceShow('publisher.extension', mockVsceDeps(spawnSync, { cwd }));
+    const signaled = runVsceShow('publisher.extension', mockVsceDeps(spawnSync, { cwd }));
 
     expect(spawnSync).toHaveBeenNthCalledWith(
       1,
@@ -214,7 +214,7 @@ describe('Marketplace listing verification', () => {
     );
     expect(failed).toMatchObject({ status: 1, stdout: '', stderr: '', error: 'spawn failed' });
     expect(failed.command).toContain('show publisher.extension --json');
-    expect(succeeded).toMatchObject({ status: 0, stdout: '', stderr: '', error: '' });
+    expect(signaled).toMatchObject({ status: 1, stdout: '', stderr: '', error: 'terminated by signal SIGTERM' });
   });
 
   it('passes immediately and writes the retained evidence file', () => {
