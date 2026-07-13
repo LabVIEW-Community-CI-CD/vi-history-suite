@@ -98,7 +98,7 @@ describe('renderViPreviewForFile', () => {
     expect(deps.removeDirectory).toHaveBeenCalledWith('/tmp/ws');
   });
 
-  it('serves a cache hit without staging or running LabVIEW', async () => {
+  it('serves a cache hit without staging or running LabVIEW (VHS-REQ-659.11)', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', [
       { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 111 }
     ]);
@@ -119,7 +119,7 @@ describe('renderViPreviewForFile', () => {
     expect(cache.set).not.toHaveBeenCalled();
   });
 
-  it('renders and populates the cache on a miss', async () => {
+  it('renders and populates the cache on a miss (VHS-REQ-659.11)', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', [
       { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 111 }
     ]);
@@ -136,6 +136,28 @@ describe('renderViPreviewForFile', () => {
     expect(result.cached).toBe(false);
     expect(result.html).toBe('<HTML>fresh</HTML>');
     expect(deps.execution.runCommand).toHaveBeenCalledOnce();
+    expect(cache.set).toHaveBeenCalledOnce();
+  });
+
+  it('treats cache read and write failures as non-fatal (VHS-REQ-659.11)', async () => {
+    const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', [
+      { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 111 }
+    ]);
+    const cache = {
+      get: vi.fn().mockRejectedValue(new Error('cache read failed')),
+      set: vi.fn().mockRejectedValue(new Error('cache write failed'))
+    };
+
+    const result = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops' },
+      { ...deps, cache }
+    );
+
+    expect(result.outcome).toBe('rendered');
+    expect(result.cached).toBe(false);
+    expect(result.html).toBe('<HTML>fresh</HTML>');
+    expect(deps.execution.runCommand).toHaveBeenCalledOnce();
+    expect(cache.get).toHaveBeenCalledOnce();
     expect(cache.set).toHaveBeenCalledOnce();
   });
 

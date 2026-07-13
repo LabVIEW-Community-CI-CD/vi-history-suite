@@ -28,7 +28,7 @@ describe('computeViPreviewCacheKey', () => {
     expect(computeViPreviewCacheKey('a\\Foo.vi', [{ relativePath: 'a\\Foo.vi', sizeBytes: 10, mtimeMs: 100 }])).toBe(base);
   });
 
-  it('distinguishes different target VIs that share the same staged file set (#646)', () => {
+  it('distinguishes different target VIs that share the same staged file set (VHS-REQ-659.11, #646)', () => {
     const entries = [
       { relativePath: 'left/A.vi', sizeBytes: 10, mtimeMs: 100 },
       { relativePath: 'left/B.vi', sizeBytes: 20, mtimeMs: 200 }
