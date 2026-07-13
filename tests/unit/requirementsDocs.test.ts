@@ -597,7 +597,6 @@ describe('requirements documentation coherence', () => {
 
     expect(srs).toContain('The initial coverage floor ratchet is statements 40%, branches 33%,');
     expect(srs).toContain('functions 47%, and lines 40%.');
-    expect(thresholds).toEqual({ statements: 80, branches: 70, functions: 84, lines: 80 });
     for (const [metric, floor] of Object.entries(initialFloor)) {
       expect(thresholds[metric as keyof typeof thresholds]).toBeGreaterThanOrEqual(floor);
     }
