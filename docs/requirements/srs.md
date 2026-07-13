@@ -888,6 +888,7 @@ Missing numeric IDs are intentional.
   - `src/ui/runtimeReportPanel.ts`
   - `src/commands/openRuntimeReportPanelCommand.ts`
 - Verification References:
+  - `tests/unit/packageManifest.test.ts`
   - `tests/unit/comparisonReportExecutionPlan.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/runtimeReportPanel.test.ts`

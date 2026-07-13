@@ -111,7 +111,7 @@ tests/unit/multiReportDashboard.test.ts,mapped,Yes,Multi-report dashboard render
 tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
-tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM.
+tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM including VHS-REQ-645 settings contribution checks.
 tests/unit/packageRuntimeSurfaceAudit.test.ts,mapped,Yes,Package runtime surface audit tests; mapped through RTM.
 tests/unit/packageTestVsixWorkflow.test.ts,mapped,Yes,Package test VSIX workflow tests; mapped through RTM.
 tests/unit/preparePublicRepoCloneScript.test.ts,dev-only,No,Public repo clone script tests; CI infrastructure.
