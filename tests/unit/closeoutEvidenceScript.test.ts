@@ -219,6 +219,20 @@ const evidenceOk = json({
     TEST: { signal: 'strong' }
   }
 });
+const evidenceWithTrustedDod = json({
+  inventory: { file_count: 251 },
+  areas: {
+    REQ: { signal: 'strong' },
+    TEST: { signal: 'strong' }
+  },
+  evidence: [
+    {
+      path: '.github/workflows/ci.yml',
+      rule_source: 'GATE:dod:context',
+      matched_text: 'name: DoD Gate / dod'
+    }
+  ]
+});
 const scorecardOk = [
   'Gate Scorecard',
   '| Gate | Status | Confidence | Missing Proof |',
@@ -254,7 +268,7 @@ function githubRemoteOk(): string {
   ].join('\n');
 }
 
-function hostSuccessSpawnSync() {
+function hostSuccessSpawnSync(options: { evidenceScan?: string; scorecard?: string } = {}) {
   return vi.fn((command: string, args: string[]) => {
     const line = [command, ...args].join(' ');
     if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
@@ -283,8 +297,8 @@ function hostSuccessSpawnSync() {
     if (command === 'npm.cmd') return { status: 0, stdout: `${args.join(' ')} ok\n` };
     if (line.includes('preflight_local_dependencies.py')) return { status: 0, stdout: preflightOk };
     if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
-    if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceOk };
-    if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardOk };
+    if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: options.evidenceScan ?? evidenceWithTrustedDod };
+    if (line.includes('run_assurance.py')) return { status: 0, stdout: options.scorecard ?? scorecardDodPass };
     return { status: 0, stdout: '' };
   });
 }
@@ -840,7 +854,7 @@ describe('closeout evidence script', () => {
     expect(result.markdown).toContain('| docs:links | PASS | npm.cmd run docs:links |');
     expect(result.markdown).toContain('| coverage:map | PASS | npm.cmd run coverage:map |');
     expect(result.markdown).toContain('Definition-of-Done');
-    expect(result.markdown).toContain('dod=N/A (raw=N/A; source=none');
+    expect(result.markdown).toContain('dod=PASS (raw=PASS; source=workflow');
     expect(result.markdown).toContain(
       'Definition-of-Done evidence: local `dod:gate` and standards scorecard status are retained in closeout evidence.'
     );
@@ -855,9 +869,28 @@ describe('closeout evidence script', () => {
       generatedRootsExcluded: expect.arrayContaining(['win-validation/', '.cache/'])
     });
     expect(result.context.machineReadableSummary?.standards.summary.dodGateEvidence).toMatchObject({
-      status: 'N/A',
-      scorecardStatus: 'N/A',
-      source: 'none'
+      status: 'PASS',
+      scorecardStatus: 'PASS',
+      source: 'workflow'
+    });
+  });
+
+  it('blocks closeout when Definition-of-Done evidence remains unresolved (VHS-REQ-601.28)', () => {
+    const result = generateCloseoutEvidence(['--kind', 'standards', '--issue', '130', '--run-gates'], {
+      platform: 'win32',
+      cwd: 'C:\\repo',
+      existsSync: () => true,
+      spawnSync: hostSuccessSpawnSync({ evidenceScan: evidenceOk, scorecard: scorecardOk })
+    });
+
+    expect(result.markdown).toContain('dod=N/A (raw=N/A; source=none');
+    expect(result.markdown).toContain('Closable: no');
+    expect(result.context.machineReadableSummary?.closureDecision).toMatchObject({
+      closable: false,
+      requirements: expect.objectContaining({ definitionOfDoneEvidence: false }),
+      reasons: expect.arrayContaining([
+        expect.stringContaining('Definition-of-Done evidence did not pass')
+      ])
     });
   });
 

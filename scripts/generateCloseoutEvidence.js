@@ -1291,6 +1291,8 @@ function evaluateClosureDecision(context) {
     : [];
   const standardsPassed = context.standards?.success === true;
   const provenancePassed = context.provenance?.success === true;
+  const dodGateEvidence = context.standards?.summary?.dodGateEvidence;
+  const dodEvidencePassed = standardsPassed && dodGateEvidence?.status === 'PASS';
   const reasons = [];
 
   if (!localGatesRan) {
@@ -1301,6 +1303,8 @@ function evaluateClosureDecision(context) {
 
   if (!standardsPassed) {
     reasons.push(context.standards?.failure || 'Standards evidence failed.');
+  } else if (!dodEvidencePassed) {
+    reasons.push('Definition-of-Done evidence did not pass; record the blocking follow-up issue before umbrella closeout.');
   }
 
   if (!provenancePassed) {
@@ -1308,11 +1312,12 @@ function evaluateClosureDecision(context) {
   }
 
   return {
-    closable: localGatesPassed && standardsPassed && provenancePassed,
+    closable: localGatesPassed && standardsPassed && dodEvidencePassed && provenancePassed,
     localGatesRan,
     localGatesPassed,
     failedLocalGates,
     standardsPassed,
+    dodEvidencePassed,
     provenancePassed,
     reasons
   };
@@ -1409,6 +1414,7 @@ function buildMachineReadableCloseoutSummary(context, exitCode) {
       requirements: {
         localGates: closureDecision.localGatesPassed,
         standardsEvidence: closureDecision.standardsPassed,
+        definitionOfDoneEvidence: closureDecision.dodEvidencePassed,
         standardsProvenance: closureDecision.provenancePassed
       },
       reasons: closureDecision.reasons
