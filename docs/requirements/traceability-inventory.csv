@@ -26,7 +26,7 @@ src/docs/bundledDocumentationAction.ts,mapped,Yes,Bundled documentation command/
 src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
 src/domain/viMagic.ts,mapped,Yes,VI magic wrapper; mapped through RTM.
 src/domain/viMagicCore.ts,mapped,Yes,VI magic core detection; mapped through RTM.
-src/extension.ts,mapped,Yes,Extension entry point; mapped through RTM.
+src/extension.ts,mapped,Yes,Extension entry point; mapped through RTM including VHS-REQ-651 command registration.
 src/git/gitApi.ts,mapped,Yes,Git API wrapper enabling viHistoryService Git state resolution; mapped through RTM.
 src/git/gitCli.ts,mapped,Yes,Git CLI wrapper; mapped through RTM.
 src/reporting/comparisonReportAction.ts,mapped,Yes,Comparison report action; mapped through RTM.
@@ -95,7 +95,7 @@ tests/unit/labviewCliIni.test.ts,mapped,Yes,LabVIEWCLI.ini connect-window harden
 tests/unit/windowsContainerLabviewCliScript.test.ts,mapped,Yes,Windows-container LabVIEW CLI script builder cliConnectTimeoutSeconds parity tests; mapped to VHS-REQ-148.
 tests/unit/linuxContainerLabviewCliScript.test.ts,mapped,Yes,Linux-container LabVIEW CLI script builder connect-window hardening and cold-launch retry parity tests; mapped to VHS-REQ-148.
 tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
-tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM.
+tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM including VHS-REQ-651 command registration.
 tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.
 tests/unit/gitApi.test.ts,mapped,Yes,Unit verification coverage for Git API wrapper; mapped through RTM.
 tests/unit/gitCli.test.ts,mapped,Yes,Git CLI tests; mapped through RTM.
@@ -111,7 +111,7 @@ tests/unit/multiReportDashboard.test.ts,mapped,Yes,Multi-report dashboard render
 tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
-tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM including VHS-REQ-645 settings contribution checks.
+tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM including VHS-REQ-645 settings contribution checks and VHS-REQ-651 Command Palette exclusion.
 tests/unit/packageRuntimeSurfaceAudit.test.ts,mapped,Yes,Package runtime surface audit tests; mapped through RTM.
 tests/unit/packageTestVsixWorkflow.test.ts,mapped,Yes,Package test VSIX workflow tests; mapped through RTM.
 tests/unit/preparePublicRepoCloneScript.test.ts,dev-only,No,Public repo clone script tests; CI infrastructure.
@@ -171,7 +171,7 @@ vitest.config.ts,mapped,Yes,Vitest coverage reporter and evidence-backed thresho
 stryker.config.mjs,dev-only,No,Stryker mutation-testing configuration scoped to src/domain; advisory assertion-quality signal (thresholds.break null); requires a local run.
 tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
 tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.
-package.json,mapped,Yes,Package manifest; mapped through RTM.
+package.json,mapped,Yes,Package manifest; mapped through RTM including VHS-REQ-651 Command Palette exclusion.
 package-lock.json,supporting,No,Package lock file; dependency support.
 README.md,asset-doc,Yes,Repository README; mapped through RTM.
 INSTALL.md,asset-doc,Yes,Installation documentation; mapped through RTM.
