@@ -321,12 +321,12 @@
   "devDependencies": {
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
-    "@types/node": "^24.13.2",
+    "@types/node": "^24.13.3",
     "@types/vscode": "^1.101.0",
     "@vitest/coverage-v8": "^4.1.10",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "3.9.2",
-    "marked": "^18.0.5",
+    "marked": "^18.0.6",
     "rimraf": "^6.0.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
