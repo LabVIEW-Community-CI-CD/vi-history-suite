@@ -4273,7 +4273,7 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('command-spawn-failed');
   });
 
-  it('reclassifies a -350000 LabVIEW CLI exit as labview-cli-connection-failed (VHS-REQ-658.1)', async () => {
+  it('reclassifies a -350000 LabVIEW CLI exit as labview-cli-connection-failed (VHS-REQ-630.3, VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
 
     const result = await executeComparisonReport(
