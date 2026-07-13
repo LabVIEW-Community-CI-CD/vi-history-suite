@@ -158,6 +158,23 @@ describe('Definition-of-Done gate', () => {
     ).toBe(true);
   });
 
+  it('pins the hosted scanner-visible DoD gate to the required CI workflow (VHS-REQ-615.10)', () => {
+    const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
+
+    expect(workflow).toContain('name: DoD Gate / dod');
+    expect(workflow).toContain('npm run dod:gate');
+    expect(workflow).toContain('npm run package');
+    expect(workflow).toContain('dod-gate-report.txt');
+    expect(
+      assertOrdered(
+        workflow,
+        ['Package', 'DoD Gate / dod', 'Governance Gate Reports / governance-gates'],
+        (step) => `name: ${step}`
+      ).passed
+    ).toBe(true);
+    expect(runDefinitionOfDoneGate({ cwd: repoRoot }).success).toBe(true);
+  });
+
   it('fails ordered checks when a required predecessor moves later', () => {
     const result = assertOrdered(
       "['docs:links']\n['traceability:audit']",
