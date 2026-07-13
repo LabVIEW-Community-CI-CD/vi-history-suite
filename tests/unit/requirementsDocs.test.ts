@@ -467,15 +467,15 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('Criterion Closure Docket');
-    expect(testPlan).toContain('488/513 criterion-level citations');
-    expect(testPlan).toContain('25\nuncited criteria');
+    expect(testPlan).toContain('494/513\ncriterion-level citations');
+    expect(testPlan).toContain('19 uncited criteria');
     expect(testPlan).toContain('`exact-testable`');
     expect(testPlan).toContain('`needs-new-behavior-test`');
     expect(testPlan).toContain('`manual/process`');
     expect(testPlan).toContain('`broad-regression`');
     expect(testPlan).toContain('`defer/product-decision`');
     expect(testPlan).toContain('Current closure docket');
-    expect(testPlan).toContain(`\`${['VHS-REQ-627', '5'].join('.')}\``);
+    expect(testPlan).toContain(`\`${['VHS-REQ-631', '4'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
     expect(testPlan).toContain('Recommended implementation order');
