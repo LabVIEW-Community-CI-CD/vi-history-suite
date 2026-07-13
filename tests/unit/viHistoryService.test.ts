@@ -227,7 +227,7 @@ describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', (
     ).toBeUndefined();
   });
 
-  it('selects the most specific root when multiple nested repositories match', () => {
+  it('selects the most specific root when multiple nested repositories match (VHS-REQ-061.1)', () => {
     expect(
       selectMostSpecificGitRepositoryRoot('/workspace/outer/inner/deep/file.vi', [
         { rootUri: { fsPath: '/workspace/outer' } },
@@ -264,7 +264,7 @@ describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', (
     ).toBe('/home/user/external');
   });
 
-  it('falls back to CLI repository discovery when Git API cannot match a file path', async () => {
+  it('falls back to CLI repository discovery when Git API cannot match a file path (VHS-REQ-061.2)', async () => {
     getRepoRootMock.mockResolvedValue('/workspace/discovered-root');
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'discovered-root',

@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -63,6 +65,15 @@ describe('resolveLinuxContainerLabviewProfile (VHS-REQ-657)', () => {
 });
 
 describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
+  it('keeps the tag model free of VS Code, filesystem, child-process, and network dependencies (VHS-REQ-646.5)', () => {
+    const source = fs.readFileSync(
+      path.resolve(__dirname, '../../src/tooling/containerImageCatalog.ts'),
+      'utf8'
+    );
+
+    expect(source).not.toMatch(/from ['"]vscode['"]|node:fs|node:child_process|child_process|\bfetch\s*\(|https?/u);
+  });
+
   it('parses a base quarterly tag (VHS-REQ-646.1)', () => {
     expect(parseLabviewContainerImageTag('2026q1-windows')).toEqual({
       year: 2026,
