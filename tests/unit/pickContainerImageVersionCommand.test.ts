@@ -246,6 +246,34 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     vi.clearAllMocks();
   });
 
+  it('runs published discovery lazily on picker command execution, not registration (VHS-REQ-647.1)', async () => {
+    const fetchPublishedTags = vi.fn().mockResolvedValue(['2026q1-windows']);
+    const listLocalImages = vi.fn().mockResolvedValue([]);
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(() => undefined),
+      update: vi.fn(async () => undefined),
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    vi.spyOn(vscode.window, 'showQuickPick').mockResolvedValue(undefined as never);
+
+    registerPickContainerImageVersionCommand(createFakeContext() as never, {
+      isTrusted: () => true,
+      platform: 'windows',
+      fetchPublishedTags,
+      listLocalImages
+    });
+
+    expect(fetchPublishedTags).not.toHaveBeenCalled();
+    expect(listLocalImages).not.toHaveBeenCalled();
+
+    const result = await vscode.commands.executeCommand(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID);
+
+    expect(fetchPublishedTags).toHaveBeenCalledWith(LABVIEW_CONTAINER_IMAGE_REPOSITORY);
+    expect(listLocalImages).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ outcome: 'cancelled-by-user' });
+  });
+
   it('blocks execution outside trusted workspaces (VHS-REQ-649.4)', async () => {
     const warn = vi.spyOn(vscode.window, 'showWarningMessage');
     registerPickContainerImageVersionCommand(createFakeContext() as never, {
@@ -498,6 +526,28 @@ describe('defaultFetchPublishedTags (VHS-REQ-647)', () => {
     const httpGetJson = vi.fn();
     await expect(defaultFetchPublishedTags('someone/else', httpGetJson as never)).resolves.toEqual([]);
     expect(httpGetJson).not.toHaveBeenCalled();
+  });
+
+  it('requests only pinned anonymous HTTPS tag pages with bounded page size and page count (VHS-REQ-647.1)', async () => {
+    const requestedUrls: string[] = [];
+    const httpGetJson = vi.fn(async (url: string) => {
+      requestedUrls.push(url);
+      return {
+        results: [{ name: '2026q1-linux' }],
+        next: 'https://hub.docker.com/v2/repositories/nationalinstruments/labview/tags?page=next'
+      };
+    });
+
+    await defaultFetchPublishedTags(LABVIEW_CONTAINER_IMAGE_REPOSITORY, httpGetJson as never);
+
+    expect(requestedUrls).toEqual([
+      'https://hub.docker.com/v2/repositories/nationalinstruments/labview/tags?page_size=100&page=1',
+      'https://hub.docker.com/v2/repositories/nationalinstruments/labview/tags?page_size=100&page=2',
+      'https://hub.docker.com/v2/repositories/nationalinstruments/labview/tags?page_size=100&page=3',
+      'https://hub.docker.com/v2/repositories/nationalinstruments/labview/tags?page_size=100&page=4',
+      'https://hub.docker.com/v2/repositories/nationalinstruments/labview/tags?page_size=100&page=5'
+    ]);
+    expect(requestedUrls.join('\n')).not.toMatch(/authorization|token|password|credential/i);
   });
 
   it('collects string tag names across pages, following the next link (VHS-REQ-647.4)', async () => {
