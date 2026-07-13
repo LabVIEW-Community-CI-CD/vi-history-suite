@@ -365,6 +365,48 @@ describe('registerPickContainerImageVersionCommand (VHS-REQ-649)', () => {
     expect(result).toMatchObject({ outcome: 'persisted-selection', tag: '2026q1-linux' });
   });
 
+  it('filters unparseable and wrong-platform versions before persistence (VHS-REQ-650.4)', async () => {
+    const update = vi.fn(async () => undefined);
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn(() => undefined),
+      update,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    let capturedTags: Array<string | undefined> = [];
+    vi.spyOn(vscode.window, 'showQuickPick').mockImplementation((async (
+      items: ReadonlyArray<{ option: { tag?: string } }>
+    ) => {
+      capturedTags = items.map((item) => item.option.tag);
+      return items[0];
+    }) as never);
+
+    registerPickContainerImageVersionCommand(createFakeContext() as never, {
+      isTrusted: () => true,
+      platform: 'windows',
+      fetchPublishedTags: vi.fn().mockResolvedValue([
+        '2026q1-linux',
+        'not-a-labview-version',
+        '2026q1-windows'
+      ]),
+      listLocalImages: vi.fn().mockResolvedValue([
+        'nationalinstruments/labview:2026q1-linux',
+        'ubuntu:24.04'
+      ])
+    });
+    const result = await vscode.commands.executeCommand(PICK_CONTAINER_IMAGE_VERSION_COMMAND_ID);
+
+    expect(capturedTags).toContain('2026q1-windows');
+    expect(capturedTags).not.toContain('2026q1-linux');
+    expect(capturedTags).not.toContain('not-a-labview-version');
+    expect(result).toMatchObject({ outcome: 'persisted-selection', tag: '2026q1-windows' });
+    expect(update).toHaveBeenCalledWith(
+      'container.imageVersion',
+      '2026q1-windows',
+      vscode.ConfigurationTarget.Global
+    );
+  });
+
   it('skips the daemon probe when an explicit platform override is provided (VHS-REQ-649.6)', async () => {
     const probeDaemonPlatform = vi.fn().mockResolvedValue('linux');
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
