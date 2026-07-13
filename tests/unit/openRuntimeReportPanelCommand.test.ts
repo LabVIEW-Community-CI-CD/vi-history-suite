@@ -286,6 +286,42 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).toContain('2026q1-linux');
   });
 
+  it('degrades to the current container image selection when discovery is unavailable (VHS-REQ-651.3)', async () => {
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn((key: string) => key === 'container.imageVersion' ? '2026q1-linux' : undefined),
+      update: sharedUpdate,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    const fetchPublishedTags = vi.fn(async () => {
+      throw new Error('registry unavailable');
+    });
+    const listLocalImages = vi.fn(async () => {
+      throw new Error('docker unavailable');
+    });
+    registerOpenRuntimeReportPanelCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth, dockerActiveSnapshot) as never,
+      {
+        isTrusted: () => true,
+        containerPlatform: 'linux',
+        fetchPublishedTags,
+        listLocalImages
+      }
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+
+    await expect(panel.dispatchMessage({ command: 'discoverContainerVersions' })).resolves.toBeUndefined();
+
+    expect(fetchPublishedTags).toHaveBeenCalled();
+    expect(listLocalImages).toHaveBeenCalled();
+    expect(panel.webview.html).toContain('<strong>Selected:</strong> 2026q1-linux');
+    expect(panel.webview.html).toContain('Published LabVIEW container tag discovery was skipped');
+    expect(panel.webview.html).toContain('Local LabVIEW container image discovery could not enumerate pulled images');
+  });
+
   it('labels image versions "local presence unknown" when the Docker engine is offline (VHS-REQ-649.3)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
