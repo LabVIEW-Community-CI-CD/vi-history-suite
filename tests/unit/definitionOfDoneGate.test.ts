@@ -163,13 +163,15 @@ describe('Definition-of-Done gate', () => {
 
     expect(workflow).toContain('name: DoD Gate / dod');
     expect(workflow).toContain('npm run dod:gate');
+    expect(workflow).toContain('npm run package');
     expect(workflow).toContain('dod-gate-report.txt');
-    expect(workflow.indexOf('run: npm run package')).toBeLessThan(
-      workflow.indexOf('name: DoD Gate / dod')
-    );
-    expect(workflow.indexOf('name: DoD Gate / dod')).toBeLessThan(
-      workflow.indexOf('name: Governance Gate Reports / governance-gates')
-    );
+    expect(
+      assertOrdered(
+        workflow,
+        ['Package', 'DoD Gate / dod', 'Governance Gate Reports / governance-gates'],
+        (step) => `name: ${step}`
+      ).passed
+    ).toBe(true);
     expect(runDefinitionOfDoneGate({ cwd: repoRoot }).success).toBe(true);
   });
 
