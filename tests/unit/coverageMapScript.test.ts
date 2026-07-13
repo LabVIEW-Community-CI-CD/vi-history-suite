@@ -135,7 +135,7 @@ function writeFixture() {
 }
 
 describe('coverage traceability map script', () => {
-  it('parses coverage map arguments with safe defaults and threshold overrides (VHS-REQ-613.1)', () => {
+  it('parses coverage map arguments with safe defaults and threshold overrides', () => {
     const options = parseArgs(['--risk-threshold', '60', '--json']);
 
     expect(options.coverageSummary).toBe(path.join('coverage', 'coverage-summary.json'));
@@ -145,7 +145,7 @@ describe('coverage traceability map script', () => {
     expect(options.json).toBe(true);
   });
 
-  it('joins coverage, inventory, and RTM records into requirement risk facts (VHS-REQ-613.2, VHS-REQ-613.3)', () => {
+  it('joins coverage, inventory, and RTM records into requirement risk facts (VHS-REQ-613.1, VHS-REQ-613.2, VHS-REQ-613.3)', () => {
     const repoRoot = writeFixture();
 
     const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });

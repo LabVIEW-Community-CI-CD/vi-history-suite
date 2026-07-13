@@ -185,6 +185,7 @@ describe('CI branch governance workflow', () => {
 
     expect(workflow).toContain('name: DoD Gate / dod');
     expect(workflow).toContain('npm run dod:gate');
+    expect(workflow).toContain('run: npm run package');
     expect(workflow).toContain('dod-gate-report.txt');
     expect(workflow.indexOf('run: npm run package')).toBeLessThan(
       workflow.indexOf('name: DoD Gate / dod')
