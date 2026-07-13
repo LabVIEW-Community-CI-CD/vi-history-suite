@@ -264,7 +264,7 @@ describe('extension manifest public metadata', () => {
     expect(containerImageVersionSetting).not.toHaveProperty('default');
   });
 
-  it('contributes comparison report suppression settings without a report format setting (VHS-REQ-645.1)', () => {
+  it('contributes native comparison report suppression settings without a report format setting (VHS-REQ-645.1, VHS-REQ-645.4)', () => {
     const manifest = readManifest();
     const properties = manifest.contributes?.configuration?.properties ?? {};
 
