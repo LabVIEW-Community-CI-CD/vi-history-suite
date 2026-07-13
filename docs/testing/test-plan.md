@@ -139,9 +139,10 @@ gate semantics.
 acceptance criteria that lack a literal `VHS-REQ-N.M` citation in a verification
 reference test, but the remaining Phase-3b backlog should not be closed by
 adding citation text alone. As of 2026-07-13, after the LabVIEW CLI open-gate,
-Definition-of-Done governance, VI Server gate, registry-fallback, and container
-image mismatch remediation evidence branches, the baseline is 497/513
-criterion-level citations with 16 uncited criteria.
+Definition-of-Done governance, VI Server gate, registry-fallback, container
+image mismatch remediation, and Linux container headless-recovery evidence
+branches, the baseline is 498/513 criterion-level citations with 15 uncited
+criteria.
 
 Classify each remaining uncited criterion before adding citations or proposing
 enforcement:
@@ -158,7 +159,7 @@ Current closure docket:
 
 | Bucket | Criteria | Next action |
 | --- | --- | --- |
-| `exact-testable` | `VHS-REQ-624.9`, `VHS-REQ-641.3`, `VHS-REQ-641.5`, `VHS-REQ-657.4`, `VHS-REQ-659.7`, `VHS-REQ-659.12`, `VHS-REQ-659.15` | Close in focused PRs by surface: staged-tree/runtime evidence and VI Preview lifecycle. |
+| `exact-testable` | `VHS-REQ-624.9`, `VHS-REQ-641.3`, `VHS-REQ-641.5`, `VHS-REQ-659.7`, `VHS-REQ-659.12`, `VHS-REQ-659.15` | Close in focused PRs by surface: staged-tree/runtime evidence and VI Preview lifecycle. |
 | `needs-new-behavior-test` | `VHS-REQ-615.2`, `VHS-REQ-656.5` | Decompose into concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
 | `manual/process` | None currently assigned after the 488/513 refresh. | Keep available for future closeout or release-review evidence that cannot be unit-tested. |
 | `broad-regression` | `VHS-REQ-614.3`, `VHS-REQ-614.4`, `VHS-REQ-631.6`, `VHS-REQ-636.9`, `VHS-REQ-642.5`, `VHS-REQ-644.6` | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
@@ -166,8 +167,8 @@ Current closure docket:
 
 Recommended implementation order:
 
-1. Runtime/staged-tree proofs for `VHS-REQ-624.9`, `VHS-REQ-641.3`,
-   `VHS-REQ-641.5`, and `VHS-REQ-657.4`.
+1. Runtime/staged-tree proofs for `VHS-REQ-624.9`, `VHS-REQ-641.3`, and
+   `VHS-REQ-641.5`.
 2. VI Preview lifecycle proofs for `VHS-REQ-659.7`, `VHS-REQ-659.12`, and
    `VHS-REQ-659.15`.
 3. Docket-only follow-up for any remaining `needs-new-behavior-test`,
