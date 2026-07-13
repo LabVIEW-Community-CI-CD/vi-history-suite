@@ -138,8 +138,8 @@ gate semantics.
 `npm run requirements:criteria` remains advisory. It is useful for finding
 acceptance criteria that lack a literal `VHS-REQ-N.M` citation in a verification
 reference test, but the remaining Phase-3b backlog should not be closed by
-adding citation text alone. As of 2026-07-13, after the launcher self-heal
-follow-up merged, the baseline is 475/513 criterion-level citations with 38
+adding citation text alone. As of 2026-07-13, after PRs #962-#986 were merged
+into `develop`, the baseline is 488/513 criterion-level citations with 25
 uncited criteria.
 
 Classify each remaining uncited criterion before adding citations or proposing
@@ -152,6 +152,29 @@ enforcement:
 | `manual/process` | The evidence is owned by a manual dispatch, release process, closeout packet, or external validation surface. | Name the manual or process evidence in this test plan or the RTM instead of forcing a unit-test citation. |
 | `broad-regression` | The criterion says broad behavior is unchanged or no unrelated surface regressed. | Keep advisory unless it can be decomposed into concrete assertions. |
 | `defer/product-decision` | The criterion depends on a UX, runtime, governance, or tooling decision. | Track the decision explicitly; do not create assertion theater. |
+
+Current closure docket:
+
+| Bucket | Criteria | Next action |
+| --- | --- | --- |
+| `exact-testable` | `VHS-REQ-615.1`, `VHS-REQ-615.3`, `VHS-REQ-615.4`, `VHS-REQ-615.11`, `VHS-REQ-624.9`, `VHS-REQ-627.5`, `VHS-REQ-627.6`, `VHS-REQ-631.4`, `VHS-REQ-634.3`, `VHS-REQ-641.3`, `VHS-REQ-641.5`, `VHS-REQ-650.7`, `VHS-REQ-657.4`, `VHS-REQ-659.7`, `VHS-REQ-659.12`, `VHS-REQ-659.15` | Close in focused PRs by surface: governance/process, runtime open gates, staged-tree/runtime evidence, and VI Preview lifecycle. |
+| `needs-new-behavior-test` | `VHS-REQ-615.2`, `VHS-REQ-656.5` | Decompose into concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
+| `manual/process` | None currently assigned after the 488/513 refresh. | Keep available for future closeout or release-review evidence that cannot be unit-tested. |
+| `broad-regression` | `VHS-REQ-614.3`, `VHS-REQ-614.4`, `VHS-REQ-631.6`, `VHS-REQ-636.9`, `VHS-REQ-642.5`, `VHS-REQ-644.6` | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
+| `defer/product-decision` | `VHS-REQ-644.2` | Resolve the requirement/product intent before citation because current export behavior injects revision context into generated-report exports while the criterion says the preferred graphics-report export copies the LabVIEW report unchanged. |
+
+Recommended implementation order:
+
+1. Governance/process exact proofs for `VHS-REQ-615.1`, `VHS-REQ-615.3`,
+   `VHS-REQ-615.4`, and `VHS-REQ-615.11`.
+2. Runtime open-gate proofs for `VHS-REQ-627.5`, `VHS-REQ-627.6`,
+   `VHS-REQ-631.4`, `VHS-REQ-634.3`, and `VHS-REQ-650.7`.
+3. Runtime/staged-tree proofs for `VHS-REQ-624.9`, `VHS-REQ-641.3`,
+   `VHS-REQ-641.5`, and `VHS-REQ-657.4`.
+4. VI Preview lifecycle proofs for `VHS-REQ-659.7`, `VHS-REQ-659.12`, and
+   `VHS-REQ-659.15`.
+5. Docket-only follow-up for any remaining `needs-new-behavior-test`,
+   `broad-regression`, or `defer/product-decision` items.
 
 Do not add a `VHS-REQ-N.M` citation unless the cited verification test actually
 demonstrates that criterion. When a true proof lives in a different verification
