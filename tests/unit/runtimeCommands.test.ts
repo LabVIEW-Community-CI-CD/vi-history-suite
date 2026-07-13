@@ -278,7 +278,7 @@ describe('buildDriftSummaryLine (VHS-REQ-620.6)', () => {
 });
 
 describe('registerRuntimeRuntimeCommands trust gating', () => {
-  it('blocks all three commands in untrusted workspaces with a warning', async () => {
+  it('blocks all three commands in untrusted workspaces with a warning (VHS-REQ-617.6)', async () => {
     const context = createFakeContext();
     const watcher = createFakeWatcher();
     registerRuntimeRuntimeCommands(context as never, watcher, {

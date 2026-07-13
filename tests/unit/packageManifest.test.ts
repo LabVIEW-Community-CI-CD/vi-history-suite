@@ -154,7 +154,7 @@ describe('extension manifest public metadata', () => {
     expect(manifest.extensionDependencies ?? []).not.toContain('vscode.git');
   });
 
-  it('contributes the runtime convenience commands under the VI History category', () => {
+  it('contributes the runtime convenience commands under the VI History category (VHS-REQ-617.6)', () => {
     const manifest = readManifest();
     const commands = manifest.contributes?.commands ?? [];
     const titles = new Map(commands.map((entry) => [entry.command ?? '', entry]));
