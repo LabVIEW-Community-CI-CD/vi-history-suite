@@ -362,7 +362,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('disposes the focus listener, configuration listener, and status bar item (VHS-REQ-617.4)', async () => {
+  it('disposes the focus listener, configuration listener, and status bar item', async () => {
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {
       detect: async () => detectionWithBoth,

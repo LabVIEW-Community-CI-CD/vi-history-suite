@@ -368,7 +368,7 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
-  it('allows VI History open while Git prerequisite detection is pending and registers watcher disposal (VHS-REQ-619.5, VHS-REQ-619.6)', async () => {
+  it('allows VI History open while Git prerequisite detection is pending and registers watcher disposal (VHS-REQ-619.5, VHS-REQ-619.6, VHS-REQ-617.4)', async () => {
     const watcher = {
       dispose: vi.fn(),
       forceRefresh: vi.fn(async () => undefined),
