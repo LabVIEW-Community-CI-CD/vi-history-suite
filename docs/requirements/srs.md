@@ -2619,6 +2619,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/gitPrerequisiteDetect.test.ts`
   - `tests/unit/gitPrerequisiteNotice.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep Git detection synchronous in spirit (one probe, cached) and never
