@@ -467,8 +467,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('Criterion Closure Docket');
-    expect(testPlan).toContain('498/513 criterion-level citations');
-    expect(testPlan).toContain('15 uncited');
+    expect(testPlan).toContain('501/513 criterion-level citations');
+    expect(testPlan).toContain('12 uncited');
     expect(testPlan).toContain('`exact-testable`');
     expect(testPlan).toContain('`needs-new-behavior-test`');
     expect(testPlan).toContain('`manual/process`');
@@ -479,6 +479,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).not.toContain(`\`${['VHS-REQ-634', '3'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-650', '7'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-657', '4'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-624', '9'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-641', '3'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-641', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
     expect(testPlan).toContain('Recommended implementation order');

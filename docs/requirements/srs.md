@@ -1251,6 +1251,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/comparisonReportPreflight.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
 - Change Guidance:
