@@ -87,6 +87,22 @@ function extractCoverageGlobArrays(vitestConfig: string): { include: string[]; e
   };
 }
 
+function extractGlobalCoverageThresholds(vitestConfig: string) {
+  const thresholdsStart = vitestConfig.indexOf('thresholds: {');
+  const perFileThresholdsStart = vitestConfig.indexOf("'src/reporting/comparisonRuntimeLocator.ts'", thresholdsStart);
+  const thresholdBlock = vitestConfig.slice(thresholdsStart, perFileThresholdsStart);
+
+  return Object.fromEntries(
+    ['statements', 'branches', 'functions', 'lines'].map((metric) => {
+      const match = new RegExp(`${metric}:\\s*(\\d+)`, 'u').exec(thresholdBlock);
+      if (!match) {
+        throw new Error(`Missing global coverage threshold for ${metric}`);
+      }
+      return [metric, Number(match[1])];
+    })
+  ) as Record<'statements' | 'branches' | 'functions' | 'lines', number>;
+}
+
 function globToRegExp(pattern: string): RegExp {
   const normalized = pattern.replace(/\\/g, '/');
   let source = '';
@@ -572,6 +588,19 @@ describe('requirements documentation coherence', () => {
     expect(coverageTestRow?.Classification).toBe('mapped');
     expect(coverageTestRow?.RtmCoverage).toBe('Yes');
     expect(coverageTestRow?.Notes).toContain('VHS-REQ-613');
+  });
+
+  it('keeps the coverage floor ratchet at or above the initial baseline (VHS-REQ-613.6)', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const thresholds = extractGlobalCoverageThresholds(readRepoText('vitest.config.ts'));
+    const initialFloor = { statements: 40, branches: 33, functions: 47, lines: 40 } as const;
+
+    expect(srs).toContain('The initial coverage floor ratchet is statements 40%, branches 33%,');
+    expect(srs).toContain('functions 47%, and lines 40%.');
+    expect(thresholds).toEqual({ statements: 80, branches: 70, functions: 84, lines: 80 });
+    for (const [metric, floor] of Object.entries(initialFloor)) {
+      expect(thresholds[metric as keyof typeof thresholds]).toBeGreaterThanOrEqual(floor);
+    }
   });
 
   it('keeps coverage instrumentation scoped to product code and requirement-supporting scripts (VHS-REQ-613.5)', () => {
