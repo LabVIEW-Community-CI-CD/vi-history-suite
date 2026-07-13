@@ -25,6 +25,7 @@ import {
 } from '../tooling/runtimeAutoDetect';
 import {
   buildLinuxLabviewIniCandidatePaths,
+  inferLabviewYearFromExecutablePath,
   inferSupportedLabviewYearFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   observeWindowsRuntimeProcesses,
@@ -845,7 +846,7 @@ export async function decideBitnessOpenGate(
       selectedBitness,
       observedYear:
         observation?.labviewProcessYear ??
-        inferSupportedLabviewYearFromExecutablePath(observation?.labviewProcessExecutablePath),
+        inferLabviewYearFromExecutablePath(observation?.labviewProcessExecutablePath),
       selectedYear: snapshot?.label.labviewVersion
     }),
     actionLabel: BITNESS_OPEN_PICK_PROVIDER_ACTION,
