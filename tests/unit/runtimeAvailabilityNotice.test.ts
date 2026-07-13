@@ -30,6 +30,7 @@ import {
   LABVIEW_CLI_NOTICE_BUTTON_INSTALL,
   LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI,
   LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+  presentLabviewCliOpenBlockedToast,
   presentBitnessOpenBlockedToast,
   presentVersionOpenBlockedToast,
   RUNTIME_RE_DETECT_THROTTLE_MS,
@@ -408,6 +409,48 @@ describe('decideLabviewCliOpenGate manual override (VHS-REQ-633.3, VHS-REQ-633.4
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     expect(decideLabviewCliOpenGate(detectionHost, snapshot, '   ').kind).toBe('block');
     expect(decideLabviewCliOpenGate(detectionHost, snapshot, '').kind).toBe('block');
+  });
+});
+
+describe('presentLabviewCliOpenBlockedToast (VHS-REQ-629)', () => {
+  it('shows the carried action label and opens the carried install URL when chosen (VHS-REQ-629.4)', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const openExternal = vi.mocked(vscode.env.openExternal);
+    showWarning.mockClear();
+    openExternal.mockClear();
+
+    await presentLabviewCliOpenBlockedToast({
+      kind: 'block',
+      toastMessage: LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE,
+      actionLabel: LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI,
+      installUrl: INSTALL_LABVIEW_CLI_URL
+    });
+
+    expect(showWarning).toHaveBeenCalledWith(
+      LABVIEW_CLI_MISSING_WITH_HOST_MESSAGE,
+      LABVIEW_CLI_NOTICE_BUTTON_INSTALL_CLI
+    );
+    expect(openExternal).toHaveBeenCalledTimes(1);
+    expect(openExternal.mock.calls[0]?.[0]).toMatchObject({ scheme: 'https' });
+    expect(openExternal.mock.calls[0]?.[0]?.toString()).toContain(
+      'download.ni-labview-command-line-interface'
+    );
+  });
+
+  it('does not open an install URL when the user dismisses the toast', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const openExternal = vi.mocked(vscode.env.openExternal);
+    showWarning.mockResolvedValueOnce(undefined);
+    openExternal.mockClear();
+
+    await presentLabviewCliOpenBlockedToast({
+      kind: 'block',
+      toastMessage: LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+      actionLabel: LABVIEW_CLI_NOTICE_BUTTON_INSTALL,
+      installUrl: INSTALL_LABVIEW_CLI_URL
+    });
+
+    expect(openExternal).not.toHaveBeenCalled();
   });
 });
 
