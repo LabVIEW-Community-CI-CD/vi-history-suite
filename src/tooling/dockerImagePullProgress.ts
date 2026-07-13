@@ -543,7 +543,7 @@ export function formatPullProgressMessage(
 /** Injectable line-stream boundary for {@link streamDockerImagePull}. */
 export interface DockerPullStreamRequest {
   (
-    params: { socketPath: string; path: string },
+    params: { socketPath: string; path: string; method: 'POST'; headers: Record<string, string> },
     handlers: { onLine: (line: string) => void }
   ): Promise<{ statusCode: number }>;
 }
@@ -588,8 +588,8 @@ const defaultRequestStream: DockerPullStreamRequest = (params, handlers) =>
       {
         socketPath: params.socketPath,
         path: params.path,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        method: params.method,
+        headers: params.headers
       },
       (response) => {
         response.setEncoding('utf8');
@@ -673,7 +673,15 @@ export async function streamDockerImagePull(
 
   let statusCode: number;
   try {
-    ({ statusCode } = await requestStream({ socketPath, path }, { onLine }));
+    ({ statusCode } = await requestStream(
+      {
+        socketPath,
+        path,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      },
+      { onLine }
+    ));
   } catch {
     // Daemon socket unreachable (e.g. ENOENT npipe / ECONNREFUSED): not attempted
     // so the caller falls back to the CLI pull.
