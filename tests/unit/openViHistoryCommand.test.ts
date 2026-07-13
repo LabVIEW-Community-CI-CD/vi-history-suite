@@ -870,7 +870,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(serializedUpdate).not.toContain('host-native');
   });
 
-  it('shows a concise Docker Desktop toast and suppresses the verbose runtime warning when the Docker daemon is not running (VHS-REQ-642)', async () => {
+  it('shows a concise Docker Desktop toast and suppresses the verbose runtime warning when the Docker daemon is not running (VHS-REQ-642, VHS-REQ-642.4)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -928,7 +928,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
   });
 
-  it('names the Docker daemon (not Docker Desktop) on non-Windows hosts (VHS-REQ-642)', async () => {
+  it('names the Docker daemon (not Docker Desktop) on non-Windows hosts (VHS-REQ-642, VHS-REQ-642.4)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -971,7 +971,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     ).toBe(false);
   });
 
-  it('re-runs the comparison for the same revision pair when Retry is selected (VHS-REQ-642)', async () => {
+  it('re-runs the comparison for the same revision pair when Retry is selected (VHS-REQ-642, VHS-REQ-642.4)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -1016,7 +1016,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('opens the retained diagnostics packet for the same pair when Show diagnostics is selected (VHS-REQ-642)', async () => {
+  it('opens the retained diagnostics packet for the same pair when Show diagnostics is selected (VHS-REQ-642, VHS-REQ-642.4)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();

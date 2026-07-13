@@ -1267,7 +1267,7 @@ describe('Container image platform mismatch comparison gate (#532)', () => {
   });
 });
 
-describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
+describe('isDockerDaemonNotRunningBlock (VHS-REQ-642, VHS-REQ-642.1)', () => {
   const DAEMON_DOWN_REASONS = [
     'docker-provider-unavailable',
     'docker-only-provider-unavailable',
@@ -1288,7 +1288,7 @@ describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
     }
   );
 
-  // VHS-REQ-642: the daemon-unreachable block must also fire when the Docker CLI
+  // VHS-REQ-642.1: the daemon-unreachable block must also fire when the Docker CLI
   // presence fact is unconfirmed (`undefined`). This is the real-world shape
   // that previously leaked the verbose toast + auto-opened report: the doctor
   // next action already said "start Docker Desktop" (CLI not explicitly absent),
@@ -1360,7 +1360,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     harness.reset();
   });
 
-  it('suppresses the diagnostics webview, still archives the packet, and returns the daemon-down outcome', async () => {
+  it('suppresses the diagnostics webview, still archives the packet, and returns the daemon-down outcome (VHS-REQ-642.2, VHS-REQ-642.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1414,6 +1414,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
       blockedReason: 'docker-provider-unavailable',
       dockerCliAvailable: true,
       dockerDaemonReachable: false,
+      platform: 'win32',
       retainedArchiveAvailable: true
     });
     expect(createWebviewPanel).not.toHaveBeenCalled();
@@ -1421,7 +1422,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
   });
 
-  it('suppresses the diagnostics webview for a working-tree daemon-down compare even though it is intentionally not archived (VHS-REQ-641/642)', async () => {
+  it('suppresses the diagnostics webview for a working-tree daemon-down compare even though it is intentionally not archived (VHS-REQ-641/642, VHS-REQ-642.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1530,7 +1531,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     expect(harness.panels).toHaveLength(1);
   });
 
-  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost', async () => {
+  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost (VHS-REQ-642.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1581,7 +1582,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
   });
 });
 
-describe('isDockerNotInstalledBlock (VHS-REQ-643)', () => {
+describe('isDockerNotInstalledBlock (VHS-REQ-643, VHS-REQ-643.1)', () => {
   const PROVIDER_UNAVAILABLE_REASONS = [
     'docker-provider-unavailable',
     'docker-only-provider-unavailable',
@@ -1668,7 +1669,7 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     harness.reset();
   });
 
-  it('suppresses the diagnostics webview, still archives the packet, and returns the not-installed outcome', async () => {
+  it('suppresses the diagnostics webview, still archives the packet, and returns the not-installed outcome (VHS-REQ-643.2, VHS-REQ-643.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1712,6 +1713,8 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
       reportStatus: 'blocked-runtime',
       blockedReason: 'docker-provider-unavailable',
       dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      platform: 'win32',
       retainedArchiveAvailable: true
     });
     expect(createWebviewPanel).not.toHaveBeenCalled();
@@ -1719,7 +1722,7 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
   });
 
-  it('suppresses the diagnostics webview for a working-tree not-installed compare even though it is intentionally not archived (VHS-REQ-641/643)', async () => {
+  it('suppresses the diagnostics webview for a working-tree not-installed compare even though it is intentionally not archived (VHS-REQ-641/643, VHS-REQ-643.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1779,7 +1782,7 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     expect(harness.panels).toHaveLength(0);
   });
 
-  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost', async () => {
+  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost (VHS-REQ-643.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
