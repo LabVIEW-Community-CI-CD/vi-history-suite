@@ -133,6 +133,34 @@ map after `npm test` and before package validation so release-readiness evidence
 captures coverage-risk backlog candidates without changing the Vitest threshold
 gate semantics.
 
+## Criterion Closure Docket
+
+`npm run requirements:criteria` remains advisory. It is useful for finding
+acceptance criteria that lack a literal `VHS-REQ-N.M` citation in a verification
+reference test, but the remaining Phase-3b backlog should not be closed by
+adding citation text alone. As of 2026-07-13, after the launcher self-heal
+follow-up merged, the baseline is 475/513 criterion-level citations with 38
+uncited criteria.
+
+Classify each remaining uncited criterion before adding citations or proposing
+enforcement:
+
+| Bucket | Meaning | Closure action |
+| --- | --- | --- |
+| `exact-testable` | An existing verification-ref test, or a small focused unit test, directly proves the criterion. | Add the citation to the proving test or add the focused assertion and cite it. |
+| `needs-new-behavior-test` | The criterion names a plausible regression risk, but no current test proves it. | Open a follow-up issue and add a real behavior test; do not cite until the assertion exists. |
+| `manual/process` | The evidence is owned by a manual dispatch, release process, closeout packet, or external validation surface. | Name the manual or process evidence in this test plan or the RTM instead of forcing a unit-test citation. |
+| `broad-regression` | The criterion says broad behavior is unchanged or no unrelated surface regressed. | Keep advisory unless it can be decomposed into concrete assertions. |
+| `defer/product-decision` | The criterion depends on a UX, runtime, governance, or tooling decision. | Track the decision explicitly; do not create assertion theater. |
+
+Do not add a `VHS-REQ-N.M` citation unless the cited verification test actually
+demonstrates that criterion. When a true proof lives in a different verification
+file, update SRS and RTM references together and run `npm run requirements:integrity`.
+Use `node scripts/auditRequirementCriteriaInventory.js --json` to build or refresh
+the docket. Criterion-linkage enforcement should wait until every remaining
+criterion is either exactly proved or explicitly assigned to one of the other
+buckets above.
+
 ## Critical-Path Verification Evidence
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |

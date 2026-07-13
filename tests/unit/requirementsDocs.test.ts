@@ -450,6 +450,15 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('82.16% statements, 72.32% branches');
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
+    expect(testPlan).toContain('Criterion Closure Docket');
+    expect(testPlan).toContain('475/513 criterion-level citations');
+    expect(testPlan).toContain('`exact-testable`');
+    expect(testPlan).toContain('`needs-new-behavior-test`');
+    expect(testPlan).toContain('`manual/process`');
+    expect(testPlan).toContain('`broad-regression`');
+    expect(testPlan).toContain('`defer/product-decision`');
+    expect(testPlan).toContain('Do not add a `VHS-REQ-N.M` citation unless');
+    expect(testPlan).toContain('node scripts/auditRequirementCriteriaInventory.js --json');
     expect(testPlan).toContain('| VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts');
     expect(testPlan).toContain('| VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts');
     expect(testPlan).toContain('| VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts');
