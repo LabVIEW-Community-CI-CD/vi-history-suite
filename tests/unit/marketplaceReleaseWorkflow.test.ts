@@ -83,6 +83,19 @@ describe('Marketplace release workflow', () => {
     expect(verificationIndex).toBeGreaterThan(publishIndex);
   });
 
+  it('keeps release-readiness evidence decision-complete (VHS-REQ-615.11)', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('npm run traceability:audit');
+    expect(workflow).toContain('npm run docs:links');
+    expect(workflow).toContain('npm test');
+    expect(workflow).toContain('npm run package');
+    expect(workflow).toContain('release-evidence/marketplace-show.json');
+    expect(workflow).toContain('release-evidence/marketplace-listing-verification.json');
+    expect(workflow).toContain('release-evidence/release-evidence-contract.json');
+    expect(workflow).toContain('Closeout expectation: npm run closeout:evidence');
+  });
+
   it('publishes idempotently and uploads evidence even when verification times out (VHS-REQ-609.7, VHS-REQ-609.9)', () => {
     const workflow = readWorkflow();
 
