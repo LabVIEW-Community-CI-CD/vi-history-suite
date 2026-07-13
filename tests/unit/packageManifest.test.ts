@@ -68,6 +68,10 @@ function readManifest(): ExtensionManifest {
   return JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as ExtensionManifest;
 }
 
+function readRepoText(...segments: string[]): string {
+  return fs.readFileSync(path.resolve(__dirname, '..', '..', ...segments), 'utf8');
+}
+
 describe('extension manifest public metadata', () => {
   it('preserves the Marketplace identity while moving source metadata to the org repo', () => {
     const manifest = readManifest();
@@ -324,6 +328,38 @@ describe('extension manifest public metadata', () => {
     for (const name of workflowFiles) {
       const content = fs.readFileSync(path.join(workflowsDirectory, name), 'utf8');
       expect(content, `${name} must not invoke the optional Vagrant helper`).not.toMatch(/vagrant/i);
+    }
+  });
+
+  it('documents Vagrant as optional and keeps provisioning independent of CI (VHS-REQ-599.1, VHS-REQ-599.4)', () => {
+    const vagrantDoc = readRepoText('docs', 'vagrant.md');
+    const vagrantfile = readRepoText('vagrant', 'Vagrantfile');
+    const bootstrapProvisioner = readRepoText('vagrant', 'provision', 'bootstrap.ps1');
+    const coldLabviewProvisioner = readRepoText(
+      'vagrant',
+      'provision',
+      'prepare-cold-labview.ps1'
+    );
+
+    expect(vagrantDoc).toContain('optional isolation helper');
+    expect(vagrantDoc).toContain('not part of required CI');
+    expect(vagrantDoc).toMatch(/not\s+a release gate/);
+    expect(vagrantDoc).toContain('npm run vagrant:validate');
+    expect(vagrantfile).toContain('human-maintainer local testing only');
+    expect(vagrantfile).toMatch(/not a required\s+#\s+release gate/);
+    expect(vagrantfile).toContain('provision/bootstrap.ps1');
+    expect(vagrantfile).toContain('provision/prepare-cold-labview.ps1');
+
+    expect(bootstrapProvisioner).toContain('Checking git');
+    expect(bootstrapProvisioner).toContain('Checking Node.js');
+    expect(bootstrapProvisioner).toContain('Checking VS Code CLI');
+    expect(bootstrapProvisioner).toContain('Checking LabVIEW 2026');
+    expect(coldLabviewProvisioner).toContain('$runtimeProcessNames');
+    expect(coldLabviewProvisioner).toContain('Stop-RuntimeProcess');
+    expect(coldLabviewProvisioner).toContain('Test-PortListening');
+
+    for (const provisioner of [bootstrapProvisioner, coldLabviewProvisioner]) {
+      expect(provisioner).not.toMatch(/GITHUB_|workflow_dispatch|github\.com|actions\//i);
     }
   });
 
