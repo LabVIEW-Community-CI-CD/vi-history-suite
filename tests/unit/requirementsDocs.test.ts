@@ -457,8 +457,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('| VHS-REQ-147 | TEST-147 | src/reporting/comparisonReportRuntimeExecution.ts');
     expect(testPlan).toContain('| VHS-REQ-148 | TEST-148 | src/reporting/comparisonReportRuntimeExecution.ts');
     expect(testPlan).toContain('| VHS-REQ-155 | TEST-155 | src/reporting/comparisonRuntimeLocator.ts');
-    expect(testPlan).toContain('| VHS-REQ-635 | TEST-635 | src/commands/openViHistoryCommand.ts');
-    expect(testPlan).toContain('avoids repository-wide VI indexing as a prerequisite');
+    expect(testPlan).toContain('| VHS-REQ-635 | TEST-635 | src/extension.ts; src/commands/openViHistoryCommand.ts');
+    expect(testPlan).toContain('tests/unit/extensionActivationLazySideEffects.test.ts; tests/unit/openViHistoryCommand.test.ts');
+    expect(testPlan).toContain('avoid repository-wide VI indexing as a prerequisite');
     expect(testPlan).toContain('| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts');
     expect(testPlan).toContain('src/dashboard/multiReportDashboard.ts; src/dashboard/multiReportDashboardAction.ts');
     expect(testPlan).toContain('tests/unit/multiReportDashboard.test.ts; tests/unit/multiReportDashboardAction.test.ts');
