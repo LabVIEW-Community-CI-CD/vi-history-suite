@@ -1775,7 +1775,11 @@ describe('comparisonReportRuntimeExecution', () => {
       .mockResolvedValueOnce({
         exitCode: 1,
         stdout: 'LabVIEWCLI operation failed with error.',
-        stderr: 'CreateComparisonReport operation failed.'
+        stderr: [
+          'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
+          'LabVIEW: (Hex 0x8) File permission error.',
+          'CreateComparisonReport operation failed.'
+        ].join('\n')
       })
       .mockResolvedValueOnce({ exitCode: 0, stdout: 'close ok', stderr: '' })
       .mockImplementationOnce(async () => {
