@@ -13,6 +13,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   DOCKER_HUB_REGISTRY_HOST,
   DOCKER_HUB_TOKEN_HOST,
+  REGISTRY_MANIFEST_ACCEPT,
   parseBearerChallenge,
   resolveDockerHubReference,
   resolveImageDownloadSize,
@@ -181,6 +182,64 @@ describe('resolveImageDownloadSize', () => {
     // Token endpoint scope is built from the parsed repository, not the challenge.
     const tokenCall = calls.find((u) => u.startsWith(`https://${DOCKER_HUB_TOKEN_HOST}/token`));
     expect(tokenCall).toContain('scope=repository%3Anationalinstruments%2Flabview%3Apull');
+  });
+
+  it('keeps manifest resolution anonymous, bounded, and pinned to Docker Hub hosts (VHS-REQ-655.4)', async () => {
+    const calls: Array<{
+      url: string;
+      headers: Readonly<Record<string, string>>;
+      timeoutMs: number;
+    }> = [];
+    const requestJson: RegistryHttpRequest = vi.fn(async (request) => {
+      calls.push(request);
+      if (request.url.includes('/manifests/2026q1-windows') && !request.headers.Authorization) {
+        return {
+          statusCode: 401,
+          headers: {
+            'www-authenticate': `Bearer realm="https://${DOCKER_HUB_TOKEN_HOST}/token",service="registry.docker.io",scope="repository:ignored:pull"`
+          },
+          body: ''
+        } satisfies RegistryHttpResponse;
+      }
+      if (request.url.startsWith(`https://${DOCKER_HUB_TOKEN_HOST}/token`)) {
+        return { statusCode: 200, headers: {}, body: JSON.stringify({ token: 'TKN' }) };
+      }
+      if (request.url.includes('/manifests/2026q1-windows')) {
+        return { statusCode: 200, headers: {}, body: manifestListBody };
+      }
+      if (request.url.includes('/manifests/sha256%3Awinman')) {
+        return { statusCode: 200, headers: {}, body: platformManifestBody };
+      }
+      throw new Error(`unexpected url ${request.url}`);
+    });
+
+    const size = await resolveImageDownloadSize({
+      image: 'nationalinstruments/labview:2026q1-windows',
+      requestJson,
+      timeoutMs: 1234
+    });
+
+    expect(size?.totalBytes).toBe(4_000_000_000);
+    expect(calls).toHaveLength(4);
+    expect(calls.map((call) => new URL(call.url).host)).toEqual([
+      DOCKER_HUB_REGISTRY_HOST,
+      DOCKER_HUB_TOKEN_HOST,
+      DOCKER_HUB_REGISTRY_HOST,
+      DOCKER_HUB_REGISTRY_HOST
+    ]);
+    expect(calls.every((call) => new URL(call.url).protocol === 'https:')).toBe(true);
+    expect(calls.every((call) => call.timeoutMs === 1234)).toBe(true);
+    expect(calls[0].headers).toEqual({ Accept: REGISTRY_MANIFEST_ACCEPT });
+    expect(calls[1].headers).toEqual({});
+    expect(calls[2].headers).toEqual({
+      Accept: REGISTRY_MANIFEST_ACCEPT,
+      Authorization: 'Bearer TKN'
+    });
+    expect(calls[3].headers).toEqual({
+      Accept: REGISTRY_MANIFEST_ACCEPT,
+      Authorization: 'Bearer TKN'
+    });
+    expect(calls[1].url).toContain('scope=repository%3Anationalinstruments%2Flabview%3Apull');
   });
 
   it('handles an anonymous (200) single manifest without a token round-trip (VHS-REQ-655.1)', async () => {
