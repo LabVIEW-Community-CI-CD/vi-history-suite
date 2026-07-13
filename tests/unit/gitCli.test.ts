@@ -478,6 +478,13 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     expect(commitHashes).toHaveLength(2);
   });
 
+  it('fails closed when tracked path enumeration cannot run at the caller boundary (VHS-REQ-007.3)', async () => {
+    const nonRepositoryRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-nonrepo-'));
+    tempDirectories.push(nonRepositoryRoot);
+
+    await expect(listTrackedFiles(nonRepositoryRoot)).rejects.toThrow(/not a git repository/i);
+  });
+
   it('parses NUL-separated paths with empty segments and trailing NUL bytes correctly (VHS-REQ-007.2)', () => {
     expect(parseLsFilesZ('')).toEqual([]);
     expect(parseLsFilesZ('\0')).toEqual([]);
