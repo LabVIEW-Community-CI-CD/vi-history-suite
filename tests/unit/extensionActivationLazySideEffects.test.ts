@@ -473,7 +473,7 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
-  it('blocks VI History open from the cached LabVIEW CLI gate without re-detecting (VHS-REQ-627.5, VHS-REQ-627.6)', async () => {
+  it('blocks VI History open from the cached LabVIEW CLI gate without re-detecting (VHS-REQ-627.6)', async () => {
     const gitWatcher = {
       dispose: vi.fn(),
       forceRefresh: vi.fn(async () => undefined),
