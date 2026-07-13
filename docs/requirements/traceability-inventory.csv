@@ -232,7 +232,7 @@ src/ui/gitPrerequisiteNotice.ts,mapped,Yes,Git prerequisite status bar and first
 tests/unit/gitPrerequisiteDetect.test.ts,mapped,Yes,Git --version probe unit tests mapped to VHS-REQ-619.
 tests/unit/gitPrerequisiteNotice.test.ts,mapped,Yes,Git prerequisite UX helper unit tests mapped to VHS-REQ-619.
 src/commands/pickRuntimeProviderCommand.ts,mapped,Yes,Runtime provider selection helpers (builders and settings writer) reused by the Runtime & Report Settings panel mapped to VHS-REQ-620.
-src/ui/runtimeReportPanel.ts,mapped,Yes,Runtime & Report Settings panel renderer covering runtime provider container image and report include/ignore inversion mapped to VHS-REQ-620 VHS-REQ-645 and VHS-REQ-651.
+src/ui/runtimeReportPanel.ts,mapped,Yes,Runtime & Report Settings panel renderer covering runtime provider container image report include/ignore inversion and shared panel escaping; mapped to VHS-REQ-017 VHS-REQ-620 VHS-REQ-645 and VHS-REQ-651.
 src/commands/openRuntimeReportPanelCommand.ts,mapped,Yes,Runtime & Report Settings panel command opening the secondary webview and persisting runtime container and report selections mapped to VHS-REQ-620 VHS-REQ-645 and VHS-REQ-651.
 src/commands/pickContainerImageVersionCommand.ts,mapped,Yes,LabVIEW container image version quick-pick command with injected registry/local discovery boundaries mapped to VHS-REQ-647 VHS-REQ-648 and VHS-REQ-649.
 src/tooling/dockerDaemonPlatform.ts,mapped,Yes,Docker daemon container-mode prober and confirmed-platform resolver shared by the image-version picker and the runtime status bar mapped to VHS-REQ-649 and VHS-REQ-650.
@@ -240,7 +240,7 @@ tests/unit/pickContainerImageVersionCommand.test.ts,mapped,Yes,Container image v
 tests/unit/dockerDaemonPlatform.test.ts,mapped,Yes,Docker daemon container-mode prober and confirmed-platform resolver unit tests mapped to VHS-REQ-649 and VHS-REQ-650.
 tests/unit/containerImageCatalog.test.ts,mapped,Yes,Container image tag model and discovery unit tests mapped to VHS-REQ-646 VHS-REQ-647 and VHS-REQ-648.
 tests/unit/pickRuntimeProviderCommand.test.ts,mapped,Yes,Runtime provider selection helper unit tests mapped to VHS-REQ-620.
-tests/unit/runtimeReportPanel.test.ts,mapped,Yes,Runtime & Report Settings panel renderer unit tests mapped to VHS-REQ-620 and VHS-REQ-645.
+tests/unit/runtimeReportPanel.test.ts,mapped,Yes,Runtime & Report Settings panel renderer unit tests mapped to VHS-REQ-017 VHS-REQ-620 and VHS-REQ-645.
 tests/unit/openRuntimeReportPanelCommand.test.ts,mapped,Yes,Runtime & Report Settings panel command unit tests mapped to VHS-REQ-620 VHS-REQ-645 and VHS-REQ-651.
 tests/unit/comparisonReportOptionSelection.test.ts,mapped,Yes,Comparison report option settings writer unit tests mapped to VHS-REQ-645.
 tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-617 and VHS-REQ-620.
