@@ -384,6 +384,16 @@ describe('extension activation lazy side effects', () => {
     expect(context.subscriptions as unknown[]).toContain(runtimeWatcher);
   });
 
+  it('registers the standalone container image picker command for remediation CTAs (VHS-REQ-651.5)', async () => {
+    await activate(createContext() as never);
+
+    expect(registerCommandMock).toHaveBeenCalledWith(
+      'labviewViHistory.pickContainerImageVersion',
+      expect.any(Function)
+    );
+    expect(commandHandlers.has('labviewViHistory.pickContainerImageVersion')).toBe(true);
+  });
+
   it('allows VI History open while Git prerequisite detection is pending and registers watcher disposal (VHS-REQ-619.5, VHS-REQ-619.6)', async () => {
     const watcher = {
       dispose: vi.fn(),

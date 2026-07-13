@@ -1191,8 +1191,12 @@ Missing numeric IDs are intentional.
   - `src/commands/openRuntimeReportPanelCommand.ts`
   - `src/ui/runtimeReportPanel.ts`
   - `src/commands/pickContainerImageVersionCommand.ts`
+  - `src/extension.ts`
+  - `package.json`
 - Verification References:
   - `tests/unit/openRuntimeReportPanelCommand.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/packageManifest.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the container image selection co-located with the docker provider choice
