@@ -50,7 +50,7 @@ interface ExtensionManifest {
     }>;
     configuration?: {
       title?: string;
-      properties?: Record<string, unknown>;
+      properties?: Record<string, { type?: string } | unknown>;
     };
     menus?: Record<
       string,
@@ -213,7 +213,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084.1, VHS-REQ-084.2, VHS-REQ-084.3, VHS-REQ-012.3)', () => {
+  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084.1, VHS-REQ-084.2, VHS-REQ-084.3, VHS-REQ-012.3, VHS-REQ-633.1)', () => {
     const manifest = readManifest();
 
     expect(manifest.main).toBe('./out/extension.js');
@@ -247,6 +247,12 @@ describe('extension manifest public metadata', () => {
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.labviewCliPath'
     );
+    expect(manifest.contributes?.configuration?.properties?.['viHistorySuite.labviewExePath']).toMatchObject({
+      type: 'string'
+    });
+    expect(manifest.contributes?.configuration?.properties?.['viHistorySuite.labviewCliPath']).toMatchObject({
+      type: 'string'
+    });
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.container.imageVersion'
     );

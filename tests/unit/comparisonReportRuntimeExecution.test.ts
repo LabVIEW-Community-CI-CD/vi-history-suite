@@ -264,7 +264,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(stderr.destroy).toHaveBeenCalledTimes(1);
   });
 
-  it('stages each revision from its resolved historical relative path when the VI moved', async () => {
+  it('stages each revision from its resolved historical relative path when the VI moved (VHS-REQ-147.1, VHS-REQ-147.3)', async () => {
     const readRevisionBlob = vi
       .fn()
       .mockResolvedValueOnce(Buffer.from('left'))
@@ -320,7 +320,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('retains deterministic staged filenames that embed revision identity even when the VI moved', async () => {
+  it('retains deterministic staged filenames that embed revision identity even when the VI moved (VHS-REQ-147.2, VHS-REQ-147.3)', async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const record = createReadyRecord();
     record.preflight.left.resolvedRelativePath = 'Examples/foo.vi';
@@ -372,7 +372,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.stagedRevisionPlan.rightFilename).toBe('right-abcdef123456-foo.vi');
   });
 
-  it('fails closed with a retained reason when left blob staging fails', async () => {
+  it('fails closed with a retained reason when left blob staging fails (VHS-REQ-147.4)', async () => {
     const record = createReadyRecord();
     const readRevisionBlob = vi.fn().mockRejectedValueOnce(new Error('blob-not-found'));
 
@@ -404,7 +404,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.reportExists).toBe(false);
   });
 
-  it('fails closed with a retained reason when right blob staging fails', async () => {
+  it('fails closed with a retained reason when right blob staging fails (VHS-REQ-147.4)', async () => {
     const record = createReadyRecord();
     const readRevisionBlob = vi
       .fn()
@@ -439,7 +439,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.reportExists).toBe(false);
   });
 
-  it('rejects stale generated reports with retained evidence explaining the staged filename mismatch', async () => {
+  it('rejects stale generated reports with retained evidence explaining the staged filename mismatch (VHS-REQ-147.5)', async () => {
     const record = createReadyRecord();
     const pathExists = vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath);
     const readFile = vi.fn().mockResolvedValue(
@@ -487,8 +487,8 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(removePath).toHaveBeenCalled();
   });
 
-  it('rejects a stale generated report on a timed-out execution with retained evidence (VHS-REQ-147 criterion 5)', async () => {
-    // Criterion 5 covers "timed-out OR failed" executions; the failed branch is
+  it('rejects a stale generated report on a timed-out execution with retained evidence (VHS-REQ-147.5)', async () => {
+    // VHS-REQ-147.5 covers "timed-out OR failed" executions; the failed branch is
     // asserted above. A timed-out run must also reject a pre-existing stale
     // report so a regression dropping the timeout branch of the identity check
     // fails closed.

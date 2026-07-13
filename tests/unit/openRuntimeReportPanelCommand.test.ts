@@ -132,7 +132,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('opens the panel and renders the settings surface', async () => {
+  it('opens the panel and renders the settings surface (VHS-REQ-645.5)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -188,7 +188,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('writes the inverse ignore flag when an include checkbox is toggled', async () => {
+  it('writes the inverse ignore flag when an include checkbox is toggled (VHS-REQ-645.5)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -221,7 +221,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('ignores an unknown setReportFormat message (format option removed, #545)', async () => {
+  it('ignores an unknown setReportFormat message (format option removed, VHS-REQ-645.5, #545)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(

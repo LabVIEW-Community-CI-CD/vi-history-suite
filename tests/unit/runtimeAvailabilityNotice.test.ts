@@ -119,7 +119,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     });
   });
 
-  it('renders provider-specific status bar text for host, docker, and missing runtimes', () => {
+  it('renders provider-specific status bar text for host, docker, and missing runtimes (VHS-REQ-617.1)', () => {
     expect(buildStatusBarPresentation(evaluateRuntimeAvailability(detectionHost)).text).toBe(
       `${STATUS_BAR_TEXT_AVAILABLE}: LabVIEW 2026 x64`
     );
@@ -381,7 +381,7 @@ describe('decideLabviewCliOpenGate (VHS-REQ-627)', () => {
   });
 });
 
-describe('decideLabviewCliOpenGate manual override (VHS-REQ-633)', () => {
+describe('decideLabviewCliOpenGate manual override (VHS-REQ-633.3, VHS-REQ-633.4)', () => {
   it('allows open when a non-empty labviewCliPath override is configured despite a CLI-missing host', () => {
     // Without the override this detection blocks (LabVIEW installed, CLI missing).
     const snapshot = evaluateRuntimeAvailability(detectionHost);
@@ -411,7 +411,7 @@ describe('decideLabviewCliOpenGate manual override (VHS-REQ-633)', () => {
   });
 });
 
-describe('decideLabviewCliOpenGateWithRegistryFallback (VHS-REQ-634)', () => {
+describe('decideLabviewCliOpenGateWithRegistryFallback (VHS-REQ-634.2, VHS-REQ-634.4)', () => {
   const blockDecision = {
     kind: 'block' as const,
     toastMessage: LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,

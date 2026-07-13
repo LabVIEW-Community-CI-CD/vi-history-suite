@@ -171,7 +171,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     expect(plan.commandPlan?.args[reportTypeIndex + 1]).toBe('htmlsinglefile');
   });
 
-  it('VHS-REQ-645: defaults to single-file HTML with no suppression filters when no options are given', () => {
+  it('VHS-REQ-645.3: defaults to single-file HTML with no suppression filters when no options are given', () => {
     const record = createBaseRecord();
 
     const plan = buildComparisonReportExecutionPlan(record);
@@ -183,7 +183,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('VHS-REQ-645: applies all difference-suppression filters and keeps the fixed single-file format', () => {
+  it('VHS-REQ-645.2: applies all difference-suppression filters and keeps the fixed single-file format', () => {
     const record = createBaseRecord();
 
     const plan = buildComparisonReportExecutionPlan(record, {
@@ -205,7 +205,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     expect(args).toContain('-nobdcosm');
   });
 
-  it('VHS-REQ-645: emits only the enabled suppression filters and keeps the single-file default format', () => {
+  it('VHS-REQ-645.2: emits only the enabled suppression filters and keeps the single-file default format', () => {
     const record = createBaseRecord();
 
     const plan = buildComparisonReportExecutionPlan(record, {

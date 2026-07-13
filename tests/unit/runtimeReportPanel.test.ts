@@ -83,7 +83,7 @@ describe('VI Preview toggle (VHS-REQ-659)', () => {
   });
 });
 
-describe('REPORT_OPTION_DESCRIPTORS (VHS-REQ-645)', () => {
+describe('REPORT_OPTION_DESCRIPTORS (VHS-REQ-645.2)', () => {
   it('maps the five difference filters to their ignore settings and CLI flags', () => {
     expect(REPORT_OPTION_DESCRIPTORS.map((descriptor) => descriptor.includeKey)).toEqual([
       'viAttributes',
@@ -109,7 +109,7 @@ describe('REPORT_OPTION_DESCRIPTORS (VHS-REQ-645)', () => {
   });
 });
 
-describe('deriveReportIncludeFlags (VHS-REQ-645)', () => {
+describe('deriveReportIncludeFlags (VHS-REQ-645.5)', () => {
   it('treats an absent or false ignore flag as included (checked)', () => {
     expect(deriveReportIncludeFlags({})).toEqual({
       viAttributes: true,
@@ -183,7 +183,7 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     expect(html).toMatch(/<option value="2026q1-linux" selected>/);
   });
 
-  it('reflects the include flags as checkbox state (deselected = unchecked)', () => {
+  it('reflects the include flags as checkbox state (deselected = unchecked) (VHS-REQ-645.5)', () => {
     const html = renderRuntimeReportPanelHtml(
       baseModel({
         report: {
@@ -202,7 +202,7 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     expect(includeCheckboxChecked(html, 'blockDiagram')).toBe(false);
   });
 
-  it('renders the fixed single-file format note and no format selector (#545)', () => {
+  it('renders the fixed single-file format note and no format selector (VHS-REQ-645.5, #545)', () => {
     const html = renderRuntimeReportPanelHtml(baseModel());
     expect(html).toContain('data-testid="runtime-report-format-note"');
     expect(html).toContain('single self-contained HTML file');

@@ -216,8 +216,8 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     ]);
   });
 
-  it('detects a Linux quarterly install directory (LabVIEW-<year>Q1-64) (issue #352)', async () => {
-    // VHS-REQ-632: a host whose only LabVIEW lives in the quarterly install
+  it('detects a Linux quarterly install directory (LabVIEW-<year>Q1-64) (VHS-REQ-632.2, issue #352)', async () => {
+    // VHS-REQ-632.2: a host whose only LabVIEW lives in the quarterly install
     // directory must be detected so the LabVIEW CLI open-gate does not
     // false-block it, matching the comparison runtime locator's documented
     // candidates (which already scan the quarterly form).
@@ -247,8 +247,8 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
-  it('detects a Windows install at a year not in the legacy locator list (VHS-REQ-632)', async () => {
-    // VHS-REQ-632: detection and the locator now share a 2025-2030 catalog, so a
+  it('detects a Windows install at a year not in the legacy locator list (VHS-REQ-632.2)', async () => {
+    // VHS-REQ-632.2: detection and the locator now share a 2025-2030 catalog, so a
     // newer-year Windows install (e.g. 2027) is recognized by activation
     // detection instead of being missed by a hardcoded folder list.
     const fs = createFakeFs([
