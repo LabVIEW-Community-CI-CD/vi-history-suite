@@ -11,7 +11,7 @@ import {
 } from '../../src/tooling/gitPrerequisiteDetect';
 
 describe('detectGitPrerequisite', () => {
-  it('returns available with the parsed version when git --version succeeds', async () => {
+  it('returns available with the parsed version when git --version succeeds (VHS-REQ-619.1)', async () => {
     const detection = await detectGitPrerequisite({
       runGitVersion: async () => ({
         exitCode: 0,

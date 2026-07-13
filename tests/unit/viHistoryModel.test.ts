@@ -68,7 +68,7 @@ describe('viHistoryModel direct history facts', () => {
     isFileDirtyInWorkingTreeMock.mockResolvedValue(false);
   });
 
-  it('evaluates tracked VI eligibility with bounded commit proof (VHS-REQ-008.1)', async () => {
+  it('evaluates tracked VI eligibility with bounded commit proof (VHS-REQ-006.3, VHS-REQ-635.1, VHS-REQ-008.1)', async () => {
     const result = await evaluateViEligibilityForFsPath('/workspace/repo/src/Sample.vi', {
       strictRsrcHeader: true
     });
@@ -88,7 +88,7 @@ describe('viHistoryModel direct history facts', () => {
     });
   });
 
-  it('fails eligibility closed when signature or commit proof is insufficient', async () => {
+  it('fails eligibility closed when signature or commit proof is insufficient (VHS-REQ-006.2, VHS-REQ-006.3)', async () => {
     detectViSignatureFromFsPathMock.mockResolvedValueOnce(undefined);
     await expect(
       evaluateViEligibilityForFsPath('/workspace/repo/src/Unknown.bin', {

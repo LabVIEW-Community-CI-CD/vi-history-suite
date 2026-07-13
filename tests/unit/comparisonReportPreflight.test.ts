@@ -56,13 +56,13 @@ afterEach(async () => {
 });
 
 describe('buildRevisionBlobSpecifier (VHS-REQ-127)', () => {
-  it('derives <revision>:<normalized-relative-path>, normalizing Windows separators', () => {
+  it('derives <revision>:<normalized-relative-path>, normalizing Windows separators (VHS-REQ-127.1)', () => {
     expect(buildRevisionBlobSpecifier('abc123', 'Source\\Folder Name\\Example VI.vi')).toBe(
       'abc123:Source/Folder Name/Example VI.vi'
     );
   });
 
-  it('fails closed when the revision identifier is missing', () => {
+  it('fails closed when the revision identifier is missing (VHS-REQ-127.2)', () => {
     expect(() => buildRevisionBlobSpecifier('   ', 'Source/Example.vi')).toThrow(
       'revisionId must be non-empty'
     );
@@ -271,7 +271,7 @@ describe('comparisonReportPreflight', () => {
     });
   });
 
-  it('normalizes resolved repo-relative paths with spaces and Windows separators for both blob reads (VHS-REQ-127)', async () => {
+  it('normalizes resolved repo-relative paths with spaces and Windows separators for both blob reads (VHS-REQ-127.1, VHS-REQ-127.3)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -320,7 +320,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('reports preflight blocked when left blob is not a VI (VHS-REQ-128)', async () => {
+  it('reports preflight blocked when left blob is not a VI (VHS-REQ-128.1, VHS-REQ-128.2)', async () => {
     const repoRoot = await createTempRepoRoot();
     const relativePath = 'Examples/NotAVI.vi';
     const absolutePath = path.join(repoRoot, relativePath);
@@ -354,7 +354,7 @@ describe('comparisonReportPreflight', () => {
     expect(result.right.isVi).toBe(true);
   });
 
-  it('reports preflight blocked when right blob is not a VI (VHS-REQ-128)', async () => {
+  it('reports preflight blocked when right blob is not a VI (VHS-REQ-128.1, VHS-REQ-128.2, VHS-REQ-128.3)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -396,7 +396,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('reports preflight blocked when right blob cannot be read (VHS-REQ-128)', async () => {
+  it('reports preflight blocked when right blob cannot be read (VHS-REQ-128.2, VHS-REQ-128.3)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -442,7 +442,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('retains dual-side blocked details when left blob is not a VI and right blob cannot be read (VHS-REQ-128)', async () => {
+  it('retains dual-side blocked details when left blob is not a VI and right blob cannot be read (VHS-REQ-128.1, VHS-REQ-128.3)', async () => {
     const resolveRevisionRelativePaths = vi
       .fn<typeof import('../../src/reporting/comparisonReportPreflight').resolveRevisionRelativePaths>()
       .mockResolvedValue(
@@ -494,7 +494,7 @@ describe('comparisonReportPreflight', () => {
     ]);
   });
 
-  it('does not use the working-tree file when one requested revision no longer has the VI blob', async () => {
+  it('does not use the working-tree file when one requested revision no longer has the VI blob (VHS-REQ-127.4)', async () => {
     const repoRoot = await createTempRepoRoot();
     const relativePath = 'Source/Folder Name/Current Example.vi';
     const absolutePath = path.join(repoRoot, relativePath);

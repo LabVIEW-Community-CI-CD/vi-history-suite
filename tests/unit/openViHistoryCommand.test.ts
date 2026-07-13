@@ -70,7 +70,7 @@ function createIneligibleModel(
   };
 }
 
-describe('openViHistoryCommand ineligibility messaging (VHS-REQ-016)', () => {
+describe('openViHistoryCommand ineligibility messaging (VHS-REQ-013.2, VHS-REQ-013.3, VHS-REQ-016.2, VHS-REQ-635.3, VHS-REQ-635.4)', () => {
   beforeEach(() => {
     vscodeHarness.reset();
     workspaceState.isTrusted = true;
@@ -223,7 +223,7 @@ describe('openViHistoryCommand copyReviewPacket path (VHS-REQ-039)', () => {
     createWebviewPanelMock.mockReturnValue(createMockPanel());
   });
 
-  it('writes review packet plain text to the clipboard', async () => {
+  it('writes review packet plain text to the clipboard (VHS-REQ-039.2)', async () => {
     const model = createEligibleModel();
     const historyService = {
       load: vi.fn().mockResolvedValue(model)
@@ -346,7 +346,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     clipboardWriteTextMock.mockResolvedValue(undefined);
   });
 
-  it('stops with guidance when no URI or active editor is available', async () => {
+  it('stops with guidance when no URI or active editor is available (VHS-REQ-016.1)', async () => {
     const historyService = { load: vi.fn() };
     const command = createOpenViHistoryCommand(
       historyService as never,
@@ -361,7 +361,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('honors workspace trust before loading history (VHS-REQ-012.1, VHS-REQ-012.2, VHS-REQ-012.4)', async () => {
+  it('honors workspace trust before loading history (VHS-REQ-016.3, VHS-REQ-012.1, VHS-REQ-012.2, VHS-REQ-012.4)', async () => {
     workspaceState.isTrusted = false;
     const historyService = { load: vi.fn() };
     const command = createOpenViHistoryCommand(
@@ -377,7 +377,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('surfaces history service load errors without opening a panel', async () => {
+  it('surfaces history service load errors without opening a panel (VHS-REQ-016.4)', async () => {
     const historyService = {
       load: vi.fn().mockRejectedValue(new Error('fatal: not a git repository'))
     };
@@ -1197,7 +1197,7 @@ describe('openViHistoryCommand open-flow gate branches (VHS-REQ-006/013/627/631)
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
-  it('opens the history panel for an eligible model (VHS-REQ-627/631)', async () => {
+  it('opens the history panel for an eligible model (VHS-REQ-016.5, VHS-REQ-627/631)', async () => {
     const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
 
     const command = createOpenViHistoryCommand(historyService as never, undefined);
@@ -1239,7 +1239,7 @@ describe('createCopyReviewPacketCommand Command Palette entry (VHS-REQ-039, VHS-
     clipboardWriteTextMock.mockResolvedValue(undefined);
   });
 
-  it('warns and stops in an untrusted workspace before loading history (VHS-REQ-012.1)', async () => {
+  it('warns and stops in an untrusted workspace before loading history (VHS-REQ-039.3, VHS-REQ-012.1)', async () => {
     workspaceState.isTrusted = false;
     const historyService = { load: vi.fn() };
     const command = createCopyReviewPacketCommand(historyService as never);
@@ -1253,7 +1253,7 @@ describe('createCopyReviewPacketCommand Command Palette entry (VHS-REQ-039, VHS-
     );
   });
 
-  it('guides the user to select a VI when neither a URI nor an active editor is available', async () => {
+  it('guides the user to select a VI when neither a URI nor an active editor is available (VHS-REQ-039.3)', async () => {
     const historyService = { load: vi.fn() };
     const command = createCopyReviewPacketCommand(historyService as never);
 
@@ -1279,7 +1279,7 @@ describe('createCopyReviewPacketCommand Command Palette entry (VHS-REQ-039, VHS-
     expect(clipboardWriteTextMock).toHaveBeenCalledOnce();
   });
 
-  it('surfaces a Git-repository load failure without writing to the clipboard (VHS-REQ-013)', async () => {
+  it('surfaces a Git-repository load failure without writing to the clipboard (VHS-REQ-039.3, VHS-REQ-013)', async () => {
     const historyService = {
       load: vi.fn().mockRejectedValue(new Error('fatal: not a git repository'))
     };
@@ -1308,7 +1308,7 @@ describe('createCopyReviewPacketCommand Command Palette entry (VHS-REQ-039, VHS-
     );
   });
 
-  it('shows ineligibility guidance for a recognized VI with no history', async () => {
+  it('shows ineligibility guidance for a recognized VI with no history (VHS-REQ-039.3)', async () => {
     const historyService = {
       load: vi.fn().mockResolvedValue(
         createIneligibleModel({ signature: 'LVIN', commits: [] })
@@ -1324,7 +1324,7 @@ describe('createCopyReviewPacketCommand Command Palette entry (VHS-REQ-039, VHS-
     expect(clipboardWriteTextMock).not.toHaveBeenCalled();
   });
 
-  it('copies the plain-text review packet and confirms via an information message (VHS-REQ-039)', async () => {
+  it('copies the plain-text review packet and confirms via an information message (VHS-REQ-039.2)', async () => {
     const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
     const command = createCopyReviewPacketCommand(historyService as never);
 
