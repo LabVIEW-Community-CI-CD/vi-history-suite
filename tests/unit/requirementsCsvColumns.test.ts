@@ -113,7 +113,7 @@ describe('requirements CSV column-integrity guard', () => {
     expect(result.files[0].ids).toEqual(['VHS-REQ-001', 'VHS-REQ-002']);
   });
 
-  it('renders the runtime contract, requirement IDs, and violation table for the step summary', () => {
+  it('renders the runtime contract, requirement IDs, and violation table for the step summary (VHS-REQ-601.12)', () => {
     const result = checkRequirementsCsvColumns('/repo', {
       readFile: makeReadFile({ 'a.csv': 'ReqID,Notes\nVHS-REQ-001,ok\nVHS-REQ-002,bad, extra\n' }),
       targets: [{ relativePath: 'a.csv', identityLabel: 'ReqID', isRequirementIndex: true }]
@@ -129,7 +129,7 @@ describe('requirements CSV column-integrity guard', () => {
     expect(markdown).toContain('| `a.csv` | 3 | `VHS-REQ-002` | 3 | 2 |');
   });
 
-  it('main writes the step summary, reports failure on stderr, and returns 1 when malformed', () => {
+  it('main writes the step summary, reports failure on stderr, and returns 1 when malformed (VHS-REQ-601.12)', () => {
     const summaryChunks: string[] = [];
     const stderrChunks: string[] = [];
     const stdoutChunks: string[] = [];

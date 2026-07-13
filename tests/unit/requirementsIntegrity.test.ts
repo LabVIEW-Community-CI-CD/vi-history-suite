@@ -371,7 +371,7 @@ describe('requirements cross-reference integrity guard', () => {
     expect(markdown).toContain('| anchorResolution | `VHS-REQ-001` |');
   });
 
-  it('main writes the step summary, reports failure on stderr, and returns 1 when a reference is broken', () => {
+  it('main writes the step summary, reports failure on stderr, and returns 1 when a reference is broken (VHS-REQ-601.13)', () => {
     const cwd = path.join(path.sep, 'repo');
     const files = makeFixtureFiles({
       'docs/requirements/traceability-inventory.csv':

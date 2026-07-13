@@ -238,7 +238,7 @@ describe('checkMaintainerRunnerPrerequisites.inspectMaintainerRunnerPrerequisite
     expect(labview?.satisfied).toBe(true);
   });
 
-  it('surfaces every missing prerequisite at once rather than only the first', () => {
+  it('surfaces every missing prerequisite at once rather than only the first (VHS-REQ-598.7)', () => {
     const report = doctor.inspectMaintainerRunnerPrerequisites('linux', {
       env: { PATH: '' },
       existsSync: () => false
@@ -300,7 +300,7 @@ describe('checkMaintainerRunnerPrerequisites.main', () => {
     expect(stdout.text()).toContain('System clock skew: 0.0s');
   });
 
-  it('keeps a known clock skew advisory by default (exit code unaffected)', async () => {
+  it('keeps a known clock skew advisory by default (exit code unaffected) (VHS-REQ-598.7)', async () => {
     const stdout = createWritable();
     const present = new Set([
       '/usr/bin/code',

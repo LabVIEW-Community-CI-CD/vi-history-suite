@@ -167,7 +167,7 @@ describe('requirements documentation coherence', () => {
     }
   });
 
-  it('keeps active SRS requirements and RTM rows on the same ID set', () => {
+  it('keeps active SRS requirements and RTM rows on the same ID set (VHS-REQ-601.2)', () => {
     const srsIds = new Set(
       extractSrsBlocks(readRepoText('docs', 'requirements', 'srs.md')).map((block) => block.id)
     );
@@ -201,7 +201,7 @@ describe('requirements documentation coherence', () => {
     }
   });
 
-  it('keeps RTM implementation and verification references resolvable', () => {
+  it('keeps RTM implementation and verification references resolvable (VHS-REQ-601.11)', () => {
     const rows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
 
     for (const row of rows) {
@@ -262,7 +262,7 @@ describe('requirements documentation coherence', () => {
     expect(result.success).toBe(true);
   });
 
-  it('keeps historical IDs discoverable through the ID index', () => {
+  it('keeps historical IDs discoverable through the ID index (VHS-REQ-601.3)', () => {
     const indexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
     const indexById = new Map(indexRows.map((row) => [row.ID, row]));
     const activeRtmIds = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv')).map(
@@ -1125,7 +1125,7 @@ describe('requirements documentation coherence', () => {
     );
   });
 
-  it('keeps the requirement-targeted issue template aligned with the agent contract', () => {
+  it('keeps the requirement-targeted issue template aligned with the agent contract (VHS-REQ-601.4, VHS-REQ-601.5, VHS-REQ-601.6, VHS-REQ-601.7, VHS-REQ-601.8, VHS-REQ-601.9, VHS-REQ-601.10)', () => {
     const template = readRepoText('.github', 'ISSUE_TEMPLATE', 'requirement_target.yml');
     const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');
     const issueWaveGuidance = readRepoText(

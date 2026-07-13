@@ -68,7 +68,7 @@ describe('integrationHostRuntime', () => {
     });
   });
 
-  it('fails fast with actionable remediation when the native Windows VS Code host is missing', () => {
+  it('fails fast with actionable remediation when the native Windows VS Code host is missing (VHS-REQ-598.7)', () => {
     // Reproduces run 27477253718: native-Windows host selected but VS Code is
     // not installed. The guard must throw a clear, doctor-pointing message
     // instead of letting the launcher die with CommandNotFoundException.
