@@ -611,7 +611,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     });
   });
 
-  it('retains runtime-discovery failure summaries and opens the packet when no generated report exists', async () => {
+  it('retains runtime-discovery failure summaries and opens the packet when no generated report exists (VHS-REQ-155.3, VHS-REQ-155.5)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       provider: 'unavailable',
@@ -903,7 +903,7 @@ describe('isHostBitnessConflictBlock / isHostVersionConflictBlock (#530)', () =>
 });
 
 describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#530)', () => {
-  it('names running vs selected LabVIEW and steers to close + Retry Compare (bitness)', () => {
+  it('names running vs selected LabVIEW and steers to close + Retry Compare (bitness, VHS-REQ-621.5)', () => {
     const message = buildHostBitnessConflictMessage({
       observedBitness: 'x64',
       observedYear: '2025',
@@ -921,7 +921,7 @@ describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#53
     expect(message).not.toContain('LabVIEWCLI');
   });
 
-  it('names running vs selected LabVIEW and steers to close + Retry Compare (version)', () => {
+  it('names running vs selected LabVIEW and steers to close + Retry Compare (version, VHS-REQ-653.6)', () => {
     const message = buildHostVersionConflictMessage({
       observedBitness: 'x64',
       observedYear: '2026',
@@ -942,7 +942,7 @@ describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#53
 });
 
 describe('isViVersionTooNewFailure / buildViVersionTooNewMessage (#595, VHS-REQ-658)', () => {
-  it('isViVersionTooNewFailure is true only for the labview-vi-version-too-new failure reason', () => {
+  it('isViVersionTooNewFailure is true only for the labview-vi-version-too-new failure reason (VHS-REQ-658.3)', () => {
     expect(
       isViVersionTooNewFailure({ runtimeFailureReason: 'labview-vi-version-too-new' })
     ).toBe(true);
@@ -952,7 +952,7 @@ describe('isViVersionTooNewFailure / buildViVersionTooNewMessage (#595, VHS-REQ-
     expect(isViVersionTooNewFailure({ runtimeFailureReason: undefined })).toBe(false);
   });
 
-  it('names the selected LabVIEW and steers to pick a newer installed LabVIEW', () => {
+  it('names the selected LabVIEW and steers to pick a newer installed LabVIEW (VHS-REQ-658.3)', () => {
     const message = buildViVersionTooNewMessage({
       selectedYear: '2025',
       selectedBitness: 'x64'
@@ -981,7 +981,7 @@ describe('VI version-too-new failure comparison gate (#597, VHS-REQ-658)', () =>
     harness.reset();
   });
 
-  it('suppresses the report webview and returns the failed-vi-version-too-new outcome', async () => {
+  it('suppresses the report webview and returns the failed-vi-version-too-new outcome (VHS-REQ-658.2, VHS-REQ-658.4)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       requestedLabviewVersion: '2025',
@@ -1073,7 +1073,7 @@ describe('Host bitness/version conflict comparison gate (#530)', () => {
     harness.reset();
   });
 
-  it('suppresses the report webview, surfaces structured facts, and returns the bitness-conflict outcome', async () => {
+  it('suppresses the report webview, surfaces structured facts, and returns the bitness-conflict outcome (VHS-REQ-621.5)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       provider: 'unavailable',
@@ -1119,7 +1119,7 @@ describe('Host bitness/version conflict comparison gate (#530)', () => {
     expect(harness.panels).toHaveLength(0);
   });
 
-  it('suppresses the report webview even when archiving is unavailable (no archive guard, unlike Docker)', async () => {
+  it('suppresses the report webview even when archiving is unavailable (no archive guard, unlike Docker, VHS-REQ-653.6)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       provider: 'unavailable',

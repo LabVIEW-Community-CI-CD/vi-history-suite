@@ -1100,7 +1100,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
   });
 
-  it('passes a resolved non-default VI Server port to the LabVIEW CLI on a successful host-native compare (VHS-REQ-623)', async () => {
+  it('passes a resolved non-default VI Server port to the LabVIEW CLI on a successful host-native compare (VHS-REQ-623.6)', async () => {
     // Real-hardware peer: the maintainer Windows runner hosts LabVIEW installs on
     // non-default VI Server ports. This asserts the resolved server.tcp.port flows
     // all the way into the launched CreateComparisonReport invocation (-PortNumber)
@@ -1247,7 +1247,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.exitObservedProcessNames).toEqual([]);
   });
 
-  it('reclassifies a nonzero exit as labview-host-bitness-conflict when exit snapshot shows different-bitness LabVIEW (VHS-REQ-621)', async () => {
+  it('reclassifies a nonzero exit as labview-host-bitness-conflict when exit snapshot shows different-bitness LabVIEW (VHS-REQ-621.3, VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.bitness = 'x86';
     const result = await executeComparisonReport(
@@ -1302,7 +1302,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot shows matching-bitness LabVIEW (VHS-REQ-621)', async () => {
+  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot shows matching-bitness LabVIEW (VHS-REQ-621.3)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.bitness = 'x64';
     const result = await executeComparisonReport(
@@ -1349,7 +1349,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
   });
 
-  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot has unknown-bitness LabVIEW (VHS-REQ-621)', async () => {
+  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot has unknown-bitness LabVIEW (VHS-REQ-621.3)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.bitness = 'x64';
     const result = await executeComparisonReport(
@@ -2049,7 +2049,7 @@ describe('comparisonReportRuntimeExecution', () => {
   });
 
   describe('failed execution evidence retention (VHS-REQ-148)', () => {
-    it('retains all evidence fields when execution fails with nonzero exit code', async () => {
+    it('retains all evidence fields when execution fails with nonzero exit code (VHS-REQ-658.1)', async () => {
       const record = createReadyRecord();
       const writeFile = vi.fn().mockResolvedValue(undefined);
 
@@ -2507,7 +2507,7 @@ describe('cliConnectTimeoutSeconds hardening invocation (VHS-REQ-148)', () => {
   });
 });
 
-describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621, VHS-REQ-636.4)', () => {
+describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621.1, VHS-REQ-636.4)', () => {
   it('returns x86 when path is under Program Files (x86)', () => {
     expect(
       inferLabviewBitnessFromExecutablePath(
@@ -2848,7 +2848,7 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
 });
 
 describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
-  it('blocks execution with windows-vi-server-tcp-disabled when LabVIEW.ini sets server.tcp.enabled=False', async () => {
+  it('blocks execution with windows-vi-server-tcp-disabled when LabVIEW.ini sets server.tcp.enabled=False (VHS-REQ-623.2)', async () => {
     const record = createReadyRecord();
     // createReadyRecord() defaults to platform='win32', host-native, labview-cli;
     // labviewExe.path = 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
@@ -2902,7 +2902,7 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
   });
 });
 
-describe('resolveWindowsLabviewTcpSettingsForLabviewPath (VHS-REQ-623)', () => {
+describe('resolveWindowsLabviewTcpSettingsForLabviewPath (VHS-REQ-623.1)', () => {
   const labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe';
   const expectedIniPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini';
 
@@ -4168,7 +4168,7 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('command-spawn-failed');
   });
 
-  it('reclassifies a -350000 LabVIEW CLI exit as labview-cli-connection-failed', async () => {
+  it('reclassifies a -350000 LabVIEW CLI exit as labview-cli-connection-failed (VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
 
     const result = await executeComparisonReport(
@@ -4199,7 +4199,7 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('labview-cli-connection-failed');
   });
 
-  it('reclassifies a 0x465 "File version is later" LabVIEW CLI exit as labview-vi-version-too-new (VHS-REQ-658)', async () => {
+  it('reclassifies a 0x465 "File version is later" LabVIEW CLI exit as labview-vi-version-too-new (VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
 
     const result = await executeComparisonReport(
@@ -5542,7 +5542,7 @@ describe('observeWindowsRuntimeProcesses (VHS-REQ-621)', () => {
     expect(observation).toBeUndefined();
   });
 
-  it('parses tasklist output and infers LabVIEW.exe bitness on a win32 host', async () => {
+  it('parses tasklist output and infers LabVIEW.exe bitness on a win32 host (VHS-REQ-621.1)', async () => {
     const observation = await observeWindowsRuntimeProcesses(
       { hostPlatform: 'win32', runtimePlatform: 'win32', trigger: 'cli-log-banner' },
       {
@@ -5560,6 +5560,9 @@ describe('observeWindowsRuntimeProcesses (VHS-REQ-621)', () => {
     expect(observation?.labviewCliProcessObserved).toBe(true);
     expect(observation?.lvcompareProcessObserved).toBe(false);
     expect(observation?.labviewProcessBitness).toBe('x64');
+    expect(observation?.labviewProcessExecutablePath).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
     expect(observation?.observedProcessNames).toEqual(
       expect.arrayContaining(['LabVIEW.exe', 'LabVIEWCLI.exe'])
     );

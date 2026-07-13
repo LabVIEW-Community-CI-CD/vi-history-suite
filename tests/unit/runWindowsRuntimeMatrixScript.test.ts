@@ -157,7 +157,7 @@ describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
     expect(plan[0].proofPath.startsWith('custom-proof-dir')).toBe(true);
   });
 
-  it('marks port-A to derive its expected port from the selected install ini (VHS-REQ-623)', () => {
+  it('marks port-A to derive its expected port from the selected install ini (VHS-REQ-623.6)', () => {
     const plan = harness.buildScenarioPlan({ scenario: 'port-A', out: 'evidence.json' });
     expect(plan[0].parameters.derivePortFromSelectedIni).toBe(true);
     expect(
@@ -205,7 +205,7 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args).not.toContain('-KeepRunning');
   });
 
-  it('passes the scenario-specific host/selected years and version-conflict reason (VHS-REQ-653)', () => {
+  it('passes the scenario-specific host/selected years and version-conflict reason (VHS-REQ-653.7)', () => {
     const scenario = {
       id: 'version-A',
       parameters: {
@@ -253,7 +253,7 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args).toContain('-KeepRunning');
   });
 
-  it('signals -DerivePortFromSelectedIni (no port number) for the port-admit scenario (VHS-REQ-623)', () => {
+  it('signals -DerivePortFromSelectedIni (no port number) for the port-admit scenario (VHS-REQ-623.6)', () => {
     const scenario = {
       id: 'port-A',
       parameters: {
@@ -371,7 +371,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toBe('powershell-exit-7');
   });
 
-  it('passes a version scenario when the proof reports windows-host-version-conflict (VHS-REQ-653)', () => {
+  it('passes a version scenario when the proof reports windows-host-version-conflict (VHS-REQ-653.7)', () => {
     const versionScenario = {
       id: 'version-A',
       parameters: {
@@ -405,7 +405,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toBeUndefined();
   });
 
-  it('fails a version scenario when the proof still reports a bitness conflict (VHS-REQ-653)', () => {
+  it('fails a version scenario when the proof still reports a bitness conflict (VHS-REQ-653.7)', () => {
     const versionScenario = {
       id: 'version-A',
       parameters: {
@@ -489,7 +489,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     return log;
   }
 
-  it('passes when the host is admitted and the product observed the selected install ini port (VHS-REQ-623)', () => {
+  it('passes when the host is admitted and the product observed the selected install ini port (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(portScenario, { status: 0 }, portLog({}));
     expect(summary.pass).toBe(true);
     expect(summary.expected.hostTcpPort).toBe(3366);
@@ -498,7 +498,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toBeUndefined();
   });
 
-  it('self-configures to whatever non-default port the selected ini declares (VHS-REQ-623)', () => {
+  it('self-configures to whatever non-default port the selected ini declares (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -508,7 +508,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.expected.hostTcpPort).toBe(3399);
   });
 
-  it('fails when the observed port does not match the port derived from the selected ini (VHS-REQ-623)', () => {
+  it('fails when the observed port does not match the port derived from the selected ini (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -519,7 +519,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toContain('observed=3363');
   });
 
-  it('fails when the product read a DIFFERENT ini than the selected install (latest-used regression guard, VHS-REQ-623)', () => {
+  it('fails when the product read a DIFFERENT ini than the selected install (latest-used regression guard, VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -533,7 +533,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toContain('LabVIEW 2026');
   });
 
-  it('matches the selected ini path case- and separator-insensitively (VHS-REQ-623)', () => {
+  it('matches the selected ini path case- and separator-insensitively (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -545,7 +545,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.pass).toBe(true);
   });
 
-  it('fails when no VI Server port was observed (VHS-REQ-623)', () => {
+  it('fails when no VI Server port was observed (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -555,7 +555,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toContain('observed=<none>');
   });
 
-  it('fails when the helper surfaced no port oracle at all (VHS-REQ-623)', () => {
+  it('fails when the helper surfaced no port oracle at all (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -597,7 +597,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     };
   }
 
-  it('writes an evidence file with passing summary when both scenarios match expectations', () => {
+  it('writes an evidence file with passing summary when all runtime scenarios match expectations (VHS-REQ-623.6, VHS-REQ-653.7)', () => {
     const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
     const scenarioLogPayloads = {
       [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}steady-A.scenario.json`]: {
