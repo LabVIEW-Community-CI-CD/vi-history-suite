@@ -1,11 +1,49 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { startViPreviewSessionMock } = vi.hoisted(() => ({
+  startViPreviewSessionMock: vi.fn()
+}));
 
 // The manager transitively imports the session/render host, which import
 // 'vscode' at module load. selectNextRender is pure and never calls it; stub
 // the module so the pure selector can be imported under plain Node.
 vi.mock('vscode', () => ({}));
+vi.mock('../../src/ui/viPreviewContainerSession', () => ({
+  startViPreviewSession: startViPreviewSessionMock
+}));
 
-import { selectNextRender } from '../../src/ui/viPreviewSessionManager';
+import {
+  createViPreviewSessionManager,
+  selectNextRender,
+  type ViPreviewSessionRuntime
+} from '../../src/ui/viPreviewSessionManager';
+
+const runtime: ViPreviewSessionRuntime = {
+  provider: 'linux-container',
+  containerImage: 'nationalinstruments/labview:2026q1-linux'
+};
+
+function rendered(html: string) {
+  return { outcome: 'rendered' as const, html };
+}
+
+function deferredResult() {
+  let resolve: (value: ReturnType<typeof rendered>) => void = () => undefined;
+  const promise = new Promise<ReturnType<typeof rendered>>((settle) => {
+    resolve = settle;
+  });
+  return { promise, resolve };
+}
+
+async function flushAsyncWork(): Promise<void> {
+  for (let step = 0; step < 5; step += 1) {
+    await Promise.resolve();
+  }
+}
+
+beforeEach(() => {
+  startViPreviewSessionMock.mockReset();
+});
 
 describe('selectNextRender', () => {
   it('returns undefined for an empty queue', () => {
@@ -28,5 +66,87 @@ describe('selectNextRender', () => {
       { priority: 'warm' as const, id: 'w2' }
     ];
     expect(selectNextRender(queue)?.id).toBe('w1');
+  });
+});
+
+describe('createViPreviewSessionManager (VHS-REQ-659.14)', () => {
+  it('serializes renders and prioritizes a queued interactive render over warm renders', async () => {
+    const activeRender = deferredResult();
+    const session = {
+      renderVi: vi
+        .fn()
+        .mockReturnValueOnce(activeRender.promise)
+        .mockResolvedValueOnce(rendered('interactive'))
+        .mockResolvedValueOnce(rendered('warm-2')),
+      dispose: vi.fn().mockResolvedValue(undefined)
+    };
+    startViPreviewSessionMock.mockResolvedValue(session);
+    const manager = createViPreviewSessionManager({
+      operationDirectory: '/ops',
+      idleDisposeMs: 60_000
+    });
+
+    const firstWarmRender = manager.renderVi(runtime, '/repo/warm-1.vi', 'warm');
+    const secondWarmRender = manager.renderVi(runtime, '/repo/warm-2.vi', 'warm');
+    const interactiveRender = manager.renderVi(runtime, '/repo/interactive.vi', 'interactive');
+    await flushAsyncWork();
+
+    expect(session.renderVi).toHaveBeenCalledTimes(1);
+    expect(session.renderVi).toHaveBeenNthCalledWith(1, '/repo/warm-1.vi');
+
+    activeRender.resolve(rendered('warm-1'));
+    await expect(firstWarmRender).resolves.toEqual(rendered('warm-1'));
+    await flushAsyncWork();
+
+    expect(session.renderVi).toHaveBeenNthCalledWith(2, '/repo/interactive.vi');
+    await expect(interactiveRender).resolves.toEqual(rendered('interactive'));
+    await flushAsyncWork();
+
+    expect(session.renderVi).toHaveBeenNthCalledWith(3, '/repo/warm-2.vi');
+    await expect(secondWarmRender).resolves.toEqual(rendered('warm-2'));
+    await manager.dispose();
+  });
+
+  it('reuses one session until idle disposal and recreates lazily on the next render', async () => {
+    vi.useFakeTimers();
+    try {
+      const firstSession = {
+        renderVi: vi.fn().mockResolvedValue(rendered('first-session')),
+        dispose: vi.fn().mockResolvedValue(undefined)
+      };
+      const secondSession = {
+        renderVi: vi.fn().mockResolvedValue(rendered('second-session')),
+        dispose: vi.fn().mockResolvedValue(undefined)
+      };
+      startViPreviewSessionMock
+        .mockResolvedValueOnce(firstSession)
+        .mockResolvedValueOnce(secondSession);
+      const manager = createViPreviewSessionManager({
+        operationDirectory: '/ops',
+        idleDisposeMs: 10
+      });
+
+      await expect(manager.renderVi(runtime, '/repo/a.vi')).resolves.toEqual(
+        rendered('first-session')
+      );
+      await expect(manager.renderVi(runtime, '/repo/b.vi')).resolves.toEqual(
+        rendered('first-session')
+      );
+      expect(startViPreviewSessionMock).toHaveBeenCalledTimes(1);
+      expect(firstSession.renderVi).toHaveBeenCalledTimes(2);
+
+      vi.advanceTimersByTime(10);
+      await flushAsyncWork();
+      expect(firstSession.dispose).toHaveBeenCalledTimes(1);
+
+      await expect(manager.renderVi(runtime, '/repo/c.vi')).resolves.toEqual(
+        rendered('second-session')
+      );
+      expect(startViPreviewSessionMock).toHaveBeenCalledTimes(2);
+      expect(secondSession.renderVi).toHaveBeenCalledWith('/repo/c.vi');
+      await manager.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
