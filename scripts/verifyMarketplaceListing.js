@@ -90,12 +90,18 @@ function runVsceShow(extensionId, deps = {}) {
     encoding: 'utf8',
     shell: false
   });
+  const status = typeof result.status === 'number' ? result.status : 1;
+  const signal = typeof result.signal === 'string' ? result.signal : '';
   return {
     command: [invocation.command, ...invocation.args].join(' '),
-    status: result.status ?? (result.error ? 1 : 0),
+    status,
     stdout: result.stdout || '',
     stderr: result.stderr || '',
-    error: result.error ? String(result.error.message || result.error) : ''
+    error: result.error
+      ? String(result.error.message || result.error)
+      : signal
+        ? `terminated by signal ${signal}`
+        : ''
   };
 }
 

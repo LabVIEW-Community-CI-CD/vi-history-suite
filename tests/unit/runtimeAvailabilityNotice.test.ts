@@ -158,7 +158,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     expect(buildAvailableStatusBarSuffix({ provider: 'none' })).toBe('');
   });
 
-  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650.6, VHS-REQ-620.7)', () => {
+  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-620.7)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',
       labviewVersion: '2026',
@@ -171,7 +171,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     expect(presentation.tooltip).toContain('linux-container mode');
   });
 
-  it('does not warn when the confirmed platform matches the selected image (VHS-REQ-650.6)', () => {
+  it('does not warn when the confirmed platform matches the selected image (VHS-REQ-620.7)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',
       labviewVersion: '2026',
@@ -183,7 +183,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     expect(presentation.text).not.toContain('$(warning)');
   });
 
-  it('does not warn when the daemon platform is unknown, even with a cross-platform selection (VHS-REQ-650.6)', () => {
+  it('does not warn when the daemon platform is unknown, even with a cross-platform selection (VHS-REQ-620.7)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',
       labviewVersion: '2026',
@@ -196,7 +196,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     expect(presentation.text).not.toContain('$(warning)');
   });
 
-  it('does not warn for an unset docker image selection (default adapts to platform) (VHS-REQ-650.6)', () => {
+  it('does not warn for an unset docker image selection (default adapts to platform) (VHS-REQ-620.7)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',
       labviewVersion: '2026',
