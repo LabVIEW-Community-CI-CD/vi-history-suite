@@ -8,6 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type ConfigListener = (event: { affectsConfiguration: (section: string) => boolean }) => void;
+type WindowStateListener = (event: { focused: boolean }) => void;
 
 interface FakeStatusBarItem {
   text: string;
@@ -41,12 +42,19 @@ const probeDaemonPlatform = vi.fn(async () => dockerDaemonMode);
 
 const configListeners: ConfigListener[] = [];
 const configDisposables: Array<ReturnType<typeof vi.fn>> = [];
+const focusListeners: WindowStateListener[] = [];
+const focusDisposables: Array<ReturnType<typeof vi.fn>> = [];
 
 vi.mock('vscode', () => {
   return {
     window: {
       createStatusBarItem: vi.fn(() => fakeStatusBarItem),
-      onDidChangeWindowState: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidChangeWindowState: vi.fn((listener: WindowStateListener) => {
+        focusListeners.push(listener);
+        const dispose = vi.fn();
+        focusDisposables.push(dispose);
+        return { dispose };
+      }),
       showInformationMessage: vi.fn()
     },
     workspace: {
@@ -123,9 +131,14 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     probeDaemonPlatform.mockClear();
     configListeners.length = 0;
     configDisposables.length = 0;
+    focusListeners.length = 0;
+    focusDisposables.length = 0;
     fakeStatusBarItem.text = '';
     fakeStatusBarItem.tooltip = '';
     fakeStatusBarItem.command = '';
+    fakeStatusBarItem.show.mockClear();
+    fakeStatusBarItem.hide.mockClear();
+    fakeStatusBarItem.dispose.mockClear();
   });
 
   it('renders the auto-detection recommendation when no persisted selection is set (VHS-REQ-620.4)', async () => {
@@ -317,6 +330,73 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     expect(fakeStatusBarItem.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: LabVIEW 2026 x64`);
 
     watcher.dispose();
+  });
+
+  it('re-detects on focused window changes while throttling repeated focus events (VHS-REQ-617.3)', async () => {
+    let nowMs = 1_000;
+    const detect = vi.fn(async () => detectionWithBoth);
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect,
+      now: () => nowMs,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+
+    expect(focusListeners).toHaveLength(1);
+    expect(detect).toHaveBeenCalledTimes(1);
+
+    focusListeners[0]!({ focused: false });
+    await flushAsync();
+    expect(detect).toHaveBeenCalledTimes(1);
+
+    focusListeners[0]!({ focused: true });
+    await flushAsync();
+    expect(detect).toHaveBeenCalledTimes(1);
+
+    nowMs += 5_000;
+    focusListeners[0]!({ focused: true });
+    await flushAsync();
+    expect(detect).toHaveBeenCalledTimes(2);
+
+    watcher.dispose();
+  });
+
+  it('disposes the focus listener, configuration listener, and status bar item (VHS-REQ-617.4)', async () => {
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+
+    watcher.dispose();
+
+    expect(focusDisposables[0]).toHaveBeenCalledTimes(1);
+    expect(configDisposables[0]).toHaveBeenCalledTimes(1);
+    expect(fakeStatusBarItem.dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs detection failures without throwing out of activation (VHS-REQ-617.5)', async () => {
+    const error = new Error('runtime detection failed');
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => {
+        throw error;
+      },
+      probeDaemonPlatform
+    });
+    await flushAsync();
+
+    expect(consoleError).toHaveBeenCalledWith(
+      '[vi-history-suite] Runtime availability watcher detection failed.',
+      error
+    );
+    expect(watcher.getLastDetection()).toBeUndefined();
+
+    watcher.dispose();
+    consoleError.mockRestore();
   });
 
   it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-620.7)', async () => {

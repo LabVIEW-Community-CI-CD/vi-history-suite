@@ -243,7 +243,7 @@ tests/unit/pickRuntimeProviderCommand.test.ts,mapped,Yes,Runtime provider select
 tests/unit/runtimeReportPanel.test.ts,mapped,Yes,Runtime & Report Settings panel renderer unit tests mapped to VHS-REQ-620 and VHS-REQ-645.
 tests/unit/openRuntimeReportPanelCommand.test.ts,mapped,Yes,Runtime & Report Settings panel command unit tests mapped to VHS-REQ-620 VHS-REQ-645 and VHS-REQ-651.
 tests/unit/comparisonReportOptionSelection.test.ts,mapped,Yes,Comparison report option settings writer unit tests mapped to VHS-REQ-645.
-tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-620.
+tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-617 and VHS-REQ-620.
 scripts/runWindowsRuntimeMatrix.js,mapped,Yes,Windows runtime conflict verification harness driver; mapped to VHS-REQ-622.
 scripts/checkMaintainerRunnerPrerequisites.js,mapped,Yes,Maintainer runner prerequisite doctor; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conflict verification harness driver tests; mapped to VHS-REQ-622.
