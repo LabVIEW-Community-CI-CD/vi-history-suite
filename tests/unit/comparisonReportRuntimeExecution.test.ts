@@ -3882,13 +3882,14 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     return record;
   }
 
-  it('materializes one selected-revision tree and stages both VIs at repo-relative depth (VHS-REQ-624.1, VHS-REQ-624.4, VHS-REQ-624.5)', async () => {
+  it('materializes one selected-revision tree and stages both VIs at repo-relative depth (VHS-REQ-624.1, VHS-REQ-624.4, VHS-REQ-624.5, VHS-REQ-624.9)', async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
     const record = createNestedReadyRecord();
     const plan = record.stagedRevisionPlan;
 
-    await executeComparisonReport(
+    const result = await executeComparisonReport(
       { record, repositoryRoot: '/workspace/repo' },
       {
         readRevisionBlob: vi
@@ -3902,7 +3903,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
         runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
         nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
-        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        writePacketRecord,
         processPlatform: 'win32'
       }
     );
@@ -3927,6 +3928,76 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     // Base blob -> left filename; selected blob -> right filename.
     expect(writeFile).toHaveBeenCalledWith(plan.leftFilePath, Buffer.from('base-blob'));
     expect(writeFile).toHaveBeenCalledWith(plan.rightFilePath, Buffer.from('selected-blob'));
+    const materializedTree = {
+      root: plan.treeRoot as string,
+      revisionId: record.selectedHash,
+      pathspec: '.'
+    };
+    expect(result.record.runtimeExecution.materializedTree).toEqual(materializedTree);
+    const retainedRecord = writePacketRecord.mock.calls[0]?.[0];
+    expect(retainedRecord?.stagedRevisionPlan).toMatchObject({
+      leftFilename: plan.leftFilename,
+      rightFilename: plan.rightFilename
+    });
+    expect(retainedRecord?.runtimeExecution.materializedTree).toEqual(materializedTree);
+  });
+
+  it('stages working-tree bytes only into retained staging paths (VHS-REQ-641.5)', async () => {
+    const readRevisionBlob = vi
+      .fn()
+      .mockResolvedValueOnce(Buffer.from('base-blob'))
+      .mockResolvedValueOnce(Buffer.from('worktree-blob'));
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const record = createNestedReadyRecord();
+    record.selectedHash = 'WORKTREE';
+    record.baseHash = 'c3';
+    record.preflight.left.revisionId = 'c3';
+    record.preflight.left.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.preflight.right.revisionId = 'WORKTREE';
+    record.preflight.right.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: 'Source/Sub/foo.vi'
+    });
+
+    await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob,
+        materializeSelectedRevisionTree,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: writeFile as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(readRevisionBlob).toHaveBeenNthCalledWith(1, '/workspace/repo', 'c3', 'Source/Sub/foo.vi');
+    expect(readRevisionBlob).toHaveBeenNthCalledWith(
+      2,
+      '/workspace/repo',
+      'WORKTREE',
+      'Source/Sub/foo.vi'
+    );
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repositoryRoot: '/workspace/repo',
+        revisionId: 'WORKTREE',
+        destinationRoot: record.stagedRevisionPlan.treeRoot
+      })
+    );
+    const writeTargets = writeFile.mock.calls.map((call) => String(call[0]).replace(/\\/g, '/'));
+    expect(writeTargets).toContain(record.stagedRevisionPlan.leftFilePath.replace(/\\/g, '/'));
+    expect(writeTargets).toContain(record.stagedRevisionPlan.rightFilePath.replace(/\\/g, '/'));
+    expect(writeTargets.some((target) => target.startsWith('/workspace/repo/'))).toBe(false);
   });
 
   it('prunes the retained materialized tree back to the two staged VIs on win32 host-native', async () => {
@@ -4746,6 +4817,40 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     expect(removePath).toHaveBeenCalledWith('/tmp/vihs-stage-index-AAAA', {
       recursive: true,
       force: true
+    });
+  });
+
+  it('uses HEAD as the dependency context when materializing the working-tree sentinel (VHS-REQ-641.3)', async () => {
+    const calls: Array<{ args: string[]; env: NodeJS.ProcessEnv }> = [];
+    const runGit = vi.fn(async (args: string[], opts: { env: NodeJS.ProcessEnv }) => {
+      calls.push({ args, env: opts.env });
+    });
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-WORKTREE');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+    const listSubmoduleGitlinks = vi.fn().mockResolvedValue([]);
+
+    await materializeSelectedRevisionTreeWithGit(
+      {
+        repositoryRoot: '/workspace/repo',
+        revisionId: 'WORKTREE',
+        destinationRoot: '/stage/dest',
+        pathspec: '.'
+      },
+      {
+        runGit,
+        mkdtemp: mkdtemp as never,
+        removePath: removePath as never,
+        tmpdir,
+        listSubmoduleGitlinks
+      }
+    );
+
+    expect(calls[0].args).toEqual(['-C', '/workspace/repo', 'read-tree', 'HEAD']);
+    expect(calls[1].args).toContain('/stage/dest');
+    expect(listSubmoduleGitlinks).toHaveBeenCalledWith({
+      workingDirectory: '/workspace/repo',
+      revisionId: 'HEAD'
     });
   });
 

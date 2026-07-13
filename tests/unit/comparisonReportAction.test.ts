@@ -394,7 +394,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(html).not.toContain('_files');
   });
 
-  it('compares the working tree against HEAD and does not retain the evidence (VHS-REQ-641.2, VHS-REQ-641.4)', async () => {
+  it('compares the working tree against HEAD and does not retain the evidence (VHS-REQ-641.2, VHS-REQ-641.4, VHS-REQ-641.5)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -474,6 +474,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     // never archived into retained dashboard evidence.
     expect(archiveComparisonReportSource).not.toHaveBeenCalled();
     expect(result.retainedArchiveAvailable).toBe(false);
+    expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
   });
 
   it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638.4)', async () => {
