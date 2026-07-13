@@ -72,7 +72,7 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
     );
 
     expect(source).not.toMatch(
-      /from ['"](?:vscode|(?:node:)?fs(?:\/promises)?|(?:node:)?child_process)['"]|require\(['"](?:vscode|(?:node:)?fs(?:\/promises)?|(?:node:)?child_process)['"]\)|\bfetch\s*\(|https?/u
+      /(?:from\s+|import\s+|import\s*\(\s*|require\(\s*)['"](?:vscode|(?:node:)?fs(?:\/promises)?|(?:node:)?child_process)['"]|\bfetch\s*\(|https?/u
     );
   });
 
