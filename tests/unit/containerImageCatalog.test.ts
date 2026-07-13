@@ -17,7 +17,7 @@ import {
 } from '../../src/tooling/containerImageCatalog';
 
 describe('resolveLinuxContainerLabviewProfile (VHS-REQ-657)', () => {
-  it('derives the 2026 Q1 profile: labviewprofull + cli-headless', () => {
+  it('derives the 2026 Q1 profile: labviewprofull + cli-headless (VHS-REQ-657.1)', () => {
     expect(
       resolveLinuxContainerLabviewProfile('nationalinstruments/labview:2026q1-linux')
     ).toEqual({
@@ -29,7 +29,7 @@ describe('resolveLinuxContainerLabviewProfile (VHS-REQ-657)', () => {
     });
   });
 
-  it('derives the 2025 Q3 profile: plain labview + enable-cicd-env', () => {
+  it('derives the 2025 Q3 profile: plain labview + enable-cicd-env (VHS-REQ-657.2)', () => {
     expect(
       resolveLinuxContainerLabviewProfile('nationalinstruments/labview:2025q3-linux')
     ).toEqual({
@@ -50,7 +50,7 @@ describe('resolveLinuxContainerLabviewProfile (VHS-REQ-657)', () => {
     expect(profile.headlessMode).toBe('cli-headless');
   });
 
-  it('falls back to the LabVIEW 2026 profile when the reference is unparseable', () => {
+  it('falls back to the LabVIEW 2026 profile when the reference is unparseable (VHS-REQ-657.3)', () => {
     for (const unparseable of [undefined, '', 'not-a-labview-image', 'ubuntu:24.04']) {
       const profile = resolveLinuxContainerLabviewProfile(unparseable);
       expect(profile.year).toBeUndefined();

@@ -42,7 +42,7 @@ function createFakeFs(presentFiles: readonly string[]): RuntimeAutoDetectFs {
 }
 
 describe('runtime auto-detect (VHS-REQ-616)', () => {
-  it('detects Windows host installations across folder name variants and prefers x64 within a year', async () => {
+  it('detects Windows host installations across folder name variants and prefers x64 within a year (VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([
       'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
       'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -79,7 +79,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
-  it('falls back to docker when no host LabVIEW is installed but docker is on PATH', async () => {
+  it('falls back to docker when no host LabVIEW is installed but docker is on PATH (VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([
       'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
     ]);
@@ -106,7 +106,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
-  it('reports no runtime when neither LabVIEW nor docker is present', async () => {
+  it('reports no runtime when neither LabVIEW nor docker is present (VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([]);
 
     const detection = await detectAvailableRuntimes({
@@ -312,7 +312,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     ]);
   });
 
-  it('pickPreferredHostInstallation returns undefined for empty input and prefers higher years', () => {
+  it('pickPreferredHostInstallation returns undefined for empty input and prefers higher years (VHS-REQ-616.6)', () => {
     expect(pickPreferredHostInstallation([])).toBeUndefined();
 
     const installations: DetectedHostInstallation[] = [

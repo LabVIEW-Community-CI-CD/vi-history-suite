@@ -124,7 +124,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     fakeStatusBarItem.command = '';
   });
 
-  it('renders the auto-detection recommendation when no persisted selection is set', async () => {
+  it('renders the auto-detection recommendation when no persisted selection is set (VHS-REQ-620.4)', async () => {
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {
       detect: async () => detectionWithBoth,
@@ -141,7 +141,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('re-renders the label from cached detection when persisted keys flip via onDidChangeConfiguration', async () => {
+  it('re-renders the label from cached detection when persisted keys flip via onDidChangeConfiguration (VHS-REQ-620.4)', async () => {
     const detect = vi.fn(async () => detectionWithBoth);
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, { detect, probeDaemonPlatform });
