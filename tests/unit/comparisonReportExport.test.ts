@@ -516,13 +516,21 @@ describe('runComparisonReportExport', () => {
     expect(deps.exportBundle).not.toHaveBeenCalled();
   });
 
-  it('exports the bundle into a timestamped folder under the chosen directory', async () => {
+  it('exports the bundle into timestamped folders under the chosen directory without overwriting prior exports (VHS-REQ-626.5)', async () => {
     const deps = createBaseDeps();
+    const now = vi
+      .fn()
+      .mockReturnValueOnce(new Date('2026-06-07T12:00:00.000Z'))
+      .mockReturnValueOnce(new Date('2026-06-07T12:01:00.000Z'));
+    deps.now = now;
 
     const result = await runComparisonReportExport(createSource(), deps);
+    const secondResult = await runComparisonReportExport(createSource(), deps);
 
     expect(result.outcome).toBe('exported');
+    expect(secondResult.outcome).toBe('exported');
     expect(result.copiedAssets).toBe(true);
+    expect(secondResult.bundleDirectoryPath).not.toBe(result.bundleDirectoryPath);
     expect(deps.exportBundle).toHaveBeenCalledWith({
       plan: expect.objectContaining({ evidenceKind: 'generated-report' }),
       destinationDirectory: path.join(
@@ -535,6 +543,14 @@ describe('runComparisonReportExport', () => {
         baseHash: 'bbbbbbbbbbbb'
       })
     });
+    expect(deps.exportBundle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        destinationDirectory: path.join(
+          '/chosen',
+          'vi-comparison-report-foo-vi-2026-06-07T12-01-00-000Z'
+        )
+      })
+    );
   });
 
   it('opens the exported HTML in the browser when the user selects that action (VHS-REQ-626.6)', async () => {
