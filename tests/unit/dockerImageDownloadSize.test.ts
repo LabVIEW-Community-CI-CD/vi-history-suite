@@ -1,5 +1,7 @@
 /**
  * VHS-REQ-655: unit tests for the registry manifest download-size resolver.
+ * VHS-REQ-655.5: pure helpers and an injected HTTP boundary keep manifest
+ * resolution unit-testable without network access.
  *
  * The reference/challenge/manifest helpers are pure; the multi-step registry
  * auth + manifest flow is exercised through an injected HTTP boundary so it is
@@ -89,7 +91,7 @@ describe('selectPlatformManifestDigest', () => {
     ]
   };
 
-  it('selects the matching os/architecture digest', () => {
+  it('selects the matching os/architecture digest (VHS-REQ-655.1)', () => {
     expect(selectPlatformManifestDigest(index, { os: 'windows', architecture: 'amd64' })).toBe('sha256:windows');
   });
 
@@ -100,7 +102,7 @@ describe('selectPlatformManifestDigest', () => {
 });
 
 describe('summarizeManifestLayers', () => {
-  it('sums layer sizes and maps short ids to sizes', () => {
+  it('sums layer sizes and maps short ids to sizes (VHS-REQ-655.1)', () => {
     const summary = summarizeManifestLayers({
       layers: [
         { digest: 'sha256:aaaaaaaaaaaa1111', size: 1000 },
@@ -138,7 +140,7 @@ describe('resolveImageDownloadSize', () => {
     ]
   });
 
-  it('runs the 401 -> token -> manifest-list -> platform-manifest flow and sums layers', async () => {
+  it('runs the 401 -> token -> manifest-list -> platform-manifest flow and sums layers (VHS-REQ-655.1)', async () => {
     const calls: string[] = [];
     const requestJson: RegistryHttpRequest = vi.fn(async ({ url, headers }) => {
       calls.push(url);
@@ -181,7 +183,7 @@ describe('resolveImageDownloadSize', () => {
     expect(tokenCall).toContain('scope=repository%3Anationalinstruments%2Flabview%3Apull');
   });
 
-  it('handles an anonymous (200) single manifest without a token round-trip', async () => {
+  it('handles an anonymous (200) single manifest without a token round-trip (VHS-REQ-655.1)', async () => {
     const requestJson: RegistryHttpRequest = vi.fn(async () => ({
       statusCode: 200,
       headers: {},
@@ -195,7 +197,7 @@ describe('resolveImageDownloadSize', () => {
     expect(requestJson).toHaveBeenCalledOnce();
   });
 
-  it('returns undefined for a non-Hub image without making any request', async () => {
+  it('returns undefined for a non-Hub image without making any request (VHS-REQ-655.3)', async () => {
     const requestJson: RegistryHttpRequest = vi.fn(async () => {
       throw new Error('should not be called');
     });
@@ -205,7 +207,7 @@ describe('resolveImageDownloadSize', () => {
     expect(requestJson).not.toHaveBeenCalled();
   });
 
-  it('returns undefined (for layer-weighted fallback) when the challenge realm is not the Hub token host', async () => {
+  it('returns undefined (for layer-weighted fallback) when the challenge realm is not the Hub token host (VHS-REQ-655.3)', async () => {
     const requestJson: RegistryHttpRequest = vi.fn(async () => ({
       statusCode: 401,
       headers: { 'www-authenticate': 'Bearer realm="https://evil.example.com/token",service="x"' },
@@ -216,7 +218,7 @@ describe('resolveImageDownloadSize', () => {
     ).toBeUndefined();
   });
 
-  it('returns undefined when a request rejects (network/timeout)', async () => {
+  it('returns undefined when a request rejects (network/timeout) (VHS-REQ-655.3)', async () => {
     const requestJson: RegistryHttpRequest = vi.fn(async () => {
       throw new Error('ETIMEDOUT');
     });

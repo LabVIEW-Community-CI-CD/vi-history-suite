@@ -238,7 +238,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('persists and clears the container image version selection', async () => {
+  it('persists and clears the container image version selection (VHS-REQ-651.2)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -286,7 +286,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).toContain('2026q1-linux');
   });
 
-  it('labels image versions "local presence unknown" when the Docker engine is offline (VHS-REQ-649)', async () => {
+  it('labels image versions "local presence unknown" when the Docker engine is offline (VHS-REQ-649.3)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     const fetchPublishedTags = vi.fn(async () => ['2026q1-linux']);
@@ -311,7 +311,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).not.toContain('Available to pull');
   });
 
-  it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657.9)', async () => {
+  it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657.9, VHS-REQ-651.1)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -326,7 +326,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).not.toContain('undefined');
   });
 
-  it('hides the container image section when the comparison runtime is host (VHS-REQ-657.9/651)', async () => {
+  it('hides the container image section when the comparison runtime is host (VHS-REQ-657.9, VHS-REQ-651.4)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({

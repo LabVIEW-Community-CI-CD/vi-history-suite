@@ -23,23 +23,23 @@ describe('resolveHostContainerPlatform (VHS-REQ-649)', () => {
 });
 
 describe('resolveConfirmedContainerPlatform (VHS-REQ-649/650)', () => {
-  it('returns the probed Docker daemon mode when the probe succeeds', async () => {
+  it('returns the probed Docker daemon mode when the probe succeeds (VHS-REQ-649.6)', async () => {
     expect(await resolveConfirmedContainerPlatform(async () => 'linux')).toBe('linux');
     expect(await resolveConfirmedContainerPlatform(async () => 'windows')).toBe('windows');
   });
 
-  it('returns undefined (unknown) when the probe is inconclusive, not a host guess', async () => {
+  it('returns undefined (unknown) when the probe is inconclusive, not a host guess (VHS-REQ-649.6, VHS-REQ-650.6)', async () => {
     // Docker stopped/timing out: the mode is unknown. It must NOT be reported as
     // the host OS, so stale cross-platform detection cannot fire on a guess.
     expect(await resolveConfirmedContainerPlatform(async () => undefined)).toBeUndefined();
   });
 
-  it('returns undefined when the probe rejects, never blocking selection', async () => {
+  it('returns undefined when the probe rejects, never blocking selection (VHS-REQ-649.6)', async () => {
     const rejectingProbe = vi.fn().mockRejectedValue(new Error('docker info failed'));
     expect(await resolveConfirmedContainerPlatform(rejectingProbe)).toBeUndefined();
   });
 
-  it('returns the explicit override without probing the daemon', async () => {
+  it('returns the explicit override without probing the daemon (VHS-REQ-649.6)', async () => {
     const probe = vi.fn();
     expect(await resolveConfirmedContainerPlatform(probe as never, 'windows')).toBe('windows');
     expect(probe).not.toHaveBeenCalled();
@@ -57,7 +57,7 @@ function makeFakeDockerChild() {
 }
 
 describe('defaultProbeDockerDaemonPlatform (VHS-REQ-649)', () => {
-  it('probes docker info and maps a windows OSType to the windows container platform', async () => {
+  it('probes docker info and maps a windows OSType to the windows container platform (VHS-REQ-649.6)', async () => {
     const { child, stdout } = makeFakeDockerChild();
     const spawnImpl = vi.fn(() => child);
 
@@ -73,7 +73,7 @@ describe('defaultProbeDockerDaemonPlatform (VHS-REQ-649)', () => {
     );
   });
 
-  it('maps a trimmed, case-insensitive linux OSType to the linux container platform', async () => {
+  it('maps a trimmed, case-insensitive linux OSType to the linux container platform (VHS-REQ-649.6)', async () => {
     const { child, stdout } = makeFakeDockerChild();
 
     const probe = defaultProbeDockerDaemonPlatform(vi.fn(() => child) as never);
@@ -83,7 +83,7 @@ describe('defaultProbeDockerDaemonPlatform (VHS-REQ-649)', () => {
     expect(await probe).toBe('linux');
   });
 
-  it('resolves undefined (unknown) for unrecognized daemon output', async () => {
+  it('resolves undefined (unknown) for unrecognized daemon output (VHS-REQ-649.6)', async () => {
     const { child, stdout } = makeFakeDockerChild();
 
     const probe = defaultProbeDockerDaemonPlatform(vi.fn(() => child) as never);
@@ -93,7 +93,7 @@ describe('defaultProbeDockerDaemonPlatform (VHS-REQ-649)', () => {
     expect(await probe).toBeUndefined();
   });
 
-  it('resolves undefined when the child process errors (Docker unavailable)', async () => {
+  it('resolves undefined when the child process errors (Docker unavailable) (VHS-REQ-649.6)', async () => {
     const { child } = makeFakeDockerChild();
 
     const probe = defaultProbeDockerDaemonPlatform(vi.fn(() => child) as never);
@@ -102,7 +102,7 @@ describe('defaultProbeDockerDaemonPlatform (VHS-REQ-649)', () => {
     expect(await probe).toBeUndefined();
   });
 
-  it('resolves undefined when spawning throws synchronously (Docker CLI missing)', async () => {
+  it('resolves undefined when spawning throws synchronously (Docker CLI missing) (VHS-REQ-649.6)', async () => {
     const spawnImpl = vi.fn(() => {
       throw new Error('docker CLI missing');
     });
@@ -110,7 +110,7 @@ describe('defaultProbeDockerDaemonPlatform (VHS-REQ-649)', () => {
     expect(await defaultProbeDockerDaemonPlatform(spawnImpl as never)).toBeUndefined();
   });
 
-  it('resolves undefined and kills a wedged daemon when the probe times out', async () => {
+  it('resolves undefined and kills a wedged daemon when the probe times out (VHS-REQ-649.6)', async () => {
     vi.useFakeTimers();
     try {
       const { child } = makeFakeDockerChild();

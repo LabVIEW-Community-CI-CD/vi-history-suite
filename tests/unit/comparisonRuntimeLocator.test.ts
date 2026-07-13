@@ -1093,7 +1093,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     expect(selection.provider).toBe('windows-container');
   });
 
-  it('drives the windows-container image from the selected container image version (VHS-REQ-650)', async () => {
+  it('drives the windows-container image from the selected container image version (VHS-REQ-650.1)', async () => {
     const query = vi
       .fn()
       .mockImplementation((windowsImage: string) =>
@@ -1118,7 +1118,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     expect(selection.containerImage).toBe('nationalinstruments/labview:2026q1patch2-windows');
   });
 
-  it('preserves the default windows-container image when no version is selected (VHS-REQ-650)', async () => {
+  it('preserves the default windows-container image when no version is selected (VHS-REQ-650.2)', async () => {
     const query = vi
       .fn()
       .mockImplementation((windowsImage: string) =>
@@ -1137,7 +1137,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('bypasses the version-not-implemented pin when a container image version is selected (VHS-REQ-650)', async () => {
+  it('bypasses the version-not-implemented pin when a container image version is selected (VHS-REQ-650.3)', async () => {
     const query = vi
       .fn()
       .mockImplementation((windowsImage: string) =>
@@ -1162,7 +1162,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('drives the linux-container image from the selected container image version (VHS-REQ-650)', async () => {
+  it('drives the linux-container image from the selected container image version (VHS-REQ-650.1)', async () => {
     const query = vi.fn().mockResolvedValue(
       windowsContainerFacts({
         image: 'nationalinstruments/labview:2026q1patch1-linux',
@@ -1192,7 +1192,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('fails closed when the selected container image version platform conflicts with the Docker host mode (VHS-REQ-650)', async () => {
+  it('fails closed when the selected container image version platform conflicts with the Docker host mode (VHS-REQ-650.5)', async () => {
     // Linux image token selected, but the active Docker engine is in
     // windows-container mode. Previously the linux selection was silently
     // dropped and the default windows image ran; now it must fail closed.
@@ -1235,7 +1235,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('does not flag a platform mismatch when a full image override governs the active platform (VHS-REQ-650)', async () => {
+  it('does not flag a platform mismatch when a full image override governs the active platform (VHS-REQ-650.1, VHS-REQ-650.5)', async () => {
     // A raw windowsContainerImage override governs the windows host mode, so the
     // conflicting linux version token is moot and must not block.
     const query = vi
@@ -1605,7 +1605,7 @@ describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-6
 describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => {
   const image = 'nationalinstruments/labview:2026q1-windows';
 
-  it('drives the Docker Engine API stream and reports live layer-weighted progress', async () => {
+  it('drives the Docker Engine API stream and reports live layer-weighted progress (VHS-REQ-654.1)', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
       // Two 1 GB layers: one done at 50%, both done near the 99% ceiling.
@@ -1643,7 +1643,7 @@ describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => 
     expect(updates.at(-1)?.message).toBe(`Container image ready: ${image}`);
   });
 
-  it('re-emits the toast when only the downloaded bytes change at the same whole percent', async () => {
+  it('re-emits the toast when only the downloaded bytes change at the same whole percent (VHS-REQ-654.2)', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
       const gb = 1024 * 1024 * 1024;
@@ -1678,7 +1678,7 @@ describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => 
     expect(pullMessages.some((u) => /30% \(1\/3 layers, 2 GB\)/.test(u.message))).toBe(true);
   });
 
-  it('signals the extraction phase and keeps the bar advancing after download (VHS-REQ-656)', async () => {
+  it('signals the extraction phase and keeps the bar advancing after download (VHS-REQ-656.2, VHS-REQ-656.3)', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const gb = 1024 * 1024 * 1024;
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
@@ -2084,7 +2084,7 @@ describe('acquireWindowsContainerImage CLI fallback spawn routing (VHS-REQ-654)'
     });
   }
 
-  it('spawns the pull through the WSL cmd.exe bridge when WSL_DISTRO_NAME is set on linux', async () => {
+  it('spawns the pull through the WSL cmd.exe bridge when WSL_DISTRO_NAME is set on linux (VHS-REQ-654.3)', async () => {
     await withWslDistro('Ubuntu-22.04', async () => {
       const { child, stdout } = makeFakeDockerChild();
       const spawnImpl = vi.fn(() => child);
@@ -2108,7 +2108,7 @@ describe('acquireWindowsContainerImage CLI fallback spawn routing (VHS-REQ-654)'
     });
   });
 
-  it('spawns a plain docker pull on a linux host without WSL when the daemon socket is unreachable', async () => {
+  it('spawns a plain docker pull on a linux host without WSL when the daemon socket is unreachable (VHS-REQ-654.3, VHS-REQ-654.4)', async () => {
     await withWslDistro(undefined, async () => {
       const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
       const { child, stdout } = makeFakeDockerChild();
@@ -2135,7 +2135,7 @@ describe('acquireWindowsContainerImage CLI fallback spawn routing (VHS-REQ-654)'
     });
   });
 
-  it('reports a failed acquisition with the exit code when the CLI pull exits non-zero without output', async () => {
+  it('reports a failed acquisition with the exit code when the CLI pull exits non-zero without output (VHS-REQ-654.4)', async () => {
     const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
     const { child } = makeFakeDockerChild();
     const spawnImpl = vi.fn(() => child);
@@ -2154,7 +2154,7 @@ describe('acquireWindowsContainerImage CLI fallback spawn routing (VHS-REQ-654)'
     expect(result.notes.at(-1)).toContain('exit code 1');
   });
 
-  it('reports a failed acquisition when the CLI pull emits a spawn error', async () => {
+  it('reports a failed acquisition when the CLI pull emits a spawn error (VHS-REQ-654.4)', async () => {
     const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
     const { child } = makeFakeDockerChild();
     const spawnImpl = vi.fn(() => child);
@@ -2175,7 +2175,7 @@ describe('acquireWindowsContainerImage CLI fallback spawn routing (VHS-REQ-654)'
     expect(result.notes.at(-1)).toContain('docker binary missing');
   });
 
-  it('surfaces per-line CLI pull progress from stdout and stderr on the acquisition toast', async () => {
+  it('surfaces per-line CLI pull progress from stdout and stderr on the acquisition toast (VHS-REQ-654.3)', async () => {
     const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
     const { child, stdout, stderr } = makeFakeDockerChild();
     const spawnImpl = vi.fn(() => child);
@@ -2529,7 +2529,7 @@ describe('comparisonRuntimeLocator platform-specific runtime resolution (VHS-REQ
 });
 
 describe('comparisonRuntimeLocator linux container image override suppresses version conflict (VHS-REQ-650)', () => {
-  it('does not flag a platform mismatch when a linux image override governs a linux-container host mode', async () => {
+  it('does not flag a platform mismatch when a linux image override governs a linux-container host mode (VHS-REQ-650.1, VHS-REQ-650.5)', async () => {
     // The linux-side of the active-platform override branch: a linux image
     // override plus a linux-container host mode makes the conflicting windows
     // version token moot, so the selection proceeds instead of failing closed.
@@ -2707,7 +2707,7 @@ describe('comparisonRuntimeLocator Docker-unavailable fallback notes (VHS-REQ-62
 describe('acquireWindowsContainerImage stream progress gating (VHS-REQ-654)', () => {
   const image = 'nationalinstruments/labview:2026q1-windows';
 
-  it('skips a progress emit while the pull snapshot has no computable percentage yet', async () => {
+  it('skips a progress emit while the pull snapshot has no computable percentage yet (VHS-REQ-654.2)', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
       // A percent-less snapshot (no download/overall percent) must not emit a toast.

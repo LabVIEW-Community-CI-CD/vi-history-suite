@@ -805,7 +805,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('shows a concise Pick Image Version toast when blocked by a container image platform mismatch (VHS-REQ-650, #532)', async () => {
+  it('shows a concise Pick Image Version toast when blocked by a container image platform mismatch (VHS-REQ-650.6, #532)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
