@@ -2631,7 +2631,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     return record;
   }
 
-  it('builds candidate paths under ~/natinst/.config and /etc/natinst', () => {
+  it('builds candidate paths under ~/natinst/.config and /etc/natinst (VHS-REQ-156.7)', () => {
     const candidates = buildLinuxLabviewIniCandidatePaths({
       homeDir: '/home/sergio',
       requestedLabviewVersion: '2026',
@@ -2642,7 +2642,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(candidates).toContain('/etc/natinst/LabVIEW-2026/labview.conf');
   });
 
-  it('returns viServerTcpEnabled=true and the explicit port when labview.conf enables TCP', async () => {
+  it('returns viServerTcpEnabled=true and the explicit port when labview.conf enables TCP (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue(
         'server.tcp.access="+localhost"\nserver.tcp.enabled=True\nserver.tcp.port=3363\n'
@@ -2654,7 +2654,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.labviewIniPath).toBe('/home/sergio/natinst/.config/LabVIEW-2026/labview.conf');
   });
 
-  it('defaults to port 3363 when TCP is enabled but server.tcp.port is omitted', async () => {
+  it('defaults to port 3363 when TCP is enabled but server.tcp.port is omitted (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\n') as never,
       homeDir: () => '/home/sergio'
@@ -2663,7 +2663,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.labviewTcpPort).toBe(3363);
   });
 
-  it('flags VI Server TCP disabled when server.tcp.enabled=False', async () => {
+  it('flags VI Server TCP disabled when server.tcp.enabled=False (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue('server.tcp.enabled=False\n') as never,
       homeDir: () => '/home/sergio'
@@ -2672,7 +2672,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.notes.join(' ')).toMatch(/server\.tcp\.enabled=False/);
   });
 
-  it('flags VI Server TCP disabled when labview.conf has no server.tcp.enabled key (Linux default)', async () => {
+  it('flags VI Server TCP disabled when labview.conf has no server.tcp.enabled key (Linux default) (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue('LoadAddOns=False\n') as never,
       homeDir: () => '/home/sergio'
@@ -2681,7 +2681,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.notes.join(' ')).toMatch(/server\.tcp\.enabled is missing/);
   });
 
-  it('returns viServerTcpEnabled=unknown when no candidate file is readable', async () => {
+  it('returns viServerTcpEnabled=unknown when no candidate file is readable (VHS-REQ-156.7)', async () => {
     const enoent = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockRejectedValue(enoent) as never,
@@ -2701,7 +2701,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.inspectedCandidatePaths).toEqual([]);
   });
 
-  it('infers requestedLabviewVersion from labviewExe path when not explicitly set', async () => {
+  it('infers requestedLabviewVersion from labviewExe path when not explicitly set (VHS-REQ-156.7)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -2760,7 +2760,7 @@ describe('inferLinuxLabviewVersionFromExecutablePath (VHS-REQ-156)', () => {
 });
 
 describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
-  it('blocks execution with linux-vi-server-tcp-disabled when labview.conf disables VI Server TCP', async () => {
+  it('blocks execution with linux-vi-server-tcp-disabled when labview.conf disables VI Server TCP (VHS-REQ-156.7)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -2824,7 +2824,7 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
     );
   });
 
-  it('blocks execution with linux-vi-server-tcp-disabled when no labview.conf candidate is readable', async () => {
+  it('blocks execution with linux-vi-server-tcp-disabled when no labview.conf candidate is readable (VHS-REQ-156.7)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
