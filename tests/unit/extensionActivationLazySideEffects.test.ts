@@ -356,10 +356,11 @@ describe('extension activation lazy side effects', () => {
     expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(materializedCli);
   });
 
-  it('resolves Git and selected-file history runtime lazily for VI History open', async () => {
+  it('registers the primary VI History open handler and resolves its runtime lazily (VHS-REQ-082.3)', async () => {
     const context = createContext();
     await activate(context as never);
 
+    expect(commandHandlers.has('labviewViHistory.open')).toBe(true);
     await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
 
     expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);

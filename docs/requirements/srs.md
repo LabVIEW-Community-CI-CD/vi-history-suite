@@ -281,6 +281,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Treat command IDs as public extension API.
