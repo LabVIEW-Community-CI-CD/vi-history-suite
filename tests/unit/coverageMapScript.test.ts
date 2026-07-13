@@ -145,10 +145,11 @@ describe('coverage traceability map script', () => {
     expect(options.json).toBe(true);
   });
 
-  it('joins coverage, inventory, and RTM records into requirement risk facts', () => {
+  it('joins coverage, inventory, and RTM records into requirement risk facts (VHS-REQ-613.1, VHS-REQ-613.2, VHS-REQ-613.3)', () => {
     const repoRoot = writeFixture();
 
     const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });
+    const requirementRisk = map.byRequirement.find((entry) => entry.reqId === 'VHS-REQ-613');
 
     expect(map.files.map((file) => file.path)).toEqual([
       'src/coveredMapped.ts',
@@ -161,13 +162,15 @@ describe('coverage traceability map script', () => {
       'src/supportingRisk.ts'
     ]);
     expect(map.zeroCoverageSupportingRequirements[0].requirementIds).toContain('VHS-REQ-610');
-    expect(map.byRequirement.find((entry) => entry.reqId === 'VHS-REQ-613')?.missingLines).toBe(6);
+    expect(requirementRisk?.missingLines).toBe(6);
+    expect(requirementRisk?.missingBranches).toBe(3);
+    expect(requirementRisk?.missingFunctions).toBe(3);
     expect(map.byClassification.find((entry) => entry.classification === 'supporting')?.fileCount).toBe(
       1
     );
   });
 
-  it('renders GitHub-ready Markdown for low mapped and zero supporting risk', () => {
+  it('renders GitHub-ready Markdown for low mapped and zero supporting risk (VHS-REQ-613.2, VHS-REQ-613.3)', () => {
     const repoRoot = writeFixture();
     const markdown = renderCoverageMapMarkdown(generateCoverageMap({ repoRoot }));
 
@@ -179,7 +182,7 @@ describe('coverage traceability map script', () => {
     expect(markdown).toContain('| VHS-REQ-613 | 2 | 6 |');
   });
 
-  it('fails closed when retained coverage evidence is missing', () => {
+  it('fails closed when retained coverage evidence is missing (VHS-REQ-613.7)', () => {
     const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-coverage-map-missing-'));
     fs.mkdirSync(path.join(repoRoot, 'docs', 'requirements'), { recursive: true });
     fs.writeFileSync(
@@ -223,7 +226,7 @@ describe('coverage traceability map script', () => {
     });
   });
 
-  it('fails closed under --enforce when requirement-mapped or supporting risk exists', () => {
+  it('fails closed under --enforce when requirement-mapped or supporting risk exists (VHS-REQ-613.4)', () => {
     const repoRoot = writeFixture();
     expect(main(['--enforce', '--repo-root', repoRoot])).toBe(1);
   });

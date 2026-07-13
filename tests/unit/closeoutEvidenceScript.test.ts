@@ -810,7 +810,7 @@ describe('closeout evidence script', () => {
     expect(result.failure).toContain('docker build');
   });
 
-  it('renders a closable standards summary when mandatory standards and gates pass (VHS-REQ-601.24)', () => {
+  it('renders a closable standards summary when mandatory standards and gates pass (VHS-REQ-601.24, VHS-REQ-613.8)', () => {
     const spawnSync = hostSuccessSpawnSync();
     const result = generateCloseoutEvidence(
       ['--kind', 'standards', '--issue', '130', '--run-gates'],
