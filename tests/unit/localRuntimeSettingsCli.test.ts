@@ -206,7 +206,7 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     ).rejects.toThrow('Workspace settings are not supported');
   });
 
-  it('materializes launchers, honors platform injection, and refreshes idempotently', async () => {
+  it('materializes launchers with stale-module self-heal logic, honors platform injection, and refreshes idempotently (VHS-REQ-612.6)', async () => {
     const memoryFs = new MemoryFs();
     const plan = buildLocalRuntimeSettingsCliMaterialization(
       '/global-storage',
@@ -242,12 +242,16 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     );
     expect(materialized.pathPrependValue).toBe(`${materialized.rootDirectoryPath}:`);
     expect(environment.prepend).toHaveBeenCalledWith('PATH', materialized.pathPrependValue);
-    expect(memoryFs.text(materialized.javascriptLauncherPath)).toContain(
-      'runLocalRuntimeSettingsCliMain'
-    );
-    expect(memoryFs.text(materialized.javascriptLauncherPath)).toContain(
-      JSON.stringify(plan.modulePath)
-    );
+    const javascriptLauncher = memoryFs.text(materialized.javascriptLauncherPath);
+    expect(javascriptLauncher).toContain('runLocalRuntimeSettingsCliMain');
+    expect(javascriptLauncher).toContain(JSON.stringify(plan.modulePath));
+    expect(javascriptLauncher).toContain('svelderrainruiz.vi-history-suite-');
+    expect(javascriptLauncher).toContain('out/tooling/localRuntimeSettingsCli.js');
+    expect(javascriptLauncher).toContain('findInstalledExtensionModulePath');
+    expect(javascriptLauncher).toContain("path.join(home, '.vscode', 'extensions')");
+    expect(javascriptLauncher).toContain("path.join(home, '.vscode-server', 'extensions')");
+    expect(javascriptLauncher).toContain('compareExtensionFolderNames');
+    expect(javascriptLauncher).toContain('if (fallback && fallback !== stampedModulePath)');
     expect(memoryFs.text(materialized.posixLauncherPath)).toContain('#!/usr/bin/env sh');
     expect(memoryFs.text(materialized.windowsLauncherPath)).toContain(
       'VI History runtime-settings CLI requires'
