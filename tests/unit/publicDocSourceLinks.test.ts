@@ -95,7 +95,7 @@ describe('public docs source and support link confidence', () => {
     expect(maintainerOps).toContain(onboardingIssueUrl);
   });
 
-  it('keeps first-time onboarding feedback structured around Marketplace and source evaluation', () => {
+  it('keeps first-time onboarding feedback structured around Marketplace/source/support link reports (VHS-REQ-600.6)', () => {
     const feedbackTemplate = readRepoText(
       '.github',
       'ISSUE_TEMPLATE',
@@ -109,15 +109,20 @@ describe('public docs source and support link confidence', () => {
       readRepoText('SUPPORT.md')
     ].join('\n');
 
+    expect(publicDocs).toContain(marketplaceIdentity);
     expect(publicDocs).toContain(onboardingIssueUrl);
     expect(publicDocs).toContain('Marketplace');
     expect(publicDocs).toContain('source-evaluation');
     expect(feedbackTemplate).toContain('name: First-Time Onboarding Feedback');
+    expect(feedbackTemplate).toContain('Report Marketplace, first-run, or source-evaluation friction.');
     expect(feedbackTemplate).toContain('Marketplace install');
+    expect(feedbackTemplate).toContain('Marketplace, install, or documentation');
     expect(feedbackTemplate).toContain('Codespaces source evaluation');
     expect(feedbackTemplate).toContain('Dev Containers in VS Code');
     expect(feedbackTemplate).toContain('id: extension_version');
     expect(feedbackTemplate).toContain('id: vscode_version');
+    expect(feedbackTemplate).toContain('stale link');
+    expect(feedbackTemplate).toContain('link mismatch details');
     expect(feedbackTemplate).toContain('id: relevant_output');
     expect(feedbackTemplate).toContain('Do not include secrets');
   });
