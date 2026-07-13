@@ -111,7 +111,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(summary.at(-1)).toContain('or switch viHistorySuite.runtimeProvider to host');
   });
 
-  it('reports the image-derived LabVIEW year for a container provider (VHS-REQ-657)', () => {
+  it('reports the image-derived LabVIEW year for a container provider (VHS-REQ-657.6)', () => {
     const summary = blockedSummary('container-image-acquisition-failed', {
       executionMode: 'docker-only',
       requestedProvider: 'docker',
@@ -720,7 +720,7 @@ describe('comparisonRuntimeDoctor next-action taxonomy and fact surfaces', () =>
     expect(toolLine).toContain('HostConflictDetected=no');
   });
 
-  it('reports a container-derived LabVIEW version label for container providers (VHS-REQ-657)', () => {
+  it('reports a container-derived LabVIEW version label for container providers (VHS-REQ-657.6)', () => {
     const summary = doctor(
       'ready-for-runtime',
       {

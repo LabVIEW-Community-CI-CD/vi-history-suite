@@ -218,7 +218,7 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     expect(html).not.toContain('data-testid="runtime-report-report-section"');
   });
 
-  it('surfaces a no-detection banner when detection has not completed', () => {
+  it('surfaces a no-detection banner when detection has not completed (VHS-REQ-620.5)', () => {
     const html = renderRuntimeReportPanelHtml(
       baseModel({ detectionAvailable: false, providerOptions: [], selectedProviderIndex: -1 })
     );
