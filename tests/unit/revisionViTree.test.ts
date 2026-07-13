@@ -32,7 +32,7 @@ describe('parseLsTreeOutput', () => {
   });
 });
 
-describe('materializeRevisionViTree', () => {
+describe('materializeRevisionViTree (VHS-REQ-659.15)', () => {
   function makeDeps(tree: { repoRelativePath: string; sizeBytes: number }[]) {
     return {
       listTreeFiles: vi.fn().mockResolvedValue(tree),

@@ -165,7 +165,7 @@ describe('applyPickRuntimeProviderSelection (VHS-REQ-620)', () => {
   });
 });
 
-describe('applyViPreviewEnabledSelection (VHS-REQ-659)', () => {
+describe('applyViPreviewEnabledSelection (VHS-REQ-659.7)', () => {
   it('writes preview.enabled=true to the Global target', async () => {
     const update = vi.fn(async () => undefined);
     await applyViPreviewEnabledSelection(true, { update });

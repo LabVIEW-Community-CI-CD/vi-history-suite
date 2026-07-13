@@ -2344,7 +2344,7 @@ describe('openViHistoryCommand git-uri, preview, and plain-diff branches (VHS-RE
     });
   });
 
-  it('tells the user VI Preview is off when preview is disabled', async () => {
+  it('tells the user VI Preview is off when preview is disabled (VHS-REQ-659.7)', async () => {
     const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
     const panelTracker = new HistoryPanelTracker();
     const gitApi = createGitApiStub();
@@ -2362,7 +2362,7 @@ describe('openViHistoryCommand git-uri, preview, and plain-diff branches (VHS-RE
     expect(revisionTreeMock.materialize).not.toHaveBeenCalled();
   });
 
-  it('materializes the revision and opens the read-only preview editor when preview is on', async () => {
+  it('materializes the revision and opens the read-only preview editor when preview is on (VHS-REQ-659.15)', async () => {
     previewState.enabled = true;
     revisionTreeMock.materialize.mockResolvedValue({
       viFilePath: '/workspace/preview/Sample.vi'
@@ -2385,6 +2385,16 @@ describe('openViHistoryCommand git-uri, preview, and plain-diff branches (VHS-RE
     }
 
     expect(revisionTreeMock.materialize).toHaveBeenCalledTimes(1);
+    expect(revisionTreeMock.materialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        revisionId: 'abc1234567890abcdef1234567890abcdef12345',
+        relativePath: 'src/Sample.vi'
+      }),
+      expect.objectContaining({
+        listTreeFiles: expect.any(Function),
+        readBlob: expect.any(Function)
+      })
+    );
     expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
       'vscode.openWith',
       expect.objectContaining({ fsPath: '/workspace/preview/Sample.vi' }),
