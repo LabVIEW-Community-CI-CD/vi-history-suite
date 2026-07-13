@@ -413,6 +413,36 @@ describe('decideLabviewCliOpenGate manual override (VHS-REQ-633.3, VHS-REQ-633.4
 });
 
 describe('presentLabviewCliOpenBlockedToast (VHS-REQ-629)', () => {
+  it('keeps the decision helper window-free and the presenter action external-link only (VHS-REQ-629.6)', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const openExternal = vi.mocked(vscode.env.openExternal);
+    const executeCommand = vi.mocked(vscode.commands.executeCommand);
+    showWarning.mockClear();
+    openExternal.mockClear();
+    executeCommand.mockClear();
+
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const decision = decideLabviewCliOpenGate(detectionHost, snapshot);
+
+    if (decision.kind !== 'block') {
+      throw new Error('expected missing LabVIEW CLI decision to block');
+    }
+    expect(showWarning).not.toHaveBeenCalled();
+    expect(openExternal).not.toHaveBeenCalled();
+    expect(executeCommand).not.toHaveBeenCalled();
+
+    showWarning.mockResolvedValueOnce(decision.actionLabel as never);
+    await presentLabviewCliOpenBlockedToast(decision);
+
+    expect(showWarning).toHaveBeenCalledWith(decision.toastMessage, decision.actionLabel);
+    expect(openExternal).toHaveBeenCalledTimes(1);
+    expect(openExternal.mock.calls[0]?.[0]).toMatchObject({ scheme: 'https' });
+    expect(openExternal.mock.calls[0]?.[0]?.toString()).toContain(
+      'download.ni-labview-command-line-interface'
+    );
+    expect(executeCommand).not.toHaveBeenCalled();
+  });
+
   it('shows the carried action label and opens the carried install URL when chosen (VHS-REQ-629.4)', async () => {
     const showWarning = vi.mocked(vscode.window.showWarningMessage);
     const openExternal = vi.mocked(vscode.env.openExternal);
