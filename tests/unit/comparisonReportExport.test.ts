@@ -157,7 +157,7 @@ describe('describeMissingGraphicsReportReason', () => {
 });
 
 describe('resolveComparisonReportExportPlan', () => {
-  it('prefers the generated report with its assets directory when both exist', async () => {
+  it('prefers the generated report with its assets directory when both exist (VHS-REQ-626.2)', async () => {
     const source = createSource();
     const expectedAssetsDirectoryPath = path.join(
       path.dirname(source.reportFilePath),
@@ -228,7 +228,7 @@ describe('resolveComparisonReportExportPlan', () => {
 });
 
 describe('exportComparisonReportBundle', () => {
-  it('copies the report HTML and its assets directory preserving original names', async () => {
+  it('copies the report HTML and its assets directory preserving original names (VHS-REQ-626.2)', async () => {
     const tempRoot = await makeTempRoot();
     const sourceDir = path.join(tempRoot, 'source');
     const assetsDir = path.join(sourceDir, 'diff-report-foo.vi_files');
@@ -294,7 +294,7 @@ describe('exportComparisonReportBundle', () => {
     ).resolves.toContain('packet');
   });
 
-  it('exports a self-contained single-file report as the HTML alone (VHS-REQ-640)', async () => {
+  it('exports a self-contained single-file report as the HTML alone (VHS-REQ-640, VHS-REQ-626.2)', async () => {
     const tempRoot = await makeTempRoot();
     const sourceDir = path.join(tempRoot, 'source');
     await fs.mkdir(sourceDir, { recursive: true });
@@ -328,7 +328,7 @@ describe('exportComparisonReportBundle', () => {
     ).resolves.toContain('data:image/png;base64,AAAA');
   });
 
-  it('embeds the revision context into the exported generated report without mutating the source (multi-file)', async () => {
+  it('embeds the revision context into the exported generated report without mutating the source (multi-file) (VHS-REQ-626.3)', async () => {
     const tempRoot = await makeTempRoot();
     const sourceDir = path.join(tempRoot, 'source');
     const assetsDir = path.join(sourceDir, 'diff-report-foo.vi_files');
@@ -537,7 +537,7 @@ describe('runComparisonReportExport', () => {
     });
   });
 
-  it('opens the exported HTML in the browser when the user selects that action', async () => {
+  it('opens the exported HTML in the browser when the user selects that action (VHS-REQ-626.6)', async () => {
     const deps = createBaseDeps();
     deps.showInformationMessage = vi.fn(async () => 'Open in Browser' as never);
 
@@ -550,7 +550,7 @@ describe('runComparisonReportExport', () => {
     );
   });
 
-  it('reveals the exported HTML in the OS file manager when requested', async () => {
+  it('reveals the exported HTML in the OS file manager when requested (VHS-REQ-626.6)', async () => {
     const deps = createBaseDeps();
     deps.showInformationMessage = vi.fn(async () => 'Show in Folder' as never);
 
@@ -600,7 +600,7 @@ describe('runComparisonReportExport', () => {
     return deps;
   }
 
-  it('confirms with a modal reason before falling back to the evidence packet', async () => {
+  it('confirms with a modal reason before falling back to the evidence packet (VHS-REQ-626.4)', async () => {
     const deps = createPacketDeps();
     deps.showWarningMessage = vi.fn(async () => 'Export Evidence Packet' as never);
 
@@ -621,7 +621,7 @@ describe('runComparisonReportExport', () => {
     );
   });
 
-  it('cancels without picking a folder when the packet confirmation is declined', async () => {
+  it('cancels without picking a folder when the packet confirmation is declined (VHS-REQ-626.4)', async () => {
     const deps = createPacketDeps();
     deps.showWarningMessage = vi.fn(async () => undefined);
 

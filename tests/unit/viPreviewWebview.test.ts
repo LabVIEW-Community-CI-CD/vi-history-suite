@@ -26,7 +26,7 @@ describe('injectPreviewCsp', () => {
 });
 
 describe('buildViPreviewWebviewHtml', () => {
-  it('returns the CSP-hardened LabVIEW document for the rendered state', () => {
+  it('returns the CSP-hardened LabVIEW document for the rendered state (VHS-REQ-659.9)', () => {
     const html = buildViPreviewWebviewHtml({
       kind: 'rendered',
       labviewHtml: '<HTML><HEAD></HEAD><BODY><IMG src="data:image/png;base64,AAAA"></BODY></HTML>'
@@ -37,7 +37,7 @@ describe('buildViPreviewWebviewHtml', () => {
     expect(html).toContain('data:image/png;base64,AAAA');
   });
 
-  it('renders a themed loading document with a CSP and optional detail', () => {
+  it('renders a themed loading document with a CSP and optional detail (VHS-REQ-659.9)', () => {
     const html = buildViPreviewWebviewHtml({
       kind: 'loading',
       title: 'Rendering VI preview…',
@@ -49,7 +49,7 @@ describe('buildViPreviewWebviewHtml', () => {
     expect(html).toContain('Starting LabVIEW container');
   });
 
-  it('escapes error messages in the error document', () => {
+  it('escapes error messages in the error document (VHS-REQ-659.9)', () => {
     const html = buildViPreviewWebviewHtml({
       kind: 'error',
       title: 'Preview failed',

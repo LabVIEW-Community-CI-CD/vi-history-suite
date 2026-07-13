@@ -986,7 +986,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
 });
 
 describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
-  it('discloses the newest-tree dependency caveat with the recompile hazard when a tree was materialized', () => {
+  it('discloses the newest-tree dependency caveat with the recompile hazard when a tree was materialized (VHS-REQ-624.7, VHS-REQ-624.8)', () => {
     const record = createBaseRecord({
       materializedTree: {
         root: '/workspace/.storage/reports/repoid123456/fileid123456/container-out/staging',

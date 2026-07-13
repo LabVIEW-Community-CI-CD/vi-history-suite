@@ -220,7 +220,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     expect(args[reportTypeIndex + 1]).toBe('htmlsinglefile');
   });
 
-  it('adds headless mode for container providers and LV_RTE_HEADLESS win32 fallback', () => {
+  it('adds headless mode for container providers and LV_RTE_HEADLESS win32 fallback (VHS-REQ-156.3)', () => {
     const originalHeadless = process.env.LV_RTE_HEADLESS;
     process.env.LV_RTE_HEADLESS = '1';
     try {
@@ -254,7 +254,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('keeps linux host-native LabVIEWCLI invocations non-headless by default', () => {
+  it('keeps linux host-native LabVIEWCLI invocations non-headless by default (VHS-REQ-156.1)', () => {
     const originalHeadless = process.env.LV_RTE_HEADLESS;
     const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
     delete process.env.LV_RTE_HEADLESS;
@@ -285,7 +285,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('lets LV_RTE_LINUX_HEADLESS=1 opt in to headless on linux host-native', () => {
+  it('lets LV_RTE_LINUX_HEADLESS=1 opt in to headless on linux host-native (VHS-REQ-156.1)', () => {
     const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
     process.env.LV_RTE_LINUX_HEADLESS = '1';
     try {
@@ -309,7 +309,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('keeps the linux-container provider headless regardless of LV_RTE_LINUX_HEADLESS', () => {
+  it('keeps the linux-container provider headless regardless of LV_RTE_LINUX_HEADLESS (VHS-REQ-156.2)', () => {
     const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
     delete process.env.LV_RTE_LINUX_HEADLESS;
     try {
