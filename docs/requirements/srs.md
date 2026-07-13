@@ -3672,8 +3672,10 @@ Missing numeric IDs are intentional.
     unit tests. Do not change the `-350000` classification, the
     VHS-REQ-623 / VHS-REQ-156 ini preflight, or add a pre-panel gate.
 - Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
 - Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
