@@ -811,7 +811,14 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     const panelTracker = new HistoryPanelTracker();
     const panel = createMockPanel();
     createWebviewPanelMock.mockReturnValue(panel);
-    const comparisonReportAction = vi.fn().mockResolvedValue({
+    let matchingImageSelected = false;
+    const comparisonReportAction = vi.fn(async () => matchingImageSelected
+      ? {
+          outcome: 'opened-comparison-report',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded'
+        }
+      : {
       outcome: 'blocked-container-image-platform-mismatch',
       reportStatus: 'blocked-runtime',
       runtimeExecutionState: 'not-available',
@@ -826,6 +833,14 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
         'Next action: the selected viHistorySuite.container.imageVersion targets a different platform than the active Docker engine (linux-container mode); switch Docker to the matching container engine or select a linux image version (or clear viHistorySuite.container.imageVersion to use the default), then rerun comparison report generation.'
       ]
     });
+    vi.mocked(vscodeHarness.vscode.commands.executeCommand).mockImplementationOnce(
+      async (command: string, ...args: unknown[]) => {
+        expect(command).toBe('labviewViHistory.pickContainerImageVersion');
+        expect(args).toEqual([]);
+        matchingImageSelected = true;
+        return { outcome: 'persisted-selection', tag: '2026q1-linux' };
+      }
+    );
     const command = createOpenViHistoryCommand(
       historyService as never,
       undefined,
@@ -878,6 +893,9 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
 
     expect(comparisonReportAction).toHaveBeenCalledTimes(2);
+    expect(panel.webview.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'comparisonRuntimeResult', status: 'succeeded' })
+    );
   });
 
   it('shows a concise Docker Desktop toast and suppresses the verbose runtime warning when the Docker daemon is not running (VHS-REQ-642, VHS-REQ-642.4)', async () => {
