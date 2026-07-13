@@ -72,6 +72,56 @@ function parseCsv(text: string): Array<Record<string, string>> {
   });
 }
 
+function extractConfigStringArray(configText: string, key: string): string[] {
+  const match = configText.match(new RegExp(`${key}:\\s*\\[([\\s\\S]*?)\\]`, 'u'));
+  return match ? [...match[1].matchAll(/'([^']+)'/gu)].map((item) => item[1]) : [];
+}
+
+function extractCoverageGlobArrays(vitestConfig: string): { include: string[]; exclude: string[] } {
+  const coverageStart = vitestConfig.indexOf('coverage: {');
+  const thresholdsStart = vitestConfig.indexOf('thresholds:', coverageStart);
+  const coverageBlock = vitestConfig.slice(coverageStart, thresholdsStart);
+  return {
+    include: extractConfigStringArray(coverageBlock, 'include'),
+    exclude: extractConfigStringArray(coverageBlock, 'exclude')
+  };
+}
+
+function globToRegExp(pattern: string): RegExp {
+  const normalized = pattern.replace(/\\/g, '/');
+  let source = '';
+  for (let index = 0; index < normalized.length;) {
+    if (normalized.slice(index, index + 3) === '**/') {
+      source += '(?:.*/)?';
+      index += 3;
+      continue;
+    }
+    if (normalized.slice(index, index + 2) === '**') {
+      source += '.*';
+      index += 2;
+      continue;
+    }
+
+    const character = normalized[index];
+    source += character === '*'
+      ? '[^/]*'
+      : character.replace(/[|\\{}()[\]^$+?.]/gu, '\\$&');
+    index += 1;
+  }
+  return new RegExp(`^${source}$`, 'u');
+}
+
+function isCoveredByVitestCoverage(
+  pathValue: string,
+  globs: { include: string[]; exclude: string[] }
+): boolean {
+  const normalized = pathValue.replace(/\\/g, '/');
+  return (
+    globs.include.some((pattern) => globToRegExp(pattern).test(normalized)) &&
+    !globs.exclude.some((pattern) => globToRegExp(pattern).test(normalized))
+  );
+}
+
 function extractSrsBlocks(text: string): Array<{
   id: string;
   title: string;
@@ -525,8 +575,9 @@ describe('requirements documentation coherence', () => {
 
   it('keeps coverage instrumentation scoped to product code and requirement-supporting scripts (VHS-REQ-613.5)', () => {
     const vitestConfig = readRepoText('vitest.config.ts');
+    const coverageGlobs = extractCoverageGlobArrays(vitestConfig);
 
-    expect(vitestConfig).toContain("include: ['src/**/*.ts', 'scripts/*.js']");
+    expect(coverageGlobs.include).toEqual(['src/**/*.ts', 'scripts/*.js']);
     for (const excludedScript of [
       'scripts/bootstrapLinuxVsCodeHost.js',
       'scripts/runLinuxIntegrationHost.js',
@@ -535,7 +586,7 @@ describe('requirements documentation coherence', () => {
       'scripts/preparePublicTestFixture.js',
       'scripts/publicRepoCloneCore.js'
     ]) {
-      expect(vitestConfig).toContain(`'${excludedScript}'`);
+      expect(isCoveredByVitestCoverage(excludedScript, coverageGlobs)).toBe(false);
     }
     for (const measuredScript of [
       'scripts/mapCoverageToTraceability.js',
@@ -544,7 +595,7 @@ describe('requirements documentation coherence', () => {
       'scripts/generateCloseoutEvidence.js',
       'scripts/verifyMarketplaceListing.js'
     ]) {
-      expect(vitestConfig).not.toContain(`'${measuredScript}'`);
+      expect(isCoveredByVitestCoverage(measuredScript, coverageGlobs)).toBe(true);
     }
   });
 
