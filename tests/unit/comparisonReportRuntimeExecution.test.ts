@@ -23,6 +23,7 @@ import {
   parseSubmoduleGitlinks,
   inferLabviewBitnessFromExecutablePath,
   inferLabviewYearFromExecutablePath,
+  inferSupportedLabviewYearFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
   resolveWindowsLabviewTcpSettingsForLabviewPath,
@@ -2545,7 +2546,7 @@ describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621.1, VHS-REQ-636.4)',
   });
 });
 
-describe('inferLabviewYearFromExecutablePath (VHS-REQ-636.4)', () => {
+describe('inferLabviewYearFromExecutablePath (VHS-REQ-636.4, VHS-REQ-637.1)', () => {
   it('extracts the year from a canonical Windows LabVIEW path', () => {
     expect(
       inferLabviewYearFromExecutablePath(
@@ -2557,9 +2558,9 @@ describe('inferLabviewYearFromExecutablePath (VHS-REQ-636.4)', () => {
   it('extracts the year from a Program Files (x86) path', () => {
     expect(
       inferLabviewYearFromExecutablePath(
-        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
       )
-    ).toBe('2024');
+    ).toBe('2025');
   });
 
   it('extracts the year from a forward-slash path', () => {
@@ -2576,10 +2577,46 @@ describe('inferLabviewYearFromExecutablePath (VHS-REQ-636.4)', () => {
     ).toBeUndefined();
   });
 
+  it('leaves years outside the supported host range to callers that need raw extraction', () => {
+    expect(
+      inferLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+      )
+    ).toBe('2024');
+    expect(
+      inferLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2031\\LabVIEW.exe'
+      )
+    ).toBe('2031');
+  });
+
   it('returns undefined for missing or empty input', () => {
     expect(inferLabviewYearFromExecutablePath(undefined)).toBeUndefined();
     expect(inferLabviewYearFromExecutablePath('')).toBeUndefined();
     expect(inferLabviewYearFromExecutablePath('   ')).toBeUndefined();
+  });
+});
+
+describe('inferSupportedLabviewYearFromExecutablePath (VHS-REQ-637.1)', () => {
+  it('returns undefined for years outside the supported host range', () => {
+    expect(
+      inferSupportedLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+      )
+    ).toBeUndefined();
+    expect(
+      inferSupportedLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2031\\LabVIEW.exe'
+      )
+    ).toBeUndefined();
+  });
+
+  it('returns supported host years', () => {
+    expect(
+      inferSupportedLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    ).toBe('2026');
   });
 });
 
@@ -5613,7 +5650,7 @@ describe('observeWindowsRuntimeProcesses (VHS-REQ-621)', () => {
     expect(observation).toBeUndefined();
   });
 
-  it('parses tasklist output and infers LabVIEW.exe bitness on a win32 host (VHS-REQ-621.1)', async () => {
+  it('parses tasklist output and infers LabVIEW.exe bitness and year on a win32 host (VHS-REQ-621.1, VHS-REQ-637.1)', async () => {
     const observation = await observeWindowsRuntimeProcesses(
       { hostPlatform: 'win32', runtimePlatform: 'win32', trigger: 'cli-log-banner' },
       {
@@ -5631,6 +5668,7 @@ describe('observeWindowsRuntimeProcesses (VHS-REQ-621)', () => {
     expect(observation?.labviewCliProcessObserved).toBe(true);
     expect(observation?.lvcompareProcessObserved).toBe(false);
     expect(observation?.labviewProcessBitness).toBe('x64');
+    expect(observation?.labviewProcessYear).toBe('2026');
     expect(observation?.labviewProcessExecutablePath).toBe(
       'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
     );

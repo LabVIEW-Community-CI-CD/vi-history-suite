@@ -25,7 +25,7 @@ import {
 } from '../tooling/runtimeAutoDetect';
 import {
   buildLinuxLabviewIniCandidatePaths,
-  inferLabviewYearFromExecutablePath,
+  inferSupportedLabviewYearFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   observeWindowsRuntimeProcesses,
   type ObserveWindowsProcessesOptions,
@@ -843,9 +843,9 @@ export async function decideBitnessOpenGate(
     toastMessage: buildBitnessOpenBlockedMessage({
       observedBitness,
       selectedBitness,
-      observedYear: inferLabviewYearFromExecutablePath(
-        observation?.labviewProcessExecutablePath
-      ),
+      observedYear:
+        observation?.labviewProcessYear ??
+        inferSupportedLabviewYearFromExecutablePath(observation?.labviewProcessExecutablePath),
       selectedYear: snapshot?.label.labviewVersion
     }),
     actionLabel: BITNESS_OPEN_PICK_PROVIDER_ACTION,
@@ -1004,9 +1004,9 @@ export async function decideVersionOpenGate(
     return { kind: 'allow' };
   }
 
-  const observedYear = inferLabviewYearFromExecutablePath(
-    observation?.labviewProcessExecutablePath
-  );
+  const observedYear =
+    observation?.labviewProcessYear ??
+    inferSupportedLabviewYearFromExecutablePath(observation?.labviewProcessExecutablePath);
   if (!observedYear || observedYear === selectedYear) {
     return { kind: 'allow' };
   }

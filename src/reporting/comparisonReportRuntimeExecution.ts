@@ -28,6 +28,10 @@ import {
   resolveLinuxContainerLabviewProfile,
   type LinuxContainerHeadlessMode
 } from '../tooling/containerImageCatalog';
+import {
+  MAXIMUM_HOST_LABVIEW_YEAR,
+  MINIMUM_HOST_LABVIEW_YEAR
+} from '../tooling/labviewInstallCatalog';
 
 export interface ExecuteComparisonReportOptions {
   record: ComparisonReportPacketRecord;
@@ -173,6 +177,11 @@ export interface RuntimeProcessObservation {
    * LabVIEW.exe is running or when the path probe was skipped/failed.
    */
   labviewProcessBitness?: ObservedLabviewBitness;
+  /**
+   * VHS-REQ-637: major LabVIEW version (year) inferred from the observed
+   * `LabVIEW.exe` path. `undefined` when no supported year can be parsed.
+   */
+  labviewProcessYear?: string;
   /**
    * Path of the first observed LabVIEW.exe that the bitness probe inspected.
    * Captured so doctor notes can name the offending install precisely.
@@ -5218,6 +5227,7 @@ export async function observeWindowsRuntimeProcesses(
     isExactObservedRuntimeProcessName(processInfo.imageName, 'LabVIEW.exe')
   );
   let labviewProcessBitness: ObservedLabviewBitness | undefined;
+  let labviewProcessYear: string | undefined;
   let labviewProcessExecutablePath: string | undefined;
   if (labviewProcess) {
     try {
@@ -5225,8 +5235,10 @@ export async function observeWindowsRuntimeProcesses(
         deps.resolveWindowsLabviewExecutablePath ?? resolveWindowsLabviewExecutablePath;
       labviewProcessExecutablePath = await resolver(labviewProcess.pid, options.hostPlatform);
       labviewProcessBitness = inferLabviewBitnessFromExecutablePath(labviewProcessExecutablePath);
+      labviewProcessYear = inferSupportedLabviewYearFromExecutablePath(labviewProcessExecutablePath);
     } catch {
       labviewProcessBitness = undefined;
+      labviewProcessYear = undefined;
     }
   }
 
@@ -5245,6 +5257,7 @@ export async function observeWindowsRuntimeProcesses(
       isExactObservedRuntimeProcessName(processInfo.imageName, 'LVCompare.exe')
     ),
     labviewProcessBitness,
+    labviewProcessYear,
     labviewProcessExecutablePath
   };
 }
@@ -5290,6 +5303,25 @@ export function inferLabviewYearFromExecutablePath(
   }
   const match = executablePath.match(/labview[ _-]?(20\d{2})/i);
   return match ? match[1] : undefined;
+}
+
+/**
+ * VHS-REQ-637: process observations only expose supported host LabVIEW years.
+ * Older/newer parsed years remain useful for registry filtering and diagnostics,
+ * but the open gate treats them as unknown.
+ */
+export function inferSupportedLabviewYearFromExecutablePath(
+  executablePath: string | undefined
+): string | undefined {
+  const inferredYear = inferLabviewYearFromExecutablePath(executablePath);
+  if (!inferredYear) {
+    return undefined;
+  }
+  const year = Number(inferredYear);
+  if (year < MINIMUM_HOST_LABVIEW_YEAR || year > MAXIMUM_HOST_LABVIEW_YEAR) {
+    return undefined;
+  }
+  return inferredYear;
 }
 
 /**
