@@ -111,7 +111,7 @@ tests/unit/multiReportDashboard.test.ts,mapped,Yes,Multi-report dashboard render
 tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
-tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM including VHS-REQ-645 settings contribution checks and VHS-REQ-651 Command Palette exclusion.
+tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM including VHS-REQ-626 export command contribution VHS-REQ-645 settings contribution checks and VHS-REQ-651 Command Palette exclusion.
 tests/unit/packageRuntimeSurfaceAudit.test.ts,mapped,Yes,Package runtime surface audit tests; mapped through RTM.
 tests/unit/packageTestVsixWorkflow.test.ts,mapped,Yes,Package test VSIX workflow tests; mapped through RTM.
 tests/unit/preparePublicRepoCloneScript.test.ts,dev-only,No,Public repo clone script tests; CI infrastructure.
@@ -171,7 +171,7 @@ vitest.config.ts,mapped,Yes,Vitest coverage reporter and evidence-backed thresho
 stryker.config.mjs,dev-only,No,Stryker mutation-testing configuration scoped to src/domain; advisory assertion-quality signal (thresholds.break null); requires a local run.
 tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
 tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.
-package.json,mapped,Yes,Package manifest; mapped through RTM including VHS-REQ-651 Command Palette exclusion.
+package.json,mapped,Yes,Package manifest; mapped through RTM including VHS-REQ-626 export command contribution and VHS-REQ-651 Command Palette exclusion.
 package-lock.json,supporting,No,Package lock file; dependency support.
 README.md,asset-doc,Yes,Repository README; mapped through RTM.
 INSTALL.md,asset-doc,Yes,Installation documentation; mapped through RTM.
