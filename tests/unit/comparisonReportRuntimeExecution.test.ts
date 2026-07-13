@@ -1629,6 +1629,65 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(readdir).not.toHaveBeenCalledWith('/tmp');
   });
 
+  it('does not run the recursive-load CloseLabVIEW reset for env-toggle Linux container images (VHS-REQ-657.4)', async () => {
+    const record = createLinuxContainerReadyRecord();
+    record.runtimeSelection.containerImage = 'nationalinstruments/labview:2025q3-linux';
+    const reportDirectory = record.artifactPlan.reportDirectory;
+    const containerTempDirectory = `${reportDirectory}/container-out/container-temp`;
+    const containerStatusLog = `${containerTempDirectory}/LVStatus.txt`;
+    const readdir = vi.fn(async (dir: string) =>
+      dir === containerTempDirectory ? ['LVStatus.txt'] : []
+    );
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === containerStatusLog) {
+        return 'Recursive load during LEIF load! loading /tmp/GSW_MainPanel.vi';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async (filePath: string) => filePath === containerStatusLog);
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: 'LabVIEWCLI operation failed with error.',
+      stderr: 'CreateComparisonReport operation failed.'
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        chmod: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:51:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-headless-recursive-load');
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toContain(
+      'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.'
+    );
+  });
+
   it('lets headless init failure win over stderr and skips recursive-load retry (VHS-REQ-156.4, VHS-REQ-156.6)', async () => {
     // A real host-native headless bring-up failure (issue #269) must still be
     // classified and surfaced. The #270 fix only stops contamination of PASSING
