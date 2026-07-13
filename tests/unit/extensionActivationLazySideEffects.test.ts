@@ -318,7 +318,7 @@ describe('extension activation lazy side effects', () => {
     });
   });
 
-  it('auto-materializes the runtime CLI on activation without resolving Git or starting indexing (VHS-REQ-083, VHS-REQ-083.3)', async () => {
+  it('auto-materializes the runtime CLI and refreshes the prepare-command contract without resolving Git (VHS-REQ-083, VHS-REQ-083.3, VHS-REQ-612.3)', async () => {
     const api = await activate(createContext() as never);
 
     // VHS-REQ-612.2
@@ -348,12 +348,27 @@ describe('extension activation lazy side effects', () => {
 
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
 
-    await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
+    const prepareResult = await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
 
     // Manual prepare remains a refresh path; admission is invoked again, idempotently.
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledTimes(2);
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(api.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(materializedCli);
+    expect(prepareResult).toMatchObject({
+      outcome: 'prepared-local-runtime-settings-cli',
+      javascriptLauncherPath: materializedCli.javascriptLauncherPath,
+      currentPlatformLauncherPath: materializedCli.currentPlatformLauncherPath,
+      currentPlatformTerminalEntrypointPath: materializedCli.currentPlatformTerminalEntrypointPath,
+      terminalCommandName: materializedCli.terminalCommandName,
+      defaultSettingsFilePath: '/home/test/.config/Code/User/settings.json',
+      supportedSettingsTargets: ['default-user-settings', 'explicit-settings-file']
+    });
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('Prepared VI History local runtime settings CLI')
+    );
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining('Settings targets: default user settings.json')
+    );
   });
 
   it('registers the primary VI History open handler and resolves its runtime lazily (VHS-REQ-082.3)', async () => {
