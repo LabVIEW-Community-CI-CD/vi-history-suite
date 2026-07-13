@@ -425,7 +425,7 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     expect(historyEntries[2]?.subject).toBe('Add original.vi');
   });
 
-  it('returns empty commit hashes for untracked files in a repository with history', async () => {
+  it('returns empty commit hashes for untracked files in a repository with history (VHS-REQ-006.1)', async () => {
     const repoRoot = await createTempGitRepo();
     const trackedPath = path.join(repoRoot, 'tracked.vi');
     const untrackedPath = path.join(repoRoot, 'untracked.vi');
@@ -455,7 +455,7 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     ).rejects.toThrow(/outside repository/);
   });
 
-  it('handles paths with special characters safely when NUL-delimited', async () => {
+  it('handles paths with special characters safely when NUL-delimited (VHS-REQ-007.1)', async () => {
     const repoRoot = await createTempGitRepo();
     const specialPath = path.join(repoRoot, 'folder with spaces', 'file [special] (chars).vi');
 
@@ -478,7 +478,7 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     expect(commitHashes).toHaveLength(2);
   });
 
-  it('parses NUL-separated paths with empty segments and trailing NUL bytes correctly', () => {
+  it('parses NUL-separated paths with empty segments and trailing NUL bytes correctly (VHS-REQ-007.2)', () => {
     expect(parseLsFilesZ('')).toEqual([]);
     expect(parseLsFilesZ('\0')).toEqual([]);
     expect(parseLsFilesZ('\0\0\0')).toEqual([]);

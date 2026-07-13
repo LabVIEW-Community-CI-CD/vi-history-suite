@@ -59,7 +59,7 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
 
 describe('historyPanelRendering', () => {
   describe('panel title (orientation header)', () => {
-    it('renders a slim title with the relative path and commit count', () => {
+    it('renders a slim title with the relative path and commit count (VHS-REQ-017.1)', () => {
       const model = createTestViewModel({
         relativePath: 'Examples/Sample.vi',
         commits: [
@@ -133,7 +133,7 @@ describe('historyPanelRendering', () => {
     });
   });
 
-  describe('commit table rendering (VHS-REQ-017, VHS-REQ-639)', () => {
+  describe('commit table rendering (VHS-REQ-017.2, VHS-REQ-639)', () => {
     it('renders history table with all commit rows', () => {
       const model = createTestViewModel({
         commits: [
@@ -228,7 +228,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('  - indented bullet<br />    nested detail');
     });
 
-    it('renders a factual fallback for commits with an empty body (VHS-REQ-639.5)', () => {
+    it('renders a factual fallback for commits with an empty body (VHS-REQ-017.3, VHS-REQ-639.5)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'oldest123', body: '' })]
       });
@@ -238,7 +238,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('No commit body');
     });
 
-    it('does not render per-row commit action buttons (VHS-REQ-017)', () => {
+    it('does not render per-row commit action buttons (VHS-REQ-017.4)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'actioncommit1234567890123456789012345678' })]
       });
@@ -353,7 +353,7 @@ describe('historyPanelRendering', () => {
   });
 
   describe('minimized panel surface', () => {
-    it('does not render the removed factual/guidance/runtime/preflight sections', () => {
+    it('does not render the removed factual/guidance/runtime/preflight sections (VHS-REQ-017.5)', () => {
       const html = renderHistoryPanelHtml(createTestViewModel());
 
       expect(html).not.toContain('data-testid="history-review-packet"');
