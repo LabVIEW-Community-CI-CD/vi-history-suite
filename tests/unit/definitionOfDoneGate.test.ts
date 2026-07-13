@@ -204,7 +204,7 @@ describe('Definition-of-Done gate', () => {
     expect(parseCsvLine('A,"B, C","D ""quoted"""')).toEqual(['A', 'B, C', 'D "quoted"']);
   });
 
-  it('requires decision-complete issue template fields and optional copilot prompt slot', () => {
+  it('requires decision-complete issue template fields and optional copilot prompt slot (VHS-REQ-615.1)', () => {
     expect(REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS).toEqual([
       'requirement_id',
       'files_to_inspect',
@@ -233,7 +233,7 @@ describe('Definition-of-Done gate', () => {
     expect(completeResult.passed).toBe(true);
   });
 
-  it('requires lightweight requirement-targeted PR evidence in docs and PR template', () => {
+  it('requires lightweight requirement-targeted PR evidence in docs and PR template (VHS-REQ-615.3, VHS-REQ-615.4)', () => {
     const missingTemplateFieldRoot = createFixture({
       'docs/testing/test-plan.md': `## PR Evidence Contract
 linked issue
@@ -242,8 +242,17 @@ validation commands
 traceability/RTM impact
 out-of-scope
 closeout readiness
-\`npm run dod:gate\`
+required hosted CI checks
+local gates
+targeted tests
 standards provenance
+environment blockers
+\`npm run traceability:audit\`
+\`npm run docs:links\`
+\`npm run check\`
+\`npm test\`
+\`npm run coverage:map\`
+\`npm run package\`
 `,
       '.github/pull_request_template.md': `## Requirement-Targeted PR Evidence (lightweight)
 - **Linked issue (required):**
@@ -266,8 +275,17 @@ validation commands
 traceability/RTM impact
 out-of-scope
 closeout readiness
-\`npm run dod:gate\`
+required hosted CI checks
+local gates
+targeted tests
 standards provenance
+environment blockers
+\`npm run traceability:audit\`
+\`npm run docs:links\`
+\`npm run check\`
+\`npm test\`
+\`npm run coverage:map\`
+\`npm run package\`
 `,
       '.github/pull_request_template.md': `## Requirement-Targeted PR Evidence (lightweight)
 - **Linked issue (required):**

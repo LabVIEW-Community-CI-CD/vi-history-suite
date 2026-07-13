@@ -138,9 +138,9 @@ gate semantics.
 `npm run requirements:criteria` remains advisory. It is useful for finding
 acceptance criteria that lack a literal `VHS-REQ-N.M` citation in a verification
 reference test, but the remaining Phase-3b backlog should not be closed by
-adding citation text alone. As of 2026-07-13, after PRs #962-#986 were merged
-into `develop`, the baseline is 488/513 criterion-level citations with 25
-uncited criteria.
+adding citation text alone. As of 2026-07-13, after the LabVIEW CLI open-gate
+and Definition-of-Done governance evidence branches, the baseline is 494/513
+criterion-level citations with 19 uncited criteria.
 
 Classify each remaining uncited criterion before adding citations or proposing
 enforcement:
@@ -157,7 +157,7 @@ Current closure docket:
 
 | Bucket | Criteria | Next action |
 | --- | --- | --- |
-| `exact-testable` | `VHS-REQ-615.1`, `VHS-REQ-615.3`, `VHS-REQ-615.4`, `VHS-REQ-615.11`, `VHS-REQ-624.9`, `VHS-REQ-627.5`, `VHS-REQ-627.6`, `VHS-REQ-631.4`, `VHS-REQ-634.3`, `VHS-REQ-641.3`, `VHS-REQ-641.5`, `VHS-REQ-650.7`, `VHS-REQ-657.4`, `VHS-REQ-659.7`, `VHS-REQ-659.12`, `VHS-REQ-659.15` | Close in focused PRs by surface: governance/process, runtime open gates, staged-tree/runtime evidence, and VI Preview lifecycle. |
+| `exact-testable` | `VHS-REQ-624.9`, `VHS-REQ-631.4`, `VHS-REQ-634.3`, `VHS-REQ-641.3`, `VHS-REQ-641.5`, `VHS-REQ-650.7`, `VHS-REQ-657.4`, `VHS-REQ-659.7`, `VHS-REQ-659.12`, `VHS-REQ-659.15` | Close in focused PRs by surface: runtime open gates, staged-tree/runtime evidence, and VI Preview lifecycle. |
 | `needs-new-behavior-test` | `VHS-REQ-615.2`, `VHS-REQ-656.5` | Decompose into concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
 | `manual/process` | None currently assigned after the 488/513 refresh. | Keep available for future closeout or release-review evidence that cannot be unit-tested. |
 | `broad-regression` | `VHS-REQ-614.3`, `VHS-REQ-614.4`, `VHS-REQ-631.6`, `VHS-REQ-636.9`, `VHS-REQ-642.5`, `VHS-REQ-644.6` | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
@@ -165,15 +165,13 @@ Current closure docket:
 
 Recommended implementation order:
 
-1. Governance/process exact proofs for `VHS-REQ-615.1`, `VHS-REQ-615.3`,
-   `VHS-REQ-615.4`, and `VHS-REQ-615.11`.
-2. Runtime open-gate proofs for `VHS-REQ-627.5`, `VHS-REQ-627.6`,
-   `VHS-REQ-631.4`, `VHS-REQ-634.3`, and `VHS-REQ-650.7`.
-3. Runtime/staged-tree proofs for `VHS-REQ-624.9`, `VHS-REQ-641.3`,
+1. Runtime open-gate proofs for `VHS-REQ-631.4`, `VHS-REQ-634.3`, and
+   `VHS-REQ-650.7`.
+2. Runtime/staged-tree proofs for `VHS-REQ-624.9`, `VHS-REQ-641.3`,
    `VHS-REQ-641.5`, and `VHS-REQ-657.4`.
-4. VI Preview lifecycle proofs for `VHS-REQ-659.7`, `VHS-REQ-659.12`, and
+3. VI Preview lifecycle proofs for `VHS-REQ-659.7`, `VHS-REQ-659.12`, and
    `VHS-REQ-659.15`.
-5. Docket-only follow-up for any remaining `needs-new-behavior-test`,
+4. Docket-only follow-up for any remaining `needs-new-behavior-test`,
    `broad-regression`, or `defer/product-decision` items.
 
 Do not add a `VHS-REQ-N.M` citation unless the cited verification test actually
@@ -203,7 +201,7 @@ buckets above.
 | VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts; src/extension.ts | tests/unit/localRuntimeSettingsCli.test.ts; tests/unit/packageManifest.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/integration/suite/extensionHost.test.ts | Installed runtime settings CLI command exposure, argument parsing, launcher materialization, idempotent settings refresh, malformed-config errors, validation proof output, terminal output, and missing global-storage handling are verified without changing runtime selection behavior. |
 | VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js; vitest.config.ts | tests/unit/coverageMapScript.test.ts; tests/unit/requirementsDocs.test.ts | Coverage map links retained coverage evidence to RTM/inventory risk and protects evidence-backed threshold ratchets. |
 | VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts | tests/unit/vscodeTestHarness.test.ts; tests/unit/requirementsDocs.test.ts | Shared VS Code fakes support coverage-led command, webview, storage, filesystem, clipboard, progress, output, and runtime CLI tests. |
-| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml; scripts/checkDefinitionOfDone.js; scripts/auditCustomizationGovernance.js; scripts/generateCloseoutEvidence.js; scripts/verifyMarketplaceListing.js; .github/pull_request_template.md; docs/maintainer-operations.md; docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md; docs/requirements/traceability-inventory.csv | tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts; tests/unit/customizationGovernanceAuditScript.test.ts; tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI order, local gates, standards provenance, closeout evidence, traceability drift prevention, release evidence, and hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`. |
+| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml; scripts/checkDefinitionOfDone.js; scripts/auditCustomizationGovernance.js; scripts/generateCloseoutEvidence.js; scripts/verifyMarketplaceListing.js; .github/pull_request_template.md; docs/maintainer-operations.md; docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md; docs/requirements/traceability-inventory.csv | tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts; tests/unit/marketplaceReleaseWorkflow.test.ts; tests/unit/customizationGovernanceAuditScript.test.ts; tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI order, local gates, standards provenance, closeout evidence, traceability drift prevention, release evidence, and hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`. |
 | VHS-REQ-616 | TEST-616 | src/extension.ts; src/tooling/runtimeAutoDetect.ts; src/tooling/runtimeSettingsSeed.ts | tests/unit/runtimeAutoDetect.test.ts; tests/unit/runtimeSettingsSeed.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/unit/requirementsDocs.test.ts | Activation runs the filesystem-only runtime detector and seeds or repairs `viHistorySuite.runtimeProvider`/`labviewVersion`/`labviewBitness` so fresh installs and upgrades arrive with a working comparison provider; preserves satisfiable persisted values; reports `no-runtime-detected` without writing when nothing is found. |
 | VHS-REQ-617 | TEST-617 | src/extension.ts; src/ui/runtimeAvailabilityNotice.ts; src/commands/runtimeCommands.ts | tests/unit/runtimeAvailabilityNotice.test.ts; tests/unit/runtimeCommands.test.ts; tests/unit/requirementsDocs.test.ts | Status bar item reflects detection outcome, first-run information notice fires once via globalState `vihs.firstRunNoRuntimeNoticeShown`, and `onDidChangeWindowState` re-detect is throttled by `RUNTIME_RE_DETECT_THROTTLE_MS`. Three trust-gated VS Code commands expose runtime state: `Detect Runtime Now` bypasses the throttle, `Reset First-Run Runtime Notice` requires modal confirmation to clear the globalState flag, and `Show Runtime Summary` writes a structured report to the `VI History: Runtime` output channel with a clipboard Copy action. |
 | VHS-REQ-620 | TEST-620 | src/extension.ts; src/ui/runtimeAvailabilityNotice.ts; src/ui/runtimeReportPanel.ts; src/commands/openRuntimeReportPanelCommand.ts; src/commands/pickRuntimeProviderCommand.ts; src/commands/runtimeCommands.ts | tests/unit/runtimeAvailabilityNotice.test.ts; tests/unit/runtimeAvailabilityWatcher.test.ts; tests/unit/runtimeReportPanel.test.ts; tests/unit/openRuntimeReportPanelCommand.test.ts; tests/unit/pickRuntimeProviderCommand.test.ts; tests/unit/runtimeCommands.test.ts; tests/unit/requirementsDocs.test.ts | Status bar label is sourced from the persisted runtime selection when `viHistorySuite.runtimeProvider`/`labviewVersion`/`labviewBitness` are populated and the combination is satisfiable per `isPersistedSelectionSatisfiable`, otherwise the auto-detection recommendation is used (silent fallback). The watcher subscribes to `onDidChangeConfiguration` filtered to `viHistorySuite` and re-renders from the cached detection without re-probing, so a `vihs --provider …` CLI invocation or manual settings.json edit updates the label immediately. The `labviewViHistory.pickRuntimeProvider` command opens the Runtime & Report Settings panel whose runtime provider section is built from the cached detection (host installations + Docker if `cliAvailable` + Clear option) and writes selections to `ConfigurationTarget.Global`; the same panel exposes the LabVIEW container image version and the comparison-report Include controls (VHS-REQ-645/651). The `Show Runtime Summary` report appends a `Drift:` line with three states: `none`, `selection differs from recommendation`, and `selection unsatisfiable on this host; falling back to recommendation`. |
@@ -379,9 +377,13 @@ Requirement-scoped pull requests must keep a lightweight evidence surface and
 name the linked issue with `Refs #...` unless the PR actually completes the
 closeout contract. PR evidence must include the target requirement, validation commands,
 and traceability/RTM impact; it must also include an out-of-scope statement and
-closeout readiness. Keep local gates explicit (including `npm run dod:gate`) plus
-hosted CI and standards provenance or closeout status. If optional/authenticated
-evidence is blocked, note the blocker and the follow-up issue.
+closeout readiness. Keep required hosted CI checks, local gates, targeted tests,
+standards provenance or closeout status, and environment blockers explicit.
+Local validation evidence includes `npm run traceability:audit`,
+`npm run docs:links`, `npm run check`, `npm test`, `npm run coverage:map`,
+`npm run package`, and the targeted tests for the changed requirement or
+implementation surface. If optional/authenticated evidence is blocked, note the
+blocker and the follow-up issue.
 
 ## Optional Vagrant Check
 

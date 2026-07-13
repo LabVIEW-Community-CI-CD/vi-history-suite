@@ -467,15 +467,15 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('Criterion Closure Docket');
-    expect(testPlan).toContain('488/513 criterion-level citations');
-    expect(testPlan).toContain('25\nuncited criteria');
+    expect(testPlan).toContain('494/513\ncriterion-level citations');
+    expect(testPlan).toContain('19 uncited criteria');
     expect(testPlan).toContain('`exact-testable`');
     expect(testPlan).toContain('`needs-new-behavior-test`');
     expect(testPlan).toContain('`manual/process`');
     expect(testPlan).toContain('`broad-regression`');
     expect(testPlan).toContain('`defer/product-decision`');
     expect(testPlan).toContain('Current closure docket');
-    expect(testPlan).toContain(`\`${['VHS-REQ-627', '5'].join('.')}\``);
+    expect(testPlan).toContain(`\`${['VHS-REQ-631', '4'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
     expect(testPlan).toContain('Recommended implementation order');
@@ -711,6 +711,9 @@ describe('requirements documentation coherence', () => {
     const closeoutEvidenceTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/closeoutEvidenceScript.test.ts'
     );
+    const marketplaceWorkflowTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/marketplaceReleaseWorkflow.test.ts'
+    );
     const customizationAuditTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -736,7 +739,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain(
       '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml'
     );
-    expect(testPlan).toContain('tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts');
+    expect(testPlan).toContain('tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts; tests/unit/marketplaceReleaseWorkflow.test.ts');
     expect(testPlan).toContain('scripts/checkDefinitionOfDone.js; scripts/auditCustomizationGovernance.js');
     expect(testPlan).toContain('scripts/verifyMarketplaceListing.js; .github/pull_request_template.md');
     expect(testPlan).toContain('docs/maintainer-operations.md; docs/requirements/srs.md');
@@ -792,6 +795,7 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/traceability-inventory.csv');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/definitionOfDoneGate.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/closeoutEvidenceScript.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/marketplaceReleaseWorkflow.test.ts');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -838,6 +842,9 @@ describe('requirements documentation coherence', () => {
     expect(closeoutEvidenceTestRow?.Classification).toBe('mapped');
     expect(closeoutEvidenceTestRow?.RtmCoverage).toBe('Yes');
     expect(closeoutEvidenceTestRow?.Notes).toContain('VHS-REQ-615');
+    expect(marketplaceWorkflowTestRow?.Classification).toBe('mapped');
+    expect(marketplaceWorkflowTestRow?.RtmCoverage).toBe('Yes');
+    expect(marketplaceWorkflowTestRow?.Notes).toContain('VHS-REQ-615');
     expect(customizationAuditTestRow?.Classification).toBe('mapped');
     expect(customizationAuditTestRow?.RtmCoverage).toBe('Yes');
     expect(customizationAuditTestRow?.Notes).toContain('VHS-REQ-615');
