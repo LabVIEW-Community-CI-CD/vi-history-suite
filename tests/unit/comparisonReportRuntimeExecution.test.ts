@@ -2848,7 +2848,7 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
 });
 
 describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
-  it('blocks execution with windows-vi-server-tcp-disabled when LabVIEW.ini sets server.tcp.enabled=False (VHS-REQ-623.2)', async () => {
+  it('blocks execution with windows-vi-server-tcp-disabled before Windows process contamination checks when LabVIEW.ini sets server.tcp.enabled=False (VHS-REQ-623.2, VHS-REQ-623.4)', async () => {
     const record = createReadyRecord();
     // createReadyRecord() defaults to platform='win32', host-native, labview-cli;
     // labviewExe.path = 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
@@ -2856,6 +2856,19 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
       'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini';
 
     const runCommand = vi.fn();
+    const observeWindowsProcesses = vi.fn().mockResolvedValue({
+      capturedAt: '2026-06-03T18:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger: 'preflight',
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false,
+      labviewProcessBitness: 'x64',
+      labviewProcessExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+    });
     const writePacketRecord = vi.fn().mockResolvedValue(undefined);
     const result = await executeComparisonReport(
       { record, repositoryRoot: 'C:\\workspace\\repo' },
@@ -2886,11 +2899,15 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
         nowIso: vi.fn().mockReturnValue('2026-06-03T18:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord,
-        processPlatform: 'win32'
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
       }
     );
 
     expect(runCommand).not.toHaveBeenCalled();
+    expect(observeWindowsProcesses).not.toHaveBeenCalled();
     expect(result.record.runtimeExecution.state).toBe('not-available');
     expect(result.record.runtimeExecution.blockedReason).toBe('windows-vi-server-tcp-disabled');
     expect(result.record.runtimeExecution.diagnosticReason).toBe('windows-vi-server-tcp-disabled');
@@ -2899,6 +2916,57 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
       /server\.tcp\.enabled=False/
     );
     expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(/VI Server/i);
+  });
+
+  it('proceeds unchanged when LabVIEW.ini is unreadable because Windows defaults VI Server TCP on (VHS-REQ-623.3)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.allowExistingWindowsHostRuntime = true;
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.',
+      stderr: ''
+    });
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath.endsWith('LabVIEW.ini')) {
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      }
+      return `${record.stagedRevisionPlan.leftFilename}\n${record.stagedRevisionPlan.rightFilename}\n`;
+    });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-06-03T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses: vi.fn().mockResolvedValue(undefined),
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
+    expect(result.record.runtimeExecution.labviewIniPath).toContain('LabVIEW.ini');
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(/not readable/);
   });
 });
 
@@ -4231,7 +4299,7 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('labview-vi-version-too-new');
   });
 
-  it('classifies an LVCompare exit-zero-without-report as lvcompare-exited-zero-without-report', async () => {
+  it('classifies an LVCompare exit-zero-without-report as lvcompare-exited-zero-without-report without applying the LabVIEWCLI VI Server preflight (VHS-REQ-623.5)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.engine = 'lvcompare';
     record.runtimeSelection.lvCompare = {
@@ -4251,13 +4319,16 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile: vi.fn().mockResolvedValue(undefined) as never,
         removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue('server.tcp.enabled=False\n') as never,
         pathExists: vi.fn().mockResolvedValue(false),
         runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
         nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
         processPlatform: 'win32',
-        enforceWindowsHostPreflight: false
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses: vi.fn().mockResolvedValue(undefined),
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
       }
     );
 
