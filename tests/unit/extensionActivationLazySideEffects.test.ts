@@ -316,6 +316,7 @@ describe('extension activation lazy side effects', () => {
   it('auto-materializes the runtime CLI on activation without resolving Git or starting indexing (VHS-REQ-083)', async () => {
     const api = await activate(createContext() as never);
 
+    // VHS-REQ-612.2
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledTimes(1);
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalledWith(
       '/tmp/vihs-global-storage',
@@ -560,6 +561,7 @@ describe('extension activation lazy side effects', () => {
 
     await commandHandlers.get('labviewViHistory.openDocumentation')?.();
 
+    // VHS-REQ-611.2
     expect(bundledDocumentationActionMock).toHaveBeenCalled();
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(showWarningMessageMock).not.toHaveBeenCalled();
@@ -571,6 +573,7 @@ describe('extension activation lazy side effects', () => {
 
     await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
 
+    // VHS-REQ-612.5
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).toHaveBeenCalled();
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(showWarningMessageMock).not.toHaveBeenCalled();
@@ -581,6 +584,7 @@ describe('extension activation lazy side effects', () => {
 
     const result = await commandHandlers.get('labviewViHistory.prepareLocalRuntimeSettingsCli')?.();
 
+    // VHS-REQ-612.4
     expect(result).toEqual({ outcome: 'missing-global-storage-uri' });
     expect(admitLocalRuntimeSettingsCliToTerminalPathMock).not.toHaveBeenCalled();
     expect(showWarningMessageMock).toHaveBeenCalledWith(

@@ -105,6 +105,7 @@ describe('bundledDocumentationAction', () => {
       outcome: 'missing-bundled-documentation'
     });
 
+    // VHS-REQ-611.2
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
     expect(tracker.getLastOpenedDocumentationPanel()).toBeUndefined();
   });
@@ -129,6 +130,7 @@ describe('bundledDocumentationAction', () => {
       pageId: 'missing-page'
     });
 
+    // VHS-REQ-611.2
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
     expect(tracker.getLastOpenedDocumentationPanel()).toBeUndefined();
   });

@@ -131,6 +131,7 @@ describe('public docs source and support link confidence', () => {
       readRepoText('SECURITY.md')
     ].join('\n');
 
+    // VHS-REQ-600.5
     // Old personal repo should not appear as active source links
     // The regex looks for personal repo URLs that are NOT followed by .git
     // (since the historical git clone URL with .git suffix may appear in migration context)
