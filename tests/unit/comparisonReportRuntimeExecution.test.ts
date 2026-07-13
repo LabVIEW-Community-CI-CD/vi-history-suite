@@ -1629,7 +1629,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(readdir).not.toHaveBeenCalledWith('/tmp');
   });
 
-  it('still classifies a genuine host-native headless init failure with #269 guidance (no regression) (VHS-REQ-156.4)', async () => {
+  it('lets headless init failure win over stderr and skips recursive-load retry (VHS-REQ-156.4, VHS-REQ-156.6)', async () => {
     // A real host-native headless bring-up failure (issue #269) must still be
     // classified and surfaced. The #270 fix only stops contamination of PASSING
     // container runs; it must not suppress a genuine host-native failure signal.
@@ -1670,6 +1670,15 @@ describe('comparisonReportRuntimeExecution', () => {
     });
     // The report is never generated (headless never came up), so the run fails.
     const pathExists = vi.fn(async (filePath: string) => filePath === headlessLog);
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: 'LabVIEWCLI operation failed with error.',
+      stderr: [
+        'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
+        'LabVIEW: (Hex 0x8) File permission error.',
+        'CreateComparisonReport operation failed.'
+      ].join('\n')
+    });
 
     const result = await executeComparisonReport(
       {
@@ -1690,11 +1699,7 @@ describe('comparisonReportRuntimeExecution', () => {
         readdir: readdir as never,
         readFile: readFile as never,
         pathExists: pathExists as never,
-        runCommand: vi.fn().mockResolvedValue({
-          exitCode: 0,
-          stdout: 'CreateComparisonReport operation succeeded.',
-          stderr: ''
-        }),
+        runCommand,
         nowIso: vi.fn().mockReturnValue('2026-06-07T03:43:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
@@ -1704,6 +1709,11 @@ describe('comparisonReportRuntimeExecution', () => {
 
     expect(result.record.runtimeExecution.state).toBe('failed');
     expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-headless-init-failed');
+    expect(result.record.runtimeExecution.diagnosticReason).not.toBe(
+      'labview-cli-create-report-permission-error'
+    );
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
     expect(result.record.runtimeExecution.diagnosticNotes ?? []).toEqual(
       expect.arrayContaining([
         expect.stringContaining('Failed to initialize headless LabVIEW.')
@@ -1711,6 +1721,111 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
       'LV_RTE_LINUX_HEADLESS=0'
+    );
+  });
+
+  it('retries Linux recursive-load headless failures through CloseLabVIEW once (VHS-REQ-156.6)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const headlessLog = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+    const readdir = vi.fn(async (dir: string) =>
+      dir === '/tmp' ? ['lvrt_26.1.1f1_headless_sergio_cur.txt'] : []
+    );
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+        return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+      }
+      if (filePath === headlessLog) {
+        return 'Recursive load during LEIF load! loading /tmp/GSW_MainPanel.vi';
+      }
+      return '';
+    });
+    let reportAvailable = false;
+    const pathExists = vi.fn(async (filePath: string) => {
+      if (filePath === headlessLog) {
+        return true;
+      }
+      return typeof filePath === 'string' &&
+        filePath.endsWith(record.artifactPlan.reportFilename)
+        ? reportAvailable
+        : false;
+    });
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: 'LabVIEWCLI operation failed with error.',
+        stderr: 'CreateComparisonReport operation failed.'
+      })
+      .mockResolvedValueOnce({ exitCode: 0, stdout: 'close ok', stderr: '' })
+      .mockImplementationOnce(async () => {
+        reportAvailable = true;
+        return {
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        };
+      });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:44:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(3);
+    expect(runCommand.mock.calls[1]?.[0]).toMatchObject({
+      executable: '/usr/local/bin/LabVIEWCLI',
+      args: expect.arrayContaining(['-OperationName', 'CloseLabVIEW'])
+    });
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBe(
+      '/usr/local/bin/LabVIEWCLI'
+    );
+    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBe(0);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.'
     );
   });
 
