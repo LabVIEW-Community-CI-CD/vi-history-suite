@@ -542,7 +542,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     const expectedSourceViFsPath = path.join('/workspace/repo', 'Source/Sample.vi');
     expect(registeredSources).toHaveLength(1);
     expect(registeredSources[0]?.sourceViFsPath).toBe(expectedSourceViFsPath);
-    // VHS-REQ-626: the registered export source carries the in-panel revision
+    // VHS-REQ-626.3: the registered export source carries the in-panel revision
     // context so the exported graphics report embeds the same selected/base
     // hashes and metadata instead of "not retained" fallbacks.
     expect(registeredSources[0]?.relativePath).toBe('Source/Sample.vi');
@@ -735,7 +735,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       retainedArchiveAvailable: true
     });
     expect(harness.panels[0]?.viewType).toBe('viHistorySuite.comparisonReport');
-    // VHS-REQ-626 criterion 7: the comparison-report webview renders
+    // VHS-REQ-626.7: the comparison-report webview renders
     // LabVIEW-authored HTML with scripts disabled; the export action is driven
     // through the command surface, never in-webview script.
     expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });

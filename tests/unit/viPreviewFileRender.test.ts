@@ -47,7 +47,7 @@ describe('renderViPreviewForFile', () => {
     expect(deps.removeDirectory).toHaveBeenCalledWith('/tmp/ws');
   });
 
-  it('stages sibling LabVIEW source files as a dependency tree and skips non-source files', async () => {
+  it('stages sibling LabVIEW source files as a dependency tree and skips non-source files (VHS-REQ-659.10)', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>', [
       { relativePath: 'Foo.vi', sizeBytes: 10 },
       { relativePath: 'support/Sub.vi', sizeBytes: 20 },
@@ -157,7 +157,7 @@ describe('renderViPreviewForFile', () => {
     expect(deps.execution.runCommand).not.toHaveBeenCalled();
   });
 
-  it('stages the enclosing project tree so cross-directory dependencies resolve', async () => {
+  it('stages the enclosing project tree so cross-directory dependencies resolve (VHS-REQ-659.10)', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>');
     const resolveStagingBaseDirectory = vi.fn().mockResolvedValue('/repo/proj');
     const listSourceFiles = vi.fn().mockResolvedValue([

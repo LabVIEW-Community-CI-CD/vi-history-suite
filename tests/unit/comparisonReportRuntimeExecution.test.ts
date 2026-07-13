@@ -542,7 +542,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(removePath).toHaveBeenCalled();
   });
 
-  it('copies Linux container reports back with canonical staged names and retained asset directories', async () => {
+  it('copies Linux container reports back with canonical staged names and retained asset directories (VHS-REQ-156.10)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -646,7 +646,7 @@ describe('comparisonReportRuntimeExecution', () => {
     });
   });
 
-  it('mounts Linux container output under container-out so it cannot pollute the retained report path', async () => {
+  it('mounts Linux container output under container-out so it cannot pollute the retained report path (VHS-REQ-156.10)', async () => {
     const record = createReadyRecord();
     record.stagedRevisionPlan = buildStagedRevisionPlan({
       stagingDirectory: record.artifactPlan.stagingDirectory,
@@ -726,7 +726,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('reports copy-back filesystem failures as report-finalize-failed rather than command-spawn-failed', async () => {
+  it('reports copy-back filesystem failures as report-finalize-failed rather than command-spawn-failed (VHS-REQ-156.9)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -823,7 +823,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('adds a cross-ownership remediation note when copy-back fails with EPERM (foreign-owned stale output)', async () => {
+  it('adds a cross-ownership remediation note when copy-back fails with EPERM (foreign-owned stale output) (VHS-REQ-156.9)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -926,7 +926,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('retries report-asset removal after chmod when the destination tree is read-only (EACCES)', async () => {
+  it('retries report-asset removal after chmod when the destination tree is read-only (EACCES) (VHS-REQ-156.9)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -1628,7 +1628,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(readdir).not.toHaveBeenCalledWith('/tmp');
   });
 
-  it('still classifies a genuine host-native headless init failure with #269 guidance (no regression)', async () => {
+  it('still classifies a genuine host-native headless init failure with #269 guidance (no regression) (VHS-REQ-156.4)', async () => {
     // A real host-native headless bring-up failure (issue #269) must still be
     // classified and surfaced. The #270 fix only stops contamination of PASSING
     // container runs; it must not suppress a genuine host-native failure signal.
@@ -1919,7 +1919,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('classifies CreateComparisonReport file permission errors (LabVIEW error 8) from stderr', () => {
+  it('classifies CreateComparisonReport file permission errors (LabVIEW error 8) from stderr (VHS-REQ-156.5)', () => {
     const result = classifyLabviewCliDiagnosticText(
       [
         'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
@@ -2999,7 +2999,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     return record;
   }
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns true for linux host-native deep workspaceStorage paths', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns true for linux host-native deep workspaceStorage paths (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     expect(shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {})).toBe(true);
   });
@@ -3016,7 +3016,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {})).toBe(false);
   });
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns false when LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns false when LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1 (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     expect(
       shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {
@@ -3025,7 +3025,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     ).toBe(false);
   });
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns false when staging already lives under the tmp root', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns false when staging already lives under the tmp root (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     record.artifactPlan.reportDirectory = '/tmp/vi-history-suite-runtime/repoid123456/fileid123456';
     expect(
@@ -3035,7 +3035,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     ).toBe(false);
   });
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns true when reportDir only shares a prefix with the tmp root', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns true when reportDir only shares a prefix with the tmp root (VHS-REQ-156.8)', () => {
     // /tmp/vi-history-suite-runtime-old/... must not be treated as inside /tmp/vi-history-suite-runtime.
     const record = makeLinuxHostNativeRecord();
     record.artifactPlan.reportDirectory =
@@ -3047,7 +3047,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     ).toBe(true);
   });
 
-  it('buildLinuxHostNativeShortPathLayout uses LVIE_LINUX_RUNTIME_TMPDIR when set', () => {
+  it('buildLinuxHostNativeShortPathLayout uses LVIE_LINUX_RUNTIME_TMPDIR when set (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     const layout = buildLinuxHostNativeShortPathLayout(record, {
       LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
@@ -3065,7 +3065,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     );
   });
 
-  it('buildLinuxHostNativeShortPathCommandPlan rewrites -VI1, -VI2, -ReportPath and preserves -LabVIEWPath', () => {
+  it('buildLinuxHostNativeShortPathCommandPlan rewrites -VI1, -VI2, -ReportPath and preserves -LabVIEWPath (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     const layout = buildLinuxHostNativeShortPathLayout(record, {
       LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
@@ -3430,7 +3430,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(script).toContain('harden_conf');
   });
 
-  it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {
+  it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up (VHS-REQ-156.8)', async () => {
     const record = makeLinuxHostNativeRecord();
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const copyFile = vi.fn().mockResolvedValue(undefined);
@@ -3599,7 +3599,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     return record;
   }
 
-  it('materializes one selected-revision tree and stages both VIs at repo-relative depth', async () => {
+  it('materializes one selected-revision tree and stages both VIs at repo-relative depth (VHS-REQ-624.1, VHS-REQ-624.4, VHS-REQ-624.5)', async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
     const record = createNestedReadyRecord();
@@ -3729,7 +3729,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     );
   });
 
-  it('fails closed with a retained reason when the selected-revision tree cannot be materialized', async () => {
+  it('fails closed with a retained reason when the selected-revision tree cannot be materialized (VHS-REQ-624.6)', async () => {
     const runCommand = vi.fn();
     const record = createNestedReadyRecord();
 
@@ -4339,7 +4339,7 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     return root;
   }
 
-  it('faithfully materializes every tracked file at the revision, including export-ignored in-repo dependencies', async () => {
+  it('faithfully materializes every tracked file at the revision, including export-ignored in-repo dependencies (VHS-REQ-624.2)', async () => {
     const repoRoot = await createTempGitRepo();
     const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
     try {
@@ -4492,7 +4492,7 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     });
   });
 
-  it('materializes submodule contents beside the superproject tree (#283)', async () => {
+  it('materializes submodule contents beside the superproject tree (#283) (VHS-REQ-624.3)', async () => {
     const subRepo = await createTempGitRepo();
     const superRepo = await createTempGitRepo();
     const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
@@ -4550,7 +4550,7 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     }
   });
 
-  it('attempts each submodule but skips unavailable ones without failing the comparison (#283)', async () => {
+  it('attempts each submodule but skips unavailable ones without failing the comparison (#283) (VHS-REQ-624.3)', async () => {
     const calls: string[][] = [];
     const runGit = vi.fn(async (args: string[]) => {
       calls.push(args);

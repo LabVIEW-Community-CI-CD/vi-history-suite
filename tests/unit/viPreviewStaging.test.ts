@@ -8,7 +8,7 @@ import {
 } from '../../src/reporting/viPreview/viPreviewStaging';
 
 describe('isLabviewSourceFile', () => {
-  it('accepts LabVIEW source/library extensions case-insensitively', () => {
+  it('accepts LabVIEW source/library extensions case-insensitively (VHS-REQ-659.10)', () => {
     for (const name of ['Foo.vi', 'Ctrl.ctl', 'Tmpl.vit', 'Mal.vim', 'A.lvlib', 'B.lvclass', 'p.lvproj', 'old.LLB']) {
       expect(isLabviewSourceFile(name)).toBe(true);
     }
@@ -32,7 +32,7 @@ describe('planViPreviewStaging', () => {
     expect(plan.filesToStage).toEqual(['Foo.vi']);
   });
 
-  it('stages the VI plus sibling source files as a dependency tree', () => {
+  it('stages the VI plus sibling source files as a dependency tree (VHS-REQ-659.10)', () => {
     const plan = planViPreviewStaging('Foo.vi', [
       { relativePath: 'Foo.vi', sizeBytes: 10 },
       { relativePath: 'support/Sub.vi', sizeBytes: 20 },
@@ -105,7 +105,7 @@ describe('selectViPreviewStagingRoot', () => {
 });
 
 describe('planViPreviewStagingWithProjectRoot', () => {
-  it('widens to the enclosing project so cross-directory dependencies stage', () => {
+  it('widens to the enclosing project so cross-directory dependencies stage (VHS-REQ-659.10)', () => {
     const selection = planViPreviewStagingWithProjectRoot('subsys/Main.vi', [
       { relativePath: 'App.lvproj', sizeBytes: 10 },
       { relativePath: 'subsys/Main.vi', sizeBytes: 10 },
@@ -130,7 +130,7 @@ describe('planViPreviewStagingWithProjectRoot', () => {
     expect(selection.plan.filesToStage).toEqual(['Main.vi', 'Sub.vi']);
   });
 
-  it('falls back to the VI directory tree when the project tree trips the guard', () => {
+  it('falls back to the VI directory tree when the project tree trips the guard (VHS-REQ-659.10)', () => {
     const selection = planViPreviewStagingWithProjectRoot(
       'subsys/Main.vi',
       [

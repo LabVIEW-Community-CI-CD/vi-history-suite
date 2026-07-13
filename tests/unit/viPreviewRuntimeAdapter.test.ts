@@ -38,7 +38,7 @@ describe('mapComparisonRuntimeSelectionToViPreview', () => {
     expect(result.runtime.connectTimeoutSeconds).toBe(200);
   });
 
-  it('maps a windows-container selection to a ready runtime with the host PowerShell', () => {
+  it('maps a windows-container selection to a ready runtime with the host PowerShell (VHS-REQ-659.4)', () => {
     const result = mapComparisonRuntimeSelectionToViPreview(
       {
         provider: 'windows-container',
@@ -61,7 +61,7 @@ describe('mapComparisonRuntimeSelectionToViPreview', () => {
     expect(result.runtime.windowsPowerShellHostExecutable).toBe('powershell.exe');
   });
 
-  it('leaves the windows PowerShell host unresolved when no platform is supplied', () => {
+  it('leaves the windows PowerShell host unresolved when no platform is supplied (VHS-REQ-659.4)', () => {
     const result = mapComparisonRuntimeSelectionToViPreview({
       provider: 'windows-container',
       containerImage: 'ni/labview:2026-windows'
