@@ -166,10 +166,20 @@ Current closure docket:
 | `broad-regression` | `VHS-REQ-614.3`, `VHS-REQ-614.4`, `VHS-REQ-631.6`, `VHS-REQ-636.9`, `VHS-REQ-642.5`, `VHS-REQ-644.6` | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
 | `defer/product-decision` | `VHS-REQ-644.2` | Resolve the requirement/product intent before citation because current export behavior injects revision context into generated-report exports while the criterion says the preferred graphics-report export copies the LabVIEW report unchanged. |
 
+Final advisory disposition for issue #1005: the remaining 9 uncited criteria are
+intentionally not closed by unit-test citation in this phase. `VHS-REQ-615.2`
+and `VHS-REQ-656.5` need concrete behavior decomposition before any citation;
+the six `broad-regression` criteria are advisory non-regression claims until a
+future change gives them a specific failure mode; and `VHS-REQ-644.2` remains a
+product-decision item because generated-report exports and in-panel context cards
+currently have different intended outputs.
+
 Recommended implementation order:
 
-1. Docket-only follow-up for any remaining `needs-new-behavior-test`,
-   `broad-regression`, or `defer/product-decision` items.
+1. Keep criterion-linkage enforcement advisory while the final 9 are classified
+   outside `exact-testable`.
+2. Open child behavior/product-decision issues only when one of those criteria is
+   decomposed into a concrete assertion or decision.
 
 Do not add a `VHS-REQ-N.M` citation unless the cited verification test actually
 demonstrates that criterion. When a true proof lives in a different verification
