@@ -106,7 +106,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('activates on startup without redundant per-command activation events or manifest-level Git activation (VHS-REQ-082, VHS-REQ-083)', () => {
+  it('activates on startup without redundant per-command activation events or manifest-level Git activation (VHS-REQ-082.1, VHS-REQ-082.2, VHS-REQ-083.1, VHS-REQ-083.2)', () => {
     const manifest = readManifest();
 
     // VHS-REQ-611.4
@@ -119,10 +119,10 @@ describe('extension manifest public metadata', () => {
       'LICENSE'
     ]);
     expect(manifest.icon).toBe('resources/marketplace/vi-history-suite-icon.png');
-    // VHS-REQ-083: onStartupFinished is the *only* explicit activation event, so
+    // VHS-REQ-083.1: onStartupFinished is the *only* explicit activation event, so
     // the eager `*` startup activation cannot be reintroduced without failing here.
     expect(manifest.activationEvents).toEqual(['onStartupFinished']);
-    // #369: VS Code auto-infers onCommand activation from contributes.commands,
+    // VHS-REQ-083.2: VS Code auto-infers onCommand activation from contributes.commands,
     // so explicit onCommand:* activation events are redundant advisories and
     // must not be reintroduced into the manifest.
     const redundantCommandActivations = (manifest.activationEvents ?? []).filter(
@@ -130,7 +130,7 @@ describe('extension manifest public metadata', () => {
     );
     expect(redundantCommandActivations).toEqual([]);
     // VHS-REQ-611.1, VHS-REQ-612.1
-    // The commands that previously carried explicit activation events remain
+    // VHS-REQ-082.1, VHS-REQ-082.2: the commands that previously carried explicit activation events remain
     // contributed, so VS Code still activates the extension on first invocation
     // of labviewViHistory.open, labviewViHistory.openDocumentation,
     // labviewViHistory.prepareLocalRuntimeSettingsCli, and the runtime commands.
@@ -141,6 +141,8 @@ describe('extension manifest public metadata', () => {
       expect.arrayContaining([
         'labviewViHistory.open',
         'labviewViHistory.openDocumentation',
+        // VHS-REQ-039.1: the copied review packet remains available as a contributed command.
+        'labviewViHistory.copyReviewPacket',
         'labviewViHistory.prepareLocalRuntimeSettingsCli',
         'labviewViHistory.detectRuntimeNow',
         'labviewViHistory.resetFirstRunNotice',
@@ -175,7 +177,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004.1, VHS-REQ-004.2, VHS-REQ-004.3)', () => {
+  it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004.1, VHS-REQ-004.2, VHS-REQ-004.3, VHS-REQ-013.1)', () => {
     const manifest = readManifest();
     const expectedMenuEntry = {
       command: 'labviewViHistory.open',
@@ -211,7 +213,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084, VHS-REQ-012.3)', () => {
+  it('keeps desktop extension boundaries and runtime settings configuration (VHS-REQ-084.1, VHS-REQ-084.2, VHS-REQ-084.3, VHS-REQ-012.3)', () => {
     const manifest = readManifest();
 
     expect(manifest.main).toBe('./out/extension.js');

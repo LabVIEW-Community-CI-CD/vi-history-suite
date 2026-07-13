@@ -1468,7 +1468,7 @@ describe('requirements documentation coherence', () => {
     );
   });
 
-  it('keeps selected-file eligibility intake separated from runtime validation output', () => {
+  it('keeps selected-file eligibility intake separated from runtime validation output (VHS-REQ-607.1, VHS-REQ-607.2, VHS-REQ-607.3, VHS-REQ-607.4, VHS-REQ-607.5)', () => {
     const bugTemplate = readRepoText('.github', 'ISSUE_TEMPLATE', 'bug_report.yml');
     const onboardingTemplate = readRepoText(
       '.github',
@@ -1482,14 +1482,19 @@ describe('requirements documentation coherence', () => {
       expect(template).toContain('Compare/runtime validation');
       expect(template).toContain('id: eligibility_evidence');
       expect(template).toContain('Eligibility / Git History Evidence');
+      expect(template).toContain('tracking/history observations');
       expect(template).toContain('Selected file path or extension');
       expect(template).toContain('Is the file tracked in Git');
       expect(template).toContain('Commit count or history facts shown');
       expect(template).toContain('Ineligibility message or Git/history error');
       expect(template).toContain('id: runtime_validation_output');
+      expect(template).toContain('Paste concise `vihs --validate` or comparison-runtime output');
       expect(template).toContain('separately from eligibility evidence');
       expect(template).toContain('Do not include secrets');
+      expect(template).toContain('Leave blank for runtime-only');
       expect(template).toContain('Leave blank for eligibility-only');
+      expect(template).not.toContain('indexing cache');
+      expect(template).not.toContain('repository-wide VI counts');
     }
   });
 

@@ -375,7 +375,7 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
     expect(result.commits.length).toBe(0);
   });
 
-  it('returns ineligible when file has valid signature but no commits (untracked)', async () => {
+  it('returns ineligible when file has valid signature but no commits (untracked) (VHS-REQ-006.1)', async () => {
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'test-repo',
       repositoryRoot: '/workspace/test-repo',
@@ -402,7 +402,7 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
     expect(result.commits.length).toBe(0);
   });
 
-  it('returns ineligible when file has valid signature but only one commit', async () => {
+  it('returns ineligible when file has valid signature but only one commit (VHS-REQ-006.2)', async () => {
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'test-repo',
       repositoryRoot: '/workspace/test-repo',
@@ -431,7 +431,7 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
     expect(result.commits.length).toBe(1);
   });
 
-  it('returns ineligible when file has unknown signature even with commits', async () => {
+  it('returns ineligible when file has unknown signature even with commits (VHS-REQ-006.3)', async () => {
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'test-repo',
       repositoryRoot: '/workspace/test-repo',

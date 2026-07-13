@@ -53,7 +53,7 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
 }
 
 describe('historyReviewPacket', () => {
-  it('renders direct factual fields and per-retained-commit subject and body facts (VHS-REQ-040)', () => {
+  it('renders direct factual fields and per-retained-commit subject and body facts (VHS-REQ-040.1, VHS-REQ-040.3)', () => {
     const text = renderHistoryReviewPacketText(createTestViewModel());
 
     expect(text).toContain('VI History Review Packet');
@@ -80,7 +80,7 @@ describe('historyReviewPacket', () => {
     expect(text).not.toContain('LabVIEW comparison succeeded');
   });
 
-  it('uses factual fallback text for unavailable origin and empty retained history', () => {
+  it('uses factual fallback text for unavailable origin and empty retained history (VHS-REQ-040.2)', () => {
     const text = renderHistoryReviewPacketText(
       createTestViewModel({
         repositoryUrl: undefined,
@@ -99,7 +99,7 @@ describe('historyReviewPacket', () => {
     );
   });
 
-  it('uses a factual fallback for retained commits with an empty body', () => {
+  it('uses a factual fallback for retained commits with an empty body (VHS-REQ-040.2)', () => {
     const text = renderHistoryReviewPacketText(
       createTestViewModel({
         commits: [
@@ -115,7 +115,7 @@ describe('historyReviewPacket', () => {
     expect(text).toContain('- feedface :: No body commit :: No commit body');
   });
 
-  it('keeps copied packet content plain-text-safe for multiline and markup-like facts', () => {
+  it('keeps copied packet content plain-text-safe for multiline and markup-like facts (VHS-REQ-040.2)', () => {
     const text = renderHistoryReviewPacketText(
       createTestViewModel({
         repositoryName: 'repo <strong>',

@@ -268,6 +268,11 @@ import {
   presentBitnessOpenBlockedToast,
   presentVersionOpenBlockedToast
 } from '../../src/ui/runtimeAvailabilityNotice';
+import {
+  createGitPrerequisiteWatcher,
+  decideOpenGate,
+  presentOpenBlockedToast
+} from '../../src/ui/gitPrerequisiteNotice';
 
 function createContext(overrides: Record<string, unknown> = {}) {
   return {
@@ -313,7 +318,7 @@ describe('extension activation lazy side effects', () => {
     });
   });
 
-  it('auto-materializes the runtime CLI on activation without resolving Git or starting indexing (VHS-REQ-083)', async () => {
+  it('auto-materializes the runtime CLI on activation without resolving Git or starting indexing (VHS-REQ-083, VHS-REQ-083.3)', async () => {
     const api = await activate(createContext() as never);
 
     // VHS-REQ-612.2
@@ -360,6 +365,26 @@ describe('extension activation lazy side effects', () => {
     expect(getBuiltInGitApiMock).toHaveBeenCalledTimes(1);
     expect(viHistoryServiceConstructedWith).toHaveLength(1);
     expect(createOpenViHistoryCommandMock).toHaveBeenCalledTimes(1);
+    expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
+  });
+
+  it('allows VI History open while Git prerequisite detection is pending and registers watcher disposal (VHS-REQ-619.5, VHS-REQ-619.6)', async () => {
+    const watcher = {
+      dispose: vi.fn(),
+      forceRefresh: vi.fn(async () => undefined),
+      getDetection: vi.fn(() => undefined)
+    };
+    vi.mocked(createGitPrerequisiteWatcher).mockReturnValueOnce(watcher);
+    const context = createContext();
+
+    await activate(context as never);
+    await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
+
+    expect(createGitPrerequisiteWatcher).toHaveBeenCalledTimes(1);
+    expect(context.subscriptions as unknown[]).toContain(watcher);
+    expect(watcher.getDetection).toHaveBeenCalledTimes(1);
+    expect(decideOpenGate).not.toHaveBeenCalled();
+    expect(presentOpenBlockedToast).not.toHaveBeenCalled();
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
