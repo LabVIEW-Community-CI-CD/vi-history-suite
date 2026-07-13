@@ -109,7 +109,7 @@ describe('requirement verification-linkage report (VHS-REQ-601)', () => {
     );
   });
 
-  it('renders the unlinked list and the advisory contract in both summaries', () => {
+  it('renders the unlinked list and the advisory contract in both summaries (VHS-REQ-601.14)', () => {
     const result = auditRequirementVerificationLinkage('/repo', {
       readFile: makeReadFile(FIXTURE_FILES)
     });
@@ -141,7 +141,7 @@ describe('requirement verification-linkage report (VHS-REQ-601)', () => {
     expect(summaryChunks.join('')).toContain('## Requirement Verification Linkage');
   });
 
-  it('fails closed under --enforce when a requirement is unlinked (VHS-REQ-601)', () => {
+  it('fails closed under --enforce when a requirement is unlinked (VHS-REQ-601, VHS-REQ-601.15)', () => {
     const stdoutChunks: string[] = [];
 
     const code = main(['--enforce'], {

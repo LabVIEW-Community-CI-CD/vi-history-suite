@@ -74,7 +74,7 @@ function createAuditFixture(options: {
 }
 
 describe('traceability audit script', () => {
-  it('exports valid classification constants', () => {
+  it('exports valid classification constants (VHS-REQ-601.19)', () => {
     expect(VALID_CLASSIFICATIONS).toContain('mapped');
     expect(VALID_CLASSIFICATIONS).toContain('supporting');
     expect(VALID_CLASSIFICATIONS).toContain('dev-only');
@@ -340,7 +340,7 @@ describe('traceability audit execution', () => {
     expect(capturedStderr).toContain('Gap entries already represented in RTM');
   });
 
-  it('keeps genuine gap entries informational when they are not in RTM', () => {
+  it('keeps genuine gap entries informational when they are not in RTM (VHS-REQ-601.21)', () => {
     const fixtureRoot = createAuditFixture({
       files: ['src/pending.ts'],
       inventoryRows: [
@@ -364,7 +364,7 @@ describe('traceability audit execution', () => {
     expect(capturedStdout).toContain('Gap entries pending classification');
   });
 
-  it('flags missing inventory entries across expanded traceability surface', () => {
+  it('flags missing inventory entries across expanded traceability surface (VHS-REQ-601.20, VHS-REQ-601.22)', () => {
     const fixtureRoot = createAuditFixture({
       files: [
         'docs/architecture/overview.md',
@@ -419,7 +419,7 @@ describe('traceability policy documentation', () => {
     expect(readme).toContain('traceability:audit');
   });
 
-  it('documents agent response for unmapped code', () => {
+  it('documents agent response for unmapped code (VHS-REQ-601.23)', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     expect(readme.toLowerCase()).toContain('unmapped');
     expect(readme).toContain('gap');

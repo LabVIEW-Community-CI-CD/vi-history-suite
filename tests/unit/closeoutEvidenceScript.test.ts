@@ -379,7 +379,7 @@ describe('closeout evidence script', () => {
     }
   });
 
-  it('verifies standards toolchain provenance as machine-readable evidence', () => {
+  it('verifies standards toolchain provenance as machine-readable evidence (VHS-REQ-601.26)', () => {
     const provenance = verifyStandardsToolchainProvenance(
       { skillRoot: 'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review' },
       {
@@ -604,7 +604,7 @@ describe('closeout evidence script', () => {
     });
   });
 
-  it('allows DoD to pass only when scanner-visible evidence is .github/workflows/ci.yml', () => {
+  it('allows DoD to pass only when scanner-visible evidence is .github/workflows/ci.yml (VHS-REQ-601.27)', () => {
     const dod = summarizeDodGateEvidence(
       {
         evidence: [
@@ -810,7 +810,7 @@ describe('closeout evidence script', () => {
     expect(result.failure).toContain('docker build');
   });
 
-  it('renders a closable standards summary when mandatory standards and gates pass', () => {
+  it('renders a closable standards summary when mandatory standards and gates pass (VHS-REQ-601.24)', () => {
     const spawnSync = hostSuccessSpawnSync();
     const result = generateCloseoutEvidence(
       ['--kind', 'standards', '--issue', '130', '--run-gates'],
@@ -952,7 +952,7 @@ describe('closeout evidence script', () => {
     }
   });
 
-  it('falls back to Docker standards evidence when host preflight fails', () => {
+  it('falls back to Docker standards evidence when host preflight fails (VHS-REQ-601.25)', () => {
     const spawnSync = vi.fn((command: string, args: string[]) => {
       const line = [command, ...args].join(' ');
       if (command === 'git' && args.includes('--show-current')) return { status: 0, stdout: 'feature/test\n' };
@@ -995,7 +995,7 @@ describe('closeout evidence script', () => {
     )).toBe(true);
   });
 
-  it('fails closeout when mandatory host and Docker standards evidence fail', () => {
+  it('fails closeout when mandatory host and Docker standards evidence fail (VHS-REQ-601.25)', () => {
     const spawnSync = vi.fn((command: string, args: string[]) => {
       const line = [command, ...args].join(' ');
       if (command === 'git') return { status: 0, stdout: '1234567890abcdef\n' };

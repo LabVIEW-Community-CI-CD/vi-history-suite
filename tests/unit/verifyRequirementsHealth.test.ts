@@ -124,7 +124,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
   });
 
-  it('reports ATTENTION with unlinked and coverage-risk requirements', () => {
+  it('reports ATTENTION with unlinked and coverage-risk requirements (VHS-REQ-601.17)', () => {
     const result = verifyRequirementsHealth('/repo', {
       linkage: LINKAGE,
       criteria: CRITERIA,
@@ -192,7 +192,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(summaryChunks.join('')).toContain('## Requirement Verification Health');
   });
 
-  it('exits non-zero under --strict when requirement health is not green', () => {
+  it('exits non-zero under --strict when requirement health is not green (VHS-REQ-601.18)', () => {
     const stdoutChunks: string[] = [];
 
     const code = main(['--strict'], {

@@ -128,7 +128,7 @@ describe('requirement acceptance-criteria inventory (VHS-REQ-601)', () => {
     expect(criterionIsCited('VHS-REQ-001.2', ['cites VHS-REQ-001 only'])).toBe(false);
   });
 
-  it('inventories Active requirements with positional ids and criterion-level citation', () => {
+  it('inventories Active requirements with positional ids and criterion-level citation (VHS-REQ-601.16)', () => {
     const result = auditRequirementCriteriaInventory('/repo', {
       readFile: makeReadFile(FIXTURE_FILES)
     });
