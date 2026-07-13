@@ -1257,6 +1257,51 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps VI Preview custom-editor contribution traceable for VHS-REQ-659 (VHS-REQ-659.8)', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const manifest = JSON.parse(readRepoText('package.json')) as {
+      contributes?: {
+        customEditors?: Array<{
+          viewType?: string;
+          priority?: string;
+          selector?: Array<{ filenamePattern?: string }>;
+        }>;
+      };
+    };
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-659');
+    const packageRow = inventoryRows.find((row) => row.Path === 'package.json');
+    const packageManifestTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/packageManifest.test.ts'
+    );
+    const viPreviewEditorTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/viPreviewEditor.test.ts'
+    );
+    const editor = manifest.contributes?.customEditors?.find(
+      (entry) => entry.viewType === 'viHistorySuite.viPreview'
+    );
+
+    expect(srs).toContain('Opening a `.vi`, `.vit`, `.vim`, or `.ctl` file activates the');
+    expect(srs).toContain('`viHistorySuite.viPreview` read-only custom editor');
+    expect(editor?.priority).toBe('default');
+    expect(editor?.selector?.map((entry) => entry.filenamePattern)).toEqual([
+      '*.vi',
+      '*.vit',
+      '*.vim',
+      '*.ctl'
+    ]);
+    expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('src/ui/viPreviewEditor.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/viPreviewEditor.test.ts');
+    expect(packageRow?.Notes).toContain('VHS-REQ-659');
+    expect(packageManifestTestRow?.Notes).toContain('VHS-REQ-659');
+    expect(viPreviewEditorTestRow?.Classification).toBe('mapped');
+    expect(viPreviewEditorTestRow?.RtmCoverage).toBe('Yes');
+    expect(viPreviewEditorTestRow?.Notes).toContain('VHS-REQ-659');
+  });
+
   it('keeps the requirement-targeted issue template aligned with the agent contract (VHS-REQ-601.4, VHS-REQ-601.5, VHS-REQ-601.6, VHS-REQ-601.7, VHS-REQ-601.8, VHS-REQ-601.9, VHS-REQ-601.10)', () => {
     const template = readRepoText('.github', 'ISSUE_TEMPLATE', 'requirement_target.yml');
     const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');

@@ -60,6 +60,12 @@ interface ExtensionManifest {
         when?: string;
       }>
     >;
+    customEditors?: Array<{
+      viewType?: string;
+      displayName?: string;
+      selector?: Array<{ filenamePattern?: string }>;
+      priority?: string;
+    }>;
   };
 }
 
@@ -300,6 +306,24 @@ describe('extension manifest public metadata', () => {
 
     expect(contributedCommands).not.toContain('labviewViHistory.pickContainerImageVersion');
     expect(commandPaletteEntries).not.toContain('labviewViHistory.pickContainerImageVersion');
+  });
+
+  it('contributes the VI Preview custom editor at default priority (VHS-REQ-659.8)', () => {
+    const manifest = readManifest();
+    const editor = manifest.contributes?.customEditors?.find(
+      (entry) => entry.viewType === 'viHistorySuite.viPreview'
+    );
+
+    expect(editor).toMatchObject({
+      displayName: 'VI History Preview',
+      priority: 'default'
+    });
+    expect(editor?.selector?.map((entry) => entry.filenamePattern)).toEqual([
+      '*.vi',
+      '*.vit',
+      '*.vim',
+      '*.ctl'
+    ]);
   });
 
   it('keeps the simplified development, CI, package, and optional Vagrant scripts (VHS-REQ-599.2)', () => {

@@ -4314,6 +4314,7 @@ Missing numeric IDs are intentional.
     Windows transport mirroring the comparison Windows-container recipe rather
     than introducing a new one.
 - Implementation References:
+  - `package.json`
   - `src/reporting/viPreview/viPreviewCommandPlan.ts`
   - `src/reporting/viPreview/viPreviewExecution.ts`
   - `src/reporting/viPreview/viPreviewFileRender.ts`
@@ -4333,6 +4334,8 @@ Missing numeric IDs are intentional.
   - `src/tooling/viPreviewVerifyCli.ts`
   - `resources/labview-cli-operations/PrintToSingleFileHtml/PrintToSingleFileHtml.lvclass`
 - Verification References:
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/viPreviewEditor.test.ts`
   - `tests/unit/viPreviewCommandPlan.test.ts`
   - `tests/unit/viPreviewExecution.test.ts`
   - `tests/unit/viPreviewFileRender.test.ts`
