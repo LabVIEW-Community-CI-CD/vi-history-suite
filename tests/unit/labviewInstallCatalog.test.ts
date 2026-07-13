@@ -26,7 +26,9 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
       'utf8'
     );
 
-    expect(source).not.toMatch(/from ['"]vscode['"]|node:fs|node:child_process|child_process|\bfetch\s*\(|https?/u);
+    expect(source).not.toMatch(
+      /from ['"](?:vscode|(?:node:)?fs(?:\/promises)?|(?:node:)?child_process)['"]|require\(['"](?:vscode|(?:node:)?fs(?:\/promises)?|(?:node:)?child_process)['"]\)|\bfetch\s*\(|https?/u
+    );
   });
 
   it('enumerates supported host LabVIEW years newest first within the bounded range (VHS-REQ-632.1)', () => {

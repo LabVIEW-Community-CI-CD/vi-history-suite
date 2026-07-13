@@ -71,7 +71,9 @@ describe('containerImageCatalog tag model (VHS-REQ-646)', () => {
       'utf8'
     );
 
-    expect(source).not.toMatch(/from ['"]vscode['"]|node:fs|node:child_process|child_process|\bfetch\s*\(|https?/u);
+    expect(source).not.toMatch(
+      /from ['"](?:vscode|(?:node:)?fs(?:\/promises)?|(?:node:)?child_process)['"]|require\(['"](?:vscode|(?:node:)?fs(?:\/promises)?|(?:node:)?child_process)['"]\)|\bfetch\s*\(|https?/u
+    );
   });
 
   it('parses a base quarterly tag (VHS-REQ-646.1)', () => {
