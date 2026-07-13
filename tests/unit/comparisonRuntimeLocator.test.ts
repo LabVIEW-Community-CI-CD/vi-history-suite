@@ -968,6 +968,69 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     expect(selection.provider).toBe('host-native');
     expect(selection.blockedReason).toBeUndefined();
   });
+
+  it('admits a same-bitness running LabVIEW session when the year cannot be inferred (VHS-REQ-653.2)', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        allowExistingWindowsHostRuntime: true
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(
+            processObservationWithLabviewBitness('x64', 'D:\\Tools\\LabVIEW\\LabVIEW.exe')
+          ) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+      }
+    );
+
+    expect(selection.provider).toBe('host-native');
+    expect(selection.blockedReason).toBeUndefined();
+    expect(selection.hostObservedLabviewVersion).toBeUndefined();
+  });
+
+  it('defers to the bitness conflict before version or contaminated-surface blocks (VHS-REQ-653.3)', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        allowExistingWindowsHostRuntime: true
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(
+            processObservationWithLabviewBitness(
+              'x86',
+              'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+            )
+          ) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([
+          { localAddress: '0.0.0.0', localPort: 3363, pid: 1234, processName: 'LabVIEW.exe' }
+        ]) as never
+      }
+    );
+
+    expect(selection.blockedReason).toBe('windows-host-bitness-conflict');
+    expect(selection.blockedReason).not.toBe('windows-host-version-conflict');
+    expect(selection.blockedReason).not.toBe('windows-host-runtime-surface-contaminated');
+    expect(selection.hostObservedLabviewBitness).toBe('x86');
+    expect(selection.hostObservedLabviewVersion).toBe('2025');
+  });
 });
 
 describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS-REQ-621)', () => {
