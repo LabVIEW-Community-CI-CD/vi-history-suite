@@ -95,7 +95,7 @@ tests/unit/labviewCliIni.test.ts,mapped,Yes,LabVIEWCLI.ini connect-window harden
 tests/unit/windowsContainerLabviewCliScript.test.ts,mapped,Yes,Windows-container LabVIEW CLI script builder cliConnectTimeoutSeconds parity tests; mapped to VHS-REQ-148.
 tests/unit/linuxContainerLabviewCliScript.test.ts,mapped,Yes,Linux-container LabVIEW CLI script builder connect-window hardening and cold-launch retry parity tests; mapped to VHS-REQ-148.
 tests/unit/explicitComparePairWorkflow.test.ts,mapped,Yes,Explicit compare pair workflow tests; mapped through RTM.
-tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM including VHS-REQ-082 primary command handler VHS-REQ-635 selected-file on-demand loading and VHS-REQ-651 command registration.
+tests/unit/extensionActivationLazySideEffects.test.ts,mapped,Yes,Extension activation tests; mapped through RTM including VHS-REQ-082 primary command handler VHS-REQ-627 LabVIEW CLI open gate wiring VHS-REQ-635 selected-file on-demand loading and VHS-REQ-651 command registration.
 tests/unit/generateBuildInfo.test.ts,dev-only,No,Build info generator tests; development tooling.
 tests/unit/gitApi.test.ts,mapped,Yes,Unit verification coverage for Git API wrapper; mapped through RTM.
 tests/unit/gitCli.test.ts,mapped,Yes,Git CLI tests; mapped through RTM.

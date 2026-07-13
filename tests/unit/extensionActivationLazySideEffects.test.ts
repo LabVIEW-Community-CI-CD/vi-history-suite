@@ -265,8 +265,11 @@ import { detectAvailableRuntimes } from '../../src/tooling/runtimeAutoDetect';
 import { applyRuntimeSettingsSeed } from '../../src/tooling/runtimeSettingsSeed';
 import {
   createRuntimeAvailabilityWatcher,
+  decideLabviewCliOpenGate,
+  decideLabviewCliOpenGateWithRegistryFallback,
   decideBitnessOpenGate,
   decideVersionOpenGate,
+  presentLabviewCliOpenBlockedToast,
   presentBitnessOpenBlockedToast,
   presentVersionOpenBlockedToast
 } from '../../src/ui/runtimeAvailabilityNotice';
@@ -468,6 +471,66 @@ describe('extension activation lazy side effects', () => {
     expect(decideOpenGate).not.toHaveBeenCalled();
     expect(presentOpenBlockedToast).not.toHaveBeenCalled();
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
+  });
+
+  it('blocks VI History open from the cached LabVIEW CLI gate without re-detecting (VHS-REQ-627.5, VHS-REQ-627.6)', async () => {
+    const gitWatcher = {
+      dispose: vi.fn(),
+      forceRefresh: vi.fn(async () => undefined),
+      getDetection: vi.fn(() => ({ available: true, version: '2.46.0' }))
+    };
+    const cachedDetection = {
+      platform: 'linux' as const,
+      host: { installations: [] },
+      docker: { cliAvailable: false }
+    };
+    const cachedSnapshot = {
+      kind: 'missing' as const,
+      source: 'auto-detected' as const,
+      label: { provider: 'none' as const }
+    };
+    const runtimeWatcher = {
+      dispose: vi.fn(),
+      forceRefresh: vi.fn(async () => undefined),
+      getLastDetection: vi.fn(() => cachedDetection),
+      getLastSnapshot: vi.fn(() => cachedSnapshot)
+    };
+    const blockDecision = {
+      kind: 'block' as const,
+      toastMessage: 'VI History cannot open a comparison because the LabVIEW CLI is not installed.',
+      actionLabel: 'Install LabVIEW'
+    };
+    vi.mocked(createGitPrerequisiteWatcher).mockReturnValueOnce(gitWatcher);
+    vi.mocked(createRuntimeAvailabilityWatcher).mockReturnValueOnce(runtimeWatcher);
+    vi.mocked(decideLabviewCliOpenGate).mockReturnValueOnce(blockDecision);
+    const context = createContext();
+
+    await activate(context as never);
+    vi.mocked(detectAvailableRuntimes).mockClear();
+    await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
+
+    expect(gitWatcher.getDetection).toHaveBeenCalledTimes(1);
+    expect(decideOpenGate).toHaveBeenCalledWith({ available: true, version: '2.46.0' });
+    expect(runtimeWatcher.getLastDetection).toHaveBeenCalledTimes(1);
+    expect(runtimeWatcher.getLastSnapshot).toHaveBeenCalledTimes(1);
+    expect(runtimeWatcher.forceRefresh).not.toHaveBeenCalled();
+    expect(detectAvailableRuntimes).not.toHaveBeenCalled();
+    expect(decideLabviewCliOpenGate).toHaveBeenCalledWith(
+      cachedDetection,
+      cachedSnapshot,
+      undefined
+    );
+    expect(decideLabviewCliOpenGateWithRegistryFallback).toHaveBeenCalledWith(
+      blockDecision,
+      expect.objectContaining({ probeRegistryHostLabview: expect.any(Function) })
+    );
+    expect(decideOpenGate.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(decideLabviewCliOpenGate).mock.invocationCallOrder[0]
+    );
+    expect(presentLabviewCliOpenBlockedToast).toHaveBeenCalledWith(blockDecision);
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(createOpenViHistoryCommandMock).not.toHaveBeenCalled();
+    expect(openViHistoryHandlerMock).not.toHaveBeenCalled();
   });
 
   it('warns without resolving Git when report re-entry has no active comparison report source (VHS-REQ-638.3)', async () => {

@@ -3340,6 +3340,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
   - `src/ui/runtimeAvailabilityNotice.ts`
 - Verification References:
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
