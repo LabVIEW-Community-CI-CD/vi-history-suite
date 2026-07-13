@@ -132,7 +132,7 @@ describe('comparisonReportPreflight', () => {
     });
   });
 
-  it('reads the working-tree sentinel from disk and detects its signature (VHS-REQ-641)', async () => {
+  it('reads the working-tree sentinel from disk and detects its signature (VHS-REQ-641.2)', async () => {
     const repoRoot = await createTempRepoRoot();
     const relativePath = 'Source/KeyDown.vi';
     const absolutePath = path.join(repoRoot, relativePath);
@@ -169,7 +169,7 @@ describe('comparisonReportPreflight', () => {
     });
   });
 
-  it('blocks the working-tree sentinel when the on-disk file is not a VI (VHS-REQ-641)', async () => {
+  it('blocks the working-tree sentinel when the on-disk file is not a VI (VHS-REQ-641.2)', async () => {
     const repoRoot = await createTempRepoRoot();
     const relativePath = 'Source/KeyDown.vi';
     const absolutePath = path.join(repoRoot, relativePath);
@@ -544,7 +544,7 @@ describe('detectComparedViLibraryMembership (VHS-REQ-625)', () => {
     await git(repoRoot, ['config', 'user.email', 'vi-history-suite@example.com']);
   }
 
-  it('detects a VI listed as a member of a .lvlib at the selected revision', async () => {
+  it('detects a VI listed as a member of a .lvlib at the selected revision (VHS-REQ-625.1)', async () => {
     const repoRoot = await createTempRepoRoot();
     await initRepo(repoRoot);
     await fs.mkdir(path.join(repoRoot, 'Dependencies'), { recursive: true });
@@ -583,7 +583,7 @@ describe('detectComparedViLibraryMembership (VHS-REQ-625)', () => {
     expect(membership.isMember).toBe(false);
   });
 
-  it('surfaces membership through preflight on the selected revision', async () => {
+  it('surfaces membership through preflight on the selected revision (VHS-REQ-625.1)', async () => {
     const repoRoot = await createTempRepoRoot();
     await initRepo(repoRoot);
     await fs.writeFile(
@@ -626,7 +626,7 @@ describe('explicitComparePairWorkflow', () => {
       expect(resolveSelectedComparePair(candidates)).toBeUndefined();
     });
 
-    it('returns a selected/base pair when exactly two candidates are selected', () => {
+    it('returns a selected/base pair when exactly two candidates are selected (VHS-REQ-133.1)', () => {
       const candidates: CompareRevisionCandidate[] = [
         { hash: 'newer123', commitIndex: 0 },
         { hash: 'older456', commitIndex: 1 }
@@ -637,7 +637,7 @@ describe('explicitComparePairWorkflow', () => {
       });
     });
 
-    it('sorts candidates by commitIndex so lower index becomes selectedHash', () => {
+    it('sorts candidates by commitIndex so lower index becomes selectedHash (VHS-REQ-133.2)', () => {
       const candidates: CompareRevisionCandidate[] = [
         { hash: 'older456', commitIndex: 2 },
         { hash: 'newer123', commitIndex: 0 }
@@ -648,7 +648,7 @@ describe('explicitComparePairWorkflow', () => {
       });
     });
 
-    it('returns undefined when more than two candidates are selected', () => {
+    it('returns undefined when more than two candidates are selected (VHS-REQ-133.3)', () => {
       const candidates: CompareRevisionCandidate[] = [
         { hash: 'abc123', commitIndex: 0 },
         { hash: 'def456', commitIndex: 1 },

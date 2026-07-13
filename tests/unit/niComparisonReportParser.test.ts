@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { parseNiComparisonReportHtml } from '../../src/dashboard/niComparisonReportParser';
 
 describe('parseNiComparisonReportHtml', () => {
-  it('extracts overview images, included attributes, and detailed sections from an NI report', () => {
+  it('extracts overview images, included attributes, and detailed sections from an NI report (VHS-REQ-610.3)', () => {
     const report = parseNiComparisonReportHtml(
       `<!DOCTYPE html>
       <html>

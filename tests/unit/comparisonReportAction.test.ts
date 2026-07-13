@@ -203,7 +203,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     harness.reset();
   });
 
-  it('uses the explicit selected/base pair, executes ready packets, archives evidence, and opens the generated report', async () => {
+  it('uses the explicit selected/base pair, executes ready packets, archives evidence, and opens the generated report (VHS-REQ-644.3)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -324,7 +324,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     );
   });
 
-  it('renders a self-contained single-file report with embedded data-URI images (VHS-REQ-640)', async () => {
+  it('renders a self-contained single-file report with embedded data-URI images (VHS-REQ-640.2, VHS-REQ-640.3)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -387,13 +387,14 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     const html = harness.panels[0]?.webview.html ?? '';
     // The embedded data URI survives into the rendered webview unchanged.
     expect(html).toContain(dataUri);
+    expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
     // The CSP permits inline data: images and the report needs no _files directory.
     expect(html).toContain('img-src');
     expect(html).toContain('data:');
     expect(html).not.toContain('_files');
   });
 
-  it('compares the working tree against HEAD and does not retain the evidence (VHS-REQ-641)', async () => {
+  it('compares the working tree against HEAD and does not retain the evidence (VHS-REQ-641.2, VHS-REQ-641.4)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -460,7 +461,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         rightRevisionId: 'WORKTREE'
       })
     );
-    // VHS-REQ-644: the synthesized working-tree revision has no commit body, so
+    // VHS-REQ-644.5: the synthesized working-tree revision has no commit body, so
     // it carries an empty body through the revision metadata (rendered as the
     // empty-body fallback) rather than erroring.
     expect(persistComparisonReport).toHaveBeenCalledWith(
@@ -475,7 +476,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(result.retainedArchiveAvailable).toBe(false);
   });
 
-  it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638)', async () => {
+  it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638.4)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();

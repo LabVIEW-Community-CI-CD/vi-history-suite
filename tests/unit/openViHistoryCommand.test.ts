@@ -477,7 +477,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     });
   });
 
-  it('dispatches a working-tree selection to the comparison action with the sentinel against the chosen commit (VHS-REQ-641)', async () => {
+  it('dispatches a working-tree selection to the comparison action with the sentinel against the chosen commit (VHS-REQ-641.1, VHS-REQ-641.2)', async () => {
     const model = createEligibleModel({
       workingTree: { hasUncommittedChanges: true, headHash: 'abc1234567890abcdef1234567890abcdef12345' }
     });

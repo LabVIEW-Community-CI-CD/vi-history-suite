@@ -67,7 +67,7 @@ describe('gitCli parsing', () => {
     expect(isWorktreeRevision(undefined)).toBe(false);
   });
 
-  it('detects tracked change from git status porcelain output (VHS-REQ-641)', () => {
+  it('detects tracked change from git status porcelain output (VHS-REQ-641.1)', () => {
     expect(parseStatusPorcelainHasChange(' M path/to/File.vi\n')).toBe(true);
     expect(parseStatusPorcelainHasChange('M  staged.vi\n')).toBe(true);
     expect(parseStatusPorcelainHasChange('')).toBe(false);
@@ -268,7 +268,7 @@ describe('gitCli parsing', () => {
     ]);
   });
 
-  it('reports per-file working-tree dirtiness scoped to the path (VHS-REQ-641)', async () => {
+  it('reports per-file working-tree dirtiness scoped to the path (VHS-REQ-641.1)', async () => {
     const repoRoot = await createTempGitRepo();
     const targetPath = path.join(repoRoot, 'nested', 'Target.vi');
     const otherPath = path.join(repoRoot, 'Other.vi');
@@ -334,7 +334,7 @@ describe('gitCli parsing', () => {
     expect(reachableProofs).toEqual(new Set([head]));
   });
 
-  it('returns bounded commit hashes and structured history entries from a real temporary Git repo (VHS-REQ-008.1, VHS-REQ-008.2)', async () => {
+  it('returns bounded commit hashes and structured history entries from a real temporary Git repo (VHS-REQ-008.1, VHS-REQ-008.2, VHS-REQ-639.3)', async () => {
     const repoRoot = await createTempGitRepo();
     const trackedPath = path.join(repoRoot, 'nested', 'history.vi');
 

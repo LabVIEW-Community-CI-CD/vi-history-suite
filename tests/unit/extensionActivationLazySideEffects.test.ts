@@ -363,7 +363,7 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
-  it('warns without resolving Git when report re-entry has no active comparison report source (VHS-REQ-638)', async () => {
+  it('warns without resolving Git when report re-entry has no active comparison report source (VHS-REQ-638.3)', async () => {
     await activate(createContext() as never);
 
     const result = await commandHandlers.get('labviewViHistory.openViHistoryFromReport')?.();
@@ -375,7 +375,7 @@ describe('extension activation lazy side effects', () => {
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
   });
 
-  it('re-opens VI History for the active report source VI by delegating to labviewViHistory.open (VHS-REQ-638)', async () => {
+  it('re-opens VI History for the active report source VI by delegating to labviewViHistory.open (VHS-REQ-638.2)', async () => {
     exportRegistryActiveSourceHolder.value = { sourceViFsPath: '/repo/demo.vi' };
     await activate(createContext() as never);
 

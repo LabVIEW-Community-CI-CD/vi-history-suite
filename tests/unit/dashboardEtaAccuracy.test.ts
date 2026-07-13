@@ -10,7 +10,7 @@ import {
 } from '../../src/dashboard/dashboardEtaAccuracy';
 
 describe('dashboardEtaAccuracy', () => {
-  it('derives pair-level estimates and remaining duration only from completed pairs', () => {
+  it('derives pair-level estimates and remaining duration only from completed pairs (VHS-REQ-610.4)', () => {
     expect(deriveEstimatedPairSeconds([])).toBeUndefined();
     expect(deriveEstimatedSecondsRemaining([], 2)).toBeUndefined();
     expect(deriveEstimatedPairSeconds([12_000, 18_000])).toBe(15);
@@ -21,7 +21,7 @@ describe('dashboardEtaAccuracy', () => {
     ).toContain('Preparing dashboard pair 2/4; est. 0m 45s left');
   });
 
-  it('retains pair-level ETA samples and summary metrics', () => {
+  it('retains pair-level ETA samples and summary metrics (VHS-REQ-610.4)', () => {
     const sample = buildPairEtaAccuracySample(1, 4, 15, 21_000, () =>
       Date.parse('2026-04-03T00:00:21.000Z')
     );
