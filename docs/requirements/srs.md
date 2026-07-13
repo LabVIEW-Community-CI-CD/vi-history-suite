@@ -3958,12 +3958,14 @@ Missing numeric IDs are intentional.
     selected-file eligibility contract changes. Do not reintroduce
     repository-wide VI scans as a prerequisite for opening one selected file.
 - Implementation References:
+  - `src/extension.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/services/viHistoryModel.ts`
   - `src/services/viHistoryService.ts`
   - `src/git/gitCli.ts`
   - `package.json`
 - Verification References:
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/viHistoryService.test.ts`
