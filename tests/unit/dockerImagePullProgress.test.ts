@@ -408,7 +408,7 @@ describe('streamDockerImagePull', () => {
     });
   }
 
-  it('requests the pinned api version /images/create path for the split reference (VHS-REQ-654.1)', async () => {
+  it('requests the pinned api version /images/create path anonymously for the split LabVIEW reference (VHS-REQ-654.1, VHS-REQ-654.5)', async () => {
     const requestStream = vi.fn(async (_params: unknown, _handlers: unknown) => ({ statusCode: 200 }));
     await streamDockerImagePull({
       image: 'nationalinstruments/labview:2026q1-windows',
@@ -416,11 +416,19 @@ describe('streamDockerImagePull', () => {
       requestStream: requestStream as never,
       resolveDownloadSize: async () => undefined
     });
-    const call = requestStream.mock.calls[0]?.[0] as { socketPath: string; path: string };
+    const call = requestStream.mock.calls[0]?.[0] as {
+      socketPath: string;
+      path: string;
+      method: string;
+      headers: Record<string, string>;
+    };
     expect(call.socketPath).toBe('/var/run/docker.sock');
+    expect(call.method).toBe('POST');
     expect(call.path).toBe(
       `/${DOCKER_ENGINE_API_VERSION}/images/create?fromImage=nationalinstruments%2Flabview&tag=2026q1-windows`
     );
+    expect(Object.keys(call.headers)).toEqual(['Content-Type']);
+    expect(JSON.stringify(call.headers)).not.toMatch(/authorization|credential|password|token/i);
   });
 
   it('reports live layer-weighted snapshots and resolves succeeded (VHS-REQ-654.1)', async () => {
