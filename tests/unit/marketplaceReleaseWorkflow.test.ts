@@ -13,7 +13,7 @@ function readWorkflow(): string {
 }
 
 describe('Marketplace release workflow', () => {
-  it('runs only from tags or manual dispatch with a protected environment', () => {
+  it('runs only from tags or manual dispatch with a protected environment (VHS-REQ-609.3)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Marketplace Release');
@@ -23,7 +23,7 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain('permissions:\n  contents: read');
   });
 
-  it('fails closed unless the ref is an exact SemVer release tag', () => {
+  it('fails closed unless the ref is an exact SemVer release tag (VHS-REQ-609.4)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('Guard Exact Version Tag');
@@ -31,7 +31,7 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain('Marketplace releases must run from an exact vX.Y.Z tag');
   });
 
-  it('verifies package version and main reachability before publishing', () => {
+  it('verifies package version and main reachability before publishing (VHS-REQ-609.4)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain("require('./package.json').version");
@@ -42,8 +42,9 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain('Release record: protected marketplace-release environment');
   });
 
-  it('runs release validation and publishes the located VSIX with pinned vsce', () => {
+  it('runs release validation and publishes the located VSIX with pinned vsce (VHS-REQ-609.5, VHS-REQ-609.6, VHS-REQ-609.10)', () => {
     const workflow = readWorkflow();
+    const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');
 
     expect(workflow).toContain('npm ci');
     expect(workflow).toContain('npm run check');
@@ -52,10 +53,19 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain("find . -maxdepth 1 -type f -name 'vi-history-suite-*.vsix'");
     expect(workflow).toContain('node scripts/runPinnedVsce.js publish --packagePath');
     expect(workflow).toContain('VSCE_PAT: ${{ secrets.VSCE_PAT }}');
+    for (const command of ['npm ci', 'npm run check', 'npm test', 'npm run package']) {
+      expect(workflow.indexOf(command), `${command} should precede publish`).toBeLessThan(
+        publishIndex
+      );
+    }
   });
 
-  it('verifies the live Marketplace listing and uploads retained release evidence', () => {
+  it('verifies the live Marketplace listing after publish and uploads retained release evidence (VHS-REQ-609.6, VHS-REQ-609.10, VHS-REQ-609.12)', () => {
     const workflow = readWorkflow();
+    const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');
+    const verificationIndex = workflow.indexOf(
+      'node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION" --out release-evidence/marketplace-show.json'
+    );
 
     expect(workflow).toContain('node scripts/verifyMarketplaceListing.js "$EXTENSION_ID" "$TAG_VERSION"');
     expect(workflow).toContain('release-evidence/marketplace-show.json');
@@ -69,9 +79,11 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain('actions/upload-artifact@v7');
     expect(workflow).toContain('coverage/**');
     expect(workflow).toContain('retention-days: 90');
+    expect(publishIndex).toBeGreaterThanOrEqual(0);
+    expect(verificationIndex).toBeGreaterThan(publishIndex);
   });
 
-  it('publishes idempotently and uploads evidence even when verification times out', () => {
+  it('publishes idempotently and uploads evidence even when verification times out (VHS-REQ-609.7, VHS-REQ-609.9)', () => {
     const workflow = readWorkflow();
 
     // Idempotent publish: pre-publish check sets already_published, and the publish

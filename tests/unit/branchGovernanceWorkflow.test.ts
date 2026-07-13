@@ -10,7 +10,7 @@ function readWorkflow(): string {
 }
 
 describe('CI branch governance workflow', () => {
-  it('runs hosted CI on governed branch families', () => {
+  it('runs hosted CI on governed branch families (VHS-REQ-597.11)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('- main');
@@ -21,7 +21,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toMatch(/pull_request:\n\s+branches:\n\s+- main\n\s+- develop/);
   });
 
-  it('runs a Windows unit-test leg alongside the required Ubuntu gate', () => {
+  it('runs a Windows unit-test leg alongside the required Ubuntu gate (VHS-REQ-597.1, VHS-REQ-597.2, VHS-REQ-597.6, VHS-REQ-597.13)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('windows-unit-test:');
@@ -38,7 +38,7 @@ describe('CI branch governance workflow', () => {
     expect(windowsSegment).toContain('run: npm test');
   });
 
-  it('runs a hosted Linux integration-host leg alongside the required Ubuntu gate', () => {
+  it('runs a hosted Linux integration-host leg alongside the required Ubuntu gate (VHS-REQ-597.14)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('integration-host:');
@@ -54,7 +54,7 @@ describe('CI branch governance workflow', () => {
     expect(integrationSegment).toContain('run: npm run test:integration:linux');
   });
 
-  it('keeps branch governance inside the required build-test-package job', () => {
+  it('keeps branch governance inside the required build-test-package job (VHS-REQ-597.12)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Build, Test, Package');
@@ -77,7 +77,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('main, or dependabot/*');
   });
 
-  it('keeps the traceability audit in the required hosted gate', () => {
+  it('keeps the traceability audit in the required hosted gate (VHS-REQ-597.3)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Traceability Audit');
@@ -122,7 +122,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('keeps the docs link-check lychee gate in the required hosted gate', () => {
+  it('keeps the docs link-check lychee gate in the required hosted gate (VHS-REQ-597.4)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Docs Link Check / lychee');
@@ -150,7 +150,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('retains machine-readable coverage evidence in the required hosted gate', () => {
+  it('retains machine-readable coverage evidence in the required hosted gate (VHS-REQ-597.7)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: PR Coverage Gate / coverage');
@@ -167,7 +167,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('enforces the coverage risk gate after coverage upload and before packaging', () => {
+  it('enforces the coverage risk gate after coverage upload and before packaging (VHS-REQ-613.4)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Coverage Risk Gate / coverage-risk');
@@ -180,7 +180,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('keeps the hosted DoD gate in the required CI workflow', () => {
+  it('keeps the hosted DoD gate in the required CI workflow (VHS-REQ-597.9, VHS-REQ-597.10)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: DoD Gate / dod');
@@ -204,7 +204,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('allows only release and hotfix branches to target main', () => {
+  it('allows only release and hotfix branches to target main (VHS-REQ-609.1)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('main)');
@@ -213,7 +213,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('PRs to main must come from release/v* or hotfix/v*');
   });
 
-  it('requires develop-targeted feature branches to reference an issue', () => {
+  it('requires develop-targeted feature branches to reference an issue (VHS-REQ-609.2)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('develop)');

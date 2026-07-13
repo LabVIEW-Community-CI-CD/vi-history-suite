@@ -10,7 +10,7 @@ function readWorkflow(): string {
 }
 
 describe('Mutation workflow (VHS-REQ-613)', () => {
-  it('runs on a schedule and manual dispatch, never as a pull-request gate', () => {
+  it('runs on a schedule and manual dispatch, never as a pull-request gate (VHS-REQ-613.9)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Mutation');
@@ -22,7 +22,7 @@ describe('Mutation workflow (VHS-REQ-613)', () => {
     expect(workflow).toContain('permissions:\n  contents: read');
   });
 
-  it('runs the advisory mutation command and retains the report as run evidence', () => {
+  it('runs the advisory mutation command and retains the report as run evidence (VHS-REQ-613.9)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('npm run test:mutation');

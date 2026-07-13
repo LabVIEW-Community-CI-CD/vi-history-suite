@@ -332,7 +332,7 @@ describe('requirements documentation coherence', () => {
     expect(titles).toContain('Devcontainer Source Evaluation');
   });
 
-  it('keeps lightweight hosted CI traceability and docs link gating documented', () => {
+  it('keeps lightweight hosted CI traceability and docs link gating documented (VHS-REQ-597.8)', () => {
     const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
@@ -557,7 +557,7 @@ describe('requirements documentation coherence', () => {
     expect(harnessTestRow?.Notes).toContain('VHS-REQ-614');
   });
 
-  it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615', () => {
+  it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615 (VHS-REQ-615.8)', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     const maintainerOperations = readRepoText('docs', 'maintainer-operations.md');
     const cmPlan = readRepoText('docs', 'cm', 'cm-plan.md');

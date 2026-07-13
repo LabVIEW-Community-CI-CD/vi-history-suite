@@ -105,7 +105,7 @@ describe('Definition-of-Done gate', () => {
     }
   });
 
-  it('passes for the committed repo contract', () => {
+  it('passes for the committed repo contract (VHS-REQ-615.9)', () => {
     const result = runDefinitionOfDoneGate({ cwd: repoRoot });
 
     expect(result.success).toBe(true);
@@ -122,7 +122,7 @@ describe('Definition-of-Done gate', () => {
     expect(renderResult(result)).toContain('[dod-gate] Gate passed.');
   });
 
-  it('keeps the required hosted and closeout gate order explicit', () => {
+  it('keeps the required hosted and closeout gate order explicit (VHS-REQ-613.8, VHS-REQ-615.7)', () => {
     expect(REQUIRED_CI_STEPS).toEqual([
       'Branch Governance',
       'Checkout',
