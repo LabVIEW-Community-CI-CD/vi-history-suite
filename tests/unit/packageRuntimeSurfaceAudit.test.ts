@@ -51,6 +51,7 @@ describe('packaged runtime surface audit', () => {
       stderr: 'npm warn deprecated glob@11.1.0\nfatal packaging failure'
     });
 
+    // VHS-REQ-602.4
     expect(message).toContain('vsce ls failed with exit code 1.');
     expect(message).toContain('stdout:');
     expect(message).toContain('packaged-path');

@@ -72,6 +72,7 @@ describe('extension manifest public metadata', () => {
   it('preserves the Marketplace identity while moving source metadata to the org repo', () => {
     const manifest = readManifest();
 
+    // VHS-REQ-600.1, VHS-REQ-600.2, VHS-REQ-600.3, VHS-REQ-600.4
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
     expect(manifest.version).toBe('1.33.2');
@@ -108,6 +109,7 @@ describe('extension manifest public metadata', () => {
   it('activates on startup without redundant per-command activation events or manifest-level Git activation (VHS-REQ-082, VHS-REQ-083)', () => {
     const manifest = readManifest();
 
+    // VHS-REQ-611.4
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -127,6 +129,7 @@ describe('extension manifest public metadata', () => {
       (event) => event.startsWith('onCommand:')
     );
     expect(redundantCommandActivations).toEqual([]);
+    // VHS-REQ-611.1, VHS-REQ-612.1
     // The commands that previously carried explicit activation events remain
     // contributed, so VS Code still activates the extension on first invocation
     // of labviewViHistory.open, labviewViHistory.openDocumentation,

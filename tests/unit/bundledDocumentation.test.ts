@@ -41,6 +41,7 @@ describe('bundled documentation', () => {
     expect(manifest.pages.map((page) => page.id)).not.toContain('current-state');
     expect(manifest.pages.map((page) => page.id)).not.toContain('debt-ledger');
 
+    // VHS-REQ-611.4
     for (const page of manifest.pages) {
       expect(
         fs.existsSync(path.join(repoRoot, 'resources', 'bundled-docs', 'pages', page.htmlFileName))
@@ -102,6 +103,7 @@ describe('bundled documentation', () => {
       pageBodyHtml: loaded!.pageBodyHtml
     });
 
+    // VHS-REQ-611.3
     expect(rendered).toContain('data-testid="documentation-shell"');
     expect(rendered).toContain('data-testid="documentation-sidebar"');
     expect(rendered).toContain('data-testid="documentation-nav"');

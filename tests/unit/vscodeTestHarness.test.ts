@@ -56,6 +56,7 @@ describe('VS Code unit test harness (VHS-REQ-614)', () => {
     const context = harness.createContext();
     await context.workspaceState.update('cache-key', { restored: true });
 
+    // VHS-REQ-614.1
     harness.vscode.commands.registerCommand('vihs.test', (value: string) => `handled:${value}`);
     const commandResult = await harness.vscode.commands.executeCommand('vihs.test', 'payload');
 
@@ -94,6 +95,7 @@ describe('VS Code unit test harness (VHS-REQ-614)', () => {
   });
 
   it('supports open command coverage with workspace trust and user message fakes', async () => {
+    // VHS-REQ-614.2
     harness.setWorkspaceTrusted(false);
     const historyService = { load: vi.fn() };
     const command = createOpenViHistoryCommand(
@@ -110,6 +112,7 @@ describe('VS Code unit test harness (VHS-REQ-614)', () => {
   });
 
   it('supports comparison and dashboard action coverage with context and progress seams', async () => {
+    // VHS-REQ-614.2
     harness.setWorkspaceTrusted(false);
     const context = harness.createContext();
     const comparisonAction = createComparisonReportAction(context as never);
@@ -131,6 +134,7 @@ describe('VS Code unit test harness (VHS-REQ-614)', () => {
   });
 
   it('supports installed runtime settings CLI coverage with context, fs, env, and stream fakes', async () => {
+    // VHS-REQ-614.2
     const context = harness.createContext();
     const fakeFs = harness.createNodeFs();
     harness.writeNodeFile(
