@@ -1,3 +1,6 @@
+import { execFile } from 'node:child_process';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -125,6 +128,28 @@ function blockedRuntimeSelection(blockedReason: string): ComparisonRuntimeSelect
     registryQueryPlans: [],
     candidates: []
   };
+}
+
+function execNodeScript(
+  scriptPath: string,
+  args: string[],
+  env: NodeJS.ProcessEnv
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    execFile(
+      process.execPath,
+      [scriptPath, ...args],
+      { env, windowsHide: true },
+      (error, stdout, stderr) => {
+        const maybeExitError = error as (Error & { code?: number }) | null;
+        resolve({
+          exitCode: typeof maybeExitError?.code === 'number' ? maybeExitError.code : 0,
+          stdout: String(stdout ?? ''),
+          stderr: String(stderr ?? '')
+        });
+      }
+    );
+  });
 }
 
 describe('local runtime settings CLI (VHS-REQ-612)', () => {
@@ -265,6 +290,67 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     );
     expect(refreshed).toEqual(materialized);
     expect(memoryFs.text(materialized.javascriptLauncherPath)).not.toBe('stale');
+  });
+
+  it('executes the generated launcher through an installed-extension fallback when the stamped module is missing (VHS-REQ-612.6)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-launcher-self-heal-'));
+    try {
+      const homeDirectory = path.join(tempRoot, 'home');
+      const extensionRoot = path.join(tempRoot, 'stamped-extension');
+      const globalStorageRoot = path.join(tempRoot, 'global-storage');
+      const stampedModulePath = path.join(
+        extensionRoot,
+        'out',
+        'tooling',
+        'localRuntimeSettingsCli.js'
+      );
+      await fs.mkdir(path.dirname(stampedModulePath), { recursive: true });
+      await fs.writeFile(stampedModulePath, 'module.exports = {};', 'utf8');
+
+      const materialized = await ensureLocalRuntimeSettingsCli(globalStorageRoot, extensionRoot, {
+        platform: 'linux'
+      });
+      await fs.rm(extensionRoot, { recursive: true, force: true });
+
+      const fallbackModulePath = path.join(
+        homeDirectory,
+        '.vscode',
+        'extensions',
+        'svelderrainruiz.vi-history-suite-99.0.0',
+        'out',
+        'tooling',
+        'localRuntimeSettingsCli.js'
+      );
+      await fs.mkdir(path.dirname(fallbackModulePath), { recursive: true });
+      await fs.writeFile(
+        fallbackModulePath,
+        [
+          'module.exports = {',
+          '  runLocalRuntimeSettingsCliMain: async (args) => {',
+          "    console.log(`fallback-loaded:${args.join('|')}`);",
+          '    return 0;',
+          '  }',
+          '};'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const result = await execNodeScript(
+        materialized.javascriptLauncherPath,
+        ['--validate'],
+        {
+          ...process.env,
+          HOME: homeDirectory,
+          USERPROFILE: homeDirectory
+        }
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('fallback-loaded:--validate');
+      expect(result.stderr).toBe('');
+    } finally {
+      await fs.rm(tempRoot, { recursive: true, force: true });
+    }
   });
 
   it('updates settings JSONC and keeps repeated refreshes stable', async () => {
