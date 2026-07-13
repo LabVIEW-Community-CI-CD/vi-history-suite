@@ -15,6 +15,7 @@ const {
   IMPLEMENTATION_GLOBS,
   TEST_GLOBS,
   TRACEABILITY_SURFACE_GLOBS,
+  GENERATED_TRACEABILITY_SURFACE_FILES,
   parseCsv,
   splitReferences,
   extractRtmPaths,
@@ -95,6 +96,7 @@ describe('traceability audit script', () => {
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('resources/bundled-docs/**');
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('.devcontainer/**');
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('.vscode/*.json');
+    expect(GENERATED_TRACEABILITY_SURFACE_FILES.has('.devcontainer/devcontainer-lock.json')).toBe(true);
   });
 
   it('parses CSV with quoted fields and semicolons', () => {
@@ -376,6 +378,7 @@ describe('traceability audit execution', () => {
         'package.json',
         'vagrant/Vagrantfile',
         '.devcontainer/devcontainer.json',
+        '.devcontainer/devcontainer-lock.json',
         '.vscode/tasks.json',
         'README.md'
       ],
@@ -409,6 +412,7 @@ describe('traceability audit execution', () => {
         'README.md'
       ])
     );
+    expect(result.findings.missingInventoryEntries).not.toContain('.devcontainer/devcontainer-lock.json');
   });
 });
 
