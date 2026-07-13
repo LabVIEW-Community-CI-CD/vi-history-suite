@@ -467,15 +467,17 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('Criterion Closure Docket');
-    expect(testPlan).toContain('494/513\ncriterion-level citations');
-    expect(testPlan).toContain('19 uncited criteria');
+    expect(testPlan).toContain('496/513 criterion-level citations');
+    expect(testPlan).toContain('17 uncited');
     expect(testPlan).toContain('`exact-testable`');
     expect(testPlan).toContain('`needs-new-behavior-test`');
     expect(testPlan).toContain('`manual/process`');
     expect(testPlan).toContain('`broad-regression`');
     expect(testPlan).toContain('`defer/product-decision`');
     expect(testPlan).toContain('Current closure docket');
-    expect(testPlan).toContain(`\`${['VHS-REQ-631', '4'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-631', '4'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-634', '3'].join('.')}\``);
+    expect(testPlan).toContain(`\`${['VHS-REQ-650', '7'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
     expect(testPlan).toContain('Recommended implementation order');
@@ -1259,6 +1261,30 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/runtimeAvailabilityNotice.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
     expect(activationTestRow?.Notes).toContain('VHS-REQ-627');
+  });
+
+  it('keeps pre-panel runtime open-gate wiring traceable for VHS-REQ-631 and VHS-REQ-634', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const viServerRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-631');
+    const registryFallbackRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-634');
+    const activationTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+
+    expect(srs).toContain('### VHS-REQ-631: Pre-Panel VI Server Prerequisite Gate For VI History Open');
+    expect(srs).toContain('### VHS-REQ-634: Authoritative Host Fallback For LabVIEW CLI Open Gate');
+    for (const row of [viServerRow, registryFallbackRow]) {
+      expect(row?.ImplementationRefs).toContain('src/extension.ts');
+      expect(row?.VerificationRefs).toContain(
+        'tests/unit/extensionActivationLazySideEffects.test.ts'
+      );
+      expect(row?.VerificationRefs).toContain('tests/unit/runtimeAvailabilityNotice.test.ts');
+      expect(row?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    }
+    expect(activationTestRow?.Notes).toContain('VHS-REQ-631');
+    expect(activationTestRow?.Notes).toContain('VHS-REQ-634');
   });
 
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {

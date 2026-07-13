@@ -515,12 +515,14 @@ describe('decideLabviewCliOpenGateWithRegistryFallback (VHS-REQ-634.2, VHS-REQ-6
     expect(probe).not.toHaveBeenCalled();
   });
 
-  it('flips a Windows block to allow when the registry probe reports an available host', async () => {
+  it('flips a Windows block to allow when the registry probe reports an available host (VHS-REQ-634.3)', async () => {
+    const probe = vi.fn(async () => true);
     const decision = await decideLabviewCliOpenGateWithRegistryFallback(blockDecision, {
       platform: 'win32',
-      probeRegistryHostLabview: async () => true
+      probeRegistryHostLabview: probe
     });
     expect(decision).toEqual({ kind: 'allow' });
+    expect(probe).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the block when the registry probe reports no available host', async () => {

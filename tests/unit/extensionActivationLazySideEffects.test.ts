@@ -269,9 +269,11 @@ import {
   decideLabviewCliOpenGateWithRegistryFallback,
   decideBitnessOpenGate,
   decideVersionOpenGate,
+  decideViServerOpenGate,
   presentLabviewCliOpenBlockedToast,
   presentBitnessOpenBlockedToast,
-  presentVersionOpenBlockedToast
+  presentVersionOpenBlockedToast,
+  presentViServerOpenBlockedToast
 } from '../../src/ui/runtimeAvailabilityNotice';
 import {
   createGitPrerequisiteWatcher,
@@ -473,7 +475,7 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
-  it('blocks VI History open from the cached LabVIEW CLI gate without re-detecting (VHS-REQ-627.6)', async () => {
+  it('blocks VI History open from the cached LabVIEW CLI gate without re-detecting (VHS-REQ-627.6, VHS-REQ-634.3)', async () => {
     const gitWatcher = {
       dispose: vi.fn(),
       forceRefresh: vi.fn(async () => undefined),
@@ -527,7 +529,81 @@ describe('extension activation lazy side effects', () => {
     expect(decideOpenGate.mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(decideLabviewCliOpenGate).mock.invocationCallOrder[0]
     );
+    expect(vi.mocked(decideLabviewCliOpenGate).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(decideLabviewCliOpenGateWithRegistryFallback).mock.invocationCallOrder[0]
+    );
+    expect(
+      vi.mocked(decideLabviewCliOpenGateWithRegistryFallback).mock.invocationCallOrder[0]
+    ).toBeLessThan(presentLabviewCliOpenBlockedToast.mock.invocationCallOrder[0]);
     expect(presentLabviewCliOpenBlockedToast).toHaveBeenCalledWith(blockDecision);
+    expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
+    expect(createOpenViHistoryCommandMock).not.toHaveBeenCalled();
+    expect(openViHistoryHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks VI History open from the cached VI Server gate after earlier gates allow (VHS-REQ-631.4)', async () => {
+    const gitWatcher = {
+      dispose: vi.fn(),
+      forceRefresh: vi.fn(async () => undefined),
+      getDetection: vi.fn(() => ({ available: true, version: '2.46.0' }))
+    };
+    const cachedDetection = {
+      platform: 'win32' as const,
+      host: {
+        installations: [
+          {
+            year: '2026',
+            bitness: 'x64' as const,
+            labviewExePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+            labviewCliPath: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          }
+        ]
+      },
+      docker: { cliAvailable: false }
+    };
+    const cachedSnapshot = {
+      kind: 'available' as const,
+      source: 'auto-detected' as const,
+      label: { provider: 'host' as const, installation: cachedDetection.host.installations[0] }
+    };
+    const runtimeWatcher = {
+      dispose: vi.fn(),
+      forceRefresh: vi.fn(async () => undefined),
+      getLastDetection: vi.fn(() => cachedDetection),
+      getLastSnapshot: vi.fn(() => cachedSnapshot)
+    };
+    const viServerBlock = {
+      kind: 'block' as const,
+      toastMessage: 'VI History cannot open a comparison because VI Server is not enabled.',
+      inspectedConfigPaths: ['C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini']
+    };
+    vi.mocked(createGitPrerequisiteWatcher).mockReturnValueOnce(gitWatcher);
+    vi.mocked(createRuntimeAvailabilityWatcher).mockReturnValueOnce(runtimeWatcher);
+    vi.mocked(decideLabviewCliOpenGate).mockReturnValueOnce({ kind: 'allow' });
+    vi.mocked(decideLabviewCliOpenGateWithRegistryFallback).mockResolvedValueOnce({ kind: 'allow' });
+    vi.mocked(decideViServerOpenGate).mockResolvedValueOnce(viServerBlock);
+
+    await activate(createContext() as never);
+    await commandHandlers.get('labviewViHistory.open')?.({ fsPath: '/repo/demo.vi' });
+
+    expect(decideOpenGate).toHaveBeenCalledWith({ available: true, version: '2.46.0' });
+    expect(decideLabviewCliOpenGate).toHaveBeenCalledWith(
+      cachedDetection,
+      cachedSnapshot,
+      undefined
+    );
+    expect(decideViServerOpenGate).toHaveBeenCalledWith(cachedDetection, cachedSnapshot);
+    expect(runtimeWatcher.forceRefresh).not.toHaveBeenCalled();
+    expect(decideOpenGate.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(decideLabviewCliOpenGate).mock.invocationCallOrder[0]
+    );
+    expect(
+      vi.mocked(decideLabviewCliOpenGateWithRegistryFallback).mock.invocationCallOrder[0]
+    ).toBeLessThan(vi.mocked(decideViServerOpenGate).mock.invocationCallOrder[0]);
+    expect(vi.mocked(decideViServerOpenGate).mock.invocationCallOrder[0]).toBeLessThan(
+      presentViServerOpenBlockedToast.mock.invocationCallOrder[0]
+    );
+    expect(presentViServerOpenBlockedToast).toHaveBeenCalledWith(viServerBlock);
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
     expect(createOpenViHistoryCommandMock).not.toHaveBeenCalled();
     expect(openViHistoryHandlerMock).not.toHaveBeenCalled();
