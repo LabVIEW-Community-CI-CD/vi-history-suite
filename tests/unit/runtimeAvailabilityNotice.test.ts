@@ -814,7 +814,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     const observe = vi.fn(async () =>
       observation(
         'x86',
-        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
       )
     );
     const decision = await decideBitnessOpenGate(detectionHost, snapshot, {
@@ -825,7 +825,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(decision.observedBitness).toBe('x86');
     expect(decision.selectedBitness).toBe('x64');
     expect(decision.actionLabel).toBe(BITNESS_OPEN_PICK_PROVIDER_ACTION);
-    expect(decision.toastMessage).toContain('LabVIEW 2025 (32-bit)');
+    expect(decision.toastMessage).toContain('LabVIEW 2024 (32-bit)');
     expect(decision.toastMessage).toContain('LabVIEW 2026 (64-bit)');
   });
 
