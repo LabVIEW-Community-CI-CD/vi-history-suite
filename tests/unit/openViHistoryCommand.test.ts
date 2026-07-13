@@ -510,7 +510,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('shows a concise close + Retry Compare toast when blocked by a concurrent LabVIEW bitness conflict (VHS-REQ-621, #530)', async () => {
+  it('shows a concise close + Retry Compare toast when blocked by a concurrent LabVIEW bitness conflict (VHS-REQ-621.5, #530)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -581,7 +581,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(serializedUpdate).not.toContain('LabVIEWCLI');
   });
 
-  it('shows a concise close + Retry Compare toast when blocked by a concurrent LabVIEW version conflict (VHS-REQ-653, #530)', async () => {
+  it('shows a concise close + Retry Compare toast when blocked by a concurrent LabVIEW version conflict (VHS-REQ-653.6, #530)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -629,7 +629,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('re-runs the compare when Retry Compare is clicked on a pre-launch conflict from the panel Compare button (#530)', async () => {
+  it('re-runs the compare when Retry Compare is clicked on a pre-launch conflict from the panel Compare button (VHS-REQ-621.5, #530)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -707,7 +707,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(runtimeToast).not.toContain('because');
   });
 
-  it('offers a Pick Runtime Provider action when comparison runtime reclassifies failure as labview-host-bitness-conflict (VHS-REQ-621)', async () => {
+  it('offers a Pick Runtime Provider action when comparison runtime reclassifies failure as labview-host-bitness-conflict (VHS-REQ-621.5)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -747,7 +747,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('shows a concise Pick Runtime Provider toast when a compare fails as labview-vi-version-too-new (#595, VHS-REQ-658)', async () => {
+  it('shows a concise Pick Runtime Provider toast when a compare fails as labview-vi-version-too-new (#595, VHS-REQ-658.4)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -2191,7 +2191,7 @@ describe('openViHistoryCommand comparison routing and runtime messaging', () => 
     expect(providerRequest?.value).toBe('docker');
   });
 
-  it('routes the mid-run labview-host-bitness-conflict failure to Pick Runtime Provider (VHS-REQ-621)', async () => {
+  it('routes the mid-run labview-host-bitness-conflict failure to Pick Runtime Provider (VHS-REQ-621.5)', async () => {
     const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
     const panelTracker = new HistoryPanelTracker();
     const comparisonReportAction = vi.fn().mockResolvedValue({

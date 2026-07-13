@@ -260,7 +260,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(joinedSummary).toContain('will not auto-switch bitness');
   });
 
-  it('gives an actionable next step for concurrent LabVIEW bitness conflict (VHS-REQ-621)', () => {
+  it('gives an actionable next step for concurrent LabVIEW bitness conflict (VHS-REQ-621.4)', () => {
     const summary = blockedSummary('windows-host-bitness-conflict', {
       bitness: 'x86',
       hostObservedLabviewBitness: 'x64',
@@ -275,7 +275,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('falls back to a generic bitness message when the observed bitness is unknown (VHS-REQ-621)', () => {
+  it('falls back to a generic bitness message when the observed bitness is unknown (VHS-REQ-621.4)', () => {
     const summary = blockedSummary('windows-host-bitness-conflict', {
       bitness: 'x64',
       hostObservedLabviewBitness: 'unknown'
@@ -286,7 +286,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('currently x64');
   });
 
-  it('gives an actionable next step for concurrent LabVIEW version conflict (VHS-REQ-653)', () => {
+  it('gives an actionable next step for concurrent LabVIEW version conflict (VHS-REQ-653.5)', () => {
     const summary = blockedSummary('windows-host-version-conflict', {
       bitness: 'x64',
       requestedLabviewVersion: '2026',
@@ -304,7 +304,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621)', () => {
+  it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621.4)', () => {
     const runtimeSelection: ComparisonRuntimeSelection = {
       platform: 'win32',
       executionMode: 'host-only',
@@ -337,7 +337,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('gives an actionable next step for post-failure labview-vi-version-too-new (VHS-REQ-658)', () => {
+  it('gives an actionable next step for post-failure labview-vi-version-too-new (VHS-REQ-658.5)', () => {
     const runtimeSelection: ComparisonRuntimeSelection = {
       platform: 'win32',
       executionMode: 'host-only',

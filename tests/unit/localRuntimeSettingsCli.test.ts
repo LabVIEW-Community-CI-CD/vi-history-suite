@@ -402,7 +402,7 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     );
   });
 
-  it('serializes the observed non-default host VI Server port into the validation proof (VHS-REQ-623)', async () => {
+  it('serializes the observed non-default host VI Server port into the validation proof (VHS-REQ-623.6)', async () => {
     // A maintainer host runs LabVIEW installs on non-default VI Server ports.
     // The locator observes the selected install's server.tcp.port; the proof
     // must carry it (and the LabVIEW.ini it was read from) so real-hardware

@@ -184,7 +184,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('reports a requested LabVIEW bitness miss without switching bitness silently', async () => {
+  it('reports a requested LabVIEW bitness miss without switching bitness silently (VHS-REQ-155.2, VHS-REQ-155.6)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -273,7 +273,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     expect(selection.blockedReason).toBeUndefined();
   });
 
-  it('reports missing shared Windows LabVIEWCLI after resolving LabVIEW', async () => {
+  it('reports missing shared Windows LabVIEWCLI after resolving LabVIEW (VHS-REQ-155.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -620,7 +620,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
 });
 
 describe('comparisonRuntimeLocator fact retention (VHS-REQ-155)', () => {
-  it('retains all requested facts when blocking host runtime for missing LabVIEW', async () => {
+  it('retains all requested facts when blocking host runtime for missing LabVIEW (VHS-REQ-155.1)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -657,7 +657,7 @@ describe('comparisonRuntimeLocator fact retention (VHS-REQ-155)', () => {
     expect(selection.notes.length).toBeGreaterThan(0);
   });
 
-  it('retains all requested facts when blocking Docker runtime for missing CLI', async () => {
+  it('retains all requested facts when blocking Docker runtime for missing CLI (VHS-REQ-155.1)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -789,7 +789,7 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     };
   }
 
-  it('blocks host-native compare when LabVIEW x64 is running and x86 was requested', async () => {
+  it('blocks host-native compare when LabVIEW x64 is running and x86 was requested (VHS-REQ-621.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -827,7 +827,7 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     expect(selection.notes.join('\n')).toContain('comparison-report execution requested LabVIEW x86');
   });
 
-  it('blocks host-native compare even when allowExistingWindowsHostRuntime is true (bitness conflict overrides admit)', async () => {
+  it('blocks host-native compare even when allowExistingWindowsHostRuntime is true (bitness conflict overrides admit, VHS-REQ-621.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -897,7 +897,7 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     expect(selection.blockedReason).toBeUndefined();
   });
 
-  it('blocks host-native compare when a same-bitness, different-year LabVIEW is running (VHS-REQ-653)', async () => {
+  it('blocks host-native compare when a same-bitness, different-year LabVIEW is running (VHS-REQ-653.1, VHS-REQ-653.4)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {

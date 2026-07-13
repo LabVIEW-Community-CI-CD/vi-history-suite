@@ -331,7 +331,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   });
 
   describe('packet HTML doctor summary rendering', () => {
-    it('renders doctor summary lines when present', () => {
+    it('renders doctor summary lines when present (VHS-REQ-155.3)', () => {
       const record = createBaseRecord({
         state: 'failed',
         attempted: true,
@@ -621,7 +621,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   });
 
   describe('runtime doctor facts preserved end-to-end (VHS-REQ-155)', () => {
-    it('retains blocked host runtime facts through packet rendering with provider decisions', () => {
+    it('retains blocked host runtime facts through packet rendering with provider decisions (VHS-REQ-155.4, VHS-REQ-155.5)', () => {
       const record = createBaseRecord(
         {
           state: 'not-available',
@@ -679,7 +679,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       expect(html).toContain('install the selected LabVIEW version');
     });
 
-    it('retains blocked Docker/container image runtime facts through packet rendering', () => {
+    it('retains blocked Docker/container image runtime facts through packet rendering (VHS-REQ-155.4, VHS-REQ-155.5)', () => {
       const record = createBaseRecord(
         {
           state: 'not-available',
@@ -751,7 +751,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       expect(html).toContain('repair Docker connectivity');
     });
 
-    it('preserves runtime selection surface facts separately from doctor summary', () => {
+    it('preserves runtime selection surface facts separately from doctor summary (VHS-REQ-155.5)', () => {
       const record = createBaseRecord(
         {
           state: 'not-available',
