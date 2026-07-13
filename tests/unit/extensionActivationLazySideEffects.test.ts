@@ -491,7 +491,7 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).not.toHaveBeenCalled();
   });
 
-  it('keeps refreshEligibility non-enumerating and uses lazy runtime for history loading', async () => {
+  it('keeps refreshEligibility non-enumerating and uses lazy selected-file runtime for history loading (VHS-REQ-635.2, VHS-REQ-635.5)', async () => {
     const api = await activate(createContext() as never);
 
     await api.refreshEligibility();

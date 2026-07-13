@@ -1057,7 +1057,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
   });
 
-  it('shows an Install Docker toast and suppresses the verbose warning when Docker is not installed (VHS-REQ-643.4)', async () => {
+  it('shows an Install Docker link-only toast and suppresses the verbose warning when Docker is not installed (VHS-REQ-643.4, VHS-REQ-643.5)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -1111,6 +1111,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(
       vscodeHarness.openedExternalUris.some((uri) => uri.includes('docker-desktop'))
     ).toBe(true);
+    expect(vscodeHarness.vscode.commands.executeCommand).not.toHaveBeenCalled();
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
   });
 
