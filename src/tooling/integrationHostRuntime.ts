@@ -34,7 +34,6 @@ export const VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES = {
     'libatk-bridge2.0-0',
     'libatspi2.0-0',
     'libdbus-1-3',
-    'libei1',
     'libgbm1',
     'libgtk-3-0',
     'libnspr4',
