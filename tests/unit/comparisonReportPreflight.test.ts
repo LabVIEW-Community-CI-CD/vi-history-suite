@@ -610,6 +610,31 @@ describe('detectComparedViLibraryMembership (VHS-REQ-625)', () => {
     expect(result.comparedViLibraryMembership?.libraryKind).toBe('lvclass');
     expect(result.comparedViLibraryMembership?.libraryRelativePath).toBe('thing.lvclass');
   });
+
+  it('treats library membership detection as best-effort and never blocks preflight (VHS-REQ-625.2)', async () => {
+    const result = await preflightComparisonReportRevisions(
+      {
+        repoRoot: '/repo',
+        relativePath: 'method.vi',
+        leftRevisionId: 'left-rev',
+        rightRevisionId: 'right-rev'
+      },
+      {
+        resolveRevisionRelativePaths: vi.fn(async () => new Map()),
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(createViLikeBuffer('LVIN'))
+          .mockResolvedValueOnce(createViLikeBuffer('LVCC')),
+        detectComparedViLibraryMembership: vi.fn(async () => {
+          throw new Error('library scan failed');
+        })
+      }
+    );
+
+    expect(result.ready).toBe(true);
+    expect(result.blockedReason).toBeUndefined();
+    expect(result.comparedViLibraryMembership).toBeUndefined();
+  });
 });
 
 describe('explicitComparePairWorkflow', () => {
