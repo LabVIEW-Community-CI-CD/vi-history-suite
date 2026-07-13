@@ -368,7 +368,23 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).toHaveBeenCalledWith({ fsPath: '/repo/demo.vi' });
   });
 
-  it('allows VI History open while Git prerequisite detection is pending and registers watcher disposal (VHS-REQ-619.5, VHS-REQ-619.6, VHS-REQ-617.4)', async () => {
+  it('registers the runtime availability watcher for extension disposal (VHS-REQ-617.4)', async () => {
+    const runtimeWatcher = {
+      dispose: vi.fn(),
+      forceRefresh: vi.fn(async () => undefined),
+      getLastDetection: vi.fn(() => undefined),
+      getLastSnapshot: vi.fn(() => undefined)
+    };
+    vi.mocked(createRuntimeAvailabilityWatcher).mockReturnValueOnce(runtimeWatcher);
+    const context = createContext();
+
+    await activate(context as never);
+
+    expect(createRuntimeAvailabilityWatcher).toHaveBeenCalledTimes(1);
+    expect(context.subscriptions as unknown[]).toContain(runtimeWatcher);
+  });
+
+  it('allows VI History open while Git prerequisite detection is pending and registers watcher disposal (VHS-REQ-619.5, VHS-REQ-619.6)', async () => {
     const watcher = {
       dispose: vi.fn(),
       forceRefresh: vi.fn(async () => undefined),
