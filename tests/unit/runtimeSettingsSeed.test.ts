@@ -73,7 +73,7 @@ const detectionNothing: DetectedRuntimes = {
 };
 
 describe('runtime settings seed-or-repair (VHS-REQ-616)', () => {
-  it('seeds defaults when settings.json does not exist', async () => {
+  it('seeds defaults when settings.json does not exist (VHS-REQ-616.2)', async () => {
     const fs = createFakeFs();
 
     const result = await applyRuntimeSettingsSeed(
@@ -94,7 +94,7 @@ describe('runtime settings seed-or-repair (VHS-REQ-616)', () => {
     expect(fs.files.get(settingsFilePath)).toContain('"viHistorySuite.labviewBitness": "x64"');
   });
 
-  it('preserves a fully-populated settings.json whose selection is satisfiable', async () => {
+  it('preserves a fully-populated settings.json whose selection is satisfiable (VHS-REQ-616.4)', async () => {
     const fs = createFakeFs({
       [settingsFilePath]: JSON.stringify(
         {
@@ -117,7 +117,7 @@ describe('runtime settings seed-or-repair (VHS-REQ-616)', () => {
     expect(fs.writeCalls).toHaveLength(0);
   });
 
-  it('preserves a LabVIEW-agnostic docker selection persisted with the provider key alone (VHS-REQ-657)', async () => {
+  it('preserves a LabVIEW-agnostic docker selection persisted with the provider key alone (VHS-REQ-657.7)', async () => {
     const fs = createFakeFs({
       [settingsFilePath]: JSON.stringify(
         { 'viHistorySuite.runtimeProvider': 'docker' },
@@ -138,7 +138,7 @@ describe('runtime settings seed-or-repair (VHS-REQ-616)', () => {
     expect(fs.writeCalls).toHaveLength(0);
   });
 
-  it('repairs a stale persisted selection that no current installation can satisfy', async () => {
+  it('repairs a stale persisted selection that no current installation can satisfy (VHS-REQ-616.3)', async () => {
     const fs = createFakeFs({
       [settingsFilePath]: JSON.stringify(
         {
@@ -166,7 +166,7 @@ describe('runtime settings seed-or-repair (VHS-REQ-616)', () => {
     expect(fs.files.get(settingsFilePath)).toContain('"viHistorySuite.labviewVersion": "2026"');
   });
 
-  it('repairs a partially-populated selection by overwriting with the recommendation', async () => {
+  it('repairs a partially-populated selection by overwriting with the recommendation (VHS-REQ-616.3)', async () => {
     const fs = createFakeFs({
       [settingsFilePath]: JSON.stringify(
         { 'viHistorySuite.runtimeProvider': 'host' },
@@ -206,7 +206,7 @@ describe('runtime settings seed-or-repair (VHS-REQ-616)', () => {
     });
   });
 
-  it('returns no-runtime-detected without writing when nothing is detected', async () => {
+  it('returns no-runtime-detected without writing when nothing is detected (VHS-REQ-616.5)', async () => {
     const fs = createFakeFs({
       [settingsFilePath]: JSON.stringify(
         {
@@ -285,7 +285,7 @@ describe('isPersistedSelectionSatisfiable', () => {
     ).toBe(false);
   });
 
-  it('treats docker as satisfiable with the provider key alone (VHS-REQ-657)', () => {
+  it('treats docker as satisfiable with the provider key alone (VHS-REQ-657.7)', () => {
     // The Docker provider is LabVIEW-agnostic: no version/bitness required.
     expect(
       isPersistedSelectionSatisfiable({ runtimeProvider: 'docker' }, detectionDockerOnly)

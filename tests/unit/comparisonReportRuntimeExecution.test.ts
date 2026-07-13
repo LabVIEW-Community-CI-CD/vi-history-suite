@@ -2507,7 +2507,7 @@ describe('cliConnectTimeoutSeconds hardening invocation (VHS-REQ-148)', () => {
   });
 });
 
-describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621)', () => {
+describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621, VHS-REQ-636.4)', () => {
   it('returns x86 when path is under Program Files (x86)', () => {
     expect(
       inferLabviewBitnessFromExecutablePath(
@@ -2545,7 +2545,7 @@ describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621)', () => {
   });
 });
 
-describe('inferLabviewYearFromExecutablePath (VHS-REQ-636)', () => {
+describe('inferLabviewYearFromExecutablePath (VHS-REQ-636.4)', () => {
   it('extracts the year from a canonical Windows LabVIEW path', () => {
     expect(
       inferLabviewYearFromExecutablePath(
@@ -3106,7 +3106,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     );
   });
 
-  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets labviewprofull headless under the container workspace', () => {
+  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets labviewprofull headless under the container workspace (VHS-REQ-657.1)', () => {
     const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
       [
         '-LogToConsole',
@@ -3148,7 +3148,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labview');
   });
 
-  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets the image labview without -Headless for 2025 Q3 (VHS-REQ-657)', () => {
+  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets the image labview without -Headless for 2025 Q3 (VHS-REQ-657.2)', () => {
     const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
       [
         '-OperationName',
@@ -3183,7 +3183,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labviewprofull');
   });
 
-  it('buildLinuxContainerCommandPlan derives the 2025 Q3 invocation from the image (VHS-REQ-657)', () => {
+  it('buildLinuxContainerCommandPlan derives the 2025 Q3 invocation from the image (VHS-REQ-657.2)', () => {
     const record = createReadyRecord();
     record.runtimeSelection = {
       ...record.runtimeSelection,
@@ -3228,7 +3228,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(script).not.toContain('-Headless');
   });
 
-  it('buildLinuxContainerCommandPlan keeps 2026 labviewprofull + -Headless without the CI/CD env (VHS-REQ-657)', () => {
+  it('buildLinuxContainerCommandPlan keeps 2026 labviewprofull + -Headless without the CI/CD env (VHS-REQ-657.1)', () => {
     const record = createReadyRecord();
     record.runtimeSelection = {
       ...record.runtimeSelection,

@@ -394,7 +394,7 @@ describe('extension activation lazy side effects', () => {
     expect(getBuiltInGitApiMock).not.toHaveBeenCalled();
   });
 
-  it('blocks VI History open with the bitness toast and does not resolve runtime when the bitness gate blocks (VHS-REQ-636)', async () => {
+  it('blocks VI History open with the bitness toast and does not resolve runtime when the bitness gate blocks (VHS-REQ-636.7)', async () => {
     vi.mocked(decideBitnessOpenGate).mockResolvedValueOnce({
       kind: 'block',
       toastMessage:
@@ -416,7 +416,7 @@ describe('extension activation lazy side effects', () => {
     expect(openViHistoryHandlerMock).not.toHaveBeenCalled();
   });
 
-  it('blocks VI History open with the version toast and does not resolve runtime when the version gate blocks (VHS-REQ-637)', async () => {
+  it('blocks VI History open with the version toast and does not resolve runtime when the version gate blocks (VHS-REQ-637.6)', async () => {
     vi.mocked(decideVersionOpenGate).mockResolvedValueOnce({
       kind: 'block',
       toastMessage:

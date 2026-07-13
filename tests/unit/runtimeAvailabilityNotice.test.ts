@@ -98,7 +98,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     expect(snapshot.recommendation.provider).toBe('none');
   });
 
-  it('shows the first-run notice exactly once when runtime is missing', () => {
+  it('shows the first-run notice exactly once when runtime is missing (VHS-REQ-617.2)', () => {
     const snapshot = evaluateRuntimeAvailability(detectionMissing);
     const first = decideFirstRunPresentation(snapshot, false);
     expect(first).toEqual({ kind: 'first-run-info', shouldMarkShown: true });
@@ -131,7 +131,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     );
   });
 
-  it('builds the provider suffix from a recommendation', () => {
+  it('builds the provider suffix from a recommendation (VHS-REQ-620.2)', () => {
     expect(
       buildAvailableStatusBarSuffix({
         provider: 'host',
@@ -158,7 +158,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
     expect(buildAvailableStatusBarSuffix({ provider: 'none' })).toBe('');
   });
 
-  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650)', () => {
+  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650, VHS-REQ-620.7)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',
       labviewVersion: '2026',
@@ -214,7 +214,7 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
   });
 });
 
-describe('selectActiveRuntime (VHS-REQ-620)', () => {
+describe('selectActiveRuntime (VHS-REQ-620.1)', () => {
   it('falls back to the recommendation when no persisted selection is provided', () => {
     const snapshot = selectActiveRuntime(detectionHost, {});
     expect(snapshot.source).toBe('auto-detected');
@@ -247,7 +247,7 @@ describe('selectActiveRuntime (VHS-REQ-620)', () => {
     expect(snapshot.label.provider).toBe('docker');
   });
 
-  it('honours a LabVIEW-agnostic persisted docker selection with the provider key alone (VHS-REQ-657)', () => {
+  it('honours a LabVIEW-agnostic persisted docker selection with the provider key alone (VHS-REQ-657.7)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker'
     });
@@ -257,7 +257,7 @@ describe('selectActiveRuntime (VHS-REQ-620)', () => {
     expect(snapshot.label.labviewBitness).toBeUndefined();
   });
 
-  it('keeps the provider-only docker label image-based (VHS-REQ-657)', () => {
+  it('keeps the provider-only docker label image-based (VHS-REQ-657.7)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',
       containerImageVersion: '2025q3-linux'
@@ -266,7 +266,7 @@ describe('selectActiveRuntime (VHS-REQ-620)', () => {
     expect(buildAvailableStatusBarSuffix(snapshot.label)).toBe('Docker @ 2025q3-linux');
   });
 
-  it('carries the selected container image version onto a persisted docker label (VHS-REQ-620)', () => {
+  it('carries the selected container image version onto a persisted docker label (VHS-REQ-620.2)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       runtimeProvider: 'docker',
       labviewVersion: '2026',
@@ -280,7 +280,7 @@ describe('selectActiveRuntime (VHS-REQ-620)', () => {
     );
   });
 
-  it('annotates an auto-detected docker label with the selected container image version (VHS-REQ-620)', () => {
+  it('annotates an auto-detected docker label with the selected container image version (VHS-REQ-620.2)', () => {
     const snapshot = selectActiveRuntime(detectionAvailable, {
       containerImageVersion: '2026q1patch2-linux'
     });
@@ -621,7 +621,7 @@ describe('decideViServerOpenGate (VHS-REQ-631)', () => {
 });
 
 describe('buildBitnessOpenBlockedMessage (VHS-REQ-636)', () => {
-  it('names the running and selected LabVIEW year and bitness and the recovery actions', () => {
+  it('names the running and selected LabVIEW year and bitness and the recovery actions (VHS-REQ-636.5)', () => {
     const message = buildBitnessOpenBlockedMessage({
       observedBitness: 'x86',
       selectedBitness: 'x64',
@@ -662,7 +662,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     labviewProcessExecutablePath: executablePath
   });
 
-  it('allows open before detection completes without observing processes', async () => {
+  it('allows open before detection completes without observing processes (VHS-REQ-636.1)', async () => {
     const observe = vi.fn();
     await expect(
       decideBitnessOpenGate(undefined, undefined, {
@@ -673,7 +673,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open when a satisfiable Docker runtime is the active provider', async () => {
+  it('allows open when a satisfiable Docker runtime is the active provider (VHS-REQ-636.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionAvailable);
     const observe = vi.fn();
     await expect(
@@ -685,7 +685,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open on a non-Windows platform', async () => {
+  it('allows open on a non-Windows platform (VHS-REQ-636.2, VHS-REQ-636.8)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn();
     await expect(
@@ -697,7 +697,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open when no host installation resolves from the snapshot', async () => {
+  it('allows open when no host installation resolves from the snapshot (VHS-REQ-636.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionMissing);
     const observe = vi.fn();
     await expect(
@@ -709,7 +709,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open when no running LabVIEW of a known bitness is observed', async () => {
+  it('allows open when no running LabVIEW of a known bitness is observed (VHS-REQ-636.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () => observation('unknown'));
     await expect(
@@ -721,7 +721,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(observe).toHaveBeenCalledTimes(1);
   });
 
-  it('allows open when the running bitness matches the selected bitness', async () => {
+  it('allows open when the running bitness matches the selected bitness (VHS-REQ-636.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation(
@@ -736,7 +736,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(decision.kind).toBe('allow');
   });
 
-  it('blocks open when the running bitness differs from the selected bitness', async () => {
+  it('blocks open when the running bitness differs from the selected bitness (VHS-REQ-636.3)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation(
@@ -756,7 +756,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(decision.toastMessage).toContain('LabVIEW 2026 (64-bit)');
   });
 
-  it('fails open when the bounded process observation throws', async () => {
+  it('fails open when the bounded process observation throws (VHS-REQ-636.8)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () => {
       throw new Error('tasklist failed');
@@ -771,7 +771,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
 });
 
 describe('presentBitnessOpenBlockedToast (VHS-REQ-636)', () => {
-  it('shows the toast and dispatches Pick Runtime Provider when the action is chosen', async () => {
+  it('shows the toast and dispatches Pick Runtime Provider when the action is chosen (VHS-REQ-636.6)', async () => {
     const showWarning = vi.mocked(vscode.window.showWarningMessage);
     const executeCommand = vi.mocked(vscode.commands.executeCommand);
     showWarning.mockClear();
@@ -800,7 +800,7 @@ describe('presentBitnessOpenBlockedToast (VHS-REQ-636)', () => {
 });
 
 describe('buildVersionOpenBlockedMessage (VHS-REQ-637)', () => {
-  it('names the running and selected LabVIEW year and bitness and the recovery actions', () => {
+  it('names the running and selected LabVIEW year and bitness and the recovery actions (VHS-REQ-637.4)', () => {
     const message = buildVersionOpenBlockedMessage({
       observedYear: '2024',
       selectedYear: '2026',
@@ -845,7 +845,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     labviewProcessExecutablePath: executablePath
   });
 
-  it('allows open before detection completes without observing processes', async () => {
+  it('allows open before detection completes without observing processes (VHS-REQ-637.2)', async () => {
     const observe = vi.fn();
     await expect(
       decideVersionOpenGate(undefined, undefined, {
@@ -856,7 +856,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open when a satisfiable Docker runtime is the active provider', async () => {
+  it('allows open when a satisfiable Docker runtime is the active provider (VHS-REQ-637.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionAvailable);
     const observe = vi.fn();
     await expect(
@@ -868,7 +868,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open on a non-Windows platform', async () => {
+  it('allows open on a non-Windows platform (VHS-REQ-637.2, VHS-REQ-637.7)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn();
     await expect(
@@ -880,7 +880,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open when no host installation resolves from the snapshot', async () => {
+  it('allows open when no host installation resolves from the snapshot (VHS-REQ-637.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionMissing);
     const observe = vi.fn();
     await expect(
@@ -892,7 +892,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(observe).not.toHaveBeenCalled();
   });
 
-  it('allows open when the running LabVIEW year cannot be inferred', async () => {
+  it('allows open when the running LabVIEW year cannot be inferred (VHS-REQ-637.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () => observation('D:\\Tools\\LabVIEW\\LabVIEW.exe', 'x64'));
     await expect(
@@ -904,7 +904,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(observe).toHaveBeenCalledTimes(1);
   });
 
-  it('allows open when the running year matches the selected year', async () => {
+  it('allows open when the running year matches the selected year (VHS-REQ-637.2, VHS-REQ-637.8)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation(
@@ -919,7 +919,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(decision.kind).toBe('allow');
   });
 
-  it('defers to VHS-REQ-636 when the running bitness differs from the selected bitness', async () => {
+  it('defers to VHS-REQ-636 when the running bitness differs from the selected bitness (VHS-REQ-637.2)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation(
@@ -934,7 +934,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(decision.kind).toBe('allow');
   });
 
-  it('blocks open when the running year differs while the bitness matches', async () => {
+  it('blocks open when the running year differs while the bitness matches (VHS-REQ-637.3)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation(
@@ -955,7 +955,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(decision.toastMessage).toContain('LabVIEW 2026 (64-bit)');
   });
 
-  it('blocks open when the running year differs and the bitness is unknown', async () => {
+  it('blocks open when the running year differs and the bitness is unknown (VHS-REQ-637.3)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation('C:\\custom\\LabVIEW 2024\\LabVIEW.exe', 'unknown')
@@ -970,7 +970,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     expect(decision.toastMessage).toContain('LabVIEW 2024 is currently open');
   });
 
-  it('fails open when the bounded process observation throws', async () => {
+  it('fails open when the bounded process observation throws (VHS-REQ-637.7)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () => {
       throw new Error('tasklist failed');
@@ -985,7 +985,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
 });
 
 describe('presentVersionOpenBlockedToast (VHS-REQ-637)', () => {
-  it('shows the toast and dispatches Pick Runtime Provider when the action is chosen', async () => {
+  it('shows the toast and dispatches Pick Runtime Provider when the action is chosen (VHS-REQ-637.5)', async () => {
     const showWarning = vi.mocked(vscode.window.showWarningMessage);
     const executeCommand = vi.mocked(vscode.commands.executeCommand);
     showWarning.mockClear();

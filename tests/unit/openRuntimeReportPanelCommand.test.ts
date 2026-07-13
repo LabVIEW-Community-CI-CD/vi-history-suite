@@ -120,7 +120,7 @@ beforeEach(() => {
 });
 
 describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', () => {
-  it('blocks outside trusted workspaces and does not open a panel', async () => {
+  it('blocks outside trusted workspaces and does not open a panel (VHS-REQ-620.5)', async () => {
     const create = vi.spyOn(vscode.window, 'createWebviewPanel');
     registerOpenRuntimeReportPanelCommand(
       createFakeContext() as never,
@@ -160,7 +160,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.reveal).toHaveBeenCalledOnce();
   });
 
-  it('persists a selected runtime provider to the three runtime keys', async () => {
+  it('persists a selected runtime provider to the three runtime keys (VHS-REQ-620.5)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -263,7 +263,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('discovers container image versions through the injected boundaries', async () => {
+  it('discovers container image versions through the injected boundaries (VHS-REQ-657.9)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     const fetchPublishedTags = vi.fn(async () => ['2026q1-linux']);
@@ -311,7 +311,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).not.toContain('Available to pull');
   });
 
-  it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657)', async () => {
+  it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657.9)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -326,7 +326,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).not.toContain('undefined');
   });
 
-  it('hides the container image section when the comparison runtime is host (VHS-REQ-657/651)', async () => {
+  it('hides the container image section when the comparison runtime is host (VHS-REQ-657.9/651)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({

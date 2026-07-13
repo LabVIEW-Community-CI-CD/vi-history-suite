@@ -121,7 +121,7 @@ describe('buildRuntimeSummaryLine', () => {
 });
 
 describe('buildRuntimeSummaryReport', () => {
-  it('lists host installations and persisted settings', () => {
+  it('lists host installations and persisted settings (VHS-REQ-617.9)', () => {
     const report = buildRuntimeSummaryReport(
       detectionAvailableHost,
       {
@@ -143,7 +143,7 @@ describe('buildRuntimeSummaryReport', () => {
     expect(report).toContain('viHistorySuite.runtimeProvider: host');
   });
 
-  it('reports unset persisted settings as (unset)', () => {
+  it('reports unset persisted settings as (unset) (VHS-REQ-617.9)', () => {
     const report = buildRuntimeSummaryReport(
       detectionMissing,
       { provider: 'none' },
@@ -160,7 +160,7 @@ describe('buildRuntimeSummaryReport', () => {
   });
 });
 
-describe('buildDriftSummaryLine (VHS-REQ-620)', () => {
+describe('buildDriftSummaryLine (VHS-REQ-620.6)', () => {
   it('reports none when nothing is persisted', () => {
     expect(
       buildDriftSummaryLine(
@@ -305,7 +305,7 @@ describe('registerRuntimeRuntimeCommands trust gating', () => {
 });
 
 describe('labviewViHistory.detectRuntimeNow', () => {
-  it('forces the watcher to refresh and surfaces the recommendation toast', async () => {
+  it('forces the watcher to refresh and surfaces the recommendation toast (VHS-REQ-617.7)', async () => {
     const context = createFakeContext();
     const watcher = createFakeWatcher();
     registerRuntimeRuntimeCommands(context as never, watcher, {
@@ -323,7 +323,7 @@ describe('labviewViHistory.detectRuntimeNow', () => {
 });
 
 describe('labviewViHistory.resetFirstRunNotice', () => {
-  it('clears the globalState flag after modal confirmation', async () => {
+  it('clears the globalState flag after modal confirmation (VHS-REQ-617.8)', async () => {
     const context = createFakeContext();
     context.globalState.storage.set(FIRST_RUN_NO_RUNTIME_NOTICE_KEY, true);
     const watcher = createFakeWatcher();
@@ -365,7 +365,7 @@ describe('labviewViHistory.resetFirstRunNotice', () => {
 });
 
 describe('labviewViHistory.showRuntimeSummary', () => {
-  it('writes the multi-line report to a singleton output channel and copies on confirm', async () => {
+  it('writes the multi-line report to a singleton output channel and copies on confirm (VHS-REQ-617.9)', async () => {
     const context = createFakeContext();
     const watcher = createFakeWatcher();
 

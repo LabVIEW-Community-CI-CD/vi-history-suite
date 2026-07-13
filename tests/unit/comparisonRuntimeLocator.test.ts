@@ -126,7 +126,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('blocks unsupported LabVIEW versions before scanning runtime tools', async () => {
+  it('blocks unsupported LabVIEW versions before scanning runtime tools (VHS-REQ-657.5)', async () => {
     const selection = await locateComparisonRuntime('win32', {
       requestedProvider: 'host',
       requireVersionAndBitness: true,
@@ -381,7 +381,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     expect(selection.windowsContainerDaemonReachable).toBe(false);
   });
 
-  it('probes Docker on Windows even when version/bitness are unset because the gate is required (VHS-REQ-657)', async () => {
+  it('probes Docker on Windows even when version/bitness are unset because the gate is required (VHS-REQ-657.8)', async () => {
     // Real-world production shape: readComparisonRuntimeSettings always sets
     // requireVersionAndBitness=true, and selecting Docker clears
     // labviewVersion/labviewBitness. The host-native version/bitness gate must
@@ -405,7 +405,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     });
   });
 
-  it('still blocks the host-native lane when version/bitness are unset and the gate is required (VHS-REQ-657)', async () => {
+  it('still blocks the host-native lane when version/bitness are unset and the gate is required (VHS-REQ-657.8)', async () => {
     // Guard rail: bypassing the gate for Docker must not weaken it for the
     // host-native provider.
     const selection = await locateComparisonRuntime('win32', {
@@ -1074,7 +1074,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('no longer blocks docker-only execution for a non-2026 LabVIEW version (VHS-REQ-657)', async () => {
+  it('no longer blocks docker-only execution for a non-2026 LabVIEW version (VHS-REQ-657.5)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {

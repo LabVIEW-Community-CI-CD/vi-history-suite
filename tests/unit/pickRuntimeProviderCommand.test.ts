@@ -48,7 +48,7 @@ const detectionEmpty: DetectedRuntimes = {
 };
 
 describe('buildPickRuntimeProviderItems (VHS-REQ-620)', () => {
-  it('emits one entry per host installation, one for docker, plus a clear option', () => {
+  it('emits one entry per host installation, one for docker, plus a clear option (VHS-REQ-620.5, VHS-REQ-657.7)', () => {
     const items = buildPickRuntimeProviderItems(detectionBoth);
     expect(items).toHaveLength(4);
     expect(items[0]).toMatchObject({
@@ -90,7 +90,7 @@ describe('buildPickRuntimeProviderItems (VHS-REQ-620)', () => {
 });
 
 describe('applyPickRuntimeProviderSelection (VHS-REQ-620)', () => {
-  it('writes all three keys to Global target for a host pick', async () => {
+  it('writes all three keys to Global target for a host pick (VHS-REQ-620.5)', async () => {
     const update = vi.fn(async () => undefined);
     await applyPickRuntimeProviderSelection(
       {
@@ -123,7 +123,7 @@ describe('applyPickRuntimeProviderSelection (VHS-REQ-620)', () => {
     );
   });
 
-  it('clears all three keys (sets undefined) for a clear pick', async () => {
+  it('clears all three keys (sets undefined) for a clear pick (VHS-REQ-620.5)', async () => {
     const update = vi.fn(async () => undefined);
     await applyPickRuntimeProviderSelection(
       { kind: 'clear', label: 'irrelevant' },
@@ -137,7 +137,7 @@ describe('applyPickRuntimeProviderSelection (VHS-REQ-620)', () => {
     ]);
   });
 
-  it('writes the provider and clears version/bitness for a docker pick (VHS-REQ-657)', async () => {
+  it('writes the provider and clears version/bitness for a docker pick (VHS-REQ-620.5, VHS-REQ-657.7)', async () => {
     const update = vi.fn(async () => undefined);
     await applyPickRuntimeProviderSelection(
       { kind: 'docker', label: '$(server) Docker', runtimeProvider: 'docker' },
