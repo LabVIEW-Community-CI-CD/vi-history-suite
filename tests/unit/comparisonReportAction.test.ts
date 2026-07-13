@@ -761,7 +761,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
   });
 });
 
-describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
+describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633.2)', () => {
   function fakeConfiguration(values: Record<string, string | undefined>) {
     return {
       get: (key: string) => values[key]
@@ -801,7 +801,7 @@ describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
   });
 });
 
-describe('readComparisonReportOptions (VHS-REQ-645)', () => {
+describe('readComparisonReportOptions (VHS-REQ-645.3)', () => {
   function fakeConfiguration(values: Record<string, unknown>) {
     return {
       get: (key: string) => values[key]

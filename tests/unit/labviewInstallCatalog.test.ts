@@ -19,7 +19,7 @@ import {
 } from '../../src/tooling/labviewInstallCatalog';
 
 describe('labviewInstallCatalog (VHS-REQ-632)', () => {
-  it('enumerates supported host LabVIEW years newest first within the bounded range', () => {
+  it('enumerates supported host LabVIEW years newest first within the bounded range (VHS-REQ-632.1)', () => {
     const years = supportedHostLabviewYearsDescending();
 
     expect(years[0]).toBe(MAXIMUM_HOST_LABVIEW_YEAR);
@@ -28,7 +28,7 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
     expect(new Set(years).size).toBe(years.length);
   });
 
-  it('builds Linux install directory names with quarterly forms before the plain form', () => {
+  it('builds Linux install directory names with quarterly forms before the plain form (VHS-REQ-632.1)', () => {
     expect(linuxLabviewInstallDirectoryNames(2026)).toEqual([
       'LabVIEW-2026Q1-64',
       'LabVIEW-2026Q3-64',
@@ -36,7 +36,7 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
     ]);
   });
 
-  it('produces Linux install candidates including the quarterly directories the locator scans', () => {
+  it('produces Linux install candidates including the quarterly directories the locator scans (VHS-REQ-632.1)', () => {
     const exePaths = linuxLabviewInstallCandidates().map((candidate) => candidate.labviewExePath);
 
     // Regression guard for the divergence that caused issue #346/#352: the
@@ -53,7 +53,7 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
     );
   });
 
-  it('exposes the shared, version-independent Linux LabVIEW CLI launchers and LVCompare path', () => {
+  it('exposes the shared, version-independent Linux LabVIEW CLI launchers and LVCompare path (VHS-REQ-632.1)', () => {
     expect(LINUX_SHARED_LABVIEW_CLI_CANDIDATES).toEqual([
       '/usr/local/bin/LabVIEWCLI',
       '/usr/local/natinst/share/nilvcli/LabVIEWCLI'
@@ -61,7 +61,7 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
     expect(LINUX_LVCOMPARE_PATH).toBe('/usr/local/bin/LVCompare');
   });
 
-  it('builds Windows LabVIEW folder-name variants for a year', () => {
+  it('builds Windows LabVIEW folder-name variants for a year (VHS-REQ-632.1)', () => {
     expect(windowsLabviewFolderNames(2026)).toEqual([
       'LabVIEW 2026 Q1',
       'LabVIEW 2026 Q3',
@@ -69,7 +69,7 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
     ]);
   });
 
-  it('emits Windows executable candidates x64-before-x86 across both Program Files roots', () => {
+  it('emits Windows executable candidates x64-before-x86 across both Program Files roots (VHS-REQ-632.1)', () => {
     const candidates = windowsLabviewExeCandidates({
       programFiles: WINDOWS_DEFAULT_PROGRAM_FILES,
       programFilesX86: WINDOWS_DEFAULT_PROGRAM_FILES_X86
@@ -107,7 +107,7 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
     );
   });
 
-  it('resolves the canonical 32-bit shared Windows LabVIEW CLI path', () => {
+  it('resolves the canonical 32-bit shared Windows LabVIEW CLI path (VHS-REQ-632.1, VHS-REQ-632.4)', () => {
     expect(WINDOWS_SHARED_LABVIEW_CLI_PATH).toBe(
       windowsSharedLabviewCliPath(WINDOWS_DEFAULT_PROGRAM_FILES_X86)
     );
@@ -122,7 +122,7 @@ describe('labviewInstallCatalog (VHS-REQ-632)', () => {
     );
   });
 
-  it('honors custom Program Files roots for the shared CLI and LVCompare paths', () => {
+  it('honors custom Program Files roots for the shared CLI and LVCompare paths (VHS-REQ-632.1)', () => {
     expect(windowsSharedLabviewCliPath('D:\\Apps')).toBe(
       path.win32.join('D:\\Apps', 'National Instruments', 'Shared', 'LabVIEW CLI', 'LabVIEWCLI.exe')
     );

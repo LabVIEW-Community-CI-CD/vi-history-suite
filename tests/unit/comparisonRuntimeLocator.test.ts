@@ -149,7 +149,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('retains configured path failures as checked candidate facts', async () => {
+  it('retains configured path failures as checked candidate facts (VHS-REQ-633.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -589,7 +589,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('honors an existing configured LabVIEWCLI path for requested x64 LabVIEW', async () => {
+  it('honors an existing configured LabVIEWCLI path for requested x64 LabVIEW (VHS-REQ-633.2)', async () => {
     const configuredLabviewCliPath = 'C:\\custom\\LabVIEWCLI.exe';
     const selection = await locateComparisonRuntime(
       'win32',
@@ -1045,7 +1045,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     expect(selection.notes.join('\n')).toContain('macOS');
   });
 
-  it('retains a missing configured LabVIEW executable path as a checked candidate fact', async () => {
+  it('retains a missing configured LabVIEW executable path as a checked candidate fact (VHS-REQ-633.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -1338,7 +1338,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
   });
 });
 
-describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
+describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634.1)', () => {
   // A real National Instruments install records the install DIRECTORY (trailing
   // backslash) in the registry `Path` value, not the executable. The probe must
   // derive `<dir>LabVIEW.exe` and validate it on disk (issue #381).
@@ -1440,7 +1440,7 @@ describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
   });
 });
 
-describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634)', () => {
+describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634.1)', () => {
   function registryOutput(pathValue: string, subkey = '25.0'): string {
     return [
       `HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\${subkey}`,
@@ -1527,7 +1527,7 @@ describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634)', () => {
   });
 });
 
-describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-634, #381)', () => {
+describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-634.1, #381)', () => {
   // A non-default install drive that the documented scan never produces (it only
   // covers C:), yet whose bitness is still inferable from `\Program Files\`, so
   // these candidates can only reach selection via the registry parser/probe path.
@@ -2380,7 +2380,7 @@ describe('comparisonRuntimeLocator legacy queryWindowsContainerImage probe (VHS-
   });
 });
 
-describe('comparisonRuntimeLocator ambiguous host LabVIEW resolution (VHS-REQ-634)', () => {
+describe('comparisonRuntimeLocator ambiguous host LabVIEW resolution (VHS-REQ-634.1)', () => {
   it('blocks when the registry and documented scan resolve two matching LabVIEW executables', async () => {
     const registryInstallDir = 'D:\\Program Files\\National Instruments\\LabVIEW 2026\\';
     const registryExe = `${registryInstallDir}LabVIEW.exe`;
@@ -2462,7 +2462,7 @@ describe('comparisonRuntimeLocator platform-specific runtime resolution (VHS-REQ
     expect(selection.notes.join('\n')).toContain('Windows hosts and Linux hosts');
   });
 
-  it('selects host-native LabVIEWCLI on linux when a documented CLI and LabVIEW are present', async () => {
+  it('selects host-native LabVIEWCLI on linux when a documented CLI and LabVIEW are present (VHS-REQ-632.3)', async () => {
     const linuxCandidates = buildDocumentedRuntimeCandidates('linux');
     const linuxExe = linuxCandidates.find((candidate) => candidate.kind === 'labview-exe')!.path;
     const linuxCli = linuxCandidates.find((candidate) => candidate.kind === 'labview-cli')!.path;
