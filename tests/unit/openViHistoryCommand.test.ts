@@ -2168,6 +2168,16 @@ describe('openViHistoryCommand comparison routing and runtime messaging', () => 
     expect(panel.webview.html).not.toContain('data-testid="history-compare-preflight"');
     expect(panel.webview.html).not.toContain('data-testid="history-action-pick-image-version"');
 
+    const informationMessages = showInformationMessageMock.mock.calls.map(
+      (callArgs) => callArgs[0] as string
+    );
+    expect(informationMessages).not.toContain(
+      'No retained VI Comparison Report exists for this pair yet. Use the compare preflight section to generate retained evidence for it.'
+    );
+    expect(informationMessages.some((message) => message.includes('compare preflight section'))).toBe(
+      false
+    );
+
     const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0] as string);
     const blockedWarning = warningMessages.find(
       (message) => typeof message === 'string' && message.includes('Generate compare blocked.')
