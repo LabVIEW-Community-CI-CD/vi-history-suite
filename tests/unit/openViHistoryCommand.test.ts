@@ -805,7 +805,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     );
   });
 
-  it('shows a concise Pick Image Version toast when blocked by a container image platform mismatch (VHS-REQ-650.6, #532)', async () => {
+  it('shows a concise Pick Image Version toast when blocked by a container image platform mismatch (VHS-REQ-650.6, VHS-REQ-650.7, #532)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -839,6 +839,9 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
       hash: 'abc1234567890abcdef1234567890abcdef12345'
     });
 
+    expect(comparisonReportAction).toHaveBeenCalledTimes(1);
+    expect(panel.webview.html).not.toContain('data-testid="history-compare-preflight"');
+    expect(panel.webview.html).not.toContain('data-testid="history-action-pick-image-version"');
     expect(showWarningMessageMock).toHaveBeenCalledWith(
       expect.stringContaining('The selected Docker image is a Windows-container image'),
       'Pick Image Version'
@@ -868,6 +871,13 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     const serializedUpdate = JSON.stringify(runtimeUpdate);
     expect(serializedUpdate).not.toContain('Rejected providers');
     expect(serializedUpdate).not.toContain('host-native');
+
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    expect(comparisonReportAction).toHaveBeenCalledTimes(2);
   });
 
   it('shows a concise Docker Desktop toast and suppresses the verbose runtime warning when the Docker daemon is not running (VHS-REQ-642, VHS-REQ-642.4)', async () => {
