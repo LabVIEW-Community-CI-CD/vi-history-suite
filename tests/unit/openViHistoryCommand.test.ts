@@ -1057,7 +1057,7 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
   });
 
-  it('shows an Install Docker toast and suppresses the verbose warning when Docker is not installed (VHS-REQ-643)', async () => {
+  it('shows an Install Docker toast and suppresses the verbose warning when Docker is not installed (VHS-REQ-643.4)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
@@ -1114,7 +1114,49 @@ describe('openViHistoryCommand harness-backed routing and explicit stops', () =>
     expect(comparisonReportAction).toHaveBeenCalledTimes(1);
   });
 
-  it('names Docker (not Docker Desktop) in the not-installed toast on non-Windows hosts (VHS-REQ-643)', async () => {
+  it('opens the retained diagnostics packet from the Docker-not-installed toast (VHS-REQ-643.4)', async () => {
+    const model = createEligibleModel();
+    const historyService = { load: vi.fn().mockResolvedValue(model) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'blocked-docker-not-installed',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-provider-unavailable',
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      platform: 'win32',
+      retainedArchiveAvailable: true
+    });
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report'
+    });
+    showWarningMessageMock.mockResolvedValueOnce('Show diagnostics');
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(vscodeHarness.vscode.env.openExternal).not.toHaveBeenCalled();
+    expect(openRetainedComparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abc1234567890abcdef1234567890abcdef12345'
+      })
+    );
+  });
+
+  it('names Docker (not Docker Desktop) in the not-installed toast on non-Windows hosts (VHS-REQ-643.4)', async () => {
     const model = createEligibleModel();
     const historyService = { load: vi.fn().mockResolvedValue(model) };
     const panelTracker = new HistoryPanelTracker();
