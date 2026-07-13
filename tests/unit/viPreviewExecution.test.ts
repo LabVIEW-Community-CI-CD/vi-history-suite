@@ -26,7 +26,7 @@ function argValue(args: string[], flag: string): string | undefined {
 }
 
 describe('buildViPreviewCommandPlan', () => {
-  it('builds a host-native plan using the resolved LabVIEWCLI executable', () => {
+  it('builds a host-native plan using the resolved LabVIEWCLI executable (VHS-REQ-659.6)', () => {
     const result = buildViPreviewCommandPlan(baseOptions());
     expect(result.outcome).toBe('ready');
     if (result.outcome !== 'ready') {
@@ -42,7 +42,7 @@ describe('buildViPreviewCommandPlan', () => {
     expect(result.commandPlan.args).not.toContain('-Headless');
   });
 
-  it('blocks host-native when the LabVIEWCLI path is missing', () => {
+  it('blocks host-native when the LabVIEWCLI path is missing (VHS-REQ-659.6)', () => {
     const result = buildViPreviewCommandPlan(
       baseOptions({ runtime: { provider: 'host-native' } })
     );
@@ -52,7 +52,7 @@ describe('buildViPreviewCommandPlan', () => {
     );
   });
 
-  it('builds a docker plan for the linux-container provider', () => {
+  it('builds a docker plan for the linux-container provider (VHS-REQ-659.6)', () => {
     const result = buildViPreviewCommandPlan(
       baseOptions({
         runtime: {
@@ -69,7 +69,7 @@ describe('buildViPreviewCommandPlan', () => {
     expect(result.commandPlan.args).toContain('nationalinstruments/labview:2026q1patch2-linux');
   });
 
-  it('blocks linux-container when no image is selected', () => {
+  it('blocks linux-container when no image is selected (VHS-REQ-659.6)', () => {
     const result = buildViPreviewCommandPlan(
       baseOptions({ runtime: { provider: 'linux-container' } })
     );
@@ -106,7 +106,7 @@ describe('buildViPreviewCommandPlan', () => {
     expect((result as { failureReason?: string }).failureReason).toBe('container-image-unavailable');
   });
 
-  it('blocks windows-container when the host PowerShell executable is unresolved', () => {
+  it('blocks windows-container when the host PowerShell executable is unresolved (VHS-REQ-659.4)', () => {
     const result = buildViPreviewCommandPlan(
       baseOptions({
         runtime: { provider: 'windows-container', containerImage: 'ni/labview:2026-windows' }
@@ -127,7 +127,7 @@ describe('executeViPreview', () => {
     };
   }
 
-  it('reports rendered when the command succeeds and the output exists', async () => {
+  it('reports rendered when the command succeeds and the output exists (VHS-REQ-659.6)', async () => {
     const dependencies = deps({ exitCode: 0, stdout: 'ok', stderr: '' }, true);
     const result = await executeViPreview(baseOptions(), dependencies);
 
@@ -136,7 +136,7 @@ describe('executeViPreview', () => {
     expect(dependencies.runCommand).toHaveBeenCalledOnce();
   });
 
-  it('reports failed with command-exited-nonzero on a nonzero exit', async () => {
+  it('reports failed with command-exited-nonzero on a nonzero exit (VHS-REQ-659.6)', async () => {
     const dependencies = deps({ exitCode: 1, stdout: '', stderr: 'boom' }, false);
     const result = await executeViPreview(baseOptions(), dependencies);
 
@@ -146,7 +146,7 @@ describe('executeViPreview', () => {
     expect(dependencies.pathExists).not.toHaveBeenCalled();
   });
 
-  it('reports failed with preview-output-not-produced when no document is written', async () => {
+  it('reports failed with preview-output-not-produced when no document is written (VHS-REQ-659.6)', async () => {
     const dependencies = deps({ exitCode: 0, stdout: 'ok', stderr: '' }, false);
     const result = await executeViPreview(baseOptions(), dependencies);
 
@@ -154,7 +154,7 @@ describe('executeViPreview', () => {
     expect(result.failureReason).toBe('preview-output-not-produced');
   });
 
-  it('does not run the command when the plan is blocked', async () => {
+  it('does not run the command when the plan is blocked (VHS-REQ-659.6)', async () => {
     const dependencies = deps({ exitCode: 0, stdout: '', stderr: '' }, true);
     const result = await executeViPreview(
       baseOptions({ runtime: { provider: 'host-native' } }),
@@ -165,7 +165,7 @@ describe('executeViPreview', () => {
     expect(dependencies.runCommand).not.toHaveBeenCalled();
   });
 
-  it('retries host-native on a cold-launch -350000 and renders on the warm retry (VHS-REQ-659)', async () => {
+  it('retries host-native on a cold-launch -350000 and renders on the warm retry (VHS-REQ-659.6)', async () => {
     const runCommand = vi
       .fn()
       .mockResolvedValueOnce({ exitCode: 1, stdout: '', stderr: 'Error code : -350000' })
@@ -182,7 +182,7 @@ describe('executeViPreview', () => {
     expect(sleep).toHaveBeenCalledOnce();
   });
 
-  it('classifies host-native as labview-cli-connection-failed after exhausting -350000 retries (VHS-REQ-659)', async () => {
+  it('classifies host-native as labview-cli-connection-failed after exhausting -350000 retries (VHS-REQ-659.6)', async () => {
     const runCommand = vi.fn().mockResolvedValue({
       exitCode: 1,
       stdout: '',
@@ -202,7 +202,7 @@ describe('executeViPreview', () => {
     expect(sleep).toHaveBeenCalledTimes(2);
   });
 
-  it('does not orchestrator-retry a container connectivity failure (retry is in-script) (VHS-REQ-659)', async () => {
+  it('does not orchestrator-retry a container connectivity failure (retry is in-script) (VHS-REQ-659.6)', async () => {
     const runCommand = vi
       .fn()
       .mockResolvedValue({ exitCode: 1, stdout: '', stderr: 'Error code : -350000' });
@@ -223,7 +223,7 @@ describe('executeViPreview', () => {
     expect(sleep).not.toHaveBeenCalled();
   });
 
-  it('does not retry a host-native non-connectivity failure (VHS-REQ-659)', async () => {
+  it('does not retry a host-native non-connectivity failure (VHS-REQ-659.6)', async () => {
     const runCommand = vi
       .fn()
       .mockResolvedValue({ exitCode: 2, stdout: '', stderr: 'some other error' });
@@ -240,7 +240,7 @@ describe('executeViPreview', () => {
     expect(sleep).not.toHaveBeenCalled();
   });
 
-  it('classifies the operation-class load failure (error 1125) as labview-preview-operation-load-failed and does not retry (VHS-REQ-659)', async () => {
+  it('classifies the operation-class load failure (error 1125) as labview-preview-operation-load-failed and does not retry (VHS-REQ-659.6)', async () => {
     const runCommand = vi.fn().mockResolvedValue({
       exitCode: 1,
       stdout: '',

@@ -31,7 +31,7 @@ function argValue(args: string[], flag: string): string | undefined {
 }
 
 describe('buildLabviewCliPrintToSingleFileHtmlPlan', () => {
-  it('builds the PrintToSingleFileHtml host command with -VI/-OutputPath and default flags', () => {
+  it('builds the PrintToSingleFileHtml host command with -VI/-OutputPath and default flags (VHS-REQ-659.1)', () => {
     const plan = buildLabviewCliPrintToSingleFileHtmlPlan({
       viPath: '/repo/staging/Foo.vi',
       outputHtmlPath: '/out/preview.html',
@@ -55,7 +55,7 @@ describe('buildLabviewCliPrintToSingleFileHtmlPlan', () => {
     expect(plan.args).not.toContain('-ReportPath');
   });
 
-  it('emits optional -LabVIEWPath, -PortNumber, and -Headless only when requested', () => {
+  it('emits optional -LabVIEWPath, -PortNumber, and -Headless only when requested (VHS-REQ-659.1)', () => {
     const plan = buildLabviewCliPrintToSingleFileHtmlPlan({
       viPath: '/repo/Foo.vi',
       outputHtmlPath: '/out/preview.html',
@@ -99,7 +99,7 @@ describe('buildLabviewCliPrintToSingleFileHtmlPlan', () => {
 });
 
 describe('rewriteViPreviewArgsForLinuxContainerWorkspace', () => {
-  it('rewrites -VI/-OutputPath to workspace-relative and -AdditionalOperationDirectory to the mount', () => {
+  it('rewrites -VI/-OutputPath to workspace-relative and -AdditionalOperationDirectory to the mount (VHS-REQ-659.2)', () => {
     const hostPlan = buildLabviewCliPrintToSingleFileHtmlPlan({
       viPath: '/host/staging/Foo.vi',
       outputHtmlPath: '/host/out/preview.html',
@@ -152,7 +152,7 @@ describe('rewriteViPreviewArgsForLinuxContainerWorkspace', () => {
 });
 
 describe('buildLinuxContainerViPreviewScript', () => {
-  it('embeds the CLI args, VI Server hardening, and one-shot -350000 retry', () => {
+  it('embeds the CLI args, VI Server hardening, and one-shot -350000 retry (VHS-REQ-659.5)', () => {
     const script = buildLinuxContainerViPreviewScript(
       'LabVIEWCLI',
       ['-OperationName', VI_PREVIEW_OPERATION_NAME, '-VI', '/workspace/staging/Foo.vi'],
@@ -180,7 +180,7 @@ describe('buildLinuxContainerViPreviewScript', () => {
 });
 
 describe('buildLinuxContainerViPreviewCommandPlan', () => {
-  it('assembles a docker run plan with workspace + read-only operation mounts', () => {
+  it('assembles a docker run plan with workspace + read-only operation mounts (VHS-REQ-659.3)', () => {
     const plan = buildLinuxContainerViPreviewCommandPlan({
       hostWorkspaceDirectory: '/host/report',
       hostOperationDirectory: '/host/ext/resources/labview-cli-operations',
@@ -210,7 +210,7 @@ describe('buildLinuxContainerViPreviewCommandPlan', () => {
 });
 
 describe('buildLinuxContainerSessionStartArgs', () => {
-  it('starts a detached, named, long-lived container with workspace + read-only ops mounts', () => {
+  it('starts a detached, named, long-lived container with workspace + read-only ops mounts (VHS-REQ-659.13)', () => {
     const args = buildLinuxContainerSessionStartArgs({
       containerName: 'vihs-vi-preview-abc',
       containerImage: 'nationalinstruments/labview:2026q1patch2-linux',
@@ -226,7 +226,7 @@ describe('buildLinuxContainerSessionStartArgs', () => {
 });
 
 describe('buildLinuxContainerSessionHardenScript', () => {
-  it('enables VI Server with a widened connect window', () => {
+  it('enables VI Server with a widened connect window (VHS-REQ-659.13)', () => {
     const script = buildLinuxContainerSessionHardenScript({
       containerLabviewPath: '/usr/local/natinst/LabVIEW-2026-64/labviewprofull',
       connectTimeoutSeconds: 200
@@ -238,7 +238,7 @@ describe('buildLinuxContainerSessionHardenScript', () => {
 });
 
 describe('buildLinuxContainerExecViPreviewCommandPlan', () => {
-  it('builds a docker exec plan targeting the per-render subdirectory', () => {
+  it('builds a docker exec plan targeting the per-render subdirectory (VHS-REQ-659.13)', () => {
     const plan = buildLinuxContainerExecViPreviewCommandPlan({
       containerName: 'vihs-vi-preview-abc',
       workspaceSubdirectory: 'render-xyz',
@@ -292,7 +292,7 @@ describe('rewriteViPreviewArgsForWindowsContainerWorkspace', () => {
 });
 
 describe('buildWindowsContainerViPreviewScript', () => {
-  it('hardens the LabVIEWCLI.ini connect timeouts and retries on -350000', () => {
+  it('hardens the LabVIEWCLI.ini connect timeouts and retries on -350000 (VHS-REQ-659.4)', () => {
     const script = buildWindowsContainerViPreviewScript(
       'LabVIEWCLI',
       ['-OperationName', VI_PREVIEW_OPERATION_NAME, '-VI', 'C:\\vi-history-suite\\staging\\Foo.vi'],
@@ -318,7 +318,7 @@ describe('buildWindowsContainerViPreviewScript', () => {
 });
 
 describe('buildWindowsContainerViPreviewCommandPlan', () => {
-  it('assembles a host-PowerShell EncodedCommand plan that runs docker run with both mounts', () => {
+  it('assembles a host-PowerShell EncodedCommand plan that runs docker run with both mounts (VHS-REQ-659.4)', () => {
     const plan = buildWindowsContainerViPreviewCommandPlan({
       hostWorkspaceDirectory: 'C:\\host\\report',
       hostOperationDirectory: 'C:\\host\\ops',
