@@ -523,6 +523,31 @@ describe('requirements documentation coherence', () => {
     expect(coverageTestRow?.Notes).toContain('VHS-REQ-613');
   });
 
+  it('keeps coverage instrumentation scoped to product code and requirement-supporting scripts (VHS-REQ-613.5)', () => {
+    const vitestConfig = readRepoText('vitest.config.ts');
+
+    expect(vitestConfig).toContain("include: ['src/**/*.ts', 'scripts/*.js']");
+    for (const excludedScript of [
+      'scripts/bootstrapLinuxVsCodeHost.js',
+      'scripts/runLinuxIntegrationHost.js',
+      'scripts/runWindowsIntegrationHost.js',
+      'scripts/preparePublicRepoClone.js',
+      'scripts/preparePublicTestFixture.js',
+      'scripts/publicRepoCloneCore.js'
+    ]) {
+      expect(vitestConfig).toContain(`'${excludedScript}'`);
+    }
+    for (const measuredScript of [
+      'scripts/mapCoverageToTraceability.js',
+      'scripts/checkDocsLinks.js',
+      'scripts/auditTraceabilitySteward.js',
+      'scripts/generateCloseoutEvidence.js',
+      'scripts/verifyMarketplaceListing.js'
+    ]) {
+      expect(vitestConfig).not.toContain(`'${measuredScript}'`);
+    }
+  });
+
   it('keeps VS Code test harness architecture traceable for VHS-REQ-614', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
