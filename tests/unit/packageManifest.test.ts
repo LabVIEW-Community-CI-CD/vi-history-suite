@@ -252,7 +252,7 @@ describe('extension manifest public metadata', () => {
     );
   });
 
-  it('keeps the simplified development, CI, package, and optional Vagrant scripts', () => {
+  it('keeps the simplified development, CI, package, and optional Vagrant scripts (VHS-REQ-599.2)', () => {
     const manifest = readManifest();
 
     expect(manifest.dependencies ?? {}).toEqual({
@@ -275,8 +275,8 @@ describe('extension manifest public metadata', () => {
     expect(manifest.scripts).not.toHaveProperty('test:design-contract');
   });
 
-  it('keeps Vagrant out of hosted CI so it stays an optional human helper (VHS-REQ-599)', () => {
-    // VHS-REQ-599: Vagrant is an optional human-run validation helper, never a
+  it('keeps Vagrant out of hosted CI so it stays an optional human helper (VHS-REQ-599.3)', () => {
+    // VHS-REQ-599.3: Vagrant is an optional human-run validation helper, never a
     // release gate — no hosted CI workflow may invoke it.
     const workflowsDirectory = path.resolve(__dirname, '..', '..', '.github', 'workflows');
     const workflowFiles = fs
