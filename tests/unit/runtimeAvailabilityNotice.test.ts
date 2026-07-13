@@ -814,7 +814,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     const observe = vi.fn(async () =>
       observation(
         'x86',
-        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
       )
     );
     const decision = await decideBitnessOpenGate(detectionHost, snapshot, {
@@ -825,7 +825,7 @@ describe('decideBitnessOpenGate (VHS-REQ-636)', () => {
     expect(decision.observedBitness).toBe('x86');
     expect(decision.selectedBitness).toBe('x64');
     expect(decision.actionLabel).toBe(BITNESS_OPEN_PICK_PROVIDER_ACTION);
-    expect(decision.toastMessage).toContain('LabVIEW 2024 (32-bit)');
+    expect(decision.toastMessage).toContain('LabVIEW 2025 (32-bit)');
     expect(decision.toastMessage).toContain('LabVIEW 2026 (64-bit)');
   });
 
@@ -996,7 +996,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation(
-        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe',
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2025\\LabVIEW.exe',
         'x86'
       )
     );
@@ -1011,7 +1011,7 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
       observation(
-        'C:\\Program Files\\National Instruments\\LabVIEW 2024\\LabVIEW.exe',
+        'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe',
         'x64'
       )
     );
@@ -1020,27 +1020,27 @@ describe('decideVersionOpenGate (VHS-REQ-637)', () => {
       observeWindowsProcesses: observe
     });
     expect(decision.kind).toBe('block');
-    expect(decision.observedYear).toBe('2024');
+    expect(decision.observedYear).toBe('2025');
     expect(decision.selectedYear).toBe('2026');
     expect(decision.observedBitness).toBe('x64');
     expect(decision.actionLabel).toBe('Pick Runtime Provider');
-    expect(decision.toastMessage).toContain('LabVIEW 2024 (64-bit)');
+    expect(decision.toastMessage).toContain('LabVIEW 2025 (64-bit)');
     expect(decision.toastMessage).toContain('LabVIEW 2026 (64-bit)');
   });
 
   it('blocks open when the running year differs and the bitness is unknown (VHS-REQ-637.3)', async () => {
     const snapshot = evaluateRuntimeAvailability(detectionHost);
     const observe = vi.fn(async () =>
-      observation('C:\\custom\\LabVIEW 2024\\LabVIEW.exe', 'unknown')
+      observation('C:\\custom\\LabVIEW 2025\\LabVIEW.exe', 'unknown')
     );
     const decision = await decideVersionOpenGate(detectionHost, snapshot, {
       platform: 'win32',
       observeWindowsProcesses: observe
     });
     expect(decision.kind).toBe('block');
-    expect(decision.observedYear).toBe('2024');
+    expect(decision.observedYear).toBe('2025');
     expect(decision.observedBitness).toBeUndefined();
-    expect(decision.toastMessage).toContain('LabVIEW 2024 is currently open');
+    expect(decision.toastMessage).toContain('LabVIEW 2025 is currently open');
   });
 
   it('fails open when the bounded process observation throws (VHS-REQ-637.7)', async () => {
