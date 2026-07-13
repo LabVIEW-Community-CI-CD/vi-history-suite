@@ -11,7 +11,8 @@ import {
   inspectIntegrationHostStrategy,
   normalizeIntegrationHostOverride,
   resolveStandardWindowsCodeCliPath,
-  VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND
+  VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND,
+  VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES
 } from '../../src/tooling/integrationHostRuntime';
 
 function elfStub(): Buffer {
@@ -186,6 +187,13 @@ describe('integrationHostRuntime', () => {
     ).toThrow(
       new RegExp(VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     );
+  });
+
+  it('keeps Debian and Ubuntu runtime package remediation aligned with bootstrap expectations', () => {
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.debian).not.toContain('libei1');
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.debian).toContain('libasound2');
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.ubuntu).toContain('libei1');
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.ubuntu).toContain('libasound2t64');
   });
 
   it('accepts a Linux runtime when no shared libraries are missing', async () => {

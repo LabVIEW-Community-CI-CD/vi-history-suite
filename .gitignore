@@ -8,6 +8,7 @@ coverage/
 reports/
 *.vsix
 *.log
+.devcontainer/devcontainer-lock.json
 .cache/
 tmp/
 assurance-*-evidence/
