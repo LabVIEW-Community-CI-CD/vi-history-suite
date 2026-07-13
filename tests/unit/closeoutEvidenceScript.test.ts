@@ -687,8 +687,8 @@ describe('closeout evidence script', () => {
       }
       const line = [command, ...args].join(' ');
       if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
-      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceOk };
-      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardOk };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceWithTrustedDod };
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardDodPass };
       return { status: 0, stdout: '' };
     });
 
@@ -885,6 +885,7 @@ describe('closeout evidence script', () => {
 
     expect(result.markdown).toContain('dod=N/A (raw=N/A; source=none');
     expect(result.markdown).toContain('Closable: no');
+    expect(result.exitCode).toBe(1);
     expect(result.context.machineReadableSummary?.closureDecision).toMatchObject({
       closable: false,
       requirements: expect.objectContaining({ definitionOfDoneEvidence: false }),
@@ -1018,8 +1019,8 @@ describe('closeout evidence script', () => {
       if (line.includes('preflight_local_dependencies.py')) return { status: 1, stderr: 'python3 missing' };
       if (command === 'docker' && args.join(' ').startsWith('image inspect')) return { status: 0, stdout: '[]' };
       if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
-      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceOk };
-      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardOk };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceWithTrustedDod };
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardDodPass };
       return { status: 0, stdout: '' };
     });
 

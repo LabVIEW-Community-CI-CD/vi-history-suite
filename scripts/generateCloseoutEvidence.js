@@ -1550,7 +1550,8 @@ function generateCloseoutEvidence(argv, deps = {}) {
   const closureDecision = evaluateClosureDecision(context);
   context.closureDecision = closureDecision;
   const gateFailure = closureDecision.localGatesRan ? !closureDecision.localGatesPassed : false;
-  const exitCode = standards.success && provenance.success && !gateFailure ? 0 : 1;
+  const exitCode =
+    standards.success && closureDecision.dodEvidencePassed && provenance.success && !gateFailure ? 0 : 1;
   const machineReadableSummary = buildMachineReadableCloseoutSummary(context, exitCode);
   context.machineReadableSummary = machineReadableSummary;
   records.push({
