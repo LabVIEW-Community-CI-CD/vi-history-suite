@@ -183,7 +183,7 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     }
   });
 
-  it('returns explicit guard outcomes before dashboard preparation', async () => {
+  it('returns explicit guard outcomes before dashboard preparation (VHS-REQ-610.7)', async () => {
     const context = harness.createContext();
     const action = createMultiReportDashboardAction(context as never);
     harness.setWorkspaceTrusted(false);
@@ -205,7 +205,7 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     });
   });
 
-  it('backfills missing pair evidence, opens the dashboard, and routes retained artifact messages', async () => {
+  it('backfills missing pair evidence, opens the dashboard, and routes retained artifact messages (VHS-REQ-610.1, VHS-REQ-610.2, VHS-REQ-610.4, VHS-REQ-610.5)', async () => {
     const context = harness.createContext();
     const model = createModel();
     const buildDashboard = vi.fn().mockResolvedValue(createDashboardResult(model));
@@ -353,7 +353,7 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     });
   });
 
-  it('summarizes seeded retained evidence and concentrates without a local refresh (VHS-REQ-610)', async () => {
+  it('summarizes seeded retained evidence and concentrates without a local refresh (VHS-REQ-610.6)', async () => {
     const context = harness.createContext();
     const model = createModel();
     const ensure = vi.fn();
@@ -868,7 +868,7 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     expect(failingProbe).toHaveBeenCalled();
   });
 
-  it('routes dashboard artifact messages through the panel tracker (VHS-REQ-610)', async () => {
+  it('routes dashboard artifact messages through the panel tracker (VHS-REQ-610.2)', async () => {
     const context = harness.createContext();
     const model = createModel();
     const panelTracker = {
@@ -1000,7 +1000,7 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     expect(result.outcome).toBe('opened-review-dashboard');
   });
 
-  it('emits keepalive progress while a dashboard pair is still generating (VHS-REQ-610)', async () => {
+  it('emits keepalive progress while a dashboard pair is still generating (VHS-REQ-610.4)', async () => {
     vi.useFakeTimers();
     try {
       const context = harness.createContext();

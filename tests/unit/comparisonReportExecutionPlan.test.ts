@@ -151,7 +151,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     });
   });
 
-  it('builds ready labview-cli execution plans', () => {
+  it('builds ready labview-cli execution plans (VHS-REQ-640.1)', () => {
     const record = createBaseRecord();
 
     const plan = buildComparisonReportExecutionPlan(record);
@@ -220,7 +220,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     expect(args[reportTypeIndex + 1]).toBe('htmlsinglefile');
   });
 
-  it('adds headless mode for container providers and LV_RTE_HEADLESS win32 fallback (VHS-REQ-156.3)', () => {
+  it('adds headless mode for container providers and LV_RTE_HEADLESS win32 fallback (VHS-REQ-156.3, VHS-REQ-640.1)', () => {
     const originalHeadless = process.env.LV_RTE_HEADLESS;
     process.env.LV_RTE_HEADLESS = '1';
     try {
@@ -233,6 +233,9 @@ describe('buildComparisonReportExecutionPlan', () => {
         })
       );
       expect(windowsContainerPlan.commandPlan?.args).toContain('-Headless');
+      const windowsReportTypeIndex = windowsContainerPlan.commandPlan?.args.indexOf('-ReportType') ?? -1;
+      expect(windowsReportTypeIndex).toBeGreaterThanOrEqual(0);
+      expect(windowsContainerPlan.commandPlan?.args[windowsReportTypeIndex + 1]).toBe('htmlsinglefile');
 
       const envFallbackPlan = buildComparisonReportExecutionPlan(
         createBaseRecord({
@@ -309,7 +312,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('keeps the linux-container provider headless regardless of LV_RTE_LINUX_HEADLESS (VHS-REQ-156.2)', () => {
+  it('keeps the linux-container provider headless regardless of LV_RTE_LINUX_HEADLESS (VHS-REQ-156.2, VHS-REQ-640.1)', () => {
     const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
     delete process.env.LV_RTE_LINUX_HEADLESS;
     try {
@@ -323,6 +326,9 @@ describe('buildComparisonReportExecutionPlan', () => {
         })
       );
       expect(plan.commandPlan?.args).toContain('-Headless');
+      const reportTypeIndex = plan.commandPlan?.args.indexOf('-ReportType') ?? -1;
+      expect(reportTypeIndex).toBeGreaterThanOrEqual(0);
+      expect(plan.commandPlan?.args[reportTypeIndex + 1]).toBe('htmlsinglefile');
     } finally {
       if (originalLinuxHeadless === undefined) {
         delete process.env.LV_RTE_LINUX_HEADLESS;

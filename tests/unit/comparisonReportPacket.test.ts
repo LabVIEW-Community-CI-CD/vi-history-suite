@@ -1025,7 +1025,7 @@ describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
 });
 
 describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
-  it('discloses the library-member caveat naming the owning library when detected', () => {
+  it('discloses the library-member caveat naming the owning library when detected (VHS-REQ-625.3)', () => {
     const record = createBaseRecord();
     record.preflight.comparedViLibraryMembership = {
       isMember: true,
@@ -1041,7 +1041,7 @@ describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
     expect(html.toLowerCase()).toContain('namespace');
   });
 
-  it('omits the library-member caveat when the compared VI is not a library member', () => {
+  it('omits the library-member caveat when the compared VI is not a library member (VHS-REQ-625.4)', () => {
     const html = renderComparisonReportPacketHtml(createBaseRecord());
 
     expect(html).not.toContain('data-testid="comparison-report-library-member-caveat"');
@@ -1050,7 +1050,7 @@ describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
 });
 
 describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
-  it('renders the full commit body for both revision context cards with multi-line preserved', () => {
+  it('renders the full commit body for both revision context cards with multi-line preserved (VHS-REQ-644.1, VHS-REQ-644.4)', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1078,7 +1078,7 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
     expect(html).toContain('Base body rationale');
   });
 
-  it('escapes HTML in the commit body', () => {
+  it('escapes HTML in the commit body (VHS-REQ-644.4)', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1096,7 +1096,7 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
     expect(html).not.toContain('<script>alert(1)</script>');
   });
 
-  it('renders the empty-body fallback when a revision has a retained but empty commit body', () => {
+  it('renders the empty-body fallback when a revision has a retained but empty commit body (VHS-REQ-644.5)', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1113,7 +1113,7 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
     expect(html).toContain('<strong>Body:</strong> <span class="muted">No commit body</span>');
   });
 
-  it('renders the not-retained fallback for the body when revision metadata is undefined', () => {
+  it('renders the not-retained fallback for the body when revision metadata is undefined (VHS-REQ-644.5)', () => {
     const record = createBaseRecord(
       {},
       {

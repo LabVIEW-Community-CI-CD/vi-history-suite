@@ -278,7 +278,7 @@ async function writeUnreadableSourceRecord(options: {
 }
 
 describe('retained dashboard evidence seeding (VHS-REQ-610)', () => {
-  it('imports compatible retained proof evidence while ignoring malformed and incompatible manifests', async () => {
+  it('imports compatible retained proof evidence while ignoring malformed and incompatible manifests (VHS-REQ-610.6)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-retained-dashboard-'));
     tempRoots.push(tempRoot);
     const model = createModel();
@@ -881,7 +881,7 @@ describe('retained dashboard evidence seeding (VHS-REQ-610)', () => {
     });
   });
 
-  it('copies the full retained artifact set including runtime logs and report assets (VHS-REQ-610)', async () => {
+  it('copies the full retained artifact set including runtime logs and report assets (VHS-REQ-610.6)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-retained-copy-'));
     tempRoots.push(tempRoot);
     const model = createModel();

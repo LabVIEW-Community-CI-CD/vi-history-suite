@@ -12,7 +12,7 @@ import {
 } from '../../src/dashboard/multiReportDashboard';
 
 describe('dashboardLatestRun', () => {
-  it('builds latest-run artifact path and attaches eta context', () => {
+  it('builds latest-run artifact path and attaches eta context (VHS-REQ-610.5)', () => {
     expect(buildDashboardLatestRunFilePath('/workspace/storage')).toBe(
       '/workspace/storage/dashboards/latest-dashboard-run.json'
     );
@@ -37,7 +37,7 @@ describe('dashboardLatestRun', () => {
     expect(attachDashboardEtaAccuracyContext(undefined, { etaAccuracyFilePath: '/unused' })).toBeUndefined();
   });
 
-  it('records dashboard latest-run summary and artifact paths', () => {
+  it('records dashboard latest-run summary and artifact paths (VHS-REQ-610.5)', () => {
     const dashboard = {
       jsonFilePath: '/workspace/storage/dashboards/review/dashboard.json',
       htmlFilePath: '/workspace/storage/dashboards/review/dashboard.html',

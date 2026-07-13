@@ -189,7 +189,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('Add feature X');
     });
 
-    it('renders the commit body in a dedicated cell for each row', () => {
+    it('renders the commit body in a dedicated cell for each row (VHS-REQ-639.1, VHS-REQ-639.2)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'abc123', body: 'Investigated the wiring change' })]
       });
@@ -201,7 +201,7 @@ describe('historyPanelRendering', () => {
       expect(html).not.toContain('data-testid="history-compare-base"');
     });
 
-    it('preserves multi-line commit bodies as line breaks and escapes HTML', () => {
+    it('preserves multi-line commit bodies as line breaks and escapes HTML (VHS-REQ-639.4)', () => {
       const model = createTestViewModel({
         commits: [
           createTestCommit({
@@ -228,7 +228,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('  - indented bullet<br />    nested detail');
     });
 
-    it('renders a factual fallback for commits with an empty body', () => {
+    it('renders a factual fallback for commits with an empty body (VHS-REQ-639.5)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'oldest123', body: '' })]
       });
@@ -277,7 +277,7 @@ describe('historyPanelRendering', () => {
       );
     });
 
-    it('renders a selection checkbox for each commit row', () => {
+    it('renders a selection checkbox for each commit row (VHS-REQ-639.6)', () => {
       const model = createTestViewModel({
         commits: [
           createTestCommit({ hash: 'a1', previousHash: 'a2' }),

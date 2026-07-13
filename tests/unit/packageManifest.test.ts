@@ -190,7 +190,7 @@ describe('extension manifest public metadata', () => {
     );
   });
 
-  it('contributes the comparison report VI History re-entry action (VHS-REQ-638)', () => {
+  it('contributes the comparison report VI History re-entry action (VHS-REQ-638.1)', () => {
     const manifest = readManifest();
     const commands = manifest.contributes?.commands ?? [];
     const titles = new Map(commands.map((entry) => [entry.command ?? '', entry]));

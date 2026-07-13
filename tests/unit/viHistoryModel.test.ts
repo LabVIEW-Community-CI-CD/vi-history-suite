@@ -113,7 +113,7 @@ describe('viHistoryModel direct history facts', () => {
     });
   });
 
-  it('makes a single-commit VI eligible when it has uncommitted working-tree changes (VHS-REQ-641)', async () => {
+  it('makes a single-commit VI eligible when it has uncommitted working-tree changes (VHS-REQ-641.1)', async () => {
     detectViSignatureFromFsPathMock.mockResolvedValueOnce('LVIN');
     getFileCommitHashesMock.mockResolvedValueOnce(['c3']);
     isFileDirtyInWorkingTreeMock.mockResolvedValueOnce(true);

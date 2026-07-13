@@ -42,7 +42,7 @@ describe('comparisonReportArchive', () => {
     );
   });
 
-  it('archives available source artifacts and writes source-record metadata', async () => {
+  it('archives available source artifacts and writes source-record metadata (VHS-REQ-610.5)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-test-'));
     tempRoots.push(tempRoot);
     const storageRoot = path.join(tempRoot, 'workspace-storage');

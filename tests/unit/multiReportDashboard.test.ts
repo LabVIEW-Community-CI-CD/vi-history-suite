@@ -371,7 +371,7 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     expect(dashboard.record.summary.materializedOverviewImageCount).toBe(0);
   });
 
-  it('concentrates generated, blocked, and missing retained evidence into the dashboard record and HTML', async () => {
+  it('concentrates generated, blocked, and missing retained evidence into the dashboard record and HTML (VHS-REQ-610.1, VHS-REQ-610.2, VHS-REQ-610.3, VHS-REQ-610.5)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-'));
     tempRoots.push(tempRoot);
     const storageRoot = path.join(tempRoot, 'workspace-storage');
@@ -479,7 +479,7 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     );
   });
 
-  it('renders preparation and ETA evidence without mutating the retained dashboard record', () => {
+  it('renders preparation and ETA evidence without mutating the retained dashboard record (VHS-REQ-610.4)', () => {
     const html = renderMultiReportDashboardHtml(
       {
         generatedAt: '2026-05-04T12:00:00.000Z',
