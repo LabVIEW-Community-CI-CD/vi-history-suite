@@ -711,6 +711,9 @@ describe('requirements documentation coherence', () => {
     const closeoutEvidenceTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/closeoutEvidenceScript.test.ts'
     );
+    const marketplaceWorkflowTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/marketplaceReleaseWorkflow.test.ts'
+    );
     const customizationAuditTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -792,6 +795,7 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/traceability-inventory.csv');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/definitionOfDoneGate.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/closeoutEvidenceScript.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/marketplaceReleaseWorkflow.test.ts');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -838,6 +842,9 @@ describe('requirements documentation coherence', () => {
     expect(closeoutEvidenceTestRow?.Classification).toBe('mapped');
     expect(closeoutEvidenceTestRow?.RtmCoverage).toBe('Yes');
     expect(closeoutEvidenceTestRow?.Notes).toContain('VHS-REQ-615');
+    expect(marketplaceWorkflowTestRow?.Classification).toBe('mapped');
+    expect(marketplaceWorkflowTestRow?.RtmCoverage).toBe('Yes');
+    expect(marketplaceWorkflowTestRow?.Notes).toContain('VHS-REQ-615');
     expect(customizationAuditTestRow?.Classification).toBe('mapped');
     expect(customizationAuditTestRow?.RtmCoverage).toBe('Yes');
     expect(customizationAuditTestRow?.Notes).toContain('VHS-REQ-615');

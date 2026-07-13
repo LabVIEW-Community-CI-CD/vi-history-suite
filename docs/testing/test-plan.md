@@ -379,9 +379,13 @@ Requirement-scoped pull requests must keep a lightweight evidence surface and
 name the linked issue with `Refs #...` unless the PR actually completes the
 closeout contract. PR evidence must include the target requirement, validation commands,
 and traceability/RTM impact; it must also include an out-of-scope statement and
-closeout readiness. Keep local gates explicit (including `npm run dod:gate`) plus
-hosted CI and standards provenance or closeout status. If optional/authenticated
-evidence is blocked, note the blocker and the follow-up issue.
+closeout readiness. Keep required hosted CI checks, local gates, targeted tests,
+standards provenance or closeout status, and environment blockers explicit.
+Local validation evidence includes `npm run traceability:audit`,
+`npm run docs:links`, `npm run check`, `npm test`, `npm run coverage:map`,
+`npm run package`, and the targeted tests for the changed requirement or
+implementation surface. If optional/authenticated evidence is blocked, note the
+blocker and the follow-up issue.
 
 ## Optional Vagrant Check
 
