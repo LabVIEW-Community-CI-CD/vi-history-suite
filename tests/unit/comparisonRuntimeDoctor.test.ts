@@ -304,7 +304,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621.4)', () => {
+  it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621.4, VHS-REQ-630.4)', () => {
     const runtimeSelection: ComparisonRuntimeSelection = {
       platform: 'win32',
       executionMode: 'host-only',
@@ -370,7 +370,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('names VI Server and the enable path for a Windows VI-Server-disabled block (VHS-REQ-628)', () => {
+  it('names VI Server and the enable path for a Windows VI-Server-disabled block (VHS-REQ-628.1, VHS-REQ-628.3, VHS-REQ-628.4)', () => {
     const summary = blockedSummary(
       'windows-vi-server-tcp-disabled',
       { provider: 'host-native', engine: 'labview-cli' },
@@ -384,9 +384,11 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('server.tcp.enabled=True');
     expect(action).toContain('restart LabVIEW');
     expect(action).toContain('rerun comparison report generation');
+    expect(action).not.toContain('viHistorySuite.');
+    expect(action).not.toContain('VS Code');
   });
 
-  it('names VI Server and the enable path for a Linux VI-Server-disabled block (VHS-REQ-628)', () => {
+  it('names VI Server and the enable path for a Linux VI-Server-disabled block (VHS-REQ-628.2, VHS-REQ-628.3, VHS-REQ-628.4)', () => {
     const summary = blockedSummary(
       'linux-vi-server-tcp-disabled',
       { platform: 'linux', provider: 'host-native', engine: 'labview-cli' },
@@ -398,6 +400,8 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('server.tcp.enabled=True in labview.conf');
     expect(action).toContain('restart LabVIEW');
     expect(action).toContain('rerun comparison report generation');
+    expect(action).not.toContain('viHistorySuite.');
+    expect(action).not.toContain('VS Code');
   });
 
   describe('cli connect window surfacing (VHS-REQ-148)', () => {
@@ -464,14 +468,19 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
       expect(summary.some((line) => line.startsWith('cli connect window:'))).toBe(false);
     });
 
-    it('names VI Server and the enable path as the next action (VHS-REQ-630)', () => {
+    it('names VI Server and the enable path as the next action (VHS-REQ-630.1, VHS-REQ-630.2)', () => {
       const action = buildLabviewCliConnectFailedSummary().at(-1) ?? '';
       expect(action).toContain('VI Server');
       expect(action).toContain('-350000');
+      expect(action).toContain('could not connect over VI Server');
+      expect(action).toContain('most often because VI Server (TCP/IP) is disabled');
       expect(action).toContain('Tools');
       expect(action).toContain('server.tcp.enabled=True');
+      expect(action).toContain('configured port');
       expect(action).toContain('restart LabVIEW');
       expect(action).toContain('rerun comparison report generation');
+      expect(action).not.toContain('viHistorySuite.');
+      expect(action).not.toContain('VS Code');
     });
   });
 });
@@ -624,7 +633,7 @@ describe('comparisonRuntimeDoctor next-action taxonomy and fact surfaces', () =>
     );
   });
 
-  it('guides password-protected VI comparison failures', () => {
+  it('guides password-protected VI comparison failures (VHS-REQ-630.4)', () => {
     const summary = doctor('ready-for-runtime', {}, {
       state: 'failed',
       diagnosticReason: 'labview-cli-vi-password-protected'
@@ -642,7 +651,7 @@ describe('comparisonRuntimeDoctor next-action taxonomy and fact surfaces', () =>
     expect(summary.at(-1)).toContain('Pick a newer installed LabVIEW');
   });
 
-  it('guides host-native CreateComparisonReport timeouts through retained observations', () => {
+  it('guides host-native CreateComparisonReport timeouts through retained observations (VHS-REQ-630.4)', () => {
     const summary = doctor(
       'ready-for-runtime',
       { platform: 'win32', provider: 'host-native' },

@@ -542,7 +542,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(removePath).toHaveBeenCalled();
   });
 
-  it('copies Linux container reports back with canonical staged names and retained asset directories (VHS-REQ-156.10)', async () => {
+  it('copies Linux container reports back with canonical staged names and retained asset directories (VHS-REQ-148.1, VHS-REQ-156.10)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -2049,7 +2049,7 @@ describe('comparisonReportRuntimeExecution', () => {
   });
 
   describe('failed execution evidence retention (VHS-REQ-148)', () => {
-    it('retains all evidence fields when execution fails with nonzero exit code (VHS-REQ-658.1)', async () => {
+    it('retains all evidence fields when execution fails with nonzero exit code (VHS-REQ-148.2, VHS-REQ-658.1)', async () => {
       const record = createReadyRecord();
       const writeFile = vi.fn().mockResolvedValue(undefined);
 
@@ -2122,7 +2122,7 @@ describe('comparisonReportRuntimeExecution', () => {
       expect(result.record.runtimeExecution.reportExists).toBe(false);
     });
 
-    it('fails closed when report is missing even with exit code 0', async () => {
+    it('fails closed when report is missing even with exit code 0 (VHS-REQ-148.3)', async () => {
       const record = createReadyRecord();
 
       const result = await executeComparisonReport(
