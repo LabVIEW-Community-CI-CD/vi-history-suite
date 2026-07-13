@@ -570,7 +570,7 @@ describe('closeout evidence script', () => {
     });
   });
 
-  it('does not let generated assurance evidence satisfy the DoD gate', () => {
+  it('does not let generated assurance evidence satisfy the DoD gate (VHS-REQ-615.5)', () => {
     const dod = summarizeDodGateEvidence(
       {
         evidence: [
@@ -597,7 +597,7 @@ describe('closeout evidence script', () => {
     ]);
   });
 
-  it('does not let unit-test fixture text satisfy the DoD gate', () => {
+  it('does not let unit-test fixture text satisfy the DoD gate (VHS-REQ-615.5)', () => {
     const dod = summarizeDodGateEvidence(
       {
         evidence: [
@@ -824,7 +824,7 @@ describe('closeout evidence script', () => {
     expect(result.failure).toContain('docker build');
   });
 
-  it('renders a closable standards summary when mandatory standards and gates pass (VHS-REQ-601.24, VHS-REQ-601.28, VHS-REQ-613.8)', () => {
+  it('renders a closable standards summary when mandatory standards and gates pass (VHS-REQ-601.24, VHS-REQ-601.28, VHS-REQ-613.8, VHS-REQ-615.5, VHS-REQ-615.6)', () => {
     const spawnSync = hostSuccessSpawnSync();
     const result = generateCloseoutEvidence(
       ['--kind', 'standards', '--issue', '130', '--run-gates'],
@@ -912,7 +912,7 @@ describe('closeout evidence script', () => {
     expect(result.context.machineReadableSummary?.closureDecision.reasons[0]).toContain('Local gates were not run');
   });
 
-  it('writes closeout-summary.json when save-dir is provided', () => {
+  it('writes closeout-summary.json when save-dir is provided (VHS-REQ-615.6)', () => {
     const saveDirRel = `.tmp-closeout-summary-${Date.now()}-${process.pid}`;
     const saveDirAbs = path.join(repoRoot, saveDirRel);
 

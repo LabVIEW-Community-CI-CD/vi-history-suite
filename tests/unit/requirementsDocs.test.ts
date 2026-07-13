@@ -665,6 +665,9 @@ describe('requirements documentation coherence', () => {
     const checkerTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/definitionOfDoneGate.test.ts'
     );
+    const closeoutEvidenceTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/closeoutEvidenceScript.test.ts'
+    );
     const customizationAuditTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -744,6 +747,7 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/traceability-inventory.csv');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/definitionOfDoneGate.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/closeoutEvidenceScript.test.ts');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -787,6 +791,9 @@ describe('requirements documentation coherence', () => {
     expect(checkerTestRow?.Classification).toBe('mapped');
     expect(checkerTestRow?.RtmCoverage).toBe('Yes');
     expect(checkerTestRow?.Notes).toContain('VHS-REQ-615');
+    expect(closeoutEvidenceTestRow?.Classification).toBe('mapped');
+    expect(closeoutEvidenceTestRow?.RtmCoverage).toBe('Yes');
+    expect(closeoutEvidenceTestRow?.Notes).toContain('VHS-REQ-615');
     expect(customizationAuditTestRow?.Classification).toBe('mapped');
     expect(customizationAuditTestRow?.RtmCoverage).toBe('Yes');
     expect(customizationAuditTestRow?.Notes).toContain('VHS-REQ-615');
