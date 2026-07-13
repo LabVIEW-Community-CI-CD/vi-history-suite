@@ -442,7 +442,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
     });
   });
 
-  describe('HTML escaping for factual evidence', () => {
+  describe('HTML escaping for factual evidence (VHS-REQ-148.6)', () => {
     it('escapes angle brackets in report title', () => {
       const record = createBaseRecord();
       record.reportTitle = 'VI Comparison Report: <script>alert("xss")</script>.vi';
@@ -808,8 +808,8 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
     });
   });
 
-  describe('compact evidence summary rendering (VHS-REQ-148)', () => {
-    it('renders compact evidence summary for failed executions', () => {
+  describe('compact evidence summary rendering (VHS-REQ-148, VHS-REQ-148.5, VHS-REQ-148.6)', () => {
+    it('renders compact evidence summary for failed executions (VHS-REQ-148.4)', () => {
       const record = createBaseRecord({
         state: 'failed',
         attempted: true,
@@ -835,7 +835,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       expect(html).toContain('<strong>Stderr artifact:</strong>');
     });
 
-    it('renders compact evidence summary for blocked executions', () => {
+    it('renders compact evidence summary for blocked executions (VHS-REQ-148.4)', () => {
       const record = createBaseRecord({
         state: 'not-available',
         attempted: false,
