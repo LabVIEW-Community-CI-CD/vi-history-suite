@@ -127,7 +127,7 @@ describe('runWindowsRuntimeMatrix.ensurePlatformGuard', () => {
     ).not.toThrow();
   });
 
-  it('throws on non-Windows without the test override', () => {
+  it('throws on non-Windows without the test override (VHS-REQ-622.1)', () => {
     expect(() => harness.ensurePlatformGuard('darwin', {})).toThrow(
       /requires Windows/
     );
@@ -135,7 +135,7 @@ describe('runWindowsRuntimeMatrix.ensurePlatformGuard', () => {
 });
 
 describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
-  it('emits a per-scenario plan with proof and log paths under the proof directory', () => {
+  it('emits a per-scenario plan with proof and log paths under the proof directory (VHS-REQ-622.2)', () => {
     const plan = harness.buildScenarioPlan({
       scenario: 'all',
       out: 'assurance-closeout-evidence/manual-vhs-req-621.json'
@@ -172,7 +172,7 @@ describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
 });
 
 describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
-  it('passes scenario, bitness, paths, and labview version to the helper', () => {
+  it('passes scenario, bitness, paths, and labview version to the helper (VHS-REQ-622.2)', () => {
     const scenario = {
       id: 'steady-A',
       parameters: {
@@ -329,7 +329,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     logPath: 'p.scenario.json'
   };
 
-  it('passes when scenario log reports pass and matches expected observations', () => {
+  it('passes when scenario log reports pass and matches expected observations (VHS-REQ-622.2)', () => {
     const summary = harness.summarizeScenario(
       scenario,
       { status: 0 },
@@ -597,7 +597,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     };
   }
 
-  it('writes an evidence file with passing summary when all runtime scenarios match expectations (VHS-REQ-623.6, VHS-REQ-653.7)', () => {
+  it('writes an evidence file with passing summary when all runtime scenarios match expectations (VHS-REQ-622.1, VHS-REQ-622.3, VHS-REQ-623.6, VHS-REQ-653.7)', () => {
     const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
     const scenarioLogPayloads = {
       [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}steady-A.scenario.json`]: {
@@ -794,7 +794,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     });
   });
 
-  it('exits non-zero when any scenario fails', () => {
+  it('exits non-zero when any scenario fails (VHS-REQ-622.3)', () => {
     const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
     const scenarioLogPayloads = {
       [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}steady-A.scenario.json`]: {
@@ -821,7 +821,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     expect(result.evidence?.summary.failed).toBe(1);
   });
 
-  it('refuses to run on non-Windows without VIHS_FAKE_WINDOWS', () => {
+  it('refuses to run on non-Windows without VIHS_FAKE_WINDOWS (VHS-REQ-622.1)', () => {
     expect(() =>
       harness.runRuntimeMatrix([], {
         spawnSync: vi.fn(),

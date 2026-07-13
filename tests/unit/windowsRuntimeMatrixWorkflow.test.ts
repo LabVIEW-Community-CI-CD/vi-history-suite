@@ -12,7 +12,7 @@ function readWorkflow(): string {
 }
 
 describe('Windows runtime matrix workflow', () => {
-  it('is manual-only and cannot run on pull requests or pushes (VHS-REQ-653.7)', () => {
+  it('is manual-only and cannot run on pull requests or pushes (VHS-REQ-622.4, VHS-REQ-653.7)', () => {
     const workflow = readWorkflow();
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).not.toMatch(/^\s*pull_request:/m);
@@ -20,7 +20,7 @@ describe('Windows runtime matrix workflow', () => {
     expect(workflow).not.toMatch(/^\s*schedule:/m);
   });
 
-  it('uses the maintainer-only Windows runner label and read-only permissions (VHS-REQ-653.7)', () => {
+  it('uses the maintainer-only Windows runner label and read-only permissions (VHS-REQ-622.4, VHS-REQ-653.7)', () => {
     const workflow = readWorkflow();
     expect(workflow).toContain('permissions:\n  contents: read');
     expect(workflow).toContain(
@@ -33,7 +33,7 @@ describe('Windows runtime matrix workflow', () => {
     expect(workflow).toContain('shell: powershell');
   });
 
-  it('fails closed to trusted refs (main, release/v*, exact v* tags only)', () => {
+  it('fails closed to trusted refs (main, release/v*, exact v* tags only) (VHS-REQ-622.4)', () => {
     const workflow = readWorkflow();
     expect(workflow).toContain("refs/heads/main");
     expect(workflow).toContain('^refs/heads/release/v\\d+\\.\\d+\\.\\d+$');
@@ -51,7 +51,7 @@ describe('Windows runtime matrix workflow', () => {
     expect(workflow).not.toMatch(/\bvsce\s+publish\b/i);
   });
 
-  it('invokes the matrix driver and uploads matrix evidence + proofs (VHS-REQ-653.7)', () => {
+  it('invokes the matrix driver and uploads matrix evidence + proofs (VHS-REQ-622.4, VHS-REQ-653.7)', () => {
     const workflow = readWorkflow();
     expect(workflow).toContain('npm.cmd ci');
     expect(workflow).toContain('npm.cmd run compile');
