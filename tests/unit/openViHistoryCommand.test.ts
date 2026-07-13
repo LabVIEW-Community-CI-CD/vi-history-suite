@@ -2130,7 +2130,7 @@ describe('openViHistoryCommand comparison routing and runtime messaging', () => 
     }
   });
 
-  it('shows the verbose runtime warning and posts a full panel update for a generic blocked runtime', async () => {
+  it('surfaces blocked compare runtime feedback through notifications and panel runtime status (VHS-REQ-133.5)', async () => {
     const panel = createMockPanel();
     createWebviewPanelMock.mockReturnValue(panel);
     const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
@@ -2163,6 +2163,20 @@ describe('openViHistoryCommand comparison routing and runtime messaging', () => 
       command: 'generateComparisonReport',
       hash: 'abc1234567890abcdef1234567890abcdef12345'
     });
+
+    expect(comparisonReportAction).toHaveBeenCalledTimes(1);
+    expect(panel.webview.html).not.toContain('data-testid="history-compare-preflight"');
+    expect(panel.webview.html).not.toContain('data-testid="history-action-pick-image-version"');
+
+    const informationMessages = showInformationMessageMock.mock.calls.map(
+      (callArgs) => callArgs[0] as string
+    );
+    expect(informationMessages).not.toContain(
+      'No retained VI Comparison Report exists for this pair yet. Use the compare preflight section to generate retained evidence for it.'
+    );
+    expect(informationMessages.some((message) => message.includes('compare preflight section'))).toBe(
+      false
+    );
 
     const warningMessages = showWarningMessageMock.mock.calls.map((callArgs) => callArgs[0] as string);
     const blockedWarning = warningMessages.find(

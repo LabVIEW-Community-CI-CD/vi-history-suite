@@ -452,6 +452,7 @@ export function createOpenViHistoryCommand(
           model,
           result
         );
+        const blockedRuntimeResult = isComparisonRuntimeBlocked(result);
 
         if (result.outcome === 'cancelled') {
           void vscode.window.showInformationMessage(cancelledMessage);
@@ -471,11 +472,11 @@ export function createOpenViHistoryCommand(
           void vscode.window.showInformationMessage(
             'VI History has no previous retained revision for this entry.'
           );
-        } else if (result.outcome === 'missing-retained-comparison-report') {
+        } else if (result.outcome === 'missing-retained-comparison-report' && !blockedRuntimeResult) {
           void vscode.window.showInformationMessage(
             'No retained VI Comparison Report exists for this pair yet. Use the compare preflight section to generate retained evidence for it.'
           );
-        } else if (result.outcome === 'invalid-retained-comparison-report') {
+        } else if (result.outcome === 'invalid-retained-comparison-report' && !blockedRuntimeResult) {
           void vscode.window.showInformationMessage(
             'Retained VI Comparison evidence for this pair is stale or invalid. Use the compare preflight section to rebuild retained evidence for it.'
           );
@@ -1544,11 +1545,7 @@ function deriveComparisonRuntimePanelStatus(
     return 'cancelled';
   }
 
-  if (
-    result.reportStatus === 'blocked-preflight' ||
-    result.reportStatus === 'blocked-runtime' ||
-    result.runtimeExecutionState === 'not-available'
-  ) {
+  if (isComparisonRuntimeBlocked(result)) {
     return 'blocked';
   }
 
@@ -1561,6 +1558,14 @@ function deriveComparisonRuntimePanelStatus(
   }
 
   return 'idle';
+}
+
+function isComparisonRuntimeBlocked(result: ComparisonReportActionResult): boolean {
+  return (
+    result.reportStatus === 'blocked-preflight' ||
+    result.reportStatus === 'blocked-runtime' ||
+    result.runtimeExecutionState === 'not-available'
+  );
 }
 
 function deriveComparisonRuntimeProgressStatus(

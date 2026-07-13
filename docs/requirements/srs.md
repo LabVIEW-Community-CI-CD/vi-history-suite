@@ -561,6 +561,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportAction.ts`
 - Verification References:
   - `tests/unit/explicitComparePairWorkflow.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/comparisonReportPreflight.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
