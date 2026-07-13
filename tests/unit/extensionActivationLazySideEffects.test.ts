@@ -389,16 +389,19 @@ describe('extension activation lazy side effects', () => {
         expect.any(Error)
       );
       expect(registerRuntimeRuntimeCommands).toHaveBeenCalled();
+      consoleError.mockClear();
 
       commandHandlers.clear();
-      vi.mocked(applyRuntimeSettingsSeed).mockRejectedValueOnce(new Error('seed failed'));
+      const seedError = new Error('seed failed');
+      vi.mocked(applyRuntimeSettingsSeed).mockRejectedValueOnce(seedError);
 
       await activate(createContext() as never);
 
       expect(commandHandlers.has('labviewViHistory.open')).toBe(true);
-      expect(consoleError).toHaveBeenCalledWith(
+      expect(consoleError).toHaveBeenCalledTimes(1);
+      expect(consoleError).toHaveBeenLastCalledWith(
         '[vi-history-suite] Failed to seed or repair runtime selection in user settings.',
-        expect.any(Error)
+        seedError
       );
       expect(consoleError.mock.calls.every((call) => String(call[0]).startsWith('[vi-history-suite]'))).toBe(
         true
