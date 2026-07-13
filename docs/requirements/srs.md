@@ -746,11 +746,13 @@ Missing numeric IDs are intentional.
   - Change the export module, panel registration, command registration, and
     export tests together when changing export behavior.
 - Implementation References:
+  - `package.json`
   - `src/reporting/comparisonReportExport.ts`
   - `src/reporting/comparisonReportAction.ts`
   - `src/reporting/comparisonReportContextMarkup.ts`
   - `src/extension.ts`
 - Verification References:
+  - `tests/unit/packageManifest.test.ts`
   - `tests/unit/comparisonReportExport.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
 - Change Guidance:

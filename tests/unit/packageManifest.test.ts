@@ -196,7 +196,7 @@ describe('extension manifest public metadata', () => {
     );
   });
 
-  it('contributes the comparison report VI History re-entry action (VHS-REQ-638.1)', () => {
+  it('contributes comparison report title-bar actions while the report panel is active (VHS-REQ-626.1, VHS-REQ-638.1)', () => {
     const manifest = readManifest();
     const commands = manifest.contributes?.commands ?? [];
     const titles = new Map(commands.map((entry) => [entry.command ?? '', entry]));
@@ -205,9 +205,18 @@ describe('extension manifest public metadata', () => {
       title: 'Open VI History',
       category: 'VI History'
     });
+    expect(titles.get('labviewViHistory.exportComparisonReport')).toMatchObject({
+      title: 'Export Comparison Report (HTML)',
+      category: 'VI History'
+    });
 
     expect(manifest.contributes?.menus?.['editor/title']).toContainEqual({
       command: 'labviewViHistory.openViHistoryFromReport',
+      group: 'navigation',
+      when: 'activeWebviewPanelId == viHistorySuite.comparisonReport'
+    });
+    expect(manifest.contributes?.menus?.['editor/title']).toContainEqual({
+      command: 'labviewViHistory.exportComparisonReport',
       group: 'navigation',
       when: 'activeWebviewPanelId == viHistorySuite.comparisonReport'
     });
