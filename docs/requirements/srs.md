@@ -417,12 +417,16 @@ Missing numeric IDs are intentional.
 - Agent Work Scope:
   - Change `historyPanel` rendering, unit tests, and extension-host assertions
     together.
+  - Change shared panel escaping or inline-script serialization safeguards with
+    the owning renderer and unit tests together.
 - Implementation References:
   - `src/ui/historyPanel.ts`
   - `src/services/viHistoryModel.ts`
+  - `src/ui/runtimeReportPanel.ts`
 - Verification References:
   - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/historyPanelRendering.test.ts`
+  - `tests/unit/runtimeReportPanel.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Do not replace factual Git content with inferred summaries. Keep the panel

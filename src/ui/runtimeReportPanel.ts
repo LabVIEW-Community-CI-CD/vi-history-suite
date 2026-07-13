@@ -186,7 +186,7 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-function serializeForInlineScript(value: unknown): string {
+export function serializeForInlineScript(value: unknown): string {
   return JSON.stringify(value).replaceAll('<', '\\u003C');
 }
 

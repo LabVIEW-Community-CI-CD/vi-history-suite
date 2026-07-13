@@ -10,6 +10,7 @@ import {
   REPORT_OPTION_DESCRIPTORS,
   deriveReportIncludeFlags,
   renderRuntimeReportPanelHtml,
+  serializeForInlineScript,
   type ReportIncludeKey,
   type RuntimeReportPanelViewModel
 } from '../../src/ui/runtimeReportPanel';
@@ -61,6 +62,10 @@ function includeCheckboxChecked(html: string, key: ReportIncludeKey): boolean {
     throw new Error(`no include checkbox rendered for ${key}`);
   }
   return match[1] === 'checked';
+}
+
+function countOccurrences(text: string, needle: string): number {
+  return text.split(needle).length - 1;
 }
 
 describe('VI Preview toggle (VHS-REQ-659)', () => {
@@ -181,6 +186,50 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     );
     expect(html).toContain('data-testid="runtime-report-container-select"');
     expect(html).toMatch(/<option value="2026q1-linux" selected>/);
+  });
+
+  it('escapes panel values and neutralizes inline script boundaries (VHS-REQ-017.6)', () => {
+    const html = renderRuntimeReportPanelHtml(
+      baseModel({
+        activeProviderSummary: 'Host </script><script>alert("active")</script>',
+        providerOptions: [
+          {
+            kind: 'host',
+            label: 'Host <script>alert("label")</script>',
+            description: 'C:/LabVIEW/<script>alert("path")</script>/LabVIEW.exe',
+            detail: 'detail </SCRIPT><SCRIPT>alert("detail")</SCRIPT>'
+          }
+        ],
+        selectedProviderIndex: 0,
+        container: {
+          visible: true,
+          currentTag: '2026q1-linux"><script>alert("current")</script>',
+          discovering: false,
+          discovered: true,
+          versions: [
+            {
+              tag: '2026q1-linux"></option><script>alert("option")</script>',
+              presence: 'Pulled <script>alert("presence")</script>'
+            }
+          ],
+          notes: ['note </script><script>alert("note")</script>']
+        }
+      })
+    );
+    const serialized = serializeForInlineScript({ value: '</script><script>alert("state")</script>' });
+
+    expect(countOccurrences(html, '<script>')).toBe(1);
+    expect(countOccurrences(html, '</script>')).toBe(1);
+    expect(countOccurrences(html, '<SCRIPT>')).toBe(0);
+    expect(countOccurrences(html, '</SCRIPT>')).toBe(0);
+    expect(html).toContain('Host &lt;script&gt;alert(&quot;label&quot;)&lt;/script&gt;');
+    expect(html).toContain('C:/LabVIEW/&lt;script&gt;alert(&quot;path&quot;)&lt;/script&gt;/LabVIEW.exe');
+    expect(html).toContain('value="2026q1-linux&quot;&gt;&lt;/option&gt;&lt;script&gt;alert(&quot;option&quot;)&lt;/script&gt;"');
+    expect(html).not.toContain('<script>alert("active")</script>');
+    expect(html).not.toContain('<SCRIPT>alert("detail")</SCRIPT>');
+    expect(html).not.toContain('<script>alert("option")</script>');
+    expect(serialized).toContain('\\u003C/script>\\u003Cscript>alert(\\"state\\")\\u003C/script>');
+    expect(serialized).not.toContain('</script>');
   });
 
   it('reflects the include flags as checkbox state (deselected = unchecked) (VHS-REQ-645.5)', () => {
