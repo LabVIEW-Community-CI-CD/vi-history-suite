@@ -261,6 +261,8 @@ vi.mock('../../src/tooling/runtimeSettingsLiveSessionSafeRestore', () => ({
 
 import { activate } from '../../src/extension';
 import { registerRuntimeRuntimeCommands } from '../../src/commands/runtimeCommands';
+import { detectAvailableRuntimes } from '../../src/tooling/runtimeAutoDetect';
+import { applyRuntimeSettingsSeed } from '../../src/tooling/runtimeSettingsSeed';
 import {
   createRuntimeAvailabilityWatcher,
   decideBitnessOpenGate,
@@ -369,6 +371,41 @@ describe('extension activation lazy side effects', () => {
     expect(showInformationMessageMock).toHaveBeenCalledWith(
       expect.stringContaining('Settings targets: default user settings.json')
     );
+  });
+
+  it('logs detection and seed failures without blocking activation (VHS-REQ-616.7)', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      vi.mocked(detectAvailableRuntimes).mockRejectedValueOnce(new Error('detection failed'));
+
+      const apiAfterDetectionFailure = await activate(createContext() as never);
+
+      expect(commandHandlers.has('labviewViHistory.open')).toBe(true);
+      expect(apiAfterDetectionFailure.getLocalRuntimeSettingsTerminalEntrypoint()).toBe(
+        materializedCli
+      );
+      expect(consoleError).toHaveBeenCalledWith(
+        '[vi-history-suite] Failed to seed or repair runtime selection in user settings.',
+        expect.any(Error)
+      );
+      expect(registerRuntimeRuntimeCommands).toHaveBeenCalled();
+
+      commandHandlers.clear();
+      vi.mocked(applyRuntimeSettingsSeed).mockRejectedValueOnce(new Error('seed failed'));
+
+      await activate(createContext() as never);
+
+      expect(commandHandlers.has('labviewViHistory.open')).toBe(true);
+      expect(consoleError).toHaveBeenCalledWith(
+        '[vi-history-suite] Failed to seed or repair runtime selection in user settings.',
+        expect.any(Error)
+      );
+      expect(consoleError.mock.calls.every((call) => String(call[0]).startsWith('[vi-history-suite]'))).toBe(
+        true
+      );
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it('registers the primary VI History open handler and resolves its runtime lazily (VHS-REQ-082.3)', async () => {
