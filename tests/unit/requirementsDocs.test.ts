@@ -487,6 +487,10 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '15'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
+    expect(testPlan).toContain('Final advisory disposition for issue #1005');
+    expect(testPlan).toContain('the remaining 9 uncited criteria are');
+    expect(testPlan).toContain('Keep criterion-linkage enforcement advisory');
+    expect(testPlan).toContain('Open child behavior/product-decision issues');
     expect(testPlan).toContain('Recommended implementation order');
     expect(testPlan).toContain('Do not add a `VHS-REQ-N.M` citation unless');
     expect(testPlan).toContain('node scripts/auditRequirementCriteriaInventory.js --json');
