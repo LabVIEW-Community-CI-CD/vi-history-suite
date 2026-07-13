@@ -84,7 +84,7 @@ tests/unit/comparisonReportExecutionPlan.test.ts,mapped,Yes,Comparison report ex
 tests/unit/comparisonReportExport.test.ts,mapped,Yes,Comparison report export tests; mapped to VHS-REQ-626.
 tests/unit/comparisonReportPacket.test.ts,mapped,Yes,Comparison report packet tests; mapped through RTM.
 tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report preflight tests; mapped through RTM.
-tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM.
+tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM including VHS-REQ-630 connection-failure classification preservation.
 tests/unit/comparisonRuntimeDoctor.test.ts,mapped,Yes,Comparison runtime doctor tests; mapped through RTM.
 tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locator tests; mapped through RTM.
 tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests; mapped to VHS-REQ-610.
