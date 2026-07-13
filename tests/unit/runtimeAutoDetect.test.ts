@@ -42,7 +42,7 @@ function createFakeFs(presentFiles: readonly string[]): RuntimeAutoDetectFs {
 }
 
 describe('runtime auto-detect (VHS-REQ-616)', () => {
-  it('detects Windows host installations across folder name variants and prefers x64 within a year (VHS-REQ-616.6)', async () => {
+  it('detects Windows host installations through filesystem/PATH probing and prefers x64 within a year (VHS-REQ-616.1, VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([
       'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
       'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -120,7 +120,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     expect(recommendRuntimeFromDetection(detection)).toEqual({ provider: 'none' });
   });
 
-  it('detects Linux LabVIEW and the shared /usr/local/bin LabVIEWCLI launcher (issue #346)', async () => {
+  it('detects Linux LabVIEW and the shared /usr/local/bin LabVIEWCLI launcher through filesystem/PATH probing (VHS-REQ-616.1, issue #346)', async () => {
     // Real NI Linux installs expose the CLI as the shared, version-independent
     // /usr/local/bin/LabVIEWCLI symlink, not a sibling of the versioned labview
     // binary. Detection probes that fixed absolute location (it does not search
@@ -270,7 +270,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     ]);
   });
 
-  it('only checks docker on macOS (LabVIEW host comparison is unsupported)', async () => {
+  it('only checks docker on macOS through PATH probing because LabVIEW host comparison is unsupported (VHS-REQ-616.1)', async () => {
     const fs = createFakeFs(['/usr/local/bin/docker']);
 
     const detection = await detectAvailableRuntimes({
