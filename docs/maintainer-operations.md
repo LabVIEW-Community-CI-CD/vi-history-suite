@@ -612,6 +612,36 @@ locally built workbench that is already present in the local Docker image cache.
 The output is advisory triage evidence, not a hosted CI gate or issue-closeout
 substitute.
 
+## Local Multi-Standard Audit
+
+For a repo-wide assurance pass after standards-related changes, maintainers can
+run the local multi-standard audit helper:
+
+```shell
+npm run standards:audit
+```
+
+The helper creates a Docker-visible tracked worktree snapshot, prepares the
+published standards workbench image with the same default-image pull behavior as
+issue triage, and writes retained artifacts under
+`assurance-multi-standards-evidence/<run-id>/`. The audit runs direct 29148 and
+26514 checks plus the multi-profile workbench set:
+
+- `requirements_quality_check.py --requirements-spec-scope system --json`
+- `external_user_information_check.py --json`
+- `quick-triage`
+- `release-gate`
+- `26514-review`
+- `due-diligence`
+- `compliance-uplift`
+- `portfolio-review` with `portfolio-table` output
+
+Use the generated `audit-summary.md` and `audit-summary.json` to prioritize
+follow-up issues. Direct requirements or user-information findings are the first
+fix candidates; profile gate failures are cross-standard candidates that should
+be reviewed with the saved profile evidence. The command is local advisory
+evidence, not a hosted CI gate or release substitute.
+
 ## External Marketplace Verification
 
 The Marketplace extension identity `svelderrainruiz.vi-history-suite` is tested

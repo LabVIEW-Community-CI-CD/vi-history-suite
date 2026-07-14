@@ -2455,6 +2455,7 @@ Missing numeric IDs are intentional.
   - `scripts/checkDefinitionOfDone.js`
   - `scripts/auditCustomizationGovernance.js`
   - `scripts/generateCloseoutEvidence.js`
+  - `scripts/runMultiStandardsAudit.js`
   - `scripts/verifyMarketplaceListing.js`
   - `.github/pull_request_template.md`
   - `docs/maintainer-operations.md`
@@ -2468,6 +2469,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/definitionOfDoneGate.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
+  - `tests/unit/multiStandardsAuditScript.test.ts`
   - `tests/unit/marketplaceReleaseWorkflow.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`

@@ -1,0 +1,455 @@
+#!/usr/bin/env node
+
+const fs = require('node:fs');
+const path = require('node:path');
+const childProcess = require('node:child_process');
+
+const {
+  DEFAULT_STANDARDS_IMAGE,
+  createTrackedWorktreeSnapshot,
+  removeTrackedWorktreeSnapshot,
+  parseGateScorecard
+} = require('./generateCloseoutEvidence.js');
+const {
+  prepareStandardsImage,
+  summarizeRequirementsQuality
+} = require('./runIssueStandardsTriage.js');
+
+const DEFAULT_SAVE_DIR = 'assurance-multi-standards-evidence';
+const DEFAULT_REQUIREMENTS_SPEC_SCOPE = 'system';
+const COMMAND_TIMEOUT_MS = 10 * 60 * 1000;
+const GATE_SCORECARD_PROFILES = [
+  'quick-triage',
+  'release-gate',
+  '26514-review',
+  'due-diligence',
+  'compliance-uplift'
+];
+const PORTFOLIO_PROFILE = 'portfolio-review';
+
+function usage() {
+  return [
+    'Usage: node scripts/runMultiStandardsAudit.js [options]',
+    '',
+    'Options:',
+    `  --image <image>                  Standards workbench image (default: ${DEFAULT_STANDARDS_IMAGE})`,
+    `  --requirements-spec-scope <mode>  requirements_quality_check scope (default: ${DEFAULT_REQUIREMENTS_SPEC_SCOPE})`,
+    `  --save-dir <dir>                 Output root (default: ${DEFAULT_SAVE_DIR})`,
+    '  --run-id <id>                    Output run id directory (default: UTC timestamp)',
+    '  --keep-snapshot                  Leave the tracked-worktree snapshot on disk for troubleshooting',
+    '  --help                           Show this help'
+  ].join('\n');
+}
+
+function takeValue(argv, index, flag) {
+  const value = argv[index + 1];
+  if (!value || value.startsWith('--')) {
+    throw new Error(`${flag} requires a value.`);
+  }
+  return value;
+}
+
+function buildRunId(date = new Date()) {
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+
+function parseArgs(argv) {
+  const options = {
+    image: DEFAULT_STANDARDS_IMAGE,
+    requirementsSpecScope: DEFAULT_REQUIREMENTS_SPEC_SCOPE,
+    saveDir: DEFAULT_SAVE_DIR,
+    runId: undefined,
+    keepSnapshot: false,
+    help: false
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    switch (arg) {
+      case '--image':
+        options.image = takeValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--requirements-spec-scope':
+        options.requirementsSpecScope = takeValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--save-dir':
+        options.saveDir = takeValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--run-id':
+        options.runId = takeValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--keep-snapshot':
+        options.keepSnapshot = true;
+        break;
+      case '--help':
+      case '-h':
+        options.help = true;
+        break;
+      default:
+        throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+
+  return options;
+}
+
+function runCommand(command, args, deps = {}) {
+  const spawnSync = deps.spawnSync || childProcess.spawnSync;
+  const result = spawnSync(command, args, {
+    cwd: deps.cwd,
+    encoding: 'utf8',
+    shell: false,
+    timeout: deps.timeoutMs || COMMAND_TIMEOUT_MS
+  });
+  return {
+    command,
+    args,
+    status: typeof result.status === 'number' ? result.status : 1,
+    stdout: result.stdout || '',
+    stderr: result.stderr || '',
+    error: result.error ? String(result.error.message || result.error) : ''
+  };
+}
+
+function commandLine(command, args) {
+  return [command, ...args].map((part) => (part.includes(' ') ? JSON.stringify(part) : part)).join(' ');
+}
+
+function ensureDir(dirPath, deps = {}) {
+  const mkdirSync = deps.mkdirSync || fs.mkdirSync;
+  mkdirSync(dirPath, { recursive: true });
+}
+
+function writeText(filePath, content, deps = {}) {
+  ensureDir(path.dirname(filePath), deps);
+  const writeFileSync = deps.writeFileSync || fs.writeFileSync;
+  writeFileSync(filePath, content, 'utf8');
+}
+
+function writeJson(filePath, payload, deps = {}) {
+  writeText(filePath, `${JSON.stringify(payload, null, 2)}\n`, deps);
+}
+
+function parseJsonOrUndefined(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
+function directDockerSteps(options) {
+  const mount = '${SNAPSHOT}:/target';
+  return [
+    {
+      name: 'requirements-quality-system',
+      file: 'requirements-quality-system.json',
+      command: 'docker',
+      args: [
+        'run',
+        '--rm',
+        '-v',
+        mount,
+        options.image,
+        'python3',
+        'scripts/requirements_quality_check.py',
+        '/target',
+        '--requirements-spec-scope',
+        options.requirementsSpecScope,
+        '--json'
+      ]
+    },
+    {
+      name: 'external-user-information',
+      file: 'external-user-information.json',
+      command: 'docker',
+      args: [
+        'run',
+        '--rm',
+        '-v',
+        mount,
+        options.image,
+        'python3',
+        'scripts/external_user_information_check.py',
+        '/target',
+        '--json'
+      ]
+    }
+  ];
+}
+
+function profileDockerSteps(options) {
+  const mount = '${SNAPSHOT}:/target';
+  const outputMount = '${OUTPUT}:/out';
+  const gateSteps = GATE_SCORECARD_PROFILES.map((profile) => ({
+    name: profile,
+    file: `${profile}-gate-scorecard.txt`,
+    saveDir: `${profile}/target`,
+    output: 'gate-scorecard'
+  }));
+  const portfolioStep = {
+    name: PORTFOLIO_PROFILE,
+    file: `${PORTFOLIO_PROFILE}-table.txt`,
+    saveDir: PORTFOLIO_PROFILE,
+    output: 'portfolio-table'
+  };
+
+  return [...gateSteps, portfolioStep].map((step) => ({
+    ...step,
+    command: 'docker',
+    args: [
+      'run',
+      '--rm',
+      '-v',
+      mount,
+      '-v',
+      outputMount,
+      options.image,
+      'python3',
+      'scripts/run_assurance.py',
+      '/target',
+      '--profile',
+      step.name,
+      '--depth',
+      'deep',
+      '--include-snippets',
+      '--max-examples',
+      '8',
+      '--max-evidence-per-rule',
+      '8',
+      '--save-dir',
+      `/out/${step.saveDir}`,
+      '--output',
+      step.output,
+      '--no-validate-workflows'
+    ]
+  }));
+}
+
+function replaceAuditMounts(args, snapshotPath, outputDir) {
+  return args.map((arg) => {
+    if (arg === '${SNAPSHOT}:/target') {
+      return `${snapshotPath}:/target`;
+    }
+    if (arg === '${OUTPUT}:/out') {
+      return `${outputDir}:/out`;
+    }
+    return arg;
+  });
+}
+
+function writeCommandArtifacts(outputDir, step, result, deps = {}) {
+  writeText(path.join(outputDir, step.file), result.stdout, deps);
+  if (result.stderr) {
+    writeText(path.join(outputDir, `${step.name}.stderr.txt`), result.stderr, deps);
+  }
+}
+
+function runAuditStep(outputDir, step, snapshotPath, deps = {}) {
+  const args = replaceAuditMounts(step.args, snapshotPath, outputDir);
+  const result = runCommand(step.command, args, deps);
+  writeCommandArtifacts(outputDir, step, result, deps);
+  return { ...step, args, status: result.status, stdout: result.stdout, stderr: result.stderr, error: result.error };
+}
+
+function summarizeExternalUserInformation(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return { ok: false, findingCount: undefined, checkedPathCount: undefined };
+  }
+  const findings = Array.isArray(payload.findings) ? payload.findings : [];
+  const checkedPaths = Array.isArray(payload.checkedPaths) ? payload.checkedPaths : [];
+  return {
+    ok: payload.ok === true,
+    findingCount: findings.length,
+    checkedPathCount: checkedPaths.length
+  };
+}
+
+function summarizeDirectStep(step) {
+  const payload = parseJsonOrUndefined(step.stdout);
+  const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
+  if (step.name === 'requirements-quality-system') {
+    summary.requirementsQuality = summarizeRequirementsQuality(payload);
+  }
+  if (step.name === 'external-user-information') {
+    summary.externalUserInformation = summarizeExternalUserInformation(payload);
+  }
+  return summary;
+}
+
+function summarizeProfileStep(step) {
+  const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
+  if (step.output === 'gate-scorecard') {
+    summary.scorecard = parseGateScorecard(step.stdout || '');
+  }
+  if (step.output === 'portfolio-table') {
+    summary.portfolio = { tableFile: step.file };
+  }
+  return summary;
+}
+
+function directStepIsClean(step) {
+  if (step.status !== 0) {
+    return false;
+  }
+  const summary = summarizeDirectStep(step);
+  if (summary.requirementsQuality) {
+    return summary.requirementsQuality.ok === true;
+  }
+  if (summary.externalUserInformation) {
+    return summary.externalUserInformation.ok === true;
+  }
+  return true;
+}
+
+function renderMarkdown(context) {
+  const lines = [];
+  lines.push('# Multi-Standard Audit');
+  lines.push('');
+  lines.push(`- Standards image: ${context.options.image}`);
+  if (context.imageAccess) {
+    lines.push(`- Docker image access: ${context.imageAccess}`);
+  }
+  lines.push(`- Requirements scope: ${context.options.requirementsSpecScope}`);
+  lines.push(`- Output directory: ${context.outputDir}`);
+  lines.push(`- Snapshot: ${context.snapshot.mode}, ${context.snapshot.trackedFileCount} tracked files`);
+  if (context.snapshot.removed === false) {
+    lines.push(`- Snapshot retained: ${context.snapshot.path}`);
+  }
+  lines.push('');
+  lines.push('## Command Results');
+  lines.push('');
+  for (const step of context.imagePreparation) {
+    lines.push(`- ${step.name}: ${step.status === 0 ? 'pass' : `FAIL (${step.status})`}`);
+  }
+  for (const step of context.directChecks) {
+    lines.push(`- ${step.name}: ${step.status === 0 ? 'pass' : `FAIL (${step.status})`} -> ${step.file}`);
+  }
+  for (const step of context.profiles) {
+    lines.push(`- ${step.name}: ${step.status === 0 ? 'pass' : `FAIL (${step.status})`} -> ${step.file}`);
+  }
+  lines.push('');
+  lines.push('## Signals');
+  lines.push('');
+  for (const step of context.directChecks.map(summarizeDirectStep)) {
+    if (step.requirementsQuality) {
+      lines.push(`- Requirements quality: ${step.requirementsQuality.ok ? 'ok' : 'not ok'}${typeof step.requirementsQuality.findingCount === 'number' ? ` (${step.requirementsQuality.findingCount} finding(s))` : ''}`);
+    }
+    if (step.externalUserInformation) {
+      const checked = typeof step.externalUserInformation.checkedPathCount === 'number'
+        ? `, ${step.externalUserInformation.checkedPathCount} checked path(s)`
+        : '';
+      lines.push(`- External user information: ${step.externalUserInformation.ok ? 'ok' : 'not ok'}${typeof step.externalUserInformation.findingCount === 'number' ? ` (${step.externalUserInformation.findingCount} finding(s)${checked})` : ''}`);
+    }
+  }
+  for (const step of context.profiles.map(summarizeProfileStep)) {
+    if (step.scorecard && Object.keys(step.scorecard).length > 0) {
+      lines.push(`- ${step.name}: ${Object.entries(step.scorecard).map(([gate, status]) => `${gate}=${status}`).join(', ')}`);
+    } else if (step.portfolio) {
+      lines.push(`- ${step.name}: see ${step.portfolio.tableFile}`);
+    }
+  }
+  lines.push('');
+  lines.push('## Prioritization Use');
+  lines.push('');
+  lines.push('- Treat direct 29148 and 26514 failures as the first fix candidates because they report exact requirement or user-information findings.');
+  lines.push('- Treat profile gate failures as cross-standard candidates and inspect the matching saved profile evidence before opening a follow-up issue.');
+  lines.push('- When all checks pass, retain the packet as advisory assurance evidence; it is not a hosted CI gate or release substitute.');
+  return lines.join('\n');
+}
+
+function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
+  const options = parseArgs(argv);
+  if (options.help) {
+    return { exitCode: 0, markdown: usage(), context: { options } };
+  }
+
+  const cwd = deps.cwd || process.cwd();
+  const runId = options.runId || buildRunId(deps.now ? deps.now() : new Date());
+  const outputDir = path.resolve(cwd, options.saveDir, runId);
+  ensureDir(outputDir, deps);
+  writeText(path.join(outputDir, 'image.txt'), `${options.image}\n`, deps);
+
+  const createSnapshot = deps.createTrackedWorktreeSnapshot || createTrackedWorktreeSnapshot;
+  const removeSnapshot = deps.removeTrackedWorktreeSnapshot || removeTrackedWorktreeSnapshot;
+  const snapshot = createSnapshot(cwd, deps);
+  writeJson(path.join(outputDir, 'snapshot.json'), snapshot, deps);
+  writeText(path.join(outputDir, 'snapshot-path.txt'), `${snapshot.path}\n`, deps);
+
+  try {
+    const { imageInspect, imagePreparation, imageAccess } = prepareStandardsImage(options, outputDir, deps, cwd);
+    const directChecks = imageInspect.status === 0
+      ? directDockerSteps(options).map((step) => runAuditStep(outputDir, step, snapshot.path, { ...deps, cwd }))
+      : [];
+    const profiles = imageInspect.status === 0
+      ? profileDockerSteps(options).map((step) => runAuditStep(outputDir, step, snapshot.path, { ...deps, cwd }))
+      : [];
+
+    const context = {
+      schemaVersion: 1,
+      options: { ...options, runId },
+      outputDir,
+      imageAccess,
+      imagePreparation: imagePreparation.map((step) => ({
+        name: step.name,
+        file: step.file,
+        status: step.status,
+        command: commandLine(step.command, step.args)
+      })),
+      snapshot: { ...snapshot, removed: !options.keepSnapshot },
+      directChecks,
+      profiles
+    };
+    const markdown = renderMarkdown(context);
+    const summary = {
+      ...context,
+      directChecks: directChecks.map(summarizeDirectStep),
+      profiles: profiles.map(summarizeProfileStep),
+      success: imageInspect.status === 0 && directChecks.every(directStepIsClean) && profiles.every((step) => step.status === 0)
+    };
+    writeJson(path.join(outputDir, 'audit-summary.json'), summary, deps);
+    writeText(path.join(outputDir, 'audit-summary.md'), markdown, deps);
+    return { exitCode: summary.success ? 0 : 1, markdown, context: summary };
+  } finally {
+    if (!options.keepSnapshot) {
+      removeSnapshot(snapshot, deps);
+    }
+  }
+}
+
+function main(argv = process.argv.slice(2), deps = {}) {
+  try {
+    const result = runMultiStandardsAudit(argv, deps);
+    (deps.stdout || process.stdout).write(`${result.markdown}\n`);
+    return result.exitCode;
+  } catch (error) {
+    (deps.stderr || process.stderr).write(`${error instanceof Error ? error.message : String(error)}\n\n${usage()}\n`);
+    return 1;
+  }
+}
+
+if (require.main === module) {
+  process.exitCode = main();
+}
+
+module.exports = {
+  DEFAULT_SAVE_DIR,
+  DEFAULT_REQUIREMENTS_SPEC_SCOPE,
+  GATE_SCORECARD_PROFILES,
+  PORTFOLIO_PROFILE,
+  buildRunId,
+  parseArgs,
+  directDockerSteps,
+  profileDockerSteps,
+  replaceAuditMounts,
+  summarizeExternalUserInformation,
+  summarizeDirectStep,
+  summarizeProfileStep,
+  renderMarkdown,
+  runMultiStandardsAudit,
+  main
+};
