@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const {
   REQUIREMENTS_HEALTH_SCHEMA_VERSION,
+  REQUIREMENTS_HEALTH_SCHEMA_ID,
   REQUIREMENTS_HEALTH_JSON_SCHEMA,
   ATTENTION_REASON_IDS,
   computeMutationScore,
@@ -29,6 +30,7 @@ const {
   main
 } = require('../../scripts/verifyRequirementsHealth.js') as {
   REQUIREMENTS_HEALTH_SCHEMA_VERSION: number;
+  REQUIREMENTS_HEALTH_SCHEMA_ID: string;
   REQUIREMENTS_HEALTH_JSON_SCHEMA: Record<string, unknown>;
   ATTENTION_REASON_IDS: { unlinked: string; uncitedCriteria: string; coverageRisk: string };
   computeMutationScore: (report: unknown) => {
@@ -407,8 +409,9 @@ describe('requirement verification health (VHS-REQ-601)', () => {
 
   it('renders the versioned JSON Schema for machine-readable health output', () => {
     const schema = JSON.parse(renderRequirementsHealthJsonSchema()) as {
+      $id: string;
       required: string[];
-      properties: { schemaVersion: { const: number }; provenance: { $ref: string } };
+      properties: { $schema: { const: string }; schemaVersion: { const: number }; provenance: { $ref: string } };
       $defs: {
         attentionReason: { properties: { reasonId: { enum: string[] } } };
         provenance: { properties: { outputMode: { enum: string[] } } };
@@ -428,13 +431,20 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       'healthy',
       'summary'
     ]);
+    expect(schema.$id).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
+    expect(schema.properties.$schema.const).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
     expect(schema.properties.schemaVersion.const).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(schema.properties.provenance.$ref).toBe('#/$defs/provenance');
     expect(schema.$defs.attentionReason.properties.reasonId.enum).toEqual(Object.values(ATTENTION_REASON_IDS));
     expect(schema.$defs.provenance.properties.outputMode.enum).toEqual(['text', 'json', 'markdown']);
-    expect((REQUIREMENTS_HEALTH_JSON_SCHEMA.properties as { schemaVersion: { const: number } }).schemaVersion.const).toBe(
-      REQUIREMENTS_HEALTH_SCHEMA_VERSION
-    );
+    expect(
+      (REQUIREMENTS_HEALTH_JSON_SCHEMA.properties as { $schema: { const: string }; schemaVersion: { const: number } })
+        .$schema.const
+    ).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
+    expect(
+      (REQUIREMENTS_HEALTH_JSON_SCHEMA.properties as { $schema: { const: string }; schemaVersion: { const: number } })
+        .schemaVersion.const
+    ).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
   });
 
   it('renders Markdown evidence with escaped attention details', () => {
@@ -561,6 +571,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
 
     const output = JSON.parse(String((writeCalls[0] as unknown[])[1])) as {
+      $schema: string;
       schemaVersion: number;
       summary: { status: string; reasonCounts: { coverageRisk: number } };
       attention: Array<{ attentionReasons: Array<{ reasonId: string }> }>;
@@ -569,6 +580,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(stdoutChunks.join('')).toBe(
       '[requirements-verify] Wrote report output to evidence/requirements-health.json\n'
     );
+    expect(output.$schema).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
     expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(output.summary).toMatchObject({ status: 'ATTENTION', reasonCounts: { coverageRisk: 1 } });
     expect(output.attention[0].attentionReasons.map((reason) => reason.reasonId)).toEqual([
@@ -610,6 +622,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
 
     const schema = JSON.parse(String((writeCalls[0] as unknown[])[1])) as {
+      $id: string;
       properties: { schemaVersion: { const: number } };
       required: string[];
     };
@@ -617,6 +630,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(stdoutChunks.join('')).toBe(
       '[requirements-verify] Wrote schema output to evidence/requirements-health.schema.json\n'
     );
+    expect(schema.$id).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
     expect(schema.properties.schemaVersion.const).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(schema.required).toContain('summary');
   });
@@ -635,6 +649,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
 
     const output = JSON.parse(String((writeCalls[0] as unknown[])[1])) as {
+      $schema: string;
       schemaVersion: number;
       provenance: { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
       summary: { status: string };
@@ -643,6 +658,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(stdoutChunks.join('')).toBe(
       '[requirements-verify] Wrote report output to evidence/requirements-health.json\n'
     );
+    expect(output.$schema).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
     expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(output.provenance).toEqual({
       generatedAt: '2026-07-14T12:00:00.000Z',
@@ -750,6 +766,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
 
     const output = JSON.parse(stdoutChunks.join('')) as {
+      $schema: string;
       schemaVersion: number;
       attention: Array<{
         reqId: string;
@@ -758,6 +775,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       summary: unknown;
     };
     expect(code).toBe(0);
+    expect(output.$schema).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
     expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(
       output.attention.map((entry) => [entry.reqId, entry.attentionReasons.map((reason) => reason.reasonId)])
@@ -777,11 +795,13 @@ describe('requirement verification health (VHS-REQ-601)', () => {
   it('keeps provenance out of default JSON unless requested', () => {
     const result = verifyRequirementsHealth('/repo', OUTPUT_FIXTURE);
     const output = JSON.parse(renderRequirementsHealthOutput(result, { json: true })) as {
+      $schema: string;
       schemaVersion: number;
       provenance?: unknown;
       summary: { status: string };
     };
 
+    expect(output.$schema).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
     expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(output.provenance).toBeUndefined();
     expect(output.summary.status).toBe('ATTENTION');
