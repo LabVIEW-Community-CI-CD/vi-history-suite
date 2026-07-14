@@ -326,6 +326,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const expectedActiveRulesetSourceType = options.expectedActiveRulesetSourceType || EXPECTED_ACTIVE_RULESET_SOURCE_TYPE;
   const expectedActiveRulesetSource = options.expectedActiveRulesetSource || options.repo || DEFAULT_REPO;
   const expectedActiveRulesetRuleTypes = options.expectedActiveRulesetRuleTypes || EXPECTED_ACTIVE_RULESET_RULE_TYPES;
+  const expectedActiveRulesetRuleCount = expectedActiveRulesetRuleTypes.length;
   const requireAdvisory = Boolean(options.requireAdvisory);
   const requireReview = Boolean(options.requireReview);
   const requireLinearHistory = Boolean(options.requireLinearHistory);
@@ -370,6 +371,9 @@ function evaluateBranchProtection(settings, options = {}) {
   const rulesetsWithUnexpectedSources = expectedActiveBranchRulesets
     .map((name) => activeRulesetsByName.get(name))
     .filter((ruleset) => ruleset && (ruleset.sourceType !== expectedActiveRulesetSourceType || ruleset.source !== expectedActiveRulesetSource));
+  const rulesetsWithUnexpectedRuleCounts = expectedActiveBranchRulesets
+    .map((name) => activeRulesetsByName.get(name))
+    .filter((ruleset) => ruleset && ruleset.ruleCount !== expectedActiveRulesetRuleCount);
   const rulesetsMissingRuleTypes = expectedActiveBranchRulesets
     .map((name) => {
       const ruleset = activeRulesetsByName.get(name);
@@ -509,6 +513,15 @@ function evaluateBranchProtection(settings, options = {}) {
         ? `${expectedActiveRulesetSourceType} ${expectedActiveRulesetSource} on ${expectedActiveBranchRulesets.join(', ')}`
         : rulesetsWithUnexpectedSources
           .map((ruleset) => `${ruleset.name} source ${ruleset.sourceType} ${ruleset.source}; expected ${expectedActiveRulesetSourceType} ${expectedActiveRulesetSource}`)
+          .join('; ')
+    },
+    {
+      name: 'active branch ruleset rule count',
+      passed: rulesetsWithUnexpectedRuleCounts.length === 0,
+      details: rulesetsWithUnexpectedRuleCounts.length === 0
+        ? `${expectedActiveRulesetRuleCount} rules on ${expectedActiveBranchRulesets.join(', ')}`
+        : rulesetsWithUnexpectedRuleCounts
+          .map((ruleset) => `${ruleset.name} rule count ${ruleset.ruleCount}; expected ${expectedActiveRulesetRuleCount}; observed: ${ruleset.ruleTypes.join(', ') || 'none'}`)
           .join('; ')
     },
     {

@@ -314,6 +314,7 @@ describe('branch protection audit evaluation', () => {
       'unexpected active branch rulesets',
       'duplicate active branch rulesets',
       'active branch ruleset sources',
+      'active branch ruleset rule count',
       'active branch ruleset rules',
       'unexpected active branch ruleset rules',
       'duplicate active branch ruleset rules',
@@ -336,6 +337,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset sources')).toMatchObject({
       passed: true,
       details: 'Repository LabVIEW-Community-CI-CD/vi-history-suite on develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'active branch ruleset rule count')).toMatchObject({
+      passed: true,
+      details: '2 rules on develop, main'
     });
     expect(result.checks.find((check) => check.name === 'required deployments disabled')).toMatchObject({
       passed: true,
@@ -480,6 +485,23 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset sources')).toMatchObject({
       passed: false,
       details: 'develop source Organization LabVIEW-Community-CI-CD; expected Repository LabVIEW-Community-CI-CD/vi-history-suite'
+    });
+  });
+
+  it('fails closed when active branch ruleset rule counts drift', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, rules: [...developRuleset.rules, { type: '' }] },
+        mainRuleset
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch ruleset rule count')).toMatchObject({
+      passed: false,
+      details: 'develop rule count 3; expected 2; observed: deletion, non_fast_forward'
     });
   });
 
@@ -965,7 +987,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(22);
+    expect(output.checks).toHaveLength(23);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
