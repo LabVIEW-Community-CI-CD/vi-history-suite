@@ -20,8 +20,11 @@ const {
   summarizeRetainedStandardsCoverage,
   summarizeRetainedStandardsEvidence,
   summarizePortfolioTable,
+  buildStandardsGateStrengthSummary,
+  buildStandardsGateDetailSummary,
   renderStandardsEvidenceSummary,
   renderStandardsGateStrengthSummary,
+  renderStandardsGateDetailSummary,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
   DEFAULT_SAVE_DIR: string;
@@ -82,10 +85,56 @@ const {
     evidencePaths: string[];
     profiles: string[];
   }>) => string[];
+  buildStandardsGateStrengthSummary: (profiles: Array<{
+    name: string;
+    standardsEvidence?: Array<{
+      id?: string;
+      summary?: string;
+      standards: string[];
+      evidencePaths: string[];
+    }>;
+    scoreFile?: string;
+  }>) => Array<{
+    id?: string;
+    summary?: string;
+    standards: string[];
+    profiles: string[];
+    scoreFiles: string[];
+  }>;
+  buildStandardsGateDetailSummary: (profiles: Array<{
+    name: string;
+    scorecardDetails?: Record<string, {
+      status?: string;
+      confidence?: string;
+      basis?: string;
+      standards?: string[];
+      missingProof: string[];
+    }>;
+    scoreFile?: string;
+  }>) => Array<{
+    gate: string;
+    status?: string;
+    confidence?: string;
+    basis?: string;
+    standards: string[];
+    missingProof: string[];
+    profiles: string[];
+    scoreFiles: string[];
+  }>;
   renderStandardsGateStrengthSummary: (summary: Array<{
     id?: string;
     summary?: string;
     standards: string[];
+    profiles: string[];
+    scoreFiles: string[];
+  }>) => string[];
+  renderStandardsGateDetailSummary: (summary: Array<{
+    gate: string;
+    status?: string;
+    confidence?: string;
+    basis?: string;
+    standards: string[];
+    missingProof: string[];
     profiles: string[];
     scoreFiles: string[];
   }>) => string[];
@@ -178,6 +227,16 @@ const {
         id?: string;
         summary?: string;
         standards: string[];
+        profiles: string[];
+        scoreFiles: string[];
+      }>;
+      standardsGateDetailSummary?: Array<{
+        gate: string;
+        status?: string;
+        confidence?: string;
+        basis?: string;
+        standards: string[];
+        missingProof: string[];
         profiles: string[];
         scoreFiles: string[];
       }>;
@@ -533,6 +592,95 @@ describe('multi standards audit script', () => {
     ])).toContain('| req gate uses backslash \\\\ and a \\| delimiter. | 29148 | quick-triage | quick-triage\\\\target\\|score.json |');
   });
 
+  it('keeps differing retained gate strength summaries separate', () => {
+    expect(buildStandardsGateStrengthSummary([
+      {
+        name: 'quick-triage',
+        scoreFile: 'quick-triage/target/score.json',
+        standardsEvidence: [
+          {
+            id: 'gate-req',
+            summary: 'req gate passes with High confidence.',
+            standards: ['29148'],
+            evidencePaths: []
+          }
+        ]
+      },
+      {
+        name: 'release-gate',
+        scoreFile: 'release-gate/target/score.json',
+        standardsEvidence: [
+          {
+            id: 'gate-req',
+            summary: 'req gate passes with Medium confidence.',
+            standards: ['29148'],
+            evidencePaths: []
+          }
+        ]
+      }
+    ])).toEqual([
+      {
+        id: 'gate-req',
+        summary: 'req gate passes with High confidence.',
+        standards: ['29148'],
+        profiles: ['quick-triage'],
+        scoreFiles: ['quick-triage/target/score.json']
+      },
+      {
+        id: 'gate-req',
+        summary: 'req gate passes with Medium confidence.',
+        standards: ['29148'],
+        profiles: ['release-gate'],
+        scoreFiles: ['release-gate/target/score.json']
+      }
+    ]);
+  });
+
+  it('groups and escapes retained gate detail Markdown cells', () => {
+    const summary = buildStandardsGateDetailSummary([
+      {
+        name: 'quick-triage',
+        scoreFile: 'quick-triage/target/score.json',
+        scorecardDetails: {
+          dod: {
+            status: 'PASS',
+            confidence: 'Med',
+            basis: 'DoD basis uses backslash \\ and a | delimiter.',
+            standards: [],
+            missingProof: []
+          }
+        }
+      },
+      {
+        name: 'release-gate',
+        scoreFile: 'release-gate/target/score.json',
+        scorecardDetails: {
+          dod: {
+            status: 'PASS',
+            confidence: 'Med',
+            basis: 'DoD basis uses backslash \\ and a | delimiter.',
+            standards: [],
+            missingProof: []
+          }
+        }
+      }
+    ]);
+
+    expect(summary).toEqual([
+      {
+        gate: 'dod',
+        status: 'PASS',
+        confidence: 'Med',
+        basis: 'DoD basis uses backslash \\ and a | delimiter.',
+        standards: [],
+        missingProof: [],
+        profiles: ['quick-triage', 'release-gate'],
+        scoreFiles: ['quick-triage/target/score.json', 'release-gate/target/score.json']
+      }
+    ]);
+    expect(renderStandardsGateDetailSummary(summary)).toContain('| dod | PASS | Med | none | DoD basis uses backslash \\\\ and a \\| delimiter. | - | quick-triage, release-gate | quick-triage/target/score.json<br>release-gate/target/score.json |');
+  });
+
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {
     const root = makeTempRoot();
     const snapshotPath = path.join(root, 'snapshot');
@@ -590,8 +738,8 @@ describe('multi standards audit script', () => {
     expect(result.markdown).toContain('| REQ maturity is 5/5 with High confidence. | 29148 | quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review | .github/instructions/requirements-and-test-docs.instructions.md<br>.github/prompts/requirement-target-execution.prompt.md<br>.github/skills/requirements-traceability/assets/requirement-target-scaffold.md |');
     expect(result.markdown).toContain('## Standards Gate Strength Summary');
     expect(result.markdown).toContain('| coverage gate passes with High confidence. | 29119-2/29119-3 | quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review | quick-triage/target/score.json<br>release-gate/target/score.json<br>26514-review/target/score.json<br>due-diligence/target/score.json<br>compliance-uplift/target/score.json<br>portfolio-review/repos/target/score.json |');
-    expect(result.markdown).toContain('quick-triage dod: basis=Report DoD only when a DoD Gate / dod context is visible.; standards=none (see quick-triage/target/score.json)');
-    expect(result.markdown).toContain('portfolio-review dod: basis=Report DoD only when a DoD Gate / dod context is visible.; standards=none (see portfolio-review/repos/target/score.json)');
+    expect(result.markdown).toContain('## Standards Gate Detail Summary');
+    expect(result.markdown).toContain('| dod | PASS | Med | none | Report DoD only when a DoD Gate / dod context is visible. | - | quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review | quick-triage/target/score.json<br>release-gate/target/score.json<br>26514-review/target/score.json<br>due-diligence/target/score.json<br>compliance-uplift/target/score.json<br>portfolio-review/repos/target/score.json |');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
     expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
       status: 'PASS',
@@ -637,6 +785,23 @@ describe('multi standards audit script', () => {
       id: 'gate-coverage',
       summary: 'coverage gate passes with High confidence.',
       standards: ['29119-2', '29119-3'],
+      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
+      scoreFiles: [
+        'quick-triage/target/score.json',
+        'release-gate/target/score.json',
+        '26514-review/target/score.json',
+        'due-diligence/target/score.json',
+        'compliance-uplift/target/score.json',
+        'portfolio-review/repos/target/score.json'
+      ]
+    });
+    expect(result.context.standardsGateDetailSummary?.find((row) => row.gate === 'dod')).toEqual({
+      gate: 'dod',
+      status: 'PASS',
+      confidence: 'Med',
+      basis: 'Report DoD only when a DoD Gate / dod context is visible.',
+      standards: [],
+      missingProof: [],
       profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
       scoreFiles: [
         'quick-triage/target/score.json',
@@ -717,6 +882,7 @@ describe('multi standards audit script', () => {
     expect(quickTriage?.standardsEvidence).toBeUndefined();
     expect(result.context.standardsEvidenceSummary?.some((row) => row.profiles.includes('quick-triage'))).toBe(false);
     expect(result.context.standardsGateStrengthSummary?.some((row) => row.profiles.includes('quick-triage'))).toBe(false);
+    expect(result.context.standardsGateDetailSummary?.some((row) => row.profiles.includes('quick-triage'))).toBe(false);
     expect(result.markdown).not.toContain('quick-triage dod:');
     expect(fs.existsSync(staleScorePath)).toBe(false);
   });
