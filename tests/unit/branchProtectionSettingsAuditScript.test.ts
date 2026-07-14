@@ -46,6 +46,8 @@ const {
   rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
+  summarizeAuditResult,
+  summarizeBranchResults,
   branchesForOptions,
   auditBranches,
   main
@@ -161,6 +163,30 @@ const {
     result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] },
     options?: { repo?: string; branch?: string }
   ) => string;
+  summarizeAuditResult: (
+    result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] }
+  ) => {
+    totalChecks: number;
+    passedChecks: number;
+    failedChecks: number;
+    noticeCount: number;
+    failures: Array<{ name: string; details: string }>;
+  };
+  summarizeBranchResults: (
+    branchResults: Array<{
+      branch: string;
+      result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
+    }>
+  ) => {
+    totalBranches: number;
+    passedBranches: number;
+    failedBranches: number;
+    totalChecks: number;
+    passedChecks: number;
+    failedChecks: number;
+    noticeCount: number;
+    failures: Array<{ branch: string; name: string; details: string }>;
+  };
   branchesForOptions: (options?: { branch?: string; allBranches?: boolean }) => string[];
   auditBranches: (options?: Record<string, unknown>, deps?: Record<string, unknown>) => Array<{ branch: string; result: { success: boolean } }>;
   rulesetRuleKeys: (ruleset: unknown) => string[];
@@ -765,6 +791,51 @@ describe('branch protection audit evaluation', () => {
     expect(renderResult(result, { repo: DEFAULT_REPO, branch: DEFAULT_BRANCH })).toContain(
       '[branch-protection-audit] Audit failed.'
     );
+  });
+
+  it('summarizes audit results for JSON evidence consumers', () => {
+    const failingResult = evaluateBranchProtection({
+      protection: protection({
+        strict: false,
+        contexts: ['Build, Test, Package'],
+        enforceAdmins: false,
+        allowForcePushes: true,
+        allowDeletions: true,
+        lockBranch: true,
+        allowForkSyncing: true,
+        requiredDeployments: true,
+        pushRestrictions: true
+      }),
+      rulesets: []
+    });
+    const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
+    const failingSummary = summarizeAuditResult(failingResult);
+
+    expect(failingSummary).toMatchObject({
+      totalChecks: 33,
+      passedChecks: 20,
+      failedChecks: 13,
+      noticeCount: 3
+    });
+    expect(failingSummary.failures.slice(0, 2)).toEqual([
+      { name: 'required status checks are strict', details: 'missing or disabled' },
+      { name: 'required status check contexts', details: 'missing: Windows Unit Tests, Integration Host (Linux); present: Build, Test, Package' }
+    ]);
+
+    const aggregateSummary = summarizeBranchResults([
+      { branch: 'develop', result: failingResult },
+      { branch: 'main', result: passingResult }
+    ]);
+    expect(aggregateSummary).toMatchObject({
+      totalBranches: 2,
+      passedBranches: 1,
+      failedBranches: 1,
+      totalChecks: 66,
+      passedChecks: 53,
+      failedChecks: 13,
+      noticeCount: 6
+    });
+    expect(aggregateSummary.failures[0]).toEqual({ branch: 'develop', name: 'required status checks are strict', details: 'missing or disabled' });
   });
 
   it('fails closed when expected active branch rulesets drift', () => {
@@ -1689,6 +1760,7 @@ describe('branch protection audit main', () => {
       repo: string;
       branch: string;
       success: boolean;
+      summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] };
       checks: unknown[];
       notices: unknown[];
       branches?: unknown[];
@@ -1701,6 +1773,13 @@ describe('branch protection audit main', () => {
       repo: DEFAULT_REPO,
       branch: DEFAULT_BRANCH,
       success: true
+    });
+    expect(output.summary).toEqual({
+      totalChecks: 33,
+      passedChecks: 33,
+      failedChecks: 0,
+      noticeCount: 3,
+      failures: []
     });
     expect(output.checks).toHaveLength(33);
     expect(output.notices.length).toBeGreaterThan(0);
@@ -1720,7 +1799,8 @@ describe('branch protection audit main', () => {
       schemaVersion: number;
       repo: string;
       success: boolean;
-      branches: Array<{ branch: string; success: boolean }>;
+      summary: { totalBranches: number; passedBranches: number; failedBranches: number; totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] };
+      branches: Array<{ branch: string; success: boolean; summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] } }>;
       branch?: string;
       checks?: unknown[];
       notices?: unknown[];
@@ -1733,11 +1813,80 @@ describe('branch protection audit main', () => {
       repo: DEFAULT_REPO,
       success: true
     });
+    expect(output.summary).toEqual({
+      totalBranches: 2,
+      passedBranches: 2,
+      failedBranches: 0,
+      totalChecks: 66,
+      passedChecks: 66,
+      failedChecks: 0,
+      noticeCount: 6,
+      failures: []
+    });
     expect(output.branches.map((item) => item.branch)).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(output.branches.every((item) => item.success)).toBe(true);
+    expect(output.branches.map((item) => item.summary.totalChecks)).toEqual([33, 33]);
+    expect(output.branches.every((item) => item.summary.failedChecks === 0)).toBe(true);
     expect(output.branch).toBeUndefined();
     expect(output.checks).toBeUndefined();
     expect(output.notices).toBeUndefined();
+  });
+
+  it('emits aggregate JSON failure summaries when opt-in hardening checks fail', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--all', '--json', '--require-advisory'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+    const output = JSON.parse(stdout.read()) as {
+      success: boolean;
+      summary: {
+        totalBranches: number;
+        passedBranches: number;
+        failedBranches: number;
+        totalChecks: number;
+        passedChecks: number;
+        failedChecks: number;
+        noticeCount: number;
+        failures: Array<{ branch: string; name: string; details: string }>;
+      };
+      branches: Array<{ branch: string; success: boolean; summary: { failedChecks: number; failures: Array<{ name: string; details: string }> } }>;
+    };
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(output.success).toBe(false);
+    expect(output.summary).toMatchObject({
+      totalBranches: 2,
+      passedBranches: 0,
+      failedBranches: 2,
+      totalChecks: 68,
+      passedChecks: 66,
+      failedChecks: 2,
+      noticeCount: 6,
+      failures: [
+        {
+          branch: 'develop',
+          name: 'advisory status check contexts',
+          details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
+        },
+        {
+          branch: 'main',
+          name: 'advisory status check contexts',
+          details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
+        }
+      ]
+    });
+    expect(output.branches.map((item) => item.summary.failedChecks)).toEqual([1, 1]);
+    expect(output.branches[0].summary.failures).toEqual([
+      {
+        name: 'advisory status check contexts',
+        details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
+      }
+    ]);
   });
 
   it('returns nonzero when advisory contexts are required but absent', () => {
