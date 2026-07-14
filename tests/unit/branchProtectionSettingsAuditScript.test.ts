@@ -5,6 +5,7 @@ const {
   DEFAULT_BRANCH,
   DEFAULT_REPO,
   EXPECTED_ACTIVE_BRANCH_RULESETS,
+  EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
@@ -30,6 +31,7 @@ const {
   DEFAULT_BRANCH: string;
   DEFAULT_REPO: string;
   EXPECTED_ACTIVE_BRANCH_RULESETS: string[];
+  EXPECTED_ACTIVE_RULESET_SOURCE_TYPE: string;
   EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID: number;
@@ -60,6 +62,8 @@ const {
   requiredStatusCheckAppBindings: (protection: Record<string, unknown>) => Array<{ context: string; appId: number | null }>;
   activeRulesetSummaries: (rulesets: unknown[]) => Array<{
     name: string;
+    sourceType: string;
+    source: string;
     ruleCount: number;
     ruleTypes: string[];
     refNameExclusions: string[];
@@ -83,6 +87,8 @@ const {
       requireBranchCreationBlock?: boolean;
       minimumApprovingReviews?: number;
       expectedActiveBranchRulesets?: string[];
+      expectedActiveRulesetSourceType?: string;
+      expectedActiveRulesetSource?: string;
       expectedActiveRulesetRuleTypes?: string[];
       expectedRequiredStatusCheckAppId?: number;
     }
@@ -168,6 +174,8 @@ function branchRulesets(names = [...EXPECTED_ACTIVE_BRANCH_RULESETS]) {
     name,
     target: 'branch',
     enforcement: 'active',
+    source_type: EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
+    source: DEFAULT_REPO,
     rules: EXPECTED_ACTIVE_RULESET_RULE_TYPES.map((type) => ({ type })),
     bypass_actors: [],
     current_user_can_bypass: 'never'
@@ -305,6 +313,7 @@ describe('branch protection audit evaluation', () => {
       'active branch rulesets',
       'unexpected active branch rulesets',
       'duplicate active branch rulesets',
+      'active branch ruleset sources',
       'active branch ruleset rules',
       'unexpected active branch ruleset rules',
       'duplicate active branch ruleset rules',
@@ -323,6 +332,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'duplicate active branch rulesets')).toMatchObject({
       passed: true,
       details: 'none'
+    });
+    expect(result.checks.find((check) => check.name === 'active branch ruleset sources')).toMatchObject({
+      passed: true,
+      details: 'Repository LabVIEW-Community-CI-CD/vi-history-suite on develop, main'
     });
     expect(result.checks.find((check) => check.name === 'required deployments disabled')).toMatchObject({
       passed: true,
@@ -363,6 +376,8 @@ describe('branch protection audit evaluation', () => {
     expect(activeRulesetSummaries([branchRulesets(['develop'])[0]])).toEqual([
       {
         name: 'develop',
+        sourceType: 'Repository',
+        source: DEFAULT_REPO,
         ruleCount: 2,
         ruleTypes: ['deletion', 'non_fast_forward'],
         refNameExclusions: [],
@@ -448,6 +463,23 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'duplicate active branch rulesets')).toMatchObject({
       passed: false,
       details: 'duplicates: develop (2)'
+    });
+  });
+
+  it('fails closed when expected active branch ruleset sources drift', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, source_type: 'Organization', source: 'LabVIEW-Community-CI-CD' },
+        mainRuleset
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch ruleset sources')).toMatchObject({
+      passed: false,
+      details: 'develop source Organization LabVIEW-Community-CI-CD; expected Repository LabVIEW-Community-CI-CD/vi-history-suite'
     });
   });
 
@@ -933,7 +965,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(21);
+    expect(output.checks).toHaveLength(22);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });

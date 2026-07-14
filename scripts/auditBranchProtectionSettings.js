@@ -6,6 +6,7 @@ const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
 const DEFAULT_AUDIT_BRANCHES = Object.freeze(['develop', 'main']);
 const EXPECTED_ACTIVE_BRANCH_RULESETS = Object.freeze(['develop', 'main']);
+const EXPECTED_ACTIVE_RULESET_SOURCE_TYPE = 'Repository';
 const EXPECTED_ACTIVE_RULESET_RULE_TYPES = Object.freeze(['deletion', 'non_fast_forward']);
 const GH_TIMEOUT_MS = 60000;
 const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze(['gh']);
@@ -281,6 +282,8 @@ function activeRulesetSummaries(rulesets) {
     .filter((ruleset) => ruleset && ruleset.enforcement === 'active' && ruleset.target === 'branch')
     .map((ruleset) => ({
       name: String(ruleset.name || '(unnamed)'),
+      sourceType: String(ruleset.source_type || 'unknown'),
+      source: String(ruleset.source || 'unknown'),
       ruleCount: Array.isArray(ruleset.rules) ? ruleset.rules.length : 0,
       ruleTypes: rulesetRuleTypes(ruleset),
       refNameExclusions: rulesetRefNameExclusions(ruleset),
@@ -320,6 +323,8 @@ function evaluateBranchProtection(settings, options = {}) {
     : EXPECTED_REQUIRED_STATUS_CHECK_APP_ID;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
+  const expectedActiveRulesetSourceType = options.expectedActiveRulesetSourceType || EXPECTED_ACTIVE_RULESET_SOURCE_TYPE;
+  const expectedActiveRulesetSource = options.expectedActiveRulesetSource || options.repo || DEFAULT_REPO;
   const expectedActiveRulesetRuleTypes = options.expectedActiveRulesetRuleTypes || EXPECTED_ACTIVE_RULESET_RULE_TYPES;
   const requireAdvisory = Boolean(options.requireAdvisory);
   const requireReview = Boolean(options.requireReview);
@@ -362,6 +367,9 @@ function evaluateBranchProtection(settings, options = {}) {
   const unexpectedActiveRulesets = activeRulesetNames.filter((name) => !expectedActiveBranchRulesets.includes(name));
   const duplicateActiveRulesets = duplicateNameCounts(activeRulesetNames);
   const activeRulesetsByName = new Map(activeRulesets.map((ruleset) => [ruleset.name, ruleset]));
+  const rulesetsWithUnexpectedSources = expectedActiveBranchRulesets
+    .map((name) => activeRulesetsByName.get(name))
+    .filter((ruleset) => ruleset && (ruleset.sourceType !== expectedActiveRulesetSourceType || ruleset.source !== expectedActiveRulesetSource));
   const rulesetsMissingRuleTypes = expectedActiveBranchRulesets
     .map((name) => {
       const ruleset = activeRulesetsByName.get(name);
@@ -493,6 +501,15 @@ function evaluateBranchProtection(settings, options = {}) {
       details: duplicateActiveRulesets.length === 0
         ? 'none'
         : `duplicates: ${formatDuplicateNameCounts(duplicateActiveRulesets)}`
+    },
+    {
+      name: 'active branch ruleset sources',
+      passed: rulesetsWithUnexpectedSources.length === 0,
+      details: rulesetsWithUnexpectedSources.length === 0
+        ? `${expectedActiveRulesetSourceType} ${expectedActiveRulesetSource} on ${expectedActiveBranchRulesets.join(', ')}`
+        : rulesetsWithUnexpectedSources
+          .map((ruleset) => `${ruleset.name} source ${ruleset.sourceType} ${ruleset.source}; expected ${expectedActiveRulesetSourceType} ${expectedActiveRulesetSource}`)
+          .join('; ')
     },
     {
       name: 'active branch ruleset rules',
@@ -727,6 +744,7 @@ module.exports = {
   DEFAULT_BRANCH,
   DEFAULT_AUDIT_BRANCHES,
   EXPECTED_ACTIVE_BRANCH_RULESETS,
+  EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
