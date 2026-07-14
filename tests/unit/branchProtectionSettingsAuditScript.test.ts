@@ -305,6 +305,7 @@ describe('branch protection audit evaluation', () => {
       'unexpected active branch rulesets',
       'duplicate active branch rulesets',
       'active branch ruleset rules',
+      'unexpected active branch ruleset rules',
       'active branch ruleset bypasses disabled'
     ]);
     expect(result.notices).toContain('advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL');
@@ -331,6 +332,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset rules')).toMatchObject({
       passed: true,
       details: 'present on develop, main: deletion, non_fast_forward'
+    });
+    expect(result.checks.find((check) => check.name === 'unexpected active branch ruleset rules')).toMatchObject({
+      passed: true,
+      details: 'none beyond deletion, non_fast_forward on develop, main'
     });
     expect(result.checks.find((check) => check.name === 'unexpected required status check contexts')).toMatchObject({
       passed: true,
@@ -546,6 +551,23 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset bypasses disabled')).toMatchObject({
       passed: false,
       details: 'main: bypass actors 1, current user can bypass always'
+    });
+  });
+
+  it('fails closed when active branch rulesets include unexpected rules', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, rules: [...developRuleset.rules, { type: 'pull_request' }] },
+        mainRuleset
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'unexpected active branch ruleset rules')).toMatchObject({
+      passed: false,
+      details: 'develop unexpected: pull_request; observed: deletion, non_fast_forward, pull_request'
     });
   });
 
@@ -865,7 +887,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(18);
+    expect(output.checks).toHaveLength(19);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
