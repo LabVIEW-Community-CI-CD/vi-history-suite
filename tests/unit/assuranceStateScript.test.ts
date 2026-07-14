@@ -343,6 +343,57 @@ describe('generateAssuranceState script', () => {
     ]));
   });
 
+  it('does not add a summary fallback when detailed candidate signals exist', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-direct-finding', 'audit-summary.json');
+    const auditSummary = {
+      schemaVersion: 1,
+      success: false,
+      options: { runId: 'audit-direct-finding' },
+      snapshot: { mode: 'tracked-worktree-snapshot', trackedFileCount: 12, removed: true },
+      imagePreparation: [],
+      directChecks: [
+        {
+          name: 'requirements-quality-system',
+          status: 0,
+          file: 'requirements-quality-system.json',
+          command: 'docker run requirements_quality_check.py',
+          requirementsQuality: {
+            ok: false,
+            findingCount: 1,
+            summary: 'One governed requirement has multiple obligations.'
+          }
+        }
+      ],
+      profiles: [],
+      standardsCoverageRationaleSummary: [],
+      standardsEvidenceSummary: [],
+      standardsGateStrengthSummary: [],
+      standardsGateBasisSummary: [],
+      standardsGateDetailSummary: []
+    };
+
+    const state = buildAssuranceState(auditSummary, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-direct-finding',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: { issueLinks: [], prLinks: [], mergeShas: [], requirements: ['VHS-REQ-615'] }
+    });
+
+    expect(state.countsByState.candidate).toBe(1);
+    expect(state.signals.map((signal) => signal.id)).toEqual([
+      'standards-audit:direct-check:requirements-quality-system'
+    ]);
+    expect(state.signals[0]).toMatchObject({
+      state: 'candidate',
+      kind: 'direct-check',
+      status: 'PASS',
+      basis: 'One governed requirement has multiple obligations.'
+    });
+    expect(state.signals.some((signal) => signal.id === 'standards-audit:summary:failed')).toBe(false);
+  });
+
   it('surfaces failed summaries without command details as candidates', () => {
     const cwd = makeTempRoot();
     const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-failed', 'audit-summary.json');
