@@ -8,6 +8,7 @@ const {
   EXPECTED_ACTIVE_RULESET_TARGET,
   EXPECTED_ACTIVE_RULESET_ENFORCEMENT,
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
+  EXPECTED_ACTIVE_RULESET_CONDITION_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
@@ -21,6 +22,7 @@ const {
   requiredApprovingReviewCount,
   requiredStatusContexts,
   requiredStatusCheckAppBindings,
+  rulesetConditionKeys,
   rulesetTargetEnforcementSummaries,
   activeRulesetSummaries,
   rulesetRuleTypes,
@@ -37,6 +39,7 @@ const {
   EXPECTED_ACTIVE_RULESET_TARGET: string;
   EXPECTED_ACTIVE_RULESET_ENFORCEMENT: string;
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE: string;
+  EXPECTED_ACTIVE_RULESET_CONDITION_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID: number;
@@ -65,11 +68,13 @@ const {
   requiredApprovingReviewCount: (protection: Record<string, unknown>) => number;
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
   requiredStatusCheckAppBindings: (protection: Record<string, unknown>) => Array<{ context: string; appId: number | null }>;
+  rulesetConditionKeys: (ruleset: unknown) => string[];
   rulesetTargetEnforcementSummaries: (rulesets: unknown[]) => Array<{ name: string; target: string; enforcement: string }>;
   activeRulesetSummaries: (rulesets: unknown[]) => Array<{
     name: string;
     sourceType: string;
     source: string;
+    conditionKeys: string[];
     ruleCount: number;
     ruleTypes: string[];
     refNameExclusions: string[];
@@ -97,6 +102,7 @@ const {
       expectedActiveRulesetEnforcement?: string;
       expectedActiveRulesetSourceType?: string;
       expectedActiveRulesetSource?: string;
+      expectedActiveRulesetConditionKeys?: string[];
       expectedActiveRulesetRuleTypes?: string[];
       expectedRequiredStatusCheckAppId?: number;
     }
@@ -184,6 +190,7 @@ function branchRulesets(names = [...EXPECTED_ACTIVE_BRANCH_RULESETS]) {
     enforcement: EXPECTED_ACTIVE_RULESET_ENFORCEMENT,
     source_type: EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
     source: DEFAULT_REPO,
+    conditions: { ref_name: { include: [], exclude: [] } },
     rules: EXPECTED_ACTIVE_RULESET_RULE_TYPES.map((type) => ({ type })),
     bypass_actors: [],
     current_user_can_bypass: 'never'
@@ -298,6 +305,10 @@ describe('branch protection audit evaluation', () => {
     expect(rulesetTargetEnforcementSummaries(branchRulesets(['develop']))).toEqual([
       { name: 'develop', target: 'branch', enforcement: 'active' }
     ]);
+    expect(rulesetConditionKeys({ conditions: { repository_name: {}, ref_name: {} } })).toEqual([
+      'ref_name',
+      'repository_name'
+    ]);
   });
 
   it('passes for the current expected develop protection contract', () => {
@@ -326,6 +337,7 @@ describe('branch protection audit evaluation', () => {
       'duplicate active branch rulesets',
       'active branch ruleset target/enforcement',
       'active branch ruleset sources',
+      'active branch ruleset condition keys',
       'active branch ruleset rule count',
       'active branch ruleset rules',
       'unexpected active branch ruleset rules',
@@ -353,6 +365,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset sources')).toMatchObject({
       passed: true,
       details: 'Repository LabVIEW-Community-CI-CD/vi-history-suite on develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'active branch ruleset condition keys')).toMatchObject({
+      passed: true,
+      details: 'ref_name only on develop, main'
     });
     expect(result.checks.find((check) => check.name === 'active branch ruleset rule count')).toMatchObject({
       passed: true,
@@ -399,6 +415,7 @@ describe('branch protection audit evaluation', () => {
         name: 'develop',
         sourceType: 'Repository',
         source: DEFAULT_REPO,
+        conditionKeys: ['ref_name'],
         ruleCount: 2,
         ruleTypes: ['deletion', 'non_fast_forward'],
         refNameExclusions: [],
@@ -518,6 +535,33 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset target/enforcement')).toMatchObject({
       passed: false,
       details: 'develop target tag, enforcement active; expected target branch and enforcement active; main target branch, enforcement disabled; expected target branch and enforcement active'
+    });
+  });
+
+  it('fails closed when active branch rulesets use unexpected condition keys', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, conditions: { ref_name: { include: [], exclude: [] }, repository_name: { include: ['vi-history-suite'] } } },
+        mainRuleset
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch ruleset condition keys')).toMatchObject({
+      passed: false,
+      details: 'develop missing: none; unexpected: repository_name; observed: ref_name, repository_name; allowed: ref_name'
+    });
+
+    const custom = evaluateBranchProtection(
+      { protection: protection(), rulesets: [{ ...developRuleset, conditions: {} }, { ...mainRuleset, conditions: {} }] },
+      { expectedActiveRulesetConditionKeys: [] }
+    );
+
+    expect(custom.checks.find((check) => check.name === 'active branch ruleset condition keys')).toMatchObject({
+      passed: true,
+      details: 'none only on develop, main'
     });
   });
 
@@ -1020,7 +1064,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(24);
+    expect(output.checks).toHaveLength(25);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
