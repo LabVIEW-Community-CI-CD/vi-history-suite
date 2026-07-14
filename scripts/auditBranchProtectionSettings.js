@@ -21,6 +21,7 @@ const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
   'Integration Host (Linux)'
 ]);
 const EXPECTED_REQUIRED_STATUS_CHECK_APP_ID = 15368;
+const EXPECTED_REQUIRED_STATUS_CHECK_KEYS = Object.freeze(['app_id', 'context']);
 const ADVISORY_STATUS_CHECKS = Object.freeze([
   'Requirements CSV Integrity',
   'CodeQL'
@@ -274,6 +275,19 @@ function requiredStatusCheckAppBindings(protection) {
     .sort((left, right) => left.context.localeCompare(right.context));
 }
 
+function requiredStatusCheckObjectKeys(protection) {
+  const checks = protection && protection.required_status_checks;
+  const keys = new Set();
+  for (const check of Array.isArray(checks && checks.checks) ? checks.checks : []) {
+    if (check && typeof check === 'object' && !Array.isArray(check)) {
+      for (const key of Object.keys(check)) {
+        keys.add(String(key));
+      }
+    }
+  }
+  return [...keys].sort();
+}
+
 function rulesetRefNameExclusions(ruleset) {
   const conditions = ruleset && ruleset.conditions;
   const refName = conditions && conditions.ref_name;
@@ -368,6 +382,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const expectedRequiredStatusCheckAppId = Number.isFinite(Number(options.expectedRequiredStatusCheckAppId))
     ? Number(options.expectedRequiredStatusCheckAppId)
     : EXPECTED_REQUIRED_STATUS_CHECK_APP_ID;
+  const expectedRequiredStatusCheckKeys = options.expectedRequiredStatusCheckKeys || EXPECTED_REQUIRED_STATUS_CHECK_KEYS;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
   const expectedActiveRulesetTarget = options.expectedActiveRulesetTarget || EXPECTED_ACTIVE_RULESET_TARGET;
@@ -399,6 +414,9 @@ function evaluateBranchProtection(settings, options = {}) {
   const requiredStatusSourceDiff = requiredStatusCheckSourceDiff(protection);
   const duplicateRequiredStatusContexts = requiredStatusCheckDuplicateContexts(protection);
   const requiredAppBindings = requiredStatusCheckAppBindings(protection);
+  const requiredStatusCheckKeys = requiredStatusCheckObjectKeys(protection);
+  const missingRequiredStatusCheckKeys = expectedRequiredStatusCheckKeys.filter((key) => !requiredStatusCheckKeys.includes(key));
+  const unexpectedRequiredStatusCheckKeys = requiredStatusCheckKeys.filter((key) => !expectedRequiredStatusCheckKeys.includes(key));
   const requiredAppBindingsByContext = new Map(requiredAppBindings.map((binding) => [binding.context, binding]));
   const mismatchedRequiredAppBindings = expectedRequiredChecks
     .map((context) => {
@@ -547,6 +565,13 @@ function evaluateBranchProtection(settings, options = {}) {
         : mismatchedRequiredAppBindings
           .map((item) => `${item.context} app ${item.observedAppId}; expected app ${expectedRequiredStatusCheckAppId}`)
           .join('; ')
+    },
+    {
+      name: 'required status check object keys',
+      passed: missingRequiredStatusCheckKeys.length === 0 && unexpectedRequiredStatusCheckKeys.length === 0,
+      details: missingRequiredStatusCheckKeys.length === 0 && unexpectedRequiredStatusCheckKeys.length === 0
+        ? `${expectedRequiredStatusCheckKeys.join(', ') || 'none'} only`
+        : `missing: ${missingRequiredStatusCheckKeys.join(', ') || 'none'}; unexpected: ${unexpectedRequiredStatusCheckKeys.join(', ') || 'none'}; observed: ${requiredStatusCheckKeys.join(', ') || 'none'}; allowed: ${expectedRequiredStatusCheckKeys.join(', ') || 'none'}`
     },
     {
       name: 'admin enforcement',
@@ -900,6 +925,7 @@ module.exports = {
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
+  EXPECTED_REQUIRED_STATUS_CHECK_KEYS,
   ADVISORY_STATUS_CHECKS,
   ALLOWED_EXECUTABLE_COMMANDS,
   isAllowedExecutableCommand,
@@ -915,6 +941,7 @@ module.exports = {
   requiredApprovingReviewCount,
   requiredStatusContexts,
   requiredStatusCheckAppBindings,
+  requiredStatusCheckObjectKeys,
   rulesetConditionKeys,
   rulesetRefNameKeys,
   rulesetRuleKeys,
