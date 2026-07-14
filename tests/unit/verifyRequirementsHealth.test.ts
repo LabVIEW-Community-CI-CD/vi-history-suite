@@ -188,6 +188,17 @@ const OUTPUT_FIXTURE = {
   mutation: MUTATION
 };
 
+type RequiredSchemaNode = {
+  required: string[];
+};
+
+function expectRequiredKeysPresent(
+  value: Record<string, unknown>,
+  requiredKeys: string[]
+) {
+  expect(requiredKeys.filter((key) => !(key in value))).toEqual([]);
+}
+
 describe('requirement verification health (VHS-REQ-601)', () => {
   it('computes the Stryker mutation score from detected over valid mutants', () => {
     const report = {
@@ -465,6 +476,70 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       (REQUIREMENTS_HEALTH_JSON_SCHEMA.properties as { $schema: { const: string }; schemaVersion: { const: number } })
         .schemaVersion.const
     ).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
+  });
+
+  it('keeps emitted JSON aligned with the published schema contract', () => {
+    const result = verifyRequirementsHealth('/repo', OUTPUT_FIXTURE);
+    const output = JSON.parse(
+      renderRequirementsHealthOutput(result, { json: true })
+    ) as Record<string, unknown>;
+    const schema = JSON.parse(renderRequirementsHealthJsonSchema()) as {
+      required: string[];
+      properties: {
+        $schema: { const: string };
+        requirements: { items: { $ref: string } };
+        attention: { items: { $ref: string } };
+        summary: { $ref: string };
+      };
+      $defs: {
+        requirementHealth: RequiredSchemaNode;
+        attentionReason: RequiredSchemaNode & { properties: { reasonId: { enum: string[] } } };
+        summary: RequiredSchemaNode & {
+          properties: {
+            reasonCounts: RequiredSchemaNode;
+            unavailableSignals: { items: { enum: string[] } };
+          };
+        };
+        coverageSignal: { oneOf: RequiredSchemaNode[] };
+        mutationSignal: { oneOf: RequiredSchemaNode[] };
+      };
+    };
+    const requirements = output.requirements as Array<Record<string, unknown>>;
+    const attention = output.attention as Array<Record<string, unknown>>;
+    const attentionReasons = attention[0].attentionReasons as Array<Record<string, unknown>>;
+    const summary = output.summary as Record<string, unknown>;
+    const reasonCounts = summary.reasonCounts as Record<string, unknown>;
+    const coverageRequiredKeys = schema.$defs.coverageSignal.oneOf.find((candidate) =>
+      candidate.required.includes('riskThreshold')
+    )?.required;
+    const mutationRequiredKeys = schema.$defs.mutationSignal.oneOf.find((candidate) =>
+      candidate.required.includes('score')
+    )?.required;
+
+    expect(coverageRequiredKeys).toBeDefined();
+    expect(mutationRequiredKeys).toBeDefined();
+    expectRequiredKeysPresent(output, schema.required);
+    expect(output.$schema).toBe(schema.properties.$schema.const);
+    expect(schema.properties.requirements.items.$ref).toBe('#/$defs/requirementHealth');
+    expect(schema.properties.attention.items.$ref).toBe('#/$defs/requirementHealth');
+    expect(schema.properties.summary.$ref).toBe('#/$defs/summary');
+    expectRequiredKeysPresent(requirements[0], schema.$defs.requirementHealth.required);
+    expectRequiredKeysPresent(attention[0], schema.$defs.requirementHealth.required);
+    expectRequiredKeysPresent(attentionReasons[0], schema.$defs.attentionReason.required);
+    expect(
+      attentionReasons.every((reason) =>
+        schema.$defs.attentionReason.properties.reasonId.enum.includes(String(reason.reasonId))
+      )
+    ).toBe(true);
+    expectRequiredKeysPresent(summary, schema.$defs.summary.required);
+    expectRequiredKeysPresent(reasonCounts, schema.$defs.summary.properties.reasonCounts.required);
+    expectRequiredKeysPresent(output.coverage as Record<string, unknown>, coverageRequiredKeys ?? []);
+    expectRequiredKeysPresent(output.mutation as Record<string, unknown>, mutationRequiredKeys ?? []);
+    expect(
+      (summary.unavailableSignals as string[]).every((signal) =>
+        schema.$defs.summary.properties.unavailableSignals.items.enum.includes(signal)
+      )
+    ).toBe(true);
   });
 
   it('adds schema provenance only when requested', () => {
