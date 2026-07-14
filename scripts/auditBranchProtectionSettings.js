@@ -129,6 +129,7 @@ function parseArgs(argv) {
     requireBranchCreationBlock: false,
     requireFullHardening: false,
     emitJson: false,
+    emitMarkdown: false,
     help: false
   };
 
@@ -160,12 +161,16 @@ function parseArgs(argv) {
       enableFullHardeningOptions(options);
     }
     else if (arg === '--json') options.emitJson = true;
+    else if (arg === '--markdown') options.emitMarkdown = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
   if (options.help) {
     return options;
+  }
+  if (options.emitJson && options.emitMarkdown) {
+    throw new Error('Use either --json or --markdown, not both');
   }
   if (!isValidRepoSlug(options.repo)) {
     throw new Error(`--repo must be a valid owner/repo slug, got: ${options.repo}`);
@@ -198,6 +203,7 @@ function usage() {
     '  --require-branch-creation-block Fail when matching branch creation is not blocked',
     '  --require-full-hardening Fail unless every opt-in hardening check passes',
     '  --json                Emit machine-readable JSON instead of text',
+    '  --markdown            Emit compact Markdown evidence instead of text',
     '  --help                Show this help'
   ].join('\n');
 }
@@ -1077,6 +1083,46 @@ function auditResultJson(item) {
   };
 }
 
+function markdownCell(value) {
+  return String(value ?? '').replace(/\r?\n/gu, ' ').replace(/\|/gu, '\\|');
+}
+
+function renderMarkdown(branchResults, options = {}) {
+  const repo = options.repo || DEFAULT_REPO;
+  const summary = summarizeBranchResults(branchResults);
+  const success = branchResults.every((item) => item.result.success);
+  const lines = [
+    '## Branch Protection Audit',
+    '',
+    `- Repository: \`${repo}\``,
+    `- Result: ${success ? 'PASS' : 'FAIL'}`,
+    `- Branches: ${summary.passedBranches}/${summary.totalBranches} passed`,
+    `- Checks: ${summary.passedChecks}/${summary.totalChecks} passed`,
+    `- Notices: ${summary.noticeCount}`,
+    '',
+    '| Branch | Result | Checks | Failed | Notices |',
+    '| --- | --- | ---: | ---: | ---: |'
+  ];
+
+  for (const item of branchResults) {
+    const branchSummary = summarizeAuditResult(item.result);
+    lines.push(
+      `| ${markdownCell(item.branch)} | ${item.result.success ? 'PASS' : 'FAIL'} | ${branchSummary.passedChecks}/${branchSummary.totalChecks} | ${branchSummary.failedChecks} | ${branchSummary.noticeCount} |`
+    );
+  }
+
+  if (summary.failures.length === 0) {
+    lines.push('', 'No failures.');
+  } else {
+    lines.push('', '### Failures', '', '| Branch | Check | Details |', '| --- | --- | --- |');
+    for (const failure of summary.failures) {
+      lines.push(`| ${markdownCell(failure.branch)} | ${markdownCell(failure.name)} | ${markdownCell(failure.details)} |`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 function branchesForOptions(options = {}) {
   return options.allBranches ? [...DEFAULT_AUDIT_BRANCHES] : [options.branch || DEFAULT_BRANCH];
 }
@@ -1133,6 +1179,8 @@ function main(argv = process.argv.slice(2), deps = {}) {
         const [branchResult] = branchResults;
         stdout.write(`${JSON.stringify({ schemaVersion: 1, repo: options.repo, ...auditResultJson(branchResult) }, null, 2)}\n`);
       }
+    } else if (options.emitMarkdown) {
+      stdout.write(`${renderMarkdown(branchResults, options)}\n`);
     } else {
       stdout.write(`${branchResults
         .map((item) => renderResult(item.result, { ...options, branch: item.branch }))
@@ -1203,6 +1251,8 @@ module.exports = {
   summarizeAuditResult,
   summarizeBranchResults,
   auditResultJson,
+  markdownCell,
+  renderMarkdown,
   branchesForOptions,
   auditBranches,
   auditBranchProtectionSettings,
