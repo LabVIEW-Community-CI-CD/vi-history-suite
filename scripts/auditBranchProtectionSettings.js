@@ -254,6 +254,11 @@ function evaluateBranchProtection(settings, options = {}) {
       details: disabledFlag(protection.allow_deletions) ? 'disabled' : 'enabled or unavailable'
     },
     {
+      name: 'branch lock disabled',
+      passed: disabledFlag(protection.lock_branch),
+      details: disabledFlag(protection.lock_branch) ? 'disabled' : 'enabled or unavailable'
+    },
+    {
       name: 'active branch rulesets',
       passed: missingActiveRulesets.length === 0,
       details: missingActiveRulesets.length === 0
