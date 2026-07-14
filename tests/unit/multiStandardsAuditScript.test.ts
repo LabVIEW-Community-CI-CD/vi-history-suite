@@ -84,6 +84,7 @@ const {
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
     file: string;
+    scoreFile?: string;
     output: string;
     command: string;
     args: string[];
@@ -331,7 +332,9 @@ function writeProfileScoreFromDockerArgs(args: string[]): void {
   if (!profileSaveDir) {
     return;
   }
-  const scoreDir = path.join(outputDir, profileSaveDir, 'target');
+  const scoreDir = args.includes('portfolio-table')
+    ? path.join(outputDir, profileSaveDir, 'repos', 'target')
+    : path.join(outputDir, profileSaveDir, 'target');
   fs.mkdirSync(scoreDir, { recursive: true });
   fs.writeFileSync(path.join(scoreDir, 'score.json'), profileScore(), 'utf8');
 }
@@ -555,10 +558,12 @@ describe('multi standards audit script', () => {
     expect(result.markdown).toContain('quick-triage: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
     expect(result.markdown).toContain('## Standards Coverage Matrix');
     expect(result.markdown).toContain('| quick-triage | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) | quick-triage/target/score.json |');
+    expect(result.markdown).toContain('| portfolio-review | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) | portfolio-review/repos/target/score.json |');
     expect(result.markdown).toContain('## Standards Evidence Summary');
-    expect(result.markdown).toContain('| REQ maturity is 5/5 with High confidence. | 29148 | quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift | .github/instructions/requirements-and-test-docs.instructions.md<br>.github/prompts/requirement-target-execution.prompt.md<br>.github/skills/requirements-traceability/assets/requirement-target-scaffold.md |');
+    expect(result.markdown).toContain('| REQ maturity is 5/5 with High confidence. | 29148 | quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review | .github/instructions/requirements-and-test-docs.instructions.md<br>.github/prompts/requirement-target-execution.prompt.md<br>.github/skills/requirements-traceability/assets/requirement-target-scaffold.md |');
     expect(result.markdown).not.toContain('coverage gate passes with High confidence.');
     expect(result.markdown).toContain('quick-triage dod: basis=Report DoD only when a DoD Gate / dod context is visible.; standards=none (see quick-triage/target/score.json)');
+    expect(result.markdown).toContain('portfolio-review dod: basis=Report DoD only when a DoD Gate / dod context is visible.; standards=none (see portfolio-review/repos/target/score.json)');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
     expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
       status: 'PASS',
@@ -578,6 +583,7 @@ describe('multi standards audit script', () => {
       confidence: 'High',
       standards: ['15289', '26514']
     });
+    expect(result.context.standardsCoverageMatrix?.find((row) => row.profile === 'portfolio-review')?.scoreFile).toBe('portfolio-review/repos/target/score.json');
     expect(result.context.profiles.find((profile) => profile.standardsEvidence)?.standardsEvidence?.[0]).toEqual({
       id: 'area-req',
       summary: 'REQ maturity is 5/5 with High confidence.',
@@ -597,7 +603,7 @@ describe('multi standards audit script', () => {
         'docs/quick-reference.md',
         'docs/information-item-map.md'
       ],
-      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift']
+      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review']
     });
     expect(result.context.profiles.find((profile) => profile.scoreFile)?.scoreFile).toBe('quick-triage/target/score.json');
     expect(result.context.profiles.find((profile) => profile.portfolio)?.portfolio).toMatchObject({
@@ -606,6 +612,7 @@ describe('multi standards audit script', () => {
       gates: '6P/0F',
       topRisk: 'none'
     });
+    expect(result.context.profiles.find((profile) => profile.portfolio)?.scoreFile).toBe('portfolio-review/repos/target/score.json');
     expect(fs.existsSync(path.join(root, 'evidence', 'run-1', 'audit-summary.json'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'evidence', 'run-1', 'portfolio-review-table.txt'))).toBe(true);
     expect(calls.filter((call) => call.command === 'docker' && call.args[0] === 'run')).toHaveLength(8);

@@ -195,6 +195,7 @@ function profileDockerSteps(options) {
     name: PORTFOLIO_PROFILE,
     file: `${PORTFOLIO_PROFILE}-table.txt`,
     saveDir: PORTFOLIO_PROFILE,
+    scoreFile: path.posix.join(PORTFOLIO_PROFILE, 'repos', 'target', 'score.json'),
     output: 'portfolio-table'
   };
 
@@ -445,16 +446,42 @@ function mergeGateDetails(scorecardDetails, retainedDetails) {
   return merged;
 }
 
+function profileScoreFile(step) {
+  if (!step.saveDir) {
+    return undefined;
+  }
+  return step.scoreFile || path.posix.join(step.saveDir, 'target', 'score.json');
+}
+
 function readProfileScore(outputDir, step, deps = {}) {
-  if (!outputDir || !step.saveDir) {
+  const scoreFile = profileScoreFile(step);
+  if (!outputDir || !scoreFile) {
     return undefined;
   }
   const readFileSync = deps.readFileSync || fs.readFileSync;
-  const scoreFilePath = path.join(outputDir, step.saveDir, 'target', 'score.json');
+  const scoreFilePath = path.join(outputDir, ...scoreFile.split('/'));
   try {
     return JSON.parse(readFileSync(scoreFilePath, 'utf8'));
   } catch {
     return undefined;
+  }
+}
+
+function attachRetainedProfileScore(summary, retainedScore, scoreFile) {
+  const retainedDetails = summarizeRetainedGateScore(retainedScore);
+  const standardsCoverage = summarizeRetainedStandardsCoverage(retainedScore);
+  const standardsEvidence = summarizeRetainedStandardsEvidence(retainedScore);
+  if (Object.keys(retainedDetails).length > 0) {
+    summary.scorecardDetails = mergeGateDetails(summary.scorecardDetails || {}, retainedDetails);
+  }
+  if (Object.keys(standardsCoverage).length > 0) {
+    summary.standardsCoverage = standardsCoverage;
+  }
+  if (standardsEvidence.length > 0) {
+    summary.standardsEvidence = standardsEvidence;
+  }
+  if (Object.keys(retainedDetails).length > 0 || Object.keys(standardsCoverage).length > 0 || standardsEvidence.length > 0) {
+    summary.scoreFile = scoreFile;
   }
 }
 
@@ -474,25 +501,14 @@ function summarizeProfileStep(step, options = {}) {
   const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
   if (step.output === 'gate-scorecard') {
     summary.scorecard = parseGateScorecard(step.stdout || '');
-    const retainedScore = readProfileScore(options.outputDir, step, options.deps);
-    const retainedDetails = summarizeRetainedGateScore(retainedScore);
-    const standardsCoverage = summarizeRetainedStandardsCoverage(retainedScore);
-    const standardsEvidence = summarizeRetainedStandardsEvidence(retainedScore);
-    summary.scorecardDetails = mergeGateDetails(summarizeGateScorecard(step.stdout || ''), retainedDetails);
-    if (Object.keys(standardsCoverage).length > 0) {
-      summary.standardsCoverage = standardsCoverage;
-    }
-    if (standardsEvidence.length > 0) {
-      summary.standardsEvidence = standardsEvidence;
-    }
-    if (Object.keys(retainedDetails).length > 0 || Object.keys(standardsCoverage).length > 0 || standardsEvidence.length > 0) {
-      summary.scoreFile = path.posix.join(step.saveDir, 'target', 'score.json');
-    }
+    summary.scorecardDetails = summarizeGateScorecard(step.stdout || '');
   }
   if (step.output === 'portfolio-table') {
     const portfolio = summarizePortfolioTable(step.stdout || '');
     summary.portfolio = portfolio ? { tableFile: step.file, ...portfolio } : { tableFile: step.file };
   }
+  const scoreFile = profileScoreFile(step);
+  attachRetainedProfileScore(summary, readProfileScore(options.outputDir, step, options.deps), scoreFile);
   return summary;
 }
 
@@ -825,6 +841,7 @@ module.exports = {
   summarizeRetainedStandardsEvidence,
   summarizeDirectStep,
   summarizeProfileStep,
+  profileScoreFile,
   buildStandardsCoverageMatrix,
   buildStandardsEvidenceSummary,
   renderStandardsEvidenceSummary,
