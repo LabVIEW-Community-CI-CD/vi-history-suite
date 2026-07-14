@@ -42,6 +42,10 @@ This changelog records user-facing release history for `vi-history-suite`.
   workflow inputs (`publish_images`, `create_commit_status`) that need a token
   with `contents: write` / `statuses: write` respectively (VHS-REQ-661; #805,
   #806, #808).
+- `npm run assurance:state` can now retain supplied post-merge review findings
+  as first-class classified signals, including the review URL, title, source,
+  and basis in the generated JSON and Markdown assurance-state packet
+  (VHS-REQ-615; #1110).
 
 ## [1.33.2] - 2026-06-25
 

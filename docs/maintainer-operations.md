@@ -672,6 +672,17 @@ post-merge closeout loop. The state packet is advisory planning evidence; it
 does not replace hosted CI, requirements health, traceability, DoD, package, or
 PR-gate validation.
 
+When post-merge review sweeps find Codex, CodeQL, or maintainer findings that
+belong in the planning packet, pass repeatable `--review-finding` JSON values:
+
+```shell
+npm run assurance:state -- --audit-run-id <standards-audit-run-id> \
+  --review-finding '{"state":"resolved","url":"https://github.com/org/repo/pull/1#discussion_r1","title":"Fixed post-merge review finding","source":"chatgpt-codex-connector","basis":"Fixed by PR #2."}'
+```
+
+Each review finding becomes a classified `post-merge-review` signal and retains
+the supplied URL, title, source, and basis in the JSON and Markdown outputs.
+
 ## External Marketplace Verification
 
 The Marketplace extension identity `svelderrainruiz.vi-history-suite` is tested
