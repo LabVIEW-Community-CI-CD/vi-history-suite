@@ -496,7 +496,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).not.toContain(`\`${['VHS-REQ-614', '4'].join('.')}\``);
     expect(testPlan).toContain('Final closure disposition for issue #1005');
     expect(testPlan).toContain('no uncited criteria remain');
-    expect(testPlan).toContain('Criterion-linkage enforcement can become fail-closed');
+    expect(testPlan).toContain('Criterion-linkage enforcement is now fail-closed in hosted CI');
+    expect(testPlan).toContain('Enforce requirement criterion citation');
     expect(testPlan).toContain('Classify future uncited criteria before enforcement');
     expect(testPlan).toContain('Recommended implementation order');
     expect(testPlan).toContain('Do not add a `VHS-REQ-N.M` citation unless');

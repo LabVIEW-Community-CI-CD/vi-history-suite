@@ -41,7 +41,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - If a task names `VHS-REQ-*`, start with `.github/skills/requirements-traceability/SKILL.md`
 - Read the requirement block and RTM row before editing implementation files
 - Run `npm run traceability:audit` before PR handoff when requirement surfaces changed
-- Gauge verification depth: `npm run requirements:linkage` (a test cites the requirement ID; enforced fail-closed in CI), `npm run requirements:criteria` (acceptance-criteria inventory + criterion-level `VHS-REQ-NNN.M` citation), and `npm run requirements:verify` (unified health). Stryker mutation testing (`npm run test:mutation`, `src/domain`) runs nightly/advisory via `.github/workflows/mutation.yml`; a ~100% score is not the goal (many domain survivors are equivalent mutants).
+- Gauge verification depth: `npm run requirements:linkage` (a test cites the requirement ID; enforced fail-closed in CI), `npm run requirements:criteria` (acceptance-criteria inventory + criterion-level `VHS-REQ-NNN.M` citation; `npm run requirements:criteria:enforce` fails closed and is enforced in CI), and `npm run requirements:verify` (unified health). Stryker mutation testing (`npm run test:mutation`, `src/domain`) runs nightly/advisory via `.github/workflows/mutation.yml`; a ~100% score is not the goal (many domain survivors are equivalent mutants).
 
 ### Architecture & Key Directories
 - `src/extension.ts`: VS Code extension entry point
