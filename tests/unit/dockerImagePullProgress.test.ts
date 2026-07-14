@@ -431,7 +431,7 @@ describe('streamDockerImagePull', () => {
     expect(JSON.stringify(call.headers)).not.toMatch(/authorization|credential|password|token/i);
   });
 
-  it('reports live layer-weighted snapshots and resolves succeeded (VHS-REQ-654.1)', async () => {
+  it('reports live layer-weighted snapshots and resolves succeeded (VHS-REQ-654.1, VHS-REQ-656.5)', async () => {
     const progress: Array<{
       percent?: number;
       downloadedBytes: number;
@@ -488,7 +488,7 @@ describe('streamDockerImagePull', () => {
     expect(result.errorMessage).toContain('HTTP 500');
   });
 
-  it('returns attempted=false (for CLI fallback) when the daemon socket is unreachable (VHS-REQ-654.4)', async () => {
+  it('returns attempted=false (for CLI fallback) when the daemon socket is unreachable (VHS-REQ-654.4, VHS-REQ-656.5)', async () => {
     const result = await streamDockerImagePull({
       image: 'repo/img:tag',
       hostPlatform: 'linux',
@@ -500,7 +500,7 @@ describe('streamDockerImagePull', () => {
     expect(result).toEqual({ attempted: false, succeeded: false, statusLines: [] });
   });
 
-  it('reports a true byte-% when the registry total resolves (VHS-REQ-655.2)', async () => {
+  it('reports a true byte-% when the registry total resolves (VHS-REQ-655.2, VHS-REQ-656.5)', async () => {
     const GiB = 1024 * 1024 * 1024;
     const snapshots: Array<{ percent?: number; knownTotalBytes?: number; downloadedBytes: number }> = [];
     const result = await streamDockerImagePull({

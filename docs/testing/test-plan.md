@@ -141,8 +141,8 @@ reference test, but the remaining Phase-3b backlog should not be closed by
 adding citation text alone. As of 2026-07-13, after the LabVIEW CLI open-gate,
 Definition-of-Done governance, VI Server gate, registry-fallback, container
 image mismatch remediation, Linux container headless-recovery evidence,
-staged-tree working-tree evidence, VI Preview lifecycle, and PR evidence contract
-branches, the baseline is 505/513 criterion-level citations with 8 uncited
+staged-tree working-tree evidence, VI Preview lifecycle, PR evidence contract,
+and pull download-phase regression branches, the baseline is 506/513 criterion-level citations with 7 uncited
 criteria.
 
 Classify each remaining uncited criterion before adding citations or proposing
@@ -160,15 +160,14 @@ Current closure docket:
 
 | Bucket | Criteria | Next action |
 | --- | --- | --- |
-| `exact-testable` | None currently assigned after the 504/513 refresh. | Keep available for newly classified criteria backed by concrete assertions. |
-| `needs-new-behavior-test` | `VHS-REQ-656.5` | Decompose into concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
+| `exact-testable` | None currently assigned after the 506/513 refresh. | Keep available for newly classified criteria backed by concrete assertions. |
+| `needs-new-behavior-test` | None currently assigned after the 506/513 refresh. | Decompose concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
 | `manual/process` | None currently assigned after the 488/513 refresh. | Keep available for future closeout or release-review evidence that cannot be unit-tested. |
 | `broad-regression` | `VHS-REQ-614.3`, `VHS-REQ-614.4`, `VHS-REQ-631.6`, `VHS-REQ-636.9`, `VHS-REQ-642.5`, `VHS-REQ-644.6` | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
 | `defer/product-decision` | `VHS-REQ-644.2` | Resolve the requirement/product intent before citation because current export behavior injects revision context into generated-report exports while the criterion says the preferred graphics-report export copies the LabVIEW report unchanged. |
 
-Final advisory disposition for issue #1005: the remaining 8 uncited criteria are
-intentionally not closed by unit-test citation in this phase. `VHS-REQ-656.5`
-needs concrete behavior decomposition before any citation; the six
+Final advisory disposition for issue #1005: the remaining 7 uncited criteria are
+intentionally not closed by unit-test citation in this phase. The six
 `broad-regression` criteria are advisory non-regression claims until a
 future change gives them a specific failure mode; and `VHS-REQ-644.2` remains a
 product-decision item because generated-report exports and in-panel context cards
