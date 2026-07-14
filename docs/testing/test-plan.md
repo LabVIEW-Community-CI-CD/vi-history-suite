@@ -142,7 +142,9 @@ adding citation text alone. As of 2026-07-13, after the LabVIEW CLI open-gate,
 Definition-of-Done governance, VI Server gate, registry-fallback, container
 image mismatch remediation, Linux container headless-recovery evidence,
 staged-tree working-tree evidence, VI Preview lifecycle, PR evidence contract,
-and pull download-phase regression branches, the baseline is 506/513 criterion-level citations with 7 uncited
+pull download-phase regression, pre-panel/compare-time gate separation, Docker
+daemon fallback, comparison commit-body export, and test-harness boundary
+branches, the baseline is 513/513 criterion-level citations with 0 uncited
 criteria.
 
 Classify each remaining uncited criterion before adding citations or proposing
@@ -160,25 +162,24 @@ Current closure docket:
 
 | Bucket | Criteria | Next action |
 | --- | --- | --- |
-| `exact-testable` | None currently assigned after the 506/513 refresh. | Keep available for newly classified criteria backed by concrete assertions. |
-| `needs-new-behavior-test` | None currently assigned after the 506/513 refresh. | Decompose concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
+| `exact-testable` | None currently assigned after the 513/513 refresh. | Keep available for newly classified criteria backed by concrete assertions. |
+| `needs-new-behavior-test` | None currently assigned after the 513/513 refresh. | Decompose concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
 | `manual/process` | None currently assigned after the 488/513 refresh. | Keep available for future closeout or release-review evidence that cannot be unit-tested. |
-| `broad-regression` | `VHS-REQ-614.3`, `VHS-REQ-614.4`, `VHS-REQ-631.6`, `VHS-REQ-636.9`, `VHS-REQ-642.5`, `VHS-REQ-644.6` | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
-| `defer/product-decision` | `VHS-REQ-644.2` | Resolve the requirement/product intent before citation because current export behavior injects revision context into generated-report exports while the criterion says the preferred graphics-report export copies the LabVIEW report unchanged. |
+| `broad-regression` | None currently assigned after the 513/513 refresh. | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
+| `defer/product-decision` | None currently assigned after aligning VHS-REQ-644.2 with the VHS-REQ-626 generated-report export contract. | Track future product decisions explicitly; do not create assertion theater. |
 
-Final advisory disposition for issue #1005: the remaining 7 uncited criteria are
-intentionally not closed by unit-test citation in this phase. The six
-`broad-regression` criteria are advisory non-regression claims until a
-future change gives them a specific failure mode; and `VHS-REQ-644.2` remains a
-product-decision item because generated-report exports and in-panel context cards
-currently have different intended outputs.
+Final closure disposition for issue #1005: no uncited criteria remain. The last
+test-harness boundary criteria are covered by the VHS-REQ-614 requirements-docs
+guard, which pins the requirement to test-harness-only implementation refs and
+keeps runtime, package, command, persisted-format, and Marketplace surfaces owned
+by their dedicated requirements.
 
 Recommended implementation order:
 
-1. Keep criterion-linkage enforcement advisory while the final 9 are classified
-   outside `exact-testable`.
-2. Open child behavior/product-decision issues only when one of those criteria is
-   decomposed into a concrete assertion or decision.
+1. Criterion-linkage enforcement can become fail-closed once maintainers decide
+   the 513/513 advisory baseline is stable enough for CI enforcement.
+2. Classify future uncited criteria before enforcement changes; do not add a
+   citation unless a verification test demonstrates the criterion.
 
 Do not add a `VHS-REQ-N.M` citation unless the cited verification test actually
 demonstrates that criterion. When a true proof lives in a different verification

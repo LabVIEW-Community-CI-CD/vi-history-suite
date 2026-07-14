@@ -1248,7 +1248,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.exitObservedProcessNames).toEqual([]);
   });
 
-  it('reclassifies a nonzero exit as labview-host-bitness-conflict when exit snapshot shows different-bitness LabVIEW (VHS-REQ-621.3, VHS-REQ-658.1)', async () => {
+  it('reclassifies a nonzero exit as labview-host-bitness-conflict when exit snapshot shows different-bitness LabVIEW (VHS-REQ-621.3, VHS-REQ-636.9, VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.bitness = 'x86';
     const result = await executeComparisonReport(

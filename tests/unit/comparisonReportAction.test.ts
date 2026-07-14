@@ -203,7 +203,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     harness.reset();
   });
 
-  it('uses the explicit selected/base pair, executes ready packets, archives evidence, and opens the generated report (VHS-REQ-644.3)', async () => {
+  it('uses the explicit selected/base pair, executes ready packets, archives evidence, and opens the generated report (VHS-REQ-644.3, VHS-REQ-644.6)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -1490,7 +1490,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     expect(harness.panels).toHaveLength(0);
   });
 
-  it('still opens the diagnostics webview when Docker is installed but the daemon is reachable (different block)', async () => {
+  it('still opens the diagnostics webview when Docker is installed but the daemon is reachable (different block) (VHS-REQ-642.5)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
