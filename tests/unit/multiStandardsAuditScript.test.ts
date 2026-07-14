@@ -20,6 +20,7 @@ const {
   summarizeRetainedStandardsCoverage,
   summarizeRetainedStandardsEvidence,
   summarizePortfolioTable,
+  renderStandardsEvidenceSummary,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
   DEFAULT_SAVE_DIR: string;
@@ -73,6 +74,13 @@ const {
     standards: string[];
     evidencePaths: string[];
   }>;
+  renderStandardsEvidenceSummary: (summary: Array<{
+    id?: string;
+    summary?: string;
+    standards: string[];
+    evidencePaths: string[];
+    profiles: string[];
+  }>) => string[];
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
     file: string;
@@ -481,6 +489,18 @@ describe('multi standards audit script', () => {
         evidencePaths: []
       }
     ]);
+  });
+
+  it('escapes retained standards evidence Markdown cells', () => {
+    expect(renderStandardsEvidenceSummary([
+      {
+        id: 'area-req',
+        summary: 'REQ proof uses backslash \\ and a | delimiter.',
+        standards: ['29148'],
+        profiles: ['quick-triage'],
+        evidencePaths: ['docs\\requirements|srs.md']
+      }
+    ])).toContain('| REQ proof uses backslash \\\\ and a \\| delimiter. | 29148 | quick-triage | docs\\\\requirements\\|srs.md |');
   });
 
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {

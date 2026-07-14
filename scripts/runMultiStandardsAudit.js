@@ -534,7 +534,7 @@ function buildStandardsEvidenceSummary(profiles) {
 }
 
 function markdownCell(value) {
-  return String(value || '-').replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+  return String(value || '-').replace(/\r?\n/g, ' ').replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 }
 
 function renderStandardsEvidenceSummary(summary) {
@@ -827,6 +827,7 @@ module.exports = {
   summarizeProfileStep,
   buildStandardsCoverageMatrix,
   buildStandardsEvidenceSummary,
+  renderStandardsEvidenceSummary,
   renderMarkdown,
   runMultiStandardsAudit,
   main
