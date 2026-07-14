@@ -14,6 +14,7 @@ const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
   'Windows Unit Tests',
   'Integration Host (Linux)'
 ]);
+const EXPECTED_REQUIRED_STATUS_CHECK_APP_ID = 15368;
 const ADVISORY_STATUS_CHECKS = Object.freeze([
   'Requirements CSV Integrity',
   'CodeQL'
@@ -206,6 +207,20 @@ function requiredStatusContexts(protection) {
   return [...contexts].sort();
 }
 
+function requiredStatusCheckAppBindings(protection) {
+  const checks = protection && protection.required_status_checks;
+  return (Array.isArray(checks && checks.checks) ? checks.checks : [])
+    .filter((check) => check && check.context)
+    .map((check) => {
+      const appId = Number(check.app_id);
+      return {
+        context: String(check.context),
+        appId: Number.isFinite(appId) ? appId : null
+      };
+    })
+    .sort((left, right) => left.context.localeCompare(right.context));
+}
+
 function activeRulesetSummaries(rulesets) {
   return (Array.isArray(rulesets) ? rulesets : [])
     .filter((ruleset) => ruleset && ruleset.enforcement === 'active' && ruleset.target === 'branch')
@@ -229,6 +244,9 @@ function evaluateBranchProtection(settings, options = {}) {
   const protection = settings.protection || {};
   const requiredContexts = requiredStatusContexts(protection);
   const expectedRequiredChecks = options.expectedRequiredChecks || EXPECTED_REQUIRED_STATUS_CHECKS;
+  const expectedRequiredStatusCheckAppId = Number.isFinite(Number(options.expectedRequiredStatusCheckAppId))
+    ? Number(options.expectedRequiredStatusCheckAppId)
+    : EXPECTED_REQUIRED_STATUS_CHECK_APP_ID;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
   const expectedActiveRulesetRuleTypes = options.expectedActiveRulesetRuleTypes || EXPECTED_ACTIVE_RULESET_RULE_TYPES;
@@ -245,6 +263,20 @@ function evaluateBranchProtection(settings, options = {}) {
     ? Number(options.minimumApprovingReviews)
     : 1;
   const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
+  const requiredAppBindings = requiredStatusCheckAppBindings(protection);
+  const requiredAppBindingsByContext = new Map(requiredAppBindings.map((binding) => [binding.context, binding]));
+  const mismatchedRequiredAppBindings = expectedRequiredChecks
+    .map((context) => {
+      const binding = requiredAppBindingsByContext.get(context);
+      if (!binding) {
+        return { context, observedAppId: 'missing' };
+      }
+      if (binding.appId !== expectedRequiredStatusCheckAppId) {
+        return { context, observedAppId: binding.appId === null ? 'missing' : String(binding.appId) };
+      }
+      return undefined;
+    })
+    .filter(Boolean);
   const advisoryNotRequired = advisoryChecks.filter((context) => !requiredContexts.includes(context));
   const approvingReviewCount = requiredApprovingReviewCount(protection);
   const activeRulesets = activeRulesetSummaries(settings.rulesets);
@@ -274,6 +306,15 @@ function evaluateBranchProtection(settings, options = {}) {
       details: missingRequired.length === 0
         ? `present: ${expectedRequiredChecks.join(', ')}`
         : `missing: ${missingRequired.join(', ')}; present: ${requiredContexts.join(', ') || 'none'}`
+    },
+    {
+      name: 'required status check app bindings',
+      passed: mismatchedRequiredAppBindings.length === 0,
+      details: mismatchedRequiredAppBindings.length === 0
+        ? `app ${expectedRequiredStatusCheckAppId}: ${expectedRequiredChecks.join(', ')}`
+        : mismatchedRequiredAppBindings
+          .map((item) => `${item.context} app ${item.observedAppId}; expected app ${expectedRequiredStatusCheckAppId}`)
+          .join('; ')
     },
     {
       name: 'admin enforcement',
@@ -515,6 +556,7 @@ module.exports = {
   EXPECTED_ACTIVE_BRANCH_RULESETS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
+  EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
   ADVISORY_STATUS_CHECKS,
   ALLOWED_EXECUTABLE_COMMANDS,
   isAllowedExecutableCommand,
@@ -529,6 +571,7 @@ module.exports = {
   fetchBranchRulesets,
   requiredApprovingReviewCount,
   requiredStatusContexts,
+  requiredStatusCheckAppBindings,
   activeRulesetSummaries,
   rulesetRuleTypes,
   evaluateBranchProtection,
