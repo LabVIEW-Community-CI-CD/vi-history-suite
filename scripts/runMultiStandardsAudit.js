@@ -726,7 +726,7 @@ function renderStandardsGateDetailSummary(summary, completeProfiles = []) {
     '| --- | --- | --- | --- | --- | --- | --- |'
   ];
   for (const row of summary) {
-    const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
+    const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'unmapped';
     const missingProof = Array.isArray(row.missingProof) && row.missingProof.length > 0 ? row.missingProof.map(markdownCell).join('<br>') : '-';
     const profiles = renderProfileList(row.profiles, completeProfiles);
     lines.push(`| ${markdownCell(row.gate || 'unknown')} | ${markdownCell(row.status || 'UNKNOWN')} | ${markdownCell(row.confidence || 'unknown')} | ${markdownCell(standards)} | ${markdownCell(row.basis || '-')} | ${missingProof} | ${markdownCell(profiles)} |`);
