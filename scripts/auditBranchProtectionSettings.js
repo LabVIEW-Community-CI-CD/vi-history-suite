@@ -1,0 +1,284 @@
+#!/usr/bin/env node
+
+const { spawnSync } = require('node:child_process');
+
+const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
+const DEFAULT_BRANCH = 'develop';
+const GH_TIMEOUT_MS = 60000;
+const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze(['gh']);
+const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
+  'Build, Test, Package',
+  'Windows Unit Tests',
+  'Integration Host (Linux)'
+]);
+const ADVISORY_STATUS_CHECKS = Object.freeze([
+  'Requirements CSV Integrity',
+  'CodeQL'
+]);
+const REPO_SLUG_PATTERN = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u;
+const BRANCH_NAME_PATTERN = /^[A-Za-z0-9._\/-]+$/u;
+
+function isAllowedExecutableCommand(command) {
+  return ALLOWED_EXECUTABLE_COMMANDS.includes(String(command || ''));
+}
+
+function assertAllowedExecutableCommand(command) {
+  if (!isAllowedExecutableCommand(command)) {
+    throw new Error(`Refusing to execute non-allow-listed command: ${String(command)}`);
+  }
+}
+
+function isValidRepoSlug(repo) {
+  return REPO_SLUG_PATTERN.test(String(repo || ''));
+}
+
+function isValidBranchName(branch) {
+  return BRANCH_NAME_PATTERN.test(String(branch || ''));
+}
+
+function parseArgs(argv) {
+  const options = {
+    repo: DEFAULT_REPO,
+    branch: DEFAULT_BRANCH,
+    emitJson: false,
+    help: false
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const next = () => {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error(`${arg} requires a value`);
+      }
+      index += 1;
+      return value;
+    };
+
+    if (arg === '--repo') options.repo = next();
+    else if (arg === '--branch') options.branch = next();
+    else if (arg === '--json') options.emitJson = true;
+    else if (arg === '--help' || arg === '-h') options.help = true;
+    else throw new Error(`Unknown argument: ${arg}`);
+  }
+
+  if (options.help) {
+    return options;
+  }
+  if (!isValidRepoSlug(options.repo)) {
+    throw new Error(`--repo must be a valid owner/repo slug, got: ${options.repo}`);
+  }
+  if (!isValidBranchName(options.branch)) {
+    throw new Error(`--branch must be a branch name without spaces, got: ${options.branch}`);
+  }
+
+  return options;
+}
+
+function usage() {
+  return [
+    'Usage: node scripts/auditBranchProtectionSettings.js [options]',
+    '',
+    'Audits live GitHub branch protection settings for the canonical repository.',
+    '',
+    'Options:',
+    `  --repo <owner/repo>    Repository to inspect (default: ${DEFAULT_REPO})`,
+    `  --branch <name>       Branch to inspect (default: ${DEFAULT_BRANCH})`,
+    '  --json                Emit machine-readable JSON instead of text',
+    '  --help                Show this help'
+  ].join('\n');
+}
+
+function buildGhApiArgs(repo, branch, resource) {
+  if (resource === 'protection') {
+    return ['api', `repos/${repo}/branches/${encodeURIComponent(branch)}/protection`];
+  }
+  if (resource === 'rulesets') {
+    return ['api', `repos/${repo}/rulesets`];
+  }
+  throw new Error(`Unknown GitHub API resource: ${resource}`);
+}
+
+function runGhJson(args, deps = {}) {
+  assertAllowedExecutableCommand('gh');
+  const spawnSyncImpl = deps.spawnSync || spawnSync;
+  const result = spawnSyncImpl('gh', args, { encoding: 'utf8', timeout: GH_TIMEOUT_MS });
+  if (result.error) {
+    throw result.error;
+  }
+  if (typeof result.status === 'number' && result.status !== 0) {
+    throw new Error(`gh ${args.join(' ')} failed (status ${result.status}): ${String(result.stderr || '').trim()}`);
+  }
+  try {
+    return JSON.parse(String(result.stdout || ''));
+  } catch (error) {
+    throw new Error(`gh ${args.join(' ')} returned invalid JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function fetchBranchProtectionSettings(options, deps = {}) {
+  return {
+    protection: runGhJson(buildGhApiArgs(options.repo, options.branch, 'protection'), deps),
+    rulesets: runGhJson(buildGhApiArgs(options.repo, options.branch, 'rulesets'), deps)
+  };
+}
+
+function enabledFlag(value) {
+  return Boolean(value && value.enabled === true);
+}
+
+function disabledFlag(value) {
+  return Boolean(value && value.enabled === false);
+}
+
+function requiredStatusContexts(protection) {
+  const checks = protection && protection.required_status_checks;
+  const contexts = new Set();
+  for (const context of checks && Array.isArray(checks.contexts) ? checks.contexts : []) {
+    contexts.add(String(context));
+  }
+  for (const check of checks && Array.isArray(checks.checks) ? checks.checks : []) {
+    if (check && check.context) {
+      contexts.add(String(check.context));
+    }
+  }
+  return [...contexts].sort();
+}
+
+function activeRulesetSummaries(rulesets) {
+  return (Array.isArray(rulesets) ? rulesets : [])
+    .filter((ruleset) => ruleset && ruleset.enforcement === 'active' && ruleset.target === 'branch')
+    .map((ruleset) => ({
+      name: String(ruleset.name || '(unnamed)'),
+      ruleCount: Array.isArray(ruleset.rules) ? ruleset.rules.length : 0
+    }));
+}
+
+function evaluateBranchProtection(settings, options = {}) {
+  const protection = settings.protection || {};
+  const requiredContexts = requiredStatusContexts(protection);
+  const expectedRequiredChecks = options.expectedRequiredChecks || EXPECTED_REQUIRED_STATUS_CHECKS;
+  const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
+  const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
+  const advisoryNotRequired = advisoryChecks.filter((context) => !requiredContexts.includes(context));
+  const activeRulesets = activeRulesetSummaries(settings.rulesets);
+
+  const checks = [
+    {
+      name: 'required status checks are strict',
+      passed: Boolean(protection.required_status_checks && protection.required_status_checks.strict === true),
+      details: protection.required_status_checks && protection.required_status_checks.strict === true ? 'enabled' : 'missing or disabled'
+    },
+    {
+      name: 'required status check contexts',
+      passed: missingRequired.length === 0,
+      details: missingRequired.length === 0
+        ? `present: ${expectedRequiredChecks.join(', ')}`
+        : `missing: ${missingRequired.join(', ')}; present: ${requiredContexts.join(', ') || 'none'}`
+    },
+    {
+      name: 'admin enforcement',
+      passed: enabledFlag(protection.enforce_admins),
+      details: enabledFlag(protection.enforce_admins) ? 'enabled' : 'disabled or unavailable'
+    },
+    {
+      name: 'force pushes disabled',
+      passed: disabledFlag(protection.allow_force_pushes),
+      details: disabledFlag(protection.allow_force_pushes) ? 'disabled' : 'enabled or unavailable'
+    },
+    {
+      name: 'branch deletions disabled',
+      passed: disabledFlag(protection.allow_deletions),
+      details: disabledFlag(protection.allow_deletions) ? 'disabled' : 'enabled or unavailable'
+    }
+  ];
+
+  const notices = [];
+  notices.push(`required contexts observed: ${requiredContexts.join(', ') || 'none'}`);
+  notices.push(
+    advisoryNotRequired.length === 0
+      ? `advisory checks also branch-protection-required: ${advisoryChecks.join(', ')}`
+      : `advisory checks not branch-protection-required: ${advisoryNotRequired.join(', ')}`
+  );
+  notices.push(
+    activeRulesets.length === 0
+      ? 'active branch rulesets: none'
+      : `active branch rulesets: ${activeRulesets.map((ruleset) => `${ruleset.name} (${ruleset.ruleCount} rules)`).join(', ')}`
+  );
+
+  return {
+    success: checks.every((check) => check.passed),
+    checks,
+    notices
+  };
+}
+
+function renderResult(result, options = {}) {
+  const repo = options.repo || DEFAULT_REPO;
+  const branch = options.branch || DEFAULT_BRANCH;
+  const lines = [`[branch-protection-audit] Branch protection results for ${repo}:${branch}`];
+  for (const check of result.checks) {
+    lines.push(`[branch-protection-audit] ${check.passed ? 'PASS' : 'FAIL'} ${check.name}: ${check.details}`);
+  }
+  for (const notice of result.notices) {
+    lines.push(`[branch-protection-audit] NOTICE ${notice}`);
+  }
+  lines.push(result.success ? '[branch-protection-audit] Audit passed.' : '[branch-protection-audit] Audit failed.');
+  return lines.join('\n');
+}
+
+function auditBranchProtectionSettings(options = {}, deps = {}) {
+  const normalizedOptions = {
+    repo: options.repo || DEFAULT_REPO,
+    branch: options.branch || DEFAULT_BRANCH
+  };
+  const settings = deps.settings || fetchBranchProtectionSettings(normalizedOptions, deps);
+  return evaluateBranchProtection(settings, options);
+}
+
+function main(argv = process.argv.slice(2), deps = {}) {
+  const stdout = deps.stdout || process.stdout;
+  const stderr = deps.stderr || process.stderr;
+  try {
+    const options = parseArgs(argv);
+    if (options.help) {
+      stdout.write(`${usage()}\n`);
+      return 0;
+    }
+    const result = auditBranchProtectionSettings(options, deps);
+    if (options.emitJson) {
+      stdout.write(`${JSON.stringify({ schemaVersion: 1, repo: options.repo, branch: options.branch, ...result }, null, 2)}\n`);
+    } else {
+      stdout.write(`${renderResult(result, options)}\n`);
+    }
+    return result.success ? 0 : 1;
+  } catch (error) {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+}
+
+if (require.main === module) {
+  process.exitCode = main();
+}
+
+module.exports = {
+  DEFAULT_REPO,
+  DEFAULT_BRANCH,
+  EXPECTED_REQUIRED_STATUS_CHECKS,
+  ADVISORY_STATUS_CHECKS,
+  ALLOWED_EXECUTABLE_COMMANDS,
+  isAllowedExecutableCommand,
+  assertAllowedExecutableCommand,
+  isValidRepoSlug,
+  isValidBranchName,
+  parseArgs,
+  usage,
+  buildGhApiArgs,
+  requiredStatusContexts,
+  activeRulesetSummaries,
+  evaluateBranchProtection,
+  renderResult,
+  auditBranchProtectionSettings,
+  main
+};

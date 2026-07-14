@@ -27,6 +27,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - **Dev Watch:** `npm run dev:watch`
 - **Check:** `npm run check`
 - **Package:** `npm run package`
+- **Branch protection audit:** `npm run branch-protection:audit`
 - **Verification health:** `npm run requirements:verify` (single-pane signal; add `:strict` for a local pre-push gate)
 
 ### Priority Area: Testing Automation
@@ -73,6 +74,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - Some scripts/tools expect a Linux environment (see [scripts/](./scripts/))
 - Integration tests may require specific Git setup; Vagrant is an optional local helper, not a release gate (see [docs/vagrant.md](./docs/vagrant.md))
 - Workflow contract tests can become brittle if they assert exact single-line `run:` snippets; prefer step-name ordering checks when CI steps use multiline `run: |` blocks.
+- Run `npm run branch-protection:audit` when branch-protection settings are part of the question; it reads live `develop` protection through `gh` and fails if required checks or core protection flags drift.
 - Merging multiple PRs into `develop` is serial, not parallel: `develop` requires branches to be up to date, so after one merge every other open PR goes `BEHIND` and `gh pr merge` fails with "N of N required status checks are expected". Run `gh pr update-branch <N>` and wait for the full CI re-run before merging the next. See [Branch and PR Flow](./CONTRIBUTING.md#branch-and-pr-flow).
 - Before opening a new PR, run `gh pr list --repo LabVIEW-Community-CI-CD/vi-history-suite --state open` so you do not duplicate maintainer or agent work already in flight.
 - Avoid stacking PRs (child PR based on another PR's head) when you intend to `gh pr merge --delete-branch` the base: deleting the base head branch on merge auto-closes the child PR (GitHub does not retarget it), and a closed PR whose base branch is gone cannot be reopened or retargeted — you must recreate it from the still-existing head branch against `develop`. Prefer branching each separable change off `develop` independently.

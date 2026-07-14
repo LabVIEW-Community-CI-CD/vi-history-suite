@@ -8,6 +8,7 @@ scripts/checkRequirementsCsvColumns.js,mapped,Yes,Requirements CSV column-integr
 scripts/checkRequirementsIntegrity.js,mapped,Yes,Requirements cross-reference integrity guard; fails closed on dangling id-index anchors non-Active RTM parents missing inventory paths unresolved replacement IDs SRS/RTM evidence-reference disagreement missing or unresolved system-requirement references and Active requirements without a verification reference; prints the contract to the CI run summary; mapped to VHS-REQ-601.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command with generated validation/evidence root exclusions; mapped to VHS-REQ-597.
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
+scripts/auditBranchProtectionSettings.js,dev-only,No,Maintainer branch protection settings audit for canonical GitHub required status checks and protection flags; gh-only injected execution boundary.
 scripts/checkDocumentationWorkbench.js,dev-only,No,Documentation workbench gate verifying the docs-authoring image documentation-workbench guide and docs:gate script surfaces exist and stay coherent; CI and dev documentation infrastructure.
 scripts/fileLinuxValidationGap.js,dev-only,No,Maintainer Linux-validation gap auto-filer (issue #259) so the session not the human authors fix issues; gh-only allow-list and injected fs/spawn boundaries.
 scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with tracked-worktree standards audit snapshot mandatory standards runner published Docker workbench support standards toolchain provenance verification coverage-risk mapping and DoD evidence-source hygiene; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
@@ -72,6 +73,7 @@ scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification 
 scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
+tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
 tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards audit snapshot standards toolchain provenance coverage-risk mapping and DoD evidence-source hygiene tests; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
 tests/unit/assuranceStateScript.test.ts,mapped,Yes,Local assurance-state evidence model generator unit tests for retained audit normalization classification and provenance; mapped to VHS-REQ-615.
