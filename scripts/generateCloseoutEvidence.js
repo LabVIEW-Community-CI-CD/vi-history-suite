@@ -1211,7 +1211,8 @@ function runStandardsEvidence(options, deps = {}) {
     return host;
   }
 
-  if (options.kind === 'release' && host.summary?.failedReleaseProfiles?.length > 0) {
+  const hostPreflightOk = host.summary?.preflight?.ok === true;
+  if (options.kind === 'release' && hostPreflightOk && host.summary?.failedReleaseProfiles?.length > 0) {
     return host;
   }
 
