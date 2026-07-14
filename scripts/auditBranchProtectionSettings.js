@@ -1050,12 +1050,16 @@ function renderResult(result, options = {}) {
   return lines.join('\n');
 }
 
-function checkIdForName(name) {
-  return String(name || '')
+function slugIdForText(value, fallback) {
+  return String(value || '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/gu, '-')
-    .replace(/^-|-$/gu, '') || 'unnamed-check';
+    .replace(/^-|-$/gu, '') || fallback;
+}
+
+function checkIdForName(name) {
+  return slugIdForText(name, 'unnamed-check');
 }
 
 function checkIdForCheck(check) {
@@ -1067,6 +1071,25 @@ function checkResultJson(check) {
     ...check,
     id: checkIdForCheck(check)
   };
+}
+
+function noticeIdForMessage(message) {
+  const text = String(message || '').trim();
+  const labelEnd = text.indexOf(':');
+  const label = labelEnd >= 0 ? text.slice(0, labelEnd) : text;
+  return slugIdForText(label, 'unnamed-notice');
+}
+
+function noticeResultJson(notice) {
+  return {
+    noticeId: noticeIdForMessage(notice),
+    message: String(notice ?? '')
+  };
+}
+
+function noticeDetailsForResult(result) {
+  const notices = Array.isArray(result && result.notices) ? result.notices : [];
+  return notices.map(noticeResultJson);
 }
 
 function duplicateCheckIdsForResult(result) {
@@ -1096,6 +1119,7 @@ function auditResultSuccess(result, options = {}) {
 function summarizeAuditResult(result, options = {}) {
   const checks = Array.isArray(result && result.checks) ? result.checks : [];
   const notices = Array.isArray(result && result.notices) ? result.notices : [];
+  const noticeDetails = noticeDetailsForResult(result);
   const duplicateCheckIds = duplicateCheckIdsForResult(result);
   const duplicateCheckIdFailure = Boolean(options.failOnDuplicateCheckIds && duplicateCheckIds.length > 0);
   const failures = checks
@@ -1106,6 +1130,7 @@ function summarizeAuditResult(result, options = {}) {
     passedChecks: checks.length - failures.length,
     failedChecks: failures.length,
     noticeCount: notices.length,
+    noticeDetails,
     duplicateCheckIdCount: duplicateCheckIds.length,
     duplicateCheckIds,
     failures
@@ -1133,6 +1158,7 @@ function summarizeBranchResults(branchResults, options = {}) {
     passedChecks: branchSummaries.reduce((total, item) => total + item.passedChecks, 0),
     failedChecks: branchSummaries.reduce((total, item) => total + item.failedChecks, 0),
     noticeCount: branchSummaries.reduce((total, item) => total + item.noticeCount, 0),
+    noticeDetails: branchSummaries.flatMap((item) => item.noticeDetails.map((notice) => ({ branch: item.branch, ...notice }))),
     duplicateCheckIdCount: branchSummaries.reduce((total, item) => total + item.duplicateCheckIdCount, 0),
     duplicateCheckIds: branchSummaries.flatMap((item) => item.duplicateCheckIds.map((duplicate) => ({ branch: item.branch, ...duplicate }))),
     failures: branchSummaries.flatMap((item) => item.failures.map((failure) => ({ branch: item.branch, ...failure })))
@@ -1149,6 +1175,7 @@ function auditResultJson(item, options = {}) {
     success: auditResultSuccess(item.result, options),
     checks: Array.isArray(item.result.checks) ? item.result.checks.map(checkResultJson) : [],
     notices: Array.isArray(item.result.notices) ? item.result.notices : [],
+    noticeDetails: noticeDetailsForResult(item.result),
     summary: summarizeAuditResult(item.result, options)
   };
 }
@@ -1241,6 +1268,13 @@ function renderMarkdown(branchResults, options = {}) {
     lines.push(
       `| ${markdownCell(item.branch)} | ${auditResultSuccess(item.result, options) ? 'PASS' : 'FAIL'} | ${branchSummary.passedChecks}/${branchSummary.totalChecks} | ${branchSummary.failedChecks} | ${branchSummary.noticeCount} |`
     );
+  }
+
+  if (summary.noticeDetails.length > 0) {
+    lines.push('', '### Notices', '', '| Branch | Notice ID | Message |', '| --- | --- | --- |');
+    for (const notice of summary.noticeDetails) {
+      lines.push(`| ${markdownCell(notice.branch)} | ${markdownCell(notice.noticeId)} | ${markdownCell(notice.message)} |`);
+    }
   }
 
   if (summary.failures.length === 0) {
@@ -1429,9 +1463,13 @@ module.exports = {
   rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
+  slugIdForText,
   checkIdForName,
   checkIdForCheck,
   checkResultJson,
+  noticeIdForMessage,
+  noticeResultJson,
+  noticeDetailsForResult,
   duplicateCheckIdsForResult,
   duplicateCheckIdFailureForResult,
   auditResultSuccess,

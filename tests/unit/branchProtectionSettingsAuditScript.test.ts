@@ -47,9 +47,13 @@ const {
   rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
+  slugIdForText,
   checkIdForName,
   checkIdForCheck,
   checkResultJson,
+  noticeIdForMessage,
+  noticeResultJson,
+  noticeDetailsForResult,
   duplicateCheckIdsForResult,
   duplicateCheckIdFailureForResult,
   auditResultSuccess,
@@ -185,9 +189,13 @@ const {
     result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] },
     options?: { repo?: string; branch?: string }
   ) => string;
+  slugIdForText: (value: unknown, fallback: string) => string;
   checkIdForName: (name: string) => string;
   checkIdForCheck: (check: { id?: string; name: string; passed: boolean; details: string }) => string;
   checkResultJson: (check: { id?: string; name: string; passed: boolean; details: string }) => { id: string; name: string; passed: boolean; details: string };
+  noticeIdForMessage: (message: string) => string;
+  noticeResultJson: (notice: string) => { noticeId: string; message: string };
+  noticeDetailsForResult: (result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] }) => Array<{ noticeId: string; message: string }>;
   duplicateCheckIdsForResult: (
     result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] }
   ) => Array<{ checkId: string; count: number; names: string[] }>;
@@ -207,6 +215,7 @@ const {
     passedChecks: number;
     failedChecks: number;
     noticeCount: number;
+    noticeDetails: Array<{ noticeId: string; message: string }>;
     duplicateCheckIdCount: number;
     duplicateCheckIds: Array<{ checkId: string; count: number; names: string[] }>;
     duplicateCheckIdFailure?: boolean;
@@ -226,6 +235,7 @@ const {
     passedChecks: number;
     failedChecks: number;
     noticeCount: number;
+    noticeDetails: Array<{ branch: string; noticeId: string; message: string }>;
     duplicateCheckIdCount: number;
     duplicateCheckIds: Array<{ branch: string; checkId: string; count: number; names: string[] }>;
     duplicateCheckIdFailure?: boolean;
@@ -904,12 +914,33 @@ describe('branch protection audit evaluation', () => {
     });
     expect(checkIdForName('Required Status Check Contexts')).toBe('required-status-check-contexts');
     expect(checkIdForName('  active branch ruleset ref_name keys  ')).toBe('active-branch-ruleset-ref-name-keys');
+    expect(slugIdForText('  Notice Label!  ', 'fallback-id')).toBe('notice-label');
+    expect(slugIdForText('', 'fallback-id')).toBe('fallback-id');
     expect(checkIdForCheck({ id: 'custom-check-id', name: 'Custom Check', passed: true, details: 'ok' })).toBe('custom-check-id');
     expect(checkResultJson({ name: 'required status checks are strict', passed: false, details: 'missing or disabled' })).toEqual({
       id: 'required-status-checks-are-strict',
       name: 'required status checks are strict',
       passed: false,
       details: 'missing or disabled'
+    });
+    expect(noticeIdForMessage('required contexts observed: Build, Test, Package')).toBe('required-contexts-observed');
+    expect(noticeIdForMessage('active branch rulesets: none')).toBe('active-branch-rulesets');
+    expect(noticeIdForMessage('')).toBe('unnamed-notice');
+    expect(noticeResultJson('active branch rulesets: none')).toEqual({
+      noticeId: 'active-branch-rulesets',
+      message: 'active branch rulesets: none'
+    });
+    expect(noticeDetailsForResult({ success: true, checks: [], notices: ['active branch rulesets: none'] })).toEqual([
+      { noticeId: 'active-branch-rulesets', message: 'active branch rulesets: none' }
+    ]);
+    expect(failingSummary.noticeDetails.map((notice) => notice.noticeId)).toEqual([
+      'required-contexts-observed',
+      'advisory-checks-not-branch-protection-required',
+      'active-branch-rulesets'
+    ]);
+    expect(failingSummary.noticeDetails[0]).toEqual({
+      noticeId: 'required-contexts-observed',
+      message: 'required contexts observed: Build, Test, Package'
     });
     expect(failingSummary.duplicateCheckIdCount).toBe(0);
     expect(failingSummary.duplicateCheckIds).toEqual([]);
@@ -984,6 +1015,12 @@ describe('branch protection audit evaluation', () => {
       noticeCount: 6
     });
     expect(aggregateSummary.duplicateCheckIdCount).toBe(0);
+    expect(aggregateSummary.noticeDetails).toHaveLength(6);
+    expect(aggregateSummary.noticeDetails[0]).toEqual({
+      branch: 'develop',
+      noticeId: 'required-contexts-observed',
+      message: 'required contexts observed: Build, Test, Package'
+    });
     expect(aggregateSummary.duplicateCheckIds).toEqual([]);
     expect(aggregateSummary.failures[0]).toEqual({ branch: 'develop', checkId: 'required-status-checks-are-strict', name: 'required status checks are strict', details: 'missing or disabled' });
     expect(summarizeBranchResults([{ branch: 'collision', result: duplicateIdResult }]).duplicateCheckIds).toEqual([
@@ -1027,10 +1064,20 @@ describe('branch protection audit evaluation', () => {
       '| --- | --- | ---: | ---: | ---: |',
       '| develop | PASS | 33/33 | 0 | 3 |',
       '',
+      '### Notices',
+      '',
+      '| Branch | Notice ID | Message |',
+      '| --- | --- | --- |',
+      '| develop | required-contexts-observed | required contexts observed: Build, Test, Package, Integration Host (Linux), Windows Unit Tests |',
+      '| develop | advisory-checks-not-branch-protection-required | advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL |',
+      '| develop | active-branch-rulesets | active branch rulesets: develop (2 rules), main (2 rules) |',
+      '',
       'No failures.'
     ].join('\n'));
 
     const markdownFailureEvidence = renderMarkdown([{ branch: 'main', result: failingResult }], { repo: DEFAULT_REPO });
+    expect(markdownFailureEvidence).toContain('| Branch | Notice ID | Message |');
+    expect(markdownFailureEvidence).toContain('| main | active-branch-rulesets | active branch rulesets: develop (2 rules), main (2 rules) |');
     expect(markdownFailureEvidence).toContain('| Branch | Check ID | Check | Details |');
     expect(markdownFailureEvidence).toContain(
       '| main | advisory-status-check-contexts | advisory status check contexts | missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests |'
@@ -2099,9 +2146,10 @@ describe('branch protection audit main', () => {
       repo: string;
       branch: string;
       success: boolean;
-      summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] };
+      summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; noticeDetails: Array<{ noticeId: string; message: string }>; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] };
       checks: unknown[];
       notices: unknown[];
+      noticeDetails: Array<{ noticeId: string; message: string }>;
       branches?: unknown[];
     };
 
@@ -2118,12 +2166,18 @@ describe('branch protection audit main', () => {
       passedChecks: 33,
       failedChecks: 0,
       noticeCount: 3,
+      noticeDetails: [
+        { noticeId: 'required-contexts-observed', message: 'required contexts observed: Build, Test, Package, Integration Host (Linux), Windows Unit Tests' },
+        { noticeId: 'advisory-checks-not-branch-protection-required', message: 'advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL' },
+        { noticeId: 'active-branch-rulesets', message: 'active branch rulesets: develop (2 rules), main (2 rules)' }
+      ],
       duplicateCheckIdCount: 0,
       duplicateCheckIds: [],
       failures: []
     });
     expect(output.checks).toHaveLength(33);
     expect(output.notices.length).toBeGreaterThan(0);
+    expect(output.noticeDetails).toEqual(output.summary.noticeDetails);
     expect(output.branches).toBeUndefined();
   });
 
@@ -2140,8 +2194,8 @@ describe('branch protection audit main', () => {
       schemaVersion: number;
       repo: string;
       success: boolean;
-      summary: { totalBranches: number; passedBranches: number; failedBranches: number; totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] };
-      branches: Array<{ branch: string; success: boolean; checks: Array<{ id: string; name: string }>; summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] } }>;
+      summary: { totalBranches: number; passedBranches: number; failedBranches: number; totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; noticeDetails: Array<{ branch: string; noticeId: string; message: string }>; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] };
+      branches: Array<{ branch: string; success: boolean; checks: Array<{ id: string; name: string }>; notices: string[]; noticeDetails: Array<{ noticeId: string; message: string }>; summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; noticeDetails: Array<{ noticeId: string; message: string }>; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] } }>;
       branch?: string;
       checks?: unknown[];
       notices?: unknown[];
@@ -2162,6 +2216,14 @@ describe('branch protection audit main', () => {
       passedChecks: 66,
       failedChecks: 0,
       noticeCount: 6,
+      noticeDetails: [
+        { branch: 'develop', noticeId: 'required-contexts-observed', message: 'required contexts observed: Build, Test, Package, Integration Host (Linux), Windows Unit Tests' },
+        { branch: 'develop', noticeId: 'advisory-checks-not-branch-protection-required', message: 'advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL' },
+        { branch: 'develop', noticeId: 'active-branch-rulesets', message: 'active branch rulesets: develop (2 rules), main (2 rules)' },
+        { branch: 'main', noticeId: 'required-contexts-observed', message: 'required contexts observed: Build, Test, Package, Integration Host (Linux), Windows Unit Tests' },
+        { branch: 'main', noticeId: 'advisory-checks-not-branch-protection-required', message: 'advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL' },
+        { branch: 'main', noticeId: 'active-branch-rulesets', message: 'active branch rulesets: develop (2 rules), main (2 rules)' }
+      ],
       duplicateCheckIdCount: 0,
       duplicateCheckIds: [],
       failures: []
@@ -2169,6 +2231,8 @@ describe('branch protection audit main', () => {
     expect(output.branches.map((item) => item.branch)).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(output.branches.every((item) => item.success)).toBe(true);
     expect(output.branches[0].checks[0]).toMatchObject({ id: 'required-status-checks-are-strict', name: 'required status checks are strict' });
+    expect(output.branches[0].notices).toEqual(output.branches[0].noticeDetails.map((notice) => notice.message));
+    expect(output.branches[0].noticeDetails).toEqual(output.branches[0].summary.noticeDetails);
     expect(output.branches.map((item) => item.summary.totalChecks)).toEqual([33, 33]);
     expect(output.branches.every((item) => item.summary.failedChecks === 0)).toBe(true);
     expect(output.branch).toBeUndefined();
