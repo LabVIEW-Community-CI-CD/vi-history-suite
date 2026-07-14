@@ -259,6 +259,46 @@ function writeJson(filePath, payload, deps = {}) {
   writeText(filePath, `${JSON.stringify(payload, null, 2)}\n`, deps);
 }
 
+function writeCommandArtifacts(outputDir, stem, stdoutFile, result, deps = {}) {
+  writeText(path.join(outputDir, stdoutFile), result.stdout, deps);
+  if (result.stderr) {
+    writeText(path.join(outputDir, `${stem}.stderr.txt`), result.stderr, deps);
+  }
+}
+
+function prepareStandardsImage(options, outputDir, deps = {}, cwd = process.cwd()) {
+  const imagePreparation = [];
+  const imageInspect = runCommand('docker', ['image', 'inspect', options.image], { ...deps, cwd });
+  writeCommandArtifacts(outputDir, 'docker-image-inspect', 'docker-image-inspect.stdout.json', imageInspect, deps);
+  imagePreparation.push({ name: 'docker-image-inspect', file: 'docker-image-inspect.stdout.json', ...imageInspect });
+
+  if (imageInspect.status === 0) {
+    return { imageInspect, imagePreparation, imageAccess: 'present' };
+  }
+
+  if (options.image !== DEFAULT_STANDARDS_IMAGE) {
+    return { imageInspect, imagePreparation, imageAccess: 'missing' };
+  }
+
+  const imagePull = runCommand('docker', ['pull', options.image], { ...deps, cwd });
+  writeCommandArtifacts(outputDir, 'docker-image-pull', 'docker-image-pull.stdout.txt', imagePull, deps);
+  imagePreparation.push({ name: 'docker-image-pull', file: 'docker-image-pull.stdout.txt', ...imagePull });
+
+  if (imagePull.status !== 0) {
+    return { imageInspect, imagePreparation, imageAccess: 'pull-failed' };
+  }
+
+  const imageAfterPull = runCommand('docker', ['image', 'inspect', options.image], { ...deps, cwd });
+  writeCommandArtifacts(outputDir, 'docker-image-after-pull', 'docker-image-after-pull.stdout.json', imageAfterPull, deps);
+  imagePreparation.push({ name: 'docker-image-after-pull', file: 'docker-image-after-pull.stdout.json', ...imageAfterPull });
+
+  return {
+    imageInspect: imageAfterPull,
+    imagePreparation,
+    imageAccess: imageAfterPull.status === 0 ? 'pulled' : 'pull-unverified'
+  };
+}
+
 function summarizeRequirementsQuality(payload) {
   if (!payload || typeof payload !== 'object') {
     return { ok: false, findingCount: undefined };
@@ -304,6 +344,9 @@ function renderMarkdown(context) {
   }
   lines.push(`- GitHub repo: ${context.options.repo}`);
   lines.push(`- Standards image: ${context.options.image}`);
+  if (context.imageAccess) {
+    lines.push(`- Docker image access: ${context.imageAccess}`);
+  }
   lines.push(`- Standards profile: ${context.options.profile}`);
   lines.push(`- Requirements scope: ${context.options.requirementsSpecScope}`);
   lines.push(`- Output directory: ${context.outputDir}`);
@@ -319,7 +362,9 @@ function renderMarkdown(context) {
   } else {
     lines.push('- issue-metadata: skipped');
   }
-  lines.push(`- docker-image-inspect: ${context.imageInspect.status === 0 ? 'pass' : `FAIL (${context.imageInspect.status})`}`);
+  for (const step of context.imagePreparation || [{ name: 'docker-image-inspect', status: context.imageInspect.status }]) {
+    lines.push(`- ${step.name}: ${step.status === 0 ? 'pass' : `FAIL (${step.status})`}`);
+  }
   for (const step of context.standards) {
     lines.push(`- ${step.name}: ${step.status === 0 ? 'pass' : `FAIL (${step.status})`} -> ${step.file}`);
   }
@@ -375,14 +420,9 @@ function runIssueStandardsTriage(argv = process.argv.slice(2), deps = {}) {
   const createSnapshot = deps.createTrackedWorktreeSnapshot || createTrackedWorktreeSnapshot;
   const removeSnapshot = deps.removeTrackedWorktreeSnapshot || removeTrackedWorktreeSnapshot;
   const snapshot = createSnapshot(cwd, deps);
-  let snapshotRemoved = false;
 
   try {
-    const imageInspect = runCommand('docker', ['image', 'inspect', options.image], { ...deps, cwd });
-    if (imageInspect.stderr) {
-      writeText(path.join(outputDir, 'docker-image-inspect.stderr.txt'), imageInspect.stderr, deps);
-    }
-    writeText(path.join(outputDir, 'docker-image-inspect.stdout.json'), imageInspect.stdout, deps);
+    const { imageInspect, imagePreparation, imageAccess } = prepareStandardsImage(options, outputDir, deps, cwd);
 
     const standards = imageInspect.status === 0
       ? standardsDockerSteps(options).map((step) => {
@@ -401,6 +441,8 @@ function runIssueStandardsTriage(argv = process.argv.slice(2), deps = {}) {
       outputDir,
       issue: issueContext,
       imageInspect,
+      imagePreparation,
+      imageAccess,
       snapshot: { ...snapshot, removed: false },
       standards
     };
@@ -412,6 +454,13 @@ function runIssueStandardsTriage(argv = process.argv.slice(2), deps = {}) {
       outputDir,
       issue: issueContext,
       imageInspect: { status: imageInspect.status, command: commandLine('docker', ['image', 'inspect', options.image]) },
+      imageAccess,
+      imagePreparation: imagePreparation.map((step) => ({
+        name: step.name,
+        file: step.file,
+        status: step.status,
+        command: commandLine(step.command, step.args)
+      })),
       snapshot: context.snapshot,
       standards: standards.map(summarizeStandardsStep),
       success: issueContext.status === 0 && imageInspect.status === 0 && standards.every((step) => step.status === 0)
@@ -422,7 +471,6 @@ function runIssueStandardsTriage(argv = process.argv.slice(2), deps = {}) {
   } finally {
     if (!options.keepSnapshot) {
       removeSnapshot(snapshot, deps);
-      snapshotRemoved = true;
     }
   }
 }
@@ -452,6 +500,7 @@ module.exports = {
   issueViewArgs,
   standardsDockerSteps,
   replaceSnapshotMount,
+  prepareStandardsImage,
   summarizeRequirementsQuality,
   summarizeEvidenceScan,
   summarizeStandardsStep,

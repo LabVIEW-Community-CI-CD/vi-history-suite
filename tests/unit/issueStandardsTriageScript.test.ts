@@ -54,7 +54,16 @@ const {
       };
       removeTrackedWorktreeSnapshot?: (snapshot: { path: string }) => void;
     }
-  ) => { exitCode: number; markdown: string; context: { outputDir: string; standards: Array<{ status: number }> } };
+  ) => {
+    exitCode: number;
+    markdown: string;
+    context: {
+      outputDir: string;
+      imageAccess?: string;
+      imagePreparation?: Array<{ name: string; status: number }>;
+      standards: Array<{ status: number }>;
+    };
+  };
 };
 
 const tempRoots: string[] = [];
@@ -178,7 +187,64 @@ describe('issue standards triage script', () => {
     );
   });
 
-  it('fails fast when the standards Docker image is unavailable', () => {
+  it('pulls the default standards image after an inspect miss', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    let inspectCount = 0;
+    const calls: Array<{ command: string; args: string[] }> = [];
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      calls.push({ command, args });
+      if (command === 'docker' && args[0] === 'image') {
+        inspectCount += 1;
+        return inspectCount === 1
+          ? { status: 1, stderr: 'No such image' }
+          : { status: 0, stdout: '[{"Id":"pulled-image"}]' };
+      }
+      if (command === 'docker' && args[0] === 'pull') {
+        return { status: 0, stdout: 'Downloaded newer image' };
+      }
+      if (args.includes('scripts/requirements_quality_check.py')) {
+        return { status: 0, stdout: JSON.stringify({ ok: true, findings: [] }) };
+      }
+      if (args.includes('scripts/repo_evidence_scan.py')) {
+        return { status: 0, stdout: JSON.stringify({ inventory: { file_count: 2 }, areas: {} }) };
+      }
+      if (args.includes('scripts/run_assurance.py')) {
+        return { status: 0, stdout: 'REQ: PASS\n' };
+      }
+      return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
+    });
+
+    const result = runIssueStandardsTriage(
+      ['--issue', '1042', '--skip-issue-fetch', '--save-dir', path.join(root, 'evidence')],
+      {
+        cwd: repoRoot,
+        spawnSync,
+        createTrackedWorktreeSnapshot: () => ({
+          mode: 'tracked-worktree-snapshot',
+          path: snapshotPath,
+          trackedFileCount: 2,
+          symlinkFiles: [],
+          missingFiles: [],
+          generatedRootsExcluded: []
+        }),
+        removeTrackedWorktreeSnapshot: vi.fn()
+      }
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.context.imageAccess).toBe('pulled');
+    expect(result.context.imagePreparation?.map((step) => step.name)).toEqual([
+      'docker-image-inspect',
+      'docker-image-pull',
+      'docker-image-after-pull'
+    ]);
+    expect(calls.filter((call) => call.command === 'docker' && call.args[0] === 'pull')).toHaveLength(1);
+    expect(calls.filter((call) => call.command === 'docker' && call.args[0] === 'run')).toHaveLength(3);
+    expect(fs.readFileSync(path.join(root, 'evidence', 'issue-1042', 'docker-image-pull.stdout.txt'), 'utf8')).toContain('Downloaded newer image');
+  });
+
+  it('fails fast when an explicit standards Docker image override is unavailable', () => {
     const root = makeTempRoot();
     const snapshotPath = path.join(root, 'snapshot');
     const spawnSync = vi.fn((command: string, args: string[]) => {
@@ -191,7 +257,7 @@ describe('issue standards triage script', () => {
       return { status: 99, stderr: 'docker run should not execute' };
     });
 
-    const result = runIssueStandardsTriage(['--issue', '1040', '--save-dir', path.join(root, 'evidence')], {
+    const result = runIssueStandardsTriage(['--issue', '1040', '--image', 'local/missing:image', '--save-dir', path.join(root, 'evidence')], {
       cwd: repoRoot,
       spawnSync,
       createTrackedWorktreeSnapshot: () => ({
@@ -207,6 +273,7 @@ describe('issue standards triage script', () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.context.standards).toEqual([]);
+    expect(spawnSync.mock.calls.filter(([command, args]) => command === 'docker' && args[0] === 'pull')).toHaveLength(0);
     expect(spawnSync.mock.calls.filter(([command, args]) => command === 'docker' && args[0] === 'run')).toHaveLength(0);
     expect(fs.readFileSync(path.join(root, 'evidence', 'issue-1040', 'docker-image-inspect.stderr.txt'), 'utf8')).toContain('No such image');
   });
