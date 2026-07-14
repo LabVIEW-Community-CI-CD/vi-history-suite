@@ -259,10 +259,14 @@ function evaluateBranchProtection(settings, options = {}) {
   const requireCodeOwnerReview = Boolean(options.requireCodeOwnerReview);
   const requireLastPushApproval = Boolean(options.requireLastPushApproval);
   const requireBranchCreationBlock = Boolean(options.requireBranchCreationBlock);
+  const allowedRequiredContexts = requireAdvisory
+    ? [...new Set([...expectedRequiredChecks, ...advisoryChecks])]
+    : expectedRequiredChecks;
   const minimumApprovingReviews = Number.isFinite(Number(options.minimumApprovingReviews))
     ? Number(options.minimumApprovingReviews)
     : 1;
   const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
+  const unexpectedRequired = requiredContexts.filter((context) => !allowedRequiredContexts.includes(context));
   const requiredAppBindings = requiredStatusCheckAppBindings(protection);
   const requiredAppBindingsByContext = new Map(requiredAppBindings.map((binding) => [binding.context, binding]));
   const mismatchedRequiredAppBindings = expectedRequiredChecks
@@ -306,6 +310,13 @@ function evaluateBranchProtection(settings, options = {}) {
       details: missingRequired.length === 0
         ? `present: ${expectedRequiredChecks.join(', ')}`
         : `missing: ${missingRequired.join(', ')}; present: ${requiredContexts.join(', ') || 'none'}`
+    },
+    {
+      name: 'unexpected required status check contexts',
+      passed: unexpectedRequired.length === 0,
+      details: unexpectedRequired.length === 0
+        ? `none beyond: ${allowedRequiredContexts.join(', ')}`
+        : `unexpected: ${unexpectedRequired.join(', ')}; allowed: ${allowedRequiredContexts.join(', ')}`
     },
     {
       name: 'required status check app bindings',
