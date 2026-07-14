@@ -229,6 +229,71 @@ describe('branch protection audit main', () => {
     expect(stdout.read()).toContain(`${DEFAULT_REPO}:main`);
   });
 
+  it('preserves the v1 single-branch JSON shape without --all', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--json'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+    const output = JSON.parse(stdout.read()) as {
+      schemaVersion: number;
+      repo: string;
+      branch: string;
+      success: boolean;
+      checks: unknown[];
+      notices: unknown[];
+      branches?: unknown[];
+    };
+
+    expect(exitCode).toBe(0);
+    expect(stderr.read()).toBe('');
+    expect(output).toMatchObject({
+      schemaVersion: 1,
+      repo: DEFAULT_REPO,
+      branch: DEFAULT_BRANCH,
+      success: true
+    });
+    expect(output.checks).toHaveLength(5);
+    expect(output.notices.length).toBeGreaterThan(0);
+    expect(output.branches).toBeUndefined();
+  });
+
+  it('emits aggregate JSON when --all is requested', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--all', '--json'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+    const output = JSON.parse(stdout.read()) as {
+      schemaVersion: number;
+      repo: string;
+      success: boolean;
+      branches: Array<{ branch: string; success: boolean }>;
+      branch?: string;
+      checks?: unknown[];
+      notices?: unknown[];
+    };
+
+    expect(exitCode).toBe(0);
+    expect(stderr.read()).toBe('');
+    expect(output).toMatchObject({
+      schemaVersion: 1,
+      repo: DEFAULT_REPO,
+      success: true
+    });
+    expect(output.branches.map((item) => item.branch)).toEqual(DEFAULT_AUDIT_BRANCHES);
+    expect(output.branches.every((item) => item.success)).toBe(true);
+    expect(output.branch).toBeUndefined();
+    expect(output.checks).toBeUndefined();
+    expect(output.notices).toBeUndefined();
+  });
+
   it('returns nonzero when GitHub returns malformed JSON', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
