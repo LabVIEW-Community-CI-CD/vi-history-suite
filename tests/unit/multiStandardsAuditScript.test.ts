@@ -15,6 +15,7 @@ const {
   directDockerSteps,
   profileDockerSteps,
   replaceAuditMounts,
+  summarizeGateScorecard,
   summarizePortfolioTable,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
@@ -43,6 +44,11 @@ const {
     areaScores?: Record<string, number | string>;
     topRisk?: string;
   } | undefined;
+  summarizeGateScorecard: (text: string) => Record<string, {
+    status?: string;
+    confidence?: string;
+    missingProof: string[];
+  }>;
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
     file: string;
@@ -88,6 +94,11 @@ const {
           areaScores?: Record<string, number | string>;
           topRisk?: string;
         };
+        scorecardDetails?: Record<string, {
+          status?: string;
+          confidence?: string;
+          missingProof: string[];
+        }>;
       }>;
       success: boolean;
     };
@@ -179,6 +190,26 @@ describe('multi standards audit script', () => {
     });
   });
 
+  it('summarizes gate scorecard confidence and missing proof', () => {
+    expect(summarizeGateScorecard(gateScorecard())).toMatchObject({
+      coverage: { status: 'PASS', confidence: 'High', missingProof: [] },
+      dod: { status: 'PASS', confidence: 'Med', missingProof: [] }
+    });
+
+    expect(summarizeGateScorecard([
+      'Gate Scorecard',
+      '| Gate | Status | Confidence | Missing Proof |',
+      '| --- | --- | --- | --- |',
+      '| doc | FAIL | Low | docs link evidence; user guide review |'
+    ].join('\n'))).toMatchObject({
+      doc: {
+        status: 'FAIL',
+        confidence: 'Low',
+        missingProof: ['docs link evidence', 'user guide review']
+      }
+    });
+  });
+
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {
     const root = makeTempRoot();
     const snapshotPath = path.join(root, 'snapshot');
@@ -227,7 +258,13 @@ describe('multi standards audit script', () => {
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
+    expect(result.markdown).toContain('quick-triage: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
+    expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
+      status: 'PASS',
+      confidence: 'Med',
+      missingProof: []
+    });
     expect(result.context.profiles.find((profile) => profile.portfolio)?.portfolio).toMatchObject({
       tableFile: 'portfolio-review-table.txt',
       overall: 'High',

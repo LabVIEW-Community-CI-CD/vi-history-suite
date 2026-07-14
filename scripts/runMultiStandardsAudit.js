@@ -321,6 +321,49 @@ function summarizePortfolioTable(text) {
   return undefined;
 }
 
+function parseMissingProofCell(value) {
+  const text = String(value || '').trim();
+  if (!text || text === '-' || /^none$/i.test(text)) {
+    return [];
+  }
+  return text.split(/<br\s*\/?>|;/i).map((part) => part.trim()).filter(Boolean);
+}
+
+function summarizeGateScorecard(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const headerCells = markdownTableCells(lines[lineIndex]);
+    if (!headerCells.includes('Gate') || !headerCells.includes('Status')) {
+      continue;
+    }
+
+    const details = {};
+    for (let dataLineIndex = lineIndex + 1; dataLineIndex < lines.length; dataLineIndex += 1) {
+      const dataCells = markdownTableCells(lines[dataLineIndex]);
+      if (dataCells.length === 0) {
+        break;
+      }
+      if (markdownDividerRow(dataCells)) {
+        continue;
+      }
+
+      const row = {};
+      headerCells.forEach((header, headerIndex) => {
+        row[header] = dataCells[headerIndex];
+      });
+      if (row.Gate) {
+        details[row.Gate] = {
+          status: row.Status,
+          confidence: row.Confidence,
+          missingProof: parseMissingProofCell(row['Missing Proof'])
+        };
+      }
+    }
+    return details;
+  }
+  return {};
+}
+
 function summarizeDirectStep(step) {
   const payload = parseJsonOrUndefined(step.stdout);
   const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
@@ -337,12 +380,27 @@ function summarizeProfileStep(step) {
   const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
   if (step.output === 'gate-scorecard') {
     summary.scorecard = parseGateScorecard(step.stdout || '');
+    summary.scorecardDetails = summarizeGateScorecard(step.stdout || '');
   }
   if (step.output === 'portfolio-table') {
     const portfolio = summarizePortfolioTable(step.stdout || '');
     summary.portfolio = portfolio ? { tableFile: step.file, ...portfolio } : { tableFile: step.file };
   }
   return summary;
+}
+
+function renderGateScorecardSummary(step) {
+  const details = step.scorecardDetails || {};
+  if (Object.keys(details).length > 0) {
+    return Object.entries(details).map(([gate, detail]) => {
+      const confidence = detail.confidence ? `(${detail.confidence})` : '';
+      const missingProof = Array.isArray(detail.missingProof) && detail.missingProof.length > 0
+        ? ` missing=${detail.missingProof.join('; ')}`
+        : '';
+      return `${gate}=${detail.status || 'UNKNOWN'}${confidence}${missingProof}`;
+    }).join(', ');
+  }
+  return Object.entries(step.scorecard).map(([gate, status]) => `${gate}=${status}`).join(', ');
 }
 
 function renderPortfolioSummary(portfolio) {
@@ -422,7 +480,7 @@ function renderMarkdown(context) {
   }
   for (const step of context.profiles.map(summarizeProfileStep)) {
     if (step.scorecard && Object.keys(step.scorecard).length > 0) {
-      lines.push(`- ${step.name}: ${Object.entries(step.scorecard).map(([gate, status]) => `${gate}=${status}`).join(', ')}`);
+      lines.push(`- ${step.name}: ${renderGateScorecardSummary(step)}`);
     } else if (step.portfolio) {
       lines.push(`- ${step.name}: ${renderPortfolioSummary(step.portfolio)}`);
     }
@@ -522,6 +580,7 @@ module.exports = {
   replaceAuditMounts,
   summarizeExternalUserInformation,
   summarizePortfolioTable,
+  summarizeGateScorecard,
   summarizeDirectStep,
   summarizeProfileStep,
   renderMarkdown,
