@@ -8,6 +8,9 @@ const {
   attentionReasonsForRequirement,
   aggregateRequirementHealth,
   summarizeRequirementHealth,
+  parseArgs,
+  resolveOutputPath,
+  writeRequirementsHealthOutput,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
@@ -47,6 +50,14 @@ const {
     reasonCounts: { structuralIntegrity: number; unlinked: number; uncitedCriteria: number; coverageRisk: number };
     unavailableSignals: string[];
   };
+  parseArgs: (argv?: string[]) => {
+    json: boolean;
+    strict: boolean;
+    outputPath?: string;
+    positionals: string[];
+  };
+  resolveOutputPath: (outputPath: string, deps?: { cwd?: string }) => string;
+  writeRequirementsHealthOutput: (outputPath: string, content: string, deps?: Record<string, unknown>) => void;
   verifyRequirementsHealth: (cwd?: string, deps?: Record<string, unknown>) => Record<string, unknown>;
   renderSummary: (result: unknown) => string;
   renderStepSummary: (result: unknown) => string;
@@ -112,6 +123,14 @@ const COVERAGE_WITH_RISK = {
 };
 
 const MUTATION = { killed: 40, timeout: 0, survived: 9, noCoverage: 0, score: 81.63 };
+
+const OUTPUT_FIXTURE = {
+  linkage: LINKAGE,
+  criteria: CRITERIA,
+  integrity: INTEGRITY_PASS,
+  coverage: COVERAGE_WITH_RISK,
+  mutation: MUTATION
+};
 
 describe('requirement verification health (VHS-REQ-601)', () => {
   it('computes the Stryker mutation score from detected over valid mutants', () => {
@@ -243,6 +262,40 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
   });
 
+  it('parses output arguments without treating the output path as the target repository', () => {
+    expect(parseArgs(['--json', '--strict', '--output', 'evidence/requirements.json', '/repo'])).toEqual({
+      json: true,
+      strict: true,
+      outputPath: 'evidence/requirements.json',
+      positionals: ['/repo']
+    });
+    expect(() => parseArgs(['--output'])).toThrow(/requires a value/);
+    expect(() => parseArgs(['--unknown'])).toThrow(/Unknown argument/);
+  });
+
+  it('resolves and writes retained report output inside the working directory', () => {
+    const cwd = path.resolve('/repo');
+    const resolvedOutput = path.join(cwd, 'evidence', 'requirements-health.json');
+    const mkdirCalls: unknown[] = [];
+    const writeCalls: unknown[] = [];
+    const mkdirSync = (...args: unknown[]) => mkdirCalls.push(args);
+    const writeFileSync = (...args: unknown[]) => writeCalls.push(args);
+
+    expect(resolveOutputPath('evidence/requirements-health.json', { cwd })).toBe(resolvedOutput);
+    expect(() => resolveOutputPath('', { cwd })).toThrow(/non-empty path/);
+    expect(() => resolveOutputPath('../requirements-health.json', { cwd })).toThrow(/stay inside/);
+    expect(() => resolveOutputPath(resolvedOutput, { cwd })).toThrow(/relative path/);
+
+    writeRequirementsHealthOutput('evidence/requirements-health.json', '{"healthy":true}', {
+      cwd,
+      mkdirSync,
+      writeFileSync
+    });
+
+    expect(mkdirCalls).toEqual([[path.dirname(resolvedOutput), { recursive: true }]]);
+    expect(writeCalls).toEqual([[resolvedOutput, '{"healthy":true}\n', 'utf8']]);
+  });
+
   it('reports ATTENTION when criterion citations are missing despite clean linkage and coverage (VHS-REQ-601)', () => {
     const result = verifyRequirementsHealth('/repo', {
       linkage: { total: 2, linked: ['VHS-REQ-001', 'VHS-REQ-004'], unlinked: [], manualOnly: [] },
@@ -315,6 +368,69 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(code).toBe(0);
     expect(stdoutChunks.join('')).toContain('[requirements-verify] Overall: ATTENTION');
     expect(summaryChunks.join('')).toContain('## Requirement Verification Health');
+  });
+
+  it('main writes retained text output and prints a concise output notice', () => {
+    const stdoutChunks: string[] = [];
+    const writeCalls: unknown[] = [];
+
+    const code = main(['--output', 'evidence/requirements-health.txt'], {
+      ...OUTPUT_FIXTURE,
+      cwd: '/repo',
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) },
+      mkdirSync: () => undefined,
+      writeFileSync: (...args: unknown[]) => writeCalls.push(args)
+    });
+
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toBe(
+      '[requirements-verify] Wrote report output to evidence/requirements-health.txt\n'
+    );
+    expect(writeCalls).toHaveLength(1);
+    expect(String((writeCalls[0] as unknown[])[1])).toContain('[requirements-verify] Overall: ATTENTION');
+  });
+
+  it('main writes retained JSON output using the same machine-readable contract', () => {
+    const stdoutChunks: string[] = [];
+    const writeCalls: unknown[] = [];
+
+    const code = main(['--json', '--output', 'evidence/requirements-health.json'], {
+      ...OUTPUT_FIXTURE,
+      cwd: '/repo',
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) },
+      mkdirSync: () => undefined,
+      writeFileSync: (...args: unknown[]) => writeCalls.push(args)
+    });
+
+    const output = JSON.parse(String((writeCalls[0] as unknown[])[1])) as {
+      summary: { status: string; reasonCounts: { coverageRisk: number } };
+      attention: Array<{ attentionReasons: Array<{ reasonId: string }> }>;
+    };
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toBe(
+      '[requirements-verify] Wrote report output to evidence/requirements-health.json\n'
+    );
+    expect(output.summary).toMatchObject({ status: 'ATTENTION', reasonCounts: { coverageRisk: 1 } });
+    expect(output.attention[0].attentionReasons.map((reason) => reason.reasonId)).toEqual([
+      ATTENTION_REASON_IDS.uncitedCriteria,
+      ATTENTION_REASON_IDS.coverageRisk
+    ]);
+  });
+
+  it('main rejects unsafe retained output paths', () => {
+    const stdoutChunks: string[] = [];
+    const stderrChunks: string[] = [];
+
+    const code = main(['--output', '../requirements-health.txt'], {
+      ...OUTPUT_FIXTURE,
+      cwd: '/repo',
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) },
+      stderr: { write: (chunk: string) => stderrChunks.push(chunk) }
+    });
+
+    expect(code).toBe(1);
+    expect(stdoutChunks).toEqual([]);
+    expect(stderrChunks.join('')).toContain('--output must stay inside the working directory');
   });
 
   it('exits non-zero under --strict when requirement health is not green (VHS-REQ-601.18)', () => {
