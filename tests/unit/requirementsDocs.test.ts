@@ -1711,7 +1711,7 @@ describe('requirements documentation coherence', () => {
     expect(syrs).toContain('Repositories with thousands of VIs do not need a full tracked-VI scan');
 
     expect(srs).toContain('### VHS-REQ-635: Selected-File On-Demand Eligibility');
-    expect(srs).toContain('shall not wait for or require a repository-wide');
+    expect(srs).toContain('without waiting for or requiring a repository-wide');
     expect(srs).toContain('Opening history for one selected file does not enumerate every tracked VI');
     expect(srs).toContain('Manifest menu visibility remains a hint');
     expect(srs).toContain('Selected-file eligibility is independent of repository-wide indexing');

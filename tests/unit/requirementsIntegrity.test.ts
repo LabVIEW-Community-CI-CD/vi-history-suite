@@ -13,6 +13,7 @@ const {
   extractSyrsVerificationReferences,
   checkSystemRequirementReferences,
   checkRequirementVerificationEvidence,
+  checkRequirementQuality29148,
   checkRequirementsIntegrity,
   renderStepSummary,
   main
@@ -50,6 +51,9 @@ const {
   ) => Array<{ subject: string; detail: string }>;
   checkRequirementVerificationEvidence: (
     rtmRows: Array<Record<string, string>>
+  ) => Array<{ subject: string; detail: string }>;
+  checkRequirementQuality29148: (
+    specs: Array<{ path: string; text: string }>
   ) => Array<{ subject: string; detail: string }>;
   checkRequirementsIntegrity: (
     cwd: string,
@@ -320,6 +324,64 @@ describe('requirements cross-reference integrity guard', () => {
     expect(checkRequirementVerificationEvidence(rows)).toEqual([]);
   });
 
+  it('flags 29148 singularity and and/or wording issues in native requirement fields', () => {
+    const srs = [
+      '### VHS-REQ-010: Split Requirement',
+      '',
+      '- Statement: The extension shall generate evidence and shall publish it.',
+      '- Acceptance Criteria:',
+      '  - The command shall write a summary and shall retain raw output.',
+      '  - The user shall choose host and/or Docker execution.',
+      '',
+      '### VHS-REQ-011: Clean Requirement',
+      '',
+      '- Statement: The extension shall generate evidence.',
+      '- Acceptance Criteria:',
+      '  - The command reports a PASS status.',
+      ''
+    ].join('\n');
+
+    expect(checkRequirementQuality29148([{ path: 'docs/requirements/srs.md', text: srs }])).toEqual([
+      {
+        subject: 'VHS-REQ-010',
+        detail: "docs/requirements/srs.md Statement has 2 'shall' terms; split into singular requirements or criteria (ISO/IEC/IEEE 29148:2018 5.2.5 Singular)"
+      },
+      {
+        subject: 'VHS-REQ-010.1',
+        detail: "docs/requirements/srs.md Acceptance Criterion 1 has 2 'shall' terms; split into singular requirements or criteria (ISO/IEC/IEEE 29148:2018 5.2.5 Singular)"
+      },
+      {
+        subject: 'VHS-REQ-010.2',
+        detail: 'docs/requirements/srs.md Acceptance Criterion 2 uses and/or wording; split or clarify the alternatives (ISO/IEC/IEEE 29148:2018 5.2.7 Note 1 on and/or splitting)'
+      }
+    ]);
+  });
+
+  it('includes the 29148 quality invariant in the full integrity check', () => {
+    const cwd = path.join(path.sep, 'repo');
+    const files = makeFixtureFiles({
+      'docs/requirements/srs.md':
+        '### VHS-REQ-001: Alpha Requirement\n\n' +
+        '- Statement: The extension shall track history and shall render output.\n' +
+        '- Implementation References:\n  - `src/a.ts`\n' +
+        '- Verification References:\n  - `tests/a.test.ts`\n'
+    });
+
+    const result = checkRequirementsIntegrity(cwd, {
+      readFile: makeReadFile(files),
+      fileExists: makeFileExists(cwd, ['src/a.ts'])
+    });
+    const quality = result.checks.find((check) => check.key === 'requirementQuality29148');
+
+    expect(quality?.violations).toEqual([
+      {
+        subject: 'VHS-REQ-001',
+        detail: "docs/requirements/srs.md Statement has 2 'shall' terms; split into singular requirements or criteria (ISO/IEC/IEEE 29148:2018 5.2.5 Singular)"
+      }
+    ]);
+    expect(result.success).toBe(false);
+  });
+
   it('flags a missing Verification Reference through the full integrity check', () => {
     const cwd = path.join(path.sep, 'repo');
     const files = makeFixtureFiles({
@@ -367,6 +429,7 @@ describe('requirements cross-reference integrity guard', () => {
 
     expect(markdown).toContain('## Requirements Cross-Reference Integrity');
     expect(markdown).toContain('cross-reference each other consistently');
+    expect(markdown).toContain('ISO/IEC/IEEE 29148');
     expect(markdown).toContain('### Violations');
     expect(markdown).toContain('| anchorResolution | `VHS-REQ-001` |');
   });
